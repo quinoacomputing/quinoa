@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Poisson.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 03:27:41 PM MDT
+  \date      Fri 16 Sep 2016 12:41:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Poisson equation
   \details   This file implements the Poisson equation.
@@ -52,7 +52,7 @@ class Poisson {
     //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::MeshNodes& unk,
+                     tk::Fields& unk,
                      tk::real t ) const
     {
       Problem::template
@@ -79,8 +79,8 @@ class Poisson {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) const
+              tk::Fields& lhsd,
+              tk::Fields& lhso ) const
     {
       Assert( psup.second.size()-1 == coord[0].size(),
               "Number of mesh points and number of global IDs unequal" );
@@ -179,29 +179,25 @@ class Poisson {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] Un Solution vector at previous time step
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
-              tk::MeshNodes& R ) const
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       IGNORE(mult);
       IGNORE(dt);
       IGNORE(coord);
       IGNORE(inpoel);
       IGNORE(U);
-      IGNORE(Un);
 
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( Un.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at previous time step incorrect" );
-      Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
+      Assert( R.nunk() == coord[0].size() && R.nprop() == m_ncomp,
+              "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
 
       // zero right hand side for all components
@@ -211,7 +207,7 @@ class Poisson {
     //! Return the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes&,
+    velocity( const tk::Fields&,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >&) const
     { return { {{0.0, 0.0, 0.0, 0.0}},
@@ -276,7 +272,7 @@ class Poisson {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::MeshNodes& U ) const
+            tk::Fields& U ) const
     {
       IGNORE(t);
       IGNORE(coord);

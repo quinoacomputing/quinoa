@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:05:31 AM MDT
+  \date      Tue 06 Sep 2016 10:50:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -212,14 +212,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Queue up requesting PE and node IDs
       m_req.push_back( { pe, id } );
       // Trigger SDAG wait, signaling that node IDs have been requested from us
-      trigger_nodes_requested();
+      nodes_requested_complete();
     }
 
     //! Receive new (reordered) global node IDs
     //! \param[in] id Map associating new to old node IDs
     void neworder( const std::unordered_map< std::size_t, std::size_t >& id ) {
       // Signal to the runtime system that we have participated in reordering
-      trigger_participated();
+      participated_complete();
       // Store new node IDs associated to old ones
       for (const auto& p : id) m_newid[ p.first ] = p.second;
       m_reordered += id.size();   // count up number of reordered nodes
@@ -252,7 +252,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] low Lower bound of node IDs assigned to us
     void lower( std::size_t low ) {
       m_lower = low;
-      trigger_lower();
+      lower_complete();
     }
 
     //! \brief Compute the variance of the communication cost of merging the
@@ -593,7 +593,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // reordering. This is required here because this is only triggered if
       // communication is required during mesh node reordering. See also
       // particioner.ci.
-      if (CkNumPes() == 1) trigger_participated();
+      if (CkNumPes() == 1) participated_complete();
       // Send out request for new global node IDs for nodes we do not reorder
       for (const auto& c : m_communication)
         Group::thisProxy[ c.first ].request( CkMyPe(), c.second );
@@ -616,7 +616,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           ++m_reordered;
         }
       // Trigger SDAG wait, indicating that reordering own node IDs are complete
-      trigger_reorderowned_complete();
+      reorderowned_complete();
       // If we have reordered all our nodes, compute and send result to host
       if (m_reordered == m_id.size()) reordered();
     }
@@ -640,7 +640,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare() {
       // Signal to the runtime system that we have participated in reordering
-      trigger_participated();
+      participated_complete();
       for (const auto& r : m_req) {
         std::unordered_map< std::size_t, std::size_t > n;
         for (auto p : r.second) n[ p ] = tk::cref_find( m_newid, p );
@@ -651,7 +651,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       wait4prep();      // Re-enable SDAG wait for preparing new node requests
       // Re-enable trigger signaling that reordering of owned node IDs are
       // complete right away
-      trigger_reorderowned_complete();
+      reorderowned_complete();
     }
 
     //! Compute final result of reordering and send it back to host
@@ -709,7 +709,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // also expects exclusive upper indices.
       if (CkMyPe() == CkNumPes()-1) ++m_upper;
       // Tell the runtime system that the upper bound has been computed
-      trigger_upper();
+      upper_complete();
       // Set lower index for PE 0 as 0
       if (CkMyPe() == 0) lower(0);
       // All PEs except the last one send their upper indices as the lower index

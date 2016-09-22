@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 01:48:53 PM MDT
+  \date      Thu 01 Sep 2016 08:01:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -65,6 +65,7 @@ struct nstep {};
 struct term {};
 struct t0 {};
 struct dt {};
+struct ctau {};
 struct npar {};
 struct part {};
 struct ncomp {};

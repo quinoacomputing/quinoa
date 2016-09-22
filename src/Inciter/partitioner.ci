@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:10:37 AM MDT
+  \date      Tue 06 Sep 2016 10:49:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -13,6 +13,7 @@
 module partitioner {
 
   include "unordered_map";
+  include "Types.h";
 
   namespace inciter {
 
@@ -110,25 +111,24 @@ module partitioner {
       // While the tasks carried out as described in the previous paragraph lead
       // to correct results, there is an additional trigger, _participated_,
       // that needs to be enabled before create() is called. The role of
-      // trigger_participated is to make sure that all PEs participate in the
+      // participated_complete() is to make sure that all PEs participate in the
       // distribution of new (reordered) mesh node IDs during reordering. In
       // particular, since PE 0 has nothing to receive from others, if this
       // trigger is not in place, PE 0 goes ahead of every other PE and calls
-      // create() which calls Worker constructors, a potentially heavy
-      // function. This is undesired at this point since PE 0 will surely need
-      // to answer to requests from other PEs with new node IDs, which can only
-      // be done (if the participated trigger is not in place) when the
-      // Workers have been created. This introduces unnecessarly delays and
-      // load imbalance during reordering. Thus requiring trigger_participated
-      // in addition to lower and upper, delays creating of Workers. As a
-      // result, PE 0 is ready for requests from other PEs for new node IDs
-      // earlier than without the participate trigger, which yields a lot
-      // tighter CPU utilization during reordering. The participated trigger is
-      // enabled in two places: (1) in prepare(), i.e., if a PE had to prepare
-      // some of its new node IDs for others, and (2) in neworder(), i.e., if a
-      // PE had to receive new node IDs from others. Thus node reordering is
-      // only considered complete if every PE has participated in communication
-      // of the new node IDs.
+      // create() which calls Worker constructors, a potentially heavy function.
+      // This is undesired at this point since PE 0 will surely need to answer
+      // to requests from other PEs with new node IDs, which can only be done
+      // (if the participated trigger is not in place) when the Workers have
+      // been created. This introduces unnecessarly delays and load imbalance
+      // during reordering. Thus requiring participated_complete() in addition
+      // to lower and upper, delays creating of Workers. As a result, PE 0 is
+      // ready for requests from other PEs for new node IDs earlier than without
+      // the participate trigger, which yields a lot tighter CPU utilization
+      // during reordering. The participated trigger is enabled in two places:
+      // (1) in prepare(), i.e., if a PE had to prepare some of its new node IDs
+      // for others, and (2) in neworder(), i.e., if a PE had to receive new
+      // node IDs from others. Thus node reordering is only considered complete
+      // if every PE has participated in communication of the new node IDs.
       //
       // Note that Pre, Ord, and Cre are partial synchronization points: while
       // Pre always happens before Ord, and Cre on the same PE, they happen at
@@ -136,20 +136,20 @@ module partitioner {
       // synchronization points.
 
       entry void wait4prep() {
-        when trigger_reorderowned_complete(), trigger_nodes_requested()
+        when reorderowned_complete(), nodes_requested_complete()
         serial "prepare" { prepare(); }
       };
 
       entry void wait4bounds() {
-        when trigger_lower(), trigger_upper(), trigger_participated()
+        when lower_complete(), upper_complete(), participated_complete()
         serial "create" { create(); }
       };
 
-      entry void trigger_reorderowned_complete();
-      entry void trigger_nodes_requested();
-      entry void trigger_lower();
-      entry void trigger_upper();
-      entry void trigger_participated();
+      entry void reorderowned_complete();
+      entry void nodes_requested_complete();
+      entry void lower_complete();
+      entry void upper_complete();
+      entry void participated_complete();
     };
 
   } // inciter::

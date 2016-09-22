@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 03:09:30 PM MDT
+  \date      Fri 16 Sep 2016 12:31:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -23,7 +23,7 @@
 
 #include "Types.h"
 #include "Make_unique.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 
 namespace inciter {
 
@@ -74,7 +74,7 @@ class PDE {
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::MeshNodes& unk,
+                     tk::Fields& unk,
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
@@ -83,8 +83,8 @@ class PDE {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) const
+              tk::Fields& lhsd,
+              tk::Fields& lhso ) const
     { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
@@ -92,14 +92,13 @@ class PDE {
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
-              tk::MeshNodes& R ) const
-    { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
+              const tk::Fields& U,
+              tk::Fields& R ) const
+    { self->rhs( mult, dt, coord, inpoel, U, R ); }
 
     //! Public interface for extracting the velocity field at cell nodes
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes& U,
+    velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
     { return self->velocity( U, coord, N ); }
@@ -121,7 +120,7 @@ class PDE {
     std::vector< std::vector< tk::real > > output(
       tk::real t,
       const std::array< std::vector< tk::real >, 3 >& coord,
-      tk::MeshNodes& U ) const
+      tk::Fields& U ) const
     { return self->output( t, coord, U ); }
 
     //! Copy assignment
@@ -143,20 +142,20 @@ class PDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
-                               tk::MeshNodes&, tk::real ) const = 0;
+                               tk::Fields&, tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
-                        tk::MeshNodes&, tk::MeshNodes& ) const = 0;
+                        tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real, tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const tk::MeshNodes&, const tk::MeshNodes&,
-                        tk::MeshNodes& ) const = 0;
+                        const tk::Fields&,
+                        tk::Fields& ) const = 0;
       virtual bool anydirbc( int ) const = 0;
       virtual std::vector< std::array< tk::real, 4 > > velocity(
-        const tk::MeshNodes& U,
+        const tk::Fields& U,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
@@ -164,7 +163,7 @@ class PDE {
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
-        tk::MeshNodes& ) const = 0;
+        tk::Fields& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -174,23 +173,22 @@ class PDE {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                       tk::MeshNodes& unk, tk::real t ) const override
+                       tk::Fields& unk, tk::real t ) const override
       { data.initialize( coord, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
-                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) const override
+                tk::Fields& lhsd, tk::Fields& lhso ) const override
       { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
       void rhs( tk::real mult, tk::real dt,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const tk::MeshNodes& U,
-                const tk::MeshNodes& Un,
-                tk::MeshNodes& R ) const override
-      { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
+                const tk::Fields& U,
+                tk::Fields& R ) const override
+      { data.rhs( mult, dt, coord, inpoel, U, R ); }
       std::vector< std::array< tk::real, 4 > > velocity(
-        const tk::MeshNodes& U,
+        const tk::Fields& U,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const override
       { return data.velocity( U, coord, N ); }
@@ -202,7 +200,7 @@ class PDE {
       std::vector< std::vector< tk::real > > output(
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
-        tk::MeshNodes& U ) const override { return data.output( t, coord, U ); }
+        tk::Fields& U ) const override { return data.output( t, coord, U ); }
       T data;
     };
 

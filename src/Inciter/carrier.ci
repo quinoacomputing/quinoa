@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:23:45 AM MDT
+  \date      Tue 20 Sep 2016 03:33:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -29,14 +29,17 @@ module carrier {
                  const std::unordered_map< std::size_t, std::size_t >& cid,
                  int ncarr );
       initnode void registerReducers();
+      entry void comm();
       entry [reductiontarget] void msum( CkReductionMsg* msg );
       entry void setup();
       entry void requestBCs();
       entry void oldID( int frompe, const std::vector< std::size_t >& newids );
       entry void bcval( int frompe, const std::vector< std::size_t >& nodes );
       entry void init( tk::real dt );
-      entry void updateSolution( const std::vector< std::size_t >& gid,
-                                 const std::vector< tk::real >& sol );
+      entry void updateHighSol( const std::vector< std::size_t >& gid,
+                                const std::vector< tk::real >& sol );
+      entry void updateLowSol( const std::vector< std::size_t >& gid,
+                               const std::vector< tk::real >& sol );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
       entry void findpar( int fromch,
                           const std::vector< std::size_t >& miss,
@@ -48,6 +51,68 @@ module carrier {
       entry void collectedpar( const std::vector< std::size_t >& found );
       entry void out();
       entry void doWriteParticles();
+      entry void finishaec( const std::vector< std::size_t >& gid,
+                            const std::vector< std::vector< tk::real > >& P );
+      entry void finishalw( const std::vector< std::size_t >& gid,
+                            const std::vector< std::vector< tk::real > >& Q );
+      entry void finishlim( const std::vector< std::size_t >& gid,
+                            const std::vector< std::vector< tk::real > >& U );
+      entry void limit();
+      entry void eval();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //                         DAG legend:
+      //  Hi --- Ver               AEC - communication of antidiffusive element
+      //        /                        contributions complete
+      //  Lo --                    ALW - communication of maximum and minimum
+      //                                 unknowns of elements surrounding nodes
+      //                                 complete
+      //  AEC --- Limit            Hi  - High order solution updated
+      //         /                 Lo  - Low order solution updated
+      //  ALW --                   Limit - Perform limiting as the final step of
+      //                                   flux-corrected transport
+      //                           Ver - Verification of antidiffusive element
+      //                                 contributions
+      //
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // Only if both the high and low order solution updates have been received
+      // can verification of the antidiffusive element contributions can be
+      // performed. Note that this code path does not continue anywhere else and
+      // it only runs code if the number Carrier chares is one. See
+      // FluxCorrector::verify() for more details.
+      //
+      // Only if both the communication of antidiffusive element contributions
+      // (AEC) and the communication of the maximum and minimum unknowns of
+      // elements surrounding nodes (ALW) have been completed, can limiting be
+      // performed.
+      //
+      // Note that the global reduction to host (Transporter) in wait4fct()
+      // ensures that all arrays necessary for doing limiting (P,Q,Ul) have been
+      // updated across all chares.
+
+      entry void wait4sol() {
+        when hi_complete(), lo_complete() serial "sol" { verify(); } };
+
+      entry void wait4fct() {
+        when aec_complete(), alw_complete() serial "fct" {
+          contribute( CkCallback( CkReductionTarget( Transporter, limit ),
+                                  m_transporter ) ); } };
+
+      entry void hi_complete();
+      entry void lo_complete();
+      entry void aec_complete();
+      entry void alw_complete();
     };
 
   } // inciter::

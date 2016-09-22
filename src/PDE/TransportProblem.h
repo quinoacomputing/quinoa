@@ -68,7 +68,7 @@ class TransportProblemShearDiff {
     //! \param[in] t Physical time
     template< class eq >
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::MeshNodes& unk,
+                      tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type ncomp,
                       tk::ctr::ncomp_type offset,
@@ -128,7 +128,7 @@ class TransportProblemShearDiff {
     //! Return the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
     static std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes&,
+    velocity( const tk::Fields&,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& )
     { return { {{0.0, 0.0, 0.0, 0.0}},
@@ -163,7 +163,7 @@ class TransportProblemSlotCyl {
     //! \param[in] t Physical time
     template< class eq >
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::MeshNodes& unk,
+                      tk::Fields& unk,
                       tk::ctr::ncomp_type,
                       tk::ctr::ncomp_type ncomp,
                       tk::ctr::ncomp_type offset,
@@ -231,7 +231,7 @@ class TransportProblemSlotCyl {
     //! Return the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
     static std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes&,
+    velocity( const tk::Fields&,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& )
     { return { {{0.0, 0.0, 0.0, 0.0}},
