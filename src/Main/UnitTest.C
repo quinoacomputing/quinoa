@@ -59,7 +59,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/Base/TestTimer.h"
 #include "tests/Base/TestCharmUtil.h"
 #include "tests/Base/TestHas.h"
-#include "tests/Base/TestDataLayout.h"
+#include "tests/Base/TestData.h"
 #include "tests/Base/TestFactory.h"
 #include "tests/Base/TestPrint.h"
 #include "tests/Base/TestTaggedTuple.h"

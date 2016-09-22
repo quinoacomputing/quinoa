@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 03:07:37 PM MDT
+  \date      Fri 16 Sep 2016 12:40:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "Macro.h"
+#include "Keywords.h"
 #include "CompFlowPhysics.h"
 #include "CompFlowProblem.h"
 
@@ -44,7 +45,7 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::MeshNodes& unk,
+                     tk::Fields& unk,
                      tk::real ) const
     {
       //! Set initial conditions using problem configuration policy
@@ -70,8 +71,8 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) const
+              tk::Fields& lhsd,
+              tk::Fields& lhso ) const
     {
       Assert( psup.second.size()-1 == coord[0].size(),
               "Number of mesh points and number of global IDs unequal" );
@@ -144,22 +145,19 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] Un Solution vector at previous time step
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
-              tk::MeshNodes& R ) const
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( Un.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at previous time step incorrect" );
-      Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
+      Assert( R.nunk() == coord[0].size() && R.nprop() == 5,
+              "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
 
       const auto& x = coord[0];
@@ -181,27 +179,22 @@ class CompFlow {
 
         // construct tetrahedron element-level matrices
 
-        // consistent mass
-        std::array< std::array< tk::real, 4 >, 4 > mass;  // nnode*nnode [4][4]
-        // diagonal
-        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;
-        // off-diagonal
-        mass[0][1] = mass[0][2] = mass[0][3] =
+        // consistent mass, nnode*nnode [4][4]
+        std::array< std::array< tk::real, 4 >, 4 > mass;
+        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;  // diagonal
+        mass[0][1] = mass[0][2] = mass[0][3] =                   // off-diagonal
         mass[1][0] = mass[1][2] = mass[1][3] =
         mass[2][0] = mass[2][1] = mass[2][3] =
         mass[3][0] = mass[3][1] = mass[3][2] = J/120.0;
 
-        // shape function derivatives
-        std::array< std::array< tk::real, 3 >, 4 > grad;  // nnode*ndim [4][3]
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
         grad[1] = tk::crossdiv( ca, da, J );
         grad[2] = tk::crossdiv( da, ba, J );
         grad[3] = tk::crossdiv( ba, ca, J );
         for (std::size_t i=0; i<3; ++i)
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-        // access solution at element nodes at time n
-        std::array< std::array< tk::real, 4 >, 5 > u;
-        for (ncomp_t c=0; c<5; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
         std::array< std::array< tk::real, 4 >, 5 > s;
         for (ncomp_t c=0; c<5; ++c) s[c] = U.extract( c, m_offset, N );
@@ -215,7 +208,7 @@ class CompFlow {
 
         // add source to rhs for all equations
         Problem::sourceRhs( coord, 0, mult, dt, J, N, grad, mass, r, s, R,
-                            const_cast<tk::MeshNodes&>(U) );
+                            const_cast<tk::Fields&>(U) );
 
         // compute pressure
         std::array< tk::real, 4 > p;
@@ -223,12 +216,6 @@ class CompFlow {
           p[i] = (g-1.0)*(s[4][i] - (s[1][i]*s[1][i] +
                                      s[2][i]*s[2][i] +
                                      s[3][i]*s[3][i])/2.0/s[0][i]);
-
-        // mass contribution for rhs of all equations
-        for (ncomp_t c=0; c<5; ++c)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<4; ++k)
-              R.var(r[c],N[j]) += mass[k][j] * u[c][k];
 
         tk::real c = mult * dt * J/24.0;
         for (std::size_t i=0; i<3; ++i)
@@ -263,7 +250,7 @@ class CompFlow {
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes& U,
+    velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& N ) const
     {
@@ -322,7 +309,7 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::MeshNodes& U ) const
+            const tk::Fields& U ) const
     { return Problem::output( 0, m_offset, t, coord, U ); }
 
   private:

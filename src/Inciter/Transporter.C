@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:43:33 PM MDT
+  \date      Mon 12 Sep 2016 03:09:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -21,7 +21,7 @@
 
 #include "Macro.h"
 #include "Transporter.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 #include "PDEStack.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
@@ -65,8 +65,8 @@ Transporter::Transporter() :
   m_print.part( "Factory" );
 
   // Print out info data layout
-  m_print.list( "Unknowns data layout (CMake: MESHNODE_DATA_LAYOUT)",
-                std::list< std::string >{ tk::MeshNodes::layout() } );
+  m_print.list( "Unknowns data layout (CMake: FIELD_DATA_LAYOUT)",
+                std::list< std::string >{ tk::Fields::layout() } );
 
   // Re-create partial differential equations stack for output
   PDEStack stack;
@@ -96,6 +96,8 @@ Transporter::Transporter() :
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
   m_print.item( "Initial time step size", dt );
+  m_print.item( "Mass diffusion coeff",
+                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the initial time step
@@ -104,6 +106,7 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4setup();
     wait4init();
     wait4parcom();
     wait4npar();
@@ -276,7 +279,7 @@ Transporter::rowcomplete()
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  trigger_row_complete();
+  row_complete();
 }
 
 void
@@ -333,7 +336,7 @@ Transporter::doverifybc( CkReductionMsg* msg )
 
   m_print.diag( "Boundary conditions verified" );
 
-  m_linsysmerger.trigger_ver_complete();
+  m_linsysmerger.vercomplete();
 }
 
 void
@@ -368,7 +371,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
   // Finish computing diagnostics, i.e., divide sums by the number of samples
   for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
 
-  trigger_diag_complete();
+  diag_complete();
 }
 
 void

@@ -11,6 +11,8 @@
 
 #include <algorithm>
 #include <iterator>
+#include <unordered_map>
+#include <tuple>
 #include <cstddef>
 
 #include "Reorder.h"
@@ -117,7 +119,7 @@ renumber( const std::pair< std::vector< std::size_t >,
   return { mapvec, oldmap };
 }
 
-std::map< std::size_t, std::size_t >
+std::unordered_map< std::size_t, std::size_t >
 assignLid( const std::vector< std::size_t >& gid )
 // *****************************************************************************
 //  Assign local ids to global ids
@@ -126,20 +128,23 @@ assignLid( const std::vector< std::size_t >& gid )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  std::map< std::size_t, std::size_t > lid;
+  std::unordered_map< std::size_t, std::size_t > lid;
   std::size_t l = 0;
   for (auto p : gid) lid[p] = l++;
   return lid;
 }
 
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+std::tuple< std::vector< std::size_t >,
+            std::vector< std::size_t >,
+            std::unordered_map< std::size_t, std::size_t > >
 global2local( const std::vector< std::size_t >& ginpoel )
 // *****************************************************************************
 //  Generate element connectivity of local node IDs from connectivity of global
 //  node IDs also returning the mapping between local to global IDs
 //! \param[in] ginpoel Element connectivity with global node IDs
-//! \return Pair of element connectivity with local node IDs and the vector of
-//!   unique global node IDs (i.e., the mapping between local to global IDs)
+//! \return Tuple of (1) element connectivity with local node IDs, (2) the
+//!   vector of unique global node IDs (i.e., the mapping between local to
+//!   global node IDs), and (3) mapping between global to local node IDs.
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -150,14 +155,14 @@ global2local( const std::vector< std::size_t >& ginpoel )
   tk::unique( gid );
 
   // Assign local node ids to global node ids
-  const auto lnode = tk::assignLid( gid );
+  const auto lid = tk::assignLid( gid );
 
   // Generate element connectivity using local node ids
   std::vector< std::size_t > inpoel;
-  for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lnode, p ) );
+  for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lid, p ) );
 
   // Return element connectivty with local node IDs
-  return { inpoel, gid };
+  return { inpoel, gid, lid };
 }
 
 } // tk::

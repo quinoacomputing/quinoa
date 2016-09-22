@@ -38,3 +38,6 @@ add_subdirectory(rngtest)
 add_subdirectory(meshconv/gmsh_output)
 add_subdirectory(meshconv/netgen_output)
 add_subdirectory(meshconv/exo_output)
+
+# Inciter regression tests
+add_subdirectory(inciter/asynclogic)
