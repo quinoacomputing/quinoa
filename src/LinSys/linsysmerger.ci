@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 11:46:52 AM MDT
+  \date      Thu 22 Sep 2016 01:32:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -179,10 +179,10 @@ module linsysmerger {
       // Note that propagating the new hight and low order solutions only happen
       // if not only the solutions are finished, but alse when the optional
       // verification step is completed. As discussed above this is required so
-      // that we don't end up with multiple reductions in flight at the same. If
-      // these were not in place, the strict ordering of each CPU contributing
-      // to multiple reductions could not be guaranteed. See also the discussion
-      // on the charm email list linked above.
+      // that we do not end up with multiple reductions in flight at the same.
+      // If these were not in place, the strict ordering of each CPU
+      // contributing to multiple reductions could not be guaranteed. See also
+      // the discussion on the charm email list linked above.
       //
       // A word on multiple invokation of SDAG triggers: As the commit message
       // of b79ea29 explains, the "triggers", such as rhs_complete(), enumerated
