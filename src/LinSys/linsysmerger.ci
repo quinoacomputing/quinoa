@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 03:53:45 PM MDT
+  \date      Thu 22 Sep 2016 11:46:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -124,21 +124,21 @@ module linsysmerger {
       // Once the row IDs are contributed, tk::Transporter::rowcomplete(), not
       // only spaws tk::LinSysMerger::rowsreceived() but also issues a broadcast
       // to the worker chares to start initializing their system. This is
-      // started with a call to the worker's init() member function. The tasks
-      // include setting initial conditions, sending unknown/solution vectors
-      // for assembly to LinSysMerger, start computing the left and right hand
-      // sides for both the high and low order systems, and sending all this for
-      // linear system assembly. All worker chares contribute their portion of
-      // the solution (unknown) vector, the nonzero values of the left hand side
-      // matrix their portion of the diagonal lumped mass matrix, the right hand
-      // side vector for the high order system, as well as for the mass
-      // diffusion term that is added to the high order system to create the low
-      // order system in conjunction with the lumped mass matrix. The
-      // contribution goes to those Linear System Merger group branch (one per
-      // CPU) the workers happen to reside on. These steps are denoted by ChSol,
-      // ChLhs, and ChRhs in the graph above, and the contributions/assembly is
-      // performed by the member functions charesol(), charelhs(), and
-      // charerhs(), respectively.
+      // started with a call to the init() member function of the worker. The
+      // tasks include setting initial conditions, sending unknown/solution
+      // vectors for assembly to LinSysMerger, start computing the left and
+      // right hand sides for both the high and low order systems, and sending
+      // all this for linear system assembly. All worker chares contribute their
+      // portion of the solution (unknown) vector, the nonzero values of the
+      // left hand side matrix their portion of the diagonal lumped mass matrix,
+      // the right hand side vector for the high order system, as well as for
+      // the mass diffusion term that is added to the high order system to
+      // create the low order system in conjunction with the lumped mass matrix.
+      // The contribution goes to those Linear System Merger group branch (one
+      // per CPU) the workers happen to reside on. These steps are denoted by
+      // ChSol, ChLhs, and ChRhs in the graph above, and the
+      // contributions/assembly is performed by the member functions charesol(),
+      // charelhs(), and charerhs(), respectively.
       //
       // Once each of the tasks, ChSol, ChLhs, ChRhs, (not all at the same time
       // but separately) are done, we continue by converting these data
