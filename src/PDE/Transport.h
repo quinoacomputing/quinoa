@@ -58,7 +58,7 @@ class Transport {
     //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::MeshNodes& unk,
+                     tk::Fields& unk,
                      tk::real t ) const
     {
       Problem::template
@@ -84,8 +84,8 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) const
+              tk::Fields& lhsd,
+              tk::Fields& lhso ) const
     {
       Assert( psup.second.size()-1 == coord[0].size(),
               "Number of mesh points and number of global IDs unequal" );
@@ -164,12 +164,13 @@ class Transport {
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& U,
-              tk::MeshNodes& R ) const
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
+      Assert( R.nunk() == coord[0].size() && R.nprop() == m_ncomp,
+              "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
 
       const auto& x = coord[0];
@@ -239,7 +240,7 @@ class Transport {
     //! Extract the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes& U,
+    velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
     {
@@ -301,7 +302,7 @@ class Transport {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::MeshNodes& U ) const
+            tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components

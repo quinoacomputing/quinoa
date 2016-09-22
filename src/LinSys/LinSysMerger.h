@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 03:52:27 PM MDT
+  \date      Mon 19 Sep 2016 02:33:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -178,7 +178,7 @@
 #include "Exception.h"
 #include "ContainerUtil.h"
 #include "PUPUtil.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 #include "HypreMatrix.h"
 #include "HypreVector.h"
 #include "HypreSolver.h"
@@ -432,7 +432,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charesol( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const MeshNodes& sol )
+                   const Fields& sol )
     {
       Assert( gid.size() == sol.nunk(),
               "Size of solution and row ID vectors must equal" );
@@ -485,8 +485,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                    const std::vector< std::size_t >& gid,
                    const std::pair< std::vector< std::size_t >,
                                     std::vector< std::size_t > >& psup,
-                   const tk::MeshNodes& lhsd,
-                   const tk::MeshNodes& lhso )
+                   const tk::Fields& lhsd,
+                   const tk::Fields& lhso )
     {
       Assert( psup.second.size()-1 == gid.size(),
               "Number of mesh points and number of global IDs unequal" );
@@ -542,7 +542,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charerhs( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const MeshNodes& rhs )
+                   const Fields& rhs )
     {
       Assert( gid.size() == rhs.nunk(),
               "Size of right-hand side and row ID vectors must equal" );
@@ -582,7 +582,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charediff( int fromch,
                     const std::vector< std::size_t >& gid,
-                    const MeshNodes& diff )
+                    const Fields& diff )
     {
       Assert( gid.size() == diff.nunk(),
               "Size of mass diffusion rhs and row ID vectors must equal" );
@@ -623,7 +623,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charelump( int fromch,
                     const std::vector< std::size_t >& gid,
-                    const MeshNodes& mass )
+                    const Fields& mass )
     {
       Assert( gid.size() == mass.nunk(),
               "Size of mass diffusion rhs and row ID vectors must equal" );

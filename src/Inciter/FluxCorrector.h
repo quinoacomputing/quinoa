@@ -20,7 +20,7 @@
 #include "NoWarning/pup.h"
 
 #include "Keywords.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -41,34 +41,41 @@ class FluxCorrector {
       m_aec( is, g_inputdeck.get< tag::component >().nprop() ) {}
 
     //! Compute antidiffusive element contributions (AEC)
-    tk::MeshNodes
-    aec( const std::array< std::vector< tk::real >, 3 >& coord,
-         const std::vector< std::size_t >& inpoel,
-         const tk::MeshNodes& Un,
-         const tk::MeshNodes& Uh );
+    void aec( const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< tk::real >& vol,
+              const tk::Fields& dUh,
+              const tk::Fields& Un,
+              tk::Fields& P );
+
+    //! Verify the assembled antidiffusive element contributions in DEBUG mode
+    void verify( std::size_t nchare,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::Fields& dUh,
+                 const tk::Fields& dUl ) const;
 
     //! Compute lumped mass matrix lhs for low order system
-    tk::MeshNodes
-    lump( const std::array< std::vector< tk::real >, 3 >& coord,
-          const std::vector< std::size_t >& inpoel ) const;
+    tk::Fields lump( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& inpoel ) const;
 
     //! Compute mass diffusion contribution to the rhs of the low order system
-    tk::MeshNodes
-    diff( const std::array< std::vector< tk::real >, 3 >& coord,
-          const std::vector< std::size_t >& inpoel,
-          const tk::MeshNodes& Un ) const;
+    tk::Fields diff( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::Fields& Un ) const;
 
-    //! Compute the allowed solution increments and decrements at mesh nodes
-    tk::MeshNodes
-    allowed( const std::vector< std::size_t >& inpoel,
-             const tk::MeshNodes& Un,
-             const tk::MeshNodes& Ul ) const;
+    //! \brief Compute the maximum and minimum unknowns of all elements
+    //!   surrounding nodes
+    void allowed( const std::vector< std::size_t >& inpoel,
+                  const tk::Fields& Un,
+                  const tk::Fields& Ul,
+                  tk::Fields& Q ) const;
 
     //! Perform limiting
     void limit( const std::vector< std::size_t >& inpoel,
-                const tk::MeshNodes& P,
-                tk::MeshNodes& Q,
-                tk::MeshNodes& U ) const;
+                const tk::Fields& P,
+                const tk::Fields& Ul,
+                tk::Fields& Q,
+                tk::Fields& A ) const;
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -86,8 +93,7 @@ class FluxCorrector {
     using ncomp_t = kw::ncomp::info::expect::type;
 
    //! Antidiffusive element contributions for all scalar components
-   tk::MeshNodes m_aec;
-
+   tk::Fields m_aec;
 };
 
 } // inciter::

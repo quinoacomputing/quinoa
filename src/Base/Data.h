@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Base/DataLayout.h
+  \file      src/Base/Data.h
   \author    J. Bakosi
   \date      Wed 07 Sep 2016 07:32:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Generic data access abstraction for different data layouts
-  \details   Generic data access abstraction for different data layouts. See
-    also the rationale discussed in the [design](layout.html) document.
+  \brief     Generic data storage with different memory layouts
+  \details   Generic data storage with different memory layouts. See also the
+    rationale discussed in the [design](layout.html) document.
 */
 // *****************************************************************************
-#ifndef DataLayout_h
-#define DataLayout_h
+#ifndef Data_h
+#define Data_h
 
 #include <array>
 #include <string>
@@ -33,7 +33,7 @@ const uint8_t EqCompUnk = 1;
 
 //! Zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
 template< uint8_t Layout >
-class DataLayout {
+class Data {
 
   private:
     //! \brief Inherit type of number of components from keyword 'ncomp', used
@@ -42,21 +42,21 @@ class DataLayout {
 
   public:
     //! Default constructor (required for Charm++ migration)
-    explicit DataLayout() : m_vec(), m_nunk(), m_nprop() {}
+    explicit Data() : m_vec(), m_nunk(), m_nprop() {}
 
     //! Constructor
     //! \param[in] nunk Number of unknowns to allocate memory for
     //! \param[in] nprop Total number of properties, i.e., scalar variables or
     //!   components, per unknown
     //! \author J. Bakosi
-    explicit DataLayout( ncomp_t nunk, ncomp_t nprop ) :
+    explicit Data( ncomp_t nunk, ncomp_t nprop ) :
       m_vec( nunk*nprop ),
       m_nunk( nunk ),
       m_nprop( nprop ) {}
 
     //! Const data access dispatch
     //! \details Public interface to const-ref data access to a single real
-    //!   value. Use it as DataLayout(p,c,o), where p is the unknown index, c is
+    //!   value. Use it as Data(p,c,o), where p is the unknown index, c is
     //!   the component index specifying the scalar equation within a system of
     //!   equations, and o is the offset specifying the position at which the
     //!   system resides among other systems. Requirement: offset + component <
@@ -75,7 +75,7 @@ class DataLayout {
 
     //! Non-const data access dispatch
     //! \details Public interface to non-const-ref data access to a single real
-    //!   value. Use it as DataLayout(p,c,o), where p is the unknown index, c is
+    //!   value. Use it as Data(p,c,o), where p is the unknown index, c is
     //!   the component index specifying the scalar equation within a system of
     //!   equations, and o is the offset specifying the position at which the
     //!   system resides among other systems. Requirement: offset + component <
@@ -93,7 +93,7 @@ class DataLayout {
     tk::real&
     operator()( ncomp_t unknown, ncomp_t component, ncomp_t offset ) {
       return const_cast< tk::real& >(
-               static_cast< const DataLayout& >( *this ).
+               static_cast< const Data& >( *this ).
                  operator()( unknown, component, offset ) );
     }
 
@@ -181,7 +181,7 @@ class DataLayout {
     tk::real&
     var( const tk::real* pt, ncomp_t unknown ) {
       return const_cast< tk::real& >(
-               static_cast< const DataLayout& >( *this ).var( pt, unknown ) );
+               static_cast< const Data& >( *this ).var( pt, unknown ) );
     }
 
     //! Access to number of unknowns
@@ -284,10 +284,10 @@ class DataLayout {
     std::vector< tk::real >& data() { return m_vec; }
 
     //! Compound operator-=
-    //! \param[in] rhs DataLayout object to subtract
+    //! \param[in] rhs Data object to subtract
     //! \return Reference to ourselves after subtraction
     //! \author J. Bakosi
-    DataLayout< Layout >& operator-= ( const DataLayout< Layout >& rhs ) {
+    Data< Layout >& operator-= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
       std::transform( rhs.data().cbegin(), rhs.data().cend(),
@@ -296,18 +296,18 @@ class DataLayout {
       return *this;
     }
     //! Operator -
-    //! \param[in] rhs DataLayout object to subtract
-    //! \return Copy of DataLayout object after rhs has been subtracted
+    //! \param[in] rhs Data object to subtract
+    //! \return Copy of Data object after rhs has been subtracted
     //! \details Implemented in terms of compound operator-=
     //! \author J. Bakosi
-    DataLayout< Layout > operator- ( const DataLayout< Layout >& rhs )
-    const { return DataLayout< Layout >( *this ) -= rhs; }
+    Data< Layout > operator- ( const Data< Layout >& rhs )
+    const { return Data< Layout >( *this ) -= rhs; }
 
     //! Compound operator+=
-    //! \param[in] rhs DataLayout object to add
+    //! \param[in] rhs Data object to add
     //! \return Reference to ourselves after addition
     //! \author J. Bakosi
-    DataLayout< Layout >& operator+= ( const DataLayout< Layout >& rhs ) {
+    Data< Layout >& operator+= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
       std::transform( rhs.data().cbegin(), rhs.data().cend(),
@@ -316,18 +316,18 @@ class DataLayout {
       return *this;
     }
     //! Operator +
-    //! \param[in] rhs DataLayout object to add
-    //! \return Copy of DataLayout object after rhs has been multiplied with
+    //! \param[in] rhs Data object to add
+    //! \return Copy of Data object after rhs has been multiplied with
     //! \details Implemented in terms of compound operator+=
     //! \author J. Bakosi
-    DataLayout< Layout > operator+ ( const DataLayout< Layout >& rhs )
-    const { return DataLayout< Layout >( *this ) += rhs; }
+    Data< Layout > operator+ ( const Data< Layout >& rhs )
+    const { return Data< Layout >( *this ) += rhs; }
 
     //! Compound operator*=
-    //! \param[in] rhs DataLayout object to multiply with
+    //! \param[in] rhs Data object to multiply with
     //! \return Reference to ourselves after multiplication
     //! \author J. Bakosi
-    DataLayout< Layout >& operator*= ( const DataLayout< Layout >& rhs ) {
+    Data< Layout >& operator*= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
       std::transform( rhs.data().cbegin(), rhs.data().cend(),
@@ -336,12 +336,32 @@ class DataLayout {
       return *this;
     }
     //! Operator *
-    //! \param[in] rhs DataLayout object to multiply with
-    //! \return Copy of DataLayout object after rhs has been multiplied with
+    //! \param[in] rhs Data object to multiply with
+    //! \return Copy of Data object after rhs has been multiplied with
     //! \details Implemented in terms of compound operator*=
     //! \author J. Bakosi
-    DataLayout< Layout > operator* ( const DataLayout< Layout >& rhs )
-    const { return DataLayout< Layout >( *this ) *= rhs; }
+    Data< Layout > operator* ( const Data< Layout >& rhs )
+    const { return Data< Layout >( *this ) *= rhs; }
+
+    //! Compound operator/=
+    //! \param[in] rhs Data object to divide by
+    //! \return Reference to ourselves after division
+    //! \author J. Bakosi
+    Data< Layout >& operator/= ( const Data< Layout >& rhs ) {
+      Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
+      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+                      m_vec.cbegin(), m_vec.begin(),
+                      []( tk::real s, tk::real d ){ return d/s; } );
+      return *this;
+    }
+    //! Operator /
+    //! \param[in] rhs Data object to divide by
+    //! \return Copy of Data object after rhs has been divided by
+    //! \details Implemented in terms of compound operator/=
+    //! \author J. Bakosi
+    Data< Layout > operator/ ( const Data< Layout >& rhs )
+    const { return Data< Layout >( *this ) /= rhs; }
 
     //! Add new unknown
     //! \param[in] prop Vector of properties to initialize the new unknown with
@@ -399,7 +419,7 @@ class DataLayout {
     //! \author J. Bakosi
     static std::string layout() { return layout( int2type< Layout >() ); }
 
-    /** @name Pack/Unpack: Serialize DataLayout object for Charm++ */
+    /** @name Pack/Unpack: Serialize Data object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -413,7 +433,7 @@ class DataLayout {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] d DataLyaout object reference
     //! \author J. Bakosi
-    friend void operator|( PUP::er& p, DataLayout& d ) { d.pup(p); }
+    friend void operator|( PUP::er& p, Data& d ) { d.pup(p); }
     //@}
 
   private:
@@ -520,50 +540,102 @@ class DataLayout {
 };
 
 
-//! Operator min between two DataLayout objects
-//! \param[in] a 1st DataLayout object
-//! \param[in] b 2nd DataLayout object
-//! \return New DataLayout object containing the minimum of all values for each
+//! Operator min between two Data objects
+//! \param[in] a 1st Data object
+//! \param[in] b 2nd Data object
+//! \return New Data object containing the minimum of all values for each
 //!   value in _a_ and _b_
-//! \note The DataLayout objects _a_ and _b_ must have the same number of
+//! \note The Data objects _a_ and _b_ must have the same number of
 //!   unknowns and properties.
 //! \note As opposed to std::min, this function creates and returns a new object
 //!   instead of returning a reference to the smaller one of the operands.
 template< uint8_t Layout >
-DataLayout< Layout > min( const DataLayout< Layout >& a,
-                          const DataLayout< Layout >& b )
-{
+Data< Layout > min( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
   Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
-  DataLayout< Layout > r( a.nunk(), a.nprop() );
+  Data< Layout > r( a.nunk(), a.nprop() );
   std::transform( a.data().cbegin(), a.data().cend(),
                   b.data().cbegin(), r.data().begin(),
                   []( tk::real s, tk::real d ){ return std::min(s,d); } );
   return r;
 }
 
-//! Operator max between two DataLayout objects
-//! \param[in] a 1st DataLayout object
-//! \param[in] b 2nd DataLayout object
-//! \return New DataLayout object containing the maximum of all values for each
+//! Operator max between two Data objects
+//! \param[in] a 1st Data object
+//! \param[in] b 2nd Data object
+//! \return New Data object containing the maximum of all values for each
 //!   value in _a_ and _b_
-//! \note The DataLayout objects _a_ and _b_ must have the same number of
+//! \note The Data objects _a_ and _b_ must have the same number of
 //!   unknowns and properties.
 //! \note As opposed to std::max, this function creates and returns a new object
 //!   instead of returning a reference to the smaller one of the operands.
 template< uint8_t Layout >
-DataLayout< Layout > max( const DataLayout< Layout >& a,
-                          const DataLayout< Layout >& b )
-{
+Data< Layout > max( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
   Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
-  DataLayout< Layout > r( a.nunk(), a.nprop() );
+  Data< Layout > r( a.nunk(), a.nprop() );
   std::transform( a.data().cbegin(), a.data().cend(),
                   b.data().cbegin(), r.data().begin(),
                   []( tk::real s, tk::real d ){ return std::max(s,d); } );
   return r;
 }
 
+//! Operator == between two Data objects
+//! \param[in] lhs Data object to compare
+//! \param[in] rhs Data object to compare
+//! \return True if all entries are equal up to epsilon
+//! \author J. Bakosi
+template< uint8_t Layout >
+bool operator== ( const Data< Layout >& lhs, const Data< Layout >& rhs ) {
+  Assert( rhs.nunk() == lhs.nunk(), "Incorrect number of unknowns" );
+  Assert( rhs.nprop() == lhs.nprop(), "Incorrect number of properties" );
+  auto l = lhs.data().cbegin();
+  auto r = rhs.data().cbegin();
+  while (l != lhs.data().cend()) {
+    if (std::abs(*l - *r) > std::numeric_limits< tk::real >::epsilon())
+     return false;
+    ++l; ++r;
+  }
+  return true;
+}
+
+//! Operator != between two Data objects
+//! \param[in] lhs Data object to compare
+//! \param[in] rhs Data object to compare
+//! \return True if all entries are unequal up to epsilon
+//! \author J. Bakosi
+template< uint8_t Layout >
+bool operator!= ( const Data< Layout >& lhs, const Data< Layout >& rhs )
+{ return !(lhs == rhs); }
+
+//! Compute the maximum difference between the elements of two Data objects
+//! \param[in] lhs 1st Data object
+//! \param[in] rhs 2nd Data object
+//! \return The index, i.e., the raw position, of and the largest absolute value
+//!   of the difference between all corresponding elements of _lhs_ and _rhs_.
+//! \details The position returned is the position in the underlying raw data
+//!   structure, independent of components, offsets, etc. If lhs == rhs with
+//!   precision  std::numeric_limits< tk::real >::epsilon(), a pair of (0,0.0)
+//!   is returned.
+//! \note The Data objects _lhs_ and _rhs_ must have the same number of
+//!   unknowns and properties.
+template< uint8_t Layout >
+std::pair< std::size_t, tk::real >
+maxdiff( const Data< Layout >& lhs, const Data< Layout >& rhs ) {
+  Assert( lhs.nunk() == rhs.nunk(), "Number of unknowns unequal" );
+  Assert( lhs.nprop() == rhs.nprop(), "Number of properties unequal" );
+  auto l = lhs.data().cbegin();
+  auto r = rhs.data().cbegin();
+  std::pair< std::size_t, tk::real > m( 0, std::abs(*l - *r) );
+  ++l; ++r;
+  while (l != lhs.data().cend()) {
+    const auto d = std::abs(*l - *r);
+    if (d > m.second) m = { std::distance(lhs.data().cbegin(),l), d };
+    ++l; ++r;
+  }
+  return m;
+}
+
 } // tk::
 
-#endif // DataLayout_h
+#endif // Data_h

@@ -65,7 +65,7 @@ class PoissonProblemDirNeu {
     template< class eq >
     static void init( const ctr::InputDeck& deck,
                       const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::MeshNodes& unk,
+                      tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type ncomp,
                       tk::ctr::ncomp_type offset,

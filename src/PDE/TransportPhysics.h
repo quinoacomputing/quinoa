@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/TransportPhysics.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:12:29 PM MDT
+  \date      Fri 16 Sep 2016 12:30:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for a system of transport equations
   \details   This file defines policy classes for transport equations,
@@ -46,7 +46,7 @@ class TransportPhysicsAdvection {
                   const std::array< std::array< tk::real, 3 >, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
                   const std::vector< const tk::real* >&,
-                  tk::MeshNodes& ) {}
+                  tk::Fields& ) {}
 
     static ctr::PhysicsType type() noexcept
     { return ctr::PhysicsType::ADVECTION; }
@@ -79,7 +79,7 @@ class TransportPhysicsAdvDiff {
                   const std::array< std::array< tk::real, 3 >, 4 >& grad,
                   const std::vector< std::array< tk::real, 4 > >& s,
                   const std::vector< const tk::real* >& r,
-                  tk::MeshNodes& R )
+                  tk::Fields& R )
     {
       // get reference to diffusivities for all components
       const auto& diff =
