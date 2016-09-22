@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 10:15:32 AM MDT
+  \date      Thu 22 Sep 2016 10:51:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -198,7 +198,7 @@ Carrier::msum( CkReductionMsg* msg )
   // Store nodes that our mesh chunk neighbor associated to chare IDs
   for (const auto& c : meshnodes)
     if (c.first != thisIndex) {
-      if (CkNumPes() == 1) Throw( "This should not be called in serial" );
+      if (m_ncarr == 1) Throw( "This should not be called in serial" );
       const auto& gid = std::get< 0 >( c.second );
       const auto& vol = std::get< 1 >( c.second );
       for (std::size_t i=0; i<m_gid.size(); ++i)
