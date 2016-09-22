@@ -175,7 +175,7 @@ Carrier::comm()
   // IDs (that lie on the chare-boundary) and their associated volumes are used
   // by the FCT algorithm.
   std::vector< std::pair< int, comm_t > >
-    meshnodes{ { thisIndex, { m_gid, m_vol } } };
+    meshnodes{ { thisIndex, std::make_tuple( m_gid, m_vol ) } };
   auto stream = serialize( meshnodes );
   CkCallback cb( CkIndex_Carrier::msum(nullptr), thisProxy );
   contribute( stream.first, stream.second.get(), FieldsMerger, cb );
