@@ -21,7 +21,7 @@
 
 #include "Macro.h"
 #include "Transporter.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 #include "PDEStack.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
@@ -65,8 +65,8 @@ Transporter::Transporter() :
   m_print.part( "Factory" );
 
   // Print out info data layout
-  m_print.list( "Unknowns data layout (CMake: MESHNODE_DATA_LAYOUT)",
-                std::list< std::string >{ tk::MeshNodes::layout() } );
+  m_print.list( "Unknowns data layout (CMake: FIELD_DATA_LAYOUT)",
+                std::list< std::string >{ tk::Fields::layout() } );
 
   // Re-create partial differential equations stack for output
   PDEStack stack;

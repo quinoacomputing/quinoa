@@ -12,8 +12,9 @@
 #define Reorder_h
 
 #include <vector>
-#include <map>
 #include <utility>
+#include <tuple>
+#include <unordered_map>
 #include <cstddef>
 
 namespace tk {
@@ -32,12 +33,14 @@ renumber( const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup );
 
 //! Assign local ids to global ids
-std::map< std::size_t, std::size_t >
+std::unordered_map< std::size_t, std::size_t >
 assignLid( const std::vector< std::size_t >& gid );
 
 //! \brief Generate element connectivity of local node IDs from connectivity of
 //!   global node IDs also returning the mapping between local to global IDs
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+std::tuple< std::vector< std::size_t >,
+            std::vector< std::size_t >,
+            std::unordered_map< std::size_t, std::size_t > >
 global2local( const std::vector< std::size_t >& ginpoel );
 
 } // ::tk

@@ -55,7 +55,7 @@ class CompFlowPhysicsNavierStokes {
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
                 const std::array< std::array< tk::real, 4 >, 5 >& s,
                 const std::array< const tk::real*, 5 >& r,
-                tk::MeshNodes& R )
+                tk::Fields& R )
     {
       // dynamic viscosity
       tk::real mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
@@ -147,7 +147,7 @@ class CompFlowPhysicsNavierStokes {
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
                 const std::array< std::array< tk::real, 4 >, 5 >& s,
                 const std::array< const tk::real*, 5 >& r,
-                tk::MeshNodes& R )
+                tk::Fields& R )
     {
       // specific heat at constant volume
       tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
@@ -191,7 +191,7 @@ class CompFlowPhysicsEuler {
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
                 const std::array< const tk::real*, 5 >&,
-                tk::MeshNodes& ) {}
+                tk::Fields& ) {}
 
     //! Add heat conduction contribution to energy rhs (no-op)
     static void
@@ -202,7 +202,7 @@ class CompFlowPhysicsEuler {
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
                 const std::array< const tk::real*, 5 >&,
-                tk::MeshNodes& ) {}
+                tk::Fields& ) {}
 
     static ctr::PhysicsType type() noexcept
     { return ctr::PhysicsType::EULER; }

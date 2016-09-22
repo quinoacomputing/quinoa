@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:20:55 AM MDT
+  \date      Fri 16 Sep 2016 12:40:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -45,7 +45,7 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::MeshNodes& unk,
+                     tk::Fields& unk,
                      tk::real ) const
     {
       //! Set initial conditions using problem configuration policy
@@ -71,8 +71,8 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) const
+              tk::Fields& lhsd,
+              tk::Fields& lhso ) const
     {
       Assert( psup.second.size()-1 == coord[0].size(),
               "Number of mesh points and number of global IDs unequal" );
@@ -151,12 +151,13 @@ class CompFlow {
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& U,
-              tk::MeshNodes& R ) const
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
+      Assert( R.nunk() == coord[0].size() && R.nprop() == 5,
+              "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
 
       const auto& x = coord[0];
@@ -207,7 +208,7 @@ class CompFlow {
 
         // add source to rhs for all equations
         Problem::sourceRhs( coord, 0, mult, dt, J, N, grad, mass, r, s, R,
-                            const_cast<tk::MeshNodes&>(U) );
+                            const_cast<tk::Fields&>(U) );
 
         // compute pressure
         std::array< tk::real, 4 > p;
@@ -249,7 +250,7 @@ class CompFlow {
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes& U,
+    velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& N ) const
     {
@@ -308,7 +309,7 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::MeshNodes& U ) const
+            const tk::Fields& U ) const
     { return Problem::output( 0, m_offset, t, coord, U ); }
 
   private:

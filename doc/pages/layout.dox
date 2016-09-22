@@ -4,30 +4,31 @@
 \section layout_req Data layout requirements and design
 
 How should the particle properties should be stored in memory? How should the
-mesh nodal data should be stored in memory? These are the single largest chunks
-of data a particle-, and/or mesh-based code operates on.  The data layout, i.e.,
-how the data is stored and organized in memory, determines how the data is
-accessed and potentially has a first-degree effect on overall performance.
+mesh field data (associated to nodes, elements, faces, etc. of a mesh) should be
+stored in memory? These are the single largest chunks of data a particle-,
+and/or mesh-based code operates on.  The data layout, i.e., how the data is
+stored and organized in memory, determines how the data is accessed and
+potentially has a first-degree effect on overall performance.
 
 \section layout_possibilities Possibilities
 
 1. __Unknown-major__, in which various physical properties, e.g., position,
 velocity, energy, etc., i.e., the unknowns in a solver, of a single particle or
-mesh node are close to each other in memory.  For example: [ x1, y1, z1, ...,
+mesh fields are close to each other in memory.  For example: [ x1, y1, z1, ...,
 x2, y2, z2, ..., x3, y3, z3, ... ] where the x* are governed by one equation
 (e.g., position), the y* are governed by another equation (e.g., velocity), and
 the z* are governed by a third equation (e.g., energy), etc. Here the first
 letter denotes a physical quantity, while the second is the particle number or
-mesh node ID. If the algorithm that advances the properties, unknowns, in time
+mesh field ID. If the algorithm that advances the properties, unknowns, in time
 applies one equation at a time, the equations will access data by having to jump
 a distance that corresponds to the number of scalar physical variables per
-particle or mesh node. In the example, the update will have to jump as x1, x2,
+particle or mesh field. In the example, the update will have to jump as x1, x2,
 x3, ... are updated.
 
 2. __Property-major__, in which the same type of physical properties are close
 to each other in memory. For example, [ x1, x2, x3, ..., y1, y2, y3, ..., z1,
 z2, z3, ... ]. The legend here is the same as in unknown-major: the first letter
-denotes a physical quantity, while the second is the particle or mesh node
+denotes a physical quantity, while the second is the particle or mesh field
 number. If the algorithm that advances the properties in time applies one
 equation at a time, the equations will access data contiguously in memory as the
 properties are contiguously stored.
@@ -37,23 +38,23 @@ properties are contiguously stored.
 A property-major storage, case 2 above, seems to be the most efficient at first
 sight, as it stores data, as it is read and written by the equation algorithms,
 contiguously. However, data access is contiguous only if the particle properties
-(or data stored at mesh node IDs) are independent, i.e., if there is no coupling
-among the equations.  Unfortunately, this is rarely the case, at least not for
-fluid dynamics. For example in a Lagrangian particle code, position is used by
-the velocity update, and velocity is required by the energy update. The same is
-true for a mesh-based solver, where the physical variables are couple, i.e.,
-their update needs other physical variables at the same mesh node (and possibly
-others). Depending on the physical approximation, density (or mass) may be
-required for all equations. The stronger the equations are coupled the more
+(or data stored at mesh field IDs) are independent, i.e., if there is no
+coupling among the equations.  Unfortunately, this is rarely the case, at least
+not for fluid dynamics. For example in a Lagrangian particle code, position is
+used by the velocity update, and velocity is required by the energy update. The
+same is true for a mesh-based solver, where the physical variables are couple,
+i.e., their update needs other physical variables at the same mesh field (and
+possibly others). Depending on the physical approximation, density (or mass) may
+be required for all equations. The stronger the equations are coupled the more
 very-far-reads are required for a given update with a property-major data
 layout. These far-reads are potentially almost always cache misses, as the
 property-major storage stores the physical variables for the same particle or
-mesh node very far in memory, e.g., the distance between x1 and y1 is the number
-of particles or mesh nodes. While the unknown-major storage, case 1 above,
-inherently stores data non-contiguously, the distance between properties of a
-single particle (or a single mesh node) is relatively small, i.e., the number of
-properties, which may incure less cache misses as several particles (or nodes)
-but all of their properties could fit into cache.
+mesh field very far in memory, e.g., the distance between x1 and y1 is the
+number of particles or mesh fields. While the unknown-major storage, case 1
+above, inherently stores data non-contiguously, the distance between properties
+of a single particle (or a single mesh field) is relatively small, i.e., the
+number of properties, which may incure less cache misses as several particles
+(or nodes) but all of their properties could fit into cache.
 
 Assuming strong coupling among the variables, the unknown-major storage will be
 favored, but it would be nice if the design allowed for both layouts, so
@@ -127,14 +128,14 @@ a way that is invisible to derived equation classes? \a Yes. See below.
 Zero-cost is achieved via type-based compile-time polymorphism. This is
 controlled via a cmake variable.
 
-The particle (or mesh node) data is a logically 3-dimensional array that stores
+The particle (or mesh field) data is a logically 3-dimensional array that stores
 the particle properties (or nodal unknowns).
 
 For clarity, the discussion below will use the expression "particle" for a
 particle-code anad will not specifically mention nodal unknowns, stored at the
 nodes of a computational mesh. The former is for a particle-code, the latter is
 for a mesh-code. The data layout discussion is independent of whether particles
-or mesh nodes (or cells) are used.
+or mesh field (nodes, cells, etc.) are used.
 
 In principle there are a total of 6 permutations:
 
@@ -578,16 +579,16 @@ Access will be abstracted (and optimized) away.
 
 Note that the above discussion is independent of whether a particle-code, or a
 mesh-code is used. From the data layout viewpoint the particle-major and
-meshnode-major are equivalent and in the code, in tk::DataLayout, called
-Unknown-major. See src/Base/DataLayout, and its specializations in
-src/Base/MeshNodes.h and src/Base/Particles.h. The data layouts for mesh-nodes
+meshfield-major are equivalent and in the code, in tk::Data, called
+Unknown-major. See src/Base/Data, and its specializations in
+src/Base/MeshNodes.h and src/Base/Particles.h. The data layouts for mesh-fields
 and particles can be configured independently at compile time.
 
-For the implementation see the tk::DataLayout.
+For the implementation see the tk::Data.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 01 Feb 2016 01:56:52 PM MST
+<em>Page last updated:</em> Sat 17 Sep 2016 10:26:02 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 02:49:39 PM MDT
+  \date      Thu 22 Sep 2016 10:08:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -30,17 +30,29 @@
     digraph "Carrier SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
+      Hi [ label="Hi"
+            tooltip="high order solution updated"
+            URL="\ref inciter::Carrier::updateHighSol"];
+      Lo [ label="Lo"
+            tooltip="low order solution updated"
+            URL="\ref inciter::Carrier::update LowSol"];
+      Ver [ label="Ver" color="#e6851c" style="filled"
+            tooltip="verify antidiffusive element contributions"
+            URL="\ref inciter::Carrier::verify"];
       AEC [ label="AEC"
-            tooltip="communication antidiffusive element contributions"
+            tooltip="communication antidiffusive element contributions complete"
             URL="\ref inciter::Carrier::aec"];
-      Allowed [ label="Allowed"
-            tooltip="communication allowed solution increments and decrements"
-            URL="\ref inciter::Carrier::allowed"];
+      ALW [ label="ALW"
+            tooltip="communication of maximum and minimum of unknowns of
+                     elements surrounding nodes complete"
+            URL="\ref inciter::Carrier::alw"];
       Limit [ label="Limit" color="#e6851c" style="filled"
             tooltip="perform limiting"
             URL="\ref inciter::Carrier::limit"];
       AEC -> Limit [ style="solid" ];
-      Allowed -> Limit [ style="solid" ];
+      ALW -> Limit [ style="solid" ];
+      Hi -> Ver [ style="solid" ];
+      Lo -> Ver [ style="solid" ];
     }
     \enddot
     \include Inciter/carrier.ci
@@ -60,11 +72,11 @@
 #include <set>
 
 #include "Types.h"
-#include "MeshNodes.h"
+#include "Fields.h"
 #include "Particles.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
-#include "MeshNodeMerger.h"
+#include "FieldsMerger.h"
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -78,7 +90,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType VerifyBCMerger;
-extern CkReduction::reducerType MeshNodeMerger;
+extern CkReduction::reducerType FieldsMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
 class Carrier : public CBase_Carrier {
@@ -142,7 +154,7 @@ class Carrier : public CBase_Carrier {
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
-      MeshNodeMerger = CkReduction::addReducer( mergeMeshNodes< std::size_t > );
+      FieldsMerger = CkReduction::addReducer( mergeFields< comm_t > );
     }
 
     //! \brief Starts collecting global mesh node IDs bordering the mesh chunk
@@ -206,25 +218,23 @@ class Carrier : public CBase_Carrier {
     void doWriteParticles();
 
     //! Finish summing antidiffusive element contributions on chare-boundaries
-    void finishaec( int fromch,
-                    const std::vector< std::size_t >& gid,
+    void finishaec( const std::vector< std::size_t >& gid,
                     const std::vector< std::vector< tk::real > >& P );
 
-    //! \brief Acknowledge received antidiffusive element contributions on
-    //!   chare-boundaries
-    void recaec();
+    //! \brief Finish computing the maximum and minimum unknowns of all elements
+    //!   surrounding mesh nodes on chare-boundaries
+    void finishalw( const std::vector< std::size_t >& gid,
+                    const std::vector< std::vector< tk::real > >& Q );
 
-    //! Finish computing the allowed solution values on chare-boundaries
-    void finishallowed( int fromch,
-                        const std::vector< std::size_t >& gid,
-                        const std::vector< std::vector< tk::real > >& A );
-
-    //! \brief Acknowledge received allowed solution increments and decrements
-    //!   on chare-boundaries
-    void recallowed();
+    //! Finish applying antidiffusive element contributions on chare-boundaries
+    void finishlim( const std::vector< std::size_t >& gid,
+                    const std::vector< std::vector< tk::real > >& A );
 
     //! Perform limiting as the final step of flux-corrected transport (FCT)
     void limit();
+
+    //! Evaluate (finish) time step stage
+    void eval();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -239,6 +249,7 @@ class Carrier : public CBase_Carrier {
       p | m_nlsol;
       p | m_naec;
       p | m_nalw;
+      p | m_nlim;
       p | m_nchpar;
       p | m_ncarr;
       p | m_outFilename;
@@ -249,15 +260,16 @@ class Carrier : public CBase_Carrier {
       p | m_cid;
       p | m_el;
       if (p.isUnpacking()) {
-        m_inpoel = m_el.first;
-        m_gid = m_el.second;
+        m_inpoel = std::get< 0 >( m_el );
+        m_gid = std::get< 1 >( m_el );
+        m_lid = std::get< 2 >( m_el );
       }
-      p | m_lid;
       p | m_coord;
       p | m_psup;
       p | m_u;
       p | m_ul;
       p | m_uf;
+      p | m_ec;
       p | m_ulf;
       p | m_du;
       p | m_dul;
@@ -268,6 +280,7 @@ class Carrier : public CBase_Carrier {
       p | m_lhso;
       p | m_particles;
       p | m_msum;
+      p | m_vol;
       p | m_parmiss;
       p | m_parelse;
     }
@@ -281,6 +294,10 @@ class Carrier : public CBase_Carrier {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
+    //! Type of the data structure communicated to neighbors
+    using comm_t = std::tuple< std::vector< std::size_t >,
+                               std::vector< tk::real > >;
+
     //! Iteration count
     uint64_t m_it;
     //! Field output iteration count
@@ -293,12 +310,15 @@ class Carrier : public CBase_Carrier {
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
     std::size_t m_nlsol;
-    //! \brief Number of chares received our anitdiffusive element contributions
-    //!   on chare boundaries
+    //! \brief Number of chares from which we received antidiffusive element
+    //!   contributions on chare boundaries
     std::size_t m_naec;
-    //! \brief Number of chares received our allowed solution increments and
-    //!   decrements element contributions on chare boundaries
+    //! \brief Number of chares from which we received maximum and minimum
+    //!   unknowns of elements surrounding nodes on chare boundaries
     std::size_t m_nalw;
+    //! \brief Number of chares from which we received limited antidiffusion
+    //!   element contributiones on chare boundaries
+    std::size_t m_nlim;
     //! Number of chares we received particles from
     std::size_t m_nchpar;
     //! Total number of carrier chares
@@ -316,15 +336,19 @@ class Carrier : public CBase_Carrier {
     std::unordered_map< std::size_t, std::size_t > m_cid;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
-    //!   connectivity (local IDs), while the second vector is the global node
-    //!   IDs of owned elements.
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_el;
+    //!   connectivity (local IDs), the second vector is the global node IDs of
+    //!   owned elements, while the third one is a map of global->local node
+    //!   IDs.
+    std::tuple< std::vector< std::size_t >,
+                std::vector< std::size_t >,
+                std::unordered_map< std::size_t, std::size_t > > m_el;
     //! Alias to element connectivity in m_el
-    decltype(m_el.first)& m_inpoel = m_el.first;
+    std::vector< std::size_t > m_inpoel = std::get< 0 >( m_el );
     //! Alias to global node IDs of owned elements in m_el
-    decltype(m_el.second)& m_gid = m_el.second;
-    //!< Local node ids associated to the global ones of owned elements
-    std::unordered_map< std::size_t, std::size_t > m_lid;
+    std::vector< std::size_t > m_gid = std::get< 1 >( m_el );
+    //! \brief Alias to local node ids associated to the global ones of owned
+    //!    elements in m_el
+    std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Flux corrector performing FCT
@@ -335,9 +359,9 @@ class Carrier : public CBase_Carrier {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
     //! Unknown/solution vectors: global mesh point row ids and values
-    tk::MeshNodes m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_up, m_p, m_q;
+    tk::Fields m_u, m_ul, m_uf, m_ec, m_ulf, m_du, m_dul, m_up, m_p, m_q;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
-    tk::MeshNodes m_lhsd, m_lhso;
+    tk::Fields m_lhsd, m_lhso;
     //! Particle properties
     tk::Particles m_particles;
     //! Element ID in which a particle has last been found for all particles
@@ -347,6 +371,8 @@ class Carrier : public CBase_Carrier {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //! Volume of nodes of owned elements (sum of surrounding cell volumes / 4 )
+    std::vector< tk::real > m_vol;
     //! Indicies of particles not found here (missing)
     std::set< std::size_t > m_parmiss;
     //! Indicies of particles not found here but found by fellows
@@ -373,8 +399,8 @@ class Carrier : public CBase_Carrier {
     //! Compute righ-hand side vector of transport equations
     void rhs( tk::real mult,
               tk::real dt,
-              const tk::MeshNodes& sol,
-              tk::MeshNodes& rhs );
+              const tk::Fields& sol,
+              tk::Fields& rhs );
 
     //! Output chare element blocks to output file
     void writeMesh();
@@ -412,10 +438,18 @@ class Carrier : public CBase_Carrier {
     void writeParticles();
 
     //! Compute and sum antidiffusive element contributions to mesh nodes
-    void aec( const tk::MeshNodes& Un, const tk::MeshNodes& Uh );
+    void aec( const tk::Fields& Un );
 
-    //! Compute the allowed solution values at mesh nodes
-    void allowed( const tk::MeshNodes& Ul, const tk::MeshNodes& Un );
+    //! \brief Compute the maximum and minimum unknowns of all elements
+    //!   surrounding nodes
+    void alw( const tk::Fields& Ul, const tk::Fields& Un );
+
+    //! Apply the limited antidiffusive element contributions to mesh nodes
+    void lim();
+
+    //! \brief Verify antidiffusive element contributions up to linear solver
+    //!   convergence
+    void verify();
 };
 
 } // inciter::

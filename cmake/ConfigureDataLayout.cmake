@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Configure data layouts
-# \date      Fri 06 May 2016 06:41:06 AM MDT
+# \date      Sat 17 Sep 2016 10:27:08 AM MDT
 #
 ################################################################################
 
@@ -28,26 +28,26 @@ ELSEIF (${PARTICLE_DATA_LAYOUT_INDEX} EQUAL 1)
 ELSEIF (${PARTICLE_DATA_LAYOUT_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Particle data layout '${PARTICLE_DATA_LAYOUT}' not supported, valid entries are ${PARTICLE_DATA_LAYOUT_VALUES}(-major).")
 ENDIF()
-message(STATUS "Particle data layout (PARTICLE_DATA_LAYOUT): " ${PARTICLE_DATA_LAYOUT} "(-major)")
+message(STATUS "Particle data layout: " ${PARTICLE_DATA_LAYOUT} "(-major)")
 
-# Configure data layout for mesh node data
+# Configure data layout for mesh field data
 
 # Available options
-set(MESHNODE_DATA_LAYOUT_VALUES "meshnode" "equation")
+set(FIELD_DATA_LAYOUT_VALUES "field" "equation")
 # Initialize all to off
-set(MESHNODE_DATA_LAYOUT_AS_MESHNODE_MAJOR off)  # 0
-set(MESHNODE_DATA_LAYOUT_AS_EQUATION_MAJOR off)  # 1
+set(FIELD_DATA_LAYOUT_AS_FIELD_MAJOR off)  # 0
+set(FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR off)  # 1
 # Set default and select from list
-set(MESHNODE_DATA_LAYOUT "meshnode" CACHE STRING "Mesh node data layout. Default: (meshnode-major). Available options: ${MESHNODE_DATA_LAYOUT_VALUES}(-major).")
-SET_PROPERTY (CACHE MESHNODE_DATA_LAYOUT PROPERTY STRINGS ${MESHNODE_DATA_LAYOUT_VALUES})
-STRING (TOLOWER ${MESHNODE_DATA_LAYOUT} MESHNODE_DATA_LAYOUT)
-LIST (FIND MESHNODE_DATA_LAYOUT_VALUES ${MESHNODE_DATA_LAYOUT} MESHNODE_DATA_LAYOUT_INDEX)
+set(FIELD_DATA_LAYOUT "field" CACHE STRING "Mesh field data layout. Default: (field-major). Available options: ${FIELD_DATA_LAYOUT_VALUES}(-major).")
+SET_PROPERTY (CACHE FIELD_DATA_LAYOUT PROPERTY STRINGS ${FIELD_DATA_LAYOUT_VALUES})
+STRING (TOLOWER ${FIELD_DATA_LAYOUT} FIELD_DATA_LAYOUT)
+LIST (FIND FIELD_DATA_LAYOUT_VALUES ${FIELD_DATA_LAYOUT} FIELD_DATA_LAYOUT_INDEX)
 # Evaluate selected option and put in a define for it
-IF (${MESHNODE_DATA_LAYOUT_INDEX} EQUAL 0)
-  set(MESHNODE_DATA_LAYOUT_AS_MESHNODE_MAJOR on)
-ELSEIF (${MESHNODE_DATA_LAYOUT_INDEX} EQUAL 1)
-  set(MESHNODE_DATA_LAYOUT_AS_EQUATION_MAJOR on)
-ELSEIF (${MESHNODE_DATA_LAYOUT_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Mesh node data layout '${MESHNODE_DATA_LAYOUT}' not supported, valid entries are ${MESHNODE_DATA_LAYOUT_VALUES}(-major).")
+IF (${FIELD_DATA_LAYOUT_INDEX} EQUAL 0)
+  set(FIELD_DATA_LAYOUT_AS_FIELD_MAJOR on)
+ELSEIF (${FIELD_DATA_LAYOUT_INDEX} EQUAL 1)
+  set(FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR on)
+ELSEIF (${FIELD_DATA_LAYOUT_INDEX} EQUAL -1)
+  MESSAGE(FATAL_ERROR "Mesh field data layout '${FIELD_DATA_LAYOUT}' not supported, valid entries are ${FIELD_DATA_LAYOUT_VALUES}(-major).")
 ENDIF()
-message(STATUS "Mesh node data layout (MESHNODE_DATA_LAYOUT): " ${MESHNODE_DATA_LAYOUT} "(-major)")
+message(STATUS "Mesh field data layout: " ${FIELD_DATA_LAYOUT} "(-major)")

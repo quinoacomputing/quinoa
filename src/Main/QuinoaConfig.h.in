@@ -35,8 +35,8 @@ namespace tk {
 #cmakedefine PARTICLE_DATA_LAYOUT_AS_EQUATION_MAJOR
 
 // Data layout for mesh node data
-#cmakedefine MESHNODE_DATA_LAYOUT_AS_MESHNODE_MAJOR
-#cmakedefine MESHNODE_DATA_LAYOUT_AS_EQUATION_MAJOR
+#cmakedefine FIELD_DATA_LAYOUT_AS_FIELD_MAJOR
+#cmakedefine FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR
 
 // Optional TPLs
 #cmakedefine HAS_MKL

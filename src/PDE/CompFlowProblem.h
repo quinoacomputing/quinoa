@@ -46,7 +46,7 @@ class CompFlowProblemUserDefined {
     //!   PDEs among other systems
     static void init( const ctr::InputDeck&,
                       const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::MeshNodes& unk,
+                      tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset )
     {
@@ -74,8 +74,8 @@ class CompFlowProblemUserDefined {
                const std::array< std::array< tk::real, 4 >, 4 >&,
                const std::array< const tk::real*, 5 >&,
                std::array< std::array< tk::real, 4 >, 5 >&,
-               tk::MeshNodes&,
-               tk::MeshNodes& ) {}
+               tk::Fields&,
+               tk::Fields& ) {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -103,7 +103,7 @@ class CompFlowProblemUserDefined {
             tk::ctr::ncomp_type offset,
             tk::real,
             const std::array< std::vector< tk::real >, 3 >&,
-            const tk::MeshNodes& U )
+            const tk::Fields& U )
     {
       IGNORE(e);
       std::vector< std::vector< tk::real > > out;
@@ -162,7 +162,7 @@ class CompFlowProblemVorticalFlow {
     //!   PDEs among other systems
     static void init( const ctr::InputDeck&,
                       const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::MeshNodes& unk,
+                      tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset )
     {
@@ -209,8 +209,8 @@ class CompFlowProblemVorticalFlow {
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
                const std::array< const tk::real*, 5 >& r,
                std::array< std::array< tk::real, 4 >, 5 >& s,
-               tk::MeshNodes& R,
-               tk::MeshNodes& U )
+               tk::Fields& R,
+               tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
@@ -314,7 +314,7 @@ class CompFlowProblemVorticalFlow {
             tk::ctr::ncomp_type offset,
             tk::real,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::MeshNodes& U )
+            const tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
