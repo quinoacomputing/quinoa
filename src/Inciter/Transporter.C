@@ -147,10 +147,16 @@ Transporter::Transporter() :
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
 
-    // Create particle writer Charm++ chare group
-    m_particlewriter = ParticleWriterProxy::ckNew(
-                         thisProxy,
-                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    // Create particle writer Charm++ chare group. Note that by passing an empty
+    // filename argument to the constructor, we tell the writer not to open a
+    // file and not to perform I/O. To enable particle I/O, put in the filename
+    // argument, commented out, instead of the empty string, and change the
+    // number of particles (the constructor argument to m_particles) in the
+    // initializer list of Carrier::Carrier(). This is basically a punt to
+    // enable skipping H5Part I/O. Particles are a highly experimental feature
+    // at this point.
+    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
+                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
