@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:28:41 AM MDT
+  \date      Thu 22 Sep 2016 04:02:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -32,6 +32,10 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //! Constructor
     //! \param[in] host Host proxy
     //! \param[in] filename Filename of particle output file
+    //! \details It is okay to call this constructor with empty filename. In
+    //!   that case no IO will be performed. This is basically a punt to enable
+    //!   skipping H5Part I/O. Particles are a highly experimental feature at
+    //!   this point.
     explicit ParticleWriter( const HostProxy& host,
                              const std::string& filename ) :
       m_host( host ),

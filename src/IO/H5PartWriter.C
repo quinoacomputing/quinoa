@@ -21,10 +21,15 @@ H5PartWriter::H5PartWriter( const std::string& filename ) :
 // *****************************************************************************
 //  Constructor: create/open H5Part file
 //! \param[in] filename File to open as H5Part file
+//! \details It is okay to call this constructor with empty filename. In that
+//!   case no IO will be performed. This is basically a punt to enable skipping
+//!   H5Part I/O. Particles are a highly experimental feature at this point.
 //! \note If the file exists, it will be truncated.
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  if (m_filename.empty()) return;
+
   #if defined(__clang__)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wold-style-cast"
@@ -60,6 +65,8 @@ H5PartWriter::writeCoords( uint64_t it,
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  if (m_filename.empty()) return;
+
   Assert( x.size() == y.size() && y.size() == z.size(),
           "Particle coordinates array sizes mismatch" );
 
