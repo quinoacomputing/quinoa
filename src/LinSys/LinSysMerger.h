@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 19 Sep 2016 02:33:51 PM MDT
+  \date      Sun 25 Sep 2016 07:32:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -99,7 +99,7 @@
               tooltip="fill/set solution vector"
               URL="\ref tk::LinSysMerger::sol"];
       FillLhs [ label="FillLhs"
-              tooltip="fill/set lefth hand side matrix"
+              tooltip="fill/set left hand side matrix"
               URL="\ref tk::LinSysMerger::lhs"];
       FillRhs [ label="FillRhs"
               tooltip="fill/set right hand side vector"
