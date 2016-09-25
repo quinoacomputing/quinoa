@@ -160,12 +160,12 @@ to the tools.
 \subsection git_web 7. Git for source code version control
   - Web: https://git-scm.com
 
-\subsection numdiff_web 8. Numdiff for comparison text files with numerical content
+\subsection numdiff_web 8. Numdiff for comparison of text files with numerical content
   - Web: http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 28 Jul 2016 07:50:28 AM MDT
+<em>Page last updated:</em> Sun 25 Sep 2016 07:18:53 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
