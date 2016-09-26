@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 01:32:55 PM MDT
+  \date      Mon 26 Sep 2016 07:15:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -189,8 +189,7 @@ module linsysmerger {
       // below, at threir call site should be thought of as messages being put
       // in some message queue and consumed at when clauses wherever they
       // appear. If they appear in multiple when clauses, they consume multple
-      // message, thus they have to be triggered multiple times. See also the
-      // commit message of b79ea29 and
+      // messages, thus they have to be triggered multiple times. See also
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
 
       entry void wait4row() {
