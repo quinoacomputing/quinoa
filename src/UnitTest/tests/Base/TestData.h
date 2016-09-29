@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestData.h
   \author    J. Bakosi
-  \date      Mon 19 Sep 2016 11:02:13 AM MDT
+  \date      Thu 29 Sep 2016 02:46:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Data.h
   \details   Unit tests for Base/Data.h
@@ -38,7 +38,7 @@ struct Data_common {
                       ensure_equals( msg, s, d, this->prec ); return true; } );
   }
 
-  // Ensure equality of all element of a array of reals
+  // Ensure equality of all element of an array of reals
   template< std::size_t N >
   void veceq( const std::string& msg,
               const std::array< tk::real, N >& a,
