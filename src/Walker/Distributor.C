@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 10:27:14 AM MDT
+  \date      Fri 30 Sep 2016 01:10:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -365,7 +365,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
 // *****************************************************************************
 {
   // Get PDF metadata
-  const auto info =
+  const auto nfo =
     tk::ctr::pdfInfo< 1 >( g_inputdeck.get< tag::discr, tag::binsize >(),
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
@@ -375,7 +375,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
-    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + nfo.name;
 
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -391,7 +391,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
                       g_inputdeck.get< tag::prec, tag::pdf >() );
 
   // Output PDF
-  pdfw.writeTxt( p, info );
+  pdfw.writeTxt( p, nfo );
 }
 
 void
@@ -407,7 +407,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
 // *****************************************************************************
 {
   // Get PDF metadata
-  const auto info =
+  const auto nfo =
     tk::ctr::pdfInfo< 2 >( g_inputdeck.get< tag::discr, tag::binsize >(),
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
@@ -417,7 +417,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
-    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + nfo.name;
 
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -443,15 +443,15 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
 
   // Output PDF
   if (filetype == tk::ctr::PDFFileType::TXT)
-    pdfw.writeTxt( p, info );
+    pdfw.writeTxt( p, nfo );
   else if (filetype == tk::ctr::PDFFileType::GMSHTXT)
-    pdfw.writeGmshTxt( p, info,
+    pdfw.writeGmshTxt( p, nfo,
                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::GMSHBIN)
-    pdfw.writeGmshBin( p, info,
+    pdfw.writeGmshBin( p, nfo,
                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
-    pdfw.writeExodusII( p, info,
+    pdfw.writeExodusII( p, nfo,
                         m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
@@ -469,7 +469,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
 // *****************************************************************************
 {
   // Get PDF metadata
-  const auto info =
+  const auto nfo =
     tk::ctr::pdfInfo< 3 >( g_inputdeck.get< tag::discr, tag::binsize >(),
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
@@ -479,7 +479,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
-    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + nfo.name;
 
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -505,15 +505,15 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
 
   // Output PDF
   if (filetype == tk::ctr::PDFFileType::TXT)
-    pdfw.writeTxt( p, info );
+    pdfw.writeTxt( p, nfo );
   else if (filetype == tk::ctr::PDFFileType::GMSHTXT)
-     pdfw.writeGmshTxt( p, info,
+     pdfw.writeGmshTxt( p, nfo,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::GMSHBIN)
-     pdfw.writeGmshBin( p, info,
+     pdfw.writeGmshBin( p, nfo,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
-    pdfw.writeExodusII( p, info,
+    pdfw.writeExodusII( p, nfo,
                         m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }

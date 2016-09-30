@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 09:39:24 AM MDT
+  \date      Fri 30 Sep 2016 12:44:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -92,11 +92,6 @@ class Print {
     friend const Print& operator<<( const Print& os, const T& t )
     { os.m_stream << t; return os; }
 
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
-
     //! Operator % for printing any type to the quiet stream.
     //! \param[in] os Reference to pretty printer object
     //! \param[in] t Reference to an arbitrary object of type T. T must define
@@ -116,10 +111,6 @@ class Print {
     //! \author J. Bakosi
     friend const Print& operator%( const Print& os,
       std::ostream& (*pf)(std::ostream&) ) { os.m_qstream << pf; return os; }
-
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! Operator << for a function pointer taking ostream returning ostream.
     //! This is so that several of operators of << can be chained together.

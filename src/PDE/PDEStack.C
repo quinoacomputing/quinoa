@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Tue 30 Aug 2016 11:09:01 AM MDT
+  \date      Fri 30 Sep 2016 01:04:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -163,19 +163,19 @@ PDEStack::info() const
 {
   std::map< ctr::PDEType, ncomp_t > cnt; // count PDEs per type
   // will store info on all differential equations selected
-  std::vector< std::vector< std::pair< std::string, std::string > > > info;
+  std::vector< std::vector< std::pair< std::string, std::string > > > nfo;
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::TRANSPORT)
-      info.emplace_back( infoTransport( cnt ) );
+      nfo.emplace_back( infoTransport( cnt ) );
     else if (d == ctr::PDEType::POISSON)
-      info.emplace_back( infoPoisson( cnt ) );
+      nfo.emplace_back( infoPoisson( cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
-      info.emplace_back( infoCompFlow( cnt ) );
+      nfo.emplace_back( infoCompFlow( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 
-  return info;
+  return nfo;
 }
 
 std::vector< std::pair< std::string, std::string > >
@@ -191,31 +191,31 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0
 
-  std::vector< std::pair< std::string, std::string > > info;
+  std::vector< std::pair< std::string, std::string > > nfo;
 
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
-  info.emplace_back( "problem", ctr::Problem().name(
+  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
+  nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
-  info.emplace_back( "start offset in unknowns array", std::to_string(
+  nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
-  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
   const auto& diff =
      g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
   if (diff.size() > c)
-    info.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
+    nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
                        parameters( diff[c] ) );
   const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
   if (u0.size() > c)
-    info.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
+    nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
                        parameters( u0[c] ) );
   const auto& lambda =
     g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
   if (lambda.size() > c)
-    info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
+    nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
       parameters( lambda[c] ) );
 
-  return info;
+  return nfo;
 }
 
 std::vector< std::pair< std::string, std::string > >
@@ -231,17 +231,17 @@ PDEStack::infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   auto c = ++cnt[ ctr::PDEType::POISSON ];       // count eqs
   --c;  // used to index vectors starting with 0
 
-  std::vector< std::pair< std::string, std::string > > info;
+  std::vector< std::pair< std::string, std::string > > nfo;
 
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::POISSON ), "" );
-  info.emplace_back( "problem", ctr::Problem().name(
+  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::POISSON ), "" );
+  nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::poisson, tag::problem >()[c] ) );
-  info.emplace_back( "start offset in unknowns array", std::to_string(
+  nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::poisson >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::poisson >()[c];
-  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  return info;
+  return nfo;
 }
 
 std::vector< std::pair< std::string, std::string > >
@@ -257,31 +257,31 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
   --c;  // used to index vectors starting with 0
 
-  std::vector< std::pair< std::string, std::string > > info;
+  std::vector< std::pair< std::string, std::string > > nfo;
 
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
-  info.emplace_back( "physics", ctr::Physics().name(
+  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
+  nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, tag::compflow, tag::physics >()[c] ) );
-  info.emplace_back( "problem", ctr::Problem().name(
+  nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::compflow, tag::problem >()[c] ) );
-  info.emplace_back( "start offset in unknowns array", std::to_string(
+  nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::compflow >()[c];
-  info.emplace_back( "number of components", std::to_string( ncomp ) );
-  info.emplace_back( "material id", parameters(
+  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+  nfo.emplace_back( "material id", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
-  info.emplace_back( "ratio of specific heats", parameters(
+  nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
-  info.emplace_back( "dynamic viscosity", parameters(
+  nfo.emplace_back( "dynamic viscosity", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::mu >() ) );
-  info.emplace_back( "specific heat at const. volume", parameters(
+  nfo.emplace_back( "specific heat at const. volume", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::cv >() ) );
-  info.emplace_back( "heat conductivity", parameters(
+  nfo.emplace_back( "heat conductivity", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::k >() ) );
 
   auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
   if (!npar.empty())
-    info.emplace_back( "number of tracker particles", parameters( npar ) );
+    nfo.emplace_back( "number of tracker particles", parameters( npar ) );
 
-  return info;
+  return nfo;
 }

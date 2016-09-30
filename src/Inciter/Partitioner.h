@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 10:50:09 AM MDT
+  \date      Fri 30 Sep 2016 01:08:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -200,17 +200,17 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   we have the precise communication map as well as the start offset on
     //!   all PEs and so we can start the distributed global mesh node ID
     //!   reordering.
-    void offset( int pe, std::size_t u ) {
-      if (pe < CkMyPe()) m_start += u;
+    void offset( int p, std::size_t u ) {
+      if (p < CkMyPe()) m_start += u;
       if (++m_noffset == static_cast<std::size_t>(CkNumPes())) reorder();
     }
 
     //! Request new global node IDs for old node IDs
-    //! \param[in] pe PE request coming from and to which we send new IDs to
+    //! \param[in] p PE request coming from and to which we send new IDs to
     //! \param[in] id Set of old node IDs whose new IDs are requested
-    void request( int pe, const std::set< std::size_t >& id ) {
+    void request( int p, const std::set< std::size_t >& id ) {
       // Queue up requesting PE and node IDs
-      m_req.push_back( { pe, id } );
+      m_req.push_back( { p, id } );
       // Trigger SDAG wait, signaling that node IDs have been requested from us
       nodes_requested_complete();
     }
@@ -270,7 +270,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
     //! \brief Query our global node IDs by other PEs so they know if they
     //!   receive IDs for those from during reordering
-    //! \param[in] pe Querying PE
+    //! \param[in] p Querying PE
     //! \param[in] id Vector of global mesh node IDs to query
     //! \details Note that every PE calls this function in a broadcast fashion,
     //!   including our own. However, to compute the correct result, this would
@@ -280,19 +280,19 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   callers. This also results in a simpler logic, because every PE goes
     //!   through this single call path. The returned mask is simply a boolean
     //!   array signaling if the node ID is found (owned).
-    void query( int pe, const std::vector< std::size_t >& id ) {
+    void query( int p, const std::vector< std::size_t >& id ) {
       std::vector< int > own( id.size(), 0 );
-      if (pe > CkMyPe()) {
+      if (p > CkMyPe()) {
         for (std::size_t i=0; i<id.size(); ++i) {
           const auto it = m_sid.find( id[i] );
           if (it != end(m_sid)) own[i] = 1;
         }
       }
-      Group::thisProxy[ pe ].mask( CkMyPe(), own );
+      Group::thisProxy[ p ].mask( CkMyPe(), own );
     }
 
     //! Receive mask of to-be-received global mesh node IDs
-    //! \param[in] pe The PE uniquely assigns the node IDs marked by 1 in rec
+    //! \param[in] p The PE uniquely assigns the node IDs marked by 1 in rec
     //! \param[in] rec Mask vector containing 1 if the pe owns the node ID, 0 if
     //!   it does not
     //! \details Note that every PE will call this function, since query() was
@@ -300,7 +300,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   This is more efficient than calling only the PEs from which we would
     //!   have to receive results from. Thus the incoming results are only
     //!   interesting from PEs with lower IDs than ours.
-    void mask( int pe, const std::vector< int >& rec ) {
+    void mask( int p, const std::vector< int >& rec ) {
       // Associate global mesh node IDs to lower PEs we will need to receive
       // from during node reordering. The choice of associated container is
       // std::map, which is ordered (vs. unordered, hash-map). This is required
@@ -308,8 +308,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // communication map. (We are called in an unordered fashion, so we need
       // to collect from all PEs and then we need to make the node IDs unique,
       // keeping only the lowest PEs a node ID is associated with.)
-      if (pe < CkMyPe()) {
-        auto& id = m_comm[ pe ];
+      if (p < CkMyPe()) {
+        auto& id = m_comm[ p ];
         for (std::size_t i=0; i<rec.size(); ++i)
           if (rec[i]) id.insert( m_id[i] );
       }
@@ -321,15 +321,15 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                 std::to_string(CkMyPe()) );
         // Fill new hash-map, keeping only unique node IDs obtained from the
         // lowest possible PEs
-        for (auto p=begin(m_comm); p!=end(m_comm); ++p) {
-          auto& u = m_communication[ p->first ];
-          for (auto i : p->second)
-            if (std::none_of( begin(m_comm), p,
+        for (auto c=begin(m_comm); c!=end(m_comm); ++c) {
+          auto& u = m_communication[ c->first ];
+          for (auto i : c->second)
+            if (std::none_of( begin(m_comm), c,
                  [i](const typename decltype(m_comm)::value_type& s)
                  { return s.second.find(i) != end(s.second); } )) {
               u.insert(i);
             }
-          if (u.empty()) m_communication.erase( p->first );
+          if (u.empty()) m_communication.erase( c->first );
         }
         // Count up total number of nodes we will need receive durin reordering
         std::size_t nrecv = 0;
@@ -759,16 +759,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
     //! Compute communication cost of linear system merging for our PE
-    //! \param[in] lower Lower global row ID of linear system this PE works on
-    //! \param[in] upper Upper global row ID of linear system this PE works on
+    //! \param[in] l Lower global row ID of linear system this PE works on
+    //! \param[in] u Upper global row ID of linear system this PE works on
     //! \return Communicatoin cost of merging the linear system for our PE
     //! \details The cost is a real number between 0 and 1, defined as the
     //!   number of mesh points we do not own, i.e., need to send to some other
     //!   PE, divided by the total number of points we contribute to. The lower
     //!   the better.
-    tk::real cost( std::size_t lower, std::size_t upper ) {
+    tk::real cost( std::size_t l, std::size_t u ) {
       std::size_t ownpts = 0, compts = 0;
-      for (auto p : m_id) if (p >= lower && p < upper) ++ownpts; else ++compts;
+      for (auto p : m_id) if (p >= l && p < u) ++ownpts; else ++compts;
       return static_cast<tk::real>(compts) /
              static_cast<tk::real>(ownpts + compts);
     }

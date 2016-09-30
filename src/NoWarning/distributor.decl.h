@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/distributor.decl.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 11:08:03 AM MDT
+  \date      Fri 30 Sep 2016 12:43:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include distributor.decl.h with turning off specific compiler
              warnings
@@ -41,7 +41,6 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wredundant-decls"

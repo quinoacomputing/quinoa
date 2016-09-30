@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HelpFactory.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 09:34:25 AM MDT
+  \date      Fri 30 Sep 2016 12:36:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
@@ -20,17 +20,6 @@
 
 namespace tk {
 namespace ctr {
-
-// The structs KeywordInfo and HelpKw below do not define consutrctors on
-// purpose so that the compiler generates constructors taking initializer lists.
-// The warning -Weffc++ complains about the data member not being initialized,
-// however, defining the default constructors would prohibit the compiler
-// implicitly defining the initializer-list constructors, required in struct
-// Info::operator(). Thus the "-Weffc++" warning is suppressed.
-#if defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
-#endif
 
 //! \brief Keyword information bundle
 //! \details This bundle contains the information that is used to display
@@ -99,10 +88,6 @@ struct HelpKw {
   friend void operator|( PUP::er& p, HelpKw& h ) { h.pup(p); }
   ///@}
 };
-
-#if defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 //! \brief Function object for filling a HelpFactory (std::map) with keywords
 //!   and their associated information bundle

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:17:55 PM MDT
+  \date      Fri 30 Sep 2016 01:09:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -192,29 +192,29 @@ class DiffEqStack {
 
     //! \brief Insert spike information (used to specify delta PDFs) into info
     //!   vector
-    //! \param[in,out] info Info vector of string-pairs to insert to
+    //! \param[in,out] nfo Info vector of string-pairs to insert to
     //! \param[in] spike Vector of vectors specifying spike info
     //! \author J. Bakosi
     template< typename Info, typename VV >
-    void spikes( Info& info, const VV& spike ) const {
+    void spikes( Info& nfo, const VV& spike ) const {
       std::size_t i = 0;
       for (const auto& s : spike)
-        info.emplace_back( "delta spikes [comp" + std::to_string(++i) + ":" +
-                             std::to_string( s.size()/2 ) + "]",
-                           parameters( s ) );
+        nfo.emplace_back( "delta spikes [comp" + std::to_string(++i) + ":" +
+                            std::to_string( s.size()/2 ) + "]",
+                          parameters( s ) );
     }
 
     //! \brief Insert betapdf information (used to specify beta PDFs) into info
     //!   vector
-    //! \param[in,out] info Info vector of string-pairs to insert to
+    //! \param[in,out] nfo Info vector of string-pairs to insert to
     //! \param[in] betapdf Vector of vectors specifying betapdf info
     //! \author J. Bakosi
     template< typename Info, typename VV >
-    void betapdfs( Info& info, const VV& betapdf ) const {
+    void betapdfs( Info& nfo, const VV& betapdf ) const {
       std::size_t i = 0;
       for (const auto& s : betapdf)
-        info.emplace_back( "beta pds [comp" + std::to_string(++i) + "]",
-                           parameters( s ) );
+        nfo.emplace_back( "beta pds [comp" + std::to_string(++i) + "]",
+                          parameters( s ) );
     }
 
     DiffEqFactory m_factory;                 //!< Differential equations factory

@@ -208,7 +208,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   add_compiler_flag("-Wall")
   add_compiler_flag("-Wextra")
-  add_compiler_flag("-Weffc++")
   add_compiler_flag("-pedantic")
   add_compiler_flag("-pedantic-errors")
   add_compiler_flag("-Wcast-align")

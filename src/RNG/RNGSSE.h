@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:42:16 PM MDT
+  \date      Fri 30 Sep 2016 01:00:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -46,27 +46,27 @@ class RNGSSE {
 
   public:
     //! Constructor
-    //! \param[in] nthreads Initialize RNG using this many independent streams
+    //! \param[in] n Initialize RNG using this many independent streams
     //! \param[in] fnShort RNG initializer function for short streams
     //! \param[in] seqlen Sequence length enum: short, medium or long
     //! \param[in] fnLong RNG initializer function for long streams
     //! \param[in] fnMed RNG initializer function for medium streams
-    explicit RNGSSE( SeqNumType nthreads,
+    explicit RNGSSE( SeqNumType n,
                      InitFn fnShort,
                      ctr::RNGSSESeqLenType seqlen = ctr::RNGSSESeqLenType::SHORT,
                      InitFn fnLong = nullptr,
                      InitFn fnMed = nullptr) :
-       m_nthreads( nthreads ),
+       m_nthreads( n ),
        m_init( seqlen == ctr::RNGSSESeqLenType::LONG ? fnLong :
                seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort ),
        m_stream()
     {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
-      Assert( nthreads > 0, "Need at least one thread" );
+      Assert( n > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
-      m_stream = tk::make_unique< State[] >( nthreads );
+      m_stream = tk::make_unique< State[] >( n );
       // Initialize thread-streams
-      for (SeqNumType i=0; i<nthreads; ++i) m_init( &m_stream[i], i );
+      for (SeqNumType i=0; i<n; ++i) m_init( &m_stream[i], i );
     }
 
     //! Uniform RNG: Generate uniform random numbers
@@ -135,15 +135,8 @@ class RNGSSE {
       return *this;
     }
 
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
     //! Copy constructor: in terms of copy assignment
     RNGSSE( const RNGSSE& x ) { operator=(x); }
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! Move assignment
     RNGSSE& operator=( RNGSSE&& x ) {

@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/H5Part.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 09:30:51 AM MDT
+  \date      Fri 30 Sep 2016 12:40:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include H5Part.h with turning off specific compiler warnings
 */
@@ -19,7 +19,6 @@
   #pragma clang diagnostic ignored "-Wcast-align"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wlong-long"
 #endif
 

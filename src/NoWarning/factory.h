@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/factory.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 06:59:32 AM MDT
+  \date      Fri 30 Sep 2016 12:39:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/functional/factory.hpp with turning off specific
              compiler warnings
@@ -14,7 +14,6 @@
 #if defined(__clang__)
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 

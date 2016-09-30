@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/carrier.def.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 08:28:59 AM MDT
+  \date      Fri 30 Sep 2016 12:39:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include carrier.def.h with turning off specific compiler
              warnings
@@ -20,7 +20,6 @@
   #pragma clang diagnostic ignored "-Wunused-variable"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
   #pragma GCC diagnostic ignored "-Wswitch-default"

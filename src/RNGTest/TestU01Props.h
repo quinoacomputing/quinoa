@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:45:03 AM MDT
+  \date      Fri 30 Sep 2016 01:02:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 statistical test properties class
   \details   This file defines a generic TestU01 statistical test properties
@@ -71,21 +71,21 @@ class TestU01Props {
     //! \details None of the state data is const since the this class is
     //!   designed to be migratable over the network by the Charm++ runtime
     //!   system.
-    //! \param[in] proxy Host proxy facilitating call-back to host object chare.
+    //! \param[in] host Host proxy facilitating call-back to host object chare.
     //! \param[in] rng Random number generator ID enum to be tested
-    //! \param[in] names Vector of statisical test names (can be more than one
+    //! \param[in] n Vector of statisical test names (can be more than one
     //!   associated with a given test, since a test can contain more than one
     //!   statistical test evaluation, yielding multiple p-values)
     //! \param[in] gen Raw function pointer to TestU01 statistical test
     //! \param[in] xargs Extra arguments to test-run
-    explicit TestU01Props( Proxy& proxy,
+    explicit TestU01Props( Proxy& host,
                            tk::ctr::RNGType rng,
-                           std::vector< std::string >&& names,
+                           std::vector< std::string >&& n,
                            unif01_Gen* gen,
                            Ts&&... xargs ) :
-      m_proxy( proxy ),
+      m_proxy( host ),
       m_rng( rng ),
-      m_names( std::move(names) ),
+      m_names( std::move(n) ),
       m_xargs( std::forward<Ts>(xargs)... ),
       m_gen( gen ),
       m_runner( g_testStack.TestU01.runner.get<Test>() ),
@@ -105,15 +105,8 @@ class TestU01Props {
       return *this;
     }
 
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
     //! Copy constructor: in terms of copy assignment
     TestU01Props( const TestU01Props& x ) { operator=(x); }
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! Move assignment
     TestU01Props& operator=( TestU01Props&& ) = default;

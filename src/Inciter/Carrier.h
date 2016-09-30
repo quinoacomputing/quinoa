@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:05:08 PM MDT
+  \date      Fri 30 Sep 2016 12:36:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -143,17 +143,8 @@ class Carrier : public CBase_Carrier {
                const std::unordered_map< std::size_t, std::size_t >& cid,
                int ncarr );
 
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
-
     //! Migrate constructor
     explicit Carrier( CkMigrateMessage* ) {}
-
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! \brief Configure Charm++ reduction types
     //! \details Since this is a [nodeinit] routine, see carrier.ci, the

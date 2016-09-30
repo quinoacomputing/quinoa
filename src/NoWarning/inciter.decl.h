@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/inciter.decl.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 07:40:58 AM MDT
+  \date      Fri 30 Sep 2016 12:40:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include inciter.decl.h with turning off specific compiler
              warnings
@@ -42,7 +42,6 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"

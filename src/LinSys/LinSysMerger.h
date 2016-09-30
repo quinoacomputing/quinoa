@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Sun 25 Sep 2016 07:32:14 AM MDT
+  \date      Fri 30 Sep 2016 12:59:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -240,16 +240,17 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Constructor
     //! \param[in] host Charm++ host proxy
     //! \param[in] worker Charm++ worker proxy
-    //! \param[in] ncomp Total number of scalar components in the linear system
+    //! \param[in] s Elem and side lists mapped to side set ids
+    //! \param[in] n Total number of scalar components in the linear system
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
-                  const std::map< int, std::vector< std::size_t > >& side,
-                  std::size_t ncomp ) :
+                  const std::map< int, std::vector< std::size_t > >& s,
+                  std::size_t n ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
-      m_side( side ),
-      m_ncomp( ncomp ),
+      m_side( s ),
+      m_ncomp( n ),
       m_nchare( 0 ),
       m_nperow( 0 ),
       m_nchbc( 0 ),
@@ -327,17 +328,17 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
 
     //! Receive lower and upper global node IDs all PEs will operate on
-    //! \param[in] pe PE whose bounds being received
+    //! \param[in] p PE whose bounds being received
     //! \param[in] lower Lower index of the global rows on my PE
     //! \param[in] upper Upper index of the global rows on my PE
-    void bounds( int pe, std::size_t lower, std::size_t upper ) {
+    void bounds( int p, std::size_t lower, std::size_t upper ) {
       // Store our bounds
-      if (pe == CkMyPe()) {
+      if (p == CkMyPe()) {
         m_lower = lower;
         m_upper = upper;
       }
       // Store inverse of PE-division map stored on all PE
-      m_div[ {lower,upper} ] = pe;
+      m_div[ {lower,upper} ] = p;
       // If we have all PEs' bounds, signal the runtime system to continue
       if (m_div.size() == static_cast<std::size_t>(CkNumPes())) {
         // Create my PE's lhs matrix distributed across all PEs
@@ -427,14 +428,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Chares contribute their solution nonzero values
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] sol Portion of the unknown/solution vector contributed
+    //! \param[in] solution Portion of the unknown/solution vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charesol( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const Fields& sol )
+                   const Fields& solution )
     {
-      Assert( gid.size() == sol.nunk(),
+      Assert( gid.size() == solution.nunk(),
               "Size of solution and row ID vectors must equal" );
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
@@ -442,9 +443,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
           m_solimport[ fromch ].push_back( gid[i] );
-          m_sol[ gid[i] ] = sol[i];
+          m_sol[ gid[i] ] = solution[i];
         } else {
-          exp[ pe(gid[i]) ][ gid[i] ] = sol[i];
+          exp[ pe(gid[i]) ][ gid[i] ] = solution[i];
         }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
@@ -455,12 +456,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
     //! Receive solution vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] sol Portion of the unknown/solution vector contributed,
+    //! \param[in] solution Portion of the unknown/solution vector contributed,
     //!   containing global row indices and values for all components
     void addsol( int fromch,
-                 const std::map< std::size_t, std::vector< tk::real > >& sol )
+                 const std::map< std::size_t,
+                                 std::vector< tk::real > >& solution )
     {
-      for (const auto& r : sol) {
+      for (const auto& r : solution) {
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
@@ -519,14 +521,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
     //! Receive matrix nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] lhs Portion of the left-hand side matrix contributed,
+    //! \param[in] l Portion of the left-hand side matrix contributed,
     //!   containing global row and column indices and non-zero values
     void addlhs( int fromch,
                  const std::map< std::size_t,
                                  std::map< std::size_t,
-                                           std::vector< tk::real > > >& lhs )
+                                           std::vector< tk::real > > >& l )
     {
-      for (const auto& r : lhs) {
+      for (const auto& r : l) {
         m_lhsimport[ fromch ].push_back( r.first );
         auto& row = m_lhs[ r.first ];
         for (const auto& c : r.second) row[ c.first ] += c.second;
@@ -537,23 +539,23 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Chares contribute their rhs nonzero values
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] rhs Portion of the right-hand side vector contributed
+    //! \param[in] r Portion of the right-hand side vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charerhs( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const Fields& rhs )
+                   const Fields& r )
     {
-      Assert( gid.size() == rhs.nunk(),
+      Assert( gid.size() == r.nunk(),
               "Size of right-hand side and row ID vectors must equal" );
       // Store+add vector of nonzero values owned and pack those to be exported
       std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
           m_rhsimport[ fromch ].push_back( gid[i] );
-          m_rhs[ gid[i] ] += rhs[i];
+          m_rhs[ gid[i] ] += r[i];
         } else
-          exp[ pe(gid[i]) ][ gid[i] ] = rhs[i];
+          exp[ pe(gid[i]) ][ gid[i] ] = r[i];
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -563,13 +565,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
     //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] rhs Portion of the right-hand side vector contributed,
+    //! \param[in] r Portion of the right-hand side vector contributed,
     //!   containing global row indices and values
     void addrhs( int fromch,
-                 const std::map< std::size_t, std::vector< tk::real > >& rhs ) {
-      for (const auto& r : rhs) {
-        m_rhsimport[ fromch ].push_back( r.first );
-        m_rhs[ r.first ] += r.second;
+                 const std::map< std::size_t, std::vector< tk::real > >& r ) {
+      for (const auto& l : r) {
+        m_rhsimport[ fromch ].push_back( l.first );
+        m_rhs[ l.first ] += l.second;
       }
       if (rhscomplete()) { rhs_complete(); rhs_complete(); }
     }
@@ -755,11 +757,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   the distributed matrix columns at which BCs are set
     void bcval( CkReductionMsg* msg ) {
       std::unordered_map< std::size_t,
-                          std::vector< std::pair< bool, tk::real > > > bcval;
+                          std::vector< std::pair< bool, tk::real > > > bcvalues;
       PUP::fromMem creator( msg->getData() );
-      creator | bcval;
+      creator | bcvalues;
       delete msg;
-      for (const auto& n : bcval) {
+      for (const auto& n : bcvalues) {
         auto& b = n.second;
         for (std::size_t i=0; i<m_ncomp; ++i)
           if (b[i].first)       // zero our portion of the column
@@ -1152,7 +1154,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // workers that own them
       for (const auto& w : m_solimport) {
         std::vector< std::size_t > gid;
-        std::vector< tk::real > sol;
+        std::vector< tk::real > solution;
         for (auto r : w.second) {
           const auto it = m_sol.find( r );
           if (it != end(m_sol)) {
@@ -1161,14 +1163,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
             using diff_type = typename decltype(m_hypreSol)::difference_type;
             auto b = static_cast< diff_type >( i*m_ncomp );
             auto e = static_cast< diff_type >( (i+1)*m_ncomp );
-            sol.insert( end(sol),
+            solution.insert( end(solution),
                         std::next( begin(m_hypreSol), b ),
                         std::next( begin(m_hypreSol), e ) );
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in high order solution vector" );
         }
-        m_worker[ w.first ].updateHighSol( gid, sol );
+        m_worker[ w.first ].updateHighSol( gid, solution );
       }
     }
 
@@ -1207,17 +1209,17 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // workers that own them
       for (const auto& w : m_solimport) {
         std::vector< std::size_t > gid;
-        std::vector< tk::real > sol;
+        std::vector< tk::real > solution;
         for (auto r : w.second) {
           const auto it = m_diff.find( r );
           if (it != end(m_diff)) {
             gid.push_back( it->first );
-            sol.insert( end(sol), begin(it->second), end(it->second) );
+            solution.insert(end(solution), begin(it->second), end(it->second));
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in low order solution vector" );
         }
-        m_worker[ w.first ].updateLowSol( gid, sol );
+        m_worker[ w.first ].updateLowSol( gid, solution );
       }
     }
 
@@ -1370,7 +1372,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
