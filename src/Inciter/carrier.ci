@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Tue 20 Sep 2016 03:33:36 PM MDT
+  \date      Fri 30 Sep 2016 09:29:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -51,14 +51,12 @@ module carrier {
       entry void collectedpar( const std::vector< std::size_t >& found );
       entry void out();
       entry void doWriteParticles();
-      entry void finishaec( const std::vector< std::size_t >& gid,
-                            const std::vector< std::vector< tk::real > >& P );
-      entry void finishalw( const std::vector< std::size_t >& gid,
-                            const std::vector< std::vector< tk::real > >& Q );
-      entry void finishlim( const std::vector< std::size_t >& gid,
-                            const std::vector< std::vector< tk::real > >& U );
-      entry void limit();
-      entry void eval();
+      entry void comaec( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& P );
+      entry void comalw( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& Q );
+      entry void comlim( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& U );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -68,51 +66,67 @@ module carrier {
       //
       // Directed Acyclic Graph (DAG):
       // -----------------------------
-      //                         DAG legend:
-      //  Hi --- Ver               AEC - communication of antidiffusive element
-      //        /                        contributions complete
-      //  Lo --                    ALW - communication of maximum and minimum
-      //                                 unknowns of elements surrounding nodes
-      //                                 complete
-      //  AEC --- Limit            Hi  - High order solution updated
-      //         /                 Lo  - Low order solution updated
-      //  ALW --                   Limit - Perform limiting as the final step of
-      //                                   flux-corrected transport
-      //                           Ver - Verification of antidiffusive element
-      //                                 contributions
       //
+      // See src/Inciter/Carrier.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Only if both the high and low order solution updates have been received
-      // can verification of the antidiffusive element contributions can be
-      // performed. Note that this code path does not continue anywhere else and
-      // it only runs code if the number Carrier chares is one. See
-      // FluxCorrector::verify() for more details.
+      // Only in DEBUG mode, wait4ver(): When the low and high order solutions
+      // have been updated, and the own portion of the antidiffusive element
+      // contributions (AEC) have been computed, we optionally (inly in DEBUG
+      // mode) verify that the AECs assembled to nodes equal to the difference
+      // between the high and low order increments. See also
+      // FluxCorrector::aec() and FluxCorrector::verify(). Note that this
+      // verification is only done if there is only a single Carrier chare as
+      // the correct verification would entail communication for multiple
+      // chares. Note also that the DAG conditions below for wait4ver() require
+      // the own contributions to the AEC and ALW instead of requiring the low
+      // and high order solutions and the own AEC. Requiring the former set (as
+      // implemented) is stronger than the latter, because the former can only
+      // be satisfied when the latter is also satisfied. The former is
+      // implemented because that avoids introducing two more SDAG messages,
+      // e.g., lo_complete() and hi_complete(), and that would require 3
+      // conditions instead of two, leading to simpler code.
       //
-      // Only if both the communication of antidiffusive element contributions
-      // (AEC) and the communication of the maximum and minimum unknowns of
-      // elements surrounding nodes (ALW) have been completed, can limiting be
-      // performed.
+      // Computing limited antidiffusive element contributions, wait4fct():
+      // Computing and communicating contributions on chare-boundaries of
+      // antidiffusive element contributions (AEC), and the maximum and minimum
+      // unknowns of elements surrounding nodes (ALW) are overlapped. See
+      // aec(), comaec(), alw(), comalw(). When all are complete on a single
+      // chare, computing the limited antidiffusive element contributions can
+      // start.
       //
-      // Note that the global reduction to host (Transporter) in wait4fct()
-      // ensures that all arrays necessary for doing limiting (P,Q,Ul) have been
-      // updated across all chares.
+      // Applying the limited antidiffusive element contributions, wait4app():
+      // Computing the limited antidiffusive element contributions assembled and
+      // applied to mesh nodes involves own and contributions on the
+      // chare-boundary nodes. When both are done on a single chare, applying
+      // the new limited AECs can be done.
+      //
+      // Note that the none of wait4ver(), wait4fct(), and wait4app(), nor its
+      // underlying computations and communications involve global reductions or
+      // broadcasts: the entire FCT algorithm runs completely independent on
+      // each Carrier chare, and exercising task parallelism within.
 
-      entry void wait4sol() {
-        when hi_complete(), lo_complete() serial "sol" { verify(); } };
+      #ifndef NDEBUG
+      entry void wait4ver() {
+        when ownaec_complete(), ownalw_complete() serial "ver" { verify(); } };
+      #endif
 
       entry void wait4fct() {
-        when aec_complete(), alw_complete() serial "fct" {
-          contribute( CkCallback( CkReductionTarget( Transporter, limit ),
-                                  m_transporter ) ); } };
+        when ownaec_complete(), comaec_complete(),
+             ownalw_complete(), comalw_complete() serial "fct" { lim(); } };
 
-      entry void hi_complete();
-      entry void lo_complete();
-      entry void aec_complete();
-      entry void alw_complete();
+      entry void wait4app() {
+        when ownlim_complete(), comlim_complete() serial "app" { apply(); } };
+
+      entry void ownaec_complete();
+      entry void ownalw_complete();
+      entry void ownlim_complete();
+      entry void comaec_complete();
+      entry void comalw_complete();
+      entry void comlim_complete();
     };
 
   } // inciter::

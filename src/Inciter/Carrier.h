@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 10:08:22 AM MDT
+  \date      Fri 30 Sep 2016 12:05:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -30,29 +30,39 @@
     digraph "Carrier SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Hi [ label="Hi"
-            tooltip="high order solution updated"
-            URL="\ref inciter::Carrier::updateHighSol"];
-      Lo [ label="Lo"
-            tooltip="low order solution updated"
-            URL="\ref inciter::Carrier::update LowSol"];
-      Ver [ label="Ver" color="#e6851c" style="filled"
-            tooltip="verify antidiffusive element contributions"
+      OwnAEC [ label="OwnAEC"
+               tooltip="own contributions to the antidiffusive element
+                        contributions computed"
+               URL="\ref inciter::Carrier::aec"];
+      ComAEC [ label="ComAEC"
+               tooltip="contributions to the antidiffusive element contributions
+                        communicated"
+               URL="\ref inciter::Carrier::comaec"];
+      OwnALW [ label="OwnALW"
+               tooltip="own contributions to the maximum and minimum unknowns of
+                        elements surrounding nodes computed"
+               URL="\ref inciter::Carrier::alw"];
+      ComALW [ label="ComALW"
+               tooltip="contributions to the the maximum and minimum unknowns of
+                        elements surrounding nodes communicated"
+               URL="\ref inciter::Carrier::comalw"];
+      Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
             URL="\ref inciter::Carrier::verify"];
-      AEC [ label="AEC"
-            tooltip="communication antidiffusive element contributions complete"
-            URL="\ref inciter::Carrier::aec"];
-      ALW [ label="ALW"
-            tooltip="communication of maximum and minimum of unknowns of
-                     elements surrounding nodes complete"
-            URL="\ref inciter::Carrier::alw"];
-      Limit [ label="Limit" color="#e6851c" style="filled"
-            tooltip="perform limiting"
-            URL="\ref inciter::Carrier::limit"];
-      AEC -> Limit [ style="solid" ];
-      ALW -> Limit [ style="solid" ];
-      Hi -> Ver [ style="solid" ];
-      Lo -> Ver [ style="solid" ];
+      Lim [ label="Lim"
+            tooltip="compute and apply limited antidiffusive element
+                     contributions"
+            URL="\ref inciter::Carrier::lim"];
+      Apply [ label="Apply"
+              tooltip="apply limited antidiffusive element contributions"
+              URL="\ref inciter::Carrier::limit"];
+      OwnAEC -> Ver [ style="dashed" ];
+      OwnALW -> Ver [ style="dashed" ];
+      OwnAEC -> Lim [ style="solid" ];
+      ComAEC -> Lim [ style="solid" ];
+      OwnALW -> Lim [ style="solid" ];
+      ComALW -> Lim [ style="solid" ];
+      OwnLim -> Apply [ style="solid" ];
+      ComLim -> Apply [ style="solid" ];
     }
     \enddot
     \include Inciter/carrier.ci
@@ -217,24 +227,19 @@ class Carrier : public CBase_Carrier {
     //! Output particles fields to file
     void doWriteParticles();
 
-    //! Finish summing antidiffusive element contributions on chare-boundaries
-    void finishaec( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& P );
+    //! Receive sums of antidiffusive element contributions on chare-boundaries
+    void comaec( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& P );
 
-    //! \brief Finish computing the maximum and minimum unknowns of all elements
-    //!   surrounding mesh nodes on chare-boundaries
-    void finishalw( const std::vector< std::size_t >& gid,
+    //! \brief Receive contributions to the maxima and minima of unknowns of all
+    //!   elements surrounding mesh nodes on chare-boundaries
+    void comalw( const std::vector< std::size_t >& gid,
                     const std::vector< std::vector< tk::real > >& Q );
 
-    //! Finish applying antidiffusive element contributions on chare-boundaries
-    void finishlim( const std::vector< std::size_t >& gid,
+    //! \brief Receive contributions of limited antidiffusive element
+    //!   contributions on chare-boundaries
+    void comlim( const std::vector< std::size_t >& gid,
                     const std::vector< std::vector< tk::real > >& A );
-
-    //! Perform limiting as the final step of flux-corrected transport (FCT)
-    void limit();
-
-    //! Evaluate (finish) time step stage
-    void eval();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -269,13 +274,13 @@ class Carrier : public CBase_Carrier {
       p | m_u;
       p | m_ul;
       p | m_uf;
-      p | m_ec;
       p | m_ulf;
       p | m_du;
       p | m_dul;
       p | m_up;
       p | m_p;
       p | m_q;
+      p | m_a;
       p | m_lhsd;
       p | m_lhso;
       p | m_particles;
@@ -283,6 +288,10 @@ class Carrier : public CBase_Carrier {
       p | m_vol;
       p | m_parmiss;
       p | m_parelse;
+      p | m_bid;
+      p | m_pc;
+      p | m_qc;
+      p | m_ac;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -359,7 +368,7 @@ class Carrier : public CBase_Carrier {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
     //! Unknown/solution vectors: global mesh point row ids and values
-    tk::Fields m_u, m_ul, m_uf, m_ec, m_ulf, m_du, m_dul, m_up, m_p, m_q;
+    tk::Fields m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_up, m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
     //! Particle properties
@@ -377,6 +386,12 @@ class Carrier : public CBase_Carrier {
     std::set< std::size_t > m_parmiss;
     //! Indicies of particles not found here but found by fellows
     decltype(m_parmiss) m_parelse;
+    //! \brief Local chare-boundary mesh node IDs at which we receive
+    //!   contributions associated to global mesh node IDs of mesh elements we
+    //!   contribute to
+    std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Receive buffers for FCT
+    std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -397,10 +412,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( tk::real mult,
-              tk::real dt,
-              const tk::Fields& sol,
-              tk::Fields& rhs );
+    void rhs( tk::real mult, tk::real dt, const tk::Fields& sol );
 
     //! Output chare element blocks to output file
     void writeMesh();
@@ -437,19 +449,22 @@ class Carrier : public CBase_Carrier {
     //! Output number of particles we will write to file in this step
     void writeParticles();
 
-    //! Compute and sum antidiffusive element contributions to mesh nodes
+    //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
     void aec( const tk::Fields& Un );
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
-    void alw( const tk::Fields& Ul, const tk::Fields& Un );
-
-    //! Apply the limited antidiffusive element contributions to mesh nodes
-    void lim();
+    void alw( const tk::Fields& Un, const tk::Fields& Ul );
 
     //! \brief Verify antidiffusive element contributions up to linear solver
     //!   convergence
     void verify();
+
+    //! Compute the limited antidiffusive element contributions
+    void lim();
+
+    //! Apply limited antidiffusive element contributions
+    void apply();
 };
 
 } // inciter::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 10:51:07 AM MDT
+  \date      Fri 30 Sep 2016 12:20:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -92,13 +92,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_ec( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ulf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_dul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_p( m_u.nunk(), m_u.nprop()*2 ),
   m_q( m_u.nunk(), m_u.nprop()*2 ),
+  m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( 0 * m_inpoel.size()/4, 3 ),
@@ -106,7 +106,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_msum(),
   m_vol( m_gid.size(), 0.0 ),
   m_parmiss(),
-  m_parelse()
+  m_parelse(),
+  m_bid(),
+  m_pc(),
+  m_qc(),
+  m_ac()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -123,10 +127,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
-
-  // Activate SDAG-waits
-  wait4fct();
-  wait4sol();
 }
 
 void
@@ -195,10 +195,10 @@ Carrier::msum( CkReductionMsg* msg )
   creator | meshnodes;
   delete msg;
 
-  // Store nodes that our mesh chunk neighbor associated to chare IDs
+  // Store nodes that our mesh chunk neighbors associated to chare IDs
   for (const auto& c : meshnodes)
     if (c.first != thisIndex) {
-      if (m_ncarr == 1) Throw( "This should not be called in serial" );
+      if (m_ncarr == 1) Throw( "Should not be called with a single chare" );
       const auto& gid = std::get< 0 >( c.second );
       const auto& vol = std::get< 1 >( c.second );
       for (std::size_t i=0; i<m_gid.size(); ++i)
@@ -209,6 +209,29 @@ Carrier::msum( CkReductionMsg* msg )
             n = gid.size();
           }
     }
+
+//   std::cout << thisIndex << "> ";
+//   for (const auto& n : m_msum) {
+//     std::cout << n.first << ": ";
+//     for (auto i : n.second) std::cout << i << ' ';
+//     std::cout << ' ';
+//   }
+//   std::cout << '\n';
+
+  // Count the number of mesh nodes at which we receive data from other chares
+  // and compute map associating boundary-chare node ID associated to global ID
+  std::vector< std::size_t > c;
+  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
+  tk::unique( c );
+  m_bid = tk::assignLid( c );
+
+  // Allocate receive buffers for FCT
+  m_pc.resize( m_bid.size() );
+  for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
+  m_qc.resize( m_bid.size() );
+  for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
+  m_ac.resize( m_bid.size() );
+  for (auto& b : m_ac) b.resize( m_u.nprop() );
 
   contribute(
      CkCallback( CkReductionTarget(Transporter,msumcomplete), m_transporter ) );
@@ -429,9 +452,6 @@ Carrier::init( tk::real dt )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
 
-  // Set initial high and low order solutions equal
-  m_ul = m_u;
-
   // Output initial conditions to file (time = 0.0)
   writeFields( 0.0 );
 
@@ -467,34 +487,38 @@ Carrier::lhs()
 }
 
 void
-Carrier::rhs( tk::real mult,
-              tk::real dt,
-              const tk::Fields& sol,
-              tk::Fields& rhs )
+Carrier::rhs( tk::real mult, tk::real dt, const tk::Fields& sol )
 // *****************************************************************************
 // Compute right-hand side of transport equations
 //! \param[in] mult Multiplier differentiating the different stages in
 //!    multi-stage time stepping
 //! \param[in] dt Size of time step
 //! \param[in] sol Solution vector at current stage
-//! \param[inout] rhs Right-hand side vector computed
 //! \author J. Bakosi
 // *****************************************************************************
 {
   // Initialize FCT data structures for new time step stage
   m_p.fill( 0.0 );
-  m_ec.fill( 0.0 );
-
+  m_a.fill( 0.0 );
   for (std::size_t p=0; p<m_u.nunk(); ++p)
     for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
       m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
       m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
     }
 
+  for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_qc)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
+      b[c*2+0] = -std::numeric_limits< tk::real >::max();
+      b[c*2+1] = std::numeric_limits< tk::real >::max();
+    }
+
   // Compute right-hand side vector for all equations
-  for (const auto& eq : g_pdes) eq.rhs( mult, dt, m_coord, m_inpoel, sol, rhs );
+  tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
+  for (const auto& eq : g_pdes) eq.rhs( mult, dt, m_coord, m_inpoel, sol, r );
   // Send off right-hand sides for assembly
-  m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );
+  m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, sol );
@@ -587,10 +611,10 @@ Carrier::writeFields( tk::real time )
   ew.writeTimeStamp( m_itf, time );
 
   // Collect node fields output from all PDEs
-  m_du = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
+  auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_coord, m_du );
+    auto o = eq.output( time, m_coord, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -627,8 +651,7 @@ Carrier::doWriteParticles()
 void
 Carrier::aec( const tk::Fields& Un )
 // *****************************************************************************
-//  Compute and sum antidiffusive element contributions to mesh nodes
-//! \param[in] Un Solution at the previous time step stage
+//  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
@@ -639,49 +662,51 @@ Carrier::aec( const tk::Fields& Un )
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
   m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, m_du, Un, m_p );
+  ownaec_complete();
+  #ifndef NDEBUG
+  ownaec_complete();
+  #endif
 
-  // In serial, we are done
   if (m_msum.empty())
-    aec_complete();
+    comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::size_t > gid;
       std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) {
-        gid.push_back( i );
-        p.push_back( m_p.extract( tk::cref_find(m_lid,i) ) );
-      }
-      thisProxy[ n.first ].finishaec( gid, p );
+      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
+      thisProxy[ n.first ].comaec( n.second, p );
     }
 }
 
 void
-Carrier::finishaec( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& P )
+Carrier::comaec( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& P )
 // *****************************************************************************
-//  Finish summing antidiffusive element contributions (AEC) on chare-boundaries
+//  Receive sums of antidiffusive element contributions on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive AEC contributions
-//! \param[in] P Partial sums of positive (negative) AECs to chare-boundary
-//!   nodes
-//! \details This function finishes communicating m_p, which stores the sum of
-//!    all positive (negative) antidiffusive element contributions to nodes
-//!    (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
+//! \param[in] P Partial sums of positive (negative) antidiffusive element
+//!   contributions to chare-boundary nodes
+//! \details This function receives contributions to m_p, which stores the
+//!   sum of all positive (negative) antidiffusive element contributions to
+//!   nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec(). While m_p stores
+//!   own contributions, m_pc collects the neighbor chare contributions during
+//!   communication. This way work on m_p and m_pc is overlapped. The two are
+//!   combined in lim().
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  Assert( P.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_p.nunk(),
-            "Indexing out of unknowns summing AEC on chare-boundaries" );
-    const auto& p = P[i];
-    Assert( p.size() == m_p.nprop(),
-            "Indexing out of components summing AEC on chare-boundaries" );
-    for (ncomp_t c=0; c<m_p.nprop(); ++c) m_p(lid,c,0) += p[c];
+    auto bid = tk::cref_find( m_bid, gid[i] );
+    Assert( bid < m_pc.size(), "Indexing out of bounds" );
+    m_pc[ bid ] += P[i];
   }
 
   if (++m_naec == m_msum.size()) {
-    aec_complete();
     m_naec = 0;
+    comaec_complete();
   }
 }
 
@@ -689,11 +714,11 @@ void
 Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at previous time step stage
 //! \param[in] Ul Low order solution
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
-//!    (Lohner: u^{max,min}_i), see also FluxCorrector::allowed().
+//!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -701,111 +726,126 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
   // Note that the maximum and minimum unknowns are complete on nodes that are
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
-  m_fluxcorrector.allowed( m_inpoel, Un, Ul, m_q );
+  m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
+  ownalw_complete();
+  #ifndef NDEBUG
+  ownalw_complete();
+  #endif
 
-  // In serial, we are done
   if (m_msum.empty())
-    alw_complete();
+    comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::size_t > gid;
       std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) {
-        gid.push_back( i );
-        q.push_back( m_q.extract( tk::cref_find(m_lid,i) ) );
-      }
-      thisProxy[ n.first ].finishalw( gid, q );
+      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
+      thisProxy[ n.first ].comalw( n.second, q );
     }
 }
 
 void
-Carrier::finishalw( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& Q )
+Carrier::comalw( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& Q )
 // *****************************************************************************
-// Finish computing the maximum and minimum unknowns of all elements surrounding
-// mesh nodes on chare-boundaries
+// Receive contributions to the maxima and minima of unknowns of all elements
+// surrounding mesh nodes on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive contributions
 //! \param[in] Q Partial contributions to maximum and minimum unknowns of all
 //!   elements surrounding nodes to chare-boundary nodes
-//! \details This function finishes communicating m_q, which stores the maximum
-//!    and mimimum unknowns of all elements surrounding each node (Lohner:
-//!    u^{max,min}_i), see also FluxCorrector::allowed().
+//! \details This function receives contributions to m_q, which stores the
+//!   maximum and mimimum unknowns of all elements surrounding each node
+//!   (Lohner: u^{max,min}_i), see also FluxCorrector::alw(). While m_q stores
+//!   own contributions, m_qc collects the neighbor chare contributions during
+//!   communication. This way work on m_q and m_qc is overlapped. The two are
+//!   combined in lim().
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  Assert( Q.size() == gid.size(), "Size mismatch" );
+
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_q.nunk(), "Indexing out of unknowns finalizing maximum and "
-            "minimum unknowns of elements surrounding mesh nodes on "
-            "chare-boundaries" );
+    auto bid = tk::cref_find( m_bid, gid[i] );
+    Assert( bid < m_qc.size(), "Indexing out of bounds" );
+    auto& o = m_qc[ bid ];
     const auto& q = Q[i];
-    Assert( q.size() == m_q.nprop(), "Indexing out of components finalizing "
-            "maximum and minimum unknowns of elements surrounding mesh nodes "
-            "on chare-boundaries" );
     for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      if (q[c*2+0] > m_q(lid,c,0)) m_q(lid,c,0) = q[c*2+0];
-      if (q[c*2+1] < m_q(lid,c,1)) m_q(lid,c,1) = q[c*2+1];
+      if (q[c*2+0] > o[c*2+0]) o[c*2+0] = q[c*2+0];
+      if (q[c*2+1] < o[c*2+1]) o[c*2+1] = q[c*2+1];
     }
   }
 
   if (++m_nalw == m_msum.size()) {
-    alw_complete();
     m_nalw = 0;
+    comalw_complete();
   }
 }
 
 void
 Carrier::lim()
 // *****************************************************************************
-//  Apply the limited antidiffusive element contributions to mesh nodes
-//! \details This function starts communicating m_ec, which stores the limited
-//!    antidiffusive element contributions assembled to nodes (Lohner: AEC^c),
-//!    see also FluxCorrector::limit().
+//  Compute the limited antidiffusive element contributions
+//! \details This function computes and starts communicating m_a, which stores
+//!   the limited antidiffusive element contributions assembled to nodes
+//!   (Lohner: AEC^c), see also FluxCorrector::limit().
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // In serial, we are done
+  // Combine own and communicated contributions to P and Q
+  for (const auto& b : m_bid) {
+    auto lid = tk::cref_find( m_lid, b.first );
+    const auto& bpc = m_pc[ b.second ];
+    const auto& bqc = m_qc[ b.second ];
+    for (ncomp_t c=0; c<m_p.nprop()/2; ++c) {
+      m_p(lid,c*2+0,0) += bpc[c*2+0];
+      m_p(lid,c*2+1,0) += bpc[c*2+1];
+      if (bqc[c*2+0] > m_q(lid,c*2+0,0)) m_q(lid,c*2+0,0) = bqc[c*2+0];
+      if (bqc[c*2+1] < m_q(lid,c*2+1,0)) m_q(lid,c*2+1,0) = bqc[c*2+1];
+    }
+  }
+
+  m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
+  ownlim_complete();
+
   if (m_msum.empty())
-    eval();
+    comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
     for (const auto& n : m_msum) {
-      std::vector< std::size_t > gid;
       std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) {
-        gid.push_back( i );
-        a.push_back( m_ec.extract( tk::cref_find(m_lid,i) ) );
-      }
-      thisProxy[ n.first ].finishlim( gid, a );
+      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
+      thisProxy[ n.first ].comlim( n.second, a );
     }
 }
 
 void
-Carrier::finishlim( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& A )
+Carrier::comlim( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& A )
 // *****************************************************************************
-//  Finish applying antidiffusive element contributions on chare-boundaries
+//  Receive contributions of limited antidiffusive element contributions on
+//  chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive contributions
 //! \param[in] A Partial contributions to antidiffusive element contributions to
 //!   chare-boundary nodes
-//! \details This function finishes communicating m_ec, which stores the limited
-//!    antidiffusive element contributions assembled to nodes (Lohner: AEC^c),
-//!    see also FluxCorrector::limit().
+//! \details This function receives contributions to m_a, which stores the
+//!   limited antidiffusive element contributions assembled to nodes (Lohner:
+//!   AEC^c), see also FluxCorrector::limit(). While m_a stores own
+//!   contributions, m_ac collects the neighbor chare contributions during
+//!   communication. This way work on m_a and m_ac is overlapped. The two are
+//!   combined in apply().
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_ec.nunk(),
-            "Indexing out of unknowns summing AEC on chare-boundaries" );
-    const auto& a = A[i];
-    Assert( a.size() == m_ec.nprop(),
-            "Indexing out of components summing AEC on chare-boundaries" );
-    for (ncomp_t c=0; c<m_ec.nprop(); ++c) m_ec(lid,c,0) += a[c];
-  }
+  Assert( A.size() == gid.size(), "Size mismatch" );
 
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( m_bid, gid[i] );
+    Assert( bid < m_ac.size(), "Indexing out of bounds" );
+    m_ac[ bid ] += A[i];
+  }
+ 
   if (++m_nlim == m_msum.size()) {
-    eval();
     m_nlim = 0;
+    comlim_complete();
   }
 }
 
@@ -825,11 +865,18 @@ Carrier::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
   m_t = t;
   m_it = it;
 
+  // Activate SDAG-waits
+  #ifndef NDEBUG
+  wait4ver();
+  #endif
+  wait4fct();
+  wait4app();
+
   // Advance stage in multi-stage time stepping by updating the rhs
   if (m_stage < 1)
-    rhs( 0.5, dt, m_u, m_uf );
+    rhs( 0.5, dt, m_u );
   else
-    rhs( 1.0, dt, m_uf, m_du );
+    rhs( 1.0, dt, m_uf );
 }
 
 void
@@ -1292,15 +1339,14 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
   // If all contributions we own have been received, continue by updating a
   // different solution vector depending on time step stage
   if (m_nlsol == m_gid.size()) {
+    m_nlsol = 0;
     if (m_stage < 1) {
-      m_ulf = m_ul + m_dul;
-      alw( m_ul, m_ulf );
-    } else {
-      m_ul += m_dul;
+      m_ulf = m_u + m_dul;
+      alw( m_u, m_ulf );
+     } else {
+      m_ul = m_u + m_dul;
       alw( m_uf, m_ul );
     }
-    m_nlsol = 0;
-    lo_complete();
   }
 }
 
@@ -1331,15 +1377,8 @@ Carrier::updateHighSol( const std::vector< std::size_t >& gid,
   // If all contributions we own have been received, continue by updating a
   // different solution vector depending on time step stage
   if (m_nhsol == m_gid.size()) {
-    if (m_stage < 1) {
-      aec( m_u );
-      m_uf = m_u + m_du;
-    } else {
-      aec( m_uf );
-      m_u += m_du;
-    }
     m_nhsol = 0;
-    hi_complete();
+    aec( m_stage < 1 ? m_u : m_uf );
   }
 }
 
@@ -1350,38 +1389,31 @@ Carrier::verify()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_fluxcorrector.verify( m_ncarr, m_inpoel, m_du, m_dul );
+  if (m_fluxcorrector.verify( m_ncarr, m_inpoel, m_du, m_dul ))
+    contribute(
+      CkCallback( CkReductionTarget(Transporter,verified), m_transporter) );
 }
 
 void
-Carrier::limit()
+Carrier::apply()
 // *****************************************************************************
-// Perform limiting as the final step of flux-corrected transport (FCT)
+// Apply limited antidiffusive element contributions
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  if (m_stage < 1)
-    m_fluxcorrector.limit( m_inpoel, m_p, m_ulf, m_q, m_ec );
-  else
-    m_fluxcorrector.limit( m_inpoel, m_p, m_ul, m_q, m_ec );
-
-  lim();
-}
-
-void
-Carrier::eval()
-// *****************************************************************************
-// Evaluate (finish) time step stage
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  if (m_stage < 1)
-    m_uf = m_ulf + m_ec;  // update half-time solution with limited solution
-  else {
-    m_up = m_u;           // save time n (limited) solution for particle update
-    m_u = m_ul + m_ec;    // update time solution with new (limited) solution
+  // Combine own and communicated contributions to A
+  for (const auto& b : m_bid) {
+    auto lid = tk::cref_find( m_lid, b.first );
+    const auto& bac = m_ac[ b.second ];
+    for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
-  m_ul = m_u;             // update low order with limited solution
+
+  if (m_stage < 1)
+    m_uf = m_ulf + m_a;   // update half-time solution with limited solution
+  else {
+    m_up = m_u;           // save time n solution for particle update
+    m_u = m_ul + m_a;     // update solution with new (limited) solution
+  }
 
   // Advance particles
   track();
@@ -1408,9 +1440,6 @@ Carrier::eval()
 //      CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
-
-  wait4fct();
-  wait4sol();
 }
 
 #include "NoWarning/carrier.def.h"
