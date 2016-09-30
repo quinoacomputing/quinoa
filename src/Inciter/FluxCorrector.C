@@ -128,31 +128,32 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     }
 }
 
-void
+bool
 FluxCorrector::verify( std::size_t nchare,
                        const std::vector< std::size_t >& inpoel,
                        const tk::Fields& dUh,
                        const tk::Fields& dUl ) const
 // *****************************************************************************
-//  Verify the assembled antidiffusive element contributions (AEC) in DEBUG mode
+//  Verify the assembled antidiffusive element contributions (AEC)
 //! \param[in] nchare Total number of host chares
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] dUh Increment of the high order solution
 //! \param[in] dUl Increment of the low order solution
+//! \return True if verification has been done
 //! \details This verification only makes sense if no communication is to be
 //!   done, i.e., if there is a single host chare, because the AEC assembled to
 //!   mesh nodes only contains partial contributions on chare boundaries at this
 //!   point. Verification in parallel would incure communication of the
 //!   unlimited AEC, which in general is not necessary, so we will not do that
 //!   for the sake of verification.
-//! \note This function is completely optimized away in RELEASE mode.
+//! \note This function is optimized away in RELEASE mode, see carrier.ci and
+//!   Carrier::verify().
 //! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),
           "Unknown array size mismatch" );
 
-  #ifndef NDEBUG
   if (nchare == 1) {
     auto ncomp = g_inputdeck.get< tag::component >().nprop();
     tk::Fields U( dUh.nunk(), dUh.nprop() );
@@ -181,13 +182,11 @@ FluxCorrector::verify( std::size_t nchare,
                 << ", AEC:" << U(d.first,0,0) << '\n';
       Throw( "Assembled AEC does not equal dUh-dUl" );
     }
+
+    return true;
   }
-  #else
-  IGNORE(nchare);
-  IGNORE(inpoel);
-  IGNORE(dUh);
-  IGNORE(dUl);
-  #endif
+
+  return false;
 }
 
 tk::Fields
@@ -292,10 +291,10 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 }
 
 void
-FluxCorrector::allowed( const std::vector< std::size_t >& inpoel,
-                        const tk::Fields& Un,
-                        const tk::Fields& Ul,
-                        tk::Fields& Q ) const
+FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
+                    const tk::Fields& Un,
+                    const tk::Fields& Ul,
+                    tk::Fields& Q ) const
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \param[in] inpoel Mesh element connectivity
@@ -343,13 +342,13 @@ FluxCorrector::allowed( const std::vector< std::size_t >& inpoel,
 }
 
 void
-FluxCorrector::limit( const std::vector< std::size_t >& inpoel,
-                      const tk::Fields& P,
-                      const tk::Fields& Ul,
-                      tk::Fields& Q,
-                      tk::Fields& A ) const
+FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
+                    const tk::Fields& P,
+                    const tk::Fields& Ul,
+                    tk::Fields& Q,
+                    tk::Fields& A ) const
 // *****************************************************************************
-// Perform limiting
+// Compute limited antiffusive element contributions and apply to mesh nodes
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 02:23:58 PM MDT
+  \date      Fri 30 Sep 2016 12:19:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -165,10 +165,6 @@ class Transporter : public CBase_Transporter {
     //!   number of particles to be output
     void nparcomplete() { npar_complete(); }
 
-    //! \brief Reduction target indicating that all workers have finished
-    //!    computing their prerequsities to perform FCT
-    void limit() { m_carrier.limit(); }
-
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
     void diagnostics( tk::real* d, std::size_t n );
@@ -189,6 +185,9 @@ class Transporter : public CBase_Transporter {
 
     //! Normal finish of time stepping
     void finish();
+
+    //! \brief Reduction target outputing diagnostics
+    void verified() { m_print.diag( "AEC verified" ); }
 
   private:
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,

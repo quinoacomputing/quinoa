@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.h
   \author    J. Bakosi
-  \date      Thu 08 Sep 2016 07:27:39 AM MDT
+  \date      Fri 30 Sep 2016 09:31:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. There is a
@@ -48,8 +48,8 @@ class FluxCorrector {
               const tk::Fields& Un,
               tk::Fields& P );
 
-    //! Verify the assembled antidiffusive element contributions in DEBUG mode
-    void verify( std::size_t nchare,
+    //! Verify the assembled antidiffusive element contributions
+    bool verify( std::size_t nchare,
                  const std::vector< std::size_t >& inpoel,
                  const tk::Fields& dUh,
                  const tk::Fields& dUl ) const;
@@ -65,17 +65,17 @@ class FluxCorrector {
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
-    void allowed( const std::vector< std::size_t >& inpoel,
-                  const tk::Fields& Un,
-                  const tk::Fields& Ul,
-                  tk::Fields& Q ) const;
+    void alw( const std::vector< std::size_t >& inpoel,
+              const tk::Fields& Un,
+              const tk::Fields& Ul,
+              tk::Fields& Q ) const;
 
-    //! Perform limiting
-    void limit( const std::vector< std::size_t >& inpoel,
-                const tk::Fields& P,
-                const tk::Fields& Ul,
-                tk::Fields& Q,
-                tk::Fields& A ) const;
+    //! Compute limited antiffusive element contributions and apply to mesh nodes
+    void lim( const std::vector< std::size_t >& inpoel,
+              const tk::Fields& P,
+              const tk::Fields& Ul,
+              tk::Fields& Q,
+              tk::Fields& A ) const;
 
     ///@{
     //! \brief Pack/Unpack serialize member function
