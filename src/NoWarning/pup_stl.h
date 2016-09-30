@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/pup_stl.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:41:19 PM MDT
+  \date      Fri 30 Sep 2016 12:47:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pup_stl.h with turning off specific compiler warnings
 */
@@ -28,8 +28,8 @@
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
 #include <pup_stl.h>

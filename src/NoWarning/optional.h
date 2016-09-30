@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/optional.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 06:58:08 AM MDT
+  \date      Fri 30 Sep 2016 12:43:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/optional.hpp with turning off specific
              compiler warnings
@@ -17,7 +17,6 @@
   #pragma clang diagnostic ignored "-Wundef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )

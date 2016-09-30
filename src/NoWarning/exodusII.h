@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/exodusII.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:45:20 AM MDT
+  \date      Fri 30 Sep 2016 12:41:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include exodusII.h with turning off specific compiler warnings
 */
@@ -18,17 +18,12 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
-#elif defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
 #include <exodusII.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
-  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_exodusII_h

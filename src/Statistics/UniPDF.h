@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:52:11 AM MDT
+  \date      Fri 30 Sep 2016 12:48:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
@@ -49,9 +49,9 @@ class UniPDF {
     explicit UniPDF() : m_binsize( 0 ), m_nsample( 0 ), m_pdf() {}
 
     //! Constructor: Initialize univariate PDF container
-    //! \param[in] binsize Sample space bin size
-    explicit UniPDF( tk::real binsize ) :
-      m_binsize( binsize ), m_nsample( 0 ), m_pdf() {}
+    //! \param[in] bs Sample space bin size
+    explicit UniPDF( tk::real bs ) :
+      m_binsize( bs ), m_nsample( 0 ), m_pdf() {}
 
     //! Accessor to number of samples
     //! \return Number of samples collected

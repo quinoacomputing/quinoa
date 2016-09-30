@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 09:19:40 AM MDT
+  \date      Fri 30 Sep 2016 01:03:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -290,23 +290,23 @@ Statistics::accumulateOrd()
 }
 
 void
-Statistics::accumulateCen( const std::vector< tk::real >& ord )
+Statistics::accumulateCen( const std::vector< tk::real >& om )
 // *****************************************************************************
 //  Accumulate (i.e., only do the sum for) central moments
 //! \details The ordinary moments container, m_ordinary, is overwritten here
-//!   with the argument ord, because each of multiple Statistics class objects
+//!   with the argument om, because each of multiple Statistics class objects
 //!   (residing on different PEs) only collect their partial sums when
 //!   accumulateOrd() is run. By the time the accumulation of the central
 //!   moments is started, the ordinary moments have been collected from all
 //!   PEs and thus are the same to be passed here on all PEs. For example
 //!   client-code, see walker::Distributor.
-//! \param[in] ord Ordinary moments
+//! \param[in] om Ordinary moments
 //! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_ncen) {
     // Overwrite ordinary moments by those computed across all PEs
-    for (std::size_t i=0; i<ord.size(); ++i) m_ordinary[i] = ord[i];
+    for (std::size_t i=0; i<om.size(); ++i) m_ordinary[i] = om[i];
 
     // Zero central moment accumulators
     std::fill( begin(m_central), end(m_central), 0.0 );
@@ -368,23 +368,23 @@ Statistics::accumulateOrdPDF()
 }
 
 void
-Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
+Statistics::accumulateCenPDF( const std::vector< tk::real >& om )
 // *****************************************************************************
 //  Accumulate (i.e., only do the sum for) central PDFs
 //! \details The ordinary moments container, m_ordinary, is overwritten here
-//!   with the argument ord, because each of multiple Statistics class objects
+//!   with the argument om, because each of multiple Statistics class objects
 //!   (residing on different PEs) only collect their partial sums when
 //!   accumulateOrd() is run. By the time the accumulation of the central
 //!   PDFs is started, the ordinary moments have been collected from all
 //!   PEs and thus are the same to be passed here on all PEs. For example
 //!   client-code, see walker::Distributor.
-//! \param[in] ord Ordinary moments
+//! \param[in] om Ordinary moments
 //! \author J. Bakosi
 // *****************************************************************************
 {
   if (!m_cenupdf.empty() || !m_cenbpdf.empty() || !m_centpdf.empty()) {
     // Overwrite ordinary moments by those computed across all PEs
-    for (std::size_t i=0; i<ord.size(); ++i) m_ordinary[i] = ord[i];
+    for (std::size_t i=0; i<om.size(); ++i) m_ordinary[i] = om[i];
 
     // Zero PDF accumulators
     for (auto& pdf : m_cenupdf) pdf.zero();

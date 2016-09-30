@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/unittest.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:16:21 PM MDT
+  \date      Fri 30 Sep 2016 12:42:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include unittest.def.h with turning off specific compiler
              warnings
@@ -21,7 +21,6 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wswitch-default"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 

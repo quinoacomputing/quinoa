@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:33:43 AM MDT
+  \date      Fri 30 Sep 2016 01:27:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest-specific pretty printer functionality
   \details   RNGTest-specific pretty printer functionality.
@@ -207,14 +207,14 @@ class RNGTestPrint : public tk::RNGPrint {
     //! Print RNGs and their measured run times
     //! \param[in] name Section name
     //! \param[in] costnote A note on how to interpret the costs
-    //! \param[in] cost Costs for RNGs
+    //! \param[in] c Costs for RNGs
     //! \author J. Bakosi
     void cost( const std::string& name,
                const std::string& costnote,
-               std::map< std::string, tk::real > cost ) const
+               std::map< std::string, tk::real > c ) const
     {
-      Assert( !cost.empty(), "Empty map passed to cost()" );
-      std::multimap< tk::real, std::string > times = tk::flip_map( cost );
+      Assert( !c.empty(), "Empty map passed to cost()" );
+      std::multimap< tk::real, std::string > times = tk::flip_map( c );
       section< tk::QUIET >( name );
       raw< tk::QUIET >( m_item_indent + costnote + "\n\n" );
       tk::real fastest = times.begin()->first;

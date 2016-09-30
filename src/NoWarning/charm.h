@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/charm.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:40:00 PM MDT
+  \date      Fri 30 Sep 2016 12:38:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include charm.h with turning off specific compiler warnings
 */
@@ -26,7 +26,6 @@
   #pragma GCC diagnostic ignored "-Wlong-long"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Data.h
   \author    J. Bakosi
-  \date      Wed 07 Sep 2016 07:32:35 AM MDT
+  \date      Fri 30 Sep 2016 12:50:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
@@ -45,14 +45,14 @@ class Data {
     explicit Data() : m_vec(), m_nunk(), m_nprop() {}
 
     //! Constructor
-    //! \param[in] nunk Number of unknowns to allocate memory for
-    //! \param[in] nprop Total number of properties, i.e., scalar variables or
+    //! \param[in] nu Number of unknowns to allocate memory for
+    //! \param[in] np Total number of properties, i.e., scalar variables or
     //!   components, per unknown
     //! \author J. Bakosi
-    explicit Data( ncomp_t nunk, ncomp_t nprop ) :
-      m_vec( nunk*nprop ),
-      m_nunk( nunk ),
-      m_nprop( nprop ) {}
+    explicit Data( ncomp_t nu, ncomp_t np ) :
+      m_vec( nu*np ),
+      m_nunk( nu ),
+      m_nprop( np ) {}
 
     //! Const data access dispatch
     //! \details Public interface to const-ref data access to a single real

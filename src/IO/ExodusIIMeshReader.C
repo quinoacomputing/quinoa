@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Thu 18 Aug 2016 09:26:28 AM MDT
+  \date      Fri 30 Sep 2016 12:46:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -100,10 +100,10 @@ ExodusIIMeshReader::readHeader()
 // *****************************************************************************
 {
   char title[MAX_LINE_LENGTH+1];
-  int ndim, nel, nnodeset, nelemset, nnode, neblk;
+  int ndim, n, nnodeset, nelemset, nnode, neblk;
 
   ErrChk(
-    ex_get_init( m_inFile, title, &ndim, &nnode, &nel, &neblk, &nnodeset,
+    ex_get_init( m_inFile, title, &ndim, &nnode, &n, &neblk, &nnodeset,
                  &nelemset ) == 0,
     "Failed to read header from ExodusII file: " + m_filename );
 
@@ -197,11 +197,11 @@ ExodusIIMeshReader::readElemBlockIDs()
   // Fill element block ID vector
   for (auto id : eid) {
     char eltype[MAX_STR_LENGTH+1];
-    int nel, nnpe, nattr;
+    int n, nnpe, nattr;
 
     // Read element block information
     ErrChk(
-      ex_get_elem_block( m_inFile, id, eltype, &nel, &nnpe, &nattr ) == 0,
+      ex_get_elem_block( m_inFile, id, eltype, &n, &nnpe, &nattr ) == 0,
       "Failed to read element block information from ExodusII file: " +
       m_filename );
 
@@ -212,10 +212,10 @@ ExodusIIMeshReader::readElemBlockIDs()
     // number of elements per block mapped to tk::ExoElemType enum
     if (nnpe == 4) {        // tetrahedra
       m_eidt[ static_cast<std::size_t>(ExoElemType::TET) ] = id;
-      m_nel[ static_cast<std::size_t>(ExoElemType::TET) ] = nel;
+      m_nel[ static_cast<std::size_t>(ExoElemType::TET) ] = n;
     } else if (nnpe == 3) { // triangles
       m_eidt[ static_cast<std::size_t>(ExoElemType::TRI) ] = id;
-      m_nel[ static_cast<std::size_t>(ExoElemType::TRI) ] = nel;
+      m_nel[ static_cast<std::size_t>(ExoElemType::TRI) ] = n;
     }
   }
 
@@ -236,16 +236,16 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 
   for (auto id : m_eid) {
     char eltype[MAX_STR_LENGTH+1];
-    int nel, nnpe, nattr;
+    int nelem, nnpe, nattr;
 
     // Read element block information
     ErrChk(
-      ex_get_elem_block( m_inFile, id, eltype, &nel, &nnpe, &nattr ) == 0,
+      ex_get_elem_block( m_inFile, id, eltype, &nelem, &nnpe, &nattr ) == 0,
       "Failed to read element block information from ExodusII file: " +
       m_filename );
 
     // Read element connectivity
-    auto connectsize = static_cast< std::size_t >( nel*nnpe );
+    auto connectsize = static_cast< std::size_t >( nelem*nnpe );
     if (nnpe == 4) {    // tetrahedra
 
       mesh.tettag().resize( connectsize, { 1 } );

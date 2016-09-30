@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/HyperMeshReader.C
   \author    J. Bakosi
-  \date      Thu 05 May 2016 12:48:10 PM MDT
+  \date      Fri 30 Sep 2016 12:46:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hyper mesh reader class definition
   \details   Hyper mesh reader class definition. Only supports tetrahedra.
@@ -89,8 +89,8 @@ HyperMeshReader::readNodes( const std::string& filename, UnsMesh& mesh ) const
 // *****************************************************************************
 {
   // Read in node coordinates: x-coord y-coord z-coord
-  for (auto& line : tk::Reader(filename).lines()) {
-    std::stringstream ss(line);
+  for (auto& l : tk::Reader(filename).lines()) {
+    std::stringstream ss(l);
     int id;
     tk::real x, y, z;
     ss >> id >> x >> y >> z;
@@ -111,8 +111,8 @@ const
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  for (auto& line : tk::Reader(filename).lines()) {
-    std::stringstream ss(line);
+  for (auto& l : tk::Reader(filename).lines()) {
+    std::stringstream ss(l);
     int id;
     std::array< std::size_t, 4 > n;
     ss >> id >> n[0] >> n[1] >> n[2] >> n[3];

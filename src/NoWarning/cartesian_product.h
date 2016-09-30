@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/cartesian_product.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 06:58:15 AM MDT
+  \date      Fri 30 Sep 2016 12:38:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include cartesian_product.h with turning off specific compiler
              warnings
@@ -18,7 +18,6 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 03:09:51 PM MDT
+  \date      Fri 30 Sep 2016 12:37:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -86,15 +86,8 @@ struct Factory_common {
       assg = "mov";
       return *this;
     }
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
     //! Move constructor: could be default, but in terms of move assignment
     VBase( VBase&& x ) noexcept { *this = std::move(x); ctor = "mov"; }
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! Accessor to ctor type
     std::string ctortype() const { return ctor; }

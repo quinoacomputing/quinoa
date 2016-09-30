@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Thu 22 Sep 2016 04:02:43 PM MDT
+  \date      Fri 30 Sep 2016 12:49:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -49,7 +49,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //! \param[in] npar Number of particles will be contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void npar( std::size_t npar ) { m_npar += npar; }
+    void npar( std::size_t n ) { m_npar += n; }
 
     //! Receive, buffer, and write particle coordinates to file
     //! \param[in] x X coordinates of particles

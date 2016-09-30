@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/value_factory.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 06:59:58 AM MDT
+  \date      Fri 30 Sep 2016 12:40:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/functional/value_factory.hpp with turning off
              specific compiler warnings
@@ -17,7 +17,6 @@
   #pragma clang diagnostic ignored "-Wsign-conversion"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 

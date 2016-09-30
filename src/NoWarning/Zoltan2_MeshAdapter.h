@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 11:11:04 AM MDT
+  \date      Fri 30 Sep 2016 12:40:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -38,7 +38,6 @@
   #pragma clang diagnostic ignored "-Wundefined-var-template"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wfloat-equal"

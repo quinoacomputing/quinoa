@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:52:22 AM MDT
+  \date      Fri 30 Sep 2016 01:01:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -24,13 +24,13 @@ class MKLRNG {
 
   public:
     //! Constructor
-    //! \param[in] nthreads Initialize RNG using this many independent streams
+    //! \param[in] n Initialize RNG using this many independent streams
     //! \param[in] brng Index of the basic generator to initialize the stream
     //! \param[in] seed RNG seed
     //! \param[in] uniform_method MKL ID of the method to use for uniform RNGs
     //! \param[in] gaussian_method MKL ID of the method to use for Gaussian RNGs
     //! \param[in] beta_method MKL ID of the method to use for beta RNGs
-    explicit MKLRNG( int nthreads = 1,
+    explicit MKLRNG( int n = 1,
                      int brng = VSL_BRNG_MCG59,
                      unsigned int seed = 0,
                      int uniform_method = VSL_RNG_METHOD_UNIFORM_STD,
@@ -41,14 +41,14 @@ class MKLRNG {
       m_uniform_method( uniform_method ),
       m_gaussian_method( gaussian_method ),
       m_beta_method( beta_method ),
-      m_nthreads( nthreads ),
+      m_nthreads( n ),
       m_stream()
     {
-      Assert( nthreads > 0, "Need at least one thread" );
+      Assert( n > 0, "Need at least one thread" );
       Assert( brng > 0, "Basic RNG MKL parameter must be positive" );
       // Allocate array of stream-pointers for threads
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
-                   static_cast<std::size_t>(nthreads) );
+                   static_cast<std::size_t>(n) );
       // Initialize thread-streams for block-splitting. These MKL VSL functions
       // dynamically allocate memory, so these calls being in a constructor are
       // a potential memory leak hazard in the presence of exceptions. However,
@@ -56,13 +56,13 @@ class MKLRNG {
       // encounter errors and always continue. As a result, the constructor
       // finishes, the MKLRNG object gets created, so the destructor will also
       // get called when leaving scope.
-      if (nthreads == 1)
+      if (n == 1)
         errchk( vslNewStream( &m_stream[0], brng, seed ) );
       else
-        for (int i=0; i<nthreads; ++i) {
+        for (int i=0; i<n; ++i) {
           auto I = static_cast< std::size_t >( i );
           errchk( vslNewStream( &m_stream[I], brng, seed ) );
-          errchk( vslLeapfrogStream( m_stream[I], i, nthreads ) );
+          errchk( vslLeapfrogStream( m_stream[I], i, n ) );
         }
     }
 
@@ -132,15 +132,8 @@ class MKLRNG {
       return *this;
     }
 
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic push
-      #pragma GCC diagnostic ignored "-Weffc++"
-    #endif
     //! Copy constructor: in terms of copy assignment
     MKLRNG( const MKLRNG& x ) { operator=(x); }
-    #if defined(__GNUC__)
-      #pragma GCC diagnostic pop
-    #endif
 
     //! Move assignment
     MKLRNG& operator=( MKLRNG&& x ) {

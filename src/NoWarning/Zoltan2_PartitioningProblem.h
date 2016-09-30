@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
-  \date      Tue 31 May 2016 08:08:55 AM MDT
+  \date      Fri 30 Sep 2016 12:38:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
@@ -35,7 +35,6 @@
   #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wfloat-equal"

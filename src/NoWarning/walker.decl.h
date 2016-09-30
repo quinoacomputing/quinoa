@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/walker.decl.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 07:41:30 AM MDT
+  \date      Fri 30 Sep 2016 12:41:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include walker.decl.h with turning off specific compiler warnings
 */
@@ -42,7 +42,6 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wcast-qual"

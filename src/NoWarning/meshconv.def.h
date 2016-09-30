@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/meshconv.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:39:49 AM MDT
+  \date      Fri 30 Sep 2016 12:44:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include meshconv.def.h with turning off specific compiler
              warnings
@@ -20,7 +20,6 @@
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 

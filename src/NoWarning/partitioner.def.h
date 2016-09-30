@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/partitioner.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:32:28 AM MDT
+  \date      Fri 30 Sep 2016 12:43:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include partitioner.def.h with turning off specific compiler
              warnings
@@ -24,7 +24,6 @@
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 

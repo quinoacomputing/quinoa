@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/walker.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:59:26 AM MDT
+  \date      Fri 30 Sep 2016 12:39:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include walker.def.h with turning off specific compiler warnings
 */
@@ -20,7 +20,6 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
 #include "../Main/walker.def.h"
