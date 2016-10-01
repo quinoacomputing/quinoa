@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Mon 12 Sep 2016 08:56:59 AM MDT
+# \date      Sat 01 Oct 2016 08:51:23 AM MDT
 #
 ################################################################################
 
@@ -45,8 +45,8 @@ message("  TEXT_RESULT (text output file(s) diffed with good solution) : ${TEXT_
 message("  BIN_DIFF_PROG (diff tool used for binary diffs)             : ${BIN_DIFF_PROG}")
 message("  BIN_DIFF_PROG_ARGS (binary diff tool arguments)             : ${BIN_DIFF_PROG_ARGS}")
 message("  BIN_DIFF_PROG_CONF (binary diff tool configuration file)    : ${BIN_DIFF_PROG_CONF}")
-message("  BIN_BASELINE (binary output known good solution file)       : ${BIN_BASELINE}")
-message("  BIN_RESULT (binary output file diffed with good solution)   : ${BIN_RESULT}")
+message("  BIN_BASELINE (binary output known good solution file(s))    : ${BIN_BASELINE}")
+message("  BIN_RESULT (binary output file(s) diffed with good solution): ${BIN_RESULT}")
 
 # Remove previous test output (if any)
 if(TEXT_RESULT OR BIN_RESULT)
@@ -135,7 +135,8 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS BIN_BASELINE)
       list(GET BIN_RESULT ${b} result)
-      set(bin_diff_command ${BIN_DIFF_PROG} -f ${BIN_DIFF_PROG_CONF}
+      set(bin_diff_command ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
+                           -f ${BIN_DIFF_PROG_CONF}
                            ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
