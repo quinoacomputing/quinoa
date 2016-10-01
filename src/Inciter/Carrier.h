@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:36:23 PM MDT
+  \date      Sat 01 Oct 2016 06:44:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -48,19 +48,26 @@
                URL="\ref inciter::Carrier::comalw"];
       Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
             URL="\ref inciter::Carrier::verify"];
-      Lim [ label="Lim"
-            tooltip="compute and apply limited antidiffusive element
-                     contributions"
-            URL="\ref inciter::Carrier::lim"];
+      OwnLim [ label="OwnLim"
+               tooltip="compute limited antidiffusive element contributions"
+               URL="\ref inciter::Carrier::lim"];
+      ComLim [ label="ComLim"
+               tooltip="contributions to the limited antidiffusive element
+                        contributions communicated"
+               URL="\ref inciter::Carrier::comlim"];
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
               URL="\ref inciter::Carrier::limit"];
       OwnAEC -> Ver [ style="dashed" ];
       OwnALW -> Ver [ style="dashed" ];
-      OwnAEC -> Lim [ style="solid" ];
-      ComAEC -> Lim [ style="solid" ];
-      OwnALW -> Lim [ style="solid" ];
-      ComALW -> Lim [ style="solid" ];
+      OwnAEC -> OwnLim [ style="solid" ];
+      ComAEC -> OwnLim [ style="solid" ];
+      OwnALW -> OwnLim [ style="solid" ];
+      ComALW -> OwnLim [ style="solid" ];
+      OwnAEC -> ComLim [ style="solid" ];
+      ComAEC -> ComLim [ style="solid" ];
+      OwnALW -> ComLim [ style="solid" ];
+      ComALW -> ComLim [ style="solid" ];
       OwnLim -> Apply [ style="solid" ];
       ComLim -> Apply [ style="solid" ];
     }
