@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Mon 12 Sep 2016 08:55:27 AM MDT
+# \date      Sat 01 Oct 2016 08:46:19 AM MDT
 #
 ################################################################################
 
@@ -72,6 +72,8 @@
 #
 # BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
 #
+# BIN_DIFF_PROG_ARGS arg1 arg2 ... - Binary diff program arguments. Default: "".
+#
 # BIN_BASELINE stat1.std stat2.std ... - Binary file(s) containing the known
 # good solutions. If empty, no binary diff is performed. Default: "". Note
 # that the number of baseline filenames must equal the number of result files.
@@ -100,7 +102,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
                    BIN_DIFF_PROG_CONF POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
-                     BIN_RESULT LABELS POSTPROCESS_PROG_ARGS
+                     BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
                      TEXT_DIFF_PROG_ARGS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
@@ -184,6 +186,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_ARGS "${ARG_TEXT_DIFF_PROG_ARGS}")
   endif()
 
+  if(ARG_BIN_DIFF_PROG_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
+  endif()
+
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
   if (ARG_ARGS)
@@ -228,7 +236,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DTEXT_BASELINE=${ARG_TEXT_BASELINE}
            -DTEXT_RESULT=${ARG_TEXT_RESULT}
            -DBIN_DIFF_PROG=${BIN_DIFF_PROG}
-           -DBIN_DIFF_PROG_ARGS=
+           -DBIN_DIFF_PROG_ARGS=${ARG_BIN_DIFF_PROG_ARGS}
            -DBIN_DIFF_PROG_CONF=${ARG_BIN_DIFF_PROG_CONF}
            -DBIN_BASELINE=${ARG_BIN_BASELINE}
            -DBIN_RESULT=${ARG_BIN_RESULT}
@@ -246,6 +254,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   #  4 - pass regular expression for exodiff output
   #  5 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous")
+    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
+    FAIL_REGULAR_EXPRESSION "exodiff: ERROR")
 
 endfunction()
