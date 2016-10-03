@@ -46,37 +46,6 @@ add_regression_test(fct_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
-add_regression_test(fct_u0.5 ${INCITER_EXECUTABLE}
-                    NUMPES 4
-                    INPUTFILES slot_cyl.q unitcube_01_31k.exo exodiff.cfg
-                               slot_cyl_pe4_u0.5.std.exo.0
-                               slot_cyl_pe4_u0.5.std.exo.1
-                               slot_cyl_pe4_u0.5.std.exo.2
-                               slot_cyl_pe4_u0.5.std.exo.3
-                               slot_cyl_pe4_u0.5.std.exo.4
-                               slot_cyl_pe4_u0.5.std.exo.5
-                               slot_cyl_pe4_u0.5.std.exo.6
-                               slot_cyl_pe4_u0.5.std.exo.7
-                    ARGS -c slot_cyl.q -i unitcube_01_31k.exo -v -u 0.5
-                    BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
-                                 slot_cyl_pe4_u0.5.std.exo.1
-                                 slot_cyl_pe4_u0.5.std.exo.2
-                                 slot_cyl_pe4_u0.5.std.exo.3
-                                 slot_cyl_pe4_u0.5.std.exo.4
-                                 slot_cyl_pe4_u0.5.std.exo.5
-                                 slot_cyl_pe4_u0.5.std.exo.6
-                                 slot_cyl_pe4_u0.5.std.exo.7
-                    BIN_RESULT out.0
-                               out.1
-                               out.2
-                               out.3
-                               out.4
-                               out.5
-                               out.6
-                               out.7
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
-
 # Virtualization = 0.9
 
 add_regression_test(fct_u0.9 ${INCITER_EXECUTABLE}
