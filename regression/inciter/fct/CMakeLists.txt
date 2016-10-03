@@ -43,6 +43,7 @@ add_regression_test(fct_u0.5 ${INCITER_EXECUTABLE}
                                  slot_cyl_pe1_u0.5.std.exo.1
                     BIN_RESULT out.0
                                out.1
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
 add_regression_test(fct_u0.5 ${INCITER_EXECUTABLE}
@@ -73,6 +74,7 @@ add_regression_test(fct_u0.5 ${INCITER_EXECUTABLE}
                                out.5
                                out.6
                                out.7
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
 # Virtualization = 0.9
@@ -108,4 +110,5 @@ add_regression_test(fct_u0.9 ${INCITER_EXECUTABLE}
                                out.6
                                out.7
                                out.8
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
