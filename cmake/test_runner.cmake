@@ -143,7 +143,7 @@ else() # Test command ran successfully, attempt to do diffs
       execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
       # Check return value from binary diff command
       if(ERROR)
-        message(FATAL_ERROR "Binary diff failed to run: '${bin_diff_command_string}' returned error code: ${ERROR}")
+        message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")
       endif(ERROR)
       math(EXPR b "${b}+1")
     endforeach(baseline)
