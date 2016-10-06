@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 09:29:52 AM MDT
+  \date      Thu 06 Oct 2016 08:04:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -43,11 +43,11 @@ module carrier {
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
       entry void findpar( int fromch,
                           const std::vector< std::size_t >& miss,
-                          const tk::Particles& ps );
+                          const std::vector< std::vector< tk::real > >& ps );
       entry void foundpar( const std::vector< std::size_t >& found );
       entry void collectpar( int fromch,
                              const std::vector< std::size_t >& miss,
-                             const tk::Particles& ps );
+                             const std::vector< std::vector< tk::real > >& ps );
       entry void collectedpar( const std::vector< std::size_t >& found );
       entry void out();
       entry void doWriteParticles();

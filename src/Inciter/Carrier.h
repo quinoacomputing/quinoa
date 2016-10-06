@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Sat 01 Oct 2016 06:44:40 AM MDT
+  \date      Tue 04 Oct 2016 03:27:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -90,7 +90,7 @@
 
 #include "Types.h"
 #include "Fields.h"
-#include "Particles.h"
+#include "Tracker.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FieldsMerger.h"
@@ -119,6 +119,8 @@ class Carrier : public CBase_Carrier {
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
+    using Array = CBase_Carrier;
+
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -200,24 +202,30 @@ class Carrier : public CBase_Carrier {
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
-    //! Generates particles into mesh cells
-    void genpar();
-
     //! Find particles missing by the requestor and make those found ours
     void findpar( int fromch,
                   const std::vector< std::size_t >& miss,
-                  const tk::Particles& ps );
+                  const std::vector< std::vector< tk::real > >& ps )
+    { m_tracker.findpar( thisProxy, m_coord, m_inpoel, fromch, miss, ps ); }
 
     //! Receive particle indices found elsewhere (by fellow neighbors)
-    void foundpar( const std::vector< std::size_t >& found );
+    void foundpar( const std::vector< std::size_t >& found ) {
+      m_tracker.foundpar( m_transporter, thisProxy, m_msum, this, thisIndex,
+                          found );
+    }
 
-    //! Find particles missing by the requestor and make those found ours    
+    //! Find particles missing by the requestor and make those found ours
     void collectpar( int fromch,
                      const std::vector< std::size_t >& miss,
-                     const tk::Particles& ps );
+                     const std::vector< std::vector< tk::real > >& ps )
+    { m_tracker.collectpar( thisProxy, m_coord, m_inpoel, fromch, miss, ps ); }
 
     //! Collect particle indices found elsewhere (by far fellows)
-    void collectedpar( const std::vector< std::size_t >& found );
+    void collectedpar( const std::vector< std::size_t >& found )
+    { m_tracker.collectedpar( m_transporter, this, found, m_ncarr ); }
+
+    //! \brief Extract velocity at the four cell nodes of a mesh element
+    std::array< std::array< tk::real, 4 >, 3 > evel( std::size_t e );
 
     //! Output mesh and particle fields to files
     void out();
@@ -253,12 +261,10 @@ class Carrier : public CBase_Carrier {
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
-      p | m_nchpar;
       p | m_ncarr;
       p | m_outFilename;
       p | m_transporter;
       p | m_linsysmerger;
-      p | m_particlewriter;
       p | m_fluxcorrector;
       p | m_cid;
       p | m_el;
@@ -275,21 +281,18 @@ class Carrier : public CBase_Carrier {
       p | m_ulf;
       p | m_du;
       p | m_dul;
-      p | m_up;
       p | m_p;
       p | m_q;
       p | m_a;
       p | m_lhsd;
       p | m_lhso;
-      p | m_particles;
       p | m_msum;
       p | m_vol;
-      p | m_parmiss;
-      p | m_parelse;
       p | m_bid;
       p | m_pc;
       p | m_qc;
       p | m_ac;
+      p | m_tracker;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -311,6 +314,8 @@ class Carrier : public CBase_Carrier {
     uint64_t m_itf;
     //! Physical time
     tk::real m_t;
+    //! Physical time step size
+    tk::real m_dt;
     //! Stage in multi-stage time stepping
     uint8_t m_stage;
     //! Counter for high order solution nodes updated
@@ -326,8 +331,6 @@ class Carrier : public CBase_Carrier {
     //! \brief Number of chares from which we received limited antidiffusion
     //!   element contributiones on chare boundaries
     std::size_t m_nlim;
-    //! Number of chares we received particles from
-    std::size_t m_nchpar;
     //! Total number of carrier chares
     std::size_t m_ncarr;
     //! Output filename
@@ -362,17 +365,10 @@ class Carrier : public CBase_Carrier {
     FluxCorrector m_fluxcorrector;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
-    //! Elements surrounding points of elements of mesh chunk we operate on
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-      m_esupel;
     //! Unknown/solution vectors: global mesh point row ids and values
-    tk::Fields m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_up, m_p, m_q, m_a;
+    tk::Fields m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
-    //! Particle properties
-    tk::Particles m_particles;
-    //! Element ID in which a particle has last been found for all particles
-    std::vector< std::size_t > m_elp;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   Carrier chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -380,16 +376,14 @@ class Carrier : public CBase_Carrier {
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
     //! Volume of nodes of owned elements (sum of surrounding cell volumes / 4 )
     std::vector< tk::real > m_vol;
-    //! Indicies of particles not found here (missing)
-    std::set< std::size_t > m_parmiss;
-    //! Indicies of particles not found here but found by fellows
-    decltype(m_parmiss) m_parelse;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Receive buffers for FCT
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
+    //! Particle tracker
+    tk::Tracker m_tracker;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -410,7 +404,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( tk::real mult, tk::real dt, const tk::Fields& sol );
+    void rhs( tk::real mult, const tk::Fields& sol );
 
     //! Output chare element blocks to output file
     void writeMesh();

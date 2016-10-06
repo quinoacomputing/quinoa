@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestData.h
   \author    J. Bakosi
-  \date      Thu 29 Sep 2016 02:46:50 PM MDT
+  \date      Wed 05 Oct 2016 08:12:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Data.h
   \details   Unit tests for Base/Data.h
@@ -1529,6 +1529,85 @@ void Data_object::test< 32 >() {
   m = tk::maxdiff(f1,f2);
   ensure_equals( "<EqCompUnk>::maxdiff neq pos incorrect", m.first, 5, prec );
   ensure_equals( "<EqCompUnk>::maxdiff neq dif incorrect", m.second, 1.1,prec );
+}
+
+//! Test tk::Data::push_back()
+//! \author J. Bakosi
+template<> template<>
+void Data_object::test< 33 >() {
+  set_test_name( "push_back" );
+
+  // Test with UnkEqComp data layout
+  tk::Data< tk::UnkEqComp > p( 3, 2 );
+  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
+  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
+  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+
+  p.push_back( {0.2, 0.3} );
+
+  ensure_equals( "nunk after <UnkEqComp>::push_back() incorrect", p.nunk(), 4 );
+  ensure_equals( "nprop after <UnkEqComp>::push_back() incorrect",
+                 p.nprop(), 2 );
+
+  veceq( "<UnkEqComp>::push_back() at 0 incorrect",
+         std::vector< tk::real >{ 1.0, 2.0 }, p[0] );
+  veceq( "<UnkEqComp>::push_back() at 1 incorrect",
+         std::vector< tk::real >{ 3.0, 4.0 }, p[1] );
+  veceq( "<UnkEqComp>::push_back() at 2 incorrect",
+         std::vector< tk::real >{ 5.0, 6.0 }, p[2] );
+  veceq( "<UnkEqComp>::push_back() at 3 incorrect",
+         std::vector< tk::real >{ 0.2, 0.3 }, p[3] );
+
+  // tk::Data::push_back() unimplemented with EqCompUnk data layout
+}
+
+//! Test tk::Data::rm()
+//! \author J. Bakosi
+template<> template<>
+void Data_object::test< 34 >() {
+  set_test_name( "rm" );
+
+  // Test with UnkEqComp data layout with a single component
+  tk::Data< tk::UnkEqComp > p( 3, 1 );
+  p(0,0,0) = 1.0;
+  p(1,0,0) = 3.0;
+  p(2,0,0) = 5.0;
+
+  p.rm( { 0, 2 } );
+
+  ensure_equals( "nunk after <UnkEqComp>::rm(1prop) incorrect", p.nunk(), 1 );
+  ensure_equals( "nprop after <UnkEqComp>::rm(1prop) incorrect", p.nprop(), 1 );
+  veceq( "<UnkEqComp>::rm() incorrect", std::vector< tk::real >{ 3.0 }, p[0] );
+
+  // Test with UnkEqComp data layout with a multiple components removing a
+  // single unknown
+  tk::Data< tk::UnkEqComp > q( 3, 2 );
+  q(0,0,0) = 1.0;  q(0,1,0) = 2.0;
+  q(1,0,0) = 3.0;  q(1,1,0) = 4.0;
+  q(2,0,0) = 5.0;  q(2,1,0) = 6.0;
+
+  q.rm( { 1 } );
+
+  ensure_equals( "nunk after <UnkEqComp>::rm(2prop) incorrect", q.nunk(), 2 );
+  ensure_equals( "nprop after <UnkEqComp>::rm(2prop) incorrect", q.nprop(), 2 );
+  veceq( "<UnkEqComp>::rm() at 0 incorrect",
+         std::vector< tk::real >{ 1.0, 2.0 }, q[0] );
+  veceq( "<UnkEqComp>::rm() at 1 incorrect",
+         std::vector< tk::real >{ 5.0, 6.0 }, q[1] );
+
+  // Test with UnkEqComp data layout with a multiple components removing
+  // multiple unknowns
+  tk::Data< tk::UnkEqComp > r( 3, 2 );
+  r(0,0,0) = 1.0;  r(0,1,0) = 2.0;
+  r(1,0,0) = 3.0;  r(1,1,0) = 4.0;
+  r(2,0,0) = 5.0;  r(2,1,0) = 6.0;
+
+  r.rm( { 0, 2 } );
+
+  ensure_equals( "nunk after <UnkEqComp>::rm(2prop) incorrect", r.nunk(), 1 );
+  ensure_equals( "nprop after <UnkEqComp>::rm(2prop) incorrect", r.nprop(), 2 );
+  veceq( "<UnkEqComp>::rm() at 0 incorrect",
+         std::vector< tk::real >{ 3.0, 4.0 }, r[0] );
 }
 
 } // tut::

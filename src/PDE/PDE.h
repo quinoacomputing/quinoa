@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Fri 16 Sep 2016 12:31:23 PM MDT
+  \date      Mon 03 Oct 2016 02:12:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <array>
 
 #include "Types.h"
 #include "Make_unique.h"
@@ -97,7 +98,7 @@ class PDE {
     { self->rhs( mult, dt, coord, inpoel, U, R ); }
 
     //! Public interface for extracting the velocity field at cell nodes
-    std::vector< std::array< tk::real, 4 > >
+    std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
@@ -154,7 +155,7 @@ class PDE {
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual bool anydirbc( int ) const = 0;
-      virtual std::vector< std::array< tk::real, 4 > > velocity(
+      virtual std::array< std::array< tk::real, 4 >, 3 > velocity(
         const tk::Fields& U,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const = 0;
@@ -187,7 +188,7 @@ class PDE {
                 const tk::Fields& U,
                 tk::Fields& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, R ); }
-      std::vector< std::array< tk::real, 4 > > velocity(
+      std::array< std::array< tk::real, 4 >, 3 > velocity(
         const tk::Fields& U,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const override

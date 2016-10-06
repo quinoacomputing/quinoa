@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Poisson.h
   \author    J. Bakosi
-  \date      Fri 16 Sep 2016 12:41:03 PM MDT
+  \date      Mon 03 Oct 2016 02:17:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Poisson equation
   \details   This file implements the Poisson equation.
@@ -10,6 +10,9 @@
 // *****************************************************************************
 #ifndef Poisson_h
 #define Poisson_h
+
+#include <vector>
+#include <array>
 
 #include <cmath>
 
@@ -206,13 +209,13 @@ class Poisson {
 
     //! Return the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
-    std::vector< std::array< tk::real, 4 > >
+    std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields&,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >&) const
-    { return { {{0.0, 0.0, 0.0, 0.0}},
-               {{0.0, 0.0, 0.0, 0.0}},
-               {{0.0, 0.0, 0.0, 0.0}} }; }
+    { return {{ {{0.0, 0.0, 0.0, 0.0}},
+                {{0.0, 0.0, 0.0, 0.0}},
+                {{0.0, 0.0, 0.0, 0.0}} }}; }
 
     //! \brief Query if a Dirichlet boundary condition has set by the user on
     //!   a given side set for any component in the PDE system

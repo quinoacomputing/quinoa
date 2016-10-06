@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Fri 16 Sep 2016 12:40:25 PM MDT
+  \date      Mon 03 Oct 2016 02:09:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -249,12 +249,12 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the three velocity coordinates
-    std::vector< std::array< tk::real, 4 > >
+    std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& N ) const
     {
-      std::vector< std::array< tk::real, 4 > > v( 3 );
+      std::array< std::array< tk::real, 4 >, 3 > v;
       v[0] = U.extract( 1, m_offset, N );
       v[1] = U.extract( 2, m_offset, N );
       v[2] = U.extract( 3, m_offset, N );

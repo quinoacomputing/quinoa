@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlowPhysics.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 11:47:33 AM MDT
+  \date      Mon 03 Oct 2016 02:10:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for the compressible flow equations
   \details   This file defines policy classes for the compressible flow
@@ -23,6 +23,9 @@
 // *****************************************************************************
 #ifndef CompFlowPhysics_h
 #define CompFlowPhysics_h
+
+#include <vector>
+#include <array>
 
 #include <boost/mpl/vector.hpp>
 
