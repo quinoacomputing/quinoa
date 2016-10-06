@@ -110,6 +110,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       AsyncIO
                       Mesh
                       RNG
+                      Particles
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}

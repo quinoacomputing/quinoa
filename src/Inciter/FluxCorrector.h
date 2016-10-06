@@ -2,12 +2,11 @@
 /*!
   \file      src/Inciter/FluxCorrector.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 09:31:23 AM MDT
+  \date      Tue 04 Oct 2016 06:12:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
-  \details   FluxCorrector performs limiting for transport equations. There is a
-    FluxCorrector Charm++ array element bound to each Carrier array element..
-    Each FluxCorrector object performs the limiting procedure, according to a
+  \details   FluxCorrector performs limiting for transport equations. Each
+    FluxCorrector object performs the limiting procedure, according to a
     flux-corrected transport algorithm, on a chunk of the full load (part of the
     mesh).
 */
@@ -27,7 +26,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! FluxCorrector Charm++ chare array used to perform flux-corrected transport
+//! FluxCorrector is used to perform flux-corrected transport
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
@@ -79,6 +78,7 @@ class FluxCorrector {
 
     ///@{
     //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_aec;
     }

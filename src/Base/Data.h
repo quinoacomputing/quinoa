@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Data.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:50:26 PM MDT
+  \date      Wed 05 Oct 2016 06:39:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
@@ -363,32 +363,26 @@ class Data {
     Data< Layout > operator/ ( const Data< Layout >& rhs )
     const { return Data< Layout >( *this ) /= rhs; }
 
-    //! Add new unknown
+    //! Add new unknown at the end of the container
     //! \param[in] prop Vector of properties to initialize the new unknown with
     //! \author J. Bakosi
-    void add( const std::vector< tk::real >& prop ) {
-      Assert( prop.size() == m_nprop, "Incorrect number of properties" );
-      m_vec.resize( (m_nunk+1) * m_nprop );
-      ncomp_t u = m_nunk;
-      ++m_nunk;
-      for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
-    }
+    void push_back( const std::vector< tk::real >& prop )
+    { return push_back( prop, int2type< Layout >() ); }
 
     //! Remove a number of unknowns
     //! \param[in] unknown Set of indices of unknowns to remove
     //! \author J. Bakosi
     void rm( const std::set< ncomp_t >& unknown ) {
-
-      auto rem = [ &unknown ]( std::size_t i ) -> bool {
+      auto remove = [ &unknown ]( std::size_t i ) -> bool {
         if (unknown.find(i) != end(unknown)) return true;
         return false;
       };
-
       std::size_t last = 0;
       for(std::size_t i=0; i<m_nunk; ++i, ++last) {
-        while( rem(i) ) ++i;
+        while( remove(i) ) ++i;
         if (i >= m_nunk) break;
-        for (ncomp_t p = 0; p<m_nprop; ++p) m_vec[ last+p ] = m_vec[ i+p ];
+        for (ncomp_t p = 0; p<m_nprop; ++p)
+          m_vec[ last*m_nprop+p ] = m_vec[ i*m_nprop+p ];
       }
       m_vec.resize( last*m_nprop );
       m_nunk -= unknown.size();
@@ -522,6 +516,20 @@ class Data {
       Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
               "unknowns" );
       return *(pt + unknown);
+    }
+
+    //! Add new unknown
+    //! \param[in] prop Vector of properties to initialize the new unknown with
+    //! \note Only the UnkEqComp overload is provided as this operation would be
+    //!   too inefficient with the EqCompUnk data layout.
+    //! \author J. Bakosi
+    void push_back( const std::vector< tk::real >& prop, int2type< UnkEqComp > )
+    {
+      Assert( prop.size() == m_nprop, "Incorrect number of properties" );
+      m_vec.resize( (m_nunk+1) * m_nprop );
+      ncomp_t u = m_nunk;
+      ++m_nunk;
+      for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
     }
 
     // Overloads for the name-queries of data lauouts

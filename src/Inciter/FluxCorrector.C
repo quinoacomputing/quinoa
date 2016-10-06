@@ -2,12 +2,11 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  rdate      Mon 19 Sep 2016 04:17:43 PM MDT
+  \date      Mon 03 Oct 2016 11:39:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
-  \details   FluxCorrector performs limiting for transport equations. There is a
-    FluxCorrector Charm++ array element bound to each Carrier array element..
-    Each FluxCorrector object performs the limiting procedure, according to a
+  \details   FluxCorrector performs limiting for transport equations. Each
+    FluxCorrector object performs the limiting procedure, according to a
     flux-corrected transport algorithm, on a chunk of the full load (part of the
     mesh).
 */

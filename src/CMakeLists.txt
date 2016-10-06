@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 29 Jul 2016 11:34:06 AM MDT
+# \date      Mon 03 Oct 2016 11:36:16 AM MDT
 #
 ################################################################################
 
@@ -399,6 +399,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${QUINOA_SOURCE_DIR}/RNGTest
                     ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${HDF5_INCLUDE_DIRS}
@@ -432,6 +433,7 @@ add_subdirectory(Mesh)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
+add_subdirectory(Particles)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.
