@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 2.8.5)
+
+project(Particles CXX)
+
+add_library(Particles
+            Tracker.C
+)
+
+INSTALL(TARGETS Particles
+  	RUNTIME DESTINATION bin COMPONENT Runtime
+  	LIBRARY DESTINATION lib COMPONENT Runtime
+ 	ARCHIVE DESTINATION lib COMPONENT Development
+)
