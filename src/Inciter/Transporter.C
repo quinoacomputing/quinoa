@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Mon 03 Oct 2016 03:46:14 PM MDT
+  \date      Thu 06 Oct 2016 11:41:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -166,8 +166,8 @@ Transporter::Transporter() :
     // initializer list of Carrier::Carrier(). This is basically a punt to
     // enable skipping H5Part I/O. Particles are a highly experimental feature
     // at this point.
-    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, //"" );
-                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
+                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
