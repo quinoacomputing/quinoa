@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:20:54 PM MDT
+  \date      Tue 11 Oct 2016 01:00:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -34,7 +34,8 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier >;
+                                        inciter::CProxy_Carrier,
+                                        inciter::AuxSolverLumpMassDiff >;
 
 namespace inciter {
 
@@ -475,7 +476,7 @@ Carrier::lhs()
   // Compute lumped mass lhs required for the low order solution
   auto lump = m_fluxcorrector.lump( m_coord, m_inpoel );
   // Send off lumped mass lhs for assembly
-  m_linsysmerger.ckLocalBranch()->charelump( thisIndex, m_gid, lump );
+  m_linsysmerger.ckLocalBranch()->chareauxlhs( thisIndex, m_gid, lump );
 }
 
 void
@@ -514,7 +515,7 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, sol );
   // Send off mass diffusion rhs contribution for assembly
-  m_linsysmerger.ckLocalBranch()->charediff( thisIndex, m_gid, diff );
+  m_linsysmerger.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
 }
 
 void
@@ -912,8 +913,8 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::updateHighSol( const std::vector< std::size_t >& gid,
-                        const std::vector< tk::real >& du )
+Carrier::updateSol( const std::vector< std::size_t >& gid,
+                    const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update high order solution vector
 //! \param[in] gid Global row indices of the vector updated

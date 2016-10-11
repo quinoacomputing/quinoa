@@ -2,19 +2,48 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:59:17 PM MDT
+  \date      Tue 11 Oct 2016 01:56:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
-    assemble the left hand side matrix, the right hand side vector, and the
-    solution (unknown) vector from individual worker (e.g., Carrier) chares. The
-    solution is outsourced to hypre, an MPI-only library.
+    assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
+    and the solution (unknown) vector from individual worker (e.g., Carrier)
+    chares. Beside collection and assembly, the system is also solved. The
+    solution is outsourced to hypre, an MPI-only library. Once the solution is
+    available, the individual worker chares are updated with the new solution.
+
+    In the basic configuration this class assembles and solves a single linear
+    system, whose rhs vector may change during time stepping. In a more advanced
+    configuration, an additional, auxiliary, linear system can also be solved.
+    The basic configuration is configured by instantiating this class using the
+    AuxSolver = AuxSolverNull template argument, while the one that solves the
+    auxiliary system is configured by an AuxSolver class that provides a number
+    of member functions. For possible auxiliary solver classes, see, e.g.,
+    src/Inciter/AuxSolver.h.
+
+    When LinSysMerger is configured to solve an auxiliary solution beside its
+    primary solution, the class behind the AuxSolver template argument, must
+    have static member functions only, which may provide the necessary
+    functionality to collect, assemble, solve, and update an auxiliary linear
+    system. The requirements on the auxiliary linear system are: (1) the left
+    hand side matrix must be diagonal, (2) the right hand side vector is
+    (optionally) a combination of the primary right hand side vector and another
+    vector, assembled separately (and overlapped with the primary system). This
+    enables configuring the auxiliary system to be, e.g., the low order solution
+    as required by the flux-corrected transport algorithm used for transport
+    equations in inciter. However, it also enables entirely removing the
+    auxiliary solution from LinSysMerger, via inciter::AuxSolverNull. Tthe
+    Charm++ SDAG logic does not change depending on whether an auxiliary
+    solution is performed or not. The composition is done at compile time,
+    depending on how LinSysMerger is instantiated.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/LinSys/linsysmerger.ci.
+    discussed in the Charm++ interface file src/LinSys/linsysmerger.ci. Note
+    that the SDAG logic is the same regardless whether an auxiliary solution is
+    performed.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
@@ -64,25 +93,26 @@
       RhsBC [ label="RhsBC"
               tooltip="set boundary conditions on the right-hand side vector"
               URL="\ref tk::LinSysMerger::rhsbc"];
-      LumpBC [ label="LumpBC"
-              tooltip="set boundary conditions on the lumped mass left-hand side
-              matrix" URL="\ref tk::LinSysMerger::lumpbc"];
+      AuxBC [ label="AuxBC"
+              tooltip="set boundary conditions on the auxiliary linear solve
+                       left-hand side
+              matrix" URL="\ref tk::LinSysMerger::auxbc"];
       ChSol [ label="ChSol"
               tooltip="chares contribute their solution vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
               URL="\ref tk::LinSysMerger::charelhs"];
-      ChLump [ label="ChLump"
-              tooltip="chares contribute their lumped mass left hand side matrix"
-              URL="\ref tk::LinSysMerger::charelump"];
+      ChAuxLhs [ label="ChAuxLhs"
+              tooltip="chares contribute their auxiliary left hand side matrix"
+              URL="\ref tk::LinSysMerger::chareaux"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
-      ChDiff [ label="ChDiff"
-              tooltip="chares contribute their mass diffusion contribution to
-                       the right hand side vector"
-              URL="\ref tk::LinSysMerger::charediff"];
+      ChAuxRhs [ label="ChAuxRhs"
+              tooltip="chares contribute their contribution to the auxiliary
+                       right hand side vector"
+              URL="\ref tk::LinSysMerger::chareauxrhs"];
       HypreRow [ label="HypreRow"
               tooltip="convert global row ID vector to hypre format"
               URL="\ref tk::LinSysMerger::hyprerow"];
@@ -113,16 +143,16 @@
       AsmRhs [ label="AsmRhs"
               tooltip="assemble right hand side vector"
               URL="\ref tk::LinSysMerger::assemblerhs"];
-      Solve [ label="Solve" tooltip="solve high order linear system"
+      Solve [ label="Solve" tooltip="solve linear system"
               URL="\ref tk::LinSysMerger::solve"];
-      LowSolve [ label="LowSolve" tooltip="solve low order linear system"
-              URL="\ref tk::LinSysMerger::lowsolve"];
-      HighUpd [ label="HighUpd" tooltip="update high order solution"
+      AuxSolve [ label="AuxSolve" tooltip="solve auxiliary linear system"
+              URL="\ref tk::LinSysMerger::auxsolve"];
+      Upd [ label="Upd" tooltip="update solution"
                 color="#e6851c" style="filled"
-                URL="\ref tk::LinSysMerger::updateHighSol"];
-      LowUpd [ label="LowUpd" tooltip="update low order solution"
+                URL="\ref tk::LinSysMerger::updateSol"];
+      AuxUpd [ label="AuxUpd" tooltip="update auxiliary solution"
                color="#e6851c"style="filled"
-               URL="\ref tk::LinSysMerger::updateLowSol"];
+               URL="\ref tk::LinSysMerger::updateAuxSol"];
       ChRow -> RowComplete [ style="solid" ];
       ChBCs -> RowComplete Ver [ style="solid" ];
       RowComplete -> Init [ style="solid" ];
@@ -131,32 +161,32 @@
       Ver -> VerRow [ style="dashed" ];
       Ver -> VerBCs [ style="dashed" ];
       Ver -> QueryBCVal [ style="solid" ];
-      VerBCs -> HighUpd [ style="dashed" ];
-      VerBCs -> LowUpd [ style="dashed" ];
+      VerBCs -> Upd [ style="dashed" ];
+      VerBCs -> AuxUpd [ style="dashed" ];
       QueryBCVal -> LhsBC [ style="solid" ];
       QueryBCVal -> RhsBC [ style="solid" ];
-      QueryBCVal -> LumpBC [ style="solid" ];
+      QueryBCVal -> AuxBC [ style="solid" ];
       ChLhs -> LhsBC [ style="solid" ];
       ChRhs -> RhsBC [ style="solid" ];
-      ChLump -> LumpBC [ style="solid" ];
+      ChAuxLhs -> AuxBC [ style="solid" ];
       LhsBC -> HypreLhs [ style="solid" ];
       RhsBC -> HypreRhs [ style="solid" ];
-      LumpBC -> LowSolve [ style="solid" ];
-      ChRhs -> LowSolve [ style="solid" ];
-      ChDiff -> LowSolve [ style="solid" ];
+      AuxBC -> AuxSolve [ style="solid" ];
+      ChRhs -> AuxSolve [ style="solid" ];
+      ChAuxRhs -> AuxSolve [ style="solid" ];
       Init -> ChSol [ style="solid" ];
       Init -> ChLhs [ style="solid" ];
-      Init -> ChLump [ style="solid" ];
+      Init -> ChAuxLhs [ style="solid" ];
       Init -> ChRhs [ style="solid" ];
-      Init -> ChDiff [ style="solid" ];
+      Init -> ChAuxRhs [ style="solid" ];
       HypreRow -> FillSol [ style="solid" ];
       HypreRow -> FillLhs [ style="solid" ];
       HypreRow -> FillRhs [ style="solid" ];
       ChSol -> HypreSol -> FillSol -> AsmSol -> Solve [ style="solid" ];
       HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
       HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
-      Solve -> HighUpd [ style="solid" ];
-      LowSolve -> LowUpd [ style="solid" ];
+      Solve -> Upd [ style="solid" ];
+      AuxSolve -> AuxUpd [ style="solid" ];
     }
     \enddot
     \include LinSys/linsysmerger.ci
@@ -184,6 +214,7 @@
 #include "HypreSolver.h"
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
+#include "AuxSolver.h"
 
 #include "NoWarning/linsysmerger.decl.h"
 #include "NoWarning/transporter.decl.h"
@@ -207,8 +238,10 @@ extern CkReduction::reducerType BCValMerger;
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   linsysmerger.ci.
 //! \author J. Bakosi
-template< class HostProxy, class WorkerProxy  >
-class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
+template< class HostProxy, class WorkerProxy, class AuxSolver  >
+class LinSysMerger : public CBase_LinSysMerger< HostProxy,
+                                                WorkerProxy,
+                                                AuxSolver > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -234,7 +267,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   #endif
 
   private:
-    using Group = CBase_LinSysMerger< HostProxy, WorkerProxy >;
+    using Group = CBase_LinSysMerger< HostProxy, WorkerProxy, AuxSolver >;
+    using GroupIdx = CkIndex_LinSysMerger< HostProxy, WorkerProxy, AuxSolver >;
 
   public:
     //! Constructor
@@ -263,14 +297,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_solimport(),
       m_lhsimport(),
       m_rhsimport(),
-      m_diffimport(),
-      m_lumpimport(),
+      m_auxrhsimport(),
+      m_auxlhsimport(),
       m_row(),
       m_sol(),
       m_lhs(),
       m_rhs(),
-      m_diff(),
-      m_lump(),
+      m_auxrhs(),
+      m_auxlhs(),
       m_x(),
       m_A(),
       m_b(),
@@ -292,11 +326,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4row();
       wait4lhsbc();
       wait4rhsbc();
-      wait4lumpbc();
+      wait4auxbc();
       wait4sol();
       wait4lhs();
       wait4rhs();
-      wait4loworder();
+      wait4aux();
       wait4hypresol();
       wait4hyprelhs();
       wait4hyprerhs();
@@ -305,7 +339,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4fillrhs();
       wait4asm();
       wait4solve();
-      wait4lowsolve();
+      wait4auxsolve();
       #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
       ver_complete(); ver_complete();
       #endif
@@ -360,20 +394,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4hyprerhs();
       wait4fillrhs();
       wait4asm();
-      wait4loworder();
+      wait4aux();
       wait4solve();
-      wait4lowsolve();
+      wait4auxsolve();
       m_rhsimport.clear();
-      m_diffimport.clear();
+      m_auxrhsimport.clear();
       m_rhs.clear();
-      m_diff.clear();
+      m_auxrhs.clear();
       m_hypreRhs.clear();
       m_bcval.clear();
       hyprerow_complete();
       asmsol_complete();
       asmlhs_complete();
       ver_complete(); ver_complete();
-      lumpbc_complete();
+      auxbc_complete();
       signal2host_advance( m_host );
       querybcval();
     }
@@ -576,86 +610,55 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       if (rhscomplete()) { rhs_complete(); rhs_complete(); }
     }
 
-    //! Chares contribute their mass diffusion rhs to low order system
+    //! Chares contribute to the rhs of the auxiliary linear system
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] diff Portion of the mass diffusion rhs vector contributed
+    //! \param[in] auxrhs Portion of the auxiliary rhs vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charediff( int fromch,
-                    const std::vector< std::size_t >& gid,
-                    const Fields& diff )
+    void chareauxrhs( int fromch,
+                      const std::vector< std::size_t >& gid,
+                      const Fields& auxrhs )
     {
-      Assert( gid.size() == diff.nunk(),
-              "Size of mass diffusion rhs and row ID vectors must equal" );
-      // Store+add vector of nonzero values owned and pack those to be exported
-      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
-      for (std::size_t i=0; i<gid.size(); ++i)
-        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-          m_diffimport[ fromch ].push_back( gid[i] );
-          m_diff[ gid[i] ] += diff[i];
-        } else
-          exp[ pe(gid[i]) ][ gid[i] ] = diff[i];
-      // Export non-owned vector values to fellow branches that own them
-      for (const auto& p : exp) {
-        auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].adddiff( fromch, p.second );
-      }
-      if (diffcomplete()) diff_complete();
+      AuxSolver::chareauxrhs( Group::thisProxy, this, m_lower, m_upper, fromch,
+                              gid, auxrhs, m_auxrhsimport, m_auxrhs );
+      if (auxrhscomplete()) auxrhs_complete();
     }
-    //! Receive+add massdiffusion rhs vector nonzeros from fellow group branches
+    //! Receive+add auxiliary rhs vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] diff Portion of the right-hand side vector contributed,
+    //! \param[in] auxrhs Portion of the auxiliary rhs vector contributed,
     //!   containing global row indices and values
-    void adddiff( int fromch, const std::map< std::size_t,
-                                std::vector< tk::real > >& diff )
+    void addauxrhs( int fromch, const std::map< std::size_t,
+                                   std::vector< tk::real > >& auxrhs )
     {
-      for (const auto& r : diff) {
-        m_diffimport[ fromch ].push_back( r.first );
-        m_diff[ r.first ] += r.second;
-      }
-      if (diffcomplete()) diff_complete();
+      AuxSolver::addauxrhs( fromch, auxrhs, m_auxrhsimport, m_auxrhs );
+      if (auxrhscomplete()) auxrhs_complete();
     }
 
-    //! Chares contribute their lumped mass lhs to low order system
-    //! \param[in] fromch Charm chare array index contribution coming from
+    //! Chares contribute to the lhs of the auxiliary linear system
+    //! \param[in] fromch Charm chare array the contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] mass Portion of the lumped mass lhs vector contributed
+    //! \param[in] auxlhs Portion of the auxiliary lhs vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charelump( int fromch,
-                    const std::vector< std::size_t >& gid,
-                    const Fields& mass )
+    void chareauxlhs( int fromch,
+                      const std::vector< std::size_t >& gid,
+                      const Fields& auxlhs )
     {
-      Assert( gid.size() == mass.nunk(),
-              "Size of mass diffusion rhs and row ID vectors must equal" );
-      // Store+add vector of nonzero values owned and pack those to be exported
-      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
-      for (std::size_t i=0; i<gid.size(); ++i)
-        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
-          m_lumpimport[ fromch ].push_back( gid[i] );
-          m_lump[ gid[i] ] += mass[i];
-        } else
-          exp[ pe(gid[i]) ][ gid[i] ] = mass[i];
-      // Export non-owned vector values to fellow branches that own them
-      for (const auto& p : exp) {
-        auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].addlump( fromch, p.second );
-      }
-      if (lumpcomplete()) lump_complete();
+      AuxSolver::chareauxlhs( Group::thisProxy, this, m_lower, m_upper, fromch,
+                              gid, auxlhs, m_auxlhsimport, m_auxlhs );
+      if (auxlhscomplete()) auxlhs_complete();
     }
-    //! Receive+add lumped mass lhs vector from fellow group branches
+    //! \brief Receive and add lhs vector to the auxiliary system from fellow
+    //!   group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] mass Portion of the lumped mass lhs vector contributed,
-    //!   containing global row indices and values
-    void addlump( int fromch, const std::map< std::size_t,
-                                std::vector< tk::real > >& mass )
+    //! \param[in] auxlhs Portion of the lhs vector contributed to the auxiliary
+    //!   linear system, containing global row indices and values
+    void addauxlhs( int fromch, const std::map< std::size_t,
+                                  std::vector< tk::real > >& auxlhs )
     {
-      for (const auto& r : mass) {
-        m_lumpimport[ fromch ].push_back( r.first );
-        m_lump[ r.first ] += r.second;
-      }
-      if (lumpcomplete()) lump_complete();
+      AuxSolver::addauxlhs( fromch, auxlhs, m_auxlhsimport, m_auxlhs );
+      if (auxlhscomplete()) auxlhs_complete();
     }
 
     //! Assert that all global row indices have been received on my PE
@@ -701,8 +704,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Forward all bcs received to fellow branches
       if (++m_nchbc == m_nchare) {
         auto stream = tk::serialize( m_bc );
-        CkCallback cb( CkIndex_LinSysMerger< HostProxy, WorkerProxy >::
-                         addbc(nullptr), Group::thisProxy );
+        CkCallback cb( GroupIdx::addbc(nullptr), Group::thisProxy );
         Group::contribute( stream.first, stream.second.get(), BCMapMerger, cb );
       }
     }
@@ -791,6 +793,38 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       }
     }
 
+    //! Check if our portion of the right-hand side vector values is complete
+    //! \return True if all parts of the right-hand side vector have been
+    //!   received
+    bool rhscomplete() const { return m_rhsimport == m_rowimport; }
+    //! Check if our portion of the auxiliary rhs vector values is complete
+    //! \return True if all parts of the auxiliary rhs vector have been received
+    bool auxrhscomplete() const { return m_auxrhsimport == m_rowimport; }
+    //! Check if our portion of the auxiliary lhs vector values is complete
+    //! \return True if all parts of the auxiliary lhs vector have been received
+    bool auxlhscomplete() const { return m_auxlhsimport == m_rowimport; }
+
+    //! Return processing element for global mesh row id
+    //! \param[in] gid Global mesh point (matrix or vector row) id
+    //! \details First we attempt to the point index in the cache. If that
+    //!   fails, we resort to a linear search across the division map. Once the
+    //!   PE is found, we store it in the cache, so next time the search is
+    //!   quicker. This procedure must find the PE for the id.
+    //! \return PE that owns global row id
+    int pe( std::size_t gid ) {
+      int p = -1;
+      auto it = m_pe.find( gid );
+      if (it != end(m_pe))
+        p = it->second;
+      else
+        for (const auto& d : m_div)
+          if (gid >= d.first.first && gid < d.first.second)
+            p = m_pe[ gid ] = d.second;
+      Assert( p >= 0, "PE not found for node id " + std::to_string(gid) );
+      Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
+      return p;
+    }
+
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
@@ -819,11 +853,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   id during the communication of the righ-hand side vector
     std::map< int, std::vector< std::size_t > > m_rhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the mass diffusion rhs vector
-    std::map< int, std::vector< std::size_t > > m_diffimport;
+    //!   id during the communication of the auxiliary rhs vector
+    std::map< int, std::vector< std::size_t > > m_auxrhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the lumped mass lhs vector
-    std::map< int, std::vector< std::size_t > > m_lumpimport;
+    //!   id during the communication of the auxiliary lhs vector
+    std::map< int, std::vector< std::size_t > > m_auxlhsimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my PE
@@ -839,16 +873,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids
     std::map< std::size_t, std::vector< tk::real > > m_rhs;
-    //! \brief Part of mass diffusion right-hand side vector owned by my PE
+    //! \brief Part of auxiliary right-hand side vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row ids. This vector collects the mass diffusion
-    //!   terms to be added to the right-hand side for the low order solution.
-    std::map< std::size_t, std::vector< tk::real > > m_diff;
-    //! \brief Part of lumped mass left-hand side vector owned by my PE
+    //!   to global mesh point row ids. This vector collects the rhs
+    //!   terms to be combined with the rhs to produce the auxiliary rhs.
+    std::map< std::size_t, std::vector< tk::real > > m_auxrhs;
+    //! \brief Part of the auxiliary system left-hand side vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the nonzero values
-    //!   of the lumped mass matrix for the low order solution.
-    std::map< std::size_t, std::vector< tk::real > > m_lump;
+    //!   of the auxiliary system lhs "matrix" solution.
+    std::map< std::size_t, std::vector< tk::real > > m_auxlhs;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -896,27 +930,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bcval;
 
-    //! Return processing element for global mesh row id
-    //! \param[in] gid Global mesh point (matrix or vector row) id
-    //! \details First we attempt to the point index in the cache. If that
-    //!   fails, we resort to a linear search across the division map. Once the
-    //!   PE is found, we store it in the cache, so next time the search is
-    //!   quicker. This procedure must find the PE for the id.
-    //! \return PE that owns global row id
-    int pe( std::size_t gid ) {
-      int p = -1;
-      auto it = m_pe.find( gid );
-      if (it != end(m_pe))
-        p = it->second;
-      else
-        for (const auto& d : m_div)
-          if (gid >= d.first.first && gid < d.first.second)
-            p = m_pe[ gid ] = d.second;
-      Assert( p >= 0, "PE not found for node id " + std::to_string(gid) );
-      Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
-      return p;
-    }
-
     //! Check if we have done our part in storing and exporting global row ids
     //! \details This does not mean the global row ids on our PE is complete
     //!   (which is tested by an assert in rowsreceived), only that we have done
@@ -944,18 +957,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \return True if all parts of the left-hand side matrix have been
     //!   received
     bool lhscomplete() const { return m_lhsimport == m_rowimport; }
-    //! Check if our portion of the right-hand side vector values is complete
-    //! \return True if all parts of the right-hand side vector have been
-    //!   received
-    bool rhscomplete() const { return m_rhsimport == m_rowimport; }
-    //! Check if our portion of the mass diffusion rhs vector values is complete
-    //! \return True if all parts of the mass diffusion rhs vector have been
-    //!   received
-    bool diffcomplete() const { return m_diffimport == m_rowimport; }
-    //! Check if our portion of the lumped mass lhs vector values is complete
-    //! \return True if all parts of the lumped mass lhs vector have been
-    //!   received
-    bool lumpcomplete() const { return m_lumpimport == m_rowimport; }
 
     //! Verify if the BCs we will set match the user's BCs
     //! \details This is only the first step: we send out queries to workers
@@ -1021,8 +1022,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Export BC node IDs and values to all other PEs so that all of the
       // distributed matrix columns can be zeroed on all PEs where BCs are set
       auto stream = tk::serialize( m_bcval );
-      CkCallback c( CkIndex_LinSysMerger< HostProxy, WorkerProxy >::
-                      bcval(nullptr), Group::thisProxy );
+      CkCallback c( GroupIdx::bcval(nullptr), Group::thisProxy );
       Group::contribute( stream.first, stream.second.get(), BCValMerger, c );
     }
 
@@ -1040,19 +1040,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       rhsbc_complete();
     }
 
-    //! Set boundary conditions on the lumped mass left-hand side matrix
+    //! Set boundary conditions on the auxiliary system left-hand side matrix
     //! \details We put 1.0 in the diagonal and we are done.
-    void lumpbc() {
-      Assert( lumpcomplete(),
-              "Values of distributed lumped mass lhs vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
-      for (const auto& n : m_bcval) {
-        auto& row = tk::ref_find( m_lump, n.first );
-        auto& b = n.second;
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first) row[i] = 1.0; // put 1.0 in diagonal
-      }
-      lumpbc_complete();
+    void auxbc() {
+      AuxSolver::auxbc( this, m_ncomp, m_bcval, m_auxlhs );
+      auxbc_complete();
     }
 
     //! Build Hypre data for our portion of the solution vector
@@ -1144,8 +1136,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       asmrhs_complete();
     }
 
-    //! Update high order solution vector in our PE's workers
-    void updateHighSol() {
+    //! Update solution vector in our PE's workers
+    void updateSol() {
       // Get solution vector values for our PE
       m_x.get( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
@@ -1168,94 +1160,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                         std::next( begin(m_hypreSol), e ) );
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
-                   " to export in high order solution vector" );
+                   " to export in solution vector" );
         }
-        m_worker[ w.first ].updateHighSol( gid, solution );
+        m_worker[ w.first ].updateSol( gid, solution );
       }
     }
 
-    //! Solve high order linear system
+    //! Solve linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
       solve_complete();
     }
 
-    //! Test if all keys of two maps are equal
-    //! \param[in] a 1st map to compare
-    //! \param[in] b 2nd map to compare
-    //! \return True if the maps have the same size and all keys (and only the
-    //!   keys) of the two maps are equal
-    //! \note It is an error to call this function with unequal-size maps,
-    //!   triggering an exception in DEBUG mode.
-    //! \note Operator != is used to compare the map keys.
-    template< typename Key >
-    bool keyEqual( const std::map< Key, std::vector< tk::real > >& a,
-                   const std::map< Key, std::vector< tk::real > >& b ) const
-    {
-      Assert( a.size() == b.size(), "Size mismatch comparing maps" );
-      auto ia = a.cbegin();
-      auto ib = b.cbegin();
-      while (ia != a.cend()) {
-        if (ia->first != ib->first) return false;
-        ++ia;
-        ++ib;
-      }
-      return true;
+    //! Update auxiliary solution vector in our PE's workers
+    void updateAuxSol() {
+      AuxSolver::update( m_worker, m_solimport, m_auxrhs );
     }
 
-    //! Update low order solution vector in our PE's workers
-    void updateLowSol() {
-      // Group solution vector by workers and send each the parts back to
-      // workers that own them
-      for (const auto& w : m_solimport) {
-        std::vector< std::size_t > gid;
-        std::vector< tk::real > solution;
-        for (auto r : w.second) {
-          const auto it = m_diff.find( r );
-          if (it != end(m_diff)) {
-            gid.push_back( it->first );
-            solution.insert(end(solution), begin(it->second), end(it->second));
-          } else
-            Throw( "Can't find global row id " + std::to_string(r) +
-                   " to export in low order solution vector" );
-        }
-        m_worker[ w.first ].updateLowSol( gid, solution );
-      }
-    }
-
-    //! Solve low order linear system
-    void lowsolve() {
-      Assert( rhscomplete(),
-              "Values of distributed right-hand-side vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
-              "order system" );
-      Assert( diffcomplete(),
-              "Values of distributed mass diffusion rhs vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
-              "order system" );
-      Assert( lumpcomplete(),
-              "Values of distributed lumped mass lhs vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
-              "order system" );
-      Assert( keyEqual( m_rhs, m_diff ), "Row IDs of rhs and mass diffusion "
-              "rhs vector unequal on PE " + std::to_string( CkMyPe() ) + ": "
-              "cannot solve low order system" );
-      Assert( keyEqual( m_rhs, m_lump ), "Row IDs of rhs and lumped mass lhs "
-              "vector unequal on PE " + std::to_string( CkMyPe() ) + ": cannot "
-              "solve low order system" );
-      auto ir = m_rhs.cbegin();
-      auto id = m_diff.begin();
-      auto im = m_lump.cbegin();
-      while (ir != m_rhs.cend()) {
-        const auto& r = ir->second;
-        const auto& m = im->second;
-        auto& d = id->second;
-        Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,
-                "Wrong number of components in solving the low order system" );
-        for (std::size_t i=0; i<m_ncomp; ++i) d[i] = (r[i]+d[i])/m[i];
-        ++ir; ++id; ++im;
-      }
-      lowsolve_complete();
+    //! Solve auxiliary linear system
+    void auxsolve() {
+      AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );
+      auxsolve_complete();
     }
 
     #if defined(__clang__)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Particles/Tracker.h
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 08:20:00 AM MDT
+  \date      Thu 06 Oct 2016 04:18:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on
@@ -85,7 +85,7 @@ class Tracker {
     }
 
     //! Advance particle based on velocity from mesh cell
-    //! \param[in] array Charm++ array object pointer of the holds class
+    //! \param[in] array Charm++ array object pointer of the holder class
     //! \param[in] i Particle index
     //! \param[in] e Mesh element index where the particle currently resides
     //! \param[in] dt Time step size

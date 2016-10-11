@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:19:44 PM MDT
+  \date      Thu 06 Oct 2016 12:52:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -191,7 +191,8 @@ class Transporter : public CBase_Transporter {
 
   private:
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Carrier >;
+                                                       CProxy_Carrier,
+                                                       AuxSolverLumpMassDiff >;
     using CarrierProxy = CProxy_Carrier;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,

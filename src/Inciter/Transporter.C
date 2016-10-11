@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 11:41:12 AM MDT
+  \date      Thu 06 Oct 2016 12:54:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -35,7 +35,8 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier >;
+                                        inciter::CProxy_Carrier,
+                                        inciter::AuxSolverLumpMassDiff >;
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
@@ -44,7 +45,8 @@ extern template class
     inciter::CProxy_Transporter,
     inciter::CProxy_Carrier,
     tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                             inciter::CProxy_Carrier >,
+                             inciter::CProxy_Carrier,
+                             inciter::AuxSolverLumpMassDiff >,
     tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 extern CProxy_Main mainProxy;
