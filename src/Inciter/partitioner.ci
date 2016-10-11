@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 10:49:27 AM MDT
+  \date      Thu 06 Oct 2016 12:51:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -20,7 +20,8 @@ module partitioner {
     chare Partitioner< CProxy_Transporter,
                        CProxy_Carrier,
                        tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                CProxy_Carrier >,
+                                                CProxy_Carrier,
+                                                AuxSolverLumpMassDiff >,
                        tk::CProxy_ParticleWriter< CProxy_Transporter > >;
 
     template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,

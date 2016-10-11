@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 04 Oct 2016 03:27:14 PM MDT
+  \date      Tue 11 Oct 2016 01:01:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -115,7 +115,8 @@ class Carrier : public CBase_Carrier {
   private:
     using TransporterProxy = CProxy_Transporter;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Carrier >;
+                                                       CProxy_Carrier,
+                                                       AuxSolverLumpMassDiff >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
@@ -192,8 +193,8 @@ class Carrier : public CBase_Carrier {
     void init( tk::real dt );
 
     //! Update high order solution vector
-    void updateHighSol( const std::vector< std::size_t >& gid,
-                        const std::vector< tk::real >& sol );
+    void updateSol( const std::vector< std::size_t >& gid,
+                    const std::vector< tk::real >& sol );
 
     //! Update low order solution vector
     void updateLowSol( const std::vector< std::size_t >& gid,

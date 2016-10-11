@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Wed 02 Mar 2016 08:12:36 AM MST
+  \date      Thu 06 Oct 2016 12:49:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -125,6 +125,30 @@ operator+=( std::vector< T, Allocator >& dst,
   std::transform( src.begin(), src.end(), dst.begin(), dst.begin(),
                   []( const T& s, T& d ){ return d += s; } );
   return dst;
+}
+
+// *****************************************************************************
+//! Test if all keys of two associative containers are equal
+//! \param[in] a 1st container to compare
+//! \param[in] b 2nd container to compare
+//! \return True if the containers have the same size and all keys (and only the
+//!   keys) of the two containers are equal
+//! \note It is an error to call this function with unequal-size containers,
+//!   triggering an exception in DEBUG mode.
+//! \note Operator != is used to compare the container keys.
+//! \author J. Bakosi
+// *****************************************************************************
+template< class Container >
+bool keyEqual( const Container& a, const Container& b ) {
+  Assert( a.size() == b.size(), "Size mismatch comparing containers" );
+  auto ia = a.cbegin();
+  auto ib = b.cbegin();
+  while (ia != a.cend()) {
+    if (ia->first != ib->first) return false;
+    ++ia;
+    ++ib;
+  }
+  return true;
 }
 
 } // tk::

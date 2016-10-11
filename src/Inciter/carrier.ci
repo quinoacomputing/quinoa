@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 08:04:09 AM MDT
+  \date      Tue 11 Oct 2016 01:04:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -16,6 +16,7 @@ module carrier {
   extern module particlewriter;
 
   include "Particles.h";
+  include "AuxSolver.h";
 
   namespace inciter {
 
@@ -23,7 +24,8 @@ module carrier {
       entry
         Carrier( const CProxy_Transporter& transporter,
                  const tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                CProxy_Carrier >& lsm,
+                                                CProxy_Carrier,
+                                                AuxSolverLumpMassDiff >& lsm,
                  const tk::CProxy_ParticleWriter< CProxy_Transporter >& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid,
@@ -36,8 +38,8 @@ module carrier {
       entry void oldID( int frompe, const std::vector< std::size_t >& newids );
       entry void bcval( int frompe, const std::vector< std::size_t >& nodes );
       entry void init( tk::real dt );
-      entry void updateHighSol( const std::vector< std::size_t >& gid,
-                                const std::vector< tk::real >& sol );
+      entry void updateSol( const std::vector< std::size_t >& gid,
+                            const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:04:21 AM MDT
+  \date      Tue 11 Oct 2016 02:06:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
@@ -232,6 +232,34 @@ void ContainerUtil_object::test< 5 >() {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
+}
+
+//! Test keyEqual()
+//! \author J. Bakosi
+template<> template<>
+void ContainerUtil_object::test< 6 >() {
+  set_test_name( "keyEqual" );
+
+  // test if throws in DEBUG to warn on unequal-size containers
+  try {
+    std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0} };
+    tk::keyEqual( r1, r2 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  // Test if keys are equal
+  std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0}, {2,3.0} };
+  ensure_equals( "keys are not equal", tk::keyEqual(r1,r2), true );
+  
+  // Test if keys are unequal
+  std::map< int, tk::real > q1{ {3,4.0}, {2,2.0} }, q2{ {1,4.0}, {2,3.0} };
+  ensure_equals( "keys are equal", tk::keyEqual(q1,q2), false );
 }
 
 } // tut::
