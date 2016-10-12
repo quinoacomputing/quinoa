@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Wed 03 Aug 2016 05:55:48 AM MDT
+# \date      Wed 12 Oct 2016 09:28:58 AM MDT
 #
 ################################################################################
 
@@ -185,18 +185,14 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5_include_dirs_flags "${HDF5_INCLUDE_DIRS}")
   string(REGEX REPLACE "([^;]+)" "CPPFLAGS=-I\\1" hdf5_include_dirs_flags
          "${hdf5_include_dirs_flags}")
-  set(hdf5_library_dirs_flags "${HDF5_LIBRARY_DIRS}")
+  set(hdf5_library_dirs "${HDF5_LIBRARIES}")
+  list(GET HDF5_LIBRARIES 0 hdf5_root)  # get the first item of cmake list
+  get_filename_component(hdf5_root_last ${hdf5_root} NAME)
+  get_filename_component(hdf5_root ${hdf5_root} DIRECTORY )
+  set(hdf5_library_dirs_flags "${hdf5_root}")
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
-  set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
-  list(GET HDF5_LIBRARY_DIRS 0 hdf5_root)  # get the first item of cmake list
-  get_filename_component(hdf5_root_last ${hdf5_root} NAME)
-  if ("${hdf5_root_last}" MATCHES "lib")
-    get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/lib"
-  endif()
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(hdf5_library_dirs_flags "LDFLAGS=-L${hdf5_root}/lib")
-  endif()
+  set(hdf5_library_dirs_flags "${hdf5_library_dirs_flags}/lib")
 else()
   message(STATUS "HDF5 either not found, not parallel, or NO_SYSTEM_HDF5=true: will build")
   set(hdf5 "hdf5")
