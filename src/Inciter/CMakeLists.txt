@@ -43,6 +43,11 @@ add_dependencies( "Inciter" "particlewriterCharmModule" )
 # generated before Carrier including those.
 add_dependencies( "carrierCharmModule" "particlewriterCharmModule" )
 
+# Add extra dependency of Transporter charm module on Partitioner charm module.
+# This is required so that Partitioner.decl.h and Partitioner.def.h are
+# generated before Transporter including those.
+add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
+
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
