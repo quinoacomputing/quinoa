@@ -475,11 +475,12 @@ Carrier::dt()
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  if (std::abs(const_dt - def_const_dt) > eps) {        // use constant dt
+  // use constant dt if configured
+  if (std::abs(const_dt - def_const_dt) > eps) {
 
     mindt = const_dt;
 
-  } else if (m_stage == 1) {      // compute dt based on CFL only in final stage
+  } else {      // compute dt based on CFL
 
     const auto& x = m_coord[0];
     const auto& y = m_coord[1];
