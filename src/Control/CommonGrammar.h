@@ -95,6 +95,8 @@ namespace grm {
     WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
+    NODT,               //!< No time-step-size policy selected
+    MULDT,              //!< Multiple time-step-size policies selected
     NOSAMPLES,          //!< PDF need a variable
     INVALIDSAMPLESPACE, //!< PDF sample space specification incorrect
     MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
@@ -154,6 +156,14 @@ namespace grm {
     { MsgKey::NORNG, "The random number generator has not been specified in "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'rng' to specify the random number generator." },
+    { MsgKey::NODT, "No time step calculation policy has been selected in the "
+      "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
+       "adaptive time step size calculation policy." },
+    { MsgKey::MULDT, "Multiple time step calculation policies has been "
+      "selected in the preceeding block. Use either keyword 'dt' to set a "
+      "constant or 'cfl' to set an adaptive time step size calculation policy. "
+      "Setting 'cfl' and 'dt' are mutually exclusive. If both 'cfl' and 'dt' "
+      "are set, 'dt' wins." },
     { MsgKey::NOINIT, "No initialization policy has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'init' to specify an initialization policy." },

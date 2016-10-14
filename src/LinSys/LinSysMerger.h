@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 01:56:41 PM MDT
+  \date      Wed 12 Oct 2016 03:51:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -408,7 +408,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       asmlhs_complete();
       ver_complete(); ver_complete();
       auxbc_complete();
-      signal2host_advance( m_host );
+      signal2host_computedt( m_host );
       querybcval();
     }
 
@@ -1251,10 +1251,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
     //! \brief Signal back to host that enabling the SDAG waits for assembling
     //!    the right-hand side is complete and ready for a new advance in time
-    void signal2host_advance( const inciter::CProxy_Transporter& host ) {
+    void signal2host_computedt( const inciter::CProxy_Transporter& host ) {
       using inciter::CkIndex_Transporter;
       Group::contribute(
-       CkCallback( CkIndex_Transporter::redn_wrapper_advance(NULL), host ) );
+       CkCallback( CkIndex_Transporter::redn_wrapper_computedt(NULL), host ) );
     }
     //! \brief Signal back to host that receiving the inverse PE-division map is
     //!  complete and we are ready for Prformers to start their setup.

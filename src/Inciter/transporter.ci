@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:18:50 PM MDT
+  \date      Wed 12 Oct 2016 03:52:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -23,6 +23,7 @@ module transporter {
       entry [reductiontarget] void msumcomplete();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void verifybc( CkReductionMsg* msg );
@@ -33,7 +34,7 @@ module transporter {
       entry [reductiontarget] void diagnostics( tk::real d[n], std::size_t n );
       entry [reductiontarget] void diagcomplete();
       entry [reductiontarget] void outcomplete();
-      entry [reductiontarget] void advance();
+      entry [reductiontarget] void computedt();
       entry [reductiontarget] void finish();
       entry [reductiontarget] void verified();
 
@@ -100,7 +101,7 @@ module transporter {
 
       entry void wait4init() {
         when row_complete() serial "init" {
-          m_carrier.init( m_dt ); } };
+          m_carrier.init(); } };
 
       entry void wait4parcom() {
         when parcom_complete() serial "recvpar" {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 12:52:09 PM MDT
+  \date      Thu 13 Oct 2016 12:43:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -148,6 +148,10 @@ class Transporter : public CBase_Transporter {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! \brief Reduction target yielding a single minimum time step size across
+    //!   all workers
+    void dt( tk::real* d, std::size_t n );
+
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );
 
@@ -181,7 +185,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that the linear system mergers are
     //!   ready for the next time step
-    void advance();
+    void computedt() { m_carrier.dt(); }
 
     //! Normal finish of time stepping
     void finish();
@@ -223,9 +227,6 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_linsysbc;
     //! Diagnostics
     std::vector< tk::real > m_diag;
-
-    //! Compute size of next time step
-    tk::real computedt();
 
     //! Print out time integration header
     void header();

@@ -190,7 +190,7 @@ class Carrier : public CBase_Carrier {
     void bcval( int frompe, const std::vector< std::size_t >& nodes );
 
     //! Initialize communication and mesh data
-    void init( tk::real dt );
+    void init();
 
     //! Update high order solution vector
     void updateSol( const std::vector< std::size_t >& gid,
@@ -202,6 +202,9 @@ class Carrier : public CBase_Carrier {
 
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+
+    //! Compute time step size
+    void dt();
 
     //! Find particles missing by the requestor and make those found ours
     void findpar( int fromch,

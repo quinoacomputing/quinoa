@@ -37,12 +37,13 @@ module carrier {
       entry void requestBCs();
       entry void oldID( int frompe, const std::vector< std::size_t >& newids );
       entry void bcval( int frompe, const std::vector< std::size_t >& nodes );
-      entry void init( tk::real dt );
+      entry void init();
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+      entry void dt();
       entry void findpar( int fromch,
                           const std::vector< std::size_t >& miss,
                           const std::vector< std::vector< tk::real > >& ps );

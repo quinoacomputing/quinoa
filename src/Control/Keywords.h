@@ -1452,10 +1452,11 @@ using t0 = keyword< t0_info, t,'0' >;
 struct dt_info {
   static std::string name() { return "dt"; }
   static std::string shortDescription() { return
-    "Select (initial) time step size"; }
+    "Select constant time step size"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the time step size. For a variable-dt
-    simulation this is the initial time step size.)";
+    R"(This keyword is used to specify the time step size that used as a
+    constant during simulation. Setting 'cfl' and 'dt' are mutually
+    exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)";
   }
   struct expect {
     using type = tk::real;
@@ -1464,6 +1465,23 @@ struct dt_info {
   };
 };
 using dt = keyword< dt_info, d,t >;
+
+struct cfl_info {
+  static std::string name() { return "CFL"; }
+  static std::string shortDescription() { return
+    "Set the Courant-Friedrichs-Lewy (CFL) coefficient"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the CFL coefficient for
+    variable-time-step-size simulations. Setting 'cfl' and 'dt' are mutually
+    exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using cfl = keyword< cfl_info, c,f,l >;
 
 struct ncomp_info {
   static std::string name() { return "ncomp"; }

@@ -105,6 +105,7 @@ class InputDeck :
                                        kw::pde_p0,
                                        kw::laplace,
                                        kw::ctau,
+                                       kw::cfl,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
@@ -118,7 +119,8 @@ class InputDeck :
       set< tag::discr, tag::term >
          ( std::numeric_limits< kw::term::info::expect::type >::max() );
       set< tag::discr, tag::t0 >( 0.0 );
-      set< tag::discr, tag::dt >( 0.5 );
+      set< tag::discr, tag::dt >( 0.0 );
+      set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
