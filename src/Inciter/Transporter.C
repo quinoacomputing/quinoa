@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Fri 14 Oct 2016 08:03:29 AM MDT
+  \date      Fri 14 Oct 2016 08:23:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -107,15 +107,15 @@ Transporter::Transporter() :
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto dt = g_inputdeck.get< tag::discr, tag::dt >();
+  const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
 
-  if (std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
+  if (std::abs(constdt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
         std::numeric_limits< tk::real >::epsilon())
-    m_print.item( "Constant time step size", dt );
+    m_print.item( "Constant time step size", constdt );
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
@@ -127,9 +127,9 @@ Transporter::Transporter() :
   // termination time is larger than the initial time, and the constant time
   // step size (if that is used) is smaller than the duration of the time to be
   // simulated, we have work to do, otherwise, finish right away. If a constant
-  // dt is not used, that part of the logic is always true as the default dt is
-  // zero, see inciter::ctr::InputDeck::InputDeck().
-  if ( nstep != 0 && term > t0 && dt < term-t0 ) {
+  // dt is not used, that part of the logic is always true as the default
+  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
+  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
     wait4setup();
