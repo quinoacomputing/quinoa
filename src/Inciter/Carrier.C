@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 01:00:54 PM MDT
+  \date      Thu 13 Oct 2016 10:07:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -16,6 +16,7 @@
 #include <cmath>
 #include <array>
 #include <set>
+#include <algorithm>
 
 #include "Carrier.h"
 #include "LinSysMerger.h"
@@ -40,6 +41,7 @@ extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
 
 //! \brief Charm++ reducers used by Carrier
@@ -68,7 +70,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_dt( 0 ),
+  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_stage( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -430,7 +432,7 @@ Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
 }
 
 void
-Carrier::init( tk::real dt )
+Carrier::init()
 // *****************************************************************************
 // Initialize linear system
 //! \author J. Bakosi
@@ -445,6 +447,9 @@ Carrier::init( tk::real dt )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
 
+  // Compute initial time step size
+  dt();
+
   // Output initial conditions to file (time = 0.0)
   writeFields( 0.0 );
 
@@ -455,8 +460,73 @@ Carrier::init( tk::real dt )
 
   // Compute left-hand side of PDE
   lhs();
-  // Start advancing PDE in time at time step stage 0
-  advance( 0, dt, m_it, m_t );
+}
+
+void
+Carrier::dt()
+// *****************************************************************************
+// Start computing minimum time step size
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  tk::real mindt = std::numeric_limits< tk::real >::max();
+
+  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
+  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  if (std::abs(const_dt - def_const_dt) > eps) {        // use constant dt
+
+    mindt = const_dt;
+
+  } else if (m_stage == 1) {      // compute dt based on CFL only in final stage
+
+    const auto& x = m_coord[0];
+    const auto& y = m_coord[1];
+    const auto& z = m_coord[2];
+
+    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+      // Find largest of element nodal velocities
+      auto ev = evel( e );
+      const auto& evx = ev[0], evy = ev[1], evz = ev[2];
+      const std::array< tk::real, 4 > vel = {{
+        std::sqrt(evx[0]*evx[0] + evy[0]*evy[0] + evz[0]*evz[0]),
+        std::sqrt(evx[1]*evx[1] + evy[1]*evy[1] + evz[1]*evz[1]),
+        std::sqrt(evx[2]*evx[2] + evy[2]*evy[2] + evz[2]*evz[2]),
+        std::sqrt(evx[3]*evx[3] + evy[3]*evy[3] + evz[3]*evz[3]) }};
+      auto maxvel = *std::max_element( begin(vel), end(vel) );
+
+      if (maxvel < std::numeric_limits<tk::real>::epsilon()) maxvel = 1.0;
+
+      // Compute smallest edge length
+      const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
+                                             m_inpoel[e*4+2], m_inpoel[e*4+3] }};
+      const std::array< std::array< tk::real, 3 >, 6 > evec = {{
+        {{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+        {{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+        {{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }},
+        {{ x[N[2]]-x[N[1]], y[N[2]]-y[N[1]], z[N[2]]-z[N[1]] }},
+        {{ x[N[3]]-x[N[1]], y[N[3]]-y[N[1]], z[N[3]]-z[N[1]] }},
+        {{ x[N[3]]-x[N[2]], y[N[3]]-y[N[2]], z[N[3]]-z[N[2]] }} }};
+      const std::array< tk::real, 6 > edge = {{
+        std::sqrt( tk::dot( evec[0], evec[0] ) ),
+        std::sqrt( tk::dot( evec[1], evec[1] ) ),
+        std::sqrt( tk::dot( evec[2], evec[2] ) ),
+        std::sqrt( tk::dot( evec[3], evec[3] ) ),
+        std::sqrt( tk::dot( evec[4], evec[4] ) ),
+        std::sqrt( tk::dot( evec[5], evec[5] ) ) }};
+      auto minedge = *std::min_element( begin(edge), end(edge) );
+
+      // Find smallest dt
+      tk::real dt = g_inputdeck.get< tag::discr, tag::cfl >() * minedge / maxvel;
+      if (dt < mindt) mindt = dt;
+    }
+
+  }
+
+  // Contribute to mindt across all Carrier chares
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+    CkCallback(CkReductionTarget(Transporter,dt), m_transporter) );
 }
 
 void

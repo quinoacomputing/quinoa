@@ -14,6 +14,9 @@
 #ifndef InciterInputDeckGrammar_h
 #define InciterInputDeckGrammar_h
 
+#include <limits>
+#include <cmath>
+
 #include "CommonGrammar.h"
 #include "PEGTLParsed.h"
 #include "Keywords.h"
@@ -171,6 +174,29 @@ namespace deck {
     }
   };
 
+  //! \brief Do error checking on setting the time step calculation policy
+  //! \author J. Bakosi
+  struct check_dt : pegtl::action_base< check_dt > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Error out if no dt policy has been selected
+      const auto& dt = stack.get< tag::discr, tag::dt >();
+      const auto& cfl = stack.get< tag::discr, tag::cfl >();
+      if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) <
+            std::numeric_limits< tk::real >::epsilon() &&
+          std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) <
+            std::numeric_limits< tk::real >::epsilon() )
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODT >
+                        ( stack, value );
+      // If both dt and cfl are given, warn that dt wins over cfl
+      if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
+            std::numeric_limits< tk::real >::epsilon() &&
+          std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
+            std::numeric_limits< tk::real >::epsilon() )
+        tk::grm::Message< Stack, tk::grm::WARNING, tk::grm::MsgKey::MULDT >
+                        ( stack, value );
+    }
+  };
+
   // Inciter's InputDeck grammar
 
   //! scan and store_back equation keyword and option
@@ -199,6 +225,7 @@ namespace deck {
                      tk::grm::discr< Stack, use< kw::term >, tag::term >,
                      tk::grm::discr< Stack, use< kw::t0 >, tag::t0 >,
                      tk::grm::discr< Stack, use< kw::dt >, tag::dt >,
+                     tk::grm::discr< Stack, use< kw::cfl >, tag::cfl >,
                      tk::grm::discr< Stack, use< kw::ctau >, tag::ctau >,
                      tk::grm::interval< Stack, use< kw::ttyi >, tag::tty > > {};
 
@@ -390,16 +417,17 @@ namespace deck {
   struct inciter :
          pegtl::ifmust<
            tk::grm::readkw< Stack, use< kw::inciter >::pegtl_string >,
-           pegtl::sor< tk::grm::block< Stack,
-                         use< kw::end >,
-                         discretization_parameters,
-                         equations,
-                         partitioning,
-                         plotvar,
-                         tk::grm::diagnostics< Stack, use, store_option > >,
-                       pegtl::apply<
-                          tk::grm::error< Stack,
-                                          tk::grm::MsgKey::UNFINISHED > > > > {};
+           pegtl::sor<
+             pegtl::seq< tk::grm::block< Stack,
+                           use< kw::end >,
+                           discretization_parameters,
+                           equations,
+                           partitioning,
+                           plotvar,
+                           tk::grm::diagnostics< Stack, use, store_option > >,
+                         pegtl::apply< check_dt > >,
+             pegtl::apply<
+               tk::grm::error< Stack, tk::grm::MsgKey::UNFINISHED > > > > {};
 
   //! \brief All keywords
   //! \author J. Bakosi

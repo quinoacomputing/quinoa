@@ -65,6 +65,7 @@ struct nstep {};
 struct term {};
 struct t0 {};
 struct dt {};
+struct cfl {};
 struct ctau {};
 struct npar {};
 struct part {};

@@ -42,3 +42,4 @@ add_subdirectory(meshconv/exo_output)
 # Inciter regression tests
 add_subdirectory(inciter/asynclogic)
 add_subdirectory(inciter/fct)
+add_subdirectory(inciter/cfl)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 12:54:05 PM MDT
+  \date      Fri 14 Oct 2016 08:03:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -18,6 +18,8 @@
 #include <iostream>
 #include <cstddef>
 #include <unordered_set>
+#include <limits>
+#include <cmath>
 
 #include "Macro.h"
 #include "Transporter.h"
@@ -50,6 +52,7 @@ extern template class
     tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 extern CProxy_Main mainProxy;
+extern inciter::ctr::InputDeck g_inputdeck_defaults;
 
 using inciter::Transporter;
 
@@ -59,7 +62,7 @@ Transporter::Transporter() :
   m_nchare( 0 ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_dt( computedt() ),
+  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_stage( 0 ),
   m_linsysmerger(),
   m_carrier(),
@@ -105,17 +108,27 @@ Transporter::Transporter() :
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto dt = g_inputdeck.get< tag::discr, tag::dt >();
+  const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
-  m_print.item( "Initial time step size", dt );
+
+  if (std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
+        std::numeric_limits< tk::real >::epsilon())
+    m_print.item( "Constant time step size", dt );
+  else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
+             std::numeric_limits< tk::real >::epsilon())
+    m_print.item( "CFL coefficient", cfl );
+
   m_print.item( "Mass diffusion coeff",
                 g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
-  // termination time is larger than the initial time, and the initial time step
-  // is smaller than the duration of the time to be simulated, we have work to
-  // do, otherwise, finish right away
+  // termination time is larger than the initial time, and the constant time
+  // step size (if that is used) is smaller than the duration of the time to be
+  // simulated, we have work to do, otherwise, finish right away. If a constant
+  // dt is not used, that part of the logic is always true as the default dt is
+  // zero, see inciter::ctr::InputDeck::InputDeck().
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
@@ -394,32 +407,30 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
 }
 
 void
-Transporter::advance()
+Transporter::dt( tk::real* d, std::size_t n )
 // *****************************************************************************
-//  Reduction target indicating that all Carrier chares have finished their
-//  initialization step
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // If not final stage, continue with next stage, increasing the stage. If
-  // final stage, continue with next time step zeroing stage and using new time
-  // step size.
-  if (m_stage < 1)
-    m_carrier.advance( ++m_stage, m_dt, m_it, m_t );
-  else
-    m_carrier.advance( m_stage=0, m_dt=computedt(), m_it, m_t );
-}
-
-tk::real
-Transporter::computedt()
-// *****************************************************************************
-// Compute size of next time step
-//! \return Size of dt for the next time step
+// Reduction target yielding a single minimum time step size across all workers
+//! \param[in] d Minimum time step size collected over all chares
+//! \param[in] n Size of data behind d
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Simply return the constant user-defined initial dt for now
-  return g_inputdeck.get< tag::discr, tag::dt >();
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == 1, "Size of min(dt) must be 1" );
+
+  if (m_stage == 1) {
+    // Use newly computed time step size
+    m_dt = *d;
+    // Truncate the size of last time step
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    if (m_t+m_dt > term) m_dt = term - m_t;;
+  }
+
+  // Advance to next time step stage
+  m_carrier.advance( m_stage, m_dt, m_it, m_t );
 }
 
 void
@@ -473,14 +484,17 @@ Transporter::evaluateTime()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
 
-  // if at final stage of time step, finish time step just taken
-  if (m_stage == 1) {
+  if (m_stage < 1) {    // if at half-stage, simply go to next one
+
+    ++m_stage;
+
+  } else {      // if final stage of time step, finish time step just taken
+
+    m_stage = 0;
     // Increase number of iterations taken
     ++m_it;
     // Advance physical time to include time step just finished
     m_t += m_dt;
-    // Truncate the size of last time step
-    if (m_t > term) m_t = term;
 
     bool diag = false;
 
@@ -527,6 +541,10 @@ Transporter::evaluateTime()
     }
   }
 
+  wait4parcom();
+  wait4npar();
+  wait4eval();
+
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
   // elements to prepare for a new rhs), otherwise finish
@@ -534,10 +552,6 @@ Transporter::evaluateTime()
     m_linsysmerger.enable_wait4rhs();
   else
     finish();
-
-  wait4parcom();
-  wait4npar();
-  wait4eval();
 }
 
 #include "NoWarning/transporter.def.h"
