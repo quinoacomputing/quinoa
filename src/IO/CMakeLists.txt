@@ -34,6 +34,11 @@ add_library(AsyncIO
 
 addCharmModule( "particlewriter" "AsyncIO" )
 
+# Add extra dependency of AsyncIO on Transporter charm module. This is required
+# so that transporter.decl.h and transporter.def.h are generated before AsyncIO
+# including those.
+add_dependencies( "AsyncIO" "transporterCharmModule" )
+
 INSTALL(TARGETS AsyncIO
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
