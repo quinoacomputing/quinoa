@@ -201,7 +201,7 @@ class Carrier : public CBase_Carrier {
                        const std::vector< tk::real >& sol );
 
     //! Advance equations to next stage in multi-stage time stepping
-    void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+    void advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t );
 
     //! Compute time step size
     void dt();

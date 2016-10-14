@@ -42,7 +42,8 @@ module carrier {
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
-      entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+      entry void
+        advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t );
       entry void dt();
       entry void findpar( int fromch,
                           const std::vector< std::size_t >& miss,
