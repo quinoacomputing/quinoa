@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Thu 13 Oct 2016 07:57:18 AM MDT
+# \date      Fri 14 Oct 2016 07:27:05 AM MDT
 #
 ################################################################################
 
@@ -193,7 +193,7 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs_flags "${hdf5_library_dirs_flags}/lib")
-  if ("${hdf5_root}" MATCHES "lib")
+  if ("${hdf5_root}" MATCHES "lib$")
     get_filename_component(hdf5_root ${hdf5_root} DIRECTORY) # strip "/lib"
   endif()
 else()
