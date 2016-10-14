@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Wed 12 Oct 2016 03:51:26 PM MDT
+  \date      Fri 14 Oct 2016 12:24:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -330,7 +330,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       wait4sol();
       wait4lhs();
       wait4rhs();
-      wait4aux();
       wait4hypresol();
       wait4hyprelhs();
       wait4hyprerhs();
@@ -338,6 +337,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       wait4filllhs();
       wait4fillrhs();
       wait4asm();
+      wait4aux();
       wait4solve();
       wait4auxsolve();
       #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
@@ -757,7 +757,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 
     //! \brief Receive BC node/row IDs and values from all other PEs and zero
     //!   the distributed matrix columns at which BCs are set
-    void bcval( CkReductionMsg* msg ) {
+    void comlhsbc( CkReductionMsg* msg ) {
       std::unordered_map< std::size_t,
                           std::vector< std::pair< bool, tk::real > > > bcvalues;
       PUP::fromMem creator( msg->getData() );
@@ -1005,7 +1005,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! Set boundary conditions on the left-hand side matrix
     //! \details Here we only zero the row and put 1.0 in the diagonal, zeroing
     //!   the column requires communication among all fellow PEs and is done at
-    //!   the receiving side in bcval().
+    //!   the receiving side in comlhsbc().
     void lhsbc() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
@@ -1021,9 +1021,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       }
       // Export BC node IDs and values to all other PEs so that all of the
       // distributed matrix columns can be zeroed on all PEs where BCs are set
-      auto stream = tk::serialize( m_bcval );
-      CkCallback c( GroupIdx::bcval(nullptr), Group::thisProxy );
-      Group::contribute( stream.first, stream.second.get(), BCValMerger, c );
+      if (m_bcval.empty())
+        lhsbc_complete();
+      else {
+        auto stream = tk::serialize( m_bcval );
+        CkCallback c( GroupIdx::comlhsbc(nullptr), Group::thisProxy );
+        Group::contribute( stream.first, stream.second.get(), BCValMerger, c );
+      }
     }
 
     //! Set boundary conditions on the right-hand side vector
