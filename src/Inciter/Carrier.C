@@ -518,8 +518,9 @@ Carrier::dt()
       auto minedge = *std::min_element( begin(edge), end(edge) );
 
       // Find smallest dt
-      tk::real dt = g_inputdeck.get< tag::discr, tag::cfl >() * minedge / maxvel;
-      if (dt < mindt) mindt = dt;
+      tk::real celldt =
+        g_inputdeck.get< tag::discr, tag::cfl >() * minedge / maxvel;
+      if (celldt < mindt) mindt = celldt;
     }
 
   }
@@ -895,11 +896,11 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
+Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
 // *****************************************************************************
 // Advance equations to next stage in multi-stage time stepping
 //! \param[in] stage Stage in multi-stage time stepping
-//! \param[in] dt Size of time step
+//! \param[in] newdt Size of this new time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
 //! \author J. Bakosi
@@ -909,7 +910,7 @@ Carrier::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
   // iteration count
   m_stage = stage;
   m_t = t;
-  m_dt = dt;
+  m_dt = newdt;
   m_it = it;
 
   // Activate SDAG-waits
