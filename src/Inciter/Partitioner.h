@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:08:01 PM MDT
+  \date      Mon 17 Oct 2016 11:29:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -331,7 +331,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             }
           if (u.empty()) m_communication.erase( c->first );
         }
-        // Count up total number of nodes we will need receive durin reordering
+        // Count up total number of nodes we will need receive during reordering
         std::size_t nrecv = 0;
         for (const auto& u : m_communication) nrecv += u.second.size();
         // Start computing PE offsets for node reordering
