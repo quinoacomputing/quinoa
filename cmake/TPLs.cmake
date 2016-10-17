@@ -4,12 +4,12 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Thu 28 Jul 2016 07:06:53 AM MDT
+# \date      Mon 17 Oct 2016 08:55:51 AM MDT
 #
 ################################################################################
 
-# Add TPL_DIR/include to modules directory for TPLs that provide cmake
-# FIND_PACKAGE code, such as Trilinos
+# Add TPL_DIR to modules directory for TPLs that provide cmake FIND_PACKAGE
+# code, such as Trilinos
 SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 
 # Include support for multiarch path names
@@ -84,10 +84,6 @@ endif()
 find_package(SEACASExodus REQUIRED)
 if(SEACASExodus_FOUND)
   message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARY_DIRS}")
-endif()
-find_package(SEACASNemesis REQUIRED)
-if(SEACASNemesis_FOUND)
-  message(STATUS "Found SEACASNemesis: ${SEACASNemesis_LIBRARY_DIRS}")
 endif()
 find_package(SEACASExodiff REQUIRED)
 if(SEACASExodiff_FOUND)

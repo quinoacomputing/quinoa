@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 14 Oct 2016 07:27:05 AM MDT
+# \date      Mon 17 Oct 2016 08:55:47 AM MDT
 #
 ################################################################################
 
@@ -511,7 +511,6 @@ ExternalProject_Add(
              -D Zoltan2_ENABLE_Experimental:BOOL=ON
              -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
              -D Trilinos_ENABLE_Fortran=OFF
              -D Trilinos_ENABLE_DEBUG=OFF

@@ -45,7 +45,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
                       ${PUGIXML_LIBRARIES}
-                      ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -112,7 +111,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       RNG
                       Particles
                       ${PUGIXML_LIBRARIES}
-                      ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
@@ -228,7 +226,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       MeshConvControl
                       Base
                       ${PUGIXML_LIBRARIES}
-                      ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
@@ -288,7 +285,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       WalkerControl
                       Base
                       ${PUGIXML_LIBRARIES}
-                      ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
