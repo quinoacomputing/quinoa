@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 10:01:52 AM MDT
+  \date      Tue 18 Oct 2016 01:17:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -139,7 +139,7 @@ class Transporter : public CBase_Transporter {
     void stdCost( tk::real c );
 
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.setup(); }
+    void setup() { m_carrier.vol(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -147,7 +147,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
-    void volcomplete() { vol_complete(); }
+    void volcomplete() { m_carrier.setup(); }
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers
@@ -164,11 +164,11 @@ class Transporter : public CBase_Transporter {
     void initcomplete();
 
     //! Reduction target indicating the particle communication is complete
-    void parcomcomplete() { parcom_complete(); }
+    void parcomcomplete() { m_carrier.out(); }
 
     //! \brief Reduction target indicating that all workers have sent their
     //!   number of particles to be output
-    void nparcomplete() { npar_complete(); }
+    void nparcomplete() { m_carrier.doWriteParticles(); }
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
