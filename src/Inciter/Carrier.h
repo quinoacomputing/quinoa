@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 01:01:08 PM MDT
+  \date      Tue 18 Oct 2016 10:35:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -93,7 +93,6 @@
 #include "Tracker.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
-#include "FieldsMerger.h"
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -107,7 +106,6 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType VerifyBCMerger;
-extern CkReduction::reducerType FieldsMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
 class Carrier : public CBase_Carrier {
@@ -150,6 +148,8 @@ class Carrier : public CBase_Carrier {
                const LinSysMergerProxy& lsm,
                const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
+               const std::unordered_map< int,
+                       std::vector< std::size_t > >& msum,
                const std::unordered_map< std::size_t, std::size_t >& cid,
                int ncarr );
 
@@ -165,19 +165,13 @@ class Carrier : public CBase_Carrier {
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
-      FieldsMerger = CkReduction::addReducer( mergeFields< comm_t > );
     }
 
-    //! \brief Starts collecting global mesh node IDs bordering the mesh chunk
-    //!   held by fellow Carrier chares associated to their chare IDs
-    void comm();
+    //! Collect nodal volumes across chare boundaries
+    void vol( const std::vector< std::size_t >& gid,
+              const std::vector< tk::real >& V );
 
-    //! \brief Reduction target finishing collecting global mesh node IDs
-    //!   bordering the mesh chunk held by fellow Carrier chares associated to
-    //!   their chare IDs
-    void msum( CkReductionMsg* msg );
-
-    //! Initialize mesh IDs, element connectivity, coordinates
+    //! Setup rows, boundary conditions, output initial field data, etc.
     void setup();
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
@@ -259,6 +253,7 @@ class Carrier : public CBase_Carrier {
       p | m_it;
       p | m_itf;
       p | m_t;
+      p | m_nvol;
       p | m_stage;
       p | m_nhsol;
       p | m_nlsol;
@@ -308,10 +303,6 @@ class Carrier : public CBase_Carrier {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Type of the data structure communicated to neighbors
-    using comm_t = std::tuple< std::vector< std::size_t >,
-                               std::vector< tk::real > >;
-
     //! Iteration count
     uint64_t m_it;
     //! Field output iteration count
@@ -322,6 +313,9 @@ class Carrier : public CBase_Carrier {
     tk::real m_dt;
     //! Stage in multi-stage time stepping
     uint8_t m_stage;
+    //! \brief Number of chares from which we received nodal volume
+    //!   contributions on chare boundaries
+    std::size_t m_nvol;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
@@ -388,9 +382,6 @@ class Carrier : public CBase_Carrier {
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
     //! Particle tracker
     tk::Tracker m_tracker;
-
-    //! Send off global row IDs to linear system merger, setup global->local IDs
-    void setupIds();
 
     //! Extract node IDs from element side sets and match to BCs
     std::vector< std::size_t > queryBCs();

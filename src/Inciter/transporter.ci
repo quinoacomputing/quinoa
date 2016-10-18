@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Wed 12 Oct 2016 03:52:33 PM MDT
+  \date      Tue 18 Oct 2016 10:00:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -20,9 +20,9 @@ module transporter {
       entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void partition();
       entry [reductiontarget] void flattened();
-      entry [reductiontarget] void msumcomplete();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void volcomplete();
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
@@ -47,15 +47,14 @@ module transporter {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //                                   DAG legend:
-      //  Row  -- Init                       Row  - linear system rows complete
-      //                                     Msum - mesh surrounding mesh
-      //  Msum -- Setup                      Init - initialization continues
-      //                                     Setup - initialize mesh IDs, etc.
+      //  Row -- Init                        Row  - linear system rows complete
+      //        /                            Vol - nodal volumes complete
+      //  Vol --                             Init - initialization continues
       //                                     Diag - compute diagnostics
       //                                     Out - Output particles to file
       //  ParCom -- Npar - Out -- Eval       ParCom - particle communications
       //                         /           Eval - evalaute time step
-      //                    Diag             Npar - output number of particles
+      //                   Diag -            Npar - output number of particles
       //
       //
       // Interpretation of the above DAG
@@ -63,22 +62,21 @@ module transporter {
       // Control flow is from left to right and top to bottom.
       //
       // First graph: If the linear system merger branches have done their part
-      // of storing and exporting global row ids (Row), initialization can
-      // continue. If the mesh chunks surrounding mesh chunks data structure has
-      // been built (Msum), the setup can continue.
+      // of storing and exporting global row ids (Row), and the Carrier (worker)
+      // chares have finish computing their nodal vollumes (Vol), initialization
+      // can continue.
       //
       // Second graph (happening after the first graph): At the final time step
       // stage particles are advanced on each Carrier chare followed by
       // searching for the mesh cells of each particle, which may require
-      // communication if some particles have left the mesh cunk held by
-      // Carrier chares. After the particle communication has been completed
-      // (ParCom), each Carrier chare sends its number particles (Npar) the it
-      // will contribute to the particle output in the given time step. Once
-      // that is done particles are sent and buffered for output with done by
-      // ParticleWriter. In the meantime diagnostics are also computed by the
-      // linear system merger group objects on each PE. The time step is
-      // evaluated only if both the diagnostics and the particle output have
-      // been done.
+      // communication if some particles have left the mesh cunk held by Carrier
+      // chares. After the particle communication has been completed (ParCom),
+      // each Carrier chare sends its number particles (Npar) then it will
+      // contribute to the particle output in the given time step. Once that is
+      // done particles are sent and buffered for output done by ParticleWriter.
+      // In the meantime diagnostics are also computed by the linear system
+      // merger group objects on each PE. The time step is evaluated only if
+      // both the diagnostics and the particle output have been done.
       //
       // Collecting diagnostics is optional, i.e., it does not happen every time
       // step. If diagnostics are collected diag_complete() is signaled from the
@@ -95,12 +93,8 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
-      entry void wait4setup() {
-        when msum_complete() serial "setup" {
-          m_carrier.setup(); } };
-
       entry void wait4init() {
-        when row_complete() serial "init" {
+        when row_complete(), vol_complete() serial "init" {
           m_carrier.init(); } };
 
       entry void wait4parcom() {
@@ -115,8 +109,8 @@ module transporter {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
-      entry void msum_complete();
       entry void row_complete();
+      entry void vol_complete();
       entry void parcom_complete();
       entry void npar_complete();
       entry void out_complete();

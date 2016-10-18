@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Thu 13 Oct 2016 12:43:39 PM MDT
+  \date      Tue 18 Oct 2016 10:01:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -30,9 +30,9 @@
       Row [ label="Row"
             tooltip="row indices of the linear system is complete"
             URL="\ref tk::LinSysMerger::signal2host_row_complete"];
-      Msum [ label="Msum"
-              tooltip="mesh surrounding mesh data structure computed"
-              URL="\ref inciter::Carrier::msum"];
+      Vol [ label="Vol"
+            tooltip="nodal volumes have been computed/communicated"
+            URL="\ref inciter::Carrier::vol"];
       Setup [ label="Setup"
               tooltip="inciter::Carrier::setup"
               URL="\ref inciter::Carrier::setup"];
@@ -40,7 +40,7 @@
               tooltip="inciter::Carrier::init"
               URL="\ref inciter::Carrier::init"];
       Row -> Init [ style="solid" ];
-      Msum -> Setup [ style="solid" ];
+      Vol -> Init [ style="solid" ];
 
       ParCom [ label="ParCom"
               tooltip="particle communication among Carrier chares"
@@ -138,15 +138,16 @@ class Transporter : public CBase_Transporter {
     //!   communication cost of merging the linear system
     void stdCost( tk::real c );
 
-    //! \brief Reduction target indicating ...
-    void msumcomplete() { msum_complete(); }
-
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.comm(); }
+    void setup() { m_carrier.setup(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
+
+    //! \brief Reduction target indicating that all Carriers have finished
+    //!   computing/receiving their part of the nodal volumes
+    void volcomplete() { vol_complete(); }
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers

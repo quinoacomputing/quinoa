@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 13 Oct 2016 10:07:20 AM MDT
+  \date      Tue 18 Oct 2016 09:01:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -54,7 +54,6 @@ extern std::vector< PDE > g_pdes;
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
 CkReduction::reducerType VerifyBCMerger;
-CkReduction::reducerType FieldsMerger;
 
 } // inciter::
 
@@ -64,6 +63,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const LinSysMergerProxy& lsm,
                   const ParticleWriterProxy& pw,
                   const std::vector< std::size_t >& conn,
+                  const std::unordered_map< int,
+                          std::vector< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& cid,
                   int ncarr ) :
   __dep(),
@@ -72,6 +73,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_stage( 0 ),
+  m_nvol( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
   m_naec( 0 ),
@@ -99,7 +101,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_msum(),
+  m_msum( msum ),
   m_vol( m_gid.size(), 0.0 ),
   m_bid(),
   m_pc(),
@@ -110,10 +112,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
+//! \param[in] pw Particle writer proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
+//! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
+//!   mesh chunk we operate on
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
-//! \param[in] nper Total number of Carrier chares
+//! \param[in] ncarr Total number of Carrier chares
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -122,16 +127,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
-}
 
-void
-Carrier::comm()
-// *****************************************************************************
-// Starts collecting global mesh node IDs bordering the mesh chunk held by
-// fellow Carrier chares associated to their chare IDs
-//! \author J. Bakosi
-// *****************************************************************************
-{
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
 
@@ -139,6 +135,7 @@ Carrier::comm()
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
+  // Compute nodal volumes on our chunk of the mesh
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
                                            m_inpoel[e*4+2], m_inpoel[e*4+3] }};
@@ -151,67 +148,6 @@ Carrier::comm()
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
-
-  // Collect fellow chare IDs (as well as the global mesh node IDs and the
-  // volume associated to them) to/from our mesh neighbors. The goal here is to
-  // end up with a list of chare IDs (as the keys in m_msum) on each chare that
-  // the chare shares at least a single mesh node ID with, i.e., its mesh chunk
-  // borders another chare's mesh chunk. Note that this is not necessarily the
-  // most efficient way of doing this, since we do an all-to-all reduction from
-  // and to all Carrier chares, sending all the global node indices of the mesh
-  // chunk each Carrier chare holds. This contribute() is the start of this, and
-  // msum() is the final step. A better way of doing this is to only send the
-  // chare-boundary node indices. That information might already be available in
-  // Partitioner (the host chare group we are created by), or if not directly,
-  // it might be possible to be computed from the output of the partitioner.
-  // This data structure (m_msum) is used in various ways: (1) the list of
-  // neighboring chare IDs are used for searching for particles traveling across
-  // the mesh that left our mesh chunk, (2) the list of neighboring mesh node
-  // IDs (that lie on the chare-boundary) and their associated volumes are used
-  // by the FCT algorithm.
-  std::vector< std::pair< int, comm_t > >
-    meshnodes{ { thisIndex, std::make_tuple( m_gid, m_vol ) } };
-  auto stream = serialize( meshnodes );
-  CkCallback cb( CkIndex_Carrier::msum(nullptr), thisProxy );
-  contribute( stream.first, stream.second.get(), FieldsMerger, cb );
-}
-
-void
-Carrier::msum( CkReductionMsg* msg )
-// *****************************************************************************
-// Reduction target finishing collecting global mesh node IDs bordering the
-// mesh chunk held by fellow Carrier chares associated to their chare IDs
-//! \param[in] msg Serialized aggregated mesh node IDs categorized by chares
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  std::vector< std::pair< int, comm_t > > meshnodes;
-  PUP::fromMem creator( msg->getData() );
-  creator | meshnodes;
-  delete msg;
-
-  // Store nodes that our mesh chunk neighbors associated to chare IDs
-  for (const auto& c : meshnodes)
-    if (c.first != thisIndex) {
-      if (m_ncarr == 1) Throw( "Should not be called with a single chare" );
-      const auto& gid = std::get< 0 >( c.second );
-      const auto& vol = std::get< 1 >( c.second );
-      for (std::size_t i=0; i<m_gid.size(); ++i)
-        for (std::size_t n=0; n<gid.size(); ++n)
-          if (m_gid[i] == gid[n]) {
-            m_msum[ c.first ].push_back( m_gid[i] );
-            m_vol[ tk::cref_find(m_lid,m_gid[i]) ] += vol[n];
-            n = gid.size();
-          }
-    }
-
-//   std::cout << thisIndex << "> ";
-//   for (const auto& n : m_msum) {
-//     std::cout << n.first << ": ";
-//     for (auto i : n.second) std::cout << i << ' ';
-//     std::cout << ' ';
-//   }
-//   std::cout << '\n';
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
@@ -228,19 +164,53 @@ Carrier::msum( CkReductionMsg* msg )
   m_ac.resize( m_bid.size() );
   for (auto& b : m_ac) b.resize( m_u.nprop() );
 
-  contribute(
-     CkCallback( CkReductionTarget(Transporter,msumcomplete), m_transporter ) );
+  // Send our nodal volume contributions to neighbor chares
+  if (m_msum.empty())
+    contribute(
+       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+  else
+    for (const auto& n : m_msum) {
+      std::vector< tk::real > v;
+      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
+      thisProxy[ n.first ].vol( n.second, v );
+    }
+}
+
+void
+Carrier::vol( const std::vector< std::size_t >& gid,
+              const std::vector< tk::real >& V )
+// *****************************************************************************
+//  Receive nodal volumes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive volume contributions
+//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//!   nodes
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  Assert( V.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto lid = tk::cref_find( m_lid, gid[i] );
+    Assert( lid < m_vol.size(), "Indexing out of bounds" );
+    m_vol[ lid ] += V[i];
+  }
+
+  if (++m_nvol == m_msum.size()) {
+    m_nvol = 0;
+    contribute(
+       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+  }
 }
 
 void
 Carrier::setup()
 // *****************************************************************************
-// Initialize mesh IDs, element connectivity, coordinates
+// Setup rows, boundary conditions, output initial field data, etc.
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Send off global row IDs to linear system merger, setup global->local IDs
-  setupIds();
+  // Send off global row IDs to linear system merger
+  m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Send node IDs from element side sets matched to user-specified BCs
   sendBCs( queryBCs() );
   // Generate particles
@@ -249,17 +219,6 @@ Carrier::setup()
   writeMesh();
   // Output fields metadata to output file
   writeMeta();
-}
-
-void
-Carrier::setupIds()
-// *****************************************************************************
-// Send off global row IDs to linear system merger, setup global->local IDs
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Send off global row IDs to linear system merger
-  m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
 }
 
 std::vector< std::size_t >
