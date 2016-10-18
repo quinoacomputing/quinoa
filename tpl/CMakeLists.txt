@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Mon 17 Oct 2016 08:55:47 AM MDT
+# \date      Tue 18 Oct 2016 02:36:12 PM MDT
 #
 ################################################################################
 
@@ -635,8 +635,8 @@ if (boost)
     PREFIX boost
     # Header-only, copy include dir over
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                      ${PROJECT_SOURCE_DIR}/src/boost
-                      ${CMAKE_INSTALL_PREFIX}/include/
+                      ${PROJECT_SOURCE_DIR}/src/boost/boost
+                      ${CMAKE_INSTALL_PREFIX}/include/boost/
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
