@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 09:01:12 AM MDT
+  \date      Tue 18 Oct 2016 12:51:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -128,6 +128,33 @@ Carrier::Carrier( const TransporterProxy& transporter,
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
 
+  // Count the number of mesh nodes at which we receive data from other chares
+  // and compute map associating boundary-chare node ID associated to global ID
+  std::vector< std::size_t > c;
+  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
+  tk::unique( c );
+  m_bid = tk::assignLid( c );
+
+  // Allocate receive buffers for FCT
+  m_pc.resize( m_bid.size() );
+  for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
+  m_qc.resize( m_bid.size() );
+  for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
+  m_ac.resize( m_bid.size() );
+  for (auto& b : m_ac) b.resize( m_u.nprop() );
+}
+
+void
+Carrier::vol()
+// *****************************************************************************
+//  Read mesh node coordinates, sum mesh volumes to nodes, and start
+//  communicating them on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive volume contributions
+//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//!   nodes
+//! \author J. Bakosi
+// *****************************************************************************
+{
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
 
@@ -149,21 +176,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
 
-  // Count the number of mesh nodes at which we receive data from other chares
-  // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c;
-  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
-  tk::unique( c );
-  m_bid = tk::assignLid( c );
-
-  // Allocate receive buffers for FCT
-  m_pc.resize( m_bid.size() );
-  for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
-  m_qc.resize( m_bid.size() );
-  for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
-  m_ac.resize( m_bid.size() );
-  for (auto& b : m_ac) b.resize( m_u.nprop() );
-
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
     contribute(
@@ -172,13 +184,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
       for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
-      thisProxy[ n.first ].vol( n.second, v );
+      thisProxy[ n.first ].comvol( n.second, v );
     }
 }
 
 void
-Carrier::vol( const std::vector< std::size_t >& gid,
-              const std::vector< tk::real >& V )
+Carrier::comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V )
 // *****************************************************************************
 //  Receive nodal volumes on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive volume contributions

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 09:55:57 AM MDT
+  \date      Tue 18 Oct 2016 01:24:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -132,9 +132,6 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
-    wait4init();
-    wait4parcom();
-    wait4npar();
     wait4eval();
 
     // Print I/O filenames
@@ -310,7 +307,7 @@ Transporter::rowcomplete()
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  row_complete();
+  m_carrier.init();
 }
 
 void
@@ -540,8 +537,6 @@ Transporter::evaluateTime()
     }
   }
 
-  wait4parcom();
-  wait4npar();
   wait4eval();
 
   // if not final stage of time step or if neither max iterations nor max time

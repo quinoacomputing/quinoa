@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 10:35:32 AM MDT
+  \date      Tue 18 Oct 2016 12:50:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -167,9 +167,13 @@ class Carrier : public CBase_Carrier {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
     }
 
+    //! \brief Read mesh node coordinates, sum mesh volumes to nodes, and start
+    //!   communicating them on chare-boundaries
+    void vol();
+
     //! Collect nodal volumes across chare boundaries
-    void vol( const std::vector< std::size_t >& gid,
-              const std::vector< tk::real >& V );
+    void comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V );
 
     //! Setup rows, boundary conditions, output initial field data, etc.
     void setup();
