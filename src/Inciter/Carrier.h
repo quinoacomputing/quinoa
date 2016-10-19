@@ -167,6 +167,10 @@ class Carrier : public CBase_Carrier {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
     }
 
+    //! \brief Read mesh node coordinates, sum mesh volumes to nodes, and start
+    //!   communicating them on chare-boundaries
+    void vol();
+
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 08:16:24 AM MDT
+  \date      Wed 19 Oct 2016 10:36:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -27,18 +27,6 @@
     digraph "Transporter SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Row [ label="Row"
-            tooltip="row indices of the linear system is complete"
-            URL="\ref tk::LinSysMerger::signal2host_row_complete"];
-      Vol [ label="Vol"
-            tooltip="nodal volumes have been computed/communicated"
-            URL="\ref inciter::Carrier::vol"];
-      Init [ label="Init"
-              tooltip="inciter::Carrier::init"
-              URL="\ref inciter::Carrier::init"];
-      Row -> Init [ style="solid" ];
-      Vol -> Init [ style="solid" ];
-
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Carrier::diagnostics"];
@@ -128,7 +116,7 @@ class Transporter : public CBase_Transporter {
     void stdCost( tk::real c );
 
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.setup(); }
+    void setup() { m_carrier.vol(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -136,7 +124,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
-    void volcomplete() { vol_complete(); }
+    void volcomplete() { m_carrier.setup(); }
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers
