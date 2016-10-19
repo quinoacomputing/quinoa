@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 01:17:50 PM MDT
+  \date      Wed 19 Oct 2016 08:16:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -33,21 +33,12 @@
       Vol [ label="Vol"
             tooltip="nodal volumes have been computed/communicated"
             URL="\ref inciter::Carrier::vol"];
-      Setup [ label="Setup"
-              tooltip="inciter::Carrier::setup"
-              URL="\ref inciter::Carrier::setup"];
       Init [ label="Init"
               tooltip="inciter::Carrier::init"
               URL="\ref inciter::Carrier::init"];
       Row -> Init [ style="solid" ];
       Vol -> Init [ style="solid" ];
 
-      ParCom [ label="ParCom"
-              tooltip="particle communication among Carrier chares"
-              URL="\ref inciter::Carrier::track"];
-      Npar [ label="Npar"
-              tooltip="number of particles to be output to file counted"
-              URL="\ref inciter::Carrier::writeParticles"];
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Carrier::diagnostics"];
@@ -57,8 +48,6 @@
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
-      ParCom -> Npar [ style="solid" ];
-      Npar -> Out [ style="solid" ];
       Diag -> Eval [ style="solid" ];
       Out -> Eval [ style="solid" ];
     }
@@ -139,7 +128,7 @@ class Transporter : public CBase_Transporter {
     void stdCost( tk::real c );
 
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.vol(); }
+    void setup() { m_carrier.setup(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -147,7 +136,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
-    void volcomplete() { m_carrier.setup(); }
+    void volcomplete() { vol_complete(); }
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers

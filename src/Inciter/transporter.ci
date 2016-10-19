@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 01:22:49 PM MDT
+  \date      Wed 19 Oct 2016 08:15:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -46,11 +46,8 @@ module transporter {
       //
       // Directed Acyclic Graph (DAG):
       // -----------------------------
-      //                                   DAG legend:
-      //  Row -- Init                        Row  - linear system rows complete
-      //        /                            Vol - nodal volumes complete
-      //  Vol --                             Init - initialization continues
       //
+      // See srcInciter/Transporter.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -59,12 +56,36 @@ module transporter {
       // If the linear system merger branches have done their part of storing
       // and exporting global row ids (Row), and the Carrier (worker) chares
       // have finish computing their nodal vollumes (Vol), initialization can
-      // continue.
+      // continue.entry void wait4init() {
+      //
+      // The time step is evaluated only if both the diagnostics and the
+      // field and particle output have been done by the workers.
+      //
+      // Collecting diagnostics is optional, i.e., it does not happen every time
+      // step. If diagnostics are collected diag_complete() is signaled from the
+      // reduction target, Transporter::diagnostics(). If diagnostics are not
+      // collected in a time step, collection is skipped, and diag_complete() is
+      // signaled from the shortcut function, Transporter::diagcomplete().
+      //
+      // Similar to diagnostics output, particle output is also optional and
+      // does not happen every time step. The Charm++ reduction target
+      // Transporter::outcomplete() is reached either way but on different
+      // routes: if particles are output, the reduction originates from the
+      // ParticleWriter Charm++ group after writeCoords() finished the output,
+      // if particles are not output, the reduction originates from
+      // Carrier::out(). Either way, the above DAG and its logic remains the
+      // same.
+
+      entry void wait4init() {
+        when row_complete(), vol_complete() serial "init" {
+          m_carrier.init(); } };
 
       entry void wait4eval() {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
+      entry void row_complete();
+      entry void vol_complete();
       entry void out_complete();
       entry void diag_complete();
     }
