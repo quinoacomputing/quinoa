@@ -703,9 +703,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       }
       // Forward all bcs received to fellow branches
       if (++m_nchbc == m_nchare) {
-        auto stream = tk::serialize( m_bc );
-        CkCallback cb( GroupIdx::addbc(nullptr), Group::thisProxy );
-        Group::contribute( stream.first, stream.second.get(), BCMapMerger, cb );
+        if (m_bc.empty())
+          bc_complete();
+        else {
+          auto stream = tk::serialize( m_bc );
+          CkCallback cb( GroupIdx::addbc(nullptr), Group::thisProxy );
+          Group::
+            contribute( stream.first, stream.second.get(), BCMapMerger, cb );
+        }
       }
     }
     // Reduction target collecting the final aggregated BC node list map
