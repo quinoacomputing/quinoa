@@ -142,7 +142,17 @@ Carrier::Carrier( const TransporterProxy& transporter,
   for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
   m_ac.resize( m_bid.size() );
   for (auto& b : m_ac) b.resize( m_u.nprop() );
+}
 
+void
+Carrier::vol()
+// *****************************************************************************
+//  Read mesh node coordinates, sum mesh volumes to nodes, and start
+//  communicating them on chare-boundaries
+//!   nodes
+//! \author J. Bakosi
+// *****************************************************************************
+{
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
 

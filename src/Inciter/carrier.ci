@@ -33,6 +33,7 @@ module carrier {
                  const std::unordered_map< std::size_t, std::size_t >& cid,
                  int ncarr );
       initnode void registerReducers();
+      entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& V );
       entry void setup();

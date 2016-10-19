@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 08:15:54 AM MDT
+  \date      Wed 19 Oct 2016 10:36:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -53,11 +53,6 @@ module transporter {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // If the linear system merger branches have done their part of storing
-      // and exporting global row ids (Row), and the Carrier (worker) chares
-      // have finish computing their nodal vollumes (Vol), initialization can
-      // continue.entry void wait4init() {
-      //
       // The time step is evaluated only if both the diagnostics and the
       // field and particle output have been done by the workers.
       //
@@ -76,16 +71,10 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
-      entry void wait4init() {
-        when row_complete(), vol_complete() serial "init" {
-          m_carrier.init(); } };
-
       entry void wait4eval() {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
-      entry void row_complete();
-      entry void vol_complete();
       entry void out_complete();
       entry void diag_complete();
     }
