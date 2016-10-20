@@ -139,7 +139,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_particlewriter( pw ),
       m_npe( 0 ),
       m_req(),
-      m_reordered( 0 ),
       m_start( 0 ),
       m_noffset( 0 ),
       m_nquery( 0 ),
@@ -228,9 +227,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       participated_complete();
       // Store new node IDs associated to old ones
       for (const auto& p : id) m_newid[ p.first ] = p.second;
-      m_reordered += id.size();   // count up number of reordered nodes
       // If we have reordered all our node IDs, send result to host
-      if (m_reordered == m_id.size()) reordered();
+      if (m_newid.size() == m_id.size()) reordered();
     }
 
     //! Receive mesh node IDs associated to chares we own
@@ -249,9 +247,30 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
     //! Acknowledge received node IDs
-    void recv() {
-      --m_npe;
-      if (recvnodes()) flatten();
+    void recv() { if (--m_npe == 0) signal2host_distributed( m_host ); }
+
+    //! Prepare owned mesh node IDs for reordering
+    void flatten() {
+      // Make sure we are not fed garbage
+      int chunksize, mynchare;
+      std::tie( chunksize, mynchare ) = chareDistribution();
+      Assert( m_node.size() == static_cast<std::size_t>(mynchare),
+              "Global mesh nodes ids associated to chares on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete" );
+      // Collect chare IDs we own associated to old global mesh node IDs
+      for (const auto& c : m_node)
+        for (auto p : c.second)
+          m_ch[p].insert( c.first );
+      // Flatten node IDs of elements our chares operate on
+      for (const auto& c : m_node)
+        m_id.insert( end(m_id), begin(c.second), end(c.second) );
+      // Make node IDs unique, these need reordering on our PE
+      tk::unique( m_id );
+      // Store mesh node IDs in hash-set
+      std::copy( begin(m_id), end(m_id), std::inserter(m_sid,end(m_sid)) );
+      // Signal host that we are ready for computing the communication map,
+      // required for parallel distributed global mesh node reordering
+      signal2host_flattened( m_host );
     }
 
     //! Receive lower bound of node IDs our PE operates on after reordering
@@ -378,8 +397,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::set< std::size_t > > > m_req;
-    //! Number of mesh nodes reordered
-    std::size_t m_reordered;
     //! Starting global mesh node ID for node reordering
     std::size_t m_start;
     //! \brief Counter for number of offsets
@@ -587,31 +604,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_npe = exp.size();
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].add( CkMyPe(), p.second );
-      if (recvnodes()) flatten();
-    }
-
-    //! Prepare owned mesh node IDs for reordering
-    void flatten() {
-      // Make sure we are not fed garbage
-      int chunksize, mynchare;
-      std::tie( chunksize, mynchare ) = chareDistribution();
-      Assert( m_node.size() == static_cast<std::size_t>(mynchare),
-              "Global mesh nodes ids associated to chares on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete" );
-      // Collect chare IDs we own associated to old global mesh node IDs
-      for (const auto& c : m_node)
-        for (auto p : c.second)
-          m_ch[p].insert( c.first );
-      // Flatten node IDs of elements our chares operate on
-      for (const auto& c : m_node)
-        m_id.insert( end(m_id), begin(c.second), end(c.second) );
-      // Make node IDs unique, these need reordering on our PE
-      tk::unique( m_id );
-      // Store mesh node IDs in hash-set
-      std::copy( begin(m_id), end(m_id), std::inserter(m_sid,end(m_sid)) );
-      // Signal host that we are ready for computing the communication map,
-      // required for parallel distributed global mesh node reordering
-      signal2host_flattened( m_host );
+      if (m_npe == 0) signal2host_distributed( m_host );
     }
 
     //! Compute chare distribution
@@ -655,20 +648,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // if we are to assign a new ID to a node ID, and if so, we assign new ID,
       // i.e., reorder, by constructing a map associating new to old IDs. We
       // also count up the reordered nodes.
-      for (const auto& p : m_id)
-        if (own(p)) {           
-          m_newid[ p ] = m_start++;
-          ++m_reordered;
-        }
+      for (const auto& p : m_id) if (own(p)) m_newid[ p ] = m_start++;
       // Trigger SDAG wait, indicating that reordering own node IDs are complete
       reorderowned_complete();
       // If we have reordered all our nodes, compute and send result to host
-      if (m_reordered == m_id.size()) reordered();
+      if (m_newid.size() == m_id.size()) reordered();
     }
-
-    //! Test if all fellow PEs have received my node IDs contributions
-    //! \return True if all fellow PEs have received what I have sent them
-    bool recvnodes() const { return m_npe == 0; }
 
     //! Return processing element for chare id
     //! \param[in] id Chare id
@@ -862,6 +847,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void signal2host_setup_complete( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_partition(NULL), host ));
+    }
+    //! \brief Signal host that we are done our part of distributing mesh node
+    //!   IDs and we are ready for preparing (flattening) data for reordering
+    void signal2host_distributed( const CProxy_Transporter& host ) {
+      Group::contribute(
+        CkCallback(CkIndex_Transporter::redn_wrapper_distributed(NULL), host ));
     }
     //! \brief Signal host that we are ready for computing the communication
     //!   map, required for parallel distributed global mesh node reordering

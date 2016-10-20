@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 10:36:26 AM MDT
+  \date      Thu 20 Oct 2016 11:04:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -19,6 +19,7 @@ module transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void partition();
+      entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void rowcomplete();

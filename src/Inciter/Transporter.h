@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 10:36:39 AM MDT
+  \date      Thu 20 Oct 2016 11:06:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -103,6 +103,11 @@ class Transporter : public CBase_Transporter {
     void partition();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished distributing its global mesh node IDs and they are ready
+    //!   for preparing (flattening) their owned mesh node IDs for reordering
+    void distributed() { m_partitioner.flatten(); }
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
     //!   for computing the communication maps required for node ID reordering
     void flattened() { m_partitioner.gather(); }
@@ -116,7 +121,7 @@ class Transporter : public CBase_Transporter {
     void stdCost( tk::real c );
 
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.vol(); }
+    void setup();
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -124,7 +129,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
-    void volcomplete() { m_carrier.setup(); }
+    void volcomplete();
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers

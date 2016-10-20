@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 10:34:26 AM MDT
+  \date      Wed 19 Oct 2016 02:47:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -263,7 +263,8 @@ Transporter::aveCost( tk::real c )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagend( "done" );    // "Partitioning and distributing mesh ...";
+  m_print.diagend( "done" );    // "Partitioning and distributing mesh ..."
+  m_print.diag( "Creating workers" );
   // Compute average and broadcast it back to all partitioners (PEs)
   m_avcost = c / CkNumPes();
   m_partitioner.stdCost( m_avcost );
@@ -291,6 +292,28 @@ Transporter::stdCost( tk::real c )
 }
 
 void
+Transporter::setup()
+// *****************************************************************************
+// Reduction target indicating that all chare groups are ready for workers
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
+  m_carrier.vol();
+}
+
+void
+Transporter::volcomplete()
+// *****************************************************************************
+
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_print.diagstart( "Setting up workers ..." );
+  m_carrier.setup();
+}
+
+void
 Transporter::rowcomplete()
 // *****************************************************************************
 // Reduction target indicating that all linear system merger branches have done
@@ -306,6 +329,8 @@ Transporter::rowcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  m_print.diagend( "done" );   // "Setting up workers ..."
+  m_print.diagstart( "Initializing workers ..." );
   m_linsysmerger.rowsreceived();
   m_carrier.init();
 }
@@ -375,6 +400,7 @@ Transporter::initcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  m_print.diagend( "done" );   // "Initializing workers ..."
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
 }
