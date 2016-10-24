@@ -456,6 +456,9 @@ class Carrier : public CBase_Carrier {
 
     //! Apply limited antidiffusive element contributions
     void apply();
+
+    //! Compute diagnostics, e.g., residuals
+    void diagnostics();
 };
 
 } // inciter::

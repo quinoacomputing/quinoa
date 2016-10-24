@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 14 Oct 2016 12:24:23 PM MDT
+  \date      Mon 24 Oct 2016 04:10:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -289,7 +289,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       m_nperow( 0 ),
       m_nchbc( 0 ),
       m_nchbcval( 0 ),
-      m_nchdiag( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
       m_myworker(),
@@ -299,12 +298,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       m_rhsimport(),
       m_auxrhsimport(),
       m_auxlhsimport(),
+      m_diagimport(),
       m_row(),
       m_sol(),
       m_lhs(),
       m_rhs(),
       m_auxrhs(),
       m_auxlhs(),
+      m_diag(),
       m_x(),
       m_A(),
       m_b(),
@@ -399,10 +400,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       wait4auxsolve();
       m_rhsimport.clear();
       m_auxrhsimport.clear();
+      m_diagimport.clear();
       m_rhs.clear();
       m_auxrhs.clear();
       m_hypreRhs.clear();
       m_bcval.clear();
+      m_diag.clear();
       hyprerow_complete();
       asmsol_complete();
       asmlhs_complete();
@@ -784,18 +787,49 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! Reduction target indicating that verification of the BCs are complete
     void vercomplete() { ver_complete(); ver_complete(); }
 
-    //! Compute diagnostics (residuals) and contribute them back to host
-    //! \details Diagnostics: L1 norm for all components
-    void diagnostics() {
-      std::vector< tk::real > diag( m_ncomp, 0.0 );
-      for (std::size_t i=0; i<m_hypreSol.size()/m_ncomp; ++i)
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += std::abs( m_hypreSol[i*m_ncomp+c] );
-      // if we have heard from every chare, signal back to host
-      if (++m_nchdiag == m_nchare) {
-        signal2host_diag( m_host, diag );
-        m_nchdiag = 0;
+    //! Chares contribute their solution nonzero values for diagnostics
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] solution Portion of the unknown/solution vector contributed
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void charediag( int fromch,
+                    const std::vector< std::size_t >& gid,
+                    const Fields& solution )
+    {
+      Assert( gid.size() == solution.nunk(),
+              "Size of solution and row ID vectors must equal" );
+      // Store solution vector nonzero values owned and pack those to be
+      // exported, also build import map used to test for completion
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
+          m_diagimport[ fromch ].push_back( gid[i] );
+          m_diag[ gid[i] ] = solution[i];
+        } else {
+          exp[ pe(gid[i]) ][ gid[i] ] = solution[i];
+        }
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp) {
+        auto tope = static_cast< int >( p.first );
+        Group::thisProxy[ tope ].adddiag( fromch, p.second );
       }
+      if (diagcomplete()) diagnostics();
+    }
+    //! \brief Receive solution vector nonzeros from fellow group branches for
+    //!    diagnostics
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] solution Portion of the unknown/solution vector contributed,
+    //!   containing global row indices and values for all components
+    void adddiag( int fromch,
+                  const std::map< std::size_t,
+                                  std::vector< tk::real > >& solution )
+    {
+      for (const auto& r : solution) {
+        m_diagimport[ fromch ].push_back( r.first );
+        m_diag[ r.first ] = r.second;
+      }
+      if (diagcomplete()) diagnostics();
     }
 
     //! Check if our portion of the right-hand side vector values is complete
@@ -840,7 +874,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_nchbcval;     //!< Number of chares we received bc values from
-    std::size_t m_nchdiag;      //!< Number of chares we received diags from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE
@@ -863,6 +896,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the auxiliary lhs vector
     std::map< int, std::vector< std::size_t > > m_auxlhsimport;
+    //! \brief Import map associating a list of global row ids to a worker chare
+    //!   id during the communication of the solution/unknown vector for
+    //!   computing diagnostics, e.g., residuals
+    std::map< int, std::vector< std::size_t > > m_diagimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my PE
@@ -888,6 +925,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   to global mesh point row ids. This vector collects the nonzero values
     //!   of the auxiliary system lhs "matrix" solution.
     std::map< std::size_t, std::vector< tk::real > > m_auxlhs;
+    //! \brief Part of solution vector owned by my PE
+    //! \details Vector of values (for each scalar equation solved) associated
+    //!   to global mesh point row IDs
+    std::map< std::size_t, std::vector< tk::real > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -962,6 +1003,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \return True if all parts of the left-hand side matrix have been
     //!   received
     bool lhscomplete() const { return m_lhsimport == m_rowimport; }
+    //! \brief Check if our portion of the solution vector values (for
+    //!   diagnostics) is complete
+    //! \return True if all parts of the unknown/solution vector have been
+    //!   received
+    bool diagcomplete() const { return m_diagimport == m_rowimport; }
 
     //! Verify if the BCs we will set match the user's BCs
     //! \details This is only the first step: we send out queries to workers
@@ -1165,8 +1211,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
             auto b = static_cast< diff_type >( i*m_ncomp );
             auto e = static_cast< diff_type >( (i+1)*m_ncomp );
             solution.insert( end(solution),
-                        std::next( begin(m_hypreSol), b ),
-                        std::next( begin(m_hypreSol), e ) );
+                             std::next( begin(m_hypreSol), b ),
+                             std::next( begin(m_hypreSol), e ) );
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );
@@ -1190,6 +1236,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     void auxsolve() {
       AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );
       auxsolve_complete();
+    }
+
+    //! Compute diagnostics (residuals) and contribute them back to host
+    //! \details Diagnostics: L1 norm for all components
+    void diagnostics() {
+      Assert( diagcomplete(),
+              "Values of distributed solution vector (for diagnostics) on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete" );
+      std::vector< tk::real > diag( m_ncomp, 0.0 );
+      for (const auto& s : m_diag)
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          diag[c] += std::abs( s.second[c] );
+      // Contribute to diagnostics across all PEs
+      signal2host_diag( m_host, diag );
     }
 
     #if defined(__clang__)

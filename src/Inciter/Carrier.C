@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 12:51:04 PM MDT
+  \date      Mon 24 Oct 2016 02:33:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -1021,6 +1021,21 @@ Carrier::evel( std::size_t e )
 }
 
 void
+Carrier::diagnostics()
+// *****************************************************************************
+// Compute diagnostics, e.g., residuals
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Optionally send latest solution to LinSysMerger for computing diagnostics
+  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
+    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u );
+  else
+    contribute(
+      CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
+}
+
+void
 Carrier::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
@@ -1044,12 +1059,8 @@ Carrier::apply()
   m_tracker.track( m_transporter, thisProxy, m_coord, m_inpoel, m_msum,
                    thisIndex, this, m_stage, m_dt );
 
-  // Optionally contribute diagnostics, e.g., residuals, back to host
-  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
-    m_linsysmerger.ckLocalBranch()->diagnostics();
-  else
-    contribute(
-      CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
+  // Compute diagnostics, e.g., residuals
+  diagnostics();
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
