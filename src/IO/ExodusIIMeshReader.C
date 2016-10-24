@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 07:57:11 AM MDT
+  \date      Mon 24 Oct 2016 08:29:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -240,16 +240,16 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 
   for (auto id : m_eid) {
     char eltype[MAX_STR_LENGTH+1];
-    int nelem, nnpe, nattr;
+    int nel, nnpe, nattr;
 
     // Read element block information
     ErrChk(
-      ex_get_elem_block( m_inFile, id, eltype, &nelem, &nnpe, &nattr ) == 0,
+      ex_get_elem_block( m_inFile, id, eltype, &nel, &nnpe, &nattr ) == 0,
       "Failed to read element block information from ExodusII file: " +
       m_filename );
 
     // Read element connectivity
-    auto connectsize = static_cast< std::size_t >( nelem*nnpe );
+    auto connectsize = static_cast< std::size_t >( nel*nnpe );
     if (nnpe == 4) {    // tetrahedra
 
       mesh.tettag().resize( connectsize, { 1 } );
@@ -333,9 +333,9 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
     offset += nel[b];
   }
 
-  Assert( lo_bid >= 0 && lo_bid < nel.size() && lo_bid < bid.size(),
+  Assert( lo_bid < nel.size() && lo_bid < bid.size(),
           "Invalid start block ID" );
-  Assert( hi_bid >= 0 && hi_bid < nel.size() && hi_bid < bid.size(),
+  Assert( hi_bid < nel.size() && hi_bid < bid.size(),
           "Invalid end block ID" );
 
   // Compute relative extents based on absolute ones for each block to read from
