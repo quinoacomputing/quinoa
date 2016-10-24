@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:46:55 PM MDT
+  \date      Mon 24 Oct 2016 07:57:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -36,8 +36,8 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_neblk( 0 ),
   m_neset( 0 ),
   m_eid(),
-  m_eidt( m_nnpe.size(), -1 ),
-  m_nel( m_nnpe.size(), -1 )
+  m_eidt( m_nnpe.size() ),
+  m_nel( m_nnpe.size() )
 // *****************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -208,14 +208,18 @@ ExodusIIMeshReader::readElemBlockIDs()
     // Store ExodusII element block ID
     m_eid.push_back( id );
 
-    // Store ExodusII element block ID mapped to tk::ExoElemType enum, and
-    // number of elements per block mapped to tk::ExoElemType enum
+    // Store ExodusII element block IDs mapped to elem type, and add up the
+    // number of elements per for each elem type
     if (nnpe == 4) {        // tetrahedra
-      m_eidt[ static_cast<std::size_t>(ExoElemType::TET) ] = id;
-      m_nel[ static_cast<std::size_t>(ExoElemType::TET) ] = n;
+      auto e = static_cast< std::size_t >( ExoElemType::TET );
+      m_eidt[ e ].push_back( id );
+      m_nel[ e ].push_back( static_cast< std::size_t >( n ) );
+      Assert( m_eidt[e].size() == m_nel[e].size(), "Size mismatch" );
     } else if (nnpe == 3) { // triangles
-      m_eidt[ static_cast<std::size_t>(ExoElemType::TRI) ] = id;
-      m_nel[ static_cast<std::size_t>(ExoElemType::TRI) ] = n;
+      auto e = static_cast< std::size_t >( ExoElemType::TRI );
+      m_eidt[ e ].push_back( id );
+      m_nel[ e ].push_back( static_cast< std::size_t >( n ) );
+      Assert( m_eidt[e].size() == m_nel[e].size(), "Size mismatch" );
     }
   }
 
@@ -277,76 +281,111 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 }
 
 void
-ExodusIIMeshReader::readElement( std::size_t id,
-                                 tk::ExoElemType elemtype,
-                                 std::vector< std::size_t >& conn ) const
-// *****************************************************************************
-//  Read element connectivity of a single mesh cell from ExodusII file
-//! \param[in] id Element id whose connectivity to read
-//! \param[in] elemtype Element type
-//! \param[inout] conn Connectivity vector to push to
-//! \note Must be preceded by a call to readElemBlockIDs()
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  Assert( static_cast< std::size_t >(
-            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
-          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-          "call to ExodusIIMeshReader::readElemBlockIDs()" );
-
-  auto bid = static_cast< std::size_t >( elemtype );
-
-  std::vector< int > c( m_nnpe[bid] );
-
-  // Read element connectivity from file
-  ErrChk(
-    ex_get_n_elem_conn(
-      m_inFile, m_eidt[bid], static_cast<int64_t>(id)+1, 1, c.data() ) == 0,
-      "Failed to read element connectivity of element " + std::to_string( id ) +
-      " from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
-      m_filename );
-
-  // Put in element connectivity using zero-based node indexing
-  for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
-}
-
-void
 ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
                                   tk::ExoElemType elemtype,
                                   std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read element connectivity of a single mesh cell from ExodusII file
-//! \param[in] ext Extents of element ids whose connectivity to read, both
-//!   inclusive
+//! \param[in] ext Extents of element IDs whose connectivity to read:
+//!   [from...till), using zero-based element IDs, where 'from' >=0, inclusive
+//!   and 'till < 'maxelements', where 'maxelements' is the total number of
+//!   elements of all element blocks in the file of the requested cell type.
+//!   Note that 'maxelements' can be queried by nelem().
 //! \param[in] elemtype Element type
 //! \param[inout] conn Connectivity vector to push to
 //! \note Must be preceded by a call to readElemBlockIDs()
+//! \details This function takes the extents of element IDs in a zero-based
+//!   fashion. These input extents can be thought of "absolute" extents that
+//!   denote lowest and the largest-1 element IDs to be read from file.
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  Assert( static_cast< std::size_t >(
-            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
-          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-          "call to ExodusIIMeshReader::readElemBlockIDs()" );
+  Assert( tk::sumsize(m_eidt) > 0,
+          "A call to this function must be preceded by a call to "
+          "ExodusIIMeshReader::readElemBlockIDs()" );
+  Assert( ext[0] <= ext[1] &&
+          ext[0] < nelem(elemtype) &&
+          ext[1] < nelem(elemtype),
+          "Invalid element ID extents. Of the requested extents [from...till), "
+          "'from' must be lower than or equal to 'till', and they must be in "
+          "the range [0...maxelements), where 'maxelements' is the total "
+          "number of elements of all element blocks in the file of the "
+          "requested cell type. Requested element ID extents: ["
+          + std::to_string(ext[0]) + "..." + std::to_string(ext[1])
+          + "), 'maxelements' of cell type with "
+          + std::to_string( m_nnpe[ static_cast<std::size_t>(elemtype) ] )
+          + " nodes per cell in file '" + m_filename + "': "
+          + std::to_string( nelem( elemtype ) ) );
 
-  auto bid = static_cast< std::size_t >( elemtype );
+  auto e = static_cast< std::size_t >( elemtype );
+  // List of number of elements of all blocks of element type requested
+  const auto& nel = m_nel[e];
+  // List of element block IDs for element type requested
+  const auto& bid = m_eidt[e];
 
-  auto num = ext[1] - ext[0] + 1;
+  // Compute lower and upper element block ids to read from based on extents
+  std::size_t lo_bid = 0, hi_bid = 0, offset = 0;
+  for (std::size_t b=0; b<nel.size(); ++b) {
+    std::size_t lo = offset;                    // lo (min) elem IDs in block
+    std::size_t hi = offset + nel[b] - 1;       // hi (max) elem id in block
+    if (ext[0] >= lo && ext[0] <= hi) lo_bid = b;
+    if (ext[1] >= lo && ext[1] <= hi) hi_bid = b;
+    offset += nel[b];
+  }
 
-  std::vector< int > c( num * m_nnpe[bid] );
+  Assert( lo_bid >= 0 && lo_bid < nel.size() && lo_bid < bid.size(),
+          "Invalid start block ID" );
+  Assert( hi_bid >= 0 && hi_bid < nel.size() && hi_bid < bid.size(),
+          "Invalid end block ID" );
+
+  // Compute relative extents based on absolute ones for each block to read from
+  std::vector< std::array< std::size_t, 2 > > rext;
+  offset = 0;
+  for (std::size_t b=1; b<=lo_bid; ++b) offset += nel[b];
+  for (std::size_t b=lo_bid; b<=hi_bid; ++b) {
+    std::size_t lo = offset;
+    std::size_t hi = offset + nel[b] - 1;
+    std::size_t le = 1, he = nel[b];
+    if (ext[0] >= lo && ext[0] <= hi) le = ext[0] - lo + 1;
+    if (ext[1] >= lo && ext[1] <= hi) he = ext[1] - lo + 1;
+    Assert( le >= 1 && le <= nel[b] && he >= 1 && he <= nel[b],
+            "Relative index out of block" );
+    rext.push_back( {{ le, he }} );
+    offset += nel[b];
+  }
+
+  Assert( std::accumulate(
+            std::next(rext.cbegin()), rext.cend(), rext[0][1]-rext[0][0]+1,
+            []( std::size_t n, const std::array< std::size_t, 2 >& r )
+            { return n + r[1] - r[0] + 1; }
+          ) == ext[1]-ext[0]+1, "Total number of elements to read incorrect" );
+
+  std::vector< int > inpoel;
 
   // Read element connectivity from file
-  ErrChk(
-    ex_get_n_elem_conn(
-      m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
-      static_cast<int64_t>(num), c.data() ) == 0,
-      "Failed to read element connectivity of elements [" +
-      std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
-      "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
-      m_filename );
+  std::size_t B = 0;
+  for (auto b=lo_bid; b<=hi_bid; ++b, ++B) {
+    const auto& r = rext[B];
+    std::vector< int > c( (r[1]-r[0]+1) * m_nnpe[e] );
+    ErrChk( ex_get_n_elem_conn( m_inFile,
+                                bid[b],
+                                static_cast< int64_t >( r[0] ),
+                                static_cast< int64_t >( r[1]-r[0]+1 ),
+                                c.data() ) == 0,
+            "Failed to read element connectivity of elements [" +
+            std::to_string(r[0]) + "..." + std::to_string(r[1]) +
+            "] from element block " + std::to_string(bid[b]) + " in ExodusII "
+            "file: " + m_filename );
+    inpoel.insert( end(inpoel), begin(c), end(c) );
+  }
+
+  Assert( inpoel.size() == (ext[1]-ext[0]+1)*4,
+          "Failed to read element connectivity of elements [" +
+          std::to_string(ext[0]) + "..." + std::to_string(ext[1]) + ") from "
+          "ExodusII file: " + m_filename );
 
   // Put in element connectivity using zero-based node indexing
-  for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
+  for (auto i : inpoel) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
 std::map< int, std::vector< std::size_t > >
@@ -398,20 +437,18 @@ ExodusIIMeshReader::readSidesets()
   return side;
 }
 
-int
-ExodusIIMeshReader::nel( tk::ExoElemType elemtype ) const
+std::size_t
+ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************
-//  Return number of elements in a mesh block in the ExodusII file
+//  Return number of elements in all mesh blocks for a given elem type in file
 //! \param[in] elemtype Element type
-//! \return Number of elements in elemtype given
+//! \return Number of elements in all blocks for the elem type
 //! \note Must be preceded by a call to readElemBlockIDs()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  Assert( static_cast< std::size_t >(
-            std::accumulate(begin(m_eidt),end(m_eidt),0) ) != -m_nnpe.size(),
-          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-          "call to ExodusIIMeshReader::readElemBlockIDs()" );
-
-  return m_nel[ static_cast< std::size_t >( elemtype ) ];
+  auto e = static_cast< std::size_t >( elemtype );
+  std::size_t sum = 0;
+  for (auto n : m_nel[e]) sum += n;
+  return sum;
 }

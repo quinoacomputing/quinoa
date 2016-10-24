@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:52:48 AM MDT
+  \date      Mon 24 Oct 2016 07:48:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -39,6 +39,7 @@
 #include "Assessment.h"
 #include "ProcessException.h"
 #include "UnitTest/CmdLine/CmdLine.h"
+#include "TestArray.h"
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
@@ -53,19 +54,20 @@ const int MAX_TESTS_IN_GROUP = 80;
 
 } // tut::
 
-// Unit test groups to be tested. Each file defines a different test group.
+// // Unit test groups to be tested. Each file defines a different test group.
+#include "tests/Base/TestCharmUtil.h"
+#include "tests/Base/TestFactory.h"
+#include "tests/Base/TestTimer.h"
+#include "tests/Base/TestPUPUtil.h"
+
 #include "tests/Base/TestFlip_map.h"
 #include "tests/Base/TestMake_list.h"
-#include "tests/Base/TestTimer.h"
-#include "tests/Base/TestCharmUtil.h"
 #include "tests/Base/TestHas.h"
 #include "tests/Base/TestData.h"
-#include "tests/Base/TestFactory.h"
 #include "tests/Base/TestPrint.h"
 #include "tests/Base/TestTaggedTuple.h"
 #include "tests/Base/TestException.h"
 #include "tests/Base/TestExceptionMPI.h"
-#include "tests/Base/TestPUPUtil.h"
 #include "tests/Base/TestReader.h"
 #include "tests/Base/TestStrConvUtil.h"
 #include "tests/Base/TestWriter.h"
@@ -86,6 +88,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/Control/Options/TestRNG.h"
 
 #include "tests/IO/TestMesh.h"
+#include "tests/IO/TestExodusIIMeshReader.h"
 
 #include "tests/Mesh/TestDerivedData.h"
 

@@ -151,6 +151,19 @@ bool keyEqual( const Container& a, const Container& b ) {
   return true;
 }
 
+// *****************************************************************************
+//! Compute the sum of the sizes of a container of containers
+//! \param[in] c Container of containers
+//! \return Sum of the sizes of the containers of the container
+//! \author J. Bakosi
+// *****************************************************************************
+template< class Container >
+std::size_t sumsize( const Container& c ) {
+  std::size_t sum = 0;
+  for (const auto& s : c) sum += s.size();
+  return sum;
+}
+
 } // tk::
 
 #endif // ContainerUtil_h
