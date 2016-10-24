@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 08:29:04 AM MDT
+  \date      Mon 24 Oct 2016 08:35:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -285,7 +285,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
                                   tk::ExoElemType elemtype,
                                   std::vector< std::size_t >& conn ) const
 // *****************************************************************************
-//  Read element connectivity of a single mesh cell from ExodusII file
+//  Read element connectivity of a number of mesh cells from ExodusII file
 //! \param[in] ext Extents of element IDs whose connectivity to read:
 //!   [from...till), using zero-based element IDs, where 'from' >=0, inclusive
 //!   and 'till < 'maxelements', where 'maxelements' is the total number of
