@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 18 Oct 2016 10:10:28 AM MDT
+  \date      Fri 21 Oct 2016 03:41:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -481,18 +481,18 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void readGraph( tk::ExodusIIMeshReader& er ) {
       // Get number of mesh points and number of tetrahedron elements in file
       er.readElemBlockIDs();
-      auto nel = er.nel( tk::ExoElemType::TET );
+      auto nel = er.nelem( tk::ExoElemType::TET );
       // Read our contiguously-numbered chunk of tetrahedron element
       // connectivity from file and also generate and store the list of global
       // element indices for our chunk of the mesh
-      auto chunk = nel / CkNumPes();
-      auto from = CkMyPe() * chunk;
+      auto npes = static_cast< std::size_t >( CkNumPes() );
+      auto mype = static_cast< std::size_t >( CkMyPe() );
+      auto chunk = nel / npes;
+      auto from = mype * chunk;
       auto till = from + chunk;
-      if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
-      std::array< std::size_t, 2 > ext = { {static_cast<std::size_t>(from),
-                                            static_cast<std::size_t>(till-1)} };
-      er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
-      m_gelemid.resize( static_cast<std::size_t>(till-from) );
+      if (mype == npes-1) till += nel % npes;
+      er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
+      m_gelemid.resize( till-from );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
       signal2host_graph_complete( m_host, m_gelemid.size() );
     }

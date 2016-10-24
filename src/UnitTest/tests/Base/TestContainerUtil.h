@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 02:06:34 PM MDT
+  \date      Fri 21 Oct 2016 01:24:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
@@ -262,6 +262,16 @@ void ContainerUtil_object::test< 6 >() {
   ensure_equals( "keys are equal", tk::keyEqual(q1,q2), false );
 }
 
+//! Test sumsize()
+//! \author J. Bakosi
+template<> template<>
+void ContainerUtil_object::test< 7 >() {
+  set_test_name( "sumsize" );
+
+  // Test sum of the sizes of a vector of vectors
+  std::vector< std::vector< tk::real > > c{ {3,4.0}, {2,2.0} };
+  ensure_equals( "sum of sizes incorrect", tk::sumsize(c), 4 );
+}
 } // tut::
 
 #endif // test_ContainerUtil_h

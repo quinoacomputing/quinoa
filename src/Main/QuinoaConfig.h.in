@@ -27,6 +27,7 @@ namespace tk {
 #define BUILD_HOSTNAME               "@HOSTNAME@"
 #define BUILD_TYPE                   "@BUILD_TYPE@"
 #define BUILD_DATE                   "@BUILD_DATE@"
+#define REGRESSION_DIR               "@REGRESSION_DIR@"
 
 // Compile-time options
 

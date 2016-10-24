@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Wed 19 Oct 2016 07:54:33 AM MDT
+# \date      Fri 21 Oct 2016 08:46:04 AM MDT
 #
 ################################################################################
 
@@ -65,6 +65,9 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
 # Set build type (will become compiler define in Main/QuinoaConfig.h)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
+# Query regression tests direcetory (will become compiler define in
+# Main/QuinoaConfig.h)
+set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../regression")
 
 # Query target architecture
 include(TargetArch)

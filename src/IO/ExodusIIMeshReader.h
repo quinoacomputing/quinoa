@@ -84,11 +84,6 @@ class ExodusIIMeshReader {
     //! Read element block IDs from file
     std::size_t readElemBlockIDs();
 
-    //! Read element connectivity of a single mesh cell from file
-    void readElement( std::size_t id,
-                      tk::ExoElemType elemtype,
-                      std::vector< std::size_t >& conn ) const;
-
     //! Read element connectivity of a number of mesh cells from file
     void readElements( const std::array< std::size_t, 2 >& extent,
                        tk::ExoElemType elemtype,
@@ -98,7 +93,7 @@ class ExodusIIMeshReader {
     std::map< int, std::vector< std::size_t > > readSidesets();
 
     //!  Return number of elements in a mesh block in the ExodusII file
-    int nel( tk::ExoElemType elemtype ) const;
+    std::size_t nelem( tk::ExoElemType elemtype ) const;
 
     //! Read ExodusII header without setting mesh size
     std::size_t readHeader();
@@ -132,8 +127,10 @@ class ExodusIIMeshReader {
     std::size_t m_neblk;                //!< Number of element blocks in file
     std::size_t m_neset;                //!< Number of element sets in file
     std::vector< int > m_eid;           //!< Element block IDs
-    std::vector< int > m_eidt;          //!< Element block IDs mapped to enum
-    std::vector< int > m_nel;  //!< Number of elements in a block mapped to enum
+    //! List of element block IDs for each elem type enum
+    std::vector< std::vector< int > > m_eidt;
+    //! Number of elements in blocks for each elem type enum
+    std::vector< std::vector< std::size_t > > m_nel;
 };
 
 } // tk::

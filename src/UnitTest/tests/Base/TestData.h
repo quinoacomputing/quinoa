@@ -20,34 +20,13 @@
 #include <boost/mpl/at.hpp>
 
 #include "Data.h"
+#include "TUTUtil.h"
 
 namespace tut {
 
 //! All tests in group inherited from this base
 struct Data_common {
-
   const tk::real prec = std::numeric_limits< tk::real >::epsilon();
-
-  // Ensure equality of all element of a vector of reals
-  void veceq( const std::string& msg,
-              const std::vector< tk::real >& a,
-              std::vector< tk::real >&& b )
-  {
-    std::transform( a.begin(), a.end(), b.begin(), b.begin(),
-                    [ &msg, this ]( tk::real s, tk::real& d ){
-                      ensure_equals( msg, s, d, this->prec ); return true; } );
-  }
-
-  // Ensure equality of all element of an array of reals
-  template< std::size_t N >
-  void veceq( const std::string& msg,
-              const std::array< tk::real, N >& a,
-              std::array< tk::real, N >&& b )
-  {
-    std::transform( a.begin(), a.end(), b.begin(), b.begin(),
-                    [ &msg, this ]( tk::real s, tk::real& d ){
-                      ensure_equals( msg, s, d, this->prec ); return true; } );
-  }
 };
 
 //! Test group shortcuts
@@ -496,6 +475,8 @@ void Data_object::test< 8 >() {
   pe( 1, 1, 0 ) = 0.5;
   pe( 1, 2, 0 ) = 0.6;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() vector of unknowns at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.4 }, pp.extract( 0, 0 ) );
@@ -547,6 +528,8 @@ void Data_object::test< 9 >() {
   pe( 1, 1, 0 ) = 0.5;
   pe( 1, 2, 0 ) = 0.4;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() vector of components at 0 incorrect",
          std::vector< tk::real >{ 0.1, 0.2, 0.3 }, pp.extract( 0 ) );
@@ -581,6 +564,8 @@ void Data_object::test< 10 >() {
   pe( 1, 0, 0 ) = 0.6;
   pe( 1, 1, 0 ) = 0.5;
   pe( 1, 2, 0 ) = 0.4;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator[] returning vector of components at 0 incorrect",
@@ -638,6 +623,8 @@ void Data_object::test< 11 >() {
   pe( 5, 1, 0 ) = 1.6;
   pe( 6, 1, 0 ) = 1.7;
   pe( 7, 1, 0 ) = 1.8;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
@@ -712,6 +699,8 @@ void Data_object::test< 12 >() {
   pe( 6, 1, 0 ) = 1.7;
   pe( 7, 1, 0 ) = 1.8;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
           std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
@@ -752,6 +741,8 @@ void Data_object::test< 13 >() {
   pp.fill( 0.0 );
   pe.fill( 0.1 );
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::fill() all with the same value at 0,0 incorrect",
           std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 0, 0 ) );
@@ -782,6 +773,8 @@ void Data_object::test< 14 >() {
 
   pe.fill( 0, 0, 0.5 );
   pe.fill( 1, 0, -0.5 );
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq(
@@ -844,6 +837,8 @@ void Data_object::test< 16 >() {
   std::vector< tk::Data< tk::EqCompUnk > > w;
   w.push_back( e );
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::ctor() at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
@@ -878,6 +873,8 @@ void Data_object::test< 17 >() {
   tk::Data< tk::EqCompUnk > e1( 3, 2 );
   e1 = e;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::cass() at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
@@ -911,6 +908,8 @@ void Data_object::test< 18 >() {
   std::vector< tk::Data< tk::EqCompUnk > > w;
   w.emplace_back( e );
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::mctor() at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
@@ -942,6 +941,8 @@ void Data_object::test< 19 >() {
   auto p1 = std::move( p );
   auto e1 = std::move( e );
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::mass() at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
@@ -972,6 +973,8 @@ void Data_object::test< 20 >() {
 
   p1 -= p2;
   e1 -= e2;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator-=() at 0,0 incorrect",
@@ -1018,6 +1021,8 @@ void Data_object::test< 21 >() {
 
   auto p = p1 - p2;
   auto e = e1 - e2;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator-() at 0,0 incorrect",
@@ -1080,6 +1085,8 @@ void Data_object::test< 22 >() {
   p1 += p2;
   e1 += e2;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::operator+=() at 0,0 incorrect",
          std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 0, 0 ) );
@@ -1125,6 +1132,8 @@ void Data_object::test< 23 >() {
 
   auto p = p1 + p2;
   auto e = e1 + e2;
+
+  using unittest::veceq;
 
   // Test the result of the addition for all template specializations
   veceq( "<UnkEqComp>::operator+() res at 0,0 incorrect",
@@ -1187,6 +1196,8 @@ void Data_object::test< 24 >() {
   p1 *= p2;
   e1 *= e2;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*=() at 0,0 incorrect",
          std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 0, 0 ) );
@@ -1232,6 +1243,8 @@ void Data_object::test< 25 >() {
 
   auto p = p1 * p2;
   auto e = e1 * e2;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
@@ -1294,6 +1307,8 @@ void Data_object::test< 26 >() {
   p1 /= p2;
   e1 /= e2;
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/=() at 0,0 incorrect",
          std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract( 0, 0 ) );
@@ -1339,6 +1354,8 @@ void Data_object::test< 27 >() {
 
   auto p = p1 / p2;
   auto e = e1 / e2;
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/() at 0,0 incorrect",
@@ -1401,6 +1418,8 @@ void Data_object::test< 28 >() {
   auto p = tk::min( p1, p2 );
   auto e = tk::min( e1, e2 );
 
+  using unittest::veceq;
+
   // Test all template specializations
   veceq( "<UnkEqComp>::operator min() at 0,0 incorrect",
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 0, 0 ) );
@@ -1431,6 +1450,8 @@ void Data_object::test< 29 >() {
 
   auto p = tk::max( p1, p2 );
   auto e = tk::max( e1, e2 );
+
+  using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator max() at 0,0 incorrect",
@@ -1549,6 +1570,8 @@ void Data_object::test< 33 >() {
   ensure_equals( "nprop after <UnkEqComp>::push_back() incorrect",
                  p.nprop(), 2 );
 
+  using unittest::veceq;
+
   veceq( "<UnkEqComp>::push_back() at 0 incorrect",
          std::vector< tk::real >{ 1.0, 2.0 }, p[0] );
   veceq( "<UnkEqComp>::push_back() at 1 incorrect",
@@ -1575,6 +1598,8 @@ void Data_object::test< 34 >() {
 
   p.rm( { 0, 2 } );
 
+  using unittest::veceq;
+
   ensure_equals( "nunk after <UnkEqComp>::rm(1prop) incorrect", p.nunk(), 1 );
   ensure_equals( "nprop after <UnkEqComp>::rm(1prop) incorrect", p.nprop(), 1 );
   veceq( "<UnkEqComp>::rm() incorrect", std::vector< tk::real >{ 3.0 }, p[0] );
@@ -1587,6 +1612,8 @@ void Data_object::test< 34 >() {
   q(2,0,0) = 5.0;  q(2,1,0) = 6.0;
 
   q.rm( { 1 } );
+
+  using unittest::veceq;
 
   ensure_equals( "nunk after <UnkEqComp>::rm(2prop) incorrect", q.nunk(), 2 );
   ensure_equals( "nprop after <UnkEqComp>::rm(2prop) incorrect", q.nprop(), 2 );
@@ -1603,6 +1630,8 @@ void Data_object::test< 34 >() {
   r(2,0,0) = 5.0;  r(2,1,0) = 6.0;
 
   r.rm( { 0, 2 } );
+
+  using unittest::veceq;
 
   ensure_equals( "nunk after <UnkEqComp>::rm(2prop) incorrect", r.nunk(), 1 );
   ensure_equals( "nprop after <UnkEqComp>::rm(2prop) incorrect", r.nprop(), 2 );
