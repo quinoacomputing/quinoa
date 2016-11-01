@@ -2,7 +2,7 @@
 /*!
   \file      src/Particles/Tracker.h
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 04:18:12 PM MDT
+  \date      Mon 31 Oct 2016 03:21:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on
@@ -99,8 +99,8 @@ class Tracker {
                           tk::real dt,
                           const std::array< tk::real, 4 >& Np )
     {
-      // Extract velocity difference between previous and current time steps
-      auto v = array->evel( e );
+      // Extract the transport velocity at nodes
+      auto v = array->velocity( e );
       // Advance particle coordinates using the interpolated velocity
       m_particles(i,0,0) +=
         dt*(Np[0]*v[0][0] + Np[1]*v[0][1] + Np[2]*v[0][2] + Np[3]*v[0][3]);

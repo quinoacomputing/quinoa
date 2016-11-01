@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 01:04:55 PM MDT
+  \date      Mon 31 Oct 2016 07:16:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -37,9 +37,6 @@ module carrier {
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& V );
       entry void setup();
-      entry void requestBCs();
-      entry void oldID( int frompe, const std::vector< std::size_t >& newids );
-      entry void bcval( int frompe, const std::vector< std::size_t >& nodes );
       entry void init();
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );

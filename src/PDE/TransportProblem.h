@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/TransportProblem.h
   \author    J. Bakosi
-  \date      Mon 03 Oct 2016 03:32:33 PM MDT
+  \date      Tue 01 Nov 2016 08:28:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for transport equations
   \details   This file defines policy classes for a transport equation, defined
@@ -163,76 +163,74 @@ class TransportProblemSlotCyl {
     //! \param[in] ncomp Number of components in this transport equation
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] t Physical time
+    //! \param[in] time Physical time
     template< class eq >
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type,
                       tk::ctr::ncomp_type ncomp,
                       tk::ctr::ncomp_type offset,
-                      tk::real t )
+                      tk::real time )
     {
-      const tk::real R0 = 0.15;
-      // center of the cone
-      tk::real x0 = 0.5;
-      tk::real y0 = 0.25;
-      tk::real r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-      tk::real kx = 0.5 + r*std::sin( t );
-      tk::real ky = 0.5 - r*std::cos( t );
-      // center of the hump
-      x0 = 0.25;
-      y0 = 0.5;
-      r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-      tk::real hx = 0.5 + r*std::sin( t-M_PI/2.0 ),
-               hy = 0.5 - r*std::cos( t-M_PI/2.0 );
-      // center of the slotted cylinder
-      x0 = 0.5;
-      y0 = 0.75;
-      r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-      tk::real cx = 0.5 + r*std::sin( t+M_PI ),
-               cy = 0.5 - r*std::cos( t+M_PI );
-      // end points of the cylinder slot
-      tk::real i1x = 0.525, i1y = cy - r*std::cos( std::asin(0.025/r) ),
-               i2x = 0.525, i2y = 0.8,
-               i3x = 0.475, i3y = 0.8;
-      // rotate end points of cylinder slot
-      tk::real ri1x = 0.5 + std::cos(t)*(i1x-0.5) - std::sin(t)*(i1y-0.5),
-               ri1y = 0.5 + std::sin(t)*(i1x-0.5) + std::cos(t)*(i1y-0.5),
-               ri2x = 0.5 + std::cos(t)*(i2x-0.5) - std::sin(t)*(i2y-0.5),
-               ri2y = 0.5 + std::sin(t)*(i2x-0.5) + std::cos(t)*(i2y-0.5),
-               ri3x = 0.5 + std::cos(t)*(i3x-0.5) - std::sin(t)*(i3y-0.5),
-               ri3y = 0.5 + std::sin(t)*(i3x-0.5) + std::cos(t)*(i3y-0.5);
-      // direction of slot sides
-      tk::real v1x = ri2x-ri1x, v1y = ri2y-ri1y,
-               v2x = ri3x-ri2x, v2y = ri3y-ri2y;
-      // lengths of direction of slot sides vectors
-      tk::real v1 = std::sqrt(v1x*v1x + v1y*v1y),
-               v2 = std::sqrt(v2x*v2x + v2y*v2y);
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      for (ncomp_t c=0; c<ncomp; ++c) unk.fill( c, offset, 0.0 );
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        // cone
-        r = std::sqrt((x[i]-kx)*(x[i]-kx) + (y[i]-ky)*(y[i]-ky)) / R0;
-        if (r<1.0)
-          for (ncomp_t c=0; c<ncomp; ++c)
-            unk( i, c, offset ) = 0.6*(1.0-r);
-        // hump
-        r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
-        if (r<1.0)
-          for (ncomp_t c=0; c<ncomp; ++c)
-            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
-        // cylinder
-        r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
-        const std::array< tk::real, 2 > r1{{ v1x, v1y }},
-                                        r2{{ x[i]-ri1x, y[i]-ri1y }};
-        const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
-        const std::array< tk::real, 2 > r3{{ v2x, v2y }},
-                                        r4{{ x[i]-ri2x, y[i]-ri2y }};
-        const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
-        if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0))
-          for (ncomp_t c=0; c<ncomp; ++c)
-            unk( i, c, offset ) = 0.6;
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        auto t = time + 2.0*M_PI/ncomp * c;
+        const tk::real R0 = 0.15;
+        // center of the cone
+        tk::real x0 = 0.5;
+        tk::real y0 = 0.25;
+        tk::real r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real kx = 0.5 + r*std::sin( t );
+        tk::real ky = 0.5 - r*std::cos( t );
+        // center of the hump
+        x0 = 0.25;
+        y0 = 0.5;
+        r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real hx = 0.5 + r*std::sin( t-M_PI/2.0 ),
+                 hy = 0.5 - r*std::cos( t-M_PI/2.0 );
+        // center of the slotted cylinder
+        x0 = 0.5;
+        y0 = 0.75;
+        r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real cx = 0.5 + r*std::sin( t+M_PI ),
+                 cy = 0.5 - r*std::cos( t+M_PI );
+        // end points of the cylinder slot
+        tk::real i1x = 0.525, i1y = cy - r*std::cos( std::asin(0.025/r) ),
+                 i2x = 0.525, i2y = 0.8,
+                 i3x = 0.475, i3y = 0.8;
+        // rotate end points of cylinder slot
+        tk::real ri1x = 0.5 + std::cos(t)*(i1x-0.5) - std::sin(t)*(i1y-0.5),
+                 ri1y = 0.5 + std::sin(t)*(i1x-0.5) + std::cos(t)*(i1y-0.5),
+                 ri2x = 0.5 + std::cos(t)*(i2x-0.5) - std::sin(t)*(i2y-0.5),
+                 ri2y = 0.5 + std::sin(t)*(i2x-0.5) + std::cos(t)*(i2y-0.5),
+                 ri3x = 0.5 + std::cos(t)*(i3x-0.5) - std::sin(t)*(i3y-0.5),
+                 ri3y = 0.5 + std::sin(t)*(i3x-0.5) + std::cos(t)*(i3y-0.5);
+        // direction of slot sides
+        tk::real v1x = ri2x-ri1x, v1y = ri2y-ri1y,
+                 v2x = ri3x-ri2x, v2y = ri3y-ri2y;
+        // lengths of direction of slot sides vectors
+        tk::real v1 = std::sqrt(v1x*v1x + v1y*v1y),
+                 v2 = std::sqrt(v2x*v2x + v2y*v2y);
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        unk.fill( c, offset, 0.0 );
+        for (ncomp_t i=0; i<x.size(); ++i) {
+          // cone
+          r = std::sqrt((x[i]-kx)*(x[i]-kx) + (y[i]-ky)*(y[i]-ky)) / R0;
+          if (r<1.0) unk( i, c, offset ) = 0.6*(1.0-r);
+          // hump
+          r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
+          if (r<1.0)
+              unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
+          // cylinder
+          r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
+          const std::array< tk::real, 2 > r1{{ v1x, v1y }},
+                                          r2{{ x[i]-ri1x, y[i]-ri1y }};
+          const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
+          const std::array< tk::real, 2 > r3{{ v2x, v2y }},
+                                          r4{{ x[i]-ri2x, y[i]-ri2y }};
+          const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
+          if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0)) unk( i, c, offset ) = 0.6;
+        }
       }
     }
 

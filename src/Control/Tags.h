@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:01:25 AM MDT
+  \date      Wed 26 Oct 2016 09:33:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -140,7 +140,7 @@ struct problem {};
 struct physics {};
 struct diffusivity {};
 struct u0 {};
-struct bc_dirichlet {};
+struct bcdir {};
 struct material {};
 struct id {};
 struct cv {};

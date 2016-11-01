@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Tue 30 Aug 2016 10:53:00 AM MDT
+  \date      Tue 25 Oct 2016 12:02:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -115,6 +115,7 @@ namespace grm {
     PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
+    BC_EMPTY,           //!< Empty boundary condition block
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -241,6 +242,8 @@ namespace grm {
     { MsgKey::VORTICAL_UNFINISHED, "Specifying the vortical flow test problem "
       "requires the specification of parameters alpha, beta, and p0. The error"
       "is in the block finished above the line above." },
+    { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
+      "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

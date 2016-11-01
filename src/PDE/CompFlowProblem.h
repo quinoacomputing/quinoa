@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlowProblem.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 11:58:18 AM MDT
+  \date      Tue 01 Nov 2016 03:22:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the compressible flow equations
   \details   This file defines policy classes for the compressible flow
@@ -25,6 +25,8 @@
 #define CompFlowProblem_h
 
 #include <cmath>
+#include <cstdlib>
+#include <string>
 
 #include <boost/mpl/vector.hpp>
 
@@ -39,13 +41,19 @@ class CompFlowProblemUserDefined {
 
     //! Set initial conditions
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] gid Global node IDs of owned elements
+    //! \param[in] bc Vector of pairs of bool and boundary condition value
+    //!   associated to mesh node IDs at which to set Dirichlet boundary
+    //!   conditions 
     //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    static void init( const ctr::InputDeck&,
-                      const std::array< std::vector< tk::real >, 3 >& coord,
+    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
+                      const std::vector< std::size_t >& gid,
+                      const std::unordered_map< std::size_t,
+                              std::vector< std::pair< bool, tk::real > > >& bc,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset )
@@ -53,11 +61,20 @@ class CompFlowProblemUserDefined {
       IGNORE(e);
       const auto& x = coord[0];
       for (ncomp_t i=0; i<x.size(); ++i) {
-         unk( i, 0, offset ) = 1.0;     // density
-         unk( i, 1, offset ) = 0.0;     // density * velocity
-         unk( i, 2, offset ) = 0.0;
-         unk( i, 3, offset ) = -1.0;
-         unk( i, 4, offset ) = 293.0;     // density * specific total energy
+        // domain points
+        unk(i,0,offset) = 1.0;        // density
+        unk(i,1,offset) = 0.0;        // density * velocity
+        unk(i,2,offset) = 0.0;
+        unk(i,3,offset) = -1.0;
+        unk(i,4,offset) = 293.0;      // density * specific total energy
+        // boundary conditions
+        const auto b = bc.find( gid[i] );
+        if (b != end(bc)) {
+          const auto& v = b->second;
+          Assert( v.size() == 5, "Incorrect BC vector size" );
+          for (std::size_t c=0; c<v.size(); ++c)
+            if (v[c].first) unk(i,c,offset) = v[c].second;
+        }
       }
     }
 
@@ -68,13 +85,10 @@ class CompFlowProblemUserDefined {
                tk::ctr::ncomp_type,
                tk::real,
                tk::real,
-               tk::real,
                const std::array< std::size_t, 4 >&,
-               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< std::array< tk::real, 4 >, 4 >&,
                const std::array< const tk::real*, 5 >&,
                std::array< std::array< tk::real, 4 >, 5 >&,
-               tk::Fields&,
                tk::Fields& ) {}
 
     //! Return field names to be output to file
@@ -89,6 +103,23 @@ class CompFlowProblemUserDefined {
       n.push_back( "pressure" );
       n.push_back( "temperature" );
       return n;
+    }
+
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
+    //! \param[in] sideset Side set ID
+    //! \return Vector of pairs of bool and BC value for all components
+    static std::vector< std::pair< bool, tk::real > >
+    dirbc( int sideset ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >()) {
+        Assert( s.size() == 3, "Side set vector size incorrect" );
+        if (std::stoi(s[0]) == sideset)
+          b[ static_cast<std::size_t>(std::stol(s[1])-1) ] =
+            { true, std::atof(s[2].c_str()) };
+      }
+      return b;
     }
 
     //! Return field output going to file
@@ -155,62 +186,22 @@ class CompFlowProblemVorticalFlow {
 
     //! Set initial conditions
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] gid Global node IDs of owned elements
+    //! \param[in] bc Vector of pairs of bool and boundary condition value
+    //!   associated to mesh node IDs at which to set Dirichlet boundary
+    //!   conditions 
     //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    static void init( const ctr::InputDeck&,
-                      const std::array< std::vector< tk::real >, 3 >& coord,
+    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
+                      const std::vector< std::size_t >& gid,
+                      const std::unordered_map< std::size_t,
+                              std::vector< std::pair< bool, tk::real > > >& bc,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset )
-    {
-      IGNORE(e);
-
-      // manufactured solution parameters
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
-      const auto& p0 =
-        g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
-
-      const auto& x = coord[0];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-         unk( i, 0, offset ) = 1.0;
-         unk( i, 1, offset ) = 0.0;
-         unk( i, 2, offset ) = 0.0;
-         unk( i, 3, offset ) = 0.0;
-         unk( i, 4, offset ) = p0/(g-1);
-      }
-    }
-
-    //! Add source term to rhs for vortical flow manufactured solution
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
-    //! \param[in] dt Size of time step
-    //! \param[in] J Element Jacobi determinant
-    //! \param[in] N Element node indices
-    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
-    //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] s Solution at element nodes at recent time step stage
-    //! \param[in,out] R Right-hand side vector contributing to
-    static void
-    sourceRhs( const std::array< std::vector< tk::real >, 3 >& coord,
-               tk::ctr::ncomp_type e,
-               tk::real mult,
-               tk::real dt,
-               tk::real J,
-               const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 3 >, 4 >& grad,
-               const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >& s,
-               tk::Fields& R,
-               tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
@@ -222,58 +213,92 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+      // set initial and boundary conditions
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      for (ncomp_t i=0; i<x.size(); ++i) {
+        auto& r  = unk( i, 0, offset ); // rho
+        auto& ru = unk( i, 1, offset ); // rho * u
+        auto& rv = unk( i, 2, offset ); // rho * v
+        auto& rw = unk( i, 3, offset ); // rho * w
+        auto& re = unk( i, 4, offset ); // rho * e
+        r = 1.0;
+        ru = 0.0;
+        rv = 0.0;
+        rw = 0.0;
+        re = (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
+        if (bc.find(gid[i]) != end(bc)) {
+          ru = r*(a*x[i] - b*y[i]);
+          rv = r*(b*x[i] + a*y[i]);
+          rw = -2.0*r*a*z[i];
+          re = (ru*ru + rv*rv + rw*rw)/(2.0*r)
+               + (p0 - 2.0*r*a*a*z[i]*z[i])/(g-1.0);
+        }
+      }
+    }
+
+    //! Add source term to rhs for vortical flow manufactured solution
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] mult Multiplier differentiating the different stages in
+    //!    multi-stage time stepping
+    //! \param[in] dt Size of time step
+    //! \param[in] N Element node indices
+    //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
+    //! \param[in] r Pointers to right hand side at component and offset
+    //! \param[in,out] u Solution at element nodes at recent time step stage
+    //! \param[in,out] R Right-hand side vector contributing to
+    static void
+    sourceRhs( const std::array< std::vector< tk::real >, 3 >& coord,
+               tk::ctr::ncomp_type e,
+               tk::real mult,
+               tk::real dt,
+               const std::array< std::size_t, 4 >& N,
+               const std::array< std::array< tk::real, 4 >, 4 >& mass,
+               const std::array< const tk::real*, 5 >& r,
+               std::array< std::array< tk::real, 4 >, 5 >& u,
+               tk::Fields& R )
+    {
+      // manufactured solution parameters
+      const auto& a =
+        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
+      const auto& b =
+        g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[e];
+      // ratio of specific heats
+      tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
       // mesh node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // set boundary conditions (directly on the solution)
-      const auto eps = 1.0e-8;//std::numeric_limits< tk::real >::epsilon();
-      for (std::size_t j=0; j<4; ++j)
-        if ( std::fabs(x[N[j]]+0.5) < eps || std::fabs(x[N[j]]-0.5) < eps ||
-             std::fabs(y[N[j]]+0.5) < eps || std::fabs(y[N[j]]-0.5) < eps ||
-             std::fabs(z[N[j]]+0.5) < eps || std::fabs(z[N[j]]-0.5) < eps )
-        {
-          s[1][j] = U(N[j],1,0) = a*x[N[j]] - b*y[N[j]];
-          s[2][j] = U(N[j],2,0) = b*x[N[j]] + a*y[N[j]];
-          s[3][j] = U(N[j],3,0) = -2.0*a*z[N[j]];
-          s[4][j] = U(N[j],4,0) = (s[1][j]*s[1][j] +
-                                   s[2][j]*s[2][j] +
-                                   s[3][j]*s[3][j])/2.0 +
-                                  (p0 - 2.0*a*a*z[N[j]]*z[N[j]])/(g-1.0);
-        }
-
-      // add density source at element nodes
-      tk::real c = mult * dt * J/24.0;
-      for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<4; ++j)
-          for (std::size_t k=0; k<4; ++k)
-            R.var(r[0],N[j]) += c * grad[k][i] * s[i+1][k];
-
-      // momentum source
+      // compute momentum source
       std::array< std::array< tk::real, 4 >, 2 > Sm{{
-        {{ s[0][0]*((a*a-b*b)*x[N[0]] - 2.0*a*b*y[N[0]]),
-           s[0][1]*((a*a-b*b)*x[N[1]] - 2.0*a*b*y[N[1]]),
-           s[0][2]*((a*a-b*b)*x[N[2]] - 2.0*a*b*y[N[2]]),
-           s[0][3]*((a*a-b*b)*x[N[3]] - 2.0*a*b*y[N[3]]) }},
-        {{ s[0][0]*((a*a-b*b)*y[N[0]] + 2.0*a*b*x[N[0]]),
-           s[0][1]*((a*a-b*b)*y[N[1]] + 2.0*a*b*x[N[1]]),
-           s[0][2]*((a*a-b*b)*y[N[2]] + 2.0*a*b*x[N[2]]),
-           s[0][3]*((a*a-b*b)*y[N[3]] + 2.0*a*b*x[N[3]]) }} }};
+        {{ u[0][0]*((a*a-b*b)*x[N[0]] - 2.0*a*b*y[N[0]]),
+           u[0][1]*((a*a-b*b)*x[N[1]] - 2.0*a*b*y[N[1]]),
+           u[0][2]*((a*a-b*b)*x[N[2]] - 2.0*a*b*y[N[2]]),
+           u[0][3]*((a*a-b*b)*x[N[3]] - 2.0*a*b*y[N[3]]) }},
+        {{ u[0][0]*((a*a-b*b)*y[N[0]] + 2.0*a*b*x[N[0]]),
+           u[0][1]*((a*a-b*b)*y[N[1]] + 2.0*a*b*x[N[1]]),
+           u[0][2]*((a*a-b*b)*y[N[2]] + 2.0*a*b*x[N[2]]),
+           u[0][3]*((a*a-b*b)*y[N[3]] + 2.0*a*b*x[N[3]]) }} }};
 
-      // energy source
+      // compute energy source
       std::array< tk::real, 4 > Se{{
-        Sm[0][0]*s[1][0]/s[0][0] + Sm[1][0]*s[2][0]/s[0][0] +
-          8.0*s[0][0]*a*a*a*z[N[0]]*z[N[0]]/(g-1.0),
-        Sm[0][1]*s[1][1]/s[0][1] + Sm[1][1]*s[2][1]/s[0][1] +
-          8.0*s[0][1]*a*a*a*z[N[1]]*z[N[1]]/(g-1.0),
-        Sm[0][2]*s[1][2]/s[0][2] + Sm[1][2]*s[2][2]/s[0][2] +
-          8.0*s[0][2]*a*a*a*z[N[2]]*z[N[2]]/(g-1.0),
-        Sm[0][3]*s[1][3]/s[0][3] + Sm[1][3]*s[2][3]/s[0][3] +
-          8.0*s[0][3]*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
+        (Sm[0][0]*u[1][0] + Sm[1][0]*u[2][0])/u[0][0] +
+          8.0*u[0][0]*a*a*a*z[N[0]]*z[N[0]]/(g-1.0),
+        (Sm[0][1]*u[1][1] + Sm[1][1]*u[2][1])/u[0][1] +
+          8.0*u[0][1]*a*a*a*z[N[1]]*z[N[1]]/(g-1.0),
+        (Sm[0][2]*u[1][2] + Sm[1][2]*u[2][2])/u[0][2] +
+          8.0*u[0][2]*a*a*a*z[N[2]]*z[N[2]]/(g-1.0),
+        (Sm[0][3]*u[1][3] + Sm[1][3]*u[2][3])/u[0][3] +
+          8.0*u[0][3]*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
 
-      c = mult * dt;
+      // add momentum and energy source at element nodes
+      tk::real c = mult * dt;
       for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k) {
           // source contribution to momentum rhs
@@ -282,6 +307,21 @@ class CompFlowProblemVorticalFlow {
           // source contribution to enerhy rhs
           R.var(r[4],N[j]) += c * mass[j][k] * Se[k];
         }
+    }
+
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
+    //! \param[in] sideset Side set ID
+    //! \return Vector of pairs of bool and BC value for all components
+    static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+        for (const auto& i : s)
+          if (std::stoi(i) == sideset)
+            for (auto& b : bc)
+               b = { true, 0.0 };
+      return bc;
     }
 
     //! Return field names to be output to file
@@ -328,7 +368,7 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r = U.extract( 0, offset );
+      const auto r  = U.extract( 0, offset );
       const auto ru = U.extract( 1, offset );
       const auto rv = U.extract( 2, offset );
       const auto rw = U.extract( 3, offset );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  \date      Mon 03 Oct 2016 11:39:21 AM MDT
+  \date      Tue 01 Nov 2016 11:13:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
@@ -13,7 +13,9 @@
 // *****************************************************************************
 
 #include <limits>
+#include <sstream>
 #include <algorithm>
+#include <unordered_map>
 
 #include "Macro.h"
 #include "Vector.h"
@@ -27,6 +29,8 @@ void
 FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
                     const std::vector< std::size_t >& inpoel,
                     const std::vector< tk::real >& vol,
+                    const std::unordered_map< std::size_t,
+                            std::vector< std::pair< bool, tk::real > > >& bc,
                     const tk::Fields& dUh,
                     const tk::Fields& Un,
                     tk::Fields& P )
@@ -35,15 +39,18 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] vol Volume associated to mesh nodes
+//! \param[in] bc Vector of pairs of bool and boundary condition value
+//!   associated to mesh node IDs at which to set Dirichlet boundary conditions
 //! \param[in] dUh Increment of the high order solution
 //! \param[in] Un Solution at the previous time step stage
 //! \param[in,out] P The sums of positive (negative) AECs to nodes
-//! \details The antidiffusive element contributions (AEC) are computed as the
+//! \details The antidiffusive element contributions (AEC) are defined as the
 //!   difference between the high and low order solution, where the high order
-//!   solution is consistent mass Taylor-Galerkin and the low order solution is
-//!   lumped mass Taylor-Galerkin + diffusion. Note that AEC is not directly
-//!   computed as dUh - dUl (although that could also be done), but as AEC =
-//!   M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh), where
+//!   solution is obtained from consistent mass Taylor-Galerkin discretization
+//!   and the low order solution is lumped mass Taylor-Galerkin + diffusion.
+//!   Note that AEC is not directly computed as dUh - dUl (although that could
+//!   also be done), but as AEC =  M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh),
+//!   where
 //!    * M_ce is the element's consistent mass matrix,
 //!    * M_Le is the element's lumped mass matrix,
 //!    * ctau is the mass diffusion coefficient on the rhs of the low order
@@ -52,9 +59,13 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!    * dUh is the increment of the high order solution, and
 //!    * M_L^{-1} is the inverse of the assembled lumped mass matrix, i.e., the
 //!      volume associated to a mesh node by summing the quarter of the element
-//!      volumes surrounding the node. Note this is the correct node volume
-//!      taking into account that some nodes are on chare boundaries. See
-//!      Carrier::comm().
+//!      volumes surrounding the node. Note that this is the correct node volume
+//!      taking into account that some nodes are on chare boundaries. See also
+//!      Carrier::vol().
+//! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
+//!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
+//!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
+//!   doi:10.1002/fld.1650071007
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -101,11 +112,35 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     std::vector< std::array< tk::real, 4 > > duh( ncomp );
     for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
 
-    // compute antidiffusive element contributions
-    for (ncomp_t c=0; c<ncomp; ++c)
-      for (std::size_t j=0; j<4; ++j)
-        for (std::size_t k=0; k<4; ++k)
-          m_aec(e*4+j,c,0) += m[j][k] * (ctau*un[c][k] + duh[c][k]) / vol[N[j]];
+    // Compute antidiffusive element contributions (AEC). The high order system
+    // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the
+    // high order right hand side. The low order system is constructed from the
+    // high order one by lumping the consistent mass matrix and adding mass
+    // diffusion: M_L * dUl = r + c_tau * (M_c - M_L) Un, where M_L is the
+    // lumped mass matrix, c_tau is the mass diffusion coefficient (c_tau = 1.0
+    // guarantees a monotonic solution). See also the details in the function
+    // header for the notaion. Based on the above, the AEC, in general, is
+    // computed as AEC = M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh), which can be
+    // obtained by subtracting the low order system from the high order system.
+    // Note that the solution update is U^{n+1} = Un + dUl + lim(dUh - dUl),
+    // where the last terms is the limited AEC. (Think of 'lim' as the limit
+    // coefficient between 0 and 1.) At nodes where Dirichlet boundary
+    // conditions (BC) are set, we ignore the high order solution increment,
+    // i.e., dUh=0, when computing the AEC. This equates the AEC at those BC
+    // nodes with M_L^{-1} * the negative of the mass diffusion, which also
+    // equals to M_L^{-1} * the low order right hand side, since the high order
+    // right hand side, r, is zero there. At the solution update, where the
+    // limited AEC is applied, in member function lim(), we apply the full AEC
+    // for these BC nodes (i.e., limit coefficient = 1.0) which yields no
+    // increment there, correctly forcing the Dirichlet BCs at those nodes.
+    for (std::size_t j=0; j<4; ++j) {
+      bool b = bc.find(N[j]) != end(bc);
+      for (ncomp_t c=0; c<ncomp; ++c)
+        for (std::size_t k=0; k<4; ++k) {
+          auto d = !b ? duh[c][k] : 0.0;
+          m_aec(e*4+j,c,0) += m[j][k] * (ctau*un[c][k] + d) / vol[N[j]];
+        }
+     }
   }
 
   // sum all positive (negative) antidiffusive element contributions to nodes
@@ -165,7 +200,7 @@ FluxCorrector::verify( std::size_t nchare,
       std::vector< const tk::real* > u( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.cptr( c, 0 );
       // scatter-add antidiffusive element contributions to nodes
-      for (ncomp_t c=0; c<ncomp; ++c) 
+      for (ncomp_t c=0; c<ncomp; ++c)
         for (std::size_t j=0; j<4; ++j)
           U.var(u[c],N[j]) += m_aec(e*4+j,c,0);
     }
@@ -175,11 +210,15 @@ FluxCorrector::verify( std::size_t nchare,
 
     // Tolerance: 10 x the linear solver tolerance for the high order solution.
     if (d.second > 1.0e-7) {
-      std::cout << "maxdiff at " << d.first << ": " << d.second
-                << ", dUh:" << dUh(d.first,0,0) << ", dUl:" << dUl(d.first,0,0)
-                << ", dUh-dUl:" << dUh(d.first,0,0) - dUl(d.first,0,0)
-                << ", AEC:" << U(d.first,0,0) << '\n';
-      Throw( "Assembled AEC does not equal dUh-dUl" );
+      const auto& duh = dUh.data();
+      const auto& dul = dUl.data();
+      const auto& u = U.data();
+      std::stringstream ss;
+      ss << "maximum difference at " << d.first << ": " << d.second
+         << ", dUh:" << duh[d.first] << ", dUl:" << dul[d.first]
+         << ", dUh-dUl:" << duh[d.first] - dul[d.first]
+         << ", AEC:" << u[d.first] << '\n';
+      Throw( "Assembled AEC does not equal dUh-dUl: " + ss.str() );
     }
 
     return true;
@@ -342,6 +381,8 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 
 void
 FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
+                    const std::unordered_map< std::size_t,
+                            std::vector< std::pair< bool, tk::real > > >& bc,
                     const tk::Fields& P,
                     const tk::Fields& Ul,
                     tk::Fields& Q,
@@ -349,6 +390,8 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 // Compute limited antiffusive element contributions and apply to mesh nodes
 //! \param[in] inpoel Mesh element connectivity
+//! \param[in] bc Vector of pairs of bool and boundary condition value associated
+//!   to mesh node IDs at which to set Dirichlet boundary conditions
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
 //! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
@@ -408,9 +451,16 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
     std::vector< const tk::real* > a( ncomp );
     for (ncomp_t c=0; c<ncomp; ++c) a[c] = A.cptr( c, 0 );
 
-    // scatter-add limited antidiffusive element contributions to nodes
-    for (ncomp_t c=0; c<ncomp; ++c) 
-      for (std::size_t j=0; j<4; ++j)
-        A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);
+    // Scatter-add limited antidiffusive element contributions to nodes. At
+    // nodes where Dirichlet boundary conditions are set, we ignore the limit
+    // coefficient. This yields no increment for those nodes. See the detailed
+    // discussion when computing the AECs.
+    for (std::size_t j=0; j<4; ++j)
+      if (bc.find(N[j]) == end(bc))
+        for (ncomp_t c=0; c<ncomp; ++c) 
+          A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);
+      else
+        for (ncomp_t c=0; c<ncomp; ++c) 
+          A.var(a[c],N[j]) += m_aec(e*4+j,c,0);
   }
 }

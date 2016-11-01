@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:02:11 AM MDT
+  \date      Wed 26 Oct 2016 09:35:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -159,6 +159,12 @@ namespace deck {
                             tk::grm::MsgKey::VORTICAL_UNFINISHED >
                           ( stack, value );
       }
+      // Error check Dirichlet boundary condition block for all compflow
+      // configurations
+      for (const auto& s : stack.get< tag::param, eq, tag::bcdir >())
+        if (s.empty()) 
+          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::BC_EMPTY >
+                          ( stack, value );
     }
   };
 
@@ -355,7 +361,7 @@ namespace deck {
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
                                                tag::poisson >,
-                           bc_dirichlet< tag::poisson, tag::bc_dirichlet > >,
+                           bc_dirichlet< tag::poisson, tag::bcdir > >,
            check_errors< tag::poisson, check_eq > > {};
 
   //! compressible flow
@@ -382,7 +388,7 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
                            parameter< tag::compflow, kw::pde_beta, tag::beta >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
-                           bc_dirichlet< tag::compflow, tag::bc_dirichlet > >,
+                           bc_dirichlet< tag::compflow, tag::bcdir > >,
            check_errors< tag::compflow, check_compflow > > {};
 
   //! partitioning ... end block
