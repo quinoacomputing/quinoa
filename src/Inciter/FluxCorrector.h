@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.h
   \author    J. Bakosi
-  \date      Tue 04 Oct 2016 06:12:43 AM MDT
+  \date      Tue 01 Nov 2016 11:13:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
@@ -15,6 +15,7 @@
 #define FluxCorrector_h
 
 #include <utility>
+#include <unordered_map>
 
 #include "NoWarning/pup.h"
 
@@ -43,6 +44,8 @@ class FluxCorrector {
     void aec( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< tk::real >& vol,
+              const std::unordered_map< std::size_t,
+                      std::vector< std::pair< bool, tk::real > > >& bc,
               const tk::Fields& dUh,
               const tk::Fields& Un,
               tk::Fields& P );
@@ -71,6 +74,8 @@ class FluxCorrector {
 
     //! Compute limited antiffusive element contributions and apply to mesh nodes
     void lim( const std::vector< std::size_t >& inpoel,
+              const std::unordered_map< std::size_t,
+                      std::vector< std::pair< bool, tk::real > > >& bc,
               const tk::Fields& P,
               const tk::Fields& Ul,
               tk::Fields& Q,

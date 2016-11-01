@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/AuxSolver.h
   \author    J. Bakosi
-  \date      Tue 11 Oct 2016 12:42:34 PM MDT
+  \date      Thu 27 Oct 2016 10:20:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Auxiliary solvers used in tk::LinSysMerger by inciter.
   \details   This file defines policy classes for tk::LinSysMerger's auxiliary
@@ -284,42 +284,6 @@ class AuxSolverLumpMassDiff {
                    " to export in low order solution vector" );
         }
         worker[ w.first ].updateLowSol( gid, solution );
-      }
-    }
-
-    //! Set boundary conditions on the low order system left-hand side matrix
-    //! \param[in] host Pointer to the object instance we interoperate with
-    //! \param[in] ncomp Number of scalar components per unknown
-    //! \param[in] bcval Values (for each scalar equation solved) of Dirichlet
-    //!   boundary conditions assigned to global node IDs we (our PE branch)
-    //!   set. The map key is the global mesh node/row ID, the value is a vector
-    //!   of pairs in which the bool (.first) indicates whether the boundary
-    //!   condition value (.second) is set at the given node. The size of the
-    //!   vectors is the number of PDEs integrated times the number of scalar
-    //!   components in all PDEs.
-    //! \param[in] lump Part of auxiliary system left-hand side "matrix"
-    //!   (vector) owned by my PE. Vector of values (for each scalar equation
-    //!   solved) associated to global mesh point row ids. This vector collects
-    //!   the nonzero values of the auxiliary system lhs "matrix" solution. In
-    //!   flux-corrected transport this is the lhs forthe low order system
-    //!   only storing the nonzero diagonal entries of the lhs matrix.
-    //! \details Since the lhs is only a diagonal of nonzero entries, we put 1.0
-    //!   in the diagonal and we are done.
-    template< class Host > static
-    void auxbc( Host* const host,
-                std::size_t ncomp,
-                const std::unordered_map< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > >& bcval,
-                const std::map< std::size_t, std::vector< tk::real > >& lump )
-    {
-      IGNORE(host);
-      Assert( host->auxlhscomplete(),
-              "Values of distributed lumped mass lhs vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
-      for (const auto& n : bcval) {
-        auto& row = tk::ref_find( lump, n.first );
-        auto& b = n.second;
-        for (std::size_t i=0; i<ncomp; ++i) if (b[i].first) row[i] = 1.0;
       }
     }
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 03 Oct 2016 02:12:20 PM MDT
+  \date      Mon 31 Oct 2016 03:24:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -17,10 +17,11 @@
 #ifndef PDE_h
 #define PDE_h
 
+#include <array>
 #include <string>
 #include <vector>
 #include <functional>
-#include <array>
+#include <unordered_map>
 
 #include "Types.h"
 #include "Make_unique.h"
@@ -75,9 +76,12 @@ class PDE {
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& gid,
+                     const std::unordered_map< std::size_t,
+                            std::vector< std::pair< bool, tk::real > > >& bc,
                      tk::Fields& unk,
                      tk::real t ) const
-    { self->initialize( coord, unk, t ); }
+    { self->initialize( coord, gid, bc, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -97,22 +101,23 @@ class PDE {
               tk::Fields& R ) const
     { self->rhs( mult, dt, coord, inpoel, U, R ); }
 
-    //! Public interface for extracting the velocity field at cell nodes
+    //! Public interface for computing the minimum time step size
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::Fields& U ) const
+    { return self->dt( coord, inpoel, U ); }
+
+    //! Public interface for computing the transport velocity at nodes
     std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
     { return self->velocity( U, coord, N ); }
 
-    //! \brief Public interface for querying if a Dirichlet boundary condition
-    //!   has set by the user on any side set for any component in the PDE
-    bool anydirbc( int sideset ) const
-    { return self->anydirbc( sideset ); }
-
     //! \brief Public interfac for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
-    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
-    { return self->dirbc( sideset ); }
+    std::vector< std::pair< bool, tk::real > >
+    dirbc( int sideset ) const { return self->dirbc( sideset ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
@@ -143,7 +148,11 @@ class PDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
-                               tk::Fields&, tk::real ) const = 0;
+                               const std::vector< std::size_t >&,
+                               const std::unordered_map< std::size_t,
+                                 std::vector< std::pair< bool, tk::real > > >&,
+                               tk::Fields&,
+                               tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
@@ -154,11 +163,13 @@ class PDE {
                         const std::vector< std::size_t >&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
-      virtual bool anydirbc( int ) const = 0;
+      virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
+                           const std::vector< std::size_t >&,
+                           const tk::Fields& ) const = 0;
       virtual std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields& U,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::array< std::size_t, 4 >& N  ) const = 0;
+        const tk::Fields&,
+        const std::array< std::vector< tk::real >, 3 >&,
+        const std::array< std::size_t, 4 >&  ) const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
@@ -174,8 +185,12 @@ class PDE {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                       tk::Fields& unk, tk::real t ) const override
-      { data.initialize( coord, unk, t ); }
+                       const std::vector< std::size_t >& gid,
+                       const std::unordered_map< std::size_t,
+                               std::vector< std::pair< bool, tk::real > > >& bc,
+                       tk::Fields& unk,
+                       tk::real t ) const override
+      { data.initialize( coord, gid, bc, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
@@ -188,13 +203,15 @@ class PDE {
                 const tk::Fields& U,
                 tk::Fields& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, R ); }
+      tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                   const std::vector< std::size_t >& inpoel,
+                   const tk::Fields& U ) const override
+      { return data.dt( coord, inpoel, U ); }
       std::array< std::array< tk::real, 4 >, 3 > velocity(
         const tk::Fields& U,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const override
       { return data.velocity( U, coord, N ); }
-      bool anydirbc( int sideset ) const override
-      { return data.anydirbc( sideset ); }
       std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
       override { return data.dirbc( sideset ); }
       std::vector< std::string > names() const override { return data.names(); }

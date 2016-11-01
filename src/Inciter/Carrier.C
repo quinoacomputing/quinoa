@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 02:33:46 PM MDT
+  \date      Tue 01 Nov 2016 11:06:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -107,7 +107,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_pc(),
   m_qc(),
   m_ac(),
-  m_tracker( 0, m_inpoel ) // 0 = no particles
+  m_tracker( 0, m_inpoel ), // 0 = no particles
+  m_bc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -149,7 +150,6 @@ Carrier::vol()
 // *****************************************************************************
 //  Read mesh node coordinates, sum mesh volumes to nodes, and start
 //  communicating them on chare-boundaries
-//!   nodes
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -215,14 +215,14 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
 void
 Carrier::setup()
 // *****************************************************************************
-// Setup rows, boundary conditions, output initial field data, etc.
+// Setup rows, query boundary conditions, generate particles, output mesh, etc.
 //! \author J. Bakosi
 // *****************************************************************************
 {
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
-  // Send node IDs from element side sets matched to user-specified BCs
-  sendBCs( queryBCs() );
+  // Send node IDs from element side sets matched to BC set IDs
+  bc();
   // Generate particles
   m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
   // Output chare mesh to file
@@ -231,17 +231,20 @@ Carrier::setup()
   writeMeta();
 }
 
-std::vector< std::size_t >
-Carrier::queryBCs()
+void
+Carrier::bc()
 // *****************************************************************************
-//  Extract nodes IDs from side sets node lists and match to boundary conditions
-//! \return List of owned node IDs on which a Dirichlet BC is set by the user
-//! \details Boundary conditions, mathematically speaking, are applied on
+//  Extract node IDs from side set node lists and match to user-specified
+//  boundary conditions
+//! \details Boundary conditions (BC), mathematically speaking, are applied on
 //!   finite surfaces. These finite surfaces are given by element sets. This
-//!   function takes the node lists mapped to side set IDs and extracts only
-//!   those nodes that we own that the user has specified boundary condition on
-//!   and returns the 'new' (as in producing contiguous-row-id linear system
-//!   contributions, see also Partitioner.h) node IDs.
+//!   function queries the node lists associated to side set IDs as read in from
+//!   file (old mesh node IDs as in file associated to all side sets in file).
+//!   Then the user-specified boundary conditions, their values and which side
+//!   set they are assigned to, are interrogated and only those nodes and their
+//!   BC values are extracted that we operate on. This BC data structure is then
+//!   sent to the linear system merger which needs to know about this to apply
+//!   BCs before a linear solve.
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -259,103 +262,14 @@ Carrier::queryBCs()
     return { false, 0 };
   };
 
-  // lambda to find out if the user has specified a Dirichlet BC on the given
-  // side set for any component of any of the PDEs integrated
-  auto userbc = []( int sideset ) -> bool {
-    for (const auto& eq : g_pdes) if (eq.anydirbc(sideset)) return true;
-    return false;
-  };
-
-  // Collect list of owned node IDs on which a Dirichlet BC is given by the user
-  std::vector< std::size_t > bc;
-  for (const auto& s : side) {
-    auto ubc = userbc( s.first );
-    for (auto n : s.second) {
-      auto o = own(n);
-      if (o.first && ubc) bc.push_back( o.second );
-    }
-  }
-
-  // Make BC node list unique. The node list extracted here can still contain
-  // repeating IDs, because the nodes are originally extracted by the Exodus
-  // reader by interrogating elements whose faces are adjacent to side sets,
-  // which can contain repeating node IDs for those nodes that elements share.
-  // See also the Exodus user manual.
-  tk::unique(bc);
-
-  return bc;
-}
-
-void
-Carrier::sendBCs( const std::vector< std::size_t >& bc )
-// *****************************************************************************
-// Send node list to our LinSysMerger branch which is then used to set BCs
-//! \param[in] bc List of node IDs to send
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Offer list of owned node IDs mapped to side sets to LinSysMerger
-  m_linsysmerger.ckLocalBranch()->charebc( thisIndex, bc );
-}
-
-std::vector< std::size_t >
-Carrier::old( const std::vector< std::size_t >& newids )
-// *****************************************************************************
-// Query old node IDs for a list of new node IDs
-//! \param[in] newids Vector of new node IDs
-//! \details 'old' as in file, 'new' as in as in producing contiguous-row-id
-//!   linear system contributions, see also Partitioner.h.
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  std::vector< std::size_t > oldids;
-  for (auto i : newids) oldids.push_back( tk::cref_find(m_cid,i) );
-  return oldids;
-}
-
-void
-Carrier::requestBCs()
-// *****************************************************************************
-// Request owned node IDs on which a Dirichlet BC is set by the user
-//! \details Called from host (Transporter), contributing the result back to host
-//! \author J. Bakosi
-// *****************************************************************************
-{
-   auto stream = tk::serialize( old( queryBCs() ) );
-   CkCallback cb( CkIndex_Transporter::doverifybc(nullptr), m_transporter );
-   contribute( stream.first, stream.second.get(), VerifyBCMerger, cb );
-}
-
-void
-Carrier::oldID( int frompe, const std::vector< std::size_t >& newids )
-// *****************************************************************************
-// Look up and return old node IDs for new ones
-//! \param[in] newids Vector of new node IDs
-//! \details Old (as in file), new (as in producing contiguous-row-id linear
-//!   system contributions
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  m_linsysmerger[ frompe ].oldID( thisIndex, old(newids) );
-}
-
-void
-Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
-// *****************************************************************************
-// Look up boundary condition values at node IDs for all PDEs
-//! \param[in] nodes Vector of node IDs at which to query BC values
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Access all side sets from LinSysMerger
-  auto& side = m_linsysmerger.ckLocalBranch()->side();
-
-  // lambda to query the user-specified Dirichlet BCs on a given side set for
-  // all components of all the PDEs integrated
-  auto bc = []( int sideset ) -> std::vector< std::pair< bool, tk::real > > {
+  // lambda to query the Dirichlet BCs on a side set for all components of all
+  // the PDEs integrated
+  auto bcval = []( int sideset ) {
+    // storage for whether the a BC is set and its value for all components of
+    // all PDEs configured to be solved
     std::vector< std::pair< bool, tk::real > > b;
     for (const auto& eq : g_pdes) {
-      auto e = eq.dirbc( sideset );  // query BC values for all components of eq
+      auto e = eq.dirbc( sideset );
       b.insert( end(b), begin(e), end(e) );
     }
     Assert( b.size() == g_inputdeck.get< tag::component >().nprop(),
@@ -377,33 +291,46 @@ Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
     return false;
   };
 
-  // Collect vector of pairs of bool and BC value, where the bool indicates
-  // whether the BC value is set at the given node by the user. The size of the
-  // vectors is the number of PDEs integrated times the number of scalar
-  // components in all PDEs. The vector is associated to global node IDs at
-  // which the boundary condition will be set. If a node gets boundary
-  // conditions from multiple side sets, true values (the fact that a BC is set)
-  // overwrite existing false ones, i.e., the union of the boundary conditions
-  // will be applied at the node.
-  std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > > bcv;
+  // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
+  // data structure in which this information is stored associates a vector of
+  // pairs of bool and BC value to new global mesh node IDs. 'New' as in
+  // producing contiguous-row-id linear system contributions, see also
+  // Partitioner.h. The bool indicates whether the BC value is set at the given
+  // node by the user. The size of the vectors is the number of PDEs integrated
+  // times the number of scalar components in all PDEs. The vector is associated
+  // to global node IDs at which the boundary condition will be set. If a node
+  // gets boundary conditions from multiple side sets, true values (the fact
+  // that a BC is set) overwrite existing false ones, i.e., the union of the
+  // boundary conditions will be applied at the node.
   for (const auto& s : side) {
-    auto b = bc( s.first );    // query BC values for all components of all PDEs
-    for (auto n : nodes)
-      if (inset( n, s.second )) {
-        auto& v = bcv[n];
+    // get BC values for side set
+    auto b = bcval( s.first );
+    // query if any BC is to be set on the side set for any component of any of
+    // the PDEs integrated
+    bool ubc = std::any_of( b.cbegin(), b.cend(),
+                            [](const std::pair< bool, tk::real >& p)
+                            { return p.first; } );
+    // for all node IDs we contribute to in the side set associate BC values and
+    // whether they are set for a component (for all PDE components)
+    for (auto o : s.second) {
+      auto n = own(o);
+      if (n.first && inset(n.second,s.second) && ubc) {
+        auto& v = m_bc[ n.second ];
         v.resize( b.size() );
         for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
       }
+    }
   }
 
-  m_linsysmerger[ frompe ].charebcval( bcv );
+  // Send off list of owned node IDs mapped to side sets to LinSysMerger
+  m_linsysmerger.ckLocalBranch()->charebc( m_bc );
 }
 
 void
 Carrier::init()
 // *****************************************************************************
-// Initialize linear system
+// Set ICs, compute initial time step size, output initial field data, compute
+// left-hand-side matrix
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -413,8 +340,8 @@ Carrier::init()
   // Send off initial guess for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
+  // Set initial and boundary conditions for all PDEs
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_gid, m_bc, m_u, m_t );
 
   // Compute initial time step size
   dt();
@@ -451,47 +378,14 @@ Carrier::dt()
 
   } else {      // compute dt based on CFL
 
-    const auto& x = m_coord[0];
-    const auto& y = m_coord[1];
-    const auto& z = m_coord[2];
-
-    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-      // Find largest of element nodal velocities
-      auto ev = evel( e );
-      const auto& evx = ev[0], evy = ev[1], evz = ev[2];
-      const std::array< tk::real, 4 > vel = {{
-        std::sqrt(evx[0]*evx[0] + evy[0]*evy[0] + evz[0]*evz[0]),
-        std::sqrt(evx[1]*evx[1] + evy[1]*evy[1] + evz[1]*evz[1]),
-        std::sqrt(evx[2]*evx[2] + evy[2]*evy[2] + evz[2]*evz[2]),
-        std::sqrt(evx[3]*evx[3] + evy[3]*evy[3] + evz[3]*evz[3]) }};
-      auto maxvel = *std::max_element( begin(vel), end(vel) );
-
-      if (maxvel < std::numeric_limits<tk::real>::epsilon()) maxvel = 1.0;
-
-      // Compute smallest edge length
-      const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
-                                             m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-      const std::array< std::array< tk::real, 3 >, 6 > evec = {{
-        {{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-        {{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-        {{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }},
-        {{ x[N[2]]-x[N[1]], y[N[2]]-y[N[1]], z[N[2]]-z[N[1]] }},
-        {{ x[N[3]]-x[N[1]], y[N[3]]-y[N[1]], z[N[3]]-z[N[1]] }},
-        {{ x[N[3]]-x[N[2]], y[N[3]]-y[N[2]], z[N[3]]-z[N[2]] }} }};
-      const std::array< tk::real, 6 > edge = {{
-        std::sqrt( tk::dot( evec[0], evec[0] ) ),
-        std::sqrt( tk::dot( evec[1], evec[1] ) ),
-        std::sqrt( tk::dot( evec[2], evec[2] ) ),
-        std::sqrt( tk::dot( evec[3], evec[3] ) ),
-        std::sqrt( tk::dot( evec[4], evec[4] ) ),
-        std::sqrt( tk::dot( evec[5], evec[5] ) ) }};
-      auto minedge = *std::min_element( begin(edge), end(edge) );
-
-      // Find smallest dt
-      tk::real celldt =
-        g_inputdeck.get< tag::discr, tag::cfl >() * minedge / maxvel;
-      if (celldt < mindt) mindt = celldt;
+    // find the minimum dt across all PDEs integrated
+    for (const auto& eq : g_pdes) {
+      auto eqdt = eq.dt( m_coord, m_inpoel, m_u );
+      if (eqdt < mindt) mindt = eqdt;
     }
+
+    // Scale smallest dt with CFL coefficient
+    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
 
   }
 
@@ -677,7 +571,7 @@ Carrier::aec( const tk::Fields& Un )
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, m_du, Un, m_p );
+  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, m_bc, m_du, Un, m_p );
   ownaec_complete();
   #ifndef NDEBUG
   ownaec_complete();
@@ -818,7 +712,7 @@ Carrier::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, m_bc, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
   ownlim_complete();
 
   if (m_msum.empty())
@@ -997,8 +891,23 @@ Carrier::verify()
       CkCallback( CkReductionTarget(Transporter,verified), m_transporter) );
 }
 
+void
+Carrier::diagnostics()
+// *****************************************************************************
+// Compute diagnostics, e.g., residuals
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Optionally send latest solution to LinSysMerger for computing diagnostics
+  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
+    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u );
+  else
+    contribute(
+      CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
+}
+
 std::array< std::array< tk::real, 4 >, 3 >
-Carrier::evel( std::size_t e )
+Carrier::velocity( std::size_t e )
 // *****************************************************************************
 // Extract velocity at the four cell nodes of a mesh element
 //! \param[in] e Element id
@@ -1018,21 +927,6 @@ Carrier::evel( std::size_t e )
   }
 
   return c;
-}
-
-void
-Carrier::diagnostics()
-// *****************************************************************************
-// Compute diagnostics, e.g., residuals
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Optionally send latest solution to LinSysMerger for computing diagnostics
-  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u );
-  else
-    contribute(
-      CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
 }
 
 void

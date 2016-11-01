@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Thu 20 Oct 2016 11:04:57 AM MDT
+  \date      Mon 31 Oct 2016 07:16:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -27,8 +27,6 @@ module transporter {
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
-      entry [reductiontarget] void verifybc( CkReductionMsg* msg );
-      entry [reductiontarget] void doverifybc( CkReductionMsg* msg );
       entry [reductiontarget] void initcomplete();
       entry [reductiontarget] void parcomcomplete();
       entry [reductiontarget] void nparcomplete();

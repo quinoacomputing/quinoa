@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 03:10:15 PM MDT
+  \date      Tue 01 Nov 2016 08:46:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
@@ -14,7 +14,7 @@
 
 #include <vector>
 #include <array>
-
+#include <limits>
 #include <cmath>
 
 #include "TransportPhysics.h"
@@ -56,16 +56,19 @@ class Transport {
     }
 
     //! Initalize the transport equations using problem policy
-    //! \param[in,out] unk Array of unknowns
     //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >&,
+                     const std::unordered_map< std::size_t,
+                             std::vector< std::pair< bool, tk::real > > >&,
                      tk::Fields& unk,
                      tk::real t ) const
     {
       Problem::template
-        init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
+       init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -197,10 +200,8 @@ class Transport {
 
         // consistent mass
         std::array< std::array< tk::real, 4 >, 4 > mass;  // nnode*nnode [4][4]
-        // diagonal
-        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;
-        // off-diagonal
-        mass[0][1] = mass[0][2] = mass[0][3] =
+        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;  // diagonal
+        mass[0][1] = mass[0][2] = mass[0][3] =                   // off-diagonal
         mass[1][0] = mass[1][2] = mass[1][3] =
         mass[2][0] = mass[2][1] = mass[2][3] =
         mass[3][0] = mass[3][1] = mass[3][2] = J/120.0;
@@ -214,8 +215,8 @@ class Transport {
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
         // access solution at element nodes at recent time step stage
-        std::vector< std::array< tk::real, 4 > > s( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) s[c] = U.extract( c, m_offset, N );
+        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
@@ -233,49 +234,85 @@ class Transport {
               for (std::size_t k=0; k<3; ++k)
                 for (std::size_t l=0; l<4; ++l)
                   R.var(r[c],N[j]) -= a * mass[j][i] * vel[c][k][i]
-                                        * grad[l][k] * s[c][l];
+                                        * grad[l][k] * u[c][l];
 
         // add diffusion contribution to right hand side
-        Physics::diffusionRhs( m_c, m_ncomp, mult, dt, J, N, grad, s, r, R );
+        Physics::diffusionRhs( m_c, m_ncomp, mult, dt, J, N, grad, u, r, R );
       }
     }
 
-    //! Extract the velocity field at cell nodes
+    //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the three velocity coordinates
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \return Minimum time step size
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::Fields& U ) const
+    {
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      // compute the minimum dt across all elements we own
+      tk::real mindt = std::numeric_limits< tk::real >::max();
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute cubic root of element volume as the characteristic length
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
+        // access solution at element nodes at recent time step stage
+        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // get velocity for problem
+        const auto vel =
+          Problem::template
+            prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
+        // compute the maximum length of the characteristic velocity (advection
+        // velocity) across the four element nodes
+        tk::real maxvel = 0.0;
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          for (std::size_t i=0; i<4; ++i) {
+            auto v = std::sqrt( vel[c][0][i]*vel[c][0][i] + 
+                                vel[c][1][i]*vel[c][1][i] +
+                                vel[c][2][i]*vel[c][2][i] );
+            if (v > maxvel) maxvel = v;
+          }
+        // compute element dt for the advection
+        auto advection_dt = L / maxvel;
+        // compute element dt based on diffusion
+        auto diffusion_dt = Physics::diffusion_dt( m_c, m_ncomp, L, u );
+        // compute minimum element dt
+        auto elemdt = std::min( advection_dt, diffusion_dt );
+        // find minimum dt across all elements
+        if (elemdt < mindt) mindt = elemdt;
+      }
+      return mindt;
+    }
+
+    //! Extract the transport velocity field at cell nodes
+    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] N Element node indices    
+    //! \return Array of the four values of the transport velocity
     std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
-    {
-      return Problem::velocity( U, coord, N );
-    }
-
-    //! \brief Query if a Dirichlet boundary condition has set by the user on
-    //!   any side set for any component in the PDE system
-    //! \param[in] sideset Side set ID
-    //! \return True if the user has set a Dirichlet boundary condition on any
-    //!   of the side sets for any component in the PDE system.
-    bool anydirbc( int sideset ) const {
-      const auto& bc =
-        g_inputdeck.get< tag::param, tag::transport, tag::bc_dirichlet >();
-      for (const auto& s : bc)
-        if (static_cast<int>(std::round(s[0])) == sideset)
-          return true;
-      return false;
-    }
+    { return Problem::velocity( U, coord, N ); }
 
     //! \brief Query Dirichlet boundary condition value set by the user on a
     //!   given side set for all components in this PDE system
     //! \param[in] sideset Side set ID
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
-      const auto& bc =
-        g_inputdeck.get< tag::param, tag::transport, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       IGNORE(sideset);
-      IGNORE(bc);
       return b;
     }
 
@@ -314,7 +351,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t );
+      initialize( coord, {}, {}, U, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

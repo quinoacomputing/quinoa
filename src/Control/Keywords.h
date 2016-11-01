@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:03:53 AM MDT
+  \date      Tue 25 Oct 2016 08:17:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2886,8 +2886,8 @@ struct sideset_info {
     solving partial differential equation.)";
   }
   struct expect {
-    using type = tk::real;
-    static std::string description() { return "real(s)"; }
+    using type = std::string;
+    static std::string description() { return "strings"; }
   };
 };
 using sideset = keyword< sideset_info, s,i,d,e,s,e,t >;

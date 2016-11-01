@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:01:06 AM MDT
+  \date      Wed 26 Oct 2016 09:34:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -79,7 +79,7 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
                       kw::pde_lambda::info::expect::type > >,
   tag::u0,          std::vector< std::vector<
                       kw::pde_u0::info::expect::type > >,
-  tag::bc_dirichlet, std::vector< std::vector<
+  tag::bcdir,       std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
@@ -88,7 +88,7 @@ using PoissonPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,       std::vector< char >,
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
-  tag::bc_dirichlet, std::vector< std::vector<
+  tag::bcdir,        std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
@@ -96,7 +96,7 @@ using PoissonPDEParameters = tk::tuple::tagged_tuple<
 using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
-  tag::bc_dirichlet, std::vector< std::vector<
+  tag::bcdir,        std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::alpha, std::vector< kw::pde_alpha::info::expect::type >,

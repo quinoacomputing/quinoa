@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 07:33:26 AM MDT
+  \date      Tue 01 Nov 2016 08:31:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -86,6 +86,7 @@
 #include <cstring>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 #include <set>
 
 #include "Types.h"
@@ -175,7 +176,8 @@ class Carrier : public CBase_Carrier {
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V );
 
-    //! Setup rows, boundary conditions, output initial field data, etc.
+    //! \brief Setup rows, query boundary conditions, generate particles, output
+    //!    mesh, etc.
     void setup();
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
@@ -184,10 +186,8 @@ class Carrier : public CBase_Carrier {
     //! Look up and return old node ID for new one
     void oldID( int frompe, const std::vector< std::size_t >& newids );
 
-    //! Look up boundary condition values at node IDs for all PDEs
-    void bcval( int frompe, const std::vector< std::size_t >& nodes );
-
-    //! Initialize communication and mesh data
+    //! \brief Set ICs, compute initial time step size, output initial field
+    //!   data, compute left-hand-side matrix
     void init();
 
     //! Update high order solution vector
@@ -226,8 +226,8 @@ class Carrier : public CBase_Carrier {
     void collectedpar( const std::vector< std::size_t >& found )
     { m_tracker.collectedpar( m_transporter, this, found, m_ncarr ); }
 
-    //! \brief Extract velocity at the four cell nodes of a mesh element
-    std::array< std::array< tk::real, 4 >, 3 > evel( std::size_t e );
+    //! Extract the velocity at cell nodes
+    std::array< std::array< tk::real, 4 >, 3 > velocity( std::size_t e );
 
     //! Output mesh and particle fields to files
     void out();
@@ -386,15 +386,17 @@ class Carrier : public CBase_Carrier {
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
     //! Particle tracker
     tk::Tracker m_tracker;
-
-    //! Extract node IDs from element side sets and match to BCs
-    std::vector< std::size_t > queryBCs();
+    //! \brief Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which to set Dirichlet boundary conditions
+    std::unordered_map< std::size_t,
+                        std::vector< std::pair< bool, tk::real > > > m_bc;
 
     //! Query old node IDs for a list of new node IDs
     std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
 
-    //! Send node list to our LinSysMerger branch which is then used to set BCs
-    void sendBCs( const std::vector< std::size_t >& bc );
+    //! \brief Extract node IDs from side set node lists and match to
+    //    user-specified boundary conditions
+    void bc();
 
     //! Read coordinates of mesh nodes given
     void readCoords();

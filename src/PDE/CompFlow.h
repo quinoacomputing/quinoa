@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Mon 03 Oct 2016 02:09:00 PM MDT
+  \date      Mon 31 Oct 2016 09:39:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -12,6 +12,7 @@
 #ifndef CompFlow_h
 #define CompFlow_h
 
+#include <cmath>
 #include <algorithm>
 
 #include "Macro.h"
@@ -41,15 +42,22 @@ class CompFlow {
     explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in,out] unk Array of unknowns
+    //! \param[in] gid Global node IDs of owned elements
+    //! \param[in] bc Vector of pairs of bool and boundary condition value
+    //!   associated to mesh node IDs at which to set Dirichlet boundary
+    //!   conditions
     //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& gid,
+                     const std::unordered_map< std::size_t,
+                            std::vector< std::pair< bool, tk::real > > >& bc,
                      tk::Fields& unk,
                      tk::real ) const
     {
       //! Set initial conditions using problem configuration policy
-      Problem::init( g_inputdeck, coord, unk, 0, m_offset );
+      Problem::init( coord, gid, bc, unk, 0, m_offset );
     }
 
     //! Compute the left hand side sparse matrix
@@ -175,9 +183,7 @@ class CompFlow {
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );
-
-        // construct tetrahedron element-level matrices
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
 
         // consistent mass, nnode*nnode [4][4]
         std::array< std::array< tk::real, 4 >, 4 > mass;
@@ -196,59 +202,112 @@ class CompFlow {
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
         // access solution at element nodes at recent time step stage
-        std::array< std::array< tk::real, 4 >, 5 > s;
-        for (ncomp_t c=0; c<5; ++c) s[c] = U.extract( c, m_offset, N );
+        std::array< std::array< tk::real, 4 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
         std::array< const tk::real*, 5 > r;
         for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
         // ratio of specific heats
-        tk::real g =
-          g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-        // add source to rhs for all equations
-        Problem::sourceRhs( coord, 0, mult, dt, J, N, grad, mass, r, s, R,
-                            const_cast<tk::Fields&>(U) );
+        auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
         // compute pressure
         std::array< tk::real, 4 > p;
         for (std::size_t i=0; i<4; ++i)
-          p[i] = (g-1.0)*(s[4][i] - (s[1][i]*s[1][i] +
-                                     s[2][i]*s[2][i] +
-                                     s[3][i]*s[3][i])/2.0/s[0][i]);
+          p[i] = (g-1.0)*(u[4][i] - (u[1][i]*u[1][i] +
+                                     u[2][i]*u[2][i] +
+                                     u[3][i]*u[3][i])/2.0/u[0][i]);
 
+        // scatter-add mass, momentum, and energy contributions to rhs
         tk::real c = mult * dt * J/24.0;
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<4; ++j)
             for (std::size_t k=0; k<4; ++k) {
               // advection contribution to mass rhs
-              R.var(r[0],N[j]) -= c * grad[k][i] * s[i+1][k];
-
+              R.var(r[0],N[j]) -= c * grad[k][i] * u[i+1][k];
               // advection contribution to momentum rhs
               for (std::size_t l=0; l<3; ++l)
-                R.var(r[i+1],N[j]) -= c * grad[k][l] *
-                                      s[i+1][k] * s[l+1][k]/s[0][k];
-
+                R.var(r[l+1],N[j]) -= c * grad[k][i] *
+                                      u[l+1][k]*u[i+1][k]/u[0][k];
               // pressure gradient contribution to momentum rhs
               R.var(r[i+1],N[j]) -= c * grad[k][i] * p[k];
-
               // advection and pressure gradient contribution to energy rhs
               R.var(r[4],N[j]) -= c * grad[k][i] *
-                                  (s[4][k] + p[k]) * s[i+1][k]/s[0][k];
+                                  (u[4][k] + p[k]) * u[i+1][k]/u[0][k];
             }
 
         // add viscous stress contribution to momentum and energy rhs
-        Physics::viscousRhs( mult, dt, J, N, grad, s, r, R );
-
+        Physics::viscousRhs( mult, dt, J, N, grad, u, r, R );
         // add heat conduction contribution to energy rhs
-        Physics::conductRhs( mult, dt, J, N, grad, s, r, R );
+        Physics::conductRhs( mult, dt, J, N, grad, u, r, R );
+        // add source to rhs for all equations
+        Problem::sourceRhs( coord, 0, mult, dt, N, mass, r, u, R );
       }
+    }
+
+    //! Compute the minimum time step size
+    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \return Minimum time step size
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::Fields& U ) const
+    {
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      // ratio of specific heats
+      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+      // compute the minimum dt across all elements we own
+      tk::real mindt = std::numeric_limits< tk::real >::max();
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute cubic root of element volume as the characteristic length
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
+        // access solution at element nodes at recent time step stage
+        std::array< std::array< tk::real, 4 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
+        // compute the maximum length of the characteristic velocity (fluid
+        // velocity + sound velocity) across the four element nodes
+        tk::real maxvel = 0.0;
+        for (std::size_t j=0; j<4; ++j) {
+          auto& r  = u[0][j];    // rho
+          auto& ru = u[1][j];    // rho * u
+          auto& rv = u[2][j];    // rho * v
+          auto& rw = u[3][j];    // rho * w
+          auto& re = u[4][j];    // rho * e
+          auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
+          auto c = std::sqrt(g*p/r);     // sound speed
+          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r) + c; // char. velocity
+          if (v > maxvel) maxvel = v;
+        }
+        // compute element dt for the Euler equations
+        auto euler_dt = L / maxvel;
+        // compute element dt based on the viscous force
+        auto viscous_dt = Physics::viscous_dt( L, u );
+        // compute element dt based on thermal diffusion
+        auto heat_diffusion_dt = Physics::heat_diffusion_dt( L, u );
+        // compute minimum element dt
+        auto elemdt = std::min( euler_dt,
+                        std::min( viscous_dt, heat_diffusion_dt ) );
+        // find minimum dt across all elements
+        if (elemdt < mindt) mindt = elemdt;
+      }
+      return mindt;
     }
 
     //! Extract the velocity field at cell nodes
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in] N Element node indices    
-    //! \return Array of the four values of the three velocity coordinates
+    //! \return Array of the four values of the velocity field
     std::array< std::array< tk::real, 4 >, 3 >
     velocity( const tk::Fields& U,
               const std::array< std::vector< tk::real >, 3 >&,
@@ -268,36 +327,12 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query if a Dirichlet boundary condition has been set on a side
-    //!   set for any component in the PDE system
-    //! \param[in] sideset Side set ID
-    //! \return True if a Dirichlet boundary condition has been set on the side
-    //!   set for any component in the PDE system.
-    bool anydirbc( int sideset ) const {
-      const auto& bc =
-        g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
-      for (const auto& s : bc)
-        if (static_cast<int>(std::round(s[0])) == sideset)
-          return true;
-      return false;
-    }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] sideset Side set ID
     //! \return Vector of pairs of bool and BC value for all components
-    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
-      const auto& bc =
-        g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
-      std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
-      for (const auto& s : bc) {
-        Assert( s.size() == 3, "Side set vector size incorrect" );
-        if (static_cast<int>(std::round(s[0])) == sideset) {
-          b[ static_cast<std::size_t>(std::round(s[1]))-1 ] = { true, s[2] };
-        }
-      }
-      return b;
-    }
+    std::vector< std::pair< bool, tk::real > >
+    dirbc( int sideset ) const { return Problem::dirbc( sideset ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

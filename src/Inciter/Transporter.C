@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Wed 19 Oct 2016 02:47:15 PM MDT
+  \date      Tue 01 Nov 2016 03:29:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -309,7 +309,7 @@ Transporter::volcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagstart( "Setting up workers ..." );
+  m_print.diagstart( "Computing row IDs, querying BCs, outputing mesh ..." );
   m_carrier.setup();
 }
 
@@ -330,66 +330,10 @@ Transporter::rowcomplete()
 // *****************************************************************************
 {
   m_print.diagend( "done" );   // "Setting up workers ..."
-  m_print.diagstart( "Initializing workers ..." );
+  m_print.diagstart( "Setting and outputing ICs, computing initial dt, "
+                     "computing LHS ..." );
   m_linsysmerger.rowsreceived();
   m_carrier.init();
-}
-
-void
-Transporter::verifybc( CkReductionMsg* msg )
-// *****************************************************************************
-// Reduction target initiating verification of the boundary conditions set
-//! \param[in] msg Serialized and concatenated vectors of BC nodelists
-//! \details As a final step aggregating all node lists at which LinSysMerger
-//!   will set boundary conditions, this function initiates verification that
-//!   the aggregate boundary conditions to be set match the user's BCs. This
-//!   function is a Charm++ reduction target that is called when all linear
-//!   system merger branches have received from worker chares offering setting
-//!   boundary conditions. This is the first step of the verification. First
-//!   receives the aggregated node list at which LinSysMerger will set boundary
-//!   conditions. Then we do a broadcast to all workers (Carriers) to query
-//!   the worker-owned node IDs on which a Dirichlet BC is set by the user (on
-//!   any component of any PDEs integrated by the worker).
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Deserialize final BC node list vector set by LinSysMerger
-  PUP::fromMem creator( msg->getData() );
-  creator | m_linsysbc;
-  delete msg;
-
-  // Issue broadcast querying the BCs set
-  m_carrier.requestBCs();
-}
-
-void
-Transporter::doverifybc( CkReductionMsg* msg )
-// *****************************************************************************
-// Reduction target as a 2nd (final) of the verification of BCs
-//! \param[in] msg Serialized and concatenated vectors of BC nodelists
-//! \details This function finishes off the verification that the aggregate
-//!   boundary conditions to be set by LinSysMerger objects match the user's
-//!   BCs. This function is a Charm++ reduction target that is called by
-//!   Carrier::requestBCs() This is the last step of the verification, doing
-//!   the actual verification of the BCs after receiving the aggregate BC node
-//!   list from Carriers querying user BCs from the input file.
-//! \see Transporter::verifybc()
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Deserialize final user BC node list vector
-  PUP::fromMem creator( msg->getData() );
-  std::vector< std::size_t > bc;
-  creator | bc;
-  delete msg;
-
-  Assert( m_linsysbc == bc, "The boundary conditions node list to be set does "
-          "not match the boundary condition node list based on the side sets "
-          "given in the input file." );
-
-  m_print.diag( "Boundary conditions verified" );
-
-  m_linsysmerger.vercomplete();
 }
 
 void
@@ -443,7 +387,7 @@ Transporter::dt( tk::real* d, std::size_t n )
 
   Assert( n == 1, "Size of min(dt) must be 1" );
 
-  if (m_stage == 1) {
+  if (m_stage == 1 || m_it == 0) {
     // Use newly computed time step size
     m_dt = *d;
     // Truncate the size of last time step

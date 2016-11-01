@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:04:49 PM MDT
+  \date      Tue 01 Nov 2016 08:41:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -22,15 +22,12 @@
 #include "Inciter/Options/Problem.h"
 
 #include "Transport.h"
-#include "Poisson.h"
 #include "CompFlow.h"
 
 #include "TransportPhysics.h"
-#include "PoissonPhysics.h"
 #include "CompFlowPhysics.h"
 
 #include "TransportProblem.h"
-#include "PoissonProblem.h"
 #include "CompFlowProblem.h"
 
 using inciter::PDEStack;
@@ -113,13 +110,6 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
   mpl::cartesian_product< TransportPolicies >(
     registerPDE< Transport >( m_factory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
 
-  // Poisson PDE
-  // Construct vector of vectors for all possible policies for PDE
-  using PoissonPolicies = mpl::vector< PoissonPhysics, PoissonProblems >;
-  // Register PDE for all combinations of policies
-  mpl::cartesian_product< PoissonPolicies >(
-    registerPDE< Poisson >( m_factory, ctr::PDEType::POISSON, m_eqTypes ) );
-
   // Compressible flow system of PDEs
   // Construct vector of vectors for all possible policies for PDE
   using CompFlowPolicies = mpl::vector< CompFlowPhysics, CompFlowProblems >;
@@ -168,8 +158,6 @@ PDEStack::info() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::TRANSPORT)
       nfo.emplace_back( infoTransport( cnt ) );
-    else if (d == ctr::PDEType::POISSON)
-      nfo.emplace_back( infoPoisson( cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
       nfo.emplace_back( infoCompFlow( cnt ) );
     else Throw( "Can't find selected PDE" );
@@ -219,32 +207,6 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-PDEStack::infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-// *****************************************************************************
-//  Return information on the Poisson PDE
-//! \param[inout] cnt std::map of counters for all partial differential equation
-//!   types
-//! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  auto c = ++cnt[ ctr::PDEType::POISSON ];       // count eqs
-  --c;  // used to index vectors starting with 0
-
-  std::vector< std::pair< std::string, std::string > > nfo;
-
-  nfo.emplace_back( ctr::PDE().name( ctr::PDEType::POISSON ), "" );
-  nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::poisson, tag::problem >()[c] ) );
-  nfo.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::poisson >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::poisson >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
-
-  return nfo;
-}
-
-std::vector< std::pair< std::string, std::string > >
 PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 // *****************************************************************************
 //  Return information on the compressible flow system of PDEs
@@ -272,14 +234,20 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
-  nfo.emplace_back( "dynamic viscosity", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::mu >() ) );
-  nfo.emplace_back( "specific heat at const. volume", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::cv >() ) );
-  nfo.emplace_back( "heat conductivity", parameters(
-    g_inputdeck.get< tag::param, tag::compflow, tag::k >() ) );
 
-  auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
+  const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
+  if (!mu.empty())
+    nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
+
+  const auto& cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >();
+  if (!cv.empty())
+    nfo.emplace_back( "specific heat at const. volume", parameters( cv ) );
+
+  const auto& k = g_inputdeck.get< tag::param, tag::compflow, tag::k >();
+  if (!k.empty())
+    nfo.emplace_back( "heat conductivity", parameters( k ) );
+
+  const auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
   if (!npar.empty())
     nfo.emplace_back( "number of tracker particles", parameters( npar ) );
 
