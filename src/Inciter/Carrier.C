@@ -341,7 +341,7 @@ Carrier::init()
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
   // Set initial and boundary conditions for all PDEs
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_gid, m_bc, m_u, m_t );
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, m_bc );
 
   // Compute initial time step size
   dt();
