@@ -150,14 +150,14 @@ class CompFlow {
     //! Compute right hand side
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
-    //! \param[in] dt Size of time step
+    //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
-              tk::real dt,
+              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
@@ -220,7 +220,7 @@ class CompFlow {
                                      u[3][i]*u[3][i])/2.0/u[0][i]);
 
         // scatter-add mass, momentum, and energy contributions to rhs
-        tk::real c = mult * dt * J/24.0;
+        tk::real c = mult * deltat * J/24.0;
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<4; ++j)
             for (std::size_t k=0; k<4; ++k) {
@@ -238,11 +238,11 @@ class CompFlow {
             }
 
         // add viscous stress contribution to momentum and energy rhs
-        Physics::viscousRhs( mult, dt, J, N, grad, u, r, R );
+        Physics::viscousRhs( mult, deltat, J, N, grad, u, r, R );
         // add heat conduction contribution to energy rhs
-        Physics::conductRhs( mult, dt, J, N, grad, u, r, R );
+        Physics::conductRhs( mult, deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( coord, 0, mult, dt, N, mass, r, u, R );
+        Problem::sourceRhs( coord, 0, mult, deltat, N, mass, r, u, R );
       }
     }
 
