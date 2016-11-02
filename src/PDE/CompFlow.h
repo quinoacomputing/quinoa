@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Mon 31 Oct 2016 09:39:50 PM MDT
+  \date      Wed 02 Nov 2016 08:49:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
 
 #include "Macro.h"
 #include "Keywords.h"
@@ -50,12 +51,12 @@ class CompFlow {
     //! \param[in,out] unk Array of unknowns
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     tk::Fields& unk,
+                     tk::real,
                      const std::vector< std::size_t >& gid,
                      const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc,
-                     tk::Fields& unk,
-                     tk::real ) const
-    {
+                            std::vector< std::pair< bool, tk::real > > >& bc )
+    const {
       //! Set initial conditions using problem configuration policy
       Problem::init( coord, gid, bc, unk, 0, m_offset );
     }

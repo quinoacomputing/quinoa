@@ -76,12 +76,12 @@ class PDE {
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     tk::Fields& unk,
+                     tk::real t,
                      const std::vector< std::size_t >& gid,
                      const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc,
-                     tk::Fields& unk,
-                     tk::real t ) const
-    { self->initialize( coord, gid, bc, unk, t ); }
+                            std::vector< std::pair< bool, tk::real > > >& bc )
+    const { self->initialize( coord, unk, t, gid, bc ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -148,11 +148,12 @@ class PDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
+                               tk::Fields&,
+                               tk::real,
                                const std::vector< std::size_t >&,
                                const std::unordered_map< std::size_t,
-                                 std::vector< std::pair< bool, tk::real > > >&,
-                               tk::Fields&,
-                               tk::real ) const = 0;
+                                 std::vector< std::pair< bool, tk::real > > >& )
+        const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
@@ -185,12 +186,12 @@ class PDE {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                       tk::Fields& unk,
+                       tk::real t,
                        const std::vector< std::size_t >& gid,
                        const std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >& bc,
-                       tk::Fields& unk,
-                       tk::real t ) const override
-      { data.initialize( coord, gid, bc, unk, t ); }
+                             std::vector< std::pair< bool, tk::real > > >& bc )
+      const override { data.initialize( coord, unk, t, gid, bc ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
