@@ -94,12 +94,12 @@ class PDE {
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real mult,
-              tk::real dt,
+              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( mult, dt, coord, inpoel, U, R ); }
+    { self->rhs( mult, deltat, coord, inpoel, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -159,7 +159,8 @@ class PDE {
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
                         tk::Fields&, tk::Fields& ) const = 0;
-      virtual void rhs( tk::real, tk::real,
+      virtual void rhs( tk::real,
+                        tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const tk::Fields&,
@@ -198,12 +199,13 @@ class PDE {
                                  std::vector< std::size_t > >& psup,
                 tk::Fields& lhsd, tk::Fields& lhso ) const override
       { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
-      void rhs( tk::real mult, tk::real dt,
+      void rhs( tk::real mult,
+                tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( mult, dt, coord, inpoel, U, R ); }
+      { data.rhs( mult, deltat, coord, inpoel, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
