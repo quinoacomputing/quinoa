@@ -161,14 +161,14 @@ class Transport {
     //! Compute right hand side
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
-    //! \param[in] dt Size of time step
+    //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
-              tk::real dt,
+              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
@@ -228,7 +228,7 @@ class Transport {
             prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
 
         // add advection contribution to right hand side
-        tk::real a = mult * dt;
+        tk::real a = mult * deltat;
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t i=0; i<4; ++i)
             for (std::size_t j=0; j<4; ++j)
@@ -238,7 +238,7 @@ class Transport {
                                         * grad[l][k] * u[c][l];
 
         // add diffusion contribution to right hand side
-        Physics::diffusionRhs( m_c, m_ncomp, mult, dt, J, N, grad, u, r, R );
+        Physics::diffusionRhs( m_c, m_ncomp, mult, deltat, J, N, grad, u, r, R );
       }
     }
 
