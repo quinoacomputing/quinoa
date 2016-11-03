@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 11:06:22 AM MDT
+  \date      Thu 03 Nov 2016 03:28:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -347,7 +347,7 @@ Carrier::init()
   dt();
 
   // Output initial conditions to file (time = 0.0)
-  writeFields( 0.0 );
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( 0.0 );
 
   // Call back to Transporter::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
@@ -476,10 +476,12 @@ Carrier::writeMesh()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-  // Write chare mesh initializing element connectivity and point coords
-  ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+    // Write chare mesh initializing element connectivity and point coords
+    ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+  }
 }
 
 void
@@ -506,18 +508,22 @@ Carrier::writeMeta() const
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-  // Collect nodal field output names from all PDEs
-  std::vector< std::string > names;
-  for (const auto& eq : g_pdes) {
-    auto n = eq.names();
-    names.insert( end(names), begin(n), end(n) );
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+    // Collect nodal field output names from all PDEs
+    std::vector< std::string > names;
+    for (const auto& eq : g_pdes) {
+      auto n = eq.names();
+      names.insert( end(names), begin(n), end(n) );
+    }
+
+    // Write node field names
+    ew.writeNodeVarNames( names );
+
   }
-
-  // Write node field names
-  ew.writeNodeVarNames( names );
 }
 
 void
@@ -555,7 +561,8 @@ Carrier::doWriteParticles()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_tracker.doWriteParticles( m_particlewriter, m_it );
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
+    m_tracker.doWriteParticles( m_particlewriter, m_it );
 }
 
 void
@@ -799,8 +806,9 @@ Carrier::out()
 // *****************************************************************************
 {
   // Optionally output field and particle data
-  if (m_stage == 1 &&
-      !(m_it % g_inputdeck.get< tag::interval, tag::field >()))
+  if ( m_stage == 1 &&
+       !(m_it % g_inputdeck.get< tag::interval, tag::field >()) &&
+       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
     m_tracker.writeParticles( m_transporter, m_particlewriter, this );

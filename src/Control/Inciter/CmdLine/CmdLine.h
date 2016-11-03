@@ -37,6 +37,7 @@ class CmdLine : public tk::Control<
                   tag::io,             ios,
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
+                  tag::benchmark,      bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
@@ -49,6 +50,7 @@ class CmdLine : public tk::Control<
     //! \author J. Bakosi
     //! \see tk::grm::use and its documentation
     using keywords = boost::mpl::set< kw::verbose
+                                    , kw::benchmark
                                     , kw::virtualization
                                     , kw::help
                                     , kw::helpctr
@@ -96,6 +98,7 @@ class CmdLine : public tk::Control<
       set< tag::io, tag::part >( "track.h5part" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
+      set< tag::benchmark >( false ); // No benchmark mode by default
       // Initialize help: fill from own keywords + add map passed in
       boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -110,6 +113,7 @@ class CmdLine : public tk::Control<
       tk::Control< tag::io,             ios,
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
+                   tag::benchmark,      bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,

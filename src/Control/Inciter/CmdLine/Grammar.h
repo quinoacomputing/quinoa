@@ -49,6 +49,13 @@ namespace cmd {
                                       use< kw::verbose >,
                                       tag::verbose > {};
 
+  //! \brief Match and set benchmark switch (i.e., benchmark mode)
+  //! \author J. Bakosi
+  struct benchmark :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::benchmark >,
+                                      tag::benchmark > {};
+
   //! \brief Match and set virtualization parameter
   //! \author J. Bakosi
   struct virtualization :
@@ -92,6 +99,7 @@ namespace cmd {
   //! \author J. Bakosi
   struct keywords :
          pegtl::sor< verbose,
+                     benchmark,
                      virtualization,
                      help,
                      helpctr,
