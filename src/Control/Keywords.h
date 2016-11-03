@@ -2360,6 +2360,19 @@ struct verbose_info {
 };
 using verbose = keyword< verbose_info, v,e,r,b,o,s,e >;
 
+struct benchmark_info {
+  static std::string name() { return "benchmark"; }
+  static std::string shortDescription() { return "Select benchmark mode"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select benchmark mode. In benchmark mode no large
+       file output is performed, overriding the configuration in the control
+       file.)";
+  }
+  using alias = Alias< b >;
+};
+
+using benchmark = keyword< benchmark_info, b,e,n,c,h,m,a,r,k >;
+
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
   static std::string shortDescription() { return

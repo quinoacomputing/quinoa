@@ -27,6 +27,7 @@ struct rngmkl {};
 struct rngsse {};
 struct seqlen {};
 struct verbose {};
+struct benchmark {};
 struct reorder {};
 struct error {};
 struct pdf {};
