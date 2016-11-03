@@ -65,7 +65,7 @@ class CompFlowProblemUserDefined {
         unk(i,0,offset) = 1.0;        // density
         unk(i,1,offset) = 0.0;        // density * velocity
         unk(i,2,offset) = 0.0;
-        unk(i,3,offset) = -1.0;
+        unk(i,3,offset) = 1.0;
         unk(i,4,offset) = 293.0;      // density * specific total energy
         // boundary conditions
         const auto b = bc.find( gid[i] );

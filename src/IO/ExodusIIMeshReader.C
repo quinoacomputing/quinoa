@@ -149,7 +149,7 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
           "Failed to read coordinates from ExodusII file: " + m_filename );
 }
 
-std::unordered_map< std::size_t, std::array< tk::real, 3 > >
+std::array< std::vector< tk::real >, 3 >
 ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
 // *****************************************************************************
 //  Read coordinates of a number of mesh nodes from ExodusII file
@@ -170,10 +170,7 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
       "..." + std::to_string(ext[1]) + "] from ExodusII file: " +
       m_filename );
 
-  std::unordered_map< std::size_t, std::array< tk::real, 3 > > coord;
-  for (std::size_t p=0; p<num; ++p)
-    coord.emplace( ext[0]+p, std::array<tk::real,3>{{px[p],py[p],pz[p]}} );
-  return coord;
+  return {{ px, py, pz }};
 }
 
 std::size_t
@@ -326,8 +323,8 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   // Compute lower and upper element block ids to read from based on extents
   std::size_t lo_bid = 0, hi_bid = 0, offset = 0;
   for (std::size_t b=0; b<nel.size(); ++b) {
-    std::size_t lo = offset;                    // lo (min) elem IDs in block
-    std::size_t hi = offset + nel[b] - 1;       // hi (max) elem id in block
+    std::size_t lo = offset;                    // lo (min) elem ID in block
+    std::size_t hi = offset + nel[b] - 1;       // hi (max) elem ID in block
     if (ext[0] >= lo && ext[0] <= hi) lo_bid = b;
     if (ext[1] >= lo && ext[1] <= hi) hi_bid = b;
     offset += nel[b];
@@ -341,7 +338,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   // Compute relative extents based on absolute ones for each block to read from
   std::vector< std::array< std::size_t, 2 > > rext;
   offset = 0;
-  for (std::size_t b=1; b<=lo_bid; ++b) offset += nel[b];
+  for (std::size_t b=0; b<lo_bid; ++b) offset += nel[b];
   for (std::size_t b=lo_bid; b<=hi_bid; ++b) {
     std::size_t lo = offset;
     std::size_t hi = offset + nel[b] - 1;
@@ -358,7 +355,9 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
             std::next(rext.cbegin()), rext.cend(), rext[0][1]-rext[0][0]+1,
             []( std::size_t n, const std::array< std::size_t, 2 >& r )
             { return n + r[1] - r[0] + 1; }
-          ) == ext[1]-ext[0]+1, "Total number of elements to read incorrect" );
+          ) == ext[1]-ext[0]+1,
+          "Total number of elements to read incorrect, requested extents: " +
+          std::to_string(ext[0]) + " ... " + std::to_string(ext[1]) );
 
   std::vector< int > inpoel;
 
@@ -376,7 +375,8 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
             std::to_string(r[0]) + "..." + std::to_string(r[1]) +
             "] from element block " + std::to_string(bid[b]) + " in ExodusII "
             "file: " + m_filename );
-    inpoel.insert( end(inpoel), begin(c), end(c) );
+    inpoel.reserve( inpoel.size() + c.size() );
+    std::move( begin(c), end(c), std::back_inserter(inpoel) );
   }
 
   Assert( inpoel.size() == (ext[1]-ext[0]+1)*4,
@@ -385,7 +385,9 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
           "ExodusII file: " + m_filename );
 
   // Put in element connectivity using zero-based node indexing
-  for (auto i : inpoel) conn.push_back( static_cast<std::size_t>(i)-1 );
+  for (auto& i : inpoel) --i;
+  conn.reserve( conn.size() + inpoel.size() );
+  std::move( begin(inpoel), end(inpoel), std::back_inserter(conn) );
 }
 
 std::map< int, std::vector< std::size_t > >

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Physics.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:05:45 PM MDT
+  \date      Thu 03 Nov 2016 12:27:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics options for inciter
   \details   Physics options for inciter
@@ -25,9 +25,8 @@ namespace ctr {
 //! \author J. Bakosi
 enum class PhysicsType : uint8_t { ADVECTION=0,
                                    ADVDIFF,
-                                   LAPLACE,
-                                   NAVIERSTOKES,
-                                   EULER};
+                                   EULER,
+                                   NAVIERSTOKES };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
 //! \author J. Bakosi
@@ -58,15 +57,13 @@ class Physics : public tk::Toggle< PhysicsType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { PhysicsType::ADVECTION, kw::advection::name() },
           { PhysicsType::ADVDIFF, kw::advdiff::name() },
-          { PhysicsType::LAPLACE, kw::laplace::name() },
-          { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() },
-          { PhysicsType::EULER, kw::compflow_euler::name() } },
+          { PhysicsType::EULER, kw::compflow_euler::name() },
+          { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() } },
         //! keywords -> Enums
         { { kw::advection::string(), PhysicsType::ADVECTION },
           { kw::advdiff::string(), PhysicsType::ADVDIFF },
-          { kw::laplace::string(), PhysicsType::LAPLACE },
-          { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES },
-          { kw::compflow_euler::string(), PhysicsType::EULER } } )
+          { kw::compflow_euler::string(), PhysicsType::EULER },
+          { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
     }
@@ -100,9 +97,8 @@ class Physics : public tk::Toggle< PhysicsType > {
     std::map< PhysicsType, std::string > policy {
         { PhysicsType::ADVECTION, *kw::advection::code() }
       , { PhysicsType::ADVDIFF, *kw::advdiff::code() }
-      , { PhysicsType::LAPLACE, *kw::laplace::code() }
-      , { PhysicsType::NAVIERSTOKES, *kw::compflow_navierstokes::code() }
       , { PhysicsType::EULER, *kw::compflow_euler::code() }
+      , { PhysicsType::NAVIERSTOKES, *kw::compflow_navierstokes::code() }
     };
 };
 
