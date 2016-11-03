@@ -132,8 +132,6 @@ PDEStack::selected() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::TRANSPORT)
       pdes.push_back( createPDE< tag::transport >( d, cnt ) );
-    else if (d == ctr::PDEType::POISSON)
-      pdes.push_back( createPDE< tag::poisson >( d, cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
       pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
     else Throw( "Can't find selected PDE" );

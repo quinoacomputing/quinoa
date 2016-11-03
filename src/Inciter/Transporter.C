@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 03:29:04 PM MDT
+  \date      Thu 03 Nov 2016 12:29:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -165,6 +165,7 @@ Transporter::Transporter() :
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
     // Create linear system merger chare group
+    m_print.diag( "Creating linear system mergers" );
     m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier,
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
@@ -177,11 +178,12 @@ Transporter::Transporter() :
     // initializer list of Carrier::Carrier(). This is basically a punt to
     // enable skipping H5Part I/O. Particles are a highly experimental feature
     // at this point.
+    m_print.diag( "Creating particle writers" );
     m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
                          //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
-    m_print.diagstart( "Reading mesh graph ..." );
+    m_print.diagstart( "Creating partitioners and reading mesh graph ..." );
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
                                              m_linsysmerger,
                                              m_particlewriter );

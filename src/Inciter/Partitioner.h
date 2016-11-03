@@ -504,7 +504,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       auto gid = m_tetinpoel;
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
-      auto coord = er.readNodes( tk::extents(gid) );
+      auto ext = tk::extents( gid );
+      auto coord = er.readNodes( ext );
+      const auto& x = std::get< 0 >( coord );
+      const auto& y = std::get< 1 >( coord );
+      const auto& z = std::get< 2 >( coord );
       // Make room for element centroid coordinates
       auto& cx = m_centroid[0];
       auto& cy = m_centroid[1];
@@ -515,13 +519,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       cz.resize( num );
       // Compute element centroids for our chunk of the mesh elements
       for (std::size_t e=0; e<num; ++e) {
-        const auto& a = tk::cref_find( coord, m_tetinpoel[e*4+0] );
-        const auto& b = tk::cref_find( coord, m_tetinpoel[e*4+1] );
-        const auto& c = tk::cref_find( coord, m_tetinpoel[e*4+2] );
-        const auto& d = tk::cref_find( coord, m_tetinpoel[e*4+3] );
-        cx[e] = (a[0] + b[0] + c[0] + d[0]) / 4.0;
-        cy[e] = (a[1] + b[1] + c[1] + d[1]) / 4.0;
-        cz[e] = (a[2] + b[2] + c[2] + d[2]) / 4.0;
+        auto A = m_tetinpoel[e*4+0] - ext[0];
+        auto B = m_tetinpoel[e*4+1] - ext[0];
+        auto C = m_tetinpoel[e*4+2] - ext[0];
+        auto D = m_tetinpoel[e*4+3] - ext[0];
+        cx[e] = (x[A] + x[B] + x[C] + x[D]) / 4.0;
+        cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
+        cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
       }
       signal2host_setup_complete( m_host );
     }

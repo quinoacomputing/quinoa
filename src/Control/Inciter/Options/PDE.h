@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 12:56:56 PM MDT
+  \date      Thu 03 Nov 2016 12:31:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -24,7 +24,6 @@ namespace ctr {
 
 //! Differential equation types
 enum class PDEType : uint8_t { TRANSPORT=0,
-                               POISSON,
                                COMPFLOW };
 
 //! Pack/Unpack: forward overload to generic enum class packer
@@ -52,11 +51,9 @@ class PDE : public tk::Toggle< PDEType > {
       Toggle< PDEType >( "Partial differential equation",
         //! Enums -> names
         { { PDEType::TRANSPORT, kw::transport::name() },
-          { PDEType::POISSON, kw::poisson::name() },
           { PDEType::COMPFLOW, kw::compflow::name() } },
         //! keywords -> Enums
         { { kw::transport::string(), PDEType::TRANSPORT },
-          { kw::poisson::string(), PDEType::POISSON },
           { kw::compflow::string(), PDEType::COMPFLOW } } ) {}
 };
 
