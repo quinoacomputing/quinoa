@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Mon 07 Nov 2016 03:48:49 PM MST
+  \date      Tue 08 Nov 2016 02:25:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -36,22 +36,26 @@ module transporter {
       entry [reductiontarget] void computedt();
       entry [reductiontarget] void finish();
       entry [reductiontarget] void verified();
+
       entry void pegraph();
+
       entry void pepartitioned();
       entry void pedistributed();
+
       entry void peflattened();
       entry void pemask();
       entry void pereordered();
       entry void pebounds();
+
       entry void perowcomplete();
       entry void chbcmatched();
       entry void pebccomplete();
+
       entry void pesolcomplete();
       entry void chic();
       entry void chlhs();
-      entry void pelhsasm();
+
       entry void chrhs();
-      entry void perhsasm();
       entry void pesolve();
       entry void chlim();
       entry void chtrack();

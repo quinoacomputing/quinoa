@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 08:02:21 AM MST
+  \date      Tue 08 Nov 2016 02:00:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system. See more
@@ -47,7 +47,6 @@ module linsysmerger {
                          const std::set< std::size_t >& row );
       entry void recrow();
       entry [reductiontarget] void addbc( CkReductionMsg* msg );
-      entry [reductiontarget] void comlhsbc( CkReductionMsg* msg );
       entry void addsol( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& solution );
