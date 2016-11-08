@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 08:01:47 AM MST
+  \date      Tue 08 Nov 2016 02:30:34 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -528,7 +528,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       // Export non-owned matrix rows values to fellow branches that own them
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].addlhs( fromch, p.second );
-      checkiflhscomplete();
+      if (lhscomplete()) lhs_complete();
     }
     //! Receive matrix nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -544,7 +544,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto& row = m_lhs[ r.first ];
         for (const auto& c : r.second) row[ c.first ] += c.second;
       }
-      checkiflhscomplete();
+      if (lhscomplete()) lhs_complete();
     }
 
     //! Chares contribute their rhs nonzero values
@@ -572,7 +572,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrhs( fromch, p.second );
       }
-      checkifrhscomplete();
+      if (rhscomplete()) rhs_complete();
     }
     //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -584,7 +584,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         m_rhsimport[ fromch ].push_back( l.first );
         m_rhs[ l.first ] += l.second;
       }
-      checkifrhscomplete();
+      if (rhscomplete()) rhs_complete();
     }
 
     //! Chares contribute to the rhs of the auxiliary linear system
@@ -681,9 +681,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         }
       // Forward all BC vectors received to fellow branches
       if (++m_nchbc == m_nchare) {
-        if (m_bc.empty())
+        if (m_bc.empty()) {
+          if (m_feedback) m_host.pebccomplete(); // send progress report to host
           bc_complete();
-        else {
+        } else {
           auto stream = tk::serialize( m_bc );
           Group::contribute( stream.first, stream.second.get(), BCMapMerger,
                         CkCallback(GroupIdx::addbc(nullptr),Group::thisProxy) );
@@ -695,35 +696,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       PUP::fromMem creator( msg->getData() );
       creator | m_bc;
       delete msg;
-      // keep only those BC vectors that are associated to rows we own
+      // Keep only those BC vectors in m_bc that are associated to rows we own
+      // and store the row IDs of those we do not own in m_nbc.
       for (auto it=begin(m_bc); it!=end(m_bc);)
-        if (it->first < m_lower || it->first >= m_upper)
+        if (it->first < m_lower || it->first >= m_upper) {
+          m_nbc.push_back( it->first );
           it = m_bc.erase(it);
-        else
+        } else
           ++it;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
       bc_complete();
-    }
-
-    //! \brief Receive BC node/row IDs and values from all other PEs and zero
-    //!   the distributed matrix columns at which BCs are set
-    void comlhsbc( CkReductionMsg* msg ) {
-      std::unordered_map< std::size_t,
-                          std::vector< std::pair< bool, tk::real > > > bc;
-      PUP::fromMem creator( msg->getData() );
-      creator | bc;
-      delete msg;
-      for (const auto& n : bc) {
-        auto& b = n.second;
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first)       // zero our portion of the column
-            for (auto& r : m_lhs) {
-              auto it = r.second.find( n.first );
-              if (it != end(r.second) && r.first != n.first)
-                it->second[ i ] = 0.0;
-            }
-      }
-      lhsbc_complete();
     }
 
     //! Chares contribute their solution nonzero values for diagnostics
@@ -903,9 +885,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   vector of pairs in which the bool (.first) indicates whether the
     //!   boundary condition value (.second) is set at the given node. The size
     //!   of the vectors is the number of PDEs integrated times the number of
-    //!   scalar components in all PDEs.
+    //!   scalar components in all PDEs. This BC map only stores those row IDs
+    //!   that we own.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bc;
+    //! Global row IDs of those rows at which we do not set Dirichlet BCs
+    std::vector< std::size_t > m_nbc;
 
     //! Check if we have done our part in storing and exporting global row ids
     //! \details This does not mean the global row ids on our PE is complete
@@ -957,24 +942,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         sol_complete();
       }
     }
-    //! Check if contributions to left-hand side matrix are complete
-    //! \details If so, send progress report to host that this sub-task is done,
-    //!   and tell the runtime system that this is complete.
-    void checkiflhscomplete() {
-      if (lhscomplete()) {
-        if (m_feedback) m_host.pelhsasm();
-        lhs_complete();
-      }
-    }
-    //! Check if contributions to right-hand side vector are complete
-    //! \details If so, send progress report to host that this sub-task is done,
-    //!   and tell the runtime system that this is complete.
-    void checkifrhscomplete() {
-      if (rhscomplete()) {
-        if (m_feedback) m_host.perhsasm();
-        rhs_complete();
-      }
-    }
 
     //! Build Hypre data for our portion of the global row ids
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
@@ -989,31 +956,29 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
 
     //! Set boundary conditions on the left-hand side matrix
-    //! \details Here we only zero the row and put 1.0 in the diagonal, zeroing
-    //!   the column requires communication among all fellow PEs and is done at
-    //!   the receiving side in comlhsbc().
     void lhsbc() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
       for (const auto& n : m_bc) {
+        // zero row and put 1.0 in diagonal of BC rows we own
         auto& row = tk::ref_find( m_lhs, n.first );
         auto& b = n.second;
         for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first) { // zero row and put 1.0 in diagonal
+          if (b[i].first) {
             for (auto& col : row) col.second[i] = 0.0;
             tk::ref_find( row, n.first )[ i ] = 1.0;
           }
+        // zero our portion of the column of BC rows we do not own
+        for (std::size_t i=0; i<m_ncomp; ++i)
+          if (b[i].first)
+            for (auto& r : m_lhs) {
+              auto it = r.second.find( n.first );
+              if (it != end(r.second) && r.first != n.first)
+                it->second[ i ] = 0.0;
+            }
       }
-      // Export BC node IDs and values to all other PEs so that all of the
-      // distributed matrix columns can be zeroed on all PEs where BCs are set
-      if (m_bc.empty())
-        lhsbc_complete();
-      else {
-        auto stream = tk::serialize( m_bc );
-        CkCallback c( GroupIdx::comlhsbc(nullptr), Group::thisProxy );
-        Group::contribute( stream.first, stream.second.get(), BCValMerger, c );
-      }
+      lhsbc_complete();
     }
 
     //! Set Dirichlet boundary conditions on the right-hand side vector
@@ -1154,7 +1119,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
       // send progress report to host
-      if(m_feedback) m_host.pesolve();
+      if (m_feedback) m_host.pesolve();
       solve_complete();
     }
 

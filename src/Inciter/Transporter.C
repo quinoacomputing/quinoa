@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 09:12:11 AM MST
+  \date      Tue 08 Nov 2016 02:25:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -90,9 +90,9 @@ Transporter::Transporter() :
   m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "r", "m", "b" }} ),
   m_progInit( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "i", "f", "l", "a" }} ),
+              {{ "i", "f", "l" }} ),
   m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "r", "a", "s", "l", "p" }} )
+              {{ "r", "s", "l", "p" }} )
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -373,7 +373,7 @@ Transporter::rowcomplete()
   m_progSetup.end();
   m_progInit.start( "Setting and outputting ICs, computing initial dt, "
                     "computing LHS ...",
-                    {{ CkNumPes(), m_nchare, m_nchare, CkNumPes() }} );
+                    {{ CkNumPes(), m_nchare, m_nchare }} );
   m_linsysmerger.rowsreceived();
   m_carrier.init();
 }
@@ -390,8 +390,8 @@ Transporter::initcomplete()
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step ...",
-      { {m_nchare, CkNumPes(), CkNumPes(), m_nchare, m_nchare }} );
+    m_progStep.start( "Time step stage ...",
+      {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
 }
 
 void
@@ -563,7 +563,7 @@ Transporter::evaluateTime()
   if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step ..." );
+      m_progStep.start( "Time step stage ..." );
   } else
     finish();
 }

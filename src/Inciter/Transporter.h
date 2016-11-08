@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Mon 07 Nov 2016 03:52:22 PM MST
+  \date      Tue 08 Nov 2016 02:24:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -154,19 +154,15 @@ class Transporter : public CBase_Transporter {
     void chic() { m_progInit.inc<1>(); }
     //! Non-reduction target for receiving progress report on computing the LHS
     void chlhs() { m_progInit.inc<2>(); }
-    //! Non-reduction target for receiving progress report on assembling the LHS
-    void pelhsasm() { m_progInit.inc<3>(); }
 
     //! Non-reduction target for receiving progress report on computing the RHS
     void chrhs() { m_progStep.inc<0>(); }
-    //! Non-reduction target for receiving progress report on assembling the RHS
-    void perhsasm() { m_progStep.inc<1>(); }
     //! Non-reduction target for receiving progress report on solving the system
-    void pesolve() { m_progStep.inc<2>(); }
+    void pesolve() { m_progStep.inc<1>(); }
     //! Non-reduction target for receiving progress report on limiting
-    void chlim() { m_progStep.inc<3>(); }
+    void chlim() { m_progStep.inc<2>(); }
     //! Non-reduction target for receiving progress report on tracking particles
-    void chtrack() { m_progStep.inc<4>(); }
+    void chtrack() { m_progStep.inc<3>(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -274,9 +270,9 @@ class Transporter : public CBase_Transporter {
     // Progress object for task "Computing row IDs, querying BCs, ..."
     tk::Progress< 3 > m_progSetup;
     // Progress object for task "Setting and output ICs, ..."
-    tk::Progress< 4 > m_progInit;
+    tk::Progress< 3 > m_progInit;
     // Progress object for sub-tasks of a time step
-    tk::Progress< 5 > m_progStep;
+    tk::Progress< 4 > m_progStep;
 
     //! Print out time integration header
     void header();
