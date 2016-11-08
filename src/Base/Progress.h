@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Progress.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 08:21:37 AM MST
+  \date      Tue 08 Nov 2016 09:53:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Simple progress indicator
   \details   Simple progress indicator.
@@ -42,7 +42,7 @@ class Progress {
     explicit Progress( const tk::Print& print,
                        bool feedback,
                        std::array< std::string, N >&& prefix,
-                       std::array< int, N >&& max = {} )
+                       std::array< int, N >&& max = std::array< int, N >() )
     : m_print( print ),
       m_feedback( feedback ),
       m_prefix( std::move(prefix) ),
