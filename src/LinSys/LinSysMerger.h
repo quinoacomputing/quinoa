@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 02:23:31 PM MDT
+  \date      Tue 08 Nov 2016 08:01:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -256,10 +256,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \param[in] worker Charm++ worker proxy
     //! \param[in] s Mesh node IDs mapped to side set ids
     //! \param[in] n Total number of scalar components in the linear system
+    //! \param[in] feedback Whether to send sub-task feedback to host    
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
                   const std::map< int, std::vector< std::size_t > >& s,
-                  std::size_t n ) :
+                  std::size_t n,
+                  bool feedback ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
@@ -270,6 +272,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       m_nchbc( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
+      m_feedback( feedback ),
       m_myworker(),
       m_rowimport(),
       m_solimport(),
@@ -414,7 +417,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
       }
-      if (rowcomplete()) row_complete();
+      checkifrowcomplete();
     }
     //! Receive global row ids from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -430,7 +433,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! Acknowledge received row ids
     void recrow() {
       --m_nperow;
-      if (rowcomplete()) row_complete();
+      checkifrowcomplete();
     }
 
     //! Chares contribute their solution nonzero values
@@ -460,7 +463,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addsol( fromch, p.second );
       }
-      if (solcomplete()) sol_complete();
+      checkifsolcomplete();
     }
     //! Receive solution vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -474,7 +477,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
-      if (solcomplete()) sol_complete();
+      checkifsolcomplete();
     }
 
     //! Chares contribute their matrix nonzero values
@@ -525,7 +528,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       // Export non-owned matrix rows values to fellow branches that own them
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].addlhs( fromch, p.second );
-      if (lhscomplete()) lhs_complete();
+      checkiflhscomplete();
     }
     //! Receive matrix nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -541,7 +544,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto& row = m_lhs[ r.first ];
         for (const auto& c : r.second) row[ c.first ] += c.second;
       }
-      if (lhscomplete()) lhs_complete();
+      checkiflhscomplete();
     }
 
     //! Chares contribute their rhs nonzero values
@@ -569,7 +572,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrhs( fromch, p.second );
       }
-      if (rhscomplete()) rhs_complete();
+      checkifrhscomplete();
     }
     //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -581,7 +584,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         m_rhsimport[ fromch ].push_back( l.first );
         m_rhs[ l.first ] += l.second;
       }
-      if (rhscomplete()) rhs_complete();
+      checkifrhscomplete();
     }
 
     //! Chares contribute to the rhs of the auxiliary linear system
@@ -698,6 +701,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
           it = m_bc.erase(it);
         else
           ++it;
+      if (m_feedback) m_host.pebccomplete();    // send progress report to host
       bc_complete();
     }
 
@@ -810,6 +814,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
+    bool m_feedback;            //!< Whether to send sub-task feedback to host
     //! Ids of workers on my PE
     std::vector< int > m_myworker;
     //! \brief Import map associating a list of global row ids to a worker chare
@@ -920,7 +925,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
              // all fellow PEs have received my row ids contribution
              m_nperow == 0;
     }
-
     //! Check if our portion of the solution vector values is complete
     //! \return True if all parts of the unknown/solution vector have been
     //!   received
@@ -934,6 +938,43 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \return True if all parts of the unknown/solution vector have been
     //!   received
     bool diagcomplete() const { return m_diagimport == m_rowimport; }
+
+    //! Check if contributions to global row IDs are complete
+    //! \details If so, send progress report to host that this sub-task is done,
+    //!   and tell the runtime system that this is complete.
+    void checkifrowcomplete() {
+      if (rowcomplete()) {
+        if (m_feedback) m_host.perowcomplete();
+        row_complete();
+      };
+    }
+    //! Check if contributions to unknown/solution vector are complete
+    //! \details If so, send progress report to host that this sub-task is done,
+    //!   and tell the runtime system that this is complete.
+    void checkifsolcomplete() {
+      if (solcomplete()) {
+        if (m_feedback) m_host.pesolcomplete();
+        sol_complete();
+      }
+    }
+    //! Check if contributions to left-hand side matrix are complete
+    //! \details If so, send progress report to host that this sub-task is done,
+    //!   and tell the runtime system that this is complete.
+    void checkiflhscomplete() {
+      if (lhscomplete()) {
+        if (m_feedback) m_host.pelhsasm();
+        lhs_complete();
+      }
+    }
+    //! Check if contributions to right-hand side vector are complete
+    //! \details If so, send progress report to host that this sub-task is done,
+    //!   and tell the runtime system that this is complete.
+    void checkifrhscomplete() {
+      if (rhscomplete()) {
+        if (m_feedback) m_host.perhsasm();
+        rhs_complete();
+      }
+    }
 
     //! Build Hypre data for our portion of the global row ids
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
@@ -1112,6 +1153,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! Solve linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
+      // send progress report to host
+      if(m_feedback) m_host.pesolve();
       solve_complete();
     }
 

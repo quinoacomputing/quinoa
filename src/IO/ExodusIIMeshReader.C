@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 08:35:21 AM MDT
+  \date      Sat 05 Nov 2016 08:47:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -155,7 +155,7 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
 //  Read coordinates of a number of mesh nodes from ExodusII file
 //! \param[in] ext Extents of element ids whose connectivity to read, both
 //!   inclusive
-//! \param[inout] coord Unordered map of node coordinates associated to ids
+//! \return Mesh node coordinates
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -170,7 +170,7 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
       "..." + std::to_string(ext[1]) + "] from ExodusII file: " +
       m_filename );
 
-  return {{ px, py, pz }};
+  return {{ std::move(px), std::move(py), std::move(pz) }};
 }
 
 std::size_t

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:44:37 PM MDT
+  \date      Tue 08 Nov 2016 08:08:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -18,6 +18,8 @@
 #include <sstream>
 #include <iomanip>
 #include <list>
+#include <cmath>
+#include <array>
 
 #include "NoWarning/format.h"
 
@@ -292,7 +294,7 @@ class Print {
     void note( const std::string& msg ) const
     { stream<s>() << m_note_fmt % m_item_indent % msg; }
 
-    //! Echo ormatted print of a diagnostics message
+    //! Echo formatted print of a diagnostics message
     //! \param[in] msg Message to print as a diagnostics message
     //! \author J. Bakosi
     template< Style s = VERBOSE >
@@ -312,6 +314,63 @@ class Print {
     template< Style s = VERBOSE >
     void diagend( const std::string& msg ) const
     { stream<s>() << m_diag_end_fmt % msg << std::flush; }
+
+    //! Echo formatted print of a progress message
+    //! \param[in] prefix Strings to output prefixing the progress report
+    //! \param[in] done Array of integers indicating how many have been done
+    //! \param[in] max Array of integers indicating how many to be done
+    //! \param[in] progress_size Size of previous progress report (to overwrite)
+    //! \details All input arrays are the same size. The prefix strings
+    //!   are optional, i.e., they can be empty strings. The function generates
+    //!   an output to the stream configured in the following fashion:
+    //!   <pre1>[<done1>/<max1>], <pre2>[<done2>/<max2>], ..., e.g.,
+    //!   r:[1/3], b[2/8]. Whenever this function is called, a number of
+    //!   backspaces are put into the stream so that the new progress report
+    //!   string overwrites the old one. In order to backtrack the correct
+    //!   amount, the length of the old progress report is stored (by whatever
+    //!   object holds us) and passed in by reference in progress_size, which is
+    //!   overwritten here once it has been used for backtracking. Therefore,
+    //!   for restarting a new series of progress reports, this variable must be
+    //!   zeroed. Also, it is best to not to interleave multiple tasks, because
+    //!   even if a different progress_size is kept for each, there is no regard
+    //!   as to which line we output to in the stream. In other words, multiple
+    //!   task outputs will be intermingled, leading to confusing screen output.
+    //! \author J. Bakosi
+    template< std::size_t N, Style s = VERBOSE >
+    void progress( const std::array< std::string, N >& prefix,
+                   const std::array< int, N >& done,
+                   const std::array< int, N >& max,
+                   std::size_t& progress_size ) const
+    {
+      // lambda to determine the number of digits in an integer
+      auto numdig = []( int i ) -> std::size_t {
+        return i > 0 ?
+          static_cast< std::size_t >( std::log10(static_cast<double>(i)) ) + 1
+          : 1; };
+      // Backspace so that new progress can overwrite old one
+      stream<s>() << std::string( progress_size, '\b' );
+      std::stringstream ss;
+      auto ip = prefix.cbegin();
+      auto id = done.cbegin();
+      auto im = max.cbegin();
+      progress_size = 0;
+      while (ip != prefix.cend()) {
+        // Compute new length of progress string
+        progress_size += 4 + ip->size() + numdig(*id) + numdig(*im);
+        // Construct and output new progress string to stream
+        ss << *ip << ":[" << *id << '/' << *im << ']';
+        ++ip; ++id; ++im;
+        // if next subprogress is not the last one, put in a comma
+        if (ip != prefix.cend()) {
+          ss << ", ";
+          progress_size += 2;
+        } else {
+          ss << ' ';
+          ++progress_size;
+        }
+      }
+      stream<s>() << m_progress_fmt % ss.str() << std::flush;
+    }
 
     //! \brief Formatted print of help of one-liners on all command-line
     //!   parameters or control file keywords
@@ -609,8 +668,9 @@ class Print {
     mutable format m_list_item_fmt = format("%s%-30s\n");
     mutable format m_note_fmt = format("%s%-30s\n");
     mutable format m_diag_fmt = format("Quinoa> %s\n");
-    mutable format m_diag_start_fmt = format("Quinoa> %s");
-    mutable format m_diag_end_fmt = format(" %s\n");
+    mutable format m_diag_start_fmt = format("Quinoa> %s ");
+    mutable format m_diag_end_fmt = format("%s\n");
+    mutable format m_progress_fmt = format("%s");
     mutable format m_help_title_fmt = format("\n%s %s\n");
     mutable format m_help_item_fmt = format("%20s%11s %s\n");
     mutable format m_helpkw_cmd_title_fmt =

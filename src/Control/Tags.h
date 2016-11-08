@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Wed 26 Oct 2016 09:33:59 AM MDT
+  \date      Tue 08 Nov 2016 07:34:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -28,6 +28,7 @@ struct rngsse {};
 struct seqlen {};
 struct verbose {};
 struct benchmark {};
+struct feedback {};
 struct reorder {};
 struct error {};
 struct pdf {};

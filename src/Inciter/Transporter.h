@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Thu 20 Oct 2016 11:06:19 AM MDT
+  \date      Mon 07 Nov 2016 03:52:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -57,6 +57,7 @@
 #include "Partitioner.h"
 #include "VectorReducer.h"
 #include "ParticleWriter.h"
+#include "Progress.h"
 
 #include "NoWarning/carrier.decl.h"
 
@@ -105,7 +106,7 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready
     //!   for preparing (flattening) their owned mesh node IDs for reordering
-    void distributed() { m_partitioner.flatten(); }
+    void distributed();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
@@ -122,6 +123,50 @@ class Transporter : public CBase_Transporter {
 
     //! Reduction target indicating that all chare groups are ready for workers
     void setup();
+
+    //! Non-reduction target for receiving progress report on reading mesh graph
+    void pegraph() { m_progGraph.inc<0>(); }
+
+    //! Non-reduction target for receiving progress report on partitioning mesh
+    void pepartitioned() { m_progPart.inc<0>(); }
+    //! Non-reduction target for receiving progress report on distributing mesh
+    void pedistributed() { m_progPart.inc<1>(); }
+
+    //! Non-reduction target for receiving progress report on flattening mesh
+    void peflattened() { m_progReorder.inc<0>(); }
+    //! Non-reduction target for receiving progress report on node ID mask
+    void pemask() { m_progReorder.inc<1>(); }
+    //! Non-reduction target for receiving progress report on reordering mesh
+    void pereordered() { m_progReorder.inc<2>(); }
+    //! Non-reduction target for receiving progress report on computing bounds
+    void pebounds() { m_progReorder.inc<3>(); }
+
+    //! Non-reduction target for receiving progress report on computing row IDs
+    void perowcomplete() { m_progSetup.inc<0>(); }
+    //! Non-reduction target for receiving progress report on matching BCs
+    void chbcmatched() { m_progSetup.inc<1>(); }
+    //! Non-reduction target for receiving progress report on computing BCs
+    void pebccomplete() { m_progSetup.inc<2>(); }
+
+    //! Non-reduction target for receiving progress report on the initial guess
+    void pesolcomplete() { m_progInit.inc<0>(); }
+    //! Non-reduction target for receiving progress report on outputing ICs
+    void chic() { m_progInit.inc<1>(); }
+    //! Non-reduction target for receiving progress report on computing the LHS
+    void chlhs() { m_progInit.inc<2>(); }
+    //! Non-reduction target for receiving progress report on assembling the LHS
+    void pelhsasm() { m_progInit.inc<3>(); }
+
+    //! Non-reduction target for receiving progress report on computing the RHS
+    void chrhs() { m_progStep.inc<0>(); }
+    //! Non-reduction target for receiving progress report on assembling the RHS
+    void perhsasm() { m_progStep.inc<1>(); }
+    //! Non-reduction target for receiving progress report on solving the system
+    void pesolve() { m_progStep.inc<2>(); }
+    //! Non-reduction target for receiving progress report on limiting
+    void chlim() { m_progStep.inc<3>(); }
+    //! Non-reduction target for receiving progress report on tracking particles
+    void chtrack() { m_progStep.inc<4>(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -189,6 +234,16 @@ class Transporter : public CBase_Transporter {
 
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
+    int m_npegraph; //!< Number of PEs completed reading their mesh graph
+    int m_npepart;                       //!< Number of PEs partitioned the mesh
+    int m_npedis;                        //!< Number of PEs distributed the mesh
+    int m_npefla;   //!< Number of PEs completed flattening their mesh graph
+    int m_npemask;  //!< Number of PEs completed receiving node ID mask
+    int m_npere;                         //!< Number of PEs reordered mesh chunk
+    int m_npebounds;                     //!< Number of PEs computed mesh bounds
+    int m_nperow;                        //!< Number of PEs completed row IDs
+    int m_npebcmatch;                    //!< Number of PEs matched BCs
+    int m_npebccompl;                    //!< Number of PEs completed BCs
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
@@ -210,6 +265,18 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_linsysbc;
     //! Diagnostics
     std::vector< tk::real > m_diag;
+    // Progress object for task "Partitioning and distributing mesh"
+    tk::Progress< 2 > m_progPart;
+    // Progress object for task "Creating partitioners and reading mesh graph"
+    tk::Progress< 1 > m_progGraph;
+    // Progress object for task "Reordering mesh"
+    tk::Progress< 4 > m_progReorder;
+    // Progress object for task "Computing row IDs, querying BCs, ..."
+    tk::Progress< 3 > m_progSetup;
+    // Progress object for task "Setting and output ICs, ..."
+    tk::Progress< 4 > m_progInit;
+    // Progress object for sub-tasks of a time step
+    tk::Progress< 5 > m_progStep;
 
     //! Print out time integration header
     void header();
