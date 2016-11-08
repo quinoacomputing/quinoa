@@ -2,7 +2,7 @@
 /*!
   \file      src/Particles/Tracker.h
   \author    J. Bakosi
-  \date      Mon 31 Oct 2016 03:21:32 PM MDT
+  \date      Tue 08 Nov 2016 07:43:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on
@@ -39,15 +39,18 @@ class Tracker {
     //! Constructor
     //! \param[in] npar Number of particles per mesh element
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] feedback Whether to send sub-task feedback to host
     //! \author J. Bakosi
-    explicit Tracker( std::size_t npar = 0,
+    explicit Tracker( bool feedback = false,
+                      std::size_t npar = 0,
                       const std::vector< std::size_t >& inpoel = {} ) :
       m_particles( npar * inpoel.size()/4, 3 ), // only the 3 spatial components
       m_elp( m_particles.nunk() ),
       m_parmiss(),
       m_parelse(),
       m_nchpar( 0 ),
-      m_esupel( tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4) ) )
+      m_esupel( tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4) ) ),
+      m_feedback( feedback )
     {}
 
     //! Generate particles to each of our mesh cells
@@ -63,7 +66,7 @@ class Tracker {
     //! \param[in] array Charm++ array object pointer of the holder class
     //! \author J. Bakosi
     template< class HostProxy, class ParticleWriterProxy, class ChareArray >
-    void writeParticles( const HostProxy& hostproxy,
+    void writeParticles( HostProxy& hostproxy,
                          const ParticleWriterProxy& pw,
                          ChareArray* const array )
     {
@@ -127,7 +130,7 @@ class Tracker {
     //! \param[in] dt Time step size
     //! \author F.J. Gonzalez
     template< class HostProxy, class ChareArrayProxy, class ChareArray >
-    void track( const HostProxy& hostproxy,
+    void track( HostProxy& hostproxy,
                 const ChareArrayProxy& arrayProxy,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
@@ -229,7 +232,7 @@ class Tracker {
     //! \author J. Bakosi
     template< class HostProxy, class ChareArrayProxy, class ChareArray >
     void
-    foundpar( const HostProxy& hostproxy,
+    foundpar( HostProxy& hostproxy,
               ChareArrayProxy& arrayProxy,
               const std::unordered_map< int, std::vector< std::size_t > > msum,
               ChareArray* const array,
@@ -291,7 +294,7 @@ class Tracker {
     //! \param[in] nchare Total number of holder array chares
     //! \author J. Bakosi
     template< class HostProxy, class ChareArray >
-    void collectedpar( const HostProxy& hostproxy,
+    void collectedpar( HostProxy& hostproxy,
                        ChareArray* const array,
                        const std::vector< std::size_t >& found,
                        std::size_t nchare )
@@ -336,6 +339,8 @@ class Tracker {
     //! Elements surrounding points of elements of mesh chunk we operate on
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
+    //! Bool that determines whether to send sub-task feedback to host
+    bool m_feedback;
 
     //! Try to find particles and add those found to the list of ours
     std::vector< std::size_t >
@@ -410,6 +415,7 @@ class Tracker {
     ///@{
     //! Tell the host that we are done with sending our number of particles
     //! \param[in] host Host proxy to contribute to
+    //! \param[in] array Charm++ array object pointer of the holder class
     template< class ChareArray >
     void signal2host_nparcomplete( const inciter::CProxy_Transporter& host,
                                    ChareArray* array )
@@ -421,10 +427,13 @@ class Tracker {
     }
     //! Tell the host that we are done communicating particles
     //! \param[in] host Host proxy to contribute to
+    //! \param[in] array Charm++ array object pointer of the holder class
     template< class ChareArray >
-    void signal2host_parcomcomplete( const inciter::CProxy_Transporter& host,
+    void signal2host_parcomcomplete( inciter::CProxy_Transporter& host,
                                      ChareArray* array )
     {
+      // send progress report to host
+      if (m_feedback) host.chtrack();
       m_nchpar = 0;
       m_parmiss.clear();
       m_parelse.clear();

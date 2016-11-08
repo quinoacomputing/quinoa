@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Thu 03 Nov 2016 12:29:26 PM MDT
+  \date      Tue 08 Nov 2016 09:12:11 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -60,6 +60,13 @@ Transporter::Transporter() :
   __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
+  m_npefla( 0 ),
+  m_npemask( 0 ),
+  m_npere( 0 ),
+  m_npebounds( 0 ),
+  m_nperow( 0 ),
+  m_npebcmatch( 0 ),
+  m_npebccompl( 0 ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -72,7 +79,20 @@ Transporter::Transporter() :
   m_npoin( 0 ),
   m_timer(),
   m_linsysbc(),
-  m_diag( g_inputdeck.get< tag::component >().nprop(), 0.0 )
+  m_diag( g_inputdeck.get< tag::component >().nprop(), 0.0 ),
+  m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
+  m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+               {{ "" }}, {{ CkNumPes() }} ),
+  m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+                 {{ "f", "m", "r", "b" }},
+                 {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
+  m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+               {{ "r", "m", "b" }} ),
+  m_progInit( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "i", "f", "l", "a" }} ),
+  m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              {{ "r", "a", "s", "l", "p" }} )
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -165,10 +185,13 @@ Transporter::Transporter() :
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
     // Create linear system merger chare group
+    m_print.diagstart( "Reading side sets ..." );
+    auto ss = er.readSidesets();
+    m_print.diagend( "done" );
     m_print.diag( "Creating linear system mergers" );
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier,
-                       er.readSidesets(),
-                       g_inputdeck.get< tag::component >().nprop() );
+    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
+                       g_inputdeck.get< tag::component >().nprop(),
+                       g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create particle writer Charm++ chare group. Note that by passing an empty
     // filename argument to the constructor, we tell the writer not to open a
@@ -183,7 +206,7 @@ Transporter::Transporter() :
                          //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
-    m_print.diagstart( "Creating partitioners and reading mesh graph ..." );
+    m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
                                              m_linsysmerger,
                                              m_particlewriter );
@@ -201,7 +224,7 @@ Transporter::load( uint64_t nelem )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagend( "done" );    // "Reading mesh graph ..."
+  m_progGraph.end();
 
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
@@ -246,8 +269,22 @@ Transporter::partition()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagstart( "Partitioning and distributing mesh ..." );
+  m_progPart.start( "Partitioning and distributing mesh ..." );
   m_partitioner.partition( m_nchare );
+}
+
+void
+Transporter::distributed()
+// *****************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// distributing its global mesh node IDs and they are ready for preparing
+// (flattening) their owned mesh node IDs for reordering
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_progPart.end();
+  m_progReorder.start( "Reordering mesh ..." );
+  m_partitioner.flatten();
 }
 
 void
@@ -265,7 +302,7 @@ Transporter::aveCost( tk::real c )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagend( "done" );    // "Partitioning and distributing mesh ..."
+  m_progReorder.end();
   m_print.diag( "Creating workers" );
   // Compute average and broadcast it back to all partitioners (PEs)
   m_avcost = c / CkNumPes();
@@ -307,11 +344,13 @@ Transporter::setup()
 void
 Transporter::volcomplete()
 // *****************************************************************************
-
+// Reduction target indicating that all Carriers have finished
+// computing/receiving their part of the nodal volumes
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagstart( "Computing row IDs, querying BCs, outputing mesh ..." );
+  m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh ...",
+                     {{ CkNumPes(), m_nchare, CkNumPes() }} );
   m_carrier.setup();
 }
 
@@ -331,9 +370,10 @@ Transporter::rowcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagend( "done" );   // "Setting up workers ..."
-  m_print.diagstart( "Setting and outputing ICs, computing initial dt, "
-                     "computing LHS ..." );
+  m_progSetup.end();
+  m_progInit.start( "Setting and outputting ICs, computing initial dt, "
+                    "computing LHS ...",
+                    {{ CkNumPes(), m_nchare, m_nchare, CkNumPes() }} );
   m_linsysmerger.rowsreceived();
   m_carrier.init();
 }
@@ -346,9 +386,12 @@ Transporter::initcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_print.diagend( "done" );   // "Initializing workers ..."
+  m_progInit.end();
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_progStep.start( "Time step ...",
+      { {m_nchare, CkNumPes(), CkNumPes(), m_nchare, m_nchare }} );
 }
 
 void
@@ -452,6 +495,9 @@ Transporter::evaluateTime()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
 
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_progStep.end();
+
   if (m_stage < 1) {    // if at half-stage, simply go to next one
 
     ++m_stage;
@@ -514,9 +560,11 @@ Transporter::evaluateTime()
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
   // elements to prepare for a new rhs), otherwise finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
-  else
+    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+      m_progStep.start( "Time step ..." );
+  } else
     finish();
 }
 

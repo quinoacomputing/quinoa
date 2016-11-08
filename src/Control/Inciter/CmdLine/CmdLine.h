@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 09:37:55 AM MDT
+  \date      Tue 08 Nov 2016 07:33:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -38,6 +38,7 @@ class CmdLine : public tk::Control<
                   tag::virtualization, kw::virtualization::info::expect::type,
                   tag::verbose,        bool,
                   tag::benchmark,      bool,
+                  tag::feedback,       bool,
                   tag::help,           bool,
                   tag::helpctr,        bool,
                   tag::cmdinfo,        tk::ctr::HelpFactory,
@@ -51,6 +52,7 @@ class CmdLine : public tk::Control<
     //! \see tk::grm::use and its documentation
     using keywords = boost::mpl::set< kw::verbose
                                     , kw::benchmark
+                                    , kw::feedback
                                     , kw::virtualization
                                     , kw::help
                                     , kw::helpctr
@@ -99,6 +101,7 @@ class CmdLine : public tk::Control<
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       set< tag::benchmark >( false ); // No benchmark mode by default
+      set< tag::feedback >( false ); // No detailed feedback by default
       // Initialize help: fill from own keywords + add map passed in
       boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -114,6 +117,7 @@ class CmdLine : public tk::Control<
                    tag::virtualization, kw::virtualization::info::expect::type,
                    tag::verbose,        bool,
                    tag::benchmark,      bool,
+                   tag::feedback,       bool,
                    tag::help,           bool,
                    tag::helpctr,        bool,
                    tag::cmdinfo,        tk::ctr::HelpFactory,

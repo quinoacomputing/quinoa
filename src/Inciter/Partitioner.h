@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 21 Oct 2016 03:41:07 PM MDT
+  \date      Tue 08 Nov 2016 07:46:54 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -183,6 +183,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                                  m_gelemid,
                                                  m_tetinpoel.size()/4,
                                                  nchare );
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.pepartitioned();
       Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
               "not equal the number of mesh graph elements" );
       // Construct global mesh node ids for each chare and distribute
@@ -268,6 +271,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       tk::unique( m_id );
       // Store mesh node IDs in hash-set
       std::copy( begin(m_id), end(m_id), std::inserter(m_sid,end(m_sid)) );
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.peflattened();
       // Signal host that we are ready for computing the communication map,
       // required for parallel distributed global mesh node reordering
       signal2host_flattened( m_host );
@@ -379,6 +385,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // Count up total number of nodes we will need receive during reordering
         std::size_t nrecv = 0;
         for (const auto& u : m_communication) nrecv += u.second.size();
+        // send progress report to host
+        if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+          m_host.pemask();
         // Start computing PE offsets for node reordering
         Group::thisProxy.offset( CkMyPe(), m_sid.size()-nrecv );
       }
@@ -494,6 +503,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
       m_gelemid.resize( till-from );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.pegraph();
       signal2host_graph_complete( m_host, m_gelemid.size() );
     }
 
@@ -608,6 +620,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_npe = exp.size();
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].add( CkMyPe(), p.second );
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.pedistributed();
       if (m_npe == 0) signal2host_distributed( m_host );
     }
 
@@ -688,12 +703,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       reorderowned_complete();
     }
 
-    //! Compute final result of reordering and send it back to host
+    //! Compute final result of reordering
     //! \details This member function is called when both those node IDs that we
     //!   assign a new ordering to as well as those assigned new IDs by other
     //!   PEs have been reordered (and we contribute to) and we are ready (on
-    //!   this PE) to compute our final result of the reordering and send it
-    //!   back to the host.
+    //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
@@ -719,6 +733,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Update unique global node IDs of chares our PE will contribute to the
       // new IDs resulting from reordering
       for (auto& p : m_id) p = tk::cref_find( m_newid, p );
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.pereordered();
       // Compute lower and upper bounds of reordered node IDs our PE operates on
       bounds();
     }
@@ -767,6 +784,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   connectivity, i.e., node IDs, it contributes to and the old->new node
     //!   ID map.
     void create() {
+      // send progress report to host
+      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+        m_host.pebounds();
       // Initiate asynchronous reduction across all Partitioner objects
       // computing the average communication cost of merging the linear system
       signal2host_avecost( m_host );

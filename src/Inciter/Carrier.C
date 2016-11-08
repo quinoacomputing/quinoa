@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 03 Nov 2016 03:28:43 PM MDT
+  \date      Tue 08 Nov 2016 09:05:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -107,7 +107,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_pc(),
   m_qc(),
   m_ac(),
-  m_tracker( 0, m_inpoel ), // 0 = no particles
+                                                        // 0 = no particles
+  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel ),
   m_bc()
 // *****************************************************************************
 //  Constructor
@@ -251,15 +252,16 @@ Carrier::bc()
   // Access all side sets from LinSysMerger
   auto& side = m_linsysmerger.ckLocalBranch()->side();
 
-  // lambda to find out if we own the old (as in file) global node id. We
-  // perform a linear search on the map value so we do not have to invert the
-  // map and return the map key (the new global id, new as in producing
-  // contiguous-row-id linear system contributions, see also Partitioner.h).
-  auto own = [ this ]( std::size_t id ) -> std::pair< bool, std::size_t > {
-    for (const auto& i : this->m_cid)
-      if (i.second == id)
-        return { true, i.first };
-    return { false, 0 };
+  // Invert m_cid, a map associating old node IDs (as in file) to new node IDs
+  // (as in producing contiguous-row-id linear system contributions), so we can
+  // search more efficiently for old node IDs.
+  decltype(m_cid) rcid;
+  for (const auto& i : m_cid) rcid[ i.second ] = i.first;
+
+  // lambda to find out if we own the old (as in file) global node id
+  auto own = [ &rcid ]( std::size_t id ) -> std::pair< bool, std::size_t > {
+    auto it = rcid.find( id );
+    if (it != end(rcid)) return { true, it->second }; else return { false, 0 };
   };
 
   // lambda to query the Dirichlet BCs on a side set for all components of all
@@ -322,6 +324,10 @@ Carrier::bc()
     }
   }
 
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_transporter.chbcmatched();
+
   // Send off list of owned node IDs mapped to side sets to LinSysMerger
   m_linsysmerger.ckLocalBranch()->charebc( m_bc );
 }
@@ -349,10 +355,9 @@ Carrier::init()
   // Output initial conditions to file (time = 0.0)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( 0.0 );
 
-  // Call back to Transporter::initcomplete(), signaling that the initialization
-  // is complete and we are now starting time stepping
-  contribute(
-      CkCallback(CkReductionTarget(Transporter,initcomplete), m_transporter));
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_transporter.chic();
 
   // Compute left-hand side of PDE
   lhs();
@@ -404,6 +409,7 @@ Carrier::lhs()
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
     eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
+
   // Send off left hand side for assembly
   m_linsysmerger.ckLocalBranch()->
     charelhs( thisIndex, m_gid, m_psup, m_lhsd, m_lhso );
@@ -412,6 +418,15 @@ Carrier::lhs()
   auto lump = m_fluxcorrector.lump( m_coord, m_inpoel );
   // Send off lumped mass lhs for assembly
   m_linsysmerger.ckLocalBranch()->chareauxlhs( thisIndex, m_gid, lump );
+
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_transporter.chlhs();
+
+  // Call back to Transporter::initcomplete(), signaling that the initialization
+  // is complete and we are now starting time stepping
+  contribute(
+      CkCallback(CkReductionTarget(Transporter,initcomplete), m_transporter));
 }
 
 void
@@ -451,6 +466,10 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
   auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, sol );
   // Send off mass diffusion rhs contribution for assembly
   m_linsysmerger.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
+
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_transporter.chrhs();
 }
 
 void
@@ -956,6 +975,10 @@ Carrier::apply()
     m_uf = m_ulf + m_a;   // update half-time solution with limited solution
   else
     m_u = m_ul + m_a;     // update solution with new (limited) solution
+
+  // send progress report to host
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_transporter.chlim();
 
   // Advance particles
   m_tracker.track( m_transporter, thisProxy, m_coord, m_inpoel, m_msum,

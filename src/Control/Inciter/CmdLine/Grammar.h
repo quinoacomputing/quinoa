@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 11:08:20 AM MDT
+  \date      Tue 08 Nov 2016 08:35:37 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -56,6 +56,13 @@ namespace cmd {
                                       use< kw::benchmark >,
                                       tag::benchmark > {};
 
+  //! \brief Match and set feedback switch (i.e., feedback mode)
+  //! \author J. Bakosi
+  struct feedback :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::feedback >,
+                                      tag::feedback > {};
+
   //! \brief Match and set virtualization parameter
   //! \author J. Bakosi
   struct virtualization :
@@ -100,6 +107,7 @@ namespace cmd {
   struct keywords :
          pegtl::sor< verbose,
                      benchmark,
+                     feedback,
                      virtualization,
                      help,
                      helpctr,

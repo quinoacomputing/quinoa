@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 25 Oct 2016 08:17:01 AM MDT
+  \date      Tue 08 Nov 2016 08:35:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -205,7 +205,7 @@ struct helpctr_info {
     R"(This keyword can be used to get a short one-liner help on all control
     file keywords from an executable.)";
   }
-  using alias = Alias< f >;
+  using alias = Alias< C >;
 };
 using helpctr = keyword< helpctr_info, h,e,l,p,c,t,r >;
 
@@ -2372,6 +2372,19 @@ struct benchmark_info {
 };
 
 using benchmark = keyword< benchmark_info, b,e,n,c,h,m,a,r,k >;
+
+struct feedback_info {
+  static std::string name() { return "feedback"; }
+  static std::string shortDescription() { return "Enable on-screen feedback"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable more detailed on-screen feedback on
+       particular tasks and sub-tasks as they happen. This is useful for large
+       problems and debugging.)";
+  }
+  using alias = Alias< f >;
+};
+
+using feedback = keyword< feedback_info, f,e,e,d,b,a,c,k >;
 
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
