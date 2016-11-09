@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 02:30:34 PM MST
+  \date      Wed 09 Nov 2016 12:45:58 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -681,14 +681,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         }
       // Forward all BC vectors received to fellow branches
       if (++m_nchbc == m_nchare) {
-        if (m_bc.empty()) {
-          if (m_feedback) m_host.pebccomplete(); // send progress report to host
-          bc_complete();
-        } else {
-          auto stream = tk::serialize( m_bc );
-          Group::contribute( stream.first, stream.second.get(), BCMapMerger,
-                        CkCallback(GroupIdx::addbc(nullptr),Group::thisProxy) );
-        }
+        auto stream = tk::serialize( m_bc );
+        Group::contribute( stream.first, stream.second.get(), BCMapMerger,
+                      CkCallback(GroupIdx::addbc(nullptr),Group::thisProxy) );
       }
     }
     // Reduction target collecting the final aggregated BC node list map
