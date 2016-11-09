@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 02:25:00 PM MST
+  \date      Wed 09 Nov 2016 12:34:44 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -76,7 +76,7 @@ Transporter::Transporter() :
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-               {{ "" }}, {{ CkNumPes() }} ),
+               {{ "g" }}, {{ CkNumPes() }} ),
   m_progReorder( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                  {{ "f", "m", "r", "b" }},
                  {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
