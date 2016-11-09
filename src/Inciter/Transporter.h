@@ -230,16 +230,6 @@ class Transporter : public CBase_Transporter {
 
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
-    int m_npegraph; //!< Number of PEs completed reading their mesh graph
-    int m_npepart;                       //!< Number of PEs partitioned the mesh
-    int m_npedis;                        //!< Number of PEs distributed the mesh
-    int m_npefla;   //!< Number of PEs completed flattening their mesh graph
-    int m_npemask;  //!< Number of PEs completed receiving node ID mask
-    int m_npere;                         //!< Number of PEs reordered mesh chunk
-    int m_npebounds;                     //!< Number of PEs computed mesh bounds
-    int m_nperow;                        //!< Number of PEs completed row IDs
-    int m_npebcmatch;                    //!< Number of PEs matched BCs
-    int m_npebccompl;                    //!< Number of PEs completed BCs
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
