@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlowProblem.h
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 03:22:42 PM MDT
+  \date      Wed 09 Nov 2016 12:19:30 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the compressible flow equations
   \details   This file defines policy classes for the compressible flow
@@ -85,8 +85,10 @@ class CompFlowProblemUserDefined {
                tk::ctr::ncomp_type,
                tk::real,
                tk::real,
+               tk::real,
                const std::array< std::size_t, 4 >&,
                const std::array< std::array< tk::real, 4 >, 4 >&,
+               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >&,
                std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& ) {}
@@ -245,8 +247,10 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
     //! \param[in] dt Size of time step
+    //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
+    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] u Solution at element nodes at recent time step stage
     //! \param[in,out] R Right-hand side vector contributing to
@@ -255,8 +259,10 @@ class CompFlowProblemVorticalFlow {
                tk::ctr::ncomp_type e,
                tk::real mult,
                tk::real dt,
+               tk::real J,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
+               const std::array< std::array< tk::real, 3 >, 4 >& grad,
                const std::array< const tk::real*, 5 >& r,
                std::array< std::array< tk::real, 4 >, 5 >& u,
                tk::Fields& R )
@@ -301,6 +307,9 @@ class CompFlowProblemVorticalFlow {
       tk::real c = mult * dt;
       for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k) {
+          // source contribution to mass rhs
+          for (std::size_t i=0; i<3; ++i)
+            R.var(r[0],N[j]) += c * J/24.0 * grad[k][i] * u[i+1][k];
           // source contribution to momentum rhs
           for (std::size_t l=0; l<2; ++l)
             R.var(r[l+1],N[j]) += c * mass[j][k] * Sm[l][k];
@@ -409,7 +418,7 @@ class CompFlowProblemVorticalFlow {
       out.push_back( E );
       for (std::size_t i=0; i<E.size(); ++i)
          E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
-                (p0 - 2.0*r[i]*a*a*z[i]*z[i])/r[i]/(g-1.0);
+                (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
       out.push_back( E );
 
       return out;
