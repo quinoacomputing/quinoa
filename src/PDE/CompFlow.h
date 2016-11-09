@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Wed 02 Nov 2016 08:49:05 AM MDT
+  \date      Wed 09 Nov 2016 12:19:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -242,7 +242,7 @@ class CompFlow {
         // add heat conduction contribution to energy rhs
         Physics::conductRhs( mult, deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( coord, 0, mult, deltat, N, mass, r, u, R );
+        Problem::sourceRhs( coord, 0, mult, deltat, J, N, mass, grad, r, u, R );
       }
     }
 
