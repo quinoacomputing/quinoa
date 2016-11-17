@@ -244,8 +244,8 @@ Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the components of the covariance matrix and those of
 the invariant.
 
-\image html ou_means.svg
-\image html ou_cov.svg
+<img src="https://quinoacomputing.github.io/quinoa/ou_means.svg" align="left" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/quinoa/ou_cov.svg" align="right" width="50%" background=transparent>
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
@@ -258,11 +258,11 @@ plot "stat.txt" u 2:6 w l t "<r1r1>", "stat.txt" u 2:7 w l t "<r1r2>", "stat.txt
 Example visualization of the estimated bivariate PDF at the final time step
 using [gmsh](http://www.geuz.org/gmsh).
 
-\image html ou_pdf.svg
+<img src="https://quinoacomputing.github.io/quinoa/ou_pdf.svg" align="center" width="75%" background=transparent>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 17 Feb 2015 08:43:08 AM MST
+<em>Page last updated:</em> Thu 17 Nov 2016 08:02:22 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

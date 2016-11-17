@@ -1,6 +1,6 @@
 /*!
   \page      walker_doc Walker: Random walker for stochastic differential equations
-  \image html walker.svg
+  <img src="https://quinoacomputing.github.io/quinoa/walker.svg" align="right" width="40%" background=transparent>
 
 Walker is a fully asynchronous distributed-memory-parallel numerical integrator
 for stochastic differential equations (SDE). It can be used to analyze and
@@ -180,7 +180,7 @@ Currently, the following differential equations are implemented:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 27 May 2016 09:40:14 PM MDT
+<em>Page last updated:</em> Thu 17 Nov 2016 07:56:41 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

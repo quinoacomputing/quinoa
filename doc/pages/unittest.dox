@@ -1,6 +1,6 @@
 /*!
   \page      unittest_doc UnitTest: Unit test suite
-  \image html unittest.svg
+  <img src="https://quinoacomputing.github.io/quinoa/unittest.svg" align="right" width="40%" background=transparent>
 
 UnitTest is a fully asynchronous distributed-memory-parallel [unit
 test](http://en.wikipedia.org/wiki/Unit_testing) harness, running hundreds of
@@ -33,7 +33,7 @@ unittest Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 24 May 2016 06:37:06 PM MDT
+<em>Page last updated:</em> Thu 17 Nov 2016 07:56:02 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
