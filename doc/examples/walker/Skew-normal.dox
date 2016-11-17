@@ -240,8 +240,8 @@ The left figure shows the first two moments indicating convergence to a
 statistically stationary state. The right one shows the estimated PDFs with
 their analytical solution (see DiffEq/SkewNormal.h).
 
-\image html skew_mom.svg
-\image html skew_pdf.svg
+<img src="https://quinoacomputing.github.io/quinoa/skew_mom.svg" align="left" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/quinoa/skew_pdf.svg" align="right" width="50%" background=transparent>
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
@@ -251,7 +251,7 @@ plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 17 Feb 2015 08:42:15 AM MST
+<em>Page last updated:</em> Thu 17 Nov 2016 08:00:09 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

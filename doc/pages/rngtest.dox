@@ -1,6 +1,6 @@
 /*!
   \page      rngtest_doc RNGTest: Random number generator test suite
-  \image html rngtest.svg
+  <img src="https://quinoacomputing.github.io/quinoa/rngtest.svg" align="right" width="40%" background=transparent>
 
 RNGTest is a fully asynchronous distributed-memory-parallel test harness to
 subject random number generators to stringent statistical tests enabling
@@ -287,7 +287,7 @@ Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 03 Jul 2016 12:38:57 PM MDT
+<em>Page last updated:</em> Thu 17 Nov 2016 07:56:20 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
