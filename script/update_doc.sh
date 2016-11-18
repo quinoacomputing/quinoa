@@ -4,7 +4,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Fri 13 May 2016 10:47:28 AM MDT
+# \date      Fri 18 Nov 2016 06:23:12 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script clones the github repository, builds the third-party
@@ -88,7 +88,7 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   mv ${WORKDIR}/regression_coverage .
   mv ${WORKDIR}/test_coverage .
   touch .nojekyll
-  cp ../../../doc/images/quinoa.svg .
+  cp ../../../doc/images/* .
   git add .
   git commit --no-gpg-sign -m "Documentation for changeset ${CODE_SHA}"
   git push origin gh-pages
