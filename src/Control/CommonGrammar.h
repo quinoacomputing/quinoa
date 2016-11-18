@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Tue 25 Oct 2016 12:02:39 PM MDT
+  \date      Thu 17 Nov 2016 03:57:30 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -116,6 +116,7 @@ namespace grm {
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
+    WRONGSIZE,          //!< Size of parameter vector incorrect
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -244,6 +245,8 @@ namespace grm {
       "is in the block finished above the line above." },
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
+    { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
+      "the parameter vector is incorrect." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "
@@ -482,25 +485,56 @@ namespace grm {
     }
   };
 
-  //! \brief Push back option in state at position given by tags
+  //! \brief Push back option to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for pushing back an option (an object deriving from
   //!   tk::Toggle) into a vector in the grammar stack. See walker::ctr::DiffEq
   //!   for an example specialization of tk::Toggle to see how an option is
   //!   created from tk::Toggle. We also do a simple sanity check here testing
-  //!   if the desried option value exist for the particular option type and
-  //!   error out if there is problem. Errors and warnings are accumulated
+  //!   if the desired option value exist for the particular option type and
+  //!   error out if there is a problem. Errors and warnings are accumulated
   //!   during parsing and diagnostics are given after the parsing is finished.
   //! \author J. Bakosi
   template< class Stack, template < class > class use, class Option,
             typename tag, typename... tags >
   struct store_back_option :
-    pegtl::action_base< store_back_option< Stack, use, Option, tag, tags...> >
+    pegtl::action_base< store_back_option< Stack, use, Option, tag, tags... > >
   {
     static void apply( const std::string& value, Stack& stack ) {
       Option opt;
       if (opt.exist(value)) {
         stack.template push_back<tag,tags...>( opt.value( value ) );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! \brief Push back option to vector of back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for pushing back an option (an object deriving from
+  //!   tk::Toggle) into the back of a vector of a vector in the grammar stack.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished. This functor is similar to store_back_option but pushes the
+  //!   option back to a vector of a vector.
+  //! \author J. Bakosi
+  template< class Stack, template < class > class use, class Option,
+            typename tag, typename... tags >
+  struct store_back_back_option : pegtl::action_base<
+    store_back_back_option< Stack, use, Option, tag, tags... > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      Option opt;
+      if (opt.exist(value)) {
+        stack.template push_back_back<tag,tags...>( opt.value( value ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
       }
@@ -1467,6 +1501,40 @@ namespace grm {
              store< Stack, tag::param, eq, param >,
              use< kw::end >,
              pegtl::apply< start< Stack, tag::param, eq, param > > >,
+           pegtl::apply< check< Stack, eq, param > > > {};
+
+  //! \brief Match equation/model option vector
+  //! \details This structure is used to match a keyword ... end block that
+  //!   contains a list (i.e., a vector) of numbers. The keyword that starts the
+  //!   block is passed in via the 'keyword' template argument. The 'store'
+  //!   argument abstracts away a "functor" used to store the parsed values
+  //!   (e.g. a push_back operaton on a std::vector. The 'start' argument
+  //!   abstracts away the starter functor used to start the inserting operation
+  //!   before parsing a value (usually a push_back on a vector using the
+  //!   default value constructor). The 'check' argument abstracts away a
+  //!   functor used to do error checking on the value parsed. Arguments 'eq'
+  //!   and 'param' denote two levels of the hierarchy relative to tag::param,
+  //!   at which the parameter vector lives. Example client-code: see
+  //!   walker::deck::sde_option_vector.
+  //! \author J. Bakosi
+  template< class Stack,
+            template< class > class use,
+            typename keyword,
+            class option,
+            template< class, class, class... > class store,
+            template< class, class, class... > class start,
+            template< class, class, class > class check,
+            typename eq,
+            typename param >
+  struct option_vector :
+         pegtl::ifmust<
+           vector<
+             Stack,
+             keyword,
+             store_back_back_option<Stack, use, option, tag::param, eq, param>,
+             use< kw::end >,
+             pegtl::apply< start< Stack, tag::param, eq, param > >,
+             pegtl::alpha >,
            pegtl::apply< check< Stack, eq, param > > > {};
 
   //! \brief Match model parameter dependent variable

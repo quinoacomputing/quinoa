@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 08:35:08 AM MST
+  \date      Fri 18 Nov 2016 09:08:07 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2225,6 +2225,139 @@ struct mixmassfracbeta_info {
 };
 using mixmassfracbeta =
   keyword< mixmassfracbeta_info, m,i,x,m,a,s,s,f,r,a,c,b,e,t,a >;
+
+struct eq_A005H_info {
+  static std::string name() { return "eq_A005H"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.05, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light << heavy.)"; }
+};
+using eq_A005H = keyword< eq_A005H_info, e,q,'_',A,'0','0','5',H >;
+
+struct eq_A005S_info {
+  static std::string name() { return "eq_A005S"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.05, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light = heavy.)"; }
+};
+using eq_A005S = keyword< eq_A005S_info, e,q,'_',A,'0','0','5',S >;
+
+struct eq_A005L_info {
+  static std::string name() { return "eq_A005L"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.05, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light >> heavy.)"; }
+};
+using eq_A005L = keyword< eq_A005L_info, e,q,'_',A,'0','0','5',L >;
+
+struct eq_A05H_info {
+  static std::string name() { return "eq_A05H"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.5, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light << heavy.)"; }
+};
+using eq_A05H = keyword< eq_A05H_info, e,q,'_',A,'0','5',H >;
+
+struct eq_A05S_info {
+  static std::string name() { return "eq_A05S"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.5, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light = heavy.)"; }
+};
+using eq_A05S = keyword< eq_A05S_info, e,q,'_',A,'0','5',S >;
+
+struct eq_A05L_info {
+  static std::string name() { return "eq_A05L"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.5, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light >> heavy.)"; }
+};
+using eq_A05L = keyword< eq_A05L_info, e,q,'_',A,'0','5',L >;
+
+struct eq_A075H_info {
+  static std::string name() { return "eq_A075H"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.75, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light << heavy.)"; }
+};
+using eq_A075H = keyword< eq_A075H_info, e,q,'_',A,'0','7','5',H >;
+
+struct eq_A075S_info {
+  static std::string name() { return "eq_A075S"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.75, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light = heavy.)"; }
+};
+using eq_A075S = keyword< eq_A075S_info, e,q,'_',A,'0','7','5',S >;
+
+struct eq_A075L_info {
+  static std::string name() { return "eq_A075L"; }
+  static std::string shortDescription() { return "Select inverse equilibrium "
+   "hydro time scale from DNS of HRT, A=0.75, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
+       Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light >> heavy.)"; }
+};
+using eq_A075L = keyword< eq_A075L_info, e,q,'_',A,'0','7','5',L >;
+
+struct hydrotimescales_info {
+  static std::string name() { return "hydrotimescales"; }
+  static std::string shortDescription() { return
+    R"(Set MixMassFractionBeta SDE parameter(s) hydrotimescales)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of strings used to parameterize
+    the system of stochastic differential equations, configured in a
+    mixmassfracbeta ... end block. Within the mixmassfracbeta ... end block the
+    coefficients policy must be set to 'hydrotimescale' in order for the
+    hydrotimescales ... end  block to be in effect. The hydrotimescales keyword
+    is then used to specify a list of strings, each specifying which inverse
+    time scale should be used for the particular component integrated. Available
+    time scales are defined in src/DiffEq/HydroTimescales.h. Example:
+    "hydrotimescales eq_A05S eq_A05H eq_A05L eq_A05S eq_A05S end", which
+    configures five inverse hydrodynamics time scales associated to 5
+    components, i.e., 5 scalar stochastic differential equations, integrated,
+    specified and configured within the given mixmassfracbeta ... end block. The
+    length of the hydrotimescales vector depends on the number of scalar
+    components and is controlled by the preceding keyword 'ncomp'. For
+    mixmassfracbeta, ncomp is the actual number of scalar components * 4, since
+    mixmassfractionbeta always computes 4 additional derived stochastic
+    variables (in a diagnostic) fashion. See also MixMassFractionBeta::derived()
+    in src/DiffEq/MixMassFractionBeta.h. Keywords allowed in a hydrotimescales
+    ... end block: )" + std::string("\'")
+    + eq_A005H::string() + "\', \'"
+    + eq_A005S::string() + "\', \'"
+    + eq_A005L::string() + "\', \'"
+    + eq_A05H::string() + "\', \'"
+    + eq_A05S::string() + "\', \'"
+    + eq_A05L::string() + "\', \'"
+    + eq_A075H::string() + "\', \'"
+    + eq_A075S::string() + "\', \'"
+    + eq_A075L::string() + "\'. "
+    + R"(For an example hydrotimescales ... end block, see
+      doc/html/walker_example_mixmassfracbeta.html.)"; }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string(s)"; }
+  };
+};
+using hydrotimescales =
+  keyword< hydrotimescales_info, h,y,d,r,o,t,i,m,e,s,c,a,l,e,s >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

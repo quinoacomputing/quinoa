@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:40:27 AM MDT
+  \date      Thu 17 Nov 2016 01:29:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -20,6 +20,7 @@
 #include "Walker/Options/DiffEq.h"
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "Walker/Options/HydroTimeScales.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
 #include "Options/PDFCentering.h"
@@ -288,24 +289,25 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
 
 //! Mix mass-fraction beta parameters storage
 using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      std::vector< char >,
-  tag::bprime,      std::vector< std::vector<
-                      kw::sde_bprime::info::expect::type > >,
-  tag::S,           std::vector< std::vector<
-                      kw::sde_S::info::expect::type > >,
-  tag::kappaprime, std::vector< std::vector<
-                      kw::sde_kappaprime::info::expect::type > >,
-  tag::rho2,       std::vector< std::vector<
-                      kw::sde_rho2::info::expect::type > >,
-  tag::r,          std::vector< std::vector<
-                      kw::sde_r::info::expect::type > >,
-  tag::spike,      std::vector< std::vector< std::vector <
-                      kw::spike::info::expect::type > > >,
-  tag::betapdf,     std::vector< std::vector< std::vector <
-                      kw::betapdf::info::expect::type > > >,
-  tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
+  tag::depvar,          std::vector< char >,
+  tag::bprime,          std::vector< std::vector<
+                          kw::sde_bprime::info::expect::type > >,
+  tag::S,               std::vector< std::vector<
+                          kw::sde_S::info::expect::type > >,
+  tag::kappaprime,     std::vector< std::vector<
+                          kw::sde_kappaprime::info::expect::type > >,
+  tag::rho2,           std::vector< std::vector<
+                          kw::sde_rho2::info::expect::type > >,
+  tag::r,              std::vector< std::vector<
+                          kw::sde_r::info::expect::type > >,
+  tag::spike,          std::vector< std::vector< std::vector <
+                          kw::spike::info::expect::type > > >,
+  tag::betapdf,         std::vector< std::vector< std::vector <
+                          kw::betapdf::info::expect::type > > >,
+  tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
+  tag::rng,             std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,      std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Parameters storage

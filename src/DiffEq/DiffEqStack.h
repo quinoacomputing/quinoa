@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:09:09 PM MDT
+  \date      Thu 17 Nov 2016 02:55:24 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -186,6 +186,19 @@ class DiffEqStack {
       std::stringstream s;
       s << "{ ";
       for (auto p : v) s << p << ' ';
+      s << "}";
+      return s.str();
+    }
+
+    //! \brief Return names of options (tk::Toggle) from vector as a string
+    //! \param[in] v Option vector whose names of components to return
+    //! \return Concatenated string of option names read from option vector
+    //! \author J. Bakosi
+    template< class Option, class OptTypeVec >
+    std::string options( const Option& opt, const OptTypeVec& v ) const {
+      std::stringstream s;
+      s << "{ ";
+      for (auto o : v) s << opt.name(o) << ' ';
       s << "}";
       return s.str();
     }
