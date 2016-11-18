@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:19:56 AM MDT
+  \date      Fri 18 Nov 2016 08:15:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -72,6 +72,7 @@
 #include "MixMassFractionBetaCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "Walker/Options/HydroTimeScales.h"
 
 namespace walker {
 
@@ -134,7 +135,40 @@ class MixMassFractionBeta {
         g_inputdeck.get< tag::param,
                          tag::mixmassfracbeta,
                          tag::r >().at(c),
-        m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k ) {}
+        m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k )
+    {
+      // Populate inverse hydrodynamics time scales extracted from DNS, as
+      // associated by the user.
+      if ( Coefficients::type() ==
+             ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY )
+      {
+        const auto& hts = g_inputdeck.get< tag::param,
+                                           tag::mixmassfracbeta,
+                                           tag::hydrotimescales >().at(c);
+        for (auto t : hts) {
+          if (t == ctr::HydroTimeScalesType::EQ_A005H)
+            m_hts.push_back( invhts_eq_A005H );
+          else if (t == ctr::HydroTimeScalesType::EQ_A005S)
+            m_hts.push_back( invhts_eq_A005S );
+          else if (t == ctr::HydroTimeScalesType::EQ_A005L)
+            m_hts.push_back( invhts_eq_A005L );
+          else if (t == ctr::HydroTimeScalesType::EQ_A05H)
+            m_hts.push_back( invhts_eq_A05H );
+          else if (t == ctr::HydroTimeScalesType::EQ_A05S)
+            m_hts.push_back( invhts_eq_A05S );
+          else if (t == ctr::HydroTimeScalesType::EQ_A05L)
+            m_hts.push_back( invhts_eq_A05L );
+          else if (t == ctr::HydroTimeScalesType::EQ_A075H)
+            m_hts.push_back( invhts_eq_A075H );
+          else if (t == ctr::HydroTimeScalesType::EQ_A075S)
+            m_hts.push_back( invhts_eq_A075S );
+          else if (t == ctr::HydroTimeScalesType::EQ_A075L)
+            m_hts.push_back( invhts_eq_A075L );
+        }
+        Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
+          "tables associated does not match the components integrated" );
+      }
+    }
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
@@ -167,7 +201,7 @@ class MixMassFractionBeta {
     {
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
-                    m_b, m_k, m_S, t );
+                    m_hts, m_b, m_k, m_S, t );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -204,6 +238,11 @@ class MixMassFractionBeta {
 
     //! Coefficients policy
     Coefficients coeff;
+
+    //! Selected inverse hydrodynamics time scales (if used) for each component
+    //! \details This is only used if the coefficients policy is
+    //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
+    std::vector< HydroTimeScaleTable > m_hts;
 
     //! \brief Return density for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:40:40 AM MDT
+  \date      Thu 17 Nov 2016 11:07:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -71,6 +71,8 @@ class InputDeck :
     //!   preprocessor-generated boost::mpl headers), the whole set is broken up
     //!   into several sets each containing 20 keywords.
     //! \see See also tk::grm::use
+    //! \details If you add a new mpl::set, make sure you also add it to
+    //!   waker::deck::use.
     using keywords1 = boost::mpl::set< kw::precision
                                      , kw::end
                                      , kw::depvar
@@ -188,6 +190,17 @@ class InputDeck :
                                      , kw::icbeta
                                      , kw::betapdf
                                      >;
+    using keywords7 = boost::mpl::set< kw::hydrotimescales
+                                     , kw::eq_A005H
+                                     , kw::eq_A005S
+                                     , kw::eq_A005L
+                                     , kw::eq_A05H
+                                     , kw::eq_A05S
+                                     , kw::eq_A05L
+                                     , kw::eq_A075H
+                                     , kw::eq_A075S
+                                     , kw::eq_A075L
+                                     >;
 
     //! \brief Constructor: set all defaults
     //! \details Anything not set here is initialized by the compiler using the
@@ -217,6 +230,7 @@ class InputDeck :
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
       boost::mpl::for_each< keywords6 >( ctrinfoFill );
+      boost::mpl::for_each< keywords7 >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 07:34:42 AM MST
+  \date      Thu 17 Nov 2016 10:59:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -57,6 +57,7 @@ struct alpha {};
 struct gamma {};
 struct spike {};
 struct betapdf {};
+struct hydrotimescales {};
 struct diffeq {};
 struct pde {};
 struct partitioner {};

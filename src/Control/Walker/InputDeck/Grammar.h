@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:40:52 AM MDT
+  \date      Thu 17 Nov 2016 03:56:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -24,6 +24,7 @@
 #include "QuinoaConfig.h"
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "Walker/Options/HydroTimeScales.h"
 
 #ifdef HAS_MKL
 #include "MKLGrammar.h"
@@ -54,7 +55,8 @@ namespace deck {
                             ctr::InputDeck::keywords3,
                             ctr::InputDeck::keywords4,
                             ctr::InputDeck::keywords5,
-                            ctr::InputDeck::keywords6 >;
+                            ctr::InputDeck::keywords6,
+                            ctr::InputDeck::keywords7 >;
 
   // Walker's InputDeck state
 
@@ -172,6 +174,22 @@ namespace deck {
     }
   };
 
+  //! \brief Do error checking on the hydrotimescales block
+  //! \author J. Bakosi
+  template< class Stack, class eq, class param >
+  struct check_hydrotimescales :
+    pegtl::action_base< check_hydrotimescales< Stack, eq, param > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Error out if hydrotimescales vector has the wrong size
+      const auto& hts =
+        stack.template get< tag::param, eq, tag::hydrotimescales >().back();
+      const auto& ncomp = stack.template get< tag::component, eq >().back();
+      if (hts.empty() || hts.size() != ncomp/4)
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
+                        ( stack, value );
+    }
+  };
 
   // Walker's InputDeck grammar
 
@@ -254,7 +272,7 @@ namespace deck {
                              eq,
                              tag::betapdf > > > {};
 
-  //! Error checks after a equation..end block has been parsed
+  //! Error checks after an equation ... end block has been parsed
   template< class eq >
   struct check_errors :
          pegtl::seq<
@@ -276,6 +294,20 @@ namespace deck {
                                     tk::grm::check_vector,
                                     eq,
                                     param > {};
+
+  //! SDE option vector
+  template< class Option, class keyword, class eq, class param,
+            template< class, class, class > class check >
+  struct sde_option_vector :
+         tk::grm::option_vector< Stack,
+                                 use,
+                                 use< keyword >,
+                                 Option,
+                                 tk::grm::Store_back_back,
+                                 tk::grm::start_vector,
+                                 check,
+                                 eq,
+                                 param > {};
 
   //! Diagonal Ornstein-Uhlenbeck SDE
   struct diag_ou :
@@ -636,6 +668,11 @@ namespace deck {
                                             tag::coeffpolicy >,
                            icdelta< tag::mixmassfracbeta >,
                            icbeta< tag::mixmassfracbeta >,
+                           sde_option_vector< ctr::HydroTimeScales,
+                                              kw::hydrotimescales,
+                                              tag::mixmassfracbeta,
+                                              tag::hydrotimescales,
+                                              check_hydrotimescales >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:18:01 AM MDT
+  \date      Fri 18 Nov 2016 08:30:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -31,7 +31,7 @@
       - ncomp denotes the number of scalar components of the system of
         mix mass-fraction beta SDEs.
       - Constant references to bprime_, S_, kprime_, rho2_, and r_, which
-        denote five vectors of real values used to initialize the parameter
+        denote vectors of real values used to initialize the parameter
         vectors of the system of mix mass-fraction beta SDEs. The length of
         the vectors must be equal to the number of components given by ncomp.
       - References to bprime, S, kprime, rho2_, and r, which denote the
@@ -60,6 +60,7 @@
           const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
           const std::vector< kw::sde_rho2::info::expect::type >& rho2,
           const std::vector< kw::sde_r::info::expect::type >& r,
+          const std::vector< HydroTimeScaleTable >& hts,
           std::vector< kw::sde_b::info::expect::type  >& b,
           std::vector< kw::sde_kappa::info::expect::type >& k,
           std::vector< kw::sde_S::info::expect::type >& S ) const {}
@@ -70,7 +71,14 @@
       associating moment IDs (tk::ctr::vector< tk::ctr::Term >) to values of
       statistical moments, _bprime_, _kprime_, rho2, r, are user-defined
       parameters, and _b_, _k_, _S_, are the SDE parameters computed, see
-      DiffEq/MixMassFractionBeta.h.
+      DiffEq/MixMassFractionBeta.h. The constant reference to hts, denotes
+      a vector of y=f(x) functions (see src/DiffEq/HydroTimeScales.h and
+      src/Control/Walker/Options/HydroTimescale.h) used to configure the inverse
+      hydrodynamics time scales (extracted from DNS) of the system of mix
+      mass-fraction beta SDEs if the MixMassFracBetaCoeffHydroTimeScaleHomDecay
+      coefficients policy is selected. The length of this vector must be equal
+      to the number of components given by ncomp. Note that hts is only used by
+      MixMassFracBetaCoeffHydroTimeScaleHomDecay.
 */
 // *****************************************************************************
 #ifndef MixMassFractionBetaCoeffPolicy_h
@@ -80,6 +88,8 @@
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "HydroTimeScales.h"
+#include "Walker/Options/HydroTimeScales.h"
 
 namespace walker {
 
@@ -146,6 +156,7 @@ class MixMassFracBetaCoeffDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >&,
       const std::vector< kw::sde_r::info::expect::type >&,
+      const std::vector< HydroTimeScaleTable >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >&,
@@ -228,6 +239,7 @@ class MixMassFracBetaCoeffHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< HydroTimeScaleTable >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -350,6 +362,7 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< HydroTimeScaleTable >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -475,6 +488,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< HydroTimeScaleTable >& hts,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -493,7 +507,6 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       // <R> = mean density,
       std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
       // Sample hydrodynamics timescale at time t
-      auto hts = hydrotimescale( t );
       for (ncomp_t c=0; c<ncomp; ++c) {
 
         const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
@@ -536,18 +549,20 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real f = 1.0;
         tk::real f = (1.0+A)/(1.0+30.0*A*theta);
 
-        //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
-        //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
-        //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * hts;
-        //b[c] = bprime[c] * std::pow(theta,n) * hts;
-        //b[c] = bprime[c] * (1.0+A)/(1.0+A*theta)*theta * hts;
-        b[c] = bprime[c] * f * mix * theta * hts;
+        auto ts = hydrotimescale( t, hts[c] );
 
-        //k[c] = kprime[c] * v * hts;
-        //k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
-        //k[c] = kprime[c] * ds * std::pow(theta,n) * hts;
-        //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * hts;
-        k[c] = kprime[c] * ds * f * mix * theta * hts;
+        //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * ts;
+        //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
+        //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * ts;
+        //b[c] = bprime[c] * std::pow(theta,n) * ts;
+        //b[c] = bprime[c] * (1.0+A)/(1.0+A*theta)*theta * ts;
+        b[c] = bprime[c] * f * mix * theta * ts;
+
+        //k[c] = kprime[c] * v * ts;
+        //k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
+        //k[c] = kprime[c] * ds * std::pow(theta,n) * ts;
+        //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * ts;
+        k[c] = kprime[c] * ds * f * mix * theta * ts;
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
@@ -563,25 +578,26 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
     }
 
   public:
-    //! Sample the (inverse) hydrodynamics time scale at time t, eps/k
+    //! Sample the inverse hydrodynamics time scale at time t
     //! \param[in] t Time at which to sample inverse hydrodynamics time scale
-    tk::real hydrotimescale( tk::real t ) const {
-      // eps/k
-      auto eok = 34145.3 * std::pow(t,-3.94975)
-                 * std::exp(-2057.44 * std::pow(t,-2.60227)) + 0.0226072;
-      // dk/dt/k
-      auto kdok = 3.33511 * std::exp(-0.745261*std::pow(t,0.741547));
-      //return eok;
-      //return std::sqrt(kdok*kdok/4.0 + eok*eok);
-      //return std::sqrt( 0.5*(std::pow(kdok+eok,2.0) + std::pow(eok,2.0)) );
-      //return 0.5*(kdok+eok + eok);
-      //return std::sqrt( std::sqrt(std::pow(kdok+eok,2.0) * std::pow(eok,2.0)) ); /
-      //return std::sqrt( 2.0/(std::pow(1.0/(kdok+eok),2.0)*std::pow(1.0/eok,2.0)) );
-      //return std::sqrt( std::sqrt(std::pow(kdok,2.0) * std::pow(eok,2.0)) );
-      //return std::sqrt( 2.0/(std::pow(1.0/kdok,2.0) * std::pow(1.0/eok,2.0)) );
-      return eok*sqrt(2.0+kdok/eok);
+    //! \param[in] ts Hydro time scale table to sample
+    //! \return Sampled value from discrete table of inverse hydro time scale
+    //! \details If t is lower than the first x value in the function, the first
+    //!   function value is returned. If t is larger than the last x value in
+    //!   the function, the last function value is returned.
+    tk::real hydrotimescale( tk::real t, const HydroTimeScaleTable& ts ) const {
+      if (t < ts.front().first) return ts.front().second;
+      for (std::size_t i=0; i<ts.size()-1; ++i) {
+        if (ts[i].first < t && t < ts[i+1].first) {
+          auto t1 = ts[i].first;
+          auto y1 = ts[i].second;
+          auto t2 = ts[i+1].first;
+          auto y2 = ts[i+1].second;
+          return y1 + (y2-y1)/(t2-t1)*(t-t1);
+        }
+      }
+      return ts.back().second;
     }
-
 };
 
 //! List of all mix mass-fraction beta's coefficients policies
