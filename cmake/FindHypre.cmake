@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Hypre library from LLNL
-# \date      Fri 06 May 2016 06:42:13 AM MDT
+# \date      Sun 20 Nov 2016 11:04:25 AM MST
 #
 ################################################################################
 
@@ -30,7 +30,9 @@ if(HYPRE_INCLUDE AND HYPRE_LIBRARY)
   set (HYPRE_FIND_QUIETLY TRUE)
 endif()
 
-find_path(HYPRE_INCLUDE NAMES HYPRE.h HINTS ${HYPRE_ROOT}/include)
+find_path(HYPRE_INCLUDE NAMES HYPRE.h
+                        HINTS ${HYPRE_ROOT}/include
+                        HINTS /usr/include/hypre)
 
 if(NOT BUILD_SHARED_LIBS)
   find_library(HYPRE_LIBRARY NAMES libHYPRE.a HINTS ${HYPRE_ROOT}/lib)
