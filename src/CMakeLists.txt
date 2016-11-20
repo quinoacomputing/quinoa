@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 21 Oct 2016 08:46:04 AM MDT
+# \date      Sun 20 Nov 2016 11:18:57 AM MST
 #
 ################################################################################
 
@@ -406,6 +406,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${HDF5_INCLUDE_DIRS}
+                    ${HYPRE_INCLUDE}
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
