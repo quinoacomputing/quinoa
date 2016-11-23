@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 22 Nov 2016 07:11:57 AM MST
+# \date      Wed 23 Nov 2016 10:14:48 AM MST
 #
 ################################################################################
 
@@ -317,13 +317,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 endif()
 
-# Set charmrun path. This is used when generating code coverage and running
-# regression tests using ctest. Note that ninja puts chamrun to <build> while
-# make puts it into <build>/Main, but after any executable target we copy
+# Set runner executable path. This is used when generating code coverage and
+# running regression tests using ctest. Note that ninja puts chamrun to <build>
+# while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
 # Main/CMakeLists.txt.
-SET(CHARMRUN "${CMAKE_BINARY_DIR}/charmrun")
-message(STATUS "charmrun executable: ${CHARMRUN}")
+if (DEFINED ENV{NERSC_HOST})
+  SET(RUNNER "srun")
+else()
+  SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
+endif()
+message(STATUS "Parallel job runner: ${RUNNER}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
@@ -473,7 +477,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
 if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(unit doc/html unittest_coverage
-                            ${CHARMRUN}
+                            ${RUNNER}
                             TESTRUNNER_ARGS
                             +p${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
