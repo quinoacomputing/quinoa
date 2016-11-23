@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Wed 23 Nov 2016 07:59:26 AM MST
+# \date      Wed 23 Nov 2016 10:54:24 AM MST
 #
 ################################################################################
 
@@ -26,7 +26,7 @@ string(REPLACE " " ";" TEST_LABELS "${TEST_LABELS}")
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
-message("  CHARMRUN (used to run Charm++ executables)                  : ${CHARMRUN}")
+message("  RUNNER (used to run Charm++ executables)                    : ${RUNNER}")
 message("  MPIRUN_BIND_ARGS (mpirun process binding)                   : ${MPIRUN_BIND_ARGS}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
@@ -54,10 +54,16 @@ if(TEXT_RESULT OR BIN_RESULT)
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT})
 endif()
 
-# Run the test
-set(test_command ${CHARMRUN} +p${NUMPES} ${MPIRUN_BIND_ARGS}
+# Configure test run command
+if (DEFINED ENV{NERSC_HOST})
+  SET(NCPUS_ARG "-n")
+else()
+  SET(NCPUS_ARG "+p")
+endif()
+set(test_command ${RUNNER} ${NCPUS_ARG} ${NUMPES} ${MPIRUN_BIND_ARGS}
                  ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS})
 string(REPLACE ";" " " test_command_string "${test_command}")
+# Run the test
 message("\nRunning test command: '${test_command_string}'\n")
 execute_process(COMMAND ${test_command} RESULT_VARIABLE ERROR)
 
@@ -101,7 +107,7 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
       list(GET TEXT_RESULT ${b} result)
-      set(text_diff_command ${CHARMRUN} ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
+      set(text_diff_command ${RUNNER} ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
                             ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
@@ -135,7 +141,7 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS BIN_BASELINE)
       list(GET BIN_RESULT ${b} result)
-      set(bin_diff_command ${CHARMRUN} ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
+      set(bin_diff_command ${RUNNER} ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
                            -f ${BIN_DIFF_PROG_CONF}
                            ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
