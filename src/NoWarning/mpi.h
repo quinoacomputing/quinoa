@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/mpi.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:42:29 PM MDT
+  \date      Wed 16 Nov 2016 10:20:37 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mpi.h with turning off specific compiler warnings
 */
@@ -20,6 +20,7 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wlong-long"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
 #include <mpi.h>

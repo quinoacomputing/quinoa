@@ -1,10 +1,10 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 # vim: filetype=sh:
 ################################################################################
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Tue 17 May 2016 09:52:22 PM MDT
+# \date      Wed 23 Nov 2016 08:35:24 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -12,18 +12,19 @@
 #   Arguments to bash:
 #   -e: shell will exit if any statement returns a non-true return value
 #   -u: shell will exit if we try to use an uninitialized variable
-#   -x: shell will print each command to stdout before executing it
 #
 #  This script will try to run the test suites in whatever build directory it is
 #  called in.
 #
-#  If an argument is given, use that as the number of CPUs, if not grab them
-#  all.
+#  Arguments to script:
+#  * No argument: Grab all available CPUs
+#  * 1st optional argument: Use that as the number of CPUs
+#  * 2nd optional argument: Forward argument to charmrun, e.g., mpirun
 #
 ################################################################################
 
 # If an argument is given, use that as the number of CPUs, if not grab them all
-if [ "$#" -eq 1 ]; then
+if [ "$#" -ge 1 ]; then
   CPUS=$1
 else
   # Query number of CPUs
@@ -34,8 +35,15 @@ else
 fi
 echo "Will use $CPUS CPUs"
 
+if [ "$#" -eq 2 ]; then
+  CHARMRUN_ARG=$2
+  echo "Will pass '$CHARMRUN_ARG' to charmrun"
+else
+  CHARMRUN_ARG=''
+fi
+
 # Run unit test suite
-./charmrun +p$CPUS --allow-run-as-root Main/unittest -v
+./charmrun +p$CPUS $CHARMRUN_ARG $PWD/Main/unittest -v
 
 # Run regression test suite (skip stringent tests that would run very long)
 ctest -j$CPUS -LE stringent

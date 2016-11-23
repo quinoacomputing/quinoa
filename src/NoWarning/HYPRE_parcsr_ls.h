@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/HYPRE_parcsr_ls.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:41:42 PM MDT
+  \date      Wed 16 Nov 2016 10:19:08 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include HYPRE_parcsr_ls.h with turning off specific compiler
              warnings
@@ -19,6 +19,9 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wdocumentation"
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 7 )
@@ -28,6 +31,8 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )
 #endif

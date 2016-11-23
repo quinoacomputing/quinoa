@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Tue 18 Oct 2016 02:36:12 PM MDT
+# \date      Mon 21 Nov 2016 03:59:30 PM MST
 #
 ################################################################################
 
@@ -112,7 +112,14 @@ else()
 endif()
 
 # Set Charm++ architecture
-set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
+if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+    NOT DEFINED ENV{CRAY_PRGENVINTEL})
+  set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
+else()
+  set(CHARM_ARCHITECTURE "mpi-crayxc")
+endif()
 
 message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
 
@@ -331,7 +338,7 @@ ExternalProject_Add(
   BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
   # Build Charm++
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
-                LIBS
+                charm++
                 ${CHARM_ARCHITECTURE}
                 ${CHARM_PTHREADS}
                 ${CHARM_SHARED}
@@ -487,14 +494,14 @@ endif()
 if(BUILD_SHARED_LIBS)
   set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=ON")
 else()
-  set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=OFF;-DTPL_FIND_SHARED_LIBS:BOOL=OFF;-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON")
+  set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=OFF;-DTPL_FIND_SHARED_LIBS:BOOL=OFF;-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON;-DCMAKE_SKIP_INSTALL_RPATH=TRUE")
   set(tr_hdf5 "-DTrilinos_EXTRA_LINK_FLAGS=-L${hdf5_library_dirs} -lhdf5_hl -lhdf5 -lz -lm -ldl")
 endif()
 if (HOST_OS MATCHES "alpine")
   set(TRILINOS_ALPINE "-DBLAS_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib;-DLAPACK_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 if (MKL_FOUND)
-  set(TRILINOS_MKL "-DTPL_ENABLE_MKL=ON;-DMKL_LIBRARY_DIRS=$ENV{MKLROOT}/lib/intel64;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
+  set(TRILINOS_MKL "-DTPL_ENABLE_BLAS=ON;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(TRILINOS_MKL "-DTPL_ENABLE_MKL=ON;-DMKL_LIBRARY_DIRS=$ENV{MKLROOT}/lib;-DMKL_INCLUDE_DIRS=$ENV{MKLROOT}/include;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
   endif()

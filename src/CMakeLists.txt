@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Sun 20 Nov 2016 11:18:57 AM MST
+# \date      Tue 22 Nov 2016 07:11:57 AM MST
 #
 ################################################################################
 
@@ -452,9 +452,16 @@ endif()
 enable_testing()
 
 # Set mpirun arguments controling process binding
-set(MPIRUN_BIND_ARGS "--bind-to none --map-by node"
-    CACHE STRING "Arguments to pass to mpirun for all regression tests.")
-message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
+if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+    NOT DEFINED ENV{CRAY_PRGENVINTEL})
+
+  set(MPIRUN_BIND_ARGS "--bind-to none --map-by node"
+      CACHE STRING "Arguments to pass to mpirun for all regression tests.")
+  message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
+
+endif()
 
 # Include cmake code common to all regression tests
 message(STATUS "Adding regression tests ...")

@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Thu 22 Sep 2016 03:28:32 PM MDT
+# \date      Wed 23 Nov 2016 08:16:45 AM MST
 #
 ################################################################################
 
@@ -44,6 +44,6 @@ RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`))
+RUN cd quinoa && mkdir -p build && cd build && cmake -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
 # Clean code
 RUN rm -rf /quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:57:44 AM MDT
+  \date      Wed 23 Nov 2016 07:42:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -49,7 +49,7 @@ class UnitTestPrint : public tk::Print {
            m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
     }
 
-    //! \brief Print one-liner info for test.
+    //! Print one-liner info for test
     //! \details Columns:
     //!   [done/failed]
     //!   - done: number of tests completed so far
@@ -74,7 +74,8 @@ class UnitTestPrint : public tk::Print {
            << status[1];
         (status[2] == "0" ? m_stream : m_qstream) <<
           m_item_widename_value_fmt % m_item_indent % ss.str()
-                                    % result( status[2], status[3], status[4] );
+                                    % result( status[2], status[3], status[4] )
+          << std::flush;
       }
     }
 
