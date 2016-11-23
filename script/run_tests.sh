@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Wed 23 Nov 2016 11:14:18 AM MST
+# \date      Wed 23 Nov 2016 11:34:02 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -20,7 +20,7 @@
 #  Arguments to script:
 #  * No argument: Grab all available CPUs
 #  * 1st optional argument: Use that as the number of CPUs
-#  * 2nd optional argument: Forward argument to charmrun, e.g., mpirun
+#  * 2nd optional argument: Forward argument to runner, e.g., mpirun
 #
 ################################################################################
 
@@ -37,10 +37,10 @@ fi
 echo "Will use $CPUS CPUs"
 
 if [ "$#" -eq 2 ]; then
-  CHARMRUN_ARG=$2
-  echo "Will pass '$CHARMRUN_ARG' to charmrun"
+  RUNNER_ARG=$2
+  echo "Will pass '$RUNNER_ARG' to runner"
 else
-  CHARMRUN_ARG=''
+  RUNNER_ARG=''
 fi
 
 # Configure parallel job runner
@@ -52,7 +52,7 @@ else
   NCPUS_ARG=+p
 fi
 # Run unit test suite
-${RUNNER} ${NCPUS_ARG} $CPUS $CHARMRUN_ARG $PWD/Main/unittest -v
+${RUNNER} ${NCPUS_ARG} $CPUS $RUNNER_ARG $PWD/Main/unittest -v
 
 # Run regression test suite (skip stringent tests that would run very long)
 ctest -j$CPUS -LE stringent
