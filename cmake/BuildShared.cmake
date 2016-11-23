@@ -4,17 +4,26 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Set default value for building shared libs if none was specified
-# \date      Fri 06 May 2016 06:40:37 AM MDT
+# \date      Wed 23 Nov 2016 06:38:46 AM MST
 #
 ################################################################################
 
-set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries. Possible values: ON | OFF")
 if(NOT DEFINED BUILD_SHARED_LIBS)
-  message(STATUS "BUILD_SHARED_LIBS not specified, setting to 'ON'")
-else()
-  if(NOT BUILD_SHARED_LIBS AND NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    message(STATUS "Static linking only supported with the GNU compiler suite, overriding BUILD_SHARED_LIBS = off -> on")
-    set(BUILD_SHARED_LIBS on)
+
+  # Detect a Cray machine. This is based on testing for the following
+  # environment variables. At least one of these is always defined on a Cray,
+  # depending on what programming environment is loaded among the modules.
+  if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+      NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+      NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+      NOT DEFINED ENV{CRAY_PRGENVINTEL})
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries. Possible values: ON | OFF")
+    message(STATUS "BUILD_SHARED_LIBS not specified, setting to 'ON'")
+  else()
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries. Possible values: ON | OFF")
+    message(STATUS "Cray detected, setting BUILD_SHARED_LIBS to 'OFF'")
   endif()
-  message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+
 endif()
+
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")

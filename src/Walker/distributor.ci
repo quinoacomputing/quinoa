@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Wed 25 May 2016 11:17:48 PM MDT
+  \date      Tue 22 Nov 2016 08:47:28 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -22,8 +22,8 @@ module distributor {
       entry Distributor( const ctr::CmdLine& cmdline );
       entry [reductiontarget] void registered();
       entry [reductiontarget] void nostat();
-      entry [reductiontarget] void estimateOrd( tk::real ord[n], std::size_t n );
-      entry [reductiontarget] void estimateCen( tk::real cen[n], std::size_t n );
+      entry [reductiontarget] void estimateOrd( tk::real ord[n], int n );
+      entry [reductiontarget] void estimateCen( tk::real cen[n], int n );
       entry [reductiontarget] void estimateOrdPDF( CkReductionMsg* msg );
       entry [reductiontarget] void estimateCenPDF( CkReductionMsg* msg );
 

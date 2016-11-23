@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Wed 25 May 2016 10:26:37 PM MDT
+  \date      Tue 22 Nov 2016 08:47:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -113,10 +113,10 @@ class Distributor : public CBase_Distributor {
     void registered() { m_intproxy.setup( m_dt, m_t, m_it, m_moments ); }
 
     //! Estimate ordinary moments
-    void estimateOrd( tk::real* ord, std::size_t n );
+    void estimateOrd( tk::real* ord, int n );
 
     //! Estimate central moments
-    void estimateCen( tk::real* cen, std::size_t n );
+    void estimateCen( tk::real* cen, int n );
 
     //! Estimate ordinary PDFs
     void estimateOrdPDF( CkReductionMsg* msg );

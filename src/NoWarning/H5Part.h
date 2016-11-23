@@ -20,6 +20,7 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wlong-long"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
 #define PARALLEL_IO

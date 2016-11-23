@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:10:27 PM MDT
+  \date      Tue 22 Nov 2016 08:48:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -107,7 +107,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 
   // Print out time integration header
   m_print.endsubsection();
-  m_print.diag( "Starting time stepping ..." );  
+  m_print.diag( "Starting time stepping ..." );
   header();
 
   // Start timer measuring total integration time
@@ -225,7 +225,7 @@ Distributor::computedt()
 }
 
 void
-Distributor::estimateOrd( tk::real* ord, std::size_t n )
+Distributor::estimateOrd( tk::real* ord, int n )
 // *****************************************************************************
 // Estimate ordinary moments
 //! \param[in] ord Ordinary moments (sum) collected over all chares
@@ -237,7 +237,7 @@ Distributor::estimateOrd( tk::real* ord, std::size_t n )
   IGNORE(n);
   #endif
 
-  Assert( n == m_ordinary.size(),
+  Assert( static_cast<std::size_t>(n) == m_ordinary.size(),
           "Number of ordinary moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
@@ -251,7 +251,7 @@ Distributor::estimateOrd( tk::real* ord, std::size_t n )
 }
 
 void
-Distributor::estimateCen( tk::real* cen, std::size_t n )
+Distributor::estimateCen( tk::real* cen, int n )
 // *****************************************************************************
 // Estimate ordinary moments
 //! \param[in] cen Central moments (sum) collected over all chares
@@ -263,7 +263,7 @@ Distributor::estimateCen( tk::real* cen, std::size_t n )
   IGNORE(n);
   #endif
 
-  Assert( n == m_central.size(),
+  Assert( static_cast<std::size_t>(n) == m_central.size(),
           "Number of central moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
@@ -711,7 +711,7 @@ Distributor::report()
     m_output.get< tag::stat >() = false;
     m_output.get< tag::pdf >() = false;
 
-    m_print << '\n';
+    m_print << std::endl;
   }
 }
 
