@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Wed 23 Nov 2016 10:19:03 AM MST
+# \date      Thu 24 Nov 2016 03:48:31 PM MST
 #
 ################################################################################
 
@@ -225,6 +225,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DTEST_NAME=${test_name}
            -DWORKDIR=${workdir}
            -DRUNNER=${RUNNER}
+           -DRUNNER_NCPUS_ARG=${RUNNER_NCPUS_ARG}
            -DMPIRUN_BIND_ARGS=${MPIRUN_BIND_ARGS}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
