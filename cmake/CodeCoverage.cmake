@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Fri 06 May 2016 06:37:27 PM MDT
+# \date      Thu 24 Nov 2016 02:51:52 PM MST
 #
 ################################################################################
 
@@ -108,7 +108,7 @@ ENDFUNCTION()
 # Function to add code coverage target for all individual coverage targets
 # included. This is very similar to setup_target_for_coverage(), defined above,
 # but compiles a coverage report for all the individual test suites. The
-# testrunner and TESTRUNNER_ARGS are hard-coded.
+# TESTRUNNER_ARGS are hard-coded.
 #
 # setup_target_for_all_coverage( <suite> <path> <targetname>
 #                                [DEPENDS dep1 dep2 ... ] )
@@ -124,6 +124,11 @@ ENDFUNCTION()
 # targetname - The name of the code coverage target. The HTML report on code
 # coverage is generated at the path <path>/${targetname}/index.html.
 #
+# unittestrunner - Command line of the unittest harness runner.
+#
+# unittestrunner_ncpus_arg - Command line argument specifying the number of cpus
+# argument of the unittest harness runner.
+#
 # Optional arguments:
 # -------------------
 #
@@ -135,7 +140,8 @@ ENDFUNCTION()
 # Author: J. Bakosi
 #
 # ##############################################################################
-FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname)
+FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
+                                       unittestrunner_ncpus_arg)
 
   set(multiValueArgs DEPENDS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
@@ -160,7 +166,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname)
     # Capture initial state yielding zero coverage baseline
     COMMAND ${LCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
     # Run all test suites
-    COMMAND ${CHARMRUN} +p${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+    COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
     COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
     # Capture lcov counters
     COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
