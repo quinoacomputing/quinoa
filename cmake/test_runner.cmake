@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Wed 23 Nov 2016 10:54:24 AM MST
+# \date      Thu 24 Nov 2016 02:49:18 PM MST
 #
 ################################################################################
 
@@ -55,12 +55,7 @@ if(TEXT_RESULT OR BIN_RESULT)
 endif()
 
 # Configure test run command
-if (DEFINED ENV{NERSC_HOST})
-  SET(NCPUS_ARG "-n")
-else()
-  SET(NCPUS_ARG "+p")
-endif()
-set(test_command ${RUNNER} ${NCPUS_ARG} ${NUMPES} ${MPIRUN_BIND_ARGS}
+set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${MPIRUN_BIND_ARGS}
                  ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS})
 string(REPLACE ";" " " test_command_string "${test_command}")
 # Run the test

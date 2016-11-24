@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Wed 23 Nov 2016 10:14:48 AM MST
+# \date      Thu 24 Nov 2016 02:52:41 PM MST
 #
 ################################################################################
 
@@ -324,8 +324,10 @@ endif()
 # Main/CMakeLists.txt.
 if (DEFINED ENV{NERSC_HOST})
   SET(RUNNER "srun")
+  SET(RUNNER_NCPUS_ARG "-n")
 else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
+  SET(RUNNER_NCPUS_ARG "+p")
 endif()
 message(STATUS "Parallel job runner: ${RUNNER}")
 
@@ -497,6 +499,7 @@ endif()
 # Setup code coverage for all individual coverage targets included
 if(CODE_COVERAGE)
   setup_target_for_all_coverage(all doc/html test_coverage
+                                ${RUNNER} ${RUNNER_NCPUS_ARG}
                                 DEPENDS ${NONTEST_EXECUTABLES}
                                         ${UNITTEST_EXECUTABLE}
                                         ${NUMDIFF_EXECUTABLE})
