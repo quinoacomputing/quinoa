@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 24 Nov 2016 02:52:41 PM MST
+# \date      Thu 24 Nov 2016 03:49:20 PM MST
 #
 ################################################################################
 
@@ -330,6 +330,7 @@ else()
   SET(RUNNER_NCPUS_ARG "+p")
 endif()
 message(STATUS "Parallel job runner: ${RUNNER}")
+message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
@@ -481,7 +482,7 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(unit doc/html unittest_coverage
                             ${RUNNER}
                             TESTRUNNER_ARGS
-                            +p${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()

@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Thu 24 Nov 2016 02:49:18 PM MST
+# \date      Thu 24 Nov 2016 03:24:35 PM MST
 #
 ################################################################################
 
@@ -27,6 +27,7 @@ message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
 message("  RUNNER (used to run Charm++ executables)                    : ${RUNNER}")
+message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
 message("  MPIRUN_BIND_ARGS (mpirun process binding)                   : ${MPIRUN_BIND_ARGS}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
