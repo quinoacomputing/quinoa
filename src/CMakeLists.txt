@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 24 Nov 2016 03:49:20 PM MST
+# \date      Fri 25 Nov 2016 07:46:40 PM MST
 #
 ################################################################################
 
@@ -329,8 +329,21 @@ else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
   SET(RUNNER_NCPUS_ARG "+p")
 endif()
-message(STATUS "Parallel job runner: ${RUNNER}")
+message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
+
+# Set default parallel/serial job runner extra arguments
+if (NOT DEFINED RUNNER_ARGS AND
+    NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+    NOT DEFINED ENV{CRAY_PRGENVINTEL})
+
+  set(RUNNER_ARGS "--bind-to none --map-by node"
+      CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
+
+endif()
+message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
@@ -457,18 +470,6 @@ endif()
 
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
-
-# Set mpirun arguments controling process binding
-if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
-
-  set(MPIRUN_BIND_ARGS "--bind-to none --map-by node"
-      CACHE STRING "Arguments to pass to mpirun for all regression tests.")
-  message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
-
-endif()
 
 # Include cmake code common to all regression tests
 message(STATUS "Adding regression tests ...")
