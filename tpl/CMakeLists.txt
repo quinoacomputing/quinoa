@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Mon 21 Nov 2016 03:59:30 PM MST
+# \date      Mon 28 Nov 2016 07:58:04 AM MST
 #
 ################################################################################
 
@@ -164,6 +164,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
   # Some configure scripts don't like pgi's preprocessor so use gnu's
   set(PGCPP "CPP=cpp")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
+
+  set(CHARM_COMPILER "craycc")
 
 endif()
 
@@ -340,6 +344,7 @@ ExternalProject_Add(
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
                 charm++
                 ${CHARM_ARCHITECTURE}
+                ${CHARM_COMPILER}
                 ${CHARM_PTHREADS}
                 ${CHARM_SHARED}
                 ${CHARM_RELEASE_BUILD}
