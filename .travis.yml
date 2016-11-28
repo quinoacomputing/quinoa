@@ -1,14 +1,16 @@
-sudo: false
 language: cpp
+sudo: required
+dist: trusty
 os:
   - linux
   - osx
 env:
-  - CONFIG=coverage DEFINES=standard
-  - CONFIG=coverage DEFINES=PUGIXML_WCHAR_MODE
-  - CONFIG=coverage DEFINES=PUGIXML_COMPACT
-  - CONFIG=release DEFINES=standard
-  - CONFIG=release DEFINES=PUGIXML_WCHAR_MODE
-  - CONFIG=release DEFINES=PUGIXML_COMPACT
-script: make test defines=$DEFINES config=$CONFIG -j2
+  - DEFINES=standard
+  - DEFINES=PUGIXML_WCHAR_MODE
+  - DEFINES=PUGIXML_COMPACT
+script:
+  - make test cxxstd=c++11 defines=$DEFINES config=coverage -j2
+  - make test cxxstd=c++11 defines=$DEFINES config=release -j2
+  - make test cxxstd=c++98 defines=$DEFINES config=debug -j2
+
 after_success: bash <(curl -s https://codecov.io/bash) -f pugixml.cpp.gcov

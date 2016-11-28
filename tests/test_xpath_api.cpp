@@ -31,12 +31,12 @@ TEST_XML(xpath_api_select_node, "<node><head/><foo id='1'/><foo/><tail/></node>"
 	CHECK(n2.node().attribute(STR("id")).as_int() == 1);
 
 	xpath_node n3 = doc.select_node(STR("node/bar"));
-	
+
 	CHECK(!n3);
 
 	xpath_node n4 = doc.select_node(STR("node/head/following-sibling::foo"));
 	xpath_node n5 = doc.select_node(STR("node/tail/preceding-sibling::foo"));
-	
+
 	CHECK(n4.node().attribute(STR("id")).as_int() == 1);
 	CHECK(n5.node().attribute(STR("id")).as_int() == 1);
 }
@@ -258,7 +258,7 @@ TEST(xpath_api_evaluate_string)
 	// test for just enough space
 	std::basic_string<char_t> s1 = base;
 	CHECK(q.evaluate_string(&s1[0], 11, xml_node()) == 11 && memcmp(&s1[0], STR("0123456789\0xxxxx"), 16 * sizeof(char_t)) == 0);
-	
+
 	// test for just not enough space
 	std::basic_string<char_t> s2 = base;
 	CHECK(q.evaluate_string(&s2[0], 10, xml_node()) == 11 && memcmp(&s2[0], STR("012345678\0xxxxxx"), 16 * sizeof(char_t)) == 0);
@@ -292,7 +292,7 @@ TEST(xpath_api_return_type)
 TEST(xpath_api_query_bool)
 {
 	xpath_query q(STR("node"));
-	
+
 	CHECK(q);
 	CHECK((!q) == false);
 }
@@ -301,7 +301,7 @@ TEST(xpath_api_query_bool)
 TEST(xpath_api_query_bool_fail)
 {
 	xpath_query q(STR(""));
-	
+
 	CHECK((q ? true : false) == false);
 	CHECK((!q) == true);
 }
@@ -418,7 +418,7 @@ TEST(xpath_api_empty)
 	CHECK(!q.evaluate_boolean(c));
 }
 
-#if __cplusplus >= 201103
+#ifdef PUGIXML_HAS_MOVE
 TEST_XML(xpath_api_nodeset_move_ctor, "<node><foo/><foo/><bar/></node>")
 {
 	xpath_node_set set = doc.select_nodes(STR("node/bar/preceding::*"));
@@ -631,8 +631,8 @@ TEST(xpath_api_query_vector)
 
 	double result = 0;
 
-	for (auto& q: qv)
-		result += q.evaluate_number(xml_node());
+	for (size_t i = 0; i < qv.size(); ++i)
+		result += qv[i].evaluate_number(xml_node());
 
 	CHECK(result == 45);
 }

@@ -1,7 +1,13 @@
+configurations {
+	Toolset {
+		key: "PlatformToolset";
+		choices: { v140, v120, v110, v100 };
+	}
+}
 nuget {
 	nuspec {
 		id = pugixml;
-		version: 1.7.0;
+		version: 1.8.0-appveyor;
 
 		authors: {Arseny Kapoulkine};
 		owners: {Arseny Kapoulkine};
@@ -12,7 +18,7 @@ nuget {
 		title: pugixml;
 		summary: "Light-weight, simple and fast XML parser for C++ with XPath support";
 		releaseNotes: "http://pugixml.org/docs/manual.html#changes";
-		copyright: "Copyright (c) 2006-2015 Arseny Kapoulkine";
+		copyright: "Copyright (c) 2006-2016 Arseny Kapoulkine";
 		licenseUrl: "http://pugixml.org/license.html";
 		requireLicenseAcceptance: false;
 
@@ -24,9 +30,13 @@ nuget {
 	files {
 		include: { "..\src\*.hpp" };
 		
-		[x86,release] { lib: vs2015\Win32_Release\pugixml.lib; }
-		[x86,debug] { lib: vs2015\Win32_Debug\pugixml.lib; }
-		[x64,release] { lib: vs2015\x64_Release\pugixml.lib; }
-		[x64,debug] { lib: vs2015\x64_Debug\pugixml.lib; }
+		[x86,v120,release] { lib: vs2013\x32\pugixmls.lib; }
+		[x86,v120,debug] { lib: vs2013\x32\pugixmlsd.lib; }
+		[x64,v120,release] { lib: vs2013\x64\pugixmls.lib; }
+		[x64,v120,debug] { lib: vs2013\x64\pugixmlsd.lib; }
+		[x86,v140,release] { lib: vs2015\Win32_Release\pugixml.lib; }
+		[x86,v140,debug] { lib: vs2015\Win32_Debug\pugixml.lib; }
+		[x64,v140,release] { lib: vs2015\x64_Release\pugixml.lib; }
+		[x64,v140,debug] { lib: vs2015\x64_Debug\pugixml.lib; }
 	}
 }
