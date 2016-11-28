@@ -192,12 +192,12 @@ TEST_XML(write_escape_unicode, "<node attr='&#x3c00;'/>")
 {
 #ifdef PUGIXML_WCHAR_MODE
 	#ifdef U_LITERALS
-		CHECK_NODE(doc, STR("<node attr=\"\u3c00\" />"));
+		CHECK_NODE(doc, STR("<node attr=\"\u3c00\"/>"));
 	#else
-		CHECK_NODE(doc, STR("<node attr=\"\x3c00\" />"));
+		CHECK_NODE(doc, STR("<node attr=\"\x3c00\"/>"));
 	#endif
 #else
-	CHECK_NODE(doc, STR("<node attr=\"\xe3\xb0\x80\" />"));
+	CHECK_NODE(doc, STR("<node attr=\"\xe3\xb0\x80\"/>"));
 #endif
 }
 
@@ -213,7 +213,7 @@ struct test_writer: xml_writer
 {
 	std::basic_string<pugi::char_t> contents;
 
-	virtual void write(const void* data, size_t size)
+	virtual void write(const void* data, size_t size) PUGIXML_OVERRIDE
 	{
 		CHECK(size % sizeof(pugi::char_t) == 0);
 		contents.append(static_cast<const pugi::char_t*>(data), size / sizeof(pugi::char_t));
@@ -473,7 +473,7 @@ TEST(write_no_name_element)
 	root.append_child();
 	root.append_child().append_child(node_pcdata).set_value(STR("text"));
 
-	CHECK_NODE(doc, STR("<:anonymous><:anonymous /><:anonymous>text</:anonymous></:anonymous>"));
+	CHECK_NODE(doc, STR("<:anonymous><:anonymous/><:anonymous>text</:anonymous></:anonymous>"));
 	CHECK_NODE_EX(doc, STR("<:anonymous>\n\t<:anonymous />\n\t<:anonymous>text</:anonymous>\n</:anonymous>\n"), STR("\t"), format_default);
 }
 
@@ -491,7 +491,7 @@ TEST(write_no_name_attribute)
 	doc.append_child().set_name(STR("root"));
 	doc.child(STR("root")).append_attribute(STR(""));
 
-	CHECK_NODE(doc, STR("<root :anonymous=\"\" />"));
+	CHECK_NODE(doc, STR("<root :anonymous=\"\"/>"));
 }
 
 TEST(write_print_empty)
@@ -596,15 +596,47 @@ TEST(write_pcdata_whitespace_fixedpoint)
 
 TEST_XML_FLAGS(write_mixed, "<node><child1/><child2>pre<![CDATA[data]]>mid<!--comment--><test/>post<?pi value?>fin</child2><child3/></node>", parse_full)
 {
-	CHECK_NODE(doc, STR("<node><child1 /><child2>pre<![CDATA[data]]>mid<!--comment--><test />post<?pi value?>fin</child2><child3 /></node>"));
+	CHECK_NODE(doc, STR("<node><child1/><child2>pre<![CDATA[data]]>mid<!--comment--><test/>post<?pi value?>fin</child2><child3/></node>"));
 	CHECK_NODE_EX(doc, STR("<node>\n<child1 />\n<child2>pre<![CDATA[data]]>mid<!--comment-->\n<test />post<?pi value?>fin</child2>\n<child3 />\n</node>\n"), STR("\t"), 0);
 	CHECK_NODE_EX(doc, STR("<node>\n\t<child1 />\n\t<child2>pre<![CDATA[data]]>mid<!--comment-->\n\t\t<test />post<?pi value?>fin</child2>\n\t<child3 />\n</node>\n"), STR("\t"), format_indent);
+}
+
+TEST_XML(write_no_empty_element_tags, "<node><child1/><child2>text</child2><child3></child3></node>")
+{
+	CHECK_NODE(doc, STR("<node><child1/><child2>text</child2><child3/></node>"));
+	CHECK_NODE_EX(doc, STR("<node><child1></child1><child2>text</child2><child3></child3></node>"), STR("\t"), format_raw | format_no_empty_element_tags);
+	CHECK_NODE_EX(doc, STR("<node>\n\t<child1></child1>\n\t<child2>text</child2>\n\t<child3></child3>\n</node>\n"), STR("\t"), format_indent | format_no_empty_element_tags);
+}
+
+TEST_XML_FLAGS(write_roundtrip, "<node><child1 attr1='value1' attr2='value2'/><child2 attr='value'>pre<![CDATA[data]]>mid&lt;text&amp;escape<!--comment--><test/>post<?pi value?>fin</child2><child3/></node>", parse_full)
+{
+	const unsigned int flagset[] = { format_indent, format_raw, format_no_declaration, format_indent_attributes, format_no_empty_element_tags };
+	size_t flagcount = sizeof(flagset) / sizeof(flagset[0]);
+
+	for (size_t i = 0; i < (size_t(1) << flagcount); ++i)
+	{
+		unsigned int flags = 0;
+
+		for (size_t j = 0; j < flagcount; ++j)
+			if (i & (size_t(1) << j))
+				flags |= flagset[j];
+
+		std::string contents = write_narrow(doc, flags, encoding_utf8);
+
+		pugi::xml_document verify;
+		CHECK(verify.load_buffer(contents.c_str(), contents.size(), parse_full));
+		CHECK(test_write_narrow(verify, flags, encoding_utf8, contents.c_str(), contents.size()));
+
+		pugi::xml_document verifyws;
+		CHECK(verifyws.load_buffer(contents.c_str(), contents.size(), parse_full | parse_ws_pcdata));
+		CHECK(test_write_narrow(verifyws, flags, encoding_utf8, contents.c_str(), contents.size()));
+	}
 }
 
 #ifndef PUGIXML_NO_EXCEPTIONS
 struct throwing_writer: pugi::xml_writer
 {
-	virtual void write(const void*, size_t)
+	virtual void write(const void*, size_t) PUGIXML_OVERRIDE
 	{
 		throw std::runtime_error("write failed");
 	}
