@@ -211,6 +211,7 @@ const
   #elif defined(__GNUC__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
+    #pragma GCC diagnostic ignored "-Wstack-protector"
   #endif
 
   ErrChk(
@@ -252,6 +253,7 @@ const
   #elif defined(__GNUC__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
+    #pragma GCC diagnostic ignored "-Wstack-protector"
   #endif
 
   ErrChk(
