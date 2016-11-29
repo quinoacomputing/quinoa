@@ -137,7 +137,6 @@ class WrightFisher {
       #elif defined(__GNUC__)
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wvla"
-        #pragma GCC diagnostic ignored "-Wstack-protector"
       #endif
 
       for (auto p=decltype(npar){0}; p<npar; ++p) {
