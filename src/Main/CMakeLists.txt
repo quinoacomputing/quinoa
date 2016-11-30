@@ -67,7 +67,8 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND
+   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
   add_custom_command(TARGET ${UNITTEST_EXECUTABLE} POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E copy
                              "${CMAKE_BINARY_DIR}/Main/charmrun"
@@ -136,7 +137,8 @@ INSTALL(TARGETS ${INCITER_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND
+   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
   add_custom_command(TARGET ${INCITER_EXECUTABLE} POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E copy
                              "${CMAKE_BINARY_DIR}/Main/charmrun"
@@ -190,7 +192,8 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND
+   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
   add_custom_command(TARGET ${RNGTEST_EXECUTABLE} POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E copy
                              "${CMAKE_BINARY_DIR}/Main/charmrun"
@@ -244,7 +247,8 @@ INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND
+   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
   add_custom_command(TARGET ${MESHCONV_EXECUTABLE} POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E copy
                              "${CMAKE_BINARY_DIR}/Main/charmrun"
@@ -309,7 +313,8 @@ INSTALL(TARGETS ${WALKER_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND
+   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
   add_custom_command(TARGET ${WALKER_EXECUTABLE} POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E copy
                              "${CMAKE_BINARY_DIR}/Main/charmrun"

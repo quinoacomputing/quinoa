@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Wed 01 Jun 2016 01:29:27 PM MDT
+# \date      Wed 30 Nov 2016 08:03:22 AM MST
 #
 ################################################################################
 
@@ -17,7 +17,7 @@
 #  MKL_CORE_LIBRARY - MKL core library
 #
 #  The environment variables MKLROOT and INTEL are used to find the library.
-#  Everything else is ignored. If MKL is found "-DMKL_ILP64 -m64" is added to
+#  Everything else is ignored. If MKL is found "-DMKL_ILP64" is added to
 #  CMAKE_C_FLAGS and CMAKE_CXX_FLAGS.
 #
 #  Example usage:
@@ -31,7 +31,8 @@
 #  endif()
 
 # If already in cache, be silent
-if (MKL_INTERFACE_LIBRARY AND
+if (MKL_INCLUDE_PATH AND
+    MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
     MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
@@ -49,6 +50,8 @@ else()
   set(THR_LIB "mkl_intel_thread")
   set(COR_LIB "mkl_core")
 endif()
+
+find_path(MKL_INCLUDE_PATH NAMES mkl.h HINTS $ENV{MKLROOT}/include)
 
 find_library(MKL_INTERFACE_LIBRARY
              NAMES ${INT_LIB}
@@ -82,8 +85,17 @@ if (MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
     MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
+
+    if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+        NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+        NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+        NOT DEFINED ENV{CRAY_PRGENVINTEL})
+      set(ABI "-m64")
+    endif()
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 ${ABI}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 ${ABI}")
+
 else()
   set(MKL_INTERFACE_LIBRARY "")
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
@@ -97,9 +109,10 @@ set(MKL_LIBS ${MKL_INTERFACE_LIBRARY} ${MKL_SEQUENTIAL_LAYER_LIBRARY}
 # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBS MKL_INCLUDE_PATH)
 
-MARK_AS_ADVANCED(MKL_INTERFACE_LIBRARY
+MARK_AS_ADVANCED(MKL_INCLUDE_PATH
+                 MKL_INTERFACE_LIBRARY
                  MKL_SEQUENTIAL_LAYER_LIBRARY
                  MKL_THREADED_LAYER_LIBRARY
                  MKL_CORE_LIBRARY
