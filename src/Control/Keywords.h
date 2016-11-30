@@ -357,7 +357,7 @@ struct mkl_sobol_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_SOBOL', a 32-bit Gray code-based
     random number generator, producing low-discrepancy sequences for
-    dimensions 1 ≤ s ≤ 40 with available user-defined dimensions, provided
+    dimensions 1 .le. s .le. 40 with available user-defined dimensions, provided
     by Intel's Math Kernel Library (MKL). For more info on MKL see https://
     software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
@@ -371,7 +371,7 @@ struct mkl_niederr_info {
   static std::string longDescription() { return
     R"(This keyword is used to select 'VSL_BRNG_NIEDERR', a 32-bit Gray
     code-based random number generator, producing low-discrepancy sequences
-    for dimensions 1 ≤ s ≤ 318 with available user-defined dimensions,
+    for dimensions 1 .le. s .le. 318 with available user-defined dimensions,
     provided by Intel's Math Kernel Library (MKL). For more info on MKL see
     https://software.intel.com/en-us/articles/intel-math-kernel-library-
     documentation.)";

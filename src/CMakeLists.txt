@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 25 Nov 2016 07:46:40 PM MST
+# \date      Wed 30 Nov 2016 10:19:45 AM MST
 #
 ################################################################################
 
@@ -166,10 +166,15 @@ include(GetGitRevisionDescription)
 git_describe(GIT_SHA1)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
-# Macro to add compiler flags
+# Macro to add C++ compiler flags
 macro (add_compiler_flag flag)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
 endmacro (add_compiler_flag)
+
+# Macro to add C compiler flags
+macro (add_c_compiler_flag flag)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
+endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
@@ -315,6 +320,42 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
+
+  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for cray)
+  add_compiler_flag("-hstd=c++11")
+
+  # Compiler flags for cray
+  add_compiler_flag("-hmsglevel_0") # enable errors, warnings, cautions, notes, comments
+
+  # Globally suppress the following Cray compiler messages:
+  # 1: source file does not end with a new-line character
+  # 7: indicated token is not valid in this context
+  # 47: macro has an incompatible redefinition
+  # 193: zero is used for the indicated undefined preprocessing identifier
+  # 177: variable was declared but never referenced
+  # 181: argument is incompatible with the corresponding format string conversion
+  # 261: access control is not specified ("private" by default)
+  # 301: indicated "typedef" name has already been declared (with same type)
+  # 324: duplicate friend declaration
+  # 368: class template defines no constructor to initialize ...
+  # 401: destructor for base class is not virtual
+  # 737: the using-declaration is ignored--it refers to the current namespace
+  # 997: function is the virtual function override intended?
+  # 826: parameter was never referenced
+  # 1982: function ...::operator new has no corresponding member operator delete (to be called if an exception is thrown during initialization of an allocated object)
+  # 3138: variable "this" assumed referenced by ...
+  # 3137: variable "this" assumed modified by ...
+  # 11709: diretory was specified as both a system and non-system include directory -- the non-system entry will be ignored
+  # 12307: dynamic exception specifications are deprecated
+  # 12489: constexpr non-static member function will not be implicitly 'const' in C++14
+  # 7405: variable may be used before it is defined
+  # 1418: a pointer expression is cast to a pointer with a greater alignment requirement
+  # 11749: declaration hides member
+  # 11548: comparison between signed and unsigned operands
+  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7")
+  add_c_compiler_flag("-hnomessage=11709:301")
+
 endif()
 
 # Set runner executable path. This is used when generating code coverage and
@@ -425,8 +466,9 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
+                    ${MKL_INCLUDE_PATH}
                     ${HDF5_INCLUDE_DIRS}
-                    ${HYPRE_INCLUDE}
+                    ${HYPRE_INCLUDE_PATH}
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
