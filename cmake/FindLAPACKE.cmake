@@ -39,7 +39,8 @@ else()
 endif()
 
 find_path(LAPACKE_INCLUDE lapacke.h DOC "C-interface to LAPACK"
-          HINTS ${LAPACKE_ROOT}/include)
+          HINTS ${LAPACKE_ROOT}/include
+          PATH_SUFFIXES lapacke)
 
 if(NOT BUILD_SHARED_LIBS)
   find_library(LAPACKE_LIBRARY NAMES liblapacke.a HINTS ${LAPACKE_ROOT}/lib)
@@ -55,7 +56,7 @@ if(NOT BUILD_SHARED_LIBS)
   find_library(QUADMATH_LIBRARY NAMES libquadmath.a  HINTS ${LAPACKE_ROOT}/lib
                /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${GCC_MAJOR})
 else()
-  find_library(LAPACKE_LIBRARY NAMES lapacke HINTS ${LAPACKE_ROOT}/lib)
+  find_library(LAPACKE_LIBRARY NAMES lapacke reflapacke HINTS ${LAPACKE_ROOT}/lib)
 endif()
 
 # Only for reporting on what is found
