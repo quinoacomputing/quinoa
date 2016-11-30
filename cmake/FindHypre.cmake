@@ -31,8 +31,8 @@ if(HYPRE_INCLUDE AND HYPRE_LIBRARY)
 endif()
 
 find_path(HYPRE_INCLUDE NAMES HYPRE.h
-                        HINTS ${HYPRE_ROOT}/include
-                        HINTS /usr/include/hypre)
+          PATH_SUFFIXES hypre
+          HINTS ${HYPRE_ROOT}/include)
 
 if(NOT BUILD_SHARED_LIBS)
   find_library(HYPRE_LIBRARY NAMES libHYPRE.a HINTS ${HYPRE_ROOT}/lib)
