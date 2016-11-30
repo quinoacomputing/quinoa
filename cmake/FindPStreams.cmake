@@ -26,7 +26,8 @@ if(PSTREAMS_INCLUDES)
   set (PSTREAMS_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PATH(PSTREAMS_INCLUDES NAMES pstreams/pstream.h
+FIND_PATH(PSTREAMS_INCLUDES NAMES pstream.h
+          PATH_SUFFIXES pstreams
           HINTS ${PSTREAMS_ROOT}/include $ENV{PSTREAMS_ROOT})
 
 # Handle the QUIETLY and REQUIRED arguments and set PSTREAMS_FOUND to TRUE if
