@@ -26,7 +26,7 @@
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #endif
 
-#include <pstreams/pstream.h>
+#include <pstream.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

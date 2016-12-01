@@ -204,8 +204,8 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs_flags "${hdf5_library_dirs_flags}/lib")
-  if ("${hdf5_root}" MATCHES "lib$")
-    get_filename_component(hdf5_root ${hdf5_root} DIRECTORY) # strip "/lib"
+  if ("${hdf5_root}" MATCHES "lib(64)?$")
+    get_filename_component(hdf5_root ${hdf5_root} DIRECTORY) # strip "/lib" and "/lib64"
   endif()
 else()
   message(STATUS "HDF5 either not found, not parallel, or NO_SYSTEM_HDF5=true: will build")
@@ -511,6 +511,12 @@ if (MKL_FOUND)
     set(TRILINOS_MKL "-DTPL_ENABLE_MKL=ON;-DMKL_LIBRARY_DIRS=$ENV{MKLROOT}/lib;-DMKL_INCLUDE_DIRS=$ENV{MKLROOT}/include;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
   endif()
 endif()
+if(NOT blas)
+  set(TRILINOS_BLAS -DTPL_BLAS_LIBRARIES=${BLAS_LIBRARIES})
+endif()
+if(NOT lapack)
+  set(TRILINOS_LAPACK -DTPL_LAPACK_LIBRARIES=${LAPACK_LIBRARIES})
+endif()
 ExternalProject_Add(
   trilinos
   DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
@@ -530,6 +536,8 @@ ExternalProject_Add(
              ${TRILINOS_SHARED}
              ${TRILINOS_ALPINE}
              ${TRILINOS_MKL}
+             ${TRILINOS_BLAS}
+             ${TRILINOS_LAPACK}
              ${MACOSX_RPATH}
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
