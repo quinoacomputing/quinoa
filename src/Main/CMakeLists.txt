@@ -38,7 +38,7 @@ endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
-                      IO
+                      MeshIO
                       Mesh
                       RNG
                       LoadBalance
@@ -107,6 +107,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LinSys
                       Base
                       IO
+                      MeshIO
                       AsyncIO
                       Mesh
                       RNG
@@ -224,7 +225,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 target_link_libraries(${MESHCONV_EXECUTABLE}
-                      IO
+                      MeshIO
                       Mesh
                       MeshConvControl
                       Base
@@ -284,7 +285,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       RNG
                       Walker
                       Statistics
-                      Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       IO
                       WalkerControl
                       Base

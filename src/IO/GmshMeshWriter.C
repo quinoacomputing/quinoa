@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:12:11 AM MDT
+  \date      Thu 01 Dec 2016 11:16:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -129,14 +129,14 @@ GmshMeshWriter::writeElements( const UnsMesh& mesh )
                mesh.tetinpoel().size()/4
             << std::endl;
 
-  // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( 2, GmshElemType::LIN, mesh.lintag(), mesh.lininpoel() );
+  // Write out line element ids and connectivity (node list)
+  writeElemBlock( 2, GmshElemType::LIN, mesh.lininpoel() );
 
-  // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( 3, GmshElemType::TRI, mesh.tritag(), mesh.triinpoel() );
+  // Write out triangle element ids and connectivity (node list)
+  writeElemBlock( 3, GmshElemType::TRI, mesh.triinpoel() );
 
-  // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( 4, GmshElemType::TET, mesh.tettag(), mesh.tetinpoel() );
+  // Write out terahedron element ids and connectivity (node list)
+  writeElemBlock( 4, GmshElemType::TET, mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
   m_outFile << "$EndElements" << std::endl;
@@ -145,13 +145,11 @@ GmshMeshWriter::writeElements( const UnsMesh& mesh )
 void
 GmshMeshWriter::writeElemBlock( std::size_t nnpe,
                                 GmshElemType type,
-                                const std::vector< std::vector< int > >& tag,
                                 const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
-//  Write element block: element ids, tags, and connectivity (node list)
+//  Write element block: element ids and connectivity (node list)
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] type Element type
-//! \param[in] tag Vectors of element tags
 //! \param[in] inpoel Element connectivity (must be zero-based)
 //! \author J. Bakosi
 // *****************************************************************************
@@ -166,14 +164,10 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
   // Get number of elements in mesh
   auto n = inpoel.size()/nnpe;
 
-  // Create empty tag vector if there is no tag
+  // Ignore element tags
   std::vector< std::vector< int > > tg;
-  if (!tag.empty())
-    tg = tag;
-  else {
-    tg.resize( n );
-    for (auto& t : tg) t.push_back( 0 );
-  }
+  tg.resize( n );
+  for (auto& t : tg) t.push_back( 0 );
 
   if (isASCII()) {
 

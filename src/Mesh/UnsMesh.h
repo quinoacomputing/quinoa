@@ -29,14 +29,14 @@ class UnsMesh {
     ///@{
     //! Constructor without initializing anything
     explicit UnsMesh() : m_graphsize(0), m_lininpoel(), m_triinpoel(),
-      m_tetinpoel(), m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag() {}
+      m_tetinpoel(), m_x(), m_y(), m_z() {}
 
     //! Constructor copying over element connectivity
     explicit UnsMesh( const std::vector< std::size_t >& tetinp ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
-      m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag()
+      m_x(), m_y(), m_z()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -47,7 +47,7 @@ class UnsMesh {
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
-      m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag()
+      m_x(), m_y(), m_z()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -63,8 +63,7 @@ class UnsMesh {
       m_tetinpoel( tetinp ),
       m_x( X ),
       m_y( Y ),
-      m_z( Z ),
-      m_lintag(), m_tritag(), m_tettag()
+      m_z( Z )
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -79,8 +78,7 @@ class UnsMesh {
       m_tetinpoel( tetinp ),
       m_x( coord[0] ),
       m_y( coord[1] ),
-      m_z( coord[2] ),
-      m_lintag(), m_tritag(), m_tettag()
+      m_z( coord[2] )
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -96,8 +94,7 @@ class UnsMesh {
       m_tetinpoel( std::move(tetinp) ),
       m_x( std::move(X) ),
       m_y( std::move(Y) ),
-      m_z( std::move(Z) ),
-      m_lintag(), m_tritag(), m_tettag()
+      m_z( std::move(Z) )
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -113,8 +110,7 @@ class UnsMesh {
       m_tetinpoel( std::move(tetinp) ),
       m_x( std::move(coord[0]) ),
       m_y( std::move(coord[1]) ),
-      m_z( std::move(coord[2]) ),
-      m_lintag(), m_tritag(), m_tettag()
+      m_z( std::move(coord[2]) )
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -160,13 +156,6 @@ class UnsMesh {
     std::vector< std::size_t >& lininpoel() noexcept { return m_lininpoel; }
     ///@}
 
-    /** @name Line element tags accessors */
-    ///@{
-    const std::vector< std::vector< int > >& lintag() const noexcept
-    { return m_lintag; }
-    std::vector< std::vector< int > >& lintag() noexcept { return m_lintag; }
-    ///@}
-
     /** @name Triangles elements connectivity accessors */
     ///@{
     const std::vector< std::size_t >& triinpoel() const noexcept
@@ -174,25 +163,11 @@ class UnsMesh {
     std::vector< std::size_t >& triinpoel() noexcept { return m_triinpoel; }
     ///@}
 
-    /** @name Triangle element tags accessors */
-    ///@{
-    const std::vector< std::vector< int > >& tritag() const noexcept
-    { return m_tritag; }
-    std::vector< std::vector< int > >& tritag() noexcept { return m_tritag; }
-    ///@}
-
     /** @name Tetrahedra elements connectivity accessors */
     ///@{
     const std::vector< std::size_t >& tetinpoel() const noexcept
     { return m_tetinpoel; }
     std::vector< std::size_t >& tetinpoel() noexcept { return m_tetinpoel; }
-    ///@}
-
-    /** @name Tetrahedra element tags accessors */
-    ///@{
-    const std::vector< std::vector< int > >& tettag() const noexcept
-    { return m_tettag; }
-    std::vector< std::vector< int > >& tettag() noexcept { return m_tettag; }
     ///@}
 
   private:
@@ -213,12 +188,6 @@ class UnsMesh {
     std::vector< tk::real > m_x;
     std::vector< tk::real > m_y;
     std::vector< tk::real > m_z;
-
-    //! Element tags
-    std::vector< std::vector< int > > m_lintag; //!< Line tags
-    std::vector< std::vector< int > > m_tritag; //!< Triangle tags
-    std::vector< std::vector< int > > m_tettag; //!< Tetrahedron tags
-
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity

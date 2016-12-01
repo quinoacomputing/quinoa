@@ -249,7 +249,6 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
     auto connectsize = static_cast< std::size_t >( nel*nnpe );
     if (nnpe == 4) {    // tetrahedra
 
-      mesh.tettag().resize( connectsize, { 1 } );
       std::vector< int > inpoel( connectsize );
       ErrChk(
         ex_get_elem_conn( m_inFile, id, inpoel.data() ) == 0,
@@ -260,7 +259,6 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 
     } else if (nnpe == 3) {    // triangles
 
-      mesh.tritag().resize( connectsize, { 1 } );
       std::vector< int > inpoel( connectsize );
       ErrChk(
         ex_get_elem_conn( m_inFile, id, inpoel.data() ) == 0,

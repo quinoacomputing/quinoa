@@ -190,7 +190,7 @@ GmshMeshReader::readElements( UnsMesh& mesh )
         m_inFile.read( reinterpret_cast<char*>(&id), sizeof(int) );
       }
 
-      // Read and add element tags
+      // Read and ignore element tags
       std::vector< int > tags( static_cast<std::size_t>(ntags), 0 );
       if (isASCII()) {
         for (std::size_t j=0; j<static_cast<std::size_t>(ntags); j++)
@@ -200,16 +200,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
           reinterpret_cast<char*>(tags.data()),
           static_cast<std::streamsize>(
             static_cast<std::size_t>(ntags) * sizeof(int) ) );
-      }
-      // Put in element tags for different types of elements
-      switch ( elmtype ) {
-        case GmshElemType::LIN: mesh.lintag().push_back( tags ); break;
-        case GmshElemType::TRI: mesh.tritag().push_back( tags ); break;
-        case GmshElemType::TET: mesh.tettag().push_back( tags ); break;
-        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
-        default: Throw( std::string("Unsupported element type ") << elmtype <<
-                        " in mesh file: " << m_filename );
-
       }
 
       // Read and add element node list (i.e. connectivity)

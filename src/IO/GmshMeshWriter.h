@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:26:27 PM MDT
+  \date      Thu 01 Dec 2016 11:16:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh writer class declaration
   \details   Gmsh mesh writer class declaration. Currently, this class supports
@@ -60,10 +60,9 @@ class GmshMeshWriter : public Writer {
       return m_type == GmshFileType::BINARY ? true : false;
     }
 
-    //! Write element block: element ids, tags, and connectivity (node list)
+    //! Write element block: element ids and connectivity (node list)
     void writeElemBlock( std::size_t nnpe,
                          GmshElemType type,
-                         const std::vector< std::vector< int > >& tag,
                          const std::vector< std::size_t >& inpoel );
 
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary

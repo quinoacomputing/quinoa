@@ -78,14 +78,10 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
   // Write out number of tetrahedra
   m_outFile << n << std::endl;
 
-  // Create empty tag vector if there is no tag
+  // Create empty tag vector
   std::vector< std::vector< int > > tg;
-  if (!mesh.tettag().empty())
-    tg = mesh.tettag();
-  else {
-    tg.resize( n );
-    for (auto& t : tg) t.push_back( 0 );
-  }
+  tg.resize( n );
+  for (auto& t : tg) t.push_back( 0 );
 
   // Write out tetrehadra element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {
@@ -112,12 +108,8 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
 
   // Create empty tag vector if there is no tag
   tg.clear();
-  if (!mesh.tritag().empty())
-    tg = mesh.tritag();
-  else {
-    tg.resize( n );
-    for (auto& t : tg) t.push_back( 0 );
-  }
+  tg.resize( n );
+  for (auto& t : tg) t.push_back( 0 );
 
   // Write out triangle element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {
