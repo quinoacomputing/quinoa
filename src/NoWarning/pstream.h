@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/pstream.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:49:38 PM MDT
+  \date      Thu 01 Dec 2016 03:30:51 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pstreams/pstream.h with turning off specific compiler
              warnings
@@ -26,7 +26,7 @@
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #endif
 
-#include <pstream.h>
+#include <pstreams/pstream.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
