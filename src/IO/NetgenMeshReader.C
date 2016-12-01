@@ -87,7 +87,6 @@ NetgenMeshReader::readElements( UnsMesh& mesh )
       std::array< std::size_t, 4 > n;
       // tag n[1-4]
       m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
-      mesh.tettag().push_back( { tag } );
       mesh.tetinpoel().push_back( n[0] );
       mesh.tetinpoel().push_back( n[1] );
       mesh.tetinpoel().push_back( n[2] );
@@ -112,7 +111,6 @@ NetgenMeshReader::readElements( UnsMesh& mesh )
       std::array< std::size_t, 3 > n;
       // tag n[1-3]
       m_inFile >> tag >> n[0] >> n[1] >> n[2];
-      mesh.tritag().push_back( { tag } );
       mesh.triinpoel().push_back( n[0] );
       mesh.triinpoel().push_back( n[1] );
       mesh.triinpoel().push_back( n[2] );

@@ -3,26 +3,35 @@ cmake_minimum_required(VERSION 2.8.5)
 project(IO CXX)
 
 add_library(IO
+            PDFWriter.C
+            TxtStatWriter.C
+            DiagWriter.C
+            H5PartWriter.C
+)
+
+INSTALL(TARGETS IO
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
+add_library(MeshIO
             MeshFactory.C
-            GmshMeshReader.C            # readers
+            GmshMeshReader.C
             STLTxtMeshReader.C
             NetgenMeshReader.C
             ExodusIIMeshReader.C
             HyperMeshReader.C
-            PDFWriter.C                 # writers
-            TxtStatWriter.C
-            DiagWriter.C
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
-            H5PartWriter.C
-#            SiloWriter.C
+            #SiloWriter.C
 )
 
-INSTALL(TARGETS IO
-  	RUNTIME DESTINATION bin COMPONENT Runtime
-  	LIBRARY DESTINATION lib COMPONENT Runtime
- 	ARCHIVE DESTINATION lib COMPONENT Development
+INSTALL(TARGETS MeshIO
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
 )
 
 # Include function for adding Charm++ modules
@@ -40,7 +49,7 @@ addCharmModule( "particlewriter" "AsyncIO" )
 add_dependencies( "AsyncIO" "transporterCharmModule" )
 
 INSTALL(TARGETS AsyncIO
-  	RUNTIME DESTINATION bin COMPONENT Runtime
-  	LIBRARY DESTINATION lib COMPONENT Runtime
- 	ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
 )
