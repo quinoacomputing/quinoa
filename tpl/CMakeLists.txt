@@ -204,8 +204,8 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs_flags "${hdf5_library_dirs_flags}/lib")
-  if ("${hdf5_root}" MATCHES "lib$")
-    get_filename_component(hdf5_root ${hdf5_root} DIRECTORY) # strip "/lib"
+  if ("${hdf5_root}" MATCHES "lib(64)?$")
+    get_filename_component(hdf5_root ${hdf5_root} DIRECTORY) # strip "/lib" and "/lib64"
   endif()
 else()
   message(STATUS "HDF5 either not found, not parallel, or NO_SYSTEM_HDF5=true: will build")
