@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Wed 30 Nov 2016 08:03:22 AM MST
+# \date      Thu 01 Dec 2016 06:38:23 PM MST
 #
 ################################################################################
 
@@ -81,7 +81,8 @@ find_library(MKL_CORE_LIBRARY
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-if (MKL_INTERFACE_LIBRARY AND
+if (MKL_INCLUDE_PATH AND
+    MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
     MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
@@ -97,10 +98,13 @@ if (MKL_INTERFACE_LIBRARY AND
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 ${ABI}")
 
 else()
+
+  set(MKL_INCLUDE_PATH "")
   set(MKL_INTERFACE_LIBRARY "")
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
   set(MKL_THREADED_LAYER_LIBRARY "")
   set(MKL_CORE_LIBRARY "")
+
 endif()
 
 set(MKL_LIBS ${MKL_INTERFACE_LIBRARY} ${MKL_SEQUENTIAL_LAYER_LIBRARY}
