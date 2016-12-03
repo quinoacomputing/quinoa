@@ -91,12 +91,7 @@ if(SEACASExodiff_FOUND)
 endif()
 
 #### H5Part library
-set(H5PART_LIBRARY "NOTFOUND")
-find_library(H5PART_LIBRARY
-             NAMES H5Part
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
+find_package(H5Part REQUIRED)
 
 #### RNGSSE2 library
 set(RNGSSE_LIBRARY "NOTFOUND")
