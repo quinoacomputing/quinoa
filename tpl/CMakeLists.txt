@@ -306,8 +306,16 @@ if(NOT BUILD_SHARED_LIBS)
   endif()
 endif()
 
+#Use -DCMAKE_DISABLE_FIND_PACKAGE_H5Part=ON to avoid finding system H5Part
+find_package(H5Part)
+if(H5Part_FOUND)
+  set(h5part "")
+else()
+  set(h5part "h5part")
+endif()
+
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 h5part ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -730,27 +738,30 @@ if(BUILD_SHARED_LIBS)
 else()
   set(H5PART_SHARED "--disable-shared;--enable-static")
 endif()
-ExternalProject_Add(
-  h5part
-  DEPENDS ${hdf5}
-  PREFIX h5part
-  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${PROJECT_SOURCE_DIR}/src/h5part
-                   ${PROJECT_BINARY_DIR}/h5part
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/configure
-                    FC=${MPI_Fortran_COMPILER}
-                    FFLAGS=${FFLAGS}
-                    CC=${MPI_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    CXX=${MPI_CXX_COMPILER}
-                    CXXFLAGS=${CXXFLAGS}
-                    --with-hdf5=${hdf5_root}
-                    --enable-parallel
-                    ${H5PART_SHARED}
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+
+if(h5part)
+  ExternalProject_Add(
+    h5part
+    DEPENDS ${hdf5}
+    PREFIX h5part
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/h5part
+                     ${PROJECT_BINARY_DIR}/h5part
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/configure
+                      FC=${MPI_Fortran_COMPILER}
+                      FFLAGS=${FFLAGS}
+                      CC=${MPI_C_COMPILER}
+                      CFLAGS=${CFLAGS}
+                      CXX=${MPI_CXX_COMPILER}
+                      CXXFLAGS=${CXXFLAGS}
+                      --with-hdf5=${hdf5_root}
+                      --enable-parallel
+                      ${H5PART_SHARED}
+                      --prefix=${CMAKE_INSTALL_PREFIX}
+    BUILD_IN_SOURCE 1
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
