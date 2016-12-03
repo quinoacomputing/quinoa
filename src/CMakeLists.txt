@@ -483,6 +483,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_PATH}
                     ${PSTREAMS_INCLUDE_PATH}
+                    ${H5Part_INCLUDE_DIRS}
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
