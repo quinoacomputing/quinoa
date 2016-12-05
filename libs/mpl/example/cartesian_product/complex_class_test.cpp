@@ -12,6 +12,7 @@
 #include <boost/mpl/cartesian_product.hpp>
 
 #include <iostream>
+#include <typeinfo>
 
 namespace mpl = boost::mpl;
 

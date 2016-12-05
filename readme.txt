@@ -24,8 +24,15 @@ Organic Vectory
 http://www.organicvectory.com
 
 
+WHAT IS IT & HOW TO USE
+-----------------------
+http://tinyurl.com/55wdww
+
+
 REVISION HISTORY
 ----------------
+
+2015.07.02  J. Bakosi: Add 'what is it and how to use' section above
 
 2014.02.05  J. Bakosi: Moved
 
