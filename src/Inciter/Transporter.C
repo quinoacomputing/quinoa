@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Wed 09 Nov 2016 12:34:44 PM MST
+  \date      Mon 05 Dec 2016 10:56:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -550,10 +550,10 @@ Transporter::evaluateTime()
 
   wait4eval();
 
-  // if not final stage of time step or if neither max iterations nor max time
-  // reached, will continue (by telling all linear system merger group
-  // elements to prepare for a new rhs), otherwise finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
+  // if neither max iterations nor max time reached, will continue (by telling
+  // all linear system merger group elements to prepare for a new rhs),
+  // otherwise finish
+  if (std::fabs(m_t-term) > eps && m_it < nstep) {
     m_linsysmerger.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
       m_progStep.start( "Time step stage ..." );
