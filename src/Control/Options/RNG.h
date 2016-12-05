@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:58:27 AM MDT
+  \date      Sun 04 Dec 2016 11:57:19 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -142,7 +142,7 @@ class RNG : public tk::Toggle< RNGType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit RNG() :
-      Toggle< RNGType >(
+      tk::Toggle< RNGType >(
         //! Group, i.e., options, name
         "Random number generator",
         //! Enums -> names

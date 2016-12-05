@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PDFCentering.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:22:43 PM MDT
+  \date      Sun 04 Dec 2016 11:56:53 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF output file centering type options
   \details   PDF output file centering type options
@@ -47,7 +47,7 @@ class PDFCentering : public tk::Toggle< PDFCenteringType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit PDFCentering() :
-      Toggle< PDFCenteringType >(
+      tk::Toggle< PDFCenteringType >(
         //! Group, i.e., options, name
         "PDF output file centering",
         //! Enums -> names

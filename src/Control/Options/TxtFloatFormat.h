@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:22:53 PM MDT
+  \date      Sun 04 Dec 2016 11:57:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text floating-point output options
   \details   Text floating-point output options
@@ -49,7 +49,7 @@ class TxtFloatFormat : public tk::Toggle< TxtFloatFormatType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit TxtFloatFormat() :
-      Toggle< TxtFloatFormatType >(
+      tk::Toggle< TxtFloatFormatType >(
         //! Group, i.e., options, name
         "floating-point format",
         //! Enums -> names

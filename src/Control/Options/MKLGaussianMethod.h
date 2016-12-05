@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:59:05 AM MDT
+  \date      Sun 04 Dec 2016 11:56:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -56,7 +56,7 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit MKLGaussianMethod() :
-      Toggle< MKLGaussianMethodType >(
+      tk::Toggle< MKLGaussianMethodType >(
         //! Group, i.e., options, name
         "Gaussian method",
         //! Enums -> names

@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:32:45 AM MDT
+  \date      Sun 04 Dec 2016 12:14:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck file parser
-  \details   This file declares the input deck, i.e., control file, parser for
+  \details   This file defines the input deck, i.e., control file, parser for
     the computational shock hydrodynamics tool, Inciter.
 */
 // *****************************************************************************

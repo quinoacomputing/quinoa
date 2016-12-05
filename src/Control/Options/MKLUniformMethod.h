@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:58:42 AM MDT
+  \date      Sun 04 Dec 2016 11:56:38 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -54,7 +54,7 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit MKLUniformMethod() :
-      Toggle< MKLUniformMethodType >(
+      tk::Toggle< MKLUniformMethodType >(
         //! Group, i.e., options, name
         "uniform method",
         //! Enums -> names

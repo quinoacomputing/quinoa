@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:16:56 PM MDT
+  \date      Sun 04 Dec 2016 12:00:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite batteries options
   \details   Random number generator test suite batteries options
@@ -48,7 +48,7 @@ class Battery : public tk::Toggle< BatteryType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit Battery() :
-      Toggle< BatteryType >(
+      tk::Toggle< BatteryType >(
         //! Group, i.e., options, name
         "RNG battery",
         //! Enums -> names

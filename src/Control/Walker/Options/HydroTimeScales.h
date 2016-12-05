@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 11:57:58 AM MST
+  \date      Sun 04 Dec 2016 12:00:06 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scale options
   \details   Inverse hydrodynamics time scale options
@@ -63,7 +63,7 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit HydroTimeScales() :
-      Toggle< HydroTimeScalesType >(
+      tk::Toggle< HydroTimeScalesType >(
         //! Group, i.e., options, name
         "Inverse hydrodynamics time scale",
         //! Enums -> names

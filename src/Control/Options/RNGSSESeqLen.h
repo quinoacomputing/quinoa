@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:22:14 PM MDT
+  \date      Sun 04 Dec 2016 11:57:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -49,7 +49,7 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit RNGSSESeqLen() :
-      Toggle< RNGSSESeqLenType >(
+      tk::Toggle< RNGSSESeqLenType >(
         //! Group, i.e., options, name
         "sequence length",
         //! Enums -> names

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Problem.h
   \author    J. Bakosi
-  \date      Wed 24 Aug 2016 08:59:29 AM MDT
+  \date      Sun 04 Dec 2016 11:56:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter
@@ -52,7 +52,7 @@ class Problem : public tk::Toggle< ProblemType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit Problem() :
-      Toggle< ProblemType >(
+      tk::Toggle< ProblemType >(
         //! Group, i.e., options, name
         "Test problem",
         //! Enums -> names
