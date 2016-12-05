@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 10:15:06 AM MDT
+  \date      Sun 04 Dec 2016 11:59:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -53,7 +53,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit CoeffPolicy() :
-      Toggle< CoeffPolicyType >(
+      tk::Toggle< CoeffPolicyType >(
         //! Group, i.e., options, name
         "Coefficients Policy",
         //! Enums -> names

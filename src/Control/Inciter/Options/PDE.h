@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Thu 03 Nov 2016 12:31:43 PM MDT
+  \date      Sun 04 Dec 2016 11:55:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -48,7 +48,7 @@ class PDE : public tk::Toggle< PDEType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit PDE() :
-      Toggle< PDEType >( "Partial differential equation",
+      tk::Toggle< PDEType >( "Partial differential equation",
         //! Enums -> names
         { { PDEType::TRANSPORT, kw::transport::name() },
           { PDEType::COMPFLOW, kw::compflow::name() } },

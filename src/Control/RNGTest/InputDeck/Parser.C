@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:57:23 AM MDT
+  \date      Sun 04 Dec 2016 12:15:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite input deck parser
-  \details   This file declares the input deck, i.e., control file, parser for
+  \details   This file defines the input deck, i.e., control file, parser for
      the random number generator test suite, RNGTest.
 */
 // *****************************************************************************

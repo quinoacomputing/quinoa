@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PDFPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:23:03 PM MDT
+  \date      Sun 04 Dec 2016 11:57:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF output file policy options
   \details   PDF output file policy options
@@ -48,7 +48,7 @@ class PDFPolicy : public tk::Toggle< PDFPolicyType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit PDFPolicy() :
-      Toggle< PDFPolicyType >(
+      tk::Toggle< PDFPolicyType >(
         //! Group, i.e., options, name
         "PDF output file policy",
         //! Enums -> names

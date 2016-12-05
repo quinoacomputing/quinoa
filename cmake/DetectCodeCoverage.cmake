@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Detect prerequesites for code coverage analysis
-# \date      Fri 06 May 2016 06:41:14 AM MDT
+# \date      Sun 04 Dec 2016 04:14:11 PM MST
 #
 ################################################################################
 
@@ -26,7 +26,7 @@ if ( GCOV AND
   # Enable code coverage analysis
   SET(CODE_COVERAGE ON)
 
-  # Make flag enablin code coverage analysis available
+  # Make flag enabling code coverage analysis available in parent cmake scope
   MARK_AS_ADVANCED(CODE_COVERAGE)
 
   # Only include code coverage cmake functions if all prerequsites are met

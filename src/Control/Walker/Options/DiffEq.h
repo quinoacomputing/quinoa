@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:18:51 PM MDT
+  \date      Sun 04 Dec 2016 11:59:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker
@@ -68,7 +68,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit DiffEq() :
-      Toggle< DiffEqType >( "Differential equation",
+      tk::Toggle< DiffEqType >( "Differential equation",
         //! Enums -> names
         { { DiffEqType::NO_DIFFEQ, "n/a" },
           { DiffEqType::OU, kw::ornstein_uhlenbeck::name() },

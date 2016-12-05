@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Physics.h
   \author    J. Bakosi
-  \date      Thu 03 Nov 2016 12:27:17 PM MDT
+  \date      Sun 04 Dec 2016 11:55:54 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics options for inciter
   \details   Physics options for inciter
@@ -51,7 +51,7 @@ class Physics : public tk::Toggle< PhysicsType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit Physics() :
-      Toggle< PhysicsType >(
+      tk::Toggle< PhysicsType >(
         //! Group, i.e., options, name
         "Physics configuration",
         //! Enums -> names (if defined, policy codes, if not, name)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLBetaMethod.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:59:12 AM MDT
+  \date      Sun 04 Dec 2016 11:56:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL Beta RNG method options
   \details   Intel MKL Beta RNG method options
@@ -53,7 +53,7 @@ class MKLBetaMethod : public tk::Toggle< MKLBetaMethodType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit MKLBetaMethod() :
-      Toggle< MKLBetaMethodType >(
+      tk::Toggle< MKLBetaMethodType >(
         //! Group, i.e., options, name
         "Beta method",
         //! Enums -> names

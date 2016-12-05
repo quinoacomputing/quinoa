@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 10:16:27 AM MDT
+  \date      Sun 04 Dec 2016 12:00:12 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
@@ -50,7 +50,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit InitPolicy() :
-      Toggle< InitPolicyType >(
+      tk::Toggle< InitPolicyType >(
         //! Group, i.e., options, name
         "Initialization Policy",
         //! Enums -> names

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PartitioningAlgorithm.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:04:21 AM MDT
+  \date      Sun 04 Dec 2016 11:57:11 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh partitioning algorithm options
   \details   Mesh partitioning algorithm options
@@ -54,7 +54,7 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
     //!    will handle client interactions
     //! \author J. Bakosi
     explicit PartitioningAlgorithm() :
-      Toggle< PartitioningAlgorithmType >(
+      tk::Toggle< PartitioningAlgorithmType >(
         //! Group, i.e., options, name
         "Mesh partitioning algorithm",
         //! Enums -> names
