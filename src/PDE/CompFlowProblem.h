@@ -188,19 +188,15 @@ class CompFlowProblemVorticalFlow {
 
     //! Set initial conditions
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] gid Global node IDs of owned elements
-    //! \param[in] bc Vector of pairs of bool and boundary condition value
-    //!   associated to mesh node IDs at which to set Dirichlet boundary
-    //!   conditions 
     //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >& gid,
+                      const std::vector< std::size_t >&,
                       const std::unordered_map< std::size_t,
-                              std::vector< std::pair< bool, tk::real > > >& bc,
+                              std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset )
