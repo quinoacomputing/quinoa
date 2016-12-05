@@ -484,6 +484,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${HYPRE_INCLUDE_PATH}
                     ${PSTREAMS_INCLUDE_PATH}
                     ${H5PART_INCLUDE_DIR}
+                    ${BoostMPLCartesianProduct_INCLUDE_DIR}
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
