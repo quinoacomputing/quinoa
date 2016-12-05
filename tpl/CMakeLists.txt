@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Mon 28 Nov 2016 09:40:11 AM MST
+# \date      Mon 05 Dec 2016 08:45:46 AM MST
 #
 ################################################################################
 
@@ -306,8 +306,10 @@ if(NOT BUILD_SHARED_LIBS)
   endif()
 endif()
 
-#Use -DCMAKE_DISABLE_FIND_PACKAGE_H5Part=ON to avoid finding system H5Part
-find_package(H5Part)
+# Detect H5Part
+if(NOT NO_SYSTEM_H5PART)
+  find_package(H5Part)
+endif()
 if(H5Part_FOUND)
   set(h5part "")
 else()
@@ -738,7 +740,6 @@ if(BUILD_SHARED_LIBS)
 else()
   set(H5PART_SHARED "--disable-shared;--enable-static")
 endif()
-
 if(h5part)
   ExternalProject_Add(
     h5part

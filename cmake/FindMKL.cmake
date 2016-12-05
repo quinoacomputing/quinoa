@@ -4,13 +4,14 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Thu 01 Dec 2016 06:38:23 PM MST
+# \date      Mon 05 Dec 2016 08:03:33 AM MST
 #
 ################################################################################
 
 # Find the Math Kernel Library from Intel
 #
 #  MKL_FOUND - System has MKL
+#  MKL_INCLUDE_PATH - MKL include files path
 #  MKL_INTERFACE_LIBRARY - MKL interface library
 #  MKL_SEQUENTIAL_LAYER_LIBRARY - MKL sequential layer library
 #  MKL_THREADED_LAYER_LIBRARY - MKL threaded layer library

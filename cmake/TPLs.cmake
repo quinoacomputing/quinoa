@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Mon 17 Oct 2016 08:55:51 AM MDT
+# \date      Mon 05 Dec 2016 08:26:10 AM MST
 #
 ################################################################################
 
@@ -61,6 +61,10 @@ else()
   find_package(HDF5 COMPONENTS C HL)
 endif()
 
+#### H5Part
+set(H5PART_ROOT ${TPL_DIR}) # prefer ours
+find_package(H5Part REQUIRED)
+
 #### AEC (only for static link)
 if(NOT BUILD_SHARED_LIBS)
   set(AEC_ROOT ${TPL_DIR}) # prefer ours
@@ -89,9 +93,6 @@ find_package(SEACASExodiff REQUIRED)
 if(SEACASExodiff_FOUND)
   message(STATUS "Found SEACASExodiff: ${SEACASExodiff_LIBRARY_DIRS}")
 endif()
-
-#### H5Part library
-find_package(H5Part REQUIRED)
 
 #### RNGSSE2 library
 set(RNGSSE_LIBRARY "NOTFOUND")
