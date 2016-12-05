@@ -37,6 +37,7 @@ if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
+find_package(BoostMPLCartesianProduct REQUIRED)
 
 #### PStreams
 set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours

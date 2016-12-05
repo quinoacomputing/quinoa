@@ -316,8 +316,19 @@ else()
   set(h5part "h5part")
 endif()
 
+# Detect BoostMPLCartesianProduct
+if(NOT NO_SYSTEM_BoostMPLCartesianProduct)
+  find_package(BoostMPLCartesianProduct)
+endif()
+if(BoostMPLCartesianProduct_FOUND)
+  set(cartesian_product "")
+else()
+  set(cartesian_product "cartesian_product")
+endif()
+
+
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos pegtl tut ${cartesian_product} rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -600,18 +611,20 @@ ExternalProject_Add(
 #### Boost.MPL extension: cartesian product ###################################
 # http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
 # Header only
-ExternalProject_Add(
-  cartesian_product
-  PREFIX cartesian_product
-  # Header-only, copy include dir over
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/cartesian_product/boost/mpl
-                    ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  DOWNLOAD_COMMAND ""
-)
+if(cartesian_product)
+  ExternalProject_Add(
+    cartesian_product
+    PREFIX cartesian_product
+    # Header-only, copy include dir over
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/cartesian_product/boost/mpl
+                      ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    DOWNLOAD_COMMAND ""
+  )
+endif()
 
 #### RNGSSELib2 ################################################################
 # http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
