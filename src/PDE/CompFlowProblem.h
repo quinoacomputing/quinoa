@@ -220,23 +220,16 @@ class CompFlowProblemVorticalFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto& r  = unk( i, 0, offset ); // rho
-        auto& ru = unk( i, 1, offset ); // rho * u
-        auto& rv = unk( i, 2, offset ); // rho * v
-        auto& rw = unk( i, 3, offset ); // rho * w
-        auto& re = unk( i, 4, offset ); // rho * e
+        auto& r  = unk(i,0,offset); // rho
+        auto& ru = unk(i,1,offset); // rho * u
+        auto& rv = unk(i,2,offset); // rho * v
+        auto& rw = unk(i,3,offset); // rho * w
+        auto& re = unk(i,4,offset); // rho * e
         r = 1.0;
-        ru = 0.0;
-        rv = 0.0;
-        rw = 0.0;
-        re = (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
-        if (bc.find(gid[i]) != end(bc)) {
-          ru = r*(a*x[i] - b*y[i]);
-          rv = r*(b*x[i] + a*y[i]);
-          rw = -2.0*r*a*z[i];
-          re = (ru*ru + rv*rv + rw*rw)/(2.0*r)
-               + (p0 - 2.0*r*a*a*z[i]*z[i])/(g-1.0);
-        }
+        ru = a*x[i] - b*y[i];
+        rv = b*x[i] + a*y[i];
+        rw = -2.0*a*z[i];
+        re = (ru*ru + rv*rv + rw*rw)/2.0 + (p0-2.0*a*a*z[i]*z[i])/(g-1.0);
       }
     }
 
@@ -281,27 +274,32 @@ class CompFlowProblemVorticalFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
+      std::array< tk::real, 4 > ru{{ a*x[N[0]] - b*y[N[0]],
+                                     a*x[N[1]] - b*y[N[1]],
+                                     a*x[N[2]] - b*y[N[2]],
+                                     a*x[N[3]] - b*y[N[3]] }};
+      std::array< tk::real, 4 > rv{{ b*x[N[0]] + a*y[N[0]],
+                                     b*x[N[1]] + a*y[N[1]],
+                                     b*x[N[2]] + a*y[N[2]],
+                                     b*x[N[3]] + a*y[N[3]] }};
+
       // compute momentum source
-      std::array< std::array< tk::real, 4 >, 2 > Sm{{
-        {{ u[0][0]*((a*a-b*b)*x[N[0]] - 2.0*a*b*y[N[0]]),
-           u[0][1]*((a*a-b*b)*x[N[1]] - 2.0*a*b*y[N[1]]),
-           u[0][2]*((a*a-b*b)*x[N[2]] - 2.0*a*b*y[N[2]]),
-           u[0][3]*((a*a-b*b)*x[N[3]] - 2.0*a*b*y[N[3]]) }},
-        {{ u[0][0]*((a*a-b*b)*y[N[0]] + 2.0*a*b*x[N[0]]),
-           u[0][1]*((a*a-b*b)*y[N[1]] + 2.0*a*b*x[N[1]]),
-           u[0][2]*((a*a-b*b)*y[N[2]] + 2.0*a*b*x[N[2]]),
-           u[0][3]*((a*a-b*b)*y[N[3]] + 2.0*a*b*x[N[3]]) }} }};
+      std::array< std::array< tk::real, 4 >, 3 >
+        Sm{{ {{ a*ru[0] - b*rv[0],
+                a*ru[1] - b*rv[1],
+                a*ru[2] - b*rv[2],
+                a*ru[3] - b*rv[3] }},
+             {{ b*ru[0] + a*rv[0],
+                b*ru[1] + a*rv[1],
+                b*ru[2] + a*rv[2],
+                b*ru[3] + a*rv[3] }} }};
 
       // compute energy source
       std::array< tk::real, 4 > Se{{
-        (Sm[0][0]*u[1][0] + Sm[1][0]*u[2][0])/u[0][0] +
-          8.0*u[0][0]*a*a*a*z[N[0]]*z[N[0]]/(g-1.0),
-        (Sm[0][1]*u[1][1] + Sm[1][1]*u[2][1])/u[0][1] +
-          8.0*u[0][1]*a*a*a*z[N[1]]*z[N[1]]/(g-1.0),
-        (Sm[0][2]*u[1][2] + Sm[1][2]*u[2][2])/u[0][2] +
-          8.0*u[0][2]*a*a*a*z[N[2]]*z[N[2]]/(g-1.0),
-        (Sm[0][3]*u[1][3] + Sm[1][3]*u[2][3])/u[0][3] +
-          8.0*u[0][3]*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
+        Sm[0][0]*ru[0] + Sm[1][0]*rv[0] + 8.0*a*a*a*z[N[0]]*z[N[0]]/(g-1.0),
+        Sm[0][1]*ru[1] + Sm[1][1]*rv[1] + 8.0*a*a*a*z[N[1]]*z[N[1]]/(g-1.0),
+        Sm[0][2]*ru[2] + Sm[1][2]*rv[2] + 8.0*a*a*a*z[N[2]]*z[N[2]]/(g-1.0),
+        Sm[0][3]*ru[3] + Sm[1][3]*rv[3] + 8.0*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
 
       // add momentum and energy source at element nodes
       tk::real c = mult * dt;
