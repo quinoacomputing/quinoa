@@ -316,6 +316,17 @@ else()
   set(h5part "h5part")
 endif()
 
+if(NOT NO_SYSTEM_TRILINOS)
+  find_package(Zoltan2)
+  find_package(SEACASExodus)
+  find_package(SEACASExodiff)
+endif()
+if(Zoltan2_FOUND AND SEACASExodus_FOUND AND SEACASExodiff_FOUND)
+  set(trilinos "")
+else()
+  set(trilinos "trilinos")
+endif()
+
 # Detect BoostMPLCartesianProduct
 if(NOT NO_SYSTEM_BoostMPLCartesianProduct)
   find_package(BoostMPLCartesianProduct)
@@ -328,7 +339,7 @@ endif()
 
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut ${cartesian_product} rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm ${trilinos} pegtl tut ${cartesian_product} rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -538,43 +549,45 @@ endif()
 if(NOT lapack)
   set(TRILINOS_LAPACK -DTPL_LAPACK_LIBRARIES=${LAPACK_LIBRARIES})
 endif()
-ExternalProject_Add(
-  trilinos
-  DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
-  PREFIX trilinos
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
-  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-             -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF
-             -D Trilinos_ENABLE_Zoltan2:BOOL=ON
-             -D Zoltan2_ENABLE_Experimental:BOOL=ON
-             -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
-             -D Trilinos_ENABLE_Fortran=OFF
-             -D Trilinos_ENABLE_DEBUG=OFF
-             ${tr_hdf5}
-             ${TRILINOS_SHARED}
-             ${TRILINOS_ALPINE}
-             ${TRILINOS_MKL}
-             ${TRILINOS_BLAS}
-             ${TRILINOS_LAPACK}
-             ${MACOSX_RPATH}
-             -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
-             -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
-             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if(trilinos)
+  ExternalProject_Add(
+    trilinos
+    DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
+    PREFIX trilinos
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
+    CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+               -D TPL_ENABLE_MPI:BOOL=ON
+               -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF
+               -D Trilinos_ENABLE_Zoltan2:BOOL=ON
+               -D Zoltan2_ENABLE_Experimental:BOOL=ON
+               -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+               -D Trilinos_ENABLE_Fortran=OFF
+               -D Trilinos_ENABLE_DEBUG=OFF
+               ${tr_hdf5}
+               ${TRILINOS_SHARED}
+               ${TRILINOS_ALPINE}
+               ${TRILINOS_MKL}
+               ${TRILINOS_BLAS}
+               ${TRILINOS_LAPACK}
+               ${MACOSX_RPATH}
+               -D TPL_ENABLE_Netcdf:BOOL=ON
+               -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
+               -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
+               -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
+               -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
 # https://code.google.com/p/pegtl/wiki/PEGTL0

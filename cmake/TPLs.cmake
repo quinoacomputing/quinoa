@@ -82,17 +82,17 @@ endif()
 #### Zoltan2 library
 find_package(Zoltan2 REQUIRED)
 if(Zoltan2_FOUND)
-  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARY_DIRS}")
+  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARIES}")
 endif()
 
 #### ExodusII library
 find_package(SEACASExodus REQUIRED)
 if(SEACASExodus_FOUND)
-  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARY_DIRS}")
+  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARIES}")
 endif()
 find_package(SEACASExodiff REQUIRED)
 if(SEACASExodiff_FOUND)
-  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_LIBRARY_DIRS}")
+  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_EXECUTABLE}")
 endif()
 
 #### RNGSSE2 library
