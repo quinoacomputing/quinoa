@@ -39,6 +39,8 @@ if(Boost_FOUND)
 endif()
 find_package(BoostMPLCartesianProduct REQUIRED)
 
+find_package(Tut REQUIRED)
+
 #### PStreams
 set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
 find_package(PStreams REQUIRED)
