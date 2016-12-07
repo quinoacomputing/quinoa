@@ -337,9 +337,18 @@ else()
   set(cartesian_product "cartesian_product")
 endif()
 
+# Detect Tut
+if(NOT NO_SYSTEM_Tut)
+  find_package(Tut)
+endif()
+if(Tut_FOUND)
+  set(tut "")
+else()
+  set(tut "tut")
+endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm ${trilinos} pegtl tut ${cartesian_product} rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm ${trilinos} pegtl ${tut} ${cartesian_product} rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -608,18 +617,20 @@ ExternalProject_Add(
 #### TUT (Template Unit Test Framework) ########################################
 # http://tut-framework.sourceforge.net
 # Header only
-ExternalProject_Add(
-  tut
-  PREFIX tut
-  # Header-only, copy include dir over
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/tut/include
-                    ${CMAKE_INSTALL_PREFIX}/include/tut
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  DOWNLOAD_COMMAND ""
-)
+if(tut)
+  ExternalProject_Add(
+    tut
+    PREFIX tut
+    # Header-only, copy include dir over
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/tut/include
+                      ${CMAKE_INSTALL_PREFIX}/include/tut
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    DOWNLOAD_COMMAND ""
+  )
+endif()
 
 #### Boost.MPL extension: cartesian product ###################################
 # http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
