@@ -129,7 +129,7 @@ Quinoa's main language of choice is C++ for the following reasons.
    effect; as such it supports
    [procedural](_derived_data_8_c_source.html),
    [object oriented](_diff_eq_2_diff_eq_8h_source.html),
-   [generic](_factory_8h_source.html) as well as
+   [generic](_base_2_factory_8h_source.html) as well as
    [functional](_tagged_tuple_8h_source.html) programming
 
  - It provides a portable [standard library](http://en.wikipedia.org/wiki/C%2B%2B_Standard_Library) with [guaranteed algorithmic complexity](http://www.sgi.com/tech/stl/complexity.html)
@@ -201,7 +201,7 @@ simultaneously considered at all times and from the outset.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 07:55:25 AM MST
+<em>Page last updated:</em> Sun 11 Dec 2016 12:25:48 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
