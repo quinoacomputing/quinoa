@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Wed 09 Nov 2016 12:19:43 PM MST
+  \date      Tue 06 Dec 2016 09:04:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "Macro.h"
@@ -327,6 +328,12 @@ class CompFlow {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       return v;
     }
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    void side( std::unordered_set< int >& conf ) const
+    { Problem::side( conf ); }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system

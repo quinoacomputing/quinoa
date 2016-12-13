@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 08:31:46 AM MDT
+  \date      Tue 13 Dec 2016 09:58:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -386,10 +386,6 @@ class Carrier : public CBase_Carrier {
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
     //! Particle tracker
     tk::Tracker m_tracker;
-    //! \brief Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which to set Dirichlet boundary conditions
-    std::unordered_map< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > > m_bc;
 
     //! Query old node IDs for a list of new node IDs
     std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
@@ -461,6 +457,9 @@ class Carrier : public CBase_Carrier {
 
     //! Compute diagnostics, e.g., residuals
     void diagnostics();
+
+    //! Verify that solution does not change at Dirichlet boundary conditions
+    bool correctBC();
 };
 
 } // inciter::
