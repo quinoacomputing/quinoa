@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 13 Dec 2016 10:08:59 AM MST
+  \date      Tue 13 Dec 2016 04:14:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -664,7 +664,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     const std::unordered_map< std::size_t,
-            std::vector< std::pair< bool, tk::real > > >& bc() { return m_bc; }
+            std::vector< std::pair< bool, tk::real > > >&
+      dirbc() { return m_bc; }
 
     //! \brief Chares contribute their global row ids and associated Dirichlet
     //!   boundary condition values at which they set BCs
