@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+#include <unordered_set>
 
 #include <boost/mpl/vector.hpp>
 
@@ -105,6 +106,15 @@ class CompFlowProblemUserDefined {
       n.push_back( "pressure" );
       n.push_back( "temperature" );
       return n;
+    }
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    static void side( std::unordered_set< int >& conf ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+        conf.insert( std::stoi(s[0]) );
     }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
@@ -310,6 +320,16 @@ class CompFlowProblemVorticalFlow {
           // source contribution to enerhy rhs
           R.var(r[4],N[j]) += c * mass[j][k] * Se[k];
         }
+    }
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    static void side( std::unordered_set< int >& conf ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+        for (const auto& i : s)
+          conf.insert( std::stoi(i) );
     }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for

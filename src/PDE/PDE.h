@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "Types.h"
@@ -114,7 +115,11 @@ class PDE {
               const std::array< std::size_t, 4 >& N ) const
     { return self->velocity( U, coord, N ); }
 
-    //! \brief Public interfac for querying Dirichlet boundary condition values
+    //! \brief Public interface for collecting all side set IDs the user has
+    //!   configured for all components of a PDE system
+    void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
+
+    //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
     std::vector< std::pair< bool, tk::real > >
     dirbc( int sideset ) const { return self->dirbc( sideset ); }
@@ -172,6 +177,7 @@ class PDE {
         const tk::Fields&,
         const std::array< std::vector< tk::real >, 3 >&,
         const std::array< std::size_t, 4 >&  ) const = 0;
+      virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
@@ -215,6 +221,8 @@ class PDE {
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::array< std::size_t, 4 >& N  ) const override
       { return data.velocity( U, coord, N ); }
+      void side( std::unordered_set< int >& conf ) const override
+      { data.side( conf ); }
       std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
       override { return data.dirbc( sideset ); }
       std::vector< std::string > names() const override { return data.names(); }

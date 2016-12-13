@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Wed 09 Nov 2016 12:45:58 PM MST
+  \date      Tue 13 Dec 2016 10:08:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -660,6 +660,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   method since it is always called by chares on the same PE.
     const std::map< int, std::vector< std::size_t > >& side() { return m_side; }
 
+    //! Chares query Dirichlet boundary conditions
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    const std::unordered_map< std::size_t,
+            std::vector< std::pair< bool, tk::real > > >& bc() { return m_bc; }
+
     //! \brief Chares contribute their global row ids and associated Dirichlet
     //!   boundary condition values at which they set BCs
     //! \param[in] bc Vector of pairs of bool and BC value (BC vector)
@@ -691,14 +697,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       PUP::fromMem creator( msg->getData() );
       creator | m_bc;
       delete msg;
-      // Keep only those BC vectors in m_bc that are associated to rows we own
-      // and store the row IDs of those we do not own in m_nbc.
-      for (auto it=begin(m_bc); it!=end(m_bc);)
-        if (it->first < m_lower || it->first >= m_upper) {
-          m_nbc.push_back( it->first );
-          it = m_bc.erase(it);
-        } else
-          ++it;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
       bc_complete();
     }
@@ -880,12 +878,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   vector of pairs in which the bool (.first) indicates whether the
     //!   boundary condition value (.second) is set at the given node. The size
     //!   of the vectors is the number of PDEs integrated times the number of
-    //!   scalar components in all PDEs. This BC map only stores those row IDs
-    //!   that we own.
+    //!   scalar components in all PDEs. This BC map stores all row IDs at which
+    //!   Dirichlet boundary conditions are prescribed, i.e., including boundary
+    //!   conditions set across all PEs, not just the ones need to be set on
+    //!   this PE.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bc;
-    //! Global row IDs of those rows at which we do not set Dirichlet BCs
-    std::vector< std::size_t > m_nbc;
 
     //! Check if we have done our part in storing and exporting global row ids
     //! \details This does not mean the global row ids on our PE is complete
@@ -955,23 +953,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
-      for (const auto& n : m_bc) {
-        // zero row and put 1.0 in diagonal of BC rows we own
-        auto& row = tk::ref_find( m_lhs, n.first );
-        auto& b = n.second;
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first) {
-            for (auto& col : row) col.second[i] = 0.0;
-            tk::ref_find( row, n.first )[ i ] = 1.0;
-          }
-        // zero our portion of the column of BC rows we do not own
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first)
-            for (auto& r : m_lhs) {
-              auto it = r.second.find( n.first );
-              if (it != end(r.second) && r.first != n.first)
-                it->second[ i ] = 0.0;
+
+      for (auto& r : m_lhs) {
+        auto it = m_bc.find( r.first );
+        if (it != end(m_bc)) {
+          auto& diag = tk::ref_find( r.second, r.first );
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            if (it->second[i].first) {
+              // zero columns in BC row
+              for (auto& col : r.second) col.second[i] = 0.0;
+              // put 1.0 in diagonal of BC row
+              diag[i] = 1.0;
             }
+        }
       }
       lhsbc_complete();
     }
@@ -984,9 +978,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
       for (const auto& n : m_bc) {
-        auto& r = tk::ref_find( m_rhs, n.first );
-        auto& b = n.second;
-        for (std::size_t i=0; i<m_ncomp; ++i) if (b[i].first) r[i] = 0.0;
+        if (n.first >= m_lower && n.first < m_upper) {
+          auto& r = tk::ref_find( m_rhs, n.first );
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            if (n.second[i].first)
+              r[i] = 0.0;
+        }
       }
       rhsbc_complete(); rhsbc_complete();
     }
@@ -1125,6 +1122,15 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 
     //! Solve auxiliary linear system
     void auxsolve() {
+      // Set boundary conditions on the auxiliary right hand side vector
+      for (const auto& n : m_bc)
+        if (n.first >= m_lower && n.first < m_upper) {
+          auto& r = tk::ref_find( m_auxrhs, n.first );
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            if (n.second[i].first)
+              r[i] = 0.0;
+        }
+      // Solve auxiliary system
       AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );
       auxsolve_complete();
     }

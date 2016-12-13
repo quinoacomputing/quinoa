@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Mon 05 Dec 2016 10:56:59 AM MST
+  \date      Tue 06 Dec 2016 10:33:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -52,7 +52,13 @@ extern template class
     tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 extern CProxy_Main mainProxy;
-extern inciter::ctr::InputDeck g_inputdeck_defaults;
+
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck_defaults;
+extern std::vector< PDE > g_pdes;
+
+}
 
 using inciter::Transporter;
 
@@ -177,10 +183,23 @@ Transporter::Transporter() :
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-    // Create linear system merger chare group
+    // Read in side sets from file
     m_print.diagstart( "Reading side sets ..." );
     auto ss = er.readSidesets();
     m_print.diagend( "done" );
+
+    // Verify that side sets to which boundary conditions are assigned by user
+    // exist in mesh file
+    std::unordered_set< int > conf;
+    for (const auto& eq : g_pdes) eq.side( conf );
+    for (auto i : conf)
+      if (ss.find(i) == end(ss)) {
+        m_print.diag( "WARNING: Boundary conditions specified on side set " +
+          std::to_string(i) + " which does not exist in mesh file" );
+        break;
+      }
+
+    // Create linear system merger chare group
     m_print.diag( "Creating linear system mergers" );
     m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
                        g_inputdeck.get< tag::component >().nprop(),
@@ -544,7 +563,7 @@ Transporter::evaluateTime()
       if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
       if (diag) m_print << 'D';
 
-      m_print << '\n';
+      m_print << std::endl;
     }
   }
 
