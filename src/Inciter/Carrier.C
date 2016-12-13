@@ -358,8 +358,8 @@ Carrier::init()
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
   // Set initial and boundary conditions for all PDEs
-  auto& bc = m_linsysmerger.ckLocalBranch()->bc();
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, bc );
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, dbc );
 
   // Compute initial time step size
   dt();
@@ -609,8 +609,8 @@ Carrier::aec( const tk::Fields& Un )
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  auto& bc = m_linsysmerger.ckLocalBranch()->bc();
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, bc, m_gid, m_du, Un, m_p );
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
   ownaec_complete();
   #ifndef NDEBUG
   ownaec_complete();
@@ -978,14 +978,14 @@ Carrier::correctBC()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  auto& bc = m_linsysmerger.ckLocalBranch()->bc();
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
 
-  if (bc.empty()) return true;
+  if (dbc.empty()) return true;
 
-  tk::Fields b( bc.size(), m_u.nprop() );
+  tk::Fields b( dbc.size(), m_u.nprop() );
   std::size_t i = 0;
 
-  for (const auto& n : bc) {
+  for (const auto& n : dbc) {
     auto p = m_lid.find(n.first);
     if (p!=end(m_lid)) {
       auto lid = p->second;
