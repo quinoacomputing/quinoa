@@ -3,6 +3,9 @@
 // L.Yu. Barash, L.N. Shchur, "RNGSSELIB: Program library for random number generation. More generators, parallel streams of random numbers and Fortran compatibility".
 // e-mail: barash @ itp.ac.ru (remove space)
 
+#ifndef mtl19937_h
+#define mtl19937_h
+
 #define mt19937_N 624
 
 typedef struct{
@@ -32,3 +35,5 @@ unsigned int mt19937_sse_generate_(mt19937_sse_state* state);
 void mt19937_get_sse_state_(mt19937_state* state, mt19937_sse_state* sse_state);
 
 void mt19937_print_state_(mt19937_state* state);
+
+#endif // mtl19937_h

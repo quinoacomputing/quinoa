@@ -3,6 +3,9 @@
 // L.Yu. Barash, L.N. Shchur, "RNGSSELIB: Program library for random number generation. More generators, parallel streams of random numbers and Fortran compatibility".
 // e-mail: barash @ itp.ac.ru (remove space)
 
+#ifndef gm29_h
+#define gm29_h
+
 #define gm29_g 536870909U
 
 typedef struct{
@@ -33,3 +36,5 @@ void gm29_get_sse_state_(gm29_state* state,gm29_sse_state* sse_state);
 void gm29_print_state_(gm29_state* state);
 
 void gm29_print_sse_state_(gm29_sse_state* state);
+
+#endif // gm29_h
