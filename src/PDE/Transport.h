@@ -16,6 +16,7 @@
 #include <array>
 #include <limits>
 #include <cmath>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "TransportPhysics.h"
@@ -306,6 +307,10 @@ class Transport {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::array< std::size_t, 4 >& N ) const
     { return Problem::velocity( U, coord, N ); }
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    static void side( std::unordered_set< int >& ) {}
 
     //! \brief Query Dirichlet boundary condition value set by the user on a
     //!   given side set for all components in this PDE system
