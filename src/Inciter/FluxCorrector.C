@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 11:13:49 AM MDT
+  \date      Fri 09 Dec 2016 03:52:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
@@ -31,6 +31,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
                     const std::vector< tk::real >& vol,
                     const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc,
+                    const std::vector< std::size_t >& gid,
                     const tk::Fields& dUh,
                     const tk::Fields& Un,
                     tk::Fields& P )
@@ -40,7 +41,10 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] vol Volume associated to mesh nodes
 //! \param[in] bc Vector of pairs of bool and boundary condition value
-//!   associated to mesh node IDs at which to set Dirichlet boundary conditions
+//!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
+//!   Note that this BC data structure must include boundary conditions set
+//!   across all PEs, not just the ones need to be set on this PE.
+//! \param[in] gid Local to global node ID mapping
 //! \param[in] dUh Increment of the high order solution
 //! \param[in] Un Solution at the previous time step stage
 //! \param[in,out] P The sums of positive (negative) AECs to nodes
@@ -124,23 +128,27 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     // obtained by subtracting the low order system from the high order system.
     // Note that the solution update is U^{n+1} = Un + dUl + lim(dUh - dUl),
     // where the last terms is the limited AEC. (Think of 'lim' as the limit
-    // coefficient between 0 and 1.) At nodes where Dirichlet boundary
-    // conditions (BC) are set, we ignore the high order solution increment,
-    // i.e., dUh=0, when computing the AEC. This equates the AEC at those BC
-    // nodes with M_L^{-1} * the negative of the mass diffusion, which also
-    // equals to M_L^{-1} * the low order right hand side, since the high order
-    // right hand side, r, is zero there. At the solution update, where the
-    // limited AEC is applied, in member function lim(), we apply the full AEC
-    // for these BC nodes (i.e., limit coefficient = 1.0) which yields no
-    // increment there, correctly forcing the Dirichlet BCs at those nodes.
-    for (std::size_t j=0; j<4; ++j) {
-      bool b = bc.find(N[j]) != end(bc);
+    // coefficient between 0 and 1.)
+    for (std::size_t j=0; j<4; ++j)
       for (ncomp_t c=0; c<ncomp; ++c)
-        for (std::size_t k=0; k<4; ++k) {
-          auto d = !b ? duh[c][k] : 0.0;
-          m_aec(e*4+j,c,0) += m[j][k] * (ctau*un[c][k] + d) / vol[N[j]];
-        }
-     }
+        for (std::size_t k=0; k<4; ++k)
+          m_aec(e*4+j,c,0) += m[j][k] * (ctau*un[c][k] + duh[c][k]) / vol[N[j]];
+  }
+
+  // At nodes where Dirichlet boundary conditions (BC) are set, we set the AEC
+  // to zero. Since the right hand side of the low order solution is also set to
+  // zero at nodes where Dirichlet BCs are set, this properly enforces no
+  // increment at BC nodes. See also LinSysMerger::auxsolve().
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                           inpoel[e*4+2], inpoel[e*4+3] }};
+    for (std::size_t j=0; j<4; ++j) {
+      auto b = bc.find( gid[ N[j] ] );
+      if (b != end(bc))
+        for (ncomp_t c=0; c<ncomp; ++c)
+          if (b->second[c].first)
+            m_aec(e*4+j,c,0) = 0.0;
+    }
   }
 
   // sum all positive (negative) antidiffusive element contributions to nodes
@@ -319,10 +327,10 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
     for (ncomp_t c=0; c<ncomp; ++c) d[c] = D.cptr( c, 0 );
 
     // scatter-add mass diffusion element contributions to rhs nodes
-    for (ncomp_t c=0; c<ncomp; ++c)
-      for (std::size_t j=0; j<4; ++j)
+    for (std::size_t j=0; j<4; ++j)
+      for (ncomp_t c=0; c<ncomp; ++c)
         for (std::size_t k=0; k<4; ++k)
-           D.var(d[c],N[j]) -= ctau * m[j][k] * un[c][k];
+          D.var(d[c],N[j]) -= ctau * m[j][k] * un[c][k];
   }
 
   return D;
@@ -381,8 +389,6 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 
 void
 FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
-                    const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc,
                     const tk::Fields& P,
                     const tk::Fields& Ul,
                     tk::Fields& Q,
@@ -390,8 +396,6 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 // Compute limited antiffusive element contributions and apply to mesh nodes
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] bc Vector of pairs of bool and boundary condition value associated
-//!   to mesh node IDs at which to set Dirichlet boundary conditions
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
 //! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
@@ -456,11 +460,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
     // coefficient. This yields no increment for those nodes. See the detailed
     // discussion when computing the AECs.
     for (std::size_t j=0; j<4; ++j)
-      if (bc.find(N[j]) == end(bc))
-        for (ncomp_t c=0; c<ncomp; ++c) 
-          A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);
-      else
-        for (ncomp_t c=0; c<ncomp; ++c) 
-          A.var(a[c],N[j]) += m_aec(e*4+j,c,0);
+      for (ncomp_t c=0; c<ncomp; ++c)
+        A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);
   }
 }

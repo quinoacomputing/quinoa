@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Mon 05 Dec 2016 09:03:59 AM MST
+# \date      Fri 02 Dec 2016 07:45:06 AM MST
 #
 ################################################################################
 
@@ -551,12 +551,13 @@ if (MKL_FOUND)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(TRILINOS_MKL "-DTPL_ENABLE_MKL=ON;-DMKL_LIBRARY_DIRS=$ENV{MKLROOT}/lib;-DMKL_INCLUDE_DIRS=$ENV{MKLROOT}/include;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
   endif()
-endif()
-if(NOT blas)
-  set(TRILINOS_BLAS -DTPL_BLAS_LIBRARIES=${BLAS_LIBRARIES})
-endif()
-if(NOT lapack)
-  set(TRILINOS_LAPACK -DTPL_LAPACK_LIBRARIES=${LAPACK_LIBRARIES})
+else()
+  if(BLAS_FOUND)
+    set(TRILINOS_BLAS -DTPL_BLAS_LIBRARIES=${BLAS_LIBRARIES})
+  endif()
+  if(LAPACKE_FOUND)
+    set(TRILINOS_LAPACK -DTPL_LAPACK_LIBRARIES=${LAPACK_LIBRARIES})
+  endif()
 endif()
 if(trilinos)
   ExternalProject_Add(

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 09:05:24 AM MST
+  \date      Tue 06 Dec 2016 02:03:27 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -108,8 +108,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_qc(),
   m_ac(),
                                                         // 0 = no particles
-  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel ),
-  m_bc()
+  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -245,7 +244,13 @@ Carrier::bc()
 //!   set they are assigned to, are interrogated and only those nodes and their
 //!   BC values are extracted that we operate on. This BC data structure is then
 //!   sent to the linear system merger which needs to know about this to apply
-//!   BCs before a linear solve.
+//!   BCs before a linear solve. Note that the BC mesh nodes that this function
+//!   results in, stored in dirbc and sent to the linear system merger, only
+//!   contains those nodes that this chare contributes to, i.e., it does not
+//!   contain those BC nodes at which other chares enforce Dirichlet BCs. The
+//!   linear system merger then collects these and communicates to other PEs so
+//!   that BC data held in LinSysMerger::m_bc are the same on all PEs. That is
+//!   the authoritative BC data, which can be queried by LinSysMerger::bc().
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -293,6 +298,12 @@ Carrier::bc()
     return false;
   };
 
+  // Dirichlet boundary conditions storage: Vector of pairs of bool and boundary
+  // condition value associated to mesh node IDs at which to set Dirichlet
+  // boundary conditions
+  std::unordered_map< std::size_t,
+                      std::vector< std::pair< bool, tk::real > > > dirbc;
+
   // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
   // data structure in which this information is stored associates a vector of
   // pairs of bool and BC value to new global mesh node IDs. 'New' as in
@@ -317,7 +328,7 @@ Carrier::bc()
     for (auto o : s.second) {
       auto n = own(o);
       if (n.first && inset(n.second,s.second) && ubc) {
-        auto& v = m_bc[ n.second ];
+        auto& v = dirbc[ n.second ];
         v.resize( b.size() );
         for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
       }
@@ -329,7 +340,7 @@ Carrier::bc()
     m_transporter.chbcmatched();
 
   // Send off list of owned node IDs mapped to side sets to LinSysMerger
-  m_linsysmerger.ckLocalBranch()->charebc( m_bc );
+  m_linsysmerger.ckLocalBranch()->charebc( dirbc );
 }
 
 void
@@ -347,7 +358,8 @@ Carrier::init()
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
   // Set initial and boundary conditions for all PDEs
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, m_bc );
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, dbc );
 
   // Compute initial time step size
   dt();
@@ -597,7 +609,8 @@ Carrier::aec( const tk::Fields& Un )
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, m_bc, m_du, Un, m_p );
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
   ownaec_complete();
   #ifndef NDEBUG
   ownaec_complete();
@@ -738,7 +751,7 @@ Carrier::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_bc, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
   ownlim_complete();
 
   if (m_msum.empty())
@@ -956,6 +969,39 @@ Carrier::velocity( std::size_t e )
   return c;
 }
 
+bool
+Carrier::correctBC()
+// *****************************************************************************
+// Verify that solution does not change at Dirichlet boundary conditions
+//! \return True if the solution did not change at Dirichlet boundary condition
+//!   nodes
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+
+  if (dbc.empty()) return true;
+
+  tk::Fields b( dbc.size(), m_u.nprop() );
+  std::size_t i = 0;
+
+  for (const auto& n : dbc) {
+    auto p = m_lid.find(n.first);
+    if (p!=end(m_lid)) {
+      auto lid = p->second;
+      for (ncomp_t c=0; c<b.nprop(); ++c)
+        b(i,c,0) = std::abs( m_dul(lid,c,0) + m_a(lid,c,0) );
+      ++i;
+    }
+  }
+
+  auto d = std::max_element( begin(b.data()), end(b.data()) );
+  if (*d > std::numeric_limits< tk::real >::epsilon())
+    return false;
+  else
+    return true;
+}
+
 void
 Carrier::apply()
 // *****************************************************************************
@@ -969,6 +1015,11 @@ Carrier::apply()
     const auto& bac = m_ac[ b.second ];
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
+
+  // Verify that solution values do not change at Dirichlet BC nodes
+  Assert( correctBC(), "Dirichlet boundary condition incorrect. Solution "
+         "values at mesh nodes where Dirichlet boundary conditions are "
+         "prescribed must not change." );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (m_stage < 1)

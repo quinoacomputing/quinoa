@@ -13,6 +13,7 @@
 #include <boost/mpl/list.hpp>
 
 #include <iostream>
+#include <typeinfo>
 
 namespace mpl = boost::mpl;
 
