@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 18 Nov 2016 08:30:23 AM MST
+  \date      Thu 15 Dec 2016 12:45:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -60,7 +60,7 @@
           const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
           const std::vector< kw::sde_rho2::info::expect::type >& rho2,
           const std::vector< kw::sde_r::info::expect::type >& r,
-          const std::vector< HydroTimeScaleTable >& hts,
+          const std::vector< tk::Table >& hts,
           std::vector< kw::sde_b::info::expect::type  >& b,
           std::vector< kw::sde_kappa::info::expect::type >& k,
           std::vector< kw::sde_S::info::expect::type >& S ) const {}
@@ -87,6 +87,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include "Types.h"
+#include "Table.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "HydroTimeScales.h"
 #include "Walker/Options/HydroTimeScales.h"
@@ -156,7 +157,7 @@ class MixMassFracBetaCoeffDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >&,
       const std::vector< kw::sde_r::info::expect::type >&,
-      const std::vector< HydroTimeScaleTable >&,
+      const std::vector< tk::Table >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >&,
@@ -239,7 +240,7 @@ class MixMassFracBetaCoeffHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< HydroTimeScaleTable >&,
+      const std::vector< tk::Table >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -362,7 +363,7 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< HydroTimeScaleTable >&,
+      const std::vector< tk::Table >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -488,7 +489,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< HydroTimeScaleTable >& hts,
+      const std::vector< tk::Table >& hts,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -541,13 +542,17 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real theta = 1.0 - ds/bnm;
         tk::real A = 0.15;
 
+        //tk::real mix = 1.0;
         //tk::real mix = (1.0-theta) / (2.0-theta) * theta;
         //tk::real mix = (1.0-theta) / (2.0-theta) * theta/2.0/(2.0-theta);
-        tk::real mix = 1.0;
         //tk::real mix = 1.0/(2.0*(2.0-theta));
+        //tk::real mix = yt*(1.0-yt)/(1.0+r[c]*yt)/(1.0+r[c]*yt);
+        //tk::real mix = 1.0/(1.0+r[c]*yt);     // a)
+        tk::real mix = 1.0+r[c]*yt;             // b)
 
-        //tk::real f = 1.0;
-        tk::real f = (1.0+A)/(1.0+30.0*A*theta);
+        tk::real f = 1.0;
+        //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
+        //tk::real f =  // sqrt[1+(P/eps-1)^1]
 
         auto ts = hydrotimescale( t, hts[c] );
 
@@ -556,13 +561,13 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * ts;
         //b[c] = bprime[c] * std::pow(theta,n) * ts;
         //b[c] = bprime[c] * (1.0+A)/(1.0+A*theta)*theta * ts;
-        b[c] = bprime[c] * f * mix * theta * ts;
+        b[c] = bprime[c] * f * mix * ts;      // model 1
 
         //k[c] = kprime[c] * v * ts;
         //k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
         //k[c] = kprime[c] * ds * std::pow(theta,n) * ts;
         //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * ts;
-        k[c] = kprime[c] * ds * f * mix * theta * ts;
+        k[c] = kprime[c] * ds * f * mix * ts; // model 1
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
@@ -585,7 +590,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
     //! \details If t is lower than the first x value in the function, the first
     //!   function value is returned. If t is larger than the last x value in
     //!   the function, the last function value is returned.
-    tk::real hydrotimescale( tk::real t, const HydroTimeScaleTable& ts ) const {
+    tk::real hydrotimescale( tk::real t, const tk::Table& ts ) const {
       if (t < ts.front().first) return ts.front().second;
       for (std::size_t i=0; i<ts.size()-1; ++i) {
         if (ts[i].first < t && t < ts[i+1].first) {
