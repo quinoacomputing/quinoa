@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 18 Nov 2016 08:15:23 AM MST
+  \date      Thu 15 Dec 2016 12:46:59 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -72,6 +72,7 @@
 #include "MixMassFractionBetaCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "Table.h"
 #include "Walker/Options/HydroTimeScales.h"
 
 namespace walker {
@@ -242,7 +243,7 @@ class MixMassFractionBeta {
     //! Selected inverse hydrodynamics time scales (if used) for each component
     //! \details This is only used if the coefficients policy is
     //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
-    std::vector< HydroTimeScaleTable > m_hts;
+    std::vector< tk::Table > m_hts;
 
     //! \brief Return density for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta
@@ -263,7 +264,7 @@ class MixMassFractionBeta {
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real Y, ncomp_t i ) const {
-      return 1.0 / rho( Y, i );
+      return ( 1.0 + m_r[i] * Y ) / m_rho2[i];
     }
 
     //! Compute instantaneous values derived from updated Y
