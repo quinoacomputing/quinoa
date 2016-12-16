@@ -2,11 +2,11 @@
 /*!
   \file      src/Base/Table.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 12:41:19 PM MST
+  \date      Fri 16 Dec 2016 07:46:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Type alias for declaring, defining, and storing a discrete y = f(x)
+  \brief     Basic functionality for storing and sampling a discrete y = f(x)
              function
-  \details   Type alias for declaring, defining, and storing a discrete y = f(x)
+  \details   Basic functionality for storing and sampling a discrete y = f(x)
              function.
 */
 // *****************************************************************************
@@ -22,6 +22,9 @@ namespace tk {
 
 //! Type alias for declaring, defining, and storing a discrete y = f(x) function
 using Table = std::vector< std::pair< tk::real, tk::real > >;
+
+//! Sample a discrete y = f(x) function at x
+tk::real sample( tk::real x, const tk::Table& table );
 
 } // tk::
 
