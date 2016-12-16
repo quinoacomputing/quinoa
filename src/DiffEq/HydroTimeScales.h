@@ -2,9 +2,10 @@
 /*!
   \file      src/DiffEq/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 12:41:12 PM MST
+  \date      Thu 15 Dec 2016 02:13:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Inverse hydrodynamics time scales from DNS.
+  \brief     Inverse hydrodynamics time scales from DNS for the homogeneous
+    Rayleigh-Taylor instability.
   \details   Inverse hydrodynamics time scales from direct numerical simulation
     (DNS) of homogeneous Rayleigh-Taylor instability.
 
@@ -33,8 +34,6 @@
 #ifndef HydroTimeScales_h
 #define HydroTimeScales_h
 
-#include <vector>
-
 #include "Table.h"
 
 namespace walker {
@@ -56,7 +55,7 @@ namespace walker {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -327,7 +326,7 @@ const tk::Table invhts_eq_A005H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -607,7 +606,7 @@ const tk::Table invhts_eq_A005S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -885,7 +884,7 @@ const tk::Table invhts_eq_A005L {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -1063,7 +1062,7 @@ const tk::Table invhts_eq_A05H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -1242,7 +1241,7 @@ const tk::Table invhts_eq_A05S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -1417,7 +1416,7 @@ const tk::Table invhts_eq_A05L {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -1589,7 +1588,7 @@ const tk::Table invhts_eq_A075H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
@@ -1766,7 +1765,7 @@ const tk::Table invhts_eq_A075S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the

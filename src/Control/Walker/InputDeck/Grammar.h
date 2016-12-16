@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 03:56:02 PM MST
+  \date      Thu 15 Dec 2016 03:23:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -25,6 +25,7 @@
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 
 #ifdef HAS_MKL
 #include "MKLGrammar.h"
@@ -186,6 +187,23 @@ namespace deck {
         stack.template get< tag::param, eq, tag::hydrotimescales >().back();
       const auto& ncomp = stack.template get< tag::component, eq >().back();
       if (hts.empty() || hts.size() != ncomp/4)
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
+                        ( stack, value );
+    }
+  };
+
+  //! \brief Do error checking on the hydroproductions block
+  //! \author J. Bakosi
+  template< class Stack, class eq, class param >
+  struct check_hydroproductions :
+    pegtl::action_base< check_hydroproductions< Stack, eq, param > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Error out if hydroproductions vector has the wrong size
+      const auto& hp =
+        stack.template get< tag::param, eq, tag::hydroproductions >().back();
+      const auto& ncomp = stack.template get< tag::component, eq >().back();
+      if (hp.empty() || hp.size() != ncomp/4)
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
                         ( stack, value );
     }
@@ -673,6 +691,11 @@ namespace deck {
                                               tag::mixmassfracbeta,
                                               tag::hydrotimescales,
                                               check_hydrotimescales >,
+                           sde_option_vector< ctr::HydroProductions,
+                                              kw::hydroproductions,
+                                              tag::mixmassfracbeta,
+                                              tag::hydroproductions,
+                                              check_hydroproductions >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,
