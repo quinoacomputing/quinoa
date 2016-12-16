@@ -273,6 +273,16 @@ else()
   set(pugixml "pugixml")
 endif()
 
+# Detect PEGTL, exclude if found, build if not
+if(NOT NO_SYSTEM_PEGTL)
+  find_package(PEGTL)
+endif()
+if(PEGTL_FOUND)
+  set(pegtl "")
+else()
+  set(pegtl "pegtl")
+endif()
+
 # Detect blas and lapack, exclude if found, build if not
 set(lapack "lapack")
 set(blas "blas")
@@ -315,7 +325,7 @@ else()
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos ${pegtl} tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -565,20 +575,22 @@ ExternalProject_Add(
 )
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
-# https://code.google.com/p/pegtl/wiki/PEGTL0
+# https://github.com/ColinH/PEGTL
 # Header only
-ExternalProject_Add(
-  pegtl
-  PREFIX pegtl
-  # Header-only, copy include dir over
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/pegtl/include
-                    ${CMAKE_INSTALL_PREFIX}/include/pegtl
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  DOWNLOAD_COMMAND ""
-)
+if (pegtl)
+ ExternalProject_Add(
+   pegtl
+   PREFIX pegtl
+   # Header-only, copy include dir over
+   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/pegtl/include
+                     ${CMAKE_INSTALL_PREFIX}/include/pegtl
+   CONFIGURE_COMMAND ""
+   BUILD_COMMAND ""
+   INSTALL_COMMAND ""
+   DOWNLOAD_COMMAND ""
+ )
+endif()
 
 #### TUT (Template Unit Test Framework) ########################################
 # http://tut-framework.sourceforge.net

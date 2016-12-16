@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Sun 04 Dec 2016 04:22:02 PM MST
+# \date      Fri 16 Dec 2016 08:38:21 AM MST
 #
 ################################################################################
 
@@ -483,9 +483,9 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_PATH}
                     ${PSTREAMS_INCLUDE_PATH}
+                    ${PEGTL_INCLUDE_PATH}
                     ${H5Part_INCLUDE_DIRS}
                     ${TPL_DIR}/include
-                    ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
