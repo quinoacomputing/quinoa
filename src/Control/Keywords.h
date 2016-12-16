@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 18 Nov 2016 09:08:07 AM MST
+  \date      Fri 16 Dec 2016 07:50:53 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2325,10 +2325,10 @@ struct hydrotimescales_info {
     the system of stochastic differential equations, configured in a
     mixmassfracbeta ... end block. Within the mixmassfracbeta ... end block the
     coefficients policy must be set to 'hydrotimescale' in order for the
-    hydrotimescales ... end  block to be in effect. The hydrotimescales keyword
-    is then used to specify a list of strings, each specifying which inverse
-    time scale should be used for the particular component integrated. Available
-    time scales are defined in src/DiffEq/HydroTimescales.h. Example:
+    hydrotimescales ... end  block to be in effect. The 'hydrotimescales'
+    keyword is then used to specify a list of strings, each specifying which
+    inverse time scale should be used for the particular component integrated.
+    Available time scales are defined in src/DiffEq/HydroTimescales.h. Example:
     "hydrotimescales eq_A05S eq_A05H eq_A05L eq_A05S eq_A05S end", which
     configures five inverse hydrodynamics time scales associated to 5
     components, i.e., 5 scalar stochastic differential equations, integrated,
@@ -2358,6 +2358,141 @@ struct hydrotimescales_info {
 };
 using hydrotimescales =
   keyword< hydrotimescales_info, h,y,d,r,o,t,i,m,e,s,c,a,l,e,s >;
+
+struct prod_A005H_info {
+  static std::string name() { return "prod_A005H"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.05, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.05, IC: light << heavy.)"; }
+};
+using prod_A005H = keyword< prod_A005H_info, p,r,o,d,'_',A,'0','0','5',H >;
+
+struct prod_A005S_info {
+  static std::string name() { return "prod_A005S"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.05, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.05, IC: light = heavy.)"; }
+};
+using prod_A005S = keyword< prod_A005S_info, p,r,o,d,'_',A,'0','0','5',S >;
+
+struct prod_A005L_info {
+  static std::string name() { return "prod_A005L"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.05, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.05, IC: light >> heavy.)"; }
+};
+using prod_A005L = keyword< prod_A005L_info, p,r,o,d,'_',A,'0','0','5',L >;
+
+struct prod_A05H_info {
+  static std::string name() { return "prod_A05H"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.5, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.5, IC: light << heavy.)"; }
+};
+using prod_A05H = keyword< prod_A05H_info, p,r,o,d,'_',A,'0','5',H >;
+
+struct prod_A05S_info {
+  static std::string name() { return "prod_A05S"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.5, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.5, IC: light = heavy.)"; }
+};
+using prod_A05S = keyword< prod_A05S_info, p,r,o,d,'_',A,'0','5',S >;
+
+struct prod_A05L_info {
+  static std::string name() { return "prod_A05L"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.5, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.5, IC: light >> heavy.)"; }
+};
+using prod_A05L = keyword< prod_A05L_info, p,r,o,d,'_',A,'0','5',L >;
+
+struct prod_A075H_info {
+  static std::string name() { return "prod_A075H"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.75, IC:light<<heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.75, IC: light << heavy.)"; }
+};
+using prod_A075H = keyword< prod_A075H_info, p,r,o,d,'_',A,'0','7','5',H >;
+
+struct prod_A075S_info {
+  static std::string name() { return "prod_A075S"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.75, IC:light=heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.75, IC: light = heavy.)"; }
+};
+using prod_A075S = keyword< prod_A075S_info, p,r,o,d,'_',A,'0','7','5',S >;
+
+struct prod_A075L_info {
+  static std::string name() { return "prod_A075L"; }
+  static std::string shortDescription() { return "Select production divided by "
+    "dissipation rate from DNS of HRT, A=0.75, IC:light>>heavy"; }
+  static std::string longDescription() { return
+    R"(Production divided by dissipation rate from DNS of homogeneous
+       Rayleigh-Taylor instability, P/e, A = 0.75, IC: light >> heavy.)"; }
+};
+using prod_A075L = keyword< prod_A075L_info, p,r,o,d,'_',A,'0','7','5',L >;
+
+struct hydroproductions_info {
+  static std::string name() { return "P/eps"; }
+  static std::string shortDescription() { return
+    R"(Set MixMassFractionBeta SDE parameter(s) productions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of strings used to parameterize
+    the system of stochastic differential equations, configured in a
+    mixmassfracbeta ... end block. Within the mixmassfracbeta ... end block the
+    coefficients policy must be set to 'hydrotimescale' in order for the
+    hydroproductions ... end  block to be in effect. The 'hydroproductions'
+    keyword is then used to specify a list of strings, each specifying which
+    turbulent kinetic energy production dividied by the dissipation rate (P/eps)
+    data (from direct numerical simulations) should be used for the particular
+    component integrated. Available P/eps data are defined in
+    src/DiffEq/HydroProductions.h. Example: "productions prod_A05S prod_A05H
+    prod_A05L prod_A05S prod_A05S end", which
+    configures five P/eps data sets associated to 5 components, i.e., 5 scalar
+    stochastic differential equations, integrated, specified and configured
+    within the given mixmassfracbeta ... end block. The length of the
+    hydroproductions vector depends on the number of scalar components and is
+    controlled by the preceding keyword 'ncomp'. For mixmassfracbeta, ncomp is
+    the actual number of scalar components * 4, since mixmassfractionbeta always
+    computes 4 additional derived stochastic variables (in a diagnostic)
+    fashion. See also MixMassFractionBeta::derived() in
+    src/DiffEq/MixMassFractionBeta.h. Keywords allowed in a hydroproductions
+    ... end block: )" + std::string("\'")
+    + prod_A005H::string() + "\', \'"
+    + prod_A005S::string() + "\', \'"
+    + prod_A005L::string() + "\', \'"
+    + prod_A05H::string() + "\', \'"
+    + prod_A05S::string() + "\', \'"
+    + prod_A05L::string() + "\', \'"
+    + prod_A075H::string() + "\', \'"
+    + prod_A075S::string() + "\', \'"
+    + prod_A075L::string() + "\'. "
+    + R"(For an example hydroproductions ... end block, see
+      doc/html/walker_example_mixmassfracbeta.html.)"; }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string(s)"; }
+  };
+};
+using hydroproductions =
+  keyword< hydroproductions_info, h,y,d,r,o,p,r,o,d,u,c,t,i,o,n,s >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

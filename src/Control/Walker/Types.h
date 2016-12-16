@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 01:29:57 PM MST
+  \date      Thu 15 Dec 2016 03:21:34 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -21,6 +21,7 @@
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
 #include "Options/PDFCentering.h"
@@ -305,6 +306,7 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
+  tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
