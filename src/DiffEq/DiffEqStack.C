@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 02:55:18 PM MST
+  \date      Thu 15 Dec 2016 03:20:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -22,6 +22,8 @@
 #include "Options/RNG.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/InitPolicy.h"
+#include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 
 #include "Beta.h"
 #include "DiagOrnsteinUhlenbeck.h"
@@ -796,13 +798,20 @@ const
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   auto ncomp =
     g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
-  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY)
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY) {
     nfo.emplace_back(
       "inverse hydro time scales [" + std::to_string( ncomp ) + "]",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
                                 tag::mixmassfracbeta,
                                 tag::hydrotimescales >().at(c) ) );
+    nfo.emplace_back(
+      "production/dissipation [" + std::to_string( ncomp ) + "]",
+      options( ctr::HydroProductions(),
+               g_inputdeck.get< tag::param,
+                                tag::mixmassfracbeta,
+                                tag::hydroproductions >().at(c) ) );
+  }
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
