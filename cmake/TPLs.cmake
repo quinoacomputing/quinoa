@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Mon 17 Oct 2016 08:55:51 AM MDT
+# \date      Fri 16 Dec 2016 08:35:11 AM MST
 #
 ################################################################################
 
@@ -49,6 +49,10 @@ find_package(Hypre REQUIRED)
 #### PugiXML
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(pugixml REQUIRED)
+
+#### PEGTL
+set(PEGTL_ROOT ${TPL_DIR}) # prefer ours
+find_package(PEGTL REQUIRED)
 
 ### HDF5/NetCDF (NetCDF only for static link)
 if(NOT BUILD_SHARED_LIBS)
