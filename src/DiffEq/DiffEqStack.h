@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 02:55:24 PM MST
+  \date      Wed 21 Dec 2016 03:11:15 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -62,6 +62,11 @@ class DiffEqStack {
     //! Instantiate selected DiffEqs
     std::vector< DiffEq > selected() const;
 
+    //! \brief Instantiate tables from which extra statistics data to be output
+    //!    sampled for all selected differential equations
+    std::pair< std::vector< std::string >, std::vector< tk::Table > > tables()
+    const;
+
     //! \brief Constant accessor to differential equation factory
     //! \return Constant reference to the internal differential equation factory
     //! \author J. Bakosi
@@ -113,14 +118,17 @@ class DiffEqStack {
       }
     };
 
-    //! \brief Instantiate a differential equation
-    //! \details The template argument, EqTag, is used to find the given
-    //!   differential equation in the input deck, the hierarchical data filled
-    //!   during control file parsing, containing user input.
-    //! \param[in] eq The unique differential equation key whose object to
-    //!   instantiate.
+    //! \brief Instantiate a differential equation object
+    //! \see walker::DiffEq
+    //! \details Since multiple systems of equations can be configured
+    //!   with the same type, the map (cnt) is used to assign a counter to each
+    //!   type. The template argument, EqTag, is used to find the given system
+    //!   of differential equations in the input deck, the hierarchical data
+    //!   filled during control file parsing, containing user input.
+    //! \param[in] eq The unique differential equation system key whose object
+    //!   to instantiate.
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
-    //!   differential equations by type.
+    //!   differential equations systems by type.
     //! \author J. Bakosi
     template< class EqTag >
     DiffEq createDiffEq( ctr::DiffEqType eq,
@@ -128,14 +136,58 @@ class DiffEqStack {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
-        // re-create key and search for it
+        // create key and search for it
         ctr::DiffEqKey key{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
         const auto it = m_factory.find( key );
         Assert( it != end( m_factory ), "Can't find eq in factory" );
-        return it->second( c );    // instantiate and return diff eq object
+        // instantiate and return diff eq object
+        return it->second( c );
       } else Throw ( "Can't create DiffEq with zero independent variables" );
+    }
+
+    //! \brief Instantiate tables from a differential equation
+    //! \details This function is used to instantiate a vector of tk::Tables and
+    //!   their associated names for a system of differential equation selected
+    //!   by the user. Since multiple systems of equations can be configured
+    //!   with the same type, the map (cnt) is used to assign a counter to each
+    //!   type. We then find out if the coefficients policy, configured to the
+    //!   equation system, uses tables. If so, we return all the tables and
+    //!   their names associated to the different components in the system. The
+    //!   template argument, EqTag, is used to find the given differential
+    //!   equation system in the input deck, the hierarchical data filled
+    //!   during control file parsing, containing user input.
+    //! \param[in] eq The unique differential equation system key whose tables
+    //!   object to instantiate (if the configured coefficients policy uses
+    //!   tables).
+    //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
+    //!   vector of tables associated to a differential equations systems by
+    //!   type.
+    //! \author J. Bakosi
+    template< class EqTag >
+    std::pair< std::vector< std::string >, std::vector< tk::Table > >
+    createTables( ctr::DiffEqType eq,
+                  std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
+    {
+      auto c = ++cnt[ eq ];   // count eqs
+      --c;                    // used to index vectors starting with 0
+      std::vector< tk::Table > tables;
+      std::vector< std::string > names;
+      if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
+        // find out if coefficients policy uses tables and return them if so
+        if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
+              ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY)
+        {
+          const auto& hts = g_inputdeck.get< tag::param,
+                                             tag::mixmassfracbeta,
+                                             tag::hydrotimescales >().at(c);
+          ctr::HydroTimeScales opt;
+          for (auto t : hts) tables.push_back( opt.table(t) );
+          for (auto t : hts) names.push_back( opt.name(t) );
+        }
+      } else Throw ( "DiffEq with zero independent variables" );
+      return { names, tables };
     }
 
     /** @name Configuration-querying functions for SDEs */
