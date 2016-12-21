@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/HydroProductions.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:19:18 PM MST
+  \date      Thu 22 Dec 2016 06:54:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hydrodynamics production divided by dissipation rate options
   \details   Hydrodynamics production divided by dissipation rate options
@@ -17,6 +17,7 @@
 #include "Toggle.h"
 #include "Keywords.h"
 #include "PUPUtil.h"
+#include "DiffEq/HydroProductions.h"
 
 namespace walker {
 namespace ctr {
@@ -86,6 +87,34 @@ class HydroProductions : public tk::Toggle< HydroProductionsType > {
            { kw::prod_A075H::string(), HydroProductionsType::PROD_A075H },
            { kw::prod_A075S::string(), HydroProductionsType::PROD_A075S },
            { kw::prod_A075L::string(), HydroProductionsType::PROD_A075L } } ) {}
+
+    //! \brief Return table based on Enum
+    //! \param[in] t Enum value of the option requested
+    //! \return tk::Table associated to the option
+    //! \author J. Bakosi
+    tk::Table table( HydroProductionsType t ) const {
+      if (t == HydroProductionsType::PROD_A005H)
+        return prod_A005H;
+      else if (t == HydroProductionsType::PROD_A005S)
+        return prod_A005S;
+      else if (t == HydroProductionsType::PROD_A005L)
+        return prod_A005L;
+      else if (t == HydroProductionsType::PROD_A05H)
+        return prod_A05H;
+      else if (t == HydroProductionsType::PROD_A05S)
+        return prod_A05S;
+      else if (t == HydroProductionsType::PROD_A05L)
+        return prod_A05L;
+      else if (t == HydroProductionsType::PROD_A075H)
+        return prod_A075H;
+      else if (t == HydroProductionsType::PROD_A075S)
+        return prod_A075S;
+      else if (t == HydroProductionsType::PROD_A075L)
+        return prod_A075L;
+      else Throw( "Hydrodynamics P/e associated to " +
+                  std::to_string( static_cast<uint8_t>(t) ) + " not found" );
+    }
+
 };
 
 } // ctr::

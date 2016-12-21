@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:20:25 PM MST
+  \date      Wed 21 Dec 2016 02:55:44 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -268,6 +268,55 @@ DiffEqStack::selected() const
   }
 
   return diffeqs;
+}
+
+std::pair< std::vector< std::string >, std::vector< tk::Table > >
+DiffEqStack::tables() const
+// *****************************************************************************
+//  Instantiate tables from which extra statistics data to be output sampled for
+//  all selected differential equations
+//! \return Vector of names and tables to sample from during time stepping
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::map< ctr::DiffEqType, ncomp_t > cnt;     // count DiffEqs per type
+  std::vector< std::string > nam;               // names of instantiated tables
+  std::vector< tk::Table > tab;                 // instantiated tables
+
+  for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
+    std::pair< std::vector< std::string >, std::vector< tk::Table > > t;
+
+    if (d == ctr::DiffEqType::DIRICHLET)
+      t = createTables< tag::dirichlet >( d, cnt );
+    else if (d == ctr::DiffEqType::GENDIR)
+      t = createTables< tag::gendir >( d, cnt );
+    else if (d == ctr::DiffEqType::WRIGHTFISHER)
+      t = createTables< tag::wrightfisher >( d, cnt );
+    else if (d == ctr::DiffEqType::OU)
+      t = createTables< tag::ou >( d, cnt );
+    else if (d == ctr::DiffEqType::DIAG_OU)
+      t = createTables< tag::diagou >( d, cnt );
+    else if (d == ctr::DiffEqType::BETA)
+      t = createTables< tag::beta >( d, cnt );
+    else if (d == ctr::DiffEqType::NUMFRACBETA)
+      t = createTables< tag::numfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MASSFRACBETA)
+      t = createTables< tag::massfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
+      t = createTables< tag::mixnumfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+      t = createTables< tag::mixmassfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::SKEWNORMAL)
+      t = createTables< tag::skewnormal >( d, cnt );
+    else if (d == ctr::DiffEqType::GAMMA)
+      t = createTables< tag::gamma >( d, cnt );
+    else Throw( "Can't find selected DiffEq" );
+
+    nam.insert( end(nam), begin(t.first), end(t.first) );
+    tab.insert( end(tab), begin(t.second), end(t.second) );
+  }
+
+  return { nam, tab };
 }
 
 std::vector< std::vector< std::pair< std::string, std::string > > >

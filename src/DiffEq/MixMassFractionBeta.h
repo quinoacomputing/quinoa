@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 04:51:37 PM MST
+  \date      Wed 21 Dec 2016 01:20:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -150,26 +150,8 @@ class MixMassFractionBeta {
         const auto& hts = g_inputdeck.get< tag::param,
                                            tag::mixmassfracbeta,
                                            tag::hydrotimescales >().at(c);
-        for (auto t : hts) {
-          if (t == ctr::HydroTimeScalesType::EQ_A005H)
-            m_hts.push_back( invhts_eq_A005H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A005S)
-            m_hts.push_back( invhts_eq_A005S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A005L)
-            m_hts.push_back( invhts_eq_A005L );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05H)
-            m_hts.push_back( invhts_eq_A05H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05S)
-            m_hts.push_back( invhts_eq_A05S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05L)
-            m_hts.push_back( invhts_eq_A05L );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075H)
-            m_hts.push_back( invhts_eq_A075H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075S)
-            m_hts.push_back( invhts_eq_A075S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075L)
-            m_hts.push_back( invhts_eq_A075L );
-        }
+        ctr::HydroTimeScales ot;
+        for (auto t : hts) m_hts.push_back( ot.table(t) );
         Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
           "tables associated does not match the components integrated" );
 
@@ -177,26 +159,8 @@ class MixMassFractionBeta {
         const auto& hp = g_inputdeck.get< tag::param,
                                           tag::mixmassfracbeta,
                                           tag::hydroproductions >().at(c);
-        for (auto t : hp) {
-          if (t == ctr::HydroProductionsType::PROD_A005H)
-            m_hp.push_back( prod_A005H );
-          else if (t == ctr::HydroProductionsType::PROD_A005S)
-            m_hp.push_back( prod_A005S );
-          else if (t == ctr::HydroProductionsType::PROD_A005L)
-            m_hp.push_back( prod_A005L );
-          else if (t == ctr::HydroProductionsType::PROD_A05H)
-            m_hp.push_back( prod_A05H );
-          else if (t == ctr::HydroProductionsType::PROD_A05S)
-            m_hp.push_back( prod_A05S );
-          else if (t == ctr::HydroProductionsType::PROD_A05L)
-            m_hp.push_back( prod_A05L );
-          else if (t == ctr::HydroProductionsType::PROD_A075H)
-            m_hp.push_back( prod_A075H );
-          else if (t == ctr::HydroProductionsType::PROD_A075S)
-            m_hp.push_back( prod_A075S );
-          else if (t == ctr::HydroProductionsType::PROD_A075L)
-            m_hp.push_back( prod_A075L );
-        }
+        ctr::HydroProductions op;
+        for (auto t : hp) m_hp.push_back( op.table(t) );
         Assert( m_hp.size() == m_ncomp, "Number of hydro "
           "production/dissipation tables associated does not match the "
           "components integrated" );

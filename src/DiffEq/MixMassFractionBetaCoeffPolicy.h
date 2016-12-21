@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 07:02:45 AM MST
+  \date      Mon 19 Dec 2016 11:54:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -523,7 +523,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       //   r = R - <R>, density fluctuation about its mean,
       // <Y> = mean mass fraction,
       // <R> = mean density,
-      std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
+      //std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
       // Sample hydrodynamics timescale at time t
       for (ncomp_t c=0; c<ncomp; ++c) {
 
@@ -572,7 +572,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
 
         //tk::real f = 1.0;
         //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
-        tk::real f = 1.0/(1.0+(pe-1.0));
+        tk::real f = 1.0 / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
 
         //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * ts;
         //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
