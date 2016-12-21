@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:23:47 PM MST
+  \date      Wed 21 Dec 2016 10:19:26 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -105,6 +105,52 @@ namespace deck {
     }
   };
 
+  //! \brief Check the existence of a vector (required for a block)
+  //! \details This functor can be used to check the existence of a
+  //!   user-specified vector, e.g., at the end of a diffeq ... end block, that
+  //!   is required for that block. If the vector does not exist, we error out.
+  //! \note This functor only checks existence. If the vector exists, the size
+  //!   of it can be checked by check_vector_size.
+  //! \author J. Bakosi
+  template< class eq, class vec, tk::grm::MsgKey Key >
+  struct check_vector_exists : pegtl::action_base<
+           check_vector_exists< eq, vec, Key > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      const auto& vv = stack.template get< tag::param, eq, vec >();
+      if (vv.size() != neq.get< eq >())
+        tk::grm::Message< Stack, tk::grm::ERROR, Key >( stack, value );
+    }
+  };
+
+  //! \brief Do error checking of a vector (required for a block)
+  //! \details This functor can be used to verify the correct size of an already
+  //!   existing vector, specified by the user in a given block. The vector is
+  //!   required to have a specific size: ncomp/4, i.e., the number of
+  //!   components in a block divided by four. This specific value is the only
+  //!   way this is used at this time, thus the hard-coding of ncomp/4. However,
+  //!   this could be abstracted away via a template argument if needed.
+  //! \note This functor does not check existence of a vector. If the vector
+  //!   does not even exist, it will throw an exception in DEBUG mode, while in
+  //!   RELEASE mode it will attempt to access unallocated memory yielding a
+  //!   segfault. The existence of the vector should be checked by
+  //!   check_vector_exists first.
+  //! \author J. Bakosi
+  template< class Stack, class eq, class vec >
+  struct check_vector_size :
+    pegtl::action_base< check_vector_size< Stack, eq, vec > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      const auto& vv = stack.template get< tag::param, eq, vec >();
+      Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
+      const auto& v = vv.back();
+      const auto& ncomp = stack.template get< tag::component, eq >().back();
+      if (v.empty() || v.size() != ncomp/4)
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
+                        ( stack, value );
+    }
+  };
+
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
   //! \author J. Bakosi
@@ -172,40 +218,6 @@ namespace deck {
                           ( stack, value );
       }
 
-    }
-  };
-
-  //! \brief Do error checking on the hydrotimescales block
-  //! \author J. Bakosi
-  template< class Stack, class eq, class param >
-  struct check_hydrotimescales :
-    pegtl::action_base< check_hydrotimescales< Stack, eq, param > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
-      // Error out if hydrotimescales vector has the wrong size
-      const auto& hts =
-        stack.template get< tag::param, eq, tag::hydrotimescales >().back();
-      const auto& ncomp = stack.template get< tag::component, eq >().back();
-      if (hts.empty() || hts.size() != ncomp/4)
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
-                        ( stack, value );
-    }
-  };
-
-  //! \brief Do error checking on the hydroproductions block
-  //! \author J. Bakosi
-  template< class Stack, class eq, class param >
-  struct check_hydroproductions :
-    pegtl::action_base< check_hydroproductions< Stack, eq, param > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
-      // Error out if hydroproductions vector has the wrong size
-      const auto& hp =
-        stack.template get< tag::param, eq, tag::hydroproductions >().back();
-      const auto& ncomp = stack.template get< tag::component, eq >().back();
-      if (hp.empty() || hp.size() != ncomp/4)
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
-                        ( stack, value );
     }
   };
 
@@ -291,7 +303,7 @@ namespace deck {
                              tag::betapdf > > > {};
 
   //! Error checks after an equation ... end block has been parsed
-  template< class eq >
+  template< class eq, class... extra_checks  >
   struct check_errors :
          pegtl::seq<
            // register differential equation block
@@ -299,7 +311,9 @@ namespace deck {
            // do error checking on this block
            pegtl::apply< check_eq< eq > >,
            // do error checking on the init policy
-           pegtl::apply< check_init< eq > > > {};
+           pegtl::apply< check_init< eq > >,
+           // performe extra pegtl actions, e.g., performing extra checks
+           pegtl::apply< extra_checks >... > {};
 
   //! SDE parameter vector
   template< class keyword, class eq, class param >
@@ -690,12 +704,12 @@ namespace deck {
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
                                               tag::hydrotimescales,
-                                              check_hydrotimescales >,
+                                              check_vector_size >,
                            sde_option_vector< ctr::HydroProductions,
                                               kw::hydroproductions,
                                               tag::mixmassfracbeta,
                                               tag::hydroproductions,
-                                              check_hydroproductions >,
+                                              check_vector_size >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,
@@ -711,7 +725,15 @@ namespace deck {
                            sde_parameter_vector< kw::sde_r,
                                                  tag::mixmassfracbeta,
                                                  tag::r > >,
-           check_errors< tag::mixmassfracbeta > > {};
+           check_errors< tag::mixmassfracbeta,
+                         check_vector_exists<
+                           tag::mixmassfracbeta,
+                           tag::hydrotimescales,
+                           tk::grm::MsgKey::HYDROTIMESCALES >,
+                         check_vector_exists<
+                           tag::mixmassfracbeta,
+                           tag::hydroproductions,
+                           tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
 
   //! Gamma SDE
   struct gamma :
