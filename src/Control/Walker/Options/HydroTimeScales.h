@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 12:00:06 PM MST
+  \date      Thu 22 Dec 2016 06:53:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scale options
   \details   Inverse hydrodynamics time scale options
@@ -17,6 +17,7 @@
 #include "Toggle.h"
 #include "Keywords.h"
 #include "PUPUtil.h"
+#include "DiffEq/HydroTimeScales.h"
 
 namespace walker {
 namespace ctr {
@@ -86,6 +87,33 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
            { kw::eq_A075H::string(), HydroTimeScalesType::EQ_A075H },
            { kw::eq_A075S::string(), HydroTimeScalesType::EQ_A075S },
            { kw::eq_A075L::string(), HydroTimeScalesType::EQ_A075L } } ) {}
+
+    //! \brief Return table based on Enum
+    //! \param[in] t Enum value of the option requested
+    //! \return tk::Table associated to the option
+    //! \author J. Bakosi
+    tk::Table table( HydroTimeScalesType t ) const {
+      if (t == HydroTimeScalesType::EQ_A005H)
+        return invhts_eq_A005H;
+      else if (t == HydroTimeScalesType::EQ_A005S)
+        return invhts_eq_A005S;
+      else if (t == HydroTimeScalesType::EQ_A005L)
+        return invhts_eq_A005L;
+      else if (t == HydroTimeScalesType::EQ_A05H)
+        return invhts_eq_A05H;
+      else if (t == HydroTimeScalesType::EQ_A05S)
+        return invhts_eq_A05S;
+      else if (t == HydroTimeScalesType::EQ_A05L)
+        return invhts_eq_A05L;
+      else if (t == HydroTimeScalesType::EQ_A075H)
+        return invhts_eq_A075H;
+      else if (t == HydroTimeScalesType::EQ_A075S)
+        return invhts_eq_A075S;
+      else if (t == HydroTimeScalesType::EQ_A075L)
+        return invhts_eq_A075L;
+      else Throw( "Inverse hydrodynamics time scale associated to " +
+                  std::to_string( static_cast<uint8_t>(t) ) + " not found" );
+    }
 };
 
 } // ctr::

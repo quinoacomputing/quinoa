@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 10:34:41 AM MDT
+  \date      Wed 21 Dec 2016 01:29:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -49,11 +49,13 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
 
 void
 TxtStatWriter::header( const std::vector< std::string >& nameOrd,
-                       const std::vector< std::string >& nameCen ) const
+                       const std::vector< std::string >& nameCen,
+                       const std::vector< std::string >& nameExt ) const
 // *****************************************************************************
 //  Write out statistics file header
 //! \param[in] nameOrd Vector of strings with the names of ordinary moments
 //! \param[in] nameCen Vector of strings with the names of central moments
+//! \param[in] nameExt Vector of strings with the names of extra data
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -76,6 +78,13 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
     out.str("");
   }
 
+  // Output name of extra data
+  for (const auto& c : nameExt) {
+    out << column++ << ":<" << c << ">";
+    m_outFile << std::setw(m_width) << out.str();
+    out.str("");
+  }
+
   m_outFile << std::endl;
 }
 
@@ -83,13 +92,15 @@ std::size_t
 TxtStatWriter::stat( uint64_t it,
                      tk::real t,
                      const std::vector< tk::real >& ordinary,
-                     const std::vector< tk::real >& central )
+                     const std::vector< tk::real >& central,
+                     const std::vector< tk::real >& extra )
 // *****************************************************************************
 //  Write out statistics
 //! \param[in] it Iteration counter
 //! \param[in] t Time
 //! \param[in] ordinary Vector with the ordinary moment statistics
 //! \param[in] central Vector with the central moment statistics
+//! \param[in] extra Vector with extra data to be also written (besides stats)
 //! \return The total number of statistics written to the output file
 //! \author J. Bakosi
 // *****************************************************************************
@@ -103,7 +114,10 @@ TxtStatWriter::stat( uint64_t it,
   // Output central moments
   for (const auto& c : central) m_outFile << std::setw(m_width) << c;
 
+  // Output extra data
+  for (const auto& c : extra) m_outFile << std::setw(m_width) << c;
+
   m_outFile << std::endl;
 
-  return ordinary.size() + central.size();
+  return ordinary.size() + central.size() + extra.size();
 }
