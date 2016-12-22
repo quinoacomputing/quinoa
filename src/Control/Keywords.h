@@ -2369,7 +2369,7 @@ struct prod_A005H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light << heavy.)"; }
 };
-using prod_A005H = keyword< prod_A005H_info, p,r,o,d,'_',A,'0','0','5',H >;
+using prod_A005H = keyword< prod_A005H_info, pegtl_string_t("prod_A005H") >;
 
 struct prod_A005S_info {
   static std::string name() { return "prod_A005S"; }
@@ -2379,7 +2379,7 @@ struct prod_A005S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light = heavy.)"; }
 };
-using prod_A005S = keyword< prod_A005S_info, p,r,o,d,'_',A,'0','0','5',S >;
+using prod_A005S = keyword< prod_A005S_info, pegtl_string_t("prod_A005S") >;
 
 struct prod_A005L_info {
   static std::string name() { return "prod_A005L"; }
@@ -2389,7 +2389,7 @@ struct prod_A005L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light >> heavy.)"; }
 };
-using prod_A005L = keyword< prod_A005L_info, p,r,o,d,'_',A,'0','0','5',L >;
+using prod_A005L = keyword< prod_A005L_info, pegtl_string_t("prod_A005L") >;
 
 struct prod_A05H_info {
   static std::string name() { return "prod_A05H"; }
@@ -2399,7 +2399,7 @@ struct prod_A05H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light << heavy.)"; }
 };
-using prod_A05H = keyword< prod_A05H_info, p,r,o,d,'_',A,'0','5',H >;
+using prod_A05H = keyword< prod_A05H_info, pegtl_string_t("prod_A05H") >;
 
 struct prod_A05S_info {
   static std::string name() { return "prod_A05S"; }
@@ -2409,7 +2409,7 @@ struct prod_A05S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light = heavy.)"; }
 };
-using prod_A05S = keyword< prod_A05S_info, p,r,o,d,'_',A,'0','5',S >;
+using prod_A05S = keyword< prod_A05S_info, pegtl_string_t("prod_A05S") >;
 
 struct prod_A05L_info {
   static std::string name() { return "prod_A05L"; }
@@ -2419,7 +2419,7 @@ struct prod_A05L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light >> heavy.)"; }
 };
-using prod_A05L = keyword< prod_A05L_info, p,r,o,d,'_',A,'0','5',L >;
+using prod_A05L = keyword< prod_A05L_info, pegtl_string_t("prod_A05L") >;
 
 struct prod_A075H_info {
   static std::string name() { return "prod_A075H"; }
@@ -2429,7 +2429,7 @@ struct prod_A075H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light << heavy.)"; }
 };
-using prod_A075H = keyword< prod_A075H_info, p,r,o,d,'_',A,'0','7','5',H >;
+using prod_A075H = keyword< prod_A075H_info, pegtl_string_t("prod_A075H") >;
 
 struct prod_A075S_info {
   static std::string name() { return "prod_A075S"; }
@@ -2439,7 +2439,7 @@ struct prod_A075S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light = heavy.)"; }
 };
-using prod_A075S = keyword< prod_A075S_info, p,r,o,d,'_',A,'0','7','5',S >;
+using prod_A075S = keyword< prod_A075S_info, pegtl_string_t("prod_A075S") >;
 
 struct prod_A075L_info {
   static std::string name() { return "prod_A075L"; }
@@ -2449,7 +2449,7 @@ struct prod_A075L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light >> heavy.)"; }
 };
-using prod_A075L = keyword< prod_A075L_info, p,r,o,d,'_',A,'0','7','5',L >;
+using prod_A075L = keyword< prod_A075L_info, pegtl_string_t("prod_A075L") >;
 
 struct hydroproductions_info {
   static std::string name() { return "P/eps"; }
@@ -2494,7 +2494,7 @@ struct hydroproductions_info {
   };
 };
 using hydroproductions =
-  keyword< hydroproductions_info, h,y,d,r,o,p,r,o,d,u,c,t,i,o,n,s >;
+  keyword< hydroproductions_info, pegtl_string_t("hydroproductions") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
