@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 03:57:30 PM MST
+  \date      Mon 19 Dec 2016 03:16:28 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -117,6 +117,8 @@ namespace grm {
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
+    HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
@@ -247,6 +249,10 @@ namespace grm {
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
+      "Specification of a 'hydrotimescales' vector missing." },
+    { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
+      "Specification of a 'hydroproductions' vector missing." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

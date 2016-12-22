@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 11:07:18 AM MST
+  \date      Thu 15 Dec 2016 03:30:36 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -191,6 +191,7 @@ class InputDeck :
                                      , kw::betapdf
                                      >;
     using keywords7 = boost::mpl::set< kw::hydrotimescales
+                                     , kw::hydroproductions
                                      , kw::eq_A005H
                                      , kw::eq_A005S
                                      , kw::eq_A005L
@@ -200,6 +201,15 @@ class InputDeck :
                                      , kw::eq_A075H
                                      , kw::eq_A075S
                                      , kw::eq_A075L
+                                     , kw::prod_A005H
+                                     , kw::prod_A005S
+                                     , kw::prod_A005L
+                                     , kw::prod_A05H
+                                     , kw::prod_A05S
+                                     , kw::prod_A05L
+                                     , kw::prod_A075H
+                                     , kw::prod_A075S
+                                     , kw::prod_A075L
                                      >;
 
     //! \brief Constructor: set all defaults

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:26:15 PM MDT
+  \date      Wed 21 Dec 2016 01:29:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -39,13 +39,15 @@ class TxtStatWriter : public tk::Writer {
 
     //! Write out statistics file header
     void header( const std::vector< std::string >& nameOrd,
-                 const std::vector< std::string >& nameCen ) const;
+                 const std::vector< std::string >& nameCen,
+                 const std::vector< std::string >& nameExt ) const;
 
     //! Write statistics file
     std::size_t stat( uint64_t it,
                       tk::real t,
                       const std::vector< tk::real >& ordinary,
-                      const std::vector< tk::real >& central );
+                      const std::vector< tk::real >& central,
+                      const std::vector< tk::real >& extra );
 
   private:
     int m_precision;    //!< Floating-point precision in digits

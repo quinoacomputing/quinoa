@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 22 Nov 2016 08:48:03 AM MST
+  \date      Thu 22 Dec 2016 06:54:28 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -70,6 +70,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_cenupdf(),
   m_cenbpdf(),
   m_centpdf(),
+  m_tables(),
   m_moments()
 // *****************************************************************************
 // Constructor
@@ -103,7 +104,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
                         std::string(),
                         g_inputdeck.get< tag::flformat, tag::stat >(),
                         g_inputdeck.get< tag::prec, tag::stat >() );
-  sw.header( m_nameOrdinary, m_nameCentral );
+  sw.header( m_nameOrdinary, m_nameCentral, m_tables.first );
 
   // Print out time integration header
   m_print.endsubsection();
@@ -134,7 +135,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 }
 
 void
-Distributor::info( uint64_t chunksize, std::size_t nchare ) const
+Distributor::info( uint64_t chunksize, std::size_t nchare )
 // *****************************************************************************
 //  Print information at startup
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
@@ -155,6 +156,9 @@ Distributor::info( uint64_t chunksize, std::size_t nchare ) const
   m_print.eqlist( "Registered differential equations",
                   stack.factory(), stack.ntypes() );
   m_print.endpart();
+
+  // Instantiate tables to sample and output to statistics file
+  m_tables = stack.tables();
 
   // Print out information on problem
   m_print.part( "Problem" );
@@ -323,6 +327,14 @@ Distributor::outStat()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // lambda to sample tables to write to statistics file
+  auto extra = [this]() -> std::vector< tk::real > {
+    std::vector< tk::real > x;
+    for (const auto& t : this->m_tables.second)
+      x.push_back( tk::sample(m_t,t) );
+    return x;
+  };
+
   // Append statistics file at selected times
   if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::stat >())) {
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
@@ -331,7 +343,7 @@ Distributor::outStat()
                           g_inputdeck.get< tag::flformat, tag::stat >(),
                           g_inputdeck.get< tag::prec, tag::stat >(),
                           std::ios_base::app );
-    if (sw.stat( m_it+1, m_t+m_dt, m_ordinary, m_central ))
+    if (sw.stat( m_it+1, m_t+m_dt, m_ordinary, m_central, extra() ))
       m_output.get< tag::stat >() = true;
   }
 }

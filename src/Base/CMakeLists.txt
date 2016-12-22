@@ -13,6 +13,7 @@ add_library(Base
             Reader.C
             Writer.C
             VectorReducer.C
+            Table.C
 #            Msg.C
 )
 

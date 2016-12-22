@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 02:55:18 PM MST
+  \date      Wed 21 Dec 2016 02:55:44 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -22,6 +22,8 @@
 #include "Options/RNG.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/InitPolicy.h"
+#include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 
 #include "Beta.h"
 #include "DiagOrnsteinUhlenbeck.h"
@@ -266,6 +268,55 @@ DiffEqStack::selected() const
   }
 
   return diffeqs;
+}
+
+std::pair< std::vector< std::string >, std::vector< tk::Table > >
+DiffEqStack::tables() const
+// *****************************************************************************
+//  Instantiate tables from which extra statistics data to be output sampled for
+//  all selected differential equations
+//! \return Vector of names and tables to sample from during time stepping
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::map< ctr::DiffEqType, ncomp_t > cnt;     // count DiffEqs per type
+  std::vector< std::string > nam;               // names of instantiated tables
+  std::vector< tk::Table > tab;                 // instantiated tables
+
+  for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
+    std::pair< std::vector< std::string >, std::vector< tk::Table > > t;
+
+    if (d == ctr::DiffEqType::DIRICHLET)
+      t = createTables< tag::dirichlet >( d, cnt );
+    else if (d == ctr::DiffEqType::GENDIR)
+      t = createTables< tag::gendir >( d, cnt );
+    else if (d == ctr::DiffEqType::WRIGHTFISHER)
+      t = createTables< tag::wrightfisher >( d, cnt );
+    else if (d == ctr::DiffEqType::OU)
+      t = createTables< tag::ou >( d, cnt );
+    else if (d == ctr::DiffEqType::DIAG_OU)
+      t = createTables< tag::diagou >( d, cnt );
+    else if (d == ctr::DiffEqType::BETA)
+      t = createTables< tag::beta >( d, cnt );
+    else if (d == ctr::DiffEqType::NUMFRACBETA)
+      t = createTables< tag::numfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MASSFRACBETA)
+      t = createTables< tag::massfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
+      t = createTables< tag::mixnumfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+      t = createTables< tag::mixmassfracbeta >( d, cnt );
+    else if (d == ctr::DiffEqType::SKEWNORMAL)
+      t = createTables< tag::skewnormal >( d, cnt );
+    else if (d == ctr::DiffEqType::GAMMA)
+      t = createTables< tag::gamma >( d, cnt );
+    else Throw( "Can't find selected DiffEq" );
+
+    nam.insert( end(nam), begin(t.first), end(t.first) );
+    tab.insert( end(tab), begin(t.second), end(t.second) );
+  }
+
+  return { nam, tab };
 }
 
 std::vector< std::vector< std::pair< std::string, std::string > > >
@@ -796,13 +847,20 @@ const
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
   auto ncomp =
     g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
-  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY)
+  if (cp == ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY) {
     nfo.emplace_back(
       "inverse hydro time scales [" + std::to_string( ncomp ) + "]",
       options( ctr::HydroTimeScales(),
                g_inputdeck.get< tag::param,
                                 tag::mixmassfracbeta,
                                 tag::hydrotimescales >().at(c) ) );
+    nfo.emplace_back(
+      "production/dissipation [" + std::to_string( ncomp ) + "]",
+      options( ctr::HydroProductions(),
+               g_inputdeck.get< tag::param,
+                                tag::mixmassfracbeta,
+                                tag::hydroproductions >().at(c) ) );
+  }
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
