@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:21:34 PM MST
+  \date      Thu 22 Dec 2016 10:55:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -332,8 +332,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::mixmassfracbeta, MixMassFractionBetaParameters
 >;
 
-//! PEGTL location type to use throughout Walker's parsers
-using Location = pegtl::ascii_location;
+//! PEGTL location/position type to use throughout all of Walker's parsers
+using Location = pegtl::position_info;
 
 } // ctr::
 } // walker::
