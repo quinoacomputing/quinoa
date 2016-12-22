@@ -172,8 +172,8 @@ class DiffEqStack {
     {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
-      std::vector< tk::Table > tables;
-      std::vector< std::string > names;
+      std::vector< tk::Table > tab;
+      std::vector< std::string > nam;
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
         // find out if coefficients policy uses tables and return them if so
         if (g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] ==
@@ -183,11 +183,11 @@ class DiffEqStack {
                                              tag::mixmassfracbeta,
                                              tag::hydrotimescales >().at(c);
           ctr::HydroTimeScales opt;
-          for (auto t : hts) tables.push_back( opt.table(t) );
-          for (auto t : hts) names.push_back( opt.name(t) );
+          for (auto t : hts) tab.push_back( opt.table(t) );
+          for (auto t : hts) nam.push_back( opt.name(t) );
         }
       } else Throw ( "DiffEq with zero independent variables" );
-      return { names, tables };
+      return { nam, tab };
     }
 
     /** @name Configuration-querying functions for SDEs */
