@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Wed 21 Dec 2016 03:11:15 PM MST
+  \date      Thu 22 Dec 2016 12:59:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -182,9 +182,17 @@ class DiffEqStack {
           const auto& hts = g_inputdeck.get< tag::param,
                                              tag::mixmassfracbeta,
                                              tag::hydrotimescales >().at(c);
-          ctr::HydroTimeScales opt;
-          for (auto t : hts) tab.push_back( opt.table(t) );
-          for (auto t : hts) nam.push_back( opt.name(t) );
+          ctr::HydroTimeScales ot;
+          for (auto t : hts) tab.push_back( ot.table(t) );
+          for (auto t : hts) nam.push_back( ot.name(t) );
+
+          const auto& hp = g_inputdeck.get< tag::param,
+                                            tag::mixmassfracbeta,
+                                            tag::hydroproductions >().at(c);
+          ctr::HydroProductions op;
+          for (auto t : hp) tab.push_back( op.table(t) );
+          for (auto t : hp) nam.push_back( op.name(t) );
+
         }
       } else Throw ( "DiffEq with zero independent variables" );
       return { nam, tab };
