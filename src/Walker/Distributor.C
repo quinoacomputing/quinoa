@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 06:54:28 AM MST
+  \date      Thu 22 Dec 2016 12:33:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -392,7 +392,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t+m_dt );
+    filename += '_' + std::to_string( m_t );
 
   // Augment PDF filename by '.txt' extension
   filename += ".txt";
@@ -434,7 +434,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t+m_dt );
+    filename += '_' + std::to_string( m_t );
 
   const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
 
@@ -496,7 +496,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t+m_dt );
+    filename += '_' + std::to_string( m_t );
 
   const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
 
