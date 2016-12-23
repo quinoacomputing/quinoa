@@ -1074,7 +1074,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, MsgType type, MsgKey key >
   struct unknown :
-         pegtl::pad< pegtl::ifapply< trim< Stack, pegtl::any, pegtl::space >,
+         pegtl::pad< pegtl::if_must< trim< Stack, pegtl::any, pegtl::space >,
                                      msg< type, key > >,
                      pegtl::blank,
                      pegtl::space > {};
@@ -1145,7 +1145,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, class keywords, class... actions >
   struct scan :
-           pegtl::pad< pegtl::ifapply< trim< Stack, keywords, pegtl::space >,
+           pegtl::pad< pegtl::if_must< trim< Stack, keywords, pegtl::space >,
                                        actions... >,
                        pegtl::blank,
                        pegtl::space > {};
@@ -1158,7 +1158,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, class keywords, class action, class end = pegtl::space >
   struct scan_until :
-         pegtl::pad< pegtl::ifapply< trim< Stack, keywords,
+         pegtl::pad< pegtl::if_must< trim< Stack, keywords,
                                            pegtl::sor< pegtl::space, end > >,
                                      action >,
                      pegtl::blank,
@@ -1202,39 +1202,38 @@ namespace grm {
   template< class Stack, class key, class insert, class endkeyword,
             class starter, class value = number >
   struct vector :
-         pegtl::ifmust< readkw< Stack, typename key::pegtl_string >,
-                        starter,
-                        pegtl::until<
-                          readkw< Stack, typename endkeyword::pegtl_string >,
-                          pegtl::sor<
-                            comment< Stack >,
-                            scan< Stack, value, insert >,
-                            unknown< Stack, ERROR, MsgKey::LIST > > > > {};
+         pegtl::if_must< readkw< Stack, typename key::pegtl_string >,
+                         starter,
+                         pegtl::until<
+                           readkw< Stack, typename endkeyword::pegtl_string >,
+                           pegtl::sor<
+                             comment< Stack >,
+                             scan< Stack, value, insert >,
+                             unknown< Stack, ERROR, MsgKey::LIST > > > > {};
 
   //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
   //!   apply action 'insert'
   //! \author J. Bakosi
   template< class Stack, class insert, char lbound = '"', char rbound = '"' >
   struct quoted :
-         pegtl::ifmust< pegtl::one< lbound >,
-                        pegtl::ifapply<
-                          pegtl::sor< trim< Stack, pegtl::not_one< lbound >,
-                                            pegtl::one< rbound > >,
-                                      unknown< Stack, ERROR, MsgKey::QUOTED > >,
-                        insert >,
-                        pegtl::one< rbound > > {};
+         pegtl::if_must< pegtl::one< lbound >,
+                         pegtl::if_must<
+                           pegtl::sor< trim< Stack, pegtl::not_one< lbound >,
+                                             pegtl::one< rbound > >,
+                                       unknown< Stack, ERROR, MsgKey::QUOTED > >,
+                         insert >,
+                         pegtl::one< rbound > > {};
 
   //! \brief Process 'keyword' and call its 'insert' action if matches 'kw_type'
   //! \author J. Bakosi
   template< class Stack, class keyword, class insert,
             class kw_type = pegtl::digit >
   struct process :
-         pegtl::ifmust< readkw< Stack, typename keyword::pegtl_string >,
-                        scan< Stack, pegtl::sor<
-                                kw_type,
-                                pegtl::apply< error< Stack,
-                                                     MsgKey::MISSING > > >,
-                              insert > > {};
+         pegtl::if_must< readkw< Stack, typename keyword::pegtl_string >,
+                         scan< Stack, pegtl::sor<
+                                 kw_type,
+                                 msg< ERROR, MsgKey::MISSING > >,
+                               insert > > {};
 
   //! \brief Process 'keyword' and call its 'insert' action for a string matched
   //!   between characters 'lbound' and 'rbound'
@@ -1242,10 +1241,10 @@ namespace grm {
   template< class Stack, class keyword, class insert, char lbound='"',
             char rbound='"' >
   struct process_quoted :
-         pegtl::ifmust< readkw< Stack, keyword >,
-                        pegtl::sor<
-                          quoted< Stack, insert, lbound, rbound >,
-                          unknown< Stack, ERROR, MsgKey::QUOTED > > > {};
+         pegtl::if_must< readkw< Stack, keyword >,
+                         pegtl::sor<
+                           quoted< Stack, insert, lbound, rbound >,
+                           unknown< Stack, ERROR, MsgKey::QUOTED > > > {};
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
@@ -1253,13 +1252,12 @@ namespace grm {
   template< class Stack, class keyword, class insert,
             class kw_type = pegtl::any >
   struct process_cmd :
-         pegtl::ifmust< readcmd< Stack, keyword >,
-                        scan< Stack, 
-                              pegtl::sor<
-                                kw_type,
-                                pegtl::apply< error< Stack,
-                                                     MsgKey::MISSING > > >,
-                        insert > > {};
+         pegtl::if_must< readcmd< Stack, keyword >,
+                         scan< Stack, 
+                               pegtl::sor<
+                                 kw_type,
+                                 msg< ERROR, MsgKey::MISSING > >,
+                         insert > > {};
 
   //! \brief Process command line switch 'keyword'
   //! \details The value of a command line switch is a boolean, i.e., it can be
@@ -1267,9 +1265,9 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, class keyword, typename tag, typename... tags >
   struct process_cmd_switch :
-         pegtl::ifmust<
+         pegtl::if_must<
            readcmd< Stack, keyword >,
-           pegtl::apply< Store_switch< Stack, tag, tags... > > > {};
+           Store_switch< tag, tags... > > {};
 
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file
@@ -1312,11 +1310,7 @@ namespace grm {
   struct rng_option :
          process< Stack,
                   keyword,
-                  insert_option< Stack,
-                                 use,
-                                 option,
-                                 field,
-                                 sel, vec, tags... >,
+                  insert_option< use, option, field, sel, vec, tags... >,
                   pegtl::alpha > {};
 
   //! \brief fieldvar: a character, denoting a variable, optionally followed by
@@ -1325,8 +1319,8 @@ namespace grm {
   template< typename Stack, typename var >
   struct fieldvar :
          pegtl::sor<
-           pegtl::seq< var, pegtl::ifapply< pegtl::plus< pegtl::digit >,
-                                            save_field< Stack > > >,
+           pegtl::seq< var, pegtl::if_must< pegtl::plus< pegtl::digit >,
+                                            save_field > >,
            var > {};
 
   //! \brief term: upper or lowercase fieldvar matched to selected depvars for
@@ -1335,16 +1329,12 @@ namespace grm {
   template< class Stack >
   struct term :
          pegtl::sor<
-           pegtl::ifapply<
+           pegtl::if_must<
              fieldvar< Stack, pegtl::upper >,
-             match_depvar<
-               Stack,
-               push_term< Stack, tk::ctr::Moment::ORDINARY > > >,
-           pegtl::ifapply<
+             match_depvar< push_term< tk::ctr::Moment::ORDINARY > > >,
+           pegtl::if_must<
              fieldvar< Stack, pegtl::lower >,
-             match_depvar<
-               Stack,
-               push_term< Stack, tk::ctr::Moment::CENTRAL > > > > {};
+             match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
 
   //! \brief sample space variable: fieldvar matched to selected depvars
   //! \author J. Bakosi
@@ -1353,7 +1343,7 @@ namespace grm {
          scan_until<
            Stack,
            fieldvar< Stack, c >,
-           match_depvar< Stack, push_sample< Stack, m > >,
+           match_depvar< push_sample< m > >,
            pegtl::one<':'> > {};
 
   //! \brief samples: sample space variables optionally separated by fillers
@@ -1371,11 +1361,11 @@ namespace grm {
   struct bins :
          pegtl::sor< scan_until< Stack,
                                  number,
-                                 push_binsize< Stack >,
+                                 push_binsize,
                                  pegtl::one<')'> >,
-                     pegtl::ifapply<
+                     pegtl::if_must<
                        pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                       error< Stack, MsgKey::INVALIDBINSIZE > > > {};
+                       msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
 
   //! \brief plow through expectations between characters '<' and '>'
   //! \author J. Bakosi
@@ -1383,20 +1373,20 @@ namespace grm {
   struct parse_expectations :
          readkw<
            Stack,
-           pegtl::ifmust<
+           pegtl::if_must<
              pegtl::one<'<'>,
-             pegtl::apply< start_vector< Stack, tag::stat > >,
+             start_vector< tag::stat >,
              pegtl::until< pegtl::one<'>'>, term< Stack > >,
-             pegtl::apply< check_expectation< Stack > > > > {};
+             check_expectation > > {};
 
   //! \brief list of sample space variables with error checking
   //! \author J. Bakosi
   template< class Stack >
   struct sample_space :
          pegtl::seq<
-           pegtl::apply< start_vector< Stack, tag::pdf > >,
+           start_vector< Stack, tag::pdf >,
            pegtl::until< pegtl::one<':'>, samples< Stack > >,
-           pegtl::apply< check_samples< Stack > > > {};
+           check_samples > {};
 
   //! \brief extents: optional user-specified extents of PDF sample space
   //! \author J. Bakosi
@@ -1404,25 +1394,25 @@ namespace grm {
   struct extents :
          pegtl::sor< scan_until< Stack,
                                  number,
-                                 push_extents< Stack >,
+                                 push_extents,
                                  pegtl::one<')'> >,
-                     pegtl::ifapply<
+                     pegtl::if_must<
                        pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                       error< Stack, MsgKey::INVALIDEXTENT > > > {};
+                       msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
 
   //! \brief binsizes followed by optional extents with error checking
   //! \author J. Bakosi
   template< class Stack >
   struct bins_exts :
          pegtl::seq<
-           pegtl::apply< start_vector< Stack, tag::discr, tag::binsize >,
-                         start_vector< Stack, tag::discr, tag::extent > >,
+           start_vector< tag::discr, tag::binsize >,
+           start_vector< tag::discr, tag::extent >,
            pegtl::until< pegtl::sor< pegtl::one<';'>,
                                      pegtl::at< pegtl::one<')'> > >,
                          bins< Stack > >,
            pegtl::until< pegtl::one<')'>, extents< Stack > >,
-           pegtl::apply< check_binsizes< Stack > >,
-           pegtl::apply< check_extents< Stack > > > {};
+           check_binsizes,
+           check_extents > {};
 
   //! \brief PDF name
   //! \details A PDF name is a C-language identifier (alphas, digits, and
@@ -1431,8 +1421,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack >
   struct pdf_name :
-         pegtl::ifapply< pegtl::identifier,
-                         match_pdfname< Stack > > {};
+         pegtl::if_must< pegtl::identifier, match_pdfname > {};
 
   //! \brief Match pdf description: name + sample space specification
   //! \details Example syntax (without the quotes): "name(x y z : 1.0 2.0 3.0)",
@@ -1444,13 +1433,12 @@ namespace grm {
   struct parse_pdf :
          readkw<
            Stack,
-           pegtl::ifmust<
+           pegtl::if_must<
              pegtl::seq< pdf_name< Stack >, pegtl::at< pegtl::one<'('> > >,
              pegtl::sor< pegtl::one<'('>,
-                         pegtl::apply< error< Stack, MsgKey::KEYWORD > > >,
+                         msg< ERROR, MsgKey::KEYWORD > >,
              pegtl::sor< pegtl::seq< sample_space< Stack >, bins_exts< Stack > >,
-                         pegtl::apply<
-                           error< Stack, MsgKey::INVALIDSAMPLESPACE > > > > > {};
+                         msg< ERROR, MsgKey::INVALIDSAMPLESPACE > > > > {};
 
   //! \brief Match precision of floating-point numbers in digits (for text
   //!   output)
@@ -1459,7 +1447,7 @@ namespace grm {
   struct precision :
          process< Stack,
                   use< kw::precision >,
-                  store_precision< Stack, prec >,
+                  store_precision< prec >,
                   pegtl::alnum > {};
 
   //! \brief Match control parameter
@@ -1480,7 +1468,7 @@ namespace grm {
   struct component :
          process< Stack,
                   keyword,
-                  Store_back< Stack, tag::component, Tag >,
+                  Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
   //! \brief Match interval control parameter
@@ -1495,20 +1483,20 @@ namespace grm {
             template< class > class use,
             template< class... Ts > class store >
   struct statistics :
-         pegtl::ifmust< readkw< Stack,
-                                typename use< kw::statistics >::pegtl_string >,
-                        block< Stack,
-                               use< kw::end >,
-                               interval< Stack, use< kw::interval >,
-                                         tag::stat >,
-                               process< Stack,
-                                        use< kw::txt_float_format >,
-                                        store< tk::ctr::TxtFloatFormat,
-                                               tag::flformat,
-                                               tag::stat >,
-                                        pegtl::alpha >,
-                               precision< Stack, use, tag::stat >,
-                               parse_expectations< Stack > > > {};
+         pegtl::if_must< readkw< Stack,
+                                 typename use< kw::statistics >::pegtl_string >,
+                         block< Stack,
+                                use< kw::end >,
+                                interval< Stack, use< kw::interval >,
+                                          tag::stat >,
+                                process< Stack,
+                                         use< kw::txt_float_format >,
+                                         store< tk::ctr::TxtFloatFormat,
+                                                tag::flformat,
+                                                tag::stat >,
+                                         pegtl::alpha >,
+                                precision< Stack, use, tag::stat >,
+                                parse_expectations< Stack > > > {};
 
   //! \brief Parse diagnostics ... end block
   //! \author J. Bakosi
@@ -1516,19 +1504,19 @@ namespace grm {
             template< class > class use,
             template< class... Ts > class store >
   struct diagnostics :
-         pegtl::ifmust< readkw< Stack,
-                                typename use< kw::diagnostics >::pegtl_string >,
-                        block< Stack,
-                               use< kw::end >,
-                               interval< Stack, use< kw::interval >,
-                                         tag::diag >,
-                               process< Stack,
-                                        use< kw::txt_float_format >,
-                                        store< tk::ctr::TxtFloatFormat,
-                                               tag::flformat,
-                                               tag::diag >,
-                                        pegtl::alpha >,
-                               precision< Stack, use, tag::diag > > > {};
+         pegtl::if_must< readkw< Stack,
+                                 typename use< kw::diagnostics >::pegtl_string >,
+                         block< Stack,
+                                use< kw::end >,
+                                interval< Stack, use< kw::interval >,
+                                          tag::diag >,
+                                process< Stack,
+                                         use< kw::txt_float_format >,
+                                         store< tk::ctr::TxtFloatFormat,
+                                                tag::flformat,
+                                                tag::diag >,
+                                         pegtl::alpha >,
+                                precision< Stack, use, tag::diag > > > {};
 
   //! \brief Match model parameter
   //! \author J. Bakosi
@@ -1544,8 +1532,7 @@ namespace grm {
   struct rng :
          process< Stack,
                   keyword,
-                  check_store_option< Stack,
-                                      use,
+                  check_store_option< use,
                                       option,
                                       tag::selected,
                                       tag::rng,
@@ -1556,8 +1543,8 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, template< class > class use, class rngs >
   struct rngblock :
-         pegtl::ifmust< readkw< Stack, typename use< kw::rngs >::pegtl_string >,
-                        block< Stack, use< kw::end >, rngs > > {};
+         pegtl::if_must< readkw< Stack, typename use< kw::rngs >::pegtl_string >,
+                         block< Stack, use< kw::end >, rngs > > {};
 
 
   //! \brief Match equation/model parameter vector
@@ -1579,18 +1566,18 @@ namespace grm {
             typename keyword,
             template< class, class, class... > class store,
             template< class, class, class... > class start,
-            template< class, class, class > class check,
+            template< class, class > class check,
             typename eq,
             typename param >
   struct parameter_vector :
-         pegtl::ifmust<
+         pegtl::if_must<
            vector<
              Stack,
              keyword,
              store< Stack, tag::param, eq, param >,
              use< kw::end >,
-             pegtl::apply< start< Stack, tag::param, eq, param > > >,
-           pegtl::apply< check< Stack, eq, param > > > {};
+             start< tag::param, eq, param > >,
+           check< eq, param > > {};
 
   //! \brief Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that
@@ -1612,40 +1599,41 @@ namespace grm {
             class option,
             template< class, class, class... > class store,
             template< class, class, class... > class start,
-            template< class, class, class > class check,
+            template< class, class > class check,
             typename eq,
             typename param >
   struct option_vector :
-         pegtl::ifmust<
+         pegtl::if_must<
            vector<
              Stack,
              keyword,
-             store_back_back_option<Stack, use, option, tag::param, eq, param>,
+             store_back_back_option< use, option, tag::param, eq, param >,
              use< kw::end >,
-             pegtl::apply< start< Stack, tag::param, eq, param > >,
+             start< tag::param, eq, param >,
              pegtl::alpha >,
-           pegtl::apply< check< Stack, eq, param > > > {};
+           check< eq, param > > {};
 
   //! \brief Match model parameter dependent variable
   //! \author J. Bakosi
   template< class Stack, template< class > class use, typename model,
             typename Tag >
   struct depvar :
-         pegtl::ifmust<
+         pegtl::if_must<
            readkw< Stack, typename use< kw::depvar >::pegtl_string >,
            scan<
              Stack, 
              pegtl::sor< pegtl::alpha,
-                         pegtl::apply< error< Stack, MsgKey::NOTALPHA > > >,
+                         msg< ERROR, MsgKey::NOTALPHA > >,
              Store_back< Stack, tag::param, model, Tag >,
-             add_depvar< Stack > > > {};
+             add_depvar > > {};
 
   //! \brief Match and set keyword 'title'
   //! \author J. Bakosi
   template< class Stack, template< class > class use >
   struct title :
-         pegtl::ifmust< readkw< Stack, typename use< kw::title >::pegtl_string >,
-                        quoted< Stack, Set< Stack, tag::title > > > {};
+         pegtl::if_must<
+           readkw< Stack, typename use< kw::title >::pegtl_string >,
+           quoted< Stack, Set< Stack, tag::title > > > {};
 
   //! \brief Match and set policy parameter
   //! \author J. Bakosi
@@ -1655,7 +1643,7 @@ namespace grm {
          process<
            Stack,
            keyword,
-           store_back_option< Stack, use, option, tag::param, sde, tags... >,
+           store_back_option< use, option, tag::param, sde, tags... >,
            pegtl::alpha > {};
 
   //! \brief Match and set a PDF option
@@ -1669,7 +1657,7 @@ namespace grm {
   template< class Stack, template< class > class use,
             template< class... Ts > class store >
   struct pdfs :
-         pegtl::ifmust<
+         pegtl::if_must<
            tk::grm::readkw< Stack, typename use < kw::pdfs >::pegtl_string >,
            tk::grm::block<
              Stack,
