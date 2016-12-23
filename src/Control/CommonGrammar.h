@@ -377,120 +377,128 @@ namespace grm {
 
   // Common PEGTL actions (PEGTL actions reused by multiple grammars)
 
+  //! PEGTL action base: do nothing by default
+  //! \details This base is specialized to different actions duing parsing.
+  template< typename Rule >
+  struct action : pegtl::nothing< Rule > {};
+
+  //! Rule used to trigger action
+  template< MsgType, MsgKey > struct msg {};
   //! \brief Error message dispatch
-  //! \details This struct and its apply function are used to dispatch an error
-  //!   message from the parser. It is simply an interface to Message with a
-  //!   specialization of the message type to ERROR. This struct is practically
-  //!   used as a functor, i.e., a struct or class that defines the function
-  //!   call operator, but instead the function call operator, PEGTL uses the
-  //!   apply() member function for the actions. Thus this struct can be passed
-  //!   to, i.e., specialize a template, such as tk::grm::unknown, injecting in
-  //!   it the desired behavior.
+  //! \details This struct and its apply function are used to dispatch a message
+  //!   (e.g., error, waring) from the parser. It is simply an interface to
+  //!   Message. See This struct is practically used as a functor, i.e., a
+  //!   struct or class that defines the function call operator, but instead the
+  //!   function call operator, PEGTL uses the apply() member function for the
+  //!   actions. Thus this struct can be passed to, i.e., specialize a template,
+  //!   such as tk::grm::unknown, injecting in it the desired behavior.
   //! \author J. Bakosi
-  template< class Stack, MsgKey key >
-  struct error : pegtl::action_base< error<Stack,key> > {
-    static void apply(const std::string& value, Stack& stack) {
-      Message< Stack, ERROR, key >( stack, value );
+  template< MsgType type, MsgKey key >
+  struct action< msg< type, key > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      Message< Stack, type, key >( stack, in.value );
     }
   };
 
-  //! \brief Warning message dispatch
-  //! \details This struct and its apply function are used to dispatch a warning
-  //!   message from the parser. It is simply an interface to Message with a
-  //!   specialization of the message type to WARNING. This struct is practically
-  //!   used as a functor, i.e., a struct or class that defines the function
-  //!   call operator, but instead the function call operator, PEGTL uses the
-  //!   apply() member function for the actions. Thus this struct can be passed
-  //!   to, i.e., specialize a template, such as tk::grm::unknown, injecting in
-  //!   it the desired behavior.
-  //! \author J. Bakosi
-  template< class Stack, MsgKey key >
-  struct warning : pegtl::action_base< warning<Stack,key> > {
-    static void apply(const std::string& value, Stack& stack) {
-      Message< Stack, WARNING, key >( stack, value );
-    }
-  };
-
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Set {};
   //! \brief Put value in state at position given by tags without conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the set member function of the underlying grammar
   //!    stack, tk::Control::set.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename... tags >
-  struct Set : pegtl::action_base< Set<Stack,tag,tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.template set< tag, tags... >( value );
+  template< typename tag, typename... tags >
+  struct action< Set< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      stack.template set< tag, tags... >( in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Store {};
   //! \brief Put value in state at position given by tags with conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store member function of the underlying grammar
   //!    stack, tk::Control::store.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename... tags >
-  struct Store : pegtl::action_base< Store< Stack, tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      if (!value.empty())
-        stack.template store< tag, tags... >( value );
+  template< typename tag, typename... tags >
+  struct action< Store< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      if (!in.value.empty())
+        stack.template store< tag, tags... >( in.value );
       else
-        Message< Stack, ERROR, MsgKey::MISSING >( stack, value );
+        Message< Stack, ERROR, MsgKey::MISSING >( stack, in.value );
     }
   };
 
-  //! \brief Convert and push back value to vector in state at position given by
-  //!    tags
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Store_back {};
+  //! Convert and push back value to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back member function of the underlying
   //!    grammar stack, tk::Control::store_back.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename...tags >
-  struct Store_back : pegtl::action_base< Store_back< Stack, tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      stack.template store_back< tag, tags... >( value );
+  template< typename tag, typename...tags >
+  struct action< Store_back< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      stack.template store_back< tag, tags... >( in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Store_back_back {};
   //! \brief Convert and push back value to vector of back of vector in state at
   //!    position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back_back member function of the
   //!    underlying grammar stack, tk::Control::store_back_back.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename...tags >
-  struct Store_back_back :
-  pegtl::action_base< Store_back_back< Stack, tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      stack.template store_back_back< tag, tags... >( value );
+  template< typename tag, typename...tags >
+  struct action< Store_back_back< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      stack.template store_back_back< tag, tags... >( in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Store_back_back_back {};
   //! \brief Convert and push back value to vector of back of vector of back of
   //!   vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back_back_back member function of the
   //!    underlying grammar stack, tk::Control::store_back_back_back.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename...tags >
-  struct Store_back_back_back :
-  pegtl::action_base< Store_back_back_back< Stack, tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      stack.template store_back_back_back< tag, tags... >( value );
+  template< typename tag, typename...tags >
+  struct action< Store_back_back_back< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
+      stack.template store_back_back_back< tag, tags... >( in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct Store_switch {};
   //! \brief Put true in switch in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
   //!    stack via the member function tk::Control::set.
   //! \author J. Bakosi
-  template< class Stack, typename tag, typename... tags >
-  struct Store_switch : pegtl::action_base< Store_switch<Stack,tag,tags...> > {
-    static void apply(const std::string&, Stack& stack) {
-      stack.template set<tag,tags...>(true);
+  template< typename tag, typename... tags >
+  struct action< Store_switch< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input&, Stack& stack ) {
+      stack.template set< tag, tags... >( true );
     }
   };
 
+  //! Rule used to trigger action
+  template< template < class > class use, class Option,
+            typename tag, typename... tags > struct store_back_option {};
   //! \brief Push back option to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for pushing back an option (an object deriving from
@@ -501,17 +509,16 @@ namespace grm {
   //!   error out if there is a problem. Errors and warnings are accumulated
   //!   during parsing and diagnostics are given after the parsing is finished.
   //! \author J. Bakosi
-  template< class Stack, template < class > class use, class Option,
+  template< template < class > class use, class Option,
             typename tag, typename... tags >
-  struct store_back_option :
-    pegtl::action_base< store_back_option< Stack, use, Option, tag, tags... > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< store_back_option< use, Option, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       Option opt;
-      if (opt.exist(value)) {
-        stack.template push_back<tag,tags...>( opt.value( value ) );
+      if (opt.exist(in.value)) {
+        stack.template push_back<tag,tags...>( opt.value( in.value ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.value );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -519,6 +526,9 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< template < class > class use, class Option,
+            typename tag, typename... tags > struct store_back_back_option {};
   //! \brief Push back option to vector of back of vector in state at position
   //!   given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -532,17 +542,16 @@ namespace grm {
   //!   is finished. This functor is similar to store_back_option but pushes the
   //!   option back to a vector of a vector.
   //! \author J. Bakosi
-  template< class Stack, template < class > class use, class Option,
+  template< template < class > class use, class Option,
             typename tag, typename... tags >
-  struct store_back_back_option : pegtl::action_base<
-    store_back_back_option< Stack, use, Option, tag, tags... > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< store_back_back_option< use, Option, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       Option opt;
-      if (opt.exist(value)) {
-        stack.template push_back_back<tag,tags...>( opt.value( value ) );
+      if (opt.exist(in.value)) {
+        stack.template push_back_back<tag,tags...>( opt.value( in.value ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.value );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -550,6 +559,9 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< typename field, typename sel, typename vec,
+            typename tag, typename... tags > struct Insert_field {};
   //! \brief Convert and insert value to map at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for inserting a value into a std::map behind a key in the
@@ -569,19 +581,24 @@ namespace grm {
   //!   tag::param to store the RNG parameter. Client-code is in, e.g.,
   //!   tk::rngsse::seed.
   //! \author J. Bakosi
-  template< class Stack, typename field, typename sel, typename vec,
+  template< typename field, typename sel, typename vec,
             typename tag, typename...tags >
-  struct Insert_field :
-  pegtl::action_base< Insert_field< Stack, field, sel, vec, tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< Insert_field< field, sel, vec, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
-      stack.template insert_field<key_type, field, tag, tags...>( key, value );
+      stack.template
+        insert_field< key_type, field, tag, tags... >( key, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< template< class > class use, class Option,
+            typename field, typename sel, typename vec,
+            typename tag, typename... tags > struct insert_option {};
   //! \brief Convert and insert option value to map at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for converting and inserting an option in a std::map in the
@@ -589,26 +606,27 @@ namespace grm {
   //!   e.g., walker::ctr::DiffEq for an example specialization of tk::Toggle to
   //!   see how an option is created from tk::Toggle.
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, class Option,
+  template< template< class > class use, class Option,
             typename field, typename sel, typename vec, typename tag,
             typename... tags >
-  struct insert_option : pegtl::action_base<
-                           insert_option< Stack, use, Option, field, sel, vec,
-                                          tag, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< insert_option< use, Option, field, sel, vec, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       stack.template
         insert_opt< key_type, field, typename Option::EnumType, tag, tags... >
-                  ( key, Option().value(value) );
+                  ( key, Option().value(in.value) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
       boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename prec > struct store_precision {};
   //! \brief Set numeric precision for ASCII output of floating-point values
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for setting the precision used for outputing floating-point
@@ -616,11 +634,12 @@ namespace grm {
   //!   is between the correct bounds of the underlying floating-point type.
   //! \see kw::precision_info
   //! \author J. Bakosi
-  template< class Stack, class prec >
-  struct store_precision : pegtl::action_base< store_precision<Stack,prec> > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class prec >
+  struct action< store_precision< prec > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       using PrEx = kw::precision::info::expect;
-      std::string low( value );
+      std::string low( in.value );
       std::transform( begin(low), end(low), begin(low), ::tolower );
       if (low == "max") {
         const auto maxprec = PrEx::upper;
@@ -628,20 +647,22 @@ namespace grm {
       } else {
         PrEx::type precision = std::cout.precision();  // set default
         try {
-          precision = std::stol( value ); // try to convert matched str to int
+          precision = std::stol( in.value ); //try to convert matched str to int
         }
         catch ( std::exception& ) {
-          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, value );
+          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, in.value );
         }
         // only set precision given if it makes sense
         if (precision >= PrEx::lower && precision <= PrEx::upper)
           stack.template set< tag::prec, prec >( precision );
         else
-          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, value );
+          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, in.value );
       }
     }
   };
 
+  //! Rule used to trigger action
+  struct helpkw {};
   //! \brief Find keyword among all keywords and if found, store the keyword
   //!    and its info on which help was requested behind tag::helpkw in Stack
   //! \details This struct and its apply function are used as a functor-like
@@ -654,124 +675,144 @@ namespace grm {
   //!    requested (behind tag::helpkw). This is the structure of CmdLine
   //!    objects, thus this functor should be called from command line parsers.
   //! \author J. Bakosi
-  template< class Stack >
-  struct helpkw : pegtl::action_base< helpkw< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< helpkw > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       const auto& cmdinfo = stack.template get< tag::cmdinfo >();
       const auto& ctrinfo = stack.template get< tag::ctrinfo >();
-      auto it = cmdinfo.find( value );
+      auto it = cmdinfo.find( in.value );
       if (it != cmdinfo.end()) {
         // store keyword and its info on which help was requested
         stack.template set< tag::helpkw >( { it->first, it->second, true } );
       } else {
-        it = ctrinfo.find( value );
+        it = ctrinfo.find( in.value );
         if (it != ctrinfo.end())
           // store keyword and its info on which help was requested
           stack.template set< tag::helpkw >( { it->first, it->second, false } );
         else
-          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, value );
+          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in.value );
       }
     }
   };
 
+  //! Rule used to trigger action
+  template< typename push > struct mach_depvar {};
   //! \brief Match depvar (dependent variable) to one of the selected ones
   //! \details This is used to check the set of dependent variables previously
   //!    assigned to registered differential equations (or models).
   //! \author J. Bakosi
-  template< class Stack, class push >
-  struct match_depvar : pegtl::action_base< match_depvar< Stack, push > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class push >
+  struct action< mach_depvar< push > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // convert matched string to char
-      auto var = stack.template convert< char >( value );
+      auto var = stack.template convert< char >( in.value );
       // find matched variable in set of selected ones
       if (depvars.find( var ) != depvars.end())
-        push::apply( value, stack );
+        push::apply( in.value, stack );
       else  // error out if matched var is not selected
-        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct match_pdfname {};
   //! \brief Match PDF name to the registered ones
   //! \details This is used to check the set of PDF names dependent previously
   //!    registered to make sure all are unique.
   //! \author J. Bakosi
-  template< class Stack >
-  struct match_pdfname : pegtl::action_base< match_pdfname< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< match_pdfname > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // find matched name in set of registered ones
-      if (pdfnames.find( value ) == pdfnames.end()) {
-        pdfnames.insert( value );
-        stack.template push_back< tag::cmd, tag::io, tag::pdfnames >( value );
+      if (pdfnames.find( in.value ) == pdfnames.end()) {
+        pdfnames.insert( in.value );
+        stack.template
+          push_back< tag::cmd, tag::io, tag::pdfnames >( in.value );
       }
       else  // error out if name matched var is already registered
-        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, value );
+        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< template< class > class use, class Option,
+            typename field, typename sel, typename vec,
+            typename... tags > struct check_store_option {};
   //! \brief Put option in state at position given by tags if among the selected
   //! \author J. Bakosi
-  template< class Stack, template < class > class use, class Option,
+  template< template < class > class use, class Option,
             typename sel, typename vec, typename... tags >
-  struct check_store_option :
-    pegtl::action_base<
-      check_store_option< Stack, use, Option, sel, vec, tags... > >
-  {
-    static void apply(const std::string& value, Stack& stack) {
+  struct action< check_store_option< use, Option, sel, vec, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // error out if chosen item does not exist in selected vector
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
-        if (Option().value(value) == r) exists = true;
+        if (Option().value(in.value) == r) exists = true;
       }
       if (exists)
-        store_back_option< Stack, use, Option, tags... >().apply( value, stack );
+        store_back_option< use, Option, tags... >().apply( in.value, stack );
       else
-        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct add_depvar {};
   //! \brief Add depvar (dependent variable) to the selected ones
   //! \author J. Bakosi
-  template< class Stack >
-  struct add_depvar : pegtl::action_base< add_depvar< Stack > > {
-    static void apply(const std::string& value, Stack& stack) {
+  template<>
+  struct action< add_depvar > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // convert matched string to char
-      auto newvar = stack.template convert< char >( value );
+      auto newvar = stack.template convert< char >( in.value );
       // put in new dependent variable to set of already selected ones
       if (depvars.find( newvar ) == depvars.end())
         depvars.insert( newvar );
       else  // error out if depvar is already taken
-        Message< Stack, ERROR, MsgKey::EXISTS >( stack, value );
+        Message< Stack, ERROR, MsgKey::EXISTS >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct start_vector {};
   //! \brief Start new vector in vector
   //! \author J. Bakosi
-  template< class Stack, class tag, class... tags >
-  struct start_vector : pegtl::action_base<
-                          start_vector< Stack, tag, tags... > > {
-    static void apply( const std::string&, Stack& stack ) {
+  template< class tag, class... tags >
+  struct action< start_vector< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input&, Stack& stack ) {
       stack.template push_back< tag, tags... >();  // no arg: use default ctor
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tag, typename... tags > struct start_vector_back {};
   //! \brief Start new vector in back of a vector
   //! \author J. Bakosi
-  template< class Stack, class tag, class... tags >
-  struct start_vector_back : pegtl::action_base<
-                             start_vector_back< Stack, tag, tags... > > {
-    static void apply( const std::string&, Stack& stack ) {
+  template< class tag, class... tags >
+  struct action< start_vector_back< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( Input&, Stack& stack ) {
       // no arg: use default ctor
       stack.template push_back_back< tag, tags... >();
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tk::ctr::Moment, char var = '\0' > struct push_term {};
   //! \brief Add matched value as Term into vector of vector of statistics
   //! \author J. Bakosi
-  template< class Stack, tk::ctr::Moment m, char var = '\0' >
-  struct push_term : pegtl::action_base< push_term< Stack, m, var > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< tk::ctr::Moment m, char var >
+  struct action< push_term< m, var > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // If var is given, push var, otherwise push first char of value
-      char v(var ? var : value[0]);
+      char v(var ? var : in.value[0]);
       // Use a shorthand of reference to vector to push_back to
       auto& stats = stack.template get< tag::stat >();
       // Push term into current vector
@@ -787,25 +828,28 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< tk::ctr::Moment m > struct push_sample {};
   //! \brief Add matched value as Term into vector of vector of PDFs
   //! \author J. Bakosi
-  template< class Stack, tk::ctr::Moment m >
-  struct push_sample : pegtl::action_base< push_sample< Stack, m > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< tk::ctr::Moment m >
+  struct action< push_sample< m > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& pdf = stack.template get< tag::pdf >();
       // Error out if sample space already has at least 3 dimensions
       if ( pdf.back().size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, value );
+        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in.value );
       }
       // Error out if matched sample space variable starts with a digit
-      if ( std::isdigit(value[0]) )
-        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, value );
+      if ( std::isdigit(in.value[0]) )
+        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in.value );
       // Push term into current vector
-      pdf.back().emplace_back( tk::ctr::Term( value[0], field, m ) );
+      pdf.back().emplace_back( tk::ctr::Term( in.value[0], field, m ) );
       // If central moment, trigger estimation of mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( static_cast<char>(toupper(value[0])),
+        tk::ctr::Term term( static_cast<char>(toupper(in.value[0])),
                             field,
                             tk::ctr::Moment::ORDINARY );
         auto& stats = stack.template get< tag::stat >();
@@ -818,66 +862,78 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct push_binsize {};
   //! \brief Push matched value into vector of vector binsizes
   //! \author J. Bakosi
-  template< class Stack >
-  struct push_binsize : pegtl::action_base< push_binsize< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< push_binsize > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& bins = stack.template get< tag::discr, tag::binsize >().back();
       // Error out if binsize vector already has at least 3 dimensions
       if ( bins.size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, value );
+        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in.value );
       }
       // Push term into vector if larger than zero
-      const auto& binsize = stack.template convert< tk::real >( value );
+      const auto& binsize = stack.template convert< tk::real >( in.value );
       if ( !(binsize > std::numeric_limits< tk::real >::epsilon()) )
-        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, value );
+        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in.value );
       else
         bins.emplace_back( binsize );
     }
   };
 
+  //! Rule used to trigger action
+  struct push_extents {};
   //! \brief Push matched value into vector of PDF extents
   //! \author J. Bakosi
-  template< class Stack >
-  struct push_extents : pegtl::action_base< push_extents< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< push_extents > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& vec = stack.template get< tag::discr, tag::extent >().back();
       // Error out if extents vector already has at least 3 pairs
       if (vec.size() >= 6)
-        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, value );
+        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in.value );
       // Error out if extents vector already has the enough pairs to match the
       // number of sample space dimensions
       if (vec.size() >=
           stack.template get< tag::discr, tag::binsize >().back().size() * 2) {
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, value );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.value );
       }
       // Push extent into vector
-      vec.emplace_back( stack.template convert< tk::real >( value ) );
+      vec.emplace_back( stack.template convert< tk::real >( in.value ) );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq, class param > struct check_vector {};
   //! \brief Check parameter vector
   //! \author J. Bakosi
-  template< class Stack, class eq, class param >
-  struct check_vector : pegtl::action_base< check_vector< Stack, eq, param > > {
-    static void apply( const std::string&, Stack& ) {}
+  template< class eq, class param >
+  struct action< check_vector< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( Input&, Stack& ) {}
   };
 
+  //! Rule used to trigger action
+  template< class eq, class param > struct check_spikes {};
   //! \brief Check if the spikes parameter vector specifications are correct
   //! \details Spikes are used to specify sample-space locations and relative
   //!    probability heights for a joint-delta PDF.
   //! \author J. Bakosi
-  template< class Stack, class eq, class param >
-  struct check_spikes : pegtl::action_base< check_spikes< Stack, eq, param > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class eq, class param >
+  struct action< check_spikes< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       const auto& spike =
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number of spikes-vector is odd
       if (spike.size() % 2)
-        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, value );
+        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in.value );
       // Error out if the sum of spike heights does not add up to unity, but
       // only if the spike block is not empty (an empty spike..end block
       // is okay and is used to specify no delta spikes for a dependent
@@ -887,90 +943,106 @@ namespace grm {
         for (std::size_t i=1; i<spike.size(); i+=2)  // every even is a height
           sum += spike[i];
         if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
-          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, value );
+          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in.value );
       }
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq, class param > struct check_betapdfs {};
   //! \brief Check if the betapdf parameter vector specifications are correct
   //! \details Betapdf vectors are used to configure univariate beta
   //!   distributions.
   //! \author J. Bakosi
-  template< class Stack, class eq, class param >
-  struct check_betapdfs :
-    pegtl::action_base< check_betapdfs< Stack, eq, param > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class eq, class param >
+  struct action< check_betapdfs< eq, param > > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       const auto& betapdf =
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number parameters is not four
       if (betapdf.size() != 4)
-        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, value );
+        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct check_expectation {};
   //! \brief Check if there is at least one variable in expectation
   //! \author J. Bakosi
-  template< class Stack >
-  struct check_expectation : pegtl::action_base< check_expectation< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< check_expectation > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       if (stack.template get< tag::stat >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct check_binsizes {};
   //! \brief Check if the number of binsizes equal the PDF sample space
   //!   variables
   //! \author J. Bakosi
-  template< class Stack >
-  struct check_binsizes : pegtl::action_base< check_binsizes< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< check_binsizes > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().size() !=
           stack.template get< tag::discr, tag::binsize >().back().size())
-          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, value );
+          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct check_extents {};
   //! \brief Check if the number of extents equal 2 * the PDF sample space
   //!    variables
   //! \author J. Bakosi
-  template< class Stack >
-  struct check_extents : pegtl::action_base< check_extents< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< check_extents > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // Use a shorthand to extents vector
       const auto& e = stack.template get< tag::discr, tag::extent >().back();
       // Check if the number of extents are correct
       if (!e.empty() &&
           e.size() !=
             stack.template get< tag::discr, tag::binsize >().back().size()*2)
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, value );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.value );
       // Check if the lower extents are indeed lower than the higher extents
       if (e.size() > 1 && e[0] > e[1])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
       if (e.size() > 3 && e[2] > e[3])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
       if (e.size() > 5 && e[4] > e[5])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct check_samples {};
   //! \brief Check if there is at least one sample space variable in PDF
   //! \author J. Bakosi
-  template< class Stack >
-  struct check_samples : pegtl::action_base< check_samples< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< check_samples > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in.value );
     }
   };
 
+  //! Rule used to trigger action
+  struct save_field {};
   //! \brief Save field ID to parser's state so push_term can pick it up
   //! \author J. Bakosi
-  template< class Stack >
-  struct save_field : pegtl::action_base< save_field< Stack > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<>
+  struct action< save_field > {
+    template< typename Input, typename Stack >
+    static void apply( Input& in, Stack& stack ) {
       // field ID numbers start at 0
-      auto f = stack.template convert< long >( value ) - 1; 
+      auto f = stack.template convert< long >( in.value ) - 1; 
       Assert( f>=0, "Field value must be non-negative in tk::grm::save_field" );
       field = static_cast< ncomp_t >( f );
     }
@@ -985,14 +1057,14 @@ namespace grm {
          pegtl::seq< token,
                      pegtl::sor<
                        pegtl::until< pegtl::at< erased > >,
-                       pegtl::apply< error< Stack, MsgKey::PREMATURE > > > > {};
+                       msg< ERROR, MsgKey::PREMATURE > > > {};
 
   //! \brief Match unknown keyword and handle error
   //! \author J. Bakosi
-  template< class Stack, MsgKey key, template< class, MsgKey > class msg >
+  template< class Stack, MsgType type, MsgKey key >
   struct unknown :
          pegtl::pad< pegtl::ifapply< trim< Stack, pegtl::any, pegtl::space >,
-                                     msg< Stack, key > >,
+                                     msg< type, key > >,
                      pegtl::blank,
                      pegtl::space > {};
 
@@ -1005,7 +1077,7 @@ namespace grm {
            pegtl::one< '-' >,
            typename keyword::info::alias::type,
            pegtl::sor< pegtl::space,
-                       pegtl::apply< error< Stack, MsgKey::ALIAS > > > > {};
+                       msg< ERROR, MsgKey::ALIAS > >  > {};
 
   //! \brief Match verbose cmdline keyword
   //! \details A verbose command line keyword is prefixed by a double-dash,
@@ -1110,7 +1182,7 @@ namespace grm {
            readkw< Stack, typename endkeyword::pegtl_string >,
            pegtl::sor< comment< Stack >,
                        tokens...,
-                       unknown< Stack, MsgKey::KEYWORD, error > > > {};
+                       unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
@@ -1126,7 +1198,7 @@ namespace grm {
                           pegtl::sor<
                             comment< Stack >,
                             scan< Stack, value, insert >,
-                            unknown< Stack, MsgKey::LIST, error > > > > {};
+                            unknown< Stack, ERROR, MsgKey::LIST > > > > {};
 
   //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
   //!   apply action 'insert'
@@ -1137,7 +1209,7 @@ namespace grm {
                         pegtl::ifapply<
                           pegtl::sor< trim< Stack, pegtl::not_one< lbound >,
                                             pegtl::one< rbound > >,
-                                      unknown< Stack, MsgKey::QUOTED, error > >,
+                                      unknown< Stack, ERROR, MsgKey::QUOTED > >,
                         insert >,
                         pegtl::one< rbound > > {};
 
@@ -1162,7 +1234,7 @@ namespace grm {
          pegtl::ifmust< readkw< Stack, keyword >,
                         pegtl::sor<
                           quoted< Stack, insert, lbound, rbound >,
-                          unknown< Stack, MsgKey::QUOTED, error > > > {};
+                          unknown< Stack, ERROR, MsgKey::QUOTED > > > {};
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
@@ -1197,14 +1269,14 @@ namespace grm {
                        pegtl::sor<
                          keywords,
                          ign,
-                         unknown< Stack, MsgKey::KEYWORD, error > > > {};
+                         unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Process but ignore Charm++'s charmrun arguments starting with '+'
   //! \author J. Bakosi
   template< class Stack >
   struct charmarg :
          pegtl::seq< pegtl::one<'+'>,
-                     unknown< Stack, MsgKey::CHARMARG, warning > > {};
+                     unknown< Stack, WARNING, MsgKey::CHARMARG > > {};
 
   //! \brief Generic string parser entry point: parse 'keywords' until end of
   //!   string
@@ -1215,7 +1287,7 @@ namespace grm {
                        pegtl::sor<
                          keywords,
                          charmarg< Stack >,
-                         unknown< Stack, MsgKey::KEYWORD, error > > > {};
+                         unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Insert RNG parameter
   //! \details A parameter here is always an option. An option is an object
