@@ -567,12 +567,17 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real mix = (1.0-theta) / (2.0-theta) * theta/2.0/(2.0-theta);
         //tk::real mix = 1.0/(2.0*(2.0-theta));
         //tk::real mix = yt*(1.0-yt)/(1.0+r[c]*yt)/(1.0+r[c]*yt);
-        //tk::real mix = 1.0/(1.0+r[c]*yt);     // a)
-        tk::real mix = 1.0+r[c]*yt;             // b)
+        //tk::real mix = 1.0/(1.0+r[c]*yt);
+        tk::real mix = 1.0+r[c]*yt;
+        //tk::real mix = (1.0+r[c]*yt);//* std::pow(theta,0.5);
 
         //tk::real f = 1.0;
+        //tk::real f = std::pow(theta,0.5);
         //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
         tk::real f = 1.0 / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
+        //tk::real f = std::pow(1.0 / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) ), 2.0);
+        //tk::real f = theta / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
+        //tk::real f = std::pow(theta,0.5) / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
 
         //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * ts;
         //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * ts;
