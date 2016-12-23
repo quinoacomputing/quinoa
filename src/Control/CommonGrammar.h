@@ -383,7 +383,7 @@ namespace grm {
   struct action : pegtl::nothing< Rule > {};
 
   //! Rule used to trigger action
-  template< MsgType, MsgKey > struct msg {};
+  template< MsgType, MsgKey > struct msg : pegtl::success {};
   //! \brief Error message dispatch
   //! \details This struct and its apply function are used to dispatch a message
   //!   (e.g., error, waring) from the parser. It is simply an interface to
@@ -402,7 +402,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Set {};
+  template< typename tag, typename... tags > struct Set : pegtl::success {};
   //! \brief Put value in state at position given by tags without conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the set member function of the underlying grammar
@@ -417,7 +417,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Store {};
+  template< typename tag, typename... tags > struct Store : pegtl::success {};
   //! \brief Put value in state at position given by tags with conversion
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store member function of the underlying grammar
@@ -435,7 +435,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Store_back {};
+  template< typename tag, typename... tags >
+  struct Store_back : pegtl::success {};
   //! Convert and push back value to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back member function of the underlying
@@ -450,7 +451,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Store_back_back {};
+  template< typename tag, typename... tags >
+  struct Store_back_back : pegtl::success {};
   //! \brief Convert and push back value to vector of back of vector in state at
   //!    position given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -466,7 +468,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Store_back_back_back {};
+  template< typename tag, typename... tags >
+  struct Store_back_back_back : pegtl::success {};
   //! \brief Convert and push back value to vector of back of vector of back of
   //!   vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -482,7 +485,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Store_switch {};
+  template< typename tag, typename... tags >
+  struct Store_switch : pegtl::success {};
   //! \brief Put true in switch in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
@@ -498,7 +502,8 @@ namespace grm {
 
   //! Rule used to trigger action
   template< template < class > class use, class Option,
-            typename tag, typename... tags > struct store_back_option {};
+            typename tag, typename... tags >
+  struct store_back_option : pegtl::success {};
   //! \brief Push back option to vector in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for pushing back an option (an object deriving from
@@ -528,7 +533,8 @@ namespace grm {
 
   //! Rule used to trigger action
   template< template < class > class use, class Option,
-            typename tag, typename... tags > struct store_back_back_option {};
+            typename tag, typename... tags >
+  struct store_back_back_option : pegtl::success {};
   //! \brief Push back option to vector of back of vector in state at position
   //!   given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -561,7 +567,8 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename field, typename sel, typename vec,
-            typename tag, typename... tags > struct Insert_field {};
+            typename tag, typename... tags >
+  struct Insert_field : pegtl::success {};
   //! \brief Convert and insert value to map at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for inserting a value into a std::map behind a key in the
@@ -598,7 +605,8 @@ namespace grm {
   //! Rule used to trigger action
   template< template< class > class use, class Option,
             typename field, typename sel, typename vec,
-            typename tag, typename... tags > struct insert_option {};
+            typename tag, typename... tags >
+  struct insert_option : pegtl::success {};
   //! \brief Convert and insert option value to map at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for converting and inserting an option in a std::map in the
@@ -626,7 +634,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename prec > struct store_precision {};
+  template< typename prec > struct store_precision : pegtl::success {};
   //! \brief Set numeric precision for ASCII output of floating-point values
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for setting the precision used for outputing floating-point
@@ -662,7 +670,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct helpkw {};
+  struct helpkw : pegtl::success {};
   //! \brief Find keyword among all keywords and if found, store the keyword
   //!    and its info on which help was requested behind tag::helpkw in Stack
   //! \details This struct and its apply function are used as a functor-like
@@ -697,13 +705,13 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename push > struct mach_depvar {};
+  template< typename push > struct match_depvar : pegtl::success {};
   //! \brief Match depvar (dependent variable) to one of the selected ones
   //! \details This is used to check the set of dependent variables previously
   //!    assigned to registered differential equations (or models).
   //! \author J. Bakosi
   template< class push >
-  struct action< mach_depvar< push > > {
+  struct action< match_depvar< push > > {
     template< typename Input, typename Stack >
     static void apply( Input& in, Stack& stack ) {
       // convert matched string to char
@@ -717,7 +725,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct match_pdfname {};
+  struct match_pdfname : pegtl::success {};
   //! \brief Match PDF name to the registered ones
   //! \details This is used to check the set of PDF names dependent previously
   //!    registered to make sure all are unique.
@@ -740,7 +748,7 @@ namespace grm {
   //! Rule used to trigger action
   template< template< class > class use, class Option,
             typename field, typename sel, typename vec,
-            typename... tags > struct check_store_option {};
+            typename... tags > struct check_store_option : pegtl::success {};
   //! \brief Put option in state at position given by tags if among the selected
   //! \author J. Bakosi
   template< template < class > class use, class Option,
@@ -761,7 +769,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct add_depvar {};
+  struct add_depvar : pegtl::success {};
   //! \brief Add depvar (dependent variable) to the selected ones
   //! \author J. Bakosi
   template<>
@@ -779,7 +787,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct start_vector {};
+  template< typename tag, typename... tags >
+  struct start_vector : pegtl::success {};
   //! \brief Start new vector in vector
   //! \author J. Bakosi
   template< class tag, class... tags >
@@ -791,7 +800,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags > struct start_vector_back {};
+  template< typename tag, typename... tags >
+  struct start_vector_back : pegtl::success {};
   //! \brief Start new vector in back of a vector
   //! \author J. Bakosi
   template< class tag, class... tags >
@@ -804,7 +814,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tk::ctr::Moment, char var = '\0' > struct push_term {};
+  template< typename tk::ctr::Moment, char var = '\0' >
+  struct push_term : pegtl::success {};
   //! \brief Add matched value as Term into vector of vector of statistics
   //! \author J. Bakosi
   template< tk::ctr::Moment m, char var >
@@ -829,7 +840,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< tk::ctr::Moment m > struct push_sample {};
+  template< tk::ctr::Moment m > struct push_sample : pegtl::success {};
   //! \brief Add matched value as Term into vector of vector of PDFs
   //! \author J. Bakosi
   template< tk::ctr::Moment m >
@@ -863,7 +874,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct push_binsize {};
+  struct push_binsize : pegtl::success {};
   //! \brief Push matched value into vector of vector binsizes
   //! \author J. Bakosi
   template<>
@@ -886,7 +897,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct push_extents {};
+  struct push_extents : pegtl::success {};
   //! \brief Push matched value into vector of PDF extents
   //! \author J. Bakosi
   template<>
@@ -910,7 +921,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_vector {};
+  template< class eq, class param > struct check_vector : pegtl::success {};
   //! \brief Check parameter vector
   //! \author J. Bakosi
   template< class eq, class param >
@@ -920,7 +931,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_spikes {};
+  template< class eq, class param > struct check_spikes : pegtl::success {};
   //! \brief Check if the spikes parameter vector specifications are correct
   //! \details Spikes are used to specify sample-space locations and relative
   //!    probability heights for a joint-delta PDF.
@@ -949,7 +960,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq, class param > struct check_betapdfs {};
+  template< class eq, class param > struct check_betapdfs : pegtl::success {};
   //! \brief Check if the betapdf parameter vector specifications are correct
   //! \details Betapdf vectors are used to configure univariate beta
   //!   distributions.
@@ -967,7 +978,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_expectation {};
+  struct check_expectation : pegtl::success {};
   //! \brief Check if there is at least one variable in expectation
   //! \author J. Bakosi
   template<>
@@ -980,7 +991,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_binsizes {};
+  struct check_binsizes : pegtl::success {};
   //! \brief Check if the number of binsizes equal the PDF sample space
   //!   variables
   //! \author J. Bakosi
@@ -995,7 +1006,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_extents {};
+  struct check_extents : pegtl::success {};
   //! \brief Check if the number of extents equal 2 * the PDF sample space
   //!    variables
   //! \author J. Bakosi
@@ -1021,7 +1032,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_samples {};
+  struct check_samples : pegtl::success {};
   //! \brief Check if there is at least one sample space variable in PDF
   //! \author J. Bakosi
   template<>
@@ -1034,7 +1045,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct save_field {};
+  struct save_field : pegtl::success {};
   //! \brief Save field ID to parser's state so push_term can pick it up
   //! \author J. Bakosi
   template<>
