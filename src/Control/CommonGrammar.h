@@ -396,8 +396,8 @@ namespace grm {
   template< MsgType type, MsgKey key >
   struct action< msg< type, key > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      Message< Stack, type, key >( stack, in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      Message< Stack, type, key >( stack, in.string() );
     }
   };
 
@@ -411,8 +411,8 @@ namespace grm {
   template< typename tag, typename... tags >
   struct action< Set< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      stack.template set< tag, tags... >( in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template set< tag, tags... >( in.string() );
     }
   };
 
@@ -426,11 +426,11 @@ namespace grm {
   template< typename tag, typename... tags >
   struct action< Store< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      if (!in.value.empty())
-        stack.template store< tag, tags... >( in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      if (!in.string().empty())
+        stack.template store< tag, tags... >( in.string() );
       else
-        Message< Stack, ERROR, MsgKey::MISSING >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::MISSING >( stack, in.string() );
     }
   };
 
@@ -445,8 +445,8 @@ namespace grm {
   template< typename tag, typename...tags >
   struct action< Store_back< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      stack.template store_back< tag, tags... >( in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template store_back< tag, tags... >( in.string() );
     }
   };
 
@@ -462,8 +462,8 @@ namespace grm {
   template< typename tag, typename...tags >
   struct action< Store_back_back< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      stack.template store_back_back< tag, tags... >( in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template store_back_back< tag, tags... >( in.string() );
     }
   };
 
@@ -479,8 +479,8 @@ namespace grm {
   template< typename tag, typename...tags >
   struct action< Store_back_back_back< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
-      stack.template store_back_back_back< tag, tags... >( in.value );
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template store_back_back_back< tag, tags... >( in.string() );
     }
   };
 
@@ -518,12 +518,12 @@ namespace grm {
             typename tag, typename... tags >
   struct action< store_back_option< use, Option, tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       Option opt;
-      if (opt.exist(in.value)) {
-        stack.template push_back<tag,tags...>( opt.value( in.value ) );
+      if (opt.exist(in.string())) {
+        stack.template push_back<tag,tags...>( opt.value( in.string() ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.string() );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -552,12 +552,12 @@ namespace grm {
             typename tag, typename... tags >
   struct action< store_back_back_option< use, Option, tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       Option opt;
-      if (opt.exist(in.value)) {
-        stack.template push_back_back<tag,tags...>( opt.value( in.value ) );
+      if (opt.exist(in.string())) {
+        stack.template push_back_back<tag,tags...>( opt.value( in.string() ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.string() );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -592,13 +592,13 @@ namespace grm {
             typename tag, typename...tags >
   struct action< Insert_field< field, sel, vec, tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       stack.template
-        insert_field< key_type, field, tag, tags... >( key, in.value );
+        insert_field< key_type, field, tag, tags... >( key, in.string() );
     }
   };
 
@@ -619,14 +619,14 @@ namespace grm {
             typename... tags >
   struct action< insert_option< use, Option, field, sel, vec, tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       stack.template
         insert_opt< key_type, field, typename Option::EnumType, tag, tags... >
-                  ( key, Option().value(in.value) );
+                  ( key, Option().value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
       boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
@@ -645,26 +645,27 @@ namespace grm {
   template< class prec >
   struct action< store_precision< prec > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       using PrEx = kw::precision::info::expect;
-      std::string low( in.value );
+      std::string low( in.string() );
       std::transform( begin(low), end(low), begin(low), ::tolower );
       if (low == "max") {
         const auto maxprec = PrEx::upper;
         stack.template set< tag::prec, prec >( maxprec );
       } else {
         PrEx::type precision = std::cout.precision();  // set default
-        try {
-          precision = std::stol( in.value ); //try to convert matched str to int
+        try {   //try to convert matched str to int
+          precision = std::stol( in.string() );
         }
         catch ( std::exception& ) {
-          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, in.value );
+          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, in.string() );
         }
         // only set precision given if it makes sense
         if (precision >= PrEx::lower && precision <= PrEx::upper)
           stack.template set< tag::prec, prec >( precision );
         else
-          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, in.value );
+          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >
+                 ( stack, in.string() );
       }
     }
   };
@@ -686,20 +687,20 @@ namespace grm {
   template<>
   struct action< helpkw > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       const auto& cmdinfo = stack.template get< tag::cmdinfo >();
       const auto& ctrinfo = stack.template get< tag::ctrinfo >();
-      auto it = cmdinfo.find( in.value );
+      auto it = cmdinfo.find( in.string() );
       if (it != cmdinfo.end()) {
         // store keyword and its info on which help was requested
         stack.template set< tag::helpkw >( { it->first, it->second, true } );
       } else {
-        it = ctrinfo.find( in.value );
+        it = ctrinfo.find( in.string() );
         if (it != ctrinfo.end())
           // store keyword and its info on which help was requested
           stack.template set< tag::helpkw >( { it->first, it->second, false } );
         else
-          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in.value );
+          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in.string() );
       }
     }
   };
@@ -713,14 +714,14 @@ namespace grm {
   template< class push >
   struct action< match_depvar< push > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // convert matched string to char
-      auto var = stack.template convert< char >( in.value );
+      auto var = stack.template convert< char >( in.string() );
       // find matched variable in set of selected ones
       if (depvars.find( var ) != depvars.end())
-        push::apply( in.value, stack );
+        push::apply( in.string(), stack );
       else  // error out if matched var is not selected
-        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, in.string() );
     }
   };
 
@@ -733,15 +734,15 @@ namespace grm {
   template<>
   struct action< match_pdfname > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // find matched name in set of registered ones
-      if (pdfnames.find( in.value ) == pdfnames.end()) {
-        pdfnames.insert( in.value );
+      if (pdfnames.find( in.string() ) == pdfnames.end()) {
+        pdfnames.insert( in.string() );
         stack.template
-          push_back< tag::cmd, tag::io, tag::pdfnames >( in.value );
+          push_back< tag::cmd, tag::io, tag::pdfnames >( in.string() );
       }
       else  // error out if name matched var is already registered
-        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in.string() );
     }
   };
 
@@ -755,16 +756,16 @@ namespace grm {
             typename sel, typename vec, typename... tags >
   struct action< check_store_option< use, Option, sel, vec, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // error out if chosen item does not exist in selected vector
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
-        if (Option().value(in.value) == r) exists = true;
+        if (Option().value(in.string()) == r) exists = true;
       }
       if (exists)
-        store_back_option< use, Option, tags... >().apply( in.value, stack );
+        store_back_option< use, Option, tags... >().apply( in.string(), stack );
       else
-        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in.string() );
     }
   };
 
@@ -775,14 +776,14 @@ namespace grm {
   template<>
   struct action< add_depvar > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // convert matched string to char
-      auto newvar = stack.template convert< char >( in.value );
+      auto newvar = stack.template convert< char >( in.string() );
       // put in new dependent variable to set of already selected ones
       if (depvars.find( newvar ) == depvars.end())
         depvars.insert( newvar );
       else  // error out if depvar is already taken
-        Message< Stack, ERROR, MsgKey::EXISTS >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::EXISTS >( stack, in.string() );
     }
   };
 
@@ -821,9 +822,9 @@ namespace grm {
   template< tk::ctr::Moment m, char var >
   struct action< push_term< m, var > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // If var is given, push var, otherwise push first char of value
-      char v(var ? var : in.value[0]);
+      char v(var ? var : in.string()[0]);
       // Use a shorthand of reference to vector to push_back to
       auto& stats = stack.template get< tag::stat >();
       // Push term into current vector
@@ -846,21 +847,21 @@ namespace grm {
   template< tk::ctr::Moment m >
   struct action< push_sample< m > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& pdf = stack.template get< tag::pdf >();
       // Error out if sample space already has at least 3 dimensions
       if ( pdf.back().size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in.string() );
       }
       // Error out if matched sample space variable starts with a digit
-      if ( std::isdigit(in.value[0]) )
-        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in.value );
+      if ( std::isdigit(in.string()[0]) )
+        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in.string() );
       // Push term into current vector
-      pdf.back().emplace_back( tk::ctr::Term( in.value[0], field, m ) );
+      pdf.back().emplace_back( tk::ctr::Term( in.string()[0], field, m ) );
       // If central moment, trigger estimation of mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( static_cast<char>(toupper(in.value[0])),
+        tk::ctr::Term term( static_cast<char>(toupper(in.string()[0])),
                             field,
                             tk::ctr::Moment::ORDINARY );
         auto& stats = stack.template get< tag::stat >();
@@ -880,17 +881,17 @@ namespace grm {
   template<>
   struct action< push_binsize > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& bins = stack.template get< tag::discr, tag::binsize >().back();
       // Error out if binsize vector already has at least 3 dimensions
       if ( bins.size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in.string() );
       }
       // Push term into vector if larger than zero
-      const auto& binsize = stack.template convert< tk::real >( in.value );
+      const auto& binsize = stack.template convert< tk::real >( in.string() );
       if ( !(binsize > std::numeric_limits< tk::real >::epsilon()) )
-        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in.string() );
       else
         bins.emplace_back( binsize );
     }
@@ -903,20 +904,20 @@ namespace grm {
   template<>
   struct action< push_extents > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& vec = stack.template get< tag::discr, tag::extent >().back();
       // Error out if extents vector already has at least 3 pairs
       if (vec.size() >= 6)
-        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in.string() );
       // Error out if extents vector already has the enough pairs to match the
       // number of sample space dimensions
       if (vec.size() >=
           stack.template get< tag::discr, tag::binsize >().back().size() * 2) {
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.string() );
       }
       // Push extent into vector
-      vec.emplace_back( stack.template convert< tk::real >( in.value ) );
+      vec.emplace_back( stack.template convert< tk::real >( in.string() ) );
     }
   };
 
@@ -939,12 +940,12 @@ namespace grm {
   template< class eq, class param >
   struct action< check_spikes< eq, param > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       const auto& spike =
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number of spikes-vector is odd
       if (spike.size() % 2)
-        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in.string() );
       // Error out if the sum of spike heights does not add up to unity, but
       // only if the spike block is not empty (an empty spike..end block
       // is okay and is used to specify no delta spikes for a dependent
@@ -954,7 +955,7 @@ namespace grm {
         for (std::size_t i=1; i<spike.size(); i+=2)  // every even is a height
           sum += spike[i];
         if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
-          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in.value );
+          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in.string() );
       }
     }
   };
@@ -968,12 +969,12 @@ namespace grm {
   template< class eq, class param >
   struct action< check_betapdfs< eq, param > > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       const auto& betapdf =
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number parameters is not four
       if (betapdf.size() != 4)
-        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in.string() );
     }
   };
 
@@ -984,9 +985,9 @@ namespace grm {
   template<>
   struct action< check_expectation > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::stat >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in.string() );
     }
   };
 
@@ -998,10 +999,10 @@ namespace grm {
   template<>
   struct action< check_binsizes > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().size() !=
           stack.template get< tag::discr, tag::binsize >().back().size())
-          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in.value );
+          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in.string() );
     }
   };
 
@@ -1013,21 +1014,21 @@ namespace grm {
   template<>
   struct action< check_extents > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand to extents vector
       const auto& e = stack.template get< tag::discr, tag::extent >().back();
       // Check if the number of extents are correct
       if (!e.empty() &&
           e.size() !=
             stack.template get< tag::discr, tag::binsize >().back().size()*2)
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.string() );
       // Check if the lower extents are indeed lower than the higher extents
       if (e.size() > 1 && e[0] > e[1])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
       if (e.size() > 3 && e[2] > e[3])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
       if (e.size() > 5 && e[4] > e[5])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
     }
   };
 
@@ -1038,9 +1039,9 @@ namespace grm {
   template<>
   struct action< check_samples > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in.value );
+        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in.string() );
     }
   };
 
@@ -1051,9 +1052,9 @@ namespace grm {
   template<>
   struct action< save_field > {
     template< typename Input, typename Stack >
-    static void apply( Input& in, Stack& stack ) {
+    static void apply( const Input& in, Stack& stack ) {
       // field ID numbers start at 0
-      auto f = stack.template convert< long >( in.value ) - 1; 
+      auto f = stack.template convert< long >( in.string() ) - 1;
       Assert( f>=0, "Field value must be non-negative in tk::grm::save_field" );
       field = static_cast< ncomp_t >( f );
     }
