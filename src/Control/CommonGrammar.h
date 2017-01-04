@@ -427,6 +427,7 @@ namespace grm {
   struct action< Store< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+std::cout << "S> '" << in.string() << "'\n";
       if (!in.string().empty())
         stack.template store< tag, tags... >( in.string() );
       else
@@ -495,7 +496,7 @@ namespace grm {
   template< typename tag, typename... tags >
   struct action< Store_switch< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input&, Stack& stack ) {
+    static void apply( const Input&, Stack& stack ) {
       stack.template set< tag, tags... >( true );
     }
   };
@@ -795,7 +796,7 @@ namespace grm {
   template< class tag, class... tags >
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input&, Stack& stack ) {
+    static void apply( const Input&, Stack& stack ) {
       stack.template push_back< tag, tags... >();  // no arg: use default ctor
     }
   };
@@ -808,7 +809,7 @@ namespace grm {
   template< class tag, class... tags >
   struct action< start_vector_back< tag, tags... > > {
     template< typename Input, typename Stack >
-    static void apply( Input&, Stack& stack ) {
+    static void apply( const Input&, Stack& stack ) {
       // no arg: use default ctor
       stack.template push_back_back< tag, tags... >();
     }
@@ -928,7 +929,7 @@ namespace grm {
   template< class eq, class param >
   struct action< check_vector< eq, param > > {
     template< typename Input, typename Stack >
-    static void apply( Input&, Stack& ) {}
+    static void apply( const Input&, Stack& ) {}
   };
 
   //! Rule used to trigger action

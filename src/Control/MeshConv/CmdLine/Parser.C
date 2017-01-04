@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:50:25 AM MDT
+  \date      Wed 04 Jan 2017 01:07:33 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line parser
   \details   This file defines the command-line argument parser for the mesh
@@ -51,12 +51,9 @@ CmdLineParser::CmdLineParser( int argc,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTL string input from std::string, i.e., concatenated argv[]
-  pegtl::string_input< ctr::Location > input( m_string );
-
   // Create PEGTLCmdLine to store parsed command line data which derives from
   // CmdLine and has location() used during parsing
-  cmd::PEGTLCmdLine cmd( input );
+  cmd::PEGTLCmdLine cmd;
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
@@ -73,7 +70,8 @@ CmdLineParser::CmdLineParser( int argc,
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
-  pegtl::dummy_parse< cmd::read_string >( input, cmd );
+  pegtl::parse< cmd::read_string, tk::grm::action >
+              ( m_string, "command line", cmd );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, cmd.get< tag::error >() );
