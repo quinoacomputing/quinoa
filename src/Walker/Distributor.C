@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 12:33:40 PM MST
+  \date      Wed 04 Jan 2017 11:08:09 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -343,7 +343,7 @@ Distributor::outStat()
                           g_inputdeck.get< tag::flformat, tag::stat >(),
                           g_inputdeck.get< tag::prec, tag::stat >(),
                           std::ios_base::app );
-    if (sw.stat( m_it+1, m_t+m_dt, m_ordinary, m_central, extra() ))
+    if (sw.stat( m_it, m_t, m_ordinary, m_central, extra() ))
       m_output.get< tag::stat >() = true;
   }
 }
