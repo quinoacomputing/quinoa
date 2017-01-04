@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 12:01:52 PM MST
+  \date      Wed 04 Jan 2017 01:08:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -26,8 +26,7 @@ namespace cmd {
   //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
   //!    information so the location can be tracked during parsing.
   //! \author J. Bakosi
-  using PEGTLCmdLine =
-    tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
+  using PEGTLCmdLine = tk::ctr::PEGTLParsed< ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for MeshConv's command line parser
   //! \author J. Bakosi
@@ -58,7 +57,7 @@ namespace cmd {
   struct io :
          tk::grm::process_cmd< Stack,
                                keyword,
-                               tk::grm::Store< Stack, tag::io, io_tag > > {};
+                               tk::grm::Store< tag::io, io_tag > > {};
 
   //! \brief Match help on command-line parameters
   struct help :
@@ -70,7 +69,7 @@ namespace cmd {
   struct helpkw :
          tk::grm::process_cmd< Stack,
                                use< kw::helpkw >,
-                               tk::grm::helpkw< Stack >,
+                               tk::grm::helpkw,
                                pegtl::alnum > {};
 
   //! \brief Match all command line keywords

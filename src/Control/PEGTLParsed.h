@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 01:36:14 PM MST
+  \date      Wed 04 Jan 2017 01:14:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments. This is used
@@ -23,12 +23,11 @@ struct unused {};
 //! \details This is used to track the parser's location so that we can detect
 //!   the location of errors
 //! \author J. Bakosi
-template< class Parsed, class Input, class cmdtag = unused, class Cmd = unused >
+template< class Parsed, class cmdtag = unused, class Cmd = unused >
 class PEGTLParsed : public Parsed {
 
   public:
     //! \brief Constructor
-    //! \param[in] input PEGTL object and allowing access to the parser location
     //! \param[in] ctrinfo std::map of control file keywords and their info
     //! \details The ctrinfo map argument is optional. If not given, it is an
     //!    empty std::map constructed in-place and affects nothing. If given, it
@@ -58,22 +57,17 @@ class PEGTLParsed : public Parsed {
     //!    instantiated without passing the ctrinfo map, otherwise it would be a
     //!    mutual dependency.
     //! \author J. Bakosi
-    explicit PEGTLParsed( const Input& input,
-                          HelpFactory ctrinfo = HelpFactory() ) :
-      Parsed( ctrinfo ), m_input( input ) {}
+    explicit PEGTLParsed( HelpFactory ctrinfo = HelpFactory() ) :
+      Parsed( ctrinfo ) {}
 
     //! \brief Constructor setting command line
     //! \author J. Bakosi
-    explicit PEGTLParsed( const Input& input, const Cmd& cl ) : m_input(input)
+    explicit PEGTLParsed( const Cmd& cl )
     { Parsed::template set< cmdtag >( cl ); }
 
     //! \brief PEGTL location accessor
     //! \author J. Bakosi
-    const typename Input::location_type location() const
-    { return m_input.location(); }
-
-  private:
-    const Input& m_input;      //!< Reference to PEGTL input parsed
+    std::string location() const { return "<LOCATION>"; }
 };
 
 } // ctr::

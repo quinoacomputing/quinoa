@@ -17,6 +17,7 @@
 #include "NoWarning/pegtl.h"
 
 #include "Has.h"
+#include "Escaper.h"
 
 namespace kw {
 
@@ -79,8 +80,11 @@ struct keyword< Info, pegtl::string< Char, Chars... > > {
 
   //! \brief Accessor to keyword as std::string
   //! \return Keyword as std::string
-  static std::string string()
-  { return pegtl::string< Char, Chars... >::string(); }
+  static std::string string() {
+    return ( sizeof...( Chars ) ) ?
+           ( kw::escaper< Char, Chars... >::result() ) :
+           ( kw::escape( Char ) );
+  }
 
   //! \brief Accessor to required short name of a keyword
   //! \return Name of keyword as std::string
@@ -113,7 +117,7 @@ struct keyword< Info, pegtl::string< Char, Chars... > > {
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefAlias< T >::value, int >::type = 0 >
   static boost::optional< std::string > alias()
-  { return pegtl::string< Char, Chars... >( Info::alias::value ); }
+  { return std::string( 1, static_cast<char>( Info::alias::value ) ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefAlias< T >::value, int >::type = 0 >
@@ -133,7 +137,7 @@ struct keyword< Info, pegtl::string< Char, Chars... > > {
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefCode< T >::value, int >::type = 0 >
   static boost::optional< std::string > code()
-  { return pegtl::string< Char, Chars... >( Info::code::value ); }
+  { return std::string( 1, Info::code::value ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefCode< T >::value, int >::type = 0 >
