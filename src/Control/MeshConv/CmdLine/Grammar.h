@@ -35,9 +35,6 @@ namespace cmd {
 
   // MeshConv's CmdLine state
 
-  //! Everything is stored in Stack during parsing
-  using Stack = PEGTLCmdLine;
-
   // MeshConv's CmdLine grammar
 
   //! brief Match and set verbose switch (i.e., verbose or quiet output)
