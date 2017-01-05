@@ -40,8 +40,7 @@ namespace mkl {
   template< typename Stack, template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
-         tk::grm::process< Stack,
-                           use< kw::seed >,
+         tk::grm::process< use< kw::seed >,
                            tk::grm::Insert_field< Stack,
                                                   tag::seed,
                                                   sel, vec, tags... > > {};
@@ -51,7 +50,7 @@ namespace mkl {
   template< typename Stack, template< class > class use, typename sel,
             typename vec, typename... tags >
   struct uniform_method :
-         grm::rng_option< Stack, use,
+         grm::rng_option< use,
                           use< kw::uniform_method >,
                           ctr::MKLUniformMethod,
                           tag::uniform_method,
@@ -62,7 +61,7 @@ namespace mkl {
   template< typename Stack, template< class > class use, typename sel,
             typename vec, typename... tags >
   struct gaussian_method :
-         grm::rng_option< Stack, use,
+         grm::rng_option< use,
                           use< kw::gaussian_method >,
                           ctr::MKLGaussianMethod,
                           tag::gaussian_method,
@@ -73,7 +72,7 @@ namespace mkl {
   template< typename Stack, template< class > class use, typename sel,
             typename vec, typename... tags >
   struct beta_method :
-         grm::rng_option< Stack, use,
+         grm::rng_option< use,
                           use< kw::beta_method >,
                           ctr::MKLBetaMethod,
                           tag::beta_method,
@@ -91,8 +90,7 @@ namespace mkl {
                                                       use,
                                                       ctr::RNG,
                                                       sel, vec > >,
-           tk::grm::block< Stack,
-                           kw::end,
+           tk::grm::block< kw::end,
                            seed< Stack, use, sel, vec, tags... >,
                            uniform_method< Stack, use, sel, vec, tags... >,
                            gaussian_method< Stack, use, sel, vec, tags... >,

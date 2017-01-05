@@ -227,19 +227,18 @@ namespace deck {
 
   //! Discretization parameters
   struct discretization_parameters :
-         pegtl::sor< tk::grm::discr< Stack, use< kw::nstep >, tag::nstep >,
-                     tk::grm::discr< Stack, use< kw::term >, tag::term >,
-                     tk::grm::discr< Stack, use< kw::t0 >, tag::t0 >,
-                     tk::grm::discr< Stack, use< kw::dt >, tag::dt >,
-                     tk::grm::discr< Stack, use< kw::cfl >, tag::cfl >,
-                     tk::grm::discr< Stack, use< kw::ctau >, tag::ctau >,
-                     tk::grm::interval< Stack, use< kw::ttyi >, tag::tty > > {};
+         pegtl::sor< tk::grm::discr< use< kw::nstep >, tag::nstep >,
+                     tk::grm::discr< use< kw::term >, tag::term >,
+                     tk::grm::discr< use< kw::t0 >, tag::t0 >,
+                     tk::grm::discr< use< kw::dt >, tag::dt >,
+                     tk::grm::discr< use< kw::cfl >, tag::cfl >,
+                     tk::grm::discr< use< kw::ctau >, tag::ctau >,
+                     tk::grm::interval< use< kw::ttyi >, tag::tty > > {};
 
   //! PDE parameter vector
   template< class keyword, class eq, class param >
   struct pde_parameter_vector :
-         tk::grm::parameter_vector< Stack,
-                                    use,
+         tk::grm::parameter_vector< use,
                                     use< keyword >,
                                     tk::grm::Store_back_back,
                                     tk::grm::start_vector,
@@ -253,10 +252,8 @@ namespace deck {
            pegtl::ifmust<
              tk::grm::readkw< Stack, use< kw::bc_dirichlet >::pegtl_string >,
              tk::grm::block<
-               Stack,
                use< kw::end >,
-               tk::grm::parameter_vector< Stack,
-                                          use,
+               tk::grm::parameter_vector< use,
                                           use< kw::sideset >,
                                           tk::grm::Store_back_back,
                                           tk::grm::start_vector,
@@ -270,10 +267,8 @@ namespace deck {
            pegtl::ifmust<
              tk::grm::readkw< Stack, use< kw::ic >::pegtl_string >,
              tk::grm::block<
-               Stack,
                use< kw::end >,
-               tk::grm::parameter_vector< Stack,
-                                          use,
+               tk::grm::parameter_vector< use,
                                           use< kw::velocity >,
                                           tk::grm::Store_back_back,
                                           tk::grm::start_vector,
@@ -284,7 +279,7 @@ namespace deck {
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
   struct material_property :
-         tk::grm::process< Stack, use< keyword >,
+         tk::grm::process< use< keyword >,
            tk::grm::Store_back< Stack, tag::param, eq, property > > {};
 
   //! Material properties block for compressible flow
@@ -292,8 +287,7 @@ namespace deck {
   struct material_properties :
            pegtl::ifmust<
              tk::grm::readkw< Stack, use< kw::material >::pegtl_string >,
-             tk::grm::block< Stack,
-                             use< kw::end >,
+             tk::grm::block< use< kw::end >,
                              material_property< eq, kw::id, tag::id >,
                              material_property< eq, kw::mat_gamma, tag::gamma >,
                              material_property< eq, kw::mat_mu, tag::mu >,
@@ -303,23 +297,20 @@ namespace deck {
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p >
   struct parameter :
-         tk::grm::process< Stack, use< keyword >,
+         tk::grm::process< use< keyword >,
            tk::grm::Store_back< Stack, tag::param, eq, p > > {};
 
   //! transport equation for scalars
   struct transport :
          pegtl::ifmust<
            scan_eq< use< kw::transport >, tag::transport >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
-                           tk::grm::policy< Stack,
-                                            use,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::policy< use,
                                             use< kw::physics >,
                                             ctr::Physics,
                                             tag::transport,
                                             tag::physics >,
-                           tk::grm::policy< Stack,
-                                            use,
+                           tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
                                             tag::transport,
@@ -328,8 +319,7 @@ namespace deck {
                                            use,
                                            tag::transport,
                                            tag::depvar >,
-                           tk::grm::component< Stack,
-                                               use< kw::ncomp >,
+                           tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
                                                  tag::transport,
@@ -346,10 +336,8 @@ namespace deck {
   struct poisson :
          pegtl::ifmust<
            scan_eq< use< kw::poisson >, tag::poisson >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
-                           tk::grm::policy< Stack,
-                                            use,
+           tk::grm::block<  use< kw::end >,
+                           tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
                                             tag::poisson,
@@ -358,8 +346,7 @@ namespace deck {
                                            use,
                                            tag::poisson,
                                            tag::depvar >,
-                           tk::grm::component< Stack,
-                                               use< kw::ncomp >,
+                           tk::grm::component< use< kw::ncomp >,
                                                tag::poisson >,
                            bc_dirichlet< tag::poisson, tag::bcdir > >,
            check_errors< tag::poisson, check_eq > > {};
@@ -368,16 +355,13 @@ namespace deck {
   struct compflow :
          pegtl::ifmust<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
-                           tk::grm::policy< Stack,
-                                            use,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::policy< use,
                                             use< kw::physics >,
                                             ctr::Physics,
                                             tag::compflow,
                                             tag::physics >,
-                           tk::grm::policy< Stack,
-                                            use,
+                           tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
                                             tag::compflow,
@@ -395,10 +379,8 @@ namespace deck {
   struct partitioning :
          pegtl::ifmust<
            tk::grm::readkw< Stack, use< kw::partitioning >::pegtl_string >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
+           tk::grm::block< use< kw::end >,
                            tk::grm::process<
-                             Stack,
                              use< kw::algorithm >,
                              store_option< tk::ctr::PartitioningAlgorithm,
                                            tag::selected,
@@ -413,10 +395,8 @@ namespace deck {
   struct plotvar :
          pegtl::ifmust<
            tk::grm::readkw< Stack, use< kw::plotvar >::pegtl_string >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
-                           tk::grm::interval< Stack,
-                                              use< kw::interval >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::interval< use< kw::interval >,
                                               tag::field > > > {};
 
   //! 'inciter' block
@@ -424,13 +404,13 @@ namespace deck {
          pegtl::ifmust<
            tk::grm::readkw< Stack, use< kw::inciter >::pegtl_string >,
            pegtl::sor<
-             pegtl::seq< tk::grm::block< Stack,
+             pegtl::seq< tk::grm::block<
                            use< kw::end >,
                            discretization_parameters,
                            equations,
                            partitioning,
                            plotvar,
-                           tk::grm::diagnostics< Stack, use, store_option > >,
+                           tk::grm::diagnostics< use, store_option > >,
                          pegtl::apply< check_dt > >,
              pegtl::apply<
                tk::grm::error< Stack, tk::grm::MsgKey::UNFINISHED > > > > {};
@@ -438,12 +418,12 @@ namespace deck {
   //! \brief All keywords
   //! \author J. Bakosi
   struct keywords :
-         pegtl::sor< tk::grm::title< Stack, use >, inciter > {};
+         pegtl::sor< tk::grm::title< use >, inciter > {};
 
   //! \brief Grammar entry point: parse keywords and ignores until eof
   //! \author J. Bakosi
   struct read_file :
-         tk::grm::read_file< Stack, keywords, tk::grm::ignore< Stack > > {};
+         tk::grm::read_file< keywords, tk::grm::ignore > {};
 
 } // deck::
 } // inciter::

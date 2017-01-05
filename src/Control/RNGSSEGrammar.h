@@ -71,8 +71,7 @@ namespace rngsse {
   template< typename Stack, template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
-         tk::grm::process< Stack,
-                           use< kw::seed >,
+         tk::grm::process< use< kw::seed >,
                            tk::grm::Insert_field< Stack,
                                                   tag::seed,
                                                   sel, vec, tags... > > {};
@@ -83,8 +82,7 @@ namespace rngsse {
             typename option, typename field, typename sel, typename vec,
             typename... tags >
   struct rngsse_seq :
-         grm::process< Stack,
-                       keyword,
+         grm::process< keyword,
                        insert_seq< Stack, use, option, field, sel, vec,
                                    tags... >,
                        pegtl::alpha > {};
@@ -112,8 +110,7 @@ namespace rngsse {
                                                       use,
                                                       ctr::RNG,
                                                       sel, vec > >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
+           tk::grm::block< use< kw::end >,
                            seed< Stack, use, sel, vec, tags... >,
                            seqlen< Stack, use, sel, vec, tags... > > > {};
 

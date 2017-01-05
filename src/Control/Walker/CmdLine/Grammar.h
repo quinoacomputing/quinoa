@@ -93,7 +93,7 @@ namespace cmd {
 
   //! entry point: parse keywords and until end of string
   struct read_string :
-         tk::grm::read_string< Stack, keywords > {};
+         tk::grm::read_string< keywords > {};
 
 } // cmd::
 } // walker::
