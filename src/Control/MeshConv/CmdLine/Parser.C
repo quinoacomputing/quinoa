@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 Jan 2017 01:07:33 PM MST
+  \date      Thu 05 Jan 2017 03:29:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line parser
   \details   This file defines the command-line argument parser for the mesh
@@ -66,10 +66,7 @@ CmdLineParser::CmdLineParser( int argc,
   // not to have to create a new pretty printer, but use the existing one.
   tk::grm::g_print.reset( print.save() );
 
-  // Parse command line string by populating the underlying tagged tuple:
-  // basic_parse() below gives debug info during parsing, use it for debugging
-  // the parser itself, i.e., when modifying the grammar, otherwise, use
-  // dummy_parse() to compile faster
+  // Parse command line string by populating the underlying tagged tuple
   pegtl::parse< cmd::read_string, tk::grm::action >
               ( m_string, "command line", cmd );
 

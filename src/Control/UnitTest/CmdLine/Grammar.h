@@ -26,8 +26,7 @@ namespace cmd {
   //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
   //!    information so the location can be tracked during parsing.
   //! \author J. Bakosi
-  using PEGTLCmdLine =
-    tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
+  using PEGTLCmdLine = tk::ctr::PEGTLParsed< ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for UnitTest's command line parser
   //! \author J. Bakosi
@@ -36,40 +35,32 @@ namespace cmd {
 
   // UnitTest's CmdLine state
 
-  //! \brief Everything is stored in Stack during parsing
-  //! \author J. Bakosi
-  using Stack = PEGTLCmdLine;
-
   // UnitTest's CmdLine grammar
 
   //! \brief Match and set verbose switch (i.e., verbose or quiet output)
   //! \author J. Bakosi
   struct verbose :
-         tk::grm::process_cmd_switch< Stack,
-                                      use< kw::verbose >,
+         tk::grm::process_cmd_switch< use< kw::verbose >,
                                       tag::verbose > {};
 
   //! \brief Match help on command-line parameters
   //! \author J. Bakosi
   struct help :
-         tk::grm::process_cmd_switch< Stack,
-                                      use< kw::help >,
+         tk::grm::process_cmd_switch< use< kw::help >,
                                       tag::help > {};
 
   //! \brief Match help on a command-line keyword
   //! \author J. Bakosi
   struct helpkw :
-         tk::grm::process_cmd< Stack,
-                               use< kw::helpkw >,
-                               tk::grm::helpkw< Stack >,
+         tk::grm::process_cmd< use< kw::helpkw >,
+                               tk::grm::helpkw,
                                pegtl::alnum > {};
 
   //! \brief Match test group name(s) and only run those
   //! \author J. Bakosi
   struct group :
-         tk::grm::process_cmd< Stack,
-                               use< kw::group >,
-                               tk::grm::Store< Stack, tag::group > > {};
+         tk::grm::process_cmd< use< kw::group >,
+                               tk::grm::Store< tag::group > > {};
 
   //! \brief Match all command line keywords
   //! \author J. Bakosi
