@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \author    J. Bakosi
-  \date      Mon 19 Dec 2016 03:16:28 PM MST
+  \author    J. Bakosi, D. Frey
+  \date      Thu 05 Jan 2017 03:18:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -379,8 +379,30 @@ namespace grm {
 
   //! PEGTL action base: do nothing by default
   //! \details This base is specialized to different actions duing parsing.
+  //! \author D. Frey
   template< typename Rule >
   struct action : pegtl::nothing< Rule > {};
+
+  //! Helper for calling action::apply for multiple actions
+  //! \author D. Frey
+  template< typename... As >
+  struct call {
+    template< typename Input, typename State >
+    static void apply( const Input& in, State& state ) {
+        using swallow = bool[];
+        (void)swallow{ ( action< As >::apply( in, state ), true )..., true };
+     }
+  };
+
+  //! Rule used to trigger action(s) for a rule
+  //! \author J. Bakosi
+  template< class rule, class... actions >
+  struct act : pegtl::seq< rule > {};
+
+  //! \author J. Bakosi
+  //! \details Specialization of action for act< rule, actions... >
+  template< class rule, class... actions >
+  struct action< act< rule, actions... > > : call< actions... > {};
 
   //! Rule used to trigger action
   template< MsgType, MsgKey > struct msg : pegtl::success {};
@@ -427,7 +449,6 @@ namespace grm {
   struct action< Store< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-std::cout << "S> '" << in.string() << "'\n";
       if (!in.string().empty())
         stack.template store< tag, tags... >( in.string() );
       else
@@ -486,18 +507,18 @@ std::cout << "S> '" << in.string() << "'\n";
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags >
+  template< typename... tags >
   struct Store_switch : pegtl::success {};
   //! \brief Put true in switch in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
   //!    stack via the member function tk::Control::set.
   //! \author J. Bakosi
-  template< typename tag, typename... tags >
-  struct action< Store_switch< tag, tags... > > {
+  template< typename... tags >
+  struct action< Store_switch< tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template set< tag, tags... >( true );
+      stack.template set< tags... >( true );
     }
   };
 
@@ -1065,7 +1086,7 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
   //! \author J. Bakosi
-  template< class Stack, class token, class erased >
+  template< class token, class erased >
   struct trim :
          pegtl::seq< token,
                      pegtl::sor<
@@ -1074,17 +1095,17 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Match unknown keyword and handle error
   //! \author J. Bakosi
-  template< class Stack, MsgType type, MsgKey key >
+  template< MsgType type, MsgKey key >
   struct unknown :
-         pegtl::pad< pegtl::if_must< trim< Stack, pegtl::any, pegtl::space >,
-                                     msg< type, key > >,
+         pegtl::pad< pegtl::seq< trim< pegtl::any, pegtl::space >,
+                          msg< type, key > >,
                      pegtl::blank,
                      pegtl::space > {};
 
   //! \brief Match alias cmdline keyword
   //! \details An alias command line keyword is prefixed by a single dash, '-'.
   //! \author J. Bakosi
-  template< class Stack, class keyword >
+  template< class keyword >
   struct alias :
          pegtl::seq<
            pegtl::one< '-' >,
@@ -1104,16 +1125,16 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Read keyword 'token' padded by blank at left and space at right
   //! \author J. Bakosi
-  template< class Stack, class token >
+  template< class token >
   struct readkw :
-         pegtl::pad< trim< Stack, token, pegtl::space >,
+         pegtl::pad< trim< token, pegtl::space >,
                      pegtl::blank,
                      pegtl::space > {};
 
   //! \brief Read command line 'keyword' in verbose form, i.e., '--keyword'
   //! \details This version is used if no alias is defined for the given keyword
   //! \author J. Bakosi
-  template< class Stack, class keyword, typename = void >
+  template< class keyword, typename = void >
   struct readcmd :
          verbose< keyword > {};
 
@@ -1136,19 +1157,18 @@ std::cout << "S> '" << in.string() << "'\n";
   //! \see http://en.cppreference.com/w/cpp/language/sfinae
   //! \see http://stackoverflow.com/a/11814074
   //! \author J. Bakosi
-  template< class Stack, class keyword >
-  struct readcmd< Stack, keyword,
+  template< class keyword >
+  struct readcmd< keyword,
                   typename if_< false, typename keyword::info::alias >::type > :
-         pegtl::sor< verbose< keyword >, alias< Stack, keyword > > {};
+         pegtl::sor< verbose< keyword >, alias< keyword > > {};
 
   //! \brief Scan input padded by blank at left and space at right and if it
   //!   matches 'keywords', apply 'actions'
   //! \details As opposed to scan_until this rule, allows multiple actions
   //! \author J. Bakosi
-  template< class Stack, class keywords, class... actions >
+  template< class keyword, class... actions >
   struct scan :
-           pegtl::pad< pegtl::if_must< trim< Stack, keywords, pegtl::space >,
-                                       actions... >,
+           pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
                        pegtl::blank,
                        pegtl::space > {};
 
@@ -1158,27 +1178,24 @@ std::cout << "S> '" << in.string() << "'\n";
   //!   to scan, this rule allows an additional end-rule until which parsing is
   //!   continued. The additional custom end-rule is OR'd to pegtl::space.
   //! \author J. Bakosi
-  template< class Stack, class keywords, class action, class end = pegtl::space >
+  template< class keywords, class action, class end = pegtl::space >
   struct scan_until :
-         pegtl::pad< pegtl::if_must< trim< Stack, keywords,
-                                           pegtl::sor< pegtl::space, end > >,
-                                     action >,
+         pegtl::pad< act< trim< keywords, pegtl::sor< pegtl::space, end > >,
+                          action >,
                      pegtl::blank,
                      pegtl::space > {};
 
   //! \brief Parse comment: start with '#' until eol
   //! \author J. Bakosi
-  template< class Stack >
   struct comment :
-         pegtl::pad< trim< Stack, pegtl::one<'#'>, pegtl::eol >,
+         pegtl::pad< trim< pegtl::one<'#'>, pegtl::eol >,
                      pegtl::blank,
                      pegtl::eol > {};
 
   //! \brief Ignore comments and empty lines
   //! \author J. Bakosi
-  template< class Stack >
   struct ignore :
-         pegtl::sor< comment< Stack >, pegtl::until< pegtl::eol, pegtl::space > > {};
+         pegtl::sor< comment, pegtl::until< pegtl::eol, pegtl::space > > {};
 
   //! \brief Parse a number: an optional sign followed by digits
   //! \author J. Bakosi
@@ -1189,116 +1206,95 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Plow through 'tokens' until 'endkeyword'
   //! \author J. Bakosi
-  template< class Stack, class endkeyword, typename... tokens >
+  template< class endkeyword, typename... tokens >
   struct block :
          pegtl::until<
-           readkw< Stack, typename endkeyword::pegtl_string >,
-           pegtl::sor< comment< Stack >,
+           readkw< typename endkeyword::pegtl_string >,
+           pegtl::sor< comment,
                        tokens...,
-                       unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
+                       unknown< ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   //! \author J. Bakosi
-  template< class Stack, class key, class insert, class endkeyword,
+  template< class key, class insert, class endkeyword,
             class starter, class value = number >
   struct vector :
-         pegtl::if_must< readkw< Stack, typename key::pegtl_string >,
-                         starter,
-                         pegtl::until<
-                           readkw< Stack, typename endkeyword::pegtl_string >,
-                           pegtl::sor<
-                             comment< Stack >,
-                             scan< Stack, value, insert >,
-                             unknown< Stack, ERROR, MsgKey::LIST > > > > {};
+         pegtl::seq<
+           act< readkw< typename key::pegtl_string >, starter >,
+           pegtl::until< readkw< typename endkeyword::pegtl_string >,
+                         pegtl::sor< comment,
+                                     scan< value, insert >,
+                                     unknown< ERROR, MsgKey::LIST > > > > {};
 
   //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
   //!   apply action 'insert'
   //! \author J. Bakosi
-  template< class Stack, class insert, char lbound = '"', char rbound = '"' >
+  template< class insert, char lbound = '"', char rbound = '"' >
   struct quoted :
          pegtl::if_must< pegtl::one< lbound >,
-                         pegtl::if_must<
-                           pegtl::sor< trim< Stack, pegtl::not_one< lbound >,
-                                             pegtl::one< rbound > >,
-                                       unknown< Stack, ERROR, MsgKey::QUOTED > >,
-                         insert >,
+                         act< pegtl::sor< trim< pegtl::not_one< lbound >,
+                                                pegtl::one< rbound > >,
+                                          unknown< ERROR, MsgKey::QUOTED > >,
+                              insert >,
                          pegtl::one< rbound > > {};
 
   //! \brief Process 'keyword' and call its 'insert' action if matches 'kw_type'
   //! \author J. Bakosi
-  template< class Stack, class keyword, class insert,
-            class kw_type = pegtl::digit >
+  template< class keyword, class insert, class kw_type = pegtl::digit >
   struct process :
-         pegtl::if_must< readkw< Stack, typename keyword::pegtl_string >,
-                         scan< Stack, pegtl::sor<
-                                 kw_type,
-                                 msg< ERROR, MsgKey::MISSING > >,
-                               insert > > {};
-
-  //! \brief Process 'keyword' and call its 'insert' action for a string matched
-  //!   between characters 'lbound' and 'rbound'
-  //! \author J. Bakosi
-  template< class Stack, class keyword, class insert, char lbound='"',
-            char rbound='"' >
-  struct process_quoted :
-         pegtl::if_must< readkw< Stack, keyword >,
-                         pegtl::sor<
-                           quoted< Stack, insert, lbound, rbound >,
-                           unknown< Stack, ERROR, MsgKey::QUOTED > > > {};
+         pegtl::if_must<
+           readkw< typename keyword::pegtl_string >,
+           scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >,
+                 insert > > {};
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
   //! \author J. Bakosi
-  template< class Stack, class keyword, class insert,
-            class kw_type = pegtl::any >
+  template< class keyword, class insert, class kw_type = pegtl::any >
   struct process_cmd :
-         pegtl::if_must< readcmd< Stack, keyword >,
-                         scan< Stack, 
-                               pegtl::sor<
+         pegtl::if_must< readcmd< keyword >,
+                         scan< pegtl::sor<
                                  kw_type,
                                  msg< ERROR, MsgKey::MISSING > >,
-                         insert > > {};
+                               insert > > {};
 
   //! \brief Process command line switch 'keyword'
   //! \details The value of a command line switch is a boolean, i.e., it can be
   //!    either set or unset.
   //! \author J. Bakosi
-  template< class Stack, class keyword, typename tag, typename... tags >
+  template< class keyword, typename tag, typename... tags >
   struct process_cmd_switch :
-         pegtl::if_must<
-           readcmd< Stack, keyword >,
-           Store_switch< tag, tags... > > {};
+         pegtl::seq< readcmd< keyword >, Store_switch< tag, tags... > > {};
 
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file
   //! \author J. Bakosi
-  template< class Stack, typename keywords, typename ign >
+  template< typename keywords, typename ign >
   struct read_file :
          pegtl::until< pegtl::eof,
                        pegtl::sor<
                          keywords,
                          ign,
-                         unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
+                         unknown< ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Process but ignore Charm++'s charmrun arguments starting with '+'
   //! \author J. Bakosi
-  template< class Stack >
   struct charmarg :
          pegtl::seq< pegtl::one<'+'>,
-                     unknown< Stack, WARNING, MsgKey::CHARMARG > > {};
+                     unknown< WARNING, MsgKey::CHARMARG > > {};
 
   //! \brief Generic string parser entry point: parse 'keywords' until end of
   //!   string
   //! \author J. Bakosi
-  template< class Stack, typename keywords >
+  template< typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
                        pegtl::sor<
                          keywords,
-                         charmarg< Stack >,
-                         unknown< Stack, ERROR, MsgKey::KEYWORD > > > {};
+                         charmarg,
+                         unknown< ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Insert RNG parameter
   //! \details A parameter here is always an option. An option is an object
@@ -1306,113 +1302,91 @@ std::cout << "S> '" << in.string() << "'\n";
   //!   specialization of tk::Toggle to see how an option is created from
   //!   tk::Toggle.
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename keyword,
+  template< template< class > class use, typename keyword,
             typename option, typename field, typename sel, typename vec,
             typename... tags >
   struct rng_option :
-         process< Stack,
-                  keyword,
+         process< keyword,
                   insert_option< use, option, field, sel, vec, tags... >,
                   pegtl::alpha > {};
 
   //! \brief fieldvar: a character, denoting a variable, optionally followed by
   //!   a digit
   //! \author J. Bakosi
-  template< typename Stack, typename var >
+  template< typename var >
   struct fieldvar :
          pegtl::sor<
-           pegtl::seq< var, pegtl::if_must< pegtl::plus< pegtl::digit >,
-                                            save_field > >,
+           pegtl::seq< var, act< pegtl::plus< pegtl::digit >, save_field > >,
            var > {};
 
   //! \brief term: upper or lowercase fieldvar matched to selected depvars for
   //!   stats
   //! \author J. Bakosi
-  template< class Stack >
   struct term :
          pegtl::sor<
-           pegtl::if_must<
-             fieldvar< Stack, pegtl::upper >,
-             match_depvar< push_term< tk::ctr::Moment::ORDINARY > > >,
-           pegtl::if_must<
-             fieldvar< Stack, pegtl::lower >,
-             match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
+           act< fieldvar< pegtl::upper >,
+                match_depvar< push_term< tk::ctr::Moment::ORDINARY > > >,
+           act< fieldvar< pegtl::lower >,
+                match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
 
   //! \brief sample space variable: fieldvar matched to selected depvars
   //! \author J. Bakosi
-  template< class Stack, class c, tk::ctr::Moment m >
+  template< class c, tk::ctr::Moment m >
   struct sample_space_var :
          scan_until<
-           Stack,
-           fieldvar< Stack, c >,
+           fieldvar< c >,
            match_depvar< push_sample< m > >,
            pegtl::one<':'> > {};
 
   //! \brief samples: sample space variables optionally separated by fillers
   //! \author J. Bakosi
-  template< class Stack >
   struct samples :
          pegtl::sor<
-           sample_space_var< Stack, pegtl::upper, tk::ctr::Moment::ORDINARY >,
-           sample_space_var< Stack, pegtl::lower, tk::ctr::Moment::CENTRAL >
+           sample_space_var< pegtl::upper, tk::ctr::Moment::ORDINARY >,
+           sample_space_var< pegtl::lower, tk::ctr::Moment::CENTRAL >
          > {};
 
   //! \brief bin(sizes): real numbers as many sample space dimensions were given
   //! \author J. Bakosi
-  template< class Stack >
   struct bins :
-         pegtl::sor< scan_until< Stack,
-                                 number,
-                                 push_binsize,
-                                 pegtl::one<')'> >,
-                     pegtl::if_must<
-                       pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                       msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
+         pegtl::sor<
+           scan_until< number, push_binsize, pegtl::one<')'> >,
+           act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
+                msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
 
   //! \brief plow through expectations between characters '<' and '>'
   //! \author J. Bakosi
-  template< class Stack >
   struct parse_expectations :
-         readkw<
-           Stack,
-           pegtl::if_must<
-             pegtl::one<'<'>,
-             start_vector< tag::stat >,
-             pegtl::until< pegtl::one<'>'>, term< Stack > >,
-             check_expectation > > {};
+         readkw< pegtl::seq< act< pegtl::one<'<'>, start_vector< tag::stat > >,
+                             pegtl::until< pegtl::one<'>'>, term >,
+                             check_expectation > > {};
 
   //! \brief list of sample space variables with error checking
   //! \author J. Bakosi
-  template< class Stack >
   struct sample_space :
          pegtl::seq<
-           start_vector< Stack, tag::pdf >,
-           pegtl::until< pegtl::one<':'>, samples< Stack > >,
+           start_vector< tag::pdf >,
+           pegtl::until< pegtl::one<':'>, samples >,
            check_samples > {};
 
   //! \brief extents: optional user-specified extents of PDF sample space
   //! \author J. Bakosi
-  template< class Stack >
   struct extents :
-         pegtl::sor< scan_until< Stack,
-                                 number,
-                                 push_extents,
-                                 pegtl::one<')'> >,
-                     pegtl::if_must<
-                       pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                       msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
+         pegtl::sor<
+           scan_until< number, push_extents, pegtl::one<')'> >,
+           act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
+                msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
 
   //! \brief binsizes followed by optional extents with error checking
   //! \author J. Bakosi
-  template< class Stack >
   struct bins_exts :
          pegtl::seq<
            start_vector< tag::discr, tag::binsize >,
            start_vector< tag::discr, tag::extent >,
            pegtl::until< pegtl::sor< pegtl::one<';'>,
                                      pegtl::at< pegtl::one<')'> > >,
-                         bins< Stack > >,
-           pegtl::until< pegtl::one<')'>, extents< Stack > >,
+                         bins >,
+           pegtl::until< pegtl::one<')'>, extents >,
            check_binsizes,
            check_extents > {};
 
@@ -1421,9 +1395,8 @@ std::cout << "S> '" << in.string() << "'\n";
   //!    underscores, no leading digit), matched to already selected pdf name
   //!    requiring unique names.
   //! \author J. Bakosi
-  template< class Stack >
   struct pdf_name :
-         pegtl::if_must< pegtl::identifier, match_pdfname > {};
+         act< pegtl::identifier, match_pdfname > {};
 
   //! \brief Match pdf description: name + sample space specification
   //! \details Example syntax (without the quotes): "name(x y z : 1.0 2.0 3.0)",
@@ -1431,109 +1404,93 @@ std::cout << "S> '" << in.string() << "'\n";
   //!    while 1.0 2.0 3.0 are bin sizes corresponding to the x y z sample space
   //!    dimensions, respectively.
   //! \author J. Bakosi
-  template< class Stack >
   struct parse_pdf :
          readkw<
-           Stack,
            pegtl::if_must<
-             pegtl::seq< pdf_name< Stack >, pegtl::at< pegtl::one<'('> > >,
+             pegtl::seq< pdf_name, pegtl::at< pegtl::one<'('> > >,
              pegtl::sor< pegtl::one<'('>,
                          msg< ERROR, MsgKey::KEYWORD > >,
-             pegtl::sor< pegtl::seq< sample_space< Stack >, bins_exts< Stack > >,
+             pegtl::sor< pegtl::seq< sample_space, bins_exts >,
                          msg< ERROR, MsgKey::INVALIDSAMPLESPACE > > > > {};
 
   //! \brief Match precision of floating-point numbers in digits (for text
   //!   output)
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, class prec >
+  template< template< class > class use, class prec >
   struct precision :
-         process< Stack,
-                  use< kw::precision >,
+         process< use< kw::precision >,
                   store_precision< prec >,
                   pegtl::alnum > {};
 
   //! \brief Match control parameter
   //! \author J. Bakosi
-  template< class Stack, typename keyword, class kw_type, typename... tags >
+  template< typename keyword, class kw_type, typename... tags >
   struct control :
-         process< Stack, keyword, Store< Stack, tags... >, kw_type > {};
+         process< keyword, Store< tags... >, kw_type > {};
 
   //! \brief Match discretization control parameter
   //! \author J. Bakosi
-  template< class Stack, typename keyword, typename Tag >
+  template< typename keyword, typename Tag >
   struct discr :
-         control< Stack, keyword, pegtl::digit, tag::discr, Tag > {};
+         control< keyword, pegtl::digit, tag::discr, Tag > {};
 
   //! \brief Match component control parameter
   //! \author J. Bakosi
-  template< class Stack, typename keyword, typename Tag >
+  template< typename keyword, typename Tag >
   struct component :
-         process< Stack,
-                  keyword,
+         process< keyword,
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
   //! \brief Match interval control parameter
   //! \author J. Bakosi
-  template< class Stack, typename keyword, typename Tag >
+  template< typename keyword, typename Tag >
   struct interval :
-         control< Stack, keyword, pegtl::digit, tag::interval, Tag > {};
+         control< keyword, pegtl::digit, tag::interval, Tag > {};
 
   //! \brief Parse statistics ... end block
   //! \author J. Bakosi
-  template< class Stack,
-            template< class > class use,
-            template< class... Ts > class store >
+  template< template< class > class use, template< class... Ts > class store >
   struct statistics :
-         pegtl::if_must< readkw< Stack,
-                                 typename use< kw::statistics >::pegtl_string >,
-                         block< Stack,
-                                use< kw::end >,
-                                interval< Stack, use< kw::interval >,
+         pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
+                         block< use< kw::end >,
+                                interval< use< kw::interval >,
                                           tag::stat >,
-                                process< Stack,
-                                         use< kw::txt_float_format >,
+                                process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
                                                 tag::stat >,
                                          pegtl::alpha >,
-                                precision< Stack, use, tag::stat >,
-                                parse_expectations< Stack > > > {};
+                                precision< use, tag::stat >,
+                                parse_expectations > > {};
 
   //! \brief Parse diagnostics ... end block
   //! \author J. Bakosi
-  template< class Stack,
-            template< class > class use,
-            template< class... Ts > class store >
+  template< template< class > class use, template< class... Ts > class store >
   struct diagnostics :
-         pegtl::if_must< readkw< Stack,
-                                 typename use< kw::diagnostics >::pegtl_string >,
-                         block< Stack,
-                                use< kw::end >,
-                                interval< Stack, use< kw::interval >,
+         pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
+                         block< use< kw::end >,
+                                interval< use< kw::interval >,
                                           tag::diag >,
-                                process< Stack,
-                                         use< kw::txt_float_format >,
+                                process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
                                                 tag::diag >,
                                          pegtl::alpha >,
-                                precision< Stack, use, tag::diag > > > {};
+                                precision< use, tag::diag > > > {};
 
   //! \brief Match model parameter
   //! \author J. Bakosi
-  template< class Stack, typename keyword, typename kw_type, typename model,
-            typename Tag >
+  template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
-         control< Stack, keyword, kw_type, tag::param, model, Tag > {};
+         control< keyword, kw_type, tag::param, model, Tag > {};
 
   //! \brief Match rng parameter
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, typename keyword,
+  template< template< class > class use, typename keyword,
             typename option, typename model, typename... tags >
   struct rng :
-         process< Stack,
-                  keyword,
+         process< keyword,
                   check_store_option< use,
                                       option,
                                       tag::selected,
@@ -1543,10 +1500,10 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Match rngs ... end block
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, class rngs >
+  template< template< class > class use, class rngs >
   struct rngblock :
-         pegtl::if_must< readkw< Stack, typename use< kw::rngs >::pegtl_string >,
-                         block< Stack, use< kw::end >, rngs > > {};
+         pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
+                         block< use< kw::end >, rngs > > {};
 
 
   //! \brief Match equation/model parameter vector
@@ -1563,8 +1520,7 @@ std::cout << "S> '" << in.string() << "'\n";
   //!   at which the parameter vector lives. Example client-code: see
   //!   walker::deck::icbeta, or walker::deck::icdelta.
   //! \author J. Bakosi
-  template< class Stack,
-            template< class > class use,
+  template< template< class > class use,
             typename keyword,
             template< class, class, class... > class store,
             template< class, class, class... > class start,
@@ -1572,14 +1528,11 @@ std::cout << "S> '" << in.string() << "'\n";
             typename eq,
             typename param >
   struct parameter_vector :
-         pegtl::if_must<
-           vector<
-             Stack,
-             keyword,
-             store< Stack, tag::param, eq, param >,
-             use< kw::end >,
-             start< tag::param, eq, param > >,
-           check< eq, param > > {};
+         act< vector< keyword,
+                      store< tag::param, eq, param >,
+                      use< kw::end >,
+                      start< tag::param, eq, param > >,
+              check< eq, param > > {};
 
   //! \brief Match equation/model option vector
   //! \details This structure is used to match a keyword ... end block that
@@ -1595,8 +1548,7 @@ std::cout << "S> '" << in.string() << "'\n";
   //!   at which the parameter vector lives. Example client-code: see
   //!   walker::deck::sde_option_vector.
   //! \author J. Bakosi
-  template< class Stack,
-            template< class > class use,
+  template< template< class > class use,
             typename keyword,
             class option,
             template< class, class, class... > class store,
@@ -1607,7 +1559,6 @@ std::cout << "S> '" << in.string() << "'\n";
   struct option_vector :
          pegtl::if_must<
            vector<
-             Stack,
              keyword,
              store_back_back_option< use, option, tag::param, eq, param >,
              use< kw::end >,
@@ -1617,76 +1568,64 @@ std::cout << "S> '" << in.string() << "'\n";
 
   //! \brief Match model parameter dependent variable
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, typename model,
-            typename Tag >
+  template< template< class > class use, typename model, typename Tag >
   struct depvar :
          pegtl::if_must<
-           readkw< Stack, typename use< kw::depvar >::pegtl_string >,
-           scan<
-             Stack, 
-             pegtl::sor< pegtl::alpha,
-                         msg< ERROR, MsgKey::NOTALPHA > >,
-             Store_back< Stack, tag::param, model, Tag >,
-             add_depvar > > {};
+           readkw< typename use< kw::depvar >::pegtl_string >,
+           scan< pegtl::sor< pegtl::alpha, msg< ERROR, MsgKey::NOTALPHA > >,
+                 Store_back< tag::param, model, Tag >,
+           add_depvar > > {};
 
   //! \brief Match and set keyword 'title'
   //! \author J. Bakosi
-  template< class Stack, template< class > class use >
+  template< template< class > class use >
   struct title :
-         pegtl::if_must<
-           readkw< Stack, typename use< kw::title >::pegtl_string >,
-           quoted< Stack, Set< Stack, tag::title > > > {};
+         pegtl::if_must< readkw< typename use< kw::title >::pegtl_string >,
+                         quoted< Set< tag::title > > > {};
 
   //! \brief Match and set policy parameter
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, typename keyword,
+  template< template< class > class use, typename keyword,
             typename option, typename sde, typename... tags >
   struct policy :
          process<
-           Stack,
            keyword,
            store_back_option< use, option, tag::param, sde, tags... >,
            pegtl::alpha > {};
 
   //! \brief Match and set a PDF option
   //! \author J. Bakosi
-  template< class Stack, class keyword, class store >
+  template< class keyword, class store >
   struct pdf_option :
-         process< Stack, keyword, store, pegtl::alpha > {};
+         process< keyword, store, pegtl::alpha > {};
 
   //! \brief Match pdfs ... end block
   //! \author J. Bakosi
-  template< class Stack, template< class > class use,
-            template< class... Ts > class store >
+  template< template< class > class use, template< class... Ts > class store >
   struct pdfs :
          pegtl::if_must<
-           tk::grm::readkw< Stack, typename use < kw::pdfs >::pegtl_string >,
+           tk::grm::readkw< typename use < kw::pdfs >::pegtl_string >,
            tk::grm::block<
-             Stack,
              use< kw::end >,
-             tk::grm::interval< Stack, use< kw::interval >, tag::pdf >,
-             pdf_option< Stack,
-                         use< kw::pdf_filetype >,
+             tk::grm::interval< use< kw::interval >, tag::pdf >,
+             pdf_option< use< kw::pdf_filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
                                 tag::pdffiletype > >,
-             pdf_option< Stack,
-                         use< kw::pdf_policy >,
+             pdf_option< use< kw::pdf_policy >,
                          store< tk::ctr::PDFPolicy,
                                 tag::selected,
                                 tag::pdfpolicy > >,
-             pdf_option< Stack,
-                         use< kw::pdf_centering >,
+             pdf_option< use< kw::pdf_centering >,
                          store< tk::ctr::PDFCentering,
                                 tag::selected,
                                 tag::pdfctr > >,
-             pdf_option< Stack,
-                         use< kw::txt_float_format >,
+             pdf_option< use< kw::txt_float_format >,
                          store< tk::ctr::TxtFloatFormat,
                                 tag::flformat,
                                 tag::pdf > >,
-             precision< Stack, use, tag::pdf >,
-             parse_pdf< Stack > > > {};
+             precision< use, tag::pdf >,
+             parse_pdf > > {};
 
   //! \brief Ensures that a grammar only uses keywords from a pool of
   //!   pre-defined keywords

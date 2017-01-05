@@ -79,7 +79,7 @@ namespace cmd {
   //! \brief Grammar entry point: parse keywords until end of string
   //! \author J. Bakosi
   struct read_string :
-         tk::grm::read_string< Stack, keywords > {};
+         tk::grm::read_string< keywords > {};
 
 } // cmd::
 } // unittest::

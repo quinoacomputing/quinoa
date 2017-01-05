@@ -95,7 +95,7 @@ namespace deck {
                                                      tag::selected,
                                                      tag::battery > >,
                         pegtl::sor<
-                          tk::grm::block< Stack, use< kw::end >, rngs >,
+                          tk::grm::block< use< kw::end >, rngs >,
                           pegtl::apply<
                           tk::grm::error< Stack,
                                           tk::grm::MsgKey::UNFINISHED > > > > {};
@@ -115,7 +115,7 @@ namespace deck {
   //! \brief Grammar entry point: parse keywords and ignores until eof
   //! \author J. Bakosi
   struct read_file :
-         tk::grm::read_file< Stack, keywords, tk::grm::ignore< Stack > > {};
+         tk::grm::read_file< keywords, tk::grm::ignore > {};
 
 } // deck::
 } // rngtest::

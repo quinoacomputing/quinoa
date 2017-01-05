@@ -42,33 +42,24 @@ namespace cmd {
 
   //! brief Match and set verbose switch (i.e., verbose or quiet output)
   struct verbose :
-         tk::grm::process_cmd_switch< Stack,
-                                      use< kw::verbose >,
-                                      tag::verbose > {};
+         tk::grm::process_cmd_switch< use< kw::verbose >, tag::verbose > {};
 
   //! brief Match and set reorder switch (i.e., reorder mesh nodes or not)
   struct reorder :
-         tk::grm::process_cmd_switch< Stack,
-                                      use< kw::reorder >,
-                                      tag::reorder > {};
+         tk::grm::process_cmd_switch< use< kw::reorder >, tag::reorder > {};
 
   //! \brief Match and set io parameter
   template< typename keyword, typename io_tag >
   struct io :
-         tk::grm::process_cmd< Stack,
-                               keyword,
-                               tk::grm::Store< tag::io, io_tag > > {};
+         tk::grm::process_cmd< keyword, tk::grm::Store< tag::io, io_tag > > {};
 
   //! \brief Match help on command-line parameters
   struct help :
-         tk::grm::process_cmd_switch< Stack,
-                                      use< kw::help >,
-                                      tag::help > {};
+         tk::grm::process_cmd_switch< use< kw::help >, tag::help > {};
 
   //! \brief Match help on a single command-line or control file keyword
   struct helpkw :
-         tk::grm::process_cmd< Stack,
-                               use< kw::helpkw >,
+         tk::grm::process_cmd< use< kw::helpkw >,
                                tk::grm::helpkw,
                                pegtl::alnum > {};
 
@@ -83,7 +74,7 @@ namespace cmd {
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
-         tk::grm::read_string< Stack, keywords > {};
+         tk::grm::read_string< keywords > {};
 
 } // cmd::
 } // meshconv::
