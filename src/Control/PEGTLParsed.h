@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
-  \date      Wed 04 Jan 2017 01:14:10 PM MST
+  \date      Fri 06 Jan 2017 01:45:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments. This is used
@@ -61,13 +61,11 @@ class PEGTLParsed : public Parsed {
       Parsed( ctrinfo ) {}
 
     //! \brief Constructor setting command line
+    //! \details This constructor is used for control file parsers whose state
+    //!   includes the previously parsed command line.
     //! \author J. Bakosi
     explicit PEGTLParsed( const Cmd& cl )
     { Parsed::template set< cmdtag >( cl ); }
-
-    //! \brief PEGTL location accessor
-    //! \author J. Bakosi
-    std::string location() const { return "<LOCATION>"; }
 };
 
 } // ctr::

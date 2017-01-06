@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:54:27 AM MDT
+  \date      Thu 05 Jan 2017 03:34:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -57,13 +57,10 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTL string input from std::string (i.e. concatenated argv[])
-  pegtl::string_input< ctr::Location > input( m_string );
-
   // Create PEGTLCmdLine to store parsed command line data which derives from
   // CmdLine and has location() used during parsing. Also pass in HelpFactory,
   // ctrinfo, containing the input deck keywords.
-  cmd::PEGTLCmdLine cmd( input, g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
+  cmd::PEGTLCmdLine cmd( g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
@@ -77,10 +74,8 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple:
-  // basic_parse() below gives debug info during parsing, use it for debugging
-  // the parser itself, i.e., when modifying the grammar, otherwise, use
-  // dummy_parse() to compile faster
-  pegtl::dummy_parse< cmd::read_string >( input, cmd );
+  pegtl::parse< cmd::read_string, tk::grm::action >
+              ( m_string, "command line", cmd );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, cmd.get< tag::error >() );

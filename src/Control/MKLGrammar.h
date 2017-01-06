@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 01:35:49 PM MDT
+  \date      Thu 05 Jan 2017 04:01:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,
@@ -37,17 +37,16 @@ namespace mkl {
 
   //! \brief Match and set MKL RNG seed
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
          tk::grm::process< use< kw::seed >,
-                           tk::grm::Insert_field< Stack,
-                                                  tag::seed,
+                           tk::grm::Insert_field< tag::seed,
                                                   sel, vec, tags... > > {};
 
   //! \brief Match and set MKL uniform method algorithm
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct uniform_method :
          grm::rng_option< use,
@@ -58,7 +57,7 @@ namespace mkl {
      
   //! \brief Match and set MKL Gaussian method algorithm
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct gaussian_method :
          grm::rng_option< use,
@@ -69,7 +68,7 @@ namespace mkl {
 
   //! \brief Match and set MKL beta method algorithm
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct beta_method :
          grm::rng_option< use,
@@ -81,20 +80,19 @@ namespace mkl {
   //! \brief Match MKL RNGs in an rngs ... end block
   //! \see walker::deck::rngs
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct rngs :
-         pegtl::ifmust<
-           tk::grm::scan< Stack, rng< use >,
-                          tk::grm::store_back_option< Stack,
-                                                      use,
+         pegtl::if_must<
+           tk::grm::scan< rng< use >,
+                          tk::grm::store_back_option< use,
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< kw::end,
-                           seed< Stack, use, sel, vec, tags... >,
-                           uniform_method< Stack, use, sel, vec, tags... >,
-                           gaussian_method< Stack, use, sel, vec, tags... >,
-                           beta_method< Stack, use, sel, vec, tags... > > >
+                           seed< use, sel, vec, tags... >,
+                           uniform_method< use, sel, vec, tags... >,
+                           gaussian_method< use, sel, vec, tags... >,
+                           beta_method< use, sel, vec, tags... > > >
   {};
 
 } // mkl::

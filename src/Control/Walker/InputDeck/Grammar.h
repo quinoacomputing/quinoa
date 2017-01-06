@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 21 Dec 2016 10:19:26 AM MST
+  \date      Fri 06 Jan 2017 01:41:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -42,10 +42,7 @@ namespace deck {
 
   //! PEGTLParsed type specialized to Walker's input deck parser
   using PEGTLInputDeck =
-    tk::ctr::PEGTLParsed< ctr::InputDeck,
-                          pegtl::file_input< ctr::Location >,
-                          tag::cmd,
-                          ctr::CmdLine >;
+    tk::ctr::PEGTLParsed< ctr::InputDeck, tag::cmd, ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for Walker's input deck parser
   //! \author J. Bakosi
@@ -60,10 +57,7 @@ namespace deck {
                             ctr::InputDeck::keywords7 >;
 
   // Walker's InputDeck state
-
-  //! Everything is stored in Stack during parsing
-  using Stack = PEGTLInputDeck;
-
+ 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
@@ -79,32 +73,52 @@ namespace deck {
                                   tag::massfracbeta,    std::size_t,
                                   tag::mixnumfracbeta,  std::size_t,
                                   tag::mixmassfracbeta, std::size_t > neq;
+} // ::deck
+} // ::walker
+
+namespace tk {
+namespace grm {
+
+  // Note that PEGTL action specializations must be in the same namespace as the
+  // template being specialized. See http://stackoverflow.com/a/3052604.
 
   // Walker's InputDeck actions
 
+  //! Rule used to trigger action
+  template< class Option, typename... tags >
+  struct store_walker_option : pegtl::success {};
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
-  //!    stack defaults.
+  //!    stack defaults for walker.
   //! \author J. Bakosi
   template< class Option, typename... tags >
-  struct store_option : pegtl::action_base< store_option< Option, tags... > > {
-    static void apply(const std::string& value, Stack& stack) {
-      tk::grm::store_option< Stack, use, Option, ctr::InputDeck, tags... >
-                           ( stack, value, g_inputdeck_defaults );
+  struct action< store_walker_option< Option, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      store_option< Stack, walker::deck::use, Option, walker::ctr::InputDeck,
+                    Input, tags... >
+                  ( stack, in, walker::g_inputdeck_defaults );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct register_eq : pegtl::success {};
   //! \brief Register differential equation after parsing its block
   //! \details This is used by the error checking functors (check_*) during
   //!    parsing to identify the recently-parsed block.
   //! \author J. Bakosi
   template< class eq >
-  struct register_eq : pegtl::action_base< register_eq< eq > > {
-    static void apply( const std::string&, Stack& ) {
+  struct action< register_eq< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& ) {
+      using walker::deck::neq;
       ++neq.get< eq >();
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq, class vec, MsgKey key >
+  struct check_vector_exists : pegtl::success {};
   //! \brief Check the existence of a vector (required for a block)
   //! \details This functor can be used to check the existence of a
   //!   user-specified vector, e.g., at the end of a diffeq ... end block, that
@@ -112,17 +126,19 @@ namespace deck {
   //! \note This functor only checks existence. If the vector exists, the size
   //!   of it can be checked by check_vector_size.
   //! \author J. Bakosi
-  template< class eq, class vec, tk::grm::MsgKey Key >
-  struct check_vector_exists : pegtl::action_base<
-           check_vector_exists< eq, vec, Key > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class eq, class vec, MsgKey Key >
+  struct action< check_vector_exists< eq, vec, Key > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
       const auto& vv = stack.template get< tag::param, eq, vec >();
+      using walker::deck::neq;
       if (vv.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, Key >( stack, value );
+        Message< Stack, ERROR, Key >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq, class vec > struct check_vector_size : pegtl::success {};
   //! \brief Do error checking of a vector (required for a block)
   //! \details This functor can be used to verify the correct size of an already
   //!   existing vector, specified by the user in a given block. The vector is
@@ -136,113 +152,119 @@ namespace deck {
   //!   segfault. The existence of the vector should be checked by
   //!   check_vector_exists first.
   //! \author J. Bakosi
-  template< class Stack, class eq, class vec >
-  struct check_vector_size :
-    pegtl::action_base< check_vector_size< Stack, eq, vec > >
-  {
-    static void apply( const std::string& value, Stack& stack ) {
+  template< class eq, class vec >
+  struct action< check_vector_size< eq, vec > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
       const auto& vv = stack.template get< tag::param, eq, vec >();
       Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
       const auto& v = vv.back();
       const auto& ncomp = stack.template get< tag::component, eq >().back();
       if (v.empty() || v.size() != ncomp/4)
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::WRONGSIZE >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct check_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
   //! \author J. Bakosi
   template< class eq >
-  struct check_eq : pegtl::action_base< check_eq< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
-
+  struct action< check_eq< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
       // Error out if no dependent variable has been selected
-      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+      const auto& depvar =
+        stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
       // Error out if no number of components has been selected
-      const auto& ncomp = stack.get< tag::component, eq >();
+      const auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NONCOMP >( stack, in );
 
       // Error out if no RNG has been selected
-      const auto& rng = stack.get< tag::param, eq, tag::rng >();
+      const auto& rng = stack.template get< tag::param, eq, tag::rng >();
       if (rng.empty() || rng.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NORNG >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NORNG >( stack, in );
 
       // Error out if no initialization policy has been selected
-      const auto& init = stack.get< tag::param, eq, tag::initpolicy >();
+      const auto& init =
+        stack.template get< tag::param, eq, tag::initpolicy >();
       if (init.empty() || init.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOINIT >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NOINIT >( stack, in );
 
       // Error out if no coefficients policy has been selected
-      const auto& coeff = stack.get< tag::param, eq, tag::coeffpolicy >();
+      const auto& coeff =
+        stack.template get< tag::param, eq, tag::coeffpolicy >();
       if (coeff.empty() || coeff.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOCOEFF >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NOCOEFF >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct check_init : pegtl::success {};
   //! \brief Do error checking on the selected initialization policy
   //! \author J. Bakosi
   template< class eq >
-  struct check_init : pegtl::action_base< check_init< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      const auto& init = stack.get< tag::param, eq, tag::initpolicy >();
+  struct action< check_init< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using walker::deck::neq;
+      const auto& init =
+        stack.template get< tag::param, eq, tag::initpolicy >();
       // Error checks for joint delta initpolicy
       if (init.size() == neq.get< eq >() &&
-          init.back() == ctr::InitPolicyType::JOINTDELTA) {
+          init.back() == walker::ctr::InitPolicyType::JOINTDELTA) {
         // Make sure there was an icdelta...end block with at least a single
         // spike...end block
         const auto& spike = stack.template get< tag::param, eq, tag::spike >();
         if (!spike.empty() && spike.back().empty())
-          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODELTA >
-                          ( stack, value );
+          Message< Stack, ERROR, MsgKey::NODELTA >( stack, in );
       }
       // Error checks for joint beta initpolicy
       if (init.size() == neq.get< eq >() &&
-          init.back() == ctr::InitPolicyType::JOINTBETA) {
+          init.back() == walker::ctr::InitPolicyType::JOINTBETA) {
         // Make sure there was an icbeta...end block with at least a single
         // betapdf...end block
         const auto& betapdf =
           stack.template get< tag::param, eq, tag::betapdf >();
         if (!betapdf.empty() && betapdf.back().empty())
-          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOBETA >
-                          ( stack, value );
+          Message< Stack, ERROR, MsgKey::NOBETA >( stack, in );
       }
 
     }
   };
+
+} // ::grm
+} // ::tk
+
+namespace walker {
+
+//! Walker input deck facilitating user input for integrating SDEs
+namespace deck {
 
   // Walker's InputDeck grammar
 
   //! scan and store_back sde keyword and option
   template< typename keyword, class eq >
   struct scan_sde :
-         tk::grm::scan< Stack,
-                        typename keyword::pegtl_string,
-                        tk::grm::store_back_option< Stack,
-                                                    use,
+         tk::grm::scan< typename keyword::pegtl_string,
+                        tk::grm::store_back_option< use,
                                                     ctr::DiffEq,
                                                     tag::selected,
                                                     tag::diffeq >,
                         // start new vector or vectors of spikes for a potential
                         // jointdelta initpolicy
-                        tk::grm::start_vector< Stack,
-                                               tag::param,
+                        tk::grm::start_vector< tag::param,
                                                eq,
                                                tag::spike >,
                         // start new vector or vectors of beta parameters for a
                         // potential jointbeta initpolicy
-                        tk::grm::start_vector< Stack,
-                                               tag::param,
+                        tk::grm::start_vector< tag::param,
                                                eq,
                                                tag::betapdf > > {};
 
@@ -258,19 +280,19 @@ namespace deck {
   struct rngs :
          pegtl::sor<
                      #ifdef HAS_MKL
-                     tk::mkl::rngs< Stack, use,
+                     tk::mkl::rngs< use,
                                     tag::selected, tag::rng,
                                     tag::param, tag::rngmkl >,
                      #endif
-                     tk::rngsse::rngs< Stack, use,
+                     tk::rngsse::rngs< use,
                                        tag::selected, tag::rng,
                                        tag::param, tag::rngsse > > {};
 
   //! scan icdelta ... end block
   template< class eq >
   struct icdelta :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::icdelta >::pegtl_string >,
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icdelta >::pegtl_string >,
            // parse a spike ... end block (there can be multiple)
            tk::grm::block< use< kw::end >,
                            tk::grm::parameter_vector<
@@ -285,8 +307,8 @@ namespace deck {
   //! scan icbeta ... end block
   template< class eq >
   struct icbeta :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::icbeta >::pegtl_string >,
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::icbeta >::pegtl_string >,
            // parse a betapdf ... end block (there can be multiple)
            tk::grm::block< use< kw::end >,
                            tk::grm::parameter_vector<
@@ -303,13 +325,13 @@ namespace deck {
   struct check_errors :
          pegtl::seq<
            // register differential equation block
-           pegtl::apply< register_eq< eq > >,
+           tk::grm::register_eq< eq >,
            // do error checking on this block
-           pegtl::apply< check_eq< eq > >,
+           tk::grm::check_eq< eq >,
            // do error checking on the init policy
-           pegtl::apply< check_init< eq > >,
+           tk::grm::check_init< eq >,
            // performe extra pegtl actions, e.g., performing extra checks
-           pegtl::apply< extra_checks >... > {};
+           extra_checks... > {};
 
   //! SDE parameter vector
   template< class keyword, class eq, class param >
@@ -324,10 +346,9 @@ namespace deck {
 
   //! SDE option vector
   template< class Option, class keyword, class eq, class param,
-            template< class, class, class > class check >
+            template< class, class > class check >
   struct sde_option_vector :
-         tk::grm::option_vector< Stack,
-                                 use,
+         tk::grm::option_vector< use,
                                  use< keyword >,
                                  Option,
                                  tk::grm::Store_back_back,
@@ -338,11 +359,10 @@ namespace deck {
 
   //! Diagonal Ornstein-Uhlenbeck SDE
   struct diag_ou :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::diag_ou >, tag::diagou >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::diagou,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -377,11 +397,10 @@ namespace deck {
 
   //! Ornstein-Uhlenbeck SDE
   struct ornstein_uhlenbeck :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::ornstein_uhlenbeck >, tag::ou >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::ou,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -416,11 +435,10 @@ namespace deck {
 
   //! Skew-normal SDE
   struct skewnormal :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::skewnormal >, tag::skewnormal >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::skewnormal,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -455,11 +473,10 @@ namespace deck {
 
   //! Beta SDE
   struct beta :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::beta >, tag::beta >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::beta,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -494,11 +511,10 @@ namespace deck {
 
   //! Number-fraction beta SDE
   struct numfracbeta :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::numfracbeta >, tag::numfracbeta >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::numfracbeta,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -539,11 +555,10 @@ namespace deck {
 
   //! Mass-fraction beta SDE
   struct massfracbeta :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::massfracbeta >, tag::massfracbeta >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::massfracbeta,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -584,11 +599,10 @@ namespace deck {
 
   //! Mix number-fraction beta SDE
   struct mixnumfracbeta :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::mixnumfracbeta >, tag::mixnumfracbeta >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::mixnumfracbeta,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -629,11 +643,10 @@ namespace deck {
 
   //! Mix mass-fraction beta SDE
   struct mixmassfracbeta :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::mixmassfracbeta >, tag::mixmassfracbeta >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::mixmassfracbeta,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -659,12 +672,12 @@ namespace deck {
                                               kw::hydrotimescales,
                                               tag::mixmassfracbeta,
                                               tag::hydrotimescales,
-                                              check_vector_size >,
+                                              tk::grm::check_vector_size >,
                            sde_option_vector< ctr::HydroProductions,
                                               kw::hydroproductions,
                                               tag::mixmassfracbeta,
                                               tag::hydroproductions,
-                                              check_vector_size >,
+                                              tk::grm::check_vector_size >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,
@@ -681,22 +694,21 @@ namespace deck {
                                                  tag::mixmassfracbeta,
                                                  tag::r > >,
            check_errors< tag::mixmassfracbeta,
-                         check_vector_exists<
+                         tk::grm::check_vector_exists<
                            tag::mixmassfracbeta,
                            tag::hydrotimescales,
                            tk::grm::MsgKey::HYDROTIMESCALES >,
-                         check_vector_exists<
+                         tk::grm::check_vector_exists<
                            tag::mixmassfracbeta,
                            tag::hydroproductions,
                            tk::grm::MsgKey::HYDROPRODUCTIONS > > > {};
 
   //! Gamma SDE
   struct gamma :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::gamma >, tag::gamma >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::gamma,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -731,11 +743,10 @@ namespace deck {
 
   //! Dirichlet SDE
   struct dirichlet :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::dirichlet >, tag::dirichlet >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::dirichlet,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -770,11 +781,10 @@ namespace deck {
 
   //! Generalized Dirichlet SDE
   struct gendir :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::gendir >, tag::gendir >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::gendir,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -812,11 +822,10 @@ namespace deck {
 
   //! Wright-Fisher SDE
   struct wright_fisher :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_sde< use< kw::wrightfisher >, tag::wrightfisher >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::depvar< Stack,
-                                            use,
+                           tk::grm::depvar< use,
                                             tag::wrightfisher,
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -860,18 +869,18 @@ namespace deck {
 
   //! 'walker' block
   struct walker :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::walker >::pegtl_string >,
-           pegtl::sor< tk::grm::block<
-                         use< kw::end >,
-                         discretization_parameters,
-                         sde,
-                         tk::grm::rngblock< use, rngs >,
-                         tk::grm::statistics< use, store_option >,
-                         tk::grm::pdfs< use, store_option > >,
-                       pegtl::apply<
-                          tk::grm::error< Stack,
-                                          tk::grm::MsgKey::UNFINISHED > > > > {};
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::walker >::pegtl_string >,
+           pegtl::sor<
+             tk::grm::block<
+               use< kw::end >,
+               discretization_parameters,
+               sde,
+               tk::grm::rngblock< use, rngs >,
+               tk::grm::statistics< use, tk::grm::store_walker_option >,
+               tk::grm::pdfs< use, tk::grm::store_walker_option > >,
+               tk::grm::msg< tk::grm::MsgType::ERROR,
+                             tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! main keywords
   struct keywords :

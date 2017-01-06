@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 04:59:19 PM MST
+  \date      Fri 06 Jan 2017 01:19:14 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -45,12 +45,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTL file input from std::string
-  pegtl::file_input< ctr::Location > input( m_filename );
-
   // Create PEGTLInputDeck to store parsed input deck data which derives from
   // InputDeck and has location() used during parse
-  deck::PEGTLInputDeck id( input, cmdline );
+  deck::PEGTLInputDeck id( cmdline );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
@@ -64,10 +61,8 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   tk::grm::g_print.reset( print.save() );
 
   // Parse input file by populating the underlying tagged tuple:
-  // basic_parse() below gives debug info during parsing, use it for debugging
-  // the parser itself, i.e., when modifying the grammar, otherwise, use
-  // dummy_parse() to compile faster
-  pegtl::dummy_parse< deck::read_file >( input, id );
+  pegtl::parse< deck::read_file, tk::grm::action >
+              ( m_filename, "control file", id );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );
