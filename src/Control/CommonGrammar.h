@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Fri 06 Jan 2017 02:36:14 PM MST
+  \date      Fri 06 Jan 2017 04:03:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -399,7 +399,7 @@ namespace grm {
   //! Rule used to trigger action(s) for a rule
   //! \author J. Bakosi
   template< class rule, class... actions >
-  struct act : pegtl::seq< rule > {};
+  struct act : rule {};
 
   //! \author J. Bakosi
   //! \details Specialization of action for act< rule, actions... >
@@ -1099,7 +1099,7 @@ namespace grm {
   template< MsgType type, MsgKey key >
   struct unknown :
          pegtl::pad< pegtl::seq< trim< pegtl::any, pegtl::space >,
-                          msg< type, key > >,
+                                 msg< type, key > >,
                      pegtl::blank,
                      pegtl::space > {};
 
@@ -1272,12 +1272,12 @@ namespace grm {
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file
   //! \author J. Bakosi
-  template< typename keywords, typename ign >
+  template< typename keywords, typename... ign >
   struct read_file :
          pegtl::until< pegtl::eof,
                        pegtl::sor<
                          keywords,
-                         ign,
+                         ign...,
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Process but ignore Charm++'s charmrun arguments starting with '+'
@@ -1391,14 +1391,6 @@ namespace grm {
            check_binsizes,
            check_extents > {};
 
-  //! \brief PDF name
-  //! \details A PDF name is a C-language identifier (alphas, digits, and
-  //!    underscores, no leading digit), matched to already selected pdf name
-  //!    requiring unique names.
-  //! \author J. Bakosi
-  struct pdf_name :
-         act< pegtl::identifier, match_pdfname > {};
-
   //! \brief Match pdf description: name + sample space specification
   //! \details Example syntax (without the quotes): "name(x y z : 1.0 2.0 3.0)",
   //!    'name' is the name of the pdf, and x,y,z are sample space variables,
@@ -1408,7 +1400,8 @@ namespace grm {
   struct parse_pdf :
          readkw<
            pegtl::if_must<
-             pegtl::seq< pdf_name, pegtl::at< pegtl::one<'('> > >,
+             act< pegtl::seq< pegtl::identifier, pegtl::at< pegtl::one<'('> > >,
+                  match_pdfname >,
              pegtl::sor< pegtl::one<'('>,
                          msg< ERROR, MsgKey::KEYWORD > >,
              pegtl::sor< pegtl::seq< sample_space, bins_exts >,
