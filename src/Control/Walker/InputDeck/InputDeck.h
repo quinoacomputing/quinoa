@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:30:36 PM MST
+  \date      Fri 06 Jan 2017 12:19:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -12,6 +12,7 @@
 #define WalkerInputDeck_h
 
 #include <limits>
+#include <iostream>
 
 #include "NoWarning/set.h"
 #include "NoWarning/for_each.h"

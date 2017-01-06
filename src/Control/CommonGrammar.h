@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Thu 05 Jan 2017 03:18:38 PM MST
+  \date      Fri 06 Jan 2017 02:36:14 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -270,21 +270,22 @@ namespace grm {
   //!   to operate on, (2) the message type (error or warning), and (3) the
   //!   message key used to look up the error message associated with the key.
   //! \param[in,out] stack Grammar stack (a tagged tuple) to operate on
-  //! \param[in] value Last parsed token (can be empty, depending on what
-  //!   context this function gets called.
+  //! \param[in] in Last parsed PEGTL input token (can be empty, depending on
+  //!   what context this function gets called.
   //! \author J. Bakosi
-  template< class Stack, MsgType type, MsgKey key >
-  static void Message( Stack& stack, const std::string& value ) {
+  template< class Stack, MsgType type, MsgKey key, class Input >
+  static void Message( Stack& stack, const Input& in ) {
     const auto& msg = message.find(key);
     if (msg != message.end()) {
       std::stringstream ss;
       const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
-      if (!value.empty()) {
-        ss << typestr << " while parsing '" << value << "' at "
-           << stack.location() << ". " << msg->second;
+      auto pos = pegtl::position_info( in );
+      if (!in.string().empty()) {
+        ss << typestr << " while parsing '" << in.string() << "' at "
+           << pos.line << ',' << pos.column << ". " << msg->second;
       } else {
-        ss << typestr << " while parsing at " << stack.location() << ". "
-           << msg->second;
+        ss << typestr << " while parsing at " << pos.line << ',' << pos.column
+           << ". " << msg->second;
       }
       stack.template push_back< tag::error >( ss.str() );
     } else {
@@ -338,19 +339,20 @@ namespace grm {
   //!   particular field of the tagged tuple, i.e., one tag for every additional
   //!   depth level.
   //! \param[in,out] stack Grammar stack (a tagged tuple) to operate on
-  //! \param[in] value Last parsed token
+  //! \param[in] in Last parsed PEGTL input token
   //! \param[in] defaults Reference to a copy of the full grammar stack at the
   //!   initial state, i.e., containing the defaults for all of its fields. This
   //!   is used to detect if the user wants to overwrite an option value that
   //!   has already been set differently from the default
   //! \author J. Bakosi
   template< class Stack, template< class > class use, class Option,
-            class DefaultStack, class... tags >
+            class DefaultStack, class Input, class... tags >
   static void store_option( Stack& stack,
-                            const std::string& value,
+                            const Input& in,
                             const DefaultStack& defaults ) {
     Option opt;
-    if (opt.exist(value)) {
+    if (opt.exist(in.string())) {
+      auto pos = pegtl::position_info( in );
       // Emit warning on overwriting a non-default option value. This is
       // slightly inelegant. To be more elegant, we could simply call Message()
       // here, but the warning message can be more customized here (inside of
@@ -359,16 +361,16 @@ namespace grm {
       // nature. Instead, we emit this more user-friendly message here
       // (during parsing), instead of after parsing as part of the final parser-
       // diagnostics. We still provide location information here though.
-      if (stack.template get< tags... >() != opt.value( value ) &&
+      if (stack.template get< tags... >() != opt.value( in.string() ) &&
           stack.template get< tags... >() != defaults.template get< tags... >())
         g_print << "\n>>> WARNING: Multiple definitions for '"
                 << opt.group() << "' option. Overwriting '"
                 << opt.name( stack.template get< tags... >() ) << "' with '"
-                << opt.name( opt.value( value ) ) << "' at "
-                << stack.location() << ".\n\n";
-      stack.template set< tags... >( opt.value( value ) );
+                << opt.name( opt.value( in.string() ) ) << "' at "
+                << pos.line << ',' << pos.column << ".\n\n";
+      stack.template set< tags... >( opt.value( in.string() ) );
     } else {
-      Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
+      Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
     }
     // trigger error at compile-time if any of the expected option values
     // is not in the keywords pool of the grammar
@@ -419,7 +421,7 @@ namespace grm {
   struct action< msg< type, key > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      Message< Stack, type, key >( stack, in.string() );
+      Message< Stack, type, key >( stack, in );
     }
   };
 
@@ -452,7 +454,7 @@ namespace grm {
       if (!in.string().empty())
         stack.template store< tag, tags... >( in.string() );
       else
-        Message< Stack, ERROR, MsgKey::MISSING >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::MISSING >( stack, in );
     }
   };
 
@@ -545,7 +547,7 @@ namespace grm {
       if (opt.exist(in.string())) {
         stack.template push_back<tag,tags...>( opt.value( in.string() ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -579,7 +581,7 @@ namespace grm {
       if (opt.exist(in.string())) {
         stack.template push_back_back<tag,tags...>( opt.value( in.string() ) );
       } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
@@ -680,14 +682,13 @@ namespace grm {
           precision = std::stol( in.string() );
         }
         catch ( std::exception& ) {
-          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, in.string() );
+          Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, in );
         }
         // only set precision given if it makes sense
         if (precision >= PrEx::lower && precision <= PrEx::upper)
           stack.template set< tag::prec, prec >( precision );
         else
-          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >
-                 ( stack, in.string() );
+          Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, in );
       }
     }
   };
@@ -722,7 +723,7 @@ namespace grm {
           // store keyword and its info on which help was requested
           stack.template set< tag::helpkw >( { it->first, it->second, false } );
         else
-          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in.string() );
+          Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in );
       }
     }
   };
@@ -741,9 +742,9 @@ namespace grm {
       auto var = stack.template convert< char >( in.string() );
       // find matched variable in set of selected ones
       if (depvars.find( var ) != depvars.end())
-        push::apply( in.string(), stack );
+        action< push >::apply( in, stack );
       else  // error out if matched var is not selected
-        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, in );
     }
   };
 
@@ -764,7 +765,7 @@ namespace grm {
           push_back< tag::cmd, tag::io, tag::pdfnames >( in.string() );
       }
       else  // error out if name matched var is already registered
-        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in );
     }
   };
 
@@ -785,9 +786,9 @@ namespace grm {
         if (Option().value(in.string()) == r) exists = true;
       }
       if (exists)
-        store_back_option< use, Option, tags... >().apply( in.string(), stack );
+        action< store_back_option< use, Option, tags... > >::apply( in, stack );
       else
-        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in );
     }
   };
 
@@ -805,7 +806,7 @@ namespace grm {
       if (depvars.find( newvar ) == depvars.end())
         depvars.insert( newvar );
       else  // error out if depvar is already taken
-        Message< Stack, ERROR, MsgKey::EXISTS >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::EXISTS >( stack, in );
     }
   };
 
@@ -874,11 +875,11 @@ namespace grm {
       auto& pdf = stack.template get< tag::pdf >();
       // Error out if sample space already has at least 3 dimensions
       if ( pdf.back().size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in );
       }
       // Error out if matched sample space variable starts with a digit
       if ( std::isdigit(in.string()[0]) )
-        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in );
       // Push term into current vector
       pdf.back().emplace_back( tk::ctr::Term( in.string()[0], field, m ) );
       // If central moment, trigger estimation of mean (in statistics)
@@ -908,12 +909,12 @@ namespace grm {
       auto& bins = stack.template get< tag::discr, tag::binsize >().back();
       // Error out if binsize vector already has at least 3 dimensions
       if ( bins.size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in );
       }
       // Push term into vector if larger than zero
       const auto& binsize = stack.template convert< tk::real >( in.string() );
       if ( !(binsize > std::numeric_limits< tk::real >::epsilon()) )
-        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in );
       else
         bins.emplace_back( binsize );
     }
@@ -931,12 +932,12 @@ namespace grm {
       auto& vec = stack.template get< tag::discr, tag::extent >().back();
       // Error out if extents vector already has at least 3 pairs
       if (vec.size() >= 6)
-        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in );
       // Error out if extents vector already has the enough pairs to match the
       // number of sample space dimensions
       if (vec.size() >=
           stack.template get< tag::discr, tag::binsize >().back().size() * 2) {
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in );
       }
       // Push extent into vector
       vec.emplace_back( stack.template convert< tk::real >( in.string() ) );
@@ -967,7 +968,7 @@ namespace grm {
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number of spikes-vector is odd
       if (spike.size() % 2)
-        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in );
       // Error out if the sum of spike heights does not add up to unity, but
       // only if the spike block is not empty (an empty spike..end block
       // is okay and is used to specify no delta spikes for a dependent
@@ -977,7 +978,7 @@ namespace grm {
         for (std::size_t i=1; i<spike.size(); i+=2)  // every even is a height
           sum += spike[i];
         if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
-          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in.string() );
+          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in );
       }
     }
   };
@@ -996,7 +997,7 @@ namespace grm {
         stack.template get< tag::param, eq, param >().back().back();
       // Error out if the number parameters is not four
       if (betapdf.size() != 4)
-        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in );
     }
   };
 
@@ -1009,7 +1010,7 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::stat >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in );
     }
   };
 
@@ -1024,7 +1025,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().size() !=
           stack.template get< tag::discr, tag::binsize >().back().size())
-          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in.string() );
+          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in );
     }
   };
 
@@ -1043,14 +1044,14 @@ namespace grm {
       if (!e.empty() &&
           e.size() !=
             stack.template get< tag::discr, tag::binsize >().back().size()*2)
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in );
       // Check if the lower extents are indeed lower than the higher extents
       if (e.size() > 1 && e[0] > e[1])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
       if (e.size() > 3 && e[2] > e[3])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
       if (e.size() > 5 && e[4] > e[5])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
     }
   };
 
@@ -1063,7 +1064,7 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       if (stack.template get< tag::pdf >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in.string() );
+        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in );
     }
   };
 
@@ -1522,8 +1523,8 @@ namespace grm {
   //! \author J. Bakosi
   template< template< class > class use,
             typename keyword,
-            template< class, class, class... > class store,
-            template< class, class, class... > class start,
+            template< class, class... > class store,
+            template< class, class... > class start,
             template< class, class > class check,
             typename eq,
             typename param >
@@ -1551,8 +1552,8 @@ namespace grm {
   template< template< class > class use,
             typename keyword,
             class option,
-            template< class, class, class... > class store,
-            template< class, class, class... > class start,
+            template< class, class... > class store,
+            template< class, class... > class start,
             template< class, class > class check,
             typename eq,
             typename param >

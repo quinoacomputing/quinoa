@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:21:40 PM MST
+  \date      Fri 06 Jan 2017 01:43:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGSSE-related grammar
   \details   This file defines RNGSSE2 library related grammar, (re-)used by
@@ -12,22 +12,29 @@
 #ifndef RNGSSEGrammar_h
 #define RNGSSEGrammar_h
 
+#include "CommonGrammar.h"
+
 namespace tk {
-//! Toolkit, grammar definition for the RNGSSE library
-namespace rngsse {
+namespace grm {
+
+  // Note that PEGTL action specializations must be in the same namespace as the
+  // template being specialized. See http://stackoverflow.com/a/3052604.
 
   // RNGSSE PEGTL actions
 
-  //! \brief convert and insert sequence option value to map at position given
-  //!    by tags
+  //! Rule used to trigger action
+  template< template < class > class use, class Option,
+            typename field, typename sel, typename vec, typename tag,
+            typename... tags > struct insert_seq : pegtl::success {};
+  //! \brief Convert and insert RNGSSE sequence option value to map at position
+  //!   given by tags
   //! \author J. Bakosi
-  template< class Stack, template < class > class use, class Option,
+  template< template < class > class use, class Option,
             typename field, typename sel, typename vec, typename tag,
             typename... tags >
-  struct insert_seq : pegtl::action_base<
-                        insert_seq< Stack, use, Option, field, sel, vec, tag,
-                                    tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< insert_seq< use, Option, field, sel, vec, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
       ctr::RNGSSESeqLen opt;
       using EnumType = ctr::RNGSSESeqLen::EnumType;
       // get recently inserted key from <sel,vec>
@@ -35,18 +42,21 @@ namespace rngsse {
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       // Error out if RNG does not support option specified
-      if ( !ctr::RNG().supportsOpt( key, opt.value(value) ) ) {
-        grm::Message< Stack, grm::ERROR, grm::MsgKey::UNSUPPORTED >
-                    ( stack, value );
+      if ( !ctr::RNG().supportsOpt( key, opt.value(in.string()) ) ) {
+        Message< Stack, ERROR, MsgKey::UNSUPPORTED >( stack, in );
       }
       stack.template insert_opt< key_type, field, EnumType, tag, tags... >
-                               ( key, opt.value(value) );
+                               ( key, opt.value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
-      boost::mpl::for_each< typename Option::keywords >
-                          ( tk::grm::is_keyword< use >() );
+      boost::mpl::for_each< typename Option::keywords >( is_keyword< use >() );
     }
   };
+
+} // ::grm
+
+//! Toolkit, grammar definition for the RNGSSE library
+namespace rngsse {
 
   // RNGSSE PEGTL grammar
 
@@ -68,31 +78,30 @@ namespace rngsse {
 
   //! \brief Match and set RNGSSE RNG seed
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
          tk::grm::process< use< kw::seed >,
-                           tk::grm::Insert_field< Stack,
-                                                  tag::seed,
+                           tk::grm::Insert_field< tag::seed,
                                                   sel, vec, tags... > > {};
 
   //! \brief Match and set RNG sequence length parameter
   //! \author J. Bakosi
-  template< typename Stack, template < class > class use, typename keyword,
+  template< template < class > class use, typename keyword,
             typename option, typename field, typename sel, typename vec,
             typename... tags >
   struct rngsse_seq :
-         grm::process< keyword,
-                       insert_seq< Stack, use, option, field, sel, vec,
-                                   tags... >,
-                       pegtl::alpha > {};
+         grm::process<
+           keyword,
+           tk::grm::insert_seq< use, option, field, sel, vec, tags... >,
+           pegtl::alpha > {};
 
   //! \brief Match and set RNGSSE sequence length
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seqlen :
-         rngsse_seq< Stack, use,
+         rngsse_seq< use,
                      use< kw::seqlen >,
                      ctr::RNG,
                      tag::seqlen,
@@ -101,18 +110,17 @@ namespace rngsse {
   //! \brief Match RNGSSE RNGs in an rngs ... end block
   //! \see walker::deck::rngs
   //! \author J. Bakosi
-  template< typename Stack, template< class > class use, typename sel,
+  template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct rngs :
-         pegtl::ifmust<
-           tk::grm::scan< Stack, rng< use >,
-                          tk::grm::store_back_option< Stack,
-                                                      use,
+         pegtl::if_must<
+           tk::grm::scan< rng< use >,
+                          tk::grm::store_back_option< use,
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< use< kw::end >,
-                           seed< Stack, use, sel, vec, tags... >,
-                           seqlen< Stack, use, sel, vec, tags... > > > {};
+                           seed< use, sel, vec, tags... >,
+                           seqlen< use, sel, vec, tags... > > > {};
 
 } // rngsse::
 } // tk::
