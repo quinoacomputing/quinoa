@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri 06 Jan 2017 01:19:14 PM MST
+  \date      Fri 06 Jan 2017 03:27:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -60,9 +60,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // not to have to create a new pretty printer, but use the existing one.
   tk::grm::g_print.reset( print.save() );
 
-  // Parse input file by populating the underlying tagged tuple:
-  pegtl::parse< deck::read_file, tk::grm::action >
-              ( m_filename, "control file", id );
+  // Parse input file and populate the underlying tagged tuple
+  pegtl::read_parser p( m_filename );
+  p.parse< deck::read_file, tk::grm::action >( id );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );
