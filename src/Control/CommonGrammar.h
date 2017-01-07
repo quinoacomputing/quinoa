@@ -280,7 +280,7 @@ namespace grm {
       std::stringstream ss;
       const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
       auto pos = pegtl::position_info( in );
-      if (!in.string().empty()) {
+      if (!in.empty()) {
         ss << typestr << " while parsing '" << in.string() << "' at "
            << pos.line << ',' << pos.column << ". " << msg->second;
       } else {
@@ -351,7 +351,8 @@ namespace grm {
                             const Input& in,
                             const DefaultStack& defaults ) {
     Option opt;
-    if (opt.exist(in.string())) {
+    auto value = in.string();
+    if (opt.exist(value)) {
       auto pos = pegtl::position_info( in );
       // Emit warning on overwriting a non-default option value. This is
       // slightly inelegant. To be more elegant, we could simply call Message()
@@ -361,14 +362,14 @@ namespace grm {
       // nature. Instead, we emit this more user-friendly message here
       // (during parsing), instead of after parsing as part of the final parser-
       // diagnostics. We still provide location information here though.
-      if (stack.template get< tags... >() != opt.value( in.string() ) &&
+      if (stack.template get< tags... >() != opt.value( value ) &&
           stack.template get< tags... >() != defaults.template get< tags... >())
         g_print << "\n>>> WARNING: Multiple definitions for '"
                 << opt.group() << "' option. Overwriting '"
                 << opt.name( stack.template get< tags... >() ) << "' with '"
-                << opt.name( opt.value( in.string() ) ) << "' at "
+                << opt.name( opt.value( value ) ) << "' at "
                 << pos.line << ',' << pos.column << ".\n\n";
-      stack.template set< tags... >( opt.value( in.string() ) );
+      stack.template set< tags... >( opt.value( value ) );
     } else {
       Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
     }
