@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Fri 06 Jan 2017 04:03:35 PM MST
+  \date      Mon 09 Jan 2017 05:00:30 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -771,13 +771,13 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< template< class > class use, class Option,
-            typename field, typename sel, typename vec,
-            typename... tags > struct check_store_option : pegtl::success {};
+  template< template< class > class use, class Option, typename sel,
+            typename vec, typename... tags >
+  struct check_store_option : pegtl::success {};
   //! \brief Put option in state at position given by tags if among the selected
   //! \author J. Bakosi
-  template< template < class > class use, class Option,
-            typename sel, typename vec, typename... tags >
+  template< template < class > class use, class Option, typename sel,
+            typename vec, typename... tags >
   struct action< check_store_option< use, Option, sel, vec, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
@@ -1569,7 +1569,7 @@ namespace grm {
            readkw< typename use< kw::depvar >::pegtl_string >,
            scan< pegtl::sor< pegtl::alpha, msg< ERROR, MsgKey::NOTALPHA > >,
                  Store_back< tag::param, model, Tag >,
-           add_depvar > > {};
+                 add_depvar > > {};
 
   //! \brief Match and set keyword 'title'
   //! \author J. Bakosi
