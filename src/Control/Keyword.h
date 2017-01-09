@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 10:13:35 AM MST
+  \date      Mon 09 Jan 2017 04:31:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -72,19 +72,15 @@ struct Code {
 //!    fields, see Control/Keywords.h.
 //! \author J. Bakosi
 template< typename Info, typename > struct keyword;
-template< typename Info, int Char, int... Chars >
-struct keyword< Info, pegtl::string< Char, Chars... > > {
+template< typename Info, char... Chars >
+struct keyword< Info, pegtl::string< Chars... > > {
 
   //! \brief Accessor to keyword as pegtl::string
-  using pegtl_string = pegtl::string< Char, Chars... >;
+  using pegtl_string = pegtl::string< Chars... >;
 
   //! \brief Accessor to keyword as std::string
   //! \return Keyword as std::string
-  static std::string string() {
-    return ( sizeof...( Chars ) ) ?
-           ( kw::escaper< Char, Chars... >::result() ) :
-           ( kw::escape( Char ) );
-  }
+  static std::string string() { return kw::escaper< Chars... >::result(); }
 
   //! \brief Accessor to required short name of a keyword
   //! \return Name of keyword as std::string
