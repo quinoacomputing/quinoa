@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 05 Jan 2017 03:29:46 PM MST
+  \date      Mon 09 Jan 2017 01:18:13 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's command line parser
   \details   This file defines the command-line argument parser for the unit
@@ -49,9 +49,8 @@ CmdLineParser::CmdLineParser( int argc,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTLCmdLine to store parsed command line data which derives from
-  // CmdLine and has location() used during parsing
-  cmd::PEGTLCmdLine cmd;
+  // Create CmdLine (a tagged tuple) to store parsed input
+  ctr::CmdLine cmd;
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.

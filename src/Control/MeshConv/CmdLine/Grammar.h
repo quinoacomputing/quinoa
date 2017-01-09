@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 04 Jan 2017 01:08:00 PM MST
+  \date      Mon 09 Jan 2017 01:13:53 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -15,18 +15,11 @@
 #define MeshConvCmdLineGrammar_h
 
 #include "CommonGrammar.h"
-#include "PEGTLParsed.h"
 #include "Keywords.h"
 
 namespace meshconv {
 //! Mesh converter command line grammar definition
 namespace cmd {
-
-  //!\brief PEGTLParsed type specialized to MeshConv's command line parser
-  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
-  //!    information so the location can be tracked during parsing.
-  //! \author J. Bakosi
-  using PEGTLCmdLine = tk::ctr::PEGTLParsed< ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for MeshConv's command line parser
   //! \author J. Bakosi

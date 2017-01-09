@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri 06 Jan 2017 03:27:02 PM MST
+  \date      Mon 09 Jan 2017 01:01:09 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -45,9 +45,8 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTLInputDeck to store parsed input deck data which derives from
-  // InputDeck and has location() used during parse
-  deck::PEGTLInputDeck id( cmdline );
+  // Create InputDeck (a tagged tuple) to store parsed input
+  ctr::InputDeck id( cmdline );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
