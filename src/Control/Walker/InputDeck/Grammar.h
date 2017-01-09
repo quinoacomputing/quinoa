@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 06 Jan 2017 01:41:54 PM MST
+  \date      Mon 09 Jan 2017 12:57:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -17,7 +17,6 @@
 
 #include "Macro.h"
 #include "Exception.h"
-#include "PEGTLParsed.h"
 #include "Walker/Types.h"
 #include "Keywords.h"
 #include "CommonGrammar.h"
@@ -39,10 +38,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 //! Walker input deck facilitating user input for integrating SDEs
 namespace deck {
-
-  //! PEGTLParsed type specialized to Walker's input deck parser
-  using PEGTLInputDeck =
-    tk::ctr::PEGTLParsed< ctr::InputDeck, tag::cmd, ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for Walker's input deck parser
   //! \author J. Bakosi

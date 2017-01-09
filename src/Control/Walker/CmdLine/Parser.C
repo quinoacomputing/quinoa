@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 05 Jan 2017 03:34:32 PM MST
+  \date      Mon 09 Jan 2017 01:01:59 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -57,10 +57,8 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTLCmdLine to store parsed command line data which derives from
-  // CmdLine and has location() used during parsing. Also pass in HelpFactory,
-  // ctrinfo, containing the input deck keywords.
-  cmd::PEGTLCmdLine cmd( g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
+  // Create CmdLine (a tagged tuple) to store parsed input
+  ctr::CmdLine cmd( g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.

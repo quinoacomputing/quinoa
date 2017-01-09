@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:19:48 PM MDT
+  \date      Mon 09 Jan 2017 01:17:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -15,18 +15,11 @@
 #define UnitTestCmdLineGrammar_h
 
 #include "CommonGrammar.h"
-#include "PEGTLParsed.h"
 #include "Keywords.h"
 
 namespace unittest {
 //! UnitTest command line grammar definition
 namespace cmd {
-
-  //!\brief PEGTLParsed type specialized to MeshConv's command line parser
-  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
-  //!    information so the location can be tracked during parsing.
-  //! \author J. Bakosi
-  using PEGTLCmdLine = tk::ctr::PEGTLParsed< ctr::CmdLine >;
 
   //! \brief Specialization of tk::grm::use for UnitTest's command line parser
   //! \author J. Bakosi

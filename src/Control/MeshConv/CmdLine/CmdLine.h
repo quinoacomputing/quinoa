@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:58:20 PM MDT
+  \date      Mon 09 Jan 2017 01:16:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -61,12 +61,8 @@ class CmdLine :
     //!   default constructor for the corresponding type. While there is a
     //!   ctrinfo parameter, it is unused here, since meshconv does not have a
     //!   control file parser.
-    //! \param[in] ctrnfo empty std::map, unused so that PEGTLParsed's
-    //!    constructor can be kept generic that works with those executables
-    //!    that do have both command-line argument and control file parsers
     //! \see walker::ctr::CmdLine
-    CmdLine( tk::ctr::HelpFactory ctrnfo = tk::ctr::HelpFactory() ) {
-      IGNORE(ctrnfo);
+    CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::reorder >( false ); // Do not reorder by default
       // Initialize help: fill from own keywords
