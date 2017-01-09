@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 26 Oct 2016 09:35:03 AM MDT
+  \date      Mon 09 Jan 2017 02:20:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include "CommonGrammar.h"
-#include "PEGTLParsed.h"
 #include "Keywords.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -30,16 +29,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 //! Inciter input deck facilitating user input for computing shock hydrodynamics
 namespace deck {
 
-  //! \brief PEGTLParsed type specialized to Inciter's input deck parser
-  //! \details PEGTLInputDeck is practically InputDeck equipped with PEGTL
-  //!   location information so the location can be tracked during parsing.
-  //! \author J. Bakosi
-  using PEGTLInputDeck =
-    tk::ctr::PEGTLParsed< ctr::InputDeck,
-                          pegtl::file_input< ctr::Location >,
-                          tag::cmd,
-                          ctr::CmdLine >;
-
   //! \brief Specialization of tk::grm::use for Inciter's input deck parser
   //! \author J. Bakosi
   template< typename keyword >
@@ -50,9 +39,6 @@ namespace deck {
 
   // Inciter's InputDeck state
 
-  //! Everything is stored in Stack during parsing
-  using Stack = PEGTLInputDeck;
-
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
@@ -60,45 +46,61 @@ namespace deck {
                                   tag::poisson,   std::size_t,
                                   tag::compflow,  std::size_t > neq;
 
+} // ::deck
+} // ::inciter
+
+namespace tk {
+namespace grm {
+
+  // Note that PEGTL action specializations must be in the same namespace as the
+  // template being specialized. See http://stackoverflow.com/a/3052604.
+
   // Inciter's InputDeck actions
 
+  //! Rule used to trigger action
+  template< class eq > struct register_inciter_eq : pegtl::success {};
   //! \brief Register differential equation after parsing its block
   //! \details This is used by the error checking functors (check_*) during
   //!    parsing to identify the recently-parsed block.
   //! \author J. Bakosi
   template< class eq >
-  struct register_eq : pegtl::action_base< register_eq< eq > > {
-    static void apply( const std::string&, Stack& ) {
+  struct action< register_inciter_eq< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& ) {
+      using inciter::deck::neq;
       ++neq.get< eq >();
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct check_inciter_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy. For
   //!   more specific equations, such as compressible flow, a more specialized
   //!   equation checker does and can do better error checking.
   //! \author J. Bakosi
   template< class eq >
-  struct check_eq : pegtl::action_base< check_eq< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< check_inciter_eq< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
       // Error out if no dependent variable has been selected
-      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
       // Error out if no number of components has been selected
-      const auto& ncomp = stack.get< tag::component, eq >();
+      const auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NONCOMP >( stack, in );
       // Error out if no test problem has been selected
-      const auto& problem = stack.get< tag::param, eq, tag::problem >();
+      const auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOINIT >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NOINIT >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct check_transport : pegtl::success {};
   //! \brief Set defaults and do error checking on the transport equation block
   //! \details This is error checking that only the transport equation block
   //!   must satisfy. Besides error checking we also set defaults here as
@@ -106,28 +108,31 @@ namespace deck {
   //!   just finished.
   //! \author J. Bakosi
   template< class eq >
-  struct check_transport : pegtl::action_base< check_transport< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< check_transport< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
       // Error out if no dependent variable has been selected
-      auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         depvar.push_back( 'c' );
       // If no number of components has been selected, default to 1
-      auto& ncomp = stack.get< tag::component, eq >();
+      auto& ncomp = stack.template get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
       // If physics type is not given, default to 'advection'
-      auto& physics = stack.get< tag::param, eq, tag::physics >();
+      auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( ctr::PhysicsType::ADVECTION );
+        physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
       // If problem type is not given, error out
-      auto& problem = stack.get< tag::param, eq, tag::problem >();
+      auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOPROBLEM >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class eq > struct check_compflow : pegtl::success {};
   //! \brief Set defaults and do error checking on the compressible flow
   //!   equation block
   //! \details This is error checking that only the compressible flow equation
@@ -136,82 +141,95 @@ namespace deck {
   //!   just finished.
   //! \author J. Bakosi
   template< class eq >
-  struct check_compflow : pegtl::action_base< check_compflow< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
+  struct action< check_compflow< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
       // Set number of components to 5 (mass, 3 x mom, energy)
-      stack.get< tag::component, eq >().push_back( 5 );
+      stack.template get< tag::component, eq >().push_back( 5 );
       // If physics type is not given, default to 'euler'
-      auto& physics = stack.get< tag::param, eq, tag::physics >();
+      auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( ctr::PhysicsType::EULER );
+        physics.push_back( inciter::ctr::PhysicsType::EULER );
       // If problem type is not given, default to 'user_defined'
-      auto& problem = stack.get< tag::param, eq, tag::problem >();
+      auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
-        problem.push_back( ctr::ProblemType::USER_DEFINED );
-      else if (problem.back() == ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.get< tag::param, eq, tag::alpha >();
-        const auto& beta = stack.get< tag::param, eq, tag::beta >();
-        const auto& p0 = stack.get< tag::param, eq, tag::p0 >();
+        problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
+      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& beta = stack.template get< tag::param, eq, tag::beta >();
+        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
         if ( alpha.size() != problem.size() ||
              beta.size() != problem.size() ||
              p0.size() != problem.size() )
-          tk::grm::Message< Stack, tk::grm::ERROR,
-                            tk::grm::MsgKey::VORTICAL_UNFINISHED >
-                          ( stack, value );
+          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
-      for (const auto& s : stack.get< tag::param, eq, tag::bcdir >())
+      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty()) 
-          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::BC_EMPTY >
-                          ( stack, value );
+          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
+  //! Rule used to trigger action
+  template< class Option, typename...tags >
+  struct store_inciter_option : pegtl::success {};
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
-  //!    stack defaults.
+  //!    stack defaults for inciter.
   //! \author J. Bakosi
   template< class Option, typename... tags >
-  struct store_option : pegtl::action_base< store_option< Option, tags... > > {
-    static void apply( const std::string& value, Stack& stack ) {
-      tk::grm::store_option< Stack, use, Option, ctr::InputDeck, tags... >
-                           ( stack, value, g_inputdeck_defaults );
+  struct action< store_inciter_option< Option, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      store_option< Stack, inciter::deck::use, Option, inciter::ctr::InputDeck,
+                    Input, tags... >
+                  ( stack, in, inciter::g_inputdeck_defaults );
     }
   };
 
+  //! Rule used to trigger action
+  struct check_dt : pegtl::success {};
   //! \brief Do error checking on setting the time step calculation policy
   //! \author J. Bakosi
-  struct check_dt : pegtl::action_base< check_dt > {
-    static void apply( const std::string& value, Stack& stack ) {
+  template<> struct action< check_dt > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
+      using inciter::g_inputdeck_defaults;
       // Error out if no dt policy has been selected
-      const auto& dt = stack.get< tag::discr, tag::dt >();
-      const auto& cfl = stack.get< tag::discr, tag::cfl >();
+      const auto& dt = stack.template get< tag::discr, tag::dt >();
+      const auto& cfl = stack.template get< tag::discr, tag::cfl >();
       if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) <
             std::numeric_limits< tk::real >::epsilon() &&
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) <
             std::numeric_limits< tk::real >::epsilon() )
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODT >
-                        ( stack, value );
+        Message< Stack, ERROR, MsgKey::NODT >( stack, in );
       // If both dt and cfl are given, warn that dt wins over cfl
       if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
             std::numeric_limits< tk::real >::epsilon() &&
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
-        tk::grm::Message< Stack, tk::grm::WARNING, tk::grm::MsgKey::MULDT >
-                        ( stack, value );
+        Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
     }
   };
+
+} // ::grm
+} // ::tk
+
+namespace inciter {
+
+//! Inciter input deck facilitating user input for computing shock hydrodynamics
+namespace deck {
 
   // Inciter's InputDeck grammar
 
   //! scan and store_back equation keyword and option
   template< typename keyword, class eq >
   struct scan_eq :
-         tk::grm::scan< Stack,
-                        typename keyword::pegtl_string,
-                        tk::grm::store_back_option< Stack,
-                                                    use,
+         tk::grm::scan< typename keyword::pegtl_string,
+                        tk::grm::store_back_option< use,
                                                     ctr::PDE,
                                                     tag::selected,
                                                     tag::pde > > {};
@@ -221,9 +239,9 @@ namespace deck {
   struct check_errors :
          pegtl::seq<
            // register differential equation block
-           pegtl::apply< register_eq< eq > >,
+           tk::grm::register_inciter_eq< eq >,
            // do error checking on this block
-           pegtl::apply< eqchecker< eq > > > {};
+           eqchecker< eq > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -249,8 +267,8 @@ namespace deck {
   //! Dirichlet boundary conditions block
   template< class eq, class param >
   struct bc_dirichlet :
-           pegtl::ifmust<
-             tk::grm::readkw< Stack, use< kw::bc_dirichlet >::pegtl_string >,
+           pegtl::if_must<
+             tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
              tk::grm::block<
                use< kw::end >,
                tk::grm::parameter_vector< use,
@@ -264,8 +282,8 @@ namespace deck {
   //! initial conditions block for compressible flow
   template< class eq, class param >
   struct ic_compflow :
-           pegtl::ifmust<
-             tk::grm::readkw< Stack, use< kw::ic >::pegtl_string >,
+           pegtl::if_must<
+             tk::grm::readkw< use< kw::ic >::pegtl_string >,
              tk::grm::block<
                use< kw::end >,
                tk::grm::parameter_vector< use,
@@ -280,13 +298,13 @@ namespace deck {
   template< typename eq, typename keyword, typename property >
   struct material_property :
          tk::grm::process< use< keyword >,
-           tk::grm::Store_back< Stack, tag::param, eq, property > > {};
+           tk::grm::Store_back< tag::param, eq, property > > {};
 
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
-           pegtl::ifmust<
-             tk::grm::readkw< Stack, use< kw::material >::pegtl_string >,
+           pegtl::if_must<
+             tk::grm::readkw< use< kw::material >::pegtl_string >,
              tk::grm::block< use< kw::end >,
                              material_property< eq, kw::id, tag::id >,
                              material_property< eq, kw::mat_gamma, tag::gamma >,
@@ -298,11 +316,11 @@ namespace deck {
   template< typename eq, typename keyword, typename p >
   struct parameter :
          tk::grm::process< use< keyword >,
-           tk::grm::Store_back< Stack, tag::param, eq, p > > {};
+           tk::grm::Store_back< tag::param, eq, p > > {};
 
   //! transport equation for scalars
   struct transport :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
@@ -315,8 +333,7 @@ namespace deck {
                                             ctr::Problem,
                                             tag::transport,
                                             tag::problem >,
-                          tk::grm::depvar< Stack,
-                                           use,
+                          tk::grm::depvar< use,
                                            tag::transport,
                                            tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
@@ -330,30 +347,11 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 > >,
-           check_errors< tag::transport, check_transport > > {};
-
-  //! Poisson partial differential equation for a scalar
-  struct poisson :
-         pegtl::ifmust<
-           scan_eq< use< kw::poisson >, tag::poisson >,
-           tk::grm::block<  use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::problem >,
-                                            ctr::Problem,
-                                            tag::poisson,
-                                            tag::problem >,
-                          tk::grm::depvar< Stack,
-                                           use,
-                                           tag::poisson,
-                                           tag::depvar >,
-                           tk::grm::component< use< kw::ncomp >,
-                                               tag::poisson >,
-                           bc_dirichlet< tag::poisson, tag::bcdir > >,
-           check_errors< tag::poisson, check_eq > > {};
+           check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
   struct compflow :
-         pegtl::ifmust<
+         pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
@@ -373,36 +371,37 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_beta, tag::beta >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
                            bc_dirichlet< tag::compflow, tag::bcdir > >,
-           check_errors< tag::compflow, check_compflow > > {};
+           check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! partitioning ... end block
   struct partitioning :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::partitioning >::pegtl_string >,
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::partitioning >::pegtl_string >,
            tk::grm::block< use< kw::end >,
                            tk::grm::process<
                              use< kw::algorithm >,
-                             store_option< tk::ctr::PartitioningAlgorithm,
-                                           tag::selected,
-                                           tag::partitioner >,
+                             tk::grm::store_inciter_option<
+                               tk::ctr::PartitioningAlgorithm,
+                               tag::selected,
+                               tag::partitioner >,
                              pegtl::alpha > > > {};
 
   //! equation types
   struct equations :
-         pegtl::sor< transport, poisson, compflow > {};
+         pegtl::sor< transport, compflow > {};
 
   //! plotvar ... end block
   struct plotvar :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::plotvar >::pegtl_string >,
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::plotvar >::pegtl_string >,
            tk::grm::block< use< kw::end >,
                            tk::grm::interval< use< kw::interval >,
                                               tag::field > > > {};
 
   //! 'inciter' block
   struct inciter :
-         pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::inciter >::pegtl_string >,
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::inciter >::pegtl_string >,
            pegtl::sor<
              pegtl::seq< tk::grm::block<
                            use< kw::end >,
@@ -410,10 +409,12 @@ namespace deck {
                            equations,
                            partitioning,
                            plotvar,
-                           tk::grm::diagnostics< use, store_option > >,
-                         pegtl::apply< check_dt > >,
-             pegtl::apply<
-               tk::grm::error< Stack, tk::grm::MsgKey::UNFINISHED > > > > {};
+                           tk::grm::diagnostics<
+                             use,
+                             tk::grm::store_inciter_option > >,
+                         tk::grm::check_dt >,
+            tk::grm::msg< tk::grm::MsgType::ERROR,
+                          tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! \brief All keywords
   //! \author J. Bakosi

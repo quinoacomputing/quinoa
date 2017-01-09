@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 12:56:27 PM MST
+  \date      Mon 09 Jan 2017 01:50:48 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -25,8 +25,6 @@ namespace cmd {
   //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
-
-  // Walker's CmdLine state
 
   // Walker's CmdLine grammar
 
