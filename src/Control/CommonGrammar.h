@@ -2,13 +2,11 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Mon 09 Jan 2017 05:00:30 PM MST
+  \date      Tue 10 Jan 2017 09:00:07 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
-  \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
-    Template Library (PEGTL)](https://code.google.com/p/pegtl/wiki/PEGTL0) to
-    create the grammar and the associated parser. Credit goes to Colin Hirsch
-    (pegtl@cohi.at) for PEGTL.
+  \details   Generic, low-level grammar. We use the Parsing Expression Grammar
+    Template Library (PEGTL) to create the grammar and the associated parser.
 */
 // *****************************************************************************
 #ifndef CommonGrammar_h

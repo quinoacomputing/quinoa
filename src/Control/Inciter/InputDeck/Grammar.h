@@ -2,13 +2,12 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 02:20:40 PM MST
+  \date      Tue 10 Jan 2017 09:00:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
-  associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
-  of advice: read from the bottom up.
+  associated parser. Word of advice: read from the bottom up.
 */
 // *****************************************************************************
 #ifndef InciterInputDeckGrammar_h
