@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Tue 10 Jan 2017 10:19:45 AM MST
+  \date      Mon 09 Jan 2017 01:52:27 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line parser
   \details   This file defines the command-line argument parser for the
@@ -14,8 +14,7 @@
 #include <ostream>
 #include <type_traits>
 
-#include <pegtl.hh>
-
+#include "NoWarning/pegtl.h"
 #include "NoWarning/charm.h"
 
 #include "Print.h"
