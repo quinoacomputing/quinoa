@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 01:16:53 PM MST
+  \date      Tue 10 Jan 2017 10:20:25 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line parser
   \details   This file defines the command-line argument parser for the mesh
@@ -15,7 +15,7 @@
 #include <string>
 #include <type_traits>
 
-#include "NoWarning/pegtl.h"
+#include <pegtl.hh>
 
 #include "NoWarning/charm.h"
 #include "QuinoaConfig.h"
