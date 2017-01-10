@@ -12,7 +12,7 @@ namespace pegtl
    void unit_test()
    {
       try {
-         internal::file_mapper( "pegtl" );
+         internal::file_mapper dummy( "pegtl" );
          std::cerr << "pegtl: unit test failed for [ internal::file_mapper ] " << std::endl;
          ++failed;
       }
@@ -20,7 +20,7 @@ namespace pegtl
       }
    }
 
-} // pegtl
+} // namespace pegtl
 
 #include "main.hh"
 

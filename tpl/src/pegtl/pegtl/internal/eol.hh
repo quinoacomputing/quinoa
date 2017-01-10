@@ -19,33 +19,16 @@ namespace pegtl
          template< typename Input >
          static bool match( Input & in )
          {
-            if ( const auto s = in.size() ) {
-               return match_impl( in, s );
-            }
-            return false;
-         }
-
-         template< typename Input >
-         static bool match_impl( Input & in, const std::size_t s )
-         {
-            const auto a = in.peek_char();
-            if ( a == '\n' ) {
-               in.bump_next_line();
-               return true;
-            }
-            if ( ( a == '\r' ) && ( s > 1 ) && ( in.peek_char( 1 ) == '\n' ) ) {
-               in.bump_next_line( 2 );
-               return true;
-            }
-            return false;
+            using eol_t = typename Input::eol_t;
+            return eol_t::match( in ).first;
          }
       };
 
       template<>
       struct skip_control< eol > : std::true_type {};
 
-   } // internal
+   } // namespace internal
 
-} // pegtl
+} // namespace pegtl
 
 #endif

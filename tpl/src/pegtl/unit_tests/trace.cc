@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -11,9 +11,11 @@ namespace pegtl
 
    void unit_test()
    {
-      failed = ! pegtl::trace< GRAMMAR >( "ab", "trace test please ignore" );
+      if ( ! pegtl::trace_string< GRAMMAR >( "ab", "trace test please ignore" ) ) {
+         ++failed;
+      }
    }
 
-} // pegtl
+} // namespace pegtl
 
 #include "main.hh"

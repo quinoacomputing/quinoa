@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_ANALYSIS_COUNTED_HH
@@ -12,11 +12,11 @@ namespace pegtl
    {
       template< rule_type Type, unsigned Count, typename ... Rules >
       struct counted
-            : generic< Count ? Type : rule_type::OPT, Rules ... >
+            : generic< ( Count != 0 ) ? Type : rule_type::OPT, Rules ... >
       { };
 
-   } // analysis
+   } // namespace analysis
 
-} // pegtl
+} // namespace pegtl
 
 #endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_INTERNAL_REP_HH
@@ -7,6 +7,9 @@
 #include "skip_control.hh"
 #include "trivial.hh"
 #include "rule_conjunction.hh"
+
+#include "../apply_mode.hh"
+#include "../rewind_mode.hh"
 
 #include "../analysis/counted.hh"
 
@@ -32,22 +35,22 @@ namespace pegtl
       {
          using analyze_t = analysis::counted< analysis::rule_type::SEQ, Num, Rules ... >;
 
-         template< apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
+         template< apply_mode A, rewind_mode M, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
          static bool match( Input & in, States && ... st )
          {
-            auto m = in.mark();
+            auto m = in.template mark< M >();
 
             for ( unsigned i = 0; i != Num; ++i ) {
-               if ( ! rule_conjunction< Rules ... >::template match< A, Action, Control >( in, st ... ) ) {
-                  return m( false );
+               if ( ! rule_conjunction< Rules ... >::template match< A, rewind_mode::DONTCARE, Action, Control >( in, st ... ) ) {
+                  return false;
                }
             }
             return m( true );
          }
       };
 
-   } // internal
+   } // namespace internal
 
-} // pegtl
+} // namespace pegtl
 
 #endif

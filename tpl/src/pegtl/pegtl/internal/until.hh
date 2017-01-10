@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_INTERNAL_UNTIL_HH
@@ -10,6 +10,9 @@
 #include "not_at.hh"
 #include "skip_control.hh"
 #include "rule_conjunction.hh"
+
+#include "../apply_mode.hh"
+#include "../rewind_mode.hh"
 
 #include "../analysis/generic.hh"
 
@@ -27,19 +30,18 @@ namespace pegtl
       {
          using analyze_t = analysis::generic< analysis::rule_type::SEQ, star< not_at< Cond >, not_at< eof >, bytes< 1 > >, Cond >;
 
-         template< apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
+         template< apply_mode A, rewind_mode M, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
          static bool match( Input & in, States && ... st )
          {
-            auto m = in.mark();
+            auto m = in.template mark< M >();
 
-            while ( ! Control< Cond >::template match< A, Action, Control >( in, st ... ) ) {
+            while ( ! Control< Cond >::template match< A, rewind_mode::REQUIRED, Action, Control >( in, st ... ) ) {
                if ( in.empty() ) {
                   return false;
                }
                in.bump();
             }
-            m.success();
-            return true;
+            return m( true );
          }
       };
 
@@ -48,23 +50,22 @@ namespace pegtl
       {
          using analyze_t = analysis::generic< analysis::rule_type::SEQ, star< not_at< Cond >, not_at< eof >, Rules ... >, Cond >;
 
-         template< apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
+         template< apply_mode A, rewind_mode M, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
          static bool match( Input & in, States && ... st )
          {
-            auto m = in.mark();
+            auto m = in.template mark< M >();
 
-            while ( ! Control< Cond >::template match< A, Action, Control >( in, st ... ) ) {
-               if ( in.empty() || ! rule_conjunction< Rules ... >::template match< A, Action, Control >( in, st ... ) ) {
+            while ( ! Control< Cond >::template match< A, rewind_mode::REQUIRED, Action, Control >( in, st ... ) ) {
+               if ( in.empty() || ( ! rule_conjunction< Rules ... >::template match< A, rewind_mode::DONTCARE, Action, Control >( in, st ... ) ) ) {
                   return false;
                }
             }
-            m.success();
-            return true;
+            return m( true );
          }
       };
 
-   } // internal
+   } // namespace internal
 
-} // pegtl
+} // namespace pegtl
 
 #endif
