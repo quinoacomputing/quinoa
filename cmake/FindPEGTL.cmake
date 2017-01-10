@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find PEGTL
-# \date      Fri 16 Dec 2016 08:36:38 AM MST
+# \date      Tue 10 Jan 2017 12:42:26 PM MST
 #
 ################################################################################
 
@@ -29,6 +29,7 @@ endif()
 
 find_path(PEGTL_INCLUDE_PATH NAMES pegtl.hh
                              HINTS ${PEGTL_ROOT}/include
+                                   $ENV{PEGTL_ROOT}
                              PATH_SUFFIXES pegtl)
 
 # Handle the QUIETLY and REQUIRED arguments and set PEGTL_FOUND to TRUE if
