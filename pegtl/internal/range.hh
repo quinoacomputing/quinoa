@@ -20,15 +20,28 @@ namespace pegtl
       {
          using analyze_t = analysis::generic< analysis::rule_type::ANY >;
 
-         static constexpr bool can_match_lf = ( ( ( Lo <= '\n' ) && ( '\n' <= Hi ) ) == bool( R ) );
+         template< int Eol >
+         struct can_match_eol
+         {
+            static constexpr bool value = ( ( ( Lo <= Eol ) && ( Eol <= Hi ) ) == bool( R ) );
+         };
+
+         // suppress warning with GCC 4.7
+         template< typename T >
+         static inline bool dummy_less_or_equal( const T a, const T b )
+         {
+            return a <= b;
+         }
 
          template< typename Input >
          static bool match( Input & in )
          {
+            using eol_t = typename Input::eol_t;
+
             if ( ! in.empty() ) {
                if ( const auto t = Peek::peek( in ) ) {
-                  if ( ( ( Lo <= t.data ) && ( t.data <= Hi ) ) == bool( R ) ) {
-                     bump_impl< can_match_lf >::bump( in, t.size );
+                  if ( ( dummy_less_or_equal( Lo, t.data ) && dummy_less_or_equal( t.data, Hi ) ) == bool( R ) ) {
+                     bump_impl< can_match_eol< eol_t::ch >::value >::bump( in, t.size );
                      return true;
                   }
                }
@@ -40,8 +53,8 @@ namespace pegtl
       template< result_on_found R, typename Peek, typename Peek::data_t Lo, typename Peek::data_t Hi >
       struct skip_control< range< R, Peek, Lo, Hi > > : std::true_type {};
 
-   } // internal
+   } // namespace internal
 
-} // pegtl
+} // namespace pegtl
 
 #endif

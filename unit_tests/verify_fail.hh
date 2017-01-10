@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_UNIT_TESTS_VERIFY_FAIL_HH
@@ -17,7 +17,7 @@ namespace pegtl
    void verify_fail( const std::size_t line, const char * file, const std::string & s, States && ... st )
    {
       try {
-         parse< Rule, Action >( s, "expect_exception", st ... );
+         parse_string< Rule, Action >( s, "expect_exception", st ... );
          TEST_FAILED( "expected exception" );
       }
       catch ( ... ) {

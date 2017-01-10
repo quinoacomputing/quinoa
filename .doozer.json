@@ -1,0 +1,54 @@
+{
+  "targets": {
+    "jessie-i386": {
+      "buildenv": "jessie-i386",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "trusty-i386": {
+      "buildenv": "trusty-i386",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "trusty-amd64": {
+      "buildenv": "trusty-amd64",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "xenial-i386": {
+      "buildenv": "xenial-i386",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "xenial-amd64": {
+      "buildenv": "xenial-amd64",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "xenial-armhf": {
+      "buildenv": "xenial-armhf",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "xenial-arm64": {
+      "buildenv": "xenial-arm64",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    },
+    "fedora24-x86_64": {
+      "buildenv": "fedora24-x86_64",
+      "builddeps": ["cmake", "make", "clang"],
+      "buildcmd": ["mkdir build-fedora24-x86_64", "cd build-fedora24-x86_64", "CXX=g++ cmake ..", "cmake --build .", "ctest --output-on-failure"]
+    },
+    "fedora24-x86_64-clang": {
+      "buildenv": "fedora24-x86_64",
+      "builddeps": ["cmake", "make", "clang"],
+      "buildcmd": ["mkdir build-fedora24-x86_64-clang", "cd build-fedora24-x86_64-clang", "CXX=clang++ cmake ..", "cmake --build .", "ctest --output-on-failure"]
+    },
+    "osx": {
+      "buildenv": "osx",
+      "builddeps": ["build-essential"],
+      "buildcmd": "make -j ${PARALLEL}"
+    }
+  }
+}

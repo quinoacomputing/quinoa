@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_CONTRIB_UNESCAPE_HH
@@ -7,8 +7,8 @@
 #include <string>
 #include <cassert>
 
-#include <pegtl/ascii.hh>
-#include <pegtl/parse_error.hh>
+#include "../ascii.hh"
+#include "../parse_error.hh"
 
 namespace pegtl
 {
@@ -27,20 +27,20 @@ namespace pegtl
             string += char( utf32 & 0xff );
             return true;
          }
-         else if ( utf32 <= 0x7ff ) {
+         if ( utf32 <= 0x7ff ) {
             char tmp[] = { char( ( ( utf32 & 0x7c0 ) >> 6 ) | 0xc0 ),
                            char( ( ( utf32 & 0x03f )      ) | 0x80 ) };
             string.append( tmp, sizeof( tmp ) );
             return true;
          }
-         else if ( utf32 <= 0xffff ) {
+         if ( utf32 <= 0xffff ) {
             char tmp[] = { char( ( ( utf32 & 0xf000 ) >> 12 ) | 0xe0 ),
                            char( ( ( utf32 & 0x0fc0 ) >> 6  ) | 0x80 ),
                            char( ( ( utf32 & 0x003f )       ) | 0x80 ) };
             string.append( tmp, sizeof( tmp ) );
             return true;
          }
-         else if ( utf32 <= 0x10ffff ) {
+         if ( utf32 <= 0x10ffff ) {
             char tmp[] = { char( ( ( utf32 & 0x1c0000 ) >> 18 ) | 0xf0 ),
                            char( ( ( utf32 & 0x03f000 ) >> 12 ) | 0x80 ),
                            char( ( ( utf32 & 0x000fc0 ) >> 6  ) | 0x80 ),
@@ -63,7 +63,7 @@ namespace pegtl
             case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
                return I( c - 'A' + 10 );
          }
-         assert( false );  // LCOV_EXCL_LINE
+         throw std::runtime_error( "invalid character in unhex" );  // LCOV_EXCL_LINE
       }
 
       template< typename I >
@@ -88,7 +88,7 @@ namespace pegtl
          }
       };
 
-      // This function MUST be called for a character matching T which must be pegtl::one< ... >.
+      // This action MUST be called for a character matching T which MUST be pegtl::one< ... >.
       template< typename T, char ... Rs >
       struct unescape_c
       {
@@ -113,12 +113,13 @@ namespace pegtl
                   return * ( r.begin() + i );
                }
             }
-            assert( false );  // LCOV_EXCL_LINE
+            throw std::runtime_error( "invalid character in unescape" );  // LCOV_EXCL_LINE
          }
       };
 
-      // See examples/unescape.cc to see why the following two actions
-      // have the convenience of skipping the first input character...
+      // See examples/unescape.cc for why the following two actions
+      // skip the first input character. They also MUST be called
+      // with non-empty matched inputs!
 
       struct unescape_u
       {
@@ -127,7 +128,8 @@ namespace pegtl
          {
             assert( ! in.empty() );  // First character MUST be present, usually 'u' or 'U'.
             if ( ! utf8_append_utf32( st.unescaped, unhex_string< unsigned >( in.begin() + 1, in.end() ) ) ) {
-               throw parse_error( "invalid escaped unicode code point", in );
+               using exception_t = typename Input::exception_t;
+               throw exception_t( "invalid escaped unicode code point", in );
             }
          }
       };
@@ -142,17 +144,20 @@ namespace pegtl
          }
       };
 
-      // Like unescape_u, but (a) assumes 4 hexdigits per code point,
-      // and (b) accepts multiple consecutive escaped 16-bit values.
-      // It encodes UTF-16 surrogate pairs as single UTF-8 sequence
-      // as required for JSON by RFC 7159.
+      // The unescape_j action is similar to unescape_u, however unlike
+      // unescape_u it
+      // (a) assumes exactly 4 hexdigits per escape sequence,
+      // (b) accepts multiple consecutive escaped 16-bit values.
+      // When applied to more than one escape sequence, unescape_j
+      // translates UTF-16 surrogate pairs in the input into a single
+      // UTF-8 sequence in st.unescaped, as required for JSON by RFC 7159.
 
       struct unescape_j
       {
          template< typename Input, typename State >
          static void apply( const Input & in, State & st )
          {
-            assert( ( ( in.size() + 1 ) % 6 ) == 0 );  // Expects multiple "\\u1234" with the first backslash already skipped.
+            assert( ( ( in.size() + 1 ) % 6 ) == 0 );  // Expects multiple "\\u1234", starting with the first "u".
             for ( const char * b = in.begin() + 1; b < in.end(); b += 6 ) {
                const auto c = unhex_string< unsigned >( b, b + 4 );
                if ( ( 0xd800 <= c ) && ( c <= 0xdbff ) && ( b + 6 < in.end() ) ) {
@@ -168,8 +173,8 @@ namespace pegtl
          }
       };
 
-   } // unescape
+   } // namespace unescape
 
-} // pegtl
+} // namespace pegtl
 
 #endif

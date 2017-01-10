@@ -31,8 +31,8 @@ namespace examples
 
    protected:
       explicit
-      json_base( const json_type type )
-            : type( type )
+      json_base( const json_type in_type )
+            : type( in_type )
       { }
 
       ~json_base()
@@ -77,9 +77,9 @@ namespace examples
          : public json_base
    {
       explicit
-      boolean_json( const bool data)
+      boolean_json( const bool in_data)
             : json_base( json_type::BOOLEAN ),
-              data( data )
+              data( in_data )
       { }
 
       bool data;
@@ -107,9 +107,9 @@ namespace examples
          : public json_base
    {
       explicit
-      number_json( const long double data )
+      number_json( const long double in_data )
             : json_base( json_type::NUMBER ),
-              data( data )
+              data( in_data )
       { }
 
       long double data;
@@ -130,7 +130,7 @@ namespace examples
 
       const unsigned char * d = reinterpret_cast< const unsigned char * >( data.data() );
 
-      for ( size_t i = 0; i < data.size(); ++i ) {
+      for ( std::size_t i = 0; i < data.size(); ++i ) {
          switch ( const auto c = d[ i ] ) {
             case '\b':
                r += "\\b";
@@ -172,9 +172,9 @@ namespace examples
          : public json_base
    {
       explicit
-      string_json( const std::string & data )
+      string_json( const std::string & in_data )
             : json_base( json_type::STRING ),
-              data( data )
+              data( in_data )
       { }
 
       std::string data;

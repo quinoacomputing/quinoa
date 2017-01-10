@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_INTERNAL_BYTES_HH
@@ -17,10 +17,17 @@ namespace pegtl
       {
          using analyze_t = analysis::counted< analysis::rule_type::ANY, Num >;
 
+         // suppress warning with GCC 4.7
+         template< typename T1, typename T2 >
+         static inline bool dummy_greater_or_equal( const T1 a, const T2 b )
+         {
+            return a >= b;
+         }
+
          template< typename Input >
          static bool match( Input & in )
          {
-            if ( in.size() >= Num ) {
+            if ( dummy_greater_or_equal( in.size( Num ), Num ) ) {
                in.bump( Num );
                return true;
             }
@@ -31,8 +38,8 @@ namespace pegtl
       template< unsigned Num >
       struct skip_control< bytes< Num > > : std::true_type {};
 
-   } // internal
+   } // namespace internal
 
-} // pegtl
+} // namespace pegtl
 
 #endif
