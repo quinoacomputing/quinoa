@@ -12,6 +12,6 @@ namespace pegtl
       verify_ifmt< if_must_else >( result_type::GLOBAL_FAILURE );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

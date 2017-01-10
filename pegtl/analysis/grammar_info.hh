@@ -28,8 +28,8 @@ namespace pegtl
          }
       };
 
-   } // namespace analysis
+   } // analysis
 
-} // namespace pegtl
+} // pegtl
 
 #endif

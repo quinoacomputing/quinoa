@@ -12,6 +12,6 @@ namespace pegtl
       verify_seqs< enable >();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

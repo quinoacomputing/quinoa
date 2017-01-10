@@ -14,8 +14,8 @@ namespace pegtl
       template< typename Rule, typename Sep >
       using list = seq< Rule, star< Sep, Rule > >;
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

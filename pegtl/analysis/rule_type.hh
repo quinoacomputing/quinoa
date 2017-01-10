@@ -16,8 +16,8 @@ namespace pegtl
          SOR   // Consumption-on-success depends on consumption of (non-zero bounded repetition of) disjunction of sub-rules.
       };
 
-   } // namespace analysis
+   } // analysis
 
-} // namespace pegtl
+} // pegtl
 
 #endif

@@ -64,6 +64,6 @@ namespace pegtl
       TEST_ASSERT( alphabet::Z == 'Z' );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

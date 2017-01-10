@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <cassert>
@@ -41,8 +41,7 @@ namespace examples
    template<>
    struct value_action< pegtl::json::null >
    {
-      template< typename Input >
-      static void apply( const Input &, result_state & result )
+      static void apply( const pegtl::input &, result_state & result )
       {
          result.result = std::make_shared< null_json >();
       }
@@ -51,8 +50,7 @@ namespace examples
    template<>
    struct value_action< pegtl::json::true_ >
    {
-      template< typename Input >
-      static void apply( const Input &, result_state & result )
+      static void apply( const pegtl::input &, result_state & result )
       {
          result.result = std::make_shared< boolean_json >( true );
       }
@@ -61,8 +59,7 @@ namespace examples
    template<>
    struct value_action< pegtl::json::false_ >
    {
-      template< typename Input >
-      static void apply( const Input &, result_state & result )
+      static void apply( const pegtl::input &, result_state & result )
       {
          result.result = std::make_shared< boolean_json >( false );
       }
@@ -71,8 +68,7 @@ namespace examples
    template<>
    struct value_action< pegtl::json::number >
    {
-      template< typename Input >
-      static void apply( const Input & in, result_state & result )
+      static void apply( const pegtl::input & in, result_state & result )
       {
          result.result = std::make_shared< number_json >( std::stold( in.string() ) );  // NOTE: stold() is not quite correct for JSON but we'll use it for this simple example.
       }
@@ -91,12 +87,12 @@ namespace examples
          result.reset();
       }
 
-      void success( result_state & in_result )
+      void success( result_state & result )
       {
          if ( this->result ) {
             push_back();
          }
-         in_result.result = array;
+         result.result = array;
       }
    };
 
@@ -105,8 +101,7 @@ namespace examples
    template<>
    struct array_action< pegtl::json::value_separator >
    {
-      template< typename Input >
-      static void apply( const Input &, array_state & result )
+      static void apply( const pegtl::input &, array_state & result )
       {
          result.push_back();
       }
@@ -127,12 +122,12 @@ namespace examples
          result.reset();
       }
 
-      void success( result_state & in_result )
+      void success( result_state & result )
       {
          if ( this->result ) {
             insert();
          }
-         in_result.result = object;
+         result.result = object;
       }
    };
 
@@ -141,8 +136,7 @@ namespace examples
    template<>
    struct object_action< pegtl::json::value_separator >
    {
-      template< typename Input >
-      static void apply( const Input &, object_state & result )
+      static void apply( const pegtl::input &, object_state & result )
       {
          result.insert();
       }
@@ -159,7 +153,7 @@ namespace examples
 
    struct grammar : pegtl::must< pegtl::json::text, pegtl::eof > {};
 
-} // namespace examples
+} // examples
 
 int main( int argc, char ** argv )
 {

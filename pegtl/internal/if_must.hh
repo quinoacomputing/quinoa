@@ -14,8 +14,8 @@ namespace pegtl
       template< typename Cond, typename ... Thens >
       using if_must = seq< Cond, must< Thens ... > >;
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

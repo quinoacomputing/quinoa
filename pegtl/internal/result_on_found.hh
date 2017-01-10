@@ -14,8 +14,8 @@ namespace pegtl
          FAILURE = false
       };
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

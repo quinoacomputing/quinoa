@@ -17,8 +17,8 @@ namespace pegtl
       template< typename Rule, typename Sep, typename Pad >
       using list_tail_pad = seq< list< Rule, pad< Sep, Pad > >, opt< star< Pad >, Sep > >;
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

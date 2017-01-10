@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <pegtl.hh>
@@ -7,28 +7,29 @@
 
 namespace lua53
 {
-   // PEGTL grammar for the Lua 5.3.0 lexer and parser.
+   // PEG version of the Lua 5.3.0 lexer and parser.
    //
    // The grammar here is not very similar to the grammar
    // in the Lua reference documentation on which it is based
    // which is due to multiple causes.
    //
-   // The main difference is that this grammar includes really
-   // "everything", not just the structural parts from the
-   // reference documentation:
-   // - The PEG-approach combines lexer and parser; this grammar
-   //   handles comments and tokenisation.
-   // - The operator precedence and associativity are reflected
-   //   in the structure of this grammar.
-   // - All details for all types of literals are included, with
-   //   escape-sequences for literal strings, and long literals.
+   // The PEG approach combines lexer and parser, so the grammar
+   // here really contains "everything" including comments and
+   // everything else that would normally be done by a lexer.
    //
    // The second necessary difference is that all left-recursion
-   // had to be eliminated.
+   // was eliminated.
+   //
+   // Also literal constants are included with all their details,
+   // i.e. all forms of numeric constants, and escape sequences
+   // in literal strings are all there.
+   //
+   // The operator precedence and associativity is also reflected
+   // in this grammar which the documented Lua grammar omits.
    //
    // In some places the grammar was optimised to require as little
    // back-tracking as possible, most prominently for expressions.
-   // The original grammar contains the following production rules:
+   // The original grammar contains the following prodcutions rules:
    //
    //   prefixexp ::= var | functioncall | ‘(’ exp ‘)’
    //   functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
@@ -41,16 +42,14 @@ namespace lua53
    //   ( a * b ).c()[ d ].e:f()
    //
    // where only the last element decides between function call and
-   // variable, making it necessary to parse the whole thing again
-   // if we chose wrong at the beginning.
-   // First we eliminate prefixexp and obtain:
+   // variable. As first step we eliminate prefixexp and obtain:
    //
    //   functioncall ::=  ( var | functioncall | ‘(’ exp ‘)’ ) ( args | ‘:’ Name args )
    //   var ::=  Name | ( var | functioncall | ‘(’ exp ‘)’ ) ( ‘[’ exp ‘]’ | ‘.’ Name )
    //
    // Next we split function_call and variable into a first part,
-   // a "head", or how they can start, and a second part, the "tail",
-   // which, in a sequence like above, is the final deciding part:
+   // a "head" or how they can start, and a second part, the "tail"
+   // which, in a sequence like above, is the final deciding part.
    //
    //   vartail ::= '[' exp ']' | '.' Name
    //   varhead ::= Name | '(' exp ')' vartail
@@ -68,18 +67,16 @@ namespace lua53
    //   chead ::= '(' exp ')' | Name
    //   combined ::= chead { functail | vartail }
    //
-   // Such a combined expression starts with a bracketed
-   // expression or a name, and continues with an arbitrary
-   // number of functail and/or vartail parts, all in a one
-   // grammar rule without back-tracking.
+   // We have a name or a bracketed expression as head, and can
+   // append arbitrarily many function_call or var tail parts,
+   // all in a single grammar rule without back-tracking.
    //
-   // The rule expr_thirteen below implements "combined".
+   // The rule expr_thirteen below implements this "combined".
    //
    // Another issue of interest when writing a PEG is how to
    // manage the separators, the white-space and comments that
-   // can occur in many places; in the classical two-stage
-   // lexer-parser approach the lexer would have taken care of
-   // this, but here we use the PEG approach that combines both.
+   // can occur in many places, and are taken care of by the
+   // lexer when using the two-stage lexer-parser approach.
    //
    // In the following grammar most rules adopt the convention
    // that they take care of "internal padding", i.e. spaces
@@ -329,7 +326,7 @@ namespace lua53
    struct interpreter : pegtl::seq< pegtl::one< '#' >, pegtl::until< pegtl::eolf > > {};
    struct grammar : pegtl::must< pegtl::opt< interpreter >, statement_list< pegtl::eof > > {};
 
-} // namespace lua53
+} // lua53
 
 int main( int argc, char ** argv )
 {

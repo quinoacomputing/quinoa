@@ -16,7 +16,7 @@ namespace pegtl
       verify_file< mmap_parser >();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"
 

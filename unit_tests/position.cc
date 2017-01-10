@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -10,11 +10,11 @@ namespace pegtl
    {
       static const std::string s1 = "\n";
 
-      memory_input i1( 0, 1, 0, s1.data(), s1.data() + s1.size(), __FUNCTION__ );
+      input i1( 1, 0, s1.data(), s1.data() + s1.size(), __FUNCTION__ );
 
       TEST_ASSERT( parse_input< Rule >( i1 ) );
       TEST_ASSERT( i1.line() == 2 );
-      TEST_ASSERT( i1.byte_in_line() == 0 );
+      TEST_ASSERT( i1.column() == 0 );
    }
 
    template< typename Rule >
@@ -22,11 +22,11 @@ namespace pegtl
    {
       TEST_ASSERT( s2.size() == 1 );
 
-      memory_input i2( 0, 1, 0, s2.data(), s2.data() + s2.size(), __FUNCTION__ );
+      input i2( 1, 0, s2.data(), s2.data() + s2.size(), __FUNCTION__ );
 
       TEST_ASSERT( parse_input< Rule >( i2 ) );
       TEST_ASSERT( i2.line() == 1 );
-      TEST_ASSERT( i2.byte_in_line() == 1 );
+      TEST_ASSERT( i2.column() == 1 );
    }
 
    template< typename Rule >
@@ -34,52 +34,11 @@ namespace pegtl
    {
       TEST_ASSERT( s3.size() == 1 );
 
-      memory_input i3( 0, 1, 0, s3.data(), s3.data() + s3.size(), __FUNCTION__ );
+      input i3( 1, 0, s3.data(), s3.data() + s3.size(), __FUNCTION__ );
 
       TEST_ASSERT( ! parse_input< Rule >( i3 ) );
       TEST_ASSERT( i3.line() == 1 );
-      TEST_ASSERT( i3.byte_in_line() == 0 );
-   }
-
-   struct outer_grammar
-         : must< two< 'a' >, two< 'b' >, two< 'c' >, eof > {};
-
-   struct inner_grammar
-         : must< one< 'd' >, two< 'e' >, eof > {};
-
-   template< typename Rule > struct outer_action : nothing< Rule > {};
-
-   template<>
-   struct outer_action< two< 'b' > >
-   {
-      template< typename Input >
-      static void apply( const Input & in )
-      {
-         const position_info p = in.position();
-         TEST_ASSERT( p.source == "outer" );
-         TEST_ASSERT( p.byte == 2 );
-         TEST_ASSERT( p.line == 1 );
-         TEST_ASSERT( p.byte_in_line == 2 );
-         parse_string_nested< inner_grammar >( in, "dFF", "inner" );
-      }
-   };
-
-   void test_nested()
-   {
-      try {
-         parse_string< outer_grammar, outer_action >( "aabbcc", "outer" );
-      }
-      catch ( const parse_error & e ) {
-         TEST_ASSERT( e.positions.size() == 2 );
-         TEST_ASSERT( e.positions[ 0 ].source == "inner" );
-         TEST_ASSERT( e.positions[ 0 ].byte == 1 );
-         TEST_ASSERT( e.positions[ 0 ].line == 1 );
-         TEST_ASSERT( e.positions[ 0 ].byte_in_line == 1 );
-         TEST_ASSERT( e.positions[ 1 ].source == "outer" );
-         TEST_ASSERT( e.positions[ 1 ].byte == 2 );
-         TEST_ASSERT( e.positions[ 1 ].line == 1 );
-         TEST_ASSERT( e.positions[ 1 ].byte_in_line == 2 );
-      }
+      TEST_ASSERT( i3.column() == 0 );
    }
 
    void unit_test()
@@ -121,10 +80,8 @@ namespace pegtl
       test_matches_lf< ranges< 'a', 'z', 'A', 'Z', '\n' > >();
       test_matches_other< ranges< 'a', 'z', 'A', 'Z', '\n' > >( "P" );
       test_mismatch< ranges< 'a', 'z', 'A', 'Z', '\n' > >( "8" );
-
-      test_nested();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

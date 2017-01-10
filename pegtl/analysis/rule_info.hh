@@ -16,16 +16,16 @@ namespace pegtl
       struct rule_info
       {
          explicit
-         rule_info( const rule_type in_type )
-               : type( in_type )
+         rule_info( const rule_type type )
+               : type( type )
          { }
 
          rule_type type;
          std::vector< std::string > rules;
       };
 
-   } // namespace analysis
+   } // analysis
 
-} // namespace pegtl
+} // pegtl
 
 #endif

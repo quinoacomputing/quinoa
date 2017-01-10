@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_INTERNAL_INPUT_MARK_HH
@@ -6,28 +6,24 @@
 
 #include "input_data.hh"
 
-#include "../rewind_mode.hh"
-
 namespace pegtl
 {
    namespace internal
    {
-      template< rewind_mode M > class input_mark
+      class input_mark
       {
       public:
          explicit
          input_mark( input_data & i )
-               : m_byte( i.byte ),
-                 m_line( i.line ),
-                 m_byte_in_line( i.byte_in_line ),
+               : m_line( i.line ),
+                 m_column( i.column ),
                  m_begin( i.begin ),
                  m_input( & i )
          { }
 
-         input_mark( input_mark && i ) noexcept
-               : m_byte( i.m_byte ),
-                 m_line( i.m_line ),
-                 m_byte_in_line( i.m_byte_in_line ),
+         input_mark( input_mark && i )
+               : m_line( i.m_line ),
+                 m_column( i.m_column ),
                  m_begin( i.m_begin ),
                  m_input( i.m_input )
          {
@@ -36,10 +32,9 @@ namespace pegtl
 
          ~input_mark()
          {
-            if ( m_input != nullptr ) {
-               m_input->byte = m_byte;
+            if ( m_input ) {
                m_input->line = m_line;
-               m_input->byte_in_line = m_byte_in_line;
+               m_input->column = m_column;
                m_input->begin = m_begin;
             }
          }
@@ -47,64 +42,35 @@ namespace pegtl
          input_mark( const input_mark & ) = delete;
          void operator= ( const input_mark & ) = delete;
 
-         bool operator() ( const bool result )
+         bool success()
          {
-            if ( result ) {
-               m_input = nullptr;
-               return true;
-            }
+            m_input = nullptr;
+            return true;
+         }
+
+         bool failure()
+         {
+            m_input->line = m_line;
+            m_input->column = m_column;
+            m_input->begin = m_begin;
+            m_input = nullptr;
             return false;
          }
 
-         std::size_t byte() const
+         bool operator() ( const bool result )
          {
-            return m_byte;
+            return result ? success() : failure();
          }
 
-         std::size_t line() const
-         {
-            return m_line;
-         }
-
-         std::size_t byte_in_line() const
-         {
-            return m_byte_in_line;
-         }
-
-         const char * begin() const
-         {
-            return m_begin;
-         }
-
-      private:
-         const std::size_t m_byte;
+      public:
          const std::size_t m_line;
-         const std::size_t m_byte_in_line;
+         const std::size_t m_column;
          const char * const m_begin;
          input_data * m_input;
       };
 
-      template<> class input_mark< rewind_mode::DONTCARE >
-      {
-      public:
-         explicit
-         input_mark( const input_data & )
-         { }
+   } // internal
 
-         input_mark( input_mark && ) noexcept
-         { }
-
-         input_mark( const input_mark & ) = delete;
-         void operator= ( const input_mark & ) = delete;
-
-         bool operator() ( const bool result )
-         {
-            return result;
-         }
-      };
-
-   } // namespace internal
-
-} // namespace pegtl
+} // pegtl
 
 #endif

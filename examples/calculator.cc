@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <map>
@@ -17,33 +17,47 @@
 namespace calculator
 {
    // This enum is used for the order in which the operators are
-   // evaluated, i.e. the priority of the operators; a higher
-   // number indicates a lower priority.
+   // evaluated, i.e. the priority of the operators.
 
    enum class order : int {};
 
+   // The shift-reduce-style approach allows for both left- and
+   // right-associative binary operators, and this enum is used
+   // to indicate the kind of each operator.
+
+   enum class assoc : bool
+   {
+      LEFT = true,
+      RIGHT = false
+   };
+
    // For each binary operator known to the calculator we need an
    // instance of the following data structure with the priority,
-   // and a function that performs the calculation. All operators
-   // are left-associative.
+   // associativity, and a function that performs the calculation.
 
    struct op
    {
       order p;
+      assoc a;
       std::function< long ( long, long ) > f;
    };
 
    // Class that takes care of an operand and an operator stack for
-   // shift-reduce style handling of operator priority; in a
-   // reduce-step it calls on the functions contained in the op
-   // instances to perform the calculation.
+   // shift-reduce style handling of operator associativity and
+   // priority; in a reduce-step it calls on the functions contained
+   // in the op instances to perform the calculation.
 
    struct stack
    {
       void push( const op & b )
       {
-         while ( ( ! m_o.empty() ) && ( m_o.back().p <= b.p ) ) {
-            reduce();
+         if ( ! m_o.empty() ) {
+            if ( m_o.back().p < b.p ) {
+               reduce();
+            }
+            else if ( ( m_o.back().p == b.p ) && ( b.a == assoc::LEFT ) ) {
+               reduce();
+            }
          }
          m_o.push_back( b );
       }
@@ -70,7 +84,7 @@ namespace calculator
 
       void reduce()
       {
-         assert( ! m_o.empty() );
+         assert( m_o.size() > 0 );
          assert( m_l.size() > 1 );
 
          const auto r = m_l.back();
@@ -136,34 +150,36 @@ namespace calculator
       operators()
       {
          // By default we initialise with all binary operators from the C language that can be
-         // used on integers, all with their usual priority.
+         // used on integers, all with their usual priority and associativity.
 
-         insert( "*", order( 5 ), []( const long l, const long r ){ return l * r; } );
-         insert( "/", order( 5 ), []( const long l, const long r ){ return l / r; } );
-         insert( "%", order( 5 ), []( const long l, const long r ){ return l % r; } );
-         insert( "+", order( 6 ), []( const long l, const long r ){ return l + r; } );
-         insert( "-", order( 6 ), []( const long l, const long r ){ return l - r; } );
-         insert( "<<", order( 7 ), []( const long l, const long r ){ return l << r; } );
-         insert( ">>", order( 7 ), []( const long l, const long r ){ return l >> r; } );
-         insert( "<", order( 8 ), []( const long l, const long r ){ return l < r; } );
-         insert( ">", order( 8 ), []( const long l, const long r ){ return l > r; } );
-         insert( "<=", order( 8 ), []( const long l, const long r ){ return l <= r; } );
-         insert( ">=", order( 8 ), []( const long l, const long r ){ return l >= r; } );
-         insert( "==", order( 9 ), []( const long l, const long r ){ return l == r; } );
-         insert( "!=", order( 9 ), []( const long l, const long r ){ return l != r; } );
-         insert( "&", order( 10 ), []( const long l, const long r ){ return l & r; } );
-         insert( "^", order( 11 ), []( const long l, const long r ){ return l ^ r; } );
-         insert( "|", order( 12 ), []( const long l, const long r ){ return l | r; } );
-         insert( "&&", order( 13 ), []( const long l, const long r ){ return static_cast< bool >( l ) && static_cast< bool >( r ); } );
-         insert( "||", order( 14 ), []( const long l, const long r ){ return static_cast< bool >( l ) || static_cast< bool >( r ); } );
+         insert( "*", order( 5 ), assoc::LEFT, []( const long l, const long r ){ return l * r; } );
+         insert( "/", order( 5 ), assoc::LEFT, []( const long l, const long r ){ return l / r; } );
+         insert( "%", order( 5 ), assoc::LEFT, []( const long l, const long r ){ return l % r; } );
+         insert( "+", order( 6 ), assoc::LEFT, []( const long l, const long r ){ return l + r; } );
+         insert( "-", order( 6 ), assoc::LEFT, []( const long l, const long r ){ return l - r; } );
+         insert( "<<", order( 7 ), assoc::LEFT, []( const long l, const long r ){ return l << r; } );
+         insert( ">>", order( 7 ), assoc::LEFT, []( const long l, const long r ){ return l >> r; } );
+         insert( "<", order( 8 ), assoc::LEFT, []( const long l, const long r ){ return l < r; } );
+         insert( ">", order( 8 ), assoc::LEFT, []( const long l, const long r ){ return l > r; } );
+         insert( "<=", order( 8 ), assoc::LEFT, []( const long l, const long r ){ return l <= r; } );
+         insert( ">=", order( 8 ), assoc::LEFT, []( const long l, const long r ){ return l >= r; } );
+         insert( "==", order( 9 ), assoc::LEFT, []( const long l, const long r ){ return l == r; } );
+         insert( "!=", order( 9 ), assoc::LEFT, []( const long l, const long r ){ return l != r; } );
+         insert( "&", order( 10 ), assoc::LEFT, []( const long l, const long r ){ return l & r; } );
+         insert( "^", order( 11 ), assoc::LEFT, []( const long l, const long r ){ return l ^ r; } );
+         insert( "|", order( 12 ), assoc::LEFT, []( const long l, const long r ){ return l | r; } );
+         insert( "&&", order( 13 ), assoc::LEFT, []( const long l, const long r ){ return l && r; } );
+         insert( "||", order( 14 ), assoc::LEFT, []( const long l, const long r ){ return l || r; } );
       }
 
       // Arbitrary user-defined operators can be added at runtime.
 
-      void insert( const std::string & name, const order p, const std::function< long( long, long ) > & f )
+      void insert( const std::string & name, const order p, const assoc a, const std::function< long( long, long ) > & f )
       {
          assert( ! name.empty() );
-         m_ops.insert( { name, { p, f } } );
+         const auto i = m_pas.insert( { p, a } );
+         assert( i.first->second == a );  // Asserts that all operators of the same priority share the same associativity.
+         m_ops.insert( { name, { p, a, f } } );
       }
 
       const std::map< std::string, op > & ops() const
@@ -172,6 +188,7 @@ namespace calculator
       }
 
    private:
+      std::map< order, assoc > m_pas;
       std::map< std::string, op > m_ops;
    };
 
@@ -200,7 +217,7 @@ namespace calculator
    {
       using analyze_t = analysis::generic< analysis::rule_type::ANY >;
 
-      template< apply_mode, rewind_mode, template< typename ... > class Action, template< typename ... > class Control, typename Input >
+      template< apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input >
       static bool match( Input & in, const operators & b, stacks & s )
       {
          // Look for the longest match of the input against the operators in the operator map.
@@ -212,14 +229,14 @@ namespace calculator
       template< typename Input >
       static bool match( Input & in, const operators & b, stacks & s, std::string t )
       {
-         if ( in.size( t.size() + 1 ) > t.size() ) {
+         if ( in.size() > t.size() ) {
             t += in.peek_char( t.size() );
             const auto i = b.ops().lower_bound( t );
             if ( i != b.ops().end() ) {
                if ( match( in, b, s, t ) ) {
                   return true;
                }
-               if ( i->first == t ) {
+               else if ( i->first == t ) {
                   // While we are at it, this rule also performs the task of what would
                   // usually be an associated action: To push the matched operator onto
                   // the operator stack.
@@ -281,8 +298,7 @@ namespace calculator
 
    template<> struct action< number >
    {
-      template< typename Input >
-      static void apply( const Input & in, const operators &, stacks & s )
+      static void apply( const input & in, const operators &, stacks & s )
       {
          s.push( std::stol( in.string() ) );
       }
@@ -293,8 +309,7 @@ namespace calculator
 
    template<> struct action< one< '(' > >
    {
-      template< typename Input >
-      static void apply( const Input &, const operators &, stacks & s )
+      static void apply( const input &, const operators &, stacks & s )
       {
          s.open();
       }
@@ -302,14 +317,13 @@ namespace calculator
 
    template<> struct action< one< ')' > >
    {
-      template< typename Input >
-      static void apply( const Input &, const operators &, stacks & s )
+      static void apply( const input &, const operators &, stacks & s )
       {
          s.close();
       }
    };
 
-} // namespace calculator
+} // calculator
 
 int main( int argc, char ** argv )
 {
@@ -325,7 +339,7 @@ int main( int argc, char ** argv )
    for ( int i = 1; i < argc; ++i ) {
       // Parse and process the command-line arguments as calculator expressions...
 
-      pegtl::parse_arg< calculator::grammar, calculator::action >( i, argv, b, s );
+      pegtl::parse< calculator::grammar, calculator::action >( i, argv, b, s );
 
       // ...and print the respective results to std::cout.
 

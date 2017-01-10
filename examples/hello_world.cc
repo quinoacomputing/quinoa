@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <string>
@@ -23,20 +23,19 @@ namespace hello
 
    template<> struct action< name >
    {
-      template< typename Input >
-      static void apply( const Input & in, std::string & name )
+      static void apply( const pegtl::input & in, std::string & name )
       {
          name = in.string();
       }
    };
 
-} // namespace hello
+} // hello
 
 int main( int argc, char ** argv )
 {
    if ( argc > 1 ) {
       std::string name;
-      pegtl::parse_arg< hello::grammar, hello::action >( 1, argv, name );
+      pegtl::parse< hello::grammar, hello::action >( 1, argv, name );
       std::cout << "Good bye, " << name << "!" << std::endl;
    }
 }

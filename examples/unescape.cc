@@ -42,13 +42,13 @@ namespace unescape
    template<> struct action< escaped_U > : pegtl::unescape::unescape_u {};
    template<> struct action< escaped_c > : pegtl::unescape::unescape_c< escaped_c, '\'', '"', '?', '\\', '\a', '\b', '\f', '\n', '\r', '\t', '\v' > {};
 
-} // namespace unescape
+} // unescape
 
 int main( int argc, char ** argv )
 {
    for ( int i = 1; i < argc; ++i ) {
       pegtl::unescape::state s;
-      pegtl::parse_arg< unescape::padded, unescape::action >( i, argv, s );
+      pegtl::parse< unescape::padded, unescape::action >( i, argv, s );
       std::cout << "argv[ " << i << " ] = " << s.unescaped << std::endl;
    }
    return 0;

@@ -8,6 +8,8 @@
 
 #include "../analysis/generic.hh"
 
+#include "eol.hh"
+
 namespace pegtl
 {
    namespace internal
@@ -19,17 +21,18 @@ namespace pegtl
          template< typename Input >
          static bool match( Input & in )
          {
-            using eol_t = typename Input::eol_t;
-            const auto p = eol_t::match( in );
-            return p.first || ( ! p.second );
+            if ( const auto s = in.size() ) {
+               return eol::match_impl( in, s );
+            }
+            return true;
          }
       };
 
       template<>
       struct skip_control< eolf > : std::true_type {};
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

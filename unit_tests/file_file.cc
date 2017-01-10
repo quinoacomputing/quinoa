@@ -12,6 +12,6 @@ namespace pegtl
       verify_file< file_parser >();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

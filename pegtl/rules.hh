@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_RULES_HH
@@ -10,17 +10,14 @@
 
 namespace pegtl
 {
-   template< typename ... Actions > struct apply : internal::apply< Actions ... > {};
    template< template< typename ... > class Action, typename ... Rules > struct action : internal::action< Action, Rules ... > {};
    template< typename ... Rules > struct at : internal::at< Rules ... > {};
    template< unsigned Num > struct bytes : internal::bytes< Num > {};
    template< template< typename ... > class Control, typename ... Rules > struct control : internal::control< Control, Rules ... > {};
    template< typename ... Rules > struct disable : internal::disable< Rules ... > {};
-   struct discard : internal::discard {};
    template< typename ... Rules > struct enable : internal::enable< Rules ... > {};
    struct eof : internal::eof {};
    struct failure : internal::trivial< false > {};
-   template< typename Rule, typename ... Actions > struct if_apply : internal::if_apply< Rule, Actions ... > {};
    template< typename Cond, typename ... Thens > struct if_must : internal::if_must< Cond, Thens ... > {};
    template< typename Cond, typename Then, typename Else > struct if_must_else : internal::if_must_else< Cond, Then, Else > {};
    template< typename Cond, typename Then, typename Else > struct if_then_else : internal::if_then_else< Cond, Then, Else > {};
@@ -30,7 +27,6 @@ namespace pegtl
    template< typename Rule, typename Sep > struct list_must< Rule, Sep, void > : internal::list_must< Rule, Sep > {};
    template< typename Rule, typename Sep, typename Pad = void > struct list_tail : internal::list_tail_pad< Rule, Sep, Pad > {};
    template< typename Rule, typename Sep > struct list_tail< Rule, Sep, void > : internal::list_tail< Rule, Sep > {};
-   template< typename M, typename S > struct minus : internal::minus< M, S > {};
    template< typename ... Rules > struct must : internal::must< Rules ... > {};
    template< typename ... Rules > struct not_at : internal::not_at< Rules ... > {};
    template< typename ... Rules > struct opt : internal::opt< Rules ... > {};
@@ -43,7 +39,6 @@ namespace pegtl
    template< unsigned Min, typename Rule, typename ... Rules > struct rep_min : internal::rep_min< Min, Rule, Rules ... > {};
    template< unsigned Min, unsigned Max, typename ... Rules > struct rep_min_max : internal::rep_min_max< Min, Max, Rules ... > {};
    template< unsigned Max, typename ... Rules > struct rep_opt : internal::rep_opt< Max, Rules ... > {};
-   template< unsigned Amount > struct require : internal::require< Amount > {};
    template< typename ... Rules > struct seq : internal::seq< Rules ... > {};
    template< typename ... Rules > struct sor : internal::sor< Rules ... > {};
    template< typename Rule, typename ... Rules > struct star : internal::star< Rule, Rules ... > {};
@@ -54,6 +49,6 @@ namespace pegtl
    template< typename Exception, typename ... Rules > struct try_catch_type : internal::try_catch_type< Exception, Rules ... > {};
    template< typename Cond, typename ... Rules > struct until : internal::until< Cond, Rules ... > {};
 
-} // namespace pegtl
+} // pegtl
 
 #endif
