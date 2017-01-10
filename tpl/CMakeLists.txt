@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 02 Dec 2016 07:45:06 AM MST
+# \date      Tue 10 Jan 2017 11:18:54 AM MST
 #
 ################################################################################
 
@@ -583,7 +583,7 @@ if (pegtl)
    PREFIX pegtl
    # Header-only, copy include dir over
    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                     ${PROJECT_SOURCE_DIR}/src/pegtl/include
+                     ${PROJECT_SOURCE_DIR}/src/pegtl
                      ${CMAKE_INSTALL_PREFIX}/include/pegtl
    CONFIGURE_COMMAND ""
    BUILD_COMMAND ""
