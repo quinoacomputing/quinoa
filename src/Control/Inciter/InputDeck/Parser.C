@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 02:06:16 PM MST
+  \date      Tue 10 Jan 2017 10:19:33 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck file parser
   \details   This file defines the input deck, i.e., control file, parser for
@@ -13,7 +13,7 @@
 #include <ostream>
 #include <type_traits>
 
-#include "NoWarning/pegtl.h"
+#include <pegtl.hh>
 
 #include "Print.h"
 #include "Tags.h"
