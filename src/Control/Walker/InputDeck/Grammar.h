@@ -2,14 +2,12 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 12:57:55 PM MST
+  \date      Tue 10 Jan 2017 08:59:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
-  \details   Walker's input deck grammar definition. We use the [Parsing
-    Expression Grammar Template Library (PEGTL)]
-    (https://code.google.com/p/pegtl/wiki/PEGTL0) to create the grammar and the
-    associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL.
-    Word of advice: read from the bottom up.
+  \details   Walker's input deck grammar definition. We use the Parsing
+    Expression Grammar Template Library (PEGTL) to create the grammar and the
+    associated parser. Word of advice: read from the bottom up.
 */
 // *****************************************************************************
 #ifndef WalkerInputDeckGrammar_h

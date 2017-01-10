@@ -2,13 +2,12 @@
 /*!
   \file      src/Control/Walker/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 01:50:48 PM MST
+  \date      Tue 10 Jan 2017 09:01:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
-  associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
-  of advice: read from the bottom up.
+  associated parser. Word of advice: read from the bottom up.
 */
 // *****************************************************************************
 #ifndef WalkerCmdLineGrammar_h
