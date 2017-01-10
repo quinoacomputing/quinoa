@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_CONTRIB_CHANGES_HH
@@ -22,18 +22,18 @@ namespace pegtl
       template< pegtl::apply_mode A, typename State >
       using state_disable_helper = typename std::conditional< A == pegtl::apply_mode::ACTION, State, dummy_disabled_state >::type;
 
-   } // namespace internal
+   } // internal
 
    template< typename Rule, typename State, template< typename ... > class Base = pegtl::normal >
    struct change_state
          : public Base< Rule >
    {
-      template< pegtl::apply_mode A, pegtl::rewind_mode M, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
+      template< pegtl::apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input, typename ... States >
       static bool match( Input & in, States && ... st )
       {
          internal::state_disable_helper< A, State > s;
 
-         if ( Base< Rule >::template match< A, M, Action, Control >( in, s ) ) {
+         if ( Base< Rule >::template match< A, Action, Control >( in, s ) ) {
             s.success( st ... );
             return true;
          }
@@ -45,10 +45,10 @@ namespace pegtl
    struct change_action
          : public Base< Rule >
    {
-      template< pegtl::apply_mode A, rewind_mode M, template< typename ... > class, template< typename ... > class Control, typename Input, typename ... States >
+      template< pegtl::apply_mode A, template< typename ... > class, template< typename ... > class Control, typename Input, typename ... States >
       static bool match( Input & in, States && ... st )
       {
-         return Base< Rule >::template match< A, M, Action, Control >( in, st ... );
+         return Base< Rule >::template match< A, Action, Control >( in, st ... );
       }
    };
 
@@ -63,6 +63,6 @@ namespace pegtl
          : public change_state< Rule, State, change_both_helper< Action, Base >::template change_action >
    { };
 
-} // namespace pegtl
+} // pegtl
 
 #endif

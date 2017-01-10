@@ -15,8 +15,8 @@ namespace pegtl
          return symbol;
       }
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

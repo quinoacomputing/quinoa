@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <string>
@@ -146,11 +146,11 @@ namespace pegtl
          template<> const std::string error_control< c_nl >::error_message = "unterminated rule";
          template<> const std::string error_control< rule >::error_message = "expected rule";
 
-      } // namespace grammar
+      } // grammar
 
-   } // namespace abnf
+   } // abnf
 
-} // namespace pegtl
+} // pegtl
 
 namespace abnf2pegtl
 {
@@ -199,10 +199,9 @@ namespace abnf2pegtl
          "wchar_t", "while", "xor", "xor_eq",
          "pegtl" // this would not end well :)
       };
-   } // namespace
+   }
 
-   template< typename Input >
-   std::string get_rulename( const Input & in, data & d )
+   std::string get_rulename( const pegtl::input & in, data & d )
    {
       std::string v = in.string();
       std::replace( v.begin(), v.end(), '-', '_' );
@@ -224,8 +223,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::push_stack >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          d.elements.emplace_back();
       }
@@ -233,8 +231,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::rulename >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          d.rulename = get_rulename( in, d );
       }
@@ -242,8 +239,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::rulename_val >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          std::string v = get_rulename( in, d );
@@ -268,11 +264,10 @@ namespace abnf2pegtl
          }
          s += c;
          s += '\'';
-         return std::isalpha( c ) != 0;
+         return std::isalpha( c );
       }
 
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          std::string s;
@@ -294,8 +289,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::prose_val >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          const auto v = in.string();
@@ -305,8 +299,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::case_sensitive_string >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -318,8 +311,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::bin_val::value >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          const auto v = in.string();
@@ -329,8 +321,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::bin_val::range >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -344,8 +335,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::bin_val::next_value >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -358,8 +348,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::dec_val::value >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          const auto v = in.string();
@@ -373,8 +362,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::hex_val::value >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          d.elements.back().push_back( "pegtl::one< 0x" + in.string() + " >" );
@@ -386,8 +374,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::option >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -397,8 +384,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::repeat >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          d.elements.back().push_back( in.string() );
@@ -416,8 +402,7 @@ namespace abnf2pegtl
          return v.substr( pos );
       }
 
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -488,8 +473,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::and_predicate >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -499,8 +483,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::not_predicate >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          assert( !d.elements.back().empty() );
@@ -510,8 +493,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::concatenation >
    {
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          if( d.elements.back().size() == 1 ) {
@@ -541,8 +523,7 @@ namespace abnf2pegtl
          return v.compare( 0, 12, "pegtl::one< " ) == 0;
       }
 
-      template< typename Input >
-      static void apply( const Input &, data & d )
+      static void apply( const pegtl::input &, data & d )
       {
          assert( !d.elements.empty() );
          if( d.elements.back().size() == 1 ) {
@@ -578,8 +559,7 @@ namespace abnf2pegtl
 
    template<> struct action< grammar::defined_as_op >
    {
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          d.elements.back().push_back( in.string() );
@@ -593,8 +573,7 @@ namespace abnf2pegtl
          return ( v.compare( 0, 12, "pegtl::sor< " ) == 0 ) ? v.substr( 12, v.size() - 14 ) : v;
       }
 
-      template< typename Input >
-      static void apply( const Input & in, data & d )
+      static void apply( const pegtl::input & in, data & d )
       {
          assert( !d.elements.empty() );
          assert( d.elements.back().size() == 2 );
@@ -627,7 +606,7 @@ namespace abnf2pegtl
       }
    };
 
-} // namespace abnf2pegtl
+} // abnf2pegtl
 
 int main( int argc, char ** argv )
 {

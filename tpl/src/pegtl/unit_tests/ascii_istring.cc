@@ -35,6 +35,6 @@ namespace pegtl
       verify_rule< istring< 'a', '0' > >( __LINE__, __FILE__,  "a0A0", result_type::SUCCESS, 2 );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

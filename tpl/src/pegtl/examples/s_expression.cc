@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <iostream>
@@ -76,11 +76,11 @@ namespace sexpr
          // last string literal that we use as filename here, and
          // the input is passed on for chained error messages (as
          // in "error in line x file foo included from file bar...)
-         file_parser( fn ).parse_nested< main, sexpr::action >( in, f2 );
+         file_parser( fn, in ).parse< main, sexpr::action >( f2 );
       }
    };
 
-} // namespace sexpr
+} // sexpr
 
 int main( int argc, char ** argv )
 {
@@ -88,7 +88,7 @@ int main( int argc, char ** argv )
 
    for ( int i = 1; i < argc; ++i ) {
       std::string fn;
-      pegtl::parse_arg< sexpr::main, sexpr::action >( i, argv, fn );
+      pegtl::parse< sexpr::main, sexpr::action >( i, argv, fn );
    }
    return 0;
 }

@@ -13,6 +13,6 @@ namespace pegtl
    template< template< typename ... > class Action, typename Rule >
    using is_nothing = std::is_base_of< nothing< Rule >, Action< Rule > >;
 
-} // namespace pegtl
+} // pegtl
 
 #endif

@@ -24,6 +24,6 @@ namespace pegtl
       verify_rule< identifier >( __LINE__, __FILE__,  " a", result_type::LOCAL_FAILURE, 2 );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

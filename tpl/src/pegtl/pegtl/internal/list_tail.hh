@@ -15,8 +15,8 @@ namespace pegtl
       template< typename Rule, typename Sep >
       using list_tail = seq< list< Rule, Sep >, opt< Sep > >;
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

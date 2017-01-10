@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -61,8 +61,7 @@ namespace pegtl
       template<>
       struct action1< alpha >
       {
-         template< typename Input >
-         static void apply( const Input & in, state1 & s )
+         static void apply( const input & in, state1 & s )
          {
             assert( in.size() == 1 );
             s.c = 0[ in.begin() ];
@@ -72,15 +71,15 @@ namespace pegtl
       void state_test()
       {
          std::string result;
-         parse_string< fibble, action1 >( "dk41sk41xk3", __FILE__, result );
+         parse< fibble, action1 >( "dk41sk41xk3", __FILE__, result );
          TEST_ASSERT( result == "dkskxk" );
       }
 
-   } // namespace test1
+   } // test1
 
    void unit_test()
    {
-      parse_string< disable< test1::bar >, test_action >( "baab", __FILE__ );
+      parse< disable< test1::bar >, test_action >( "baab", __FILE__ );
 
       TEST_ASSERT( applied.size() == 1 );
 
@@ -89,31 +88,31 @@ namespace pegtl
 
       applied.clear();
 
-      parse_string< at< action< test_action, test1::bar > > >( "baab", __FILE__ );
+      parse< at< action< test_action, test1::bar > > >( "baab", __FILE__ );
 
       TEST_ASSERT( applied.empty() );
 
       applied.clear();
 
-      parse_string< test1::bar, test_action >( "baab", __FILE__ );
+      parse< test1::bar, test_action >( "baab", __FILE__ );
 
       test1::test_result();
 
       applied.clear();
 
-      parse_string< action< test_action, test1::bar > >( "baab", __FILE__ );
+      parse< action< test_action, test1::bar > >( "baab", __FILE__ );
 
       test1::test_result();
 
       applied.clear();
 
-      parse_string< disable< enable< action< test_action, test1::bar > > > >( "baab", __FILE__ );
+      parse< disable< enable< action< test_action, test1::bar > > > >( "baab", __FILE__ );
 
       test1::test_result();
 
       test1::state_test();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

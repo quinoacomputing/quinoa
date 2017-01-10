@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -29,10 +29,8 @@ namespace pegtl
    void verify_data( const char ( & m )[ M ], const char ( & n )[ N ] )
    {
       unescape::state st;
-      parse_string< unstring, unaction >( std::string( m, M - 1 ), __FUNCTION__, st );
-      if ( st.unescaped != std::string( n, N - 1 ) ) {
-         throw std::runtime_error( "test failed!" );
-      }
+      parse< unstring, unaction >( std::string( m, M - 1 ), __FUNCTION__, st );
+      assert( st.unescaped == std::string( n, N - 1 ) );
    }
 
    void unit_test()
@@ -96,6 +94,6 @@ namespace pegtl
       verify_fail< unstring, unaction >( __LINE__, __FILE__, "\\Uffffffff", st );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

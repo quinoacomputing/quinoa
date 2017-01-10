@@ -38,9 +38,9 @@ namespace pegtl
       struct upper : internal::range< internal::result_on_found::SUCCESS, internal::peek_char, 'A', 'Z' > {};
       struct xdigit : internal::ranges< internal::peek_char, '0', '9', 'a', 'f', 'A', 'F' > {};
 
-   } // namespace ascii
+   } // ascii
 
-} // namespace pegtl
+} // pegtl
 
 #include "internal/pegtl_string.hh"
 

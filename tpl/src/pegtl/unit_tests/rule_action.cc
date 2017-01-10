@@ -14,6 +14,6 @@ namespace pegtl
       verify_seqs< test_action_rule >();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

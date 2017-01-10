@@ -14,6 +14,6 @@ namespace pegtl
       return analysis::analyze_cycles< Rule >( verbose ).problems();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #endif

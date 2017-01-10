@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include <pegtl.hh>
@@ -16,7 +16,7 @@ namespace modulus
       template< typename Input >
       static bool match( Input & in )
       {
-         if ( ! in.empty() ) {
+         if ( in.size() ) {
             if ( ( ( * in.begin() ) % M ) == R ) {
                in.bump( 1 );
                return true;
@@ -28,12 +28,12 @@ namespace modulus
 
    struct grammar
          : pegtl::until< pegtl::eolf, pegtl::must< my_rule< 3 > > > {};
-} // namespace modulus
+}
 
 int main( int argc, char ** argv )
 {
    if ( argc > 1 ) {
-      pegtl::parse_arg< modulus::grammar >( 1, argv );
+      pegtl::parse< modulus::grammar >( 1, argv );
    }
    return 0;
 }

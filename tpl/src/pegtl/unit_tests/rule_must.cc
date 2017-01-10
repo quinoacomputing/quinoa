@@ -12,6 +12,6 @@ namespace pegtl
       verify_seqs< must >( result_type::GLOBAL_FAILURE );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

@@ -26,6 +26,6 @@ namespace pegtl
       verify_rule< shebang >( __LINE__, __FILE__,  "#!\n ", result_type::SUCCESS, 1 );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

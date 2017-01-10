@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_INTERNAL_FILE_READER_HH
@@ -6,8 +6,6 @@
 
 #include <cstdio>
 #include <memory>
-#include <string>
-#include <utility>
 
 #include "../input_error.hh"
 
@@ -19,8 +17,8 @@ namespace pegtl
       {
       public:
          explicit
-         file_reader( std::string filename )
-               : m_source( std::move( filename ) ),
+         file_reader( const std::string & filename )
+               : m_source( filename ),
                  m_file( open(), & std::fclose )
          { }
 
@@ -30,7 +28,7 @@ namespace pegtl
          std::size_t size() const
          {
             errno = 0;
-            if ( std::fseek( m_file.get(), 0, SEEK_END ) != 0 ) {
+            if ( std::fseek( m_file.get(), 0, SEEK_END ) ) {
                PEGTL_THROW_INPUT_ERROR( "unable to fseek() to end of file " << m_source );  // LCOV_EXCL_LINE
             }
             errno = 0;
@@ -39,10 +37,10 @@ namespace pegtl
                PEGTL_THROW_INPUT_ERROR( "unable to ftell() file size of file " << m_source );  // LCOV_EXCL_LINE
             }
             errno = 0;
-            if ( std::fseek( m_file.get(), 0, SEEK_SET ) != 0 ) {
+            if ( std::fseek( m_file.get(), 0, SEEK_SET ) ) {
                PEGTL_THROW_INPUT_ERROR( "unable to fseek() to beginning of file " << m_source );  // LCOV_EXCL_LINE
             }
-            return std::size_t( s );
+            return s;
          }
 
          std::string read() const
@@ -50,7 +48,7 @@ namespace pegtl
             std::string nrv;
             nrv.resize( size() );
             errno = 0;
-            if ( ( nrv.size() != 0 ) && ( std::fread( & nrv[ 0 ], nrv.size(), 1, m_file.get() ) != 1 ) ) {
+            if ( nrv.size() && ( std::fread( & nrv[ 0 ], nrv.size(), 1, m_file.get() ) != 1 ) ) {
                PEGTL_THROW_INPUT_ERROR( "unable to fread() file " << m_source << " size " << nrv.size() );  // LCOV_EXCL_LINE
             }
             return nrv;
@@ -70,8 +68,8 @@ namespace pegtl
          }
       };
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

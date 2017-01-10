@@ -22,8 +22,8 @@ namespace pegtl
          }
       };
 
-   } // namespace internal
+   } // internal
 
-} // namespace pegtl
+} // pegtl
 
 #endif

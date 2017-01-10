@@ -16,6 +16,6 @@ namespace pegtl
       }
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

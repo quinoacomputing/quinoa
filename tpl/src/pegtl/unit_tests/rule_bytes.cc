@@ -30,6 +30,6 @@ namespace pegtl
       verify_rule< bytes< 4 > >( __LINE__, __FILE__, "abcdefghij", result_type::SUCCESS, 6 );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

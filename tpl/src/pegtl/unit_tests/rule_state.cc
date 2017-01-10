@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -24,7 +24,7 @@ namespace pegtl
       test_state_with_template_parameters_state( const Input & )
       { }
 
-      template< apply_mode, rewind_mode, template< typename ... > class Action, template< typename ... > class Control, typename Input >
+      template< apply_mode A, template< typename ... > class Action, template< typename ... > class Control, typename Input >
       void success( const Input & ) const
       { }
    };
@@ -38,6 +38,6 @@ namespace pegtl
       verify_seqs< test_state_with_template_parameters_rule >();
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

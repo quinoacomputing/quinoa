@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #include "test.hh"
@@ -15,8 +15,8 @@ namespace pegtl
 
    template<> struct rsaction< rstring::content >
    {
-      template< typename Input, typename ... States >
-      static void apply( const Input & in, const States & ... )
+      template< typename ... States >
+      static void apply( const input & in, const States & ... )
       {
          content.assign( in.begin(), in.end() );
       }
@@ -28,7 +28,7 @@ namespace pegtl
    void verify_data( const std::size_t line, const char * file, const char ( & m )[ M ], const char ( & n )[ N ] )
    {
       content.clear();
-      memory_input i( 0, line, 0, m, m + M - 1, file );
+      input i( line, 0, m, m + M - 1, file );
       const auto r = parse_input< Rule, rsaction >( i );
       if ( ( ! r ) || ( content != std::string( n, N - 1 ) ) ) {
          TEST_FAILED( "input data [ '" << m << "' ] expected success with [ '" << n << "' ] but got [ '" << content << "' ] result [ " << r << " ]" );
@@ -58,6 +58,6 @@ namespace pegtl
       verify_fail< rgrammar >( __LINE__, __FILE__, "[====[]===]" );
    }
 
-} // namespace pegtl
+} // pegtl
 
 #include "main.hh"

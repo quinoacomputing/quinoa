@@ -1,13 +1,14 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_POSITION_INFO_HH
 #define PEGTL_POSITION_INFO_HH
 
 #include <string>
-#include <sstream>
-#include <ostream>
 #include <cstdlib>
+#include <ostream>
+
+#include "input.hh"
 
 #include "internal/input_data.hh"
 
@@ -16,31 +17,30 @@ namespace pegtl
    struct position_info
    {
       explicit
-      position_info( const internal::input_data & d )
-            : byte( d.byte ),
-              line( d.line ),
-              byte_in_line( d.byte_in_line ),
-              source( d.source )
+      position_info( const input & in )
+            : position_info( in.data() )
       { }
 
-      std::size_t byte;
-      std::size_t line;
-      std::size_t byte_in_line;
+      explicit
+      position_info( const internal::input_data & id )
+            : source( id.source ),
+              line( id.line ),
+              column( id.column ),
+              begin( id.begin )
+      { }
+
       std::string source;
+      std::size_t line;
+      std::size_t column;
+
+      const char * begin;
    };
 
    inline std::ostream & operator<< ( std::ostream & o, const position_info & p )
    {
-      return o << p.source << ':' << p.line << ':' << p.byte_in_line << '(' << p.byte << ')';
+      return o << p.source << ':' << p.line << ':' << p.column;
    }
 
-   inline std::string to_string( const position_info & p )
-   {
-      std::ostringstream o;
-      o << p;
-      return o.str();
-   }
-
-} // namespace pegtl
+} // pegtl
 
 #endif

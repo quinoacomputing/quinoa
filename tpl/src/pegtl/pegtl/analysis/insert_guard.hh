@@ -1,10 +1,8 @@
-// Copyright (c) 2014-2016 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/ColinH/PEGTL/
 
 #ifndef PEGTL_ANALYSIS_INSERT_GUARD_HH
 #define PEGTL_ANALYSIS_INSERT_GUARD_HH
-
-#include <utility>
 
 namespace pegtl
 {
@@ -14,7 +12,7 @@ namespace pegtl
       class insert_guard
       {
       public:
-         insert_guard( insert_guard && g ) noexcept
+         insert_guard( insert_guard && g )
                : m_i( g.m_i ),
                  m_c( g.m_c )
          {
@@ -52,8 +50,8 @@ namespace pegtl
          return insert_guard< C >( c, t );
       }
 
-   } // namespace analysis
+   } // analysis
 
-} // namespace pegtl
+} // pegtl
 
 #endif
