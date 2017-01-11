@@ -1,38 +1,57 @@
-# Copyright (c) 2008 Dr. Colin Hirsch
-# Please see license.txt for license.
+# Copyright (c) 2014-2015 Dr. Colin Hirsch and Daniel Frey
+# Please see LICENSE for license or visit https://github.com/ColinH/PEGTL
 
-CXX ?= g++
+ifeq ($(OS),Windows_NT)
+UNAME_S := $(OS)
+ifeq ($(shell gcc -dumpmachine),mingw32)
+MINGW_CXXFLAGS = -U__STRICT_ANSI__
+endif
+else
+UNAME_S := $(shell uname -s)
+endif
 
-CPPFLAGS := -Iinclude -std=c++0x -pedantic
+# For Darwin (Mac OS X) we assume that the default compiler
+# clang++ is used; when $(CXX) is some version of g++, then
+# $(PEGTL_CXXSTD) has to be set to -std=c++11 (or newer) so
+# that -stdlib=libc++ is not automatically added.
 
-WARNINGS := -Wall -Wextra
-# -Wimplicit -Wconversion -Wcast-align -Woverloaded-virtual -Wold-style-cast -Wformat=2 -Wswitch-enum -Wswitch-default -Wredundant-decls
+ifeq ($(PEGTL_CXXSTD),)
+PEGTL_CXXSTD := -std=c++11
+ifeq ($(UNAME_S),Darwin)
+PEGTL_CXXSTD += -stdlib=libc++
+endif
+endif
 
-OPTIMISE := -O1
-# -fno-enforce-eh-specs
+# Ensure strict standard compliance and no warnings, can be
+# changed if desired.
 
-CXXFLAGS := -march=native $(WARNINGS) $(OPTIMISE)
+PEGTL_CPPFLAGS ?= -pedantic
+PEGTL_CXXFLAGS ?= -Wall -Wextra -Werror -O3 $(MINGW_CXXFLAGS)
 
 .PHONY: all clean
 
 SOURCES := $(wildcard */*.cc)
-DEPENDS := $(SOURCES:.cc=.d)
-PROGRAMS := $(SOURCES:.cc=)
+DEPENDS := $(SOURCES:%.cc=build/%.d)
+BINARIES := $(SOURCES:%.cc=build/%)
 
-all: $(PROGRAMS)
-	@echo "Executing PEGTL unit tests."
-	@example/unittests 2> /dev/null
+UNIT_TESTS := $(filter build/unit_tests/%,$(BINARIES))
+
+all: $(BINARIES)
+	@echo "Built with '$(CXX) $(PEGTL_CXXSTD) -I. $(PEGTL_CPPFLAGS) $(PEGTL_CXXFLAGS)'."
+	@set -e; for T in $(UNIT_TESTS); do echo $$T; $$T > /dev/null; done
+	@echo "All $(words $(UNIT_TESTS)) unit tests passed."
 
 clean:
-	rm -f $(DEPENDS) $(PROGRAMS)
+	rm -rf build/*
 
 .SECONDARY:
 
-%.d: %.cc
-	$(CXX) $(CPPFLAGS) -MM -MT $@ $< -o $@
+build/%.d: %.cc Makefile
+	@mkdir -p $(@D)
+	$(CXX) $(PEGTL_CXXSTD) -I. $(PEGTL_CPPFLAGS) -MM -MQ $@ $< -o $@
 
-%: %.cc %.d
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+build/%: %.cc build/%.d
+	$(CXX) $(PEGTL_CXXSTD) -I. $(PEGTL_CPPFLAGS) $(PEGTL_CXXFLAGS) $< -o $@
 
 ifeq ($(findstring $(MAKECMDGOALS),clean),)
 -include $(DEPENDS)

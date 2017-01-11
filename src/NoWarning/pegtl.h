@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/pegtl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:41:48 PM MDT
+  \date      Fri 16 Dec 2016 08:38:54 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pegtl/pegtl.hh with turning off specific compiler warnings
 */
@@ -16,7 +16,7 @@
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#include <pegtl/pegtl.hh>
+#include <pegtl.hh>
 
 #if defined(__clang__)
 #elif defined(__GNUC__)

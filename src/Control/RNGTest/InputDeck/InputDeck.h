@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:41:34 AM MDT
+  \date      Mon 09 Jan 2017 01:38:46 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite input deck
   \details   This file defines the heterogeneous stack that is used for storing
@@ -91,10 +91,13 @@ class InputDeck : public tk::Control<
                                      >;
 
     //! \brief Constructor: set all defaults
+    //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
     //! \author J. Bakosi
-    InputDeck() {
+    InputDeck( const CmdLine& cl = {} ) {
+      // Set previously parsed command line
+      set< tag::cmd >( cl );
       // Initialize help
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       boost::mpl::for_each< keywords1 >( ctrinfoFill );
