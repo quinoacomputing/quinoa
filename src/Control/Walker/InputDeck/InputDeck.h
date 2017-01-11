@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 03:30:36 PM MST
+  \date      Mon 09 Jan 2017 01:09:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -12,6 +12,7 @@
 #define WalkerInputDeck_h
 
 #include <limits>
+#include <iostream>
 
 #include "NoWarning/set.h"
 #include "NoWarning/for_each.h"
@@ -213,10 +214,13 @@ class InputDeck :
                                      >;
 
     //! \brief Constructor: set all defaults
+    //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
     //! \author J. Bakosi
-    InputDeck() {
+    explicit InputDeck( const CmdLine& cl = {} ) {
+      // Set previously parsed command line
+      set< tag::cmd >( cl );
       // Default discretization parameters
       set< tag::discr, tag::npar >( 1 );
       set< tag::discr, tag::nstep >

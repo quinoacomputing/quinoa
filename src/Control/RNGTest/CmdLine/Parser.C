@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 09:39:16 AM MDT
+  \date      Mon 09 Jan 2017 01:35:06 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's command line parser
   \details   This file defines the command-line argument parser for the random
@@ -59,13 +59,8 @@ CmdLineParser::CmdLineParser( int argc,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTL string input from std::string (i.e. concatenated argv[])
-  pegtl::string_input< ctr::Location > input( m_string );
-
-  // Create PEGTLCmdLine to store parsed command line data which derives from
-  // CmdLine and has location() used during parsing. Also pass in HelpFactory,
-  // ctrinfo, containing the input deck keywords.
-  cmd::PEGTLCmdLine cmd( input, g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
+  // Create CmdLine (a tagged tuple) to store parsed input
+  ctr::CmdLine cmd( g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
@@ -79,10 +74,8 @@ CmdLineParser::CmdLineParser( int argc,
   tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple:
-  // basic_parse() below gives debug info during parsing, use it for debugging
-  // the parser itself, i.e., when modifying the grammar, otherwise, use
-  // dummy_parse() to compile faster
-  pegtl::dummy_parse< cmd::read_string >( input, cmd );
+  pegtl::parse< cmd::read_string, tk::grm::action >
+              ( m_string, "command line", cmd );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, cmd.get< tag::error >() );

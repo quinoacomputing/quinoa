@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 26 Oct 2016 09:34:35 AM MDT
+  \date      Thu 22 Dec 2016 10:55:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -125,8 +125,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::compflow,    CompFlowPDEParameters
 >;
 
-//! PEGTL location type to use throughout Incitier's parsers
-using Location = pegtl::ascii_location;
+//! PEGTL location/position type to use throughout all of Inciter's parsers
+using Location = pegtl::position_info;
 
 } // ctr::
 } // inciter::

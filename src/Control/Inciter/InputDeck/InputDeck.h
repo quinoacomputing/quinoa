@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:04:49 AM MDT
+  \date      Mon 09 Jan 2017 02:12:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -14,6 +14,8 @@
 #define InciterInputDeck_h
 
 #include <limits>
+#include <iomanip>
+#include <iostream>
 
 #include "NoWarning/set.h"
 #include "NoWarning/for_each.h"
@@ -109,10 +111,13 @@ class InputDeck :
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
+    //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
     //! \author J. Bakosi
-    InputDeck() {
+    InputDeck( const CmdLine& cl = {} ) {
+      // Set previously parsed command line
+      set< tag::cmd >( cl );
       // Default discretization parameters
       set< tag::discr, tag::nstep >
          ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
