@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Tue 10 Jan 2017 11:18:54 AM MST
+# \date      Wed 11 Jan 2017 12:09:42 PM MST
 #
 ################################################################################
 
@@ -283,6 +283,16 @@ else()
   set(pegtl "pegtl")
 endif()
 
+# Detect Random123, exclude if found, build if not
+if(NOT NO_SYSTEM_RANDOM123)
+  find_package(Random123)
+endif()
+if(Random123_FOUND)
+  set(random123 "")
+else()
+  set(random123 "random123")
+endif()
+
 # Detect blas and lapack, exclude if found, build if not
 set(lapack "lapack")
 set(blas "blas")
@@ -325,7 +335,7 @@ else()
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos ${pegtl} tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos ${pegtl} ${random123} tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -585,8 +595,27 @@ if (pegtl)
    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
                      ${PROJECT_SOURCE_DIR}/src/pegtl
                      ${CMAKE_INSTALL_PREFIX}/include/pegtl
-   CONFIGURE_COMMAND ""
    BUILD_COMMAND ""
+   INSTALL_COMMAND ""
+   DOWNLOAD_COMMAND ""
+ )
+endif()
+
+#### Random123 (Counter-based random number generators library) ################
+# http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
+# Header only
+if (random123)
+ ExternalProject_Add(
+   random123
+   PREFIX random123
+   # Header-only, copy include dir over
+   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/random123/include
+                     ${CMAKE_INSTALL_PREFIX}/include
+   # Copy examples/uniform.hpp over
+   BUILD_COMMAND ${CMAKE_COMMAND} -E copy
+                 ${PROJECT_SOURCE_DIR}/src/random123/examples/uniform.hpp
+                 ${CMAKE_INSTALL_PREFIX}/include/Random123
    INSTALL_COMMAND ""
    DOWNLOAD_COMMAND ""
  )

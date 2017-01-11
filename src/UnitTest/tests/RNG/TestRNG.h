@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:44:25 AM MDT
+  \date      Wed 11 Jan 2017 04:30:45 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -16,6 +16,8 @@
 #include <boost/functional/value_factory.hpp>
 #include "NoWarning/tut.h"
 #include "QuinoaConfig.h"
+
+#include "NoWarning/threefry.h"
 
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>
@@ -36,6 +38,7 @@
 
 #include "RNG.h"
 #include "RNGSSE.h"
+#include "Random123.h"
 
 namespace tut {
 
@@ -75,6 +78,7 @@ struct RNG_common {
     rngs.emplace_back( tk::RNGSSE< mrg32k3a_state, unsigned long long,
                                    mrg32k3a_generate_ >
                                  ( 4, mrg32k3a_init_sequence_ ) );
+    rngs.emplace_back( tk::Random123< r123::Threefry2x64 >( 4 ) );
   }
 
   //! \brief Add a model constructor bound to its arguments to a vector of
@@ -198,7 +202,7 @@ struct RNG_common {
     test_gaussian( v );        // test that the newly moved RNG works
   }
 
-  // Test the first the four first moments of random numbers passed in
+  // Test the first four moments of random numbers passed in
   static void test_stats( const std::vector< double >& numbers,
                           double correct_mean,
                           double correct_variance,
@@ -283,6 +287,9 @@ void RNG_object::test< 2 >() {
      ( v, 4, lfsr113_init_long_sequence_ );
   add< tk::RNGSSE< mrg32k3a_state, unsigned long long, mrg32k3a_generate_ > >
      ( v, 4, mrg32k3a_init_sequence_ );
+
+  add< tk::Random123< r123::Threefry2x64 > >
+     ( v, 4 );
 
   for (const auto& r : v)
     ensure_equals( "nthreads() via polymorphic tk::RNG call incorrect",

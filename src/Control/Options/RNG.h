@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:57:19 AM MST
+  \date      Wed 11 Jan 2017 01:15:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -62,6 +62,7 @@ enum class RNGType : uint8_t { NO_RNG=0
                              //, MKL_SABSTRACT
                              , MKL_NONDETERM
                              #endif
+                             , R123_THREEFRY
 };
 
 //! \brief Pack/Unpack RNGType: forward overload to generic enum class packer
@@ -83,7 +84,8 @@ constexpr RawRNGType raw( RNGType r ) { return static_cast< RawRNGType >( r ); }
 enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSE,
-                                  PRAND };
+                                  PRAND,
+                                  R123 };
 
 //! \brief RNG options: outsource searches to base templated on enum type
 //! \author J. Bakosi
@@ -134,6 +136,7 @@ class RNG : public tk::Toggle< RNGType > {
                                        , kw::rngsse_mt19937
                                        , kw::rngsse_lfsr113
                                        , kw::rngsse_mrg32k3a
+                                       , kw::r123_threefry
                                        >;
     #endif
 
@@ -158,6 +161,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { RNGType::RNGSSE_MT19937, kw::rngsse_mt19937::name() }
         , { RNGType::RNGSSE_LFSR113, kw::rngsse_lfsr113::name() }
         , { RNGType::RNGSSE_MRG32K3A, kw::rngsse_mrg32k3a::name() }
+        , { RNGType::R123_THREEFRY, kw::r123_threefry::name() }
         #ifdef HAS_MKL
         , { RNGType::MKL_MCG31, kw::mkl_mcg31::name() }
         , { RNGType::MKL_R250, kw::mkl_r250::name() }
@@ -188,6 +192,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { kw::rngsse_mt19937::string(), RNGType::RNGSSE_MT19937 }
         , { kw::rngsse_lfsr113::string(), RNGType::RNGSSE_LFSR113 }
         , { kw::rngsse_mrg32k3a::string(), RNGType::RNGSSE_MRG32K3A }
+        , { kw::r123_threefry::string(), RNGType::R123_THREEFRY }
         #ifdef HAS_MKL
         , { kw::mkl_mcg31::string(), RNGType::MKL_MCG31 }
         , { kw::mkl_r250::string(), RNGType::MKL_R250 }
@@ -245,6 +250,7 @@ class RNG : public tk::Toggle< RNGType > {
       if ( found( "MKL", n ) ) return RNGLibType::MKL;
       else if ( found( "RNGSSE", n ) ) return RNGLibType::RNGSSE;
       else if ( found( "PRAND", n ) ) return RNGLibType::PRAND;
+      else if ( found( "R123", n ) ) return RNGLibType::R123;
       else return RNGLibType::NO_LIB;
     }
 
@@ -293,6 +299,7 @@ class RNG : public tk::Toggle< RNGType > {
       , { RNGType::RNGSSE_MT19937, 8 }
       , { RNGType::RNGSSE_LFSR113, 9 }
       , { RNGType::RNGSSE_MRG32K3A, 10 }
+      , { RNGType::R123_THREEFRY, 11 }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, VSL_BRNG_MCG31 }
       , { RNGType::MKL_R250, VSL_BRNG_R250 }

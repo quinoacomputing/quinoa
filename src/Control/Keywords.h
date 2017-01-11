@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 09:57:39 AM MST
+  \date      Wed 11 Jan 2017 01:19:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -815,6 +815,20 @@ struct seqlen_info {
   };
 };
 using seqlen = keyword< seqlen_info, pegtl_string_t("seqlen") >;
+
+struct r123_threefry_info {
+  static std::string name() { return "Random123 ThreeFry"; }
+  static std::string shortDescription() { return
+    "Select Random123 ThreeFry RNG"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the ThreeFry generator, related to the
+    Threefish block cipher from Skein Hash Function, provided by the Random123
+    random number generator library. For more info on Random123 see
+    http://dl.acm.org/citation.cfm?doid=2063405.)";
+  }
+};
+using r123_threefry =
+  keyword< r123_threefry_info, pegtl_string_t("r123_threefry") >;
 
 struct pdfs_info {
   static std::string name() { return "PDFs block"; }

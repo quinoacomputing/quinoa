@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:43:27 AM MDT
+  \date      Wed 11 Jan 2017 01:24:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file declares class RNGStack, which implements various
@@ -42,7 +42,8 @@ class RNGStack {
                        #ifdef HAS_MKL
                        const ctr::RNGMKLParameters& mklparam,
                        #endif
-                       const ctr::RNGSSEParameters& rngsseparam );
+                       const ctr::RNGSSEParameters& rngsseparam,
+                       const ctr::RNGRandom123Parameters& r123param );
 
     //! Instantiate selected RNGs
     std::map< std::underlying_type< tk::ctr::RNGType >::type, tk::RNG >
@@ -59,6 +60,9 @@ class RNGStack {
 
    //! Register RNGSSE RNGs into factory
    void regRNGSSE( int nstream, const ctr::RNGSSEParameters& param );
+
+   //! Register Random123 RNGs into factory
+   void regRandom123( int nstream, const ctr::RNGRandom123Parameters& param );
 
    RNGFactory m_factory;        //!< Random nunmber generator factory
 };
