@@ -45,7 +45,7 @@ The release container executables are configured for a single computer. To run o
 
    ```
    port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
-   port install gmsh pugixml boost
+   port install gmsh pugixml lapack boost
    ```
 
 #### 2. Clone, build third-party libraries, build & test
