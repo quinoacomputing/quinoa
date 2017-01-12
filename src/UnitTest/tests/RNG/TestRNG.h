@@ -18,6 +18,7 @@
 #include "QuinoaConfig.h"
 
 #include "NoWarning/threefry.h"
+#include "NoWarning/philox.h"
 
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>
@@ -79,6 +80,7 @@ struct RNG_common {
                                    mrg32k3a_generate_ >
                                  ( 4, mrg32k3a_init_sequence_ ) );
     rngs.emplace_back( tk::Random123< r123::Threefry2x64 >( 4 ) );
+    rngs.emplace_back( tk::Random123< r123::Philox2x64 >( 4 ) );
   }
 
   //! \brief Add a model constructor bound to its arguments to a vector of
@@ -288,8 +290,8 @@ void RNG_object::test< 2 >() {
   add< tk::RNGSSE< mrg32k3a_state, unsigned long long, mrg32k3a_generate_ > >
      ( v, 4, mrg32k3a_init_sequence_ );
 
-  add< tk::Random123< r123::Threefry2x64 > >
-     ( v, 4 );
+  add< tk::Random123< r123::Threefry2x64 > >( v, 4 );
+  add< tk::Random123< r123::Philox2x64 > >( v, 4 );
 
   for (const auto& r : v)
     ensure_equals( "nthreads() via polymorphic tk::RNG call incorrect",

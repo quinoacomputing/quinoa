@@ -63,6 +63,7 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , MKL_NONDETERM
                              #endif
                              , R123_THREEFRY
+                             , R123_PHILOX
 };
 
 //! \brief Pack/Unpack RNGType: forward overload to generic enum class packer
@@ -162,6 +163,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { RNGType::RNGSSE_LFSR113, kw::rngsse_lfsr113::name() }
         , { RNGType::RNGSSE_MRG32K3A, kw::rngsse_mrg32k3a::name() }
         , { RNGType::R123_THREEFRY, kw::r123_threefry::name() }
+        , { RNGType::R123_PHILOX, kw::r123_philox::name() }
         #ifdef HAS_MKL
         , { RNGType::MKL_MCG31, kw::mkl_mcg31::name() }
         , { RNGType::MKL_R250, kw::mkl_r250::name() }
@@ -193,6 +195,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { kw::rngsse_lfsr113::string(), RNGType::RNGSSE_LFSR113 }
         , { kw::rngsse_mrg32k3a::string(), RNGType::RNGSSE_MRG32K3A }
         , { kw::r123_threefry::string(), RNGType::R123_THREEFRY }
+        , { kw::r123_philox::string(), RNGType::R123_PHILOX }
         #ifdef HAS_MKL
         , { kw::mkl_mcg31::string(), RNGType::MKL_MCG31 }
         , { kw::mkl_r250::string(), RNGType::MKL_R250 }
@@ -300,6 +303,7 @@ class RNG : public tk::Toggle< RNGType > {
       , { RNGType::RNGSSE_LFSR113, 9 }
       , { RNGType::RNGSSE_MRG32K3A, 10 }
       , { RNGType::R123_THREEFRY, 11 }
+      , { RNGType::R123_PHILOX, 12 }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, VSL_BRNG_MCG31 }
       , { RNGType::MKL_R250, VSL_BRNG_R250 }
