@@ -31,6 +31,11 @@ static Random123_group Random123( "RNG/Random123" );
 
 //! Test definitions for group
 
+#if defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
 //! Test that constructor throws with zero number of threads
 //! \author J. Bakosi
 template<> template<>
@@ -54,6 +59,10 @@ void Random123_object::test< 1 >() {
   }
   #endif
 }
+
+#if defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 //! Test uniform generator statistics from threefry using a single thread
 //! \author J. Bakosi
