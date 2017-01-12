@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:09:34 PM MDT
+  \date      Thu 12 Jan 2017 01:12:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -119,7 +119,8 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
       #ifdef HAS_MKL
       g_inputdeck.get< tag::param, tag::rngmkl >(),
       #endif
-      g_inputdeck.get< tag::param, tag::rngsse >() );
+      g_inputdeck.get< tag::param, tag::rngsse >(),
+      g_inputdeck.get< tag::param, tag::rng123 >() );
     rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
   }
 }

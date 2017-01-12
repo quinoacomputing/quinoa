@@ -25,6 +25,7 @@ struct beta_method {};
 struct rng {};
 struct rngmkl {};
 struct rngsse {};
+struct rng123 {};
 struct seqlen {};
 struct verbose {};
 struct benchmark {};

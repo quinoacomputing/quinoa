@@ -1624,7 +1624,9 @@ struct rng_info {
                   + rngsse_gq584::string()    + "\' | \'"
                   + rngsse_mt19937::string()  + "\' | \'"
                   + rngsse_lfsr113::string()  + "\' | \'"
-                  + rngsse_mrg32k3a::string()
+                  + rngsse_mrg32k3a::string() + "\' | \'"
+                  + r123_threefry::string()   + "\' | \'"
+                  + r123_philox::string()
                   #ifdef HAS_MKL
                                               + "\' | \'"
                   + mkl_mcg31::string()       + "\' | \'"
