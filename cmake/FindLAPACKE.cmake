@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the C-interface to LAPACK as well as LAPACK/BLAS
-# \date      Wed 11 Jan 2017 10:31:04 AM MST
+# \date      Thu 12 Jan 2017 09:00:29 AM MST
 #
 ################################################################################
 
@@ -71,6 +71,12 @@ else()
   find_library(LAPACKE_LIBRARY NAMES lapacke reflapacke
                HINTS ${LAPACKE_ROOT}/lib
                      $ENV{LAPACKE_ROOT}/lib
+               PATH_SUFFIXES lapack lapacke)
+  find_library(LAPACK_LIBRARY NAMES lapack HINTS ${LAPACKE_ROOT}/lib
+                                                 $ENV{LAPACKE_ROOT}/lib
+               PATH_SUFFIXES lapack lapacke)
+  find_library(BLAS_LIBRARY NAMES blas HINTS ${LAPACKE_ROOT}/lib
+                                             $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
 endif()
 
