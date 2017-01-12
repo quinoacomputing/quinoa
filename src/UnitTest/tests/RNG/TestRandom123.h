@@ -14,6 +14,7 @@
 #include "NoWarning/tut.h"
 
 #include "NoWarning/threefry.h"
+#include "NoWarning/philox.h"
 
 #include "Random123.h"
 
@@ -158,7 +159,7 @@ void Random123_object::test< 10 >() {
   RNG_common::test_copy_assignment( r );
 }
 
-//! Test move assignment for 
+//! Test move assignment for threefry
 //! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 11 >() {
@@ -167,6 +168,112 @@ void Random123_object::test< 11 >() {
   tk::Random123< r123::Threefry2x64 > p( 1 );   // one thread
   RNG_common::test_move_assignment( p );
   tk::Random123< r123::Threefry2x64 > r( 4 );   // 4 threads
+  RNG_common::test_move_assignment( r );
+}
+
+//! Test uniform generator statistics from philox using a single thread
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 12 >() {
+  set_test_name( "uniform philox from a single stream" );
+
+  tk::Random123< r123::Philox2x64 > r( 1 );
+  RNG_common::test_uniform( r );
+}
+
+//! Test uniform generator statistics from philox using multiple threads
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 13 >() {
+  set_test_name( "uniform philox from 4 emulated streams" );
+
+  tk::Random123< r123::Philox2x64 > r( 4 );
+  RNG_common::test_uniform( r );
+}
+
+//! Test Gaussian generator statistics from philox using a single thread
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 14 >() {
+  set_test_name( "Gaussian philox from a single stream" );
+
+  tk::Random123< r123::Philox2x64 > r( 1 );
+  RNG_common::test_gaussian( r );
+}
+
+//! Test Gaussian generator statistics from philox using multiple threads
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 15 >() {
+  set_test_name( "Gaussian philox from 4 emulated streams" );
+
+  tk::Random123< r123::Philox2x64 > r( 4 );
+  RNG_common::test_gaussian( r );
+}
+
+//! Test beta generator statistics from philox using a single thread
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 16 >() {
+  set_test_name( "beta philox from a single stream" );
+
+  tk::Random123< r123::Philox2x64 > r( 1 );
+  RNG_common::test_beta( r );
+}
+
+//! Test beta generator statistics from philox using multiple threads
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 17 >() {
+  set_test_name( "beta philox from 4 emulated streams" );
+
+  tk::Random123< r123::Philox2x64 > r( 4 );
+  RNG_common::test_beta( r );
+}
+
+//! Test copy constructor for philox
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 18 >() {
+  set_test_name( "copy constructor with philox" );
+
+  tk::Random123< r123::Philox2x64 > p( 1 );   // one thread
+  RNG_common::test_copy_ctor( p );
+  tk::Random123< r123::Philox2x64 > r( 4 );   // 4 threads
+  RNG_common::test_copy_ctor( r );
+}
+
+//! Test move constructor for philox
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 19 >() {
+  set_test_name( "move constructor with philox" );
+
+  tk::Random123< r123::Philox2x64 > r( 4 );
+  RNG_common::test_move_ctor( r );
+}
+
+//! Test copy assignment for philox
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 20 >() {
+  set_test_name( "copy assignment with philox" );
+
+  tk::Random123< r123::Philox2x64 > p( 1 );   // one thread
+  RNG_common::test_copy_assignment( p );
+  tk::Random123< r123::Philox2x64 > r( 4 );   // 4 threads
+  RNG_common::test_copy_assignment( r );
+}
+
+//! Test move assignment for philox
+//! \author J. Bakosi
+template<> template<>
+void Random123_object::test< 21 >() {
+  set_test_name( "move assignment with philox" );
+
+  tk::Random123< r123::Philox2x64 > p( 1 );   // one thread
+  RNG_common::test_move_assignment( p );
+  tk::Random123< r123::Philox2x64 > r( 4 );   // 4 threads
   RNG_common::test_move_assignment( r );
 }
 

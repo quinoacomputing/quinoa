@@ -830,6 +830,20 @@ struct r123_threefry_info {
 using r123_threefry =
   keyword< r123_threefry_info, pegtl_string_t("r123_threefry") >;
 
+struct r123_philox_info {
+  static std::string name() { return "Random123 Philox"; }
+  static std::string shortDescription() { return
+    "Select Random123 Philox RNG"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Philox generator, based on Feistel
+    network and integer multiplication, provided by the Random123
+    random number generator library. For more info on Random123 see
+    http://dl.acm.org/citation.cfm?doid=2063405.)";
+  }
+};
+using r123_philox =
+  keyword< r123_philox_info, pegtl_string_t("r123_philox") >;
+
 struct pdfs_info {
   static std::string name() { return "PDFs block"; }
   static std::string shortDescription() { return

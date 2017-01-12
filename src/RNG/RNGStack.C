@@ -32,6 +32,7 @@
 #include <mrg32k3a.h>
 
 #include "NoWarning/threefry.h"
+#include "NoWarning/philox.h"
 
 #include "Tags.h"
 #include "Factory.h"
@@ -295,4 +296,9 @@ RNGStack::regRandom123( int nstreams,
              ( m_factory, RNGType::R123_THREEFRY,
                nstreams,
                opt.param< tag::seed >( RNGType::R123_THREEFRY, s_def, param ) );
+
+  recordModel< tk::RNG, tk::Random123< r123::Philox2x64 > >
+             ( m_factory, RNGType::R123_PHILOX,
+               nstreams,
+               opt.param< tag::seed >( RNGType::R123_PHILOX, s_def, param ) );
 }

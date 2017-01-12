@@ -24,8 +24,6 @@
 #include "Exception.h"
 #include "Macro.h"
 
-#define CBRNG_DATA_SIZE 4
-
 namespace tk {
 
 //! Random123-based random number generator used polymorphically with tk::RNG
@@ -33,6 +31,7 @@ template< class CBRNG >
 class Random123 {
 
   private:
+    static const std::size_t CBRNG_DATA_SIZE = 3;
     using ncomp_t = kw::ncomp::info::expect::type;    
     using ctr_type = typename CBRNG::ctr_type;
     using key_type = typename CBRNG::key_type;
@@ -53,7 +52,7 @@ class Random123 {
         auto& d = data[ static_cast< std::size_t >( tid ) ];
         d[2] = static_cast< result_type >( tid );
         ctr_type ctr = {{ d[0], d[1] }};      // assemble counter
-        key_type key = {{ d[2], d[3] }};      // assemble key
+        key_type key = {{ d[2] }};            // assemble key
         auto res = rng( ctr, key );           // generate
         ctr.incr();
         d[0] = ctr[0];
@@ -71,7 +70,7 @@ class Random123 {
     //! \param[in] seed RNG seed
     explicit Random123( uint64_t n = 1, uint32_t seed = 0 ) {
       Assert( n > 0, "Need at least one thread" );
-      m_data.resize( n, {{ 0, static_cast< uint64_t >( seed ) << 32, 0, 0 }} );
+      m_data.resize( n, {{ 0, static_cast< uint64_t >( seed ) << 32, 0 }} );
     }
 
     //! Uniform RNG: Generate uniform random numbers
@@ -83,7 +82,7 @@ class Random123 {
       for (ncomp_t i=0; i<num; ++i) {
         d[2] = static_cast< unsigned long >( tid );
         ctr_type ctr = {{ d[0], d[1] }};      // assemble counter
-        key_type key = {{ d[2], d[3] }};      // assemble key
+        key_type key = {{ d[2] }};            // assemble key
         auto res = m_rng( ctr, key );         // generate
         r[i] = r123::u01fixedpt< double, value_type >( res[0] );
         ctr.incr();

@@ -1,26 +1,27 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/uniform.h
+  \file      src/NoWarning/philox.h
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 10:52:39 AM MST
+  \date      Thu 12 Jan 2017 10:53:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include Random123/uniform.hpp with turning off specific compiler
+  \brief     Include Random123/philox.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_uniform_h
-#define nowarning_uniform_h
+#ifndef nowarning_philox_h
+#define nowarning_philox_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
-  #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wextra-semi"
 #endif
 
-#include <Random123/uniform.hpp>
+#include <Random123/philox.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
 
-#endif // nowarning_uniform_h
+#endif // nowarning_philox_h
