@@ -126,6 +126,11 @@ to the tools.
   - Web: http://vis.lbl.gov/Research/H5Part
   - License: \subpage H5Part_license
 
+\subsection random123_license 24. Random123 for random number generation
+  - Required
+  - Web: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
+  - License: \subpage Random123_license
+
 \section compiler_web Compilers
 
 \subsection clang_web 1. Clang C++ compiler
@@ -165,7 +170,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 25 Sep 2016 07:18:53 AM MDT
+<em>Page last updated:</em> Thu 12 Jan 2017 01:43:08 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
