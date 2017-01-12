@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 01:15:20 PM MST
+  \date      Thu 12 Jan 2017 12:56:03 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -253,7 +253,7 @@ class RNG : public tk::Toggle< RNGType > {
       if ( found( "MKL", n ) ) return RNGLibType::MKL;
       else if ( found( "RNGSSE", n ) ) return RNGLibType::RNGSSE;
       else if ( found( "PRAND", n ) ) return RNGLibType::PRAND;
-      else if ( found( "R123", n ) ) return RNGLibType::R123;
+      else if ( found( "Random123", n ) ) return RNGLibType::R123;
       else return RNGLibType::NO_LIB;
     }
 

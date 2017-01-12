@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:45:24 AM MDT
+  \date      Thu 12 Jan 2017 12:53:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -101,16 +101,16 @@ TestU01Suite::names( std::vector< std::string > n )
   m_print.names( n );
 
   if ( ++m_ntest == ntest() ) {
-    const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
+    const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();
     std::stringstream ss;
     ss << "RNGs tested (" << rngs.size() << ")";
     m_print.section( ss.str() );
     #ifdef HAS_MKL
-    m_print.MKLParams( g_inputdeck.get< tag::selected, tag::rng >(),
-                       g_inputdeck.get< tag::param, tag::rngmkl >() );
+    m_print.MKLParams( rngs, g_inputdeck.get< tag::param, tag::rngmkl >() );
     #endif
-    m_print.RNGSSEParams( g_inputdeck.get< tag::selected, tag::rng >(),
-                          g_inputdeck.get< tag::param, tag::rngsse >() );
+    m_print.RNGSSEParams( rngs, g_inputdeck.get< tag::param, tag::rngsse >() );
+    m_print.Random123Params( rngs,
+                             g_inputdeck.get< tag::param, tag::rng123 >() );
     m_print.endpart();
     m_print.part( m_name );
     m_print.statshead( "Statistics computed",
@@ -131,7 +131,7 @@ TestU01Suite::names( std::vector< std::string > n )
     // tests per RNG and keep the status more generic. See also the
     // discussion on the return type in TestU01Props::run().
     tk::ctr::RNG rng;
-    for (const auto& r : g_inputdeck.get< tag::selected, tag::rng >() )
+    for (const auto& r : rngs )
       m_nfail[ rng.name(r) ] = 0;
   }
 }
@@ -180,7 +180,7 @@ TestU01Suite::assess()
 {
   // Output summary of failed tests for all RNGs tested
   if ( !m_failed.empty() ) {
-    const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
+    const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();
     m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
   } else m_print.note< tk::QUIET >( "All tests passed" );
 
@@ -208,7 +208,7 @@ TestU01Suite::ntest() const
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
+  const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();
   return m_ctrs.size() / rngs.size();
 }
 

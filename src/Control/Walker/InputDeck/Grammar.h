@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 10 Jan 2017 08:59:47 AM MST
+  \date      Thu 12 Jan 2017 12:15:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the Parsing
@@ -29,6 +29,7 @@
 #endif
 
 #include "RNGSSEGrammar.h"
+#include "Random123Grammar.h"
 
 namespace walker {
 
@@ -279,7 +280,10 @@ namespace deck {
                      #endif
                      tk::rngsse::rngs< use,
                                        tag::selected, tag::rng,
-                                       tag::param, tag::rngsse > > {};
+                                       tag::param, tag::rngsse >,
+                     tk::random123::rngs< use,
+                                          tag::selected, tag::rng,
+                                          tag::param, tag::rng123 > > {};
 
   //! scan icdelta ... end block
   template< class eq >

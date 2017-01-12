@@ -89,6 +89,10 @@ class InputDeck : public tk::Control<
                                      , kw::icdf
                                      #endif
                                      >;
+    using keywords4 = boost::mpl::set< kw::r123_threefry
+                                     , kw::r123_philox
+                                     >;
+
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line
@@ -103,6 +107,7 @@ class InputDeck : public tk::Control<
       boost::mpl::for_each< keywords1 >( ctrinfoFill );
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
+      boost::mpl::for_each< keywords4 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

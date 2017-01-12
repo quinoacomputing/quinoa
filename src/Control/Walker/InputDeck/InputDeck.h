@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 01:09:55 PM MST
+  \date      Thu 12 Jan 2017 01:10:48 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -130,6 +130,8 @@ class InputDeck :
                                      , kw::seqlen
                                      , kw::cja
                                      , kw::cja_accurate
+                                     , kw::r123_threefry
+                                     , kw::r123_philox
                                      >;
     using keywords4 = boost::mpl::set< kw::seed
                                      #ifdef HAS_MKL
