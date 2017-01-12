@@ -23,14 +23,12 @@ endif()
 add_regression_test(SmallCrush_all_rngsse ${RNGTEST_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES SmallCrush_all_rngsse.q
-                    ARGS -c SmallCrush_all_rngsse.q -v
-                    LABELS stringent)
+                    ARGS -c SmallCrush_all_rngsse.q -v)
 
 add_regression_test(SmallCrush_all_r123 ${RNGTEST_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES SmallCrush_all_r123.q
-                    ARGS -c SmallCrush_all_r123.q -v
-                    LABELS stringent)
+                    ARGS -c SmallCrush_all_r123.q -v)
 
 add_regression_test(Crush_r123_threefry ${RNGTEST_EXECUTABLE}
                     NUMPES ${ManyPEs}
