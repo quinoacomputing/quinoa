@@ -23,7 +23,8 @@ endif()
 add_regression_test(SmallCrush_all_rngsse ${RNGTEST_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES SmallCrush_all_rngsse.q
-                    ARGS -c SmallCrush_all_rngsse.q -v)
+                    ARGS -c SmallCrush_all_rngsse.q -v
+                    LABELS stringent)
 
 add_regression_test(SmallCrush_all_r123 ${RNGTEST_EXECUTABLE}
                     NUMPES 4
