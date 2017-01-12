@@ -19,6 +19,7 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wdocumentation"
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+  #pragma clang diagnostic ignored "-Wmacro-redefined"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
