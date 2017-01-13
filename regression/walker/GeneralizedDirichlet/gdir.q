@@ -11,7 +11,7 @@ walker
   ttyi  1000    # TTY output interval
 
   rngs
-    rngsse_gm61 end
+    r123_threefry end
   end
 
   gendir        # Selected generalized Dirichlet SDE
@@ -23,7 +23,7 @@ walker
     S     0.625  0.4 end
     kappa 0.0125 0.3 end
     c     -0.0125    end
-    rng rngsse_gm61
+    rng r123_threefry
   end
 
   statistics

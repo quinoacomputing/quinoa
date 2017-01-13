@@ -25,10 +25,11 @@
 #include "Walker/Options/HydroProductions.h"
 
 #ifdef HAS_MKL
-#include "MKLGrammar.h"
+  #include "MKLGrammar.h"
 #endif
-
-#include "RNGSSEGrammar.h"
+#ifdef HAS_RNGSSE2
+  #include "RNGSSEGrammar.h"
+#endif
 #include "Random123Grammar.h"
 
 namespace walker {
@@ -278,9 +279,11 @@ namespace deck {
                                     tag::selected, tag::rng,
                                     tag::param, tag::rngmkl >,
                      #endif
+                     #ifdef HAS_RNGSSE2
                      tk::rngsse::rngs< use,
                                        tag::selected, tag::rng,
                                        tag::param, tag::rngsse >,
+                     #endif
                      tk::random123::rngs< use,
                                           tag::selected, tag::rng,
                                           tag::param, tag::rng123 > > {};
