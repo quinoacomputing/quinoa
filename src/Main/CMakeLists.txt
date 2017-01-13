@@ -109,13 +109,13 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshIO
                       AsyncIO
                       Mesh
-                      RNG
                       Particles
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
                       ${RNGSSE_LIBRARY}
+                      ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -125,7 +125,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${AEC_LIBRARY}            # only for static link
-                      ${LAPACK_LIBRARIES}       # only for static link
 )
 
 # Add custom dependencies for Inciter's main Charm++ module

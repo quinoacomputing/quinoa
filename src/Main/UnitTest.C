@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 07:48:35 AM MDT
+  \date      Wed 11 Jan 2017 01:38:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -97,6 +97,7 @@ const int MAX_TESTS_IN_GROUP = 80;
   #include "tests/RNG/TestMKLRNG.h"
 #endif
 #include "tests/RNG/TestRNGSSE.h"
+#include "tests/RNG/TestRandom123.h"
 
 #include "tests/LoadBalance/TestLoadDistributor.h"
 #include "tests/LoadBalance/TestLinearMap.h"

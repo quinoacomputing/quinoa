@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:07:06 AM MDT
+  \date      Mon 09 Jan 2017 01:18:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -58,12 +58,8 @@ class CmdLine : public tk::Control<
     //!   default constructor for the corresponding type. While there is a
     //!   ctrinfo parameter, it is unused here, since unittest does not have a
     //!   control file parser.
-    //! \param[in] ctrnfo empty std::map, unused so that PEGTLParsed's
-    //!    constructor can be kept generic that works with those executables
-    //!    that do have both command-line argument and control file parsers
     //! \see walker::ctr::CmdLine
-    CmdLine( tk::ctr::HelpFactory ctrnfo = tk::ctr::HelpFactory() ) {
-      IGNORE(ctrnfo);
+    CmdLine() {
       set< tag::verbose >( false ); // Use quiet output by default
       // Initialize help: fill from own keywords
       boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );

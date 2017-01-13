@@ -2,9 +2,10 @@
 /*!
   \file      src/DiffEq/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Fri 18 Nov 2016 08:19:06 AM MST
+  \date      Thu 15 Dec 2016 02:13:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Inverse hydrodynamics time scales from DNS.
+  \brief     Inverse hydrodynamics time scales from DNS for the homogeneous
+    Rayleigh-Taylor instability.
   \details   Inverse hydrodynamics time scales from direct numerical simulation
     (DNS) of homogeneous Rayleigh-Taylor instability.
 
@@ -33,12 +34,9 @@
 #ifndef HydroTimeScales_h
 #define HydroTimeScales_h
 
-#include <vector>
+#include "Table.h"
 
 namespace walker {
-
-//! Type alias for declaring, defining, and storing a discrete y = f(x) function
-using HydroTimeScaleTable = std::vector< std::pair< tk::real, tk::real > >;
 
 //! \brief Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
 //!   Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light << heavy.
@@ -57,13 +55,13 @@ using HydroTimeScaleTable = std::vector< std::pair< tk::real, tk::real > >;
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A005H {
+const tk::Table invhts_eq_A005H {
   // time, eps/k
   { 0, 0.653974 },
   { 0.463557, 0.068336 },
@@ -328,13 +326,13 @@ const HydroTimeScaleTable invhts_eq_A005H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A005S {
+const tk::Table invhts_eq_A005S {
   // time, eps/k
   { 0, 0.631186 },
   { 0.463557, 0.0610455 },
@@ -608,13 +606,13 @@ const HydroTimeScaleTable invhts_eq_A005S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.05_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.05_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A005L {
+const tk::Table invhts_eq_A005L {
   // time, eps/k
   { 0, 0.61906 },
   { 0.463557, 0.0617693 },
@@ -886,13 +884,13 @@ const HydroTimeScaleTable invhts_eq_A005L {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A05H {
+const tk::Table invhts_eq_A05H {
   // time, eps/k
   { 0.2, 1.31333 },
   { 0.4, 1.02795 },
@@ -1064,13 +1062,13 @@ const HydroTimeScaleTable invhts_eq_A05H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A05S {
+const tk::Table invhts_eq_A05S {
   // time, eps/k
   { 0, 8.39441 },
   { 0.2, 0.863319 },
@@ -1243,13 +1241,13 @@ const HydroTimeScaleTable invhts_eq_A05S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.5_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.5_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A05L {
+const tk::Table invhts_eq_A05L {
   // time, eps/k
   { 0, 6.18508 },
   { 0.2, 0.574818 },
@@ -1418,13 +1416,13 @@ const HydroTimeScaleTable invhts_eq_A05L {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_H | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_H | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A075H {
+const tk::Table invhts_eq_A075H {
   // time, eps/k
   { 0, 24.5191 },
   { 0.2, 7.04529 },
@@ -1590,13 +1588,13 @@ const HydroTimeScaleTable invhts_eq_A075H {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_S | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_S | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A075S {
+const tk::Table invhts_eq_A075S {
   // time, eps/k
   { 0, 16.77 },
   { 0.2, 2.41675 },
@@ -1767,13 +1765,13 @@ const HydroTimeScaleTable invhts_eq_A075S {
 //!    \endcode
 //!    2. In unix shell:
 //!    \code{.sh}
-//!      cat eok_A0.75_L | awk '{print "{ " $1 ", " $2 " }" }'
+//!      cat eok_A0.75_L | awk '{print "{ " $1 ", " $2 " }," }'
 //!    \endcode
 //!
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const HydroTimeScaleTable invhts_eq_A075L {
+const tk::Table invhts_eq_A075L {
   // time, eps/k
   { 0, 10.1006 },
   { 1, 0.670196 },

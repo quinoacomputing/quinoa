@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 12:14:41 PM MST
+  \date      Mon 09 Jan 2017 02:06:16 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck file parser
   \details   This file defines the input deck, i.e., control file, parser for
@@ -45,12 +45,8 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 // *****************************************************************************
 {
-  // Create PEGTL file input from std::string
-  pegtl::file_input< ctr::Location > input( m_filename );
-
-  // Create PEGTLInputDeck to store parsed input deck data which derives from
-  // InputDeck and has location() used during parse
-  deck::PEGTLInputDeck id( input, cmdline );
+  // Create InputDeck (a tagged tuple) to store parsed input
+  ctr::InputDeck id( cmdline );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.
@@ -63,11 +59,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // not to have to create a new pretty printer, but use the existing one.
   tk::grm::g_print.reset( print.save() );
 
-  // Parse control file by populating the underlying tagged tuple:
-  // basic_parse() below gives debug info during parsing, use it for debugging
-  // the parser itself, i.e., when modifying the grammar, otherwise, use
-  // dummy_parse() to compile faster
-  pegtl::dummy_parse< deck::read_file >( input, id );
+  // Parse input file and populate the underlying tagged tuple
+  pegtl::read_parser p( m_filename );
+  p.parse< deck::read_file, tk::grm::action >( id );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );

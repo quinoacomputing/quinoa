@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:43:40 AM MDT
+  \date      Wed 11 Jan 2017 01:40:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -31,12 +31,16 @@
 #include <lfsr113.h>
 #include <mrg32k3a.h>
 
+#include "NoWarning/threefry.h"
+#include "NoWarning/philox.h"
+
 #include "Tags.h"
 #include "Factory.h"
 #include "Exception.h"
 #include "RNGStack.h"
 #include "RNGSSE.h"
 #include "Options/RNGSSESeqLen.h"
+#include "Random123.h"
 #include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
@@ -52,12 +56,15 @@ RNGStack::RNGStack(
                     #ifdef HAS_MKL
                     const tk::ctr::RNGMKLParameters& mklparam,
                     #endif
-                    const tk::ctr::RNGSSEParameters& rngsseparam )
+                    const tk::ctr::RNGSSEParameters& rngsseparam,
+                    const tk::ctr::RNGRandom123Parameters& r123param )
  : m_factory()
 // *****************************************************************************
 //  Constructor: register generators into factory for each supported library
 //! \param[in] mklparam MKL RNG parameters to use to configure MKL RNGs
 //! \param[in] rngsseparam RNGSSE RNG parameters to use to configure RNGSSE RNGs
+//! \param[in] rngr123param Random123 RNG parameters to use to configure
+//!   Random123 RNGs
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -65,6 +72,7 @@ RNGStack::RNGStack(
   regMKL( CkNumPes(), mklparam );
   #endif
   regRNGSSE( CkNumPes(), rngsseparam );
+  regRandom123( CkNumPes(), r123param );
 }
 
 std::map< tk::ctr::RawRNGType, tk::RNG >
@@ -257,4 +265,40 @@ RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
     ( m_factory, RNGType::RNGSSE_MRG32K3A,
       nstreams,
       &mrg32k3a_init_sequence_ );
+}
+
+void
+RNGStack::regRandom123( int nstreams,
+                        const tk::ctr::RNGRandom123Parameters& param )
+// *****************************************************************************
+//  Register Random123 random number generators into factory
+//! \details Note that registering these entries in the map does not
+//!   invoke the constructors. The mapped value simply stores how the
+//!   constructors should be invoked at a later time. At some point later,
+//!   based on user input, we then instantiate only the RNGs (correctly
+//!   configured by the pre-bound constructor arguments) that are requested by
+//!   the user.
+//! \param[in] nstreams Register Randomer123 RNG using this many independent
+//!   streams
+//! \param[in] param Random123 RNG parameters to use to configure the RNGs
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  using tk::ctr::RNGType;
+
+  // Defaults for MKL RNGs
+  uint32_t s_def = 0;
+
+  tk::ctr::RNG opt;
+
+  // Register Random123 RNGs
+  recordModel< tk::RNG, tk::Random123< r123::Threefry2x64 > >
+             ( m_factory, RNGType::R123_THREEFRY,
+               nstreams,
+               opt.param< tag::seed >( RNGType::R123_THREEFRY, s_def, param ) );
+
+  recordModel< tk::RNG, tk::Random123< r123::Philox2x64 > >
+             ( m_factory, RNGType::R123_PHILOX,
+               nstreams,
+               opt.param< tag::seed >( RNGType::R123_PHILOX, s_def, param ) );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:39:27 AM MDT
+  \date      Thu 12 Jan 2017 12:45:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -84,6 +84,20 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
   }
 }
 
+void
+RNGPrint::echoRandom123Params( const ctr::RNGRandom123Param& p ) const
+// *****************************************************************************
+//  Echo information on Random123 random number generator
+//! \param[in] p Random123 RNG parameters
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % "seed"
+              % p.get< tag::seed >();
+}
+
 #ifdef HAS_MKL
 void
 RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
@@ -131,6 +145,31 @@ RNGPrint::RNGSSEParams( const std::vector< ctr::RNGType >& vec,
         echoRNGSSEParams( ctr::RNGSSEParam(), rng, r );
       } else {
         echoRNGSSEParams( m->second, rng, r );
+      }
+    }
+  }
+}
+
+void
+RNGPrint::Random123Params( const std::vector< ctr::RNGType >& vec,
+                           const ctr::RNGRandom123Parameters& map ) const
+// *****************************************************************************
+//  Print all fields of Random123 RNG parameters
+//! \param[in] vec Vector of RNG type enums to print
+//! \param[in] map Random123 RNG parameters map
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  ctr::RNG rng;
+
+  for (auto& r : vec) {
+    if (rng.lib(r) == ctr::RNGLibType::R123) {
+      subsection( rng.name(r) );
+      const auto& m = map.find(r);
+      if (m == map.end()) {   // no parameter map entry, print defaults
+        echoRandom123Params( ctr::RNGRandom123Param() );
+      } else {
+        echoRandom123Params( m->second );
       }
     }
   }

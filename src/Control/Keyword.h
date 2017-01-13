@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:53:57 PM MDT
+  \date      Mon 09 Jan 2017 04:31:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -17,6 +17,7 @@
 #include "NoWarning/pegtl.h"
 
 #include "Has.h"
+#include "Escaper.h"
 
 namespace kw {
 
@@ -52,36 +53,34 @@ struct Code {
 //!    of what the keyword is used for, while the longDescription() member
 //!    function is used for a longer, e.g., a paragraph-long, description on
 //!    what the keyword can be used for and how it can and should be used. The
-//!    last template parameters are a list of character constants, specifying
-//!    the case-sensitive characters that make up the keyword, which is then
-//!    matched by the parser. The keyword must be at least one character long,
-//!    but otherwise its length is only limited by the compiler's recursion
-//!    handling capability of variadic templates. While the name(),
+//!    last template parameter is a pegtl string, a list of character constants,
+//!    specifying the case-sensitive characters that make up the keyword, which
+//!    is then matched by the parser. The keyword must be at least one character
+//!    long, but otherwise its length is only limited by the compiler's
+//!    recursion handling capability of variadic templates. While the name(),
 //!    shortDescription() and longDescription() member functions of Info are
 //!    required, there are also optional ones, such as
 //!    Info::exptect::description(), which, if defined, must also be static and
-//!    return a std::string, describing the type the particular keyword expects
-//!    during parsing. This is optional since not every keyword expects a value
-//!    (or values) of a particular type. For example, the keyword 'end' is
-//!    simply used to close a block, and what follows does not have a
-//!    relationship to the keyword. A counterexample is is 'title', which
-//!    expects a double-quoted string.
+//!    must return a std::string, describing the type the particular keyword
+//!    expects during parsing. This is optional since not every keyword expects
+//!    a value (or values) of a particular type. For example, the keyword 'end'
+//!    is simply used to close a block in the input file, and what follows does
+//!    not have a relationship to the keyword. A counterexample is is 'title',
+//!    which expects a double-quoted string immediately after the keyword
+//!    title'.
 //! \see For example client-code and more detailed documentation on the possible
 //!    fields, see Control/Keywords.h.
 //! \author J. Bakosi
-template< typename Info, int Char, int... Chars >
-struct keyword {
+template< typename Info, typename > struct keyword;
+template< typename Info, char... Chars >
+struct keyword< Info, pegtl::string< Chars... > > {
 
   //! \brief Accessor to keyword as pegtl::string
-  using pegtl_string = pegtl::string< Char, Chars... >;
+  using pegtl_string = pegtl::string< Chars... >;
 
   //! \brief Accessor to keyword as std::string
   //! \return Keyword as std::string
-  static std::string string() {
-    return ( sizeof...( Chars ) ) ?
-           ( pegtl::escaper< Char, Chars... >::result() ) :
-           ( pegtl::escape( Char ) );
-  }
+  static std::string string() { return kw::escaper< Chars... >::result(); }
 
   //! \brief Accessor to required short name of a keyword
   //! \return Name of keyword as std::string
@@ -107,14 +106,14 @@ struct keyword {
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though an alias
   //!   is only a single character, it returns it as std::string since
-  //!   pegtl::escape returns std::string.
+  //!   pegtl::string returns std::string.
   //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
   //! \see http://en.cppreference.com/w/cpp/language/sfinae
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefAlias< T >::value, int >::type = 0 >
   static boost::optional< std::string > alias()
-  { return pegtl::escape( Info::alias::value ); }
+  { return std::string( 1, static_cast<char>( Info::alias::value ) ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefAlias< T >::value, int >::type = 0 >
@@ -127,14 +126,14 @@ struct keyword {
   //! \details As to why type Info has to be aliased to a local type T for
   //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though a code
   //!   is only a single character, it returns it as std::string since
-  //!   pegtl::escape returns std::string.
+  //!   pegtl::string returns std::string.
   //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
   //! \see http://en.cppreference.com/w/cpp/language/sfinae
   //! \see http://en.cppreference.com/w/cpp/types/enable_if
   template< typename T = Info, typename std::enable_if<
     tk::HasTypedefCode< T >::value, int >::type = 0 >
   static boost::optional< std::string > code()
-  { return pegtl::escape( Info::code::value ); }
+  { return std::string( 1, Info::code::value ); }
 
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefCode< T >::value, int >::type = 0 >

@@ -82,3 +82,19 @@ add_regression_test(Dirichlet_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF dir.ndiff.cfg)
+
+add_regression_test(Dirichlet_r123 ${WALKER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES dir_r123.q stat.txt.std dir.ndiff.cfg
+                    ARGS -c dir_r123.q -v
+                    TEXT_BASELINE stat.txt.std
+                    TEXT_RESULT stat.txt
+                    TEXT_DIFF_PROG_CONF dir.ndiff.cfg)
+
+add_regression_test(Dirichlet_r123 ${WALKER_EXECUTABLE}
+                    NUMPES 2
+                    INPUTFILES dir_r123.q stat.txt.std dir.ndiff.cfg
+                    ARGS -c dir_r123.q -v
+                    TEXT_BASELINE stat.txt.std
+                    TEXT_RESULT stat.txt
+                    TEXT_DIFF_PROG_CONF dir.ndiff.cfg)

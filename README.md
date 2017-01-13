@@ -38,14 +38,14 @@ The release container executables are configured for a single computer. To run o
 
    ```
    apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-   apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+   apt-get install gmsh pegtl-dev libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 
 - Mac OS X: (line 1: required, line 2: recommended)
 
    ```
    port install cmake openmpi-clang38 && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
-   port install gmsh pugixml boost
+   port install gmsh pugixml lapack boost
    ```
 
 #### 2. Clone, build third-party libraries, build & test

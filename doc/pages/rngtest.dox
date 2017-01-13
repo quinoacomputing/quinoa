@@ -34,22 +34,25 @@ Requirements, features
 ----------------------
 
 1. __Works with current and future libraries of RNGs:__
-Currently Intel's MKL's vector statistical library (VSL) RNGs and RNGSSE's RNGs
-are interfaced. References:
+Currently Intel's MKL's vector statistical library (VSL) RNGs, RNGSSE's RNGs,
+and a couple of Random123 RNGs are interfaced. References:
 
  - MKL: https://software.intel.com/en-us/intel-mkl
 
  - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022 and
-           http://dx.doi.org/10.1016/j.cpc.2013.04.007 <br><br>
+           http://dx.doi.org/10.1016/j.cpc.2013.04.007
+
+ - Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
 
  Note that MKL is entirely optional. If unavailable, all features of Quinoa can
- be used via RNGSSE.
+ be used via RNGSSE or Random123.
 
- Both of these libraries implement a variety of different pseudo random number
- generators and importantly, both support concurrent sampling from random number
- streams: while MKL supports both block splitting and leap frogging, and RNGSSE
- supports block splitting (jumping ahead and initialization of a large number of
- independent streams).
+ All of these libraries implement a variety of different pseudo random number
+ generators and importantly, all support concurrent sampling from random number
+ streams: MKL supports both block splitting and leap frogging, RNGSSE supports
+ block splitting (jumping ahead and initialization of a large number of
+ independent streams), and Random123 RNGs are counter-based so counters can be
+ initialized and incremented differently on each rank/thread.
 
 2. __Works with different libraries of statistical tests:__
 Currently TestU01's SmallCrush, Crush, and BigCrush batteries are supported and
@@ -59,7 +62,7 @@ TestU01: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 3. __The batteries work in parallel:__
 The user selects a number of RNGs (with optionally specifying parameters for
 each, e.g., seed, sequence length, etc.) as well as a battery of statistical
-tests. The tests are then run concurrently. RNGs from both MKL and RNGSSE can be
+tests. The tests are then run concurrently. RNGs from all RNG libraries can be
 tested (and thus compared to each other) at the same time.
 
 4. __Generator quality and computational cost:__
@@ -101,9 +104,9 @@ internals of class \a Battery. A client still uses \a rngtest::TestU01Suite
 polymorphically as a \a rngtest::Battery.
 
 Analogous to the relationship between classes \a rngtest::Battery and \a
-rngtest::TestU01Suite, the random number generators, available from the the MKL
-and RNGSSSE libraries, are also used polymorphically with class \a tk::RNG via
-concept-base polymorphism.
+rngtest::TestU01Suite, the random number generators, available from the MKL,
+RNGSSSE, and Random123 libraries, are also used polymorphically with class
+\a tk::RNG via concept-base polymorphism.
 
 Analogous to the relationship between \a rngtest::Battery and \a
 rngtest::TestU01Suite, individual statistical tests of TestU01 are also used
@@ -263,31 +266,31 @@ statistical test suites. Since the currently only supported set of batteries
 (TestU01) are a C library, this is done through global-scope wrappers.
 
 __Global-scope wrappers.__ The RNGs, wrapped through the base \a tk::RNG and
-children \a tk::MKLRNG and \a tk::RNGSSERNG, are invoked via concept-based
-runtime polymorphism (discussed above). While the RNGs are instantiated via \a
-tk::RNGFactory (discussed above), to be able to call any (or all) of the
-instantiated RNGs at the same time (to facilitate concurrency), we need as many
-wrappers as the maximum number of RNGs -- currently 25. In principle, this
-requires 25 global-scope almost identical wrappers so that we can pass them into
-TestU01. Note that the function signature TestU01 accepts for an external
-generator is the same for all RNGs.  Templating the global-scope wrappers on an
-integer, however, allows to write the wrapper only once and let the compiler
-generate the 25 slightly different wrappers, differing only in which polymorphic
-RNG needs to be called by TestU01.  This requires the global-scope wrappers to
-rely on a global-scope vector (or map, see below) of polymorphic RNGs and a
-global-scope id, as the function signature TestU01 accepts does not allow this
-information (which RNG I want it to call from some list and which parallel
-stream I want the next number from).  The current solution thus holds a
-global-scope std::map of polymorphic \a tk::RNG objects (using value semantics)
-into which the global-scope wrappers index into (using an std::map::find) based
-on a C-style enum (integer) template argument.  This works well enabling
-code-reuse. See RNGTest/TestU01Wrappers.h. For more information on why some of
-this (and other) data is global-scope, see the in-code documentation in
-Main/RNGTest.C.
+children \a tk::MKLRNG, \a tk::RNGSSERNG, \a tk::Random123, are invoked via
+concept-based runtime polymorphism (discussed above). While the RNGs are
+instantiated via \a tk::RNGFactory (discussed above), to be able to call any (or
+all) of the instantiated RNGs at the same time (to facilitate concurrency), we
+need as many wrappers as the maximum number of RNGs -- currently 25. In
+principle, this requires 25 global-scope almost identical wrappers so that we
+can pass them into TestU01. Note that the function signature TestU01 accepts for
+an external generator is the same for all RNGs.  Templating the global-scope
+wrappers on an integer, however, allows to write the wrapper only once and let
+the compiler generate the 25 slightly different wrappers, differing only in
+which polymorphic RNG needs to be called by TestU01.  This requires the
+global-scope wrappers to rely on a global-scope vector (or map, see below) of
+polymorphic RNGs and a global-scope id, as the function signature TestU01
+accepts does not allow this information (which RNG I want it to call from some
+list and which parallel stream I want the next number from). The current
+solution thus holds a global-scope std::map of polymorphic \a tk::RNG objects
+(using value semantics) into which the global-scope wrappers index into (using
+an std::map::find) based on a C-style enum (integer) template argument.  This
+works well enabling code-reuse. See RNGTest/TestU01Wrappers.h. For more
+information on why some of this (and other) data is global-scope, see the
+in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 07:56:20 AM MST
+<em>Page last updated:</em> Thu 12 Jan 2017 01:35:55 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
