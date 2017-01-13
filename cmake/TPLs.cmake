@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 13 Jan 2017 11:48:57 AM MST
+# \date      Fri 13 Jan 2017 04:00:10 PM MST
 #
 ################################################################################
 
@@ -61,7 +61,7 @@ find_package(Random123 REQUIRED)
 #### RNGSSE2 library
 set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 find_package(RNGSSE2)
-if(RNGSSE2_FOUND)
+if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
