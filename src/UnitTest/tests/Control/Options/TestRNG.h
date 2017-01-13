@@ -40,7 +40,7 @@ template<> template<>
 void RNGOptions_object::test< 1 >() {
   set_test_name( "param() finds RNG parameter" );
   ensure( "cannot find parameter",
-          m.param( tk::ctr::RNGType::RNGSSE_GM19 ) == 0 );
+          m.param( tk::ctr::RNGType::R123_THREEFRY ) == 0 );
 }
 
 //! Test that member function param() throws in DEBUG mode if can't find param
@@ -75,7 +75,7 @@ void RNGOptions_object::test< 3 >() {
   std::vector< tk::ctr::RNG > v;
   v.push_back( c );
   ensure( "copy constructor used to push_back a RNG object to a std::vector",
-          v[0].param( tk::ctr::RNGType::RNGSSE_GM55 ) == 3 );
+          v[0].param( tk::ctr::RNGType::R123_PHILOX ) == 1 );
 }
 
 //! Test move constructor
@@ -88,7 +88,7 @@ void RNGOptions_object::test< 4 >() {
   std::vector< tk::ctr::RNG > v;
   v.emplace_back( std::move(c) );
   ensure( "move constructor used to emplace_back a RNG object to a std::vector",
-           v[0].param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
+           v[0].param( tk::ctr::RNGType::R123_PHILOX ) == 1 );
 }
 
 //! Test copy assignment
@@ -100,7 +100,7 @@ void RNGOptions_object::test< 5 >() {
   tk::ctr::RNG c;
   c = m;
   ensure( "find param of copy-assigned RNG",
-          c.param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
+          c.param( tk::ctr::RNGType::R123_PHILOX ) == 1 );
 }
 
 //! Test move assignment
@@ -112,7 +112,7 @@ void RNGOptions_object::test< 6 >() {
   tk::ctr::RNG c;
   c = std::move( m );
   ensure( "find param of move-assigned RNG",
-          c.param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
+          c.param( tk::ctr::RNGType::R123_PHILOX ) == 1 );
 }
 
 #ifdef HAS_MKL
@@ -126,6 +126,7 @@ void RNGOptions_object::test< 7 >() {
 }
 #endif
 
+#ifdef HAS_RNGSSE2
 //! Test that member function lib() finds RNGSSE library type for a RNGSSE rng
 //! \author J. Bakosi
 template<> template<>
@@ -135,35 +136,46 @@ void RNGOptions_object::test< 8 >() {
           m.lib( tk::ctr::RNGType::RNGSSE_GM29 ) ==
             tk::ctr::RNGLibType::RNGSSE );
 }
+#endif
 
-//! Test that member function supportSeq() returns true for an RNGSSE rng
+//! \brief Test that member function lib() finds Random123 library type for a
+//!   Random123 rng
 //! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 9 >() {
+  set_test_name( "lib() finds Random123 library type" );
+  ensure( "cannot find library type",
+          m.lib( tk::ctr::RNGType::R123_THREEFRY ) ==
+            tk::ctr::RNGLibType::R123 );
+}
+
+#ifdef HAS_RNGSSE2
+//! Test that member function supportSeq() returns true for an RNGSSE rng
+//! \author J. Bakosi
+template<> template<>
+void RNGOptions_object::test< 10 >() {
   set_test_name( "supportsSeq() true for RNGSSE" );
   ensure_equals( "cannot find RNGSSE rng in support map",
                  m.supportsSeq( tk::ctr::RNGType::RNGSSE_GM29 ), true );
 }
-
-#ifdef HAS_MKL
-//! \brief Test that member function supportSeq() returns false for an
-//!    non-RNGSSE rng
-//! TODO: enable this once a new rng lib is hooked up (other than the optional
-//! mkl)
-//! \author J. Bakosi
-template<> template<>
-void RNGOptions_object::test< 10 >() {
-  set_test_name( "supportsSeq() false for non-RNGSSE" );
-  ensure_equals( "cannot find non-RNGSSE rng in support map",
-                 m.supportsSeq( tk::ctr::RNGType::MKL_SFMT19937 ), false );
-}
 #endif
 
+//! \brief Test that member function supportSeq() returns false for an
+//!    non-RNGSSE rng
+//! \author J. Bakosi
+template<> template<>
+void RNGOptions_object::test< 11 >() {
+  set_test_name( "supportsSeq() false for non-RNGSSE" );
+  ensure_equals( "cannot find non-RNGSSE rng in support map",
+                 m.supportsSeq( tk::ctr::RNGType::R123_PHILOX ), false );
+}
+
+#ifdef HAS_RNGSSE2
 //! \brief Test that member function param<>() returns default for non-specified
 //!   parameter
 //! \author J. Bakosi
 template<> template<>
-void RNGOptions_object::test< 11 >() {
+void RNGOptions_object::test< 12 >() {
   set_test_name( "param() correctly returns default" );
 
   // empty bundle: no parameter specified
@@ -172,12 +184,14 @@ void RNGOptions_object::test< 11 >() {
                  m.param< tag::seed >
                         ( tk::ctr::RNGType::RNGSSE_GM31, 0U, b ), 0 );
 }
+#endif
 
+#ifdef HAS_RNGSSE2
 //! \brief Test that member function param<>() returns parameter for specified
 //!   parameter
 //! \author J. Bakosi
 template<> template<>
-void RNGOptions_object::test< 12 >() {
+void RNGOptions_object::test< 13 >() {
   set_test_name( "param() returns specified param" );
 
   // specify sequence length parameter for RNGSSE rng
@@ -191,6 +205,7 @@ void RNGOptions_object::test< 12 >() {
                    b ) ==                               // query this bundle
             tk::ctr::RNGSSESeqLenType::LONG );
 }
+#endif
 
 } // tut::
 

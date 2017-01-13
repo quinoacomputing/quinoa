@@ -84,9 +84,9 @@ TestU01Stack::TestU01Stack() : m_generator()
     //  addRNG< raw(RNGType::MKL_SABSTRACT) >( r );
     else if (r == RNGType::MKL_NONDETERM)
       addRNG< raw(RNGType::MKL_NONDETERM) >( r );
-    else
     #endif
-    if (r == RNGType::RNGSSE_GM19)         
+    #ifdef HAS_RNGSSE2
+    else if (r == RNGType::RNGSSE_GM19)
       addRNG< raw(RNGType::RNGSSE_GM19) >( r );
     else if (r == RNGType::RNGSSE_GM29)    
       addRNG< raw(RNGType::RNGSSE_GM29) >( r );
@@ -109,6 +109,12 @@ TestU01Stack::TestU01Stack() : m_generator()
     else if (r == RNGType::RNGSSE_MRG32K3A)
       addRNG< raw(RNGType::RNGSSE_MRG32K3A) >( r );
     else if (r == RNGType::R123_THREEFRY)
+      addRNG< raw(RNGType::R123_THREEFRY) >( r );
+    else if (r == RNGType::R123_PHILOX)
+      addRNG< raw(RNGType::R123_PHILOX) >( r );
+    else
+    #endif
+    if (r == RNGType::R123_THREEFRY)
       addRNG< raw(RNGType::R123_THREEFRY) >( r );
     else if (r == RNGType::R123_PHILOX)
       addRNG< raw(RNGType::R123_PHILOX) >( r );

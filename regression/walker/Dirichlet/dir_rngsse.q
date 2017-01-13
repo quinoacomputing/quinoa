@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Dirichlet for the IJSA paper using Random123's ThreeFry RNG"
+title "Dirichlet for the IJSA paper"
 
 walker
   term  140.0   # Max time
@@ -11,7 +11,7 @@ walker
   ttyi  1000    # TTY output interval
 
   rngs
-    r123_threefry end
+    rngsse_mrg32k3a end
   end
 
   dirichlet     # Select Dirichlet SDE
@@ -22,7 +22,7 @@ walker
     b     0.1    1.5 end
     S     0.625  0.4 end
     kappa 0.0125 0.3 end
-    rng r123_threefry
+    rng rngsse_mrg32k3a
   end
 
   statistics

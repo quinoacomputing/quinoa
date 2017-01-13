@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Wed 11 Jan 2017 12:14:30 PM MST
+# \date      Fri 13 Jan 2017 04:00:10 PM MST
 #
 ################################################################################
 
@@ -61,6 +61,18 @@ find_package(PEGTL REQUIRED)
 set(Random123_ROOT ${TPL_DIR}) # prefer ours
 find_package(Random123 REQUIRED)
 
+#### RNGSSE2 library
+set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
+find_package(RNGSSE2)
+if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
+  set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
+endif()
+
+# Error out if not a single RNG library has been found
+if (NOT MKL_FOUND AND NOT Random123_FOUND AND NOT RNGSSE2_FOUND)
+  message(FATAL "At least one of MKL, RNGSSE2, Random123 is required.")
+endif()
+
 ### HDF5/NetCDF (NetCDF only for static link)
 if(NOT BUILD_SHARED_LIBS)
   set(HDF5_PREFER_PARALLEL true)
@@ -112,6 +124,9 @@ find_library(RNGSSE_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+
+#### H5Part library
+find_package(H5Part REQUIRED)
 
 #### TestU01 library
 set(TESTU01_LIBRARY "NOTFOUND")

@@ -116,7 +116,10 @@ class InputDeck :
                                      , kw::sde_kappa
                                      , kw::sde_omega
                                      >;
-    using keywords3 = boost::mpl::set< kw::rngsse_gm19
+    using keywords3 = boost::mpl::set< kw::cja
+                                     , kw::cja_accurate
+                                     #ifdef HAS_RNGSSE2
+                                     , kw::rngsse_gm19
                                      , kw::rngsse_gm29
                                      , kw::rngsse_gm31
                                      , kw::rngsse_gm55
@@ -128,8 +131,7 @@ class InputDeck :
                                      , kw::rngsse_lfsr113
                                      , kw::rngsse_mrg32k3a
                                      , kw::seqlen
-                                     , kw::cja
-                                     , kw::cja_accurate
+                                     #endif
                                      , kw::r123_threefry
                                      , kw::r123_philox
                                      >;
