@@ -492,7 +492,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${H5Part_INCLUDE_DIRS}
                     ${LAPACKE_INCLUDE}
                     ${TPL_DIR}/include
-                    ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
