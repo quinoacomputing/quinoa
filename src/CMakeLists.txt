@@ -489,7 +489,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${BoostMPLCartesianProduct_INCLUDE_DIR}
                     ${PEGTL_INCLUDE_PATH}
                     ${RANDOM123_INCLUDE_PATH}
-                    ${H5Part_INCLUDE_DIRS}
                     ${LAPACKE_INCLUDE}
                     ${Zoltan2_INCLUDE_DIRS}
                     ${SEACASExodus_INCLUDE_DIRS}
