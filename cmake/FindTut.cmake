@@ -35,7 +35,7 @@ else()
 endif()
 
 # Look for the header file
-FIND_PATH(Tut_INCLUDE_DIR NAMES tut.h HINTS ${Tut_ROOT}/include ${PC_TUT_INCLUDE_DIRS})
+FIND_PATH(Tut_INCLUDE_DIR NAMES tut/tut.hpp HINTS ${Tut_ROOT}/include ${PC_TUT_INCLUDE_DIRS})
 
 set(Tut_INCLUDE_DIRS ${Tut_INCLUDE_DIR} )
 
