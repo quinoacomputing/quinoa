@@ -8,7 +8,7 @@ walker
   ttyi  1000    # TTY output interval
 
   rngs
-    r123_philox end
+    rngsse_mrg32k3a end
   end
 
   diag_ou
@@ -19,7 +19,7 @@ walker
     sigmasq 0.25 1.0 end
     theta 1.0 1.0 end
     mu 0.0 1.5 end
-    rng r123_philox
+    rng rngsse_mrg32k3a
   end
 
   pdfs

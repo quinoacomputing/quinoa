@@ -1614,7 +1614,11 @@ struct rng_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + rngsse_gm19::string()     + "\' | \'"
+      return '\'' + r123_threefry::string()   + "\' | \'"
+                  + r123_philox::string()
+                  #ifdef HAS_RNGSSE2
+                                              + "\' | \'"
+                  + rngsse_gm19::string()     + "\' | \'"
                   + rngsse_gm29::string()     + "\' | \'"
                   + rngsse_gm31::string()     + "\' | \'"
                   + rngsse_gm55::string()     + "\' | \'"
@@ -1624,9 +1628,8 @@ struct rng_info {
                   + rngsse_gq584::string()    + "\' | \'"
                   + rngsse_mt19937::string()  + "\' | \'"
                   + rngsse_lfsr113::string()  + "\' | \'"
-                  + rngsse_mrg32k3a::string() + "\' | \'"
-                  + r123_threefry::string()   + "\' | \'"
-                  + r123_philox::string()
+                  + rngsse_mrg32k3a::string()
+                  #endif
                   #ifdef HAS_MKL
                                               + "\' | \'"
                   + mkl_mcg31::string()       + "\' | \'"

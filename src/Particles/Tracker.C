@@ -11,9 +11,9 @@
 */
 // *****************************************************************************
 
-#include <gm19.h>
+#include "NoWarning/threefry.h"
 
-#include "RNGSSE.h"
+#include "Random123.h"
 
 #include "Tracker.h"
 #include "Exception.h"
@@ -37,8 +37,7 @@ Tracker::genpar( const std::array< std::vector< tk::real >, 3 >& coord,
   Assert( m_elp.size() >= m_particles.nunk(),
           "Element-of-particle array not large enough" );
 
-  auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
-               ( static_cast<unsigned>(nchare), gm19_init_sequence_ );
+  auto rng = tk::Random123< r123::Threefry2x64 >( nchare );
 
   // Create a reference of mesh point coordinates
   const auto& x = coord[0];

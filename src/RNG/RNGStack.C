@@ -18,19 +18,6 @@
 #include <utility>
 
 #include "NoWarning/charm.h"
-
-#include <gm19.h>
-#include <gm29.h>
-#include <gm31.h>
-#include <gm55.h>
-#include <gm61.h>
-#include <gq58x1.h>
-#include <gq58x3.h>
-#include <gq58x4.h>
-#include <mt19937.h>
-#include <lfsr113.h>
-#include <mrg32k3a.h>
-
 #include "NoWarning/threefry.h"
 #include "NoWarning/philox.h"
 
@@ -42,6 +29,20 @@
 #include "Options/RNGSSESeqLen.h"
 #include "Random123.h"
 #include "QuinoaConfig.h"
+
+#ifdef HAS_RNGSSE2
+  #include <gm19.h>
+  #include <gm29.h>
+  #include <gm31.h>
+  #include <gm55.h>
+  #include <gm61.h>
+  #include <gq58x1.h>
+  #include <gq58x3.h>
+  #include <gq58x4.h>
+  #include <mt19937.h>
+  #include <lfsr113.h>
+  #include <mrg32k3a.h>
+#endif
 
 #ifdef HAS_MKL
   #include "MKLRNG.h"
@@ -56,7 +57,9 @@ RNGStack::RNGStack(
                     #ifdef HAS_MKL
                     const tk::ctr::RNGMKLParameters& mklparam,
                     #endif
+                    #ifdef HAS_RNGSSE2
                     const tk::ctr::RNGSSEParameters& rngsseparam,
+                    #endif
                     const tk::ctr::RNGRandom123Parameters& r123param )
  : m_factory()
 // *****************************************************************************
@@ -71,7 +74,9 @@ RNGStack::RNGStack(
   #ifdef HAS_MKL
   regMKL( CkNumPes(), mklparam );
   #endif
+  #ifdef HAS_RNGSSE2
   regRNGSSE( CkNumPes(), rngsseparam );
+  #endif
   regRandom123( CkNumPes(), r123param );
 }
 
@@ -160,6 +165,7 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
 }
 #endif
 
+#ifdef HAS_RNGSSE2
 void
 RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
 // *****************************************************************************
@@ -266,6 +272,7 @@ RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
       nstreams,
       &mrg32k3a_init_sequence_ );
 }
+#endif
 
 void
 RNGStack::regRandom123( int nstreams,

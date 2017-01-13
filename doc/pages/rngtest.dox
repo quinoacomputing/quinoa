@@ -44,8 +44,8 @@ and a couple of Random123 RNGs are interfaced. References:
 
  - Random123: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
 
- Note that MKL is entirely optional. If unavailable, all features of Quinoa can
- be used via RNGSSE or Random123.
+ Note that MKL and RNGSSE2 are entirely optional. If unavailable, all features
+ of Quinoa can be used via Random123.
 
  All of these libraries implement a variety of different pseudo random number
  generators and importantly, all support concurrent sampling from random number
@@ -290,7 +290,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 12 Jan 2017 01:35:55 PM MST
+<em>Page last updated:</em> Fri 13 Jan 2017 12:07:17 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

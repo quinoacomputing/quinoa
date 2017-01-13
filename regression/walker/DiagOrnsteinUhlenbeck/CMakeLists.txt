@@ -53,6 +53,58 @@ if (HAS_MKL)
                       TEXT_DIFF_PROG_CONF diagou_pdf.ndiff.cfg)
 endif()
 
+if (HAS_RNGSSE2)
+  add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 1
+                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      ARGS -c diagou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+  add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 2
+                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      ARGS -c diagou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+  add_regression_test(DiagOrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 4
+                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      ARGS -c diagou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+  add_regression_test(DiagOrnsteinUhlenbeck_rngsse_u0.9 ${WALKER_EXECUTABLE}
+                      NUMPES 4
+                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      ARGS -c diagou_rngsse.q -v -u 0.9
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+  add_regression_test(DiagOrnsteinUhlenbeck_rngsse_u0.9 ${WALKER_EXECUTABLE}
+                      NUMPES 8
+                      INPUTFILES diagou_rngsse.q stat.txt.std diagou.ndiff.cfg
+                      ARGS -c diagou_rngsse.q -v -u 0.9
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+  add_regression_test(DiagOrnsteinUhlenbeckPDF_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 8
+                      INPUTFILES diagou_pdf_rngsse.q pdf_f2.txt.std
+                                 diagou_pdf.ndiff.cfg
+                      ARGS -c diagou_pdf_rngsse.q -v
+                      LABELS verification
+                      TEXT_BASELINE pdf_f2.txt.std
+                      TEXT_RESULT pdf_f2.txt
+                      TEXT_DIFF_PROG_CONF diagou_pdf.ndiff.cfg)
+endif()
+
 add_regression_test(DiagOrnsteinUhlenbeck ${WALKER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES diagou.q stat.txt.std diagou.ndiff.cfg
