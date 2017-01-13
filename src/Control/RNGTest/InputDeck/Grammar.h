@@ -21,7 +21,7 @@
 #include "MKLGrammar.h"
 #endif
 
-#ifdef HAS_MKL
+#ifdef HAS_RNGSSE2
   #include "RNGSSEGrammar.h"
 #endif
 
