@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:19:37 PM MDT
+  \date      Thu 22 Dec 2016 10:55:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for UnitTest's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
@@ -20,8 +20,8 @@
 namespace unittest {
 namespace ctr {
 
-//! PEGTL location type to use throughout all of UnitTest's parsers
-using Location = pegtl::ascii_location;
+//! PEGTL location/position type to use throughout all of UnitTest's parsers
+using Location = pegtl::position_info;
 
 } // ctr::
 } // unittest::

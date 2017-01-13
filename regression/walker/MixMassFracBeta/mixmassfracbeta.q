@@ -39,6 +39,8 @@ walker
     kappaprime 1.0  1.0  1.0  1.0  1.0 end
     bprime     1.9  1.9  1.9  1.9  1.9 end
     S          0.5  0.5  0.5  0.5  0.5 end
+    hydrotimescales eq_A05S eq_A05H eq_A05L eq_A05S eq_A05S end
+    hydroproductions prod_A05S prod_A05H prod_A05L prod_A05S prod_A05S end
     rng rngsse_gm29
     rho2 1.0 1.0 1.0 1.0 1.0 end
     #r 2.0 2.0 2.0 2.0 2.0 end

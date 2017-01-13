@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 17 Nov 2016 01:29:57 PM MST
+  \date      Fri 06 Jan 2017 01:29:56 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -21,6 +21,7 @@
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
 #include "Options/PDFCentering.h"
@@ -305,6 +306,7 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,         std::vector< std::vector< std::vector <
                           kw::betapdf::info::expect::type > > >,
   tag::hydrotimescales, std::vector< std::vector< ctr::HydroTimeScalesType > >,
+  tag::hydroproductions,std::vector< std::vector< ctr::HydroProductionsType > >,
   tag::rng,             std::vector< tk::ctr::RNGType >,
   tag::initpolicy,      std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy,     std::vector< ctr::CoeffPolicyType >
@@ -316,6 +318,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::rngmkl,          tk::ctr::RNGMKLParameters,
   #endif
   tag::rngsse,          tk::ctr::RNGSSEParameters,
+  tag::rng123,          tk::ctr::RNGRandom123Parameters,
   tag::dirichlet,       DirichletParameters,
   tag::gendir,          GenDirichletParameters,
   tag::wrightfisher,    WrightFisherParameters,
@@ -329,9 +332,6 @@ using parameters = tk::tuple::tagged_tuple<
   tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
   tag::mixmassfracbeta, MixMassFractionBetaParameters
 >;
-
-//! PEGTL location type to use throughout Walker's parsers
-using Location = pegtl::ascii_location;
 
 } // ctr::
 } // walker::

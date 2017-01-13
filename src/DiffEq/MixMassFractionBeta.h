@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 18 Nov 2016 08:15:23 AM MST
+  \date      Wed 21 Dec 2016 01:20:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -72,7 +72,11 @@
 #include "MixMassFractionBetaCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "Table.h"
+#include "HydroTimeScales.h"
+#include "HydroProductions.h"
 #include "Walker/Options/HydroTimeScales.h"
+#include "Walker/Options/HydroProductions.h"
 
 namespace walker {
 
@@ -142,31 +146,24 @@ class MixMassFractionBeta {
       if ( Coefficients::type() ==
              ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY )
       {
+        // Configure inverse hydrodyanmics time scale from DNS
         const auto& hts = g_inputdeck.get< tag::param,
                                            tag::mixmassfracbeta,
                                            tag::hydrotimescales >().at(c);
-        for (auto t : hts) {
-          if (t == ctr::HydroTimeScalesType::EQ_A005H)
-            m_hts.push_back( invhts_eq_A005H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A005S)
-            m_hts.push_back( invhts_eq_A005S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A005L)
-            m_hts.push_back( invhts_eq_A005L );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05H)
-            m_hts.push_back( invhts_eq_A05H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05S)
-            m_hts.push_back( invhts_eq_A05S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A05L)
-            m_hts.push_back( invhts_eq_A05L );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075H)
-            m_hts.push_back( invhts_eq_A075H );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075S)
-            m_hts.push_back( invhts_eq_A075S );
-          else if (t == ctr::HydroTimeScalesType::EQ_A075L)
-            m_hts.push_back( invhts_eq_A075L );
-        }
+        ctr::HydroTimeScales ot;
+        for (auto t : hts) m_hts.push_back( ot.table(t) );
         Assert( m_hts.size() == m_ncomp, "Number of inverse hydro time scale "
           "tables associated does not match the components integrated" );
+
+        // Configure hydrodyanmics production/dissipation from DNS
+        const auto& hp = g_inputdeck.get< tag::param,
+                                          tag::mixmassfracbeta,
+                                          tag::hydroproductions >().at(c);
+        ctr::HydroProductions op;
+        for (auto t : hp) m_hp.push_back( op.table(t) );
+        Assert( m_hp.size() == m_ncomp, "Number of hydro "
+          "production/dissipation tables associated does not match the "
+          "components integrated" );
       }
     }
 
@@ -201,7 +198,7 @@ class MixMassFractionBeta {
     {
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
-                    m_hts, m_b, m_k, m_S, t );
+                    m_hts, m_hp, m_b, m_k, m_S, t );
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -242,7 +239,12 @@ class MixMassFractionBeta {
     //! Selected inverse hydrodynamics time scales (if used) for each component
     //! \details This is only used if the coefficients policy is
     //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
-    std::vector< HydroTimeScaleTable > m_hts;
+    std::vector< tk::Table > m_hts;
+
+    //! Selected hydrodynamics production/dissipation (if used) for each comp.
+    //! \details This is only used if the coefficients policy is
+    //!   MixMassFracBetaCoeffHydroTimeScaleHomDecay. See constructor.
+    std::vector< tk::Table > m_hp;
 
     //! \brief Return density for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta
@@ -263,7 +265,7 @@ class MixMassFractionBeta {
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real Y, ncomp_t i ) const {
-      return 1.0 / rho( Y, i );
+      return ( 1.0 + m_r[i] * Y ) / m_rho2[i];
     }
 
     //! Compute instantaneous values derived from updated Y

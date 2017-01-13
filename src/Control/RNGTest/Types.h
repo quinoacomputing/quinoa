@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:41:18 AM MDT
+  \date      Thu 22 Dec 2016 10:56:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers. This file defines the components of
@@ -43,11 +43,12 @@ using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
   tag::rngmkl,    tk::ctr::RNGMKLParameters,   //!< MKL RNG parameters
   #endif
-  tag::rngsse,    tk::ctr::RNGSSEParameters    //!< RNGSSE parameters
+  tag::rngsse,    tk::ctr::RNGSSEParameters,   //!< RNGSSE parameters
+  tag::rng123,    tk::ctr::RNGRandom123Parameters  //!< Random123 parameters
 >;
 
-//! PEGTL location type to use throughout all of RNGTest's parsers
-using Location = pegtl::ascii_location;
+//! PEGTL location/position type to use throughout all of RNGTest's parsers
+using Location = pegtl::position_info;
 
 } // ctr::
 } // rngtest::

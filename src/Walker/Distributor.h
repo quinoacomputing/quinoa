@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Tue 22 Nov 2016 08:47:34 AM MST
+  \date      Wed 21 Dec 2016 12:30:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -62,6 +62,7 @@
 #include "Types.h"
 #include "Timer.h"
 #include "Tags.h"
+#include "Table.h"
 #include "TaggedTuple.h"
 #include "StatCtr.h"
 #include "UniPDF.h"
@@ -129,7 +130,7 @@ class Distributor : public CBase_Distributor {
 
   private:
     //! Print information at startup
-    void info( uint64_t chunksize, std::size_t nchare ) const;
+    void info( uint64_t chunksize, std::size_t nchare );
 
     //! Compute size of next time step
     tk::real computedt();
@@ -188,6 +189,10 @@ class Distributor : public CBase_Distributor {
     std::vector< tk::UniPDF > m_cenupdf;        //!< Central univariate PDFs
     std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
+
+    //! Names of and tables to sample and output to statistics file
+    std::pair< std::vector< std::string >,
+               std::vector< tk::Table > > m_tables;
 
     //! Map used to lookup moments
     std::map< tk::ctr::Product, tk::real > m_moments;

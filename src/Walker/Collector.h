@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 09:37:00 AM MDT
+  \date      Wed 21 Dec 2016 07:51:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -125,6 +125,7 @@ class Collector : public CBase_Collector {
     std::vector< tk::UniPDF > m_cenupdf;        //!< Central univariate PDFs
     std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
+    std::vector< tk::real > m_extra;            //!< Extra statistics data
 };
 
 #if defined(__clang__)
