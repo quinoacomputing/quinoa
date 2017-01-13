@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the pugixml library
-# \date      Sat 11 Jun 2016 08:03:29 PM MDT
+# \date      Fri 13 Jan 2017 09:20:02 AM MST
 #
 ################################################################################
 
@@ -12,14 +12,14 @@
 #
 #  PUGIXML_FOUND - System has pugixml
 #  PUGIXML_INCLUDES - The pugixml include directory (pugixml is header-only)
-#  PUGIXML__LIBRARIES - The libraries needed to use pugixml
+#  PUGIXML_LIBRARIES - The libraries needed to use pugixml
 #
 #  Set PUGIXML_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
 #
 #  Usage:
 #
-#  set(PUGIXML_ROOT "/path/to/custom/pstreams") # prefer over system
+#  set(PUGIXML_ROOT "/path/to/custom/pugixml") # prefer over system
 #  find_package(pugixml)
 #  ifPUGIXML_FOUND)
 #    target_link_libraries (TARGET ${PUGIXML_LIBRARIES})

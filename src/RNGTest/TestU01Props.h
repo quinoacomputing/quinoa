@@ -235,9 +235,9 @@ class TestU01Props {
       //  g = createTestU01Gen< raw(RNGType::MKL_SABSTRACT) >( rngname );
       else if (m_rng == RNGType::MKL_NONDETERM)
         g = createTestU01Gen< raw(RNGType::MKL_NONDETERM) >( rngname );
-      else
       #endif
-      if (m_rng == RNGType::RNGSSE_GM19)
+      #ifdef HAS_RNGSSE2
+      else if (m_rng == RNGType::RNGSSE_GM19)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM19) >( rngname );
       else if (m_rng == RNGType::RNGSSE_GM29)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM29) >( rngname );
@@ -259,6 +259,12 @@ class TestU01Props {
         g = createTestU01Gen< raw(RNGType::RNGSSE_LFSR113) >( rngname );
       else if (m_rng == RNGType::RNGSSE_MRG32K3A)
         g = createTestU01Gen< raw(RNGType::RNGSSE_MRG32K3A) >( rngname );
+      else
+      #endif
+      if (m_rng == RNGType::R123_THREEFRY)
+        g = createTestU01Gen< raw(RNGType::R123_THREEFRY) >( rngname );
+      else if (m_rng == RNGType::R123_PHILOX)
+        g = createTestU01Gen< raw(RNGType::R123_PHILOX) >( rngname );
     }
 
     //! Query whether test is failed
