@@ -4,7 +4,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Fri 18 Nov 2016 06:23:12 AM MST
+# \date      Sun 15 Jan 2017 07:59:57 PM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script clones the github repository, builds the third-party
@@ -57,22 +57,22 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   cd ${BUILDDIR}
 
   # Generate unit test coverage report, move it to ${WORKDIR}, and clean
-  cmake -G Ninja ../src
-  ninja unittest_coverage
+  cmake ../src
+  make -sj$CPUS unittest_coverage
   mv doc/html/unittest_coverage ${WORKDIR}
-  rm * .ninja_* -rf
+  rm * -rf
 
   # Generate regression test coverage report, move it to ${WORKDIR}, and clean
-  cmake -G Ninja ../src
-  ninja regression_coverage
+  cmake ../src
+  make -sj$CPUS regression_coverage
   mv doc/html/regression_coverage ${WORKDIR}
-  rm * .ninja_* -rf
+  rm * -rf
 
   # Generate full test coverage report, move it to ${WORKDIR}, and clean
-  cmake -G Ninja ../src
-  ninja test_coverage
+  cmake ../src
+  make -sj$CPUS test_coverage
   mv doc/html/test_coverage ${WORKDIR}
-  rm * .ninja_* -rf
+  rm * -rf
 
   # Start out in empty build-dir with a fresh clone of the gh-pages branch
   git clone git@github.com:quinoacomputing/quinoa.git --branch gh-pages --single-branch doc/html
@@ -81,8 +81,8 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   cd -
 
   # Generate documentation, move code coverage reports in place, and push
-  cmake -G Ninja ../src
-  ninja doc
+  cmake ../src
+  make -sj$CPUS doc
   cd doc/html
   mv ${WORKDIR}/unittest_coverage .
   mv ${WORKDIR}/regression_coverage .
