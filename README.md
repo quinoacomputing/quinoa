@@ -38,7 +38,7 @@ The release container executables are configured for a single computer. To run o
 
    ```
    apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-   apt-get install gmsh pegtl-dev libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev libtrilinos-zoltan2-12 libtrilinos-zoltan2-dev libtut-dev
+   apt-get install gmsh pegtl-dev libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev libtrilinos-zoltan2-12 libtrilinos-zoltan2-dev
    ```
 
 - Mac OS X: (line 1: required, line 2: recommended)
