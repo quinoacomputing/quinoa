@@ -117,14 +117,6 @@ if(SEACASExodiff_FOUND)
   message(STATUS "Found SEACASExodiff: ${SEACASExodiff_EXECUTABLE}")
 endif()
 
-#### RNGSSE2 library
-set(RNGSSE_LIBRARY "NOTFOUND")
-find_library(RNGSSE_LIBRARY
-             NAMES rngsse
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-
 #### H5Part library
 find_package(H5Part REQUIRED)
 
