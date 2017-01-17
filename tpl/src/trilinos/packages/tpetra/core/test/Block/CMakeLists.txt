@@ -8,6 +8,16 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   )
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  ExpBlockMultiVector2
+  SOURCES
+    ExpBlockMultiVector2
+    ${TEUCHOS_STD_UNIT_TEST_MAIN}
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  STANDARD_PASS_OUTPUT
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
   ExpBlockCrsMatrix
   SOURCES
     ExpBlockCrsMatrix
@@ -41,9 +51,9 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   )
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  ExpBlockView2
+  ExpBlockOps
   SOURCES
-    ExpBlockView2
+    ExpBlockOps
     ${TEUCHOS_STD_UNIT_TEST_MAIN}
   COMM serial mpi
   NUM_MPI_PROCS 1

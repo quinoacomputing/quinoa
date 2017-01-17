@@ -180,6 +180,8 @@ namespace MueLu {
     */
     static Teuchos::ArrayRCP<SC> GetLumpedMatrixDiagonal(const Matrix& A); // FIXME
 
+    static Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > GetLumpedMatrixDiagonal(Teuchos::RCP<const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > A) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetLumpedMatrixDiagonal(A); }
+
     /*! @brief Extract Overlapped Matrix Diagonal
 
     Returns overlapped Matrix diagonal in ArrayRCP.
@@ -188,6 +190,15 @@ namespace MueLu {
     NOTE -- it's assumed that A has been fillComplete'd.
     */
     static RCP<Vector> GetMatrixOverlappedDiagonal(const Matrix& A); // FIXME
+
+    /*! @brief Return vector containing inverse of input vector
+     *
+     * @param[in] v: input vector
+     * @param[in] tol: tolerance. If entries of input vector are smaller than tolerance they are replaced by tolReplacement (see below). The default value for tol is 100*eps (machine precision)
+     * @param[in] tolReplacement: Value put in for undefined entries in output vector (default: 0.0)
+     * @ret: vector containing inverse values of input vector v
+    */
+    static Teuchos::RCP<Vector> GetInverse(Teuchos::RCP<const Vector> v, Magnitude tol = Teuchos::ScalarTraits<Scalar>::eps()*100, Scalar tolReplacement = Teuchos::ScalarTraits<Scalar>::zero()) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetInverse(v,tol,tolReplacement); }
 
     // TODO: should NOT return an Array. Definition must be changed to:
     // - ArrayRCP<> ResidualNorm(Matrix const &Op, MultiVector const &X, MultiVector const &RHS)
@@ -267,6 +278,10 @@ namespace MueLu {
     */
     static RCP<Matrix> Transpose(Matrix& Op, bool optimizeTranspose = false, const std::string & label = std::string()) {
       return Utilities::Transpose(Op, optimizeTranspose, label);
+    }
+
+    static RCP<Xpetra::MultiVector<double,LocalOrdinal,GlobalOrdinal,Node> > ExtractCoordinatesFromParameterList(ParameterList& paramList) {
+      return Utilities::ExtractCoordinatesFromParameterList(paramList);
     }
 
   }; // class Utils
@@ -544,7 +559,9 @@ namespace MueLu {
     static Teuchos::ArrayRCP<Scalar>                                         GetMatrixDiagonal(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetMatrixDiagonal(A); }
     static RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >      GetMatrixDiagonalInverse(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A, Magnitude tol = Teuchos::ScalarTraits<Scalar>::eps()*100) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetMatrixDiagonalInverse(A,tol); }
     static Teuchos::ArrayRCP<Scalar>                                         GetLumpedMatrixDiagonal(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetLumpedMatrixDiagonal(A); }
+    static RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >      GetLumpedMatrixDiagonal(Teuchos::RCP<const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > A) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetLumpedMatrixDiagonal(A); }
     static RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >      GetMatrixOverlappedDiagonal(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetMatrixOverlappedDiagonal(A); }
+    static RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >      GetInverse(Teuchos::RCP<const Vector> v, Magnitude tol = Teuchos::ScalarTraits<Scalar>::eps()*100, Scalar tolReplacement = Teuchos::ScalarTraits<Scalar>::zero()) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetInverse(v,tol,tolReplacement); }
     static Teuchos::Array<Magnitude>                                         ResidualNorm(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& X, const Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& RHS) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::ResidualNorm(Op,X,RHS); }
     static RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > Residual(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& X, const Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& RHS) { return MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Residual(Op,X,RHS); }
     static void                                                              PauseForDebugger() { MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::PauseForDebugger(); }
@@ -761,7 +778,67 @@ namespace MueLu {
       return Teuchos::null;
     }
 
+    /*! @brief Extract coordinates from parameter list and return them in a Xpetra::MultiVector
+    */
+    static RCP<Xpetra::MultiVector<double,LocalOrdinal,GlobalOrdinal,Node> > ExtractCoordinatesFromParameterList(ParameterList& paramList) {
+      RCP<Xpetra::MultiVector<double,LocalOrdinal,GlobalOrdinal,Node> > coordinates = Teuchos::null;
 
+      // check whether coordinates are contained in parameter list
+      if(paramList.isParameter ("Coordinates") == false)
+        return coordinates;
+
+  #if defined(HAVE_MUELU_TPETRA)
+  #if ( defined(EPETRA_HAVE_OMP) && defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT)) || \
+      (!defined(EPETRA_HAVE_OMP) && defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))
+
+      // define Tpetra::MultiVector type with Scalar=float only if
+      // * ETI is turned off, since then the compiler will instantiate it automatically OR
+      // * Tpetra is instantiated on Scalar=float
+  #if !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) || defined(HAVE_TPETRA_INST_FLOAT)
+      typedef Tpetra::MultiVector<float, LocalOrdinal, GlobalOrdinal, Node> tfMV;
+      RCP<tfMV> floatCoords = Teuchos::null;
+  #endif
+
+      // define Tpetra::MultiVector type with Scalar=double only if
+      // * ETI is turned off, since then the compiler will instantiate it automatically OR
+      // * Tpetra is instantiated on Scalar=double
+      typedef Tpetra::MultiVector<double, LocalOrdinal, GlobalOrdinal, Node> tdMV;
+      RCP<tdMV> doubleCoords = Teuchos::null;
+      if (paramList.isType<RCP<tdMV> >("Coordinates")) {
+        // Coordinates are stored as a double vector
+        doubleCoords = paramList.get<RCP<tdMV> >("Coordinates");
+        paramList.remove("Coordinates");
+      }
+  #if !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) || defined(HAVE_TPETRA_INST_FLOAT)
+      else if (paramList.isType<RCP<tfMV> >("Coordinates")) {
+        // check if coordinates are stored as a float vector
+        floatCoords = paramList.get<RCP<tfMV> >("Coordinates");
+        paramList.remove("Coordinates");
+        doubleCoords = rcp(new tdMV(floatCoords->getMap(), floatCoords->getNumVectors()));
+        deep_copy(*doubleCoords, *floatCoords);
+      }
+  #endif
+      // We have the coordinates in a Tpetra double vector
+      if(doubleCoords != Teuchos::null) {
+        coordinates = Teuchos::rcp(new Xpetra::TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>(doubleCoords));
+        TEUCHOS_TEST_FOR_EXCEPT(doubleCoords->getNumVectors() != coordinates->getNumVectors());
+      }
+  #endif // Tpetra instantiated on GO=int and EpetraNode
+  #endif // endif HAVE_TPETRA
+
+  #if defined(HAVE_MUELU_EPETRA)
+      RCP<Epetra_MultiVector> doubleEpCoords;
+      if (paramList.isType<RCP<Epetra_MultiVector> >("Coordinates")) {
+        doubleEpCoords = paramList.get<RCP<Epetra_MultiVector> >("Coordinates");
+        paramList.remove("Coordinates");
+        RCP<Xpetra::EpetraMultiVectorT<GlobalOrdinal,Node> > epCoordinates = Teuchos::rcp(new Xpetra::EpetraMultiVectorT<GlobalOrdinal,Node>(doubleEpCoords));
+        coordinates = rcp_dynamic_cast<Xpetra::MultiVector<double,LocalOrdinal,GlobalOrdinal,Node> >(epCoordinates);
+        TEUCHOS_TEST_FOR_EXCEPT(doubleEpCoords->NumVectors() != Teuchos::as<int>(coordinates->getNumVectors()));
+      }
+  #endif
+      TEUCHOS_TEST_FOR_EXCEPT(Teuchos::is_null(coordinates));
+      return coordinates;
+    }
   }; // class Utilities (specialization SC=double LO=GO=int)
 
 
@@ -772,43 +849,21 @@ namespace MueLu {
     // static_assert(false, "Error: NOT a Kokkos::View");
   };
 
-  // Arg3 == MemoryTraits
-  template < class DataType, class Arg1, class Arg2, unsigned U, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, Arg1, Arg2, Kokkos::MemoryTraits<U> >, T> {
-    using type = Kokkos::View< DataType, Arg1, Arg2, Kokkos::MemoryTraits<U|T> >;
+  template < class MT, unsigned T >
+  struct CombineMemoryTraits {
+    // empty
   };
 
-  // Arg2 == MemoryTraits
-  template < class DataType, class Arg1, unsigned U, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, Arg1, Kokkos::MemoryTraits<U>, void >, T> {
-    using type = Kokkos::View< DataType, Arg1, Kokkos::MemoryTraits<U|T>, void >;
+  template < unsigned U, unsigned T>
+  struct CombineMemoryTraits<Kokkos::MemoryTraits<U>, T> {
+    typedef Kokkos::MemoryTraits<U|T> type;
   };
 
-
-  // Arg1 == MemoryTraits
-  template < class DataType, unsigned U, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, Kokkos::MemoryTraits<U>, void, void >, T> {
-    using type = Kokkos::View< DataType, Kokkos::MemoryTraits<U|T>, void, void >;
+  template < class DataType, unsigned T, class... Pack >
+  struct AppendTrait< Kokkos::View< DataType, Pack... >, T> {
+    typedef Kokkos::View< DataType, Pack... > view_type;
+    using type = Kokkos::View< DataType, typename view_type::array_layout, typename view_type::device_type, typename CombineMemoryTraits<typename view_type::memory_traits,T>::type >;
   };
-
-  // 2 arguments -- no traits
-  template < class DataType, class Arg1, class Arg2, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, Arg1, Arg2, void >, T> {
-    using type = Kokkos::View< DataType, Arg1, Arg2, Kokkos::MemoryTraits<T> >;
-  };
-
-  // 1 arguments -- no traits
-  template < class DataType, class Arg1, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, Arg1, void, void >, T> {
-    using type = Kokkos::View< DataType, Arg1, Kokkos::MemoryTraits<T>, void >;
-  };
-
-  // 0 arguments
-  template < class DataType, unsigned T >
-  struct AppendTrait< Kokkos::View< DataType, void, void, void >, T> {
-    using type = Kokkos::View< DataType, Kokkos::MemoryTraits<T>, void, void >;
-  };
-
 
 } //namespace MueLu
 

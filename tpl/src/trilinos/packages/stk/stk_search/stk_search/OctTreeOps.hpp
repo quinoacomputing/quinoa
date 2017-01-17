@@ -49,8 +49,6 @@
 #include <stk_util/parallel/ParallelComm.hpp>
 #include <stk_util/parallel/ParallelReduce.hpp>
 #include <stk_util/environment/ReportHandler.hpp>
-#include <stk_search/IdentProc.hpp>
-#include <stk_search/BoundingBox.hpp>
 #include <stk_search/OctTree.hpp>
 
 
@@ -167,7 +165,6 @@ void box_global_bounds(
   const RangeBoundingBox  * const arg_range_boxes ,
   float        * const arg_global_box )
 {
-  typedef typename DomainBoundingBox::first_type box_type;
   enum { Dim = 3};
 
 #if defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1210)
@@ -859,7 +856,6 @@ void createSearchTree(
 {
   typedef std::pair<DomainBox,DomainIdent> DomainBoundingBox;
   typedef std::pair<RangeBox,RangeIdent> RangeBoundingBox;
-  typedef std::map<stk::OctTreeKey, std::pair<std::list<DomainBoundingBox>, std::list<RangeBoundingBox> > > SearchTree;
 
   stk::OctTreeKey covering[8];
   unsigned number = 0u;
@@ -1021,7 +1017,6 @@ bool oct_tree_proximity_search(
     std::set< std::pair<DomainKey, RangeKey> > local_relation ;
 
     {
-      //WTF???
       const double tolerance = 0.001 ;
 
       std::vector< stk::OctTreeKey > cuts ;

@@ -100,7 +100,12 @@ Piro::LOCASolver<Scalar>::LOCASolver(
   }
 
   const NOX::Thyra::Vector initialGuess(*model->getNominalValues().get_x());
-  group_ = Teuchos::rcp(new LOCA::Thyra::Group(globalData_, initialGuess, model, paramVector_, l));
+
+  // Don't set a scaling vector here; it'll make calling LOCA impossible with a
+  // Jacobian that is not a Tpetra::RowMatrix (but only a Tpetra::Operator).
+  Teuchos::RCP<Thyra::VectorBase<double> > scaling_vector_ = Teuchos::null;
+
+  group_ = Teuchos::rcp(new LOCA::Thyra::Group(globalData_, initialGuess, model, paramVector_, l, false, scaling_vector_));
   group_->setSaveDataStrategy(saveDataStrategy_);
 
   // TODO: Create non-trivial stopping criterion for the stepper

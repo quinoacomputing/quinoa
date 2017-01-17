@@ -119,9 +119,6 @@ void testFromDataFile(
   problem.solve();
   if (me == 0)
     cout << "Problem solved" << endl;
-
-  if (comm->getRank() == 0)
-    problem.printMetrics(cout);
 }
 
 void serialTest(int numParts, bool doRemap)
@@ -164,8 +161,6 @@ void serialTest(int numParts, bool doRemap)
 #endif
 
   serialProblem.solve();
-
-  serialProblem.printMetrics(cout);
 }
 
 void meshCoordinatesTest(const RCP<const Teuchos::Comm<int> > & comm)
@@ -200,9 +195,6 @@ void meshCoordinatesTest(const RCP<const Teuchos::Comm<int> > & comm)
 #endif
 
   problem.solve();
-
-  if (comm->getRank()  == 0)
-    problem.printMetrics(cout);
 }
 
 int main(int argc, char *argv[])

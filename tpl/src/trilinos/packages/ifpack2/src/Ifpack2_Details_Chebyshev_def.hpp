@@ -41,32 +41,6 @@
 //@HEADER
 */
 
-// ***********************************************************************
-//
-//      Ifpack2: Templated Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2004) Sandia Corporation
-//
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
-//
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
-// ***********************************************************************
-
 #ifndef IFPACK2_DETAILS_CHEBYSHEV_DEF_HPP
 #define IFPACK2_DETAILS_CHEBYSHEV_DEF_HPP
 
@@ -190,16 +164,15 @@ struct GlobalReciprocalThreshold<TpetraVectorType, false> {
   compute (TpetraVectorType& X,
            const typename TpetraVectorType::scalar_type& minVal)
   {
-    typedef typename TpetraVectorType::dual_view_type::non_const_value_type value_type;
-    typedef typename TpetraVectorType::execution_space::memory_space memory_space;
+    typedef typename TpetraVectorType::impl_scalar_type value_type;
+    typedef typename TpetraVectorType::device_type::memory_space memory_space;
 
-    auto X_lcl = X.getDualView ();
-    X_lcl.template sync<memory_space> ();
-    X_lcl.template modify<memory_space> ();
+    X.template sync<memory_space> ();
+    X.template modify<memory_space> ();
 
     const value_type minValS = static_cast<value_type> (minVal);
-
-    auto X_0 = Kokkos::subview (X_lcl.d_view, Kokkos::ALL (), 0);
+    auto X_0 = Kokkos::subview (X.template getLocalView<memory_space> (),
+                                Kokkos::ALL (), 0);
     LocalReciprocalThreshold<decltype (X_0) >::compute (X_0, minValS);
   }
 };
@@ -293,6 +266,7 @@ Chebyshev (Teuchos::RCP<const row_matrix_type> A, Teuchos::ParameterList& params
   computedLambdaMax_ (STS::nan ()),
   computedLambdaMin_ (STS::nan ()),
   lambdaMaxForApply_ (STS::nan ()),
+  boostFactor_(Teuchos::as<ST> (1.1)),
   lambdaMinForApply_ (STS::nan ()),
   eigRatioForApply_ (STS::nan ()),
   userLambdaMax_ (STS::nan ()),
@@ -338,6 +312,7 @@ setParameters (Teuchos::ParameterList& plist)
   // ML an Epetra matrix, it will use Ifpack for Chebyshev, in which
   // case it would defer to Ifpack's default settings.)
   const ST defaultEigRatio = Teuchos::as<ST> (30);
+  const double defaultBoostFactor = Teuchos::as<double>(1.1);
   const ST defaultMinDiagVal = STS::eps ();
   const int defaultNumIters = 1;
   const int defaultEigMaxIters = 10;
@@ -354,6 +329,7 @@ setParameters (Teuchos::ParameterList& plist)
   ST lambdaMax = defaultLambdaMax;
   ST lambdaMin = defaultLambdaMin;
   ST eigRatio = defaultEigRatio;
+  double boostFactor = defaultBoostFactor;
   ST minDiagVal = defaultMinDiagVal;
   int numIters = defaultNumIters;
   int eigMaxIters = defaultEigMaxIters;
@@ -532,6 +508,13 @@ setParameters (Teuchos::ParameterList& plist)
     "parameter (also called \"smoother: Chebyshev alpha\") must be >= 1, "
     "but you supplied the value " << eigRatio << ".");
 
+  boostFactor = plist.get("chebyshev: boost factor", defaultBoostFactor);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    boostFactor < Teuchos::as<double>(1.0),
+    std::invalid_argument,
+    "Ifpack2::Chebyshev::setParameters: \"chebyshev: boost factor\""
+    "parameter must be >= 1, but you supplied the value " << boostFactor << ".");
+
   // Same name in Ifpack2 and Ifpack.
   minDiagVal = plist.get ("chebyshev: min diagonal value", minDiagVal);
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -623,6 +606,7 @@ setParameters (Teuchos::ParameterList& plist)
   userLambdaMax_ = lambdaMax;
   userLambdaMin_ = lambdaMin;
   userEigRatio_ = eigRatio;
+  boostFactor_ = Teuchos::as<ST>(boostFactor);
   minDiagVal_ = minDiagVal;
   numIters_ = numIters;
   eigMaxIters_ = eigMaxIters;
@@ -638,7 +622,7 @@ void
 Chebyshev<ScalarType, MV>::reset ()
 {
   D_ = Teuchos::null;
-  diagOffsets_ = Teuchos::null;
+  diagOffsets_ = offsets_type ();
   savedDiagOffsets_ = false;
   V_ = Teuchos::null;
   W_ = Teuchos::null;
@@ -699,7 +683,12 @@ Chebyshev<ScalarType, MV>::compute ()
     if (D_.is_null ()) { // We haven't computed D_ before
       if (! A_crsMat.is_null () && A_crsMat->isStaticGraph ()) {
         // It's a CrsMatrix with a const graph; cache diagonal offsets.
-        A_crsMat->getLocalDiagOffsets (diagOffsets_);
+        const size_t lclNumRows = A_crsMat->getNodeNumRows ();
+        if (diagOffsets_.dimension_0 () < lclNumRows) {
+          diagOffsets_ = offsets_type (); // clear first to save memory
+          diagOffsets_ = offsets_type ("offsets", lclNumRows);
+        }
+        A_crsMat->getCrsGraph ()->getLocalDiagOffsets (diagOffsets_);
         savedDiagOffsets_ = true;
         D_ = makeInverseDiagonal (*A_, true);
       }
@@ -712,7 +701,12 @@ Chebyshev<ScalarType, MV>::compute ()
         // It's a CrsMatrix with a const graph; cache diagonal offsets
         // if we haven't already.
         if (! savedDiagOffsets_) {
-          A_crsMat->getLocalDiagOffsets (diagOffsets_);
+          const size_t lclNumRows = A_crsMat->getNodeNumRows ();
+          if (diagOffsets_.dimension_0 () < lclNumRows) {
+            diagOffsets_ = offsets_type (); // clear first to save memory
+            diagOffsets_ = offsets_type ("offsets", lclNumRows);
+          }
+          A_crsMat->getCrsGraph ()->getLocalDiagOffsets (diagOffsets_);
           savedDiagOffsets_ = true;
         }
         // Now we're guaranteed to have cached diagonal offsets.
@@ -926,7 +920,7 @@ makeInverseDiagonal (const row_matrix_type& A, const bool useDiagOffsets) const
         "if you have not previously saved offsets of diagonal entries.  "
         "This situation should never arise if this class is used properly.  "
         "Please report this bug to the Ifpack2 developers.");
-      A_crsMat->getLocalDiagCopy (*D_rowMap, diagOffsets_ ());
+      A_crsMat->getLocalDiagCopy (*D_rowMap, diagOffsets_);
     }
   }
   else {
@@ -1103,7 +1097,7 @@ ifpackApplyImpl (const op_type& A,
 
   // Initialize coefficients
   const ST alpha = lambdaMax / eigRatio;
-  const ST beta = Teuchos::as<ST> (1.1) * lambdaMax;
+  const ST beta = boostFactor_ * lambdaMax;
   const ST delta = two / (beta - alpha);
   const ST theta = (beta + alpha) / two;
   const ST s1 = theta * delta;
@@ -1244,6 +1238,7 @@ powerMethodWithInitGuess (const op_type& A,
     "compute the initial guess), or because the norm2 method has a bug.  The "
     "first is not impossible, but unlikely.");
 
+  //std::cerr.precision(15);
   //std::cerr << "Original norm1(x): " << x.norm1 () << ", norm2(x): " << norm << std::endl;
   x.scale (one / norm);
   //std::cerr << "norm1(x.scale(one/norm)): " << x.norm1 () << std::endl;
@@ -1262,6 +1257,7 @@ powerMethodWithInitGuess (const op_type& A,
     }
     x.update (one / norm, y, zero);
   }
+  //std::cerr << "lambdaMax: " << lambdaMax << std::endl;
   return lambdaMax;
 }
 
@@ -1338,6 +1334,7 @@ description () const {
       << ", lambdaMax: " << lambdaMaxForApply_
       << ", alpha: " << eigRatioForApply_
       << ", lambdaMin: " << lambdaMinForApply_
+      << ", boost factor: " << boostFactor_
       << "}";
   return oss.str();
 }

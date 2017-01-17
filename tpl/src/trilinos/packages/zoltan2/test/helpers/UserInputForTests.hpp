@@ -52,6 +52,7 @@
 
 #include "Zoltan2_TestHelpers.hpp"
 #include <Zoltan2_XpetraTraits.hpp>
+#include <Zoltan2_Typedefs.hpp>
 
 #include <Tpetra_MultiVector.hpp>
 #include <Tpetra_CrsMatrix.hpp>
@@ -89,6 +90,7 @@ using Teuchos::arcp;
 using Teuchos::rcp_const_cast;
 using Teuchos::ParameterList;
 using namespace std;
+using namespace Zoltan2_TestingFramework;
 
 /*! \brief A class that generates typical user input for testing.
  *
@@ -125,23 +127,11 @@ typedef enum USERINPUT_FILE_FORMATS{MATRIX_MARKET, CHACO, GEOMGEN, PAMGEN} USERI
 class UserInputForTests
 {
 public:
-  
-  typedef Tpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t, znode_t> tcrsMatrix_t;
-  typedef Tpetra::CrsGraph<zlno_t, zgno_t, znode_t> tcrsGraph_t;
-  typedef Tpetra::Vector<zscalar_t, zlno_t, zgno_t, znode_t> tVector_t;
-  typedef Tpetra::MultiVector<zscalar_t, zlno_t, zgno_t, znode_t> tMVector_t;
-  
-  typedef Xpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t, znode_t> xcrsMatrix_t;
-  typedef Xpetra::CrsGraph<zlno_t, zgno_t, znode_t> xcrsGraph_t;
-  typedef Xpetra::Vector<zscalar_t, zlno_t, zgno_t, znode_t> xVector_t;
-  typedef Xpetra::MultiVector<zscalar_t, zlno_t, zgno_t, znode_t> xMVector_t;
-  
+
   typedef Tpetra::Map<zlno_t, zgno_t, znode_t> map_t;
   typedef Tpetra::Export<zlno_t, zgno_t, znode_t> export_t;
   typedef Tpetra::Import<zlno_t, zgno_t, znode_t> import_t;
   typedef map_t::node_type default_znode_t;
-  typedef GeometricGen::GeometricGenerator<zscalar_t, zlno_t, zgno_t, znode_t>
-  geometricgen_t;
   
 
   /*! \brief Constructor that reads in a matrix/graph from disk.
@@ -548,38 +538,38 @@ chaco_offset(0), chaco_break_pnt(CHACO_LINE_LENGTH)
 }
 
 
-RCP<UserInputForTests::tMVector_t> UserInputForTests::getUICoordinates()
+RCP<Zoltan2_TestingFramework::tMVector_t> UserInputForTests::getUICoordinates()
 {
   if (xyz_.is_null())
     throw std::runtime_error("could not read coord file");
   return xyz_;
 }
 
-RCP<UserInputForTests::tMVector_t> UserInputForTests::getUIWeights()
+RCP<Zoltan2_TestingFramework::tMVector_t> UserInputForTests::getUIWeights()
 {
   return vtxWeights_;
 }
 
-RCP<UserInputForTests::tMVector_t> UserInputForTests::getUIEdgeWeights()
+RCP<Zoltan2_TestingFramework::tMVector_t> UserInputForTests::getUIEdgeWeights()
 {
   return edgWeights_;
 }
 
-RCP<UserInputForTests::tcrsMatrix_t> UserInputForTests::getUITpetraCrsMatrix()
+RCP<Zoltan2_TestingFramework::tcrsMatrix_t> UserInputForTests::getUITpetraCrsMatrix()
 {
   if (M_.is_null())
     throw std::runtime_error("could not read mtx file");
   return M_;
 }
 
-RCP<UserInputForTests::tcrsGraph_t> UserInputForTests::getUITpetraCrsGraph()
+RCP<Zoltan2_TestingFramework::tcrsGraph_t> UserInputForTests::getUITpetraCrsGraph()
 {
   if (M_.is_null())
     throw std::runtime_error("could not read mtx file");
   return rcp_const_cast<tcrsGraph_t>(M_->getCrsGraph());
 }
 
-RCP<UserInputForTests::tVector_t> UserInputForTests::getUITpetraVector()
+RCP<Zoltan2_TestingFramework::tVector_t> UserInputForTests::getUITpetraVector()
 {
   RCP<tVector_t> V = rcp(new tVector_t(M_->getRowMap(),  1));
   V->randomize();
@@ -587,7 +577,7 @@ RCP<UserInputForTests::tVector_t> UserInputForTests::getUITpetraVector()
   return V;
 }
 
-RCP<UserInputForTests::tMVector_t> UserInputForTests::getUITpetraMultiVector(int nvec)
+RCP<Zoltan2_TestingFramework::tMVector_t> UserInputForTests::getUITpetraMultiVector(int nvec)
 {
   RCP<tMVector_t> mV = rcp(new tMVector_t(M_->getRowMap(), nvec));
   mV->randomize();
@@ -595,26 +585,26 @@ RCP<UserInputForTests::tMVector_t> UserInputForTests::getUITpetraMultiVector(int
   return mV;
 }
 
-RCP<UserInputForTests::xcrsMatrix_t> UserInputForTests::getUIXpetraCrsMatrix()
+RCP<Zoltan2_TestingFramework::xcrsMatrix_t> UserInputForTests::getUIXpetraCrsMatrix()
 {
   if (M_.is_null())
     throw std::runtime_error("could not read mtx file");
   return xM_;
 }
 
-RCP<UserInputForTests::xcrsGraph_t> UserInputForTests::getUIXpetraCrsGraph()
+RCP<Zoltan2_TestingFramework::xcrsGraph_t> UserInputForTests::getUIXpetraCrsGraph()
 {
   if (M_.is_null())
     throw std::runtime_error("could not read mtx file");
   return rcp_const_cast<xcrsGraph_t>(xM_->getCrsGraph());
 }
 
-RCP<UserInputForTests::xVector_t> UserInputForTests::getUIXpetraVector()
+RCP<Zoltan2_TestingFramework::xVector_t> UserInputForTests::getUIXpetraVector()
 {
   return Zoltan2::XpetraTraits<tVector_t>::convertToXpetra(getUITpetraVector());
 }
 
-RCP<UserInputForTests::xMVector_t> UserInputForTests::getUIXpetraMultiVector(int nvec)
+RCP<Zoltan2_TestingFramework::xMVector_t> UserInputForTests::getUIXpetraMultiVector(int nvec)
 {
   RCP<tMVector_t> tMV = getUITpetraMultiVector(nvec);
   return Zoltan2::XpetraTraits<tMVector_t>::convertToXpetra(tMV);
@@ -1493,18 +1483,19 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
     
     memset(graphCounts, 0, 5*sizeof(int));
     
-    // This function is in the Zoltan C-library.
-    
     // Reads in the file and closes it when done.
     fail = chaco_input_graph(fptr, fname.c_str(), &start, &adj,
                              &nvtxs, &nVwgts, &vwgts, &nEwgts, &ewgts);
     
     // There are Zoltan2 test graphs that have no edges.
     
+    // nEwgts must be 1 or 0 - add error
+
     if (start == NULL)
       haveEdges = false;
     
-    if (verbose_){
+    if (verbose_)
+    {
       std::cout << "UserInputForTests, " << nvtxs << " vertices,";
       if (haveEdges)
         std::cout << start[nvtxs] << " edges,";
@@ -1541,11 +1532,6 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
       memset(nzPerRow, 0, sizeof(size_t) * nvtxs);
     }
     
-    if (haveEdges){
-      free(start);
-      start = NULL;
-    }
-    
     // Make sure base gid is zero.
     
     if (nedges){
@@ -1578,7 +1564,6 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
   RCP<const map_t> fromMap;
   
   // Create a Tpetra::CrsMatrix where rank 0 has entire matrix.
-  
   if (rank == 0){
     fromMap = rcp(new map_t(nvtxs, nvtxs, base, tcomm_));
     
@@ -1597,12 +1582,16 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
       adj = NULL;
       
       zgno_t *nextId = edgeIds;
-      Array<zscalar_t> values(maxRowLen, 1.0);
-      
+      Array<zscalar_t> values(nedges, 1.0);
+      if (nedges > 0 && nEwgts > 0) {
+        for (int i=0; i < nedges; i++)
+          values[i] = ewgts[i];
+      }
+
       for (int i=0; i < nvtxs; i++){
         if (nzPerRow[i] > 0){
           ArrayView<const zgno_t> rowNz(nextId, nzPerRow[i]);
-          fromMatrix->insertGlobalValues(i, rowNz, values.view(0,nzPerRow[i]));
+          fromMatrix->insertGlobalValues(i, rowNz, values.view(start[i], start[i+1] - start[i]));
           nextId += nzPerRow[i];
         }
       }
@@ -1630,6 +1619,22 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
     fromMatrix->fillComplete();
   }
   
+#ifdef KDDKDDPRINT
+  if (rank == 0) {
+    size_t sz = fromMatrix->getNodeMaxNumRowEntries();
+    Teuchos::Array<zgno_t> indices(sz);
+    Teuchos::Array<zscalar_t> values(sz);
+    for (size_t i = 0; i < fromMatrix->getNodeNumRows(); i++) {
+      zgno_t gid = fromMatrix->getRowMap()->getGlobalElement(i);
+      size_t num;
+      fromMatrix->getGlobalRowCopy(gid, indices(), values(), num);
+      std::cout << "ROW " << gid << ": ";
+      for (size_t j = 0; j < num; j++)
+        std::cout << indices[j] << " ";
+      std::cout << std::endl;
+    }
+  }
+#endif
   
   RCP<const map_t> toMap;
   RCP<tcrsMatrix_t> toMatrix;
@@ -1721,7 +1726,8 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
   // Edge weights, if any
   
   if (haveEdges && nEwgts > 0){
-    
+
+	/*// No longer distributing edge weights
     ArrayRCP<zscalar_t> weightBuf;
     ArrayView<const zscalar_t> *wgts = new ArrayView<const zscalar_t> [nEwgts];
     
@@ -1754,6 +1760,7 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
     RCP<tMVector_t> fromEdgeWeights;
     RCP<tMVector_t> toEdgeWeights;
     RCP<import_t> edgeImporter;
+
     if (distributeInput) {
       fromEdgeWeights =
       rcp(new tMVector_t(fromMap, eweights.view(0, nEwgts), nEwgts));
@@ -1765,6 +1772,28 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
       toEdgeWeights = fromEdgeWeights;
     
     edgWeights_ = toEdgeWeights;
+    */
+
+    toMap = rcp(new map_t(nedges, M_->getNodeNumEntries(), base, tcomm_));
+    edgWeights_ = rcp(new tMVector_t(toMap, nEwgts));
+
+    size_t maxSize = M_->getNodeMaxNumRowEntries();
+    Array<zlno_t> colind(maxSize);
+    Array<zscalar_t> vals(maxSize);
+    size_t nEntries;
+
+    for (size_t i = 0, idx = 0; i < M_->getNodeNumRows(); i++) {
+      M_->getLocalRowCopy(i, colind, vals, nEntries);
+      for (size_t j = 0; j < nEntries; j++) {
+        edgWeights_->replaceLocalValue(idx, 0, vals[j]); // Assuming nEwgts==1
+        idx++;
+      }
+    }
+  }
+
+  if (start) {
+    free(start);
+    start = NULL;
   }
 }
 

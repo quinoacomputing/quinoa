@@ -104,7 +104,7 @@ inverse_full_pivot(Tensor<T, N> const & A);
 /// \return Subtensor with i-row and j-col deleted.
 ///
 template<typename T, Index N>
-Tensor<T, dimension_subtract<N, 1>::value >
+Tensor<T, N>
 subtensor(Tensor<T, N> const & A, Index const i, Index const j);
 
 ///
@@ -248,14 +248,6 @@ log_rotation(Tensor<T, N> const & R);
 template<typename T, Index N>
 Tensor<T, N>
 log_rotation_pi(Tensor<T, N> const & R);
-
-///
-/// Gaussian Elimination with partial pivot
-/// \return \f$ xvec \f$
-///
-template<typename T, Index N>
-Tensor<T, N>
-gaussian_elimination(Tensor<T, N> const & A);
 
 ///
 /// Apply Givens-Jacobi rotation on the left in place.

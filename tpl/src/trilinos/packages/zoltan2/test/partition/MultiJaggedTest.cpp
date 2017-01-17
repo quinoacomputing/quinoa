@@ -626,8 +626,10 @@ int GeometricGenInterface(RCP<const Teuchos::Comm<int> > &comm,
     vector <int> stride;
 
     typedef Zoltan2::XpetraMultiVectorAdapter<tMVector_t> inputAdapter_t;
+    typedef Zoltan2::EvaluatePartition<inputAdapter_t> quality_t;
+    typedef inputAdapter_t::base_adapter_t base_adapter_t;
     //inputAdapter_t ia(coordsConst);
-    inputAdapter_t ia(coordsConst,weights, stride);
+    inputAdapter_t *ia = new inputAdapter_t(coordsConst,weights, stride);
 
     Teuchos::RCP<Teuchos::ParameterList> params ;
 
@@ -645,7 +647,6 @@ int GeometricGenInterface(RCP<const Teuchos::Comm<int> > &comm,
     params->set("timer_output_stream" , "std::cout");
 
     params->set("algorithm", "multijagged");
-    params->set("compute_metrics", "true");
     if (test_boxes)
         params->set("mj_keep_part_boxes", 1);
     if (rectilinear)
@@ -668,7 +669,7 @@ int GeometricGenInterface(RCP<const Teuchos::Comm<int> > &comm,
 
     Zoltan2::PartitioningProblem<inputAdapter_t> *problem;
     try {
-        problem = new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia,
+        problem = new Zoltan2::PartitioningProblem<inputAdapter_t>(ia,
                                                    params.getRawPtr(),
                                                    comm);
     }
@@ -678,8 +679,14 @@ int GeometricGenInterface(RCP<const Teuchos::Comm<int> > &comm,
         problem->solve();
     }
     CATCH_EXCEPTIONS_AND_RETURN("solve()")
+
+    // create metric object
+
+    RCP<quality_t> metricObject = 
+      rcp(new quality_t(ia,params.getRawPtr(),comm,&problem->getSolution()));
+
     if (comm->getRank() == 0){
-        problem->printMetrics(cout);
+      metricObject->printMetrics(cout);
     }
     problem->printTimers();
 
@@ -700,6 +707,7 @@ int GeometricGenInterface(RCP<const Teuchos::Comm<int> > &comm,
         delete [] coords;
     }
     delete problem;
+    delete ia;
     return ierr;
 }
 
@@ -730,7 +738,9 @@ int testFromDataFile(
 
     RCP<const tMVector_t> coordsConst = rcp_const_cast<const tMVector_t>(coords);
     typedef Zoltan2::XpetraMultiVectorAdapter<tMVector_t> inputAdapter_t;
-    inputAdapter_t ia(coordsConst);
+    typedef Zoltan2::EvaluatePartition<inputAdapter_t> quality_t;
+    typedef inputAdapter_t::base_adapter_t base_adapter_t;
+    inputAdapter_t *ia = new inputAdapter_t(coordsConst);
 
     Teuchos::RCP <Teuchos::ParameterList> params ;
 
@@ -743,7 +753,6 @@ int testFromDataFile(
     }
 
     //params->set("timer_output_stream" , "std::cout");
-    params->set("compute_metrics", "true");
     if (test_boxes)
         params->set("mj_keep_part_boxes", 1);
     if (rectilinear)
@@ -772,7 +781,7 @@ int testFromDataFile(
 
     Zoltan2::PartitioningProblem<inputAdapter_t> *problem;
     try {
-        problem = new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia, 
+        problem = new Zoltan2::PartitioningProblem<inputAdapter_t>(ia, 
                                                    params.getRawPtr(),
                                                    comm);
     }
@@ -864,8 +873,13 @@ int testFromDataFile(
             << " part " << zparts[i] << endl;
     }
 
+    // create metric object
+
+    RCP<quality_t> metricObject =
+      rcp(new quality_t(ia,params.getRawPtr(),comm,&problem->getSolution()));
+
     if (comm->getRank() == 0){
-        problem->printMetrics(cout);
+      metricObject->printMetrics(cout);
         cout << "testFromDataFile is done " << endl;
     }
 
@@ -878,6 +892,7 @@ int testFromDataFile(
     }
 
     delete problem;
+    delete ia;
     return ierr;
 }
 
@@ -967,7 +982,9 @@ int testFromSeparateDataFiles(
     RCP<const tMVector_t> coordsConst = rcp_const_cast<const tMVector_t>(coords);
 
     typedef Zoltan2::XpetraMultiVectorInput<tMVector_t> inputAdapter_t;
-    inputAdapter_t ia(coordsConst);
+    typedef Zoltan2::EvaluatePartition<inputAdapter_t> quality_t;
+    typedef inputAdapter_t::base_adapter_t base_adapter_t;
+    inputAdapter_t *ia = new inputAdapter_t(coordsConst);
 
     Teuchos::RCP <Teuchos::ParameterList> params ;
 
@@ -980,14 +997,13 @@ int testFromSeparateDataFiles(
     }
 
     //params->set("timer_output_stream" , "std::cout");
-    params->set("compute_metrics", "true");
     params->set("algorithm", "multijagged");
     if(imbalance > 1){
         params->set("imbalance_tolerance", double(imbalance));
     }
 
     if(pqParts != ""){
-        params->set("pqParts", pqParts);
+        params->set("mj_parts", pqParts);
     }
     if(numParts > 0){
         params->set("num_global_parts", numParts);
@@ -1019,7 +1035,7 @@ int testFromSeparateDataFiles(
     Zoltan2::PartitioningProblem<inputAdapter_t> *problem;
     try {
         problem = 
-          new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia,
+          new Zoltan2::PartitioningProblem<inputAdapter_t>(ia,
                                                            params.getRawPtr(),
                                                            comm);
     }
@@ -1040,8 +1056,13 @@ int testFromSeparateDataFiles(
             << " part " << zparts[i] << endl;
     }
 
+    //create metric object
+
+    RCP<quality_t> metricObject =
+      rcp(new quality_t(ia,params.getRawPtr(),comm,&problem->getSolution()));
+
     if (comm->getRank() == 0){
-        problem->printMetrics(cout);
+      metricObject->printMetrics(cout);
         cout << "testFromDataFile is done " << endl;
     }
 
@@ -1054,6 +1075,7 @@ int testFromSeparateDataFiles(
     }
 
     delete problem;
+    delete ia;
     return ierr;
 }
 #endif

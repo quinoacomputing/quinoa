@@ -53,9 +53,9 @@ namespace impl {
 //They are intended for use internally in the implementation of
 //stk-mesh capabilities.
 //----------------------------------------------------------------------
+void find_entities_these_nodes_have_in_common(const BulkData& mesh, stk::mesh::EntityRank rank, unsigned numNodes, const Entity* nodes, std::vector<Entity>& entity_vector);
 
-void find_elements_these_nodes_have_in_common(const BulkData& mesh, unsigned numNodes, const Entity* nodes, std::vector<Entity>& elems);
-void find_faces_these_nodes_have_in_common(const BulkData& mesh, unsigned numNodes, const Entity* nodes, std::vector<Entity>& faces);
+void find_entities_with_larger_ids_these_nodes_have_in_common_and_locally_owned(stk::mesh::EntityId id, const BulkData& mesh, stk::mesh::EntityRank rank, unsigned numNodes, const Entity* nodes, std::vector<Entity>& entity_vector);
 
 bool do_these_nodes_have_any_shell_elements_in_common(BulkData& mesh, unsigned numNodes, const Entity* nodes);
 
@@ -77,6 +77,7 @@ void internal_generate_parallel_change_lists( const BulkData & mesh ,
                                               std::vector<EntityProc> & shared_change ,
                                               std::vector<EntityProc> & ghosted_change );
 
+stk::mesh::EntityVector convert_keys_to_entities(stk::mesh::BulkData &bulk, const std::vector<stk::mesh::EntityKey>& node_keys);
 
 void internal_clean_and_verify_parallel_change(
   const BulkData & mesh ,
@@ -86,6 +87,16 @@ int check_no_shared_elements_or_higher(const BulkData& mesh);
 int check_for_connected_nodes(const BulkData& mesh);
 bool check_permutations_on_all(stk::mesh::BulkData& mesh);
 void find_side_nodes(BulkData& mesh, Entity element, int side_ordinal, EntityVector & permuted_face_nodes);
+
+class GlobalIdEntitySorter : public EntitySorterBase
+{
+public:
+    virtual void sort(stk::mesh::BulkData &bulk, EntityVector& entityVector) const
+    {
+        std::sort(entityVector.begin(), entityVector.end(), EntityLess(bulk));
+    }
+};
+
 
 template<class DO_THIS_FOR_ENTITY_IN_CLOSURE, class DESIRED_ENTITY>
 void VisitClosureGeneral(
@@ -457,6 +468,10 @@ struct HashValueForEntityVector
         return hashValue;
     }
 };
+
+void convert_part_ordinals_to_parts(const stk::mesh::MetaData& meta,
+                                    const OrdinalVector& input_ordinals,
+                                    stk::mesh::PartVector& output_parts);
 
 } // namespace impl
 } // namespace mesh

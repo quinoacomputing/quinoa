@@ -65,14 +65,16 @@ LOCA::Thyra::Group::Group(
         const Teuchos::RCP< ::Thyra::ModelEvaluator<double> >& model,
         const LOCA::ParameterVector& p,
         int p_index,
-        bool impl_dfdp) :
-  NOX::Thyra::Group(initial_guess, model),
+        bool impl_dfdp,
+        const Teuchos::RCP<const ::Thyra::VectorBase<double> >& weight_vector) :
+  NOX::Thyra::Group(initial_guess, model, weight_vector),
   LOCA::Abstract::Group(global_data),
   globalData(global_data),
   params(p),
   param_index(p_index),
   saveDataStrategy(),
-  implement_dfdp(impl_dfdp)
+  implement_dfdp(impl_dfdp),
+  weight_vec_(weight_vector)
 {
   updateThyraParamView();
   updateThyraXDot();
@@ -411,16 +413,20 @@ LOCA::Thyra::Group::computeShiftedMatrix(double alpha, double beta)
   if (in_args_.supports(::Thyra::ModelEvaluatorBase::IN_ARG_x_dot))
     in_args_.set_x_dot(x_dot_vec);
   in_args_.set_p(param_index, param_thyra_vec);
-  in_args_.set_alpha(-beta);
-  in_args_.set_beta(alpha);
+  if (in_args_.supports(::Thyra::ModelEvaluatorBase::IN_ARG_alpha))
+    in_args_.set_alpha(-beta);
+  if (in_args_.supports(::Thyra::ModelEvaluatorBase::IN_ARG_beta))
+    in_args_.set_beta(alpha);
   out_args_.set_W_op(lop_);
 
   model_->evalModel(in_args_, out_args_);
 
   in_args_.set_x(Teuchos::null);
   in_args_.set_p(param_index, Teuchos::null);
-  in_args_.set_alpha(0.0);
-  in_args_.set_beta(1.0);
+  if (in_args_.supports(::Thyra::ModelEvaluatorBase::IN_ARG_alpha))
+    in_args_.set_alpha(0.0);
+  if (in_args_.supports(::Thyra::ModelEvaluatorBase::IN_ARG_beta))
+    in_args_.set_beta(1.0);
   out_args_.set_W_op(Teuchos::null);
 
   is_valid_jacobian_ = false;

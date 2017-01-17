@@ -1,6 +1,4 @@
 
-INCLUDE(TribitsPackageMacros)
-INCLUDE(TribitsAddOptionAndDefine)
 
 #
 # A) Define the package
@@ -42,6 +40,14 @@ ENDIF()
 
 IF (ROL_ENABLE_Thyra)
   ADD_SUBDIRECTORY(adapters/thyra)
+ENDIF()
+
+IF (ROL_ENABLE_ArrayFireCPU)
+  ADD_SUBDIRECTORY(adapters/arrayfire)
+ENDIF()
+
+IF (ROL_ENABLE_TriKota)
+  ADD_SUBDIRECTORY(adapters/trikota)
 ENDIF()
 
 TRIBITS_ADD_TEST_DIRECTORIES(test)

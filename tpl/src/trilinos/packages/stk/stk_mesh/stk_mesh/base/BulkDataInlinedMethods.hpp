@@ -136,16 +136,6 @@ EntityLess& EntityLess::operator=(const EntityLess& rhs)
 }
 
 inline
-BulkData & BulkData::get( const Bucket & bucket) {
-  return bucket.bulk_data();
-}
-
-inline
-BulkData & BulkData::get( const Ghosting & ghost) {
-  return ghost.bulk_data();
-}
-
-inline
 unsigned BulkData::num_connectivity(Entity entity, EntityRank rank) const
 {
   ThrowAssert(bucket_ptr(entity));
@@ -787,14 +777,14 @@ inline EntityState BulkData::state(Entity entity) const
   return m_meshModification.get_entity_state(entity.local_offset());
 }
 
-inline void BulkData::internal_mark_entity(Entity entity, entitySharing sharedType)
+inline void BulkData::internal_mark_entity(Entity entity, EntitySharing sharedType)
 {
-    m_mark_entity[entity.local_offset()] = static_cast<int>(sharedType);
+    m_mark_entity[entity.local_offset()] = sharedType;
 }
 
-inline BulkData::entitySharing BulkData::internal_is_entity_marked(Entity entity) const
+inline BulkData::EntitySharing BulkData::internal_is_entity_marked(Entity entity) const
 {
-    return static_cast<entitySharing>(m_mark_entity[entity.local_offset()]);
+    return m_mark_entity[entity.local_offset()];
 }
 
 inline bool BulkData::internal_add_node_sharing_called() const
@@ -947,6 +937,9 @@ inline bool BulkData::internal_set_parallel_owner_rank_but_not_comm_lists(Entity
   entity_setter_debug_check(entity);
 
   int & nonconst_processor_rank = bucket(entity).m_owner_ranks[bucket_ordinal(entity)];
+
+  m_modSummary.track_set_parallel_owner_rank_but_not_comm_lists(entity, nonconst_processor_rank, in_owner_rank);
+
   if ( in_owner_rank != nonconst_processor_rank ) {
     nonconst_processor_rank = in_owner_rank;
 

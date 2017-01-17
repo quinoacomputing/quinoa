@@ -48,6 +48,9 @@
 // Teuchos includes
 #include "Teuchos_RCP.hpp"
 
+// Kokkos includes
+#include "Kokkos_DynRankView.hpp"
+
 // Panzer includes
 #include "Panzer_ConnManager.hpp"
 
@@ -72,6 +75,12 @@ public:
      * \param[in] fp Field pattern to build connectivity for
      */
    virtual void buildConnectivity(const panzer::FieldPattern & fp);
+
+   /** Build a clone of this connection manager, without any assumptions
+     * about the required connectivity (e.g. <code>buildConnectivity</code>
+     * has never been called).
+     */
+   virtual Teuchos::RCP<panzer::ConnManagerBase<int> > noConnectivityClone() const;
 
    /** Get ID connectivity for a particular element
      *
@@ -150,7 +159,7 @@ public:
    virtual void getDofCoords(const std::string & blockId,
                              const panzer::Intrepid2FieldPattern & coordProvider,
                              std::vector<std::size_t> & localCellIds,
-                             Intrepid2::FieldContainer<double> & points) const;
+                             Kokkos::DynRankView<double,PHX::Device> & points) const;
 
     /** Get STK interface that this connection manager is built on.
       */

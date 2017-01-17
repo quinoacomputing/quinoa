@@ -41,32 +41,6 @@ HEADER
 //@HEADER
 */
 
-// ***********************************************************************
-//
-//      Ifpack2: Tempated Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2004) Sandia Corporation
-//
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
-//
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
-// ***********************************************************************
-
 
 /*! \file Ifpack2_UnitTestRelaxation.cpp
 
@@ -458,6 +432,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, LocalSymGaussSeidelZeroRows
 // place, if an Import is needed.  Thus, this example uses a matrix
 // with a nontrivial Import (i.e., where the domain and column Maps
 // are not the same).
+//md - 27 Jan 2016: The bug is fixed in which diagonals were set to 0.
+//The test fails after the bug fix, which is logical, as we don't expect the
+//exact same solution for distributed SGS and sequential SGS. I disabled the
+//test with Siva's suggestion. (Mehmet)
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, SGS_mult_sweeps, Scalar, LocalOrdinal, GlobalOrdinal)
 {
   using Teuchos::ArrayView;
@@ -540,8 +518,8 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, SGS_mult_sweeps, Scalar, Lo
         numEnt = 4;
         vals[0] = -ONE;
         vals[1] = ONE;
-        vals[0] = diagVal;
-        vals[1] = ONE / TWO;
+        vals[2] = diagVal;
+        vals[3] = ONE / TWO;
         gblColInds[0] = rowMap->getMaxAllGlobalIndex () - 3;
         gblColInds[1] = rowMap->getMaxAllGlobalIndex () - 2;
         gblColInds[2] = rowMap->getMaxAllGlobalIndex () - 1;
@@ -909,7 +887,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, TestDiagonalBlockCrsMatrix,
 
   for (int k = 0; k < num_rows_per_proc; ++k) {
     typename BMV::little_vec_type ylcl = yBlock.getLocalBlock(k,0);
-    Scalar* yb = ylcl.getRawPtr();
+    Scalar* yb = ylcl.ptr_on_device();
     for (int j = 0; j < blockSize; ++j) {
       TEST_FLOATING_EQUALITY(yb[j],exactSol,1e-14);
     }
@@ -1027,7 +1005,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, TestLowerTriangularBlockCrs
   for (size_t k = 0; k < num_rows_per_proc; ++k) {
     LO lcl_row = k;
     typename BMV::little_vec_type ylcl = yBlock.getLocalBlock(lcl_row,0);
-    Scalar* yb = ylcl.getRawPtr();
+    Scalar* yb = ylcl.ptr_on_device();
     for (int j = 0; j < blockSize; ++j) {
       TEST_FLOATING_EQUALITY(yb[j],exactSol[k],1e-14);
     }
@@ -1078,7 +1056,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, TestUpperTriangularBlockCrs
 
   for (int k = 0; k < num_rows_per_proc; ++k) {
     typename BMV::little_vec_type ylcl = yBlock.getLocalBlock(k,0);
-    auto yb = ylcl.getRawPtr();
+    auto yb = ylcl.ptr_on_device();
     for (int j = 0; j < blockSize; ++j) {
       TEST_FLOATING_EQUALITY(yb[j],exactSol[k],1e-14);
     }
@@ -1095,11 +1073,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Relaxation, TestUpperTriangularBlockCrs
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, SymGaussSeidelZeroRows, Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, LocalSymGaussSeidelZeroRows, Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, NotCrsMatrix, Scalar, LO, GO ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, SGS_mult_sweeps, Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, TestDiagonalBlockCrsMatrix, Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, TestLowerTriangularBlockCrsMatrix, Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, TestUpperTriangularBlockCrsMatrix, Scalar, LO, GO )
 
+  //TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Relaxation, SGS_mult_sweeps, Scalar, LO, GO )
 #include "Ifpack2_ETIHelperMacros.h"
 
 IFPACK2_ETI_MANGLING_TYPEDEFS()

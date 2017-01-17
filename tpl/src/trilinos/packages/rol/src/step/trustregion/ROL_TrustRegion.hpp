@@ -51,7 +51,7 @@
 #include "ROL_Types.hpp"
 #include "ROL_HelperFunctions.hpp"
 
-namespace ROL { 
+namespace ROL {
 
 template<class Real>
 class TrustRegion {
@@ -66,7 +66,7 @@ private:
   Real eta2_;
   Real gamma0_;
   Real gamma1_;
-  Real gamma2_; 
+  Real gamma2_;
 
   Real pRed_;
 
@@ -84,17 +84,10 @@ private:
   int  forceFactor_;
   int cnt_;
 
-  bool softUp_;
-
   unsigned verbosity_;
 
   void updateObj( Vector<Real> &x, int iter, ProjectedObjective<Real> &pObj ) {
-    if ( !softUp_ ) {
-      pObj.update(x,true,iter);
-    }
-    else {
-      pObj.update(x);
-    }
+    pObj.update(x,true,iter);
   }
 
 
@@ -104,33 +97,31 @@ public:
 
   // Constructor
   TrustRegion( Teuchos::ParameterList & parlist )
-    : ftol_old_(ROL_OVERFLOW), cnt_(0), verbosity_(0) {
+    : ftol_old_(ROL_OVERFLOW<Real>()), cnt_(0), verbosity_(0) {
     // Unravel Parameter List
     // Trust-Region Parameters
     Teuchos::ParameterList list = parlist.sublist("Step").sublist("Trust Region");
-    delmax_ = list.get("Maximum Radius",5000.0);
-    eta0_   = list.get("Step Acceptance Threshold",0.05);
-    eta1_   = list.get("Radius Shrinking Threshold",0.05);
-    eta2_   = list.get("Radius Growing Threshold",0.9);
-    gamma0_ = list.get("Radius Shrinking Rate (Negative rho)",0.0625);
-    gamma1_ = list.get("Radius Shrinking Rate (Positive rho)",0.25);
-    gamma2_ = list.get("Radius Growing Rate",2.5);
-    TRsafe_ = list.get("Safeguard Size",100.0);
-    eps_    = TRsafe_*ROL_EPSILON;
+    delmax_ = list.get("Maximum Radius",static_cast<Real>(5000.0));
+    eta0_   = list.get("Step Acceptance Threshold",static_cast<Real>(0.05));
+    eta1_   = list.get("Radius Shrinking Threshold",static_cast<Real>(0.05));
+    eta2_   = list.get("Radius Growing Threshold",static_cast<Real>(0.9));
+    gamma0_ = list.get("Radius Shrinking Rate (Negative rho)",static_cast<Real>(0.0625));
+    gamma1_ = list.get("Radius Shrinking Rate (Positive rho)",static_cast<Real>(0.25));
+    gamma2_ = list.get("Radius Growing Rate",static_cast<Real>(2.5));
+    TRsafe_ = list.get("Safeguard Size",static_cast<Real>(100.0));
+    eps_    = TRsafe_*ROL_EPSILON<Real>();
 
     // Inexactness Information
     useInexact_.clear();
     useInexact_.push_back(parlist.sublist("General").get("Inexact Objective Function", false));
     useInexact_.push_back(parlist.sublist("General").get("Inexact Gradient", false));
     useInexact_.push_back(parlist.sublist("General").get("Inexact Hessian-Times-A-Vector", false));
-    scale_       = list.sublist("Inexact").sublist("Value").get("Tolerance Scaling",1.e-1);
-    omega_       = list.sublist("Inexact").sublist("Value").get("Exponent",0.9);
-    force_       = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Initial Value",1.0);
-    updateIter_  = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Update Frequency",10);
-    forceFactor_ = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Reduction Factor",0.1);
+    scale_       = list.sublist("Inexact").sublist("Value").get("Tolerance Scaling",static_cast<Real>(1.e-1));
+    omega_       = list.sublist("Inexact").sublist("Value").get("Exponent",static_cast<Real>(0.9));
+    force_       = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Initial Value",static_cast<Real>(1.0));
+    updateIter_  = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Update Frequency",static_cast<int>(10));
+    forceFactor_ = list.sublist("Inexact").sublist("Value").get("Forcing Sequence Reduction Factor",static_cast<Real>(0.1));
 
-    // Changing Objective Functions
-    softUp_ = parlist.sublist("General").get("Variable Objective Function",false);  
   }
 
   virtual void initialize( const Vector<Real> &x, const Vector<Real> &s, const Vector<Real> &g) {
@@ -138,35 +129,35 @@ public:
     Hs_      = g.clone();
   }
 
-  virtual void update( Vector<Real> &x,
-                       Real         &fnew,
-                       Real         &del, 
-                       int          &nfval,
-                       int          &ngrad,
-                       int          &flagTR,
-                 const Vector<Real> &s,
-                 const Real          snorm, 
-                 const Real          fold,
-                 const Vector<Real> &g, 
-                       int           iter,
-                       ProjectedObjective<Real> &pObj ) { 
-    Real tol = std::sqrt(ROL_EPSILON);
+  virtual void update( Vector<Real>      &x,
+                       Real              &fnew,
+                       Real              &del,
+                       int               &nfval,
+                       int               &ngrad,
+                       ETrustRegionFlag  &flagTR,
+                 const Vector<Real>      &s,
+                 const Real              snorm,
+                 const Real              fold,
+                 const Vector<Real>      &g,
+                       int               iter,
+                       ProjectedObjective<Real> &pObj ) {
+    Real tol = std::sqrt(ROL_EPSILON<Real>()), one(1), oe4(1.e4), half(0.5), zero(0), p1(0.1);
 
     // Compute updated iterate vector
     xupdate_->set(x);
-    xupdate_->axpy(1.0,s);
+    xupdate_->axpy(one,s);
     /***************************************************************************************************/
     // BEGIN OBJECTIVE FUNCTION COMPUTATION
     /***************************************************************************************************/
     // Update inexact objective function
-    Real fold1 = fold, ftol = tol;
+    Real fold1 = fold, ftol = tol, TOL(1.e-2);
     if ( useInexact_[0] ) {
       if ( !(cnt_%updateIter_) && (cnt_ != 0) ) {
         force_ *= forceFactor_;
       }
-      Real c = scale_*std::max(1.e-2,std::min(1.0,1.e4*std::max(pRed_,std::sqrt(ROL_EPSILON))));
-      ftol   = c*std::pow(std::min(eta1_,1.0-eta2_)
-                *std::min(std::max(pRed_,std::sqrt(ROL_EPSILON)),force_),1.0/omega_);
+      Real c = scale_*std::max(TOL,std::min(one,oe4*std::max(pRed_,std::sqrt(ROL_EPSILON<Real>()))));
+      ftol   = c*std::pow(std::min(eta1_,one-eta2_)
+                *std::min(std::max(pRed_,std::sqrt(ROL_EPSILON<Real>())),force_),one/omega_);
       if ( ftol_old_ > ftol || cnt_ == 0 ) {
         ftol_old_ = ftol;
         fold1 = pObj.value(x,ftol_old_);
@@ -188,13 +179,13 @@ public:
     // If constraints are turned on, then compute a different predicted reduction
     if (pObj.isConActivated()) {
       xupdate_->set(x);
-      xupdate_->axpy(-1.0,g.dual());
+      xupdate_->axpy(-one,g.dual());
       pObj.project(*xupdate_);
-      xupdate_->axpy(-1.0,x);
-      xupdate_->scale(-1.0);
+      xupdate_->axpy(-one,x);
+      xupdate_->scale(-one);
  
       pObj.reducedHessVec(*Hs_,s,x,xupdate_->dual(),x,tol);
-      pRed_  = -0.5*s.dot(Hs_->dual());
+      pRed_  = -half*s.dot(Hs_->dual());
 
       Hs_->set(g);
       pObj.pruneActive(*Hs_,xupdate_->dual(),x);
@@ -211,30 +202,31 @@ public:
     }
 
     // Compute Ratio of Actual and Predicted Reduction
-    aRed  -= eps_*((1.0 > std::abs(fold1)) ? 1.0 : std::abs(fold1));
-    pRed_ -= eps_*((1.0 > std::abs(fold1)) ? 1.0 : std::abs(fold1));
-    Real rho  = 0.0; 
+    aRed  -= eps_*((one > std::abs(fold1)) ? one : std::abs(fold1));
+    pRed_ -= eps_*((one > std::abs(fold1)) ? one : std::abs(fold1));
+    Real rho(0);
+    //if ((std::abs(aRed) < eps_ && std::abs(fold1) > eps_) || aRed == pRed_) {
     if ((std::abs(aRed) < eps_) && (std::abs(pRed_) < eps_)) {
-      rho = 1.0; 
-      flagTR = 0;
+      rho = one;
+      flagTR = TRUSTREGION_FLAG_SUCCESS;
     }
     else if ( std::isnan(aRed) || std::isnan(pRed_) ) {
-      rho = -1.0;
-      flagTR = 5;
+      rho = -one;
+      flagTR = TRUSTREGION_FLAG_NAN;
     }
     else {
       rho = aRed/pRed_;
-      if (pRed_ < 0 && aRed > 0) { 
-        flagTR = 1;
+      if (pRed_ < zero && aRed > zero) {
+        flagTR = TRUSTREGION_FLAG_POSPREDNEG;
       }
-      else if (aRed <= 0 && pRed_ > 0) {
-        flagTR = 2;
+      else if (aRed <= zero && pRed_ > zero) {
+        flagTR = TRUSTREGION_FLAG_NPOSPREDPOS;
       }
-      else if (aRed <= 0 && pRed_ < 0) { 
-        flagTR = 3;
+      else if (aRed <= zero && pRed_ < zero) {
+        flagTR = TRUSTREGION_FLAG_NPOSPREDNEG;
       }
       else {
-        flagTR = 0;
+        flagTR = TRUSTREGION_FLAG_SUCCESS;
       }
     }
 
@@ -247,27 +239,27 @@ public:
 
     // Check Sufficient Decrease in the Reduced Quadratic Model
     bool decr = true;
-    if ( pObj.isConActivated() && (std::abs(aRed) > eps_) ) { 
+    if ( pObj.isConActivated() && (std::abs(aRed) > eps_) ) {
       // Compute Criticality Measure || x - P( x - g ) ||
       xupdate_->set(x);
-      xupdate_->axpy(-1.0,g.dual());
+      xupdate_->axpy(-one,g.dual());
       pObj.project(*xupdate_);
-      xupdate_->scale(-1.0);
+      xupdate_->scale(-one);
       xupdate_->plus(x);
       Real pgnorm = xupdate_->norm();
       // Compute Scaled Measure || x - P( x - lam * PI(g) ) ||
       xupdate_->set(g.dual());
       pObj.pruneActive(*xupdate_,g,x);
-      Real lam = std::min(1.0, del/xupdate_->norm());
+      Real lam = std::min(one, del/xupdate_->norm());
       xupdate_->scale(-lam);
       xupdate_->plus(x);
       pObj.project(*xupdate_);
-      xupdate_->scale(-1.0);
-      xupdate_->plus(x);      
+      xupdate_->scale(-one);
+      xupdate_->plus(x);
       pgnorm *= xupdate_->norm();
       // Sufficient decrease?
-      decr = ( aRed >= 0.1*eta0_*pgnorm );
-      flagTR = (!decr ? 4 : flagTR);
+      decr = ( aRed >= p1*eta0_*pgnorm );
+      flagTR = (!decr ? TRUSTREGION_FLAG_QMINSUFDEC : flagTR);
 
       if ( verbosity_ > 0 ) {
         std::cout << "    Decrease lower bound (constraints):      " << 0.1*eta0_*pgnorm << std::endl;
@@ -279,35 +271,32 @@ public:
     if ( verbosity_ > 0 ) {
       std::cout << std::endl;
     }
-    
+
     // Accept or Reject Step and Update Trust Region
-    if ((rho < eta0_ && flagTR == 0) || flagTR >= 2 || !decr ) { // Step Rejected 
+    if ((rho < eta0_ && flagTR == TRUSTREGION_FLAG_SUCCESS) ||
+         flagTR >= 2 || !decr ) { // Step Rejected
       //updateObj(x,iter,pObj);
       //pObj.update(x,true,iter);
       fnew = fold1;
-      if (rho < 0.0) { // Negative reduction, interpolate to find new trust-region radius
+      if (rho < zero) { // Negative reduction, interpolate to find new trust-region radius
         Real gs = s.dot(g.dual());
         pObj.hessVec(*Hs_,s,x,tol);
         Real modelVal = s.dot(Hs_->dual());
-        modelVal *= 0.5;
+        modelVal *= half;
         modelVal += gs + fold1;
-        Real theta = (1.0-eta2_)*gs/((1.0-eta2_)*(fold1+gs)+eta2_*modelVal-fnew);
+        Real theta = (one-eta2_)*gs/((one-eta2_)*(fold1+gs)+eta2_*modelVal-fnew);
         del = std::min(gamma1_*snorm,std::max(gamma0_,theta)*del);
       }
       else { // Shrink trust-region radius
-        del = gamma1_*snorm; 
-      } 
+        del = gamma1_*snorm;
+      }
     }
-    else if ((rho >= eta0_ && flagTR != 3) || flagTR == 1) { // Step Accepted
-      x.axpy(1.0,s);
+    else if ((rho >= eta0_ && flagTR != TRUSTREGION_FLAG_NPOSPREDNEG) ||
+      flagTR == TRUSTREGION_FLAG_POSPREDNEG) { // Step Accepted
+      x.axpy(one,s);
       pObj.update(x,true,iter);
       if (rho >= eta2_) { // Increase trust-region radius
         del = std::min(gamma2_*del,delmax_);
-      }
-    }
-    else { // step rejected 
-      if(softUp_) { // Variable Objective Function
-        pObj.update(x,true,iter); 
       }
     }
   }
@@ -334,7 +323,7 @@ public:
       xtmp->set(x);
       xtmp->axpy(1.0,*stmp);
       // Compute model components for alpha = 1.0
-      Real tol   = std::sqrt(ROL_EPSILON);
+      Real tol   = std::sqrt(ROL_EPSILON<Real>());
       Teuchos::RCP<Vector<Real> > Bs = x.clone();
       pObj.hessVec(*Bs,*stmp,x,tol);
       Real sBs   = Bs->dot(*stmp);

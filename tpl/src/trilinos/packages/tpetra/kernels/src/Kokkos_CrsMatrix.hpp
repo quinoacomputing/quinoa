@@ -573,6 +573,7 @@ public:
                  const OrdinalType cols[],
                  const OrdinalType ncol,
                  ScalarType vals[],
+                 const bool sorted_ = false,
                  const bool force_atomic = false) const
   {
     SparseRowView<CrsMatrix> row_view = this->row (rowi);
@@ -598,6 +599,7 @@ public:
                  const OrdinalType cols[],
                  const OrdinalType ncol,
                  ScalarType vals[],
+                 const bool sorted_ = false,
                  const bool force_atomic = false) const
   {
     SparseRowView<CrsMatrix> row_view = this->row (rowi);
@@ -863,7 +865,7 @@ struct MV_MultiplyFunctor {
       sum[k] = 0;
     }
 
-    const SparseRowViewConst<CrsMatrix> row = m_A.template rowConst<typename CrsMatrix::size_type>(iRow);
+    const SparseRowViewConst<CrsMatrix> row = m_A.rowConst (iRow);
 
     // NOTE (mfh 20 Mar 2015) Unfortunately, Kokkos::Vectorization
     // lacks a typedef for determining the type of the return value of
@@ -907,7 +909,7 @@ struct MV_MultiplyFunctor {
     if (doalpha == -1) {
       for (int ii=0; ii < UNROLL; ++ii) {
         value_type sumt=sum[ii];
-        #ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
         if (blockDim.x > 1)
           sumt += shfl_down(sumt, 1,blockDim.x);
         if (blockDim.x > 2)
@@ -918,14 +920,14 @@ struct MV_MultiplyFunctor {
           sumt += shfl_down(sumt, 8,blockDim.x);
         if (blockDim.x > 16)
           sumt += shfl_down(sumt, 16,blockDim.x);
-        #endif
+#endif // defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
         sum[ii] = - sumt;
       }
     }
     else {
       for (int ii=0; ii < UNROLL; ++ii) {
         value_type sumt = sum[ii];
-        #ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
         if (blockDim.x > 1)
           sumt += shfl_down(sumt, 1,blockDim.x);
         if (blockDim.x > 2)
@@ -936,16 +938,16 @@ struct MV_MultiplyFunctor {
           sumt += shfl_down(sumt, 8,blockDim.x);
         if (blockDim.x > 16)
           sumt += shfl_down(sumt, 16,blockDim.x);
-        #endif
+#endif // defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
         sum[ii] = sumt;
       }
     }
 
-#ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
     if (threadIdx.x==0) {
 #else
     if (true) {
-#endif
+#endif // defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
       if (doalpha * doalpha != 1) {
 #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
 #pragma ivdep
@@ -1007,7 +1009,7 @@ struct MV_MultiplyFunctor {
   {
     value_type sum = 0;
 
-    const SparseRowViewConst<CrsMatrix> row = m_A.template rowConst<typename CrsMatrix::size_type>(iRow);
+    const SparseRowViewConst<CrsMatrix> row = m_A.rowConst (iRow);
 
     // NOTE (mfh 20 Mar 2015) Unfortunately, Kokkos::Vectorization
     // lacks a typedef for determining the type of the return value of
@@ -1039,7 +1041,7 @@ struct MV_MultiplyFunctor {
 #endif
       sum += row.value(iEntry) * m_x(row.colidx(iEntry),0);
     }
-    #ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
     if (blockDim.x > 1)
       sum += shfl_down(sum, 1,blockDim.x);
     if (blockDim.x > 2)
@@ -1050,7 +1052,7 @@ struct MV_MultiplyFunctor {
       sum += shfl_down(sum, 8,blockDim.x);
     if (blockDim.x > 16)
       sum += shfl_down(sum, 16,blockDim.x);
-    #endif
+#endif // defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
 
 #ifdef __CUDA_ARCH__
     if (threadIdx.x==0) {
@@ -1251,7 +1253,7 @@ struct MV_MultiplyFunctor {
         if (iRow >= m_A.numRows ()) {
           return;
         }
-        const SparseRowViewConst<CrsMatrix> row = m_A.template rowConst<typename CrsMatrix::size_type>(iRow);
+        const SparseRowViewConst<CrsMatrix> row = m_A.rowConst (iRow);
         const ordinal_type row_length = static_cast<ordinal_type> (row.length);
         value_type sum = 0;
 
@@ -1277,7 +1279,7 @@ struct MV_MultiplyFunctor {
           sum += row.value(iEntry) * m_x(row.colidx(iEntry));
         }
 
-#ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
         if (blockDim.x > 1)
           sum += shfl_down(sum, 1,blockDim.x);
         if (blockDim.x > 2)
@@ -1292,7 +1294,7 @@ struct MV_MultiplyFunctor {
         if (threadIdx.x==0) {
 #else
         if (true) {
-#endif
+#endif // defined(__CUDA_ARCH__) && defined(KOKKOS_HAVE_CUDA)
           if (doalpha == -1) {
             sum *= value_type(-1);
           } else if (doalpha * doalpha != 1) {
@@ -1429,7 +1431,7 @@ struct MV_MultiplyFunctor {
 
       const ordinal_type iRow = i / ShflThreadsPerRow::device_value;
       const int lane = static_cast<int> (i) % ShflThreadsPerRow::device_value;
-      const SparseRowViewConst<CrsMatrix> row = m_A.template rowConst<typename CrsMatrix::size_type>(iRow);
+      const SparseRowViewConst<CrsMatrix> row = m_A.rowConst (iRow);
 
       for (ordinal_type iEntry = static_cast<ordinal_type> (lane);
            iEntry < static_cast<ordinal_type> (row.length);
@@ -1489,7 +1491,7 @@ struct MV_MultiplyFunctor {
 
       const ordinal_type iRow = i / ShflThreadsPerRow::device_value;
       const int lane = static_cast<int> (i) % ShflThreadsPerRow::device_value;
-      const SparseRowViewConst<CrsMatrix> row = m_A.template rowConst<typename CrsMatrix::size_type>(iRow);
+      const SparseRowViewConst<CrsMatrix> row = m_A.rowConst (iRow);
 
       for (ordinal_type iEntry = static_cast<ordinal_type> (lane);
            iEntry < static_cast<ordinal_type> (row.length);

@@ -198,19 +198,16 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
   for (int i=0; i < nWeights; i++, wgts+=numLocalObj)
     weights.push_back(wgts);
 
-  RCP<const idInput_t> ia;
-  RCP<const base_adapter_t> bia;
+  const idInput_t *ia;
 
   try{
-    ia = rcp(new idInput_t(numLocalObj, myGids, weights, strides));
+    ia = new idInput_t(numLocalObj, myGids, weights, strides);
   }
   catch (std::exception &e){
     fail=1;
   }
 
   TEST_FAIL_AND_EXIT(*comm, fail==0, "create adapter", 1);
-
-  bia = Teuchos::rcp_implicit_cast<const base_adapter_t>(ia);
 
   // A solution (usually created by a problem)
 
@@ -239,15 +236,13 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
     partNum[i] = rank;
 
   solution->setParts(partAssignment);
-  RCP<const Zoltan2::PartitioningSolution<idInput_t> > solutionConst =
-    rcp_const_cast<const Zoltan2::PartitioningSolution<idInput_t> >(solution);
 
   // create metric object (also usually created by a problem)
 
   RCP<quality_t> metricObject;
 
   try{
-    metricObject = rcp(new quality_t(env, comm, bia, solutionConst, false));
+    metricObject = rcp(new quality_t(ia, &pl, comm, solution.getRawPtr()));
   }
   catch (std::exception &e){
     fail=1;
@@ -257,9 +252,9 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
 
 
   if (rank==0){
-    zscalar_t imb;
+    ;
     try{
-      metricObject->getObjectCountImbalance(imb); 
+      zscalar_t imb = metricObject->getObjectCountImbalance();
       cout << "Object imbalance: " << imb << endl;
     }
     catch (std::exception &e){
@@ -270,10 +265,9 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
   TEST_FAIL_AND_EXIT(*comm, fail==0, "getObjectCountImbalance", 1);
 
   if (rank==0 && nWeights > 0){
-    zscalar_t imb;
     try{
       for (int i=0; i < nWeights; i++){
-        metricObject->getWeightImbalance(imb, i);
+    	zscalar_t imb = metricObject->getWeightImbalance(i);
         cout << "Weight " << i << " imbalance: " << imb << endl;
       }
     }
@@ -282,7 +276,7 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
     }
     if (!fail && nWeights > 1){
       try{
-        metricObject->getNormedImbalance(imb);
+    	zscalar_t imb = metricObject->getNormedImbalance();
         cout << "Normed weight imbalance: " << imb << endl;
       }
       catch (std::exception &e){
@@ -303,4 +297,5 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
   }
 
   TEST_FAIL_AND_EXIT(*comm, fail==0, "print metrics", 1);
+  delete ia;
 }

@@ -55,6 +55,17 @@
 
 #include <type_traits>
 
+//Experimental Threaded ILUK with Basker
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+#include <Kokkos_Core.hpp>
+#include <shylubasker_decl.hpp>
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+#  include <ShyLUHTS_config.h>
+#  include <shylu_hts_decl.hpp>
+# endif
+#endif
+
+
 namespace Teuchos {
   class ParameterList; // forward declaration
 }
@@ -271,6 +282,7 @@ class RILUK:
                             local_ordinal_type,
                             global_ordinal_type,
                             node_type> row_matrix_type;
+
 
   static_assert(std::is_same<MatrixType, row_matrix_type>::value, "Ifpack2::RILUK: The template parameter MatrixType must be a Tpetra::RowMatrix specialization.  Please don't use Tpetra::CrsMatrix (a subclass of Tpetra::RowMatrix) here anymore.");
 
@@ -574,11 +586,53 @@ protected:
   //! The diagonal entries of the ILU(k) factorization.
   Teuchos::RCP<vec_type> D_;
 
+
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+  typedef typename node_type::device_type  kokkos_device;
+  typedef typename kokkos_device::execution_space kokkos_exe;
+  
+  static_assert( std::is_same< kokkos_exe,
+		 Kokkos::OpenMP>::value,
+		 "Kokkos node type not supported by exepertimentalthread basker RILUK decl");
+
+  Teuchos::RCP< BaskerNS::Basker<local_ordinal_type, scalar_type, Kokkos::OpenMP> >
+  myBasker;
+  local_ordinal_type basker_threads;
+  scalar_type        basker_user_fill;
+  bool               basker_reuse;
+
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+  bool use_hts_;
+  int hts_nthreads_;
+  typedef ::Experimental::HTS<local_ordinal_type, local_ordinal_type, scalar_type> HTST;
+  struct HTSData : public HTST::Deallocator {
+    local_ordinal_type n;
+    local_ordinal_type* jc, * ir;
+    scalar_type* v;
+    HTSData();
+    ~HTSData();
+    virtual void free_CrsMatrix_data();
+    struct Entry {
+      bool operator< (const Entry& o) const { return j < o.j; }
+      local_ordinal_type j; scalar_type v;
+    };
+    void sort();
+  };
+  struct HTSManager {
+    typename HTST::Impl* Limpl, * Uimpl;
+    HTSManager();
+    ~HTSManager();
+  };
+  Teuchos::RCP<HTSManager> hts_mgr_;
+# endif
+#endif
+
   int LevelOfFill_;
 
   bool isAllocated_;
   bool isInitialized_;
   bool isComputed_;
+  bool isExperimental_;
 
   int numInitialize_;
   int numCompute_;
@@ -591,6 +645,7 @@ protected:
   magnitude_type RelaxValue_;
   magnitude_type Athresh_;
   magnitude_type Rthresh_;
+
 };
 
 // NOTE (mfh 11 Feb 2015) This used to exist in order to deal with
@@ -650,6 +705,7 @@ clone (const Teuchos::RCP<const NewMatrixType>& A_newnode) const
   new_riluk->RelaxValue_ = RelaxValue_;
   new_riluk->Athresh_ = Athresh_;
   new_riluk->Rthresh_ = Rthresh_;
+
 
   return new_riluk;
 }

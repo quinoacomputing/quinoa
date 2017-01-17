@@ -50,6 +50,7 @@
 #include "Intrepid2_CellTools.hpp"
 
 #include "Panzer_CommonArrayFactories.hpp"
+#include "Kokkos_ViewFactory.hpp"
 
 namespace panzer {
 
@@ -73,22 +74,19 @@ PHX_EVALUATOR_CTOR(DirichletResidual_EdgeBasis,p)
   TEUCHOS_ASSERT(basis->isVectorBasis());
   TEUCHOS_ASSERT(basis_layout->dimension(0)==vector_layout_dof->dimension(0));
   TEUCHOS_ASSERT(basis_layout->dimension(1)==vector_layout_dof->dimension(1));
-  TEUCHOS_ASSERT(basis->dimension()==vector_layout_dof->dimension(2));
+  TEUCHOS_ASSERT(Teuchos::as<unsigned>(basis->dimension())==vector_layout_dof->dimension(2));
   TEUCHOS_ASSERT(vector_layout_vector->dimension(0)==vector_layout_dof->dimension(0));
   TEUCHOS_ASSERT(vector_layout_vector->dimension(1)==vector_layout_dof->dimension(1));
   TEUCHOS_ASSERT(vector_layout_vector->dimension(2)==vector_layout_dof->dimension(2));
 
   residual = PHX::MDField<ScalarT,Cell,BASIS>(residual_name, basis_layout);
-  dof      = PHX::MDField<ScalarT,Cell,Point,Dim>(dof_name, vector_layout_dof);
-  value    = PHX::MDField<ScalarT,Cell,Point,Dim>(value_name, vector_layout_vector);
+  dof      = PHX::MDField<const ScalarT,Cell,Point,Dim>(dof_name, vector_layout_dof);
+  value    = PHX::MDField<const ScalarT,Cell,Point,Dim>(value_name, vector_layout_vector);
 
   // setup the orientation field
   std::string orientationFieldName = basis->name() + " Orientation";
-  // std::string orientationFieldName = field_name+" Orientation";
-  // if(p.isType<std::string>("Orientation Field Name"))
-  //   orientationFieldName = p.get<std::string>("Orientation Field Name");
-  dof_orientation = PHX::MDField<ScalarT,Cell,BASIS>(orientationFieldName,
-	                                                basis_layout);
+  dof_orientation = PHX::MDField<const ScalarT,Cell,BASIS>(orientationFieldName,
+	                                                   basis_layout);
 
   // setup all basis fields that are required
   panzer::MDFieldArrayFactory af_pv(pointRule->getName()+"_");
@@ -104,7 +102,6 @@ PHX_EVALUATOR_CTOR(DirichletResidual_EdgeBasis,p)
   this->addDependentField(dof);
   this->addDependentField(dof_orientation);
   this->addDependentField(value);
-  this->addDependentField(pointValues.jac);
  
   std::string n = "Dirichlet Residual Edge Basis Evaluator";
   this->setName(n);
@@ -119,7 +116,7 @@ PHX_POST_REGISTRATION_SETUP(DirichletResidual_EdgeBasis,worksets,fm)
   this->utils.setFieldData(value,fm);
   this->utils.setFieldData(pointValues.jac,fm);
 
-  edgeTan = Intrepid2::FieldContainer<ScalarT>(dof.dimension(0),dof.dimension(1),dof.dimension(2));
+  edgeTan = Kokkos::createDynRankView(residual.get_static_view(),"edgeTan",dof.dimension(0),dof.dimension(1),dof.dimension(2));
 }
 
 //**********************************************************************
@@ -150,10 +147,10 @@ PHX_EVALUATE_FIELDS(DirichletResidual_EdgeBasis,workset)
     int cellDim = parentCell.getDimension();
     int numEdges = dof.dimension(1);
 
-    refEdgeTan = Intrepid2::FieldContainer<ScalarT>(numEdges,cellDim);
+    refEdgeTan = Kokkos::createDynRankView(residual.get_static_view(),"refEdgeTan",numEdges,cellDim);
 
     for(int i=0;i<numEdges;i++) {
-      Intrepid2::FieldContainer<double> refEdgeTan_local(cellDim);
+      Kokkos::DynRankView<double,PHX::Device> refEdgeTan_local("refEdgeTan_local",cellDim);
       Intrepid2::CellTools<double>::getReferenceEdgeTangent(refEdgeTan_local, i, parentCell);
 
       for(int d=0;d<cellDim;d++) 

@@ -53,7 +53,8 @@
 #include "stk_mesh/base/MetaData.hpp"   // for MetaData, entity_rank_names
 #include "stk_topology/topology.hpp"    // for topology, etc
 #include "stk_util/parallel/Parallel.hpp"  // for parallel_machine_size, etc
-#include "unit_tests/BulkDataTester.hpp"  // for BulkDataTester
+#include <stk_unit_test_utils/BulkDataTester.hpp>
+#include <stk_util/environment/CPUTime.hpp>  // for cpu_time
 namespace stk { namespace mesh { class Bucket; } }
 
 
@@ -518,6 +519,7 @@ TEST(Verify, usingCopyConstructor)
     EXPECT_TRUE(selector == anotherSelector);
 }
 
+
 TEST(Verify, usingSelectField)
 {
   SelectorFixture fix ;
@@ -526,6 +528,14 @@ TEST(Verify, usingSelectField)
   stk::mesh::Selector selectFieldA = stk::mesh::selectField(fix.m_fieldA);
   stk::mesh::Selector selectFieldABC = stk::mesh::selectField(fix.m_fieldABC);
 
+  stk::mesh::Part & partA = fix.m_partA;
+  stk::mesh::Part & partB = fix.m_partB;
+  stk::mesh::Part & partC = fix.m_partC;
+  stk::mesh::Part & partD = fix.m_partD;
+
+  //
+  //  Test selection of buckets
+  //
   const int numEntities = 5;
   bool gold_shouldEntityBeInPartASelector[numEntities]         = {true , true , false, false, false};
   bool gold_shouldEntityBeInPartBSelector[numEntities]         = {false, true , true , false, false};
@@ -536,6 +546,47 @@ TEST(Verify, usingSelectField)
   testSelectorWithBuckets(fix, fix.m_partB, gold_shouldEntityBeInPartBSelector);
   testSelectorWithBuckets(fix, fix.m_partC, gold_shouldEntityBeInPartCSelector);
   testSelectorWithBuckets(fix, selectFieldABC, gold_shouldEntityBeInPartsABCUnionSelector);
+
+  //
+  //  Test selection of parts.  Part selection returns true if there is overlap between the test part set
+  //  and any part the field was registered on.
+  //
+  EXPECT_TRUE (selectFieldA(partA));
+  EXPECT_FALSE(selectFieldA(partB));
+  EXPECT_FALSE(selectFieldA(partC));
+  EXPECT_FALSE(selectFieldA(partD));
+
+  EXPECT_TRUE (selectFieldABC(partA));
+  EXPECT_TRUE (selectFieldABC(partB));
+  EXPECT_TRUE (selectFieldABC(partC));
+  EXPECT_FALSE(selectFieldABC(partD));
+
+
+  stk::mesh::PartVector partsAB;
+  partsAB.push_back(&partA);
+  partsAB.push_back(&partB);
+
+  stk::mesh::PartVector partsCD;
+  partsAB.push_back(&partC);
+  partsAB.push_back(&partD);
+
+  EXPECT_TRUE (selectFieldA(partsAB));
+  EXPECT_FALSE(selectFieldA(partsCD));
+  
+  //
+  //  Check selection of buckets also works in a mesh modification cycle
+  //
+  fix.get_NonconstBulkData().modification_begin("TEST MODIFICATION");
+
+  testSelectorWithBuckets(fix, selectFieldA, gold_shouldEntityBeInPartASelector);
+  testSelectorWithBuckets(fix, fix.m_partB, gold_shouldEntityBeInPartBSelector);
+  testSelectorWithBuckets(fix, fix.m_partC, gold_shouldEntityBeInPartCSelector);
+  testSelectorWithBuckets(fix, selectFieldABC, gold_shouldEntityBeInPartsABCUnionSelector);
+
+
+  fix.get_NonconstBulkData().modification_end();
+
+
 }
 
 TEST(Verify, selectorContainsPart)
@@ -789,6 +840,9 @@ TEST( UnitTestRootTopology, getPartsDoesNotFindAutoCreatedRootParts )
       check_selector_does_not_return_root_topology_parts(pm, "topo_part" , test_topologies[i]);
     }
 }
+
+
+
 
 TEST( UnitTestRootTopology, bucketAlsoHasAutoCreatedRootParts )
 {

@@ -65,9 +65,11 @@ TRIBITS_REPOSITORY_DEFINE_PACKAGES(
   RTOp                  packages/rtop                     PS
   Sacado                packages/sacado                   PS
   Epetra                packages/epetra                   PS
-  SCORECgmi             SCOREC/gmi                        SS
   SCORECpcu             SCOREC/pcu                        SS
+  SCORECgmi             SCOREC/gmi                        SS
+  SCORECgmi_sim         SCOREC/gmi_sim                    SS
   SCORECapf             SCOREC/apf                        SS
+  SCORECapf_sim         SCOREC/apf_sim                    SS
   SCORECmds             SCOREC/mds                        SS
   SCORECparma           SCOREC/parma                      SS
   SCORECspr             SCOREC/spr                        SS
@@ -115,7 +117,7 @@ TRIBITS_REPOSITORY_DEFINE_PACKAGES(
   Moertel               packages/moertel                  PS
   MueLu                 packages/muelu                    SS
   Rythmos               packages/rythmos                  PS
-  MOOCHO                packages/moocho                   PS
+  MOOCHO                packages/moocho                   ST
   Stokhos               packages/stokhos                  SS
   ROL                   packages/rol                      SS
   Piro                  packages/piro                     SS
@@ -138,8 +140,10 @@ TRIBITS_REPOSITORY_DEFINE_PACKAGES(
 
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCOREC)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECgmi)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECgmi_sim)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECpcu)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf_sim)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECmds)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECparma)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECspr)
@@ -147,11 +151,11 @@ TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf_stk)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf_zoltan)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECma)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(MOOCHO)
-TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Optika)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Sundance)
-TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Mesquite)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(CTrilinos)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(ForTrilinos)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Optika)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Mesquite)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(WebTrilinos)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(xSDKTrilinos)
 

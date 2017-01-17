@@ -48,11 +48,20 @@
 #include <vector>
 
 #include "Teuchos_RCP.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_FieldTag.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
+#ifdef PHX_ENABLE_KOKKOS_AMT
+// amt only works with pthread and qthreads
+#include "Kokkos_TaskPolicy.hpp"
+#include "Threads/Kokkos_Threads_TaskPolicy.hpp"
+#include "Kokkos_Threads.hpp"
+#endif
+
 namespace PHX {
 
+  class any;
   template<typename Traits> class FieldManager;
 
   /*! Pure virtual base class that provides field evaluation
@@ -102,7 +111,26 @@ namespace PHX {
 	@param d - user defined data object defined by the EvalData typedef in the traits class.
     */ 
     virtual void evaluateFields(typename Traits::EvalData d) = 0;
-    
+
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    //! Create and return a task for aynchronous multi-tasking.
+    /*!
+        Input:
+	@param policy Kokkos task policy object used to create the task/future.
+	@param num_adjacencies The dependence capacity in Kokkos. The maximum number of node adjacencies (task dependencies) that this task directly depends on. 
+	@param work_size The number of parallel work units.
+	@param d User defined data.
+    */ 
+    virtual Kokkos::Experimental::Future<void,PHX::Device::execution_space>
+    createTask(Kokkos::Experimental::TaskPolicy<PHX::Device::execution_space>& policy,
+	       const std::size_t& num_adjacencies,
+	       const int& work_size,
+	       typename Traits::EvalData d) = 0;
+
+    //! Returns the size of the kokkos task for AMT.
+    virtual unsigned taskSize() const = 0;
+#endif
+
     /*! \brief This routine is called before each residual/Jacobian fill.
 
         This routine is called ONCE on the provider before the fill
@@ -125,6 +153,17 @@ namespace PHX {
     //! Returns the name/identifier of this provider.
     virtual const std::string& getName() const = 0;
 
+    /*! \brief Binds unmanaged memory to a field.
+
+      WARNING: This is a power user function. It swaps out the field
+      memory for user defined and managed memory. All evaluators that
+      evaluate or depend on this field show be bound to the same
+      memory. Otherwise you will get undefined results. To use this
+      consistently, bind all Unmanaged memory from the
+      PHX::FieldManager class.
+     */
+    virtual void bindUnmanagedField(const PHX::FieldTag& ft,
+                                    const PHX::any& f) = 0;
   };
 
 } 

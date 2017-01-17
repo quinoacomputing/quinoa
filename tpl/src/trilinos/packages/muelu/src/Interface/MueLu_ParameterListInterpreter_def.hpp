@@ -96,6 +96,7 @@
 #include "MueLu_CoalesceDropFactory_kokkos.hpp"
 #include "MueLu_CoarseMapFactory_kokkos.hpp"
 #include "MueLu_CoordinatesTransferFactory_kokkos.hpp"
+#include "MueLu_FilteredAFactory_kokkos.hpp"
 #include "MueLu_NullspaceFactory_kokkos.hpp"
 #include "MueLu_SaPFactory_kokkos.hpp"
 #include "MueLu_TentativePFactory_kokkos.hpp"
@@ -111,28 +112,27 @@
 #include "../matlab/src/MueLu_SingleLevelMatlabFactory_def.hpp"
 #endif
 
-// These code chunks should only be enabled once Tpetra supports proper graph
-// reuse in MMM. At the moment, only Epetra does, while Tpetra throws
-// #define REUSE_MATRIX_GRAPHS
-
 namespace MueLu {
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::ParameterListInterpreter(ParameterList& paramList, Teuchos::RCP<const Teuchos::Comm<int> > comm, Teuchos::RCP<FactoryFactory> factFact) : factFact_(factFact) {
 
-    if(paramList.isParameter("xml parameter file")){
-      std::string filename = paramList.get("xml parameter file","");
-      if(filename.length()!=0) {
-        if(comm.is_null()) throw Exceptions::RuntimeError("xml parameter file requires a valid comm");
-        Teuchos::ParameterList paramList2 = paramList;
-        Teuchos::updateParametersFromXmlFileAndBroadcast(filename, Teuchos::Ptr<Teuchos::ParameterList>(&paramList2),*comm);
+    if (paramList.isParameter("xml parameter file")) {
+      std::string filename = paramList.get("xml parameter file", "");
+      if (filename.length() != 0) {
+        TEUCHOS_TEST_FOR_EXCEPTION(comm.is_null(), Exceptions::RuntimeError, "xml parameter file requires a valid comm");
+
+        ParameterList paramList2 = paramList;
+        Teuchos::updateParametersFromXmlFileAndBroadcast(filename, Teuchos::Ptr<Teuchos::ParameterList>(&paramList2), *comm);
         SetParameterList(paramList2);
-      }
-      else
+
+      } else {
         SetParameterList(paramList);
-    }
-    else
+      }
+
+    } else {
       SetParameterList(paramList);
+    }
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
@@ -153,10 +153,10 @@ namespace MueLu {
 
     } else {
       // The validator doesn't work correctly for non-serializable data (Hint: template parameters), so strip it out
-      ParameterList validList, nonSerialList;
+      ParameterList serialList, nonSerialList;
 
-      ExtractNonSerializableData(paramList, validList, nonSerialList);
-      Validate(validList);
+      ExtractNonSerializableData(paramList, serialList, nonSerialList);
+      Validate(serialList);
       SetEasyParameterList(paramList);
     }
   }
@@ -253,9 +253,14 @@ namespace MueLu {
         this->prolongatorsToPrint_ = Teuchos::getArrayFromStringParameter<int>(printList, "P");
       if (printList.isParameter("R"))
         this->restrictorsToPrint_  = Teuchos::getArrayFromStringParameter<int>(printList, "R");
+      if (printList.isParameter("Nullspace"))
+        this->nullspaceToPrint_  = Teuchos::getArrayFromStringParameter<int>(printList, "Nullspace");
+      if (printList.isParameter("Coordinates"))
+        this->coordinatesToPrint_  = Teuchos::getArrayFromStringParameter<int>(printList, "Coordinates");
     }
 
     // Set verbosity parameter
+    VerbLevel oldVerbLevel = VerboseObject::GetDefaultVerbLevel();
     {
       std::map<std::string,MsgType> verbMap;
       verbMap["none"]    = None;
@@ -270,7 +275,7 @@ namespace MueLu {
       TEUCHOS_TEST_FOR_EXCEPTION(verbMap.count(verbosityLevel) == 0, Exceptions::RuntimeError,
                                  "Invalid verbosity level: \"" << verbosityLevel << "\"");
       this->verbosity_ = verbMap[verbosityLevel];
-      this->SetVerbLevel(this->verbosity_);
+      VerboseObject::SetDefaultVerbLevel(this->verbosity_);
     }
 
     // Detect if we need to transfer coordinates to coarse levels. We do that iff
@@ -389,6 +394,7 @@ namespace MueLu {
       }
     }
 
+    VerboseObject::SetDefaultVerbLevel(oldVerbLevel);
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
@@ -402,18 +408,22 @@ namespace MueLu {
       paramList = ParameterList(defaultList);
 
     MUELU_SET_VAR_2LIST(paramList, defaultList, "reuse: type", std::string, reuseType);
-    TEUCHOS_TEST_FOR_EXCEPTION(reuseType != "none" && reuseType != "tP" && reuseType != "RP" && reuseType != "emin" && reuseType != "RAP" && reuseType != "full",
-                               Exceptions::RuntimeError, "Unknown \"reuse: type\" value: \"" << reuseType << "\". Please consult User's Guide.");
+    TEUCHOS_TEST_FOR_EXCEPTION(reuseType != "none" && reuseType != "tP" && reuseType != "RP" && reuseType != "emin" && reuseType != "RAP" && reuseType != "full" && reuseType != "S",
+       Exceptions::RuntimeError, "Unknown \"reuse: type\" value: \"" << reuseType << "\". Please consult User's Guide.");
 
     MUELU_SET_VAR_2LIST(paramList, defaultList, "multigrid algorithm", std::string, multigridAlgo);
-    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo != "unsmoothed" && multigridAlgo != "sa" && multigridAlgo != "pg" && multigridAlgo != "emin"  && multigridAlgo != "matlab", Exceptions::RuntimeError, "Unknown \"multigrid algorithm\" value: \"" << multigridAlgo << "\". Please consult User's Guide.");
-    #ifndef HAVE_MUELU_MATLAB
-      if(multigridAlgo == "matlab")
-        throw std::runtime_error("Cannot use matlab for multigrid algorithm - MueLu was not configured with MATLAB support.");
-    #endif
+    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo != "unsmoothed" && multigridAlgo != "sa" && multigridAlgo != "pg" && multigridAlgo != "emin"  && multigridAlgo != "matlab",
+        Exceptions::RuntimeError, "Unknown \"multigrid algorithm\" value: \"" << multigridAlgo << "\". Please consult User's Guide.");
+#ifndef HAVE_MUELU_MATLAB
+    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo == "matlab", Exceptions::RuntimeError,
+        "Cannot use matlab for multigrid algorithm - MueLu was not configured with MATLAB support.");
+#endif
+    MUELU_SET_VAR_2LIST(paramList, defaultList, "sa: use filtered matrix", bool, useFiltering);
+    bool filteringChangesMatrix = useFiltering && !MUELU_TEST_PARAM_2LIST(paramList, defaultList, "aggregation: drop tol", double, 0);
+
     // Only some combinations of reuse and multigrid algorithms are tested, all
     // other are considered invalid at the moment
-    if (reuseType == "none" || reuseType == "RP" || reuseType == "RAP") {
+    if (reuseType == "none" || reuseType == "S" || reuseType == "RP" || reuseType == "RAP") {
       // This works for all kinds of multigrid algorithms
 
     } else if (reuseType == "tP" && (multigridAlgo != "sa" && multigridAlgo != "unsmoothed")) {
@@ -532,13 +542,15 @@ namespace MueLu {
 
         if (postSmootherType == preSmootherType && areSame(preSmootherParams, postSmootherParams))
           postSmoother = preSmoother;
-        else
+        else {
 #ifdef HAVE_MUELU_MATLAB
           if(postSmootherType == "matlab")
             postSmoother = rcp(new SmootherFactory(rcp(new MatlabSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>(postSmootherParams))));
           else
 #endif
           postSmoother = rcp(new SmootherFactory(rcp(new TrilinosSmoother(postSmootherType, postSmootherParams, overlap))));
+
+        }
       }
 
       if (preSmoother == postSmoother)
@@ -548,15 +560,6 @@ namespace MueLu {
         manager.SetFactory("PostSmoother", postSmoother);
       }
     }
-    if ((reuseType == "RAP" && levelID) || (reuseType == "full")) {
-      // The difference between "RAP" and "full" is keeping smoothers. However,
-      // as in both cases we keep coarse matrices, we do not need to update
-      // coarse smoothers. On the other hand, if a user changes fine level
-      // matrix, "RAP" would update the fine level smoother, while "full" would
-      // not
-      keeps.push_back(keep_pair("PreSmoother",  manager.GetFactory("PreSmoother") .get()));
-      keeps.push_back(keep_pair("PostSmoother", manager.GetFactory("PostSmoother").get()));
-    }
 
     // === Coarse solver ===
     // FIXME: should custom coarse solver check default list too?
@@ -564,6 +567,7 @@ namespace MueLu {
         paramList.isParameter("coarse: type")   ||
         paramList.isParameter("coarse: params");
     if (MUELU_TEST_PARAM_2LIST(paramList, defaultList, "coarse: type", std::string, "none")) {
+      this->GetOStream(Warnings0) << "No coarse grid solver" << std::endl;
       manager.SetFactory("CoarseSolver", Teuchos::null);
 
     } else if (isCustomCoarseSolver) {
@@ -593,18 +597,61 @@ namespace MueLu {
           coarseType == "LINESMOOTHING_BANDED_RELAXATION" ||
           coarseType == "LINESMOOTHING_BANDED RELAXATION")
         coarseSmoother = rcp(new TrilinosSmoother(coarseType, coarseParams, overlap));
-      else
+      else {
 #ifdef HAVE_MUELU_MATLAB
-        if(coarseType == "matlab")
+        if (coarseType == "matlab")
           coarseSmoother = rcp(new MatlabSmoother<Scalar,LocalOrdinal, GlobalOrdinal, Node>(coarseParams));
         else
 #endif
         coarseSmoother = rcp(new DirectSolver(coarseType, coarseParams));
+      }
 
       manager.SetFactory("CoarseSolver", rcp(new SmootherFactory(coarseSmoother)));
     }
+
+    // The first clause is not necessary, but it is here for clarity
+    // Smoothers are reused if smoother explicitly said to reuse them, or if
+    // any other reuse option is enabled
+    bool reuseSmoothers = (reuseType == "S" || reuseType != "none");
+    if (reuseSmoothers) {
+      RCP<Factory> preSmootherFactory = Teuchos::rcp_const_cast<Factory>(Teuchos::rcp_dynamic_cast<const Factory>(manager.GetFactory("PreSmoother")));
+      if (preSmootherFactory != Teuchos::null) {
+        ParameterList postSmootherFactoryParams;
+        postSmootherFactoryParams.set("keep smoother data", true);
+        preSmootherFactory->SetParameterList(postSmootherFactoryParams);
+
+        keeps.push_back(keep_pair("PreSmoother data",  preSmootherFactory.get()));
+      }
+
+      RCP<Factory> postSmootherFactory = Teuchos::rcp_const_cast<Factory>(Teuchos::rcp_dynamic_cast<const Factory>(manager.GetFactory("PostSmoother")));
+      if (postSmootherFactory != Teuchos::null) {
+        ParameterList postSmootherFactoryParams;
+        postSmootherFactoryParams.set("keep smoother data", true);
+        postSmootherFactory->SetParameterList(postSmootherFactoryParams);
+
+        keeps.push_back(keep_pair("PostSmoother data", postSmootherFactory.get()));
+      }
+
+      RCP<Factory> coarseFactory = Teuchos::rcp_const_cast<Factory>(Teuchos::rcp_dynamic_cast<const Factory>(manager.GetFactory("CoarseSolver")));
+      if (coarseFactory != Teuchos::null) {
+        ParameterList coarseFactoryParams;
+        coarseFactoryParams.set("keep smoother data", true);
+        coarseFactory->SetParameterList(coarseFactoryParams);
+
+        keeps.push_back(keep_pair("PreSmoother data", coarseFactory.get()));
+      }
+    }
+
     if ((reuseType == "RAP" && levelID) || (reuseType == "full")) {
-      // We do keep_pair("PreSmoother", // manager.GetFactory("CoarseSolver").get())
+      // The difference between "RAP" and "full" is keeping smoothers. However,
+      // as in both cases we keep coarse matrices, we do not need to update
+      // coarse smoothers. On the other hand, if a user changes fine level
+      // matrix, "RAP" would update the fine level smoother, while "full" would
+      // not
+      keeps.push_back(keep_pair("PreSmoother",  manager.GetFactory("PreSmoother") .get()));
+      keeps.push_back(keep_pair("PostSmoother", manager.GetFactory("PostSmoother").get()));
+
+      // We do keep_pair("PreSmoother", manager.GetFactory("CoarseSolver").get())
       // as the coarse solver factory is in fact a smoothing factory, so the
       // only pieces of data it generates are PreSmoother and PostSmoother
       keeps.push_back(keep_pair("PreSmoother", manager.GetFactory("CoarseSolver").get()));
@@ -697,9 +744,9 @@ namespace MueLu {
 
     manager.SetFactory("Ptent",     Ptent);
 
-    if (reuseType == "tP") {
-      keeps.push_back(keep_pair("Nullspace", manager.GetFactory("Ptent").get()));
-      keeps.push_back(keep_pair("P",         manager.GetFactory("Ptent").get()));
+    if (reuseType == "tP" && levelID) {
+      keeps.push_back(keep_pair("Nullspace", Ptent.get()));
+      keeps.push_back(keep_pair("P",         Ptent.get()));
     }
 
     // Nullspace
@@ -710,11 +757,12 @@ namespace MueLu {
     }
 
     // === Prolongation ===
-    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo != "unsmoothed" && multigridAlgo != "sa" && multigridAlgo != "pg" && multigridAlgo != "emin" && multigridAlgo != "matlab", Exceptions::RuntimeError, "Unknown multigrid algorithm: \"" << multigridAlgo << "\". Please consult User's Guide.");
-    #ifndef HAVE_MUELU_MATLAB
-      if(multigridAlgo == "matlab")
-        throw std::runtime_error("Cannot use MATLAB prolongator factory - MueLu was not configured with MATLAB support.");
-    #endif
+    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo != "unsmoothed" && multigridAlgo != "sa" && multigridAlgo != "pg" && multigridAlgo != "emin" && multigridAlgo != "matlab",
+                               Exceptions::RuntimeError, "Unknown multigrid algorithm: \"" << multigridAlgo << "\". Please consult User's Guide.");
+#ifndef HAVE_MUELU_MATLAB
+    TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo == "matlab", Exceptions::RuntimeError,
+        "Cannot use MATLAB prolongator factory - MueLu was not configured with MATLAB support.");
+#endif
     if (have_userP) {
       // User prolongator
       manager.SetFactory("P", NoFactory::getRCP());
@@ -726,18 +774,11 @@ namespace MueLu {
       MUELU_KOKKOS_FACTORY(P, SaPFactory, SaPFactory_kokkos);
       ParameterList Pparams;
       MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "sa: damping factor", double, Pparams);
-#if REUSE_MATRIX_GRAPHS
-      if (reuseType == "tP" && MUELU_TEST_PARAM_2LIST(paramList, defaultList, "sa: use filtered matrix", bool, false)) {
-        // Pattern can only be reuse when we don't use filtered matrix, as
-        // otherwise graph can potentially change
-        Pparams.set("Keep AP Pattern", true);
-      }
-#endif
       P->SetParameterList(Pparams);
 
       // Filtering
-      if (MUELU_TEST_PARAM_2LIST(paramList, defaultList, "sa: use filtered matrix", bool, true)) {
-        RCP<FilteredAFactory> filterFactory = rcp(new FilteredAFactory());
+      if (useFiltering) {
+        MUELU_KOKKOS_FACTORY(filterFactory, FilteredAFactory, FilteredAFactory_kokkos);
         ParameterList fParams;
         MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: use lumping", bool, fParams);
         MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: reuse graph", bool, fParams);
@@ -751,6 +792,9 @@ namespace MueLu {
 
       P->SetFactory("P", manager.GetFactory("Ptent"));
       manager.SetFactory("P", P);
+
+      if (reuseType == "tP" && !filteringChangesMatrix)
+        keeps.push_back(keep_pair("AP graph", P.get()));
 
     } else if (multigridAlgo == "emin") {
       MUELU_SET_VAR_2LIST(paramList, defaultList, "emin: pattern", std::string, patternType);
@@ -876,37 +920,49 @@ namespace MueLu {
     if (have_userA) {
       manager.SetFactory("A", NoFactory::getRCP());
 
-    } else  {
+    } else {
       RAP = rcp(new RAPFactory());
       ParameterList RAPparams;
       MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "transpose: use implicit", bool, RAPparams);
-#if REUSE_MATRIX_GRAPHS
-      // This should be enable once Tpetra supports proper graph reuse in MMM
-      // At the moment, only Epetra does, and Tpetra throws
-      if (reuseType == "RP") {
-        RAPparams.set("Keep AP Pattern",  true);
-        RAPparams.set("Keep RAP Pattern", true);
+      try {
+        if (paramList  .isParameter("aggregation: allow empty prolongator columns")) {
+          RAPparams.set("CheckMainDiagonal", paramList.get<bool>("aggregation: allow empty prolongator columns"));
+          RAPparams.set("RepairMainDiagonal", paramList.get<bool>("aggregation: allow empty prolongator columns"));
+        }
+        else if (defaultList.isParameter("aggregation: allow empty prolongator columns")) {
+          RAPparams.set("CheckMainDiagonal", defaultList.get<bool>("aggregation: allow empty prolongator columns"));
+          RAPparams.set("RepairMainDiagonal", defaultList.get<bool>("aggregation: allow empty prolongator columns"));
+        }
       }
-#endif
+      catch(Teuchos::Exceptions::InvalidParameterType) {
+        TEUCHOS_TEST_FOR_EXCEPTION_PURE_MSG(true, Teuchos::Exceptions::InvalidParameterType,
+                                            "Error: parameter \"aggregation: allow empty prolongator columns\" must be of type " << Teuchos::TypeNameTraits<bool>::name());
+      }
       RAP->SetParameterList(RAPparams);
       RAP->SetFactory("P", manager.GetFactory("P"));
       if (!this->implicitTranspose_)
         RAP->SetFactory("R", manager.GetFactory("R"));
+
       if (MUELU_TEST_PARAM_2LIST(paramList, defaultList, "aggregation: export visualization data", bool, true)) {
         RCP<AggregationExportFactory> aggExport = rcp(new AggregationExportFactory());
         ParameterList aggExportParams;
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output filename", std::string, aggExportParams);
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: agg style", std::string, aggExportParams);
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: iter", int, aggExportParams);
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: time step", int, aggExportParams);
-	MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: fine graph edges", bool, aggExportParams);
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: coarse graph edges", bool, aggExportParams);
-        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: build colormap", bool, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output filename",             std::string, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: agg style",      std::string, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: iter",                   int, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: time step",              int, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: fine graph edges",      bool, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: coarse graph edges",    bool, aggExportParams);
+        MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: output file: build colormap",        bool, aggExportParams);
         aggExport->SetParameterList(aggExportParams);
         aggExport->SetFactory("DofsPerNode", manager.GetFactory("DofsPerNode"));
         RAP->AddTransferFactory(aggExport);
       }
       manager.SetFactory("A", RAP);
+
+      if (reuseType == "RP" || (reuseType == "tP" && !filteringChangesMatrix)) {
+        keeps.push_back(keep_pair("AP graph",  RAP.get()));
+        keeps.push_back(keep_pair("RAP graph", RAP.get()));
+      }
     }
 
     // === Coordinates ===
@@ -932,15 +988,15 @@ namespace MueLu {
       }
     }
 
-    if (reuseType == "RP" || reuseType == "RAP" || reuseType == "full")
+    if ((reuseType == "RP" || reuseType == "RAP" || reuseType == "full") && levelID)
       keeps.push_back(keep_pair("Nullspace", manager.GetFactory("Nullspace").get()));
 
-    if (reuseType == "RP") {
+    if (reuseType == "RP" && levelID) {
       keeps.push_back(keep_pair("P", manager.GetFactory("P").get()));
       if (!this->implicitTranspose_)
         keeps.push_back(keep_pair("R", manager.GetFactory("R").get()));
     }
-    if ((reuseType == "tP" || reuseType == "RP" || reuseType == "emin") && useCoordinates_)
+    if ((reuseType == "tP" || reuseType == "RP" || reuseType == "emin") && useCoordinates_ && levelID)
       keeps.push_back(keep_pair("Coordinates", manager.GetFactory("Coordinates").get()));
 
     // === Repartitioning ===
@@ -1029,7 +1085,7 @@ namespace MueLu {
       repartFactory->SetFactory("A",         manager.GetFactory("A"));
       repartFactory->SetFactory("Partition", manager.GetFactory("Partition"));
       manager.SetFactory("Importer", repartFactory);
-      if (reuseType != "none")
+      if (reuseType != "none" && reuseType != "S" && levelID)
         keeps.push_back(keep_pair("Importer", manager.GetFactory("Importer").get()));
 
       // Rebalanced A
@@ -1086,7 +1142,7 @@ namespace MueLu {
       throw Exceptions::RuntimeError("No repartitioning available for a serial run");
 #endif
     }
-    if (reuseType == "RAP" || reuseType == "full") {
+    if ((reuseType == "RAP" || reuseType == "full") && levelID) {
       keeps.push_back(keep_pair("P", manager.GetFactory("P").get()));
       if (!this->implicitTranspose_)
         keeps.push_back(keep_pair("R", manager.GetFactory("R").get()));
@@ -1417,8 +1473,8 @@ namespace MueLu {
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupHierarchy(Hierarchy& H) const {
-    HierarchyManager::SetupHierarchy(H);
     H.SetCycle(Cycle_);
+    HierarchyManager::SetupHierarchy(H);
   }
 
   static bool compare(const ParameterList& list1, const ParameterList& list2) {

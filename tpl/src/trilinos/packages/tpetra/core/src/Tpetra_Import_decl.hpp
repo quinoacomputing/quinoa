@@ -118,9 +118,9 @@ namespace Tpetra {
   ///   the Import (i.e., when calling DistObject's doImport()
   ///   (forward mode) or doExport() (reverse mode)).
   ///
-  template<class LocalOrdinal = Details::DefaultTypes::local_ordinal_type,
-           class GlobalOrdinal = Details::DefaultTypes::global_ordinal_type,
-           class Node = Details::DefaultTypes::node_type>
+  template<class LocalOrdinal = ::Tpetra::Details::DefaultTypes::local_ordinal_type,
+           class GlobalOrdinal = ::Tpetra::Details::DefaultTypes::global_ordinal_type,
+           class Node = ::Tpetra::Details::DefaultTypes::node_type>
   class Import:
     public ::Tpetra::Details::Transfer<LocalOrdinal, GlobalOrdinal, Node>
   {
@@ -208,7 +208,7 @@ namespace Tpetra {
     Import (const Teuchos::RCP<const map_type>& source,
             const Teuchos::RCP<const map_type>& target,
             Teuchos::Array<int> & remotePIDs);
-
+  
     /// \brief Copy constructor.
     ///
     /// \note Currently this only makes a shallow copy of the Import's
@@ -222,6 +222,21 @@ namespace Tpetra {
     /// Tpetra developers, for example when building the explicit
     /// transpose of a sparse matrix.
     Import (const Export<LocalOrdinal,GlobalOrdinal,Node>& exporter);
+
+    /// \bief Full Expert constructor
+    /// Requirements: source and target maps are fully correct
+    ///
+
+    Import (const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> >& source,
+	    const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> >& target,
+	    Teuchos::Array<int> & userRemotePIDs,
+	    Teuchos::Array<GlobalOrdinal>& remoteGIDs,
+	    const Teuchos::ArrayView<const LocalOrdinal> & userExportLIDs,
+	    const Teuchos::ArrayView<const int> & userExportPIDs,
+	    const bool useRemotePIDs,
+	    const Teuchos::RCP<Teuchos::ParameterList>& plist = Teuchos::null,
+	    const Teuchos::RCP<Teuchos::FancyOStream>& out = Teuchos::null);
+
 
     //! Destructor.
     virtual ~Import ();
@@ -355,6 +370,33 @@ namespace Tpetra {
     //! @name I/O Methods
     //@{
 
+    /// \brief Describe this object in a human-readable way to the
+    ///   given output stream.
+    ///
+    /// You must call this method as a collective over all processes
+    /// in the communicator of the source and target Map of this
+    /// object.
+    ///
+    /// \param out [out] Output stream to which to write.  Only
+    ///   Process 0 in this object's communicator may write to the
+    ///   output stream.
+    ///
+    /// \param verbLevel [in] Verbosity level.  This also controls
+    ///   whether this method does any communication.  At verbosity
+    ///   levels higher (greater) than Teuchos::VERB_LOW, this method
+    ///   behaves as a collective over the object's communicator.
+    ///
+    /// Teuchos::FancyOStream wraps std::ostream.  It adds features
+    /// like tab levels.  If you just want to wrap std::cout, try
+    /// this:
+    /// \code
+    /// auto out = Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::out));
+    /// \endcode
+    virtual void
+    describe (Teuchos::FancyOStream& out,
+              const Teuchos::EVerbosityLevel verbLevel =
+                Teuchos::Describable::verbLevel_default) const;
+
     /// \brief Print the Import's data to the given output stream.
     ///
     /// This method assumes that the given output stream can be
@@ -373,7 +415,6 @@ namespace Tpetra {
     virtual void print (std::ostream& os) const;
 
     //@}
-
   private:
     //! All the data needed for executing the Import communication plan.
     RCP<ImportExportData<LocalOrdinal,GlobalOrdinal,Node> > ImportData_;
@@ -473,7 +514,6 @@ namespace Tpetra {
     setupExport (Teuchos::Array<GlobalOrdinal>& remoteGIDs, bool useRemotePIDs, Teuchos::Array<int> & remotePIDs);
     //@}
 
-
     /// \brief "Expert" constructor that includes all the Import's data.
     ///
     /// This is useful for implementing setUnion() efficiently.
@@ -483,7 +523,7 @@ namespace Tpetra {
     /// so that it doesn't have to copy them.
     Import (const Teuchos::RCP<const map_type>& source,
             const Teuchos::RCP<const map_type>& target,
-            const size_t numSameIDs,
+            const size_t numSameID,
             Teuchos::Array<LocalOrdinal>& permuteToLIDs,
             Teuchos::Array<LocalOrdinal>& permuteFromLIDs,
             Teuchos::Array<LocalOrdinal>& remoteLIDs,

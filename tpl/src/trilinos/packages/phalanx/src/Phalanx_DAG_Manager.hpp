@@ -59,6 +59,11 @@
 #include "Phalanx_DAG_Node.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+#ifdef PHX_ENABLE_KOKKOS_AMT
+#include "Kokkos_TaskPolicy.hpp"
+#include "Threads/Kokkos_Threads_TaskPolicy.hpp"
+#endif
+
 namespace PHX {
   
   template<typename Traits> class FieldManager;
@@ -101,9 +106,21 @@ namespace PHX {
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& vm);
     
-    //! Compute the required variables for the fill on the specific element.
+    //! Evaluate the required fields using data parallel evalaution on topological sort of tasks.
     void evaluateFields(typename Traits::EvalData d);
     
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    /*! \brief Evaluate the fields using hybrid functional (asynchronous multi-tasking) and data parallelism.
+
+      @param threads_per_task The number of threads used for data parallelism within a single task.
+      @param work_Size The number of items to divide the parallel work over.
+      @param d User defined data.
+     */
+    void evaluateFieldsTaskParallel(const int& threads_per_task,
+				    const int& work_size,
+				    typename Traits::EvalData d);
+#endif
+
     /*! \brief This routine is called before each residual/Jacobian fill.
       
         This routine is called ONCE on the provider before the fill
@@ -144,7 +161,7 @@ namespace PHX {
     //! Returns the Topological sort ordering. Used for unit testing.
     const std::vector<int>& getEvaluatorInternalOrdering() const;
 
-    //! Returns the intrenally registered nodes. Used for unit testing.
+    //! Returns the internally registered nodes. Used for unit testing.
     const std::vector<PHX::DagNode<Traits>>& getDagNodes() const;
 
     /** \brief Returns the speedup and parallelizability of the graph.
@@ -154,6 +171,16 @@ namespace PHX {
 	execution times.
      */
     void analyzeGraph(double& speedup, double& parallelizability) const;
+
+    /** \brief Returns all evalautors that either evaluate or require
+        the given field. This is used to bind memory for unmanaged
+        views.
+
+        CAUTION: The returned vector is non-const to rebind memory for
+        fields in evalautors. Be careful not to corrupt the actual
+        vector.
+     */
+    std::vector<Teuchos::RCP<PHX::Evaluator<Traits>>>& getEvaluatorsBindingField(const PHX::FieldTag& ft);
 
   protected:
 
@@ -170,6 +197,8 @@ namespace PHX {
     //! Helper function.
     void printEvaluator(const PHX::Evaluator<Traits>& e, std::ostream& os) const;
 
+    void createEvalautorBindingFieldMap();
+    
   protected:
 
     //! Fields required by the user.
@@ -201,7 +230,7 @@ namespace PHX {
     //! Use this name for graphviz file output for DAG construction errors.
     std::string graphviz_filename_for_errors_;
 
-    //! IF set to true, will write graphviz file for DAG construction errors.
+    //! If set to true, will write graphviz file for DAG construction errors.
     bool write_graphviz_file_on_error_;
 
     std::string evaluation_type_name_;
@@ -211,6 +240,13 @@ namespace PHX {
 
     //! Backwards compatibility option: set to true to disable a check that throws if multiple registered evaluators can evaluate the same field. Original DFS algortihm allowed this.  Refactor checks and throws.   
     bool allow_multiple_evaluators_for_same_field_;
+
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    //std::vector<Kokkos::Experimental::Future<void,PHX::Device::execution_space>> node_futures_;
+#endif
+
+    //! A map that returns all evalautors that bind the memory of a particular field. Key is unique field identifier.  
+    std::unordered_map<std::string,std::vector<Teuchos::RCP<PHX::Evaluator<Traits>>>> field_to_evaluators_binding_;
   };
   
   template<typename Traits>

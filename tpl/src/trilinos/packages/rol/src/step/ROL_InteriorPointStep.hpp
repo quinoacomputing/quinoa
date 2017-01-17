@@ -81,7 +81,8 @@ private:
   Teuchos::RCP<Vector<Real> > c_;
 
   Real mu_;      // Barrier parameter
-  Real eps_;     // Minimal value of barrier parameter
+  Real mumin_;   // Minimal value of barrier parameter
+  Real mumax_;   // Maximal value of barrier parameter 
   Real rho_;     // Barrier parameter reduction factor
   int  maxit_;   // Maximum number of interior point subproblem solves
 
@@ -91,8 +92,14 @@ private:
   Real stol_;           // Status test step tolerance
   int subproblemIter_;  // Status test maximum number of iterations
 
+  int verbosity_;       // Adjust level of detail in printing step information
+
 public:
  
+  using Step<Real>::initialize;
+  using Step<Real>::compute;
+  using Step<Real>::update;
+
   ~InteriorPointStep() {}
 
   InteriorPointStep(Teuchos::ParameterList &parlist) :
@@ -109,11 +116,14 @@ public:
 
     using Teuchos::ParameterList;
     
+    verbosity_ = parlist.sublist("General").get("Print Verbosity",0);
+
     // List of general Interior Point parameters
     ParameterList& iplist  = parlist.sublist("Step").sublist("Interior Point");
 
     mu_             = iplist.get("Initial Barrier Penalty",1.0);
-    eps_            = iplist.get("Minimum Barrier Penalty",1.e-4);
+    mumin_          = iplist.get("Minimum Barrier Penalty",1.e-4);
+    mumax_          = iplist.get("Maximum Barrier Penalty",1e8);
     rho_            = iplist.get("Barrier Penalty Reduction Factor",0.5);
     subproblemIter_ = iplist.get("Subproblem Iteration Limit",10);
 
@@ -222,8 +232,8 @@ public:
   void update( Vector<Real> &x, Vector<Real> &l, const Vector<Real> &s, Objective<Real> &obj, 
                EqualityConstraint<Real> &con,  AlgorithmState<Real> &algo_state ) {
 
-    // If we can reduce the barrier parameter, do so
-    if(mu_ > eps_) {
+    // If we can change the barrier parameter, do so
+    if( (rho_< 1.0 && mu_ > mumin_) || (rho_ > 1.0 && mu_ < mumax_) ) {
       mu_ *= rho_;
       ipobj_->updatePenalty(mu_);
     }
@@ -302,6 +312,27 @@ public:
   */
   std::string printHeader( void ) const {
     std::stringstream hist;
+
+    if( verbosity_ > 0 ) {
+
+      hist << std::string(116,'-') << "\n";
+      hist << "Interior Point status output definitions\n\n";
+   
+      hist << "  IPiter  - Number of interior point steps taken\n";
+      hist << "  CSiter  - Number of Composite Steps taken in each subproblem\n";
+      hist << "  penalty - Penalty parameter multiplying the barrier objective\n";
+      hist << "  fval    - Number of objective evaluations\n";
+      hist << "  cnorm   - Norm of the composite constraint\n";
+      hist << "  gLnorm  - Norm of the Lagrangian's gradient\n";
+      hist << "  snorm   - Norm of step (update to optimzation and slack vector)\n";
+      hist << "  #fval   - Number of objective function evaluations\n";
+      hist << "  #grad   - Number of gradient evaluations\n";
+      hist << "  #cval   - Number of composite constraint evaluations\n"; 
+      hist << std::string(116,'-') << "\n";
+      
+     
+    }
+
     hist << "  ";
     hist << std::setw(9)  << std::left  << "IPiter";
     hist << std::setw(9)  << std::left  << "CSiter";

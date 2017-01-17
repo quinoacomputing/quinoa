@@ -118,6 +118,7 @@ typedef Tpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t, znode_t> tMatrix_t;
 typedef Tpetra::MultiVector<zscalar_t, zlno_t, zgno_t, znode_t> tMVector_t;
 typedef Zoltan2::XpetraMultiVectorAdapter<tMVector_t> vectorAdapter_t;
 typedef Zoltan2::XpetraCrsMatrixAdapter<tMatrix_t,tMVector_t> matrixAdapter_t;
+typedef Zoltan2::EvaluatePartition<matrixAdapter_t> quality_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Zoltan callbacks
@@ -195,6 +196,15 @@ static void zhg(void *data, int ngid, int nLists, int nPins, int format,
     for (size_t j = 0; j < nEntries; j++)
       pinGids[offsets[i]+j] = graph->getColMap()->getGlobalElement(colind[j]);
   }
+
+for (zlno_t i = 0; i < nrows; i++) {
+  size_t nEntries = graph->getNumEntriesInLocalRow(i);
+  std::cout << "KDDZHG list " << i << " npins " << offsets[i+1]-offsets[i] << ": ";
+  for (size_t j = 0; j < nEntries; j++)
+    std::cout << pinGids[offsets[i]+j] << " ";
+  std::cout << std::endl;
+}
+
   *ierr = ZOLTAN_OK;
 }
 
@@ -338,6 +348,10 @@ int run(
     return 1;
   }
 
+for(int i = 0; i < nump; i++) {
+  std::cout << me << " KDD Z1 " << pgid[i] << " " << plid[i] << " " << ppart[i] << std::endl;
+}
+
   /////////////////////////////////////////
   // PARTITION USING ZOLTAN THROUGH ZOLTAN2
   /////////////////////////////////////////
@@ -371,7 +385,6 @@ int run(
   
   Teuchos::ParameterList params;
   params.set("timer_output_stream" , "std::cout");
-  params.set("compute_metrics", "true");
   // params.set("debug_level" , "verbose_detailed_status");
 
   params.set("algorithm", "zoltan");
@@ -410,8 +423,16 @@ int run(
     return 1;
   }
 
+for(int i = 0; i < nump; i++) {
+  std::cout << me << " KDD Z2 " << coords->getMap()->getGlobalElement(i)  << " " << i << " " << problem->getSolution().getPartListView()[i] << std::endl;
+}
+
+  // create metric object
+
+ RCP<quality_t>metricObject = rcp(new quality_t(ia,&params,problem->getComm(),
+						&problem->getSolution()));
   if (me == 0){
-    problem->printMetrics(cout);
+    metricObject->printMetrics(cout);
   }
   problem->printTimers();
 

@@ -6,4 +6,8 @@ SET(TEST_OPTIONAL_DEP_PACKAGES Amesos Isorropia Epetra EpetraExt Ifpack Intrepid
 SET(LIB_REQUIRED_DEP_TPLS)
 SET(LIB_OPTIONAL_DEP_TPLS)
 SET(TEST_REQUIRED_DEP_TPLS)
-SET(TEST_OPTIONAL_DEP_TPLS)
+SET(TEST_OPTIONAL_DEP_TPLS TASMANIAN)
+
+# STKClassic support in TrilinosCouplings is broken (see Trilinos #19)
+SET(TrilinosCouplings_ENABLE_STKClassic OFF CACHE BOOL
+  "Set by default in TrilinosCopulings Dependencies.cmake")

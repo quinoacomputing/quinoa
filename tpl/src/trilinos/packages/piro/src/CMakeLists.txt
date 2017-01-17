@@ -30,8 +30,6 @@ APPEND_SET(HEADERS
   Piro_SolutionObserverBase.hpp
   Piro_SolverFactory.hpp
   Piro_SolverFactory_Def.hpp
-  Piro_AdaptiveSolverFactory.hpp
-  Piro_AdaptiveSolverFactory_Def.hpp
   Piro_StratimikosUtils.hpp
   Piro_ConfigDefs.hpp
   )
@@ -76,7 +74,6 @@ IF (Piro_ENABLE_NOX)
     Piro_LOCAAdaptiveSolver.hpp
     Piro_LOCAAdaptiveSolver_Def.hpp
     Piro_ObserverToLOCASaveDataStrategyAdapter.hpp
-    Piro_NullSpaceUtils.hpp
     Piro_VelocityVerletSolver.hpp
     Piro_VelocityVerletSolver_Def.hpp
     Piro_TrapezoidRuleSolver.hpp
@@ -100,7 +97,6 @@ ENDIF()
     Piro_LOCASolver.cpp
     Piro_LOCAAdaptiveSolver.cpp
     Piro_ObserverToLOCASaveDataStrategyAdapter.cpp
-    Piro_NullSpaceUtils.cpp
     )
 IF(Piro_ENABLE_Epetra)
   APPEND_SET(SOURCES

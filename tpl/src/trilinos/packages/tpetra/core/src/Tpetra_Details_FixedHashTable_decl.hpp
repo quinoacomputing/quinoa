@@ -44,145 +44,14 @@
 #ifndef TPETRA_DETAILS_FIXEDHASHTABLE_DECL_HPP
 #define TPETRA_DETAILS_FIXEDHASHTABLE_DECL_HPP
 
-#include <Tpetra_Details_Hash.hpp>
-#include <Tpetra_Details_OrdinalTraits.hpp>
-#include <Teuchos_Describable.hpp>
-#include <Kokkos_Core.hpp>
+#include "Tpetra_Details_Hash.hpp"
+#include "Tpetra_Details_OrdinalTraits.hpp"
+#include "Tpetra_Details_copyOffsets.hpp"
+#include "Teuchos_Describable.hpp"
+#include "Kokkos_Core.hpp"
 
 namespace Tpetra {
 namespace Details {
-
-//
-// Implementation details for FixedHashTable (see below).
-// Users should skip over this anonymous namespace.
-//
-namespace { // (anonymous)
-
-  // Overflow is impossible (the output can fit the input) if the
-  // output type is bigger than the input type, or if the types have
-  // the same size and (the output type is unsigned, or both types are
-  // signed).
-  //
-  // Implicit here is the assumption that both input and output types
-  // are integers.
-  template<class T1, class T2,
-           const bool T1_is_signed = std::is_signed<T1>::value,
-           const bool T2_is_signed = std::is_signed<T2>::value>
-  struct OutputCanFitInput {
-    static const bool value = sizeof (T1) > sizeof (T2) ||
-      (sizeof (T1) == sizeof (T2) &&
-       (std::is_unsigned<T1>::value || (std::is_signed<T1>::value && std::is_signed<T2>::value)));
-  };
-
-  // Kokkos parallel_reduce functor for copying offset ("ptr") arrays.
-  // Tpetra::Details::FixedHashTable uses this in its "copy"
-  // constructor for converting between different Device types.  All
-  // the action happens in the partial specializations for different
-  // values of outputCanFitInput.
-  template<class OutputViewType, class InputViewType,
-           const bool outputCanFitInput = OutputCanFitInput<typename OutputViewType::non_const_value_type,
-                                                            typename InputViewType::non_const_value_type>::value>
-  class CopyOffsets {};
-
-  // Specialization for when overflow is possible.
-  template<class OutputViewType, class InputViewType>
-  class CopyOffsets<OutputViewType, InputViewType, false> {
-  public:
-    typedef typename OutputViewType::execution_space execution_space;
-    typedef typename OutputViewType::size_type size_type;
-    typedef bool value_type;
-
-    typedef typename InputViewType::non_const_value_type input_value_type;
-    typedef typename OutputViewType::non_const_value_type output_value_type;
-
-    CopyOffsets (const OutputViewType& dst, const InputViewType& src) :
-      dst_ (dst),
-      src_ (src),
-      // We know that output_value_type cannot fit all values of
-      // input_value_type, so an input_value_type can fit all values
-      // of output_value_type.  This means we can convert from
-      // output_value_type to input_value_type.  This is how we test
-      // whether a given input_value_type value can fit in an
-      // output_value_type.
-      minDstVal_ (static_cast<input_value_type> (std::numeric_limits<output_value_type>::min ())),
-      maxDstVal_ (static_cast<input_value_type> (std::numeric_limits<output_value_type>::max ()))
-    {}
-
-    KOKKOS_INLINE_FUNCTION void
-    operator () (const size_type& i, value_type& noOverflow) const {
-      const input_value_type src_i = src_(i);
-      if (src_i < minDstVal_ || src_i > maxDstVal_) {
-        noOverflow = false;
-      }
-      dst_(i) = static_cast<output_value_type> (src_i);
-    }
-
-    KOKKOS_INLINE_FUNCTION void init (value_type& noOverflow) const {
-      noOverflow = true; // success (no overflow)
-    }
-
-    KOKKOS_INLINE_FUNCTION void
-    join (volatile value_type& result,
-          const volatile value_type& current) const {
-      result = result && current; // was there any overflow?
-    }
-
-  private:
-    OutputViewType dst_;
-    InputViewType src_;
-    input_value_type minDstVal_;
-    input_value_type maxDstVal_;
-  };
-
-  // Specialization for when overflow is impossible.
-  template<class OutputViewType, class InputViewType>
-  class CopyOffsets<OutputViewType, InputViewType, true> {
-  public:
-    typedef typename OutputViewType::execution_space execution_space;
-    typedef typename OutputViewType::size_type size_type;
-    typedef bool value_type;
-
-    CopyOffsets (const OutputViewType& dst, const InputViewType& src) :
-      dst_ (dst),
-      src_ (src)
-    {}
-
-    KOKKOS_INLINE_FUNCTION void
-    operator () (const size_type& i, value_type& /* noOverflow */) const {
-      // Overflow is impossible in this case, so there's no need to check.
-      dst_(i) = src_(i);
-    }
-
-    KOKKOS_INLINE_FUNCTION void init (value_type& noOverflow) const {
-      noOverflow = true; // success (no overflow)
-    }
-
-    KOKKOS_INLINE_FUNCTION void
-    join (volatile value_type& result,
-          const volatile value_type& current) const {
-      result = result && current; // was there any overflow?
-    }
-
-  private:
-    OutputViewType dst_;
-    InputViewType src_;
-  };
-
-  template<class OutputViewType, class InputViewType>
-  void copyOffsets (const OutputViewType& dst, const InputViewType& src) {
-    TEUCHOS_TEST_FOR_EXCEPTION
-      (dst.dimension_0 () != src.dimension_0 (), std::invalid_argument,
-       "copyOffsets: dst.dimension_0() = " << dst.dimension_0 ()
-       << " != src.dimension_0() = " << src.dimension_0 () << ".");
-    typedef CopyOffsets<OutputViewType, InputViewType> functor_type;
-    bool noOverflow = false;
-    Kokkos::parallel_reduce (dst.dimension_0 (), functor_type (dst, src), noOverflow);
-    TEUCHOS_TEST_FOR_EXCEPTION
-      (! noOverflow, std::runtime_error, "copyOffsets: One or more values in "
-       "src were too big (in the sense of integer overflow) to fit in dst.");
-  }
-
-} // namespace (anonymous)
 
 /// \class FixedHashTable
 /// \tparam KeyType The type of the hash table's keys.  This must be a
@@ -318,7 +187,35 @@ public:
 
   /// \brief Constructor for arbitrary keys and contiguous values
   ///   starting with \c startingValue, that takes an initial
+  ///   contiguous sequence of keys, stored as a Kokkos::View.
+  ///
+  /// Add <tt>(keys[i], startingValue + i)</tt> to the table, for i =
+  /// 0, 1, ..., <tt>keys.size()</tt>.
+  ///
+  /// \param keys [in] The keys in the hash table.  We reserve the
+  ///   right to keep the input View without a deep copy.  If you
+  ///   intend to modify this View after calling this constructor,
+  ///   please make a deep copy yourself and give the copy to this
+  ///   constructor.
+  /// \param firstContigKey [in] First key in the initial contiguous
+  ///   sequence of keys.
+  /// \param lastContigKey [in] Last key (inclusive!) in the initial
   ///   contiguous sequence of keys.
+  /// \param startingValue [in] First value in the contiguous sequence
+  ///   of values.
+  /// \param keepKeys [in] Whether to keep the input keys (NOT deep
+  ///   copied, in this case).  Keeping a copy lets you convert from a
+  ///   value back to a key (the reverse of what get() does).
+  FixedHashTable (const keys_type& keys,
+                  const KeyType firstContigKey,
+                  const KeyType lastContigKey,
+                  const ValueType startingValue,
+                  const bool keepKeys = false);
+
+  /// \brief Constructor for arbitrary keys and contiguous values
+  ///   starting with \c startingValue, that takes an initial
+  ///   contiguous sequence of keys, stored as a Teuchos::ArrayView
+  ///   (host pointer).
   ///
   /// Add <tt>(keys[i], startingValue + i)</tt> to the table, for i =
   /// 0, 1, ..., <tt>keys.size()</tt>.
@@ -379,7 +276,7 @@ public:
     // of Kokkos::deep_copy.
     nonconst_ptr_type ptr (ViewAllocateWithoutInitializing ("ptr"),
                            src.ptr_.dimension_0 ());
-    copyOffsets (ptr, src.ptr_);
+    ::Tpetra::Details::copyOffsets (ptr, src.ptr_);
     nonconst_val_type val (ViewAllocateWithoutInitializing ("val"),
                            src.val_.dimension_0 ());
     // val and src.val_ have the same entry types, unlike (possibly)
@@ -463,7 +360,7 @@ public:
 
   /// \brief Number of (key, value) pairs in the table.
   ///
-  /// This counts duplicate keys separately.
+  /// This counts pairs with the same key value as separate pairs.
   KOKKOS_INLINE_FUNCTION offset_type numPairs () const {
     // NOTE (mfh 26 May 2015) Using val_.dimension_0() only works
     // because the table stores pairs with duplicate keys separately.

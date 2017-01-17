@@ -41,6 +41,7 @@
 #include "stk_mesh/base/Part.hpp"       // for Part
 #include "stk_mesh/base/Types.hpp"      // for BucketVector, PartOrdinal, etc
 #include "stk_mesh/baseImpl/BucketRepository.hpp"  // for BucketRepository
+#include <stk_mesh/baseImpl/MeshImplUtils.hpp>
 #include "stk_util/environment/ReportHandler.hpp"  // for ThrowAssert, etc
 namespace stk { namespace mesh { class FieldBase; } }
 
@@ -219,6 +220,21 @@ void Partition::overwrite_from_end(Bucket& bucket, unsigned ordinal)
   }
 }
 
+void Partition::delete_bucket(Bucket * bucket)
+{
+    if(bucket == m_buckets.back() && m_buckets.size() > 1)
+    {
+        Bucket *new_last = m_buckets[m_buckets.size() - 2];
+        m_buckets[0]->set_last_bucket_in_partition(new_last);
+    }
+
+    m_size -= bucket->size();
+
+    auto iter = std::find(m_buckets.begin(), m_buckets.end(), bucket);
+    m_repository->deallocate_bucket(bucket);
+    m_buckets.erase(iter, iter+1);
+}
+
 void Partition::remove_impl()
 {
   ThrowAssert(!empty());
@@ -287,7 +303,8 @@ void Partition::compress(bool force)
   }
 
   //sort entities
-  std::sort( entities.begin(), entities.end(), EntityLess(m_mesh) );
+  std::sort(entities.begin(),entities.end(),EntityLess(m_mesh));
+
   m_updated_since_sort = false;
 
   // ceiling
@@ -326,13 +343,16 @@ void Partition::compress(bool force)
   internal_check_invariants();
 }
 
-void Partition::sort(bool force)
+void Partition::default_sort_if_needed()
 {
-  if (!force && (empty() || !m_updated_since_sort))
+  if (!empty() && m_updated_since_sort)
   {
-    return;
+      sort(GlobalIdEntitySorter());
   }
+}
 
+void Partition::sort(const EntitySorterBase& sorter)
+{
   std::vector<unsigned> partition_key = get_legacy_partition_id();
   //index of bucket in partition
   partition_key[ partition_key[0] ] = 0;
@@ -353,7 +373,7 @@ void Partition::sort(bool force)
     new_i += b_size;
   }
 
-  std::sort( entities.begin(), entities.end(), EntityLess(m_mesh) );
+  sorter.sort(m_mesh, entities);
 
   // Make sure that there is a vacancy somewhere.
   //

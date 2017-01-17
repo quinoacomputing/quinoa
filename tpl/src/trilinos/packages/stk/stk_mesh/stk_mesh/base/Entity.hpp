@@ -35,86 +35,94 @@
 #define STK_MESH_ENTIY_HPP
 
 #include <stddef.h>                     // for size_t
-#include <stdint.h>                     // for uint64_t
+#include <stdint.h>                     // for uint64_t, uint32_t
 #include <iosfwd>                       // for ostream
+#include <stk_util/stk_config.h>
+
+#define STK_32BIT_ENTITY
 
 namespace stk{
-  namespace mesh{
+namespace mesh{
 
-    struct Entity
-    {
-      enum Entity_t {
-	InvalidEntity = 0ull,
-	MinEntity = 1ull,
-	MaxEntity = ~0ull
-      };
-
-      uint64_t m_value;
-
-      Entity() : m_value(InvalidEntity) {}
-
-      explicit Entity(uint64_t value) : m_value(value) {}
-
-      Entity operator=(Entity_t val) { m_value = val; return *this;}
-
-      /** \brief local_offset is this entity's offset into all local entities of the same rank.
-       * An entity's local_offset will generally remain unchanged through mesh-modification cycles,
-       * which means that the set of local_offsets may not be compact or contiguous if some
-       * entities have been deleted. (local_offsets for deleted entities are no longer valid.)
-       * Thus, local_offset is not suitable for use as an equation index for linear-system operations.
-       * See local_id() below.
-       */
-      size_t local_offset() const { return static_cast<size_t>(m_value); }
-
-      bool is_local_offset_valid() const { return local_offset() > 0; }
-
-      /** This setter should only be called by the BulkData class when creating entities.
-       * Erroneous calls will lead to undefined (and probably disastrous) behavior.
-       */
-      void set_local_offset(size_t localOffset) {
-	m_value = static_cast<Entity_t>(localOffset);
-      }
-
-      bool operator==(Entity entity) const { return m_value == entity.m_value; }
-
-      bool operator==(Entity_t val) const { return m_value == val; }
-
-      bool operator!=(Entity entity) const { return m_value != entity.m_value; }
-
-      bool operator!=(Entity_t val) const { return m_value != val; }
-
-      bool operator<(Entity entity) const { return m_value < entity.m_value; }
-
+struct Entity
+{
+    enum Entity_t {
+#ifdef STK_32BIT_ENTITY
+        InvalidEntity = 0u,
+        MinEntity = 1u,
+        MaxEntity = ~0u
+#else
+        InvalidEntity = 0ull,
+        MinEntity = 1ull,
+        MaxEntity = ~0ull
+#endif
     };
-  }
+
+#ifdef STK_32BIT_ENTITY
+    typedef uint32_t entity_value_type;
+#else
+    typedef uint64_t entity_value_type;
+#endif
+
+    entity_value_type m_value;
+
+    STK_FUNCTION
+    Entity() : m_value(InvalidEntity) {}
+
+    STK_FUNCTION
+    explicit Entity(entity_value_type value) : m_value(value) {}
+
+    STK_FUNCTION
+    Entity operator=(entity_value_type val) { m_value = val; return *this;}
+
+    /** \brief local_offset is this entity's offset into all local entities of the same rank.
+     * An entity's local_offset will generally remain unchanged through mesh-modification cycles,
+     * which means that the set of local_offsets may not be compact or contiguous if some
+     * entities have been deleted. (local_offsets for deleted entities are no longer valid.)
+     * Thus, local_offset is not suitable for use as an equation index for linear-system operations.
+     * See local_id() below.
+     */
+    STK_FUNCTION
+    entity_value_type local_offset() const { return m_value; }
+
+    STK_FUNCTION
+    bool is_local_offset_valid() const { return local_offset() > 0; }
+
+    /** This setter should only be called by the BulkData class when creating entities.
+     * Erroneous calls will lead to undefined (and probably disastrous) behavior.
+     */
+    STK_FUNCTION
+    void set_local_offset(size_t localOffset) {
+        m_value = static_cast<entity_value_type>(localOffset);
+    }
+
+    STK_FUNCTION
+    bool operator==(Entity entity) const { return m_value == entity.m_value; }
+
+    STK_FUNCTION
+    bool operator==(entity_value_type val) const { return m_value == val; }
+
+    STK_FUNCTION
+    bool operator!=(Entity entity) const { return m_value != entity.m_value; }
+
+    STK_FUNCTION
+    bool operator!=(entity_value_type val) const { return m_value != val; }
+
+    STK_FUNCTION
+    bool operator<(Entity entity) const { return m_value < entity.m_value; }
+
+};
+
+std::ostream & operator << ( std::ostream & , const Entity & );
+
+inline
+size_t hash_value( Entity entity) {
+//        try to use std::hash
+    return entity.local_offset();
 }
 
-
-namespace stk {
-  namespace mesh {
-    namespace impl {
-      class EntityRepository;
-    }
-    std::ostream & operator << ( std::ostream & , const Entity & );
-    //
-    // THIS CLASS STAYS BUT NEEDS TO BE DECLARED AFTER Entity.
-    //
-    class EntityEqual
-    {
-    public:
-      bool operator()(const Entity lhs, const Entity rhs) const {
-	return lhs == rhs;
-      }
-    };
-
-    inline
-    size_t hash_value( Entity entity) {
-//        try to use std::hash
-      return entity.local_offset();
-    }
-  } // namespace mesh
+} // namespace mesh
 } // namespace stk
-
 
 
 #endif

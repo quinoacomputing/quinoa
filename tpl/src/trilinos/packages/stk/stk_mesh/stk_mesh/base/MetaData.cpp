@@ -144,16 +144,16 @@ void MetaData::set_mesh_on_fields(BulkData* bulk)
   }
 }
 
-MetaData & MetaData::get( const BulkData & bulk_data) {
-  return bulk_data.meta_data();
+const MetaData & MetaData::get( const BulkData & bulk_data) {
+  return bulk_data.mesh_meta_data();
 }
 
-MetaData & MetaData::get( const Bucket & bucket) {
-  return MetaData::get(BulkData::get(bucket));
+const MetaData & MetaData::get( const Bucket & bucket) {
+  return MetaData::get(bucket.mesh());
 }
 
-MetaData & MetaData::get( const Ghosting & ghost) {
-  return MetaData::get(BulkData::get(ghost));
+const MetaData & MetaData::get( const Ghosting & ghost) {
+  return MetaData::get(ghost.mesh());
 }
 //----------------------------------------------------------------------
 
@@ -229,7 +229,6 @@ MetaData::MetaData(size_t spatial_dimension, const std::vector<std::string>& ent
     m_properties( ),
     m_entity_rank_names( ),
     m_spatial_dimension( 0 /*invalid spatial dimension*/),
-    m_side_rank(stk::topology::INVALID_RANK),
     m_part_fields()
 {
   // Declare the predefined parts
@@ -256,7 +255,6 @@ MetaData::MetaData()
     m_properties( ),
     m_entity_rank_names( ),
     m_spatial_dimension( 0 /*invalid spatial dimension*/),
-    m_side_rank(stk::topology::INVALID_RANK),
     m_part_fields()
 {
   // Declare the predefined parts
@@ -272,6 +270,7 @@ MetaData::MetaData()
 void MetaData::initialize(size_t spatial_dimension, const std::vector<std::string> &rank_names)
 {
   ThrowErrorMsgIf( !m_entity_rank_names.empty(), "already initialized");
+  ThrowErrorMsgIf( spatial_dimension == 0, "Min spatial dimension is 1");
   ThrowErrorMsgIf( spatial_dimension > 3, "Max spatial dimension is 3");
 
   if ( rank_names.empty() ) {
@@ -285,7 +284,6 @@ void MetaData::initialize(size_t spatial_dimension, const std::vector<std::strin
   }
 
   m_spatial_dimension = spatial_dimension;
-  m_side_rank = side_rank();
 
   internal_declare_known_cell_topology_parts();
 }
@@ -328,15 +326,11 @@ FieldBase const* MetaData::coordinate_field() const
 Part * MetaData::get_part( const std::string & p_name ,
                            const char * required_by ) const
 {
-  const PartVector & all_parts = m_part_repo.get_all_parts();
-
-  Part * const p = find( all_parts , p_name );
-
-  ThrowErrorMsgIf( required_by && NULL == p,
+  Part *part = m_part_repo.get_part_by_name(p_name);
+  ThrowErrorMsgIf( required_by && NULL == part,
                    "Failed to find part with name " << p_name <<
                    " for method " << required_by );
-
-  return p ;
+  return part;
 }
 
 void MetaData::add_new_part_in_part_fields()
@@ -653,7 +647,7 @@ void MetaData::register_cell_topology(const CellTopology cell_topology, EntityRa
   //check_topo_db();
 }
 
-shards::CellTopology MetaData::register_superelement_cell_topology(stk::topology topo)
+shards::CellTopology MetaData::register_super_cell_topology(stk::topology topo)
 {
   shards::CellTopology cell_topology = get_cell_topology(topo.name());
   if (!cell_topology.isValid()) {
@@ -673,7 +667,12 @@ shards::CellTopology MetaData::register_superelement_cell_topology(stk::topology
     cell_topology_data->subcell_count[2]  = 0 ;
     cell_topology_data->subcell_count[3]  = 0 ;
 
-    register_cell_topology(cell_topology, stk::topology::ELEMENT_RANK);
+    if (topo.is_superedge())
+        register_cell_topology(cell_topology, stk::topology::EDGE_RANK);
+    else if (topo.is_superface())
+        register_cell_topology(cell_topology, stk::topology::FACE_RANK);
+    else
+        register_cell_topology(cell_topology, stk::topology::ELEMENT_RANK);
   }
   return cell_topology;
 }
@@ -875,9 +874,9 @@ void set_topology(Part & part, stk::topology topo)
     meta.declare_part(part.name(), topo.rank());
   }
 
-  if (topo.is_superelement()) {
+  if (topo.is_super_topology()) {
     // Need to (possibly) create a CellTopology corresponding to this superelement stk::topology.
-    shards::CellTopology cell_topology = meta.register_superelement_cell_topology(topo);
+    shards::CellTopology cell_topology = meta.register_super_cell_topology(topo);
     set_cell_topology(part, cell_topology);
   } else {
     set_cell_topology(part, get_cell_topology(topo));
@@ -1035,6 +1034,10 @@ stk::topology get_topology( CellTopology shards_topology, int spatial_dimension)
     t = stk::topology::HEX_27;
   else if ( shards_topology.isValid() && strncmp(shards_topology.getName(), "SUPERELEMENT", 12) == 0)
     return create_superelement_topology(shards_topology.getNodeCount());
+  else if ( shards_topology.isValid() && strncmp(shards_topology.getName(), "SUPERFACE", 9) == 0)
+    return create_superface_topology(shards_topology.getNodeCount());
+  else if ( shards_topology.isValid() && strncmp(shards_topology.getName(), "SUPEREDGE", 9) == 0)
+    return create_superedge_topology(shards_topology.getNodeCount());
 
   if (t.defined_on_spatial_dimension(spatial_dimension))
     return t;

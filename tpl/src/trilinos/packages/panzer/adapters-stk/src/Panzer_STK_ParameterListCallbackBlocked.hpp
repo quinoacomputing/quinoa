@@ -43,7 +43,7 @@
 #ifndef __Panzer_STK_ParameterListCallbackBlocked_hpp__
 #define __Panzer_STK_ParameterListCallbackBlocked_hpp__
 
-#ifdef HAVE_TEKO
+#ifdef PANZER_HAVE_TEKO
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -111,6 +111,8 @@ private:
   std::map<std::string,std::vector<double> > zcoords_;
 
   mutable std::map<std::string,Teuchos::RCP<const panzer::ArrayToFieldVector<LocalOrdinalT,GlobalOrdinalT,Node> > > arrayToVector_;
+
+  Teuchos::RCP<Tpetra::MultiVector<double,int,GlobalOrdinalT,Node> > coordsVec_;
    
 };
 
@@ -118,6 +120,6 @@ private:
 
 #include "Panzer_STK_ParameterListCallbackBlocked_impl.hpp"
 
-#endif // HAVE_TEKO
+#endif // PANZER_HAVE_TEKO
 
 #endif

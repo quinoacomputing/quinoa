@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
   try {
     bool proc_verbose = false;
     bool leftprec = true; // use left preconditioning to solve these linear systems
+    bool explicit_test = true;
     int frequency = -1;  // how often residuals are printed by solver
     int numrhs = 1;
     int maxiters = -1;    // maximum iterations allowed
@@ -86,11 +87,12 @@ int main(int argc, char *argv[]) {
     Teuchos::CommandLineProcessor cmdp(false,true);
     cmdp.setOption("verbose","quiet",&verbose,"Print messages and results.");
     cmdp.setOption("left-prec","right-prec",&leftprec,"Left preconditioning or right.");
+    cmdp.setOption("explicit","implicit-only",&explicit_test,"Compute explicit residuals.");
     cmdp.setOption("frequency",&frequency,"Solvers frequency for printing residuals (#iters).");
     cmdp.setOption("filename",&filename,"Filename for Harwell-Boeing test matrix.");
     cmdp.setOption("tol",&tol,"Relative residual tolerance used by GMRES solver.");
     cmdp.setOption("num-rhs",&numrhs,"Number of right-hand sides to be solved for.");
-    cmdp.setOption("maxiters",&maxiters,"Maximum number of iterations per linear system (-1 = adapted to problem/block size).");
+    cmdp.setOption("maxiters",&maxiters,"Maximum number of iterations per linear system (-1 = adapted to problem size).");
     if (cmdp.parse(argc,argv) != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
       return -1;
     }
@@ -152,18 +154,17 @@ int main(int argc, char *argv[]) {
     RCP<Belos::EpetraPrecOp> Prec = rcp( new Belos::EpetraPrecOp( ilukFactors ) );
 
     //
-    // ********Other information used by block solver***********
+    // ********Other information used by solver***********
     // *****************(can be user specified)******************
     //
     const int NumGlobalElements = Map.NumGlobalElements();
     if (maxiters == -1)
-      maxiters = NumGlobalElements - 1; // maximum number of iterations to run
+      maxiters = NumGlobalElements; // maximum number of iterations to run
     //
     ParameterList belosList;
     belosList.set( "Maximum Iterations", maxiters );       // Maximum number of iterations allowed
     belosList.set( "Convergence Tolerance", tol );         // Relative convergence tolerance requested
-    if (leftprec)
-      belosList.set( "Explicit Residual Test", true );     // Need to check for the explicit residual before returning
+    belosList.set( "Explicit Residual Test", explicit_test );     // Need to check for the explicit residual before returning
     if (verbose) {
       belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
           Belos::TimingDetails + Belos::StatusTestDetails );
@@ -176,9 +177,11 @@ int main(int argc, char *argv[]) {
     // *****Construct solution std::vector and random right-hand-sides *****
     //
     RCP<Epetra_MultiVector> X = rcp( new Epetra_MultiVector(Map, numrhs) );
-    X->PutScalar( 0.0 );
     RCP<Epetra_MultiVector> B = rcp( new Epetra_MultiVector(Map, numrhs) );
-    B->Random();
+    MVT::MvRandom( *X );
+    OPT::Apply( *A, *X, *B );
+    MVT::MvInit( *X, 0.0 );
+
     Belos::LinearProblem<double,MV,OP> problem( A, X, B );
     if (leftprec)
       problem.setLeftPrec( Prec );

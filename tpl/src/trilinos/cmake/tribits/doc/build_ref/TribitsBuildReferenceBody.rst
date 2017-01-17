@@ -1,8 +1,11 @@
 .. Common references to other documents
 
-.. _Package Dependencies and Enable/Disable Logic: ../developers_guide/TribitsDevelopersGuide.html#package-dependencies-and-enable-disable-logic
+.. _Package Dependencies and Enable/Disable Logic: https://tribits.org/doc/TribitsDevelopersGuide.html l#package-dependencies-and-enable-disable-logic
 
-.. _TriBITS Dependency Handling Behaviors: ../developers_guide/TribitsDevelopersGuide.html#tribits-dependency-handling-behaviors
+.. _TriBITS Dependency Handling Behaviors: https://tribits.org/doc/TribitsDevelopersGuide.html#tribits-dependency-handling-behaviors
+
+.. _TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES(): https://tribits.org/doc/TribitsDevelopersGuide.html#tribits-tpl-find-include-dirs-and-libraries
+
 
 
 Getting set up to use CMake
@@ -837,29 +840,79 @@ which sets the paths where the MPI executables (e.g. mpiCC, mpicc, mpirun,
 mpiexec) can be found.  By default this is set to ``${MPI_BASE_DIR}/bin`` if
 ``MPI_BASE_DIR`` is set.
 
-The value of ``LD_LIBRARY_PATH`` will also automatically be set to
-``${MPI_BASE_DIR}/lib`` if it exists.  This is needed for the basic compiler
-tests for some MPI implementations that are installed in non-standard
-locations.
+**NOTE:** TriBITS uses the MPI compiler wrappers (e.g. mpiCC, mpicc, mpic++,
+mpif90, etc.) which is more standard with other builds systems for HPC
+computing using MPI (and the way that MPI implementations were meant to be
+used).  But directly using the MPI compiler wrappers as the direct compilers
+is inconsistent with the way that the standard CMake module ``FindMPI.cmake``
+which tries to "unwrap" the compiler wrappers and grab out the raw underlying
+compilers and the raw compiler and linker command-line arguments.  In this
+way, TriBITS is more consistent with standard usage in the HPC community but
+is less consistent with CMake (see "HISTORICAL NOTE" below).
 
 There are several different different variations for configuring with MPI
 support:
 
 a) **Configuring build using MPI compiler wrappers:**
 
-  The MPI compiler wrappers are turned on by default.  There is built-in
-  logic that will try to find the right compiler wrappers.  However, you can
-  specifically select them by setting, for example::
+  The MPI compiler wrappers are turned on by default.  There is built-in logic
+  in TriBITS that will try to find the right MPI compiler wrappers.  However,
+  you can specifically select them by setting, for example::
 
     -D MPI_C_COMPILER:FILEPATH=mpicc \
     -D MPI_CXX_COMPILER:FILEPATH=mpic++ \
     -D MPI_Fortan_COMPILER:FILEPATH=mpif77
 
   which gives the name of the MPI C/C++/Fortran compiler wrapper executable.
-  If this is just the name of the program it will be looked for in
-  ${MPI_BIN_DIR} and in other standard locations with that name.  If this is
-  an absolute path, then this will be used as CMAKE_[C,CXX,Fortran]_COMPILER
-  to compile and link code.
+  In this case, just the names of the programs are given and absolute path of
+  the executables will be searched for under ``${MPI_BIN_DIR}/`` if the cache
+  variable ``MPI_BIN_DIR`` is set, or in the default path otherwise.  The
+  found programs will then be used to set the cache variables
+  ``CMAKE_[C,CXX,Fortran]_COMPILER``.
+
+  One can avoid the search and just use the absolute paths with, for example::
+
+    -D MPI_C_COMPILER:FILEPATH=/opt/mpich/bin/mpicc \
+    -D MPI_CXX_COMPILER:FILEPATH=/opt/mpich/bin/mpic++ \
+    -D MPI_Fortan_COMPILER:FILEPATH=/opt/mpich/bin/mpif77
+
+  However, you can also directly set the variables
+  ``CMAKE_[C,CXX,Fortran]_COMPILER`` with, for example::
+
+    -D CMAKE_C_COMPILER:FILEPATH=/opt/mpich/bin/mpicc \
+    -D CMAKE_CXX_COMPILER:FILEPATH=/opt/mpich/bin/mpic++ \
+    -D CMAKE_Fortan_COMPILER:FILEPATH=/opt/mpich/bin/mpif77
+
+  **WARNING:** If you set just the compiler names and not the absolute paths
+  with ``CMAKE_<LANG>_COMPILER`` in MPI mode, then a search will not be done
+  and these will be expected to be in the path at build time. (Note that his
+  is inconsistent the behavior of raw CMake in non-MPI mode described in
+  `Selecting compiler and linker options`_).  If both
+  ``CMAKE_<LANG>_COMPILER`` and ``MPI_<LANG>_COMPILER`` are set, however, then
+  ``CMAKE_<LANG>_COMPILER`` will be used and ``MPI_<LANG>_COMPILER`` will be
+  ignored.
+
+  Note that when ``USE_XSDK_DEFAULTS=FALSE`` (see `xSDK Configuration
+  Options`_), then the environment variables ``CC``, ``CXX`` and ``FC`` are
+  ignored.  But when ``USE_XSDK_DEFAULTS=TRUE`` and the CMake cache variables
+  ``CMAKE_[C,CXX,Fortran]_COMPILER`` are not set, then the environment
+  variables ``CC``, ``CXX`` and ``FC`` will be used for
+  ``CMAKE_[C,CXX,Fortran]_COMPILER``, even if the CMake cache variables
+  ``MPI_[C,CXX,Fortran]_COMPILER`` are set!  So if one wants to make sure and
+  set the MPI compilers irrespective of the xSDK mode, then one should set
+  cmake cache variables ``CMAKE_[C,CXX,Fortran]_COMPILER`` to the absolute
+  path of the MPI compiler wrappers.
+
+  **HISTORICAL NOTE:** The TriBITS system has its own custom MPI integration
+  support and does not (currently) use the standard CMake module
+  ``FindMPI.cmake``.  This custom support for MPI was added to TriBITS in 2008
+  when it was found the built-in ``FindMPI.cmake`` module was not sufficient
+  for the needs of Trilinos and the approach taken by the module (still in use
+  as of CMake 3.4.x) which tries to unwrap the raw compilers and grab the list
+  of include directories, link libraries, etc, was not sufficiently portable
+  for the systems where Trilinos needed to be used.  But earlier versions of
+  TriBITS used the ``FindMPI.cmake`` module and that is why the CMake cache
+  variables ``MPI_[C,CXX,Fortran]_COMPILER`` are defined and still supported.
 
 b) **Configuring to build using raw compilers and flags/libraries:**
 
@@ -1024,48 +1077,91 @@ To enable a given TPL, set::
 
   -D TPL_ENABLE_<TPLNAME>=ON
 
-where ``<TPLNAME>`` = ``Boost``, ``ParMETIS``, etc.
+where ``<TPLNAME>`` = ``BLAS``, ``LAPACK`` ``Boost``, ``Netcdf``, etc.
 
-The headers, libraries, and library directories can then be specified with
-the input cache variables:
+The full list of TPLs that is defined and can be enabled is shown by doing a
+configure with CMake and then grepping the configure output for ``Final set of
+.* TPLs``.  The set of TPL names listed in ``'Final set of enabled TPLs'`` and
+``'Final set of non-enabled TPLs'`` gives the full list of TPLs that can be
+enabled (or disabled).
 
-* ``<TPLNAME>_INCLUDE_DIRS:PATH``: List of paths to the header include
-  directories.  For example::
+Some TPLs require only libraries (e.g. Fortran libraries like BLAS or LAPACK),
+some TPL require only include directories, and some TPLs require both.
 
-    -D Boost_INCLUDE_DIRS=/usr/local/boost/include
+Each TPL specification is defined in a ``FindTPL<TPLNAME>.cmake`` module file.
+The job of each of these of these module files is to set the CMake cache
+variables:
+
+* ``TPL_<TPLNAME>_INCLUDE_DIRS:PATH``: List of paths to header files for the
+  TPL (if the TPL supplies header files).
+
+* ``TPL_<TPLNAME>_LIBRARIES:PATH``: List of (absolute) paths to libraries,
+  ordered as they will be on the link line (of the TPL supplies libraries).
+
+These variables are the only variables that are actually used in the CMake
+build system.  Therefore, one can set these two variables as CMake cache
+variables, for ``SomeTPL`` for example, with::
+
+  -D TPL_SomeTPL_INCLUDE_DIRS="${LIB_BASE}/include/a;${LIB_BASE}/include/b" \
+  -D TPL_SomeTPL_LIBRARIES="${LIB_BASE}/lib/liblib1.so;${LIB_BASE}/lib/liblib2.so" \
+
+Using this approach, one can be guaranteed that these libraries and these
+include directories and will used in the compile and link lines for the
+packages that depend on this TPL ``SomeTPL``.
+
+**WARNING:** When specifying ``TPL_<TPLNAME>_INCLUDE_DIRS`` and/or
+``TPL_<TPLNAME>_LIBRARIES``, the build system will use these without question.
+It will **not** check for the existence of these directories or files so make
+sure that these files and directories exist before these are used in the
+compiles and links.  (This can actually be a feature in rare cases the
+libraries and header files don't actually get created until after the
+configure step is complete but before the build step.)
+
+**WARNING:** Do **not** try to hack the system and set, for example::
+
+  TPL_BLAS_LIBRARIES="-L/some/dir -llib1 -llib2 ..."
+
+This is not compatible with proper CMake usage and it not guaranteed to be
+supported for all use cases or all platforms!  You should instead always use
+the full library paths when setting ``TPL_<TPLNAME>_LIBRARIES``.
+
+When the variables ``TPL_<TPLNAME>_INCLUDE_DIRS`` and
+``TPL_<TPLNAME>_LIBRARIES`` are not specified, then most
+``FindTPL<TPLNAME>.cmake`` modules use a default find operation.  Some will
+call ``FIND_PACKAGE(<TPLNAME>)`` internally by default and some may implement
+the default find in some other way.  To know for sure, see the documentation
+for the specific TPL (e.g. looking in the ``FindTPL<TPLNAME>.cmake`` file to
+be sure).
+
+Most TPLs, however, use a standard system for finding include directories
+and/or libraries based on the function
+`TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES()`_.  These simple standard
+``FindTPL<TPLNAME>.cmake`` modules specify a set of header files and/or
+libraries that must be found.  The directories where these header files and
+library files are looked for are specified using the CMake cache variables:
+
+* ``<TPLNAME>_INCLUDE_DIRS:PATH``: List of paths to search for header files
+  using ``FIND_FILE()`` for each header file, in order.
 
 * ``<TPLNAME>_LIBRARY_NAMES:STRING``: List of unadorned library names, in the
   order of the link line.  The platform-specific prefixes (e.g.. 'lib') and
   postfixes (e.g. '.a', '.lib', or '.dll') will be added automatically by
-  CMake.  For example::
-
-    -D BLAS_LIBRARY_NAMES="blas;gfortran"
+  CMake.  For example, the library ``libblas.so``, ``libblas.a``, ``blas.lib``
+  or ``blas.dll`` will all be found on the proper platform using the name
+  ``blas``.
 
 * ``<TPLNAME>_LIBRARY_DIRS:PATH``: The list of directories where the library
-  files can be found.  For example::
+  files will be searched for using ``FIND_LIBRARY()``, for each library, in
+  order.
 
-    -D BLAS_LIBRARY_DIRS=/usr/local/blas
-
-The variables ``TPL_<TPLNAME>_INCLUDE_DIRS`` and ``TPL_<TPLNAME>_LIBRARIES``
-are what are directly used by the TriBITS dependency infrastructure.  These
-variables are normally set by the variables ``<TPLNAME>_INCLUDE_DIRS``,
-``<TPLNAME>_LIBRARY_NAMES``, and ``<TPLNAME>_LIBRARY_DIRS`` using CMake
-``find`` commands but one can always override these by directly setting these
-cache variables ``TPL_<TPLNAME>_INCLUDE_DIRS`` and
-``TPL_<TPLNAME>_LIBRARIES``, for example, as::
-
-  -D TPL_Boost_INCLUDE_DIRS=/usr/local/boost/include \
-  -D TPL_Boost_LIBRARIES="/user/local/boost/lib/libprogram_options.a;..."
-
-This gives the user complete and direct control in specifying exactly what is
-used in the build process.  The other variables that start with ``<TPLNAME>_``
-are just a convenience to make it easier to specify the location of the
-libraries.
+Most ``FindTPL<TPLNAME>.cmake`` modules will define a default set of libraries
+to look for and therefore ``<TPLNAME>_LIBRARY_NAMES`` can typically be left
+off.
 
 In order to allow a TPL that normally requires one or more libraries to ignore
 the libraries, one can set ``<TPLNAME>_LIBRARY_NAMES`` to empty, for example::
 
-  -D BLAS_LIBRARY_NAMES=""
+  -D <TPLNAME>_LIBRARY_NAMES=""
 
 Optional package-specific support for a TPL can be turned off by setting::
 
@@ -1083,18 +1179,123 @@ dependency on ``<TPLNAME>``.  That will result in setting
 ``TPL_ENABLE_<TPLNAME>=ON`` internally (but not set in the cache) if
 ``TPL_ENABLE_<TPLNAME>=OFF`` is not already set.
 
-WARNING: Do *not* try to hack the system and set::
+If all the parts of a TPL are not found on an initial configure the configure
+will error out with a helpful error message.  In that case, one can change the
+variables ``<TPLNAME>_INCLUDE_DIRS``, ``<TPLNAME>_LIBRARY_NAMES``, and/or
+``<TPLNAME>_LIBRARY_DIRS`` in order to help fund the parts of the TPL.  One
+can do this over and over until the TPL is found. By reconfiguring, one avoid
+a complete configure from scrath which saves time.  Or, one can avoid the find
+operations by directly setting ``TPL_<TPLNAME>_INCLUDE_DIRS`` and
+``TPL_<TPLNAME>_LIBRARIES``.
 
-  TPL_BLAS_LIBRARIES="-L/some/dir -llib1 -llib2 ..."
+**WARNING:** The cmake cache variable ``TPL_<TPLNAME>_LIBRARY_DIRS`` does
+**not** control where libraries are found.  Instead, this variable is set
+during the find processes and is not actually used in the CMake build system
+at all.
 
-This is not compatible with proper CMake usage and it not guaranteed
-to be supported.
+In summary, this gives the user complete and direct control in specifying
+exactly what is used in the build process.
 
-If all the parts of a TPL are not found on an initial configure, then one can
-change the variables ``<TPLNAME>_INCLUDE_DIRS``, ``<TPLNAME>_LIBRARY_NAMES``,
-and/or ``<TPLNAME>_LIBRARY_DIRS``.  One can do this over and over until the
-TPL is found. By reconfiguring, one avoid a complete configure from scrath
-which saves time.
+**TPL Example 1: Standard BLAS Library**
+
+Suppose one wants to find the standard BLAS library ``blas`` in the
+directory::
+
+  /usr/lib/
+    libblas.so
+    libblas.a
+    ...
+
+The ``FindTPLBLAS.cmake`` module should be set up to automatically find the
+BLAS TPL by simply enabling BLAS with::
+
+  -D TPL_ENABLE_BLAS=ON
+
+This will result in setting the CMake cache variable ``TPL_BLAS_LIBRARIES`` as
+shown in the CMake output::
+
+  -- TPL_BLAS_LIBRARIES='/user/lib/libblas.so'
+
+(NOTE: The CMake ``FIND_LIBRARY()`` command that is used internally will
+always select the shared library by default if both shared and static
+libraries are specified, unless told otherwise.  See `Building static
+libraries and executables`_ for more details about the handling of shared and
+static libraries.)
+
+However, suppose one wants to find the ``blas`` library in a non-default
+location, such as in::
+
+  /projects/something/tpls/lib/libblas.so
+
+In this case, one could simply configure with::
+
+  -D TPL_ENABLE_BLAS=ON \
+  -D BLAS_LIBRARY_DIRS=/projects/something/tpls/lib \
+
+That will result in finding the library shown in the CMake output::
+
+  -- TPL_BLAS_LIBRARIES='/projects/something/tpls/libblas.so'
+
+And if one wants to make sure that this BLAS library is used, then one can
+just directly set::
+
+  -D TPL_BLAS_LIBRARIES=/projects/something/tpls/libblas.so
+
+**TPL Example 2: Intel Math Kernel Library (MKL) for BLAS**
+  
+There are many cases where the list of libraries specified in the
+``FindTPL<TPLNAME>.cmake`` module is not correct for the TPL that one wants to
+use or is present on the system.  In this case, one will need to set the CMake
+cache variable ``<TPLNAME>_LIBRARY_NAMES`` to tell the
+`TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES()`_ function what libraries to
+search for, and in what order.
+
+For example, the Intel Math Kernel Library (MKL) implementation for the BLAS
+is usually given in several libraries.  The exact set of libraries needed
+depends on the version of MKL, whether 32bit or 64bit libraries are needed,
+etc.  Figuring out the correct set and ordering of these libraries for a given
+platform may not be trivial.  But once the set and the order of the libraries
+is known, then one can provide the correct list at configure time.
+
+For example, suppose one wants to use the threaded MKL libraries listed in the
+directories::
+
+  /usr/local/intel/Compiler/11.1/064/mkl/lib/em64t/
+  /usr/local/intel/Compiler/11.1/064/lib/intel64/
+
+and the list of libraries being searched for is ``mkl_intel_lp64``,
+``mkl_intel_thread``, ``mkl_core`` and ``iomp5``.
+
+In this case, one could specify this with the following do-configure script::
+
+  #!/bin/bash
+
+  INTEL_DIR=/usr/local/intel/Compiler/11.1/064
+
+  cmake \
+    -D TPL_ENABLE_BLAS=ON \
+    -D BLAS_LIBRARY_DIRS="${INTEL_DIR}/em64t;${INTEL_DIR}/intel64" \
+    -D BLAS_LIBRARY_NAMES="mkl_intel_lp64;mkl_intel_thread;mkl_core;iomp5" \
+    ...
+    ${PROJECT_SOURCE_DIR}
+
+This would call ``FIND_LIBRARY()`` on each of the listed library names in
+these directories and would find them and list them in::
+
+  -- TPL_BLAS_LIBRARIES='/usr/local/intel/Compiler/11.1/064/em64t/libmkl_intel_lp64.so;...'
+
+(where ``...`` are the rest of the found libraries.)
+  
+NOTE: When shared libraries are used, one typically only needs to list the
+direct libraries, not the indirect libraries, as the shared libraries are
+linked to each other.
+
+In this example, one could also play it super safe and manually list out the
+libraries in the right order by configuring with::
+
+  -D TPL_BLAS_LIBRARIES="${INTEL_DIR}/em64t/libmkl_intel_lp64.so;..."
+
+(where ``...`` are the rest of the libraries found in order).
 
 
 Disabling support for a Third-Party Library (TPL)
@@ -1340,13 +1541,13 @@ To turn on a set a given set of tests by test category, set::
 
   -D <Project>_TEST_CATEGORIES="<CATEGORY0>;<CATEGORY1>;..." 
 
-Valid categories include ``BASIC``, ``CONTINUOUS``, ``NIGHTLY``, ``WEEKLY``
-and ``PERFORMANCE``.  ``BASIC`` tests get built and run for pre-push testing,
-CI testing, and nightly testing.  ``CONTINUOUS`` tests are for post-push
-testing and nightly testing.  ``NIGHTLY`` tests are for nightly testing only.
-``WEEKLY`` tests are for more expensive tests that are run approximately
-weekly.  ``PERFORMANCE`` tests a special category used only for performance
-testing.
+Valid categories include ``BASIC``, ``CONTINUOUS``, ``NIGHTLY``, ``HEAVY`` and
+``PERFORMANCE``.  ``BASIC`` tests get built and run for pre-push testing, CI
+testing, and nightly testing.  ``CONTINUOUS`` tests are for post-push testing
+and nightly testing.  ``NIGHTLY`` tests are for nightly testing only.
+``HEAVY`` tests are for more expensive tests that require larger number of MPI
+processes and llonger run times.  ``PERFORMANCE`` tests a special category
+used only for performance testing.
 
 
 Disabling specific tests
@@ -1370,8 +1571,10 @@ reasons, configure with::
 
   -D <Project>_TRACE_ADD_TEST=ON
 
-That will print one line per show that the test got added and if not then why
-the test was not added (i.e. due to the test's ``COMM``, ``NUM_MPI_PROCS``,
+That will print one line per test and will show if the test got added or not.
+If the test is added, it shows some of the key test properties.  If the test
+did not get added, then this line will show why the test was not added
+(i.e. due to criteria related to the test's ``COMM``, ``NUM_MPI_PROCS``,
 ``CATEGORIES``, ``HOST``, ``XHOST``, ``HOSTTYPE``, or ``XHOSTTYPE``
 arguments).
 
@@ -1865,7 +2068,7 @@ file first to make sure that it gets rebuilt correctly.
 Building with verbose output without reconfiguring
 --------------------------------------------------
 
-One can get CMake to generate verbose make output at build type by just
+One can get CMake to generate verbose make output at build time by just
 setting the Makefile variable ``VERBOSE=1``, for example, as::
 
   $ make  VERBOSE=1 [<SOME_TARGET>]
@@ -1873,6 +2076,13 @@ setting the Makefile variable ``VERBOSE=1``, for example, as::
 Any number of compile or linking problem can be quickly debugged by seeing the
 raw compile and link lines.  See `Building a single object file`_ for more
 details.
+
+NOTE: The libraries listed on the link line are often in the form
+``-L<lib-dir> -l<lib1> -l<lib2>`` even if one passed in full library paths for
+TPLs through ``TPL_<TPLNAME>_LIBRARIES`` (see `Enabling support for an
+optional Third-Party Library (TPL)`_).  That is because CMake tries to keep
+the link lines as short as possible and therefore it often does this
+translation automatically (whether you want it to or not).
 
 
 Relink a target without considering dependencies
@@ -2114,7 +2324,7 @@ To install the software, type::
 
 Note that CMake actually puts in the build dependencies for installed targets
 so in some cases you can just type ``make -j<N> install`` and it will also
-build the software.  However, it is advanced to always build and test the
+build the software.  However, it is advised to always build and test the
 software first before installing with::
 
   $ make -j<N> && ctest -j<N> && make -j<N> install

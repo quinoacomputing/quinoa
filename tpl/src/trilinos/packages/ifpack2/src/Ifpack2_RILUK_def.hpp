@@ -46,6 +46,14 @@
 #include "Ifpack2_LocalFilter.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+#include <shylubasker_def.hpp>
+#include <Kokkos_CrsMatrix.hpp>
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+#  include <shylu_hts.hpp>
+# endif
+#endif
+
 namespace Ifpack2 {
 
 template<class MatrixType>
@@ -55,6 +63,7 @@ RILUK<MatrixType>::RILUK (const Teuchos::RCP<const row_matrix_type>& Matrix_in)
     isAllocated_ (false),
     isInitialized_ (false),
     isComputed_ (false),
+    isExperimental_ (false),
     numInitialize_ (0),
     numCompute_ (0),
     numApply_ (0),
@@ -74,6 +83,7 @@ RILUK<MatrixType>::RILUK (const Teuchos::RCP<const crs_matrix_type>& Matrix_in)
     isAllocated_ (false),
     isInitialized_ (false),
     isComputed_ (false),
+    isExperimental_ (false),
     numInitialize_ (0),
     numCompute_ (0),
     numApply_ (0),
@@ -353,6 +363,56 @@ setParameters (const Teuchos::ParameterList& params)
     // Accept the default value.
   }
 
+  //Experimental 
+  //Note: just following RILUK original style. 
+  //Do not think catch is the method for this. JDB
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+  try {
+    isExperimental_ = params.get<bool> ("fact: iluk experimental basker");
+  }
+  catch (InvalidParameterType&) {
+    //Use default
+  }
+  catch (InvalidParameterName&) {
+    //Use default
+  }
+ 
+  try {
+    basker_threads = params.get<int> ("fact: iluk experimental basker threads");
+  }
+  catch (InvalidParameterType&) {
+    basker_threads = 1;
+  }
+  catch (InvalidParameterName&) {
+    basker_threads = 1;
+  }
+
+  try {
+    basker_user_fill = (scalar_type) params.get<double>("fact: iluk experimental basker user_fill");
+  }
+  catch (InvalidParameterType&) {
+    basker_user_fill = (scalar_type) 0;
+  }
+  catch (InvalidParameterName&) {
+    basker_user_fill = (scalar_type) 0;
+  }
+
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+  use_hts_ = false;
+  hts_nthreads_ = basker_threads;
+  {
+    const std::string name("fact: iluk experimental HTS");
+    if (params.isType<bool> (name))
+      use_hts_ = params.get<bool> (name);
+  }
+  {
+    const std::string name("fact: iluk experimental HTS threads");
+    if (params.isType<int> (name))
+      hts_nthreads_ = params.get<int> (name);
+  }
+# endif
+#endif 
+  
   // "Commit" the values only after validating all of them.  This
   // ensures that there are no side effects if this routine throws an
   // exception.
@@ -503,9 +563,72 @@ void RILUK<MatrixType>::initialize ()
                                                             LevelOfFill_, 0));
     }
 
-    Graph_->initialize ();
-    allocate_L_and_U ();
-    initAllValues (*A_local_crs_);
+    if(!isExperimental_)
+      {
+	Graph_->initialize ();
+	allocate_L_and_U ();
+	initAllValues (*A_local_crs_);
+      }
+    else
+      {
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+	typedef typename node_type::device_type    kokkos_device;
+	typedef typename kokkos_device::execution_space kokkos_exe;
+	typedef typename crs_matrix_type::local_matrix_type kokkos_csr_matrix;
+
+	static_assert( std::is_same< kokkos_exe, 
+		       Kokkos::OpenMP>::value, 
+		       "Kokkos node type not supported by experimental thread basker RILUK");
+
+
+	myBasker = rcp( new BaskerNS::Basker<local_ordinal_type, scalar_type, Kokkos::OpenMP>);
+	myBasker->Options.no_pivot     = true;
+	myBasker->Options.transpose    = true; //CRS not CCS
+	myBasker->Options.symmetric    = false;
+	myBasker->Options.realloc      = true;
+	myBasker->Options.btf          = false;
+	myBasker->Options.incomplete   = true;
+	myBasker->Options.inc_lvl      = LevelOfFill_;
+	myBasker->Options.user_fill    = basker_user_fill;
+	myBasker->Options.same_pattern = false;
+	myBasker->SetThreads(basker_threads);
+	basker_reuse = false;
+	
+	kokkos_csr_matrix kcsr = A_local_crs_->getLocalMatrix();
+
+	local_ordinal_type* r_ptr;
+	r_ptr = new local_ordinal_type[(local_ordinal_type)A_local_crs_->getNodeNumRows()+1];
+
+	//Still need to convert
+	//Lost on why Trilinos uses such odd types for row_ptrs
+	for(local_ordinal_type bi = 0; 
+	    bi < A_local_crs_->getNodeNumRows()+1; bi++)
+	  {
+	    r_ptr[bi] = (local_ordinal_type)kcsr.graph.row_map(bi);
+	  }
+
+	int basker_error = 
+	myBasker->Symbolic(
+	 ((local_ordinal_type)A_local_crs_->getNodeNumRows()),
+	 ((local_ordinal_type)A_local_crs_->getNodeNumCols()), 
+	 ((local_ordinal_type)A_local_crs_->getNodeNumEntries()),
+	 r_ptr,
+	 &(kcsr.graph.entries(0)),
+	 &(kcsr.values(0)));
+
+	TEUCHOS_TEST_FOR_EXCEPTION(
+        basker_error != 0, std::logic_error, "Ifpack2::RILUK::initialize:"
+	 "Error in basker Symbolic");
+
+
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(
+      0==0, std::logic_error, "Ifpack2::RILUK::initialize: "
+      "Using experimental ILUK without compiling experimental "
+      "Try again with -DIFPACK2_ILUK_EXPERIMENAL.");
+#endif
+      }
+    
   } // Stop timing
 
   isInitialized_ = true;
@@ -694,7 +817,8 @@ void RILUK<MatrixType>::compute ()
   }
 
   Teuchos::Time timer ("RILUK::compute");
-  { // Start timing
+  { //Start timing
+    if(! isExperimental_) {
     isComputed_ = false;
 
     L_->resumeFill ();
@@ -836,7 +960,109 @@ void RILUK<MatrixType>::compute ()
     TEUCHOS_TEST_FOR_EXCEPTION(
       ! U_->isUpperTriangular (), std::runtime_error,
       "Ifpack2::RILUK::compute: U isn't lower triangular.");
-  } // Stop timing
+  } 
+  else{
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+    Teuchos::Time timerbasker ("RILUK::basercompute");
+    {
+      //
+      if(basker_reuse == false)
+	{
+	  //We don't have to reimport Matrix because same
+	  {
+	    //Teuchos::TimeMonitor timeMon(timerbasker);
+	    myBasker->Factor_Inc(0);
+	    basker_reuse = true;
+	  }
+	}
+      else
+	{
+	  //Do we need to import Matrix with file again?
+	  myBasker->Options.same_pattern = true;
+	  
+	  typedef typename crs_matrix_type::local_matrix_type kokkos_csr_matrix;
+	  kokkos_csr_matrix kcsr = A_local_crs_->getLocalMatrix();
+
+	  
+	 local_ordinal_type* r_ptr;
+	r_ptr = new local_ordinal_type[(local_ordinal_type)A_local_crs_->getNodeNumRows()+1];
+
+	//Still need to convert
+	//Lost on why Trilinos uses such odd types for row_ptrs
+	for(local_ordinal_type bi = 0; bi < A_local_crs_->getNodeNumRows()+1; bi++)
+	  {
+	    r_ptr[bi] = (local_ordinal_type)kcsr.graph.row_map(bi);
+	  }
+
+	int basker_error = 
+	myBasker->Factor(
+	 ((local_ordinal_type)A_local_crs_->getNodeNumRows()),
+	 ((local_ordinal_type)A_local_crs_->getNodeNumCols()), 
+	 ((local_ordinal_type)A_local_crs_->getNodeNumEntries()),
+	 r_ptr,
+	 &(kcsr.graph.entries(0)),
+	 &(kcsr.values(0)));
+	
+	//myBasker->DEBUG_PRINT();
+
+	TEUCHOS_TEST_FOR_EXCEPTION(
+        basker_error != 0, std::logic_error, "Ifpack2::RILUK::initialize:"
+	 "Error in basker compute");
+	 
+	
+        }
+    }
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+    //TODO Reuse symbolic information.
+    if (use_hts_) {
+
+      Teuchos::Time basker_getL("basker_getL");
+      Teuchos::Time hts_buildL ("hts_buildL");
+      Teuchos::Time basker_getU("basker_getU");
+      Teuchos::Time hts_buildU ("hts_buildU");
+      
+
+      hts_mgr_ = Teuchos::rcp(new HTSManager());
+      local_ordinal_type* p, * q;
+      local_ordinal_type nnz;
+
+     
+      
+      myBasker->GetPerm(&p, &q);
+      
+      {
+	
+        HTSData d;
+        myBasker->GetL(d.n, nnz, &d.ir, &d.jc, &d.v);
+        d.sort();
+        typename HTST::CrsMatrix* T = HTST::make_CrsMatrix(d.n, d.ir, d.jc, d.v, true);
+        hts_mgr_->Limpl = HTST::preprocess(T, 1, hts_nthreads_, true, p, 0);
+        delete[] p;
+
+      }
+
+      {
+        HTSData d;
+        myBasker->GetU(d.n, nnz, &d.ir, &d.jc, &d.v);
+        d.sort();
+       
+        typename HTST::CrsMatrix* T = HTST::make_CrsMatrix(d.n, d.ir, d.jc, d.v, true);
+        hts_mgr_->Uimpl = HTST::preprocess(T, 1, hts_nthreads_, true, 0, q);
+
+
+      }
+
+
+    }
+# endif
+  
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+       0==1, std::runtime_error,
+       "Ifpack2::RILUK::compute: experimental not enabled");
+#endif
+  }//end -- if experimental
+  }//end timing
 
   isComputed_ = true;
   ++numCompute_;
@@ -896,6 +1122,7 @@ apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_t
 
   Teuchos::Time timer ("RILUK::apply");
   { // Start timing
+    if(!isExperimental_){
     Teuchos::TimeMonitor timeMon (timer);
     if (alpha == one && beta == zero) {
       if (mode == Teuchos::NO_TRANS) { // Solve L (D (U Y)) = X for Y.
@@ -951,7 +1178,35 @@ apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_t
         Y.update (alpha, Y_tmp, beta);
       }
     }
-  } // Stop timing
+  } 
+  else
+    {
+#ifdef IFPACK2_ILUK_EXPERIMENTAL
+      Teuchos::ArrayRCP<const scalar_type> XX;
+      Teuchos::ArrayRCP<const scalar_type> YY;
+      XX = X.get1dView();
+      YY = Y.get1dView();
+      
+# ifdef IFPACK2_HTS_EXPERIMENTAL
+      if (use_hts_) {
+        HTST::solve_omp(hts_mgr_->Limpl, const_cast<scalar_type*>(XX.getRawPtr()),
+                        X.getNumVectors(), const_cast<scalar_type*>(YY.getRawPtr()));
+        HTST::solve_omp(hts_mgr_->Uimpl, const_cast<scalar_type*>(YY.getRawPtr()),
+                        X.getNumVectors());
+      } else
+# endif
+      {
+        myBasker->Solve(((local_ordinal_type)X.getNumVectors()), 
+                        (const_cast<scalar_type *>(XX.getRawPtr())),
+                        (const_cast<scalar_type *>(YY.getRawPtr())));
+      }
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(
+      0==1, std::runtime_error, 
+      "Ifpack2::RILUK::apply: Experimental no enabled");
+#endif
+    }//end isExperimental
+  }//end timing
 
 #ifdef HAVE_IFPACK2_DEBUG
   {
@@ -1033,6 +1288,60 @@ std::string RILUK<MatrixType>::description () const
   return os.str ();
 }
 
+#if defined IFPACK2_ILUK_EXPERIMENTAL && defined IFPACK2_HTS_EXPERIMENTAL
+template<class MatrixType>
+RILUK<MatrixType>::HTSManager::HTSManager ()
+  : Limpl(0), Uimpl(0)
+{}
+
+template<class MatrixType>
+RILUK<MatrixType>::HTSManager::~HTSManager ()
+{
+  HTST::delete_Impl(Limpl);
+  HTST::delete_Impl(Uimpl);
+}
+
+template<class MatrixType>
+RILUK<MatrixType>::HTSData::HTSData ()
+  : jc(0), ir(0), v(0)
+{}
+
+template<class MatrixType>
+RILUK<MatrixType>::HTSData::~HTSData ()
+{
+  free_CrsMatrix_data();
+}
+
+template<class MatrixType>
+void RILUK<MatrixType>::HTSData::free_CrsMatrix_data ()
+{
+  if (jc) delete[] jc;
+  if (ir) delete[] ir;
+  if (v) delete[] v;
+  jc = ir = 0;
+  v = 0;
+}
+
+template<class MatrixType>
+void RILUK<MatrixType>::HTSData::sort ()
+{
+  if ( ! ir || ! jc) return;
+  std::vector<Entry> es;
+  for (local_ordinal_type i = 0; i < n; ++i) {
+    es.resize(ir[i+1] - ir[i]);
+    const local_ordinal_type os = ir[i];
+    for (local_ordinal_type j = 0; j < ir[i+1] - os; ++j) {
+      es[j].j = jc[os+j];
+      es[j].v = v[os+j];
+    }
+    std::sort(es.begin(), es.end());
+    for (local_ordinal_type j = 0; j < ir[i+1] - os; ++j) {
+      jc[os+j] = es[j].j;
+      v[os+j] = es[j].v;
+    }
+  }
+}
+#endif
 
 } // namespace Ifpack2
 

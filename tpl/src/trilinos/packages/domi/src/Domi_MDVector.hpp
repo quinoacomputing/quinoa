@@ -491,7 +491,16 @@ public:
    */
   dim_type getLocalDim(int axis, bool withCommPad=false) const;
 
-  /** \brief Get the local dimension along the specified axis
+  /** \brief Get the local loop bounds along every axis
+   *
+   * The loop bounds are returned in the form of a <tt>Slice</tt>, in
+   * which the <tt>start()</tt> method returns the loop begin value,
+   * and the <tt>stop()</tt> method returns the non-inclusive end
+   * value.  For this method, padding is included in the bounds.
+   */
+  Teuchos::ArrayView< const Slice > getLocalBounds() const;
+
+  /** \brief Get the local looping bounds along the specified axis
    *
    * \param axis [in] the index of the axis (from zero to the number
    *        of dimensions - 1)
@@ -505,6 +514,25 @@ public:
    * value.
    */
   Slice getLocalBounds(int axis, bool withPad=false) const;
+
+  /** \brief Get the local interior looping bounds along the specified
+   *         axis
+   *
+   * \param axis [in] the index of the axis (from zero to the number
+   *        of dimensions - 1)
+   *
+   * Local interior loop bounds are the same as local loop bounds
+   * without padding, except that for non-periodic axes the global end
+   * points of the given axis are excluded. For periodic axes, the
+   * local interior loop bounds are exactly the same as local loop
+   * bounds without padding.
+   *
+   * The loop bounds are returned in the form of a <tt>Slice</tt>, in
+   * which the <tt>start()</tt> method returns the loop begin value,
+   * and the <tt>stop()</tt> method returns the non-inclusive end
+   * value.
+   */
+  Slice getLocalInteriorBounds(int axis) const;
 
   /** \brief Return true if there is any padding stored locally
    *
@@ -593,6 +621,10 @@ public:
    *        upper padding
    */
   void setUpperPad(int axis, const Scalar value);
+
+  /** \brief Return whether the given axis supports a replicated boundary
+   */
+  bool isReplicatedBoundary(int axis) const;
 
   /** \brief Get the storage order
    */
@@ -1769,11 +1801,33 @@ getLocalDim(int axis, bool withCommPad) const
 
 template< class Scalar,
           class Node >
+Teuchos::ArrayView< const Slice >
+MDVector< Scalar, Node >::
+getLocalBounds() const
+{
+  return _mdMap->getLocalBounds();
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template< class Scalar,
+          class Node >
 Slice
 MDVector< Scalar, Node >::
 getLocalBounds(int axis, bool withCommPad) const
 {
   return _mdMap->getLocalBounds(axis, withCommPad);
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template< class Scalar,
+          class Node >
+Slice
+MDVector< Scalar, Node >::
+getLocalInteriorBounds(int axis) const
+{
+  return _mdMap->getLocalInteriorBounds(axis);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1877,6 +1931,17 @@ setUpperPad(int axis,
 {
   MDArrayView< Scalar > upperPad = getUpperPadDataNonConst(axis);
   upperPad.assign(value);
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template< class Scalar,
+          class Node >
+bool
+MDVector< Scalar, Node >::
+isReplicatedBoundary(int axis) const
+{
+  return _mdMap->isReplicatedBoundary(axis);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -2816,8 +2881,7 @@ startUpdateCommPad(int axis)
 
   // Initialize the _sendMessages and _recvMessages members on the
   // first call to startUpdateCommPad(int).
-  if (_sendMessages.empty())
-    initializeMessages();
+  if (_sendMessages.empty()) initializeMessages();
 
 #ifdef HAVE_MPI
   int rank    = _teuchosComm->getRank();
@@ -3004,7 +3068,10 @@ initializeMessages()
       starts[axis]   = 0;
     }
 
+    //////////////////////////////////////////
     // Set the lower receive and send messages
+    //////////////////////////////////////////
+
     int proc = getLowerNeighbor(msgAxis);
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
@@ -3023,30 +3090,29 @@ initializeMessages()
 
     if (proc >= 0)
     {
+      ////////////////////////
       // Lower receive message
+      ////////////////////////
 
 #ifdef HAVE_MPI
-      {
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
-        msg << endl << "P" << rank << ": axis " << msgAxis
-            << ", Lower receive message:" << endl << "  ndims    = " << ndims
-            << endl << "  sizes    = " << sizes << endl << "  subsizes = "
-            << subsizes << endl << "  starts   = " << starts << endl
-            << "  order    = " << order << endl;
+      msg << endl << "P" << rank << ": axis " << msgAxis
+          << ", Lower receive message:" << endl << "  ndims    = " << ndims
+          << endl << "  sizes    = " << sizes << endl << "  subsizes = "
+          << subsizes << endl << "  starts   = " << starts << endl
+          << "  order    = " << order << endl;
 #endif
-
-        Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
-        MPI_Type_create_subarray(ndims,
-                                 &sizes[0],
-                                 &subsizes[0],
-                                 &starts[0],
-                                 order,
-                                 datatype,
-                                 commPad.get());
-        MPI_Type_commit(commPad.get());
-        messageInfo.datatype = commPad;
-      }
+      Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
+      MPI_Type_create_subarray(ndims,
+                               &sizes[0],
+                               &subsizes[0],
+                               &starts[0],
+                               order,
+                               datatype,
+                               commPad.get());
+      MPI_Type_commit(commPad.get());
+      messageInfo.datatype = commPad;
 #else
       messageInfo.dataview = _mdArrayView;
       for (int axis = 0; axis < numDims(); ++axis)
@@ -3061,33 +3127,35 @@ initializeMessages()
     }
     _recvMessages[msgAxis][0] = messageInfo;
 
+    /////////////////////
     // Lower send message
+    /////////////////////
+
     starts[msgAxis] = getLowerPadSize(msgAxis);
+    if (isReplicatedBoundary(msgAxis) && getCommIndex(msgAxis) == 0)
+      starts[msgAxis] += 1;
     if (proc >= 0)
     {
 
 #ifdef HAVE_MPI
-      {
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
-        msg << endl << "P" << rank << ": axis " << msgAxis
-            << ", Lower send message:" << endl << "  ndims    = " << ndims
-            << endl << "  sizes    = " << sizes << endl << "  subsizes = "
-            << subsizes << endl << "  starts   = " << starts << endl
-            << "  order    = " << order << endl;
+      msg << endl << "P" << rank << ": axis " << msgAxis
+          << ", Lower send message:" << endl << "  ndims    = " << ndims
+          << endl << "  sizes    = " << sizes << endl << "  subsizes = "
+          << subsizes << endl << "  starts   = " << starts << endl
+          << "  order    = " << order << endl;
 #endif
-
-        Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
-        MPI_Type_create_subarray(ndims,
-                                 &sizes[0],
-                                 &subsizes[0],
-                                 &starts[0],
-                                 order,
-                                 datatype,
-                                 commPad.get());
-        MPI_Type_commit(commPad.get());
-        messageInfo.datatype = commPad;
-      }
+      Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
+      MPI_Type_create_subarray(ndims,
+                               &sizes[0],
+                               &subsizes[0],
+                               &starts[0],
+                               order,
+                               datatype,
+                               commPad.get());
+      MPI_Type_commit(commPad.get());
+      messageInfo.datatype = commPad;
 #else
       messageInfo.dataview = _mdArrayView;
       for (int axis = 0; axis < numDims(); ++axis)
@@ -3102,7 +3170,10 @@ initializeMessages()
     }
     _sendMessages[msgAxis][0] = messageInfo;
 
+    //////////////////////////////////////////
     // Set the upper receive and send messages
+    //////////////////////////////////////////
+
     proc = getUpperNeighbor(msgAxis);
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
@@ -3117,30 +3188,29 @@ initializeMessages()
     messageInfo.proc = proc;
     if (proc >= 0)
     {
+      ////////////////////////
       // Upper receive message
+      ////////////////////////
 
 #ifdef HAVE_MPI
-      {
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
-        msg << endl << "P" << rank << ": axis " << msgAxis
-            << ", Upper receive message:" << endl << "  ndims    = " << ndims
-            << endl << "  sizes    = " << sizes << endl << "  subsizes = "
-            << subsizes << endl << "  starts   = " << starts << endl
-            << "  order    = " << order << endl;
+      msg << endl << "P" << rank << ": axis " << msgAxis
+          << ", Upper receive message:" << endl << "  ndims    = " << ndims
+          << endl << "  sizes    = " << sizes << endl << "  subsizes = "
+          << subsizes << endl << "  starts   = " << starts << endl
+          << "  order    = " << order << endl;
 #endif
-
-        Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
-        MPI_Type_create_subarray(ndims,
-                                 &sizes[0],
-                                 &subsizes[0],
-                                 &starts[0],
-                                 order,
-                                 datatype,
-                                 commPad.get());
-        MPI_Type_commit(commPad.get());
-        messageInfo.datatype = commPad;
-      }
+      Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
+      MPI_Type_create_subarray(ndims,
+                               &sizes[0],
+                               &subsizes[0],
+                               &starts[0],
+                               order,
+                               datatype,
+                               commPad.get());
+      MPI_Type_commit(commPad.get());
+      messageInfo.datatype = commPad;
 #else
       messageInfo.dataview = _mdArrayView;
       for (int axis = 0; axis < numDims(); ++axis)
@@ -3151,37 +3221,39 @@ initializeMessages()
                                                      slice);
       }
 #endif
-
     }
     _recvMessages[msgAxis][1] = messageInfo;
 
+    /////////////////////
     // Upper send message
+    /////////////////////
+
     starts[msgAxis] -= getUpperPadSize(msgAxis);
+    if (isReplicatedBoundary(msgAxis) &&
+        getCommIndex(msgAxis) == getCommDim(msgAxis)-1)
+      starts[msgAxis] -= 1;
     if (proc >= 0)
     {
 
 #ifdef HAVE_MPI
-      {
 
 #ifdef DOMI_MDVECTOR_MESSAGE_INITIALIZE
-        msg << endl << "P" << rank << ": axis " << msgAxis
-            << ", Upper send message:" << endl << "  ndims    = " << ndims
-            << endl << "  sizes    = " << sizes << endl << "  subsizes = "
-            << subsizes << endl << "  starts   = " << starts << endl
-            << "  order    = " << order << endl;
+      msg << endl << "P" << rank << ": axis " << msgAxis
+          << ", Upper send message:" << endl << "  ndims    = " << ndims
+          << endl << "  sizes    = " << sizes << endl << "  subsizes = "
+          << subsizes << endl << "  starts   = " << starts << endl
+          << "  order    = " << order << endl;
 #endif
-
-        Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
-        MPI_Type_create_subarray(ndims,
-                                 &sizes[0],
-                                 &subsizes[0],
-                                 &starts[0],
-                                 order,
-                                 datatype,
-                                 commPad.get());
-        MPI_Type_commit(commPad.get());
-        messageInfo.datatype = commPad;
-      }
+      Teuchos::RCP< MPI_Datatype > commPad = Teuchos::rcp(new MPI_Datatype);
+      MPI_Type_create_subarray(ndims,
+                               &sizes[0],
+                               &subsizes[0],
+                               &starts[0],
+                               order,
+                               datatype,
+                               commPad.get());
+      MPI_Type_commit(commPad.get());
+      messageInfo.datatype = commPad;
 #else
       messageInfo.dataview = _mdArrayView;
       for (int axis = 0; axis < numDims(); ++axis)

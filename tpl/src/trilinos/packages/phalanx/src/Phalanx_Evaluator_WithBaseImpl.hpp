@@ -46,7 +46,8 @@
 #define PHX_EVALUATOR_WITHBASEIMPL_H
 
 #include <vector>
-
+#include <functional>
+#include <unordered_map>
 #include "Phalanx_Evaluator.hpp"
 #include "Phalanx_Field.hpp"
 #include "Phalanx_MDField.hpp"
@@ -114,18 +115,31 @@ namespace PHX {
 				       PHX::FieldManager<Traits>& vm) = 0;
 
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
-    evaluatedFields() const;
+    evaluatedFields() const override;
 
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
-    dependentFields() const;
+    dependentFields() const override;
 
     virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
-    virtual void preEvaluate(typename Traits::PreEvalData d);
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    virtual Kokkos::Experimental::Future<void,PHX::Device::execution_space>
+    createTask(Kokkos::Experimental::TaskPolicy<PHX::Device::execution_space>& policy,
+	       const std::size_t& num_adjacencies,
+	       const int& work_size,
+	       typename Traits::EvalData d);
 
-    virtual void postEvaluate(typename Traits::PostEvalData d);
+    virtual unsigned taskSize() const;
+#endif
 
-    virtual const std::string& getName() const;
+    virtual void preEvaluate(typename Traits::PreEvalData d) override;
+
+    virtual void postEvaluate(typename Traits::PostEvalData d) override;
+
+    virtual const std::string& getName() const override;
+
+    virtual void bindUnmanagedField(const PHX::FieldTag& ft,
+                                    const PHX::any& f) override;
 
   private:
 
@@ -134,6 +148,9 @@ namespace PHX {
     std::vector< Teuchos::RCP<FieldTag> > required_;
 
     std::string name_;
+
+    //! binds memory for an unmanaged field
+    std::unordered_map<std::string,std::function<void(const PHX::any& f)>> unmanaged_field_binders_;
   };
 
 }

@@ -104,6 +104,8 @@ private:
     return ip;
   }
 
+  using ROL::Objective<Real>::update;
+
   void update(std::vector<Real> &u, const std::vector<Real> &s, const Real alpha=1.0) {
     for (unsigned i=0; i<u.size(); i++) {
       u[i] += alpha*s[i];
@@ -233,7 +235,7 @@ private:
     this->compute_residual(r,u,z,param);
     Real rnorm = this->compute_norm(r);
     // Define tolerances
-    Real tol   = 1.e2*ROL::ROL_EPSILON;
+    Real tol   = 1.e2*ROL::ROL_EPSILON<Real>();
     Real maxit = 500;
     // Initialize Jacobian storage
     std::vector<Real> d(this->nx_,0.0);
@@ -256,7 +258,7 @@ private:
       this->update(utmp,s,-alpha);
       this->compute_residual(r,utmp,z,param);
       rnorm = this->compute_norm(r); 
-      while ( rnorm > (1.0-1.e-4*alpha)*tmp && alpha > std::sqrt(ROL::ROL_EPSILON) ) {
+      while ( rnorm > (1.0-1.e-4*alpha)*tmp && alpha > std::sqrt(ROL::ROL_EPSILON<Real>()) ) {
         alpha /= 2.0;
         utmp.assign(u.begin(),u.end());
         this->update(utmp,s,-alpha);
