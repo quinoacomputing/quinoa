@@ -1,7 +1,11 @@
 Level 0
  Setup Smoother (MueLu::IfpackSmoother{type = Chebyshev})
- chebyshev: degree = 2
- chebyshev: ratio eigenvalue = 20
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: degree = 2
+  chebyshev: ratio eigenvalue = 20
 
 Level 1
  Prolongator smoothing (MueLu::SaPFactory)
@@ -53,14 +57,16 @@ Level 1
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::IfpackSmoother{type = Chebyshev})
- chebyshev: degree = 2
- chebyshev: ratio eigenvalue = 20   [unused]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: degree = 2
+  chebyshev: ratio eigenvalue = 20   [unused]
 
 Level 2
  Prolongator smoothing (MueLu::SaPFactory)
@@ -112,14 +118,16 @@ Level 2
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::IfpackSmoother{type = Chebyshev})
- chebyshev: degree = 2
- chebyshev: ratio eigenvalue = 20   [unused]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: degree = 2
+  chebyshev: ratio eigenvalue = 20   [unused]
 
 Level 3
  Prolongator smoothing (MueLu::SaPFactory)
@@ -171,14 +179,16 @@ Level 3
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::IfpackSmoother{type = Chebyshev})
- chebyshev: degree = 2
- chebyshev: ratio eigenvalue = 20   [unused]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: degree = 2
+  chebyshev: ratio eigenvalue = 20   [unused]
 
 Level 4
  Prolongator smoothing (MueLu::SaPFactory)
@@ -230,13 +240,15 @@ Level 4
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::AmesosSmoother{type = Klu})
- [empty list]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  [empty list]
 
 
 --------------------------------------------------------------------------------
@@ -244,6 +256,7 @@ Level 4
 --------------------------------------------------------------------------------
 Number of levels    = 5
 Operator complexity = 1.49
+Cycle type          = V
 
 level  rows    nnz  nnz/row  c ratio  procs
   0    9999  29995     3.00               1

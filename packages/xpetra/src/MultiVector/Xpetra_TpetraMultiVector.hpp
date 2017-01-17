@@ -101,7 +101,10 @@ namespace Xpetra {
 
     //! Basic constuctor.
     TpetraMultiVector(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map, size_t NumVectors, bool zeroOut=true)
-      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), NumVectors, zeroOut))) {  }
+      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), NumVectors, zeroOut))) {
+      // TAW 1/30/2016: even though Tpetra allows numVecs == 0, Epetra does not. Introduce exception to keep behavior of Epetra and Tpetra consistent.
+      TEUCHOS_TEST_FOR_EXCEPTION(NumVectors < 1, std::invalid_argument, "Xpetra::TpetraMultiVector(map,numVecs,zeroOut): numVecs = " << NumVectors << " < 1.");
+    }
 
     //! Copy constructor (performs a deep copy).
     TpetraMultiVector(const MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node > &source)
@@ -109,11 +112,17 @@ namespace Xpetra {
 
     //! Create multivector by copying two-dimensional array of local data.
     TpetraMultiVector(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map, const Teuchos::ArrayView< const Scalar > &A, size_t LDA, size_t NumVectors)
-      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), A, LDA, NumVectors))) {  }
+      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), A, LDA, NumVectors))) {
+      // TAW 1/30/2016: even though Tpetra allows numVecs == 0, Epetra does not. Introduce exception to keep behavior of Epetra and Tpetra consistent.
+      TEUCHOS_TEST_FOR_EXCEPTION(NumVectors < 1, std::invalid_argument, "Xpetra::TpetraMultiVector(map,A,LDA,numVecs): numVecs = " << NumVectors << " < 1.");
+    }
 
     //! Create multivector by copying array of views of local data.
     TpetraMultiVector(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map, const Teuchos::ArrayView< const Teuchos::ArrayView< const Scalar > > &ArrayOfPtrs, size_t NumVectors)
-      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), ArrayOfPtrs, NumVectors))) {  }
+      : vec_(Teuchos::rcp(new Tpetra::MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >(toTpetra(map), ArrayOfPtrs, NumVectors))) {
+      // TAW 1/30/2016: even though Tpetra allows numVecs == 0, Epetra does not. Introduce exception to keep behavior of Epetra and Tpetra consistent.
+      TEUCHOS_TEST_FOR_EXCEPTION(NumVectors < 1, std::invalid_argument, "Xpetra::TpetraMultiVector(map,ArrayOfPtrs,numVecs): numVecs = " << NumVectors << " < 1.");
+    }
 
 
     //! Destructor (virtual for memory safety of derived classes).
@@ -303,11 +312,13 @@ namespace Xpetra {
     }
 
     void replaceMap(const RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& map) {
+      XPETRA_MONITOR("TpetraMultiVector::replaceMap");
       this->getTpetra_MultiVector()->replaceMap(toTpetra(map));
     }
 
     template<class Node2>
     RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node2> > clone(const RCP<Node2> &node2) const {
+      XPETRA_MONITOR("TpetraMultiVector::clone");
       return RCP<MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node2> >(new TpetraMultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node2>(vec_->clone(node2)));
         //toXpetra(vec_->clone(node2));
     }
@@ -354,12 +365,12 @@ namespace Xpetra {
     }
 
     typename dual_view_type::t_host_um getHostLocalView () const {
-      return subview(vec_->getDualView().template view<typename dual_view_type::host_mirror_space> (),
+      return subview(vec_->template getLocalView<typename dual_view_type::host_mirror_space> (),
           Kokkos::ALL(), Kokkos::ALL());
     }
 
     typename dual_view_type::t_dev_um getDeviceLocalView() const {
-      return subview(vec_->getDualView().template view<typename dual_view_type::t_dev_um::execution_space> (),
+      return subview(vec_->template getLocalView<typename dual_view_type::t_dev_um::execution_space> (),
           Kokkos::ALL(), Kokkos::ALL());
     }
 
@@ -464,6 +475,11 @@ namespace Xpetra {
 
     //! @name Constructors and destructor
     //@{
+
+    //! Default constructor
+    TpetraMultiVector () {
+      XPETRA_TPETRA_ETI_EXCEPTION("TpetraMultiVector<int,int>", "TpetraMultiVector<int,int>", "int");
+    }
 
     //! Basic constuctor.
     TpetraMultiVector(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map, size_t NumVectors, bool zeroOut=true) {
@@ -690,13 +706,13 @@ namespace Xpetra {
     }
 
     typename dual_view_type::t_host_um getHostLocalView () const {
-      //return subview(vec_->getDualView().template view<typename dual_view_type::host_mirror_space> (),
+      //return subview(vec_->template getLocalView<typename dual_view_type::host_mirror_space> (),
       //    Kokkos::ALL(), Kokkos::ALL());
       return typename dual_view_type::t_host_um();
     }
 
     typename dual_view_type::t_dev_um getDeviceLocalView() const {
-      //return subview(vec_->getDualView().template view<typename dual_view_type::t_dev_um::execution_space> (),
+      //return subview(vec_->template getLocalView<typename dual_view_type::t_dev_um::execution_space> (),
       //    Kokkos::ALL(), Kokkos::ALL());
       return typename dual_view_type::t_dev_um();
     }
@@ -959,13 +975,13 @@ namespace Xpetra {
     }
 
     typename dual_view_type::t_host_um getHostLocalView () const {
-      //return subview(vec_->getDualView().template view<typename dual_view_type::host_mirror_space> (),
+      //return subview(vec_->template getLocalView<typename dual_view_type::host_mirror_space> (),
       //    Kokkos::ALL(), Kokkos::ALL());
       return typename dual_view_type::t_host_um();
     }
 
     typename dual_view_type::t_dev_um getDeviceLocalView() const {
-      //return subview(vec_->getDualView().template view<typename dual_view_type::t_dev_um::execution_space> (),
+      //return subview(vec_->template getLocalView<typename dual_view_type::t_dev_um::execution_space> (),
       //    Kokkos::ALL(), Kokkos::ALL());
       return typename dual_view_type::t_dev_um();
     }

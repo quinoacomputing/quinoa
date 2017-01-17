@@ -1,4 +1,15 @@
 
+IF(COMMAND TRIBITS_PACKAGE_DECL)
+  SET(KOKKOS_HAS_TRILINOS ON CACHE BOOL "")
+ELSE()
+  SET(KOKKOS_HAS_TRILINOS OFF CACHE BOOL "")
+ENDIF()
+
+IF(NOT KOKKOS_HAS_TRILINOS)
+  CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11 FATAL_ERROR)
+  INCLUDE(cmake/tribits.cmake)
+ENDIF()
+
 #
 # A) Forward delcare the package so that certain options are also defined for
 # subpackages
@@ -39,8 +50,13 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_Pthread
   KOKKOS_HAVE_PTHREAD
   "Enable Pthread support in Kokkos."
-  "${TPL_ENABLE_Pthread}"
+  OFF
   )
+
+ASSERT_DEFINED(TPL_ENABLE_Pthread)
+IF (Kokkos_ENABLE_Pthread AND NOT TPL_ENABLE_Pthread)
+  MESSAGE(FATAL_ERROR "You set Kokkos_ENABLE_Pthread=ON, but Trilinos' support for Pthread(s) is not enabled (TPL_ENABLE_Pthread=OFF).  This is not allowed.  Please enable Pthreads in Trilinos before attempting to enable Kokkos' support for Pthreads.")
+ENDIF ()
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_OpenMP
@@ -84,12 +100,12 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   OFF
   )
 
-#TRIBITS_ADD_OPTION_AND_DEFINE(
-#  Kokkos_ENABLE_Profiling_Collect_Kernel_Data
-#  KOKKOS_ENABLE_PROFILING_COLLECT_KERNEL_DATA
-#  "Enable profiling support for kernel data collections in Kokkos."
-#  "${${PROJECT_NAME}_ENABLE_KokkosProfiler}"
-#  )
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Profiling
+  KOKKOS_ENABLE_PROFILING_INTERNAL
+  "Enable KokkosP profiling support for kernel data collections."
+  "${TPL_ENABLE_DLlib}"
+  )
 
 # placeholder for future device...
 TRIBITS_ADD_OPTION_AND_DEFINE(
@@ -97,6 +113,14 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   KOKKOS_HAVE_WINTHREAD
   "Enable Winthread support in Kokkos."
   "${TPL_ENABLE_Winthread}"
+  )
+
+# use new/old View
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_USING_DEPRECATED_VIEW
+  KOKKOS_USING_DEPRECATED_VIEW
+  "Choose whether to use the old, deprecated Kokkos::View"
+  OFF
   )
 
 #------------------------------------------------------------------------------

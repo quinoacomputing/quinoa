@@ -57,12 +57,10 @@ struct StaticArray {
   T value[N] ;
 
   KOKKOS_INLINE_FUNCTION
-  StaticArray()
-    { for ( unsigned i = 0 ; i < N ; ++i ) value[i] = T(); }
+  StaticArray() = default;
 
   KOKKOS_INLINE_FUNCTION
-  StaticArray( const StaticArray & rhs )
-    { for ( unsigned i = 0 ; i < N ; ++i ) value[i] = rhs.value[i]; }
+  StaticArray( const StaticArray & rhs ) = default;
 
   KOKKOS_INLINE_FUNCTION
   operator T () { return value[0]; }
@@ -75,11 +73,7 @@ struct StaticArray {
     }
 
   KOKKOS_INLINE_FUNCTION
-  StaticArray & operator = ( const StaticArray & rhs )
-    {
-      for ( unsigned i = 0 ; i < N ; ++i ) value[i] = rhs.value[i] ;
-      return *this ;
-    }
+  StaticArray & operator = ( const StaticArray & rhs ) = default;
 
   KOKKOS_INLINE_FUNCTION
   StaticArray operator * ( const StaticArray & rhs )
@@ -110,6 +104,8 @@ struct StaticArray {
       for ( unsigned i = 0 ; i < N ; ++i ) value[i] += rhs.value[i] ;
     }
 };
+
+static_assert(std::is_trivial<StaticArray<int, 4>>::value, "Not trivial");
 
 template< typename T , class Space >
 struct DOT {
@@ -156,7 +152,7 @@ template< class Space >
 void TestViewAggregateReduction()
 {
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
+#if ! KOKKOS_USING_EXP_VIEW
 
   const int count = 2 ;
   const long result = count % 2 ? ( count * ( ( count + 1 ) / 2 ) )

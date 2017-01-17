@@ -1,40 +1,28 @@
 // @HEADER
 // ***********************************************************************
 //
-//                           Stokhos Package
-//                 Copyright (2009) Sandia Corporation
+//                           Sacado Package
+//                 Copyright (2006) Sandia Corporation
 //
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// USA
+// Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
+// (etphipp@sandia.gov).
 //
 // ***********************************************************************
 // @HEADER
@@ -42,17 +30,40 @@
 #ifndef KOKKOS_EXPERIMENTAL_VIEW_SACADO_FAD_HPP
 #define KOKKOS_EXPERIMENTAL_VIEW_SACADO_FAD_HPP
 
-// Make sure the user really wants these View specializations
 #include "Sacado_ConfigDefs.h"
-#if defined(HAVE_SACADO_KOKKOSCORE) && defined(HAVE_SACADO_VIEW_SPEC) && !defined(SACADO_DISABLE_FAD_VIEW_SPEC)
+#if defined(HAVE_SACADO_KOKKOSCORE)
+
+#include "Kokkos_Core.hpp"
+#include "Kokkos_Macros.hpp"
 
 #if defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
 
-#include "Kokkos_Core.hpp"
-#include <Kokkos_Macros.hpp>
-#include <Sacado_ConfigDefs.h>
+// Some definition that should exist whether the specializations exist or not
 
-#include <impl/KokkosExp_ViewMapping.hpp>
+namespace Kokkos {
+
+// Whether a given type is a view with Sacado FAD scalar type
+template <typename view_type>
+struct is_view_fad { static const bool value = false; };
+
+// Template function for extracting sacado dimension
+template <typename view_type>
+KOKKOS_INLINE_FUNCTION
+constexpr unsigned
+dimension_scalar(const view_type& view) {
+  return 0;
+}
+
+}
+
+// Make sure the user really wants these View specializations
+#if defined(HAVE_SACADO_VIEW_SPEC) && !defined(SACADO_DISABLE_FAD_VIEW_SPEC)
+
+#include "Sacado_Traits.hpp"
+#include "impl/KokkosExp_ViewMapping.hpp"
+#include "Kokkos_LayoutContiguous.hpp"
+
+#define SACADO_SUPPORT_RANK_8 0
 
 //----------------------------------------------------------------------------
 
@@ -80,6 +91,38 @@ struct is_ViewSpecializeSacadoFad< Kokkos::View<D,P...> , Args... > {
 } // namespace Kokkos
 
 namespace Kokkos {
+
+template <typename T, typename ... P>
+struct is_view_fad< View<T,P...> > {
+  typedef View<T,P...> view_type;
+  static const bool value =
+    std::is_same< typename view_type::specialize,
+                  Experimental::Impl::ViewSpecializeSacadoFad >::value;
+};
+
+template <typename T, typename ... P>
+KOKKOS_INLINE_FUNCTION
+constexpr typename
+std::enable_if< is_view_fad< View<T,P...> >::value, unsigned >::type
+dimension_scalar(const View<T,P...>& view) {
+  return view.implementation_map().dimension_scalar();
+}
+
+template <typename ViewType, typename Enabled = void>
+struct ContiguousArrayType {
+  typedef ViewType type;
+};
+
+template <typename D, typename ... P>
+struct ContiguousArrayType< View<D,P...>,
+                            typename std::enable_if< is_view_fad< View<D,P...> >::value >::type > {
+  typedef View<D,P...> view_type;
+  typedef typename view_type::data_type data_type;
+  typedef typename view_type::array_layout layout;
+  typedef typename view_type::device_type device;
+  typedef typename view_type::memory_traits memory;
+  typedef View<data_type,LayoutContiguous<layout>,device,memory> type;
+};
 
 // Overload of deep_copy for Fad views intializing to a constant scalar
 template< class DT, class ... DP >
@@ -114,13 +157,6 @@ void deep_copy(
                   typename ViewTraits<DT,DP...>::non_const_value_type >::value
     , "Can only deep copy into non-const type" );
 
-  // static_assert(
-  //   Sacado::StaticSize< typename View<DT,DP...>::value_type >::value
-  //   ||
-  //   std::is_same< Kokkos::Impl::ActiveExecutionMemorySpace
-  //               , Kokkos::HostSpace >::value
-  //   , "Deep copy from a FAD type must be statically sized or host space" );
-
   Kokkos::Experimental::Impl::ViewFill< View<DT,DP...> >( view , value );
 }
 
@@ -147,29 +183,11 @@ void deep_copy( const View<DT,DP...> & dst ,
       unsigned(ViewTraits<ST,SP...>::rank) )
     , "Deep copy destination and source must have same rank" );
 
+  typedef typename View<DT,DP...>::array_type dst_array_type;
+  typedef typename View<ST,SP...>::array_type src_array_type;
   Kokkos::deep_copy(
-    typename View<DT,DP...>::array_type( dst ) ,
-    typename View<ST,SP...>::array_type( src ) );
-}
-
-// Whether a given type is a view with Sacado FAD scalar type
-template <typename view_type>
-struct is_view_fad { static const bool value = false; };
-
-template <typename T, typename ... P>
-struct is_view_fad< View<T,P...> > {
-  typedef View<T,P...> view_type;
-  static const bool value =
-    std::is_same< typename view_type::specialize,
-                  Experimental::Impl::ViewSpecializeSacadoFad >::value;
-};
-
-template <typename view_type>
-KOKKOS_INLINE_FUNCTION
-constexpr typename
-std::enable_if< is_view_fad<view_type>::value, unsigned >::type
-dimension_scalar(const view_type& view) {
-  return view.implementation_map().dimension_scalar();
+    typename ContiguousArrayType< dst_array_type >::type( dst ) ,
+    typename ContiguousArrayType< src_array_type >::type( src ) );
 }
 
 } // namespace Kokkos
@@ -218,24 +236,76 @@ private:
   typedef ScalarType        non_const_scalar_type ;
   typedef const ScalarType  const_scalar_type ;
 
+#if SACADO_SUPPORT_RANK_8
+
+  // Append the FAD static dimension
+  // This is a hack for rank-8 dynamic view
+  typedef typename
+    std::conditional<
+      unsigned(array_analysis::dimension::rank) == 8 ,
+      typename array_analysis::dimension,
+      typename array_analysis::dimension::
+        template append<( DimFad ? DimFad + 1 : 0 )>::type >::type
+      scalar_dimension ;
+
+#else
+
   // Append the FAD static dimension
   typedef typename array_analysis::dimension::
     template append<( DimFad ? DimFad + 1 : 0 )>::type
       scalar_dimension ;
 
+#endif
+
 public:
 
   // Generate "flattened" multidimensional array specification type.
   typedef typename
-    ViewDataType< scalar_type , scalar_dimension >::type array_scalar_type ;
+    ViewDataType< scalar_type , scalar_dimension >::type scalar_array_type ;
 
   typedef typename
     ViewDataType< const_scalar_type , scalar_dimension >::type
-      const_array_scalar_type ;
+      const_scalar_array_type ;
 
   typedef typename
     ViewDataType< non_const_scalar_type , scalar_dimension >::type
-      non_const_array_scalar_type ;
+      non_const_scalar_array_type ;
+};
+
+// Specialization for LayoutContiguous, where we don't allow striding within
+// the FadType.
+//
+// Currently this is implemented by choosing the default ViewMapping
+// specialization.  In the future we will provide our own.
+template< class DataType , class ArrayLayout , class ScalarType , unsigned DimFad >
+struct FadViewDataAnalysis<DataType, LayoutContiguous<ArrayLayout>, ScalarType, DimFad>
+{
+private:
+
+  typedef ViewArrayAnalysis< DataType > array_analysis ;
+
+public:
+
+  // For now use the default mapping
+  typedef void specialize ;
+
+  typedef typename array_analysis::dimension             dimension ;
+  typedef typename array_analysis::value_type            value_type ;
+  typedef typename array_analysis::const_value_type      const_value_type ;
+  typedef typename array_analysis::non_const_value_type  non_const_value_type ;
+
+  // Generate analogous multidimensional array specification type.
+  typedef typename
+    ViewDataType< value_type , dimension >::type  type ;
+  typedef typename
+    ViewDataType< const_value_type , dimension >::type  const_type ;
+  typedef typename
+    ViewDataType< non_const_value_type , dimension >::type  non_const_type ;
+
+  // Generate "flattened" multidimensional array specification type.
+  typedef type            scalar_array_type ;
+  typedef const_type      const_scalar_array_type ;
+  typedef non_const_type  non_const_scalar_array_type ;
 };
 
 } // namespace Impl
@@ -336,6 +406,7 @@ private:
     std::add_const< fad_value_type >::type  const_fad_value_type ;
 
   enum { FadStaticDimension = Sacado::StaticSize< fad_type >::value };
+  typedef Sacado::integral_nonzero< unsigned , FadStaticDimension > sacado_size_type;
 
   // Only LayoutRight has a static stride one
   enum { FadStaticStride =
@@ -346,6 +417,22 @@ private:
 
   typedef ViewArrayAnalysis< typename Traits::data_type > array_analysis ;
 
+#if SACADO_SUPPORT_RANK_8
+
+  // Append the fad dimension for the internal offset mapping.
+  // This is a hack for rank-8 dynamic view
+  typedef ViewOffset
+    < typename std::conditional<
+        unsigned(array_analysis::dimension::rank) == 8,
+        typename array_analysis::dimension,
+        typename array_analysis::dimension::
+          template append<( FadStaticDimension ? FadStaticDimension + 1 : 0 )>::type >::type
+    , typename Traits::array_layout
+    , void
+    >  offset_type ;
+
+#else
+
   // Append the fad dimension for the internal offset mapping.
   typedef ViewOffset
     < typename array_analysis::dimension::
@@ -354,9 +441,11 @@ private:
     , void
     >  offset_type ;
 
+#endif
+
   handle_type  m_handle ;
   offset_type  m_offset ;
-  unsigned     m_fad_size ;
+  sacado_size_type m_fad_size ;
 
 public:
 
@@ -369,6 +458,20 @@ public:
   template< typename iType >
   KOKKOS_INLINE_FUNCTION constexpr size_t extent( const iType & r ) const
     { return unsigned(r) < unsigned(Rank) ? m_offset.m_dim.extent(r) : 1 ; }
+
+  KOKKOS_INLINE_FUNCTION constexpr
+  typename Traits::array_layout layout() const
+    { return typename Traits::array_layout(
+        0 < unsigned(Rank) ? m_offset.dimension_0() : 0,
+        1 < unsigned(Rank) ? m_offset.dimension_1() : 0,
+        2 < unsigned(Rank) ? m_offset.dimension_2() : 0,
+        3 < unsigned(Rank) ? m_offset.dimension_3() : 0,
+        4 < unsigned(Rank) ? m_offset.dimension_4() : 0,
+        5 < unsigned(Rank) ? m_offset.dimension_5() : 0,
+        6 < unsigned(Rank) ? m_offset.dimension_6() : 0,
+        7 < unsigned(Rank) ? m_offset.dimension_7() : 0
+        );
+    }
 
   KOKKOS_INLINE_FUNCTION constexpr size_t dimension_0() const
     { return 0 < unsigned(Rank) ? m_offset.dimension_0() : 1 ; }
@@ -409,7 +512,7 @@ public:
 
   // Size of sacado scalar dimension
   KOKKOS_FORCEINLINE_FUNCTION constexpr unsigned dimension_scalar() const
-    { return m_fad_size+1; }
+    { return m_fad_size.value+1; }
 
   //----------------------------------------
   // Range of mapping
@@ -438,7 +541,7 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION
   reference_type reference() const
     { return reference_type( m_handle
-                           , m_fad_size
+                           , m_fad_size.value
                            , 1 ); }
 
   template< typename I0 >
@@ -446,14 +549,14 @@ public:
   reference_type
   reference( const I0 & i0 ) const
     { return reference_type( m_handle + m_offset(i0,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_1() ); }
 
   template< typename I0 , typename I1 >
   KOKKOS_FORCEINLINE_FUNCTION
   reference_type reference( const I0 & i0 , const I1 & i1 ) const
     { return reference_type( m_handle + m_offset(i0,i1,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_2() ); }
 
 
@@ -461,14 +564,14 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION
   reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 ) const
     { return reference_type( m_handle + m_offset(i0,i1,i2,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_3() ); }
 
   template< typename I0 , typename I1 , typename I2 , typename I3 >
   KOKKOS_FORCEINLINE_FUNCTION
   reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 , const I3 & i3 ) const
     { return reference_type( m_handle + m_offset(i0,i1,i2,i3,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_4() ); }
 
   template< typename I0 , typename I1 , typename I2 , typename I3
@@ -477,7 +580,7 @@ public:
   reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 , const I3 & i3
                           , const I4 & i4 ) const
     { return reference_type( m_handle + m_offset(i0,i1,i2,i3,i4,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_5() ); }
 
   template< typename I0 , typename I1 , typename I2 , typename I3
@@ -486,7 +589,7 @@ public:
   reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 , const I3 & i3
                           , const I4 & i4 , const I5 & i5 ) const
     { return reference_type( m_handle + m_offset(i0,i1,i2,i3,i4,i5,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_6() ); }
 
 
@@ -496,36 +599,38 @@ public:
   reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 , const I3 & i3
                           , const I4 & i4 , const I5 & i5 , const I6 & i6 ) const
     { return reference_type( m_handle + m_offset(i0,i1,i2,i3,i4,i5,i6,0)
-                           , m_fad_size
+                           , m_fad_size.value
                            , m_offset.stride_7() ); }
+
+#if SACADO_SUPPORT_RANK_8
+
+  // This is a hack for rank-8 dynamic view
+  template< typename I0 , typename I1 , typename I2 , typename I3
+          , typename I4 , typename I5 , typename I6 , typename I7>
+  KOKKOS_FORCEINLINE_FUNCTION
+  reference_type reference( const I0 & i0 , const I1 & i1 , const I2 & i2 , const I3 & i3
+                          , const I4 & i4 , const I5 & i5 , const I6 & i6 , const I7 & i7 ) const
+    { return reference_type( m_handle + m_offset(i0,i1,i2,i3,i4,i5,i6,0)
+                           , m_fad_size.value
+                           , m_offset.stride_7() ); }
+
+#endif
 
   //----------------------------------------
 
-  /** \brief  Span, in bytes, of the potentially non-contiguous referenced memory */
-  KOKKOS_INLINE_FUNCTION constexpr size_t memory_span() const
-  {
-    return m_offset.span() * sizeof(fad_value_type);
-  }
-
   /** \brief  Span, in bytes, of the required memory */
-  template< bool AllowPadding >
   KOKKOS_INLINE_FUNCTION
-  static constexpr size_t memory_span
-    ( const std::integral_constant<bool,AllowPadding> &
-    , const size_t N0 , const size_t N1 , const size_t N2 , const size_t N3
-    , const size_t N4 , const size_t N5 , const size_t N6 , const size_t N7
-    )
+  static constexpr size_t memory_span( typename Traits::array_layout const & layout )
     {
       // Do not introduce padding...
-      return offset_type( std::integral_constant< unsigned , 0 >()
-                        , N0, N1, N2, N3, N4, N5, N6, N7
-                        ).span() * sizeof(fad_value_type);
+      typedef std::integral_constant< unsigned , 0 >  padding ;
+      return offset_type( padding() , layout ).span() * sizeof(fad_value_type);
     }
 
   //----------------------------------------
 
   KOKKOS_INLINE_FUNCTION ~ViewMapping() = default ;
-  KOKKOS_INLINE_FUNCTION ViewMapping() = default ;
+  KOKKOS_INLINE_FUNCTION ViewMapping() : m_handle(0) , m_offset() , m_fad_size(0) {}
 
   KOKKOS_INLINE_FUNCTION ViewMapping( const ViewMapping & ) = default ;
   KOKKOS_INLINE_FUNCTION  ViewMapping & operator = ( const ViewMapping & ) = default ;
@@ -533,17 +638,15 @@ public:
   KOKKOS_INLINE_FUNCTION ViewMapping( ViewMapping && ) = default ;
   KOKKOS_INLINE_FUNCTION ViewMapping & operator = ( ViewMapping && ) = default ;
 
-  template< bool AllowPadding >
+  template< class ... P >
   KOKKOS_INLINE_FUNCTION
   ViewMapping
-    ( pointer_type ptr
-    , const std::integral_constant<bool,AllowPadding> &
-    , const size_t N0 , const size_t N1 , const size_t N2 , const size_t N3
-    , const size_t N4 , const size_t N5 , const size_t N6 , const size_t N7
+    ( ViewCtorProp< P ... > const & prop
+    , typename Traits::array_layout const & local_layout
     )
-    : m_handle( reinterpret_cast< handle_type >( ptr ) )
+    : m_handle( ( (ViewCtorProp<void,pointer_type> const &) prop ).value )
     , m_offset( std::integral_constant< unsigned , 0 >()
-              , N0, N1, N2, N3, N4, N5, N6, N7 )
+              , local_layout )
     // Query m_offset, not input, in case of static dimension
     , m_fad_size(
        ( Rank == 0 ? m_offset.dimension_0() :
@@ -554,26 +657,83 @@ public:
        ( Rank == 5 ? m_offset.dimension_5() :
        ( Rank == 6 ? m_offset.dimension_6() :
                      m_offset.dimension_7() ))))))) - 1 )
-    {}
+    {
+      const unsigned fad_dim =
+       ( Rank == 0 ? m_offset.dimension_0() :
+       ( Rank == 1 ? m_offset.dimension_1() :
+       ( Rank == 2 ? m_offset.dimension_2() :
+       ( Rank == 3 ? m_offset.dimension_3() :
+       ( Rank == 4 ? m_offset.dimension_4() :
+       ( Rank == 5 ? m_offset.dimension_5() :
+       ( Rank == 6 ? m_offset.dimension_6() :
+         m_offset.dimension_7() )))))));
+      if (unsigned(FadStaticDimension) == 0 && fad_dim == 0)
+        Kokkos::abort("invalid fad dimension (0) supplied!");
+    }
 
   //----------------------------------------
-  // If the View is to construct or destroy the elements.
+  /*  Allocate and construct mapped array.
+   *  Allocate via shared allocation record and
+   *  return that record for allocation tracking.
+   */
+  template< class ... P >
+  SharedAllocationRecord<> *
+  allocate_shared( ViewCtorProp< P... > const & prop
+                 , typename Traits::array_layout const & local_layout )
+  {
+    typedef ViewCtorProp< P... > ctor_prop ;
 
-  template< class ExecSpace >
-  void construct( const ExecSpace & space ) const
-    {
-      typedef ViewValueFunctor< fad_value_type , ExecSpace > FunctorType ;
+    typedef typename ctor_prop::execution_space  execution_space ;
+    typedef typename Traits::memory_space         memory_space ;
+    typedef ViewValueFunctor< execution_space , fad_value_type > functor_type ;
+    typedef SharedAllocationRecord< memory_space , functor_type > record_type ;
 
-      (void) FunctorType( space , m_handle , m_offset.span() , FunctorType::CONSTRUCT );
+    // Disallow padding
+    typedef std::integral_constant< unsigned , 0 > padding ;
+
+    m_offset = offset_type( padding(), local_layout );
+    const unsigned fad_dim =
+      ( Rank == 0 ? m_offset.dimension_0() :
+      ( Rank == 1 ? m_offset.dimension_1() :
+      ( Rank == 2 ? m_offset.dimension_2() :
+      ( Rank == 3 ? m_offset.dimension_3() :
+      ( Rank == 4 ? m_offset.dimension_4() :
+      ( Rank == 5 ? m_offset.dimension_5() :
+      ( Rank == 6 ? m_offset.dimension_6() :
+        m_offset.dimension_7() )))))));
+    if (unsigned(FadStaticDimension) == 0 && fad_dim == 0)
+      Kokkos::abort("invalid fad dimension (0) supplied!");
+    m_fad_size = fad_dim - 1 ;
+
+    const size_t alloc_size = m_offset.span() * sizeof(fad_value_type);
+
+    // Create shared memory tracking record with allocate memory from the memory space
+    record_type * const record =
+      record_type::allocate( ( (ViewCtorProp<void,memory_space> const &) prop ).value
+                           , ( (ViewCtorProp<void,std::string>  const &) prop ).value
+                           , alloc_size );
+
+    //  Only set the the pointer and initialize if the allocation is non-zero.
+    //  May be zero if one of the dimensions is zero.
+    if ( alloc_size ) {
+
+      m_handle = handle_type( reinterpret_cast< pointer_type >( record->data() ) );
+
+      if ( ctor_prop::initialize ) {
+        // Assume destruction is only required when construction is requested.
+        // The ViewValueFunctor has both value construction and destruction operators.
+        record->m_destroy = functor_type( ( (ViewCtorProp<void,execution_space> const &) prop).value
+                                        , (fad_value_type *) m_handle
+                                        , m_offset.span()
+                                        );
+
+        // Construct values
+        record->m_destroy.construct_shared_allocation();
+      }
     }
 
-  template< class ExecSpace >
-  void destroy( const ExecSpace & space ) const
-    {
-      typedef ViewValueFunctor< fad_value_type , ExecSpace > FunctorType ;
-
-      (void) FunctorType( space , m_handle , m_offset.span() , FunctorType::DESTROY );
-    }
+    return record ;
+  }
 
 };
 
@@ -668,10 +828,10 @@ public:
         "View assignment must have compatible layout" );
 
       static_assert(
-        std::is_same< typename DstTraits::array_scalar_type
-                    , typename SrcTraits::array_scalar_type >::value ||
-        std::is_same< typename DstTraits::array_scalar_type
-                    , typename SrcTraits::const_array_scalar_type >::value ,
+        std::is_same< typename DstTraits::scalar_array_type
+                    , typename SrcTraits::scalar_array_type >::value ||
+        std::is_same< typename DstTraits::scalar_array_type
+                    , typename SrcTraits::const_scalar_array_type >::value ,
         "View assignment must have same value type or const = non-const" );
 
       static_assert(
@@ -685,7 +845,7 @@ public:
       dst.m_offset  = dst_offset_type( src.m_offset );
       dst.m_handle  = src.m_handle ;
 
-      ViewMapping::template assign_fad_size< typename DstTraits::specialize >( dst , src.m_fad_size );
+      ViewMapping::template assign_fad_size< typename DstTraits::specialize >( dst , src.m_fad_size.value );
     }
 };
 
@@ -750,6 +910,9 @@ private:
 
   // Subview's layout
   // If LayoutRight then FAD is contiguous
+  // For LayoutLeft, result is LayoutLeft only if 1st arg is a range,
+  // and since last (FAD) dimension is also a range, and these
+  // ranges must be consecutive, the input rank must be 1
   typedef typename std::conditional<
     ( /* Same layout IF */
       ( rank == 0 )
@@ -763,7 +926,7 @@ private:
       ( std::is_same< typename SrcTraits::array_layout
                     , Kokkos::LayoutLeft >::value
         &&
-        ( rank == 1 ) && R0
+        ( rank == 1 ) && (SrcTraits::rank == 1) && R0
       )
     ), typename SrcTraits::array_layout , Kokkos::LayoutStride
     >::type  array_layout ;
@@ -819,6 +982,7 @@ public:
                                                   , extents.domain_offset(6)
                                                   , extents.domain_offset(7)
                                                   ) );
+      dst.m_fad_size = src.m_fad_size;
     }
 
 };
@@ -990,8 +1154,10 @@ broadcast
 
 //----------------------------------------------------------------------------
 
-#endif
+#endif // defined(HAVE_SACADO_VIEW_SPEC) && !defined(SACADO_DISABLE_FAD_VIEW_SPEC)
 
-#endif
+#endif // defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
+
+#endif // defined(HAVE_SACADO_KOKKOSCORE)
 
 #endif /* #ifndef KOKKOS_EXPERIMENTAL_VIEW_SACADO_FAD_HPP */

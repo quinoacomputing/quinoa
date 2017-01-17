@@ -41,32 +41,6 @@
 //@HEADER
 */
 
-// ***********************************************************************
-//
-//      Ifpack2: Templated Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2004) Sandia Corporation
-//
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
-//
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
-// ***********************************************************************
-
 #ifndef IFPACK2_DETAILS_CHEBYSHEV_DECL_HPP
 #define IFPACK2_DETAILS_CHEBYSHEV_DECL_HPP
 
@@ -391,12 +365,15 @@ private:
   /// compute() sets this to point to userInvDiag_.
   Teuchos::RCP<const V> D_;
 
+  //! The type of diagOffsets_ (see below).
+  typedef Kokkos::View<size_t*, typename MV::node_type::device_type> offsets_type;
+
   /// \brief Precomputed offsets of local diagonal entries of the matrix.
   ///
   /// These are only used if the matrix has a const ("static") graph.
   /// In that case, the offsets of the diagonal entries will never
   /// change, even if the values of the diagonal entries change.
-  Teuchos::ArrayRCP<size_t> diagOffsets_;
+  offsets_type diagOffsets_;
 
   /// \brief Whether we have precomputed offsets of diagonal entries.
   ///
@@ -442,6 +419,12 @@ private:
   /// Estimate for maximum eigenvalue of A.
   /// This is the value actually used by ifpackApplyImpl().
   ST lambdaMaxForApply_;
+
+  /// @brief Factor used to increase estimate of A's maximum eigenvalue.
+  /// lambdaMaxForApply_ is multiplied by this factor in ifpackApplyImpl(). The idea is to ensure that
+  /// A's maximum eigenvalue is less than the result. Otherwise high-energy error modes could
+  /// actually be magnified by the smoother.  The default value is 1.1.
+  ST boostFactor_;
   /// Estimate for minimum eigenvalue of A.
   /// This is the value actually used by ifpackApplyImpl().
   ST lambdaMinForApply_;

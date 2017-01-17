@@ -135,13 +135,13 @@
 
 
 int main(int argc, char *argv[]) {
-#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_SERIAL)
+#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT)
   typedef double Scalar;
   typedef int LocalOrdinal;
   typedef int GlobalOrdinal;
   typedef LocalOrdinal LO;
   typedef GlobalOrdinal GO;
-  typedef Kokkos::Compat::KokkosSerialWrapperNode Node;
+  typedef Xpetra::EpetraNode Node;
 #include "MueLu_UseShortNames.hpp"
 
 
@@ -264,10 +264,10 @@ int main(int argc, char *argv[]) {
     /////////////////////////////////////// build blocked transfer operator
     // using the map extractor
     Teuchos::RCP<Xpetra::BlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > bOp = Teuchos::rcp(new Xpetra::BlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(map_extractor,map_extractor,10));
-    bOp->setMatrix(0,0,xA11);
-    bOp->setMatrix(0,1,xA12);
-    bOp->setMatrix(1,0,xA21);
-    bOp->setMatrix(1,1,xA22);
+    bOp->setMatrix(0,0,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA11)));
+    bOp->setMatrix(0,1,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA12)));
+    bOp->setMatrix(1,0,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA21)));
+    bOp->setMatrix(1,1,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA22)));
 
     bOp->fillComplete();
 
@@ -623,7 +623,7 @@ int main(int argc, char *argv[]) {
 
   return ( success ? EXIT_SUCCESS : EXIT_FAILURE );
 #else
-  std::cout << "Epetra needs Serial node. Please recompile MueLu with the Serial node enabled." << std::endl;
+  std::cout << "Epetra (and/or EpetraExt) are not available. Skip test." << std::endl;
   return EXIT_SUCCESS;
-#endif // #if defined(HAVE_MUELU_SERIAL) && defined(HAVE_MUELU_EPETRA)
+#endif
 }

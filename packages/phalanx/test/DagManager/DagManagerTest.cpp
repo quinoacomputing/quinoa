@@ -41,16 +41,14 @@
 // ************************************************************************
 // @HEADER
 
-
 #include "Phalanx_config.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
+#include "Phalanx_KokkosUtilities.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
 #include "Phalanx_FieldTag_Tag.hpp"
 #include "Phalanx_DAG_Manager.hpp"
 #include "Phalanx_TypeStrings.hpp"
 #include "Phalanx_DimTag.hpp"
-
-// Evaluators
-#include "evaluators/Evaluator_Constant.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -133,15 +131,15 @@ TEUCHOS_UNIT_TEST(dag, basic_dag)
   using namespace std;
   using namespace Teuchos;
   using namespace PHX;
-  
+
   DagManager<MyTraits> em;
 
   registerDagNodes(em,false,false,false,false);
 
   RCP<PHX::MDALayout<CELL,BASIS>> dl = 
     rcp(new PHX::MDALayout<CELL,BASIS>("H-Grad",100,4));
-  PHX::Tag<MyTraits::Residual::ScalarT> tag("A",dl);
-  em.requireField(tag);
+  PHX::Tag<MyTraits::Residual::ScalarT> tag_a("A",dl);
+  em.requireField(tag_a);
 
   TEST_ASSERT(!em.sortingCalled());
   em.sortAndOrderEvaluators();
@@ -172,8 +170,30 @@ TEUCHOS_UNIT_TEST(dag, basic_dag)
   TEST_EQUALITY(tags.size(),5);
   em.writeGraphvizFile("basic_dag.dot",true,true,false);
   cout << "\n" << em << endl;   cout << "\n" << em << endl;  
- 
-  //Teuchos::TimeMonitor::summarize();
+
+  {
+    auto& evaluators = em.getEvaluatorsBindingField(tag_a);
+    TEST_EQUALITY(evaluators.size(),1);
+  }
+
+  {
+    PHX::Tag<MyTraits::Residual::ScalarT> tag("B",dl);
+    auto& evaluators = em.getEvaluatorsBindingField(tag);
+    TEST_EQUALITY(evaluators.size(),2);
+  }
+
+  {
+    PHX::Tag<MyTraits::Residual::ScalarT> tag("C",dl);
+    auto& evaluators = em.getEvaluatorsBindingField(tag);
+    TEST_EQUALITY(evaluators.size(),2);
+  }
+
+  {
+    PHX::Tag<MyTraits::Residual::ScalarT> tag("E",dl);
+    auto& evaluators = em.getEvaluatorsBindingField(tag);
+    TEST_EQUALITY(evaluators.size(),3);
+  }
+
 }
 
 // Catch cyclic dependencies (not a true DAG)
@@ -182,7 +202,7 @@ TEUCHOS_UNIT_TEST(dag, cyclic)
   using namespace std;
   using namespace Teuchos;
   using namespace PHX;
-  
+
   DagManager<MyTraits> em("cyclic");
   em.setDefaultGraphvizFilenameForErrors("error_cyclic.dot");
   em.setWriteGraphvizFileOnError(true);
@@ -203,7 +223,7 @@ TEUCHOS_UNIT_TEST(dag, duplicate_evaluators)
   using namespace std;
   using namespace Teuchos;
   using namespace PHX;
-  
+
   DagManager<MyTraits> em("duplicate_evaluators");
   em.setDefaultGraphvizFilenameForErrors("error_duplicate_evaluators.dot");
   em.setWriteGraphvizFileOnError(true);
@@ -214,6 +234,7 @@ TEUCHOS_UNIT_TEST(dag, duplicate_evaluators)
 #else
   registerDagNodes(em,false,true,false,false);
 #endif
+
 }
 
 // Catch missing required field 
@@ -222,7 +243,7 @@ TEUCHOS_UNIT_TEST(dag, missing_req_field)
   using namespace std;
   using namespace Teuchos;
   using namespace PHX;
-  
+
   DagManager<MyTraits> em("missing_req_field");
   em.setDefaultGraphvizFilenameForErrors("error_missing_req_field.dot");
   em.setWriteGraphvizFileOnError(true);
@@ -243,7 +264,7 @@ TEUCHOS_UNIT_TEST(dag, missing_evaluator)
   using namespace std;
   using namespace Teuchos;
   using namespace PHX;
-  
+    
   DagManager<MyTraits> em("missing_evaluator");
   em.setDefaultGraphvizFilenameForErrors("error_missing_evaluator.dot");
   em.setWriteGraphvizFileOnError(true);
@@ -265,7 +286,7 @@ TEUCHOS_UNIT_TEST(dag, analyze_graph)
   using namespace Teuchos;
   using namespace PHX;
   using Mock = PHX::MockDAG<PHX::MyTraits::Residual,MyTraits>;
-  
+
   // Perfectly parallel test
   DagManager<MyTraits> dag("analyze_graph");
 
@@ -333,7 +354,7 @@ TEUCHOS_UNIT_TEST(dag, analyze_graph2)
   using namespace Teuchos;
   using namespace PHX;
   using Mock = PHX::MockDAG<PHX::MyTraits::Residual,MyTraits>;
-  
+
   // Perfectly parallel test
   DagManager<MyTraits> dag("analyze_graph2");
 
@@ -414,5 +435,37 @@ TEUCHOS_UNIT_TEST(dag, analyze_graph2)
   double s_gold = 10.0 / 8.0;
   TEST_FLOATING_EQUALITY(speedup,s_gold,tol);
   double p_gold = (1. - 1./s_gold)/(1. - 1./4.);
+  TEST_FLOATING_EQUALITY(parallelizability,p_gold,tol);
+
+  // Now test the sum into execution time to accumulate timings
+  // Insert evaluation times into the graph
+  for (const auto& i : order) {
+    const DagNode<MyTraits>& n = nodes[i];
+
+    // cast away const for unit testing to set the execution times
+    if (n.get()->getName() == "Eval_A") {
+      std::chrono::duration<double> dt(2.0);
+      const_cast<DagNode<MyTraits>&>(n).sumIntoExecutionTime(dt);
+    }
+    else if (n.get()->getName() == "Eval_B") {
+      // force different ratio to test sumInto function
+      std::chrono::duration<double> dt(8.0);
+      const_cast<DagNode<MyTraits>&>(n).sumIntoExecutionTime(dt);
+    }
+    else if (n.get()->getName() == "Eval_C") {
+      std::chrono::duration<double> dt(4.0);
+      const_cast<DagNode<MyTraits>&>(n).sumIntoExecutionTime(dt);
+    }
+    else if (n.get()->getName() == "Eval_D") {
+      std::chrono::duration<double> dt(2.0);
+      const_cast<DagNode<MyTraits>&>(n).sumIntoExecutionTime(dt);
+    }
+  }
+  
+  dag.analyzeGraph(speedup, parallelizability);
+
+  s_gold = 26.0 / 18.0;
+  TEST_FLOATING_EQUALITY(speedup,s_gold,tol);
+  p_gold = (1. - 1./s_gold)/(1. - 1./4.);
   TEST_FLOATING_EQUALITY(parallelizability,p_gold,tol);
 }

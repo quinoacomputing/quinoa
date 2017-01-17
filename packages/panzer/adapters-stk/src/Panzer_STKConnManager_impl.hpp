@@ -47,7 +47,7 @@
 // Teuchos includes
 #include "Teuchos_RCP.hpp"
 
-#include "Intrepid2_FieldContainer.hpp"
+#include "Kokkos_DynRankView.hpp"
 
 #include "Panzer_GeometricAggFieldPattern.hpp"
 #include "Panzer_IntrepidFieldPattern.hpp"
@@ -79,6 +79,14 @@ template <typename GO>
 STKConnManager<GO>::STKConnManager(const Teuchos::RCP<STK_Interface> & stkMeshDB)
    : stkMeshDB_(stkMeshDB), ownedElementCount_(0)
 {
+}
+
+template <typename GO>
+Teuchos::RCP<panzer::ConnManagerBase<int> > 
+STKConnManager<GO>::
+noConnectivityClone() const
+{
+  return Teuchos::rcp(new STKConnManager<GO>(stkMeshDB_));
 }
 
 template <typename GO>
@@ -352,17 +360,17 @@ template <typename GO>
 void STKConnManager<GO>::getDofCoords(const std::string & blockId,
                                   const panzer::Intrepid2FieldPattern & coordProvider,
                                   std::vector<std::size_t> & localCellIds,
-                                  Intrepid2::FieldContainer<double> & points) const
+                                  Kokkos::DynRankView<double,PHX::Device> & points) const
 {
    int dim = coordProvider.getDimension();
    int numIds = coordProvider.numberIds();
 
    // grab element vertices
-   Intrepid2::FieldContainer<double> vertices;
+   Kokkos::DynRankView<double,PHX::Device> vertices;
    workset_utils::getIdsAndVertices(*stkMeshDB_,blockId,localCellIds,vertices);
 
    // setup output array
-   points.resize(localCellIds.size(),numIds,dim);
+   points = Kokkos::DynRankView<double,PHX::Device>("points",localCellIds.size(),numIds,dim);
    coordProvider.getInterpolatoryCoordinates(vertices,points);
 }
 

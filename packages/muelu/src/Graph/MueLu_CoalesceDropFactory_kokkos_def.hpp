@@ -189,8 +189,8 @@ namespace MueLu {
         typename row_map_type::non_const_type rows("row_map", numRows+1);       // rows(0) = 0 automatically
 
         LO realnnz = 0;
-        Kokkos::parallel_reduce("CoalesceDropF:Build:scalar_filter:stage1_reduce", numRows, KOKKOS_LAMBDA(const LO row, LO& nnz) {
-          auto rowView = kokkosMatrix.template row<LO>(row);
+        Kokkos::parallel_reduce("MueLu:CoalesceDropF:Build:scalar_filter:stage1_reduce", numRows, KOKKOS_LAMBDA(const LO row, LO& nnz) {
+          auto rowView = kokkosMatrix.row (row);
           auto length  = rowView.length;
 
           LO rownnz = 0;
@@ -211,22 +211,22 @@ namespace MueLu {
         // parallel_scan (exclusive)
         // NOTE: parallel_scan with KOKKOS_LAMBDA does not work with CUDA for now
 #if 0
-        Kokkos::parallel_scan("CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, KOKKOS_LAMBDA(const LO i, LO& upd, const bool& final) {
+        Kokkos::parallel_scan("MueLu:CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, KOKKOS_LAMBDA(const LO i, LO& upd, const bool& final) {
           upd += rows(i);
           if (final)
             rows(i) = upd;
         });
 #else
         ScanFunctor<LO,decltype(rows)> scanFunctor(rows);
-        Kokkos::parallel_scan("CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, scanFunctor);
+        Kokkos::parallel_scan("MueLu:CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, scanFunctor);
 #endif
 
 
         // Stage 2: fill in the column indices
         typename boundary_nodes_type::non_const_type bndNodes("boundaryNodes", numRows);
         typename entries_type::non_const_type        cols    ("entries",       realnnz);
-        Kokkos::parallel_reduce("CoalesceDropF:Build:scalar_filter:stage2_reduce", numRows, KOKKOS_LAMBDA(const LO row, GO& dropped) {
-          auto rowView = kokkosMatrix.template row<LO>(row);
+        Kokkos::parallel_reduce("MueLu:CoalesceDropF:Build:scalar_filter:stage2_reduce", numRows, KOKKOS_LAMBDA(const LO row, GO& dropped) {
+          auto rowView = kokkosMatrix.row (row);
           auto length = rowView.length;
 
           LO rownnz = 0;
@@ -375,26 +375,26 @@ namespace MueLu {
 
     }
 
-    if (GetVerbLevel() & Statistics0) {
+    if (GetVerbLevel() & Statistics1) {
       GO numLocalBoundaryNodes  = 0;
       GO numGlobalBoundaryNodes = 0;
-      Kokkos::parallel_reduce("CoalesceDropF:Build:bnd", boundaryNodes.dimension_0(), KOKKOS_LAMBDA(const LO i, GO& n) {
+      Kokkos::parallel_reduce("MueLu:CoalesceDropF:Build:bnd", boundaryNodes.dimension_0(), KOKKOS_LAMBDA(const LO i, GO& n) {
         if (boundaryNodes(i))
           n++;
       }, numLocalBoundaryNodes);
 
       RCP<const Teuchos::Comm<int> > comm = A->getRowMap()->getComm();
       MueLu_sumAll(comm, numLocalBoundaryNodes, numGlobalBoundaryNodes);
-      GetOStream(Statistics0) << "Detected " << numGlobalBoundaryNodes << " Dirichlet nodes" << std::endl;
+      GetOStream(Statistics1) << "Detected " << numGlobalBoundaryNodes << " Dirichlet nodes" << std::endl;
     }
 
-    if ((GetVerbLevel() & Statistics0) && threshold != STS::zero()) {
+    if ((GetVerbLevel() & Statistics1) && threshold != STS::zero()) {
       RCP<const Teuchos::Comm<int> > comm = A->getRowMap()->getComm();
       GO numGlobalTotal, numGlobalDropped;
       MueLu_sumAll(comm, numTotal,   numGlobalTotal);
       MueLu_sumAll(comm, numDropped, numGlobalDropped);
       if (numGlobalTotal != 0) {
-        GetOStream(Statistics0) << "Number of dropped entries: "
+        GetOStream(Statistics1) << "Number of dropped entries: "
             << numGlobalDropped << "/" << numGlobalTotal
             << " (" << 100*Teuchos::as<double>(numGlobalDropped)/Teuchos::as<double>(numGlobalTotal) << "%)" << std::endl;
       }

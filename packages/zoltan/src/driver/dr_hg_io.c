@@ -419,7 +419,7 @@ int read_hypergraph_file(
   }
 
   /* Initialize mesh structure for Hypergraph. */
-  mesh->data_type = HYPERGRAPH;
+  mesh->data_type = ZOLTAN_HYPERGRAPH;
   mesh->num_elems = nvtxs;
   mesh->vwgt_dim = vwgt_dim;
   mesh->ewgt_dim = ch_ewgt_dim;
@@ -708,7 +708,7 @@ int read_mtxplus_file(
   safe_free((void **)(void *)&myPinJ);
 
   /* Initialize mesh structure for Hypergraph. */
-  mesh->data_type = HYPERGRAPH;
+  mesh->data_type = ZOLTAN_HYPERGRAPH;
   mesh->num_elems = nMyVtx;
   mesh->vwgt_dim = vtxWDim;
   mesh->ewgt_dim = 0;
@@ -1369,8 +1369,9 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
 
     line = pinBuf;
     counter = 0;
-    // Skip any additional comment lines before pins begin
-    // Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+    /* Skip any additional comment lines before pins begin
+     * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+     */
     while (line) {
       if (line[0] != COMMENT_CHAR)
         break;
@@ -1403,8 +1404,9 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
     }
 
     line = vwgtBuf;
-    // Skip any additional comment lines before vwgts begin
-    // Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+    /* Skip any additional comment lines before vwgts begin
+     * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+     */
     while (line) {
       if (line[0] != COMMENT_CHAR)
         break;
@@ -1439,8 +1441,9 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
 
     if (numew > 0){                      /* HYPEREDGE WEIGHTS */
       line = ewgtBuf;
-      // Skip any additional comment lines before ewgts begin
-      // Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+      /* Skip any additional comment lines before ewgts begin
+       * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+       */
       while (line) {
         if (line[0] != COMMENT_CHAR)
           break;

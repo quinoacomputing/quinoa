@@ -61,7 +61,7 @@ using Teuchos::rcp;
 #include "Panzer_DOF.hpp"
 #include "Panzer_DOF_PointValues.hpp"
 #include "Panzer_Constant.hpp"
-#include "Panzer_IntegrationValues.hpp"
+#include "Panzer_IntegrationValues2.hpp"
 #include "Panzer_BasisValues2.hpp"
 
 #include "Panzer_STK_Version.hpp"
@@ -96,7 +96,6 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(point_values_evaluator, eval)
   {
-    PHX::KokkosDeviceSession session;
 
     const std::size_t workset_size = 4;
     const std::string fieldName_q1 = "U";
@@ -126,9 +125,9 @@ namespace panzer {
     RCP<const panzer::PointRule> point_rule = rcp(new panzer::PointRule("RandomPoints",num_points, cell_data));
     RCP<const panzer::PointRule> point_rule_basis = rcp(new panzer::PointRule("BasisPoints",basis_q1->cardinality(), cell_data));
 
-    Teuchos::RCP<Intrepid2::FieldContainer<double> > userArray 
-       = Teuchos::rcp(new Intrepid2::FieldContainer<double>(num_points,2));
-    Intrepid2::FieldContainer<double> & point_coordinates = *userArray;
+    Teuchos::RCP<Kokkos::DynRankView<double,PHX::Device> > userArray 
+      = Teuchos::rcp(new Kokkos::DynRankView<double,PHX::Device>("userArray",num_points,2));
+    Kokkos::DynRankView<double,PHX::Device> & point_coordinates = *userArray;
     point_coordinates(0,0) =  0.0; point_coordinates(0,1) = 0.0; // mid point
     point_coordinates(1,0) =  0.5; point_coordinates(1,1) = 0.5; // mid point of upper left quadrant
     point_coordinates(2,0) = -0.5; point_coordinates(2,1) = 0.0; // mid point of line from center to left side
@@ -210,7 +209,7 @@ namespace panzer {
        point_coords_jac_inv(point_rule_basis->getName()+"_"+"jac_inv",point_rule_basis->dl_tensor);
     fm.getFieldData<panzer::Traits::Residual::ScalarT,panzer::Traits::Residual,Cell,IP,Dim,Dim>(point_coords_jac_inv);
 
-    typedef panzer::ArrayTraits<double,Intrepid2::FieldContainer<double> >::size_type size_type;
+    typedef panzer::ArrayTraits<double,Kokkos::DynRankView<double,PHX::Device> >::size_type size_type;
 
     for(size_type c=0;c<basis_q1->numCells();c++) {
        double dx = 0.5;
@@ -250,7 +249,6 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(basis_values_evaluator, eval)
   {
-    PHX::KokkosDeviceSession session;
 
     const std::size_t workset_size = 4;
     const std::string fieldName_q1 = "U";
@@ -279,11 +277,12 @@ namespace panzer {
     TEST_EQUALITY(work_sets->size(),1);
 
     Teuchos::RCP<panzer::IntegrationRule> point_rule = buildIR(workset_size,integration_order);
-    panzer::IntegrationValues<double,Intrepid2::FieldContainer<double> > int_values;
+    panzer::IntegrationValues2<double> int_values("",true);
     int_values.setupArrays(point_rule);
     int_values.evaluateValues(workset.cell_vertex_coordinates);
 
-    Teuchos::RCP<Intrepid2::FieldContainer<double> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    // Teuchos::RCP<Kokkos::DynRankView<double,PHX::Device> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    auto userArray = int_values.cub_points;
 
     Teuchos::RCP<panzer::BasisIRLayout> layout = Teuchos::rcp(new panzer::BasisIRLayout(basis_q1,*point_rule));
 
@@ -295,7 +294,7 @@ namespace panzer {
     Teuchos::RCP<const std::vector<Teuchos::RCP<PHX::FieldTag > > > evalJacFields;
     {
        Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
-          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,*userArray));
+          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,userArray));
        fm.registerEvaluator<panzer::Traits::Jacobian>(evaluator);
     }
     {
@@ -348,7 +347,6 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(basis_values_evaluator, eval_vector)
   {
-    PHX::KokkosDeviceSession session;
 
     const std::size_t workset_size = 4;
     const std::string fieldName = "U";
@@ -375,11 +373,12 @@ namespace panzer {
     TEST_EQUALITY(work_sets->size(),1);
 
     Teuchos::RCP<panzer::IntegrationRule> point_rule = buildIR(workset_size,integration_order);
-    panzer::IntegrationValues<double,Intrepid2::FieldContainer<double> > int_values;
+    panzer::IntegrationValues2<double> int_values("",true);
     int_values.setupArrays(point_rule);
     int_values.evaluateValues(workset.cell_vertex_coordinates);
 
-    Teuchos::RCP<Intrepid2::FieldContainer<double> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    // Teuchos::RCP<Kokkos::DynRankView<double,PHX::Device> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    auto userArray = int_values.cub_points;
 
     Teuchos::RCP<panzer::BasisIRLayout> layout = Teuchos::rcp(new panzer::BasisIRLayout(basis_edge,*point_rule));
 
@@ -400,7 +399,7 @@ namespace panzer {
     }
     {
        Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
-          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,*userArray));
+          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,userArray));
        fm.registerEvaluator<panzer::Traits::Jacobian>(evaluator);
     }
     {
@@ -474,7 +473,6 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(dof_point_values_evaluator, eval)
   {
-    PHX::KokkosDeviceSession session;
 
     const std::size_t workset_size = 4;
     const std::string fieldName_q1 = "U";
@@ -503,11 +501,12 @@ namespace panzer {
     TEST_EQUALITY(work_sets->size(),1);
 
     Teuchos::RCP<panzer::IntegrationRule> point_rule = buildIR(workset_size,integration_order);
-    panzer::IntegrationValues<double,Intrepid2::FieldContainer<double> > int_values;
+    panzer::IntegrationValues2<double> int_values("",true);
     int_values.setupArrays(point_rule);
     int_values.evaluateValues(workset.cell_vertex_coordinates);
 
-    Teuchos::RCP<Intrepid2::FieldContainer<double> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    // Teuchos::RCP<Kokkos::DynRankView<double,PHX::Device> > userArray = Teuchos::rcpFromRef(int_values.cub_points);
+    auto userArray = int_values.cub_points;
 
     Teuchos::RCP<panzer::BasisIRLayout> layout = Teuchos::rcp(new panzer::BasisIRLayout(basis_q1,*point_rule));
 
@@ -522,7 +521,7 @@ namespace panzer {
     }
     {
        Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
-          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,*userArray));
+          = Teuchos::rcp(new panzer::PointValues_Evaluator<panzer::Traits::Jacobian,panzer::Traits>(point_rule,userArray));
        fm.registerEvaluator<panzer::Traits::Jacobian>(evaluator);
     }
     {

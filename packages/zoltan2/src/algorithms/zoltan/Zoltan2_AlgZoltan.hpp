@@ -139,21 +139,21 @@ private:
   void setCallbacksGraph(
     const RCP<const GraphAdapter<user_t,userCoord_t> > &adp)
   {
-    std::cout << "NotReadyForGraphYet" << std::endl;
+    // std::cout << "NotReadyForGraphYet" << std::endl;
     // TODO
   }
 
   void setCallbacksGraph(
     const RCP<const MatrixAdapter<user_t,userCoord_t> > &adp)
   {
-    std::cout << "NotReadyForGraphYet" << std::endl;
+    // std::cout << "NotReadyForGraphYet" << std::endl;
     // TODO
   }
 
   void setCallbacksGraph(
     const RCP<const MeshAdapter<user_t> > &adp)
   {
-    std::cout << "NotReadyForGraphYet" << std::endl;
+    // std::cout << "NotReadyForGraphYet" << std::endl;
     // TODO
   }
 
@@ -324,6 +324,34 @@ void AlgZoltan<Adapter>::partition(
     zz->Set_Param("IMBALANCE_TOL", str);
   }
   
+  pe = pl.getEntryPtr("partitioning_approach");
+  if (pe){
+    std::string approach;
+    approach = pe->getValue<std::string>(&approach);
+    if (approach == "partition")
+      zz->Set_Param("LB_APPROACH", "PARTITION");
+    else
+      zz->Set_Param("LB_APPROACH", "REPARTITION");
+  }
+
+  pe = pl.getEntryPtr("partitioning_objective");
+  if (pe){
+    std::string strChoice = pe->getValue<std::string>(&strChoice);
+    if (strChoice == std::string("multicriteria_minimize_total_weight"))
+      zz->Set_Param("RCB_MULTICRITERIA_NORM", "1");
+    else if (strChoice == std::string("multicriteria_balance_total_maximum"))
+      zz->Set_Param("RCB_MULTICRITERIA_NORM", "2");
+    else if (strChoice == std::string("multicriteria_minimize_maximum_weight"))
+      zz->Set_Param("RCB_MULTICRITERIA_NORM", "3");
+  }
+
+  pe = pl.getEntryPtr("rectilinear");
+  if (pe) {
+    int val;
+    val = pe->getValue<int>(&val);
+    if (val != 0)
+      zz->Set_Param("RCB_RECTILINEAR_BLOCKS", "1");
+  }
 
   // Look for zoltan_parameters sublist; pass all zoltan parameters to Zoltan
   try {
@@ -393,7 +421,7 @@ void AlgZoltan<Adapter>::partition(
   ArrayRCP<part_t> partList(new part_t[numObjects], 0, numObjects, true);
   for (int i = 0; i < nObj; i++) {
     lno_t tmp;
-    TPL_Traits<lno_t, ZOLTAN_ID_PTR>::ASSIGN_TPL_T(tmp, &(oLids[i*nLidEnt]));
+    TPL_Traits<lno_t, ZOLTAN_ID_PTR>::ASSIGN(tmp, &(oLids[i*nLidEnt]));
     partList[tmp] = oParts[i];
   }
   

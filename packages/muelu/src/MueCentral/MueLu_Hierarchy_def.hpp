@@ -58,7 +58,9 @@
 
 #include "MueLu_BoostGraphviz.hpp"
 #include "MueLu_FactoryManager.hpp"
-#include "MueLu_HierarchyHelpers.hpp"
+#include "MueLu_HierarchyUtils.hpp"
+#include "MueLu_TopRAPFactory.hpp"
+#include "MueLu_TopSmootherFactory.hpp"
 #include "MueLu_Level.hpp"
 #include "MueLu_Monitor.hpp"
 #include "MueLu_PFactory.hpp"
@@ -292,7 +294,7 @@ namespace MueLu {
       level.Request(*coarseFact);
     }
 
-    PrintMonitor m0(*this, "Level " +  Teuchos::toString(coarseLevelID), static_cast<MsgType>(GetVerbLevel()));
+    PrintMonitor m0(*this, "Level " +  Teuchos::toString(coarseLevelID), static_cast<MsgType>(Runtime0 | Test));
 
     // Build coarse level hierarchy
     RCP<Operator> Ac = Teuchos::null;
@@ -414,6 +416,9 @@ namespace MueLu {
     TEUCHOS_TEST_FOR_EXCEPTION(levelManagers_.size() != numLevels, Exceptions::RuntimeError,
                                "Hierarchy::SetupRe: " << Levels_.size() << " levels, but  " << levelManagers_.size() << " level factory managers");
 
+    const int startLevel = 0;
+    Clear(startLevel);
+
 #ifdef HAVE_MUELU_DEBUG
       // Reset factories' data used for debugging
       for (int i = 0; i < numLevels; i++)
@@ -422,7 +427,7 @@ namespace MueLu {
 #endif
 
     int levelID;
-    for (levelID = 0; levelID < numLevels;) {
+    for (levelID = startLevel; levelID < numLevels;) {
       bool r = Setup(levelID,
                      (levelID != 0 ? levelManagers_[levelID-1] : Teuchos::null),
                      levelManagers_[levelID],
@@ -441,7 +446,7 @@ namespace MueLu {
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void Hierarchy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Setup(const FactoryManagerBase& manager, int startLevel, int numDesiredLevels) {
     // Use MueLu::BaseClass::description() to avoid printing "{numLevels = 1}" (numLevels is increasing...)
-    PrintMonitor m0(*this, "Setup (" + this->MueLu::BaseClass::description() + ")");
+    PrintMonitor m0(*this, "Setup (" + this->MueLu::BaseClass::description() + ")", Runtime0);
 
     Clear(startLevel);
 
@@ -618,8 +623,11 @@ namespace MueLu {
           postSmoo->Apply(X, B, zeroGuess);
           emptySolve = false;
         }
-        if (emptySolve == true)
-          GetOStream(Warnings0) << "No coarse grid solver" << std::endl;
+        if (emptySolve == true) {
+          GetOStream(Warnings1) << "No coarse grid solver" << std::endl;
+          // Coarse operator is identity
+          X.update(one, B, zero);
+        }
 
       } else {
         // On intermediate levels, we do cycles
@@ -778,7 +786,7 @@ namespace MueLu {
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
-  void Hierarchy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write(const LO& start, const LO& end) {
+  void Hierarchy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write(const LO& start, const LO& end, const std::string &suffix) {
     LO startLevel = (start != -1 ? start : 0);
     LO   endLevel = (end   != -1 ? end   : Levels_.size()-1);
 
@@ -796,9 +804,9 @@ namespace MueLu {
           R = rcp_dynamic_cast<Matrix>(Levels_[i]-> template Get< RCP< Operator> >("R"));
       }
 
-      if (!A.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A_" + toString(i) + ".m", *A);
-      if (!P.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("P_" + toString(i) + ".m", *P);
-      if (!R.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("R_" + toString(i) + ".m", *R);
+      if (!A.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A_" + toString(i) + suffix + ".m", *A);
+      if (!P.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("P_" + toString(i) + suffix + ".m", *P);
+      if (!R.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("R_" + toString(i) + suffix + ".m", *R);
     }
   }
 
@@ -895,6 +903,16 @@ namespace MueLu {
         oss << "Number of levels    = " << numLevels << std::endl;
         oss << "Operator complexity = " << std::setprecision(2) << std::setiosflags(std::ios::fixed)
             << GetOperatorComplexity() << std::endl;
+        switch (Cycle_) {
+           case VCYCLE:
+             oss << "Cycle type          = V" << std::endl;
+             break;
+           case WCYCLE:
+             oss << "Cycle type          = W" << std::endl;
+             break;
+           default:
+             break;
+        };
         oss << std::endl;
 
         Xpetra::global_size_t tt = rowsPerLevel[0];
@@ -1018,7 +1036,7 @@ namespace MueLu {
     RCP<Operator> Ao = level.Get<RCP<Operator> >("A");
     RCP<Matrix>   A  = rcp_dynamic_cast<Matrix>(Ao);
     if (A.is_null()) {
-      GetOStream(Warnings0) << "Hierarchy::ReplaceCoordinateMap: operator is not a matrix, skipping..." << std::endl;
+      GetOStream(Warnings1) << "Hierarchy::ReplaceCoordinateMap: operator is not a matrix, skipping..." << std::endl;
       return;
     }
 
@@ -1027,7 +1045,7 @@ namespace MueLu {
     RCP<xdMV> coords = level.Get<RCP<xdMV> >("Coordinates");
 
     if (A->getRowMap()->isSameAs(*(coords->getMap()))) {
-      GetOStream(Warnings0) << "Hierarchy::ReplaceCoordinateMap: matrix and coordinates maps are same, skipping..." << std::endl;
+      GetOStream(Warnings1) << "Hierarchy::ReplaceCoordinateMap: matrix and coordinates maps are same, skipping..." << std::endl;
       return;
     }
 

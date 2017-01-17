@@ -198,9 +198,9 @@ namespace MueLu {
     //   - factory has not been requested before, and
     //   - we need data which is not available
     // Let us consider an RAP factory in the reuse scenario. The factory generates "A" (coarse matrix) and
-    // "RAP Pattern" (pattern of A). Typically, "A" has keep flag Final, which is cleared during next Setup, but
-    // "RAP Pattern" has flag Keep, which is not cleared as it is part of NextRun. Therefore, during next Setup
-    // we have RAP factory with available "RAP Pattern" but not available "A".
+    // "RAP graph" (pattern of A). Typically, "A" has keep flag Final, which is cleared during next Setup, but
+    // "RAP graph" has flag Keep, which is not cleared as it is part of NextRun. Therefore, during next Setup
+    // we have RAP factory with available "RAP graph" but not available "A".
     //
     // During the regular construction phase, we will do a single request: ("A", RAPFactory). Suppose, we used
     //    bool test = (IsRequestedFactory(fac) == false && IsAvailable(fac) == false);
@@ -210,7 +210,7 @@ namespace MueLu {
     //
     // On the other hand,
     //   bool test = (IsRequestedFactory(fac) == false && IsAvailable(ename, fac) == false);
-    // is correct as ("A", fac) is not available (only ("RAP Pattern", fac) is), and dependent factories would be
+    // is correct as ("A", fac) is not available (only ("RAP graph", fac) is), and dependent factories would be
     // properly requested.
     //
     // This way, factory is requested only once (because of the IsRequested(fac) check), and only when one of the needed
@@ -425,18 +425,19 @@ namespace MueLu {
           } else {
             size_t npos = std::string::npos;
 
-            if      (strType.find("Xpetra::Matrix")          != npos) outputter.outputField("Matrix" );
-            else if (strType.find("Xpetra::Operator")        != npos) outputter.outputField("Operator");
-            else if (strType.find("Xpetra::MultiVector")     != npos) outputter.outputField("Vector");
-            else if (strType.find("Xpetra::Map")             != npos) outputter.outputField("Map");
-            else if (strType.find("Xpetra::Import")          != npos) outputter.outputField("Import");
-            else if (strType.find("Xpetra::Export")          != npos) outputter.outputField("Export");
-            else if (strType.find("MueLu::SmootherBase")     != npos) outputter.outputField("SmootherBase");
-            else if (strType.find("MueLu::Aggregates")       != npos) outputter.outputField("Aggregates");
-            else if (strType.find("MueLu::AmalgamationInfo") != npos) outputter.outputField("AmalgamationInfo");
-            else if (strType.find("MueLu::Graph")            != npos) outputter.outputField("Graph");
-            else if (strType.find("MueLu::Constraint")       != npos) outputter.outputField("Constraint");
-            else                                                      outputter.outputField(strType);
+            if      (strType.find("MueLu::Aggregates")          != npos) outputter.outputField("Aggregates");
+            else if (strType.find("MueLu::AmalgamationInfo")    != npos) outputter.outputField("AmalgamationInfo");
+            else if (strType.find("MueLu::Constraint")          != npos) outputter.outputField("Constraint");
+            else if (strType.find("MueLu::Graph")               != npos) outputter.outputField("Graph");
+            else if (strType.find("MueLu::SmootherBase")        != npos) outputter.outputField("SmootherBase");
+            else if (strType.find("MueLu::SmootherPrototype")   != npos) outputter.outputField("SmootherPrototype");
+            else if (strType.find("Xpetra::Export")             != npos) outputter.outputField("Export");
+            else if (strType.find("Xpetra::Import")             != npos) outputter.outputField("Import");
+            else if (strType.find("Xpetra::Map")                != npos) outputter.outputField("Map");
+            else if (strType.find("Xpetra::Matrix")             != npos) outputter.outputField("Matrix" );
+            else if (strType.find("Xpetra::MultiVector")        != npos) outputter.outputField("Vector");
+            else if (strType.find("Xpetra::Operator")           != npos) outputter.outputField("Operator");
+            else                                                         outputter.outputField(strType);
 
             outputter.outputField("available");
           }

@@ -49,6 +49,7 @@
 #include "Rythmos_ForwardEulerStepper.hpp"
 #include "Rythmos_ExplicitRKStepper.hpp"
 #include "Rythmos_ImplicitBDFStepper.hpp"
+#include "Rythmos_ThetaStepper.hpp"
 #include "Rythmos_SimpleIntegrationControlStrategy.hpp"
 #include "Rythmos_RampingIntegrationControlStrategy.hpp"
 #include "Rythmos_ForwardSensitivityStepper.hpp"
@@ -217,6 +218,11 @@ void Piro::RythmosSolver<Scalar>::initialize(
     fwdStateStepper = Teuchos::rcp( new Rythmos::ImplicitBDFStepper<Scalar>(model,fwdTimeStepSolver,BDFparams) );
     fwdStateStepper->setInitialCondition(model->getNominalValues());
 
+  } else if (stepperType == "Theta Stepper") {
+    
+    Teuchos::RCP<Teuchos::ParameterList> CrankNicholsonPL = 
+      Teuchos::sublist(rythmosPL, "Rythmos Stepper", true);
+    fwdStateStepper = Rythmos::thetaStepper<Scalar>(model, fwdTimeStepSolver, CrankNicholsonPL);    
   }
   else {
     // first (before failing) check to see if the user has added stepper factory
@@ -265,20 +271,20 @@ void Piro::RythmosSolver<Scalar>::initialize(
         rscs->setParameterList(p);
 
         scsa_stepper->setStepControlStrategy(rscs);
-      } 
+      }
     else {
        // first (before failing) check to see if the user has added step control factory
        typename std::map<std::string,Teuchos::RCP<Piro::RythmosStepControlFactory<Scalar> > >::const_iterator
            stepControlFactItr = stepControlFactories.find(step_control_strategy);
       if (stepControlFactItr != stepControlFactories.end())
          {
-       
+
         const RCP<Rythmos::StepControlStrategyBase<Scalar> > rscs = stepControlFactItr->second->buildStepControl();
 
         const RCP<ParameterList> p = parameterList(rythmosPL -> sublist("Rythmos Step Control Strategy"));
 
         rscs->setParameterList(p);
- 
+
         scsa_stepper->setStepControlStrategy(rscs);
         }
         else {
@@ -372,7 +378,11 @@ void Piro::RythmosSolver<Scalar>::initialize(
       if (rythmosSolverPL->get("Invert Mass Matrix", false)) {
         Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > origModel = model;
         rythmosSolverPL->get("Lump Mass Matrix", false);  //JF line does not do anything
+#ifdef ALBANY_BUILD
+        model = Teuchos::rcp(new Piro::InvertMassMatrixDecorator<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+#else
         model = Teuchos::rcp(new Piro::InvertMassMatrixDecorator<Scalar>(
+#endif
               sublist(rythmosSolverPL,"Stratimikos", true), origModel,
               true,rythmosSolverPL->get("Lump Mass Matrix", false),false));
       }
@@ -406,9 +416,9 @@ void Piro::RythmosSolver<Scalar>::initialize(
 
     fwdStateStepper = fwdStateIntegrator->getNonconstStepper();
 
-    if (Teuchos::nonnull(observer)) 
+    if (Teuchos::nonnull(observer))
       fwdStateIntegrator->setIntegrationObserver(observer);
-   
+
   }
 else {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -566,11 +576,11 @@ Piro::RythmosSolver<Scalar>::getNominalValues() const
 
 #ifdef ALBANY_BUILD
 template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
-Thyra::ModelEvaluatorBase::InArgs<Scalar> 
+Thyra::ModelEvaluatorBase::InArgs<Scalar>
 Piro::RythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>::createInArgs() const
 #else
 template <typename Scalar>
-Thyra::ModelEvaluatorBase::InArgs<Scalar> 
+Thyra::ModelEvaluatorBase::InArgs<Scalar>
 Piro::RythmosSolver<Scalar>::createInArgs() const
 #endif
 {
@@ -582,11 +592,11 @@ Piro::RythmosSolver<Scalar>::createInArgs() const
 
 #ifdef ALBANY_BUILD
 template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
-Thyra::ModelEvaluatorBase::OutArgs<Scalar> 
+Thyra::ModelEvaluatorBase::OutArgs<Scalar>
 Piro::RythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>::createOutArgsImpl() const
 #else
 template <typename Scalar>
-Thyra::ModelEvaluatorBase::OutArgs<Scalar> 
+Thyra::ModelEvaluatorBase::OutArgs<Scalar>
 Piro::RythmosSolver<Scalar>::createOutArgsImpl() const
 #endif
 {
@@ -766,7 +776,7 @@ void Piro::RythmosSolver<Scalar>::evalModelImpl(
     //
 
     fwdStateStepper->setInitialCondition(state_ic);
-    
+
     fwdStateIntegrator->setStepper(fwdStateStepper, t_final, true);
     *out << "T final : " << t_final << " \n";
 

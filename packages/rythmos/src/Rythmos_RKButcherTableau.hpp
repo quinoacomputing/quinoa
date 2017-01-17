@@ -64,6 +64,7 @@ namespace Rythmos {
   inline const std::string Explicit3Stage3rdOrder_name() { return  "Explicit 3 Stage 3rd order"; } // done
   inline const std::string Explicit3Stage3rdOrderTVD_name() { return  "Explicit 3 Stage 3rd order TVD"; } // done
   inline const std::string Explicit4Stage3rdOrderRunge_name() { return  "Explicit 4 Stage 3rd order by Runge"; } // done
+  inline const std::string Explicit5Stage3rdOrderKandG_name() { return  "Explicit 5 Stage 3rd order by Kinnmark and Gray"; } // done
 
   inline const std::string IRK1StageTheta_name() { return  "IRK 1 Stage Theta Method"; } // done
   inline const std::string IRK2StageTheta_name() { return  "IRK 2 Stage Theta Method"; } // done
@@ -116,9 +117,13 @@ class RKButcherTableauDefaultBase :
     /** \brief . */
     virtual const Teuchos::SerialDenseVector<int,Scalar>& b() const { return b_; }
     /** \brief . */
+    virtual const Teuchos::SerialDenseVector<int,Scalar>& bhat() const { return bhat_ ; }
+    /** \brief . */
     virtual const Teuchos::SerialDenseVector<int,Scalar>& c() const { return c_; }
     /** \brief . */
     virtual int order() const { return order_; }
+    /** \brief . */
+    virtual bool isEmbeddedMethod() const { return isEmbedded_; }  // returns whether the stepper is Embedded or not (Sidafa)
     /** \brief . */
     virtual void setDescription(std::string longDescription) { longDescription_ = longDescription; }
 
@@ -128,7 +133,9 @@ class RKButcherTableauDefaultBase :
         const Teuchos::SerialDenseVector<int,Scalar>& b_in,
         const Teuchos::SerialDenseVector<int,Scalar>& c_in,
         const int order_in,
-        const std::string& longDescription_in
+        const std::string& longDescription_in,
+        bool isEmbedded = false, /* (default) tell the stepper the RK is an embedded method  */
+        const Teuchos::SerialDenseVector<int,Scalar>& bhat_in =  Teuchos::SerialDenseVector<int,Scalar>() /* (default) */
         )
     {
       const int numStages_in = A_in.numRows();
@@ -142,6 +149,13 @@ class RKButcherTableauDefaultBase :
       c_ = c_in;
       order_ = order_in;
       longDescription_ = longDescription_in;
+
+      /* Sidafa */
+      if (isEmbedded) {
+        TEUCHOS_ASSERT_EQUALITY( bhat_in.length(), numStages_in );
+        bhat_ = bhat_in;
+        isEmbedded_ = true;
+      }
     }
 
     /* \brief Redefined from Teuchos::ParameterListAcceptorDefaultBase */
@@ -213,6 +227,10 @@ class RKButcherTableauDefaultBase :
     int order_;
     std::string longDescription_;
     mutable RCP<ParameterList> validPL_;
+
+    /* Sidafa - Embedded method parameters */
+    Teuchos::SerialDenseVector<int,Scalar> bhat_; 
+    bool isEmbedded_ = false;
 };
 
 
@@ -510,6 +528,93 @@ class Explicit4Stage3rdOrderRunge_RKBT :
       myc(1) = onehalf;
       myc(2) = one;
       myc(3) = one;
+
+      this->setMyDescription(myDescription.str());
+      this->setMy_A(myA);
+      this->setMy_b(myb);
+      this->setMy_c(myc);
+      this->setMy_order(3);
+    }
+};
+
+template<class Scalar>
+class Explicit5Stage3rdOrderKandG_RKBT :
+  virtual public RKButcherTableauDefaultBase<Scalar>
+{
+  public:
+    Explicit5Stage3rdOrderKandG_RKBT()
+    {
+
+      std::ostringstream myDescription;
+      myDescription << Explicit5Stage3rdOrderKandG_name() << "\n"
+                  << "Kinnmark & Gray 5 stage, 3rd order scheme \n"
+                  << "Modified by P. Ullrich.  From the prim_advance_mod.F90 \n"
+                  << "routine in the HOMME atmosphere model code.\n"
+                  << "c = [  0  1/5  1/5  1/3  2/3  ]'\n"
+                  << "A = [  0                      ]\n"
+                  << "    [ 1/5  0                  ]\n"
+                  << "    [  0  1/5   0             ]\n"
+                  << "    [  0   0   1/3   0        ]\n"
+                  << "    [  0   0    0   2/3   0   ]\n"
+                  << "b = [ 1/4  0    0    0   3/4  ]'" << std::endl;
+      typedef ScalarTraits<Scalar> ST;
+      int myNumStages = 5;
+      Teuchos::SerialDenseMatrix<int,Scalar> myA(myNumStages,myNumStages);
+      Teuchos::SerialDenseVector<int,Scalar> myb(myNumStages);
+      Teuchos::SerialDenseVector<int,Scalar> myc(myNumStages);
+
+      Scalar one = ST::one();
+      Scalar onefifth = ST::one()/(5*ST::one());
+      Scalar onefourth = ST::one()/(4*ST::one());
+      Scalar onethird = ST::one()/(3*ST::one());
+      Scalar twothirds = 2*ST::one()/(3*ST::one());
+      Scalar threefourths = 3*ST::one()/(4*ST::one());
+      Scalar zero = ST::zero();
+
+      // Fill A:
+      myA(0,0) = zero;
+      myA(0,1) = zero;
+      myA(0,2) = zero;
+      myA(0,3) = zero;
+      myA(0,4) = zero;
+
+      myA(1,0) = onefifth;
+      myA(1,1) = zero;
+      myA(1,2) = zero;
+      myA(1,3) = zero;
+      myA(1,4) = zero;
+
+      myA(2,0) = zero;
+      myA(2,1) = onefifth;
+      myA(2,2) = zero;
+      myA(2,3) = zero;
+      myA(2,4) = zero;
+
+      myA(3,0) = zero;
+      myA(3,1) = zero;
+      myA(3,2) = onethird;
+      myA(3,3) = zero;
+      myA(3,4) = zero;
+
+      myA(4,0) = zero;
+      myA(4,1) = zero;
+      myA(4,2) = zero;
+      myA(4,3) = twothirds; 
+      myA(4,4) = zero;
+
+      // Fill b:
+      myb(0) = onefourth;
+      myb(1) = zero;
+      myb(2) = zero;
+      myb(3) = zero;
+      myb(4) = threefourths;
+
+      // Fill myc:
+      myc(0) = zero;
+      myc(1) = onefifth;
+      myc(2) = onefifth;
+      myc(3) = onethird;
+      myc(4) = twothirds;
 
       this->setMyDescription(myDescription.str());
       this->setMy_A(myA);

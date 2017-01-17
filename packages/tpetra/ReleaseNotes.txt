@@ -2,8 +2,71 @@
 Release Notes for Trilinos Package Tpetra
 -----------------------------------------
 
-Development version (12.5)
---------------------------
+Trilinos 12.8
+-------------
+
+* Stop creating Node instances explicitly!
+
+Hi users!  Please don't create Node instances explicitly any more.
+Tpetra::Map creates one for you, if you really need one.  You really
+don't need Node instances: Map's constructors and nonmember
+"constructors" don't need them any more, nor do Tpetra's Matrix Market
+readers.
+
+Creating Node instances explicitly causes issues with Kokkos
+initialization.  Node will go away eventually, in favor of Kokkos
+execution spaces and memory spaces.
+
+* Lots of bug fixes, especially for CUDA
+
+* Computing offsets in CrsGraph and CrsMatrix is now thread parallel
+
+CrsGraph's and CrsMatrix's fillComplete method computes row offsets,
+if they have not yet been computed.  This is now thread parallel.  It
+uses Kokkos::parallel_scan.
+
+* More BlockCrsMatrix kernels are thread parallel
+
+* Interface changes to KokkosSparse::CrsMatrix (the "local" matrix)
+
+The replaceValues and sumIntoValues methods now take "is_sorted" and
+"force_atomic" arguments.  These methods now use binary search
+(falling back to linear search for short rows) for the sorted case.
+
+Row views in KokkosSparse::CrsMatrix are no longer templated.  They
+now use the ordinal type, rather than the offset type, for indexing.
+This suffices as long as there are not enough duplicate entries in a
+row to exceed ordinal_type.  This has the beneficial side effect of
+reducing the number of local sparse matrix-vector multiply kernel
+instantiations.
+
+* Got rid of LittleBlock and LittleVector (for Block* classes)
+
+Instead, use the little_block_type, const_little_block_type,
+little_vec_type, and const_little_vec_type typedefs in BlockCrsMatrix
+and other related classes.  Underlying data layout has NOT changed
+(yet), but constructors HAVE changed.  This is technically a
+non-backwards-compatible interface change, but all these classes are
+in an Experimental namespace anyway.
+
+* Got rid of KokkosClassic::DefaultArithmetic
+
+Stokhos was using this, so we had left it in place in previous
+releases for backwards compatibility.  Now that no other packages
+depend on it, we have gotten rid of it for good.  Its functionality
+has been replaced by various functions in TpetraKernels.
+
+The original idea behind DefaultArithmetic, as suggested in the name,
+was that users could swap out this "default" implementation of
+multivector operations with their own implementations.  This is
+generally less useful than swapping out the implementation of sparse
+matrix kernels (like sparse matrix-vector multiply or sparse
+triangular solve).  As a result, Tpetra never had an implementation
+(since at least January 2010) of multivector operations other than
+DefaultArithmetic.
+
+Trilinos 12.6
+-------------
 
 * Better CUDA testing
 

@@ -72,6 +72,10 @@
 #include <MueLu_TrilinosSmoother.hpp>
 #include <MueLu_DirectSolver.hpp>
 
+#ifdef HAVE_MUELU_KOKKOSCORE
+#include <KokkosCompat_ClassicNodeAPI_Wrapper.hpp>
+#endif
+
 namespace MueLuTests {
 
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Hierarchy, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
@@ -774,16 +778,38 @@ namespace MueLuTests {
 
     // Write matrices out, read fine A back in, and check that the read was ok
     // by using a matvec with a random vector.
-    H.Write();
+    // JJH: 22-Feb-2016 Append scalar type to file name. The theory is that for dashboard
+    //      tests with multiple Scalar instantiations of this test, a test with Scalar type
+    //      A could try to read in the results of the test with Scalar type B, simply because
+    //      the test with type B overwrote A's output matrix file.  A better solution would be
+    //      to write to a file stream, but this would involve writing new interfaces to Epetra's
+    //      file I/O capabilities.
+    std::string tname = typeid(Scalar).name();
+    tname = tname + typeid(LocalOrdinal).name();
+    tname = tname + typeid(GlobalOrdinal).name();
+#ifdef HAVE_MUELU_KOKKOSCORE
+    std::string nn = Kokkos::Compat::KokkosDeviceWrapperNode<typename Node::execution_space>::name();
+    nn.erase(std::remove(nn.begin(), nn.end(), '/'), nn.end());
+    tname = tname + nn;
+#endif
+    tname = "_" + tname;
+    LocalOrdinal zero = Teuchos::OrdinalTraits<LocalOrdinal>::zero();
+    //Only write out the fine level matrix, since that is the only data file we test against.
+    H.Write(zero,zero,tname);
 
     Teuchos::Array<typename TST::magnitudeType> norms(1);
 
     out << "random status: " << rand() << std::endl;
     std::srand(595343843);
     std::rand();
-    std::string infile = "A_0.m";
+    std::string infile = "A_0" + tname + ".m";
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
     RCP<Matrix> Ain = Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Read(infile, lib, comm);
+    remove(infile.c_str());
+    infile = "colmap_A_0" + tname + ".m";    remove(infile.c_str());
+    infile = "domainmap_A_0" + tname + ".m"; remove(infile.c_str());
+    infile = "rangemap_A_0" + tname + ".m";  remove(infile.c_str());
+    infile = "rowmap_A_0" + tname + ".m";    remove(infile.c_str());
     RCP<Vector> randomVec = VectorFactory::Build(A->getDomainMap(),false);
     randomVec->randomize();
     out << "randomVec norm: " << randomVec->norm2() << std::endl;
@@ -804,13 +830,11 @@ namespace MueLuTests {
     TEST_EQUALITY(norms[0]<1e-15, true);
   }
 
-
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Hierarchy, BlockCrs, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
 #   include <MueLu_UseShortNames.hpp>
     MUELU_TESTING_SET_OSTREAM;
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_AMESOS2)
-#ifdef HAVE_MUELU_BROKEN_TESTS
     MUELU_TEST_ONLY_FOR(Xpetra::UseTpetra);
 
     out << "===== Generating matrices =====" << std::endl;
@@ -821,7 +845,13 @@ namespace MueLuTests {
     matrixList.set("matrixType",  "Laplace2D");
 
     // Construct block matrix
-    RCP<Matrix>           A        = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildBlockMatrix(matrixList);
+    RCP<Matrix> A = TestHelpers::TpetraTestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildBlockMatrix(matrixList,Xpetra::UseTpetra);
+    if(A==Teuchos::null) { // if A is Teuchos::null, we could not build the matrix as it is not instantiated in Tpetra
+      out << "Skipping test" << std::endl;
+      return;
+    }
+
+    // extract information
     RCP<const Map>        rangeMap = A->getRangeMap();
     Xpetra::UnderlyingLib lib      = rangeMap->lib();
 
@@ -902,7 +932,6 @@ namespace MueLuTests {
     int iterations = 10;
     H.IsPreconditioner(false);
     H.Iterate(*RHS, *X, iterations);
-#endif
 #endif
     TEST_EQUALITY(0,0);
   }

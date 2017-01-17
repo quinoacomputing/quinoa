@@ -111,7 +111,7 @@ namespace MueLu {
       auto procWinner   = procWinner_  ->template getLocalView<DeviceType>();
 
       typename AppendTrait<decltype(aggregateSizes_), Kokkos::Atomic>::type aggregateSizesAtomic = aggregateSizes;
-      Kokkos::parallel_for("Aggregates:ComputeAggregateSizes:for", procWinner.size(), KOKKOS_LAMBDA(const LO k) {
+      Kokkos::parallel_for("MueLu:Aggregates:ComputeAggregateSizes:for", procWinner.size(), KOKKOS_LAMBDA(const LO k) {
         if (procWinner(k, 0) == myPID)
           aggregateSizesAtomic(vertex2AggId(k, 0))++;
       });
@@ -164,7 +164,7 @@ namespace MueLu {
   void Aggregates_kokkos<LocalOrdinal, GlobalOrdinal, Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType> >::print(Teuchos::FancyOStream& out, const Teuchos::EVerbosityLevel verbLevel) const {
     MUELU_DESCRIBE;
 
-    if (verbLevel & Statistics0)
+    if (verbLevel & Statistics1)
       out0 << "Global number of aggregates: " << GetNumGlobalAggregates() << std::endl;
   }
 

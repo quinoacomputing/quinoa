@@ -63,6 +63,14 @@ namespace Kokkos {
 namespace Example {
 namespace FENL {
 
+inline
+double maximum( const Teuchos::Comm<int>& comm , double local )
+{
+  double global = 0 ;
+  Teuchos::reduceAll( comm , Teuchos::REDUCE_MAX , 1 , & local , & global );
+  return global ;
+}
+
 // Struct storing performance statistics
 struct Perf {
   size_t uq_count ;
@@ -148,6 +156,42 @@ struct Perf {
       prec_apply_time     = p.prec_apply_time;
       cg_total_time       = p.cg_total_time;
     }
+  }
+
+  void min(const Perf& p) {
+    map_ratio           = std::min( map_ratio , p. map_ratio );
+    fill_node_set       = std::min( fill_node_set , p.fill_node_set );
+    scan_node_count     = std::min( scan_node_count , p.scan_node_count );
+    fill_graph_entries  = std::min( fill_graph_entries , p.fill_graph_entries );
+    sort_graph_entries  = std::min( sort_graph_entries , p.sort_graph_entries );
+    fill_element_graph  = std::min( fill_element_graph , p.fill_element_graph );
+    create_sparse_matrix= std::min( create_sparse_matrix , p.create_sparse_matrix );
+    import_time         = std::min( import_time , p.import_time );
+    fill_time           = std::min( fill_time , p.fill_time );
+    bc_time             = std::min( bc_time , p.bc_time );
+    mat_vec_time        = std::min( mat_vec_time , p.mat_vec_time );
+    cg_iter_time        = std::min( cg_iter_time , p.cg_iter_time );
+    prec_setup_time     = std::min( prec_setup_time , p.prec_setup_time );
+    prec_apply_time     = std::min( prec_apply_time , p.prec_apply_time );
+    cg_total_time       = std::min( cg_total_time , p.cg_total_time );
+  }
+
+  void reduceMax(const Teuchos::Comm<int>& comm) {
+    map_ratio            = maximum( comm , map_ratio);
+    fill_node_set        = maximum( comm , fill_node_set);
+    scan_node_count      = maximum( comm , scan_node_count);
+    fill_graph_entries   = maximum( comm , fill_graph_entries);
+    sort_graph_entries   = maximum( comm , sort_graph_entries);
+    fill_element_graph   = maximum( comm , fill_element_graph);
+    create_sparse_matrix = maximum( comm , create_sparse_matrix);
+    import_time          = maximum( comm , import_time );
+    fill_time            = maximum( comm , fill_time );
+    bc_time              = maximum( comm , bc_time );
+    mat_vec_time         = maximum( comm , mat_vec_time );
+    cg_iter_time         = maximum( comm , cg_iter_time  );
+    prec_setup_time      = maximum( comm , prec_setup_time );
+    prec_apply_time      = maximum( comm , prec_apply_time );
+    cg_total_time        = maximum( comm , cg_total_time );
   }
 };
 
@@ -373,6 +417,9 @@ public:
   const MeshScalar m_variance;    // Variance of random field
   const MeshScalar m_corr_len;    // Correlation length of random field
   const size_type m_num_rv;       // Number of random variables
+  const bool m_use_exp;           // Take exponential of random field
+  const MeshScalar m_exp_shift;   // Shift of exponential of random field
+  const MeshScalar m_exp_scale;   // Scale of exponential of random field
   RandomVariableView m_rv;        // KL random variables
 
 public:
@@ -381,11 +428,17 @@ public:
     const MeshScalar mean ,
     const MeshScalar variance ,
     const MeshScalar correlation_length ,
-    const size_type num_rv ) :
+    const size_type num_rv,
+    const bool use_exp,
+    const MeshScalar exp_shift,
+    const MeshScalar exp_scale) :
     m_mean( mean ),
     m_variance( variance ),
     m_corr_len( correlation_length ),
     m_num_rv( num_rv ),
+    m_use_exp( use_exp ),
+    m_exp_shift( exp_shift ),
+    m_exp_scale( exp_scale ),
     m_rv( "KL Random Variables", m_num_rv )
   {
     Teuchos::ParameterList solverParams;
@@ -408,6 +461,9 @@ public:
     m_variance( rhs.m_variance ) ,
     m_corr_len( rhs.m_corr_len ) ,
     m_num_rv( rhs.m_num_rv ) ,
+    m_use_exp( rhs.m_use_exp ) ,
+    m_exp_shift( rhs.m_exp_shift ) ,
+    m_exp_scale( rhs.m_exp_scale ) ,
     m_rv( rhs.m_rv ) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -424,6 +480,9 @@ public:
       local_rv_view_traits::create_local_view(m_rv, ensemble_rank);
 
     local_scalar_type val = m_rf.evaluate(point, local_rv);
+
+    if (m_use_exp)
+      val = m_exp_shift + m_exp_scale * std::exp(val);
 
     return val;
   }

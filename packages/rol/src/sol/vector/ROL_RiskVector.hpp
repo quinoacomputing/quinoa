@@ -45,6 +45,7 @@
 #define ROL_RISKVECTOR_HPP
 
 #include "ROL_Vector.hpp"
+#include "ROL_RiskMeasureInfo.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Array.hpp"
 
@@ -66,35 +67,21 @@ private:
 public:
   RiskVector( Teuchos::ParameterList &parlist,
         const Teuchos::RCP<Vector<Real> > &vec,
-        const Real stat = 1. )
+        const Real stat = 1 )
     : vec_(vec), augmented_(false), nStat_(0) {
-    stat_.clear();
+    // Initialize dual vector storage
     dual_vec1_ = vec->dual().clone();
-    std::string type = parlist.sublist("SOL").sublist("Risk Measure").get("Name","CVaR");
-    if ( type == "CVaR"                       ||
-         type == "HMCR"                       ||
-         type == "KL Divergence"              ||
-         type == "Moreau-Yosida CVaR"         ||
-         type == "Log-Exponential Quadrangle" ||
-         type == "Log-Quantile Quadrangle"    ||
-         type == "Quantile-Based Quadrangle"  ||
-         type == "Truncated Mean Quadrangle" ) {
-      augmented_ = true;
-      nStat_     = 1;
-      stat_.resize(nStat_,stat);
-    }
-    else if ( type == "Mixed-Quantile Quadrangle" ) {
-      Teuchos::ParameterList &list
-        = parlist.sublist("SOL").sublist("Risk Measure").sublist("Mixed-Quantile Quadrangle");
-      Teuchos::Array<Real> prob
-        = Teuchos::getArrayFromStringParameter<Real>(list,"Probability Array");
-      augmented_ = true;
-      nStat_     = prob.size();
-      stat_.resize(nStat_,stat);
-    }
-    else if ( type == "Quantile-Radius Quadrangle" ) {
-      augmented_ = true;
-      nStat_     = 2;
+    // Get risk measure information
+    std::string name;
+    std::vector<Real> lower, upper;
+    bool activated(false);
+    int nStat(0);
+    RiskMeasureInfo<Real>(parlist,name,nStat,lower,upper,activated);
+    augmented_ = (nStat > 0) ? true : false;
+    nStat_ = (uint)nStat;
+    // Initialize statistic vector
+    stat_.clear();
+    if ( augmented_ ) {
       stat_.resize(nStat_,stat);
     }
   }
@@ -105,7 +92,7 @@ public:
     stat_.clear();
     dual_vec1_ = vec->dual().clone();
     if (augmented) {
-      stat_.resize(nStat_,0.);
+      stat_.resize(nStat_,0);
     }
   }
  
@@ -169,12 +156,21 @@ public:
     return stat_[i];
   }
 
+  void getStatistic(std::vector<Real> &stat) const {
+    stat.clear();
+    stat.assign(stat_.begin(),stat_.end());
+  }
+
   Teuchos::RCP<const Vector<Real> > getVector() const {
     return vec_;
   }
 
+  Teuchos::RCP<Vector<Real> > getVector() {
+    return vec_;
+  }
+
   Teuchos::RCP<Vector<Real> > clone() const {
-    std::vector<Real> stat(nStat_,0.);
+    std::vector<Real> stat(nStat_,0);
     Teuchos::RCP<Vector<Real> > vec = Teuchos::rcp_dynamic_cast<Vector<Real> >(
       Teuchos::rcp_const_cast<Vector<Real> >(vec_->clone()));
     return Teuchos::rcp( new RiskVector( vec, stat, augmented_ ) );

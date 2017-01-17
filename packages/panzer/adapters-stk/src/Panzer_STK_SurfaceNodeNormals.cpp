@@ -47,9 +47,10 @@
 #include "Panzer_STK_SetupUtilities.hpp"
 #include "Panzer_WorksetContainer.hpp"
 #include "Panzer_Workset_Builder.hpp"
-#include "Panzer_IntegrationValues.hpp"
+#include "Panzer_IntegrationValues2.hpp"
 #include "Panzer_STK_WorksetFactory.hpp"
 #include "Panzer_CellData.hpp"
+#include "Panzer_CommonArrayFactories.hpp"
 
 #include <stk_mesh/base/Selector.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
@@ -70,7 +71,13 @@ namespace panzer_stk_classic {
 				 std::ostream* out,
 				 std::ostream* pout)
   {    
+    using panzer::Cell;
+    using panzer::NODE;
+    using panzer::Dim;
+
     using Teuchos::RCP;
+
+    panzer::MDFieldArrayFactory af("",true);
     
     RCP<stk_classic::mesh::fem::FEMMetaData> metaData = mesh->getMetaData();
     RCP<stk_classic::mesh::BulkData> bulkData = mesh->getBulkData();
@@ -116,17 +123,19 @@ namespace panzer_stk_classic {
     for ( ; sideID != localSideTopoIDs.end(); ++side,++sideID,++parentElement) {
     
       std::vector<stk_classic::mesh::Entity*> elementEntities;
-      elementEntities.push_back(*parentElement);
-      Intrepid2::FieldContainer<double> vertices;
-      mesh->getElementVertices(elementEntities,elementBlockName,vertices);
+      elementEntities.push_back(*parentElement); // notice this is size 1!
+      PHX::MDField<double,panzer::Cell,panzer::NODE,panzer::Dim> vertices 
+          = af.buildStaticArray<double,Cell,NODE,Dim>("",elementEntities.size(), parentTopology->getVertexCount(), mesh->getDimension());
+      mesh->getElementVerticesNoResize(elementEntities,elementBlockName,vertices);
       
-      panzer::CellData sideCellData(1,*sideID,parentTopology);
+      panzer::CellData sideCellData(1,*sideID,parentTopology); // this is size 1 because elementEntties is size 1!
       RCP<panzer::IntegrationRule> ir = Teuchos::rcp(new panzer::IntegrationRule(cubDegree,sideCellData));
-      panzer::IntegrationValues<double, Intrepid2::FieldContainer<double> > iv;
+
+      panzer::IntegrationValues2<double> iv("",true);
       iv.setupArrays(ir);
       iv.evaluateValues(vertices);
       
-      Intrepid2::FieldContainer<double> normal(1,ir->num_points,parentTopology->getDimension());
+      Kokkos::DynRankView<double,PHX::Device> normal("normal",1,ir->num_points,parentTopology->getDimension());
       Intrepid2::CellTools<double>::getPhysicalSideNormals(normal, iv.jac, *sideID, *(ir->topology));
 
       if (pout != NULL) {
@@ -208,7 +217,7 @@ namespace panzer_stk_classic {
     
   }
 
-  void computeSidesetNodeNormals(std::unordered_map<std::size_t,Intrepid2::FieldContainer<double> >& normals,
+  void computeSidesetNodeNormals(std::unordered_map<std::size_t,Kokkos::DynRankView<double,PHX::Device> >& normals,
 				 const Teuchos::RCP<const panzer_stk_classic::STK_Interface>& mesh,
 				 const std::string& sidesetName,
 				 const std::string& elementBlockName,
@@ -247,7 +256,7 @@ namespace panzer_stk_classic {
       // loop over nodes in nodes in side element
       stk_classic::mesh::PairIterRelation nodeRelations = (*parentElement)->relations(mesh->getNodeRank());
 
-      normals[mesh->elementLocalId(*parentElement)].resize(nodeRelations.size(),parentTopology->getDimension()); 
+      normals[mesh->elementLocalId(*parentElement)] = Kokkos::DynRankView<double,PHX::Device>("normals",nodeRelations.size(),parentTopology->getDimension()); 
 
       int nodeIndex = 0;
       for (stk_classic::mesh::PairIterRelation::iterator node = nodeRelations.begin(); node != nodeRelations.end(); ++node,++nodeIndex) {

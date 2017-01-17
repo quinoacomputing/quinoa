@@ -146,6 +146,7 @@ namespace Xpetra {
     }
 
     //! Map constructor transforming degrees of freedom
+    //! for numDofPerNode this acts like a deep copy
     static Teuchos::RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
     Build (const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& map,
            LocalOrdinal numDofPerNode)
@@ -355,6 +356,7 @@ namespace Xpetra {
     }
 
     //! Map constructor transforming degrees of freedom
+    //! for numDofPerNode this acts like a deep copy
     static Teuchos::RCP<Map<LocalOrdinal,GlobalOrdinal, Node> > Build(const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& map, LocalOrdinal numDofPerNode) {
       XPETRA_MONITOR("MapFactory::Build");
 
@@ -381,8 +383,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createLocalMapWithNode<LocalOrdinal,GlobalOrdinal, Node>(numElements, comm)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createLocalMap: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -402,8 +410,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
         return rcp (new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createLocalMapWithNode<int, GlobalOrdinal, Node> (numElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createLocalMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -426,8 +440,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
         return rcp (new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createUniformContigMapWithNode<int,GlobalOrdinal,Node> (numElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createUniformContigMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -446,8 +466,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
-        return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal, Node>(numElements, comm)));
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
+         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal, Node>(numElements, comm)));
+#else
+         TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+           "Xpetra::MapFactory::createUniformContigMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -467,8 +493,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createContigMapWithNode<int,GlobalOrdinal,Node>(numElements, localNumElements, comm)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createContigMap: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra)
@@ -483,8 +515,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createContigMapWithNode<int,GlobalOrdinal,Node>(numElements, localNumElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createContigMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=int");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -584,6 +622,7 @@ namespace Xpetra {
     }
 
     //! Map constructor transforming degrees of freedom
+    //! for numDofPerNode this acts like a deep copy
     static Teuchos::RCP<Map<LocalOrdinal,GlobalOrdinal, Node> > Build(const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& map, LocalOrdinal numDofPerNode) {
       XPETRA_MONITOR("MapFactory::Build");
 
@@ -610,8 +649,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createLocalMapWithNode<LocalOrdinal,GlobalOrdinal, Node>(numElements, comm)));
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+        "Xpetra::MapFactory::createLocalMap: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra)
@@ -626,8 +671,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp (new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createLocalMapWithNode<int, GlobalOrdinal, Node> (numElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createLocalMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -649,8 +700,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp (new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createUniformContigMapWithNode<int,GlobalOrdinal,Node> (numElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createUniformContigMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra) {
@@ -669,8 +726,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal, Node>(numElements, comm)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createUniformContigMap: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra)
@@ -685,8 +748,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createContigMapWithNode<int,GlobalOrdinal,Node>(numElements, localNumElements, comm)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createContigMap: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra)
@@ -701,8 +770,14 @@ namespace Xpetra {
        XPETRA_MONITOR("MapFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
-      if (lib == UseTpetra)
+       if (lib == UseTpetra)
+#if ((defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))) || \
+    (!defined(EPETRA_HAVE_OMP) && (defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_TPETRA_INST_INT_LONG_LONG))))
         return rcp( new TpetraMap<LocalOrdinal,GlobalOrdinal, Node> (Tpetra::createContigMapWithNode<int,GlobalOrdinal,Node>(numElements, localNumElements, comm, node)));
+#else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Xpetra::Exceptions::RuntimeError,
+          "Xpetra::MapFactory::createContigMapWithNode: Cannot create Xpetra::TpetraMap, since Tpetra is not instantiated on EpetraNode (Serial or OpenMP, depending on configuration) and/or GO=long long");
+#endif
 #endif
 
       if (lib == UseEpetra) {

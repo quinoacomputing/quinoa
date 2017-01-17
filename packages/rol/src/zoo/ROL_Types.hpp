@@ -56,7 +56,9 @@
 #endif
 
 #include <algorithm>
+#include <complex>
 #include <string>
+#include <sstream>
 #include <limits>
 #include <Teuchos_getConst.hpp>
 #include <Teuchos_RCP.hpp>
@@ -69,7 +71,18 @@
  */
 #define ROL_NUM_CHECKDERIV_STEPS 13
 
+
+
 namespace ROL {
+
+template<class T>
+std::string NumberToString( T Number )
+{
+  std::ostringstream ss;
+  ss << Number;
+  return ss.str();
+}
+
 
   /** \brief  State for algorithm class.  Will be used for restarts.
    */
@@ -115,22 +128,35 @@ namespace ROL {
       
   /** \brief  Platform-dependent machine epsilon. 
    */
-  static const double ROL_EPSILON   = std::abs(Teuchos::ScalarTraits<double>::eps());
+  template<class Real>
+  inline Real ROL_EPSILON(void) { return std::abs(Teuchos::ScalarTraits<Real>::eps()); }
+  //static const Real ROL_EPSILON<Real>() = std::abs(Teuchos::ScalarTraits<Real>::eps());
     
   /** \brief  Tolerance for various equality tests.
    */
-  static const double ROL_THRESHOLD = 10.0 * ROL_EPSILON;
+  template<class Real>
+  inline Real ROL_THRESHOLD(void) { return 10.0 * ROL_EPSILON<Real>(); }
+  //static const Real ROL_THRESHOLD = 10.0 * ROL_EPSILON<Real>()<Real>;
 
   /** \brief  Platform-dependent maximum double.
    */ 
-  static const double ROL_OVERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmax());
+  template<class Real>
+  inline Real ROL_OVERFLOW(void) { return std::abs(Teuchos::ScalarTraits<Real>::rmax()); }
+  //static const double ROL_OVERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmax());
 
-  static const double ROL_INF  = 0.1*ROL_OVERFLOW;
-  static const double ROL_NINF = -ROL_INF;
+  template<class Real>
+  inline Real ROL_INF(void) { return 0.1*ROL_OVERFLOW<Real>(); }
+  //static const double ROL_INF<Real>()  = 0.1*ROL_OVERFLOW;
+
+  template<class Real>
+  inline Real ROL_NINF(void) { return -ROL_INF<Real>(); }
+  //static const double ROL_NINF<Real>() = -ROL_INF<Real>();
 
   /** \brief  Platform-dependent minimum double.
    */ 
-  static const double ROL_UNDERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmin());
+  template<class Real>
+  inline Real ROL_UNDERFLOW(void) { return std::abs(Teuchos::ScalarTraits<Real>::rmin()); }
+  //static const double ROL_UNDERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmin());
 
   struct removeSpecialCharacters {
     bool operator()(char c) {
@@ -543,6 +569,7 @@ namespace ROL {
     NONLINEARCG_DAI_YUAN,
     NONLINEARCG_HAGER_ZHANG,
     NONLINEARCG_OREN_LUENBERGER,
+    NONLINEARCG_USERDEFINED,
     NONLINEARCG_LAST
   };
 
@@ -558,6 +585,7 @@ namespace ROL {
       case NONLINEARCG_DAI_YUAN:              retString = "Dai-Yuan";                    break;
       case NONLINEARCG_HAGER_ZHANG:           retString = "Hager-Zhang";                 break;
       case NONLINEARCG_OREN_LUENBERGER:       retString = "Oren-Luenberger";             break;
+      case NONLINEARCG_USERDEFINED:           retString = "User Defined";                break;
       case NONLINEARCG_LAST:                  retString = "Last Type (Dummy)";           break;
       default:                                retString = "INVALID ENonlinearCG";
     }
@@ -578,7 +606,8 @@ namespace ROL {
             (s == NONLINEARCG_LIU_STOREY)        ||
             (s == NONLINEARCG_DAI_YUAN)          ||
             (s == NONLINEARCG_HAGER_ZHANG)       ||
-            (s == NONLINEARCG_OREN_LUENBERGER)      
+            (s == NONLINEARCG_OREN_LUENBERGER)   ||
+            (s == NONLINEARCG_USERDEFINED)
           );
   }
 
@@ -643,7 +672,7 @@ namespace ROL {
       case LINESEARCH_BISECTION:            retString = "Bisection";               break;
       case LINESEARCH_GOLDENSECTION:        retString = "Golden Section";          break;
       case LINESEARCH_CUBICINTERP:          retString = "Cubic Interpolation";     break;
-      case LINESEARCH_BRENTS:               retString = "Brents";                  break;
+      case LINESEARCH_BRENTS:               retString = "Brent's";                 break;
       case LINESEARCH_USERDEFINED:          retString = "User Defined";            break;
       case LINESEARCH_LAST:                 retString = "Last Type (Dummy)";       break;
       default:                              retString = "INVALID ELineSearch";
@@ -804,6 +833,99 @@ namespace ROL {
     return retString;
   }
   
+  /** \enum  ROL::ETrustRegionFlag 
+      \brief Enumation of flags used by trust-region solvers.
+
+      \arg TRUSTREGION_FLAG_SUCCESS        Actual and predicted reductions are positive 
+      \arg TRUSTREGION_FLAG_POSPREDNEG     Reduction is positive, predicted negative (impossible)
+      \arg TRUSTREGION_FLAG_NPOSPREDPOS    Reduction is nonpositive, predicted positive
+      \arg TRUSTREGION_FLAG_NPOSPREDNEG    Reduction is nonpositive, predicted negative (impossible)
+      \arg TRUSTREGION_FLAG_QMINSUFDEC     Insufficient decrease of the quadratic model (bound constraint only)
+      \arg TRUSTREGION_FLAG_NAN            Actual and/or predicted reduction is NaN
+
+  */
+  enum ETrustRegionFlag {
+    TRUSTREGION_FLAG_SUCCESS = 0,
+    TRUSTREGION_FLAG_POSPREDNEG,
+    TRUSTREGION_FLAG_NPOSPREDPOS,
+    TRUSTREGION_FLAG_NPOSPREDNEG,
+    TRUSTREGION_FLAG_QMINSUFDEC,
+    TRUSTREGION_FLAG_NAN,
+    TRUSTREGION_FLAG_UNDEFINED 
+  };
+ 
+
+  inline std::string ETrustRegionFlagToString(ETrustRegionFlag trf) {
+    std::string retString;
+    switch(trf) {
+      case TRUSTREGION_FLAG_SUCCESS:  
+        retString = "Both actual and predicted reductions are positive (success)";
+        break;
+      case TRUSTREGION_FLAG_POSPREDNEG: 
+        retString = "Actual reduction is positive and predicted reduction is negative (impossible)";
+        break;
+      case TRUSTREGION_FLAG_NPOSPREDPOS: 
+        retString = "Actual reduction is nonpositive and predicted reduction is positive";
+        break;
+      case TRUSTREGION_FLAG_NPOSPREDNEG:
+        retString = "Actual reduction is nonpositive and predicted reduction is negative (impossible)";
+        break;
+      case TRUSTREGION_FLAG_QMINSUFDEC:
+        retString = "Sufficient decrease of the quadratic model not met (bound constraints only)";
+        break;
+      case TRUSTREGION_FLAG_NAN:
+        retString = "Actual and/or predicted reduction is a NaN";
+        break;
+      default:
+        retString = "INVALID ETrustRegionFlag";       
+    }
+    return retString;
+  }
+
+
+  /** \enum  ROL::ECGFlag 
+      \brief Enumation of flags used by conjugate gradient methods.
+
+    \arg CG_FLAG_SUCCESS     Residual Tolerance Met
+    \arg CG_FLAG_ITEREXCEED  Iteration Limit Exceeded
+    \arg CG_FLAG_NEGCURVE    Negative Curvature Detected
+    \arh CG_FLAG_TRRADEX     Trust-Region Radius Exceeded
+
+  */
+  enum ECGFlag {
+    CG_FLAG_SUCCESS = 0,
+    CG_FLAG_ITEREXCEED,
+    CG_FLAG_NEGCURVE,
+    CG_FLAG_TRRADEX,
+    CG_FLAG_UNDEFINED 
+  };
+
+
+  inline std::string ECGFlagToString(ECGFlag cgf) {
+    std::string retString;
+    switch(cgf) {
+      case CG_FLAG_SUCCESS:
+        retString = "Residual tolerance met";
+        break;
+      case CG_FLAG_ITEREXCEED:
+        retString = "Iteration limit exceeded";
+        break;
+      case CG_FLAG_NEGCURVE:
+        retString = "Negative curvature detected";
+        break;
+      case CG_FLAG_TRRADEX:   
+        retString = "Trust-Region radius exceeded";
+        break;
+      default:
+        retString = "INVALID ECGFlag";  
+    }
+    return retString;
+  }
+  
+
+
+
+
   /** \brief  Verifies validity of a TrustRegion enum.
     
       \param  tr  [in]  - enum of the TrustRegion
@@ -846,6 +968,9 @@ namespace ROL {
     }
     return TRUSTREGION_CAUCHYPOINT;
   }
+
+
+
 
   /** \enum   ROL::ETestObjectives
       \brief  Enumeration of test objective functions.
@@ -1107,6 +1232,54 @@ namespace ROL {
   }
 
 
+// Generic conversion from Element type to Real type
+template<class Real, class Element>
+struct TypeCaster {
+  static Real ElementToReal( const Element &val ) {
+    return Real(0);
+  }
+};
+
+// Partially specialize for complex<Real>
+template<class Real>
+struct TypeCaster<Real, std::complex<Real> > {
+  static Real ElementToReal( const std::complex<Real> &val ) {
+    return val.real();
+  } 
+};
+
+// Fully specialize for double,float
+template<>
+struct TypeCaster<double,float> {
+  static double ElementToReal( const float &val ) {
+    return static_cast<double>(val);
+  }
+};
+
+// Cast from Element type to Real type
+template<class Element, class Real>
+Real rol_cast(const Element &val) {
+  return TypeCaster<Real,Element>::ElementToReal(val);
+}
+
+
+
+
+
+
+namespace Exception {
+
+class NotImplemented : public Teuchos::ExceptionBase {
+public:
+  NotImplemented( const std::string& what_arg ) :
+    Teuchos::ExceptionBase(what_arg) {}
+
+
+}; // class NotImplemented
+ 
+
+} // namespace Exception
+
 
 } // namespace ROL
 
@@ -1291,6 +1464,11 @@ namespace ROL {
  *  @ingroup extensions_group
  *  \brief ROL's stochastic optimization capability.
  */
+
+/** @defgroup risk_group Risk Measures
+ *  @ingroup stochastic_group
+ * \brief ROL's risk measure implementations.
+*/ 
 
 /** @defgroup examples_group Examples
  *  \brief ROL's examples

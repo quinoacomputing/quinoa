@@ -73,6 +73,7 @@ mpi_filebuf::mpi_filebuf(bool useAprepro, const std::string &apreproDefines)
     aprepro_buffer(NULL),
     aprepro_buffer_len(0),
     aprepro_buffer_ptr(0),
+    aprepro_parsing_error_count(0),
     aprepro_defines(apreproDefines)
 {}
 
@@ -206,7 +207,11 @@ mpi_filebuf * mpi_filebuf::open(
 	aprepro_buffer = static_cast<char*>(std::malloc(aprepro_buffer_len));
 	std::memcpy(aprepro_buffer, tmp.data(), aprepro_buffer_len);
       }
+      aprepro_parsing_error_count = aprepro.get_error_count();
     }
+    err = MPI_Bcast(&aprepro_parsing_error_count, 1, MPI_INT, root_processor, communicator );
+    if (err != MPI_SUCCESS)
+      MPI_Abort(communicator,err);
   }
 
   //--------------------------------------------------------------------
@@ -270,6 +275,7 @@ mpi_filebuf * mpi_filebuf::open(
       aprepro_buffer = static_cast<char*>(std::malloc(aprepro_buffer_len));
       std::memcpy(aprepro_buffer, tmp.data(), aprepro_buffer_len);
     }
+    aprepro_parsing_error_count = aprepro.get_error_count();
   }
 
   //--------------------------------------------------------------------
@@ -636,8 +642,7 @@ namespace {
       // Defines are space/comma-separated pairs of the form 'var=value'
       // or "options" of the form '-W' or '--warning'
       // Split the string and then process each variable...
-      std::vector<std::string> tokens;
-      SEAMS::tokenize(defines, " ,\t", tokens);
+      std::vector<std::string> tokens = SEAMS::tokenize(defines, " ,\t");
       for (size_t i=0; i<tokens.size(); i++) {
 	std::string token = tokens[i];
 	if (token[0] == '-') {
@@ -645,8 +650,7 @@ namespace {
 	}
 	else {
 	  // It is an aprepro variable definition
-	  std::vector<std::string> define;
-	  SEAMS::tokenize(token, "=", define);
+	  std::vector<std::string> define = SEAMS::tokenize(token, "=");
 	  if (define.size() == 2) {
 	    // Determine whether the define is string type or double/int...
 	    bool immutable = define[0][0] != '_';

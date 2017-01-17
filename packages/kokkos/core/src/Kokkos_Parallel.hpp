@@ -52,7 +52,7 @@
 #include <Kokkos_View.hpp>
 #include <Kokkos_ExecPolicy.hpp>
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
 #include <impl/Kokkos_Profiling_Interface.hpp>
 #include <typeinfo>
 #endif
@@ -82,8 +82,8 @@ namespace Impl {
  */
 template< class Functor
         , class Policy
-        , class EnableFunctor = void
-        , class EnablePolicy  = void
+        , class EnableFunctor
+        , class EnablePolicy
         >
 struct FunctorPolicyExecutionSpace {
   typedef Kokkos::DefaultExecutionSpace execution_space ;
@@ -139,30 +139,6 @@ struct FunctorPolicyExecutionSpace
   typedef typename Functor::execution_space execution_space ;
 };
 
-//----------------------------------------------------------------------------
-/// \class ParallelFor
-/// \brief Implementation of the ParallelFor operator that has a
-///   partial specialization for the device.
-///
-/// This is an implementation detail of parallel_for.  Users should
-/// skip this and go directly to the nonmember function parallel_for.
-template< class FunctorType , class ExecPolicy > class ParallelFor ;
-
-/// \class ParallelReduce
-/// \brief Implementation detail of parallel_reduce.
-///
-/// This is an implementation detail of parallel_reduce.  Users should
-/// skip this and go directly to the nonmember function parallel_reduce.
-template< class FunctorType , class ExecPolicy > class ParallelReduce ;
-
-/// \class ParallelScan
-/// \brief Implementation detail of parallel_scan.
-///
-/// This is an implementation detail of parallel_scan.  Users should
-/// skip this and go directly to the documentation of the nonmember
-/// template function Kokkos::parallel_scan.
-template< class FunctorType , class ExecPolicy > class ParallelScan ;
-
 } // namespace Impl
 } // namespace Kokkos
 
@@ -200,10 +176,10 @@ void parallel_for( const ExecPolicy  & policy
                  , typename Impl::enable_if< ! Impl::is_integral< ExecPolicy >::value >::type * = 0
                  )
 {
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
     uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-     	Kokkos::Experimental::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+     	Kokkos::Profiling::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -213,9 +189,9 @@ void parallel_for( const ExecPolicy  & policy
    
    closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-        Kokkos::Experimental::endParallelFor(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+        Kokkos::Profiling::endParallelFor(kpID);
      }
 #endif
 }
@@ -232,10 +208,10 @@ void parallel_for( const size_t        work_count
       execution_space ;
   typedef RangePolicy< execution_space > policy ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+  	Kokkos::Profiling::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -245,9 +221,9 @@ void parallel_for( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelFor(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelFor(kpID);
      }
 #endif
 }
@@ -334,10 +310,10 @@ void parallel_reduce( const ExecPolicy  & policy
               >
     result_view ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+  	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -347,9 +323,9 @@ void parallel_reduce( const ExecPolicy  & policy
 
     closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 }
@@ -381,10 +357,10 @@ void parallel_reduce( const size_t        work_count
               >
     result_view ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+  	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -394,9 +370,9 @@ void parallel_reduce( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 
@@ -417,10 +393,10 @@ void parallel_reduce( const ExecPolicy  & policy
                       )>::type * = 0 )
 {
     
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -430,9 +406,9 @@ void parallel_reduce( const ExecPolicy  & policy
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 
@@ -478,10 +454,10 @@ void parallel_reduce( const ExecPolicy  & policy
                , ValueTraits::value_count( functor )
                );
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -491,9 +467,9 @@ void parallel_reduce( const ExecPolicy  & policy
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 
@@ -520,10 +496,10 @@ void parallel_reduce( const size_t        work_count
 
   typedef RangePolicy< execution_space > ExecPolicy ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -533,9 +509,9 @@ void parallel_reduce( const size_t        work_count
 
   closure.execute();
     
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 
@@ -585,10 +561,10 @@ void parallel_reduce( const size_t        work_count
                , ValueTraits::value_count( functor )
                );
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -598,9 +574,9 @@ void parallel_reduce( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelReduce(kpID);
      }
 #endif
 
@@ -838,10 +814,10 @@ void parallel_scan( const ExecutionPolicy & policy
                   , typename Impl::enable_if< ! Impl::is_integral< ExecutionPolicy >::value >::type * = 0
                   )
 {
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -851,9 +827,9 @@ void parallel_scan( const ExecutionPolicy & policy
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelScan(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelScan(kpID);
      }
 #endif
 
@@ -871,10 +847,10 @@ void parallel_scan( const size_t        work_count
 
   typedef Kokkos::RangePolicy< execution_space > policy ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -884,9 +860,9 @@ void parallel_scan( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelScan(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelScan(kpID);
      }
 #endif
 
@@ -923,7 +899,7 @@ namespace Impl {
 template< class FunctorType , class Enable = void >
 struct FunctorTeamShmemSize
 {
-  static inline size_t value( const FunctorType & , int ) { return 0 ; }
+  KOKKOS_INLINE_FUNCTION static size_t value( const FunctorType & , int ) { return 0 ; }
 };
 
 template< class FunctorType >

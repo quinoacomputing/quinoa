@@ -41,7 +41,7 @@ protected:
     void setup_mesh(const std::string &meshSpecification, stk::mesh::BulkData::AutomaticAuraOption auraOption)
     {
         allocate_bulk(auraOption);
-        stk::unit_test_util::fill_mesh_using_stk_io(meshSpecification, *bulkData, communicator);
+        stk::unit_test_util::fill_mesh_using_stk_io(meshSpecification, *bulkData);
     }
 
     void setup_mesh_with_cyclic_decomp(const std::string &meshSpecification, stk::mesh::BulkData::AutomaticAuraOption auraOption)
@@ -62,6 +62,11 @@ protected:
 
         bulkData = nullptr;
         metaData = nullptr;
+    }
+
+    int get_parallel_rank()
+    {
+        return get_bulk().parallel_rank();
     }
 
     virtual stk::mesh::MetaData& get_meta()
@@ -96,6 +101,13 @@ protected:
         bulkData = inBulkData;
     }
 
+    void delete_meta()
+    {
+        ThrowRequireMsg(bulkData==nullptr, "Unit test error. Trying to delete meta with non NULL bulk data.");
+        delete metaData;
+        metaData = nullptr;
+    }
+
 private:
     MPI_Comm communicator;
     stk::mesh::MetaData *metaData = nullptr;
@@ -108,6 +120,14 @@ protected:
     void run_test_on_num_procs(int numProcs, stk::mesh::BulkData::AutomaticAuraOption auraOption)
     {
         if(stk::parallel_machine_size(get_comm()) == numProcs)
+        {
+            run_test(auraOption);
+        }
+    }
+
+    void run_test_on_num_procs_or_less(int numProcs, stk::mesh::BulkData::AutomaticAuraOption auraOption)
+    {
+        if(stk::parallel_machine_size(get_comm()) <= numProcs)
         {
             run_test(auraOption);
         }

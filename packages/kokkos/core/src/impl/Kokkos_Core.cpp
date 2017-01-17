@@ -147,8 +147,8 @@ setenv("MEMKIND_HBW_NODES", "1", 0);
   }
 #endif
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-    Kokkos::Experimental::initialize();
+#if (KOKKOS_ENABLE_PROFILING)
+    Kokkos::Profiling::initialize();
 #endif
 }
 
@@ -189,8 +189,8 @@ void finalize_internal( const bool all_spaces = false )
   }
 #endif
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-    Kokkos::Experimental::finalize();
+#if (KOKKOS_ENABLE_PROFILING)
+    Kokkos::Profiling::finalize();
 #endif
 
 }

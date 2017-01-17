@@ -88,7 +88,6 @@ public:
   typedef typename InputTraits<User>::part_t   part_t;
   typedef typename InputTraits<User>::node_t   node_t;
   typedef Xpetra::RowMatrix<scalar_t, lno_t, gno_t, node_t> xmatrix_t;
-  typedef MatrixAdapter<User,UserCoord> base_adapter_t;
   typedef User user_t;
   typedef UserCoord userCoord_t;
 #endif
@@ -245,8 +244,12 @@ template <typename User, typename UserCoord>
       mayHaveDiagonalEntries(true)
 {
   typedef StridedData<lno_t,scalar_t> input_t;
-  matrix_ = rcp_const_cast<const xmatrix_t>(
+  try {
+    matrix_ = rcp_const_cast<const xmatrix_t>(
            XpetraTraits<User>::convertToXpetra(rcp_const_cast<User>(inmatrix)));
+  }
+  Z2_FORWARD_EXCEPTIONS
+
   rowMap_ = matrix_->getRowMap();
   colMap_ = matrix_->getColMap();
   base_ = rowMap_->getIndexBase();

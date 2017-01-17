@@ -64,6 +64,27 @@
 #include "TpetraExt_MatrixMatrix.hpp"
 
 namespace {
+
+  // Get a Teuchos::ArrayView which views the host Kokkos::View of the
+  // input 1-D Kokkos::DualView.
+  template<class DualViewType>
+  Teuchos::ArrayView<typename DualViewType::t_dev::value_type>
+  getArrayViewFromDualView (const DualViewType& x)
+  {
+    static_assert (static_cast<int> (DualViewType::t_dev::rank) == 1,
+                   "The input DualView must have rank 1.");
+    TEUCHOS_TEST_FOR_EXCEPTION
+      (x.template need_sync<Kokkos::HostSpace> (), std::logic_error, "The "
+       "input Kokkos::DualView was most recently modified on device, but this "
+       "function needs the host view of the data to be the most recently "
+       "modified.");
+
+    auto x_host = x.template view<Kokkos::HostSpace> ();
+    typedef typename DualViewType::t_dev::value_type value_type;
+    return Teuchos::ArrayView<value_type> (x_host.ptr_on_device (),
+                                           x_host.dimension_0 ());
+  }
+
   using Teuchos::as;
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
@@ -563,7 +584,7 @@ namespace {
         // general case, the redistribution may have added together
         // values, resulting in small rounding errors.
         typedef typename Array<Scalar>::size_type size_type;
-        for (size_type k = 0; k < as<size_type> (tgtNumEntries); ++k) {
+        for (size_type k = 0; k < static_cast<size_type> (tgtNumEntries); ++k) {
           TEST_EQUALITY(tgtRowInds[k], tgt2RowInds[k]);
           // The "out" and "success" variables should have been
           // automatically defined by the unit test framework, in case
@@ -1148,7 +1169,6 @@ build_remote_only_map (const Teuchos::RCP<const ImportType>& Import,
 
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 {
-  RCP<const Comm<int> > Comm = getDefaultComm();
   typedef Tpetra::CrsMatrix<Scalar, LO, GO> CrsMatrixType;
   typedef Tpetra::Map<LO, GO> MapType;
   typedef Tpetra::Import<LO, GO> ImportType;
@@ -1156,13 +1176,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
   typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType MagType;
   typedef Tpetra::global_size_t GST;
 
+  out << "Test importAndFillCompleteCrsMatrix and "
+    "exportAndFillCompleteCrsMatrix (\"fused Import/Export + "
+    "fillComplete\")" << endl;
+  RCP<const Comm<int> > Comm = getDefaultComm();
+
   RCP<CrsMatrixType> A, B, C;
   RCP<const MapType> Map1, Map2;
   RCP<MapType> Map3;
 
   RCP<ImportType> Import1;
   RCP<ExportType> Export1;
-  int MyPID = Comm->getRank();
+  const int MyPID = Comm->getRank();
   double diff;
   int total_err=0;
   MagType diff_tol = 1e4*Teuchos::ScalarTraits<Scalar>::eps();
@@ -1175,11 +1200,14 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
   try {
     build_test_matrix<CrsMatrixType> (Comm, A);
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception in build_test_matrix: "
+        << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1189,7 +1217,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1207,7 +1235,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::importAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Import1);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedImport: Test #1 FAILED with norm diff = "<<diff<<"."<<endl;
+      if (MyPID == 0) {
+        cerr << "FusedImport: Test #1 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1216,17 +1247,22 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::exportAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Export1);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedExport: Test #1 FAILED with norm diff = "<<diff<<"."<<endl;
+      if (MyPID == 0) {
+        cerr << "FusedExport: Test #1 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
     Comm->barrier ();
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1236,7 +1272,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1256,7 +1292,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::importAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Import1);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedImport: Test #2 FAILED with norm diff = "<<diff<<"."<<endl;
+      if (MyPID == 0) {
+        cerr << "FusedImport: Test #2 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1265,15 +1304,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::exportAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Export1);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedExport: Test #2 FAILED with norm diff = "<<diff<<"."<<endl;
+      if (MyPID == 0) {
+        cerr << "FusedExport: Test #2 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1283,7 +1327,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1322,7 +1366,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::importAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Import1);
     diff=test_with_matvec<CrsMatrixType>(*B,*C);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedImport: Test #4 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedImport: Test #4 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1331,15 +1378,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::exportAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Export1);
     diff=test_with_matvec<CrsMatrixType>(*B,*C);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedExport: Test #4 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedExport: Test #4 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1349,7 +1401,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1364,7 +1416,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::importAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Import1,Map3,Map3);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedImport: Test #5 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedImport: Test #5 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1373,15 +1428,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::exportAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Export1,Map3,Map3);
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol) {
-      if(MyPID==0) cout<<"FusedExport: Test #5 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedExport: Test #5 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1391,7 +1451,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1411,7 +1471,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 
     diff=test_with_matvec_reduced_maps<CrsMatrixType,MapType>(*A,*B,*Map3);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedImport: Test #6 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedImport: Test #6 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1421,15 +1484,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 
     diff=test_with_matvec_reduced_maps<CrsMatrixType,MapType>(*A,*B,*Map3);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedExport: Test #6 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedExport: Test #6 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1439,7 +1507,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1462,7 +1530,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedImport: Test #7 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedImport: Test #7 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1472,15 +1543,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 
     diff=test_with_matvec<CrsMatrixType>(*A,*B);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedExport: Test #7 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedExport: Test #7 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1490,7 +1566,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   /////////////////////////////////////////////////////////
@@ -1513,7 +1589,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
 
     diff=test_with_matvec<CrsMatrixType>(*B,*A);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedImport: Test #8 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cerr << "FusedImport: Test #8 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
 
@@ -1522,15 +1601,20 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
     B = Tpetra::exportAndFillCompleteCrsMatrix<CrsMatrixType>(A,*Export1,Map1,Map1);
     diff=test_with_matvec<CrsMatrixType>(*B,*A);
     if(diff > diff_tol){
-      if(MyPID==0) cout<<"FusedExport: Test #8 FAILED with norm diff = "<<diff<<"."<<endl;
+      if(MyPID==0) {
+        cout << "FusedExport: Test #8 FAILED with norm diff = " << diff
+             << "." << endl;
+      }
       total_err--;
     }
   } catch (std::exception& e) {
-    err << "Proc " << MyPID << ": " << e.what ();
+    err << "Process " << MyPID << " threw an exception: " << e.what ();
     lclErr = 1;
   }
 
   reduceAll<int, int> (*Comm, REDUCE_MAX, lclErr, outArg (gblErr));
+  // The test fails if any (MPI) process had trouble.
+  TEST_ASSERT( gblErr == 0 );
   if (gblErr != 0) {
     for (int r = 0; r < Comm->getSize (); ++r) {
       if (r == MyPID) {
@@ -1540,7 +1624,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FusedImportExport, doImport, LO, GO, Scalar )
       Comm->barrier ();
       Comm->barrier ();
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Test failed!");
+    return; // no sense in continuing beyond this point
   }
 
   TEST_EQUALITY(total_err,0);
@@ -1733,16 +1817,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Import_Util, PackAndPrepareWithOwningPIDs, LO
   // so this test is broken for now.
   return;
 
+#if 0
   // Unit Test the functionality in Tpetra_Import_Util
   RCP<const Comm<int> > Comm = getDefaultComm();
   typedef Tpetra::Import<LO, GO> ImportType;
   typedef Tpetra::CrsMatrix<double, LO, GO> CrsMatrixType;
+  typedef typename CrsMatrixType::device_type device_type;
   using Teuchos::av_reinterpret_cast;
 
   RCP<CrsMatrixType> A;
   int total_err=0;
   int test_err=0;
-  Teuchos::Array<char> exports1, exports2;
+  Teuchos::Array<char> exports1;
+  Kokkos::DualView<char*, device_type> exports2;
   Teuchos::Array<size_t> numPackets1, numPackets2;
   size_t constantNumPackets1=0, constantNumPackets2=0;
 
@@ -1771,6 +1858,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Import_Util, PackAndPrepareWithOwningPIDs, LO
     numPackets2.resize(Importer->getExportLIDs().size());
     Tpetra::Import_Util::packAndPrepareWithOwningPIDs<double, LO, GO, Node>(*A,Importer->getExportLIDs(),exports2,numPackets2(),constantNumPackets2,Importer->getDistributor(),pids());
 
+    // This test reads exports2 on the host, so sync there.
+    exports2.template sync<Kokkos::HostSpace> ();
+    Teuchos::ArrayView<char> exports2_av = getArrayViewFromDualView (exports2);
+
     // Loop through the parts that should be the same
     const size_t numExportLIDs = Importer->getExportLIDs().size();
     Teuchos::ArrayView<const LO> exportLIDs = Importer->getExportLIDs();
@@ -1790,9 +1881,9 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Import_Util, PackAndPrepareWithOwningPIDs, LO
       ArrayView<GO> gids1  = av_reinterpret_cast<GO>(gidsChar1);
       ArrayView<double>  vals1  = av_reinterpret_cast<double>(valsChar1);
 
-      ArrayView<char> gidsChar2 = exports2(offset2, curNumEntries*sizeof(GO));
-      //      ArrayView<char> pidsChar2 = exports2(offset2+curNumEntries*sizeof(GO), curNumEntries*sizeof(int));
-      ArrayView<char> valsChar2 = exports2(offset2+curNumEntries*(sizeof(GO)+sizeof(int)), curNumEntries*sizeof(double));
+      ArrayView<char> gidsChar2 = exports2_av(offset2, curNumEntries*sizeof(GO));
+      //      ArrayView<char> pidsChar2 = exports2_av(offset2+curNumEntries*sizeof(GO), curNumEntries*sizeof(int));
+      ArrayView<char> valsChar2 = exports2_av(offset2+curNumEntries*(sizeof(GO)+sizeof(int)), curNumEntries*sizeof(double));
       ArrayView<GO> gids2  = av_reinterpret_cast<GO>(gidsChar2);
       ArrayView<double>  vals2  = av_reinterpret_cast<double>(valsChar2);
 
@@ -1806,6 +1897,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Import_Util, PackAndPrepareWithOwningPIDs, LO
   }
 
   TEST_EQUALITY(total_err,0);
+#endif // 0
 }
 
 
@@ -1817,6 +1909,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( Import_Util, UnpackAndCombineWithOwningPIDs, 
   typedef Tpetra::Import<LO, GO> ImportType;
   typedef Tpetra::CrsMatrix<Scalar, LO, GO> CrsMatrixType;
   typedef typename Tpetra::CrsMatrix<Scalar, LO, GO>::packet_type PacketType;
+  typedef typename MapType::device_type device_type;
   typedef Tpetra::global_size_t GST;
 
   RCP<const Comm<int> > Comm = getDefaultComm();
@@ -1825,7 +1918,8 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( Import_Util, UnpackAndCombineWithOwningPIDs, 
   int test_err=0;
   int MyPID = Comm->getRank();
   RCP<const MapType> MapSource, MapTarget;
-  Teuchos::Array<char> exports, imports;
+  Kokkos::DualView<char*, device_type> exports;
+  Teuchos::Array<char> imports;
   Teuchos::Array<size_t> numImportPackets, numExportPackets;
   size_t constantNumPackets=0;
 
@@ -1861,6 +1955,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( Import_Util, UnpackAndCombineWithOwningPIDs, 
 
     Tpetra::Import_Util::packAndPrepareWithOwningPIDs<Scalar, LO, GO, Node>(*A,Importer->getExportLIDs(),exports,numExportPackets(),constantNumPackets,distor,SourcePids());
 
+    // This test reads exports on the host, so sync there.
+    exports.template sync<Kokkos::HostSpace> ();
+    Teuchos::ArrayView<char> exports_av = getArrayViewFromDualView (exports);
+
     // Do the moral equivalent of doTransfer
     distor.doPostsAndWaits<size_t>(numExportPackets().getConst(), 1,numImportPackets());
     size_t totalImportPackets = 0;
@@ -1868,7 +1966,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( Import_Util, UnpackAndCombineWithOwningPIDs, 
       totalImportPackets += numImportPackets[i];
     }
     imports.resize(totalImportPackets);
-    distor.doPostsAndWaits<PacketType>(exports(),numExportPackets(),imports(),numImportPackets());
+    distor.doPostsAndWaits<PacketType>(exports_av,numExportPackets(),imports(),numImportPackets());
 
     // Run the count... which should get the same NNZ as the traditional import
     using Tpetra::Import_Util::unpackAndCombineWithOwningPIDsCount;

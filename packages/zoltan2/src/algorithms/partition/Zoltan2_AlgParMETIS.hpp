@@ -171,7 +171,7 @@ void AlgParMETIS<Adapter>::partition(
   int nVwgt = model->getNumWeightsPerVertex();
   size_t nVtx = model->getVertexList(vtxgnos, vwgts);
   pm_idx_t pm_nVtx;
-  TPL_Traits<pm_idx_t,size_t>::ASSIGN_TPL_T(pm_nVtx, nVtx);
+  TPL_Traits<pm_idx_t,size_t>::ASSIGN(pm_nVtx, nVtx);
 
   pm_idx_t *pm_vwgts = NULL;
   if (nVwgt) {
@@ -194,11 +194,11 @@ void AlgParMETIS<Adapter>::partition(
 
   // Convert index types for edges, if needed
   pm_idx_t *pm_offsets;  
-  TPL_Traits<pm_idx_t,const lno_t>::ASSIGN_TPL_T_ARRAY(&pm_offsets, offsets);
+  TPL_Traits<pm_idx_t,const lno_t>::ASSIGN_ARRAY(&pm_offsets, offsets);
   pm_idx_t *pm_adjs;  
   pm_idx_t pm_dummy_adj;
   if (nEdge)
-    TPL_Traits<pm_idx_t,const gno_t>::ASSIGN_TPL_T_ARRAY(&pm_adjs, adjgnos);
+    TPL_Traits<pm_idx_t,const gno_t>::ASSIGN_ARRAY(&pm_adjs, adjgnos);
   else
     pm_adjs = &pm_dummy_adj;  // ParMETIS does not like NULL pm_adjs;
     
@@ -207,7 +207,7 @@ void AlgParMETIS<Adapter>::partition(
   pm_idx_t *pm_vtxdist;
   ArrayView<size_t> vtxdist; 
   model->getVertexDist(vtxdist);
-  TPL_Traits<pm_idx_t,size_t>::ASSIGN_TPL_T_ARRAY(&pm_vtxdist, vtxdist);
+  TPL_Traits<pm_idx_t,size_t>::ASSIGN_ARRAY(&pm_vtxdist, vtxdist);
 
   // ParMETIS does not like processors having no vertices.
   // Inspect vtxdist and remove from communicator procs that have no vertices
@@ -280,37 +280,61 @@ void AlgParMETIS<Adapter>::partition(
     for (pm_idx_t dim = 0; dim < pm_nCon; dim++)
       pm_imbTols[dim] = pm_real_t(tolerance);
 
-    // Other ParMETIS parameters?
     std::string parmetis_method("PARTKWAY");
+    pe = pl.getEntryPtr("partitioning_approach");
+    if (pe){
+      std::string approach;
+      approach = pe->getValue<std::string>(&approach);
+      if ((approach == "repartition") || (approach == "maximize_overlap")) {
+        if (np > 1) 
+          // ParMETIS_V3_AdaptiveRepart requires two or more processors
+          parmetis_method = "ADAPTIVE_REPART";
+        else
+          parmetis_method = "REFINE_KWAY";
+      }
+    }
+
+    // Other ParMETIS parameters?
     pm_idx_t pm_wgtflag = 2*(nVwgt > 0) + (nEwgt > 0);
     pm_idx_t pm_numflag = 0;
+    pm_idx_t pm_edgecut = -1;
+    pm_idx_t pm_options[METIS_NOPTIONS];
+    pm_options[0] = 1;   // Use non-default options for some ParMETIS options
+    for (int i = 0; i < METIS_NOPTIONS; i++) 
+      pm_options[i] = 0; // Default options
+    pm_options[2] = 15;  // Matches default value used in Zoltan
   
     pm_idx_t pm_nPart;
-    TPL_Traits<pm_idx_t,size_t>::ASSIGN_TPL_T(pm_nPart, numGlobalParts);
+    TPL_Traits<pm_idx_t,size_t>::ASSIGN(pm_nPart, numGlobalParts);
 
     if (parmetis_method == "PARTKWAY") {
-
-      pm_idx_t pm_edgecut = -1;
-      pm_idx_t pm_options[METIS_NOPTIONS];
-      pm_options[0] = 1;   // Use non-default options for some ParMETIS options
-      for (int i = 0; i < METIS_NOPTIONS; i++) 
-        pm_options[i] = 0; // Default options
-      pm_options[2] = 15;  // Matches default value used in Zoltan
-
       ParMETIS_V3_PartKway(pm_vtxdist, pm_offsets, pm_adjs, pm_vwgts, pm_ewgts,
                            &pm_wgtflag, &pm_numflag, &pm_nCon, &pm_nPart,
                            pm_partsizes, pm_imbTols, pm_options,
                            &pm_edgecut, pm_partList, &mpicomm);
     }
     else if (parmetis_method == "ADAPTIVE_REPART") {
-      // Get object sizes
-      std::cout << "NOT READY FOR ADAPTIVE_REPART YET" << std::endl;
-      exit(-1);
+      // Get object sizes:  pm_vsize
+      // TODO:  get pm_vsize info from input adapter or graph model
+      // TODO:  This is just a placeholder
+      pm_idx_t *pm_vsize = new pm_idx_t[nVtx];
+      for (size_t i = 0; i < nVtx; i++) pm_vsize[i] = 1;
+
+      pm_real_t itr = 100.;  // Same default as in Zoltan
+      ParMETIS_V3_AdaptiveRepart(pm_vtxdist, pm_offsets, pm_adjs, pm_vwgts,
+                                 pm_vsize, pm_ewgts, &pm_wgtflag,
+                                 &pm_numflag, &pm_nCon, &pm_nPart,
+                                 pm_partsizes, pm_imbTols,
+                                 &itr, pm_options,
+                                 &pm_edgecut, pm_partList, &mpicomm);
+      delete [] pm_vsize;
     }
-    else if (parmetis_method == "PART_GEOM") {
-      // Get coordinate info, too.
-      std::cout << "NOT READY FOR PART_GEOM YET" << std::endl;
-      exit(-1);
+    else if (parmetis_method == "REFINE_KWAY") {
+      ParMETIS_V3_RefineKway(pm_vtxdist, pm_offsets, pm_adjs, pm_vwgts,
+                             pm_ewgts,
+                             &pm_wgtflag, &pm_numflag, &pm_nCon, &pm_nPart,
+                             pm_partsizes, pm_imbTols,
+                             pm_options, &pm_edgecut, pm_partList, &mpicomm);
     }
 
     // Clean up 
@@ -321,29 +345,19 @@ void AlgParMETIS<Adapter>::partition(
   // Load answer into the solution.
 
   ArrayRCP<part_t> partList;
-  if (nVtx) {
-    if (TPL_Traits<pm_idx_t, part_t>::OK_TO_CAST_TPL_T()) {
-      partList = ArrayRCP<part_t>((part_t *)pm_partList, 0, nVtx, true);
-    }
-    else {
-      // TODO Probably should have a TPL_Traits function to do the following
-      partList = ArrayRCP<part_t>(new part_t[nVtx], 0, nVtx, true);
-      for (size_t i = 0; i < nVtx; i++) {
-        partList[i] = part_t(pm_partList[i]);
-      }
-      delete [] pm_partList;
-    }
-  }
+  if (nVtx)
+    TPL_Traits<part_t, pm_idx_t>::SAVE_ARRAYRCP(&partList, pm_partList, nVtx);
+  TPL_Traits<pm_idx_t, part_t>::DELETE_ARRAY(&pm_partList);
 
   solution->setParts(partList);
 
   env->memory("Zoltan2-ParMETIS: After creating solution");
 
   // Clean up copies made due to differing data sizes.
-  TPL_Traits<pm_idx_t,size_t>::DELETE_TPL_T_ARRAY(&pm_vtxdist);
-  TPL_Traits<pm_idx_t,const lno_t>::DELETE_TPL_T_ARRAY(&pm_offsets);
+  TPL_Traits<pm_idx_t,size_t>::DELETE_ARRAY(&pm_vtxdist);
+  TPL_Traits<pm_idx_t,const lno_t>::DELETE_ARRAY(&pm_offsets);
   if (nEdge)
-    TPL_Traits<pm_idx_t,const gno_t>::DELETE_TPL_T_ARRAY(&pm_adjs);
+    TPL_Traits<pm_idx_t,const gno_t>::DELETE_ARRAY(&pm_adjs);
 
   if (nVwgt) delete [] pm_vwgts;
   if (nEwgt) delete [] pm_ewgts;

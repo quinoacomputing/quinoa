@@ -74,6 +74,16 @@ IF (${PACKAGE_NAME}_ENABLE_Experimental)
   MESSAGE(STATUS "Enabling MueLu experimental code")
 ENDIF()
 
+# Split ETI cpp files
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_SPLIT_ETI_CPP_FILES
+  HAVE_${PACKAGE_NAME_UC}_SPLIT_ETI_CPP_FILES
+  "Split ETI cpp files into extra files for each enabled configuration (not recommended)."
+  NO)
+IF (${PACKAGE_NAME}_ENABLE_SPLIT_ETI_CPP_FILES)
+  MESSAGE(STATUS "Split MueLu ETI files: this may slow down the compilation process.")
+ENDIF()
+
 # Enable broken tests
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_BROKEN_TESTS
@@ -119,9 +129,17 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   "Enable MueLu code refactored to use Kokkos."
   NO)
 
+IF (${PACKAGE_NAME}_ENABLE_Kokkos_Refactor AND NOT Xpetra_ENABLE_Kokkos_Refactor)
+  MESSAGE(FATAL_ERROR "Kokkos Refactor in MueLu requires one to also enable Kokkos Refactor in Xpetra (-DXpetra_ENABLE_Kokkos_Refactor:BOOL=ON).")
+ENDIF()
+
 # Define HAVE_MUELU_STRATIMIKOS if Stratimikos package is enabled
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Stratimikos)
 GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_STRATIMIKOS ${${PACKAGE_NAME}_ENABLE_Stratimikos})
+
+# Define HAVE_MUELU_TEKO if Teko package is enabled
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Teko)
+GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_TEKO ${${PACKAGE_NAME}_ENABLE_Teko})
 
 # Explicit instantiation options:
 # - MueLu_ENABLE_EXPLICIT_INSTANTIATION

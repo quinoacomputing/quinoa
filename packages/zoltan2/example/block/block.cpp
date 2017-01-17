@@ -135,9 +135,6 @@ int main(int argc, char *argv[])
   // Check the solution.
 
   if (rank == 0)
-    problem->printMetrics(cout);
-
-  if (rank == 0)
     cout << "PASS" << endl;
 
   delete [] globalIds;
