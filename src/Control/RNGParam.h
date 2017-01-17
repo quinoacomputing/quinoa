@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:41:09 AM MDT
+  \date      Wed 11 Jan 2017 01:22:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
@@ -33,6 +33,13 @@ using RNGSSEParam = tk::tuple::tagged_tuple<
 >;
 //! RNGSSE parameters bundle associating RNG types and their parameters
 using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
+
+//! Random123 random number generator parameters storage
+using RNGRandom123Param = tk::tuple::tagged_tuple<
+  tag::seed,          kw::seed::info::expect::type   //!< seed
+>;
+//! Random123 parameters bundle associating RNG types and their parameters
+using RNGRandom123Parameters = std::map< RNGType, RNGRandom123Param >;
 
 #ifdef HAS_MKL
 //! MKL random number generator parameters storage

@@ -205,7 +205,7 @@ class TestU01Props {
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);
       Assert( !rngname.empty(), "Empty RNG name not allowed");
-      Assert( m_rng != RNGType::NO_RNG, "No RNG type allowed");
+      Assert( m_rng != RNGType::NO_RNG, "No RNG type not allowed");
       #ifdef HAS_MKL
       if (m_rng == RNGType::MKL_MCG31)
         g = createTestU01Gen< raw(RNGType::MKL_MCG31) >( rngname );
@@ -237,6 +237,7 @@ class TestU01Props {
         g = createTestU01Gen< raw(RNGType::MKL_NONDETERM) >( rngname );
       else
       #endif
+      #ifdef HAS_RNGSSE2
       if (m_rng == RNGType::RNGSSE_GM19)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM19) >( rngname );
       else if (m_rng == RNGType::RNGSSE_GM29)
@@ -259,6 +260,12 @@ class TestU01Props {
         g = createTestU01Gen< raw(RNGType::RNGSSE_LFSR113) >( rngname );
       else if (m_rng == RNGType::RNGSSE_MRG32K3A)
         g = createTestU01Gen< raw(RNGType::RNGSSE_MRG32K3A) >( rngname );
+      else
+      #endif
+      if (m_rng == RNGType::R123_THREEFRY)
+        g = createTestU01Gen< raw(RNGType::R123_THREEFRY) >( rngname );
+      else if (m_rng == RNGType::R123_PHILOX)
+        g = createTestU01Gen< raw(RNGType::R123_PHILOX) >( rngname );
     }
 
     //! Query whether test is failed

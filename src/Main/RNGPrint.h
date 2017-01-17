@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:38:58 AM MDT
+  \date      Thu 12 Jan 2017 12:45:13 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -42,6 +42,10 @@ class RNGPrint : public Print {
     void RNGSSEParams( const std::vector< ctr::RNGType >& vec,
                        const ctr::RNGSSEParameters& map ) const;
 
+    //! Print all fields of Random123 parameters
+    void Random123Params( const std::vector< ctr::RNGType >& vec,
+                          const ctr::RNGRandom123Parameters& map ) const;
+
   private:
     #ifdef HAS_MKL
     //! Echo information on MKL random number generator
@@ -52,6 +56,9 @@ class RNGPrint : public Print {
     void echoRNGSSEParams( const ctr::RNGSSEParam& p,
                            const ctr::RNG& rng,
                            const ctr::RNGType& r ) const;
+
+    //! Echo information on Random123 random number generator
+    void echoRandom123Params( const ctr::RNGRandom123Param& p ) const;
 };
 
 } // tk::

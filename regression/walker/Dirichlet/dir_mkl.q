@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Dirichlet for the IJSA paper"
+title "Dirichlet for the IJSA paper using MKL's MCG59 RNG"
 
 walker
   term  140.0   # Max time

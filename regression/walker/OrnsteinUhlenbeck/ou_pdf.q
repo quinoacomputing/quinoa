@@ -8,7 +8,7 @@ walker
   ttyi  100    # TTY output interval
 
   rngs
-    rngsse_mrg32k3a end
+    r123_threefry end
   end
 
   ornstein-uhlenbeck
@@ -23,7 +23,7 @@ walker
           32.0   5.6
                 23.0
     end
-    rng rngsse_mrg32k3a
+    rng r123_threefry
   end
 
   pdfs

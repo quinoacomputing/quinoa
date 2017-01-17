@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 10 Jan 2017 09:00:41 AM MST
+  \date      Thu 12 Jan 2017 12:21:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -21,7 +21,11 @@
 #include "MKLGrammar.h"
 #endif
 
-#include "RNGSSEGrammar.h"
+#ifdef HAS_RNGSSE2
+  #include "RNGSSEGrammar.h"
+#endif
+
+#include "Random123Grammar.h"
 
 namespace rngtest {
 
@@ -85,9 +89,14 @@ namespace deck {
                                     tag::selected, tag::rng,
                                     tag::param, tag::rngmkl >,
                      #endif
+                     #ifdef HAS_RNGSSE2
                      tk::rngsse::rngs< use,
                                        tag::selected, tag::rng,
-                                       tag::param, tag::rngsse > > {};
+                                       tag::param, tag::rngsse >,
+                     #endif
+                     tk::random123::rngs< use,
+                                          tag::selected, tag::rng,
+                                          tag::param, tag::rng123 > > {};
 
   // \brief Match TestU01 batteries
   //! \author J. Bakosi

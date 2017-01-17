@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 09:57:39 AM MST
+  \date      Wed 11 Jan 2017 01:19:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -816,6 +816,34 @@ struct seqlen_info {
 };
 using seqlen = keyword< seqlen_info, pegtl_string_t("seqlen") >;
 
+struct r123_threefry_info {
+  static std::string name() { return "Random123 ThreeFry"; }
+  static std::string shortDescription() { return
+    "Select Random123 ThreeFry RNG"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the ThreeFry generator, related to the
+    Threefish block cipher from Skein Hash Function, provided by the Random123
+    random number generator library. For more info on Random123 see
+    http://dl.acm.org/citation.cfm?doid=2063405.)";
+  }
+};
+using r123_threefry =
+  keyword< r123_threefry_info, pegtl_string_t("r123_threefry") >;
+
+struct r123_philox_info {
+  static std::string name() { return "Random123 Philox"; }
+  static std::string shortDescription() { return
+    "Select Random123 Philox RNG"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Philox generator, based on Feistel
+    network and integer multiplication, provided by the Random123
+    random number generator library. For more info on Random123 see
+    http://dl.acm.org/citation.cfm?doid=2063405.)";
+  }
+};
+using r123_philox =
+  keyword< r123_philox_info, pegtl_string_t("r123_philox") >;
+
 struct pdfs_info {
   static std::string name() { return "PDFs block"; }
   static std::string shortDescription() { return
@@ -1586,7 +1614,11 @@ struct rng_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + rngsse_gm19::string()     + "\' | \'"
+      return '\'' + r123_threefry::string()   + "\' | \'"
+                  + r123_philox::string()
+                  #ifdef HAS_RNGSSE2
+                                              + "\' | \'"
+                  + rngsse_gm19::string()     + "\' | \'"
                   + rngsse_gm29::string()     + "\' | \'"
                   + rngsse_gm31::string()     + "\' | \'"
                   + rngsse_gm55::string()     + "\' | \'"
@@ -1597,6 +1629,7 @@ struct rng_info {
                   + rngsse_mt19937::string()  + "\' | \'"
                   + rngsse_lfsr113::string()  + "\' | \'"
                   + rngsse_mrg32k3a::string()
+                  #endif
                   #ifdef HAS_MKL
                                               + "\' | \'"
                   + mkl_mcg31::string()       + "\' | \'"

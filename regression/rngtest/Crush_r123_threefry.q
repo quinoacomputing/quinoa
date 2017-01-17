@@ -2,10 +2,10 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Subject RNGSSE's MRG32K3A to BigCrush"
+title "Subject Random123's ThreeFry to Crush"
 
-bigcrush
+crush
 
-  rngsse_mrg32k3a end
+  r123_threefry end
 
 end
