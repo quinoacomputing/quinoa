@@ -2,11 +2,6 @@
 # add_regression_test().
 
 if (HAS_MKL)
-  add_regression_test(SmallCrush_few_mkl ${RNGTEST_EXECUTABLE}
-                      NUMPES 4
-                      INPUTFILES SmallCrush_few_mkl.q
-                      ARGS -c SmallCrush_few_mkl.q -v)
-
   add_regression_test(Crush_mkl_mcg59 ${RNGTEST_EXECUTABLE}
                       NUMPES ${ManyPEs}
                       INPUTFILES Crush_mkl_mcg59.q
