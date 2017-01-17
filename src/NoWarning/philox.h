@@ -16,6 +16,7 @@
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wexpansion-to-defined"
 #endif
 
 #include <Random123/philox.h>

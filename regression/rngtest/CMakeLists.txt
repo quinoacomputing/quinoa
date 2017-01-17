@@ -2,11 +2,6 @@
 # add_regression_test().
 
 if (HAS_MKL)
-  add_regression_test(SmallCrush_few_mkl ${RNGTEST_EXECUTABLE}
-                      NUMPES 4
-                      INPUTFILES SmallCrush_few_mkl.q
-                      ARGS -c SmallCrush_few_mkl.q -v)
-
   add_regression_test(Crush_mkl_mcg59 ${RNGTEST_EXECUTABLE}
                       NUMPES ${ManyPEs}
                       INPUTFILES Crush_mkl_mcg59.q
@@ -26,13 +21,13 @@ if (HAS_RNGSSE2)
                       INPUTFILES SmallCrush_all_rngsse.q
                       ARGS -c SmallCrush_all_rngsse.q -v
                       LABELS stringent)
-
-  add_regression_test(BigCrush_rngsse_mrg32k3a ${RNGTEST_EXECUTABLE}
-                      NUMPES ${PROCESSOR_COUNT}
-                      INPUTFILES BigCrush_rngsse_mrg32k3a.q
-                      ARGS -c BigCrush_rngsse_mrg32k3a.q -v
-                      LABELS stringent)
 endif()
+
+add_regression_test(BigCrush_r123_philox ${RNGTEST_EXECUTABLE}
+                    NUMPES ${PROCESSOR_COUNT}
+                    INPUTFILES BigCrush_r123_philox.q
+                    ARGS -c BigCrush_r123_philox.q -v
+                    LABELS stringent)
 
 add_regression_test(SmallCrush_all_r123 ${RNGTEST_EXECUTABLE}
                     NUMPES 4
