@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 13 Jan 2017 03:46:17 PM MST
+# \date      Tue 17 Jan 2017 03:30:31 PM MST
 #
 ################################################################################
 
@@ -687,9 +687,6 @@ endif()
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")  # force static libs on MAC OS X
-  set(testu01_shared_off_mac "-DBUILD_SHARED_LIBS:BOOL=OFF")
-endif()
 ExternalProject_Add(
   testu01
   PREFIX testu01

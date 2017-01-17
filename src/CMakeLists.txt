@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 17 Jan 2017 07:57:41 AM MST
+# \date      Tue 17 Jan 2017 03:29:02 PM MST
 #
 ################################################################################
 
@@ -119,6 +119,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # info.
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
+
 endif()
 
 # Query build hostname

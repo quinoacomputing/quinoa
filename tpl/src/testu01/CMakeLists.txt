@@ -29,6 +29,31 @@ endif()
 # Add compiler flags
 include(CheckCCompilerFlag)
 
+# Mac OS X specifics
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+  set(MACOSX_RPATH "-DCMAKE_MACOSX_RPATH:BOOL=ON")
+
+  # On Mac OS X, set RPATH
+  set(CMAKE_MACOSX_RPATH ON)
+
+  # On Mac OS X, do not to resolve symbols when creating a shared library and
+  # only resolve the symbols when linking executables. This behavior is
+  # consistent with gcc, intel, and clang on linux.
+  set(CMAKE_SHARED_LINKER_FLAGS
+      "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+
+  # On Mac OS X, due to changes in SnowLeopard (darwin10) linker changes, we add
+  # "-no_compact_unwind" to the link line. This tells the linker to not produce
+  # compact unwind information from the dwarf unwind info in .o files. Then at
+  # runtime the darwin unwinder will fallback and use the slow dwarf unwind
+  # info.
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
+
+endif()
+
+
 check_c_compiler_flag(-Wno-return-type COMPILER_HAS-Wno-return-type)
 if(COMPILER_HAS-Wno-return-type)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type")
