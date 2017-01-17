@@ -25,20 +25,22 @@
   #include "MKLRNG.h"
 #endif
 
-#include <gm19.h>
-#include <gm29.h>
-#include <gm31.h>
-#include <gm55.h>
-#include <gm61.h>
-#include <gq58x1.h>
-#include <gq58x3.h>
-#include <gq58x4.h>
-#include <mt19937.h>
-#include <lfsr113.h>
-#include <mrg32k3a.h>
+#ifdef HAS_RNGSSE2
+  #include <gm19.h>
+  #include <gm29.h>
+  #include <gm31.h>
+  #include <gm55.h>
+  #include <gm61.h>
+  #include <gq58x1.h>
+  #include <gq58x3.h>
+  #include <gq58x4.h>
+  #include <mt19937.h>
+  #include <lfsr113.h>
+  #include <mrg32k3a.h>
+  #include "RNGSSE.h"
+#endif
 
 #include "RNG.h"
-#include "RNGSSE.h"
 #include "Random123.h"
 
 namespace tut {
@@ -52,6 +54,7 @@ struct RNG_common {
     #ifdef HAS_MKL
     rngs.emplace_back( tk::MKLRNG( 4, VSL_BRNG_MCG31 ) );
     #endif
+    #ifdef HAS_RNGSSE2
     rngs.emplace_back( tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                                  ( 4, gm19_init_sequence_ ) );
     rngs.emplace_back( tk::RNGSSE< gm29_state, unsigned, gm29_generate_ >
@@ -79,6 +82,7 @@ struct RNG_common {
     rngs.emplace_back( tk::RNGSSE< mrg32k3a_state, unsigned long long,
                                    mrg32k3a_generate_ >
                                  ( 4, mrg32k3a_init_sequence_ ) );
+    #endif
     rngs.emplace_back( tk::Random123< r123::Threefry2x64 >( 4 ) );
     rngs.emplace_back( tk::Random123< r123::Philox2x64 >( 4 ) );
   }
@@ -267,6 +271,7 @@ void RNG_object::test< 2 >() {
   add< tk::MKLRNG >( v, 4, VSL_BRNG_MCG31 );
   #endif
 
+  #ifdef HAS_RNGSSE2
   add< tk::RNGSSE< gm19_state, unsigned, gm19_generate_ > >
      ( v, 4, gm19_init_sequence_ );
   add< tk::RNGSSE< gm29_state, unsigned, gm29_generate_ > >
@@ -289,6 +294,7 @@ void RNG_object::test< 2 >() {
      ( v, 4, lfsr113_init_long_sequence_ );
   add< tk::RNGSSE< mrg32k3a_state, unsigned long long, mrg32k3a_generate_ > >
      ( v, 4, mrg32k3a_init_sequence_ );
+  #endif
 
   add< tk::Random123< r123::Threefry2x64 > >( v, 4 );
   add< tk::Random123< r123::Philox2x64 > >( v, 4 );

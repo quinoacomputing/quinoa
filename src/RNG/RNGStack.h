@@ -42,7 +42,9 @@ class RNGStack {
                        #ifdef HAS_MKL
                        const ctr::RNGMKLParameters& mklparam,
                        #endif
+                       #ifdef HAS_RNGSSE2
                        const ctr::RNGSSEParameters& rngsseparam,
+                       #endif
                        const ctr::RNGRandom123Parameters& r123param );
 
     //! Instantiate selected RNGs
@@ -58,8 +60,10 @@ class RNGStack {
    void regMKL( int nstream, const ctr::RNGMKLParameters& mklparam );
    #endif
 
+   #ifdef HAS_RNGSSE2
    //! Register RNGSSE RNGs into factory
    void regRNGSSE( int nstream, const ctr::RNGSSEParameters& param );
+   #endif
 
    //! Register Random123 RNGs into factory
    void regRandom123( int nstream, const ctr::RNGRandom123Parameters& param );

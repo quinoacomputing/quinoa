@@ -13,7 +13,8 @@
 
 #include <map>
 
-#include <boost/mpl/vector/vector30.hpp>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/joint_view.hpp>
 
 #include "QuinoaConfig.h"
 
@@ -31,6 +32,7 @@ namespace ctr {
 //! Random number generator types
 //! \author J. Bakosi
 enum class RNGType : uint8_t { NO_RNG=0
+                             #ifdef HAS_RNGSSE2
                              , RNGSSE_GM19
                              , RNGSSE_GM29
                              , RNGSSE_GM31
@@ -42,6 +44,7 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , RNGSSE_MT19937
                              , RNGSSE_LFSR113
                              , RNGSSE_MRG32K3A
+                             #endif
                              #ifdef HAS_MKL
                              , MKL_MCG31
                              , MKL_R250
@@ -92,54 +95,52 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
 //! \author J. Bakosi
 class RNG : public tk::Toggle< RNGType > {
 
+  private:
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywordsMKL = boost::mpl::vector<
+                                          #ifdef HAS_MKL
+                                            kw::mkl_mcg31
+                                          , kw::mkl_r250
+                                          , kw::mkl_mrg32k3a
+                                          , kw::mkl_mcg59
+                                          , kw::mkl_wh
+                                          , kw::mkl_mt19937
+                                          , kw::mkl_mt2203
+                                          , kw::mkl_sfmt19937
+                                          , kw::mkl_sobol
+                                          , kw::mkl_niederr
+                                          //, kw::mkl_iabstract
+                                          //, kw::mkl_dabstract
+                                          //, kw::mkl_sabstract
+                                          , kw::mkl_nondeterm
+                                          #endif
+                                          >;
+    using keywordsRNGSSE2 = boost::mpl::vector<
+                                              #ifdef HAS_RNGSSE2
+                                                kw::rngsse_gm19
+                                              , kw::rngsse_gm29
+                                              , kw::rngsse_gm31
+                                              , kw::rngsse_gm55
+                                              , kw::rngsse_gm61
+                                              , kw::rngsse_gq581
+                                              , kw::rngsse_gq583
+                                              , kw::rngsse_gq584
+                                              , kw::rngsse_mt19937
+                                              , kw::rngsse_lfsr113
+                                              , kw::rngsse_mrg32k3a
+                                              #endif
+                                              >;
+    using keywordsR123 = boost::mpl::vector< kw::r123_threefry
+                                           , kw::r123_philox >;
+
   public:
     using ParamType = int;
     using LibType = RNGLibType;
 
-    //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
-    #ifdef HAS_MKL
-    using keywords = boost::mpl::vector22< kw::rngsse_gm19
-                                         , kw::rngsse_gm29
-                                         , kw::rngsse_gm31
-                                         , kw::rngsse_gm55
-                                         , kw::rngsse_gm61
-                                         , kw::rngsse_gq581
-                                         , kw::rngsse_gq583
-                                         , kw::rngsse_gq584
-                                         , kw::rngsse_mt19937
-                                         , kw::rngsse_lfsr113
-                                         , kw::rngsse_mrg32k3a
-                                         , kw::mkl_mcg31
-                                         , kw::mkl_r250
-                                         , kw::mkl_mrg32k3a
-                                         , kw::mkl_mcg59
-                                         , kw::mkl_wh
-                                         , kw::mkl_mt19937
-                                         , kw::mkl_mt2203
-                                         , kw::mkl_sfmt19937
-                                         , kw::mkl_sobol
-                                         , kw::mkl_niederr
-                                         //, kw::mkl_iabstract
-                                         //, kw::mkl_dabstract
-                                         //, kw::mkl_sabstract
-                                         , kw::mkl_nondeterm
-                                         >;
-    #else
-    using keywords = boost::mpl::vector< kw::rngsse_gm19
-                                       , kw::rngsse_gm29
-                                       , kw::rngsse_gm31
-                                       , kw::rngsse_gm55
-                                       , kw::rngsse_gm61
-                                       , kw::rngsse_gq581
-                                       , kw::rngsse_gq583
-                                       , kw::rngsse_gq584
-                                       , kw::rngsse_mt19937
-                                       , kw::rngsse_lfsr113
-                                       , kw::rngsse_mrg32k3a
-                                       , kw::r123_threefry
-                                       >;
-    #endif
+    using keywords = boost::mpl::joint_view< keywordsMKL,
+                       boost::mpl::joint_view< keywordsRNGSSE2,
+                                               keywordsR123 > >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -151,6 +152,9 @@ class RNG : public tk::Toggle< RNGType > {
         "Random number generator",
         //! Enums -> names
         { { RNGType::NO_RNG, "n/a" }
+        , { RNGType::R123_THREEFRY, kw::r123_threefry::name() }
+        , { RNGType::R123_PHILOX, kw::r123_philox::name() }
+        #ifdef HAS_RNGSSE2
         , { RNGType::RNGSSE_GM19, kw::rngsse_gm19::name() }
         , { RNGType::RNGSSE_GM29, kw::rngsse_gm29::name() }
         , { RNGType::RNGSSE_GM31, kw::rngsse_gm31::name() }
@@ -162,8 +166,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { RNGType::RNGSSE_MT19937, kw::rngsse_mt19937::name() }
         , { RNGType::RNGSSE_LFSR113, kw::rngsse_lfsr113::name() }
         , { RNGType::RNGSSE_MRG32K3A, kw::rngsse_mrg32k3a::name() }
-        , { RNGType::R123_THREEFRY, kw::r123_threefry::name() }
-        , { RNGType::R123_PHILOX, kw::r123_philox::name() }
+        #endif
         #ifdef HAS_MKL
         , { RNGType::MKL_MCG31, kw::mkl_mcg31::name() }
         , { RNGType::MKL_R250, kw::mkl_r250::name() }
@@ -183,6 +186,9 @@ class RNG : public tk::Toggle< RNGType > {
         },
         //! keywords -> Enums
         { { "no_rng", RNGType::NO_RNG }
+        , { kw::r123_threefry::string(), RNGType::R123_THREEFRY }
+        , { kw::r123_philox::string(), RNGType::R123_PHILOX }
+        #ifdef HAS_RNGSSE2
         , { kw::rngsse_gm19::string(), RNGType::RNGSSE_GM19 }
         , { kw::rngsse_gm29::string(), RNGType::RNGSSE_GM29 }
         , { kw::rngsse_gm31::string(), RNGType::RNGSSE_GM31 }
@@ -194,8 +200,7 @@ class RNG : public tk::Toggle< RNGType > {
         , { kw::rngsse_mt19937::string(), RNGType::RNGSSE_MT19937 }
         , { kw::rngsse_lfsr113::string(), RNGType::RNGSSE_LFSR113 }
         , { kw::rngsse_mrg32k3a::string(), RNGType::RNGSSE_MRG32K3A }
-        , { kw::r123_threefry::string(), RNGType::R123_THREEFRY }
-        , { kw::r123_philox::string(), RNGType::R123_PHILOX }
+        #endif
         #ifdef HAS_MKL
         , { kw::mkl_mcg31::string(), RNGType::MKL_MCG31 }
         , { kw::mkl_r250::string(), RNGType::MKL_R250 }
@@ -291,19 +296,21 @@ class RNG : public tk::Toggle< RNGType > {
     //! Enums -> MKL VSL BRNG parameters
     std::map< RNGType, ParamType > brng {
         { RNGType::NO_RNG, -1 }
-      , { RNGType::RNGSSE_GM19, 0 }
-      , { RNGType::RNGSSE_GM29, 1 }
-      , { RNGType::RNGSSE_GM31, 2 }
-      , { RNGType::RNGSSE_GM55, 3 }
-      , { RNGType::RNGSSE_GM61, 4 }
-      , { RNGType::RNGSSE_GQ581, 5 }
-      , { RNGType::RNGSSE_GQ583, 6 }
-      , { RNGType::RNGSSE_GQ584, 7 }
-      , { RNGType::RNGSSE_MT19937, 8 }
-      , { RNGType::RNGSSE_LFSR113, 9 }
-      , { RNGType::RNGSSE_MRG32K3A, 10 }
-      , { RNGType::R123_THREEFRY, 11 }
-      , { RNGType::R123_PHILOX, 12 }
+      , { RNGType::R123_THREEFRY, 0 }
+      , { RNGType::R123_PHILOX, 1 }
+      #ifdef HAS_RNGSSE2
+      , { RNGType::RNGSSE_GM19, 2 }
+      , { RNGType::RNGSSE_GM29, 3 }
+      , { RNGType::RNGSSE_GM31, 4 }
+      , { RNGType::RNGSSE_GM55, 5 }
+      , { RNGType::RNGSSE_GM61, 6 }
+      , { RNGType::RNGSSE_GQ581, 7 }
+      , { RNGType::RNGSSE_GQ583, 8 }
+      , { RNGType::RNGSSE_GQ584, 9 }
+      , { RNGType::RNGSSE_MT19937, 10 }
+      , { RNGType::RNGSSE_LFSR113, 11 }
+      , { RNGType::RNGSSE_MRG32K3A, 12 }
+      #endif
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, VSL_BRNG_MCG31 }
       , { RNGType::MKL_R250, VSL_BRNG_R250 }
@@ -324,6 +331,7 @@ class RNG : public tk::Toggle< RNGType > {
 
     //! Enums -> sequence length options supported
     std::map< RNGType, std::vector< RNGSSESeqLenType > > support {
+      #ifdef HAS_RNGSSE2
       { RNGType::RNGSSE_GM29,    { RNGSSESeqLenType::SHORT,
                                    RNGSSESeqLenType::MEDIUM,
                                    RNGSSESeqLenType::LONG } },
@@ -345,6 +353,7 @@ class RNG : public tk::Toggle< RNGType > {
                                    RNGSSESeqLenType::LONG } },
       { RNGType::RNGSSE_LFSR113, { RNGSSESeqLenType::SHORT,
                                    RNGSSESeqLenType::LONG } }
+      #endif
     };
 };
 

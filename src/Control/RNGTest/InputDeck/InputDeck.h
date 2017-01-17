@@ -52,8 +52,8 @@ class InputDeck : public tk::Control<
                                      , kw::bigcrush
                                      , kw::cja
                                      , kw::cja_accurate
-                                     >;
-    using keywords2 = boost::mpl::set< kw::rngsse_gm19
+                                     #ifdef HAS_RNGSSE2
+                                     , kw::rngsse_gm19
                                      , kw::rngsse_gm29
                                      , kw::rngsse_gm31
                                      , kw::rngsse_gm55
@@ -65,8 +65,9 @@ class InputDeck : public tk::Control<
                                      , kw::rngsse_lfsr113
                                      , kw::rngsse_mrg32k3a
                                      , kw::seqlen
+                                     #endif
                                      >;
-    using keywords3 = boost::mpl::set< kw::seed
+    using keywords2 = boost::mpl::set< kw::seed
                                      #ifdef HAS_MKL
                                      , kw::mkl_mcg31
                                      , kw::mkl_r250
@@ -89,7 +90,7 @@ class InputDeck : public tk::Control<
                                      , kw::icdf
                                      #endif
                                      >;
-    using keywords4 = boost::mpl::set< kw::r123_threefry
+    using keywords3 = boost::mpl::set< kw::r123_threefry
                                      , kw::r123_philox
                                      >;
 
@@ -107,7 +108,6 @@ class InputDeck : public tk::Control<
       boost::mpl::for_each< keywords1 >( ctrinfoFill );
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
-      boost::mpl::for_each< keywords4 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

@@ -21,7 +21,10 @@
 #include "MKLGrammar.h"
 #endif
 
-#include "RNGSSEGrammar.h"
+#ifdef HAS_RNGSSE2
+  #include "RNGSSEGrammar.h"
+#endif
+
 #include "Random123Grammar.h"
 
 namespace rngtest {
@@ -37,8 +40,7 @@ namespace deck {
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
                             ctr::InputDeck::keywords2,
-                            ctr::InputDeck::keywords3,
-                            ctr::InputDeck::keywords4 >;
+                            ctr::InputDeck::keywords3 >;
 
 } // ::deck
 } // ::rngtest
@@ -87,9 +89,11 @@ namespace deck {
                                     tag::selected, tag::rng,
                                     tag::param, tag::rngmkl >,
                      #endif
+                     #ifdef HAS_RNGSSE2
                      tk::rngsse::rngs< use,
                                        tag::selected, tag::rng,
                                        tag::param, tag::rngsse >,
+                     #endif
                      tk::random123::rngs< use,
                                           tag::selected, tag::rng,
                                           tag::param, tag::rng123 > > {};
