@@ -37,7 +37,7 @@ INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(SEACASExodiff DEFAULT_MSG SEACASExodiff_EXECUTABLE)
 
 IF(NOT SEACASExodiff_FOUND)
-  message("exodiff not found, help cmake to find it by setting SEACASExodiff_EXECUTABLE")
+  message(STATUS "exodiff not found, help cmake to find it by setting SEACASExodiff_EXECUTABLE")
 ENDIF(NOT SEACASExodiff_FOUND)
 
 MARK_AS_ADVANCED( SEACASExodiff_EXECUTABLE )
