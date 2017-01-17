@@ -53,7 +53,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-
 check_c_compiler_flag(-Wno-return-type COMPILER_HAS-Wno-return-type)
 if(COMPILER_HAS-Wno-return-type)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type")
