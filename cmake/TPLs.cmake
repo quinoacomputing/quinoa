@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 13 Jan 2017 04:00:10 PM MST
+# \date      Tue 17 Jan 2017 07:54:00 AM MST
 #
 ################################################################################
 

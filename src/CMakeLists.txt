@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 12 Jan 2017 10:53:34 AM MST
+# \date      Tue 17 Jan 2017 07:57:41 AM MST
 #
 ################################################################################
 
@@ -486,6 +486,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PSTREAMS_INCLUDE_PATH}
                     ${PEGTL_INCLUDE_PATH}
                     ${RANDOM123_INCLUDE_PATH}
+                    ${RNGSSE2_INCLUDES}
                     ${H5Part_INCLUDE_DIRS}
                     ${LAPACKE_INCLUDE}
                     ${TPL_DIR}/include
