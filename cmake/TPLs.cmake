@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Tue 17 Jan 2017 10:37:58 AM MST
+# \date      Tue 17 Jan 2017 11:52:46 AM MST
 #
 ################################################################################
 
@@ -100,8 +100,6 @@ endif()
 if(NOT BUILD_SHARED_LIBS)
   find_package(ZLIB REQUIRED)
 endif()
-
-#### TPLs we always want ours ##################################################
 
 #### Zoltan2 library
 find_package(Zoltan2 REQUIRED)
