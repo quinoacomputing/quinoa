@@ -4,7 +4,7 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Tut header
-# \date      Mon 05 Dec 2016 14:21:53 AM MST
+# \date      Tue 17 Jan 2017 10:44:39 AM MST
 #
 ################################################################################
 
@@ -35,9 +35,11 @@ else()
 endif()
 
 # Look for the header file
-FIND_PATH(Tut_INCLUDE_DIR NAMES tut/tut.hpp HINTS ${Tut_ROOT}/include ${PC_TUT_INCLUDE_DIRS})
+FIND_PATH(Tut_INCLUDE_DIR NAMES tut.h tut.hpp
+                          HINTS ${Tut_ROOT}/include ${PC_TUT_INCLUDE_DIRS}
+                          PATH_SUFFIXES tut)
 
-set(Tut_INCLUDE_DIRS ${Tut_INCLUDE_DIR} )
+set(Tut_INCLUDE_DIRS ${Tut_INCLUDE_DIR})
 
 # Handle the QUIETLY and REQUIRED arguments and set Tut_FOUND to TRUE if 
 # all listed variables are TRUE
