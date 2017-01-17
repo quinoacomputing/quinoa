@@ -205,7 +205,7 @@ class TestU01Props {
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);
       Assert( !rngname.empty(), "Empty RNG name not allowed");
-      Assert( m_rng != RNGType::NO_RNG, "No RNG type allowed");
+      Assert( m_rng != RNGType::NO_RNG, "No RNG type not allowed");
       #ifdef HAS_MKL
       if (m_rng == RNGType::MKL_MCG31)
         g = createTestU01Gen< raw(RNGType::MKL_MCG31) >( rngname );
@@ -235,9 +235,10 @@ class TestU01Props {
       //  g = createTestU01Gen< raw(RNGType::MKL_SABSTRACT) >( rngname );
       else if (m_rng == RNGType::MKL_NONDETERM)
         g = createTestU01Gen< raw(RNGType::MKL_NONDETERM) >( rngname );
+      else
       #endif
       #ifdef HAS_RNGSSE2
-      else if (m_rng == RNGType::RNGSSE_GM19)
+      if (m_rng == RNGType::RNGSSE_GM19)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM19) >( rngname );
       else if (m_rng == RNGType::RNGSSE_GM29)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM29) >( rngname );
