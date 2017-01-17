@@ -19,6 +19,7 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wconversion"
+  #pragma clang diagnostic ignored "-Wexpansion-to-defined"
 #endif
 
 #include <Random123/threefry.h>
