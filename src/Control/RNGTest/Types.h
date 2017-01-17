@@ -43,7 +43,8 @@ using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
   tag::rngmkl,    tk::ctr::RNGMKLParameters,   //!< MKL RNG parameters
   #endif
-  tag::rngsse,    tk::ctr::RNGSSEParameters    //!< RNGSSE parameters
+  tag::rngsse,    tk::ctr::RNGSSEParameters,   //!< RNGSSE parameters
+  tag::rng123,    tk::ctr::RNGRandom123Parameters  //!< Random123 parameters
 >;
 
 //! PEGTL location/position type to use throughout all of RNGTest's parsers

@@ -318,6 +318,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::rngmkl,          tk::ctr::RNGMKLParameters,
   #endif
   tag::rngsse,          tk::ctr::RNGSSEParameters,
+  tag::rng123,          tk::ctr::RNGRandom123Parameters,
   tag::dirichlet,       DirichletParameters,
   tag::gendir,          GenDirichletParameters,
   tag::wrightfisher,    WrightFisherParameters,

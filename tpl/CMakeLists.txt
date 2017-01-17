@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Tue 10 Jan 2017 11:18:54 AM MST
+# \date      Fri 13 Jan 2017 03:46:17 PM MST
 #
 ################################################################################
 
@@ -283,6 +283,26 @@ else()
   set(pegtl "pegtl")
 endif()
 
+# Detect Random123, exclude if found, build if not
+if(NOT NO_SYSTEM_RANDOM123)
+  find_package(Random123)
+endif()
+if(Random123_FOUND)
+  set(random123 "")
+else()
+  set(random123 "random123")
+endif()
+
+# Do not attempt to build RNGSSE2 if target architecture is not x86
+if(NOT NO_SYSTEM_RNGSSE2)
+  find_package(RNGSSE2)
+endif()
+if(RNGSSE2_FOUND OR NOT ARCH MATCHES "x86" OR NO_RNGSSE2)
+  set(rngsse2 "")
+else()
+  set(rngsse2 "rngsse2")
+endif()
+
 # Detect blas and lapack, exclude if found, build if not
 set(lapack "lapack")
 set(blas "blas")
@@ -325,7 +345,7 @@ else()
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos ${pegtl} tut cartesian_product rngsse2 testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos ${pegtl} ${random123} tut cartesian_product ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -585,8 +605,27 @@ if (pegtl)
    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
                      ${PROJECT_SOURCE_DIR}/src/pegtl
                      ${CMAKE_INSTALL_PREFIX}/include/pegtl
-   CONFIGURE_COMMAND ""
    BUILD_COMMAND ""
+   INSTALL_COMMAND ""
+   DOWNLOAD_COMMAND ""
+ )
+endif()
+
+#### Random123 (Counter-based random number generators library) ################
+# http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
+# Header only
+if (random123)
+ ExternalProject_Add(
+   random123
+   PREFIX random123
+   # Header-only, copy include dir over
+   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/random123/include
+                     ${CMAKE_INSTALL_PREFIX}/include
+   # Copy examples/uniform.hpp over
+   BUILD_COMMAND ${CMAKE_COMMAND} -E copy
+                 ${PROJECT_SOURCE_DIR}/src/random123/examples/uniform.hpp
+                 ${CMAKE_INSTALL_PREFIX}/include/Random123
    INSTALL_COMMAND ""
    DOWNLOAD_COMMAND ""
  )
@@ -627,21 +666,23 @@ ExternalProject_Add(
 #### RNGSSELib2 ################################################################
 # http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
 # No need for MPI, use underlying compilers
-ExternalProject_Add(
-  rngsse2
-  PREFIX rngsse2
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
-  CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-             ${MACOSX_RPATH}
-             -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
-             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (rngsse2)
+  ExternalProject_Add(
+    rngsse2
+    PREFIX rngsse2
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+               ${MACOSX_RPATH}
+               -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html

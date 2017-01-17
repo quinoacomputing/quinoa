@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:21:04 PM MDT
+  \date      Fri 13 Jan 2017 10:38:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -145,7 +145,10 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
       #ifdef HAS_MKL
       g_inputdeck.get< tag::param, tag::rngmkl >(),
       #endif
-      g_inputdeck.get< tag::param, tag::rngsse >() );
+      #ifdef HAS_RNGSSE2
+      g_inputdeck.get< tag::param, tag::rngsse >(),
+      #endif
+      g_inputdeck.get< tag::param, tag::rng123 >() );
     rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
   }
 }

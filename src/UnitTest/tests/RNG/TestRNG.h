@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:44:25 AM MDT
+  \date      Wed 11 Jan 2017 04:30:45 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -17,25 +17,31 @@
 #include "NoWarning/tut.h"
 #include "QuinoaConfig.h"
 
+#include "NoWarning/threefry.h"
+#include "NoWarning/philox.h"
+
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>
   #include "MKLRNG.h"
 #endif
 
-#include <gm19.h>
-#include <gm29.h>
-#include <gm31.h>
-#include <gm55.h>
-#include <gm61.h>
-#include <gq58x1.h>
-#include <gq58x3.h>
-#include <gq58x4.h>
-#include <mt19937.h>
-#include <lfsr113.h>
-#include <mrg32k3a.h>
+#ifdef HAS_RNGSSE2
+  #include <gm19.h>
+  #include <gm29.h>
+  #include <gm31.h>
+  #include <gm55.h>
+  #include <gm61.h>
+  #include <gq58x1.h>
+  #include <gq58x3.h>
+  #include <gq58x4.h>
+  #include <mt19937.h>
+  #include <lfsr113.h>
+  #include <mrg32k3a.h>
+  #include "RNGSSE.h"
+#endif
 
 #include "RNG.h"
-#include "RNGSSE.h"
+#include "Random123.h"
 
 namespace tut {
 
@@ -48,6 +54,7 @@ struct RNG_common {
     #ifdef HAS_MKL
     rngs.emplace_back( tk::MKLRNG( 4, VSL_BRNG_MCG31 ) );
     #endif
+    #ifdef HAS_RNGSSE2
     rngs.emplace_back( tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                                  ( 4, gm19_init_sequence_ ) );
     rngs.emplace_back( tk::RNGSSE< gm29_state, unsigned, gm29_generate_ >
@@ -75,6 +82,9 @@ struct RNG_common {
     rngs.emplace_back( tk::RNGSSE< mrg32k3a_state, unsigned long long,
                                    mrg32k3a_generate_ >
                                  ( 4, mrg32k3a_init_sequence_ ) );
+    #endif
+    rngs.emplace_back( tk::Random123< r123::Threefry2x64 >( 4 ) );
+    rngs.emplace_back( tk::Random123< r123::Philox2x64 >( 4 ) );
   }
 
   //! \brief Add a model constructor bound to its arguments to a vector of
@@ -198,7 +208,7 @@ struct RNG_common {
     test_gaussian( v );        // test that the newly moved RNG works
   }
 
-  // Test the first the four first moments of random numbers passed in
+  // Test the first four moments of random numbers passed in
   static void test_stats( const std::vector< double >& numbers,
                           double correct_mean,
                           double correct_variance,
@@ -261,6 +271,7 @@ void RNG_object::test< 2 >() {
   add< tk::MKLRNG >( v, 4, VSL_BRNG_MCG31 );
   #endif
 
+  #ifdef HAS_RNGSSE2
   add< tk::RNGSSE< gm19_state, unsigned, gm19_generate_ > >
      ( v, 4, gm19_init_sequence_ );
   add< tk::RNGSSE< gm29_state, unsigned, gm29_generate_ > >
@@ -283,6 +294,10 @@ void RNG_object::test< 2 >() {
      ( v, 4, lfsr113_init_long_sequence_ );
   add< tk::RNGSSE< mrg32k3a_state, unsigned long long, mrg32k3a_generate_ > >
      ( v, 4, mrg32k3a_init_sequence_ );
+  #endif
+
+  add< tk::Random123< r123::Threefry2x64 > >( v, 4 );
+  add< tk::Random123< r123::Philox2x64 > >( v, 4 );
 
   for (const auto& r : v)
     ensure_equals( "nthreads() via polymorphic tk::RNG call incorrect",

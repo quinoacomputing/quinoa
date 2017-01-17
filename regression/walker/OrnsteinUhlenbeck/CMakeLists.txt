@@ -52,6 +52,57 @@ if (HAS_MKL)
                       TEXT_DIFF_PROG_CONF ou_pdf.ndiff.cfg)
 endif()
 
+if (HAS_RGNSSE2)
+  add_regression_test(OrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 1
+                      INPUTFILES ou_rngsse.q stat.txt.std ou.ndiff.cfg
+                      ARGS -c ou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+  add_regression_test(OrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 2
+                      INPUTFILES ou_rngsse.q stat.txt.std ou.ndiff.cfg
+                      ARGS -c ou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+  add_regression_test(OrnsteinUhlenbeck_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 4
+                      INPUTFILES ou_rngsse.q stat.txt.std ou.ndiff.cfg
+                      ARGS -c ou_rngsse.q -v
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+  add_regression_test(OrnsteinUhlenbeck_rngsse_u0.9 ${WALKER_EXECUTABLE}
+                      NUMPES 4
+                      INPUTFILES ou_rngsse.q stat.txt.std ou.ndiff.cfg
+                      ARGS -c ou_rngsse.q -v -u 0.9
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+  add_regression_test(OrnsteinUhlenbeck_rngsse_u0.9 ${WALKER_EXECUTABLE}
+                      NUMPES 8
+                      INPUTFILES ou_rngsse.q stat.txt.std ou.ndiff.cfg
+                      ARGS -c ou_rngsse.q -v -u 0.9
+                      TEXT_BASELINE stat.txt.std
+                      TEXT_RESULT stat.txt
+                      TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+  add_regression_test(OrnsteinUhlenbeckPDF_rngsse ${WALKER_EXECUTABLE}
+                      NUMPES 8
+                      INPUTFILES ou_pdf_rngsse.q pdf_f1.txt.std ou_pdf.ndiff.cfg
+                      ARGS -c ou_pdf_rngsse.q -v
+                      LABELS verification
+                      TEXT_BASELINE pdf_f1.txt.std
+                      TEXT_RESULT pdf_f1.txt
+                      TEXT_DIFF_PROG_CONF ou_pdf.ndiff.cfg)
+endif()
+
 add_regression_test(OrnsteinUhlenbeck ${WALKER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES ou.q stat.txt.std ou.ndiff.cfg

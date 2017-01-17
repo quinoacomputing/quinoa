@@ -820,6 +820,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Musllibc_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/OpenMPI_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/MKL_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Random123_license.dox \
   . \
   @CMAKE_CURRENT_SOURCE_DIR@/../README.md \
   @CMAKE_CURRENT_SOURCE_DIR@/../src/ \
