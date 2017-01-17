@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Thu 24 Nov 2016 02:51:52 PM MST
+# \date      Sun 15 Jan 2017 09:26:09 PM MST
 #
 ################################################################################
 
@@ -73,7 +73,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' 'c++/*' 'include/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'STDIN' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -86,6 +86,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
@@ -173,7 +174,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Combine trace files
     COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' 'c++/*' 'include/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'STDIN' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -186,6 +187,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
