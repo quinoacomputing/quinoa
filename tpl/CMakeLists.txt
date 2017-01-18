@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 13 Jan 2017 03:46:17 PM MST
+# \date      Wed 18 Jan 2017 07:52:10 AM MST
 #
 ################################################################################
 
@@ -92,36 +92,64 @@ endif()
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
-# Match Charm++ build architecture for system architecture detected
-if(ARCH MATCHES "x86_64")
+message(STATUS "------------------------------------------")
+message(STATUS "Detecting third-party libraries (TPLs) ...")
 
-  set(CHARM_ARCH "-${ARCH}")
+# Detect charm
+if(NOT NO_SYSTEM_CHARM)
+  find_package(CHARM)
+endif()
+if(CHARM_FOUND)
+  set(charm "")
+else()
+  set(charm "charm")
+endif()
 
-elseif(ARCH MATCHES "i386")
+# If we are to build our own Charm++, setup prerequisites for its build command
+if (charm)
 
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CHARM_ARCH "")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CHARM_ARCH "-x86")
+  message(STATUS "Will build Charm++'")
+
+  # Use mpi wrappers by default
+  set(CHARM_COMPILER "")
+
+  # Match Charm++ build architecture for system architecture detected
+  if(ARCH MATCHES "x86_64")
+
+    set(CHARM_ARCH "-${ARCH}")
+
+  elseif(ARCH MATCHES "i386")
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+      set(CHARM_ARCH "")
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set(CHARM_ARCH "-x86")
+    endif()
+
+  else()
+
+    message(FATAL "Selecting a Charm++ architecture for ${ARCH} is not supported")
+
   endif()
 
-else()
+  # Set Charm++ architecture
+  if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+      NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+      NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+      NOT DEFINED ENV{CRAY_PRGENVINTEL})
+    set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
+  else()
+    set(CHARM_ARCHITECTURE "mpi-crayxc")
+  endif()
 
-  message(FATAL "Selecting a Charm++ architecture for ${ARCH} is not supported")
+  message(STATUS "Charm++ architecture/version: '${CHARM_ARCHITECTURE}'")
 
-endif()
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
+    set(CHARM_COMPILER "craycc")
+    message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
+  endif()
 
-# Set Charm++ architecture
-if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
-  set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
-else()
-  set(CHARM_ARCHITECTURE "mpi-crayxc")
-endif()
-
-message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
+endif(charm)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
@@ -166,8 +194,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
   set(PGCPP "CPP=cpp")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
-
-  set(CHARM_COMPILER "craycc")
 
 endif()
 
@@ -377,18 +403,11 @@ else()
   set(tut "tut")
 endif()
 
-# Detect charm
-if(NOT NO_SYSTEM_CHARM)
-  find_package(CHARM)
-endif()
-if(CHARM_FOUND)
-  set(charm "")
-else()
-  set(charm "charm")
-endif()
-	
+message(STATUS "Finished detecting TPLs")
+message(STATUS "------------------------------------------")
+
 # Output TPLs to be built
-message(STATUS "Will build: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -412,31 +431,33 @@ if (HOST_OS MATCHES "alpine")
   # http://www.openwall.com/lists/musl/2016/02/04/3
   set(CHARM_PTHREADS "pthreads")
 endif()
-ExternalProject_Add(
-  charm
-  PREFIX charm
-  # Move unpacked tarball to install dir and build there
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/charm
-                    ${CMAKE_INSTALL_PREFIX}/charm
-  # Build in install dir and leave stuff there - no install step
-  BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
-  # Build Charm++
-  BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
-                charm++
-                ${CHARM_ARCHITECTURE}
-                ${CHARM_COMPILER}
-                ${CHARM_PTHREADS}
-                ${CHARM_SHARED}
-                ${CHARM_RELEASE_BUILD}
-                ${CHARM_ALPINE}
-                -j${PROCESSOR_COUNT}
-                ${CXXFLAGS}
-  DOWNLOAD_COMMAND ""
-  INSTALL_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-)
+if (charm)
+  ExternalProject_Add(
+    charm
+    PREFIX charm
+    # Move unpacked tarball to install dir and build there
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/charm
+                      ${CMAKE_INSTALL_PREFIX}/charm
+    # Build in install dir and leave stuff there - no install step
+    BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
+    # Build Charm++
+    BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
+                  charm++
+                  ${CHARM_ARCHITECTURE}
+                  ${CHARM_COMPILER}
+                  ${CHARM_PTHREADS}
+                  ${CHARM_SHARED}
+                  ${CHARM_RELEASE_BUILD}
+                  ${CHARM_ALPINE}
+                  -j${PROCESSOR_COUNT}
+                  ${CXXFLAGS}
+    DOWNLOAD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+  )
+endif()
 
 #### HDF5 ######################################################################
 # http://www.hdfgroup.org/HDF5
