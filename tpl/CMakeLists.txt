@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Tue 17 Jan 2017 03:30:31 PM MST
+# \date      Wed 18 Jan 2017 01:41:23 PM MST
 #
 ################################################################################
 
@@ -687,23 +687,24 @@ endif()
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
-ExternalProject_Add(
-  testu01
-  PREFIX testu01
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
-  CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-             ${testu01_shared_off_mac}
-             ${MACOSX_RPATH}
-             -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (testu01)
+  ExternalProject_Add(
+    testu01
+    PREFIX testu01
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+               ${MACOSX_RPATH}
+               -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### Boost ####################################################################
 # http://www.boost.org

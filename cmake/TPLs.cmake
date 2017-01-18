@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Tue 17 Jan 2017 07:54:00 AM MST
+# \date      Wed 18 Jan 2017 02:25:00 PM MST
 #
 ################################################################################
 
@@ -113,22 +113,8 @@ endif()
 #### H5Part library
 find_package(H5Part REQUIRED)
 
-#### TestU01 library
-set(TESTU01_LIBRARY "NOTFOUND")
-find_library(TESTU01_LIBRARY
-             NAMES testu01
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-set(TESTU01_PROBDIST_LIBRARY "NOTFOUND")
-find_library(TESTU01_PROBDIST_LIBRARY
-             NAMES probdist
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-set(TESTU01_MYLIB_LIBRARY "NOTFOUND")
-find_library(TESTU01_MYLIB_LIBRARY
-             NAMES mylib
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
+set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
+find_package(TestU01)
+if(TestU01_FOUND)
+  set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
+endif()

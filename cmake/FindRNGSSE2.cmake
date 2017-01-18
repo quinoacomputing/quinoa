@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the RNGSSE2 library
-# \date      Fri 13 Jan 2017 03:44:47 PM MST
+# \date      Wed 18 Jan 2017 02:31:55 PM MST
 #
 ################################################################################
 
@@ -26,7 +26,7 @@
 #  endif()
 
 # If already in cache, be silent
-if(RNGSSE2_INCLUDES)
+if(RNGSSE2_INCLUDES AND RNGSSE2_LIBRARY)
   set (RNGSSE2_FIND_QUIETLY TRUE)
 endif()
 
@@ -65,6 +65,8 @@ set(RNGSSE2_INCLUDES ${RNGSSE2_INCLUDE_GM19}
                      ${RNGSSE2_INCLUDE_LFSR113}
                      ${RNGSSE2_INCLUDE_MRG32K3A})
 
+list(REMOVE_DUPLICATES RNGSSE2_INCLUDES)
+
 if(NOT BUILD_SHARED_LIBS)
  find_library(RNGSSE2_LIBRARY NAMES librngsse.a HINTS ${RNGSSE2_ROOT}/lib
                                                       $ENV{RNGSSE2_ROOT}/lib)
@@ -77,5 +79,10 @@ endif()
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RNGSSE2 DEFAULT_MSG RNGSSE2_LIBRARY RNGSSE2_INCLUDES)
+
+if(NOT RNGSSE2_FOUND)
+  set(RNGSSE2_INCLUDES)
+  set(RNGSSE2_LIBRARY "")
+endif()
 
 MARK_AS_ADVANCED(RNGSSE2_INCLUDES RNGSSE2_LIBRARY)
