@@ -49,11 +49,25 @@ ENV MANPATH /opt/openmpi/share/man:$MANPATH
 # Remove /install - no more installs after this line
 RUN rm -rf /install
 
+# Install our own OpenMPI as Zoltan2 fails with the system's openmpi (2.0.2)
+ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
+RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --prefix=/opt/openmpi && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) install
+ENV PATH /opt/openmpi/bin:$PATH
+ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
+ENV MANPATH /opt/openmpi/share/man:$MANPATH
+
+# Remove /install - no more installs after this line
+RUN rm -rf /install
+
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
 # Build & test
+<<<<<<< ceba4e62f0a33e435b4aa5b7aa8b9f0a63dd1a38
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
+=======
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
+>>>>>>> HRT mix latest update
 # Clean code
 RUN rm -rf /quinoa
