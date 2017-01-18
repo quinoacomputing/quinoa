@@ -72,11 +72,11 @@ else()
                HINTS ${LAPACKE_ROOT}/lib
                      $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
-  find_library(LAPACK_LIBRARY NAMES lapack HINTS ${LAPACKE_ROOT}/lib
-                                                 $ENV{LAPACKE_ROOT}/lib
+  find_library(LAPACK_LIBRARY NAMES lapack reflapack
+               HINTS ${LAPACKE_ROOT}/lib $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
-  find_library(BLAS_LIBRARY NAMES blas HINTS ${LAPACKE_ROOT}/lib
-                                             $ENV{LAPACKE_ROOT}/lib
+  find_library(BLAS_LIBRARY NAMES blas refblas
+               HINTS ${LAPACKE_ROOT}/lib $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
 endif()
 
