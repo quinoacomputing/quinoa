@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Tue 17 Jan 2017 11:52:46 AM MST
+# \date      Wed 18 Jan 2017 07:56:59 AM MST
 #
 ################################################################################
 
@@ -16,6 +16,15 @@ SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 include(GNUInstallDirs)
 
 #### TPLs we attempt to find on the system #####################################
+
+message(STATUS "------------------------------------------")
+message(STATUS "Detecting third-party libraries (TPLs) ...")
+
+#### Charm++
+set(CHARM_ROOT ${TPL_DIR}/charm)
+find_package(CHARM REQUIRED)
+message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
+message(STATUS "Charm++ include dir: " ${CHARM_INCLUDE_DIR})
 
 #### MKL (optional)
 find_package(MKL)
@@ -142,3 +151,6 @@ find_library(TESTU01_MYLIB_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+
+message(STATUS "Finished detecting TPLs")
+message(STATUS "------------------------------------------")

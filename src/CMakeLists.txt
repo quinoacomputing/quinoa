@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 17 Jan 2017 07:57:41 AM MST
+# \date      Wed 18 Jan 2017 07:29:51 AM MST
 #
 ################################################################################
 
@@ -97,10 +97,6 @@ get_mpi_compilers()
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-set(CHARM_ROOT ${TPL_DIR}/charm)
-find_package(CHARM REQUIRED)
-message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
-message(STATUS "Charm++ include dir: " ${CHARM_INCLUDE_DIR})
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
