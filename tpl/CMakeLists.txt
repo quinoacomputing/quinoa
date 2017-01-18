@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Wed 18 Jan 2017 02:56:37 PM MST
+# \date      Wed 18 Jan 2017 03:03:45 PM MST
 #
 ################################################################################
 
@@ -373,7 +373,7 @@ endif()
 if(NOT NO_SYSTEM_TESTU01)
   find_package(TestU01)
 endif()
-if(TestU01_FOUND)
+if(TestU01_FOUND OR NO_TESTU01)
   set(testu01 "")
 else()
   set(testu01 "testu01")
