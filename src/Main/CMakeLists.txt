@@ -15,11 +15,6 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
        "${CHARM_COMPILER} -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
-# Disallows undefined symbols in object files. Undefined symbols in shared
-# libraries are still allowed.
-set(MPI_LINK_FLAGS "${MPI_LINK_FLAGS} -Wl,-z,defs")
-message(STATUS "Link flags: ${MPI_LINK_FLAGS}")
-
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.C

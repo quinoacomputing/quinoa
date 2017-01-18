@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 10 Mar 2017 08:07:18 AM MST
+# \date      Wed 18 Jan 2017 04:17:48 PM MST
 #
 ################################################################################
 
@@ -145,6 +145,10 @@ message(STATUS "git sha1: ${GIT_SHA1}")
 macro (add_compiler_flag flag)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
 endmacro (add_compiler_flag)
+
+# Disallow undefined symbols in object files. Undefined symbols in shared
+# libraries are still allowed.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-z,defs")
 
 # Macro to add C compiler flags
 macro (add_c_compiler_flag flag)
