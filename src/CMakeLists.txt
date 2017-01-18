@@ -97,8 +97,10 @@ get_mpi_compilers()
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
+set(CHARM_ROOT ${TPL_DIR}/charm)
+find_package(CHARM REQUIRED)
 message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
+message(STATUS "Charm++ include dir: " ${CHARM_INCLUDE_DIR})
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -494,7 +496,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${Zoltan2_INCLUDE_DIRS}
                     ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_DIR}/include
-                    ${TPL_DIR}/charm/include
+                    ${CHARM_INCLUDE_DIR}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
