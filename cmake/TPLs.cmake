@@ -68,6 +68,9 @@ set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 find_package(RNGSSE2)
 if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(RNGSSE2_INCLUDES)
+  set(RNGSSE2_LIBRARY)
 endif()
 
 # Error out if not a single RNG library has been found
