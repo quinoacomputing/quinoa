@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Tue 17 Jan 2017 07:54:00 AM MST
+# \date      Wed 18 Jan 2017 07:56:59 AM MST
 #
 ################################################################################
 
@@ -16,6 +16,15 @@ SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 include(GNUInstallDirs)
 
 #### TPLs we attempt to find on the system #####################################
+
+message(STATUS "------------------------------------------")
+message(STATUS "Detecting third-party libraries (TPLs) ...")
+
+#### Charm++
+set(CHARM_ROOT ${TPL_DIR}/charm)
+find_package(CHARM REQUIRED)
+message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
+message(STATUS "Charm++ include dir: " ${CHARM_INCLUDE_DIR})
 
 #### MKL (optional)
 find_package(MKL)
@@ -37,6 +46,11 @@ if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
+find_package(BoostMPLCartesianProduct REQUIRED)
+
+#### TUT
+set(Tut_ROOT ${TPL_DIR}) # prefer ours
+find_package(Tut REQUIRED)
 
 #### PStreams
 set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
@@ -63,6 +77,9 @@ set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 find_package(RNGSSE2)
 if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
+else()
+  set(RNGSSE2_INCLUDES)
+  set(RNGSSE2_LIBRARY "")
 endif()
 
 # Error out if not a single RNG library has been found
@@ -81,6 +98,10 @@ else()
   find_package(HDF5 COMPONENTS C HL)
 endif()
 
+#### H5Part
+set(H5PART_ROOT ${TPL_DIR}) # prefer ours
+find_package(H5Part REQUIRED)
+
 #### AEC (only for static link)
 if(NOT BUILD_SHARED_LIBS)
   set(AEC_ROOT ${TPL_DIR}) # prefer ours
@@ -92,22 +113,20 @@ if(NOT BUILD_SHARED_LIBS)
   find_package(ZLIB REQUIRED)
 endif()
 
-#### TPLs we always want ours ##################################################
-
 #### Zoltan2 library
 find_package(Zoltan2 REQUIRED)
 if(Zoltan2_FOUND)
-  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARY_DIRS}")
+  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARIES}")
 endif()
 
 #### ExodusII library
 find_package(SEACASExodus REQUIRED)
 if(SEACASExodus_FOUND)
-  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARY_DIRS}")
+  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARIES}")
 endif()
 find_package(SEACASExodiff REQUIRED)
 if(SEACASExodiff_FOUND)
-  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_LIBRARY_DIRS}")
+  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_EXECUTABLE}")
 endif()
 
 #### H5Part library
@@ -132,3 +151,6 @@ find_library(TESTU01_MYLIB_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+
+message(STATUS "Finished detecting TPLs")
+message(STATUS "------------------------------------------")

@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Tue 17 Jan 2017 03:30:31 PM MST
+# \date      Wed 18 Jan 2017 07:58:01 AM MST
 #
 ################################################################################
 
@@ -92,36 +92,64 @@ endif()
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
-# Match Charm++ build architecture for system architecture detected
-if(ARCH MATCHES "x86_64")
+message(STATUS "------------------------------------------")
+message(STATUS "Detecting third-party libraries (TPLs) ...")
 
-  set(CHARM_ARCH "-${ARCH}")
+# Detect charm
+if(NOT NO_SYSTEM_CHARM)
+  find_package(CHARM)
+endif()
+if(CHARM_FOUND)
+  set(charm "")
+else()
+  set(charm "charm")
+endif()
 
-elseif(ARCH MATCHES "i386")
+# If we are to build our own Charm++, setup prerequisites for its build command
+if (charm)
 
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CHARM_ARCH "")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CHARM_ARCH "-x86")
+  message(STATUS "Will build Charm++'")
+
+  # Use mpi wrappers by default
+  set(CHARM_COMPILER "")
+
+  # Match Charm++ build architecture for system architecture detected
+  if(ARCH MATCHES "x86_64")
+
+    set(CHARM_ARCH "-${ARCH}")
+
+  elseif(ARCH MATCHES "i386")
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+      set(CHARM_ARCH "")
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set(CHARM_ARCH "-x86")
+    endif()
+
+  else()
+
+    message(FATAL "Selecting a Charm++ architecture for ${ARCH} is not supported")
+
   endif()
 
-else()
+  # Set Charm++ architecture
+  if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
+      NOT DEFINED ENV{CRAY_PRGENVGNU} AND
+      NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
+      NOT DEFINED ENV{CRAY_PRGENVINTEL})
+    set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
+  else()
+    set(CHARM_ARCHITECTURE "mpi-crayxc")
+  endif()
 
-  message(FATAL "Selecting a Charm++ architecture for ${ARCH} is not supported")
+  message(STATUS "Charm++ architecture/version: '${CHARM_ARCHITECTURE}'")
 
-endif()
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
+    set(CHARM_COMPILER "craycc")
+    message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
+  endif()
 
-# Set Charm++ architecture
-if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-    NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-    NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-    NOT DEFINED ENV{CRAY_PRGENVINTEL})
-  set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
-else()
-  set(CHARM_ARCHITECTURE "mpi-crayxc")
-endif()
-
-message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
+endif(charm)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
@@ -166,8 +194,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
   set(PGCPP "CPP=cpp")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
-
-  set(CHARM_COMPILER "craycc")
 
 endif()
 
@@ -336,16 +362,52 @@ if(NOT BUILD_SHARED_LIBS)
   endif()
 endif()
 
-#Use -DCMAKE_DISABLE_FIND_PACKAGE_H5Part=ON to avoid finding system H5Part
-find_package(H5Part)
+# Detect H5Part
+if(NOT NO_SYSTEM_H5PART)
+  find_package(H5Part)
+endif()
 if(H5Part_FOUND)
   set(h5part "")
 else()
   set(h5part "h5part")
 endif()
 
+if(NOT NO_SYSTEM_TRILINOS)
+  find_package(Zoltan2)
+  find_package(SEACASExodus)
+  find_package(SEACASExodiff)
+endif()
+if(Zoltan2_FOUND AND SEACASExodus_FOUND AND SEACASExodiff_FOUND)
+  set(trilinos "")
+else()
+  set(trilinos "trilinos")
+endif()
+
+# Detect BoostMPLCartesianProduct
+if(NOT NO_SYSTEM_BoostMPLCartesianProduct)
+  find_package(BoostMPLCartesianProduct)
+endif()
+if(BoostMPLCartesianProduct_FOUND)
+  set(cartesian_product "")
+else()
+  set(cartesian_product "cartesian_product")
+endif()
+
+# Detect Tut
+if(NOT NO_SYSTEM_Tut)
+  find_package(Tut)
+endif()
+if(Tut_FOUND)
+  set(tut "")
+else()
+  set(tut "tut")
+endif()
+
+message(STATUS "Finished detecting TPLs")
+message(STATUS "------------------------------------------")
+
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos ${pegtl} ${random123} tut cartesian_product ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -369,31 +431,33 @@ if (HOST_OS MATCHES "alpine")
   # http://www.openwall.com/lists/musl/2016/02/04/3
   set(CHARM_PTHREADS "pthreads")
 endif()
-ExternalProject_Add(
-  charm
-  PREFIX charm
-  # Move unpacked tarball to install dir and build there
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/charm
-                    ${CMAKE_INSTALL_PREFIX}/charm
-  # Build in install dir and leave stuff there - no install step
-  BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
-  # Build Charm++
-  BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
-                charm++
-                ${CHARM_ARCHITECTURE}
-                ${CHARM_COMPILER}
-                ${CHARM_PTHREADS}
-                ${CHARM_SHARED}
-                ${CHARM_RELEASE_BUILD}
-                ${CHARM_ALPINE}
-                -j${PROCESSOR_COUNT}
-                ${CXXFLAGS}
-  DOWNLOAD_COMMAND ""
-  INSTALL_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-)
+if (charm)
+  ExternalProject_Add(
+    charm
+    PREFIX charm
+    # Move unpacked tarball to install dir and build there
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/charm
+                      ${CMAKE_INSTALL_PREFIX}/charm
+    # Build in install dir and leave stuff there - no install step
+    BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
+    # Build Charm++
+    BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
+                  charm++
+                  ${CHARM_ARCHITECTURE}
+                  ${CHARM_COMPILER}
+                  ${CHARM_PTHREADS}
+                  ${CHARM_SHARED}
+                  ${CHARM_RELEASE_BUILD}
+                  ${CHARM_ALPINE}
+                  -j${PROCESSOR_COUNT}
+                  ${CXXFLAGS}
+    DOWNLOAD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+  )
+endif()
 
 #### HDF5 ######################################################################
 # http://www.hdfgroup.org/HDF5
@@ -556,43 +620,45 @@ else()
     set(TRILINOS_LAPACK -DTPL_LAPACK_LIBRARIES=${LAPACK_LIBRARIES})
   endif()
 endif()
-ExternalProject_Add(
-  trilinos
-  DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
-  PREFIX trilinos
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
-  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-             -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF
-             -D Trilinos_ENABLE_Zoltan2:BOOL=ON
-             -D Zoltan2_ENABLE_Experimental:BOOL=ON
-             -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
-             -D Trilinos_ENABLE_Fortran=OFF
-             -D Trilinos_ENABLE_DEBUG=OFF
-             ${tr_hdf5}
-             ${TRILINOS_SHARED}
-             ${TRILINOS_ALPINE}
-             ${TRILINOS_MKL}
-             ${TRILINOS_BLAS}
-             ${TRILINOS_LAPACK}
-             ${MACOSX_RPATH}
-             -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
-             -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
-             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if(trilinos)
+  ExternalProject_Add(
+    trilinos
+    DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
+    PREFIX trilinos
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
+    CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+               -D TPL_ENABLE_MPI:BOOL=ON
+               -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF
+               -D Trilinos_ENABLE_Zoltan2:BOOL=ON
+               -D Zoltan2_ENABLE_Experimental:BOOL=ON
+               -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+               -D Trilinos_ENABLE_Fortran=OFF
+               -D Trilinos_ENABLE_DEBUG=OFF
+               ${tr_hdf5}
+               ${TRILINOS_SHARED}
+               ${TRILINOS_ALPINE}
+               ${TRILINOS_MKL}
+               ${TRILINOS_BLAS}
+               ${TRILINOS_LAPACK}
+               ${MACOSX_RPATH}
+               -D TPL_ENABLE_Netcdf:BOOL=ON
+               -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
+               -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
+               -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
+               -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
 # https://github.com/ColinH/PEGTL
@@ -634,34 +700,38 @@ endif()
 #### TUT (Template Unit Test Framework) ########################################
 # http://tut-framework.sourceforge.net
 # Header only
-ExternalProject_Add(
-  tut
-  PREFIX tut
-  # Header-only, copy include dir over
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/tut/include
-                    ${CMAKE_INSTALL_PREFIX}/include/tut
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  DOWNLOAD_COMMAND ""
-)
+if(tut)
+  ExternalProject_Add(
+    tut
+    PREFIX tut
+    # Header-only, copy include dir over
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/tut/include
+                      ${CMAKE_INSTALL_PREFIX}/include/tut
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    DOWNLOAD_COMMAND ""
+  )
+endif()
 
 #### Boost.MPL extension: cartesian product ###################################
 # http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
 # Header only
-ExternalProject_Add(
-  cartesian_product
-  PREFIX cartesian_product
-  # Header-only, copy include dir over
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/src/cartesian_product/boost/mpl
-                    ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  DOWNLOAD_COMMAND ""
-)
+if(cartesian_product)
+  ExternalProject_Add(
+    cartesian_product
+    PREFIX cartesian_product
+    # Header-only, copy include dir over
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/cartesian_product/boost/mpl
+                      ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    DOWNLOAD_COMMAND ""
+  )
+endif()
 
 #### RNGSSELib2 ################################################################
 # http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
@@ -789,7 +859,6 @@ if(BUILD_SHARED_LIBS)
 else()
   set(H5PART_SHARED "--disable-shared;--enable-static")
 endif()
-
 if(h5part)
   ExternalProject_Add(
     h5part

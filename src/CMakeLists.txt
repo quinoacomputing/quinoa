@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 17 Jan 2017 03:29:02 PM MST
+# \date      Wed 18 Jan 2017 07:58:35 AM MST
 #
 ################################################################################
 
@@ -97,8 +97,6 @@ get_mpi_compilers()
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
-message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -485,14 +483,17 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_PATH}
                     ${PSTREAMS_INCLUDE_PATH}
+                    ${H5PART_INCLUDE_DIR}
+                    ${Tut_INCLUDE_DIRS}
+                    ${BoostMPLCartesianProduct_INCLUDE_DIR}
                     ${PEGTL_INCLUDE_PATH}
                     ${RANDOM123_INCLUDE_PATH}
                     ${RNGSSE2_INCLUDES}
-                    ${H5Part_INCLUDE_DIRS}
                     ${LAPACKE_INCLUDE}
+                    ${Zoltan2_INCLUDE_DIRS}
+                    ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_DIR}/include
-                    ${TPL_DIR}/include/tut
-                    ${TPL_DIR}/charm/include
+                    ${CHARM_INCLUDE_DIR}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
