@@ -51,6 +51,7 @@ FIND_PROGRAM(CHARM_COMPILER
   charmc
   PATHS
   ${CHARM_ROOT}/bin
+  $ENV{CHARM_ROOT}/bin
   ${CYGWIN_INSTALL_PATH}/bin
 )
 
@@ -58,8 +59,11 @@ if(CHARM_COMPILER)
   _GET_CHARMINC(HINTS_CHARMINC ${CHARM_COMPILER})
 endif()
 
-FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h HINTS ${HINTS_CHARMINC} ${CHARM_ROOT}/include
-          PATH_SUFFIXES charm)
+FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
+                            HINTS ${HINTS_CHARMINC}
+                                  ${CHARM_ROOT}/include
+                                  $ENV{CHARM_ROOT}/include
+                            PATH_SUFFIXES charm)
 
 # handle the QUIETLY and REQUIRED arguments and set CHARM_FOUND to TRUE if 
 # all listed variables are TRUE

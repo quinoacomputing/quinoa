@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find Random123
-# \date      Wed 11 Jan 2017 12:15:51 PM MST
+# \date      Thu 19 Jan 2017 06:51:05 AM MST
 #
 ################################################################################
 
