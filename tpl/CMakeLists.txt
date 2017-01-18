@@ -377,8 +377,18 @@ else()
   set(tut "tut")
 endif()
 
+# Detect charm
+if(NOT NO_SYSTEM_CHARM)
+  find_package(CHARM)
+endif()
+if(CHARM_FOUND)
+  set(charm "")
+else()
+  set(charm "charm")
+endif()
+	
 # Output TPLs to be built
-message(STATUS "Will build: charm ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
