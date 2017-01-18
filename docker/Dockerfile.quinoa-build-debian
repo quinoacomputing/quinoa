@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Wed 18 Jan 2017 09:15:01 AM MST
+# \date      Wed 18 Jan 2017 10:34:27 AM MST
 #
 ################################################################################
 
@@ -37,7 +37,7 @@ ENV https_proxy https://proxyout.lanl.gov:8080/
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev
+RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev pegtl-dev libhdf5-dev libhdf5-openmpi-dev
 
 # Install our own OpenMPI as Zoltan2 fails with the system's openmpi (2.0.2)
 ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
