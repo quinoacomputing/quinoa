@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Wed 18 Jan 2017 02:54:44 PM MST
+# \date      Wed 18 Jan 2017 02:56:37 PM MST
 #
 ################################################################################
 
@@ -91,9 +91,6 @@ endif()
 
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
-
-message(STATUS "------------------------------------------")
-message(STATUS "Detecting third-party libraries (TPLs) ...")
 
 # Detect charm
 if(NOT NO_SYSTEM_CHARM)
@@ -414,11 +411,8 @@ else()
   set(tut "tut")
 endif()
 
-message(STATUS "Finished detecting TPLs")
-message(STATUS "------------------------------------------")
-
 # Output TPLs to be built
-message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} ${testu01} ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
