@@ -148,7 +148,7 @@ endmacro (add_compiler_flag)
 
 # Disallow undefined symbols in object files. Undefined symbols in shared
 # libraries are still allowed.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-z,defs")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
 
 # Macro to add C compiler flags
 macro (add_c_compiler_flag flag)
