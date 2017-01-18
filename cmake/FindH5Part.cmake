@@ -4,7 +4,7 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the H5Part library
-# \date      Mon 05 Dec 2016 09:02:53 AM MST
+# \date      Wed 18 Jan 2017 03:43:12 PM MST
 #
 ################################################################################
 
@@ -31,13 +31,16 @@ if (H5PART_INCLUDE_DIR AND H5PART_LIBRARY)
 endif()
 
 # Look for the header file
-FIND_PATH(H5PART_INCLUDE_DIR NAMES H5Part.h HINTS ${H5PART_ROOT}/include)
+FIND_PATH(H5PART_INCLUDE_DIR NAMES H5Part.h HINTS ${H5PART_ROOT}/include
+                                                  $ENV{H5PART_ROOT}/include)
 
 # Look for the library
 if(NOT BUILD_SHARED_LIBS)
-  FIND_LIBRARY(H5PART_LIBRARY NAMES libH5Part.a HINTS ${H5PART_ROOT}/lib)
+  FIND_LIBRARY(H5PART_LIBRARY NAMES libH5Part.a HINTS ${H5PART_ROOT}/lib
+                                                      $ENV{H5PART_ROOT}/lib)
 else()
-  FIND_LIBRARY(H5PART_LIBRARY NAMES H5Part HINTS ${H5PART_ROOT}/lib)
+  FIND_LIBRARY(H5PART_LIBRARY NAMES H5Part HINTS ${H5PART_ROOT}/lib
+                                                 $ENV{H5PART_ROOT}/lib)
 endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 

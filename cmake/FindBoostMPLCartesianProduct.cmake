@@ -4,11 +4,11 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the BoostMPLCartesianProduct header
-# \date      Mon 05 Dec 2016 14:21:53 AM MST
+# \date      Thu 19 Jan 2017 06:56:31 AM MST
 #
 ################################################################################
 
-# Find BoostMPLCartesianProduct headers and libraries
+# Find BoostMPLCartesianProduct headers
 #
 #  BoostMPLCartesianProduct_FOUND        - True if BoostMPLCartesianProduct is found
 #  BoostMPLCartesianProduct_INCLUDE_DIR  - BoostMPLCartesianProduct include files paths
@@ -30,7 +30,10 @@ if (BoostMPLCartesianProduct_INCLUDE_DIR)
 endif()
 
 # Look for the header file
-FIND_PATH(BoostMPLCartesianProduct_INCLUDE_DIR NAMES boost/mpl/cartesian_product.hpp HINTS ${BoostMPLCartesianProduct_ROOT}/include)
+FIND_PATH(BoostMPLCartesianProduct_INCLUDE_DIR
+          NAMES boost/mpl/cartesian_product.hpp
+          HINTS ${BoostMPLCartesianProduct_ROOT}/include
+                $ENV{BoostMPLCartesianProduct_ROOT})
 
 # Handle the QUIETLY and REQUIRED arguments and set BoostMPLCartesianProduct_FOUND to TRUE if 
 # all listed variables are TRUE

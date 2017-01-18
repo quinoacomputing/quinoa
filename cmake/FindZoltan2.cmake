@@ -4,7 +4,7 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Zoltan2 header
-# \date      Tue 17 Jan 2017 09:52:44 AM MST
+# \date      Wed 18 Jan 2017 04:05:24 PM MST
 #
 ################################################################################
 
@@ -33,17 +33,17 @@ endif()
 # Look for the header file
 FIND_PATH(Zoltan2_INCLUDE_DIR NAMES Zoltan2_PartitioningSolution.hpp
           PATH_SUFFIXES trilinos
-          HINTS ${Zoltan2_ROOT}/include)
+          HINTS ${Zoltan2_ROOT}/include $ENV{ZOLTAN2_ROOT}/include)
 
 # Look for the library
 if(NOT BUILD_SHARED_LIBS)
   FIND_LIBRARY(Zoltan2_LIBRARY NAMES libzoltan2.a libtrilinos_zoltan2.a
                PATH_SUFFIXES trilinos
-               HINTS ${Zoltan2_ROOT}/lib)
+               HINTS ${Zoltan2_ROOT}/lib $ENV{ZOLTAN2_ROOT}/lib)
 else()
   FIND_LIBRARY(Zoltan2_LIBRARY NAMES zoltan2 trilinos_zoltan2
                PATH_SUFFIXES trilinos
-               HINTS ${Zoltan2_ROOT}/lib)
+               HINTS ${Zoltan2_ROOT}/lib $ENV{ZOLTAN2_ROOT}/lib)
 endif()
 
 set(Zoltan2_LIBRARIES ${Zoltan2_LIBRARY} )
