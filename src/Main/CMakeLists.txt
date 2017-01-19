@@ -113,7 +113,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
-                      ${Zoltan2_LIBRARY}
+                      ${ZOLTAN2_LIBRARIES}
                       ${RNGSSE2_LIBRARY}
                       ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
