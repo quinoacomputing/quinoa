@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Wed 18 Jan 2017 03:02:00 PM MST
+# \date      Thu 19 Jan 2017 07:49:12 AM MST
 #
 ################################################################################
 
@@ -18,7 +18,6 @@ include(GNUInstallDirs)
 #### TPLs we attempt to find on the system #####################################
 
 message(STATUS "------------------------------------------")
-message(STATUS "Detecting third-party libraries (TPLs) ...")
 
 #### Charm++
 set(CHARM_ROOT ${TPL_DIR}/charm)
@@ -112,19 +111,10 @@ endif()
 
 #### Zoltan2 library
 find_package(Zoltan2 REQUIRED)
-if(Zoltan2_FOUND)
-  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARIES}")
-endif()
 
 #### ExodusII library
 find_package(SEACASExodus REQUIRED)
-if(SEACASExodus_FOUND)
-  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARIES}")
-endif()
 find_package(SEACASExodiff REQUIRED)
-if(SEACASExodiff_FOUND)
-  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_EXECUTABLE}")
-endif()
 
 #### H5Part library
 find_package(H5Part REQUIRED)
@@ -136,5 +126,4 @@ if(TestU01_FOUND AND NOT NO_TESTU01)
   set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
-message(STATUS "Finished detecting TPLs")
 message(STATUS "------------------------------------------")
