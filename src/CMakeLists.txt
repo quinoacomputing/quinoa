@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 19 Jan 2017 11:46:09 AM MST
+# \date      Thu 19 Jan 2017 11:46:41 AM MST
 #
 ################################################################################
 
@@ -81,7 +81,7 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-  if (EXISTS ${TPL_DIR})
+  if (EXISTS ${TPL_DIR}/include)
     set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
     message(STATUS "Third-party library dir: " ${TPL_DIR})
   endif()
