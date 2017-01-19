@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 19 Jan 2017 09:23:51 AM MST
+# \date      Thu 19 Jan 2017 11:51:05 AM MST
 #
 ################################################################################
 
@@ -394,6 +394,8 @@ include(TPLs)
 set(INCITER_EXECUTABLE inciter)
 if (HAS_TESTU01)
   set(RNGTEST_EXECUTABLE rngtest)
+  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
+  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
 endif()
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
@@ -473,7 +475,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/RNG
-                    ${QUINOA_SOURCE_DIR}/RNGTest
+                    ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
@@ -498,7 +500,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
+                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
