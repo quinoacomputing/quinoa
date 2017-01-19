@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 19 Jan 2017 07:29:07 AM MST
+# \date      Thu 19 Jan 2017 09:08:41 AM MST
 #
 ################################################################################
 
@@ -81,13 +81,10 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-endif()
-
-# Echo status on third-party libraries directory
-if (TPL_DIR)
-  MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
-else()
-  message(FATAL_ERROR "Third-party library dir '${TPL_DIR}' is not specified")
+  if (EXISTS ${TPL_DIR})
+    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+    message(STATUS "Third-party library dir: " ${TPL_DIR})
+  endif()
 endif()
 
 # Find MPI and get its underlying compilers
@@ -495,7 +492,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${LAPACKE_INCLUDE}
                     ${Zoltan2_INCLUDE_DIR}
                     ${SEACASExodus_INCLUDE_DIRS}
-                    ${TPL_DIR}/include
+                    ${TPL_INCLUDE_DIR}
                     ${CHARM_INCLUDE_DIR}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
