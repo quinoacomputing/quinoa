@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Mon 05 Dec 2016 08:03:33 AM MST
+# \date      Thu 19 Jan 2017 08:20:22 AM MST
 #
 ################################################################################
 
@@ -14,7 +14,6 @@
 #  MKL_INCLUDE_PATH - MKL include files path
 #  MKL_INTERFACE_LIBRARY - MKL interface library
 #  MKL_SEQUENTIAL_LAYER_LIBRARY - MKL sequential layer library
-#  MKL_THREADED_LAYER_LIBRARY - MKL threaded layer library
 #  MKL_CORE_LIBRARY - MKL core library
 #
 #  The environment variables MKLROOT and INTEL are used to find the library.
@@ -35,7 +34,6 @@
 if (MKL_INCLUDE_PATH AND
     MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
-    MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
   set (MKL_FIND_QUIETLY TRUE)
 endif()
@@ -68,13 +66,6 @@ find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-find_library(MKL_THREADED_LAYER_LIBRARY
-             NAMES ${THR_LIB}
-             PATHS $ENV{MKLROOT}/lib
-                   $ENV{MKLROOT}/lib/intel64
-                   $ENV{INTEL}/mkl/lib/intel64
-             NO_DEFAULT_PATH)
-
 find_library(MKL_CORE_LIBRARY
              NAMES ${COR_LIB}
              PATHS $ENV{MKLROOT}/lib
@@ -85,7 +76,6 @@ find_library(MKL_CORE_LIBRARY
 if (MKL_INCLUDE_PATH AND
     MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
-    MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
 
     if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
@@ -103,13 +93,12 @@ else()
   set(MKL_INCLUDE_PATH "")
   set(MKL_INTERFACE_LIBRARY "")
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
-  set(MKL_THREADED_LAYER_LIBRARY "")
   set(MKL_CORE_LIBRARY "")
 
 endif()
 
 set(MKL_LIBS ${MKL_INTERFACE_LIBRARY} ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-             ${MKL_THREADED_LAYER_LIBRARY} ${MKL_CORE_LIBRARY})
+             ${MKL_CORE_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if
 # all listed variables are TRUE.
@@ -119,6 +108,5 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBS MKL_INCLUDE_PATH)
 MARK_AS_ADVANCED(MKL_INCLUDE_PATH
                  MKL_INTERFACE_LIBRARY
                  MKL_SEQUENTIAL_LAYER_LIBRARY
-                 MKL_THREADED_LAYER_LIBRARY
                  MKL_CORE_LIBRARY
                  MKL_LIBS)
