@@ -146,58 +146,58 @@ endif()
 message(STATUS "Will build executable ${INCITER_EXECUTABLE}")
 
 ### RNGTest executable #########################################################
-add_executable(${RNGTEST_EXECUTABLE}
-               RNGTestDriver.C
-               RNGPrint.C
-               RNGTest.C
-)
+if (HAS_TESTU01)
+  add_executable(${RNGTEST_EXECUTABLE}
+                 RNGTestDriver.C
+                 RNGPrint.C
+                 RNGTest.C
+  )
 
-if(MPI_COMPILE_FLAGS)
-  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
-                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
-endif()
+  if(MPI_COMPILE_FLAGS)
+    set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
+                          COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+  endif()
 
-if(MPI_LINK_FLAGS)
-  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
-                        LINK_FLAGS "${MPI_LINK_FLAGS}")
-endif()
+  if(MPI_LINK_FLAGS)
+    set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
+                          LINK_FLAGS "${MPI_LINK_FLAGS}")
+  endif()
 
-# Conditionally enforce static linking
-if(NOT BUILD_SHARED_LIBS)
-  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
-endif()
+  # Conditionally enforce static linking
+  if(NOT BUILD_SHARED_LIBS)
+    set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
+  endif()
 
-target_link_libraries(${RNGTEST_EXECUTABLE}
-                      RNG
-                      RNGTest
-                      RNGTestControl
-                      Base
-                      ${TESTU01_LIBRARY}
-                      ${TESTU01_PROBDIST_LIBRARY}
-                      ${TESTU01_MYLIB_LIBRARY}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${RNGSSE2_LIBRARY}
-)
+  target_link_libraries(${RNGTEST_EXECUTABLE}
+                        RNG
+                        RNGTest
+                        RNGTestControl
+                        Base
+                        ${TESTU01_LIBRARIES}
+                        ${MKL_INTERFACE_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${RNGSSE2_LIBRARY}
+  )
 
-# Add custom dependencies for RNGTest's main Charm++ module
-addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
+  # Add custom dependencies for RNGTest's main Charm++ module
+  addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
 
-INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
-)
+  INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
+          RUNTIME DESTINATION bin COMPONENT Runtime
+          LIBRARY DESTINATION lib COMPONENT Runtime
+          ARCHIVE DESTINATION lib COMPONENT Development
+  )
 
-if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
-  add_custom_command(TARGET ${RNGTEST_EXECUTABLE} POST_BUILD
-                     COMMAND ${CMAKE_COMMAND} -E copy
-                             "${CMAKE_BINARY_DIR}/Main/charmrun"
-                             "${CMAKE_BINARY_DIR}/charmrun")
-endif()
+  if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    add_custom_command(TARGET ${RNGTEST_EXECUTABLE} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy
+                               "${CMAKE_BINARY_DIR}/Main/charmrun"
+                               "${CMAKE_BINARY_DIR}/charmrun")
+  endif()
 
-message(STATUS "Will build executable ${RNGTEST_EXECUTABLE}")
+  message(STATUS "Will build executable ${RNGTEST_EXECUTABLE}")
+endif(HAS_TESTU01)
 
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}

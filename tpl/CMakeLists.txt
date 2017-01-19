@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Wed 18 Jan 2017 07:58:01 AM MST
+# \date      Wed 18 Jan 2017 03:03:45 PM MST
 #
 ################################################################################
 
@@ -91,9 +91,6 @@ endif()
 
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
-
-message(STATUS "------------------------------------------")
-message(STATUS "Detecting third-party libraries (TPLs) ...")
 
 # Detect charm
 if(NOT NO_SYSTEM_CHARM)
@@ -372,6 +369,17 @@ else()
   set(h5part "h5part")
 endif()
 
+# Detect TestU01
+if(NOT NO_SYSTEM_TESTU01)
+  find_package(TestU01)
+endif()
+if(TestU01_FOUND OR NO_TESTU01)
+  set(testu01 "")
+else()
+  set(testu01 "testu01")
+endif()
+
+# Detect Trilinos
 if(NOT NO_SYSTEM_TRILINOS)
   find_package(Zoltan2)
   find_package(SEACASExodus)
@@ -403,11 +411,8 @@ else()
   set(tut "tut")
 endif()
 
-message(STATUS "Finished detecting TPLs")
-message(STATUS "------------------------------------------")
-
 # Output TPLs to be built
-message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} testu01 ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} ${testu01} ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -757,23 +762,24 @@ endif()
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
-ExternalProject_Add(
-  testu01
-  PREFIX testu01
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
-  CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-             ${testu01_shared_off_mac}
-             ${MACOSX_RPATH}
-             -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (testu01)
+  ExternalProject_Add(
+    testu01
+    PREFIX testu01
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+               ${MACOSX_RPATH}
+               -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### Boost ####################################################################
 # http://www.boost.org
