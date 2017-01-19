@@ -48,8 +48,8 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE2_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
                       ${H5PART_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -117,8 +117,8 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${RNGSSE2_LIBRARY}
                       ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
                       ${H5PART_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -175,8 +175,8 @@ if (HAS_TESTU01)
                         Base
                         ${TESTU01_LIBRARIES}
                         ${MKL_INTERFACE_LIBRARY}
-                        ${MKL_CORE_LIBRARY}
                         ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
                         ${RNGSSE2_LIBRARY}
   )
 
@@ -287,9 +287,8 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}   # only for static link
-                      ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
                       ${RNGSSE2_LIBRARY}
                       ${H5PART_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
