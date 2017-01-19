@@ -4,15 +4,15 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Zoltan2 header
-# \date      Wed 18 Jan 2017 04:05:24 PM MST
+# \date      Thu 19 Jan 2017 07:28:53 AM MST
 #
 ################################################################################
 
 # Find Zoltan2 headers and libraries
 #
 #  Zoltan2_FOUND        - True if Zoltan2 is found
-#  Zoltan2_INCLUDE_DIRS - Zoltan2 include files paths
-#  Zoltan2_LIBRARIES    - List of Zoltan2 libraries
+#  Zoltan2_INCLUDE_DIR - Zoltan2 include files paths
+#  Zoltan2_LIBRARY      - List of Zoltan2 libraries
 #
 #  Set Zoltan2_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
@@ -22,7 +22,7 @@
 #  set(Zoltan2_ROOT "/path/to/custom/boost/mpl") # prefer over system
 #  find_package(Zoltan2)
 #  if(Zoltan2_FOUND)
-#    target_link_libraries (TARGET ${Zoltan2_LIBRARIES})
+#    target_link_libraries (TARGET ${Zoltan2_LIBRARY})
 #  endif()
 
 # If already in cache, be silent
@@ -45,9 +45,6 @@ else()
                PATH_SUFFIXES trilinos
                HINTS ${Zoltan2_ROOT}/lib $ENV{ZOLTAN2_ROOT}/lib)
 endif()
-
-set(Zoltan2_LIBRARIES ${Zoltan2_LIBRARY} )
-set(Zoltan2_INCLUDE_DIRS ${Zoltan2_INCLUDE_DIR} )
 
 # Handle the QUIETLY and REQUIRED arguments and set Zoltan2_FOUND to TRUE if 
 # all listed variables are TRUE

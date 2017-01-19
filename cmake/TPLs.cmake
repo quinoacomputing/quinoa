@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Wed 18 Jan 2017 07:56:59 AM MST
+# \date      Wed 18 Jan 2017 03:02:00 PM MST
 #
 ################################################################################
 
@@ -77,9 +77,6 @@ set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 find_package(RNGSSE2)
 if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
-else()
-  set(RNGSSE2_INCLUDES)
-  set(RNGSSE2_LIBRARY "")
 endif()
 
 # Error out if not a single RNG library has been found
@@ -133,24 +130,11 @@ endif()
 find_package(H5Part REQUIRED)
 
 #### TestU01 library
-set(TESTU01_LIBRARY "NOTFOUND")
-find_library(TESTU01_LIBRARY
-             NAMES testu01
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-set(TESTU01_PROBDIST_LIBRARY "NOTFOUND")
-find_library(TESTU01_PROBDIST_LIBRARY
-             NAMES probdist
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-set(TESTU01_MYLIB_LIBRARY "NOTFOUND")
-find_library(TESTU01_MYLIB_LIBRARY
-             NAMES mylib
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
+set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
+find_package(TestU01)
+if(TestU01_FOUND AND NOT NO_TESTU01)
+  set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
+endif()
 
 message(STATUS "Finished detecting TPLs")
 message(STATUS "------------------------------------------")

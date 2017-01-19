@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Wed 18 Jan 2017 07:58:35 AM MST
+# \date      Thu 19 Jan 2017 07:29:07 AM MST
 #
 ################################################################################
 
@@ -135,30 +135,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
-
-# Set names of executables
-set(INCITER_EXECUTABLE inciter)
-set(RNGTEST_EXECUTABLE rngtest)
-set(MESHCONV_EXECUTABLE meshconv)
-set(WALKER_EXECUTABLE walker)
-set(UNITTEST_EXECUTABLE unittest)
-set(NUMDIFF_EXECUTABLE numdiff)
-
-# Create set of all executables tested. These are the executables that do
-# "interesting things", i.e., excluding unittest but keeping rngtest as that is
-# (to be) regression tested
-set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
-                        ${RNGTEST_EXECUTABLE}
-                        ${MESHCONV_EXECUTABLE}
-                        ${WALKER_EXECUTABLE})
-
-# Create set of all executables.
-set(EXECUTABLES ${INCITER_EXECUTABLE}
-                ${RNGTEST_EXECUTABLE}
-                ${MESHCONV_EXECUTABLE}
-                ${WALKER_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE}
-                ${NUMDIFF_EXECUTABLE})
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -417,6 +393,32 @@ include(ConfigureDataLayout)
 # Include third-party libraries configuration
 include(TPLs)
 
+# Set names of executables
+set(INCITER_EXECUTABLE inciter)
+if (HAS_TESTU01)
+  set(RNGTEST_EXECUTABLE rngtest)
+endif()
+set(MESHCONV_EXECUTABLE meshconv)
+set(WALKER_EXECUTABLE walker)
+set(UNITTEST_EXECUTABLE unittest)
+set(NUMDIFF_EXECUTABLE numdiff)
+
+# Create set of all executables tested. These are the executables that do
+# "interesting things", i.e., excluding unittest but keeping rngtest as that is
+# (to be) regression tested
+set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
+                        ${RNGTEST_EXECUTABLE}
+                        ${MESHCONV_EXECUTABLE}
+                        ${WALKER_EXECUTABLE})
+
+# Create set of all executables.
+set(EXECUTABLES ${INCITER_EXECUTABLE}
+                ${RNGTEST_EXECUTABLE}
+                ${MESHCONV_EXECUTABLE}
+                ${WALKER_EXECUTABLE}
+                ${UNITTEST_EXECUTABLE}
+                ${NUMDIFF_EXECUTABLE})
+
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
@@ -488,9 +490,10 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${BoostMPLCartesianProduct_INCLUDE_DIR}
                     ${PEGTL_INCLUDE_PATH}
                     ${RANDOM123_INCLUDE_PATH}
+                    ${TESTU01_INCLUDE_PATH}
                     ${RNGSSE2_INCLUDES}
                     ${LAPACKE_INCLUDE}
-                    ${Zoltan2_INCLUDE_DIRS}
+                    ${Zoltan2_INCLUDE_DIR}
                     ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_DIR}/include
                     ${CHARM_INCLUDE_DIR}
@@ -518,7 +521,9 @@ add_subdirectory(LinSys)
 add_subdirectory(IO)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)
-add_subdirectory(RNGTest)
+if (HAS_TESTU01)
+  add_subdirectory(RNGTest)
+endif()
 add_subdirectory(Statistics)
 add_subdirectory(Particles)
 
