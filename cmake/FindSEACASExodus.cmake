@@ -12,13 +12,13 @@
 #
 
 find_path(SEACASExodus_INCLUDE_DIR exodusII.h PATH_SUFFIXES trilinos
-          HINTS $ENV{EXODUS_ROOT}/include)
+          HINTS ${EXODUS_ROOT}/include $ENV{EXODUS_ROOT}/include)
 
 #v6.09 calls it libexodus
 #debian calls it libexoIIv2
 #other distros libexoIIv2c
 find_library(SEACASExodus_LIBRARY NAMES SEACASExodus exodus exoIIv2 exoIIv2c
-                                  HINTS $ENV{EXODUS_ROOT}/lib
+                                  HINTS ${EXODUS_ROOT}/bin $ENV{EXODUS_ROOT}/lib
                                   PATH_SUFFIXES trilinos)
 
 set(SEACASExodus_LIBRARIES ${SEACASExodus_LIBRARY})
