@@ -26,7 +26,7 @@ INCLUDE(FindCygwin)
 
 FIND_PROGRAM(SEACASExodiff_EXECUTABLE
   NAMES exodiff
-  PATHS ${CYGWIN_INSTALL_PATH}/bin $ENV{EXODUS_ROOT}/bin
+  PATHS ${CYGWIN_INSTALL_PATH}/bin ${EXODUS_ROOT}/bin $ENV{EXODUS_ROOT}/bin
 )
 
 # handle the QUIETLY and REQUIRED arguments and set SEACASExodiff_FOUND to TRUE if 
