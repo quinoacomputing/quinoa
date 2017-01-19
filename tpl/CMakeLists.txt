@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Wed 18 Jan 2017 03:03:45 PM MST
+# \date      Thu 19 Jan 2017 07:05:23 AM MST
 #
 ################################################################################
 
@@ -411,8 +411,16 @@ else()
   set(tut "tut")
 endif()
 
+set(tpls2build ${charm} ${trilinos} ${pegtl} ${random123} ${tut}
+${cartesian_product} ${rngsse2} ${testu01} ${h5part} ${hdf5} ${netcdf} ${blas}
+${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec})
+
 # Output TPLs to be built
-message(STATUS "Will build the following TPLs: ${charm} ${trilinos} ${pegtl} ${random123} ${tut} ${cartesian_product} ${rngsse2} ${testu01} ${h5part} ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+if (tpls2build)
+  message(STATUS "Will build the following TPLs: ${tpls2build}")
+else()
+  message(STATUS "All TPLs found. No need to build.")
+endif()
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
