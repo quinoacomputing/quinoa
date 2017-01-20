@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Thu 19 Jan 2017 07:05:23 AM MST
+# \date      Fri 20 Jan 2017 10:16:58 AM MST
 #
 ################################################################################
 
@@ -379,11 +379,12 @@ else()
   set(testu01 "testu01")
 endif()
 
-# Detect Trilinos
+# Detect Trilinos system-wide and on paths given by "<package>_DIR" cmake or
+# environment variables.
 if(NOT NO_SYSTEM_TRILINOS)
-  find_package(Zoltan2)
-  find_package(SEACASExodus)
-  find_package(SEACASExodiff)
+  find_package(Zoltan2 QUIET)
+  find_package(SEACASExodus QUIET)
+  find_package(SEACASExodiff QUIET)
 endif()
 if(Zoltan2_FOUND AND SEACASExodus_FOUND AND SEACASExodiff_FOUND)
   set(trilinos "")

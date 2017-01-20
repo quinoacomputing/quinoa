@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Thu 19 Jan 2017 10:30:50 AM MST
+# \date      Fri 20 Jan 2017 10:08:21 AM MST
 #
 ################################################################################
 
@@ -45,6 +45,8 @@ if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
+
+set(BoostMPLCartesianProduct_ROOT ${TPL_DIR}) # prefer ours
 find_package(BoostMPLCartesianProduct REQUIRED)
 
 #### TUT
@@ -110,16 +112,11 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 #### Zoltan2 library
-set(ZOLTAN2_ROOT ${TPL_DIR}) # prefer ours
 find_package(Zoltan2 REQUIRED)
 
 #### ExodusII library
-set(SEACASEXODUS_ROOT ${TPL_DIR}) # prefer ours
 find_package(SEACASExodus REQUIRED)
 find_package(SEACASExodiff REQUIRED)
-
-#### H5Part library
-find_package(H5Part REQUIRED)
 
 #### TestU01 library
 set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
