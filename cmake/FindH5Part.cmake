@@ -4,15 +4,15 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the H5Part library
-# \date      Wed 18 Jan 2017 03:43:12 PM MST
+# \date      Fri 20 Jan 2017 12:10:00 PM MST
 #
 ################################################################################
 
 # Find H5Part headers and libraries
 #
-#  H5PART_FOUND        - True if H5Part is found
-#  H5PART_INCLUDE_DIR  - H5Part include files paths
-#  H5PART_LIBRARY      - List of H5Part libraries
+#  H5Part_FOUND        - True if H5Part is found
+#  H5PART_INCLUDE_DIRS - H5Part include files paths
+#  H5PART_LIBRARIES    - List of H5Part libraries
 #
 #  Set H5PART_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
@@ -21,12 +21,12 @@
 #
 #  set(H5PART_ROOT "/path/to/custom/h5part") # prefer over system
 #  find_package(H5PART)
-#  if(H5PART_FOUND)
-#    target_link_libraries (TARGET ${H5PART_LIBRARY})
+#  if(H5Part_FOUND)
+#    target_link_libraries (TARGET ${H5PART_LIBRARIES})
 #  endif()
 
 # If already in cache, be silent
-if (H5PART_INCLUDE_DIR AND H5PART_LIBRARY)
+if (H5PART_INCLUDE_DIRS AND H5PART_LIBRARIES)
   set (H5Part_FIND_QUIETLY TRUE)
 endif()
 
@@ -43,9 +43,13 @@ else()
                                                  $ENV{H5PART_ROOT}/lib)
 endif()
 
-# Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 
+set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
+set(H5PART_LIBRARIES ${H5PART_LIBRARY})
+
+# Handle the QUIETLY and REQUIRED arguments and set H5Part_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(H5Part DEFAULT_MSG H5PART_INCLUDE_DIR H5PART_LIBRARY)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(H5Part DEFAULT_MSG H5PART_INCLUDE_DIRS
+                                  H5PART_LIBRARIES)
 
-MARK_AS_ADVANCED(H5PART_INCLUDE_DIR H5PART_LIBRARY)
+MARK_AS_ADVANCED(H5PART_INCLUDE_DIRS H5PART_LIBRARIES)
