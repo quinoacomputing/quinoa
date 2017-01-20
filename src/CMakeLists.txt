@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 20 Jan 2017 12:45:58 PM MST
+# \date      Fri 20 Jan 2017 12:59:53 PM MST
 #
 ################################################################################
 
@@ -480,7 +480,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
-                    ${MKL_INCLUDE_PATH}
+                    ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
                     ${PSTREAMS_INCLUDE_PATH}
