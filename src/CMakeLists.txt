@@ -28,6 +28,9 @@ set(MINOR_VER 1)
 # Set LA-CC number
 set(LACC "16015")
 
+# Sets CMAKE_INSTALL_{BIN,LIB}DIR needed for multilib support
+include(GNUInstallDirs)
+
 # Set CMAKE_BUILD_TYPE
 include(BuildType)
 
