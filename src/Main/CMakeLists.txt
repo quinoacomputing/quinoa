@@ -55,7 +55,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${AEC_LIBRARY}            # only for static link
+                      ${AEC_LIBRARIES}          # only for static link
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -124,7 +124,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${AEC_LIBRARY}            # only for static link
+                      ${AEC_LIBRARIES}          # only for static link
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -232,7 +232,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${AEC_LIBRARY}            # only for static link
+                      ${AEC_LIBRARIES}          # only for static link
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -295,7 +295,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${AEC_LIBRARY}            # only for static link
+                      ${AEC_LIBRARIES}          # only for static link
 )
 
 # Add custom dependencies for Walker's main Charm++ module
