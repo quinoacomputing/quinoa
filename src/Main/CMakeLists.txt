@@ -46,7 +46,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTestControl
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${RNGSSE2_LIBRARY}
+                      ${RNGSSE2_LIBRARIES}
                       ${MKL_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
@@ -112,7 +112,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
-                      ${RNGSSE2_LIBRARY}
+                      ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_LIBRARIES}
                       ${H5PART_LIBRARIES}
@@ -171,7 +171,7 @@ if (HAS_TESTU01)
                         Base
                         ${TESTU01_LIBRARIES}
                         ${MKL_LIBRARIES}
-                        ${RNGSSE2_LIBRARY}
+                        ${RNGSSE2_LIBRARIES}
   )
 
   # Add custom dependencies for RNGTest's main Charm++ module
@@ -281,7 +281,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_LIBRARIES}
-                      ${RNGSSE2_LIBRARY}
+                      ${RNGSSE2_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
