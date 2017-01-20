@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 20 Jan 2017 10:08:21 AM MST
+# \date      Fri 20 Jan 2017 11:10:32 AM MST
 #
 ################################################################################
 
@@ -116,7 +116,8 @@ find_package(Zoltan2 REQUIRED)
 
 #### ExodusII library
 find_package(SEACASExodus REQUIRED)
-find_package(SEACASExodiff REQUIRED)
+set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
+find_package(Exodiff REQUIRED)
 
 #### TestU01 library
 set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
