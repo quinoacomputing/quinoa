@@ -50,7 +50,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
-                      ${H5PART_LIBRARY}
+                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
@@ -119,7 +119,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
-                      ${H5PART_LIBRARY}
+                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
@@ -227,7 +227,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       Base
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${H5PART_LIBRARY}
+                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
@@ -290,7 +290,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${RNGSSE2_LIBRARY}
-                      ${H5PART_LIBRARY}
+                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${ZLIB_LIBRARIES}         # only for static link
