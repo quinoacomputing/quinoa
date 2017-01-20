@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Hypre library from LLNL
-# \date      Fri 20 Jan 2017 12:19:59 PM MST
+# \date      Fri 20 Jan 2017 12:28:14 PM MST
 #
 ################################################################################
 
@@ -46,7 +46,6 @@ set(HYPRE_LIBRARIES ${HYPRE_LIBRARY})
 # Handle the QUIETLY and REQUIRED arguments and set HYPRE_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Hypre DEFAULT_MSG HYPRE_LIBRARIES
-                                  HYPRE_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Hypre DEFAULT_MSG HYPRE_LIBRARIES HYPRE_INCLUDE_DIRS)
 
 MARK_AS_ADVANCED(HYPRE_INCLUDE_DIRS HYPRE_LIBRARIES)
