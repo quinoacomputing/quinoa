@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 20 Jan 2017 11:29:27 AM MST
+# \date      Fri 20 Jan 2017 11:42:46 AM MST
 #
 ################################################################################
 
@@ -495,7 +495,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${Zoltan2_INCLUDE_DIR}
                     ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_INCLUDE_DIR}
-                    ${CHARM_INCLUDE_DIR}
+                    ${CHARM_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules

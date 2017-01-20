@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 20 Jan 2017 11:07:04 AM MST
+# \date      Fri 20 Jan 2017 11:46:15 AM MST
 #
 ################################################################################
 
@@ -94,7 +94,7 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
 # Detect charm
 if(NOT NO_SYSTEM_CHARM)
-  find_package(CHARM)
+  find_package(Charm)
 endif()
 if(CHARM_FOUND)
   set(charm "")
@@ -393,10 +393,10 @@ else()
 endif()
 
 # Detect BoostMPLCartesianProduct
-if(NOT NO_SYSTEM_BoostMPLCartesianProduct)
-  find_package(BoostMPLCartesianProduct)
+if(NOT NO_SYSTEM_CARTESIAN_PRODUCT)
+  find_package(CartesianProduct)
 endif()
-if(BoostMPLCartesianProduct_FOUND)
+if(CARTESIAN_PRODUCT_FOUND)
   set(cartesian_product "")
 else()
   set(cartesian_product "cartesian_product")

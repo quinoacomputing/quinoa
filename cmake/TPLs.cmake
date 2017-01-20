@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 20 Jan 2017 11:30:17 AM MST
+# \date      Fri 20 Jan 2017 11:43:40 AM MST
 #
 ################################################################################
 
@@ -21,9 +21,9 @@ message(STATUS "------------------------------------------")
 
 #### Charm++
 set(CHARM_ROOT ${TPL_DIR}/charm)
-find_package(CHARM REQUIRED)
+find_package(Charm REQUIRED)
 message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
-message(STATUS "Charm++ include dir: " ${CHARM_INCLUDE_DIR})
+message(STATUS "Charm++ include directories: " ${CHARM_INCLUDE_DIRS})
 
 #### MKL (optional)
 find_package(MKL)

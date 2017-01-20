@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Adaptive Entropy Coding library
-# \date      Fri 20 Jan 2017 11:21:02 AM MST
+# \date      Fri 20 Jan 2017 11:42:11 AM MST
 #
 ################################################################################
 
@@ -42,8 +42,8 @@ endif()
 set(AEC_INCLUDE_DIRS ${AEC_INCLUDE})
 set(AEC_LIBRARIES ${AEC_LIBRARY})
 
-# Handle the QUIETLY and REQUIRED arguments and set AEC_FOUND to TRUE if
-# all listed variables are TRUE.
+# Handle the QUIETLY and REQUIRED arguments and set AEC_FOUND to TRUE if all
+# listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(AEC DEFAULT_MSG AEC_LIBRARIES AEC_INCLUDE_DIRS)
 
