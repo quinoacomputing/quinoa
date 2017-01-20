@@ -4,15 +4,15 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the RNGSSE2 library
-# \date      Wed 18 Jan 2017 02:31:55 PM MST
+# \date      Fri 20 Jan 2017 01:27:21 PM MST
 #
 ################################################################################
 
 # Find the RNGSSE2 library
 #
 #  RNGSSE2_FOUND - System has RNGSSE2
-#  RNGSSE2_INCLUDES - The RNGSSE2 include directory
-#  RNGSSE2_LIBRARY - The libraries needed to use RNGSSE2
+#  RNGSSE2_INCLUDE_DIRS - The RNGSSE2 include directories
+#  RNGSSE2_LIBRARIES - The libraries needed to use RNGSSE2
 #
 #  Set RNGSSE2_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
@@ -22,11 +22,11 @@
 #  set(RNGSSE2_ROOT "/path/to/custom/rngsse2") # prefer over system
 #  find_package(RNGSSE2)
 #  ifRNGSSE2_FOUND)
-#    target_link_libraries (TARGET ${RNGSSE2_LIBRARY})
+#    target_link_libraries (TARGET ${RNGSSE2_LIBRARIES})
 #  endif()
 
 # If already in cache, be silent
-if(RNGSSE2_INCLUDES AND RNGSSE2_LIBRARY)
+if(RNGSSE2_INCLUDE_DIRS AND RNGSSE2_LIBRARIES)
   set (RNGSSE2_FIND_QUIETLY TRUE)
 endif()
 
@@ -53,7 +53,7 @@ FIND_PATH(RNGSSE2_INCLUDE_LFSR113 NAMES lfsr113.h HINTS ${RNGSSE2_ROOT}/include
 FIND_PATH(RNGSSE2_INCLUDE_MRG32K3A NAMES mrg32k3a.h HINTS ${RNGSSE2_ROOT}/include
                                                   $ENV{RNGSSE2_ROOT}/include)
 
-set(RNGSSE2_INCLUDES ${RNGSSE2_INCLUDE_GM19}
+set(RNGSSE2_INCLUDE_DIRS ${RNGSSE2_INCLUDE_GM19}
                      ${RNGSSE2_INCLUDE_GM29}
                      ${RNGSSE2_INCLUDE_GM31}
                      ${RNGSSE2_INCLUDE_GM55}
@@ -65,7 +65,7 @@ set(RNGSSE2_INCLUDES ${RNGSSE2_INCLUDE_GM19}
                      ${RNGSSE2_INCLUDE_LFSR113}
                      ${RNGSSE2_INCLUDE_MRG32K3A})
 
-list(REMOVE_DUPLICATES RNGSSE2_INCLUDES)
+list(REMOVE_DUPLICATES RNGSSE2_INCLUDE_DIRS)
 
 if(NOT BUILD_SHARED_LIBS)
  find_library(RNGSSE2_LIBRARY NAMES librngsse.a HINTS ${RNGSSE2_ROOT}/lib
@@ -75,14 +75,16 @@ else()
                                                  $ENV{RNGSSE2_ROOT}/lib)
 endif()
 
+set(RNGSSE2_LIBRARIES ${RNGSSE2_LIBRARY})
+
 # Handle the QUIETLY and REQUIRED arguments and set RNGSSE2_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(RNGSSE2 DEFAULT_MSG RNGSSE2_LIBRARY RNGSSE2_INCLUDES)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(RNGSSE2 DEFAULT_MSG RNGSSE2_LIBRARIES RNGSSE2_INCLUDE_DIRS)
 
 if(NOT RNGSSE2_FOUND)
-  set(RNGSSE2_INCLUDES)
-  set(RNGSSE2_LIBRARY "")
+  set(RNGSSE2_INCLUDE_DIRS "")
+  set(RNGSSE2_LIBRARIES "")
 endif()
 
-MARK_AS_ADVANCED(RNGSSE2_INCLUDES RNGSSE2_LIBRARY)
+MARK_AS_ADVANCED(RNGSSE2_INCLUDE_DIRS RNGSSE2_LIBRARIES)
