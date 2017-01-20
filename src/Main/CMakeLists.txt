@@ -112,10 +112,10 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Particles
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${HYPRE_LIBRARY}
+                      ${HYPRE_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
                       ${RNGSSE2_LIBRARY}
-                      ${LAPACK_LIBRARIES}        # only if MKL not found
+                      ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
@@ -285,7 +285,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Base
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${LAPACK_LIBRARIES}        # only if MKL not found
+                      ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}

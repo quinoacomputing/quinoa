@@ -4,16 +4,15 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the C-interface to LAPACK as well as LAPACK/BLAS
-# \date      Thu 12 Jan 2017 09:00:29 AM MST
+# \date      Fri 20 Jan 2017 12:31:47 PM MST
 #
 ################################################################################
 
 # Find the C-interface to LAPACK as well as LAPACK/BLAS
 #
 #  LAPACKE_FOUND - System has LAPACKE as well as LAPACK/BLAS
-#  LAPACKE_INCLUDE - The LAPACKE include directory
-#  LAPACKE_LIBRARY - The libraries needed to use LAPACKE with dynamic linking
-#  LAPACK_LIBRARIES - The libraries required to link LAPACKE with static linking
+#  LAPACKE_INCLUDE_DIRS - The LAPACKE include directories
+#  LAPACKE_LIBRARIES - The libraries needed to use LAPACKE with dynamic linking
 #
 #  Set LAPACKE_ROOT before calling find_package to a path to add an additional
 #  search path, e.g.,
@@ -23,22 +22,21 @@
 #  set(LAPACKE_ROOT "/path/to/custom/lapacke") # prefer over system
 #  find_package(LAPACKE)
 #  if(LAPACKE_FOUND)
-#    target_link_libraries (TARGET ${LAPACKE_LIBRARY})
+#    target_link_libraries (TARGET ${LAPACKE_LIBRARIES})
 #  endif()
 
 # If already in cache, be silent
 if(NOT BUILD_SHARED_LIBS)
-  if(LAPACKE_LIBRARY AND LAPACK_LIBRARY AND BLAS_LIBRARY AND GFORTRAN_LIBRARY
-      AND QUADMATH_LIBRARY AND LAPACKE_INCLUDE)
+  if(LAPACKE_LIBRARIES AND LAPACKE_INCLUDE_DIRS)
     set (LAPACKE_FIND_QUIETLY TRUE)
   endif()
 else()
-  if(LAPACKE_LIBRARY AND LAPACKE_INCLUDE)
+  if(LAPACKE_LIBRARIES AND LAPACKE_INCLUDE_DIRS)
     set (LAPACKE_FIND_QUIETLY TRUE)
   endif()
 endif()
 
-find_path(LAPACKE_INCLUDE lapacke.h DOC "C-interface to LAPACK"
+find_path(LAPACKE_INCLUDE_DIR lapacke.h DOC "C-interface to LAPACK"
           HINTS ${LAPACKE_ROOT}/include $ENV{LAPACKE_ROOT}/include
           PATH_SUFFIXES lapack lapacke)
 
@@ -80,19 +78,12 @@ else()
                PATH_SUFFIXES lapack lapacke)
 endif()
 
-# Only for reporting on what is found
-set(LAPACK_LIBRARIES ${LAPACKE_LIBRARY} ${LAPACK_LIBRARY} ${BLAS_LIBRARY}
-                     ${GFORTRAN_LIBRARY} ${QUADMATH_LIBRARY})
-
-message(STATUS "LAPACK libraries: ${LAPACK_LIBRARIES}")
+set(LAPACKE_INCLUDE_DIRS ${LAPACKE_INCLUDE_DIR})
+set(LAPACKE_LIBRARIES ${LAPACKE_LIBRARY} ${LAPACK_LIBRARY} ${BLAS_LIBRARY} ${GFORTRAN_LIBRARY} ${QUADMATH_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set LAPACKE_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-if(NOT BUILD_SHARED_LIBS)
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARY LAPACK_LIBRARY BLAS_LIBRARY GFORTRAN_LIBRARY QUADMATH_LIBRARY LAPACKE_INCLUDE)
-else()
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARY LAPACKE_INCLUDE)
-endif()
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LAPACKE DEFAULT_MSG LAPACKE_LIBRARIES LAPACKE_INCLUDE_DIRS)
 
-MARK_AS_ADVANCED(LAPACKE_INCLUDE LAPACK_LIBRARIES)
+MARK_AS_ADVANCED(LAPACKE_INCLUDE_DIRS LAPACKE_LIBRARIES)

@@ -4,7 +4,7 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the H5Part library
-# \date      Fri 20 Jan 2017 12:16:53 PM MST
+# \date      Fri 20 Jan 2017 12:28:25 PM MST
 #
 ################################################################################
 
@@ -49,7 +49,6 @@ set(H5PART_LIBRARIES ${H5PART_LIBRARY})
 # Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(H5Part DEFAULT_MSG H5PART_INCLUDE_DIRS
-                                  H5PART_LIBRARIES)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(H5Part DEFAULT_MSG H5PART_INCLUDE_DIRS H5PART_LIBRARIES)
 
 MARK_AS_ADVANCED(H5PART_INCLUDE_DIRS H5PART_LIBRARIES)
