@@ -4,13 +4,13 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Cartesian Product header
-# \date      Fri 20 Jan 2017 11:55:29 AM MST
+# \date      Fri 20 Jan 2017 12:15:31 PM MST
 #
 ################################################################################
 
 # Find Boost MPL CartesianProduct headers
 #
-#  CartesianProduct_FOUND        - True if Cartesian Product is found
+#  CARTESIAN_PRODUCT_FOUND        - True if Cartesian Product is found
 #  CARTESIAN_PRODUCT_INCLUDE_DIRS - Cartesian Product include files paths
 #
 #  Set CARTESIAN_PRODUCT_ROOT before calling find_package to a path to
@@ -20,7 +20,7 @@
 #
 #  set(CARTESIAN_PRODUCT_ROOT "/path/to/custom/boost/mpl") # prefer over system
 #  find_package(CartesianProduct)
-#  if(CartesianProduct_FOUND)
+#  if(CARTESIAN_PRODUCT_FOUND)
 #    include_directories(${CARTESIAN_PRODUCT_INCLUDE_DIRS})
 #  endif()
 
@@ -37,7 +37,7 @@ FIND_PATH(CARTESIAN_PRODUCT_INCLUDE_DIR
 
 set(CARTESIAN_PRODUCT_INCLUDE_DIRS ${CARTESIAN_PRODUCT_INCLUDE_DIR})
 
-# Handle the QUIETLY and REQUIRED arguments and set CartesianProduct_FOUND to
+# Handle the QUIETLY and REQUIRED arguments and set CARTESIAN_PRODUCT_FOUND to
 # TRUE if all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(CartesianProduct DEFAULT_MSG

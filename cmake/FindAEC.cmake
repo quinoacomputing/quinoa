@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Adaptive Entropy Coding library
-# \date      Fri 20 Jan 2017 11:42:11 AM MST
+# \date      Fri 20 Jan 2017 12:18:02 PM MST
 #
 ################################################################################
 
@@ -31,7 +31,7 @@ if(AEC_INCLUDE_DIRS AND AEC_LIBRARY)
   set (AEC_FIND_QUIETLY TRUE)
 endif()
 
-find_path(AEC_INCLUDE NAMES szlib.h HINTS ${AEC_ROOT}/include)
+find_path(AEC_INCLUDE_DIR NAMES szlib.h HINTS ${AEC_ROOT}/include)
 
 if(NOT BUILD_SHARED_LIBS)
   find_library(AEC_LIBRARY NAMES libaec.a HINTS ${AEC_ROOT}/lib)
@@ -39,7 +39,7 @@ else()
   find_library(AEC_LIBRARY NAMES aec HINTS ${AEC_ROOT}/lib)
 endif()
 
-set(AEC_INCLUDE_DIRS ${AEC_INCLUDE})
+set(AEC_INCLUDE_DIRS ${AEC_INCLUDE_DIR})
 set(AEC_LIBRARIES ${AEC_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set AEC_FOUND to TRUE if all

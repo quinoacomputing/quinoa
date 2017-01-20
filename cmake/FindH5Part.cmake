@@ -4,13 +4,13 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the H5Part library
-# \date      Fri 20 Jan 2017 12:10:00 PM MST
+# \date      Fri 20 Jan 2017 12:16:53 PM MST
 #
 ################################################################################
 
 # Find H5Part headers and libraries
 #
-#  H5Part_FOUND        - True if H5Part is found
+#  H5PART_FOUND        - True if H5Part is found
 #  H5PART_INCLUDE_DIRS - H5Part include files paths
 #  H5PART_LIBRARIES    - List of H5Part libraries
 #
@@ -21,7 +21,7 @@
 #
 #  set(H5PART_ROOT "/path/to/custom/h5part") # prefer over system
 #  find_package(H5PART)
-#  if(H5Part_FOUND)
+#  if(H5PART_FOUND)
 #    target_link_libraries (TARGET ${H5PART_LIBRARIES})
 #  endif()
 
@@ -46,7 +46,7 @@ endif()
 set(H5PART_INCLUDE_DIRS ${H5PART_INCLUDE_DIR})
 set(H5PART_LIBRARIES ${H5PART_LIBRARY})
 
-# Handle the QUIETLY and REQUIRED arguments and set H5Part_FOUND to TRUE if 
+# Handle the QUIETLY and REQUIRED arguments and set H5PART_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(H5Part DEFAULT_MSG H5PART_INCLUDE_DIRS
