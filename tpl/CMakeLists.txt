@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 20 Jan 2017 11:46:15 AM MST
+# \date      Fri 20 Jan 2017 12:02:51 PM MST
 #
 ################################################################################
 
@@ -384,9 +384,9 @@ endif()
 if(NOT NO_SYSTEM_TRILINOS)
   find_package(Zoltan2 QUIET)
   find_package(SEACASExodus QUIET)
-  find_package(SEACASExodiff QUIET)
+  find_package(Exodiff QUIET)
 endif()
-if(Zoltan2_FOUND AND SEACASExodus_FOUND AND SEACASExodiff_FOUND)
+if(Zoltan2_FOUND AND SEACASExodus_FOUND AND Exodiff_FOUND)
   set(trilinos "")
 else()
   set(trilinos "trilinos")

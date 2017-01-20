@@ -4,13 +4,13 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Charm++
-# \date      Fri 20 Jan 2017 11:42:25 AM MST
+# \date      Fri 20 Jan 2017 11:54:34 AM MST
 #
 ################################################################################
 
 # Find Charm++
 #
-#  CHARM_FOUND        - True if the charmc compiler wrapper was found
+#  Charm_FOUND        - True if the charmc compiler wrapper was found
 #  CHARM_INCLUDE_DIRS - Charm++ include files paths
 #
 #  Set CHARM_ROOT before calling find_package to a path to add an additional
@@ -20,7 +20,7 @@
 #
 #  set(CHARM_ROOT "/path/to/custom/charm") # prefer over system
 #  find_package(Charm)
-#  if(CHARM_FOUND)
+#  if(Charm_FOUND)
 #    # Link executables with the charmc wrapper
 #    STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>" "${CHARM_COMPILER}"
 #           CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
@@ -64,10 +64,10 @@ FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
 
 set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
 
-# Handle the QUIETLY and REQUIRED arguments and set CHARM_FOUND to TRUE if all
+# Handle the QUIETLY and REQUIRED arguments and set Charm_FOUND to TRUE if all
 # listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(CHARM DEFAULT_MSG CHARM_COMPILER
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Charm DEFAULT_MSG CHARM_COMPILER
                                   CHARM_INCLUDE_DIRS)
 
 MARK_AS_ADVANCED(CHARM_COMPILER CHARM_INCLUDE_DIRS)
