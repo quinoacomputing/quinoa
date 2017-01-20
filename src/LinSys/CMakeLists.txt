@@ -33,7 +33,7 @@ add_dependencies( "linsysmergerCharmModule" "transporterCharmModule" )
 add_dependencies( "linsysmergerCharmModule" "carrierCharmModule" )
 
 INSTALL(TARGETS LinSys
-  	RUNTIME DESTINATION bin COMPONENT Runtime
-  	LIBRARY DESTINATION lib COMPONENT Runtime
- 	ARCHIVE DESTINATION lib COMPONENT Development
+  	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+  	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+ 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
