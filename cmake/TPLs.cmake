@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 20 Jan 2017 01:18:06 PM MST
+# \date      Fri 20 Jan 2017 01:31:49 PM MST
 #
 ################################################################################
 
@@ -48,8 +48,8 @@ set(CARTESIAN_PRODUCT_ROOT ${TPL_DIR}) # prefer ours
 find_package(CartesianProduct REQUIRED)
 
 #### TUT
-set(Tut_ROOT ${TPL_DIR}) # prefer ours
-find_package(Tut REQUIRED)
+set(TUT_ROOT ${TPL_DIR}) # prefer ours
+find_package(TUT REQUIRED)
 
 #### PStreams
 set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
