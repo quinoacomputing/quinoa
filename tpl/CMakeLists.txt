@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 20 Jan 2017 12:02:51 PM MST
+# \date      Sat 21 Jan 2017 02:58:20 PM MST
 #
 ################################################################################
 
@@ -288,7 +288,7 @@ endif()
 
 # Detect pugixml, exclude if found, build if not
 if(NOT NO_SYSTEM_PUGIXML)
-  find_package(pugixml)
+  find_package(Pugixml)
 endif()
 if(PUGIXML_FOUND)
   set(pugixml "")
@@ -402,11 +402,11 @@ else()
   set(cartesian_product "cartesian_product")
 endif()
 
-# Detect Tut
-if(NOT NO_SYSTEM_Tut)
-  find_package(Tut)
+# Detect Template Unit Test library
+if(NOT NO_SYSTEM_TUT)
+  find_package(TUT)
 endif()
-if(Tut_FOUND)
+if(TUT_FOUND)
   set(tut "")
 else()
   set(tut "tut")
