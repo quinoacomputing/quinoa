@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Sun 22 Jan 2017 04:00:42 PM MST
+# \date      Sun 22 Jan 2017 04:04:58 PM MST
 #
 ################################################################################
 
@@ -396,7 +396,7 @@ endif()
 if(NOT NO_SYSTEM_CARTESIAN_PRODUCT)
   find_package(CartesianProduct)
 endif()
-if(CARTESIAN_PRODUCT_FOUND)
+if(CARTESIANPRODUCT_FOUND)
   set(cartesian_product "")
 else()
   set(cartesian_product "cartesian_product")
