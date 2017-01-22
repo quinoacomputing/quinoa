@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Sat 21 Jan 2017 02:58:20 PM MST
+# \date      Sat 21 Jan 2017 06:09:30 PM MST
 #
 ################################################################################
 
@@ -155,7 +155,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
-  if (libc++_FOUND)
+  if (LIBCXX_FOUND)
     set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
@@ -181,7 +181,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
-  if (libc++_FOUND)
+  if (LIBCXX_FOUND)
     set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
