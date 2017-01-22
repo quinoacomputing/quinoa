@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Sat 21 Jan 2017 06:09:30 PM MST
+# \date      Sat 21 Jan 2017 06:19:58 PM MST
 #
 ################################################################################
 
@@ -416,9 +416,11 @@ set(tpls2build ${charm} ${trilinos} ${pegtl} ${random123} ${tut}
 ${cartesian_product} ${rngsse2} ${testu01} ${h5part} ${hdf5} ${netcdf} ${blas}
 ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec})
 
+list(LENGTH tpls2build ntpl)
+
 # Output TPLs to be built
 if (tpls2build)
-  message(STATUS "Will build the following TPLs: ${tpls2build}")
+  message(STATUS "Will build the following ${ntpl} TPLs: ${tpls2build}")
 else()
   message(STATUS "All TPLs found. No need to build.")
 endif()
