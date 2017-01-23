@@ -19,6 +19,8 @@ add_library(Base
 
 #addCharmModule( "msg" "Base" )
 
+set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)
+
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime

@@ -176,4 +176,4 @@ addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tool/src/ndiff
                  ${CMAKE_BINARY_DIR}/regression/ndiff)
 
-message(STATUS "Will build executable ${NUMDIFF_EXECUTABLE}")
+message(STATUS "Executable '${NUMDIFF_EXECUTABLE}' configured")
