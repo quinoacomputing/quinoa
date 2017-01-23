@@ -7,9 +7,9 @@ add_library(Particles
 )
 
 INSTALL(TARGETS Particles
-  	RUNTIME DESTINATION bin COMPONENT Runtime
-  	LIBRARY DESTINATION lib COMPONENT Runtime
- 	ARCHIVE DESTINATION lib COMPONENT Development
+  	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+  	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+ 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 # Add extra dependency of Particles on ParticleWriter charm module. This is
