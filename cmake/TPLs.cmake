@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Mon 23 Jan 2017 03:03:37 PM MST
+# \date      Mon 23 Jan 2017 03:09:27 PM MST
 #
 ################################################################################
 
@@ -86,7 +86,7 @@ if(NOT BUILD_SHARED_LIBS)
   set(HDF5_PREFER_PARALLEL true)
   set(HDF5_USE_STATIC_LIBRARIES true)
   find_package(HDF5 COMPONENTS C HL REQUIRED)
-  find_package(NetCDF)
+  find_package(NetCDF REQUIRED)
 else()
   set(HDF5_PREFER_PARALLEL true)
   find_package(HDF5 COMPONENTS C HL REQUIRED)
