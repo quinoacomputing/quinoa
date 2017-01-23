@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Mon 23 Jan 2017 09:20:27 AM MST
+# \date      Mon 23 Jan 2017 03:03:37 PM MST
 #
 ################################################################################
 
@@ -72,7 +72,7 @@ find_package(Random123 REQUIRED)
 #### RNGSSE2 library
 set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
 find_package(RNGSSE2)
-if(RNGSSE2_FOUND AND NOT NO_RNGSSE2)
+if(RNGSSE2_FOUND)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
@@ -85,11 +85,11 @@ endif()
 if(NOT BUILD_SHARED_LIBS)
   set(HDF5_PREFER_PARALLEL true)
   set(HDF5_USE_STATIC_LIBRARIES true)
-  find_package(HDF5 COMPONENTS C HL)
+  find_package(HDF5 COMPONENTS C HL REQUIRED)
   find_package(NetCDF)
 else()
   set(HDF5_PREFER_PARALLEL true)
-  find_package(HDF5 COMPONENTS C HL)
+  find_package(HDF5 COMPONENTS C HL REQUIRED)
 endif()
 
 #### H5Part
@@ -118,7 +118,7 @@ find_package(Exodiff REQUIRED)
 #### TestU01 library
 set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
 find_package(TestU01)
-if(TestU01_FOUND AND NOT NO_TESTU01)
+if(TestU01_FOUND)
   set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 

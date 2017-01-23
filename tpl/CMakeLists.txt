@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Mon 23 Jan 2017 09:16:50 AM MST
+# \date      Mon 23 Jan 2017 03:03:31 PM MST
 #
 ################################################################################
 
@@ -301,7 +301,7 @@ endif()
 
 # Do not attempt to build RNGSSE2 if target architecture is not x86
 find_package(RNGSSE2)
-if(RNGSSE2_FOUND OR NOT ARCH MATCHES "x86" OR NO_RNGSSE2)
+if(RNGSSE2_FOUND OR NOT ARCH MATCHES "x86")
   set(rngsse2 "")
 else()
   set(rngsse2 "rngsse2")
