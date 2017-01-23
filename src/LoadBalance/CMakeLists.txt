@@ -13,6 +13,9 @@ add_library(LoadBalance
 addCharmModule( "linearmap" "LoadBalance" )
 addCharmModule( "unsmeshmap" "LoadBalance" )
 
+set_target_properties(LoadBalance PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_loadbalance)
+
 INSTALL(TARGETS LoadBalance
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime

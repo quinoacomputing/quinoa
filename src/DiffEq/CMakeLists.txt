@@ -6,6 +6,8 @@ add_library(DiffEq
             DiffEqStack.C
 )
 
+set_target_properties(DiffEq PROPERTIES LIBRARY_OUTPUT_NAME quinoa_diffeq)
+
 INSTALL(TARGETS DiffEq
   	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
   	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime

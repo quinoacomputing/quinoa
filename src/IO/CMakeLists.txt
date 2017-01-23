@@ -9,6 +9,8 @@ add_library(IO
             H5PartWriter.C
 )
 
+set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
+
 INSTALL(TARGETS IO
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
@@ -27,6 +29,8 @@ add_library(MeshIO
             ExodusIIMeshWriter.C
             #SiloWriter.C
 )
+
+set_target_properties(MeshIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_meshio)
 
 INSTALL(TARGETS MeshIO
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
@@ -47,6 +51,8 @@ addCharmModule( "particlewriter" "AsyncIO" )
 # so that transporter.decl.h and transporter.def.h are generated before AsyncIO
 # including those.
 add_dependencies( "AsyncIO" "transporterCharmModule" )
+
+set_target_properties(AsyncIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_asyncio)
 
 INSTALL(TARGETS AsyncIO
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
