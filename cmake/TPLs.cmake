@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 20 Jan 2017 01:31:49 PM MST
+# \date      Mon 23 Jan 2017 09:20:27 AM MST
 #
 ################################################################################
 
@@ -35,10 +35,8 @@ if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
 endif()
 
 #### Boost
-if(NOT NO_SYSTEM_BOOST)
-  set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
-  find_package(Boost REQUIRED)
-endif()
+set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
+find_package(Boost REQUIRED)
 if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
