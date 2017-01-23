@@ -30,7 +30,7 @@ add_dependencies( "tutsuiteCharmModule" "linearmapCharmModule" )
 add_dependencies( "tutsuiteCharmModule" "unsmeshmapCharmModule" )
 
 INSTALL(TARGETS UnitTest
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
