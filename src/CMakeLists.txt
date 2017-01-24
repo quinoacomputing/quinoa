@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 20 Jan 2017 01:31:39 PM MST
+# \date      Wed 25 Jan 2017 06:31:58 AM MST
 #
 ################################################################################
 
@@ -250,7 +250,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
   add_compiler_flag("-Wremarks") # display remarks and comments
-  add_compiler_flag("-gcc-sys")  # only define GNU macros during compileation of system headers
+  add_compiler_flag("-gcc-sys")  # only define GNU macros during compilation of system headers
 
   # Globally suppress the following Intel compiler remarks:
   #    68: integer conversion resulted in a change of sign
