@@ -36,7 +36,10 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
-                      ${MKL_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -75,7 +78,10 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${Zoltan2_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
-                      ${MKL_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -104,7 +110,10 @@ if (HAS_TESTU01)
                         RNGTestControl
                         Base
                         ${TESTU01_LIBRARIES}
-                        ${MKL_LIBRARIES}
+                        ${MKL_INTERFACE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                        ${MKL_CORE_LIBRARY}
+                        ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                         ${RNGSSE2_LIBRARIES}
   )
 
@@ -159,7 +168,10 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
-                      ${MKL_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE2_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
