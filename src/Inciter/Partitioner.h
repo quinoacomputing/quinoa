@@ -265,9 +265,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           m_ch[p].insert( c.first );
       // Flatten node IDs of elements our chares operate on
       for (const auto& c : m_node)
-        m_id.insert( end(m_id), begin(c.second), end(c.second) );
-      // Make node IDs unique, these need reordering on our PE
-      tk::unique( m_id );
+        std::copy( begin(c.second), end(c.second),
+                   std::inserter( m_id, end(m_id) ) );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.peflattened();
@@ -308,17 +307,19 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   callers. This also results in a simpler logic, because every PE goes
     //!   through this single call path. The returned mask is simply a boolean
     //!   array signaling if the node ID is found (owned).
-    void query( int p, const std::vector< std::size_t >& id ) {
+    void query( int p, const std::set< std::size_t >& id ) {
       std::vector< int > own( id.size(), 0 );
       std::vector< std::unordered_set< int > > ch( id.size() );
-      for (std::size_t i=0; i<id.size(); ++i)
-        for (auto j : m_id)
-          if (j == id[i]) {
-            own[i] = 1;
-            auto& c = tk::cref_find( m_ch, id[i] );
-            ch[i].insert( begin(c), end(c) );
-            break;
-          }
+      std::size_t i = 0;
+      for (auto j : id) {
+        const auto it = m_id.find( j );
+        if (it != end(m_id)) {
+          own[i] = 1;
+          auto& c = tk::cref_find( m_ch, j );
+          ch[i].insert( begin(c), end(c) );
+        }
+        ++i;
+      }
       Group::thisProxy[ p ].mask( CkMyPe(), own, ch );
     }
 
@@ -340,15 +341,18 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Store the old global mesh node IDs associated to chare IDs bordering
       // the mesh chunk held by and associated to chare IDs we own
       Assert( rec.size() == ch.size(), "Size mismatch" );
-      for (std::size_t i=0; i<rec.size(); ++i)
+      std::size_t i = 0;
+      for (auto j : m_id) {
         if (rec[i]) {
-          const auto& chares = tk::ref_find( m_ch, m_id[i] );
+          const auto& chares = tk::ref_find( m_ch, j );
           for (auto c : chares) {           // surrounded chares
             auto& sch = m_msum[c];
             for (auto s : ch[i])            // surrounding chares
-              if (s != c) sch[s].push_back( m_id[i] );
+              if (s != c) sch[s].push_back( j );
           }
         }
+        ++i;
+      }
       // Associate global mesh node IDs to lower PEs we will need to receive
       // from during node reordering. The choice of associated container is
       // std::map, which is ordered (vs. unordered, hash-map). This is required
@@ -358,8 +362,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // keeping only the lowest PEs a node ID is associated with.)
       if (p < CkMyPe()) {
         auto& id = m_comm[ p ];
-        for (std::size_t i=0; i<rec.size(); ++i)
-          if (rec[i]) id.insert( m_id[i] );
+        i = 0;
+        for (auto j : m_id) {
+          if (rec[i]) id.insert( j );
+          ++i;
+        }
       }
       if (++m_nquery == static_cast<std::size_t>(CkNumPes())) {
         // Make sure we have received all we need
@@ -371,11 +378,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // lowest possible PEs
         for (auto c=begin(m_comm); c!=end(m_comm); ++c) {
           auto& u = m_communication[ c->first ];
-          for (auto i : c->second)
+          for (auto j : c->second)
             if (std::none_of( begin(m_comm), c,
-                 [i](const typename decltype(m_comm)::value_type& s)
-                 { return s.second.find(i) != end(s.second); } )) {
-              u.insert(i);
+                 [j](const typename decltype(m_comm)::value_type& s)
+                 { return s.second.find(j) != end(s.second); } )) {
+              u.insert(j);
             }
           if (u.empty()) m_communication.erase( c->first );
         }
@@ -445,7 +452,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::unordered_map< int, std::set< std::size_t > > m_communication;
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
-    std::vector< std::size_t > m_id;
+    std::set< std::size_t > m_id;
     //! \brief Map associating new node IDs (as in producing contiguous-row-id
     //!   linear system contributions) to old node IDs (as in file)
     std::unordered_map< std::size_t, std::size_t > m_newid;
@@ -722,7 +729,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         }
       // Update unique global node IDs of chares our PE will contribute to the
       // new IDs resulting from reordering
-      for (auto& p : m_id) p = tk::cref_find( m_newid, p );
+      std::vector< std::size_t > n( m_id.size() );
+      std::size_t i = 0;
+      for (auto p : m_id) n[i++] = tk::cref_find( m_newid, p );
+      m_id.clear();
+      std::copy( begin(n), end(n), std::inserter(m_id, end(m_id)) );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.pereordered();
