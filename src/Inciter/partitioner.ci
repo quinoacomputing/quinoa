@@ -44,7 +44,7 @@ module partitioner {
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe, const std::vector< std::size_t >& low );
+      entry void query( int pe, const std::set< std::size_t >& low );
       entry void mask( int pe,
                        const std::vector< int >& rec,
                        const std::vector< std::unordered_set< int > >& ch );
