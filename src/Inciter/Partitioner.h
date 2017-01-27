@@ -152,7 +152,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_comm(),
       m_communication(),
       m_id(),
-      m_sid(),
       m_newid(),
       m_chcid(),
       m_cost( 0.0 ),
@@ -269,8 +268,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         m_id.insert( end(m_id), begin(c.second), end(c.second) );
       // Make node IDs unique, these need reordering on our PE
       tk::unique( m_id );
-      // Store mesh node IDs in hash-set
-      std::copy( begin(m_id), end(m_id), std::inserter(m_sid,end(m_sid)) );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.peflattened();
@@ -314,14 +311,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void query( int p, const std::vector< std::size_t >& id ) {
       std::vector< int > own( id.size(), 0 );
       std::vector< std::unordered_set< int > > ch( id.size() );
-      for (std::size_t i=0; i<id.size(); ++i) {
-        const auto it = m_sid.find( id[i] );
-        if (it != end(m_sid)) {
-          own[i] = 1;
-          auto& c = tk::cref_find( m_ch, id[i] );
-          ch[i].insert( begin(c), end(c) );
-        }
-      }
+      for (std::size_t i=0; i<id.size(); ++i)
+        for (auto j : m_id)
+          if (j == id[i]) {
+            own[i] = 1;
+            auto& c = tk::cref_find( m_ch, id[i] );
+            ch[i].insert( begin(c), end(c) );
+            break;
+          }
       Group::thisProxy[ p ].mask( CkMyPe(), own, ch );
     }
 
@@ -389,7 +386,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
           m_host.pemask();
         // Start computing PE offsets for node reordering
-        Group::thisProxy.offset( CkMyPe(), m_sid.size()-nrecv );
+        Group::thisProxy.offset( CkMyPe(), m_id.size()-nrecv );
       }
     }
 
@@ -449,13 +446,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::vector< std::size_t > m_id;
-    //! \brief Global mesh node IDs associated in hash set
-    //! \details These are the same global mesh node IDs as stored in m_id,
-    //!   corresponding to the mesh ordering read from file, i.e., not yet
-    //!   reordered. They are stored in a hash-set to enable constant-in-time
-    //!   search needed by computing the communication maps required for
-    //!   distributed reordering.
-    std::unordered_set< std::size_t > m_sid;
     //! \brief Map associating new node IDs (as in producing contiguous-row-id
     //!   linear system contributions) to old node IDs (as in file)
     std::unordered_map< std::size_t, std::size_t > m_newid;
@@ -667,7 +657,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // if we are to assign a new ID to a node ID, and if so, we assign new ID,
       // i.e., reorder, by constructing a map associating new to old IDs. We
       // also count up the reordered nodes.
-      for (const auto& p : m_id) if (own(p)) m_newid[ p ] = m_start++;
+      for (auto p : m_id) if (own(p)) m_newid[ p ] = m_start++;
       // Trigger SDAG wait, indicating that reordering own node IDs are complete
       reorderowned_complete();
       // If we have reordered all our nodes, compute and send result to host
