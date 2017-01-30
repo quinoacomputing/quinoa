@@ -189,6 +189,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
               "not equal the number of mesh graph elements" );
       // Construct global mesh node ids for each chare and distribute
       distribute( chareNodes(che) );
+      // Free storage of element connectivity, element centroids, and element
+      // IDs as they are no longer needed after the mesh partitioning.
+      tk::destroy( m_tetinpoel );
+      tk::destroy( m_gelemid );
+      tk::destroy( m_centroid );
     }
 
     //! Receive number of uniquely assigned global mesh node IDs from lower PEs
@@ -386,6 +391,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             }
           if (u.empty()) m_communication.erase( c->first );
         }
+        // Free storage of temporary communication map used to receive global
+        // mesh node IDs as it is no longer needed once the final communication
+        // map is generated.
+        tk::destroy( m_comm );
         // Count up total number of nodes we will need receive during reordering
         std::size_t nrecv = 0;
         for (const auto& u : m_communication) nrecv += u.second.size();
@@ -706,6 +715,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   PEs have been reordered (and we contribute to) and we are ready (on
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
+      // Free storage of communication map used for distributed mesh node
+      // reordering as it is no longer needed after reordering.
+      tk::destroy( m_communication );
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
       // associated to chare IDs (outer key). This is basically the inverse of
@@ -727,13 +739,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           for (auto& p : s.second) p = tk::cref_find( m_newid, p );
           std::sort( begin(s.second), end(s.second) );
         }
-      // Update unique global node IDs of chares our PE will contribute to the
-      // new IDs resulting from reordering
-      std::vector< std::size_t > n( m_id.size() );
-      std::size_t i = 0;
-      for (auto p : m_id) n[i++] = tk::cref_find( m_newid, p );
-      m_id.clear();
-      std::copy( begin(n), end(n), std::inserter(m_id, end(m_id)) );
+      // Update unique global node IDs of chares our PE will contribute to to
+      // now contain the new IDs resulting from reordering
+      decltype(m_id) nid;
+      for (auto p : m_id) nid.insert( tk::cref_find( m_newid, p ) );
+      m_id = std::move( nid );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.pereordered();
@@ -821,12 +831,25 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 CkMyPe() );
       }
       m_worker.doneInserting();
+      // Free storage of global mesh node ids associated to chares owned as it
+      // is no longer needed after creating the workers.
+      tk::destroy( m_node );
+      // Free maps associating old node IDs to new node IDs categorized by
+      // chares as it is no longer needed after creating the workers.
+      tk::destroy( m_chcid );
+      // Free storage of map associating a set of chare IDs to old global mesh
+      // node IDs as it is no longer needed after creating the workers.
+      tk::destroy( m_ch );
+      // Free storage of global mesh node IDs associated to chare IDs bordering
+      // the mesh chunk held by and associated to chare IDs we own as it is no
+      // longer needed after creating the workers.
+      tk::destroy( m_msum );
     }
 
     //! Compute communication cost of linear system merging for our PE
     //! \param[in] l Lower global row ID of linear system this PE works on
     //! \param[in] u Upper global row ID of linear system this PE works on
-    //! \return Communicatoin cost of merging the linear system for our PE
+    //! \return Communication cost of merging the linear system for our PE
     //! \details The cost is a real number between 0 and 1, defined as the
     //!   number of mesh points we do not own, i.e., need to send to some other
     //!   PE, divided by the total number of points we contribute to. The lower
@@ -834,6 +857,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     tk::real cost( std::size_t l, std::size_t u ) {
       std::size_t ownpts = 0, compts = 0;
       for (auto p : m_id) if (p >= l && p < u) ++ownpts; else ++compts;
+      // Free storage of unique global node IDs chares on our PE will contribute
+      // to in a linear system as it is no longer needed after computing the
+      // communication cost.
+      tk::destroy( m_id );
       return static_cast<tk::real>(compts) /
              static_cast<tk::real>(ownpts + compts);
     }
