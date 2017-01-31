@@ -702,8 +702,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         Group::thisProxy[ r.first ].neworder( n );
         n.clear();
       }
-      m_req.clear();    // Clear queue of requests just fulfilled
-      wait4prep();      // Re-enable SDAG wait for preparing new node requests
+      tk::destroy(m_req); // Clear queue of requests just fulfilled
+      wait4prep();        // Re-enable SDAG wait for preparing new node requests
       // Re-enable trigger signaling that reordering of owned node IDs are
       // complete right away
       reorderowned_complete();
