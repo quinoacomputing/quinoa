@@ -71,6 +71,7 @@
 #include "ContainerUtil.h"
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Options/PartitioningAlgorithm.h"
 #include "LinSysMerger.h"
 
 namespace inciter {
@@ -165,8 +166,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // If a geometric partitioner is selected, compute element centroid
       // coordinates
       const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
-      if ( alg == tk::ctr::PartitioningAlgorithmType::RCB ||
-           alg == tk::ctr::PartitioningAlgorithmType::RIB )
+      if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
         computeCentroids( er );
       else
         signal2host_setup_complete( m_host );

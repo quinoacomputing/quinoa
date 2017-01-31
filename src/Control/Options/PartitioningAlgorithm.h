@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PartitioningAlgorithm.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:57:11 AM MST
+  \date      Tue 31 Jan 2017 08:58:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh partitioning algorithm options
   \details   Mesh partitioning algorithm options
@@ -26,6 +26,8 @@ namespace ctr {
 //! \author J. Bakosi
 enum class PartitioningAlgorithmType : uint8_t { RCB,
                                                  RIB,
+                                                 HSFC,
+                                                 MJ,
                                                  PHG };
 
 //! \brief Pack/Unpack PartitioningAlgorithmType: forward overload to generic
@@ -46,6 +48,8 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
     //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::rcb
                                        , kw::rib
+                                       , kw::hsfc
+                                       , kw::mj
                                        , kw::phg
                                        >;
 
@@ -60,10 +64,14 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
         //! Enums -> names
         { { PartitioningAlgorithmType::RCB, kw::rcb::name() },
           { PartitioningAlgorithmType::RIB, kw::rib::name() },
+          { PartitioningAlgorithmType::HSFC, kw::hsfc::name() },
+          { PartitioningAlgorithmType::MJ, kw::mj::name() },
           { PartitioningAlgorithmType::PHG, kw::phg::name() } },
         //! keywords -> Enums
         { { kw::rcb::string(), PartitioningAlgorithmType::RCB },
           { kw::rib::string(), PartitioningAlgorithmType::RIB },
+          { kw::hsfc::string(), PartitioningAlgorithmType::HSFC },
+          { kw::mj::string(), PartitioningAlgorithmType::MJ },
           { kw::phg::string(), PartitioningAlgorithmType::PHG } } ) {}
 
     //! \brief Return parameter based on Enum
@@ -81,11 +89,27 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
       return it->second;
     }
 
+    // Return true if partitioning algorithm is geometric
+    //! \param[in] m Enum value of the option requested
+    //! \return True if partitioning algorithm is geometric, false if it is not
+    //! \author J. Bakosi
+    bool geometric( PartitioningAlgorithmType m ) const {
+      if ( m == PartitioningAlgorithmType::RCB ||
+           m == PartitioningAlgorithmType::RIB ||
+           m == PartitioningAlgorithmType::HSFC ||
+           m == PartitioningAlgorithmType::MJ )
+        return true;
+      else
+       return false;
+    }
+
   private:
     //! Enums -> Zoltan partitioning algorithm parameters
     std::map< PartitioningAlgorithmType, ParamType > method {
       { PartitioningAlgorithmType::RCB, "rcb" },
       { PartitioningAlgorithmType::RIB, "rib" },
+      { PartitioningAlgorithmType::HSFC, "hsfc" },
+      { PartitioningAlgorithmType::MJ, "multijagged" },
       { PartitioningAlgorithmType::PHG, "phg" }
     };
 };
