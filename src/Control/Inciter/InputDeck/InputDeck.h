@@ -70,6 +70,7 @@ class InputDeck :
                                        kw::algorithm,
                                        kw::rcb,
                                        kw::rib,
+                                       kw::hsfc,
                                        kw::phg,
                                        kw::inciter >;
     using keywords2 = boost::mpl::set< kw::ncomp,
@@ -108,6 +109,7 @@ class InputDeck :
                                        kw::laplace,
                                        kw::ctau,
                                        kw::cfl,
+                                       kw::mj,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
