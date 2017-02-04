@@ -313,42 +313,38 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   through this single call path. The returned mask is simply a boolean
     //!   array signaling if the node ID is found (owned).
     void query( int p, const std::set< std::size_t >& id ) {
-      std::vector< int > own( id.size(), 0 );
       std::vector< std::unordered_set< int > > ch( id.size() );
       std::size_t i = 0;
       for (auto j : id) {
         const auto it = m_id.find( j );
         if (it != end(m_id)) {
-          own[i] = 1;
           auto& c = tk::cref_find( m_ch, j );
           ch[i].insert( begin(c), end(c) );
         }
         ++i;
       }
-      Group::thisProxy[ p ].mask( CkMyPe(), own, ch );
+      Group::thisProxy[ p ].mask( CkMyPe(), ch );
     }
 
     //! Receive mask of to-be-received global mesh node IDs
-    //! \param[in] p The PE uniquely assigns the node IDs marked by 1 in rec
-    //! \param[in] rec Mask vector containing 1 if the pe owns the node ID, 0 if
-    //!   it does not
+    //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
     //! \param[in] ch Vector containing the set of potentially multiple chare
-    //!   IDs that own (i.e., contribute to) the node IDs (same size as rec)
+    //!   IDs that we own (i.e., contribute to) the node IDs. Note that the size
+    //!   of this vector is the same as that of m_id (see assert), but may
+    //!   contain empty sets. If a set is empty, that means that the sender did
+    //!   not have global node IDs to offer.
     //! \details Note that every PE will call this function, since query() was
     //!   called in a broadcast fashion and query() answers to every PE once.
     //!   This is more efficient than calling only the PEs from which we would
     //!   have to receive results from. Thus the incoming results are only
     //!   interesting from PEs with lower IDs than ours.
-    void mask( int p,
-               const std::vector< int >& rec,
-               const std::vector< std::unordered_set< int > >& ch )
-    {
+    void mask( int p, const std::vector< std::unordered_set< int > >& ch ) {
       // Store the old global mesh node IDs associated to chare IDs bordering
       // the mesh chunk held by and associated to chare IDs we own
-      Assert( rec.size() == ch.size(), "Size mismatch" );
+      Assert( m_id.size() == ch.size(), "Size mismatch" );
       std::size_t i = 0;
       for (auto j : m_id) {
-        if (rec[i]) {
+        if (!ch[i].empty()) {
           const auto& chares = tk::ref_find( m_ch, j );
           for (auto c : chares) {           // surrounded chares
             auto& sch = m_msum[c];
@@ -366,12 +362,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // to collect from all PEs and then we need to make the node IDs unique,
       // keeping only the lowest PEs a node ID is associated with.)
       if (p < CkMyPe()) {
-        auto& id = m_comm[ p ];
         i = 0;
-        for (auto j : m_id) {
-          if (rec[i]) id.insert( j );
-          ++i;
-        }
+        auto& id = m_comm[ p ];
+        for (auto j : m_id) if (!ch[i++].empty()) id.insert( j );
       }
       if (++m_nquery == static_cast<std::size_t>(CkNumPes())) {
         // Make sure we have received all we need
