@@ -693,7 +693,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         std::unordered_map< std::size_t, std::size_t > n;
         for (auto p : r.second) n[ p ] = tk::cref_find( m_newid, p );
         Group::thisProxy[ r.first ].neworder( n );
-        n.clear();
+        tk::destroy( n );
       }
       tk::destroy(m_req); // Clear queue of requests just fulfilled
       wait4prep();        // Re-enable SDAG wait for preparing new node requests
