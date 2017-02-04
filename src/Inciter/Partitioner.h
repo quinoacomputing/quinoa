@@ -737,6 +737,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       decltype(m_id) nid;
       for (auto p : m_id) nid.insert( tk::cref_find( m_newid, p ) );
       m_id = std::move( nid );
+      tk::destroy( nid );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.pereordered();
