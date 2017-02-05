@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 07:46:54 AM MST
+  \date      Sun 05 Feb 2017 05:56:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -220,7 +220,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Request new global node IDs for old node IDs
     //! \param[in] p PE request coming from and to which we send new IDs to
     //! \param[in] id Set of old node IDs whose new IDs are requested
-    void request( int p, const std::set< std::size_t >& id ) {
+    void request( int p, const std::unordered_set< std::size_t >& id ) {
       // Queue up requesting PE and node IDs
       m_req.push_back( { p, id } );
       // Trigger SDAG wait, signaling that node IDs have been requested from us
@@ -411,7 +411,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
-    std::vector< std::pair< int, std::set< std::size_t > > > m_req;
+    std::vector< std::pair< int, std::unordered_set< std::size_t > > > m_req;
     //! Starting global mesh node ID for node reordering
     std::size_t m_start;
     //! \brief Counter for number of offsets
@@ -445,13 +445,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \brief Temporary communication map used to receive global mesh node IDs
     //! \details This is an ordered map, as that facilitates making the node IDs
     //!   unique, storing only the lowest associated PE, efficient.
-    std::map< int, std::set< std::size_t > > m_comm;
+    std::map< int, std::unordered_set< std::size_t > > m_comm;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map, on each PE, associates the list of global mesh point
     //!   indices to fellow PE IDs from which we will receive new node IDs
     //!   during reordering. Only data that will be received from PEs with a
     //!   lower index are stored.
-    std::unordered_map< int, std::set< std::size_t > > m_communication;
+    std::unordered_map< int,
+                        std::unordered_set< std::size_t > > m_communication;
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::set< std::size_t > m_id;

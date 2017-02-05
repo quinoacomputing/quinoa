@@ -38,7 +38,7 @@ module partitioner {
       entry void recv();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
-      entry void request( int pe, const std::set< std::size_t >& id );
+      entry void request( int pe, const std::unordered_set< std::size_t >& id );
       entry void neworder(
                    const std::unordered_map< std::size_t, std::size_t >& id );
       entry void lower( std::size_t low );
