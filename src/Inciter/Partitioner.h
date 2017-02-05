@@ -307,11 +307,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details Note that every PE calls this function in a broadcast fashion,
     //!   including our own. However, to compute the correct result, this would
     //!   only be necessary for PEs whose ID is higher than ours. However, the
-    //!   broadcast (calling everyone) is more efficient. Because of this we
-    //!   only do the query for higher PEs here but return a mask to all
-    //!   callers. This also results in a simpler logic, because every PE goes
-    //!   through this single call path. The returned mask is simply a boolean
-    //!   array signaling if the node ID is found (owned).
+    //!   broadcast (calling everyone) is more efficient. This also results in a
+    //!   simpler logic, because every PE goes through this single call path.
+    //!   The returned mask is simply a boolean array signaling if the node ID
+    //!   is found (owned).
     void query( int p, const std::set< std::size_t >& id ) {
       std::vector< std::unordered_set< int > > ch( id.size() );
       std::size_t i = 0;
@@ -329,10 +328,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Receive mask of to-be-received global mesh node IDs
     //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
     //! \param[in] ch Vector containing the set of potentially multiple chare
-    //!   IDs that we own (i.e., contribute to) the node IDs. Note that the size
-    //!   of this vector is the same as that of m_id (see assert), but may
-    //!   contain empty sets. If a set is empty, that means that the sender did
-    //!   not have global node IDs to offer.
+    //!   IDs that we own (i.e., contribute to) for all of our node IDs. Note
+    //!   that the size of this vector is the same as that of m_id (see assert),
+    //!   but may contain empty sets. If a set is empty, that means that the
+    //!   sender does not contribute to that mesh node.
     //! \details Note that every PE will call this function, since query() was
     //!   called in a broadcast fashion and query() answers to every PE once.
     //!   This is more efficient than calling only the PEs from which we would
