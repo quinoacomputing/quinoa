@@ -44,9 +44,9 @@ module partitioner {
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe, const std::set< std::size_t >& low );
-      entry void mask( int pe,
-                       const std::vector< std::unordered_set< int > >& ch );
+      entry void query( int pe, const std::set< std::size_t >& id );
+      entry void mask( int pe, const std::unordered_map< std::size_t,
+                                       std::vector< int > >& ch );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
