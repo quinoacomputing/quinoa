@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 01:19:10 PM MST
+  \date      Tue 07 Feb 2017 09:15:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2881,7 +2881,7 @@ using shear_diff = keyword< shear_diff_info, pegtl_string_t("shear_diff") >;
 
 struct dir_neu_info {
   using code = Code< D >;
-  static std::string name() { return "Diricihlet & Neumann"; }
+  static std::string name() { return "Dirichlet & Neumann"; }
   static std::string shortDescription() { return
     "Select the Poisson equation test problem with Dirichlet and Neumann BCs"; }
   static std::string longDescription() { return
