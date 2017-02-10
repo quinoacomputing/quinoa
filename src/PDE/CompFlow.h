@@ -44,12 +44,12 @@ class CompFlow {
     explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] gid Global node IDs of owned elements
     //! \param[in] bc Vector of pairs of bool and boundary condition value
     //!   associated to mesh node IDs at which to set Dirichlet boundary
     //!   conditions
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
@@ -58,7 +58,7 @@ class CompFlow {
                      const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc )
     const {
-      //! Set initial conditions using problem configuration policy
+      // Set initial conditions using problem configuration policy
       Problem::init( coord, gid, bc, unk, 0, m_offset );
     }
 

@@ -63,9 +63,11 @@ module linsysmerger {
       entry void addauxlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& auxlhs );
+
       entry void adddiag( int fromch,
                           const std::map< std::size_t,
-                                          std::vector< tk::real > >& solution );
+                            std::vector< std::vector< tk::real > > >& sol );
+
 
       entry void rowsreceived();
 
