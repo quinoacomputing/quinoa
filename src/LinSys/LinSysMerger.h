@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 13 Dec 2016 04:14:19 PM MST
+  \date      Fri 10 Feb 2017 06:25:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -738,14 +738,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \brief Receive numerical and analytical solution vector nonzeros from
     //!   fellow group branches for computing diagnostics
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] sol Portion of the solution vector contributed, containing
-    //!    global row indices and values for all components of the numerical and
-    //!    analytical solutions (if available)
+    //! \param[in] solution Portion of the solution vector contributed,
+    //!   containing global row indices and values for all components of the
+    //!   numerical and analytical solutions (if available)
     void adddiag( int fromch,
                   const std::map< std::size_t,
-                          std::vector< std::vector< tk::real > > >& sol )
+                          std::vector< std::vector< tk::real > > >& solution )
     {
-      for (const auto& r : sol) {
+      for (const auto& r : solution) {
         m_diagimport[ fromch ].push_back( r.first );
         m_diag[ r.first ] = r.second;
       }
