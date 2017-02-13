@@ -518,7 +518,7 @@ class CompFlowProblemNLEnergyGrowth {
                tk::real dt,
                tk::real,
                const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 4 >, 4 >& mass,
+               const std::array< std::array< tk::real, 4 >, 4 >&,
                const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
                std::array< std::array< tk::real, 4 >, 5 >&,
