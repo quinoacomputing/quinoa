@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 10 Feb 2017 02:07:00 PM MST
+  \date      Mon 13 Feb 2017 01:51:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -470,8 +470,8 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
 
   // Compute right-hand side vector for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes) eq.rhs( 
-      m_t, mult, m_dt, m_coord, m_inpoel, sol, r );
+  for (const auto& eq : g_pdes)
+     eq.rhs( m_t, mult, m_dt, m_coord, m_inpoel, sol, r );
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 

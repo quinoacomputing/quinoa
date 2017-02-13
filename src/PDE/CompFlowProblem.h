@@ -506,12 +506,9 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
     //! \param[in] dt Size of time step
-    //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
     //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] u Solution at element nodes at recent time step stage
     //! \param[in,out] R Right-hand side vector contributing to
     static void
     sourceRhs( tk::real t,
@@ -519,12 +516,12 @@ class CompFlowProblemNLEnergyGrowth {
                tk::ctr::ncomp_type e,
                tk::real mult,
                tk::real dt,
-               tk::real J,
+               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >& grad,
+               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >& u,
+               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
@@ -686,8 +683,7 @@ class CompFlowProblemNLEnergyGrowth {
       for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k) {
           // source contribution to mass rhs
-          for (std::size_t i=0; i<3; ++i)
-            R.var(r[0],N[j]) += c * J/24.0 * grad[k][i] * u[i+1][k];
+          R.var(r[0],N[j]) += c * mass[j][k] * Sr[k];
           // source contribution to momentum rhs
           for (std::size_t l=0; l<3; ++l)
             R.var(r[l+1],N[j]) += c * mass[j][k] * Sm[l][k];
