@@ -149,6 +149,7 @@ class CompFlow {
     }
 
     //! Compute right hand side
+    //! \param[in] t Physical time
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
     //! \param[in] deltat Size of time step
@@ -157,7 +158,8 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
-    void rhs( tk::real mult,
+    void rhs( tk::real t,
+              tk::real mult,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -243,7 +245,8 @@ class CompFlow {
         // add heat conduction contribution to energy rhs
         Physics::conductRhs( mult, deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( coord, 0, mult, deltat, J, N, mass, grad, r, u, R );
+        Problem::sourceRhs( 
+            t, coord, 0, mult, deltat, J, N, mass, grad, r, u, R );
       }
     }
 

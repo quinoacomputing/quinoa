@@ -111,6 +111,13 @@ class InputDeck :
                                        kw::cfl,
                                        kw::mj,
                                        kw::depvar >;
+    using keywords4 = boost::mpl::set< kw::nl_energy_growth,
+                                       kw::pde_betax,
+                                       kw::pde_betay,
+                                       kw::pde_betaz,
+                                       kw::pde_ce,
+                                       kw::pde_kappa,
+                                       kw::pde_r0 >;
                                      
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -140,6 +147,7 @@ class InputDeck :
       boost::mpl::for_each< keywords1 >( ctrinfoFill );
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
+      boost::mpl::for_each< keywords4 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

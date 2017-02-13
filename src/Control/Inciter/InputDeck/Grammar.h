@@ -34,7 +34,8 @@ namespace deck {
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
                             ctr::InputDeck::keywords2,
-                            ctr::InputDeck::keywords3 >;
+                            ctr::InputDeck::keywords3,
+                            ctr::InputDeck::keywords4>;
 
   // Inciter's InputDeck state
 
@@ -162,6 +163,23 @@ namespace grm {
              beta.size() != problem.size() ||
              p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
+      }
+      else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
+        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
+        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
+        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
+        const auto& ce = stack.template get< tag::param, eq, tag::ce >();
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             r0.size() != problem.size() ||
+             ce.size() != problem.size() )
+          Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
       }
       // Error check Dirichlet boundary condition block for all compflow
       // configurations

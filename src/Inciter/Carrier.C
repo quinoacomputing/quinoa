@@ -470,7 +470,8 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
 
   // Compute right-hand side vector for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes) eq.rhs( mult, m_dt, m_coord, m_inpoel, sol, r );
+  for (const auto& eq : g_pdes) eq.rhs( 
+      m_t, mult, m_dt, m_coord, m_inpoel, sol, r );
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 

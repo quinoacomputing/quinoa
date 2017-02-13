@@ -160,6 +160,7 @@ class Transport {
     }
 
     //! Compute right hand side
+    //! \param[in] t Physical time
     //! \param[in] mult Multiplier differentiating the different stages in
     //!    multi-stage time stepping
     //! \param[in] deltat Size of time step
@@ -168,7 +169,8 @@ class Transport {
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
-    void rhs( tk::real mult,
+    void rhs( tk::real t,
+              tk::real mult,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
