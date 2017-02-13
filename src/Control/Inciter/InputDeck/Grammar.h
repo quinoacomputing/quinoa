@@ -330,10 +330,12 @@ namespace deck {
                              material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! put in PDE parameter for equation matching keyword
-  template< typename eq, typename keyword, typename p >
+  template< typename eq, typename keyword, typename p,
+            class kw_type = tk::grm::number >
   struct parameter :
          tk::grm::process< use< keyword >,
-           tk::grm::Store_back< tag::param, eq, p > > {};
+                           tk::grm::Store_back< tag::param, eq, p >,
+                           kw_type > {};
 
   //! transport equation for scalars
   struct transport :
@@ -383,10 +385,17 @@ namespace deck {
                                             tag::problem >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
-                           parameter< tag::compflow, kw::npar, tag::npar >,
+                           parameter< tag::compflow, kw::npar, tag::npar,
+                                      pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
-                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
+                           parameter< tag::compflow, kw::pde_betax, tag::betax >,
+                           parameter< tag::compflow, kw::pde_betay, tag::betay >,
+                           parameter< tag::compflow, kw::pde_betaz, tag::betaz >,
+                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
+                           parameter< tag::compflow, kw::pde_r0, tag::r0 >,
+                           parameter< tag::compflow, kw::pde_ce, tag::ce >,
+                           parameter< tag::compflow, kw::pde_kappa, tag::kappa >,
                            bc_dirichlet< tag::compflow, tag::bcdir > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
