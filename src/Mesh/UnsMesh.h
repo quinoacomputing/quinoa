@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:28:33 PM MDT
+  \date      Tue 14 Feb 2017 08:36:00 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -25,6 +25,8 @@ namespace tk {
 class UnsMesh {
 
   public:
+    using Coords = std::array< std::vector< tk::real >, 3 >;
+
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything

@@ -152,6 +152,7 @@ class Carrier : public CBase_Carrier {
                const std::unordered_map< int,
                        std::vector< std::size_t > >& msum,
                const std::unordered_map< std::size_t, std::size_t >& cid,
+               const std::array< std::vector< tk::real >, 3 >& coord,
                int ncarr );
 
     //! Migrate constructor

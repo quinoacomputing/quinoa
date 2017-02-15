@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 10 Feb 2017 02:07:00 PM MST
+  \date      Wed 15 Feb 2017 09:58:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -66,6 +66,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::unordered_map< int,
                           std::vector< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& cid,
+                  const std::array< std::vector< tk::real >, 3 >& coord,
                   int ncarr ) :
   __dep(),
   m_it( 0 ),
@@ -87,7 +88,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_particlewriter( pw ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_coord(),
+  m_coord( coord ),
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -154,7 +155,7 @@ Carrier::vol()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords();
+  //readCoords();
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
@@ -219,14 +220,14 @@ Carrier::setup()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Output chare mesh to file
+  writeMesh();
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Send node IDs from element side sets matched to BC set IDs
   bc();
   // Generate particles
   m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
-  // Output chare mesh to file
-  writeMesh();
   // Output fields metadata to output file
   writeMeta();
 }

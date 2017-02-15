@@ -17,6 +17,7 @@ module carrier {
 
   include "Particles.h";
   include "AuxSolver.h";
+  include "UnsMesh.h";
 
   namespace inciter {
 
@@ -31,6 +32,7 @@ module carrier {
                  const std::unordered_map< int,
                          std::vector< std::size_t > >& msum,
                  const std::unordered_map< std::size_t, std::size_t >& cid,
+                 const tk::UnsMesh::Coords& coord,
                  int ncarr );
       initnode void registerReducers();
       entry void vol();

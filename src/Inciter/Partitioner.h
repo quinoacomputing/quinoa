@@ -73,6 +73,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "LinSysMerger.h"
+#include "DerivedData.h"
 
 namespace inciter {
 
@@ -143,6 +144,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_start( 0 ),
       m_noffset( 0 ),
       m_nquery( 0 ),
+      m_coord(),
       m_tetinpoel(),
       m_gelemid(),
       m_centroid(),
@@ -191,7 +193,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       distribute( chareNodes(che) );
       // Free storage of element connectivity, element centroids, and element
       // IDs as they are no longer needed after the mesh partitioning.
-      tk::destroy( m_tetinpoel );
       tk::destroy( m_gelemid );
       tk::destroy( m_centroid );
     }
@@ -416,6 +417,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nquery;
+    //! Tetrtahedron element coordinates of our chunk of the mesh
+    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -428,7 +431,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::size_t m_lower;
     //! Upper bound of node IDs our PE operates on after reordering
     std::size_t m_upper;
-    //! \brief Global mesh node ids associated to chares owned
+    //! \brief Global mesh node ids (element connectivity) associated to chares
+    //!   owned
     //! \details Before reordering this map stores (old) global mesh node IDs
     //!   corresponding to the ordering as in the mesh file. After reordering it
     //!   stores the (new) global node IDs the chares contribute to.
@@ -502,16 +506,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
     // Compute element centroid coordinates
     //! \param[in] er ExodusII mesh reader
-    void computeCentroids( tk::ExodusIIMeshReader& er) {
+    void computeCentroids( tk::ExodusIIMeshReader& er ) {
       // Construct unique global mesh point indices of our chunk
       auto gid = m_tetinpoel;
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
       auto ext = tk::extents( gid );
-      auto coord = er.readNodes( ext );
-      const auto& x = std::get< 0 >( coord );
-      const auto& y = std::get< 1 >( coord );
-      const auto& z = std::get< 2 >( coord );
+      m_coord = er.readNodes( ext );
+      const auto& x = std::get< 0 >( m_coord );
+      const auto& y = std::get< 1 >( m_coord );
+      const auto& z = std::get< 2 >( m_coord );
       // Make room for element centroid coordinates
       auto& cx = m_centroid[0];
       auto& cy = m_centroid[1];
@@ -694,15 +698,138 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       reorderowned_complete();
     }
 
+    void refine() {
+//       // Update old with new node IDs in element connectivity
+//       for (auto& p : m_tetinpoel) p = tk::cref_find(m_newid,p);
+
+      // Key type for an edge
+      using Edge = std::array< std::size_t, 2 >;
+      // Hash functor for Edge
+      struct EdgeHash {
+        std::size_t operator()( const Edge& key ) const {
+          return std::hash< std::size_t >()( key[0] ) ^
+                 std::hash< std::size_t >()( key[1] );
+        }
+      };
+      // Key equal function for Edge
+      struct EdgeEq {
+        bool operator()( const Edge& left, const Edge& right ) const {
+          return (left[0] == right[0] && left[1] == right[1]) ||
+                 (left[0] == right[1] && left[1] == right[0]);
+        }
+      };
+      std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq > newnodes;
+
+      // Lambda to add a new node to an edge
+      auto addnode = [ this, &newnodes ]
+                     ( std::size_t p, std::size_t q, std::size_t& id )
+      {
+        auto& x = m_coord[0];
+        auto& y = m_coord[1];
+        auto& z = m_coord[2];
+        x.push_back( (x[p]+x[q])/2.0 ); // add new node coordinates
+        y.push_back( (y[p]+y[q])/2.0 );
+        z.push_back( (z[p]+z[q])/2.0 );
+        newnodes[ {{ p,q }} ] = id++;   // assiciate new node id to edge
+      };
+
+      // generate data structure storing unique edges surrounding points
+      auto edsup = tk::genEdsup( m_tetinpoel, 4, tk::genEsup(m_tetinpoel,4) );
+      auto nnode = m_coord[0].size();
+      auto id = nnode;
+
+      // add new node to all unique edges
+      //std::cout << "\n";
+      for (std::size_t p=0; p<nnode; ++p) {
+        //std::cout << p+1 << ": ";
+        for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i) {
+          //std::cout << edsup.first[i]+1 << ' ';
+          addnode( p, edsup.first[i], id );
+        }
+        //std::cout << "\n";
+      }
+
+      // Key type for a tetrahedron (element connectivity)
+      using Tet = std::array< std::size_t, 4 >;
+      using NewTets = std::array< std::size_t, 32 >;
+      // Hash functor for Tet
+      struct TetHash {
+        std::size_t operator()( const Tet& key ) const {
+          return std::hash< std::size_t >()( key[0] ) ^
+                 std::hash< std::size_t >()( key[1] ) ^
+                 std::hash< std::size_t >()( key[2] ) ^
+                 std::hash< std::size_t >()( key[3] );
+        }
+      };
+      // Key equal function for Tet
+      struct TetEq {
+        bool operator()( const Tet& l, const Tet& r ) const {
+          return (l[0]==r[0] || l[0]==r[1] || l[0]==r[2] || l[0]==r[3]) &&
+                 (l[1]==r[0] || l[1]==r[1] || l[1]==r[2] || l[1]==r[3]) &&
+                 (l[2]==r[0] || l[2]==r[1] || l[2]==r[2] || l[2]==r[3]) &&
+                 (l[3]==r[0] || l[3]==r[1] || l[3]==r[2] || l[3]==r[3]);
+        }
+      };
+      std::unordered_map< Tet, NewTets, TetHash, TetEq > newinpoel;
+
+      // add new elements (in 1:8 fashion) in place of each element
+      decltype(m_tetinpoel) newtets;
+      for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
+        const auto A = m_tetinpoel[e*4+0];
+        const auto B = m_tetinpoel[e*4+1];
+        const auto C = m_tetinpoel[e*4+2];
+        const auto D = m_tetinpoel[e*4+3];
+        // find new node IDs assigned to all edges of element e
+        const auto AB = tk::cref_find( newnodes, {{ A,B }} );
+        const auto AC = tk::cref_find( newnodes, {{ A,C }} );
+        const auto AD = tk::cref_find( newnodes, {{ A,D }} );
+        const auto BC = tk::cref_find( newnodes, {{ B,C }} );
+        const auto BD = tk::cref_find( newnodes, {{ B,D }} );
+        const auto CD = tk::cref_find( newnodes, {{ C,D }} );
+        // construct 8 new tets
+        NewTets n{{  A, AB, AC, AD,
+                     B, AB, BC, BD,
+                     C, AC, BC, CD,
+                     D, AD, BD, CD,
+                    BC, CD, BD, AC,
+                    AB, BD, AD, AC,
+                    AB, AC, BC, BD,
+                    AC, AD, CD, BD }};
+        newtets.insert( end(newtets), begin(n), end(n) );
+        newinpoel[ {{ A,B,C,D }} ] = n; // associate new elements to old one
+      }
+      // update connectivity in global mesh node ids associated to chares owned
+      decltype(m_node) newconn;
+      for (const auto& c : m_node) {
+        auto& ch = newconn[ c.first ];
+        for (std::size_t e=0; e<c.second.size()/4; ++e) {
+          // find the 8 new elements replacing e
+          const auto& n = tk::cref_find( newinpoel,
+                                         {{ m_tetinpoel[e*4+0],
+                                            m_tetinpoel[e*4+1],
+                                            m_tetinpoel[e*4+2],
+                                            m_tetinpoel[e*4+3] }} );
+          ch.insert( end(ch), begin(n), end(n) );
+        }
+      }
+      m_node = std::move( newconn );
+      m_tetinpoel = std::move( newtets );
+      // update unique global node IDs chares on our PE will contribute to
+      tk::destroy( m_id );
+      for (const auto& c : m_node) for (auto i : c.second) m_id.insert( i );
+    }
+
     //! Compute final result of reordering
     //! \details This member function is called when both those node IDs that we
     //!   assign a new ordering to as well as those assigned new IDs by other
     //!   PEs have been reordered (and we contribute to) and we are ready (on
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
+      // Uniformly refine mesh
+      refine();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
-      tk::destroy( m_communication );
+      //tk::destroy( m_communication );
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
       // associated to chare IDs (outer key). This is basically the inverse of
@@ -710,26 +837,34 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // contains the old global node IDs the chares contribute to.
       for (const auto& c : m_node) {
         auto& m = m_chcid[ c.first ];
-        for (auto p : c.second) m[ tk::cref_find(m_newid,p) ] = p;
+        for (auto p : c.second) {
+          auto n = m_newid.find(p);
+          if (n !=end(m_newid)) m[ n->second ] = p;
+        }
       }
       // Update our chare ID maps to now contain the new global node IDs
       // instead of the old ones
       for (auto& c : m_node)
-        for (auto& p : c.second)
-          p = tk::cref_find( m_newid, p );
+        for (auto& p : c.second) {
+          auto n = m_newid.find(p);
+          if (n !=end(m_newid)) p = n->second;
+        }
       // Update old global mesh node IDs to new ones associated to chare IDs
       // bordering the mesh chunk held by and associated to chare IDs we own
       for (auto& c : m_msum)
         for (auto& s : c.second) {
-          for (auto& p : s.second) p = tk::cref_find( m_newid, p );
+          for (auto& p : s.second) {
+            auto n = m_newid.find(p);
+            if (n !=end(m_newid)) p = n->second;
+          }
           std::sort( begin(s.second), end(s.second) );
         }
-      // Update unique global node IDs of chares our PE will contribute to to
-      // now contain the new IDs resulting from reordering
-      decltype(m_id) nid;
-      for (auto p : m_id) nid.insert( tk::cref_find( m_newid, p ) );
-      m_id = std::move( nid );
-      tk::destroy( nid );
+//       // Update unique global node IDs of chares our PE will contribute to to
+//       // now contain the new IDs resulting from reordering
+//       decltype(m_id) nid;
+//       for (auto p : m_id) nid.insert( tk::cref_find( m_newid, p ) );
+//       m_id = std::move( nid );
+//       tk::destroy( nid );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.pereordered();
@@ -813,6 +948,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 tk::cref_find( m_node, cid ),
                                 msum,
                                 tk::cref_find( m_chcid, cid ),
+                                m_coord,
                                 m_nchare,
                                 CkMyPe() );
       }
