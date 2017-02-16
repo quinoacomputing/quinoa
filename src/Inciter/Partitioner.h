@@ -392,6 +392,23 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
   private:
+    // Key type for an edge
+    using Edge = std::array< std::size_t, 2 >;
+    // Hash functor for Edge
+    struct EdgeHash {
+      std::size_t operator()( const Edge& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] );
+      }
+    };
+    // Key-equal function for Edge
+    struct EdgeEq {
+      bool operator()( const Edge& left, const Edge& right ) const {
+        return (left[0] == right[0] && left[1] == right[1]) ||
+               (left[0] == right[1] && left[1] == right[0]);
+      }
+    };
+
     //! Host proxy
     HostProxy m_host;
     //! Worker proxy
@@ -462,6 +479,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   categorized by chares.
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chcid;
+    //! \brief Maps associating edges (a pair of old node IDs) to new node IDs
+    //!   categorized by chares for only the nodes newly added as a result of
+    //!   initial uniform refinement.
+    //! \details Maps associating edges (a pair of old node IDs, as in file) to
+    //!   new node IDs (as in producing contiguous-row-id linear system
+    //!   contributions) associated to chare IDs (outer key) for only the nodes
+    //!   newly added as a result of initial uniform refinement. This is
+    //!   basically the inverse of m_newid and categorized by chares.
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, Edge > > m_chceid;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old global mesh node IDs
@@ -702,22 +729,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 //       // Update old with new node IDs in element connectivity
 //       for (auto& p : m_tetinpoel) p = tk::cref_find(m_newid,p);
 
-      // Key type for an edge
-      using Edge = std::array< std::size_t, 2 >;
-      // Hash functor for Edge
-      struct EdgeHash {
-        std::size_t operator()( const Edge& key ) const {
-          return std::hash< std::size_t >()( key[0] ) ^
-                 std::hash< std::size_t >()( key[1] );
-        }
-      };
-      // Key equal function for Edge
-      struct EdgeEq {
-        bool operator()( const Edge& left, const Edge& right ) const {
-          return (left[0] == right[0] && left[1] == right[1]) ||
-                 (left[0] == right[1] && left[1] == right[0]);
-        }
-      };
       std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq > newnodes;
 
       // Lambda to add a new node to an edge
@@ -773,7 +784,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       std::unordered_map< Tet, NewTets, TetHash, TetEq > newinpoel;
 
       // add new elements (in 1:8 fashion) in place of each element
-      decltype(m_tetinpoel) newtets;
+      //decltype(m_tetinpoel) newtets;
       for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
         const auto A = m_tetinpoel[e*4+0];
         const auto B = m_tetinpoel[e*4+1];
@@ -795,13 +806,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                     AB, BD, AD, AC,
                     AB, AC, BC, BD,
                     AC, AD, CD, BD }};
-        newtets.insert( end(newtets), begin(n), end(n) );
+        //newtets.insert( end(newtets), begin(n), end(n) );
         newinpoel[ {{ A,B,C,D }} ] = n; // associate new elements to old one
       }
       // update connectivity in global mesh node ids associated to chares owned
-      decltype(m_node) newconn;
+      decltype(m_node) extconn; // connectivity extended with new elements
       for (const auto& c : m_node) {
-        auto& ch = newconn[ c.first ];
+        auto& ch = extconn[ c.first ];
+        auto& ex = m_chceid[ c.first ];
         for (std::size_t e=0; e<c.second.size()/4; ++e) {
           // find the 8 new elements replacing e
           const auto& n = tk::cref_find( newinpoel,
@@ -810,13 +822,27 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                             m_tetinpoel[e*4+2],
                                             m_tetinpoel[e*4+3] }} );
           ch.insert( end(ch), begin(n), end(n) );
+          const auto A = n[0];
+          const auto B = n[4];
+          const auto C = n[8];
+          const auto D = n[12];
+          const auto AB = n[1];
+          const auto AC = n[2];
+          const auto AD = n[3];
+          const auto BC = n[6];
+          const auto BD = n[7];
+          const auto CD = n[11];
+          ex[ AB ] = {{ A,B }};
+          ex[ AC ] = {{ A,C }};
+          ex[ AD ] = {{ A,D }};
+          ex[ BC ] = {{ B,C }};
+          ex[ BD ] = {{ B,D }};
+          ex[ CD ] = {{ C,D }};
         }
       }
-      m_node = std::move( newconn );
-      m_tetinpoel = std::move( newtets );
-      // update unique global node IDs chares on our PE will contribute to
-      tk::destroy( m_id );
-      for (const auto& c : m_node) for (auto i : c.second) m_id.insert( i );
+      m_node = std::move( extconn );
+      tk::destroy( m_tetinpoel );
+      //m_tetinpoel = std::move( newtets );
     }
 
     //! Compute final result of reordering
@@ -826,7 +852,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Uniformly refine mesh
-      refine();
+      //refine();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
       //tk::destroy( m_communication );
@@ -836,35 +862,31 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // m_newid and categorized by chares. Note that m_node at this point still
       // contains the old global node IDs the chares contribute to.
       for (const auto& c : m_node) {
-        auto& m = m_chcid[ c.first ];
+        auto& old = m_chcid[ c.first ];
         for (auto p : c.second) {
           auto n = m_newid.find(p);
-          if (n !=end(m_newid)) m[ n->second ] = p;
+          if (n != end(m_newid)) old[ n->second ] = p;
         }
       }
       // Update our chare ID maps to now contain the new global node IDs
       // instead of the old ones
       for (auto& c : m_node)
         for (auto& p : c.second) {
-          auto n = m_newid.find(p);
-          if (n !=end(m_newid)) p = n->second;
+          const auto& n = m_newid.find(p);
+          if (n != end(m_newid)) p = n->second;
         }
-      // Update old global mesh node IDs to new ones associated to chare IDs
-      // bordering the mesh chunk held by and associated to chare IDs we own
+      // Update old global mesh node IDs to new ones (and add newly added ones)
+      // associated to chare IDs bordering the mesh chunk held by and associated
+      // to chare IDs we own
       for (auto& c : m_msum)
         for (auto& s : c.second) {
-          for (auto& p : s.second) {
-            auto n = m_newid.find(p);
-            if (n !=end(m_newid)) p = n->second;
-          }
+          for (auto& p : s.second) p = tk::cref_find( m_newid, p );
           std::sort( begin(s.second), end(s.second) );
         }
-//       // Update unique global node IDs of chares our PE will contribute to to
-//       // now contain the new IDs resulting from reordering
-//       decltype(m_id) nid;
-//       for (auto p : m_id) nid.insert( tk::cref_find( m_newid, p ) );
-//       m_id = std::move( nid );
-//       tk::destroy( nid );
+      // Update unique global node IDs of chares our PE will contribute to to
+      // now contain the new IDs resulting from reordering
+      tk::destroy( m_id );
+      for (const auto& c : m_node) for (auto i : c.second) m_id.insert( i );
       // send progress report to host
       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
         m_host.pereordered();

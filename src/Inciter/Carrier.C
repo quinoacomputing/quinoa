@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Wed 15 Feb 2017 09:58:39 AM MST
+  \date      Thu 16 Feb 2017 10:18:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -155,7 +155,8 @@ Carrier::vol()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  //readCoords();
+  for (auto& c : m_coord) c.clear();
+  readCoords();
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
