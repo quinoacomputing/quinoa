@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-// 
+//
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -275,6 +275,7 @@ double FiniteDifference::NormOne() const
   return jacobian->NormOne();
 }
 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int FiniteDifference::NumGlobalNonzeros() const
 {
   return jacobian->NumGlobalNonzeros();
@@ -293,6 +294,27 @@ int FiniteDifference::NumGlobalCols() const
 int FiniteDifference::NumGlobalDiagonals() const
 {
   return jacobian->NumGlobalDiagonals();
+}
+#endif
+
+long long FiniteDifference::NumGlobalNonzeros64() const
+{
+  return jacobian->NumGlobalNonzeros64();
+}
+
+long long FiniteDifference::NumGlobalRows64() const
+{
+  return jacobian->NumGlobalRows64();
+}
+
+long long FiniteDifference::NumGlobalCols64() const
+{
+  return jacobian->NumGlobalCols64();
+}
+
+long long FiniteDifference::NumGlobalDiagonals64() const
+{
+  return jacobian->NumGlobalDiagonals64();
 }
 
 int FiniteDifference::NumMyNonzeros() const
@@ -361,8 +383,8 @@ bool FiniteDifference::computeJacobian(const Epetra_Vector& x, Epetra_Operator& 
   FiniteDifference* testMatrix = dynamic_cast<FiniteDifference*>(&Jac);
   if (testMatrix == 0) {
     utils.out() << "ERROR: NOX::Epetra::FiniteDifference::computeJacobian() - "
-		<< "Jacobian to evaluate is not a FiniteDifference object!" 
-		<< endl;
+        << "Jacobian to evaluate is not a FiniteDifference object!"
+        << std::endl;
     throw "NOX Error";
   }
 
@@ -405,9 +427,9 @@ bool FiniteDifference::computeJacobian(const Epetra_Vector& x, Epetra_Operator& 
     if (map.MyGID(k)) {
 
       if (betaType == Scalar)
-	eta = alpha*x[map.LID(k)] + beta;
+    eta = alpha*x[map.LID(k)] + beta;
       else
-	eta = alpha*x[map.LID(k)] + (*betaVector)[map.LID(k)];
+    eta = alpha*x[map.LID(k)] + (*betaVector)[map.LID(k)];
 
       x_perturb[map.LID(k)] += scaleFactor * eta;
       proc = map.Comm().MyPID();
@@ -443,7 +465,7 @@ bool FiniteDifference::computeJacobian(const Epetra_Vector& x, Epetra_Operator& 
       if (!map.MyGID(j))
         continue;
       if (Jc[map.LID(j)] != 0.0) {
-	jac.ReplaceGlobalValues(j,1,&Jc[map.LID(j)],&k);
+    jac.ReplaceGlobalValues(j,1,&Jc[map.LID(j)],&k);
       }
     }
 
@@ -458,8 +480,8 @@ bool FiniteDifference::computeJacobian(const Epetra_Vector& x, Epetra_Operator& 
 }
 
 bool FiniteDifference::computePreconditioner(const Epetra_Vector& x,
-					     Epetra_Operator& Prec,
-					     Teuchos::ParameterList* precParams)
+                         Epetra_Operator& Prec,
+                         Teuchos::ParameterList* precParams)
 {
   return computeJacobian(x, *this);
 }
@@ -491,9 +513,9 @@ createGraphAndJacobian(Interface::Required& i, const Epetra_Vector& x)
     if (map.MyGID(k)) {
 
       if (betaType == Scalar)
-	eta = alpha*x[map.LID(k)] + beta;
+    eta = alpha*x[map.LID(k)] + beta;
       else
-	eta = alpha*x[map.LID(k)] + (*betaVector)[map.LID(k)];
+    eta = alpha*x[map.LID(k)] + (*betaVector)[map.LID(k)];
 
       x_perturb[map.LID(k)] += eta;
     }
@@ -511,7 +533,7 @@ createGraphAndJacobian(Interface::Required& i, const Epetra_Vector& x)
       if (!map.MyGID(j))
         continue;
       if (Jc[map.LID(j)] != 0.0) {
-	graph->InsertGlobalIndices(j,1,&k);
+    graph->InsertGlobalIndices(j,1,&k);
       }
     }
 
@@ -538,7 +560,7 @@ Epetra_CrsMatrix& FiniteDifference::getUnderlyingMatrix() const
   return *jacobian;
 }
 
-void FiniteDifference::Print(ostream& strm) const
+void FiniteDifference::Print(std::ostream& strm) const
 {
   jacobian->Print(strm);
 }
@@ -552,24 +574,24 @@ void FiniteDifference::setGroupForComputeF(NOX::Abstract::Group& group)
 
 
 bool FiniteDifference::computeF(const Epetra_Vector& input,
-				Epetra_Vector& result,
-				NOX::Epetra::Interface::Required::FillType)
+                Epetra_Vector& result,
+                NOX::Epetra::Interface::Required::FillType)
 {
   bool ok = false;
 
   if (!useGroupForComputeF)
     ok = interface->computeF(input, result,
-			     NOX::Epetra::Interface::Required::FD_Res);
+                 NOX::Epetra::Interface::Required::FD_Res);
   else {
-    
+
     // Get rid of const for NOX::Epetra:Vector Ctor.
     Epetra_Vector& nonconstInput = const_cast<Epetra_Vector&>(input);
 
-    Teuchos::RCP<Epetra_Vector> tmpEpetraInputVec = 
+    Teuchos::RCP<Epetra_Vector> tmpEpetraInputVec =
       //Teuchos::rcp(&nonconstInput, false);
       Teuchos::rcp(new Epetra_Vector(nonconstInput));
-    NOX::Epetra::Vector noxX(tmpEpetraInputVec, 
-			     NOX::Epetra::Vector::CreateCopy);
+    NOX::Epetra::Vector noxX(tmpEpetraInputVec,
+                 NOX::Epetra::Vector::CreateCopy);
     groupPtr->setX(noxX);
     groupPtr->computeF();
     result = dynamic_cast<const NOX::Epetra::Vector&>

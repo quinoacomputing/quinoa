@@ -12,7 +12,7 @@
 */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include "ml_common.h"
@@ -38,7 +38,7 @@ public:
   {
     NumMyRows_ = RowSpace.GetNumMyElements();
     NumMyCols_ = ColSpace.GetNumMyElements();
-    
+
     NumMyNonzeros_ = 0;
     NumMyDiagonals_ = 0;
 
@@ -75,12 +75,12 @@ public:
     return(res);
   }
 
-  virtual int ExtractMyRowCopy(int MyRow, int Length, int & NumEntries, 
+  virtual int ExtractMyRowCopy(int MyRow, int Length, int & NumEntries,
                                double *Values, int * Indices) const
   {
     NumMyRowEntries(MyRow, NumEntries);
     if (Length < NumEntries) ML_CHK_ERR(-1);
-    if (MyRow < 0 || MyRow >= NumMyRows()) 
+    if (MyRow < 0 || MyRow >= NumMyRows())
       ML_CHK_ERR(-2);
 
     int count = 0;
@@ -100,7 +100,7 @@ public:
 #endif
 
     Diagonal.PutScalar(0.0);
-                       
+
     for (int i = 0 ; i < NumMyRows() ; ++i) {
       for (where_ = ptr_[i].begin() ; where_ != ptr_[i].end() ; ++where_) {
         if (where_->first == i) {
@@ -112,7 +112,7 @@ public:
     return(0);
   }
 
-  virtual int Multiply(bool TransA, const Epetra_MultiVector& X, 
+  virtual int Multiply(bool TransA, const Epetra_MultiVector& X,
                        Epetra_MultiVector& Y) const
   {
 
@@ -136,11 +136,11 @@ public:
         }
       }
     }
-    
+
     return(0);
   }
 
-  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal, const Epetra_MultiVector& X, 
+  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal, const Epetra_MultiVector& X,
                     Epetra_MultiVector& Y) const
   {
     ML_CHK_ERR(-1);
@@ -171,7 +171,7 @@ public:
     return(true);
   }
 
-  virtual double NormInf() const 
+  virtual double NormInf() const
   {
     ML_CHK_ERR(-1);
   }
@@ -181,6 +181,7 @@ public:
     ML_CHK_ERR(-1);
   }
 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   virtual int NumGlobalNonzeros() const
   {
     return(NumMyNonzeros_);
@@ -197,6 +198,27 @@ public:
   }
 
   virtual int NumGlobalDiagonals() const
+  {
+    return(NumMyDiagonals_);
+  }
+#endif
+
+  virtual long long NumGlobalNonzeros64() const
+  {
+    return(NumMyNonzeros_);
+  }
+
+  virtual long long NumGlobalRows64() const
+  {
+     return(NumMyRows_);
+  }
+
+  virtual long long NumGlobalCols64() const
+  {
+    return(NumMyCols_);
+  }
+
+  virtual long long NumGlobalDiagonals64() const
   {
     return(NumMyDiagonals_);
   }
@@ -226,7 +248,7 @@ public:
     return(false);
   }
 
-  virtual bool UpperTriangular() const 
+  virtual bool UpperTriangular() const
   {
     return(false);
   }
@@ -260,14 +282,14 @@ public:
   {
     return(*(ColMap_.get()));
   }
-    
+
   //@}
 
   virtual int SetUseTranspose(bool)
   {
     ML_CHK_ERR(-1);
   }
-  
+
   virtual int Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
   {
     return(Multiply(false, X, Y));
@@ -316,14 +338,14 @@ public:
       ptr_[row][col] = 0.0;
       // track number of stored elements
       ++NumMyNonzeros_;
-      // track number of diagonals 
+      // track number of diagonals
       if (row == col)
         ++NumMyDiagonals_;
       // return a reference to this guy
       return(ptr_[row][col]);
     }
   }
-           
+
 private:
 
   Epetra_SerialMatrix(const Epetra_SerialMatrix& rhs)
@@ -348,7 +370,7 @@ private:
 
 }; // class Epetra_SerialMatrix
 
-class SerialMatrix : public Operator 
+class SerialMatrix : public Operator
 {
 public:
   SerialMatrix()
@@ -362,7 +384,7 @@ public:
     Operator::operator=(rhs);
     return(*this);
   }
-            
+
   SerialMatrix(const Space& RowSpace, const Space& ColSpace)
   {
     Matrix_ = new Epetra_SerialMatrix(RowSpace, ColSpace);
@@ -374,24 +396,24 @@ public:
   {
     return((*Matrix_)(row, col));
   }
-    
+
   std::ostream& Print(std::ostream& os, const bool verbose = true) const
   {
     int Length = Matrix_->MaxNumEntries();
     std::vector<double> Values(Length);
     std::vector<int>    Indices(Length);
 
-    os << endl;
-    os << "*** MLAPI::SerialMatrix ***" << endl;
-    os << "Label = " << GetLabel() << endl;
-    os << "Number of rows = " << Matrix_->NumMyRows() << endl;
-    os << "Number of columns = " << Matrix_->NumMyCols() << endl;
-    os << endl;
+    os << std::endl;
+    os << "*** MLAPI::SerialMatrix ***" << std::endl;
+    os << "Label = " << GetLabel() << std::endl;
+    os << "Number of rows = " << Matrix_->NumMyRows() << std::endl;
+    os << "Number of columns = " << Matrix_->NumMyCols() << std::endl;
+    os << std::endl;
     os.width(10); os << "row ID";
     os.width(10); os << "col ID";
     os.width(30); os << "value";
-    os << endl;
-    os << endl;
+    os << std::endl;
+    os << std::endl;
 
     for (int i = 0 ; i < Matrix_->NumMyRows() ; ++i) {
       int NnzRow = 0;
@@ -400,7 +422,7 @@ public:
         os.width(10); os << i;
         os.width(10); os << Indices[j];
         os.width(30); os << Values[j];
-        os << endl;
+        os << std::endl;
       }
     }
     return(os);

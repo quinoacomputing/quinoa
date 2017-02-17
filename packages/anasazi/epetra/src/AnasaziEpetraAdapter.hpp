@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -84,6 +84,9 @@ namespace Anasazi {
   class EpetraMultiVecAccessor {
  
   public:
+    //! Destructor
+    virtual ~EpetraMultiVecAccessor() {};
+
     /*! \brief Return the pointer to the Epetra_MultiVector object. */
     virtual Epetra_MultiVector* GetEpetraMultiVec() { return 0; }
 
@@ -191,12 +194,18 @@ namespace Anasazi {
 
     //@}
 
+    //! The number of rows in the multivector.
+    ptrdiff_t GetGlobalLength () const 
+    {
+       if ( Map().GlobalIndicesLongLong() )
+          return static_cast<ptrdiff_t>( GlobalLength64() );
+       else 
+          return static_cast<ptrdiff_t>( GlobalLength() );
+    }
+
     //! @name Attribute methods
     //! Obtain the vector length of *this.
     int GetNumberVecs () const { return NumVectors(); }
-
-    //! Obtain the number of vectors in *this.
-    int GetVecLength () const { return GlobalLength(); }
 
     //@}
 
@@ -785,8 +794,7 @@ namespace Anasazi {
       // wants a nonconst int array argument.  It doesn't actually
       // change the entries of the array.
       std::vector<int>& tmpind = const_cast< std::vector<int>& > (index);
-      return Teuchos::rcp (new Epetra_MultiVector (Copy, mv, &tmpind[0], index.size())); 
-      // return Teuchos::rcp (new Epetra_MultiVector (::Copy, mv, &tmpind[0], index.size())); 
+      return Teuchos::rcp (new Epetra_MultiVector (Epetra_DataAccess::Copy, mv, &tmpind[0], index.size())); 
     }
 
     static Teuchos::RCP<Epetra_MultiVector> 
@@ -810,7 +818,7 @@ namespace Anasazi {
 			     "number of vectors " << inNumVecs << " in the "
 			     "input multivector.");
 	}
-      return Teuchos::rcp (new Epetra_MultiVector (Copy, mv, index.lbound(), index.size()));
+      return Teuchos::rcp (new Epetra_MultiVector (Epetra_DataAccess::Copy, mv, index.lbound(), index.size()));
     }
 
     /*! \brief Creates a new Epetra_MultiVector that shares the selected contents of \c mv (shallow copy).
@@ -876,7 +884,7 @@ namespace Anasazi {
       // wants a nonconst int array argument.  It doesn't actually
       // change the entries of the array.
       std::vector<int>& tmpind = const_cast< std::vector<int>& > (index);
-      return Teuchos::rcp (new Epetra_MultiVector (View, mv, &tmpind[0], index.size()));
+      return Teuchos::rcp (new Epetra_MultiVector (Epetra_DataAccess::View, mv, &tmpind[0], index.size()));
     }
 
     static Teuchos::RCP<Epetra_MultiVector> 
@@ -901,7 +909,7 @@ namespace Anasazi {
 			     "number of vectors " << mv.NumVectors() << " in "
 			     "the input multivector.");
 	}
-      return Teuchos::rcp (new Epetra_MultiVector (View, mv, index.lbound(), index.size()));
+      return Teuchos::rcp (new Epetra_MultiVector (Epetra_DataAccess::View, mv, index.lbound(), index.size()));
     }
 
     /*! \brief Creates a new const Epetra_MultiVector that shares the selected contents of \c mv (shallow copy).
@@ -967,7 +975,7 @@ namespace Anasazi {
       // wants a nonconst int array argument.  It doesn't actually
       // change the entries of the array.
       std::vector<int>& tmpind = const_cast< std::vector<int>& > (index);
-      return Teuchos::rcp (new Epetra_MultiVector (View, mv, &tmpind[0], index.size()));
+      return Teuchos::rcp (new Epetra_MultiVector (Epetra_DataAccess::View, mv, &tmpind[0], index.size()));
     }
 
     static Teuchos::RCP<Epetra_MultiVector> 
@@ -992,7 +1000,7 @@ namespace Anasazi {
 			     "number of vectors " << mv.NumVectors() << " in "
 			     "the input multivector.");
 	}
-      return Teuchos::rcp (new Epetra_MultiVector(View, mv, index.lbound(), index.size()));
+      return Teuchos::rcp (new Epetra_MultiVector(Epetra_DataAccess::View, mv, index.lbound(), index.size()));
     }
 
     //@}
@@ -1001,8 +1009,13 @@ namespace Anasazi {
     //@{ 
 
     //! Obtain the vector length of \c mv.
-    static int GetVecLength( const Epetra_MultiVector& mv )
-    { return mv.GlobalLength(); }
+    static ptrdiff_t GetGlobalLength( const Epetra_MultiVector& mv )
+    { 
+      if (mv.Map().GlobalIndicesLongLong())
+        return static_cast<ptrdiff_t>( mv.GlobalLength64() );
+      else
+        return static_cast<ptrdiff_t>( mv.GlobalLength() );
+    }
 
     //! Obtain the number of vectors in \c mv
     static int GetNumberVecs( const Epetra_MultiVector& mv )
@@ -1022,10 +1035,10 @@ namespace Anasazi {
                                  double beta, Epetra_MultiVector& mv )
     { 
       Epetra_LocalMap LocalMap(B.numRows(), 0, mv.Map().Comm());
-      Epetra_MultiVector B_Pvec(::View, LocalMap, B.values(), B.stride(), B.numCols());
+      Epetra_MultiVector B_Pvec(Epetra_DataAccess::View, LocalMap, B.values(), B.stride(), B.numCols());
 
       TEUCHOS_TEST_FOR_EXCEPTION( mv.Multiply( 'N', 'N', alpha, A, B_Pvec, beta )!=0, EpetraMultiVecFailure,
-          "Anasazi::MultiVecTraits<double, Epetra_MultiVector>::MvNorm call to Epetra_MultiVector::Multiply() returned a nonzero value.");
+          "Anasazi::MultiVecTraits<double, Epetra_MultiVector>::MvTimesMatAddMv call to Epetra_MultiVector::Multiply() returned a nonzero value.");
     }
 
     /*! \brief Replace \c mv with \f$\alpha A + \beta B\f$.
@@ -1094,7 +1107,7 @@ namespace Anasazi {
                         )
     { 
       Epetra_LocalMap LocalMap(B.numRows(), 0, mv.Map().Comm());
-      Epetra_MultiVector B_Pvec(::View, LocalMap, B.values(), B.stride(), B.numCols());
+      Epetra_MultiVector B_Pvec(Epetra_DataAccess::View, LocalMap, B.values(), B.stride(), B.numCols());
       
       TEUCHOS_TEST_FOR_EXCEPTION( B_Pvec.Multiply( 'T', 'N', alpha, A, mv, 0.0 )!=0, EpetraMultiVecFailure,
           "Anasazi::MultiVecTraits<double, Epetra_MultiVector>::MvTransMv call to Epetra_MultiVector::Multiply() returned a nonzero value.");
@@ -1389,7 +1402,7 @@ namespace Anasazi {
     }
     
   };
-  
+
 } // end of Anasazi namespace 
 
 #endif 

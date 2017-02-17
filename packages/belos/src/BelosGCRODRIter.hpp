@@ -232,7 +232,7 @@ namespace Belos {
      * \note For any pointer in \c newstate which directly points to the multivectors in 
      * the solver, the data is not copied.
      */
-    void initialize(GCRODRIterState<ScalarType,MV> newstate);
+    void initialize(GCRODRIterState<ScalarType,MV>& newstate);
     
     /*! \brief Initialize the solver with empty data. Calling this method will result in error,
      *  as GCRODRIter must be initialized with a valid state.
@@ -517,7 +517,7 @@ namespace Belos {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Initialize this iteration object
   template <class ScalarType, class MV, class OP>
-  void GCRODRIter<ScalarType,MV,OP>::initialize(GCRODRIterState<ScalarType,MV> newstate) {
+  void GCRODRIter<ScalarType,MV,OP>::initialize(GCRODRIterState<ScalarType,MV>& newstate) {
     
     if (newstate.V != Teuchos::null &&  newstate.H != Teuchos::null) {
       curDim_ = newstate.curDim;
@@ -609,7 +609,7 @@ namespace Belos {
           subR = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType> ( Teuchos::View,*H_,1,1,lclDim,curDim_ ) );
 
         // Project out the previous Krylov vectors and normalize the next vector.
-        int rank = ortho_->projectAndNormalize(*Vnext,AsubH,subR,AVprev);
+        rank = ortho_->projectAndNormalize(*Vnext,AsubH,subR,AVprev);
 
         // Copy over the coefficients to R just in case we run into an error.
         Teuchos::SerialDenseMatrix<int,ScalarType> subR2( Teuchos::View,R_,lclDim+1,1,0,curDim_ );
@@ -669,7 +669,7 @@ namespace Belos {
         Teuchos::RCP<Teuchos::SerialDenseMatrix<int,ScalarType> >  subR = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType> ( Teuchos::View,*H_,1,1,lclDim,curDim_ ) );
 
         // Project out the previous Krylov vectors and normalize the next vector.
-        int rank = ortho_->projectAndNormalize(*Vnext,AsubH,subR,AVprev);
+        rank = ortho_->projectAndNormalize(*Vnext,AsubH,subR,AVprev);
 
         // Copy over the coefficients to R just in case we run into an error.
         Teuchos::SerialDenseMatrix<int,ScalarType> subR2( Teuchos::View,R_,lclDim+1,1,0,curDim_ );

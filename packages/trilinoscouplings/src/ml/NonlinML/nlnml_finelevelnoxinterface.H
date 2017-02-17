@@ -19,7 +19,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 # USA
 # Questions? Contact Jonathan Hu (jhu@sandia.gov) or Ray Tuminaro 
 # (rstumin@sandia.gov).
@@ -185,7 +185,7 @@ public:
    \param block_pde   (Out)  : on exit, allocated vector of length NumMyRows containing the number of
                                PDE a certain row belongs to.
    */
-  virtual bool getBlockInfo(int *nblocks, vector<int>& blocks, vector<int>& block_pde) = 0;
+  virtual bool getBlockInfo(int *nblocks, std::vector<int>& blocks, std::vector<int>& block_pde) = 0;
 
   //! Dummy routine to apply constraints
   /*! If the underlying application needs to apply constraints to the

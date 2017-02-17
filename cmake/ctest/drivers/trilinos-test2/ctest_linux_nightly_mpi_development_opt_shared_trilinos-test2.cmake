@@ -68,7 +68,7 @@ SET(CTEST_TEST_TYPE Nightly)
 
 SET(Trilinos_ENABLE_SECONDARY_STABLE_CODE ON)
 
-SET(EXTRA_EXCLUDE_PACKAGES STK Claps Zoltan2)
+SET(EXTRA_EXCLUDE_PACKAGES STK Claps)
 #can't use default Trilinos_EXCLUDE_PACKAGES because it includes PyTrilinos
 SET( Trilinos_EXCLUDE_PACKAGES ${EXTRA_EXCLUDE_PACKAGES} TriKota)
 
@@ -76,11 +76,10 @@ SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_DATA_DIR:STRING=$ENV{TRILINOSDATADIRECTORY}"
   "-DBUILD_SHARED_LIBS:BOOL=ON"
-  "-DMPI_BASE_DIR:PATH=/home/trilinos"
+  "-DMPI_BASE_DIR:PATH=/home/trilinos/gcc4.7.2/openmpi-1.6.5"
   "-DTPL_ENABLE_Pthread:BOOL=ON"
   "-DTPL_ENABLE_Boost:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost-1.49.0"
-  "-DSWIG_EXECUTABLE:FILEPATH=/home/trilinos/tpl/gcc4.1.2/swig-2.0.0/bin/swig"
+  "-DSWIG_EXECUTABLE:FILEPATH=/home/trilinos/tpl/gcc4.1.2/swig-3.0.4/bin/swig"
   "-DNOX_ENABLE_ABSTRACT_IMPLEMENTATION_LAPACK=ON"
   "-DTPL_ENABLE_Expat:BOOL=ON"
   "-DTPL_ENABLE_LAMMPS:BOOL=ON"
@@ -91,6 +90,9 @@ SET( EXTRA_CONFIGURE_OPTIONS
   "-DHDF5_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/phdf5-1.8.6/lib"
   "-DNetcdf_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/lib"
   "-DNetcdf_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/include"
+  "-DPyTrilinos_ENABLE_STK=OFF"
+  "-DPyTrilinos_ENABLE_Tpetra=OFF"
+  "-DTPL_ENABLE_CppUnit:BOOL=ON"
   )
 
 #

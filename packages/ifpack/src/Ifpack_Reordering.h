@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -41,7 +54,7 @@ class Epetra_RowMatrix;
 
 //! Ifpack_Reordering: basic class for reordering for a Ifpack_Graph object.
 /*!
-Class Ifpack_Reordering is a pure virtual class that defines the 
+Class Ifpack_Reordering is a pure virtual class that defines the
 structure of all Ifpack reordering.
 
 The Ifpack_Graph object is used \e only by method Compute().
@@ -91,12 +104,12 @@ public:
 
   //! Destructor.
   virtual ~Ifpack_Reordering() {};
-  
+
   //! Sets integer parameters `Name'.
-  virtual int SetParameter(const string Name, const int Value) = 0;
- 
+  virtual int SetParameter(const std::string Name, const int Value) = 0;
+
   //! Sets double parameters `Name'.
-  virtual int SetParameter(const string Name, const double Value) = 0;
+  virtual int SetParameter(const std::string Name, const double Value) = 0;
 
   //! Sets all parameters.
   virtual int SetParameters(Teuchos::ParameterList& List) = 0;
@@ -118,18 +131,18 @@ public:
 
   //! Applies reordering to multivector Xorig, whose local length equals the number of local rows, stores reordered vector in X.
   virtual int P(const Epetra_MultiVector& Xorig,
-		Epetra_MultiVector& X) const = 0;
+                Epetra_MultiVector& X) const = 0;
 
   //! Applies inverse reordering to multivector Xorig, whose local length equals the number of local rows, stores inverse reordered vector in X.
   virtual int Pinv(const Epetra_MultiVector& Xorig,
-		   Epetra_MultiVector& X) const = 0;
+                   Epetra_MultiVector& X) const = 0;
 
   //! Prints basic information on iostream. This function is used by operator<<.
-  virtual ostream& Print(std::ostream& os) const = 0;
+  virtual std::ostream& Print(std::ostream& os) const = 0;
 
-}; 
+};
 
-inline ostream& operator<<(ostream& os, const Ifpack_Reordering& obj)
+inline std::ostream& operator<<(std::ostream& os, const Ifpack_Reordering& obj)
 {
   return(obj.Print(os));
 }

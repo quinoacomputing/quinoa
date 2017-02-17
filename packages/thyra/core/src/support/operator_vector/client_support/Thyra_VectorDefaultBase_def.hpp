@@ -177,8 +177,8 @@ VectorDefaultBase<Scalar>::clone_v() const
           <<Teuchos::ScalarTraits<Scalar>::name()
           <<">::clone_v() called!\n";
 #endif
-  RCP<VectorBase<Scalar> > copy = createMember(this->space());
-  assign(copy.ptr(), *this);
+  const RCP<VectorBase<Scalar> > copy = createMember(this->space());
+  ::Thyra::assign<Scalar>(copy.ptr(), *this);
   return copy;
 }
 
@@ -359,6 +359,7 @@ void VectorDefaultBase<Scalar>::acquireDetachedVectorViewImpl(
   ) const
 {
   using Teuchos::dyn_cast;
+  using Teuchos::tuple;
   const Range1D rng = rng_in.full_range() ? Range1D(0,this->space()->dim()-1) : rng_in;
 #ifdef TEUCHOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -373,8 +374,8 @@ void VectorDefaultBase<Scalar>::acquireDetachedVectorViewImpl(
   RCP<RTOpPack::ReductTarget>
     reduct_obj = get_sub_vector_op.reduct_obj_create(); // This is really of type RTOpPack::ConstSubVectorView<Scalar>!
   // Perform the reduction (get the sub-vector requested)
-  const VectorBase<Scalar>* sub_vecs[] = { this };
-  ::Thyra::applyOp<Scalar>(get_sub_vector_op, 1, sub_vecs, 0, NULL, &*reduct_obj);
+  ::Thyra::applyOp<Scalar>(get_sub_vector_op, tuple(Teuchos::ptr<const VectorBase<Scalar> >(this))(),
+    Teuchos::null, reduct_obj.ptr());
   // Get the sub-vector.
   *sub_vec_inout = get_sub_vector_op(*reduct_obj);
 }
@@ -432,8 +433,8 @@ template<class Scalar>
 void VectorDefaultBase<Scalar>::setSubVectorImpl( const RTOpPack::SparseSubVectorT<Scalar>& sub_vec )
 {
   RTOpPack::TOpSetSubVector<Scalar> set_sub_vector_op(sub_vec);
-  VectorBase<Scalar>* targ_vecs[1] = { this };
-  ::Thyra::applyOp<Scalar>(set_sub_vector_op, 0, NULL, 1, targ_vecs, NULL);
+  ::Thyra::applyOp<Scalar>(set_sub_vector_op, Teuchos::null,
+    Teuchos::tuple(Teuchos::ptr<VectorBase<Scalar> >(this))(), Teuchos::null);
 }
 
 

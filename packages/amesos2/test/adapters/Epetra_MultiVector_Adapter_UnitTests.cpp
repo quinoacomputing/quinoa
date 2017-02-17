@@ -114,10 +114,12 @@ namespace {
 #endif
   }
 
+  /*
   RCP<FancyOStream> getDefaultOStream()
   {
     return( VerboseObjectBase::getDefaultOStream() );
   }
+  */
 
   /*
    * UNIT TESTS
@@ -131,7 +133,6 @@ namespace {
      * - Correct initialization of class members
      * - Correct typedefs ( using Amesos2::is_same<> )
      */
-    typedef ScalarTraits<double> ST;
     typedef Epetra_MultiVector MV;
     typedef MultiVecAdapter<MV> ADAPT;
 
@@ -160,7 +161,6 @@ namespace {
   {
     // Test that the dimensions reported by the adapter match those as reported
     // by the Tpetra::MultiVector
-    typedef ScalarTraits<double> ST;
     typedef Epetra_MultiVector MV;
     typedef MultiVecAdapter<MV> ADAPT;
 
@@ -189,7 +189,6 @@ namespace {
      * known multivector and also check against what is returned by the
      * Tpetra::MultiVector.
      */
-    typedef ScalarTraits<double> ST;
     typedef Epetra_MultiVector MV;
     typedef MultiVecAdapter<MV> ADAPT;
 
@@ -252,7 +251,6 @@ namespace {
   // accepts a Map describing the distribution of the copy
   TEUCHOS_UNIT_TEST( MultiVecAdapter, Copy_Map )
   {
-    typedef ScalarTraits<double> ST;
     typedef Epetra_MultiVector MV;
     typedef MultiVecAdapter<MV> ADAPT;
 
@@ -345,7 +343,6 @@ namespace {
 
   TEUCHOS_UNIT_TEST( MultiVecAdapter, Globalize )
   {
-    typedef ScalarTraits<double> ST;
     typedef Epetra_MultiVector MV;
     typedef MultiVecAdapter<MV> ADAPT;
 

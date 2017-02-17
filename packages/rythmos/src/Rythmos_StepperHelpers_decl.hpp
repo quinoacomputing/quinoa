@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -77,7 +77,9 @@ void eval_model_explicit(
     Thyra::ModelEvaluatorBase::InArgs<Scalar> &basePoint,
     const VectorBase<Scalar>& x_in,
     const typename Thyra::ModelEvaluatorBase::InArgs<Scalar>::ScalarMag &t_in,
-    const Ptr<VectorBase<Scalar> >& f_out
+    const Ptr<VectorBase<Scalar> >& f_out,
+    const Scalar scaled_dt = 0,
+    const Scalar stage_point = 0 /* default value */
     );
 
 

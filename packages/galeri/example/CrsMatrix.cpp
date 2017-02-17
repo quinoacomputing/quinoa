@@ -58,10 +58,10 @@ using namespace Galeri;
 // main driver //
 // =========== //
 
-int main(int argv, char* argc[])
+int main(int argc, char* argv[])
 {
 #ifdef HAVE_MPI
-  MPI_Init(&argv, &argc);
+  MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
@@ -83,7 +83,11 @@ int main(int argv, char* argc[])
   {
     // Creates a simple linear map; for more details on the map creation
     // refer to the documentation
+#ifndef GALERI_TEST_USE_LONGLONG_GO
     Map = CreateMap("Cartesian2D", Comm, GaleriList);
+#else
+    Map = CreateMap64("Cartesian2D", Comm, GaleriList);
+#endif
 
     // Creates a diagonal matrix with 1's on the diagonal
     Matrix   = CreateCrsMatrix("Biharmonic2D", Map, GaleriList);

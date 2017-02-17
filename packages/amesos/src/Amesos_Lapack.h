@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -43,6 +43,7 @@
 #include "Epetra_SerialDenseSolver.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Import.h"
+#include "Epetra_Export.h"
 class Epetra_RowMatrix;
 class Epetra_LinearProblem;
 #include "Teuchos_RCP.hpp"
@@ -166,9 +167,16 @@ protected:
   }
 
   //! Returns the number of global rows, or -1 if Matrix() returns 0.
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   inline int NumGlobalRows() const
   {
     return(Matrix()->NumGlobalRows());
+  }
+#endif
+
+  inline long long NumGlobalRows64() const
+  {
+    return(Matrix()->NumGlobalRows64());
   }
 
   //! Returns the number of local rows, or -1 if Matrix() returns 0.
@@ -177,13 +185,13 @@ protected:
     return(Matrix()->NumMyRows());
   }
 
-  //! Returns a reference to serial map (that with all elements on process 0). Builds SerialMap_ if necessary or required.
+  //! Returns a reference to serial map (that with all elements on process 0).
   inline const Epetra_Map& SerialMap()
   {
     return(*(SerialMap_.get()));
   }
 
-  //! Returns a reference to serial matrix (that with all rows on process 0). Builds SerialMap_ if necessary or required.
+  //! Returns a reference to serial matrix (that with all rows on process 0).
   inline Epetra_RowMatrix& SerialMatrix()
   {
     return(*(SerialMatrix_.get()));
@@ -194,10 +202,22 @@ protected:
     return(*(SerialCrsMatrix_.get()));
   }
 
-  //! Returns a reference to the importer map. Builds SerialMap_ if necessary or required.
-  const Epetra_Import& Importer()
+  //! Returns a reference to the matrix importer (from row map to serial map).
+  const Epetra_Import& MatrixImporter()
   {
-    return(*(Importer_.get()));
+    return(*(MatrixImporter_.get()));
+  }
+
+  //! Returns a reference to the rhs exporter (from range map to serial map).
+  const Epetra_Export& RhsExporter()
+  {
+    return(*(RhsExporter_.get()));
+  }
+
+  //! Returns a reference to the solution importer (to domain map from serial map).
+  const Epetra_Import& SolutionImporter()
+  {
+    return(*(SolutionImporter_.get()));
   }
 
   Teuchos::RCP<Teuchos::ParameterList> pl_ ; 
@@ -222,7 +242,9 @@ protected:
   Teuchos::RCP<Epetra_RowMatrix> SerialMatrix_;
   Teuchos::RCP<Epetra_CrsMatrix> SerialCrsMatrix_;
   Teuchos::RCP<Epetra_Map> SerialMap_;
-  Teuchos::RCP<Epetra_Import> Importer_;
+  Teuchos::RCP<Epetra_Import> MatrixImporter_;
+  Teuchos::RCP<Epetra_Export> RhsExporter_;
+  Teuchos::RCP<Epetra_Import> SolutionImporter_;
 
   //! Dense matrix.
   Epetra_SerialDenseMatrix DenseMatrix_;
@@ -241,8 +263,8 @@ protected:
   //! Quick access ids for the individual timings
   int MtxRedistTime_, MtxConvTime_, VecRedistTime_, SymFactTime_, NumFactTime_, SolveTime_;
 
-  int NumGlobalRows_;
-  int NumGlobalNonzeros_;
+  long long NumGlobalRows_;
+  long long NumGlobalNonzeros_;
 
   Teuchos::RCP<Teuchos::ParameterList> ParameterList_ ; 
 

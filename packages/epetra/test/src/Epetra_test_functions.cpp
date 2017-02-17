@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
@@ -100,48 +100,126 @@ bool compare_matrices(const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B)
   }
 
   int numRows = Amap.NumMyElements();
-  int* rows = Amap.MyGlobalElements();
 
-  Epetra_Util util;
+  if(Amap.GlobalIndicesInt())
+  {
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    int* rows = Amap.MyGlobalElements();
 
-  for(int i=0; i<numRows; ++i) {
-    int row = rows[i];
-    int rowLen = A.NumGlobalEntries(row);
-    if (rowLen != B.NumGlobalEntries(row)) {
-      return(false);
-    }
+    Epetra_Util util;
 
-    int* indices = new int[rowLen*2];
-    int* Bindices = indices+rowLen;
-
-    double* values = new double[rowLen*2];
-    double* Bvalues = values+rowLen;
-
-    A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
-    B.ExtractGlobalRowCopy(row, rowLen, rowLen, Bvalues, Bindices);
-
-    util.Sort(true, rowLen, indices, 1, &values, 0, 0);
-    util.Sort(true, rowLen, Bindices, 1, &Bvalues, 0, 0);
-
-    bool same = true;
-    for(int j=0; j<rowLen; ++j) {
-      if (indices[j] != Bindices[j]) {
-        same = false; break;
+    for(int i=0; i<numRows; ++i) {
+      int row = rows[i];
+      int rowLen = A.NumGlobalEntries(row);
+      if (rowLen != B.NumGlobalEntries(row)) {
+        return(false);
       }
-      if (values[j] != Bvalues[j]) {
-        same = false; break;
+
+      int* indices = new int[rowLen*2];
+      int* Bindices = indices+rowLen;
+
+      double* values = new double[rowLen*2];
+      double* Bvalues = values+rowLen;
+
+      A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
+      B.ExtractGlobalRowCopy(row, rowLen, rowLen, Bvalues, Bindices);
+
+      util.Sort(true, rowLen, indices, 1, &values, 0, 0, 0, 0);
+      util.Sort(true, rowLen, Bindices, 1, &Bvalues, 0, 0, 0, 0);
+
+      bool same = true;
+      for(int j=0; j<rowLen; ++j) {
+        if (indices[j] != Bindices[j]) {
+          same = false; break;
+        }
+        if (values[j] != Bvalues[j]) {
+          same = false; break;
+        }
+      }
+
+      delete [] indices;
+      delete [] values;
+
+      if (!same) {
+        return(false);
       }
     }
+#else
+    throw "compare_matrices: GlobalIndices int but not API for it.";
+#endif
+  }
+  else if(Amap.GlobalIndicesLongLong()) {
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-    delete [] indices;
-    delete [] values;
+    long long* rows = Amap.MyGlobalElements64();
 
-    if (!same) {
-      return(false);
+    Epetra_Util util;
+
+    for(int i=0; i<numRows; ++i) {
+      long long row = rows[i];
+      int rowLen = A.NumGlobalEntries(row);
+      if (rowLen != B.NumGlobalEntries(row)) {
+        return(false);
+      }
+
+      long long* indices = new long long[rowLen*2];
+      long long* Bindices = indices+rowLen;
+
+      double* values = new double[rowLen*2];
+      double* Bvalues = values+rowLen;
+
+      A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
+      B.ExtractGlobalRowCopy(row, rowLen, rowLen, Bvalues, Bindices);
+
+      util.Sort(true, rowLen, indices, 1, &values, 0, 0, 0, 0);
+      util.Sort(true, rowLen, Bindices, 1, &Bvalues, 0, 0, 0, 0);
+
+      bool same = true;
+      for(int j=0; j<rowLen; ++j) {
+        if (indices[j] != Bindices[j]) {
+          same = false; break;
+        }
+        if (values[j] != Bvalues[j]) {
+          same = false; break;
+        }
+      }
+
+      delete [] indices;
+      delete [] values;
+
+      if (!same) {
+        return(false);
+      }
     }
+#else
+    throw "compare_matrices: GlobalIndices long long but not API for it.";
+#endif
+  }
+  else {
+    return(false);
   }
 
+
   return(true);
+}
+
+bool compare_matrices_LL(const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B)
+{
+  const Epetra_Map& Amap = A.RowMap();
+  const Epetra_Map& Bmap = B.RowMap();
+
+  if (!Amap.PointSameAs(Bmap)) {
+    return(false);
+  }
+
+  // FIXME (mfh 18 Apr 2014) Does the commented-out line below have
+  // any side effects?  In any case, it was causing a build warning
+  // due to numRows never being used.  btw, shouldn't a function that
+  // claims to compare matrices actually look at the matrices???
+
+  //int numRows = Amap.NumMyElements();
+  (void) Amap.NumMyElements();
+  return true;
 }
 
 }//namespace epetra_test

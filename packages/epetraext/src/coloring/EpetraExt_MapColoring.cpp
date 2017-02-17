@@ -39,13 +39,14 @@
 // ***********************************************************************
 //@HEADER
 
+#include <Epetra_ConfigDefs.h>
 #include <EpetraExt_MapColoring.h>
 
 #include <EpetraExt_Transpose_CrsGraph.h>
 #include <EpetraExt_Overlap_CrsGraph.h>
 
 #include <Epetra_CrsGraph.h>
-#include <Epetra_IntVector.h>
+#include <Epetra_GIDTypeVector.h>
 #include <Epetra_MapColoring.h>
 #include <Epetra_Map.h>
 #include <Epetra_Comm.h>
@@ -65,9 +66,10 @@ using std::map;
 
 namespace EpetraExt {
 
+template<typename int_type>
 CrsGraph_MapColoring::NewTypeRef
 CrsGraph_MapColoring::
-operator()( OriginalTypeRef orig  )
+Toperator( OriginalTypeRef orig  )
 {
   Epetra_Time timer( orig.Comm() );
 
@@ -111,7 +113,7 @@ operator()( OriginalTypeRef orig  )
         for( int j = 0; j < NumIndices; ++j )
           if( Indices[j] >= nRows )
             base->InsertMyIndices( Indices[j], 1, &i );
-      } 
+      }
       base->FillComplete();
     }
 
@@ -173,7 +175,7 @@ operator()( OriginalTypeRef orig  )
     ColorMap = new Epetra_MapColoring( ColMap );
 
     std::vector<int> rowOrder( nCols );
-    if( reordering_ == 0 || reordering_ == 1 ) 
+    if( reordering_ == 0 || reordering_ == 1 )
     {
       std::multimap<int,int> adjMap;
       typedef std::multimap<int,int>::value_type adjMapValueType;
@@ -357,7 +359,7 @@ operator()( OriginalTypeRef orig  )
         set<int> Cols;
         for( int j = 0; j < NumAdj1Indices; ++j )
         {
-          int GID = OverlapGraph.LRID( OverlapGraph.GCID( Adj1Indices[j] ) );
+          int GID = OverlapGraph.LRID( OverlapGraph.GCID64( Adj1Indices[j] ) );
           OverlapGraph.ExtractMyRowView( GID, NumIndices, Indices );
           for( int k = 0; k < NumIndices; ++k ) Cols.insert( Indices[k] );
         }
@@ -368,23 +370,31 @@ operator()( OriginalTypeRef orig  )
         for( int j = 0 ; iterIS != iendIS; ++iterIS, ++j ) ColVec[j] = *iterIS;
         Adj2->InsertMyIndices( i, nCols2, &ColVec[0] );
       }
+
+#ifdef NDEBUG
+      (void) Adj2->FillComplete();
+#else
+      // assert() statements go away if NDEBUG is defined.  Don't
+      // declare the 'flag' variable if it never gets used.
       int flag = Adj2->FillComplete();
       assert( flag == 0 );
+#endif // NDEBUG
+
       RowMap.Comm().Barrier();
       if( verbosity_ > 1 ) std::cout << "Adjacency 2 Graph!\n" << *Adj2;
     }
 
     //collect GIDs on boundary
-    std::vector<int> boundaryGIDs;
-    std::vector<int> interiorGIDs;
+    std::vector<int_type> boundaryGIDs;
+    std::vector<int_type> interiorGIDs;
     for( int row = 0; row < nRows; ++row )
     {
       Adj2->ExtractMyRowView( row, NumIndices, Indices );
       bool testFlag = false;
       for( int i = 0; i < NumIndices; ++i )
         if( Indices[i] >= nRows ) testFlag = true;
-      if( testFlag ) boundaryGIDs.push_back( Adj2->GRID(row) );
-      else           interiorGIDs.push_back( Adj2->GRID(row) );
+      if( testFlag ) boundaryGIDs.push_back( (int_type) Adj2->GRID64(row) );
+      else           interiorGIDs.push_back( (int_type) Adj2->GRID64(row) );
     }
 
     int LocalBoundarySize = boundaryGIDs.size();
@@ -393,8 +403,8 @@ operator()( OriginalTypeRef orig  )
       LocalBoundarySize ? &boundaryGIDs[0]: 0,
       0, RowMap.Comm() );
     if( verbosity_ > 1 ) std::cout << "BoundaryMap:\n" << BoundaryMap;
-    
-    int BoundarySize = BoundaryMap.NumGlobalElements();
+
+    int_type BoundarySize = (int_type) BoundaryMap.NumGlobalElements64();
     Epetra_MapColoring BoundaryColoring( BoundaryMap );
 
     if( algo_ == PSEUDO_PARALLEL )
@@ -402,16 +412,16 @@ operator()( OriginalTypeRef orig  )
       Epetra_Map BoundaryIndexMap( BoundarySize, LocalBoundarySize, 0, RowMap.Comm() );
       if( verbosity_ > 1) std::cout << "BoundaryIndexMap:\n" << BoundaryIndexMap;
 
-      Epetra_IntVector bGIDs( View, BoundaryIndexMap, &boundaryGIDs[0] );
+      typename Epetra_GIDTypeVector<int_type>::impl bGIDs( View, BoundaryIndexMap, &boundaryGIDs[0] );
       if( verbosity_ > 1) std::cout << "BoundaryGIDs:\n" << bGIDs;
 
-      int NumLocalBs = 0;
+      int_type NumLocalBs = 0;
       if( !RowMap.Comm().MyPID() ) NumLocalBs = BoundarySize;
-     
+
       Epetra_Map LocalBoundaryIndexMap( BoundarySize, NumLocalBs, 0, RowMap.Comm() );
       if( verbosity_ > 1) std::cout << "LocalBoundaryIndexMap:\n" << LocalBoundaryIndexMap;
 
-      Epetra_IntVector lbGIDs( LocalBoundaryIndexMap );
+      typename Epetra_GIDTypeVector<int_type>::impl lbGIDs( LocalBoundaryIndexMap );
       Epetra_Import lbImport( LocalBoundaryIndexMap, BoundaryIndexMap );
       lbGIDs.Import( bGIDs, lbImport, Insert );
       if( verbosity_ > 1) std::cout << "LocalBoundaryGIDs:\n" << lbGIDs;
@@ -443,12 +453,12 @@ operator()( OriginalTypeRef orig  )
      * 5.Goto 3
      */
 
-      std::vector<int> OverlapBoundaryGIDs( boundaryGIDs );
+      std::vector<int_type> OverlapBoundaryGIDs( boundaryGIDs );
       for( int i = nRows; i < Adj2->ColMap().NumMyElements(); ++i )
-        OverlapBoundaryGIDs.push_back( Adj2->ColMap().GID(i) );
+        OverlapBoundaryGIDs.push_back( (int_type) Adj2->ColMap().GID64(i) );
 
-      int OverlapBoundarySize = OverlapBoundaryGIDs.size();
-      Epetra_Map BoundaryColMap( -1, OverlapBoundarySize,
+      int_type OverlapBoundarySize = OverlapBoundaryGIDs.size();
+      Epetra_Map BoundaryColMap( (int_type) -1, OverlapBoundarySize,
         OverlapBoundarySize ? &OverlapBoundaryGIDs[0] : 0,
         0, RowMap.Comm() );
 
@@ -483,51 +493,51 @@ operator()( OriginalTypeRef orig  )
 
       while( GlobalColored < BoundarySize )
       {
-	//Find current "Level" of boundary indices to color
-	int NumIndices;
-	int * Indices;
-	std::vector<int> LevelIndices;
-	for( int i = 0; i < LocalBoundarySize; ++i )
-	{
+        //Find current "Level" of boundary indices to color
+        int theNumIndices;
+        int * theIndices;
+        std::vector<int> LevelIndices;
+        for( int i = 0; i < LocalBoundarySize; ++i )
+        {
           if( !OverlapBoundaryColoring[i] )
           {
             //int MyVal = PRAND(BoundaryColMap.GID(i));
             int MyVal = OverlapBoundaryValues[i];
-            BoundaryGraph.ExtractMyRowView( i, NumIndices, Indices );
-	    bool ColorFlag = true;
-	    int Loc = 0;
-	    while( Loc<NumIndices && Indices[Loc]<LocalBoundarySize ) ++Loc;
-	    for( int j = Loc; j < NumIndices; ++j )
-              if( (OverlapBoundaryValues[Indices[j]]>MyVal)
-	          && !OverlapBoundaryColoring[Indices[j]] )
+            BoundaryGraph.ExtractMyRowView( i, theNumIndices, theIndices );
+            bool ColorFlag = true;
+            int Loc = 0;
+            while( Loc<theNumIndices && theIndices[Loc]<LocalBoundarySize ) ++Loc;
+            for( int j = Loc; j < theNumIndices; ++j )
+              if( (OverlapBoundaryValues[theIndices[j]]>MyVal)
+                  && !OverlapBoundaryColoring[theIndices[j]] )
               {
                 ColorFlag = false;
-		break;
+                break;
               }
             if( ColorFlag ) LevelIndices.push_back(i);
           }
         }
 
-	if( verbosity_ > 1 )
+        if( verbosity_ > 1 )
         {
           std::cout << MyPID << " Level Indices: ";
-	  int Lsize = (int) LevelIndices.size();
-	  for( int i = 0; i < Lsize; ++i ) std::cout << LevelIndices[i] << " ";
-	  std::cout << std::endl;
+          int Lsize = (int) LevelIndices.size();
+          for( int i = 0; i < Lsize; ++i ) std::cout << LevelIndices[i] << " ";
+          std::cout << std::endl;
         }
 
         //Greedy coloring of current level
-	set<int> levelColors;
-	int Lsize = (int) LevelIndices.size();
+        set<int> levelColors;
+        int Lsize = (int) LevelIndices.size();
         for( int i = 0; i < Lsize; ++i )
         {
-          BoundaryGraph.ExtractMyRowView( LevelIndices[i], NumIndices, Indices );
+          BoundaryGraph.ExtractMyRowView( LevelIndices[i], theNumIndices, theIndices );
 
           set<int> usedColors;
           int color;
-          for( int j = 0; j < NumIndices; ++j )
+          for( int j = 0; j < theNumIndices; ++j )
           {
-            color = OverlapBoundaryColoring[ Indices[j] ];
+            color = OverlapBoundaryColoring[ theIndices[j] ];
             if( color > 0 ) usedColors.insert( color );
             color = 0;
             int testcolor = 1;
@@ -538,21 +548,21 @@ operator()( OriginalTypeRef orig  )
             }
           }
           OverlapBoundaryColoring[ LevelIndices[i] ] = color;
-	  levelColors.insert( color );
+          levelColors.insert( color );
         }
 
-	if( verbosity_ > 2 ) std::cout << MyPID << " Level: " << Level << " Count: " << LevelIndices.size() << " NumColors: " << levelColors.size() << std::endl;
+        if( verbosity_ > 2 ) std::cout << MyPID << " Level: " << Level << " Count: " << LevelIndices.size() << " NumColors: " << levelColors.size() << std::endl;
 
-	if( verbosity_ > 2 ) std::cout << "Current Level Boundary Coloring:\n" << OverlapBoundaryColoring;
+        if( verbosity_ > 2 ) std::cout << "Current Level Boundary Coloring:\n" << OverlapBoundaryColoring;
 
-	//Update off processor coloring info
-	BoundaryColoring.Import( OverlapBoundaryColoring, ReverseOverlapBoundaryImport, Insert );
-	OverlapBoundaryColoring.Import( BoundaryColoring, OverlapBoundaryImport, Insert );
+        //Update off processor coloring info
+        BoundaryColoring.Import( OverlapBoundaryColoring, ReverseOverlapBoundaryImport, Insert );
+        OverlapBoundaryColoring.Import( BoundaryColoring, OverlapBoundaryImport, Insert );
         Colored += LevelIndices.size();
-	Level++;
+        Level++;
 
-	RowMap.Comm().SumAll( &Colored, &GlobalColored, 1 );
-	if( verbosity_ > 2 ) std::cout << "Num Globally Colored: " << GlobalColored << " from Num Global Boundary Nodes: " << BoundarySize << std::endl;
+        RowMap.Comm().SumAll( &Colored, &GlobalColored, 1 );
+        if( verbosity_ > 2 ) std::cout << "Num Globally Colored: " << GlobalColored << " from Num Global Boundary Nodes: " << BoundarySize << std::endl;
       }
     }
 
@@ -563,7 +573,7 @@ operator()( OriginalTypeRef orig  )
     //Add Boundary Colors
     for( int i = 0; i < LocalBoundarySize; ++i )
     {
-      int GID = BoundaryMap.GID(i);
+      int_type GID = (int_type) BoundaryMap.GID64(i);
       RowColorMap(GID) = BoundaryColoring(GID);
     }
 
@@ -575,7 +585,7 @@ operator()( OriginalTypeRef orig  )
     if( verbosity_ > 1 ) std::cout << "Adj2ColColorMap:\n " << Adj2ColColorMap;
 
     std::vector<int> rowOrder( nRows );
-    if( reordering_ == 0 || reordering_ == 1 ) 
+    if( reordering_ == 0 || reordering_ == 1 )
     {
       std::multimap<int,int> adjMap;
       typedef std::multimap<int,int>::value_type adjMapValueType;
@@ -626,7 +636,7 @@ operator()( OriginalTypeRef orig  )
           }
         }
         Adj2ColColorMap[ rowOrder[row] ] = color;
-	InteriorColors.insert( color );
+        InteriorColors.insert( color );
       }
     }
     if( verbosity_ > 1 ) std::cout << MyPID << " Num Interior Colors: " << InteriorColors.size() << std::endl;
@@ -645,6 +655,25 @@ operator()( OriginalTypeRef orig  )
   newObj_ = ColorMap;
 
   return *ColorMap;
+}
+
+CrsGraph_MapColoring::NewTypeRef
+CrsGraph_MapColoring::
+operator()( OriginalTypeRef orig  )
+{
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  if(orig.RowMap().GlobalIndicesInt()) {
+    return Toperator<int>(orig);
+  }
+  else
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  if(orig.RowMap().GlobalIndicesLongLong()) {
+    return Toperator<long long>(orig);
+  }
+  else
+#endif
+    throw "CrsGraph_MapColoring::operator(): ERROR, GlobalIndices type unknown.";
 }
 
 } // namespace EpetraExt

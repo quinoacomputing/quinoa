@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -42,7 +42,7 @@
 #include "Thyra_ProductVectorSpaceBase.hpp"
 #include "Thyra_AssertOp.hpp"
 #include "Thyra_TestingTools.hpp"
-
+#include "Rythmos_ImplicitBDFStepperRampingStepControl.hpp"
 #include "Teuchos_VerboseObjectParameterListHelpers.hpp"
 #include "Teuchos_as.hpp"
 
@@ -121,7 +121,7 @@ void ImplicitRKStepper<Scalar>::set_W_factory(
   const RCP<Thyra::LinearOpWithSolveFactoryBase<Scalar> > &irk_W_factory
   )
 {
-  TEUCHOS_ASSERT( !is_null(irk_W_factory) ); 
+  TEUCHOS_ASSERT( !is_null(irk_W_factory) );
   irk_W_factory_ = irk_W_factory;
 }
 
@@ -161,7 +161,7 @@ ImplicitRKStepper<Scalar>::getSolver() const
 
 
 // Overridden from StepperBase
- 
+
 
 template<class Scalar>
 bool ImplicitRKStepper<Scalar>::isImplicit() const
@@ -210,6 +210,24 @@ ImplicitRKStepper<Scalar>::cloneStepperAlgorithm() const
   return stepper;
 }
 
+template<class Scalar>
+RCP<StepControlStrategyBase<Scalar> > ImplicitRKStepper<Scalar>::getNonconstStepControlStrategy()
+{
+  return(stepControl_);
+}
+
+template<class Scalar>
+RCP<const StepControlStrategyBase<Scalar> > ImplicitRKStepper<Scalar>::getStepControlStrategy() const
+{
+  return(stepControl_);
+}
+
+template<class Scalar>
+void ImplicitRKStepper<Scalar>::setStepControlStrategy(const RCP<StepControlStrategyBase<Scalar> >& stepControl)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(stepControl == Teuchos::null,std::logic_error,"Error, stepControl == Teuchos::null!\n");
+  stepControl_ = stepControl;
+}
 
 template<class Scalar>
 void ImplicitRKStepper<Scalar>::setModel(
@@ -241,7 +259,7 @@ ImplicitRKStepper<Scalar>::getModel() const
 
 template<class Scalar>
 RCP<Thyra::ModelEvaluator<Scalar> >
-ImplicitRKStepper<Scalar>::getNonconstModel() 
+ImplicitRKStepper<Scalar>::getNonconstModel()
 {
   return Teuchos::null;
 }
@@ -272,6 +290,10 @@ void ImplicitRKStepper<Scalar>::setInitialCondition(
 
   x_ = x_init->clone_v();
 
+ // for the embedded RK method
+  xhat_ = x_init->clone_v();
+  ee_ = x_init->clone_v();
+
   // x_dot
 
   x_dot_ = createMember(x_->space());
@@ -283,7 +305,7 @@ void ImplicitRKStepper<Scalar>::setInitialCondition(
     assign(x_dot_.ptr(),*x_dot_init);
   else
     assign(x_dot_.ptr(),ST::zero());
-  
+
   // t
 
   const Scalar t =
@@ -304,7 +326,7 @@ void ImplicitRKStepper<Scalar>::setInitialCondition(
 
 
 template<class Scalar>
-Thyra::ModelEvaluatorBase::InArgs<Scalar> 
+Thyra::ModelEvaluatorBase::InArgs<Scalar>
 ImplicitRKStepper<Scalar>::getInitialCondition() const
 {
   return basePoint_;
@@ -314,8 +336,57 @@ ImplicitRKStepper<Scalar>::getInitialCondition() const
 template<class Scalar>
 Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
 {
+  Scalar stepSizeTaken;
+  using Teuchos::as;
+  using Teuchos::incrVerbLevel;
+  typedef Thyra::NonlinearSolverBase<Scalar> NSB;
+  typedef Teuchos::VerboseObjectTempState<NSB> VOTSNSB;
+
+  RCP<FancyOStream> out = this->getOStream();
+  Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
+  Teuchos::OSTab ostab(out,1,"takeStep");
+  VOTSNSB solver_outputTempState(solver_,out,incrVerbLevel(verbLevel,-1));
+
+  // not needed for this
+  int desiredOrder;
+
+  if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
+    *out
+      << "\nEntering "
+      << Teuchos::TypeNameTraits<ImplicitRKStepper<Scalar> >::name()
+      << "::takeStep("<<dt<<","<<toString(stepSizeType)<<") ...\n";
+  }
+
+  if (!isInitialized_) {
+    initialize_();
+  }
+  if (stepSizeType == STEP_TYPE_FIXED) {
+    stepSizeTaken = takeFixedStep_(dt , stepSizeType);
+    return stepSizeTaken;
+  }  else {
+      isVariableStep_ = true;
+      stepControl_->setOStream(out);
+      stepControl_->setVerbLevel(verbLevel);
+
+      rkNewtonConvergenceStatus_ = -1;
+
+      while (rkNewtonConvergenceStatus_ < 0){
+
+         stepControl_->setRequestedStepSize(*this, dt, stepSizeType);
+         stepControl_->nextStepSize(*this, &dt, &stepSizeType, &desiredOrder);
+
+         stepSizeTaken = takeVariableStep_(dt, stepSizeType);
+
+      }
+     return stepSizeTaken;
+  }
+
+}
 
 
+template<class Scalar>
+Scalar ImplicitRKStepper<Scalar>::takeFixedStep_(Scalar dt, StepSizeType stepSizeType)
+{
   using Teuchos::as;
   using Teuchos::incrVerbLevel;
   typedef ScalarTraits<Scalar> ST;
@@ -329,8 +400,9 @@ Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
 
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
     *out
-      << "\nEntering " << Teuchos::TypeNameTraits<ImplicitRKStepper<Scalar> >::name()
-      << "::takeStep("<<dt<<","<<toString(stepSizeType)<<") ...\n"; 
+      << "\nEntering "
+      << Teuchos::TypeNameTraits<ImplicitRKStepper<Scalar> >::name()
+      << "::takeFixedStep_("<<dt<<","<<toString(stepSizeType)<<") ...\n";
   }
 
   if (!isInitialized_) {
@@ -354,7 +426,7 @@ Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
   V_S( Teuchos::rcp_dynamic_cast<Thyra::VectorBase<Scalar> >(x_stage_bar_).ptr(), ST::zero() );
 
   if (!isDirk_) { // General Implicit RK Case:
-    RCP<ImplicitRKModelEvaluator<Scalar> > firkModel_ = 
+    RCP<ImplicitRKModelEvaluator<Scalar> > firkModel_ =
       Teuchos::rcp_dynamic_cast<ImplicitRKModelEvaluator<Scalar> >(irkModel_,true);
     firkModel_->setTimeStepPoint( x_old_, t, current_dt );
 
@@ -363,7 +435,7 @@ Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
 
   } else { // Diagonal Implicit RK Case:
 
-    RCP<DiagonalImplicitRKModelEvaluator<Scalar> > dirkModel_ = 
+    RCP<DiagonalImplicitRKModelEvaluator<Scalar> > dirkModel_ =
       Teuchos::rcp_dynamic_cast<DiagonalImplicitRKModelEvaluator<Scalar> >(irkModel_,true);
     dirkModel_->setTimeStepPoint( x_old_, t, current_dt );
     int numStages = irkButcherTableau_->numStages();
@@ -376,7 +448,7 @@ Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
   }
 
   // C) Complete the step ...
-  
+
   // Combine the stage derivatives with the Butcher tableau "b" vector to obtain the solution at the final time.
   // x_{k+1} = x_k + dt*sum_{i}^{p}(b_i*x_stage_bar_[i])
 
@@ -392,6 +464,154 @@ Scalar ImplicitRKStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
 
 }
 
+template<class Scalar>
+Scalar ImplicitRKStepper<Scalar>::takeVariableStep_(Scalar dt, StepSizeType stepSizeType)
+{
+  using Teuchos::as;
+  using Teuchos::incrVerbLevel;
+  typedef ScalarTraits<Scalar> ST;
+  typedef Thyra::NonlinearSolverBase<Scalar> NSB;
+  typedef Teuchos::VerboseObjectTempState<NSB> VOTSNSB;
+
+  RCP<FancyOStream> out = this->getOStream();
+  Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
+  Teuchos::OSTab ostab(out,1,"takeStep");
+  VOTSNSB solver_outputTempState(solver_,out,incrVerbLevel(verbLevel,-1));
+
+  AttemptedStepStatusFlag status;
+  Scalar dt_old = dt;
+
+  if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
+    *out
+      << "\nEntering "
+      << Teuchos::TypeNameTraits<ImplicitRKStepper<Scalar> >::name()
+      << "::takeVariableStep_("<<dt<<","<<toString(stepSizeType)<<") ...\n";
+  }
+
+  if (!isInitialized_) {
+    initialize_();
+  }
+
+  // A) Set up the IRK ModelEvaluator so that it can represent the time step
+  // equation to be solved.
+
+  // Set irkModel_ with x_old_, t_old_, and dt
+  V_V( x_old_.ptr(), *x_ );
+  Scalar current_dt = dt;
+  Scalar t = timeRange_.upper();
+  Scalar dt_to_return;
+
+  // B) Solve the timestep equation
+
+  // Set the guess for the stage derivatives to zero (unless we can think of
+  // something better)
+  V_S( Teuchos::rcp_dynamic_cast<Thyra::VectorBase<Scalar> >(x_stage_bar_).ptr(), ST::zero() );
+
+  if (!isDirk_) { // General Implicit RK Case:
+    RCP<ImplicitRKModelEvaluator<Scalar> > firkModel_ =
+      Teuchos::rcp_dynamic_cast<ImplicitRKModelEvaluator<Scalar> >(irkModel_,true);
+    firkModel_->setTimeStepPoint( x_old_, t, current_dt );
+
+    // Solve timestep equation
+    solver_->solve( &*x_stage_bar_ );
+
+  } else { // Diagonal Implicit RK Case:
+
+    RCP<DiagonalImplicitRKModelEvaluator<Scalar> > dirkModel_ =
+      Teuchos::rcp_dynamic_cast<DiagonalImplicitRKModelEvaluator<Scalar> >(irkModel_,true);
+    dirkModel_->setTimeStepPoint( x_old_, t, current_dt );
+    int numStages = irkButcherTableau_->numStages();
+    for (int stage=0 ; stage < numStages ; ++stage) {
+        dirkModel_->setCurrentStage(stage);
+        nonlinearSolveStatus_ = solver_->solve( &*(x_stage_bar_->getNonconstVectorBlock(stage)) );
+
+        if (nonlinearSolveStatus_.solveStatus == Thyra::SOLVE_STATUS_CONVERGED) {
+           rkNewtonConvergenceStatus_ = 0;
+        } else {
+          rkNewtonConvergenceStatus_ = -1;
+        }
+
+        // for now setCorrection just sets the rkNewtonConvergenceStatus_ in the stepControl
+        // and this is used by acceptStep method of the stepControl
+
+        stepControl_->setCorrection(*this, (x_stage_bar_->getNonconstVectorBlock(stage)), Teuchos::null , rkNewtonConvergenceStatus_);
+        bool stepPass = stepControl_->acceptStep(*this, &LETvalue_);
+
+        if (!stepPass) { // stepPass = false
+           stepLETStatus_ = STEP_LET_STATUS_FAILED;
+           rkNewtonConvergenceStatus_ = -1; // just making sure here
+           break;  // leave the for loop
+        } else { // stepPass = true
+           stepLETStatus_ = STEP_LET_STATUS_PASSED;
+           dirkModel_->setStageSolution( stage, *(x_stage_bar_->getVectorBlock(stage)) );
+           rkNewtonConvergenceStatus_ = 0; // just making sure here
+        }
+    }
+    // if none of the stages failed, then I can complete the step
+  }
+
+  // check the nonlinearSolveStatus
+  if ( rkNewtonConvergenceStatus_ == 0) {
+
+     /*
+     * if the solver has converged, then I can go ahead and combine the stage solutions
+     * and get the new solution
+     */
+
+     // C) Complete the step ...
+
+     // Combine the stage derivatives with the Butcher tableau "b" vector to obtain the solution at the final time.
+     // x_{k+1} = x_k + dt*sum_{i}^{p}(b_i*x_stage_bar_[i])
+
+     assembleIRKSolution( irkButcherTableau_->b(), current_dt, *x_old_, *x_stage_bar_,
+       outArg(*x_)
+       );
+    
+     //if using embedded method, estimate LTE
+     if (irkButcherTableau_->isEmbeddedMethod() ){
+
+        assembleIRKSolution( irkButcherTableau_->bhat(), current_dt, *x_old_, *x_stage_bar_,
+          outArg(*xhat_)
+          ); 
+
+        // ee_ = (x_ - xhat_)
+        Thyra::V_VmV(ee_.ptr(), *x_, *xhat_);
+        stepControl_->setCorrection(*this, x_, ee_ , rkNewtonConvergenceStatus_);
+
+        bool stepPass = stepControl_->acceptStep(*this, &LETvalue_);
+
+        if (!stepPass) { // stepPass = false
+           stepLETStatus_ = STEP_LET_STATUS_FAILED;
+           rkNewtonConvergenceStatus_ = -1; // just making sure here
+        } else { // stepPass = true
+           stepLETStatus_ = STEP_LET_STATUS_PASSED;
+           rkNewtonConvergenceStatus_ = 0; // just making sure here
+        }
+     }
+   }
+
+   if (rkNewtonConvergenceStatus_ == 0) {
+
+     // Update time range
+     timeRange_ = timeRange(t,t+current_dt);
+     numSteps_++;
+
+     // completeStep only if the none of the stage solution's failed to converged
+     stepControl_->completeStep(*this);
+
+     dt_to_return = current_dt;
+
+     } else {
+     rkNewtonConvergenceStatus_ = -1;
+     status = stepControl_-> rejectStep(*this); // reject the stage value
+     (void) status; // avoid "set but not used" build warning
+     dt_to_return = dt_old;
+  }
+
+     return dt_to_return;
+
+}
+
 
 template<class Scalar>
 const StepStatus<Scalar> ImplicitRKStepper<Scalar>::getStepStatus() const
@@ -401,18 +621,22 @@ const StepStatus<Scalar> ImplicitRKStepper<Scalar>::getStepStatus() const
   if (!isInitialized_) {
     stepStatus.stepStatus = STEP_STATUS_UNINITIALIZED;
     stepStatus.message = "This stepper is uninitialized.";
-    return stepStatus;
-  } 
-  if (numSteps_ > 0) {
+//    return stepStatus;
+  }
+  else if (numSteps_ > 0) {
     stepStatus.stepStatus = STEP_STATUS_CONVERGED;
-  } 
+  }
   else {
     stepStatus.stepStatus = STEP_STATUS_UNKNOWN;
   }
   stepStatus.stepSize = timeRange_.length();
   stepStatus.order = irkButcherTableau_->order();
   stepStatus.time = timeRange_.upper();
-  stepStatus.solution = x_;
+  if(Teuchos::nonnull(x_))
+    stepStatus.solution = x_;
+  else
+    stepStatus.solution = Teuchos::null;
+  stepStatus.solutionDot = Teuchos::null;
   return(stepStatus);
 }
 
@@ -485,7 +709,7 @@ void ImplicitRKStepper<Scalar>::getNodes(Array<Scalar>* time_vec) const
 
 
 template<class Scalar>
-void ImplicitRKStepper<Scalar>::removeNodes(Array<Scalar>& time_vec) 
+void ImplicitRKStepper<Scalar>::removeNodes(Array<Scalar>& time_vec)
 {
   TEUCHOS_TEST_FOR_EXCEPT(true);
 }
@@ -539,6 +763,9 @@ ImplicitRKStepper<Scalar>::getValidParameters() const
   static RCP<const ParameterList> validPL;
   if (is_null(validPL)) {
     RCP<ParameterList> pl = Teuchos::parameterList();
+    if (isVariableStep_){
+        pl->sublist(RythmosStepControlSettings_name);
+    }
     Teuchos::setupVerboseObjectSublist(&*pl);
     validPL = pl;
   }
@@ -583,7 +810,7 @@ template <class Scalar>
 void ImplicitRKStepper<Scalar>::initialize_()
 {
 
-  typedef ScalarTraits<Scalar> ST;
+  // typedef ScalarTraits<Scalar> ST; // unused
   using Teuchos::rcp_dynamic_cast;
 
   TEUCHOS_TEST_FOR_EXCEPT(is_null(model_));
@@ -597,10 +824,26 @@ void ImplicitRKStepper<Scalar>::initialize_()
     *x_->space(), *model_->get_x_space() );
 #endif
 
+  if (isVariableStep_ ) {
+  // Initialize StepControl
+
+    isEmbeddedRK_ = irkButcherTableau_->isEmbeddedMethod(); // determine if RK method is an embedded method
+  if (stepControl_ == Teuchos::null) {
+     RCP<ImplicitBDFStepperRampingStepControl<Scalar> > rkStepControl =
+     Teuchos::rcp(new ImplicitBDFStepperRampingStepControl<Scalar>());
+     //RCP<StepControlStrategyBase<Scalar> > rkStepControl =
+     //Teuchos::rcp(new StepControlStrategyBase<Scalar>());
+     RCP<Teuchos::ParameterList> stepControlPL =
+     Teuchos::sublist(paramList_ , RythmosStepControlSettings_name);
+     rkStepControl->setParameterList(stepControlPL);
+     this->setStepControlStrategy(rkStepControl);
+     stepControl_->initialize(*this);
+  }
+  }
 
   // Set up the IRK mdoel
 
-  if (!isDirk_) { // General Implicit RK 
+  if (!isDirk_) { // General Implicit RK
     TEUCHOS_TEST_FOR_EXCEPT(is_null(irk_W_factory_));
     irkModel_ = implicitRKModelEvaluator(
       model_,basePoint_,irk_W_factory_,irkButcherTableau_);
@@ -635,13 +878,13 @@ void ImplicitRKStepper<Scalar>::setRKButcherTableau( const RCP<const RKButcherTa
   irkButcherTableau_ = rkButcherTableau;
   E_RKButcherTableauTypes rkType = determineRKBTType<Scalar>(*irkButcherTableau_);
   if (
-         (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_DIRK) 
-      || (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_SDIRK) 
+         (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_DIRK)
+      || (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_SDIRK)
       || (irkButcherTableau_->numStages() == 1)
-     ) 
+     )
   {
     isDirk_ = true;
-  } 
+  }
 }
 
 template <class Scalar>
@@ -659,8 +902,8 @@ void ImplicitRKStepper<Scalar>::setDirk(bool isDirk)
   if (isDirk == true) {
     E_RKButcherTableauTypes rkType = determineRKBTType<Scalar>(*irkButcherTableau_);
     bool RKBT_is_DIRK = (
-         (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_DIRK) 
-      || (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_SDIRK) 
+         (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_DIRK)
+      || (rkType == RYTHMOS_RK_BUTCHER_TABLEAU_TYPE_SDIRK)
       || (irkButcherTableau_->numStages() == 1)
       );
     TEUCHOS_TEST_FOR_EXCEPTION( !RKBT_is_DIRK, std::logic_error,
@@ -671,7 +914,7 @@ void ImplicitRKStepper<Scalar>::setDirk(bool isDirk)
   }
 }
 
-// 
+//
 // Explicit Instantiation macro
 //
 // Must be expanded from within the Rythmos namespace!
@@ -690,7 +933,7 @@ void ImplicitRKStepper<Scalar>::setDirk(bool isDirk)
     const RCP<Thyra::NonlinearSolverBase< SCALAR > >& solver, \
     const RCP<Thyra::LinearOpWithSolveFactoryBase< SCALAR > >& irk_W_factory, \
     const RCP<const RKButcherTableauBase< SCALAR > >& irkbt \
-      ); 
+      );
 
 } // namespace Rythmos
 

@@ -313,8 +313,8 @@ bool PreconditionerInverseFactory::updateRequestedParameters(const Teuchos::Para
    // find name of settings sublist
    std::string subName = "";
    for(itr=srcPl->begin();itr!=srcPl->end();++itr) {
-      // search for string with "Settings" in name
-      if(itr->first.find("Settings")!=string::npos) {
+      // search for std::string with "Settings" in name
+      if(itr->first.find("Settings")!=std::string::npos) {
          subName = itr->first;
          continue;
       }
@@ -342,7 +342,8 @@ bool PreconditionerInverseFactory::updateRequestedParameters(const Teuchos::Para
 void PreconditionerInverseFactory::setupParameterListFromRequestHandler() 
 {
    // for non block preconditioners see if there are user requested additional parameters
-   if(extraParams_==Teuchos::null) return;
+   if(extraParams_==Teuchos::null)
+     return;
 
    Teuchos::ParameterList::ConstIterator itr;
    RCP<Teuchos::ParameterList> srcPl = precFactory_->unsetParameterList();
@@ -350,32 +351,40 @@ void PreconditionerInverseFactory::setupParameterListFromRequestHandler()
    // find name of settings sublist
    std::string subName = "";
    for(itr=srcPl->begin();itr!=srcPl->end();++itr) {
-      // search for string with "Settings" in name
-      if(itr->first.find("Settings")!=string::npos) {
+      // search for std::string with "Settings" in name
+      if(itr->first.find("Settings")!=std::string::npos) {
          subName = itr->first;
          continue;
       }
    }
 
    // update fails if no settings list was found
+   /*
    if(subName=="") {
       precFactory_->setParameterList(srcPl);
       return;
-   }
+   }*/
 
    Teuchos::RCP<Teko::RequestHandler> rh = getRequestHandler();
    TEUCHOS_TEST_FOR_EXCEPTION(rh==Teuchos::null,std::runtime_error,
                       "PreconditionerInverseFactory::setupParameterListFromRequestHandler: no request handler set");
 
    // add extra parameters to list
-   Teuchos::ParameterList & settingsList = srcPl->sublist(subName);
    rh->preRequest<Teuchos::RCP<Teuchos::ParameterList> >(RequestMesg(extraParams_));
    Teuchos::RCP<Teuchos::ParameterList> requestParams =
          rh->request<Teuchos::RCP<Teuchos::ParameterList> >(RequestMesg(extraParams_));
 
    TEUCHOS_TEST_FOR_EXCEPTION(requestParams==Teuchos::null,std::runtime_error,"User specified request not satisfied!");
-   for(itr=requestParams->begin();itr!=requestParams->end();++itr)
-      settingsList.setEntry(itr->first,itr->second);
+
+   // If there is no Settings sublist, assume that the list itself contains the settings
+   if(subName==""){
+     for(itr=requestParams->begin();itr!=requestParams->end();++itr)
+        srcPl->setEntry(itr->first,itr->second);
+   }else{
+     Teuchos::ParameterList & settingsList = srcPl->sublist(subName);
+     for(itr=requestParams->begin();itr!=requestParams->end();++itr)
+        settingsList.setEntry(itr->first,itr->second);
+   }
 
    // reset with updated parameter list
    precFactory_->setParameterList(srcPl);

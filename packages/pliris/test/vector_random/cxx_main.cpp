@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
   int i, m;
   int k;
   int l;
-  
+
   int mlen;   // Message length for input data
 
   int ierror;
@@ -134,12 +134,12 @@ int main(int argc, char *argv[])
 
   for(i=0;i<4;i++) buf[i]=-1;
 
-  cout << "proc " << comm.MyPID() << " is alive of   " << comm.NumProc()<< " Processors" << endl ;
+  std::cout << "proc " << comm.MyPID() << " is alive of   " << comm.NumProc()<< " Processors" << std::endl ;
 
   if( comm.MyPID() == 0 ) {
 
 
-    // Check for commandline input 
+    // Check for commandline input
 
      if (argc > 1) {
        // argv[1] should be size of matrix
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
           buf[1] = atoi(argv[2]);
        }
        else
-          // default is 1, but sqrt(p) would be better 
+          // default is 1, but sqrt(p) would be better
           buf[1] = 1;
      }
      else {
@@ -157,19 +157,19 @@ int main(int argc, char *argv[])
     // Input Data about matrix and distribution
 
    	if (buf[0] < 0) {
-	  cout << "Enter size of matrix " << endl;
+	  std::cout << "Enter size of matrix " << std::endl;
 	  std::cin >> buf[0];
 	}
-	if (buf[1] < 0) { 
-	  cout << "Enter number of processors to which each row is assigned "  << endl;
+	if (buf[1] < 0) {
+	  std::cout << "Enter number of processors to which each row is assigned "  << std::endl;
 	  std::cin >> buf[1];
 	}
 
      }
 
-	cout << " Matrix Size "<< buf[0] <<"\n";
+	std::cout << " Matrix Size "<< buf[0] <<"\n";
 
-        cout << " Processors in a row  " <<  buf[1] << "\n";
+        std::cout << " Processors in a row  " <<  buf[1] << "\n";
 
   }
 
@@ -177,9 +177,9 @@ int main(int argc, char *argv[])
 
     /* Send the initilization data to each processor    */
 
-    // Using Epetra Communicator 
+    // Using Epetra Communicator
 
-    comm.Broadcast(buf,mlen,0); 
+    comm.Broadcast(buf,mlen,0);
 
 
      // Set the values where needed
@@ -194,17 +194,17 @@ int main(int argc, char *argv[])
 
 
    if( comm.MyPID() == 0) {
-    cout << " ---- Building Pliris solver ----" << endl;
+    std::cout << " ---- Building Pliris solver ----" << std::endl;
    }
 
    // Instantiate the Solver
 
 
    Pliris solver;
- 
+
    // Get Info to build the matrix on a processor
 
-   solver.GetDistribution( &nprocs_row, 
+   solver.GetDistribution( &nprocs_row,
                             &matrix_size,
 			    &nrhs,
                             &my_rows,
@@ -218,23 +218,23 @@ int main(int argc, char *argv[])
 
    //   Define a new communicator
 
-   MPI_Comm_split(MPI_COMM_WORLD,my_row,my_col,&rowcomm); 
- 
-   //if( comm.MyPID() == 0 ){
-   cout << " ------ PARALLEL Distribution Info for : ---------" <<endl;
+   MPI_Comm_split(MPI_COMM_WORLD,my_row,my_col,&rowcomm);
 
-   cout << "   Processor  " << comm.MyPID() << endl
-        << "    my rows  " << my_rows << endl
-        << "    my cols  " << my_cols << endl
-        << "    my rhs  " << my_rhs << endl
-        << "    my first col  " << my_first_col  << endl
-        << "    my first row  " << my_first_row << endl
-        << "    my_row  " << my_row << endl
-        << "    num procs row   " << nprocs_row << endl
-        << "    my_col  " << my_col << endl;
+   //if( comm.MyPID() == 0 ){
+   std::cout << " ------ PARALLEL Distribution Info for : ---------" <<std::endl;
+
+   std::cout << "   Processor  " << comm.MyPID() << std::endl
+        << "    my rows  " << my_rows << std::endl
+        << "    my cols  " << my_cols << std::endl
+        << "    my rhs  " << my_rhs << std::endl
+        << "    my first col  " << my_first_col  << std::endl
+        << "    my first row  " << my_first_row << std::endl
+        << "    my_row  " << my_row << std::endl
+        << "    num procs row   " << nprocs_row << std::endl
+        << "    my_col  " << my_col << std::endl;
 
    //}
-   
+
    //  Local size -- my_rows  * (my_cols + my_rhs)
 
 
@@ -255,22 +255,22 @@ int main(int argc, char *argv[])
      num_global_length = -1 ;
 
 
-     // Define Epetra_map 
+     // Define Epetra_map
 
 
-     Epetra_Map map(num_global_length,num_my_length, 
+     Epetra_Map map(num_global_length,num_my_length,
   			 0, comm);
 
 
       Epetra_Vector A(map);
 
 
-     // Set Random values 
+     // Set Random values
 
      if( comm.MyPID() == 0 )
-              cout << " ****   Setting Random Matrix    ****" << endl;
+              std::cout << " ****   Setting Random Matrix    ****" << std::endl;
 
-      
+
      ierror = A.SetSeed(seed+comm.MyPID() );
 
      ierror = A.Random();
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 
 
       if( comm.MyPID() == 0 )
-              cout << " ****   Creating RHS   ****" << endl;
+              std::cout << " ****   Creating RHS   ****" << std::endl;
 
      // Sum the portion of the row that I have
 
@@ -290,15 +290,15 @@ int main(int argc, char *argv[])
        for (m=0; m < my_cols; m++) {
         temp[k] = temp[k] + A[m*my_rows+k];
        }
-     }  
-     
-    // Sum to Processor 0      
+     }
+
+    // Sum to Processor 0
 
 
-     MPI_Allreduce(temp,temp2,my_rows,MPI_DOUBLE,MPI_SUM,rowcomm); 
+     MPI_Allreduce(temp,temp2,my_rows,MPI_DOUBLE,MPI_SUM,rowcomm);
 
       if( comm.MyPID() == 0 )
-            cout << " ****   Packing RHS in Matrix   ****" << endl;
+            std::cout << " ****   Packing RHS in Matrix   ****" << std::endl;
 
     // Now put the RHS in the Appropriate position
 
@@ -315,9 +315,9 @@ int main(int argc, char *argv[])
 
       rhs[k+ my_first_row - 1]= temp2[k];
 
-     } 
-    }  
-    
+     }
+    }
+
      // Globally Sum the RHS needed for testing later
 
 
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
     // Now Solve the Problem
 
     if( comm.MyPID() == 0 )
-             cout << " ****   Beginning Matrix Solve   ****" << endl;
+             std::cout << " ****   Beginning Matrix Solve   ****" << std::endl;
 
      solver.FactorSolve(&A,
 		        my_rows,
@@ -350,13 +350,13 @@ int main(int argc, char *argv[])
 
 
       if( comm.MyPID() == 0)   {
-         cout << " ----  Solution time  ----   " 
-	 << secs << "  in secs. " << endl;
+         std::cout << " ----  Solution time  ----   "
+	 << secs << "  in secs. " << std::endl;
 
-         
+
 	 mflops = 2./3.*pow(matrix_size,3.)/secs/1000000.;
 
-	   cout << " *****   MFLOPS   *****  " << mflops << endl; 
+	   std::cout << " *****   MFLOPS   *****  " << mflops << std::endl;
       }
      // Now Check the Solution
 
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
 
      delete [] temp2;
 
-    
+
      temp = new double[matrix_size];
 
      temp2 = new double[matrix_size];
@@ -399,20 +399,20 @@ int main(int argc, char *argv[])
 
       solinf = fabs(temp2[0]);
 
-      xh = fabs(temp2[0] -one); 
-  
+      xh = fabs(temp2[0] -one);
+
       for (k= 0; k < matrix_size; k++) {
-  
+
 
        if ( fabs (temp2[k]) > solinf ) solinf = fabs(temp2[k]);
 
        if ( fabs (temp2[k]- one) > xh ) xh = fabs(temp2[k]-one);
 
       }
-      
+
      // Reset the matrix Random values
 
-      
+
      ierror = A.SetSeed(seed + comm.MyPID() );
 
 
@@ -438,27 +438,27 @@ int main(int argc, char *argv[])
 
         temp3[k]=0. ;
       }
-     
-          
-   //   Epetra_Map map(numGlobalEquations, numLocalEquations, 
+
+
+   //   Epetra_Map map(numGlobalEquations, numLocalEquations,
    //			update, 0, comm);
- 
+
      MPI_Allreduce(temp,temp3,matrix_size,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
 
      if( comm.MyPID() == 0)   {
 
-       cout <<  "======================================" << endl;
-        cout << " ---- Error Calculation ----" << endl;
-        
+       std::cout <<  "======================================" << std::endl;
+        std::cout << " ---- Error Calculation ----" << std::endl;
+
         axbinf = fabs(temp3[0]-rhs[0]);
 
         for (k= 0; k < matrix_size; k++) {
-	  
+	
            if ( fabs (temp3[k]-rhs[k]) > axbinf ) axbinf = fabs(temp3[k]-rhs[k]);
-      
+
          }
-      
+
      }
 
 
@@ -472,37 +472,37 @@ int main(int argc, char *argv[])
 
       if ( comm.MyPID() == 0 ) {
 
-	cout << "   Machine eps  " << eps  << endl;
+	std::cout << "   Machine eps  " << eps  << std::endl;
 
       }
 
 
-      
-     if ( comm.MyPID() == 0 ) {   
 
-     
+     if ( comm.MyPID() == 0 ) {
 
-       cout << "   ||Ax - b||_oo = " << axbinf << endl;
 
-       cout << "   ||A||_oo ~  " << ainf*matrix_size << endl;
 
-       cout << "   ||X||_oo = " << solinf << endl;
+       std::cout << "   ||Ax - b||_oo = " << axbinf << std::endl;
 
-       cout << "   ||Ax - b||_oo / ||A||_oo/||X||_oo  = " << axbinf/(ainf*matrix_size)/solinf  << endl;
+       std::cout << "   ||A||_oo ~  " << ainf*matrix_size << std::endl;
 
-       cout << "  matrix_size*eps*1.  " << matrix_size*eps*1. << endl;
+       std::cout << "   ||X||_oo = " << solinf << std::endl;
+
+       std::cout << "   ||Ax - b||_oo / ||A||_oo/||X||_oo  = " << axbinf/(ainf*matrix_size)/solinf  << std::endl;
+
+       std::cout << "  matrix_size*eps*1.  " << matrix_size*eps*1. << std::endl;
 
       if ( axbinf/(ainf*matrix_size)/solinf  > (matrix_size*eps*1.))
 
-        cout << " ****    Solution Fails   ****" <<  endl;
+        std::cout << " ****    Solution Fails   ****" <<  std::endl;
 
-      else 
+      else
 
-	cout << " ****   Solution Passes   ****" << endl;
+	std::cout << " ****   Solution Passes   ****" << std::endl;
 
-      cout <<  "======================================" << endl;
+      std::cout <<  "======================================" << std::endl;
 
-      
+
      }
 
 
@@ -512,9 +512,9 @@ int main(int argc, char *argv[])
      delete [] temp2;
 
      delete [] temp;
- 
+
      delete [] rhs;
- 
+
      delete [] temp3;
 
 

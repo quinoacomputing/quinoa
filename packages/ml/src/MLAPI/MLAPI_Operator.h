@@ -12,7 +12,7 @@
 */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 #include "ml_common.h"
 #include <iostream>
@@ -47,7 +47,7 @@ public:
   //@{ \name Constructors and destructors.
 
   //! Default constructor.
-  Operator() 
+  Operator()
   {
     RCPOperatorBox_ = Teuchos::null;
   }
@@ -69,7 +69,7 @@ public:
   }
 
   //! Copy constructor.
-  Operator(const Operator& RHS) 
+  Operator(const Operator& RHS)
   {
     DomainSpace_       = RHS.GetDomainSpace();
     RangeSpace_        = RHS.GetRangeSpace();
@@ -107,13 +107,16 @@ public:
     DomainSpace_       = DomainSpace;
 
     RCPOperatorBox_    = Teuchos::rcp(new ML_Operator_Box(Op,Ownership));
-    // NOTE: Should the code crash, change the following to `false'
-    bool cheap;
-    if (RangeSpace_ != DomainSpace_)
-      cheap = true;
-    else
-      cheap = false;
-    RCPRowMatrix_      = Teuchos::rcp(new ML_Epetra::RowMatrix(Op,&(GetEpetra_Comm()), 
+
+    // 'cheap' isn't used, so the branch below is commented out.
+    //
+    // // NOTE: Should the code crash, change the following to `false'
+    // bool cheap;
+    // if (RangeSpace_ != DomainSpace_)
+    //   cheap = true;
+    // else
+    //   cheap = false;
+    RCPRowMatrix_      = Teuchos::rcp(new ML_Epetra::RowMatrix(Op,&(GetEpetra_Comm()),
                                                                false));
     RCPAuxOperatorBox_ = AuxOp;
 
@@ -144,7 +147,7 @@ public:
   // @{ \name Overloaded operators
 
   //! Makes \c this object equivalent to \c RHS.
-  Operator& operator=(const Operator& RHS) 
+  Operator& operator=(const Operator& RHS)
   {
     StackPush();
 
@@ -155,7 +158,7 @@ public:
     ColumnSpace_    = RHS.GetColumnSpace();
     RCPOperatorBox_ = RHS.GetRCPOperatorBox();
     RCPRowMatrix_   = RHS.GetRCPRowMatrix();
-    
+
     SetLabel(RHS.GetLabel());
 
     StackPop();
@@ -164,7 +167,7 @@ public:
   }
 
   //! Sets the label of \c this object.
-  inline Operator& operator=(const string& Label)
+  inline Operator& operator=(const std::string& Label)
   {
     SetLabel(Label);
     return(*this);
@@ -172,7 +175,7 @@ public:
 
   // @}
   // @{ \name Get and Set methods
-  
+
   //! Returns a reference to the internally stored domain space.
   const Space GetOperatorDomainSpace() const {
     return(DomainSpace_);
@@ -194,43 +197,43 @@ public:
   }
 
   //! Returns a reference to the internally stored column space.
-  inline const Space GetColumnSpace() const 
+  inline const Space GetColumnSpace() const
   {
     return(ColumnSpace_);
   }
 
   //! Returns the number of global rows.
-  inline int GetNumGlobalRows() const 
+  inline int GetNumGlobalRows() const
   {
     return(GetRangeSpace().GetNumGlobalElements());
   }
 
   //! Returns the number of local rows.
-  inline int GetNumMyRows() const 
+  inline int GetNumMyRows() const
   {
     return(GetRangeSpace().GetNumMyElements());
   }
 
   //! Returns the number of global columns.
-  inline int GetNumGlobalCols() const 
+  inline int GetNumGlobalCols() const
   {
     return(GetRowMatrix()->NumGlobalCols());
   }
 
   //! Returns the number of local columns.
-  inline int GetNumMyCols() const 
+  inline int GetNumMyCols() const
   {
     return(GetRowMatrix()->NumMyCols());
   }
 
   //! Returns the global number of nonzeros.
-  inline int GetNumGlobalNonzeros() const 
+  inline int GetNumGlobalNonzeros() const
   {
     return(GetRowMatrix()->NumGlobalNonzeros());
   }
 
   //! Returns the local number of nonzeros.
-  inline int GetNumMyNonzeros() const 
+  inline int GetNumMyNonzeros() const
   {
     return(GetRowMatrix()->NumMyNonzeros());
   }
@@ -240,7 +243,7 @@ public:
   {
     return(RCPRowMatrix_.get());
   }
-  
+
   //! Returns the RefCountPtr of OperatorBox_.
   inline ML_Operator* GetML_Operator() const
   {
@@ -286,7 +289,7 @@ public:
 
   // @}
   // @{ \name Mathematical methods.
-  
+
   //! Applies \c this operator to LHS, returns the result in \c RHS.
   int Apply(const MultiVector& X, MultiVector& Y) const
   {
@@ -301,8 +304,8 @@ public:
       ML_THROW("Number of vectors differ", -1);
     if (GetML_Operator() == 0)
       ML_THROW("Operator not set", -1);
-      
-    int (*func)(ML_Operator*,int,double*,int,double*) = 
+
+    int (*func)(ML_Operator*,int,double*,int,double*) =
       GetML_Operator()->matvec->func_ptr;
 
     for (int v = 0 ; v < X.GetNumVectors() ; ++v) {
@@ -322,17 +325,17 @@ public:
 
   // @}
   // @{ \name Miscellaneous methods
-  
+
   //! Prints basic information about \c this object.
-  ostream& Print(std::ostream& os, const bool verbose = true) const
+  std::ostream& Print(std::ostream& os, const bool verbose = true) const
   {
     if (GetRCPOperatorBox().get() == 0) {
       if (GetMyPID() == 0) {
-        os << endl;
-        os << "*** MLAPI::Operator ***" << endl;
-        os << "Label  = " << GetLabel() << endl;
-        os << "Status = empty" << endl;
-        os << endl;
+        os << std::endl;
+        os << "*** MLAPI::Operator ***" << std::endl;
+        os << "Label  = " << GetLabel() << std::endl;
+        os << "Status = empty" << std::endl;
+        os << std::endl;
       }
       return(os);
     }
@@ -344,25 +347,25 @@ public:
     int    allocated, row_length;
     ML_Operator* matrix = GetML_Operator();
 
-    if (matrix->getrow == NULL) 
+    if (matrix->getrow == NULL)
       ML_THROW("getrow not set", -1);
 
     if (GetMyPID() == 0) {
-      os << endl;
-      os << "*** MLAPI::Operator ***" << endl;
-      os << "Label             = " << GetLabel() << endl;
-      os << "Number of rows    = " << GetRangeSpace().GetNumGlobalElements() << endl;
-      os << "Number of columns = " << GetDomainSpace().GetNumGlobalElements() << endl;
-      os << "Flop count        = " << GetFlops() << endl;
-      os << "Cumulative time   = " << GetTime() << endl;
+      os << std::endl;
+      os << "*** MLAPI::Operator ***" << std::endl;
+      os << "Label             = " << GetLabel() << std::endl;
+      os << "Number of rows    = " << GetRangeSpace().GetNumGlobalElements() << std::endl;
+      os << "Number of columns = " << GetDomainSpace().GetNumGlobalElements() << std::endl;
+      os << "Flop count        = " << GetFlops() << std::endl;
+      os << "Cumulative time   = " << GetTime() << std::endl;
       if (GetTime() != 0.0)
-        os << "MFlops rate       = " << 1.0e-6 * GetFlops() / GetTime() << endl;
+        os << "MFlops rate       = " << 1.0e-6 * GetFlops() / GetTime() << std::endl;
       else
-        os << "MFlops rate       = 0.0" << endl;
-      os << endl;
+        os << "MFlops rate       = 0.0" << std::endl;
+      os << std::endl;
     }
 
-    if (!verbose) 
+    if (!verbose)
       return(os);
 
     allocated = 100;
@@ -377,8 +380,8 @@ public:
       os.width(20);
       os << "Global Col";
       os.width(20);
-      os << "Value" << endl;
-      os << endl;
+      os << "Value" << std::endl;
+      os << std::endl;
     }
 
     for (int iproc = 0 ; iproc < GetNumProcs() ; ++iproc) {
@@ -399,7 +402,7 @@ public:
             os.width(20);
             os << GlobalCol;
             os.width(20);
-            os << val[j] << endl;
+            os << val[j] << std::endl;
           }
         }
       }
@@ -407,7 +410,7 @@ public:
     }
 
     if (GetMyPID() == 0)
-      os << endl;
+      os << std::endl;
 
     Barrier();
 
@@ -443,9 +446,9 @@ public:
 
     dtemp.resize(Nrows + Nghosts);
 
-    for (int i = 0 ; i < Nrows ; ++i) 
+    for (int i = 0 ; i < Nrows ; ++i)
       dtemp[i] = 1.0 * GetDomainSpace()(i);
-    for (int i = 0 ; i < Nghosts; ++i) 
+    for (int i = 0 ; i < Nghosts; ++i)
       dtemp[i + Nrows] = -1;
 
     ML_exchange_bdry(&dtemp[0],GetML_Operator()->getrow->pre_comm,
@@ -465,12 +468,12 @@ public:
   }
 
   // @}
-  
+
 private:
-  
+
   //! Destroys all internal data and resets \c this object.
-  void Destroy() 
-  { 
+  void Destroy()
+  {
     RangeSpace_.Reshape();
     DomainSpace_.Reshape();
     RCPOperatorBox_    = Teuchos::null;

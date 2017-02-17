@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *  
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #ifndef __ZOLTAN_H
 #define __ZOLTAN_H
@@ -33,7 +66,7 @@ typedef void ZOLTAN_VOID_FN(void);
 extern "C" {
 #endif
 
-#define ZOLTAN_VERSION_NUMBER   3.601
+#define ZOLTAN_VERSION_NUMBER   3.83
 
 /*****************************************************************************
  *  Data types and functions describing the interface between the
@@ -2311,6 +2344,27 @@ extern int Zoltan_Set_Fn(
   void *data_ptr
 );
 
+/*****************************************************************************/
+/*
+ *  General function to retrieve a pointer to a given Zoltan callback function.
+ *  Input:
+ *    zz                  --  Pointer to a Zoltan structure.
+ *    fn_type             --  Enum type indicating the function to be
+ *                            retrieved.
+ *  Output:
+ *    fn_ptr              --  Pointer to the function retrieved.
+ *    data_ptr            --  Pointer to data associated with the function.
+ *                            May be NULL.
+ *  Returned value:       --  Error code
+ */
+
+extern int Zoltan_Get_Fn(
+  struct Zoltan_Struct *zz,
+  ZOLTAN_FN_TYPE fn_type,
+  ZOLTAN_VOID_FN **fn_ptr,
+  void **data_ptr
+);
+
 /*
  *  Functions to initialize specific Zoltan callback functions.  One function
  *  exists for each callback function type, as listed in Zoltan_Fn_Type above.
@@ -3299,38 +3353,6 @@ extern int Zoltan_LB_Set_Part_Sizes(struct Zoltan_Struct *zz, int global_num,
  */
 extern int Zoltan_Generate_Files(struct Zoltan_Struct *zz, char *fname, int base_index, int gen_geom, int gen_graph, int gen_hg);
 
-#define PLATFORM_MAX_LEVELS 8
-
-enum {GLORY,
-      REDSKY,
-      CTX,
-      ODIN,
-      OCTOPI,
-      S861036,
-      ZOLTAN_HIER_LAST_PLATFORM};
-
-typedef struct _spec{
-  /*
-   * name of predefined topologies, or null if topology given by parameter
-   */
-  char *platform_name;
-
-  /*
-   * size of num_siblings and my_part arrays
-   */
-  int numLevels;
-
-  /*
-   * number of objects (cores, caches, sockets, etc), or number of
-   *  children of the parent, of this level
-   */
-  int num_siblings[PLATFORM_MAX_LEVELS];
-
-  /*
-   * the part computed by this process at this level
-   */
-  int my_part[PLATFORM_MAX_LEVELS];
-} zoltan_platform_specification;
 
 #ifdef __cplusplus
 } /* closing bracket for extern "C" */

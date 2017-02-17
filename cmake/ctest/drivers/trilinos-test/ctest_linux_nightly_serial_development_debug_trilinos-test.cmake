@@ -67,12 +67,17 @@ SET(BUILD_DIR_NAME SERIAL_DEBUG_DEV)
 
 SET(Trilinos_ENABLE_SECONDARY_STABLE_CODE ON)
 
+SET(EXTRA_EXCLUDE_PACKAGES Panzer PyTrilinos)
+
 SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_DATA_DIR:STRING=$ENV{TRILINOSDATADIRECTORY}"
   "-DTPL_ENABLE_Pthread:BOOL=ON"
   "-DTPL_ENABLE_Boost:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_49_0"
+  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0"
+  "-DBoostLib_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0_compiled/include"
+  "-DBoostLib_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0_compiled/lib"
+  "-DGLM_INCLUDE_DIRS=/home/trilinos/tpl/gcc4.1.2/glm-0.9.4.6"
   "-DNOX_ENABLE_ABSTRACT_IMPLEMENTATION_LAPACK=ON"
   "-DTPL_ENABLE_HDF5:BOOL=ON"
   "-DHDF5_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/hdf5-1.8.6/include"

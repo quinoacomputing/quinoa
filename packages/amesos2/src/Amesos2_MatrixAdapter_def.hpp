@@ -44,7 +44,7 @@
 
 #ifndef AMESOS2_MATRIXADAPTER_DEF_HPP
 #define AMESOS2_MATRIXADAPTER_DEF_HPP
-
+#include <Tpetra_Util.hpp>
 #include "Amesos2_MatrixAdapter_decl.hpp"
 #include "Amesos2_ConcreteMatrixAdapter_def.hpp"
 //#include "Amesos2_ConcreteMatrixAdapter.hpp"
@@ -126,16 +126,30 @@ namespace Amesos2 {
   typename MatrixAdapter<Matrix>::global_size_t
   MatrixAdapter<Matrix>::getGlobalNumRows() const
   {
-    return row_map_->getMaxAllGlobalIndex() + 1;
+    return static_cast<const adapter_t*>(this)->getGlobalNumRows_impl();
   }
 
   template < class Matrix >
   typename MatrixAdapter<Matrix>::global_size_t
   MatrixAdapter<Matrix>::getGlobalNumCols() const
   {
-    return col_map_->getMaxAllGlobalIndex() + 1;
+    return static_cast<const adapter_t*>(this)->getGlobalNumCols_impl();
   }
   
+  template < class Matrix >
+  typename MatrixAdapter<Matrix>::global_size_t
+  MatrixAdapter<Matrix>::getRowIndexBase() const
+  {
+    return row_map_->getIndexBase();
+  }
+
+  template < class Matrix >
+  typename MatrixAdapter<Matrix>::global_size_t
+  MatrixAdapter<Matrix>::getColumnIndexBase() const
+  {
+    return col_map_->getIndexBase();
+  }
+
   template < class Matrix >
   typename MatrixAdapter<Matrix>::global_size_t
   MatrixAdapter<Matrix>::getGlobalNNZ() const
@@ -196,6 +210,7 @@ namespace Amesos2 {
 				     EStorage_Ordering ordering,
 				     has_special_impl hsi) const
   {
+    hsi.set = false;
     static_cast<const adapter_t*>(this)->getCrs_spec(nzval, colind, rowptr,
 						     nnz, rowmap, ordering);
   }
@@ -210,6 +225,9 @@ namespace Amesos2 {
 				     EStorage_Ordering ordering,
 				     no_special_impl nsi) const
   {
+  
+    //Added void to remove parameter not used warning
+    ((void)nsi);
     do_getCrs(nzval, colind, rowptr,
 	      nnz, rowmap, ordering,
 	      typename adapter_t::major_access());
@@ -230,6 +248,9 @@ namespace Amesos2 {
     using Teuchos::ArrayView;
     using Teuchos::OrdinalTraits;
     
+ 
+    ((void) ra);
+
     RCP<const type> get_mat;
     if( *rowmap == *this->row_map_ ){
       // No need to redistribute
@@ -263,6 +284,10 @@ namespace Amesos2 {
       ArrayView<scalar_t> nzval_view = nzval.view(rowInd,rowNNZ);
       
       get_mat->getGlobalRowCopy(*row_it, colind_view, nzval_view, nnzRet);
+      for (size_t rr = 0; rr < nnzRet ; rr++)
+      {
+          colind_view[rr] = colind_view[rr] - rmap->getIndexBase();
+      }
 
       // It was suggested that instead of sorting each row's indices
       // individually, that we instead do a double-transpose at the
@@ -327,6 +352,8 @@ namespace Amesos2 {
 				     EStorage_Ordering ordering,
 				     no_special_impl nsi) const
   {
+    ((void)nsi);
+   
     do_getCcs(nzval, rowind, colptr,
 	      nnz, colmap, ordering,
 	      typename adapter_t::major_access());
@@ -344,7 +371,9 @@ namespace Amesos2 {
   {
     using Teuchos::Array;
     // get the crs and transpose
-
+   
+    ((void) ra);
+    
     Array<scalar_t> nzval_tmp(nzval.size(), 0);
     Array<global_ordinal_t> colind(rowind.size(), 0);
     Array<global_size_t> rowptr(this->getGlobalNumRows() + 1);

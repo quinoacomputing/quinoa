@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                 TriUtils: Trilinos Utilities Package
 //                 Copyright (2011) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,16 +34,47 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 // @HEADER
 
-int Trilinos_Util_ReadMatrixMarket2Epetra( char *data_file,
-					   const Epetra_Comm  &comm, 
-					   Epetra_Map *& map, 
-					   Epetra_CrsMatrix *& A, 
-					   Epetra_Vector *& x, 
-					   Epetra_Vector *& b,
-					   Epetra_Vector *&xexact ) ;
+#include "Epetra_ConfigDefs.h"
+#include "Epetra_Comm.h"
+#include "Epetra_Map.h"
+#include "Epetra_Vector.h"
 
+template<typename int_type>
+int Trilinos_Util_ReadMatrixMarket2Epetra_internal(
+    const char *data_file,
+    const Epetra_Comm  &comm,
+    Epetra_Map *& map,
+    Epetra_CrsMatrix *& A,
+    Epetra_Vector *& x,
+    Epetra_Vector *& b,
+    Epetra_Vector *&xexact );
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+
+int Trilinos_Util_ReadMatrixMarket2Epetra(
+    const char *data_file,
+    const Epetra_Comm  &comm,
+    Epetra_Map *& map,
+    Epetra_CrsMatrix *& A,
+    Epetra_Vector *& x,
+    Epetra_Vector *& b,
+    Epetra_Vector *&xexact ) ;
+#endif
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+
+int Trilinos_Util_ReadMatrixMarket2Epetra64(
+    const char *data_file,
+    const Epetra_Comm  &comm,
+    Epetra_Map *& map,
+    Epetra_CrsMatrix *& A,
+    Epetra_Vector *& x,
+    Epetra_Vector *& b,
+    Epetra_Vector *&xexact ) ;
+
+#endif

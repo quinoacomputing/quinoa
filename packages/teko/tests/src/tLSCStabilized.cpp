@@ -111,14 +111,19 @@ int tLSCStabilized::runTest(int verbosity,std::ostream & stdstrm,std::ostream & 
    allTests &= status;
    failcount += status ? 0 : 1;
    totalrun++;
-
 /*
+   status = test_diagonalNotSym(verbosity,failstrm);
+   Teko_TEST_MSG(stdstrm,1,"   \"diagonalNotSym\" ... PASSED","   \"diagonalNotSym\" ... FAILED");
+   allTests &= status;
+   failcount += status ? 0 : 1;
+   totalrun++;
+*/
    status = test_strategy(verbosity,failstrm);
    Teko_TEST_MSG(stdstrm,1,"   \"strategy\" ... PASSED","   \"strategy\" ... FAILED");
    allTests &= status;
    failcount += status ? 0 : 1;
    totalrun++;
-*/
+
 
    status = allTests;
    if(verbosity >= 10) {
@@ -134,8 +139,6 @@ int tLSCStabilized::runTest(int verbosity,std::ostream & stdstrm,std::ostream & 
 bool tLSCStabilized::test_diagonal(int verbosity,std::ostream & os)
 {
    // make sure the preconditioner is working by testing against the identity matrix
-   typedef RCP<const Thyra::VectorBase<double> > Vector;
-   typedef RCP<const Thyra::VectorSpaceBase<double> > VectorSpace;
    typedef RCP<const Thyra::LinearOpBase<double> > LinearOp;
 
    bool status = false;
@@ -246,8 +249,6 @@ bool tLSCStabilized::test_diagonal(int verbosity,std::ostream & os)
 bool tLSCStabilized::test_diagonalNotSym(int verbosity,std::ostream & os)
 {
    // make sure the preconditioner is working by testing against the identity matrix
-   typedef RCP<const Thyra::VectorBase<double> > Vector;
-   typedef RCP<const Thyra::VectorSpaceBase<double> > VectorSpace;
    typedef RCP<const Thyra::LinearOpBase<double> > LinearOp;
 
    bool status = false;
@@ -450,8 +451,8 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
    LinearOp P = Thyra::block2x2(p00,p01,p10,p11);
   
    // Kluge to get around problem with Anasazi
-   Teko::computeSpectralRad(Thyra::multiply(invMass,F),5e-2,false,3)/3.0;
-   Teko::computeSpectralRad(Thyra::multiply(invMass,F),5e-2,false,3)/3.0;
+   // Teko::computeSpectralRad(Thyra::multiply(invMass,F),5e-2,false,3)/3.0;
+   // Teko::computeSpectralRad(Thyra::multiply(invMass,F),5e-2,false,3)/3.0;
              
    // build inverse strategy
    { 
@@ -464,7 +465,7 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
 
       // test inverse mass
       ss.str("");
-      result = tester.compare( *invMass, *iStrat.getInvMass(blkA,state), &fos );
+      result = tester.compare( *invMass, *iStrat.getInvMass(blkA,state), Teuchos::ptrFromRef(fos) );
       TEST_ASSERT(result,
             std::endl << "   tLSCStabilized::test_strategy " << toString(status)
                       << " : Comparing mass operators");
@@ -473,7 +474,7 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
 
       // test inverse F
       ss.str("");
-      result = tester.compare( *iF, *iStrat.getInvF(blkA,state), &fos );
+      result = tester.compare( *iF, *iStrat.getInvF(blkA,state), Teuchos::ptrFromRef(fos) );
       TEST_ASSERT(result,
             std::endl << "   tLSCStabilized::test_strategy " << toString(status)
                       << " : Comparing F operators");
@@ -482,7 +483,7 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
 
       // test inverse B*Q*Bt-gamma*C
       ss.str("");
-      result = tester.compare( *iBQBtmC, *iStrat.getInvBQBt(blkA,state), &fos );
+      result = tester.compare( *iBQBtmC, *iStrat.getInvBQBt(blkA,state), Teuchos::ptrFromRef(fos) );
       TEST_ASSERT(result,
             std::endl << "   tLSCStabilized::test_strategy " << toString(status)
                       << " : Comparing B*Q*Bt-C operators");
@@ -492,7 +493,7 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
       // test alpha*inv(D)
       ss.str("");
       // result = tester.compare( *aiD, *iStrat.getInvAlphaD(blkA,state), &fos );
-      result = tester.compare( *aiD, *iStrat.getOuterStabilization(blkA,state), &fos );
+      result = tester.compare( *aiD, *iStrat.getOuterStabilization(blkA,state), Teuchos::ptrFromRef(fos) );
       TEST_ASSERT(result,
             std::endl << "   tLSCStabilized::test_strategy " << toString(status)
                       << " : Comparing alpha*inv(D) operators");
@@ -501,7 +502,7 @@ bool tLSCStabilized::test_strategy(int verbosity,std::ostream & os)
 
       // test full op
       ss.str("");
-      result = tester.compare( *P, *prec, &fos );
+      result = tester.compare( *P, *prec, Teuchos::ptrFromRef(fos) );
       TEST_ASSERT(result,
             std::endl << "   tLSCStabilized::test_strategy " << toString(status)
                       << " : Comparing full op");

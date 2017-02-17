@@ -59,7 +59,7 @@ namespace Thyra {
 
 template<class Scalar>
 DefaultProductVectorSpace<Scalar>::DefaultProductVectorSpace()
-  : numBlocks_(-1), dim_(-1)
+  : numBlocks_(-1), dim_(-1), isInCore_(false)
 {}
 
 
@@ -393,7 +393,6 @@ void DefaultProductVectorSpace<Scalar>::describe(
   ,const Teuchos::EVerbosityLevel      verbLevel
   ) const
 {
-  typedef Teuchos::ScalarTraits<Scalar>  ST;
   using Teuchos::includesVerbLevel;
   using Teuchos::OSTab;
   RCP<FancyOStream> out = rcpFromRef(out_arg);

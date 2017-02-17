@@ -3,10 +3,13 @@
 #
 
 # Define the core compilers
-SET(TRILINOS_TOOLSET_BASE  /opt/gcc-4.6.1/trilinos-toolset)
+IF (NOT TRILINOS_TOOLSET_BASE)
+  SET(TRILINOS_TOOLSET_BASE  /projects/vera/gcc-4.6.1/toolset)
+ENDIF()
+SET(GCC_BASE_DIR ${TRILINOS_TOOLSET_BASE}/gcc-4.6.1)
 # Add rpath for compiler libraries and gomp for parts built with OpenMP
 SET(${PROJECT_NAME}_EXTRA_LINK_FLAGS
-  "-lgomp -Wl,-rpath,${TRILINOS_TOOLSET_BASE}/lib64"
+  "-lgomp -Wl,-rpath,${GCC_BASE_DIR}/lib64"
   CACHE STRING "")
 # This dicates downstream the intel fortran compiler to be used
 # Include MKL and TBB; these should match version of Intel compilers being used
@@ -16,35 +19,24 @@ INCLUDE(${CMAKE_CURRENT_LIST_DIR}/tbb-12.0.4-options.cmake)
 INCLUDE(${CMAKE_CURRENT_LIST_DIR}/mkl-12.0.4-options.cmake)
 SET(BLAS_INCLUDE_DIRS   ${MKL_GCC451_MODULE_PATH} CACHE PATH "Path to MKL BLAS Fortran modules compatible with gfortran")
 SET(LAPACK_INCLUDE_DIRS ${MKL_GCC451_MODULE_PATH} CACHE PATH "Path to MKL LAPACK Fortran modules compatible with gfortran")
-# The ANC/VIPRE/BOA code does not work with gfortran 4.6.1 (or any GCC version of Fortran)
-SET(VERA_ENABLE_CASLRAVE OFF CACHE BOOL "")
-SET(VERA_ENABLE_CASLBOA OFF CACHE BOOL "")
+
+# Build shared libs by default to save massive amounts of disk space
+SET(BUILD_SHARED_LIBS ON CACHE BOOL
+  "Set by default in gcc-4.6.1-base-options.cmake")
 
 # To avoid problem with EpetraExt_inout_test failure in optimized code for hybrid builds
-SET(Epetra_ENABLE_Fortran OFF CACHE BOOL "")
+SET(Epetra_ENABLE_Fortran OFF CACHE BOOL
+  "Set by default in gcc-4.6.1-base-options.cmake")
 
-# This compiler supports BinUtils
-SET(TPL_ENABLE_BinUtils ON CACHE BOOL "")
+# Turn off HDF5 in EpetraExt to avoid hdf5 conflicts
+SET(EpetraExt_ENABLE_HDF5 OFF CACHE BOOL
+  "Set by default in gcc-4.6.1-base-options.cmake")
 
-# Point to basic CASL-related TPLs related to the GCC C/C++ 4.6.1 compiler
-# SET(PVMLibraries_LIBRARY_DIRS /opt/gcc-4.6.1/tpls/pvm3/lib/LINUX64 CACHE FILEPATH "")
-# SET(PVMHeaders_INCLUDE_DIRS /opt/gcc-4.6.1/tpls/pvm3/include CACHE FILEPATH "")
-SET(HDF5_LIBRARY_NAMES "hdf5_hl;hdf5;hdf5_cpp" CACHE STRING "")
-SET(HDF5_LIBRARY_DIRS /opt/gcc-4.6.1/tpls/hdf5-1.8.9/lib CACHE FILEPATH "")
-SET(HDF5_INCLUDE_DIRS /opt/gcc-4.6.1/tpls/hdf5-1.8.9/include CACHE FILEPATH "")
-SET(Netcdf_INCLUDE_DIRS /opt/gcc-4.6.1/tpls/netcdf-4.2/include CACHE FILEPATH "")
-SET(Netcdf_LIBRARY_DIRS /opt/gcc-4.6.1/tpls/netcdf-4.2/lib     CACHE FILEPATH "")
-SET(Zlib_INCLUDE_DIRS   /opt/gcc-4.6.1/tpls/zlib-1.2.7/include CACHE FILEPATH "")
-SET(Zlib_LIBRARY_DIRS   /opt/gcc-4.6.1/tpls/zlib-1.2.7/lib     CACHE FILEPATH "")
-SET(QT_REQUIRED_VERSION 4.7.1                           CACHE STRING   "")
-SET(QT_QMAKE_EXECUTABLE /opt/gcc-4.6.1/tpls/qt-4.7.1/bin/qmake CACHE FILEPATH "")
-SET(MOOSE_PETSC_INCLUDE_DIRS  /opt/gcc-4.6.1/tpls/petsc-3.1-p8/include  CACHE FILEPATH "")
-SET(MOOSE_PETSC_LIBRARY_DIRS  /opt/gcc-4.6.1/tpls/petsc-3.1-p8/lib      CACHE FILEPATH "")
-SET(MOOSE_HYPRE_INCLUDE_DIRS  /opt/gcc-4.6.1/tpls/hypre-2.8.0b/include  CACHE FILEPATH "")
-SET(MOOSE_HYPRE_LIBRARY_DIRS  /opt/gcc-4.6.1/tpls/hypre-2.8.0b/lib      CACHE FILEPATH "")
-# SET(QT_LIBRARY_DIR /opt/gcc-4.6.1/tpls/qt-4.7.1/lib     CACHE FILEPATH "")
-# SET(QT_INCLUDE_DIR /opt/gcc-4.6.1/tpls/qt-4.7.1/include CACHE FILEPATH "")
+# Set up valgrind options
+SET( MEMORYCHECK_COMMAND
+  /projects/vera/common_tools/valgrind-3.9.0/bin/valgrind)
+SET( MEMORYCHECK_COMMAND_OPTIONS
+  "-q --trace-children=yes --tool=memcheck --leak-check=yes --leak-check=full --workaround-gcc296-bugs=yes --num-callers=50")
 
 # Include last so that above override these cache variables
-INCLUDE(${CMAKE_CURRENT_LIST_DIR}/casl-vri-tpls.cmake)
 INCLUDE(${CMAKE_CURRENT_LIST_DIR}/casl-core-enables-disables.cmake)

@@ -71,6 +71,8 @@ public:
   RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
   /** \brief Throws exception. */
   RCP<const VectorSpaceBase<Scalar> > get_g_space(int j) const;
+  /** \brief Throws exception. */
+  Teuchos::ArrayView<const std::string> get_g_names(int j) const;
   /** \brief Returns this->createInArgs(). */
   ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
   /** \brief Returns this->createInArgs(). */
@@ -79,6 +81,8 @@ public:
   ModelEvaluatorBase::InArgs<Scalar> getUpperBounds() const;
   /** \brief Throws exception. */
   RCP<LinearOpBase<Scalar> > create_W_op() const;
+  /** \brief Returns null. */
+  RCP<PreconditionerBase<Scalar> > create_W_prec() const;
   /** \brief Returns null . */
   RCP<const LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
   /** \brief Ignores input and does nothing. */
@@ -140,6 +144,19 @@ StateFuncModelEvaluatorBase<Scalar>::get_g_space(int j) const
 
 
 template<class Scalar>
+Teuchos::ArrayView<const std::string>
+StateFuncModelEvaluatorBase<Scalar>::get_g_names(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    true,std::logic_error
+    ,"ModelEvaluator<"<<Teuchos::ScalarTraits<Scalar>::name()<<">::get_g_names(j): "
+    "Error, this function was not overridden in *this = \'"<<this->description()<<"\'!"
+    );
+  return Teuchos::ArrayView<const std::string>(Teuchos::null); // Should never be called!
+}
+
+
+template<class Scalar>
 ModelEvaluatorBase::InArgs<Scalar>
 StateFuncModelEvaluatorBase<Scalar>::getNominalValues() const
 { return this->createInArgs(); }
@@ -163,11 +180,19 @@ StateFuncModelEvaluatorBase<Scalar>::create_W_op() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error
-    ,"Error, if \'W\' is supported by the ModelEvaluator subclass then"
+    ,"Error, if \'W_op\' is supported by the ModelEvaluator subclass then"
     " this function create_W_op() must be overridden by the subclass "
     <<this->description()<<" to return a non-null object!"
     );
   return Teuchos::null; // Should never be called!
+}
+
+
+template<class Scalar>
+RCP<PreconditionerBase<Scalar> >
+StateFuncModelEvaluatorBase<Scalar>::create_W_prec() const
+{
+  return Teuchos::null;
 }
 
 

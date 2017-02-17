@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2009) Sandia Corporation
-// 
+//                 Copyright (2002) Sandia Corporation
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -60,7 +73,7 @@
 #ifndef HYPRE_ENUMS
 #define HYPRE_ENUMS
 //! This enumerated type defines the allowed solvers and preconditioners in Hypre. Some can be used as both solver and preconditioner.
-enum Hypre_Solver{ 
+enum Hypre_Solver{
     BoomerAMG,
     ParaSails,
     Euclid,
@@ -187,21 +200,21 @@ Class Ifpack_Hypre: A class for using methods of Hypre with Epetra objects.
 */
 
 class Ifpack_Hypre: public Ifpack_Preconditioner {
-      
+
 public:
   // @{ Constructors and destructors.
   //! Constructor
   Ifpack_Hypre(Epetra_RowMatrix* A);
-  
+
   //! Destructor
   ~Ifpack_Hypre(){ Destroy();}
 
   // @}
   // @{ Construction methods
-  
+
   //! Initialize the preconditioner, does not touch matrix values.
   int Initialize();
-  
+
   //! Returns \c true if the preconditioner has been successfully initialized.
   bool IsInitialized() const{ return(IsInitialized_);}
 
@@ -225,8 +238,8 @@ public:
                        AMS                                ParaSails
                        Hybrid                             AMS
                        PCG (Default)                      Euclid (Default)
-                       GMRES                              
-                       FlexGMRES                          
+                       GMRES
+                       FlexGMRES
                        LGMRES
                        BiCGSTAB
      SolveOrPrecondition takes enumerated type Hypre_Chooser, Solver will solve the system, Preconditioner will apply the preconditioner.
@@ -235,12 +248,12 @@ public:
      Functions takes an array of Ref Counted Pointers to an object called FunctionParameter. This class is implemented in Ifpack_Hypre.h.
      The object takes whether it is Solver or Preconditioner that we are setting a parameter for.
      The function in Hypre that sets the parameter, and the parameters for that function. An example is below:
-  
+
      RCP<FunctionParameter> functs[2];
-     functs[0] = rcp(new FunctionParameter(Solver, &HYPRE_PCGSetMaxIter, 1000)); // max iterations 
-     functs[1] = rcp(new FunctionParameter(Solver, &HYPRE_PCGSetTol, 1e-7)); // conv. tolerance 
+     functs[0] = rcp(new FunctionParameter(Solver, &HYPRE_PCGSetMaxIter, 1000)); // max iterations
+     functs[1] = rcp(new FunctionParameter(Solver, &HYPRE_PCGSetTol, 1e-7)); // conv. tolerance
      list.set("NumFunctions", 2);
-     list.set<RCP<FunctionParameter>*>("Functions", functs); 
+     list.set<RCP<FunctionParameter>*>("Functions", functs);
      NOTE: SetParameters() must be called to use ApplyInverse(), the solvers will not be created otherwise. An empty list is acceptable to use defaults.
   */
   int SetParameters(Teuchos::ParameterList& parameterlist);
@@ -334,7 +347,7 @@ public:
     \return Integer error code, set to 0 if successful.
   */
 
-    int SetParameter(bool UsePreconditioner){ UsePreconditioner = UsePreconditioner_; return 0;}
+    int SetParameter(bool UsePreconditioner){ UsePreconditioner_ = UsePreconditioner; return 0;}
 
     //! Choose to solve the problem or apply the preconditioner.
     /*!
@@ -350,9 +363,9 @@ public:
 
   //! If set true, transpose of this operator will be applied.
   /*! This flag allows the transpose of the given operator to be used implicitly.  Setting this flag
-      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface 
+      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface
       does not support transpose use, this method should return a value of -1.
-      
+
       \param
        UseTranspose_in - (In) If true, multiply by the transpose of operator, otherwise just use operator.
 
@@ -364,18 +377,18 @@ public:
 
   // @{ Mathematical functions.
   // Applies the matrix to X, returns the result in Y.
-  int Apply(const Epetra_MultiVector& X, 
-	       Epetra_MultiVector& Y) const{ return(Multiply(false,X,Y));}
+  int Apply(const Epetra_MultiVector& X,
+               Epetra_MultiVector& Y) const{ return(Multiply(false,X,Y));}
 
   //! Returns the result of a Epetra_Operator multiplied with an Epetra_MultiVector X in Y.
   /*! In this implementation, we use the Hypre matrix to multiply with so that the map is the same
-      as what is expected in solving methods. 
+      as what is expected in solving methods.
 
-    \param 
+    \param
     trans - (In) If true, use the transpose operation.
-	   X - (In) A Epetra_MultiVector of dimension NumVectors to mulitply with.
+           X - (In) A Epetra_MultiVector of dimension NumVectors to mulitply with.
     \param Out
-	   Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
+           Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
   */
@@ -383,32 +396,32 @@ public:
 
   //! Returns the result of a Epetra_Operator inverse applied to an Epetra_MultiVector X in Y.
   /*! In this implementation, we use several existing attributes to determine how virtual
-      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(), 
+      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(),
       the Epetra_CrsMatrix::UseTranspose(), and NoDiagonal() methods. The most notable warning is that
       if a matrix has no diagonal values we assume that there is an implicit unit diagonal that should
       be accounted for when doing a triangular solve.
 
-    \param 
-	   X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
+    \param
+           X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
-	   Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
+           Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
   */
   int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Computes the estimated condition number and returns the value.
-  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap, 
+  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                  const int MaxIters = 1550,
                  const double Tol = 1e-9,
-		 Epetra_RowMatrix* Matrix_in = 0);
+                 Epetra_RowMatrix* Matrix_in = 0);
 
   //! Returns the computed estimated condition number, or -1.0 if not computed.
   double Condest() const{ return(Condest_);}
 
   // @}
   // @{ Query methods
-  
+
   //! Returns a character string describing the operator
   const char* Label() const {return(Label_);}
 
@@ -424,7 +437,7 @@ public:
 
   //! Returns a reference to the map that should be used for range.
   const Epetra_Map& OperatorRangeMap() const{ return *MySimpleMap_;}
-  
+
   //! Returns 0.0 because this class cannot compute Inf-norm.
   double NormInf() const {return(0.0);};
 
@@ -440,7 +453,7 @@ public:
   //! Returns a reference to the matrix to be preconditioned.
   const Epetra_RowMatrix& Matrix() const{ return(*A_);}
 
-  //! Returns the Hypre matrix that was created upon construction. 
+  //! Returns the Hypre matrix that was created upon construction.
   const HYPRE_IJMatrix& HypreMatrix()
   {
     if(IsInitialized() == false)
@@ -449,7 +462,7 @@ public:
   }
 
   //! Prints on stream basic information about \c this object.
-  virtual ostream& Print(ostream& os) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 
   //! Returns the number of calls to Initialize().
   virtual int NumInitialize() const{ return(NumInitialize_);}
@@ -497,14 +510,14 @@ private:
     { return (dynamic_cast<const Epetra_MpiComm*>(&A_->Comm()))->GetMpiComm();}
 
   //! Returns the result of a Ifpack_ILU forward/back solve on a Epetra_MultiVector X in Y.
-  /*! 
+  /*!
     \param In
     Trans -If true, solve transpose problem.
-    \param 
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
     Y - (Out) A Epetra_MultiVector of dimension NumVectorscontaining result.
-    
+
     \return Integer error code, set to 0 if successful.
   */
   int Solve(bool Trans, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -512,18 +525,18 @@ private:
 
   //! Returns the number of global matrix rows.
   int NumGlobalRows() const {return(A_->NumGlobalRows());};
-  
+
   //! Returns the number of global matrix columns.
   int NumGlobalCols() const {return(A_->NumGlobalCols());};
-  
+
   //! Returns the number of local matrix rows.
   int NumMyRows() const {return(A_->NumMyRows());};
-  
+
   //! Returns the number of local matrix columns.
   int NumMyCols() const {return(A_->NumMyCols());};
-  
+
   //! Sets the solver type to be the passed in solver type.
-  int SetSolverType(Hypre_Solver solver); 
+  int SetSolverType(Hypre_Solver solver);
 
   //! Sets the preconditioner type to be the passed in type.
   int SetPrecondType(Hypre_Solver precond);
@@ -579,7 +592,7 @@ private:
 
   // @}
   // @{ Internal data
-  
+
   //! Pointer to the Epetra_RowMatrix to factorize
   Teuchos::RefCountPtr<Epetra_RowMatrix> A_;
   //! This objects copy of the ParameterList

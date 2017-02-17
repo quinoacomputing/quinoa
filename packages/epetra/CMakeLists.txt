@@ -1,11 +1,10 @@
 
-INCLUDE(TribitsPackageMacros)
 
 TRIBITS_PACKAGE(Epetra)
 
 SET(${PACKAGE_NAME}_VERSION "3.7d")
 
-# 
+#
 #   Exception added to deal with fixed form Fortran code on XL
 #
 TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
@@ -13,6 +12,11 @@ TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
 if("${CMAKE_Fortran_COMPILER_ID}" MATCHES "XL|VisualAge")
      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfixed=72 -qxlines")
    endif()
+
+#
+# Add Debug Option
+#
+TRIBITS_ADD_DEBUG_OPTION()
 
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_ABC
   HAVE_EPETRA_ARRAY_BOUNDS_CHECK
@@ -48,6 +52,38 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_DISABLE_READY_SEND_IN_DO_POSTS
   EPETRA_NO_READY_SEND_IN_DO_POSTS
   "Replace (barrier+MPI_Rsend) with MPI_Send in Epetra_MpiDistributor::DoPosts (EXPERIMENTAL)."
   OFF )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(Trilinos_NO_32BIT_GLOBAL_INDICES
+  EPETRA_NO_32BIT_GLOBAL_INDICES
+  "If option is enabled, 32 bit global indices are disabled.  One must use long long global indices only for maps."
+  OFF )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(Trilinos_NO_64BIT_GLOBAL_INDICES
+  EPETRA_NO_64BIT_GLOBAL_INDICES
+  "If option is enabled, 64 bit global indices are disabled.  One must use int global indices only for maps."
+  OFF )
+
+IF(TPL_ENABLE_MKL)
+  TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_MKL_SPARSE
+    Epetra_ENABLE_MKL_SPARSE
+    "If option is enabled, MKL functions will be used for sparse operations in Epetra."
+    OFF )
+
+  IF(Epetra_ENABLE_MKL_SPARSE)
+    INCLUDE_DIRECTORIES(${TPL_MKL_INCLUDE_DIRS})
+
+    TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_DISABLE_MKL_SPARSE_MM
+      Epetra_DISABLE_MKL_SPARSE_MM
+      "If option is turned on, MKL matrix-matrix functions will not be used for sparse operations in Epetra.  This does not affect the usage of MKL matrix-vector functions."
+      OFF )
+
+  ENDIF()
+
+ELSE()
+  IF(Epetra_ENABLE_MKL_SPARSE)
+    MESSAGE(FATAL_ERROR "Epetra_ENABLE_MKL_SPARSE requires that MKL TPL be enabled.  Either enable the TPL or do not enable Epetra_ENABLE_MKL_SPARSE.")
+  ENDIF()
+ENDIF()
 
 ADD_SUBDIRECTORY(src)
 

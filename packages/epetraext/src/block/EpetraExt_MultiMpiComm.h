@@ -79,7 +79,8 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
 	\param In 
 	numTimeSteps (Default=-1) - Piece of partitioning data needed specifically for parallel space-time project, corresponding to the total number of time steps.
   */
-  MultiMpiComm(MPI_Comm globalComm, int subDomainProcs, int numTimeSteps_=-1);
+  MultiMpiComm(MPI_Comm globalComm, int subDomainProcs, int numTimeSteps_=-1,
+	       const Teuchos::EVerbosityLevel verbLevel=Teuchos::VERB_DEFAULT);
   
   //! MultiMpiComm constuctor, no parallelism over domains
   /*! Creates a MultiMpiComm object for the simple case of no parallelism over
@@ -90,7 +91,8 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
 	\param In 
 	numTimeSteps - Number of steps 
   */
-  MultiMpiComm(const Epetra_MpiComm& Comm, int numTimeSteps_);
+  MultiMpiComm(const Epetra_MpiComm& Comm, int numTimeSteps_,
+	       const Teuchos::EVerbosityLevel verbLevel=Teuchos::VERB_DEFAULT);
 
   //! Copy constructor.
   MultiMpiComm( const MultiMpiComm &MMC );
@@ -142,6 +144,8 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
           { return myComm->Broadcast( MyVals, Count, Root); };
   virtual int Broadcast(long * MyVals, int Count, int Root) const
           { return myComm->Broadcast( MyVals, Count, Root); };
+  virtual int Broadcast(long long * MyVals, int Count, int Root) const
+          { return myComm->Broadcast( MyVals, Count, Root); };
   virtual int Broadcast(char * MyVals, int Count, int Root) const
           { return myComm->Broadcast( MyVals, Count, Root); };
   virtual int GatherAll(double * MyVals, double * AllVals, int Count) const
@@ -150,11 +154,15 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
           { return myComm->GatherAll( MyVals, AllVals, Count); };
   virtual int GatherAll(long * MyVals, long * AllVals, int Count) const
           { return myComm->GatherAll( MyVals,  AllVals, Count); };
+  virtual int GatherAll(long long * MyVals, long long * AllVals, int Count) const
+          { return myComm->GatherAll( MyVals,  AllVals, Count); };
   virtual int SumAll(double * PartialSums, double * GlobalSums, int Count) const
           { return myComm->SumAll( PartialSums,  GlobalSums, Count); };
   virtual int SumAll(int * PartialSums, int * GlobalSums, int Count) const
           { return myComm->SumAll( PartialSums,  GlobalSums, Count); };
   virtual int SumAll(long * PartialSums, long * GlobalSums, int Count) const
+          { return myComm->SumAll( PartialSums,  GlobalSums, Count); };
+  virtual int SumAll(long long * PartialSums, long long * GlobalSums, int Count) const
           { return myComm->SumAll( PartialSums,  GlobalSums, Count); };
   virtual int MaxAll(double * PartialMaxs, double * GlobalMaxs, int Count) const
           { return myComm->MaxAll( PartialMaxs,  GlobalMaxs, Count); };
@@ -162,11 +170,15 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
           { return myComm->MaxAll( PartialMaxs,  GlobalMaxs, Count); };
   virtual int MaxAll(long * PartialMaxs, long * GlobalMaxs, int Count) const
           { return myComm->MaxAll( PartialMaxs, GlobalMaxs, Count); };
+  virtual int MaxAll(long long * PartialMaxs, long long * GlobalMaxs, int Count) const
+          { return myComm->MaxAll( PartialMaxs, GlobalMaxs, Count); };
   virtual int MinAll(double * PartialMins, double * GlobalMins, int Count) const
           { return myComm->MinAll( PartialMins, GlobalMins, Count); };
   virtual int MinAll(int * PartialMins, int * GlobalMins, int Count) const
           { return myComm->MinAll( PartialMins, GlobalMins, Count); };
   virtual int MinAll(long * PartialMins, long * GlobalMins, int Count)const
+          { return myComm->MinAll( PartialMins, GlobalMins, Count); };
+  virtual int MinAll(long long * PartialMins, long long * GlobalMins, int Count)const
           { return myComm->MinAll( PartialMins, GlobalMins, Count); };
   virtual int ScanSum(double * MyVals, double * ScanSums, int Count)const
           { return myComm->ScanSum( MyVals,  ScanSums, Count); };
@@ -174,12 +186,14 @@ class MultiMpiComm: public EpetraExt::MultiComm, public Epetra_MpiComm,
           { return myComm->ScanSum(MyVals, ScanSums, Count); };
   virtual int ScanSum(long * MyVals, long * ScanSums, int Count) const
           { return myComm->ScanSum(MyVals, ScanSums, Count); };
+  virtual int ScanSum(long long * MyVals, long long * ScanSums, int Count) const
+          { return myComm->ScanSum(MyVals, ScanSums, Count); };
   virtual int MyPID() const { return myComm->MyPID(); };
   virtual int NumProc() const { return myComm->NumProc(); };
   virtual Epetra_Distributor * CreateDistributor() const { return myComm->CreateDistributor(); };
   virtual Epetra_Directory * CreateDirectory(const Epetra_BlockMap & Map) const 
           { return myComm->CreateDirectory(Map); };
-  virtual void PrintInfo(ostream & os) const { myComm->PrintInfo( os); };
+  virtual void PrintInfo(std::ostream & os) const { myComm->PrintInfo( os); };
 
  protected:
 

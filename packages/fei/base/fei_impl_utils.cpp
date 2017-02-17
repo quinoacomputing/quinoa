@@ -1,50 +1,14 @@
-/*
-// @HEADER
-// ************************************************************************
-//             FEI: Finite Element Interface to Linear Solvers
-//                  Copyright (2005) Sandia Corporation.
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
-// U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Alan Williams (william@sandia.gov) 
-//
-// ************************************************************************
-// @HEADER
-*/
-
+/*--------------------------------------------------------------------*/
+/*    Copyright 2008 Sandia Corporation.                              */
+/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
+/*    non-exclusive license for use of this work by or on behalf      */
+/*    of the U.S. Government.  Export of this program may require     */
+/*    a license from the United States Government.                    */
+/*--------------------------------------------------------------------*/
 
 #include <fei_CommUtils.hpp>
 #include <fei_iostream.hpp>
 #include <fei_impl_utils.hpp>
-#include <fei_FillableVec.hpp>
 #include <fei_FillableMat.hpp>
 #include <fei_CSRMat.hpp>
 #include <fei_CSVec.hpp>
@@ -85,55 +49,28 @@ void find_offsets(const std::vector<int>& sources,
 }
 
 //----------------------------------------------------------------------------
-void pack_FillableMat(const fei::FillableMat& mat,
-                      std::vector<int>& intdata,
-                      std::vector<double>& doubledata)
-{
-  int nrows = mat.getNumRows();
-  int nnz = fei::count_nnz(mat);
-
-  intdata.resize(1 + nrows*2 + nnz);
-  doubledata.resize(nnz);
-
-  int ioffset = 0;
-  int doffset = 0;
-
-  intdata[ioffset++] = nrows;
-
-  fei::FillableMat::const_iterator
-    r_iter = mat.begin(),
-    r_end = mat.end();
-
-  for(; r_iter!=r_end; ++r_iter) {
-    int rowNumber = r_iter->first;
-    const fei::FillableVec* row = r_iter->second;
-
-    intdata[ioffset++] = rowNumber;
-    intdata[ioffset++] = row->size();
-
-    fei::FillableVec::const_iterator
-      iter = row->begin(),
-      iend = row->end();
-    for(; iter!=iend; ++iter) {
-      intdata[ioffset++] = iter->first;
-      doubledata[doffset++] = iter->second;
-    }
-  }
-}
-
-//----------------------------------------------------------------------------
-void pack_FillableMat(const fei::FillableMat& mat, 
-                      std::vector<char>& buffer)
+size_t num_bytes_FillableMat(const fei::FillableMat& mat)
 {
   int nrows = mat.getNumRows();
   int nnz = fei::count_nnz(mat);
 
   int num_chars_int = (2 + nrows*2 + nnz)*sizeof(int);
   int num_chars_double = nnz*sizeof(double);
-  buffer.resize(num_chars_int + num_chars_double);
 
-  int* intdata = reinterpret_cast<int*>(&buffer[0]);
-  double* doubledata = reinterpret_cast<double*>(&buffer[0]+num_chars_int);
+  return num_chars_int + num_chars_double;
+}
+
+//----------------------------------------------------------------------------
+void pack_FillableMat(const fei::FillableMat& mat, 
+                      char* buffer)
+{
+  int nrows = mat.getNumRows();
+  int nnz = fei::count_nnz(mat);
+
+  int num_chars_int = (2 + nrows*2 + nnz)*sizeof(int);
+
+  int* intdata = reinterpret_cast<int*>(buffer);
+  double* doubledata = reinterpret_cast<double*>(buffer+num_chars_int);
 
   int ioffset = 0;
   int doffset = 0;
@@ -149,24 +86,23 @@ void pack_FillableMat(const fei::FillableMat& mat,
 
   for(; r_iter!=r_end; ++r_iter) {
     int rowNumber = r_iter->first;
-    const fei::FillableVec* row = r_iter->second;
+    const fei::CSVec* row = r_iter->second;
 
     intdata[ioffset++] = rowNumber;
-    intdata[ioffset++] = row->size();
+    const int rowlen = row->size();
+    intdata[ioffset++] = rowlen;
 
-    fei::FillableVec::const_iterator
-      iter = row->begin(),
-      iend = row->end();
-    for(; iter!=iend; ++iter) {
-      intdata[ioffsetcols++] = iter->first;
-      doubledata[doffset++] = iter->second;
+    const std::vector<int>& rowindices = row->indices();
+    const std::vector<double>& rowcoefs = row->coefs();
+    for(int i=0; i<rowlen; ++i) {
+      intdata[ioffsetcols++] = rowindices[i];
+      doubledata[doffset++] = rowcoefs[i];
     }
   }
 }
 
 //----------------------------------------------------------------------------
-void unpack_FillableMat(const std::vector<int>& intdata,
-                        const std::vector<double>& doubledata,
+void unpack_FillableMat(const char* buffer_begin, const char* buffer_end,
                         fei::FillableMat& mat,
                         bool clear_mat_on_entry,
                         bool overwrite_entries)
@@ -175,48 +111,11 @@ void unpack_FillableMat(const std::vector<int>& intdata,
     mat.clear();
   }
 
-  if (intdata.size() < 1) {
+  if (buffer_end == buffer_begin) {
     return;
   }
 
-  int ioffset = 0;
-  int doffset = 0;
-
-  int nrows = intdata[ioffset++];
-
-  for(int i=0; i<nrows; ++i) {
-    int row = intdata[ioffset++];
-    int rowlen = intdata[ioffset++];
-
-    for(int j=0; j<rowlen; ++j) {
-      int col = intdata[ioffset++];
-      double coef = doubledata[doffset++];
-
-      if (overwrite_entries) {
-        mat.putCoef(row, col, coef);
-      }
-      else {
-        mat.sumInCoef(row, col, coef);
-      }
-    }
-  }
-}
-
-//----------------------------------------------------------------------------
-void unpack_FillableMat(const std::vector<char>& buffer,
-                        fei::FillableMat& mat,
-                        bool clear_mat_on_entry,
-                        bool overwrite_entries)
-{
-  if (clear_mat_on_entry) {
-    mat.clear();
-  }
-
-  if (buffer.size() < 1) {
-    return;
-  }
-
-  const int* intdata = reinterpret_cast<const int*>(&buffer[0]);
+  const int* intdata = reinterpret_cast<const int*>(buffer_begin);
   int ioffset = 0;
   int nrows = intdata[ioffset++];
   int nnz = intdata[ioffset++];
@@ -224,7 +123,7 @@ void unpack_FillableMat(const std::vector<char>& buffer,
   int ioffsetcols = 2+nrows*2;
 
   int num_chars_int = (2+nrows*2 + nnz)*sizeof(int);
-  const double* doubledata = reinterpret_cast<const double*>(&buffer[0]+num_chars_int);
+  const double* doubledata = reinterpret_cast<const double*>(buffer_begin+num_chars_int);
 
   int doffset = 0;
 
@@ -251,14 +150,14 @@ void unpack_FillableMat(const std::vector<char>& buffer,
 }
 
 //----------------------------------------------------------------------------
-bool unpack_CSRMat(const std::vector<char>& buffer, fei::CSRMat& mat)
+bool unpack_CSRMat(const char* buffer_begin, const char* buffer_end, fei::CSRMat& mat)
 {
   bool all_zeros = true;
-  if (buffer.size() < 1) {
+  if (buffer_end == buffer_begin) {
     return all_zeros;
   }
 
-  const int* intdata = reinterpret_cast<const int*>(&buffer[0]);
+  const int* intdata = reinterpret_cast<const int*>(buffer_begin);
   int ioffset = 0;
   int nrows = intdata[ioffset++];
   int nnz = intdata[ioffset++];
@@ -273,7 +172,7 @@ bool unpack_CSRMat(const std::vector<char>& buffer, fei::CSRMat& mat)
   int ioffsetcols = 2+nrows*2;
 
   int num_chars_int = (2+nrows*2 + nnz)*sizeof(int);
-  const double* doubledata = reinterpret_cast<const double*>(&buffer[0]+num_chars_int);
+  const double* doubledata = reinterpret_cast<const double*>(buffer_begin+num_chars_int);
 
   int doffset = 0;
 
@@ -296,9 +195,19 @@ bool unpack_CSRMat(const std::vector<char>& buffer, fei::CSRMat& mat)
   return all_zeros;
 }
 
+size_t num_bytes_indices_coefs(const std::vector<int>& indices,
+                        const std::vector<double>& coefs)
+{
+  int num = indices.size();
+  int num_chars_int = (1+num)*sizeof(int);
+  int num_chars = num_chars_int + num*sizeof(double);
+  return num_chars;
+}
+
 void pack_indices_coefs(const std::vector<int>& indices,
                         const std::vector<double>& coefs,
-                        std::vector<char>& buffer)
+                        std::vector<char>& buffer,
+                        bool resize_buffer)
 {
   if (indices.size() != coefs.size()) {
     throw std::runtime_error("fei::impl_utils::pack_indices_coefs failed, sizes don't match.");
@@ -307,7 +216,9 @@ void pack_indices_coefs(const std::vector<int>& indices,
   int num = indices.size();
   int num_chars_int = (1+num)*sizeof(int);
   int num_chars = num_chars_int + num*sizeof(double);
-  buffer.resize(num_chars);
+  if (resize_buffer) {
+    buffer.resize(num_chars);
+  }
 
   int* intdata = reinterpret_cast<int*>(&buffer[0]);
   double* doubledata = reinterpret_cast<double*>(&buffer[0]+num_chars_int);
@@ -354,7 +265,7 @@ void separate_BC_eqns(const fei::FillableMat& mat,
 
   for(; m_iter != m_end; ++m_iter) {
     int eqn = m_iter->first;
-    const fei::FillableVec* row = m_iter->second;
+    const fei::CSVec* row = m_iter->second;
 
     std::vector<int>::iterator
       iter = std::lower_bound(bcEqns.begin(), bcEqns.end(), eqn);
@@ -364,7 +275,7 @@ void separate_BC_eqns(const fei::FillableMat& mat,
       std::vector<double>::iterator viter = bcVals.begin();
       viter += offset;
       try {
-        double val = row->getEntry(eqn);
+        double val = get_entry(*row, eqn);
         bcVals.insert(viter, val);
       }
       catch(...) {
@@ -392,14 +303,12 @@ void create_col_to_row_map(const fei::FillableMat& mat,
 
   for(; m_iter != m_end; ++m_iter) {
     int rowNum = m_iter->first;
-    const fei::FillableVec* rowvec = m_iter->second;
+    const fei::CSVec* rowvec = m_iter->second;
 
-    fei::FillableVec::const_iterator
-      r_iter = rowvec->begin(),
-      r_end = rowvec->end();
+    const std::vector<int>& rowindices = rowvec->indices();
 
-    for(; r_iter != r_end; ++r_iter) {
-      int colNum = r_iter->first;
+    for(size_t i=0; i<rowindices.size(); ++i) {
+      int colNum = rowindices[i];
 
       crmap.insert(std::make_pair(colNum, rowNum));
     }
@@ -428,7 +337,7 @@ int remove_couplings(fei::FillableMat& mat)
     bool foundCoupling = false;
     for(; m_iter != m_end; ++m_iter) {
       int rownum = m_iter->first;
-      fei::FillableVec* mrow = m_iter->second;
+      fei::CSVec* mrow = m_iter->second;
 
       //now find which rows contain 'rownum' as a column-index:
       std::pair<MM_Iter,MM_Iter> mmi = crmap.equal_range(rownum);
@@ -437,23 +346,23 @@ int remove_couplings(fei::FillableMat& mat)
       for(MM_Iter cri = mmi.first; cri != mmi.second; ++cri) {
         int cri_row = cri->second;
 
-        fei::FillableVec* frow = mat.create_or_getRow(cri_row);
+        fei::CSVec* frow = mat.create_or_getRow(cri_row);
 
-        double coef = frow->getEntry(rownum);
+        double coef = get_entry(*frow,rownum);
 
-        frow->removeEntry(rownum);
+        remove_entry(*frow, rownum);
 
-        fei::CSVec csrow(*mrow);
+        std::vector<int>& indices = mrow->indices();
+        std::vector<double>& coefs = mrow->coefs();
 
-        std::vector<int>& indices = csrow.indices();
-        std::vector<double>& coefs = csrow.coefs();
-
-        size_t rowlen = csrow.size();
+        size_t rowlen = mrow->size();
         for(size_t ii=0; ii<rowlen; ++ii) {
           coefs[ii] *= coef;
         }
 
-        frow->addEntries(rowlen, &coefs[0], &indices[0]);
+        int* indPtr = indices.empty() ? NULL : &indices[0];
+        double* coefPtr = coefs.empty() ? NULL : &coefs[0];
+        add_entries(*frow, rowlen, indPtr, coefPtr);
         foundCoupling = true;
       }
     }
@@ -479,9 +388,6 @@ void global_union(MPI_Comm comm,
 {
   globalUnionMatrix = localMatrix;
 
-  std::vector<int> localintdata;
-  std::vector<double> localdoubledata;
-
   int localProc = fei::localProc(comm);
   int numProcs = fei::numProcs(comm);
 
@@ -491,27 +397,19 @@ void global_union(MPI_Comm comm,
 
   //first pack the local matrix into a pair of std::vector objects
 
-  pack_FillableMat(localMatrix, localintdata, localdoubledata);
+  size_t num_bytes = num_bytes_FillableMat(localMatrix);
+  std::vector<char> localchardata(num_bytes);
+
+  pack_FillableMat(localMatrix, &localchardata[0]);
 
   //next use Allgatherv to place every processor's packed arrays onto every
   //other processor.
 
-  std::vector<int> recvintdatalengths;
-  std::vector<int> recvintdata;
-  int err = fei::Allgatherv(comm, localintdata, recvintdatalengths, recvintdata);
+  std::vector<int> recvdatalengths;
+  std::vector<char> recvdata;
+  int err = fei::Allgatherv(comm, localchardata, recvdatalengths, recvdata);
   if (err != 0) {
     throw std::runtime_error("fei::impl_utils::global_union: Allgatherv-int failed.");
-  }
-
-  std::vector<int> recvdoubledatalengths;
-  std::vector<double> recvdoubledata;
-  err = fei::Allgatherv(comm, localdoubledata, recvdoubledatalengths, recvdoubledata);
-  if (err != 0) {
-    throw std::runtime_error("fei::impl_utils::global_union: Allgatherv-double failed.");
-  }
-
-  if (recvintdatalengths.size() != recvdoubledatalengths.size()) {
-    throw std::runtime_error("fei::impl_utils::global_union: inconsistent lengths from Allgatherv");
   }
 
   //finally unpack the received arrays into matrix objects and combine them
@@ -520,21 +418,15 @@ void global_union(MPI_Comm comm,
   bool overwriteEntries = true;
 
   int ioffset = 0;
-  int doffset = 0;
-  for(size_t p=0; p<recvintdatalengths.size(); ++p) {
-    int intlen = recvintdatalengths[p];
-    int doublelen = recvdoubledatalengths[p];
+  for(size_t p=0; p<recvdatalengths.size(); ++p) {
+    int len = recvdatalengths[p];
 
-    if (intlen > 1 && (int)p != localProc) {
-      std::vector<int> intdata(&recvintdata[ioffset], &recvintdata[ioffset]+intlen);
-      std::vector<double> doubledata(&recvdoubledata[doffset], &recvdoubledata[doffset]+doublelen);
-
-      unpack_FillableMat(intdata, doubledata, globalUnionMatrix,
-                         clearMatOnEntry, overwriteEntries);
+    if (len > 1 && (int)p != localProc) {
+      unpack_FillableMat(&recvdata[ioffset], &recvdata[ioffset]+len,
+                globalUnionMatrix, clearMatOnEntry, overwriteEntries);
     }
 
-    ioffset += intlen;
-    doffset += doublelen;
+    ioffset += len;
   }
 }
 
@@ -628,7 +520,7 @@ void add_to_graph(const fei::CSRMat& inmat, fei::Graph& graph)
     int row = rowNumbers[i];
     int offset = rowOffsets[i];
     int rowlen = rowOffsets[i+1]-offset;
-    const int* indices = &pckColInds[offset];
+    const int* indices = pckColInds.empty() ? NULL : &pckColInds[offset];
 
     if (graph.addIndices(row, rowlen, indices) != 0) {
       throw std::runtime_error("fei::impl_utils::add_to_graph ERROR in graph.addIndices.");

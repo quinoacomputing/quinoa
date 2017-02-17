@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -33,6 +46,7 @@
 #include "Ifpack_ConfigDefs.h"
 #include "Ifpack_ScalingType.h"
 #include "Ifpack_IlukGraph.h"
+#include "Epetra_ConfigDefs.h"
 #include "Epetra_CompObject.h"
 #include "Epetra_Operator.h"
 #include "Epetra_CrsMatrix.h"
@@ -52,8 +66,8 @@ namespace Teuchos {
 
 //! Ifpack_CrsRiluk: A class for constructing and using an incomplete lower/upper (ILU) factorization of a given Epetra_RowMatrix.
 
-/*! The Ifpack_CrsRiluk class computes a "Relaxed" ILU factorization with level k fill 
-    of a given Epetra_CrsMatrix.  The factorization 
+/*! The Ifpack_CrsRiluk class computes a "Relaxed" ILU factorization with level k fill
+    of a given Epetra_CrsMatrix.  The factorization
     that is produced is a function of several parameters:
 <ol>
   <li> The pattern of the matrix - All fill is derived from the original matrix nonzero structure.  Level zero fill
@@ -77,8 +91,8 @@ namespace Teuchos {
        of overlap, the entire matrix would be part of each processor's local ILU factorization process.
        Level of overlap is defined during the construction of the Ifpack_IlukGraph object.
 
-       Once the factorization is computed, applying the factorization \(LUy = x\) 
-       results in redundant approximations for any elements of y that correspond to 
+       Once the factorization is computed, applying the factorization \(LUy = x\)
+       results in redundant approximations for any elements of y that correspond to
        rows that are part of more than one local ILU factor.  The OverlapMode (changed by calling SetOverlapMode())
        defines how these redundancies are
        handled using the Epetra_CombineMode enum.  The default is to zero out all values of y for rows that
@@ -93,7 +107,7 @@ namespace Teuchos {
        RelaxValue is between 0 and 1, then RelaxValue times the sum of extra entries will be added to the diagonal.
 
        For most situations, RelaxValue should be set to zero.  For certain kinds of problems, e.g., reservoir modeling,
-       there is a conservation principle involved such that any operator should obey a zero row-sum property.  MILU 
+       there is a conservation principle involved such that any operator should obey a zero row-sum property.  MILU
        was designed for these cases and you should set the RelaxValue to 1.  For other situations, setting RelaxValue to
        some nonzero value may improve the stability of factorization, and can be used if the computed ILU factors
        are poorly conditioned.
@@ -158,7 +172,7 @@ the factorization, we compute a diagonal perturbation of our matrix
 matrix.  The overhead cost of perturbing the diagonal is minimal since
 the first step in computing the incomplete factors is to copy the
 matrix \f$A\f$ into the memory space for the incomplete factors.  We
-simply compute the perturbed diagonal at this point. 
+simply compute the perturbed diagonal at this point.
 
 The actual perturbation values we use are the diagonal values \f$(d_1, d_2, \ldots, d_n)\f$
 with \f$d_i = sgn(d_i)\alpha + d_i\rho\f$, \f$i=1, 2, \ldots, n\f$, where
@@ -184,30 +198,30 @@ create new entries.
 
 Each Ifpack_CrsRiluk object keep track of the number
 of \e serial floating point operations performed using the specified object as the \e this argument
-to the function.  The Flops() function returns this number as a double precision number.  Using this 
+to the function.  The Flops() function returns this number as a double precision number.  Using this
 information, in conjunction with the Epetra_Time class, one can get accurate parallel performance
 numbers.  The ResetFlops() function resets the floating point counter.
 
 \warning A Epetra_Map is required for the Ifpack_CrsRiluk constructor.
 
-*/    
+*/
 
 
 class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public virtual Epetra_Operator {
-      
+
   // Give ostream << function some access to private and protected data/functions.
 
-  friend ostream& operator << (ostream& os, const Ifpack_CrsRiluk& A);
+  friend std::ostream& operator << (std::ostream& os, const Ifpack_CrsRiluk& A);
 
  public:
   //! Ifpack_CrsRiluk constuctor with variable number of indices per row.
-  /*! Creates a Ifpack_CrsRiluk object and allocates storage.  
-    
+  /*! Creates a Ifpack_CrsRiluk object and allocates storage.
+
     \param In
            Graph_in - Graph generated by Ifpack_IlukGraph.
   */
   Ifpack_CrsRiluk(const Ifpack_IlukGraph & Graph_in);
-  
+
   //! Copy constructor.
   Ifpack_CrsRiluk(const Ifpack_CrsRiluk & Matrix);
 
@@ -216,21 +230,23 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 
   //! Initialize L and U with values from user matrix A.
   /*! Copies values from the user's matrix into the nonzero pattern of L and U.
-    \param In 
+    \param In
            A - User matrix to be factored.
     \warning The graph of A must be identical to the graph passed in to Ifpack_IlukGraph constructor.
-             
+
    */
   int InitValues(const Epetra_CrsMatrix &A);
 
   //! Initialize L and U with values from user matrix A.
   /*! Copies values from the user's matrix into the nonzero pattern of L and U.
-    \param In 
+    \param In
            A - User matrix to be factored.
     \warning The graph of A must be identical to the graph passed in to Ifpack_IlukGraph constructor.
-             
+
    */
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES // FIXME LONG LONG
   int InitValues(const Epetra_VbrMatrix &A);
+#endif
 
   //! If values have been initialized, this query returns true, otherwise it returns false.
   bool ValuesInitialized() const {return(ValuesInitialized_);};
@@ -271,33 +287,33 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 
   //! If factor is completed, this query returns true, otherwise it returns false.
   bool Factored() const {return(Factored_);};
-  
+
 
   // Mathematical functions.
-  
-  
+
+
   //! Returns the result of a Ifpack_CrsRiluk forward/back solve on a Epetra_MultiVector X in Y (works for Epetra_Vectors also).
-  /*! 
+  /*!
     \param In
     Trans -If true, solve transpose problem.
     \param In
     X - A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
     Y -A Epetra_MultiVector of dimension NumVectorscontaining result.
-    
+
     \return Integer error code, set to 0 if successful.
   */
   int Solve(bool Trans, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Returns the result of multiplying U, D and L in that order on an Epetra_MultiVector X in Y.
-  /*! 
+  /*!
     \param In
     Trans -If true, multiply by L^T, D and U^T in that order.
     \param In
     X - A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
     Y -A Epetra_MultiVector of dimension NumVectorscontaining result.
-    
+
     \return Integer error code, set to 0 if successful.
   */
   int Multiply(bool Trans, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -308,12 +324,12 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
    \param In
     Trans -If true, solve transpose problem.
     \param Out
-    ConditionNumberEstimate - The maximum across all processors of 
+    ConditionNumberEstimate - The maximum across all processors of
     the infinity-norm estimate of the condition number of the inverse of LDU.
   */
   int Condest(bool Trans, double & ConditionNumberEstimate) const;
   // Attribute access functions
-  
+
   //! Get RILU(k) relaxation parameter
   double GetRelaxValue() {return RelaxValue_;}
 
@@ -326,46 +342,56 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
   //! Get overlap mode type
   Epetra_CombineMode GetOverlapMode() {return OverlapMode_;}
 
-    
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   //! Returns the number of global matrix rows.
   int NumGlobalRows() const {return(Graph().NumGlobalRows());};
-  
+
   //! Returns the number of global matrix columns.
   int NumGlobalCols() const {return(Graph().NumGlobalCols());};
-  
+
   //! Returns the number of nonzero entries in the global graph.
   int NumGlobalNonzeros() const {return(L().NumGlobalNonzeros()+U().NumGlobalNonzeros());};
-  
+
   //! Returns the number of diagonal entries found in the global input graph.
   virtual int NumGlobalBlockDiagonals() const {return(Graph().NumGlobalBlockDiagonals());};
-  
+#endif
+
+  long long NumGlobalRows64() const {return(Graph().NumGlobalRows64());};
+  long long NumGlobalCols64() const {return(Graph().NumGlobalCols64());};
+  long long NumGlobalNonzeros64() const {return(L().NumGlobalNonzeros64()+U().NumGlobalNonzeros64());};
+  virtual long long NumGlobalBlockDiagonals64() const {return(Graph().NumGlobalBlockDiagonals64());};
+
   //! Returns the number of local matrix rows.
   int NumMyRows() const {return(Graph().NumMyRows());};
-  
+
   //! Returns the number of local matrix columns.
   int NumMyCols() const {return(Graph().NumMyCols());};
-  
+
   //! Returns the number of nonzero entries in the local graph.
   int NumMyNonzeros() const {return(L().NumMyNonzeros()+U().NumMyNonzeros());};
-  
+
   //! Returns the number of diagonal entries found in the local input graph.
   virtual int NumMyBlockDiagonals() const {return(Graph().NumMyBlockDiagonals());};
-  
+
   //! Returns the number of nonzero diagonal values found in matrix.
   virtual int NumMyDiagonals() const {return(NumMyDiagonals_);};
-  
+
   //! Returns the index base for row and column indices for this graph.
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   int IndexBase() const {return(Graph().IndexBase());};
-  
-  //! Returns the address of the Ifpack_IlukGraph associated with this factored matrix.
+#endif
+  long long IndexBase64() const {return(Graph().IndexBase64());};
+
+  //! returns the address of the Ifpack_IlukGraph associated with this factored matrix.
   const Ifpack_IlukGraph & Graph() const {return(Graph_);};
-  
+
   //! Returns the address of the L factor associated with this factored matrix.
   const Epetra_CrsMatrix & L() const {return(*L_);};
-    
+
   //! Returns the address of the D factor associated with this factored matrix.
   const Epetra_Vector & D() const {return(*D_);};
-    
+
   //! Returns the address of the L factor associated with this factored matrix.
   const Epetra_CrsMatrix & U() const {return(*U_);};
 
@@ -373,14 +399,14 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 
     //! Returns a character string describing the operator
     const char * Label() const {return(Epetra_Object::Label());};
-    
+
     //! If set true, transpose of this operator will be applied.
     /*! This flag allows the transpose of the given operator to be used implicitly.  Setting this flag
-        affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface 
-	does not support transpose use, this method should return a value of -1.
-      
+        affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface
+        does not support transpose use, this method should return a value of -1.
+
     \param In
-	   UseTranspose_in -If true, multiply by the transpose of operator, otherwise just use operator.
+           UseTranspose_in -If true, multiply by the transpose of operator, otherwise just use operator.
 
     \return Always returns 0.
   */
@@ -388,13 +414,13 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 
     //! Returns the result of a Epetra_Operator applied to a Epetra_MultiVector X in Y.
     /*! Note that this implementation of Apply does NOT perform a forward back solve with
-        the LDU factorization.  Instead it applies these operators via multiplication with 
-	U, D and L respectively.  The ApplyInverse() method performs a solve.
+        the LDU factorization.  Instead it applies these operators via multiplication with
+        U, D and L respectively.  The ApplyInverse() method performs a solve.
 
     \param In
-	   X - A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
+           X - A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
     \param Out
-	   Y -A Epetra_MultiVector of dimension NumVectors containing result.
+           Y -A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
   */
@@ -403,15 +429,15 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 
     //! Returns the result of a Epetra_Operator inverse applied to an Epetra_MultiVector X in Y.
     /*! In this implementation, we use several existing attributes to determine how virtual
-        method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(), 
-	the Epetra_CrsMatrix::UseTranspose(), and NoDiagonal() methods. The most notable warning is that
-	if a matrix has no diagonal values we assume that there is an implicit unit diagonal that should
-	be accounted for when doing a triangular solve.
+        method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(),
+        the Epetra_CrsMatrix::UseTranspose(), and NoDiagonal() methods. The most notable warning is that
+        if a matrix has no diagonal values we assume that there is an implicit unit diagonal that should
+        be accounted for when doing a triangular solve.
 
     \param In
-	   X - A Epetra_MultiVector of dimension NumVectors to solve for.
+           X - A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
-	   Y -A Epetra_MultiVector of dimension NumVectors containing result.
+           Y -A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
   */
@@ -443,17 +469,17 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
   bool Allocated() const {return(Allocated_);};
   int SetAllocated(bool Flag) {Allocated_ = Flag; return(0);};
   int BlockGraph2PointGraph(const Epetra_CrsGraph & BG, Epetra_CrsGraph & PG, bool Upper);
-  
+
  private:
-  
-  
+
+
   int AllocateCrs();
   int AllocateVbr();
   int InitAllValues(const Epetra_RowMatrix & A, int MaxNumEntries);
   int BlockMap2PointMap(const Epetra_BlockMap & BlockMap, Teuchos::RefCountPtr<Epetra_Map>* PointMap);
-  int GenerateXY(bool Trans, 
-		 const Epetra_MultiVector& Xin, const Epetra_MultiVector& Yin,
-		 Teuchos::RefCountPtr<Epetra_MultiVector>* Xout, 
+  int GenerateXY(bool Trans,
+                 const Epetra_MultiVector& Xin, const Epetra_MultiVector& Yin,
+                 Teuchos::RefCountPtr<Epetra_MultiVector>* Xout,
                  Teuchos::RefCountPtr<Epetra_MultiVector>* Yout) const;
   bool UserMatrixIsVbr_;
   bool UserMatrixIsCrs_;
@@ -491,6 +517,6 @@ class Ifpack_CrsRiluk: public Epetra_Object, public Epetra_CompObject, public vi
 };
 
 //! << operator will work for Ifpack_CrsRiluk.
-ostream& operator << (ostream& os, const Ifpack_CrsRiluk& A);
+std::ostream& operator << (std::ostream& os, const Ifpack_CrsRiluk& A);
 
 #endif /* _IFPACK_CRSRILUK_H_ */

@@ -69,6 +69,20 @@ condCloneVec(
   return vec;
 }
 
+inline
+RCP<const Stokhos::ProductEpetraVector >
+condCloneVec_mp(
+  const RCP<const Stokhos::ProductEpetraVector > &vec,
+  bool cloneObject
+  )
+{
+  if(cloneObject)
+  {
+    printf("Warning:  clone_v not implemented for ProductEpetraVector: %s %d\n",__FILE__,__LINE__);
+    //return vec->clone_v();  //JF clone_v not implemented for ProductEpetraVector
+  }
+  return vec;
+}
 
 } // namespace ModelEvaluatorHelperPack
 
@@ -88,6 +102,8 @@ ModelEvaluatorBase::InArgs<Scalar>::InArgs()
   t_     = SMT::zero();
   alpha_ = ST::zero();
   beta_  = ST::zero();
+  step_size_ = ST::zero();
+  stage_number_ = ST::one();
 }
 
 
@@ -106,6 +122,12 @@ bool ModelEvaluatorBase::InArgs<Scalar>::supports(EInArgsMembers arg) const
   return supports_[arg];
 }
 
+template<class Scalar>
+bool ModelEvaluatorBase::InArgs<Scalar>::supports(EInArgs_p_mp arg, int l) const
+{
+  assert_l(l);
+  return supports_p_mp_[l];
+}
 
 template<class Scalar>
 void ModelEvaluatorBase::InArgs<Scalar>::set_x_dot(
@@ -131,6 +153,32 @@ template<class Scalar>
 RCP<const VectorBase<Scalar> >
 ModelEvaluatorBase::InArgs<Scalar>::get_x() const
 { assert_supports(IN_ARG_x); return x_; }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::set_x_dot_mp(
+  const RCP<const Stokhos::ProductEpetraVector > &x_dot_mp
+  )
+{ assert_supports(IN_ARG_x_dot_mp); x_dot_mp_ = x_dot_mp; }
+
+
+template<class Scalar>
+RCP<const Stokhos::ProductEpetraVector >
+ModelEvaluatorBase::InArgs<Scalar>::get_x_dot_mp() const
+{ assert_supports(IN_ARG_x_dot_mp); return x_dot_mp_; }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::set_x_mp(
+  const RCP<const Stokhos::ProductEpetraVector > &x_mp
+  )
+{ assert_supports(IN_ARG_x_mp); x_mp_ = x_mp; }
+
+
+template<class Scalar>
+RCP<const Stokhos::ProductEpetraVector >
+ModelEvaluatorBase::InArgs<Scalar>::get_x_mp() const
+{ assert_supports(IN_ARG_x_mp); return x_mp_; }
 
 
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
@@ -177,6 +225,18 @@ ModelEvaluatorBase::InArgs<Scalar>::get_p(int l) const
 
 
 template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::set_p_mp(
+  int l, const RCP<const Stokhos::ProductEpetraVector > &p_mp_l
+  )
+{ assert_supports(IN_ARG_p_mp, l); p_mp_[l] = p_mp_l; }
+
+template<class Scalar>
+RCP<const Stokhos::ProductEpetraVector >
+ModelEvaluatorBase::InArgs<Scalar>::get_p_mp(int l) const
+{ assert_supports(IN_ARG_p_mp, l); return p_mp_[l]; }
+
+
+template<class Scalar>
 void ModelEvaluatorBase::InArgs<Scalar>::set_t( ScalarMag t )
 { assert_supports(IN_ARG_t); t_ = t; }
 
@@ -206,6 +266,23 @@ template<class Scalar>
 Scalar ModelEvaluatorBase::InArgs<Scalar>::get_beta() const
 { assert_supports(IN_ARG_beta); return beta_; }
 
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::set_step_size( Scalar step_size)
+{ assert_supports(IN_ARG_step_size); step_size_ = step_size; }
+
+template<class Scalar>
+Scalar ModelEvaluatorBase::InArgs<Scalar>::get_step_size() const
+{ assert_supports(IN_ARG_step_size); return step_size_; }
+
+template<class Scalar>
+Scalar ModelEvaluatorBase::InArgs<Scalar>::get_stage_number() const
+{ assert_supports(IN_ARG_stage_number); return stage_number_; }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::set_stage_number( Scalar stage_number)
+{ assert_supports(IN_ARG_stage_number); stage_number_ = stage_number; }
+
 
 template<class Scalar>
 void ModelEvaluatorBase::InArgs<Scalar>::setArgs(
@@ -213,23 +290,32 @@ void ModelEvaluatorBase::InArgs<Scalar>::setArgs(
   )
 {
   using ModelEvaluatorHelperPack::condCloneVec;
-  if( inArgs.supports(IN_ARG_x_dot) && inArgs.get_x_dot().get() ) {
+  using ModelEvaluatorHelperPack::condCloneVec_mp;
+  if( inArgs.supports(IN_ARG_x_dot) && nonnull(inArgs.get_x_dot()) ) {
     if(supports(IN_ARG_x_dot) || !ignoreUnsupported)
       set_x_dot(condCloneVec(inArgs.get_x_dot(),cloneObjects));
   }
-  if( inArgs.supports(IN_ARG_x) && inArgs.get_x().get() ) {
+  if( inArgs.supports(IN_ARG_x_dot_mp) && nonnull(inArgs.get_x_dot_mp()) ) {
+    if(supports(IN_ARG_x_dot_mp) || !ignoreUnsupported)
+      set_x_dot_mp(condCloneVec_mp(inArgs.get_x_dot_mp(),cloneObjects));
+  }
+  if( inArgs.supports(IN_ARG_x) && nonnull(inArgs.get_x()) ) {
     if(supports(IN_ARG_x) || !ignoreUnsupported)
       set_x(condCloneVec(inArgs.get_x(),cloneObjects));
   }
+  if( inArgs.supports(IN_ARG_x_mp) && nonnull(inArgs.get_x_mp()) ) {
+    if(supports(IN_ARG_x_mp) || !ignoreUnsupported)
+      set_x_mp(condCloneVec_mp(inArgs.get_x_mp(),cloneObjects));
+  }
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
-  if( inArgs.supports(IN_ARG_x_dot_poly) && inArgs.get_x_dot_poly().get() ) {
+  if( inArgs.supports(IN_ARG_x_dot_poly) && nonnull(inArgs.get_x_dot_poly()) ) {
     if(supports(IN_ARG_x_dot_poly) || !ignoreUnsupported) {
       TEUCHOS_TEST_FOR_EXCEPT(
         cloneObjects && "Have not implemented cloning for x_dot_poly yet!" );
       set_x_dot_poly(inArgs.get_x_dot_poly());
     }
   }
-  if( inArgs.supports(IN_ARG_x_poly) && inArgs.get_x_poly().get() ) {
+  if( inArgs.supports(IN_ARG_x_poly) && nonnull(inArgs.get_x_poly()) ) {
     if(supports(IN_ARG_x_poly) || !ignoreUnsupported) {
       TEUCHOS_TEST_FOR_EXCEPT(
         cloneObjects && "Have not implemented cloning for x_poly yet!" );
@@ -238,21 +324,35 @@ void ModelEvaluatorBase::InArgs<Scalar>::setArgs(
   }
 #endif // HAVE_THYRA_ME_POLYNOMIAL
   const int min_Np = TEUCHOS_MIN(this->Np(),inArgs.Np());
-  for( int l = 0; l < min_Np; ++l ) {
-    if(inArgs.get_p(l).get())
+  for (int l = 0; l < min_Np; ++l) {
+    if (nonnull(inArgs.get_p(l)))
       set_p(l,condCloneVec(inArgs.get_p(l),cloneObjects));
   }
-  if( inArgs.supports(IN_ARG_t) ) {
+  for (int l = 0; l < min_Np; ++l) {
+    if (inArgs.supports(IN_ARG_p_mp,l)) {
+      if (nonnull(inArgs.get_p_mp(l)))
+        set_p_mp(l,condCloneVec_mp(inArgs.get_p_mp(l),cloneObjects));
+    }
+  }
+  if (inArgs.supports(IN_ARG_t)) {
     if(supports(IN_ARG_t) || !ignoreUnsupported)
       set_t(inArgs.get_t());
   }
-  if( inArgs.supports(IN_ARG_alpha) ) {
+  if (inArgs.supports(IN_ARG_alpha)) {
     if(supports(IN_ARG_alpha) || !ignoreUnsupported)
       set_alpha(inArgs.get_alpha());
   }
-  if( inArgs.supports(IN_ARG_beta) ) {
+  if (inArgs.supports(IN_ARG_beta)) {
     if(supports(IN_ARG_beta) || !ignoreUnsupported)
       set_beta(inArgs.get_beta());
+  }
+  if (inArgs.supports(IN_ARG_step_size)) {
+    if(supports(IN_ARG_step_size) || !ignoreUnsupported)
+      set_step_size(inArgs.get_step_size());
+  }
+  if (inArgs.supports(IN_ARG_stage_number)) {
+    if(supports(IN_ARG_stage_number) || !ignoreUnsupported)
+      set_stage_number(inArgs.get_stage_number());
   }
 }
 
@@ -370,6 +470,12 @@ void ModelEvaluatorBase::InArgs<Scalar>::describe(
     if (this->supports(IN_ARG_beta)) {
       *out << "beta = " << beta_ << endl;
     }
+    if (this->supports(IN_ARG_step_size)) {
+      *out << "step_size = " << step_size_ << endl;
+    }
+    if (this->supports(IN_ARG_stage_number)) {
+      *out << "stage_number = " << stage_number_ << endl;
+    }
   }
   
 }
@@ -388,6 +494,8 @@ template<class Scalar>
 void ModelEvaluatorBase::InArgs<Scalar>::_set_Np(int Np_in)
 {
   p_.resize(Np_in);
+  p_mp_.resize(Np_in);
+  supports_p_mp_.resize(Np_in);
 }
 
 
@@ -401,6 +509,15 @@ void ModelEvaluatorBase::InArgs<Scalar>::_setSupports(
     ,"model = \'"<<modelEvalDescription_
     <<"\': Error, arg="<<toString(arg)<<" is invalid!");
   supports_[arg] = supports_in;
+}
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::_setSupports(
+  EInArgs_p_mp arg, int l, bool supports_in
+  )
+{
+  assert_l(l);
+  supports_p_mp_[l] = supports_in;
 }
 
 
@@ -427,6 +544,8 @@ void ModelEvaluatorBase::InArgs<Scalar>::_setUnsupportsAndRelated(
       this->_setSupports(IN_ARG_x_dot_poly,false);
       this->_setSupports(IN_ARG_alpha,false);
       this->_setSupports(IN_ARG_beta,false);
+      this->_setSupports(IN_ARG_step_size,false);
+      this->_setSupports(IN_ARG_stage_number,false);
       break;
     }
     default:
@@ -451,6 +570,21 @@ void ModelEvaluatorBase::InArgs<Scalar>::assert_supports(
     << Teuchos::ScalarTraits<Scalar>::name() <<">::assert_supports(arg): "
     "model = \'"<<modelEvalDescription_<<"\': Error, "
     "The argument arg = " << toString(arg) << " is not supported!"
+    );
+}
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgs<Scalar>::assert_supports(
+  EInArgs_p_mp arg, int l
+  ) const
+{
+  assert_l(l);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !supports_p_mp_[l], std::logic_error
+    ,"Thyra::ModelEvaluatorBase::InArgs<"
+    << Teuchos::ScalarTraits<Scalar>::name() <<">::assert_supports(IN_ARG_p_mp,1): "
+    "model = \'"<<modelEvalDescription_<<"\': Error, "
+    "The argument p_mp(l) with index l = " << l << " is not supported!"
     );
 }
 
@@ -651,8 +785,64 @@ ModelEvaluatorBase::OutArgs<Scalar>::supports(
 
 
 template<class Scalar>
+bool 
+ModelEvaluatorBase::OutArgs<Scalar>::supports(
+  EOutArgs_g_mp arg, int j
+  ) const
+{
+  assert_j(j);
+  return supports_g_mp_[j];
+}
+
+template<class Scalar>
+const ModelEvaluatorBase::DerivativeSupport&
+ModelEvaluatorBase::OutArgs<Scalar>::supports(
+  EOutArgsDfDp_mp arg, int l
+  ) const
+{
+  assert_l(l);
+  return supports_DfDp_mp_[l];
+}
+
+
+template<class Scalar>
+const ModelEvaluatorBase::DerivativeSupport&
+ModelEvaluatorBase::OutArgs<Scalar>::supports(
+  EOutArgsDgDx_dot_mp arg, int j
+  ) const
+{
+  assert_j(j);
+  return supports_DgDx_dot_mp_[j];
+}
+
+
+template<class Scalar>
+const ModelEvaluatorBase::DerivativeSupport&
+ModelEvaluatorBase::OutArgs<Scalar>::supports(
+  EOutArgsDgDx_mp arg, int j
+  ) const
+{
+  assert_j(j);
+  return supports_DgDx_mp_[j];
+}
+
+
+template<class Scalar>
+const ModelEvaluatorBase::DerivativeSupport&
+ModelEvaluatorBase::OutArgs<Scalar>::supports(
+  EOutArgsDgDp_mp arg, int j, int l
+  ) const
+{
+  assert_j(j);
+  assert_l(l);
+  return supports_DgDp_mp_[ j*Np() + l ];
+}
+
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::set_f( 
-  const RCP<VectorBase<Scalar> > &f
+  const Evaluation<VectorBase<Scalar> > &f
   )
 {
   assert_supports(OUT_ARG_f);
@@ -661,7 +851,7 @@ void ModelEvaluatorBase::OutArgs<Scalar>::set_f(
 
 
 template<class Scalar>
-RCP<VectorBase<Scalar> >
+ModelEvaluatorBase::Evaluation<VectorBase<Scalar> >
 ModelEvaluatorBase::OutArgs<Scalar>::get_f() const
 {
   assert_supports(OUT_ARG_f);
@@ -671,7 +861,7 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_f() const
 
 template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::set_g(
-  int j, const RCP<VectorBase<Scalar> > &g_j
+  int j, const Evaluation<VectorBase<Scalar> > &g_j
   )
 {
   assert_j(j);
@@ -680,11 +870,49 @@ void ModelEvaluatorBase::OutArgs<Scalar>::set_g(
 
 
 template<class Scalar>
-RCP<VectorBase<Scalar> >
+ModelEvaluatorBase::Evaluation<VectorBase<Scalar> >
 ModelEvaluatorBase::OutArgs<Scalar>::get_g(int j) const
 { 
   assert_j(j);
   return g_[j];
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_f_mp( 
+  const RCP<Stokhos::ProductEpetraVector > &f_mp
+  )
+{
+  assert_supports(OUT_ARG_f_mp);
+  f_mp_ = f_mp;
+}
+
+
+template<class Scalar>
+RCP<Stokhos::ProductEpetraVector >
+ModelEvaluatorBase::OutArgs<Scalar>::get_f_mp() const
+{
+  assert_supports(OUT_ARG_f_mp);
+  return f_mp_;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_g_mp(
+  int j, const RCP<Stokhos::ProductEpetraVector> &g_mp_j
+  )
+{
+  assert_supports(OUT_ARG_g_mp,j);
+  g_mp_[j] = g_mp_j;
+}
+
+
+template<class Scalar>
+RCP<Stokhos::ProductEpetraVector>
+ModelEvaluatorBase::OutArgs<Scalar>::get_g_mp(int j) const
+{ 
+  assert_supports(OUT_ARG_g_mp,j);
+  return g_mp_[j];
 }
 
 
@@ -708,6 +936,25 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_W() const
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_W_mp(
+  const RCP<Stokhos::ProductEpetraOperator> &W_mp
+  )
+{
+  assert_supports(OUT_ARG_W_mp);
+  W_mp_ = W_mp;
+}
+
+
+template<class Scalar>
+RCP<Stokhos::ProductEpetraOperator>
+ModelEvaluatorBase::OutArgs<Scalar>::get_W_mp() const
+{
+  assert_supports(OUT_ARG_W_mp);
+  return W_mp_;
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::set_W_op(
   const RCP<LinearOpBase<Scalar> > &W_op
   )
@@ -723,6 +970,25 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_W_op() const
 {
   assert_supports(OUT_ARG_W_op);
   return W_op_;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_W_prec(
+  const RCP<PreconditionerBase<Scalar> > &W_prec
+  )
+{
+  assert_supports(OUT_ARG_W_prec);
+  W_prec_ = W_prec;
+}
+
+
+template<class Scalar>
+RCP<PreconditionerBase<Scalar> >
+ModelEvaluatorBase::OutArgs<Scalar>::get_W_prec() const
+{
+  assert_supports(OUT_ARG_W_prec);
+  return W_prec_;
 }
 
 
@@ -764,6 +1030,34 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_DfDp_properties(int l) const
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_DfDp_mp(
+  int l, const MPDerivative &DfDp_mp_l
+  )
+{
+  assert_supports(OUT_ARG_DfDp_mp,l,DfDp_mp_l);
+  DfDp_mp_[l] = DfDp_mp_l;
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::MPDerivative
+ModelEvaluatorBase::OutArgs<Scalar>::get_DfDp_mp(int l) const
+{
+  assert_supports(OUT_ARG_DfDp_mp,l);
+  return DfDp_mp_[l];
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::DerivativeProperties
+ModelEvaluatorBase::OutArgs<Scalar>::get_DfDp_mp_properties(int l) const
+{
+  assert_supports(OUT_ARG_DfDp_mp,l);
+  return DfDp_mp_properties_[l];
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::set_DgDx_dot(
   int j, const Derivative<Scalar> &DgDx_dot_j
   )
@@ -788,6 +1082,34 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_dot_properties(int j) const
 {
   assert_supports(OUT_ARG_DgDx_dot,j);
   return DgDx_dot_properties_[j];
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_DgDx_dot_mp(
+  int j, const MPDerivative &DgDx_dot_mp_j
+  )
+{
+  assert_supports(OUT_ARG_DgDx_dot_mp,j,DgDx_dot_mp_j);
+  DgDx_dot_mp_[j] = DgDx_dot_mp_j;
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::MPDerivative
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_dot_mp(int j) const
+{
+  assert_supports(OUT_ARG_DgDx_dot_mp,j);
+  return DgDx_dot_mp_[j];
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::DerivativeProperties
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_dot_mp_properties(int j) const
+{
+  assert_supports(OUT_ARG_DgDx_dot_mp,j);
+  return DgDx_dot_mp_properties_[j];
 }
 
 
@@ -820,6 +1142,34 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_properties(int j) const
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_DgDx_mp(
+  int j, const MPDerivative &DgDx_mp_j
+  )
+{
+  assert_supports(OUT_ARG_DgDx_mp,j,DgDx_mp_j);
+  DgDx_mp_[j] = DgDx_mp_j;
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::MPDerivative
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_mp(int j) const
+{
+  assert_supports(OUT_ARG_DgDx_mp,j);
+  return DgDx_mp_[j];
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::DerivativeProperties
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDx_mp_properties(int j) const
+{
+  assert_supports(OUT_ARG_DgDx_mp,j);
+  return DgDx_mp_properties_[j];
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::set_DgDp(
   int j, int l, const Derivative<Scalar> &DgDp_j_l
   )
@@ -844,6 +1194,34 @@ ModelEvaluatorBase::OutArgs<Scalar>::get_DgDp_properties(int j, int l) const
 {
   assert_supports(OUT_ARG_DgDp,j,l);
   return DgDp_properties_[ j*Np() + l ];
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::set_DgDp_mp(
+  int j, int l, const MPDerivative &DgDp_mp_j_l
+  )
+{
+  assert_supports(OUT_ARG_DgDp_mp,j,l,DgDp_mp_j_l);
+  DgDp_mp_[ j*Np() + l ] = DgDp_mp_j_l;
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::MPDerivative
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDp_mp(int j, int l) const
+{
+  assert_supports(OUT_ARG_DgDp_mp,j,l);
+  return DgDp_mp_[ j*Np() + l ];
+}
+
+
+template<class Scalar>
+ModelEvaluatorBase::DerivativeProperties
+ModelEvaluatorBase::OutArgs<Scalar>::get_DgDp_mp_properties(int j, int l) const
+{
+  assert_supports(OUT_ARG_DgDp_mp,j,l);
+  return DgDp_mp_properties_[ j*Np() + l ];
 }
 
 
@@ -879,31 +1257,50 @@ void ModelEvaluatorBase::OutArgs<Scalar>::setArgs(
   const int min_Np = TEUCHOS_MIN(this->Np(),inputOutArgs.Np());
   const int min_Ng = TEUCHOS_MIN(this->Ng(),inputOutArgs.Ng());
   // f
-  if ( inputOutArgs.supports(OUT_ARG_f) && inputOutArgs.get_f().get() ) {
+  if ( inputOutArgs.supports(OUT_ARG_f) && nonnull(inputOutArgs.get_f()) ) {
     if ( supports(OUT_ARG_f) || !ignoreUnsupported )
       set_f(inputOutArgs.get_f());
   }
+  if ( inputOutArgs.supports(OUT_ARG_f_mp) && nonnull(inputOutArgs.get_f_mp()) ) {
+    if ( supports(OUT_ARG_f_mp) || !ignoreUnsupported )
+      set_f_mp(inputOutArgs.get_f_mp());
+  }
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
   // f_poly
-  if ( inputOutArgs.supports(OUT_ARG_f_poly) && inputOutArgs.get_f_poly().get() ) {
+  if ( inputOutArgs.supports(OUT_ARG_f_poly) && nonnull(inputOutArgs.get_f_poly()) ) {
     if ( supports(OUT_ARG_f_poly) || !ignoreUnsupported )
       set_f_poly(inputOutArgs.get_f_poly());
   }
 #endif // HAVE_THYRA_ME_POLYNOMIAL
   // g(j)
   for ( int j = 0; j < min_Ng; ++j ) {
-    if ( inputOutArgs.get_g(j).get() )
+    if ( nonnull(inputOutArgs.get_g(j)) )
       set_g(j,inputOutArgs.get_g(j));
   }
+  for ( int j = 0; j < min_Ng; ++j ) {
+    if ( inputOutArgs.supports(OUT_ARG_g_mp,j) && nonnull(inputOutArgs.get_g_mp(j)) ) {
+    if ( supports(OUT_ARG_g_mp,j) || !ignoreUnsupported )
+      set_g_mp(j,inputOutArgs.get_g_mp(j));
+    }
+  }
   // W
-  if( inputOutArgs.supports(OUT_ARG_W) && inputOutArgs.get_W().get() ) {
+  if( inputOutArgs.supports(OUT_ARG_W) && nonnull(inputOutArgs.get_W()) ) {
     if ( supports(OUT_ARG_W) || !ignoreUnsupported )
       set_W(inputOutArgs.get_W());
   }
+  if( inputOutArgs.supports(OUT_ARG_W_mp) && nonnull(inputOutArgs.get_W_mp()) ) {
+    if ( supports(OUT_ARG_W_mp) || !ignoreUnsupported )
+      set_W_mp(inputOutArgs.get_W_mp());
+  }
   // W_op
-  if( inputOutArgs.supports(OUT_ARG_W_op) && inputOutArgs.get_W_op().get() ) {
+  if( inputOutArgs.supports(OUT_ARG_W_op) && nonnull(inputOutArgs.get_W_op()) ) {
     if ( supports(OUT_ARG_W_op) || !ignoreUnsupported )
       set_W_op(inputOutArgs.get_W_op());
+  }
+  // W_prec
+  if( inputOutArgs.supports(OUT_ARG_W_prec) && nonnull(inputOutArgs.get_W_prec()) ) {
+    if ( supports(OUT_ARG_W_prec) || !ignoreUnsupported )
+      set_W_prec(inputOutArgs.get_W_prec());
   }
   // DfDp(l)
   for ( int l = 0; l < min_Np; ++l ) {
@@ -913,6 +1310,15 @@ void ModelEvaluatorBase::OutArgs<Scalar>::setArgs(
     {
       if ( DfDp_l.isSupportedBy(supports(OUT_ARG_DfDp,l)) || !ignoreUnsupported )
         set_DfDp(l,DfDp_l);
+    }
+  }
+  for ( int l = 0; l < min_Np; ++l ) {
+    MEB::MPDerivative DfDp_mp_l;
+    if ( !inputOutArgs.supports(OUT_ARG_DfDp_mp,l).none()
+      && !(DfDp_mp_l=inputOutArgs.get_DfDp_mp(l)).isEmpty() )
+    {
+      if ( DfDp_mp_l.isSupportedBy(supports(OUT_ARG_DfDp_mp,l)) || !ignoreUnsupported )
+        set_DfDp_mp(l,DfDp_mp_l);
     }
   }
   // DgDx_dot(j) and DgDx(j)
@@ -933,6 +1339,23 @@ void ModelEvaluatorBase::OutArgs<Scalar>::setArgs(
         set_DgDx(j,DgDx_j);
     }
   }
+  for ( int j = 0; j < min_Ng; ++j ) {
+    // DgDx_dot(j)
+    MEB::MPDerivative DgDx_dot_mp_j;
+    if ( !inputOutArgs.supports(OUT_ARG_DgDx_dot_mp,j).none()
+      && !(DgDx_dot_mp_j=inputOutArgs.get_DgDx_dot_mp(j)).isEmpty() )
+    {
+      if( DgDx_dot_mp_j.isSupportedBy(supports(OUT_ARG_DgDx_dot_mp,j)) || !ignoreUnsupported )
+        set_DgDx_dot_mp(j,DgDx_dot_mp_j);
+    }
+    // DgDx(j)
+    MEB::MPDerivative DgDx_mp_j;
+    if ( !inputOutArgs.supports(OUT_ARG_DgDx_mp,j).none()
+      && !(DgDx_mp_j=inputOutArgs.get_DgDx_mp(j)).isEmpty() ) {
+      if ( DgDx_mp_j.isSupportedBy(supports(OUT_ARG_DgDx_mp,j)) || !ignoreUnsupported )
+        set_DgDx_mp(j,DgDx_mp_j);
+    }
+  }
   // DgDp(j,l)
   for ( int l = 0; l < min_Np; ++l ) {
     for ( int j = 0; j < min_Ng; ++j ) {
@@ -945,6 +1368,17 @@ void ModelEvaluatorBase::OutArgs<Scalar>::setArgs(
       }
     }
   }
+  for ( int l = 0; l < min_Np; ++l ) {
+    for ( int j = 0; j < min_Ng; ++j ) {
+      MEB::MPDerivative DgDp_mp_j_l;
+      if ( !inputOutArgs.supports(OUT_ARG_DgDp_mp,j,l).none() 
+        && !(DgDp_mp_j_l=inputOutArgs.get_DgDp_mp(j,l)).isEmpty() )
+      {
+        if ( DgDp_mp_j_l.isSupportedBy(supports(OUT_ARG_DgDp_mp,j,l)) || !ignoreUnsupported )
+          set_DgDp_mp(j,l,DgDp_mp_j_l);
+      }
+    }
+  }
   // ToDo: Add more args as needed!
 }
 
@@ -954,11 +1388,11 @@ void ModelEvaluatorBase::OutArgs<Scalar>::setFailed() const
 {
   typedef Teuchos::ScalarTraits<Scalar> ST;
   isFailed_ = true;
-  if( this->supports(OUT_ARG_f) && this->get_f().get() ) {
+  if( this->supports(OUT_ARG_f) && nonnull(this->get_f()) ) {
     assign(this->get_f().ptr(),ST::nan());
   }
   for( int j = 0; j < this->Ng(); ++j ) {
-    if(this->get_g(j).get())
+    if (nonnull(this->get_g(j)))
       assign(this->get_g(j).ptr(),ST::nan());
   }
   // ToDo: Set other objects to NaN as well!
@@ -1224,6 +1658,10 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_set_Np_Ng(int Np_in, int Ng_in)
     supports_DfDp_.resize(Np_in);
     DfDp_.resize(Np_in); std::fill_n(DfDp_.begin(),Np_in,Derivative<Scalar>());
     DfDp_properties_.resize(Np_in); std::fill_n(DfDp_properties_.begin(),Np_in,DerivativeProperties());
+
+    supports_DfDp_mp_.resize(Np_in);
+    DfDp_mp_.resize(Np_in); std::fill_n(DfDp_mp_.begin(),Np_in,MPDerivative());
+    DfDp_mp_properties_.resize(Np_in); std::fill_n(DfDp_mp_properties_.begin(),Np_in,DerivativeProperties());
   }
   if(Ng_in) {
     g_.resize(Ng_in); std::fill_n(g_.begin(),Ng_in,Teuchos::null);
@@ -1233,12 +1671,25 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_set_Np_Ng(int Np_in, int Ng_in)
     supports_DgDx_.resize(Ng_in);
     DgDx_.resize(Ng_in); std::fill_n(DgDx_.begin(),Ng_in,Derivative<Scalar>());
     DgDx_properties_.resize(Ng_in); std::fill_n(DgDx_properties_.begin(),Ng_in,DerivativeProperties());
+
+    g_mp_.resize(Ng_in); std::fill_n(g_mp_.begin(),Ng_in,Teuchos::null);
+    supports_g_mp_.resize(Ng_in);
+    supports_DgDx_dot_mp_.resize(Ng_in);
+    DgDx_dot_mp_.resize(Ng_in); std::fill_n(DgDx_dot_mp_.begin(),Ng_in,MPDerivative());
+    DgDx_dot_mp_properties_.resize(Ng_in); std::fill_n(DgDx_dot_mp_properties_.begin(),Ng_in,DerivativeProperties());
+    supports_DgDx_mp_.resize(Ng_in);
+    DgDx_mp_.resize(Ng_in); std::fill_n(DgDx_mp_.begin(),Ng_in,MPDerivative());
+    DgDx_mp_properties_.resize(Ng_in); std::fill_n(DgDx_mp_properties_.begin(),Ng_in,DerivativeProperties());
   }
   if(Np_in && Ng_in) {
     const int NpNg = Np_in*Ng_in;
     supports_DgDp_.resize(NpNg);
     DgDp_.resize(NpNg); std::fill_n(DgDp_.begin(),NpNg,Derivative<Scalar>());
     DgDp_properties_.resize(NpNg); std::fill_n(DgDp_properties_.begin(),NpNg,DerivativeProperties());
+
+    supports_DgDp_mp_.resize(NpNg);
+    DgDp_mp_.resize(NpNg); std::fill_n(DgDp_mp_.begin(),NpNg,MPDerivative());
+    DgDp_mp_properties_.resize(NpNg); std::fill_n(DgDp_mp_properties_.begin(),NpNg,DerivativeProperties());
   }
 }
 
@@ -1299,6 +1750,59 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
+  EOutArgs_g_mp arg, int j, bool supports_in
+  )
+{
+  //assert_supports(OUT_ARG_g_mp,j);
+  assert_j(j);
+  supports_g_mp_[j] = supports_in;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
+  EOutArgsDfDp_mp arg, int l, const DerivativeSupport& supports_in
+  )
+{
+  assert_supports(OUT_ARG_f_mp); //JF this is not in epetraext ME
+  assert_l(l);
+  supports_DfDp_mp_[l] = supports_in;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
+  EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& supports_in
+  )
+{
+  assert_j(j);
+  supports_DgDx_dot_mp_[j] = supports_in;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
+  EOutArgsDgDx_mp arg, int j, const DerivativeSupport& supports_in
+  )
+{
+  assert_j(j);
+  supports_DgDx_mp_[j] = supports_in;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
+  EOutArgsDgDp_mp arg, int j, int l, const DerivativeSupport& supports_in
+  )
+{
+  assert_j(j);
+  assert_l(l);
+  supports_DgDp_mp_[ j*Np()+ l ] = supports_in;
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::_set_W_properties( 
   const DerivativeProperties &properties
   )
@@ -1348,6 +1852,46 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_set_DgDp_properties(
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_set_DfDp_mp_properties(
+  int l, const DerivativeProperties &properties
+  )
+{
+  assert_supports(OUT_ARG_DfDp_mp,l);
+  DfDp_mp_properties_[l] = properties;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_set_DgDx_dot_mp_properties(
+  int j, const DerivativeProperties &properties
+  )
+{
+  assert_supports(OUT_ARG_DgDx_dot_mp,j);
+  DgDx_dot_mp_properties_[j] = properties;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_set_DgDx_mp_properties(
+  int j, const DerivativeProperties &properties
+  )
+{
+  assert_supports(OUT_ARG_DgDx_mp,j);
+  DgDx_mp_properties_[j] = properties;
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::_set_DgDp_mp_properties(
+  int j, int l, const DerivativeProperties &properties
+  )
+{
+  assert_supports(OUT_ARG_DgDp_mp,j,l);
+  DgDp_mp_properties_[ j*Np()+ l ] = properties;
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
   const OutArgs<Scalar>& inputOutArgs
   )
@@ -1365,23 +1909,47 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_setSupports(
       this->_set_DfDp_properties(l,inputOutArgs.get_DfDp_properties(l));
     }
   }
+  for( int l = 0; l < l_Np; ++l ) {
+    DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DfDp_mp,l);
+    if (!ds.none()) {
+      this->_setSupports(MEB::OUT_ARG_DfDp_mp,l,ds);
+      this->_set_DfDp_mp_properties(l,inputOutArgs.get_DfDp_mp_properties(l));
+    }
+  }
   for( int j = 0; j < l_Ng; ++j ) {
     DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDx_dot,j);
     this->_setSupports(MEB::OUT_ARG_DgDx_dot,j,ds);
     if(!ds.none()) this->_set_DgDx_dot_properties(j,inputOutArgs.get_DgDx_dot_properties(j));
   }
   for( int j = 0; j < l_Ng; ++j ) {
+    DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDx_dot_mp,j);
+    this->_setSupports(MEB::OUT_ARG_DgDx_dot_mp,j,ds);
+    if(!ds.none()) this->_set_DgDx_dot_mp_properties(j,inputOutArgs.get_DgDx_dot_mp_properties(j));
+  }
+  for( int j = 0; j < l_Ng; ++j ) {
     DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDx,j);
     this->_setSupports(MEB::OUT_ARG_DgDx,j,ds);
     if(!ds.none()) this->_set_DgDx_properties(j,inputOutArgs.get_DgDx_properties(j));
+  }
+  for( int j = 0; j < l_Ng; ++j ) {
+    DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDx_mp,j);
+    this->_setSupports(MEB::OUT_ARG_DgDx_mp,j,ds);
+    if(!ds.none()) this->_set_DgDx_mp_properties(j,inputOutArgs.get_DgDx_mp_properties(j));
   }
   for( int j = 0; j < l_Ng; ++j ) for( int l = 0; l < l_Np; ++l ) {
     DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDp,j,l);
     this->_setSupports(MEB::OUT_ARG_DgDp,j,l,ds);
     if(!ds.none()) this->_set_DgDp_properties(j,l,inputOutArgs.get_DgDp_properties(j,l));
   }
+  for( int j = 0; j < l_Ng; ++j ) for( int l = 0; l < l_Np; ++l ) {
+    DerivativeSupport ds = inputOutArgs.supports(MEB::OUT_ARG_DgDp_mp,j,l);
+    this->_setSupports(MEB::OUT_ARG_DgDp_mp,j,l,ds);
+    if(!ds.none()) this->_set_DgDp_mp_properties(j,l,inputOutArgs.get_DgDp_mp_properties(j,l));
+  }
   if(this->supports(OUT_ARG_W) || this->supports(OUT_ARG_W_op))
     this->_set_W_properties(inputOutArgs.get_W_properties());
+  if(this->supports(OUT_ARG_W_mp))
+    this->_set_W_properties(inputOutArgs.get_W_properties());  //JF should this be W_mp_properties?
 }
 
 
@@ -1396,6 +1964,14 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_setUnsupportsAndRelated(
       for( int j = 0; j < l_Ng; ++j ) {
         this->_setSupports(OUT_ARG_DgDx_dot,j,DerivativeSupport());
         this->_setSupports(OUT_ARG_DgDx,j,DerivativeSupport());
+      }
+      break;
+    }
+    case IN_ARG_x_mp: {
+      const int l_Ng = this->Ng();
+      for( int j = 0; j < l_Ng; ++j ) {
+        this->_setSupports(OUT_ARG_DgDx_dot_mp,j,DerivativeSupport());
+        this->_setSupports(OUT_ARG_DgDx_mp,j,DerivativeSupport());
       }
       break;
     }
@@ -1422,6 +1998,15 @@ void ModelEvaluatorBase::OutArgs<Scalar>::_setUnsupportsAndRelated(
       const int l_Np = this->Np();
       for( int l = 0; l < l_Np; ++l )
         this->_setSupports(OUT_ARG_DfDp,l,DerivativeSupport());
+      break;
+    }
+    case OUT_ARG_f_mp: {
+      this->_setSupports(OUT_ARG_W_mp,false);
+      this->_setSupports(OUT_ARG_W_op,false);
+      this->_setSupports(OUT_ARG_f_poly,false);
+      const int l_Np = this->Np();
+      for( int l = 0; l < l_Np; ++l )
+        this->_setSupports(OUT_ARG_DfDp_mp,l,DerivativeSupport());
       break;
     }
     default:
@@ -1519,6 +2104,90 @@ void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
+  EOutArgs_g_mp arg, int j
+  ) const
+{
+  assert_j(j);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !supports_g_mp_[j], std::logic_error,
+    "Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_g_mp,j):\n\n"
+    "model = \'"<<modelEvalDescription_<<"\':\n\n"
+    "Error, The argument g_mp("<<j<<") \n"
+    "is not supported!\n\n"
+    );
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
+  EOutArgsDfDp_mp arg, int l, const MPDerivative &deriv
+  ) const
+{
+  const DerivativeSupport derivSupport = this->supports(arg,l);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !deriv.isSupportedBy(derivSupport), std::logic_error,
+    "Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DfDp_mp,l):\n\n"
+    "model = \'"<<modelEvalDescription_<<"\':\n\n"
+    "Error, The argument DfDp_mp("<<l<<") = " << deriv.description() << "\n"
+    "is not supported!\n\n"
+    "The supported types include " << derivSupport.description() << "!"
+    );
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
+  EOutArgsDgDx_dot_mp arg, int j, const MPDerivative &deriv
+  ) const
+{
+  const DerivativeSupport derivSupport = this->supports(arg,j);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !deriv.isSupportedBy(derivSupport), std::logic_error,
+    "Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DgDx_dot_mp,j):\n\n"
+    "model = \'"<<modelEvalDescription_<<"\':\n\n"
+    "Error, The argument DgDx_dot_mp("<<j<<") = " << deriv.description() << "\n"
+    "is not supported!\n\n"
+    "The supported types include " << derivSupport.description() << "!"
+    );
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
+  EOutArgsDgDx_mp arg, int j, const MPDerivative &deriv
+  ) const
+{
+  const DerivativeSupport derivSupport = this->supports(arg,j);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !deriv.isSupportedBy(derivSupport), std::logic_error,
+    "Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DgDx_mp,j):\n\n"
+    "model = \'"<<modelEvalDescription_<<"\':\n\n"
+    "Error, The argument DgDx_mp("<<j<<") = " << deriv.description() << "\n"
+    "is not supported!\n\n"
+    "The supported types include " << derivSupport.description() << "!"
+    );
+}
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(
+  EOutArgsDgDp_mp arg, int j, int l, const MPDerivative &deriv
+  ) const
+{
+  const DerivativeSupport derivSupport = this->supports(arg,j,l);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !deriv.isSupportedBy(derivSupport), std::logic_error,
+    "Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DgDp_mp,j,l):\n\n"
+    "model = \'"<<modelEvalDescription_<<"\':\n\n"
+    "Error, The argument DgDp_mp("<<j<<","<<l<<") = " << deriv.description() << "\n"
+    "is not supported!\n\n"
+    "The supported types include " << derivSupport.description() << "!"
+    );
+}
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgs<Scalar>::assert_l(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -1576,6 +2245,11 @@ void ModelEvaluatorBase::InArgsSetup<Scalar>::set_Np(int Np_in)
 template<class Scalar>
 void ModelEvaluatorBase::InArgsSetup<Scalar>::setSupports( EInArgsMembers arg, bool supports_in )
 { this->_setSupports(arg,supports_in); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::InArgsSetup<Scalar>::setSupports( EInArgs_p_mp arg, int l, bool supports_in )
+{ this->_setSupports(arg,l,supports_in); }
 
 
 template<class Scalar>
@@ -1662,6 +2336,41 @@ void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports(
 
 
 template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports(
+  EOutArgs_g_mp arg, int j, bool supports_in
+  )
+{ this->_setSupports(arg,j,supports_in); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports(
+  EOutArgsDfDp_mp arg, int l, const DerivativeSupport& supports_in
+  )
+{ this->_setSupports(arg,l,supports_in); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports( 
+  EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& supports_in
+  )
+{ this->_setSupports(arg,j,supports_in); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports(
+  EOutArgsDgDx_mp arg, int j, const DerivativeSupport& supports_in
+  )
+{ this->_setSupports(arg,j,supports_in); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::setSupports(
+  EOutArgsDgDp_mp arg, int j, int l, const DerivativeSupport& supports_in
+  )
+{ this->_setSupports(arg,j,l,supports_in); }
+
+
+template<class Scalar>
 void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_W_properties(
   const DerivativeProperties &properties
   )
@@ -1694,6 +2403,34 @@ void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_DgDp_properties(
   int j, int l, const DerivativeProperties &properties
   )
 { this->_set_DgDp_properties(j,l,properties); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_DfDp_mp_properties(
+  int l, const DerivativeProperties &properties
+  )
+{ this->_set_DfDp_mp_properties(l,properties); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_DgDx_dot_mp_properties(
+  int j, const DerivativeProperties &properties
+  )
+{ this->_set_DgDx_dot_mp_properties(j,properties); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_DgDx_mp_properties(
+  int j, const DerivativeProperties &properties
+  )
+{ this->_set_DgDx_mp_properties(j,properties); }
+
+
+template<class Scalar>
+void ModelEvaluatorBase::OutArgsSetup<Scalar>::set_DgDp_mp_properties(
+  int j, int l, const DerivativeProperties &properties
+  )
+{ this->_set_DgDp_mp_properties(j,l,properties); }
 
 
 template<class Scalar>

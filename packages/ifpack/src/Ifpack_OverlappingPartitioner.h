@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -42,14 +55,14 @@ class Epetra_Import;
 /* \brief Ifpack_OverlappingPartitioner: A class to create overlapping
     partitions of a local graph.
 
-Class Ifpack_OverlappingPartitioner enables the extension of 
+Class Ifpack_OverlappingPartitioner enables the extension of
 non-overlapping partitions to an arbitrary value of overlap.
 Note that overlap refers to the overlap among \e local parts,
 and not the overlap among the processes.
 
 Supported parameters are:
 - \c "partitioner: local parts": the required number of parts;
-- \c "partitioner: overlap": the required amount of overlap is set in 
+- \c "partitioner: overlap": the required amount of overlap is set in
   parameter. Default = 0 (integer).
 - \c "partitioner: verbose": if \c true, information are reported on
   cout. Nothing is reported otherwise.
@@ -64,7 +77,7 @@ that has been filtered using Ifpack_SingletonFilter.
 \author Marzio Sala, SNL 9214.
 
 \date Last update: Oct-04.
-*/  
+*/
 class Ifpack_OverlappingPartitioner : public Ifpack_Partitioner {
 
 public:
@@ -76,20 +89,20 @@ public:
   virtual ~Ifpack_OverlappingPartitioner();
 
   //! Returns the number of computed local partitions.
-  int NumLocalParts() const 
+  int NumLocalParts() const
   {
     return(NumLocalParts_);
   }
 
   //! Returns the overlapping level.
-  int OverlappingLevel() const 
+  int OverlappingLevel() const
   {
     return(OverlappingLevel_);
   }
 
   //! Returns the local non-overlapping partition ID of the specified row.
   /*! Returns the non-overlapping partition ID of the specified row.
-   \param 
+   \param
    MyRow - (In) local row numbe
 
    \return
@@ -120,7 +133,7 @@ public:
   {
     return(Parts_[Part].size());
   }
-    
+
   int RowsInPart(const int Part, int* List) const
   {
     for (int i = 0 ; i < NumRowsInPart(Part) ; ++i)
@@ -128,7 +141,7 @@ public:
 
     return(0);
   }
-  
+
   const int* NonOverlappingPartition() const
   {
     return(&Partition_[0]);
@@ -157,7 +170,7 @@ public:
 
   //! Computes the partitions. Returns 0 if successful.
   virtual int ComputeOverlappingPartitions();
-  
+
   //! Returns true if partitions have been computed successfully.
   bool IsComputed()
   {
@@ -165,16 +178,19 @@ public:
   }
 
   //! Prints basic information on iostream. This function is used by operator<<.
-  virtual ostream& Print(std::ostream& os) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 
 protected:
-   
+
   //! Returns the number of local rows.
   int NumMyRows() const;
   //! Returns the number of local nonzero elements.
   int NumMyNonzeros() const;
-  //! Returns the number of local rows.
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  //! Returns the number of global rows.
   int NumGlobalRows() const;
+#endif
+  long long NumGlobalRows64() const;
   //! Returns the max number of local entries in a row.
   int MaxNumEntries() const;
   //! Returns the communicator object of Graph.
@@ -182,8 +198,8 @@ protected:
   //! Number of local subgraphs
   int NumLocalParts_;
   //! Partition_[i] contains the ID of non-overlapping part it belongs to
-  std::vector<int> Partition_; 
-  //! Parts_[i][j] is the ID of the j-th row contained in the (overlapping) 
+  std::vector<int> Partition_;
+  //! Parts_[i][j] is the ID of the j-th row contained in the (overlapping)
   // partition i
   std::vector<std::vector<int> > Parts_;
   //! Reference to the graph to be partitioned

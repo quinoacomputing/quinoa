@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *  
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #ifndef _DR_CONST_H
 #define _DR_CONST_H
@@ -84,7 +117,7 @@ extern "C" {
 #define ZOLTAN_OVIS
 #endif
 
-#ifdef HAVE_GZIP
+#ifdef ZHAVE_GZIP
 #define ZOLTAN_GZIP
 #endif
 
@@ -98,6 +131,14 @@ extern "C" {
 
 #ifdef HAVE_NEMESIS_EXODUS
 #define ZOLTAN_NEMESIS
+#endif
+
+#ifdef HAVE_PURIFY
+#define ZOLTAN_PURIFY
+#define strcmp Zoltan_strcmp
+#define strncmp Zoltan_strncmp
+#define strcasecmp Zoltan_strcasecmp
+#define strncasecmp Zoltan_strncasecmp
 #endif
 
 #endif /* TRILINOS_NO_CONFIG_H */
@@ -122,7 +163,7 @@ extern "C" {
 #define MAX_CPU_WGTS	10 /* max number of cpu weights */
 
 enum LISTS {  /* NULL lists to pass to Zoltan_Migrate */
-  NONE = 0,
+  NO_NULL_LISTS = 0,
   IMPORT_LISTS,
   EXPORT_LISTS
 };
@@ -130,7 +171,7 @@ enum LISTS {  /* NULL lists to pass to Zoltan_Migrate */
 enum DATA_TYPE {
   MESH = 0,
   ZOLTAN_GRAPH,
-  HYPERGRAPH
+  ZOLTAN_HYPERGRAPH
 };
 
 enum PARTITIONING_TYPE {
@@ -178,6 +219,14 @@ struct Element_Description
                            sides with no neighboring element (e.g., along mesh
                            boundaries).  Chaco doesn't have "sides," so the 
                            ordering is irrelevent for Chaco input. */
+                        /* KDD 1/22/15:  Using ZOLTAN_ID_TYPE == unsigned int
+                           breaks the Exodus interface which uses -1 to indicate
+                           sides without neighbors.  The solution is to NOT use
+                           ZOLTAN_ID_TYPE for this field (and others); instead,
+                           type int should be used.  In general, we wouldn't 
+                           expect an application to use ZOLTAN_ID_TYPE.
+                           However, this bug is not important enough to fix at
+                           this time.  See bug 6278 and comment in dr_loadbal.c. */
   int     *adj_proc;	/* list of processors for adjacent elements */
   int     *adj_blank;   /* NULL if not blanking, else 1/0 for blanked/not */
   float   *edge_wgt;	/* edge weights for adjacent elements */

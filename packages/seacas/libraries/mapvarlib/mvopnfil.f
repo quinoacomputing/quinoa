@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,7 @@ C     Called by MAPVAR
 C
 C     ******************************************************************
 C
-      CHARACTER*2048 fntpo, fntp2, fntp3, fntp4, filnam, option, errmsg
-      character*1   cdum
+      CHARACTER*2048 filnam, option, errmsg
 C
       include 'exodusII.inc'
       include 'ex2tp.blk'
@@ -159,8 +158,8 @@ C
      &' ntp3ex = ',i5)
 
 C ... Find the largest name size...
-      call exinq(ntp2ex, EXDBMXUSNM, namlen2, rdum, cdum, ierr)
-      call exinq(ntp3ex, EXDBMXUSNM, namlen3, rdum, cdum, ierr)
+      namlen2 = exinqi(ntp2ex, EXDBMXUSNM)
+      namlen3 = exinqi(ntp3ex, EXDBMXUSNM)
 
       namlen = max(namlen2, namlen3)
 
@@ -184,6 +183,14 @@ C     on this machine (as returned by previous call to exopen)
      &' error number ',i5,' tape number ',i5,' filename ',a20,/,
      &' ntp4ex = ',i5)
 C
+      write (*,*) 'MESH-A (MESH & SOLUTION):     ',
+     *  fntp2(:lenstr(fntp2))
+      write (*,*) 'MESH-B (MESH):                ',
+     *  fntp3(:lenstr(fntp3))
+      write (*,*) 'MESH-C (MESH & INTERPOLATED): ',
+     *  fntp4(:lenstr(fntp4))
+      write (*,*) 'Text Output:                  ',
+     *  fntpo(:lenstr(fntpo))
       call exmxnm(ntp2ex, namlen, ierr)
       call exmxnm(ntp3ex, namlen, ierr)
       call exmxnm(ntp4ex, namlen, ierr)

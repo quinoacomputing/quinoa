@@ -3,13 +3,13 @@
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -85,7 +85,7 @@ namespace LOCA {
      *   </ul>
      * </ul>
      * User-defined strategies are defined by supplying the parameter
-     * "User-Defined Save Eigen Data Name" which is the string name of the
+     * "User-Defined Save Eigen Data Name" which is the std::string name of the
      * strategy, and then a parameter with this name that is of the type
      * Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>.  This
      * allows the user to supply a user-defined strategy without providing
@@ -106,16 +106,16 @@ namespace LOCA {
 
       //! Create strategy to save eigenvectors/values
       /*!
-       * \param topParams [in] Parsed top-level parameter list.  
+       * \param topParams [in] Parsed top-level parameter list.
        * \param eigenParams [in] %Eigensolver parameters as described above
        */
       Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
       create(
-	const Teuchos::RCP<LOCA::Parameter::SublistParser>& topParams,
-	const Teuchos::RCP<Teuchos::ParameterList>& eigenParams);
+    const Teuchos::RCP<LOCA::Parameter::SublistParser>& topParams,
+    const Teuchos::RCP<Teuchos::ParameterList>& eigenParams);
 
       //! Return strategy name given by \c eigenParams
-      const string& strategyName(Teuchos::ParameterList& eigenParams) const;
+      const std::string& strategyName(Teuchos::ParameterList& eigenParams) const;
 
     private:
 

@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -25,7 +24,7 @@ SET(HEADERS ${HEADERS}
   )
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-
+ 
 SET(HEADERS ${HEADERS}
   Ifpack_ConfigDefs.h
   Ifpack_Version.h
@@ -37,11 +36,9 @@ SET(HEADERS ${HEADERS}
   Ifpack_ILUT.h
   Ifpack_OverlapGraph.h
   Ifpack_ScalingType.h
-  Ifpack_CrsIct.h
   Ifpack_ICT.h
   Ifpack_IC.h
   Ifpack_IC_Utils.h
-  icrout_cholesky_mex.h
   ifp_parameters.h	
   Ifpack_Preconditioner.h
   Ifpack_CondestType.h
@@ -53,10 +50,12 @@ SET(HEADERS ${HEADERS}
   Ifpack_Container.h
   Ifpack_SparseContainer.h
   Ifpack_DenseContainer.h
+  Ifpack_TriDiContainer.h
+  Ifpack_SerialTriDiMatrix.h
+  Ifpack_SerialTriDiSolver.h
   Ifpack_AdditiveSchwarz.h
   Ifpack_LocalFilter.h
   Ifpack_NodeFilter.h
-  Ifpack_SubdomainFilter.h
   Ifpack_DropFilter.h
   Ifpack_SparsityFilter.h
   Ifpack_ReorderFilter.h
@@ -67,6 +66,7 @@ SET(HEADERS ${HEADERS}
   Ifpack_Graph_Epetra_CrsGraph.h
   Ifpack_Partitioner.h
   Ifpack_OverlappingPartitioner.h
+  Ifpack_LinePartitioner.h
   Ifpack_LinearPartitioner.h
   Ifpack_GreedyPartitioner.h
   Ifpack_METISPartitioner.h
@@ -78,6 +78,8 @@ SET(HEADERS ${HEADERS}
   Ifpack_RCMReordering.h
   Ifpack_SPARSKIT.h
   Ifpack_Chebyshev.h
+  Ifpack_Polynomial.h
+  Ifpack_Krylov.h
   Ifpack_METISReordering.h
   Ifpack_OverlappingRowMatrix.h
   Ifpack_ValidParameters.h
@@ -96,33 +98,36 @@ SET(SOURCES ${SOURCES}
   Ifpack_IKLU.cpp
   Ifpack_IKLU_Utils.cpp
   Ifpack_ILUT.cpp
-  Ifpack_CrsIct.cpp
   Ifpack_ICT.cpp
   Ifpack_IC.cpp
   Ifpack_IC_Utils.cpp
   Ifpack_OverlapGraph.cpp
-  icrout_cholesky_mex.c
-  icrout_quicksort.c
+  Ifpack_MultiListSort.c
   ifp_parameters.cpp
   Ifpack_DiagPreconditioner.cpp
   Ifpack_PointRelaxation.cpp
   Ifpack_Condest.cpp
   Ifpack.cpp
   Ifpack_DenseContainer.cpp
+  Ifpack_TriDiContainer.cpp
+  Ifpack_SerialTriDiMatrix.cpp
+  Ifpack_SerialTriDiSolver.cpp
   Ifpack_LocalFilter.cpp
   Ifpack_NodeFilter.cpp
-  Ifpack_SubdomainFilter.cpp
+  Ifpack_SingletonFilter.cpp
   Ifpack_DropFilter.cpp
   Ifpack_SparsityFilter.cpp
   Ifpack_ReorderFilter.cpp
-  Ifpack_SingletonFilter.cpp
   Ifpack_DiagonalFilter.cpp
   Ifpack_Graph_Epetra_RowMatrix.cpp
   Ifpack_Graph_Epetra_CrsGraph.cpp
   Ifpack_Utils.cpp
   Ifpack_SPARSKIT.cpp
   Ifpack_Chebyshev.cpp
+  Ifpack_Polynomial.cpp
+  Ifpack_Krylov.cpp
   Ifpack_OverlappingPartitioner.cpp
+  Ifpack_LinePartitioner.cpp
   Ifpack_LinearPartitioner.cpp
   Ifpack_GreedyPartitioner.cpp
   Ifpack_METISPartitioner.cpp
@@ -139,6 +144,26 @@ SET(SOURCES ${SOURCES}
   Ifpack_IHSS.cpp
   Ifpack_SORa.cpp
   )
+
+# Ifpack support for MPI parallel subdomain solvers
+IF (${PACKAGE_NAME}_ENABLE_PARALLEL_SUBDOMAIN_SOLVERS)
+  SET(HEADERS ${HEADERS}
+    Ifpack_SubdomainFilter.h
+    )
+  SET(SOURCES ${SOURCES}
+    Ifpack_SubdomainFilter.cpp
+    )
+ENDIF()
+
+# Ifpack_DynamicFactory support
+IF (${PACKAGE_NAME}_ENABLE_DYNAMIC_FACTORY)
+  SET(HEADERS ${HEADERS}
+    Ifpack_DynamicFactory.h
+    )
+  SET(SOURCES ${SOURCES}
+    Ifpack_DynamicFactory.cpp
+    )
+ENDIF()
 
 IF (${PACKAGE_NAME}_ENABLE_Amesos)
 
@@ -228,6 +253,37 @@ IF (${PACKAGE_NAME}_ENABLE_Euclid)
   )
 
 ENDIF()
+
+IF (${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/supportgraph)
+  SET (HEADERS
+    ${HEADERS} 
+    supportgraph/Ifpack_SupportGraph.h
+  )
+ENDIF()
+
+# Experimental code:
+# See the comments on "experimental" code in ifpack/CMakeLists.txt.  In
+# particular, experimental headers and source files are not included
+# in the build or install unless the Ifpack_ENABLE_Experimental CMake
+# option was set at configure time.
+#
+
+APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_HEADERS)
+APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES
+
+)
+
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Experimental)
+IF(${PACKAGE_NAME}_ENABLE_Experimental)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/supportgraph)
+  #
+  # Add experimental files to HEADERS and SOURCES.
+  # 
+  APPEND_SET(HEADERS ${${PACKAGE_NAME}_EXPERIMENTAL_HEADERS})
+  APPEND_SET(SOURCES ${${PACKAGE_NAME}_EXPERIMENTAL_SOURCES})
+
+ENDIF() # ${PACKAGE_NAME}_ENABLE_Experimental
 
 #
 # C) Define the targets for package's library(s)

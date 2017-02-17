@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //    Thyra: Interfaces and Support for Abstract Numerical Algorithms
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov) 
-// 
+// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -56,7 +56,7 @@ namespace Thyra {
 template<class Scalar>
 RCP<DefaultSpmdVectorSpace<Scalar> >
 DefaultSpmdVectorSpace<Scalar>::create()
-{ 
+{
   const RCP<DefaultSpmdVectorSpace<Scalar> > vs(new DefaultSpmdVectorSpace<Scalar>);
   vs->weakSelfPtr_ = vs.create_weak();
   return vs;
@@ -74,8 +74,9 @@ void DefaultSpmdVectorSpace<Scalar>::initialize(
 
 template<class Scalar>
 void DefaultSpmdVectorSpace<Scalar>::initialize(
-  const RCP<const Teuchos::Comm<Ordinal> > &comm
-  ,const Ordinal localSubDim_in, const Ordinal globalDim
+  const RCP<const Teuchos::Comm<Ordinal> > &comm,
+  const Ordinal localSubDim_in, const Ordinal globalDim,
+  const bool isLocallyReplicated_in
   )
 {
 #ifdef TEUCHOS_DEBUG
@@ -83,15 +84,15 @@ void DefaultSpmdVectorSpace<Scalar>::initialize(
 #endif
   comm_ = comm;
   localSubDim_ = localSubDim_in;
-  if (!is_null(comm)) {
-    numProc_ = size(*comm);
-    procRank_ = rank(*comm);
+  if (! comm.is_null ()) {
+    numProc_ = comm->getSize ();
+    procRank_ = comm->getRank ();
   }
   else {
     numProc_ = 1;
     procRank_ = 0;
   }
-  this->updateState(globalDim);
+  this->updateState(globalDim, isLocallyReplicated_in);
 }
 
 
@@ -235,7 +236,8 @@ template<class Scalar>
 RCP< const VectorSpaceBase<Scalar> >
 DefaultSpmdVectorSpace<Scalar>::clone() const
 {
-  return defaultSpmdVectorSpace<Scalar>(comm_,localSubDim_,this->dim());
+  return defaultSpmdVectorSpace<Scalar>(comm_, localSubDim_, this->dim(),
+    this->isLocallyReplicated());
 }
 
 
@@ -266,30 +268,6 @@ DefaultSpmdVectorSpace<Scalar>::DefaultSpmdVectorSpace()
 {
   // The base classes should automatically default initialize to a safe
   // uninitialized state.
-}
-
-
-// Deprecated
-
-template<class Scalar>
-DefaultSpmdVectorSpace<Scalar>::DefaultSpmdVectorSpace(
-  const Ordinal dim_in
-  )
-  :localSubDim_(-1), numProc_(-1), procRank_(-1)
-{
-  initialize(dim_in);
-  weakSelfPtr_ = Teuchos::rcpFromRef(*this);
-}
-
-template<class Scalar>
-DefaultSpmdVectorSpace<Scalar>::DefaultSpmdVectorSpace(
-  const RCP<const Teuchos::Comm<Ordinal> > &comm,
-  const Ordinal my_localSubDim, const Ordinal globalDim
-  )
-  :localSubDim_(-1), numProc_(-1), procRank_(-1)
-{
-  initialize(comm, my_localSubDim, globalDim);
-  weakSelfPtr_ = Teuchos::rcpFromRef(*this);
 }
 
 

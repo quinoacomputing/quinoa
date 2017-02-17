@@ -314,12 +314,22 @@ int Aztec_LinSysCore::parameters(int numParams, const char*const * params) {
    char* dbgFileName = NULL;
    char* dbgPath = NULL;
 
+   bool output_level_on = false;
+   param = snl_fei::getParamValue("FEI_OUTPUT_LEVEL",numParams,params);
+   if (param != NULL) {
+     std::string str(param);
+     if (str == "ALL" || str == "MATRIX_FILES" || str == "FULL_LOGS") {
+       output_level_on = true;
+     }
+   }
+
    param = snl_fei::getParamValue("debugOutput",numParams,params);
-   if (param != NULL){
+   if (param != NULL || output_level_on){
       dbgOutputParam = true;
       dbgFileName = new char[128];
-      dbgPath = new char[strlen(param)+1];
-      strcpy(dbgPath, param);
+      dbgPath = param==NULL ? new char[3] : new char[strlen(param)+1];
+      if (param == NULL) sprintf(dbgPath, "./");
+      else strcpy(dbgPath, param);
 
       sprintf(dbgFileName, "AZLSC.%d.%d.%d",
               numProcs_, thisProc_, azlsc_debugFileCounter_);
@@ -642,7 +652,6 @@ int Aztec_LinSysCore::resetMatrixAndVector(double s)
          b_[i]->put(s);
       }
    }
-
    if (b_ptr_ != NULL) b_ptr_->put(s);
 
    if (bc_ != NULL) bc_->put(s);
@@ -1175,7 +1184,6 @@ int Aztec_LinSysCore::matrixLoadComplete() {
       *x_ = *tmp;
       delete tmp;
    }
-
    //if we've put boundary-condition data in tmp_bc_ then we better move it
    //into bc_ now.
    if (tmp_bc_ != NULL) {
@@ -1405,11 +1413,9 @@ int Aztec_LinSysCore::enforceEssentialBC(int* globalEqn,
 
       if (rhsLoaded_) {
         (*b_ptr_)[row] -= value;
-        (*bc_)[row] -= value;
       }
       else {
         tmp_b_[currentRHS_][row-localOffset_] -= value;
-        tmp_bc_[row-localOffset_] -= value;
       }
 
       if (debugOutput_) {
@@ -1588,12 +1594,9 @@ int Aztec_LinSysCore::blkRowEssBCMod(int blkEqn, int blkOffset, double* val,
                      if (rhsLoaded_) {
                         (*b_ptr_)[pointRow+row] -= val[thisOffset+row]
                                                 * bc_term;
-                        (*bc_)[pointRow+row] -= val[thisOffset+row]
-                                                * bc_term;
                      }
                      else {
                         tmp_b_[currentRHS_][pointRow+row-localOffset_] -= val[thisOffset+row]*bc_term;
-                        tmp_bc_[pointRow+row-localOffset_] -= val[thisOffset+row]*bc_term;
                      }
                      val[thisOffset+row] = 0.0;
                   }
@@ -1657,12 +1660,9 @@ int Aztec_LinSysCore::blkColEssBCMod(int blkRow, int blkEqn, int blkOffset,
          for(int row=0; row<thisRowSize; row++) {
             if (rhsLoaded_) {
                (*b_ptr_)[thisPtRow+row] -= val[thisOffset+row] * bc_term;
-               (*bc_)[thisPtRow+row] -= val[thisOffset+row] * bc_term;
             }
             else {
                tmp_b_[currentRHS_][thisPtRow+row-localOffset_] -=
-                                         val[thisOffset+row]*bc_term;
-               tmp_bc_[thisPtRow+row-localOffset_] -=
                                          val[thisOffset+row]*bc_term;
             }
             val[thisOffset+row] = 0.0;
@@ -1817,12 +1817,10 @@ int Aztec_LinSysCore::enforceRemoteEssBCs(int numEqns, int* globalEqns,
            if (rhsLoaded_) {
              old_rhs_val = (*b_ptr_)[globalEqn_i];
              (*b_ptr_)[globalEqn_i] -= value;
-             (*bc_)[globalEqn_i] -= value;
            }
            else {
              old_rhs_val = tmp_b_[currentRHS_][globalEqn_i -localOffset_];
              tmp_b_[currentRHS_][globalEqn_i -localOffset_] -= value;
-             tmp_bc_[globalEqn_i -localOffset_] -= value;
            }
 
            if (debugOutput_) {
@@ -2602,10 +2600,6 @@ int Aztec_LinSysCore::writeVec(Aztec_LSVector* v, const char* name)
 //==============================================================================
 int Aztec_LinSysCore::modifyRHSforBCs()
 {
-  for(int i=0; i<numLocalEqns_; i++) {
-    (*b_ptr_)[i+localOffset_] += tmp_bc_[i];
-  }
-
   if (explicitDirichletBCs_) {
     for(int j=0; j<numEssBCs_; j++) {
       int index = essBCindices_[j];
@@ -2770,10 +2764,12 @@ int Aztec_LinSysCore::launchSolver(int& solveStatus, int& iterations) {
    delete xtmp;
 
    if (explicitDirichletBCs_) explicitlySetDirichletBCs();
+   else {
+   }
 
    if (debugOutput_) {
       FEI_OSTRINGSTREAM osstr;
-      osstr << name_ << "_Aztec.slv"<<counter;
+      osstr << name_ << "_Aztec.np"<<numProcs_<<".slv"<<counter;
       std::string str = osstr.str();
 
       FEI_OSTRINGSTREAM x_osstr;
@@ -2782,6 +2778,19 @@ int Aztec_LinSysCore::launchSolver(int& solveStatus, int& iterations) {
 
       writeVec(x_, x_str.c_str());
    }
+  for(int j=0; j<numEssBCs_; j++) {
+    int index = essBCindices_[j];
+    if (rhsLoaded_) {
+      (*bc_)[index] = 0.0;
+    }
+    else {
+      tmp_bc_[index-localOffset_] = 0.0;
+    }
+  }
+  delete [] essBCindices_;
+  essBCindices_ = NULL;
+  numEssBCs_ = 0;
+
    return(0);
 }
 
@@ -3046,14 +3055,14 @@ void Aztec_LinSysCore::setDebugOutput(const char* path, const char* name){
    if (path != debugPath_) {
       delete [] debugPath_;
       debugPath_ = new char[pathLength + 1];
-      sprintf(debugPath_, path);
+      sprintf(debugPath_, "%s", path);
    }
 
    int nameLength = strlen(name);
    if (name != debugFileName_) {
       delete [] debugFileName_;
       debugFileName_ = new char[nameLength + 1];
-      sprintf(debugFileName_,name);
+      sprintf(debugFileName_,"%s",name);
    }
 
    char* dbFileName = new char[pathLength + nameLength + 3];

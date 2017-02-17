@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include <stdlib.h>
@@ -19,7 +19,7 @@
 /* the matrix ml_handle->Pmat[level2].                                  */
 /* -------------------------------------------------------------------- */
 
-int oldML_Mdfy_Prolongator_DirBdry(ML *ml_handle, int level2, 
+int oldML_Mdfy_Prolongator_DirBdry(ML *ml_handle, int level2,
                                    double *boundary, double *cboundary)
 {
    int *cols, *row_ptr, i, j;
@@ -248,19 +248,19 @@ int ML_Gen_Prolongator_Getrow(ML *ml_handle, int level2, int level, int isize,
 printf("we've changed the data pointer ? ....\n");
 */
    if (vec_comm != NULL) {
-      ML_CommInfoOP_Generate(&(ml_handle->Pmat[level2].getrow->pre_comm), 
-			  vec_comm, data, ml_handle->comm, 
-			  ml_handle->Pmat[level2].invec_leng, Nghost);
+      ML_CommInfoOP_Generate(&(ml_handle->Pmat[level2].getrow->pre_comm),
+                          vec_comm, data, ml_handle->comm,
+                          ml_handle->Pmat[level2].invec_leng, Nghost);
    }
    else ml_handle->Pmat[level2].getrow->pre_comm = NULL;
 
-   ML_Operator_Set_Getrow(&(ml_handle->Pmat[level2]), 
-			  ml_handle->Pmat[level2].outvec_leng, CSR_getrow);
+   ML_Operator_Set_Getrow(&(ml_handle->Pmat[level2]),
+                          ml_handle->Pmat[level2].outvec_leng, CSR_getrow);
 
 /*
    ML_CommInfoOP_Generate(&(ml_handle->Pmat[level2].getrow->pre_comm),
-                   vec_comm, data, ml_handle->comm, 
-		   ml_handle->Pmat[level2].invec_leng, Nghost);
+                   vec_comm, data, ml_handle->comm,
+                   ml_handle->Pmat[level2].invec_leng, Nghost);
 */
 
    return(1);
@@ -324,12 +324,12 @@ int ML_Gen_Restrictor_TransP(ML *ml_handle, int level, int level2,
    remap_leng = osize + Nrcv + Nsend;
    remap = (int *) ML_allocate( remap_leng*sizeof(int));
    for (i = 0; i < osize; i++) remap[i] = i;
-   for (i = osize; i < osize+Nrcv+Nsend; i++) 
+   for (i = osize; i < osize+Nrcv+Nsend; i++)
       remap[i] = -1;
- 
+
    c2_info     = &(Rmat->getrow->post_comm);
    ML_CommInfoOP_Set_neighbors(c2_info, Nneighbors,
- 			      neigh_list,ML_ADD,remap,remap_leng);
+                              neigh_list,ML_ADD,remap,remap_leng);
    ML_free(remap);
    for (i = 0; i < Nneighbors; i++) {
       Nsend      = ML_CommInfoOP_Get_Nsendlist(c_info, neigh_list[i]);
@@ -344,9 +344,9 @@ int ML_Gen_Restrictor_TransP(ML *ml_handle, int level, int level2,
                Nghost2 = rcv_list[j] - osize + 1;
          }
       }
- 
+
       ML_CommInfoOP_Set_exch_info(*c2_info, neigh_list[i], Nsend, send_list,
- 				 Nrcv,rcv_list);
+                                 Nrcv,rcv_list);
       if (send_list != NULL) ML_free(send_list);
       if ( rcv_list != NULL) ML_free( rcv_list);
    }
@@ -359,7 +359,7 @@ int ML_Gen_Restrictor_TransP(ML *ml_handle, int level, int level2,
 
    /* count the total number of nonzeros and compute */
    /* the length of each row in the transpose.       */
- 
+
    for (i = 0; i < Nghost+osize; i++) row_ptr[i] = 0;
 
    N_nzs = 0;
@@ -373,7 +373,7 @@ int ML_Gen_Restrictor_TransP(ML *ml_handle, int level, int level2,
 
    cols    = (int    *) ML_allocate(sizeof(int   )*(N_nzs+1));
    vals    = (double *) ML_allocate(sizeof(double)*(N_nzs+1));
-   if (vals == NULL) 
+   if (vals == NULL)
       pr_error("ML_Gen_Restrictor_TransP: Out of space\n");
 
    /* set 'row_ptr' so it points to the beginning of each row */
@@ -412,11 +412,11 @@ int ML_Gen_Restrictor_TransP(ML *ml_handle, int level, int level2,
    temp->columns = cols;
    temp->values  = vals;
    temp->rowptr  = row_ptr;
- 
+
    ml_handle->Rmat[level].data_destroy = ML_CSR_MSRdata_Destroy;
    ML_Init_Restrictor(ml_handle, level, level2, isize, osize, (void *) temp);
    ML_Operator_Set_ApplyFunc(Rmat, CSR_matvec);
-   ML_Operator_Set_Getrow(&(ml_handle->Rmat[level]), 
+   ML_Operator_Set_Getrow(&(ml_handle->Rmat[level]),
                                  Nghost+osize, CSR_getrow);
    Rmat->N_nonzeros = N_nzs;
   return(1);
@@ -436,6 +436,7 @@ extern "C" {
 #endif
 #include "metis.h"
 #ifdef __cplusplus
+#include "ml_parmetis_constants.h"
 }
 #endif
 #endif
@@ -446,27 +447,28 @@ extern "C" {
 
 #ifdef HAVE_ML_PARMETIS
 #include "parmetis.h"
+#include "ml_parmetis_constants.h"
 #endif
 
 int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
-                         int *pnode_part, ML_Partitioner which_partitioner, 
-			 double *x_coord, double *y_coord, double *z_coord,int num_PDE_eqns)
+                         int *pnode_part, ML_Partitioner which_partitioner,
+                         double *x_coord, double *y_coord, double *z_coord,int num_PDE_eqns)
 {
-#ifndef METIS
-#define idxtype int
+#ifndef indextype
+#define indextype int
 #endif
 
-  idxtype *vtxdist = NULL, *tpwts = NULL, *adjncy = NULL, *xadj = NULL, *node_wt = NULL; 
+  indextype *vtxdist = NULL, *tpwts = NULL, *adjncy = NULL, *xadj = NULL, *node_wt = NULL;
   int *map = NULL, *bindx = NULL, *blks = NULL, nprocs, myid, j, ii, jj;
   int allocated = 0, row_length, itemp1, itemp2, Nrows;
-  double *val = NULL; 
+  double *val = NULL;
   int    offset = -1;
 
-#if defined(HAVE_ML_METIS) || defined(HAVE_ML_PARMETIS) || defined(HAVE_ML_JOSTLE) 
+#if ( defined(HAVE_ML_METIS) && (METIS_VER_MAJOR < 5) ) || ( defined(HAVE_ML_PARMETIS) && (PARMETIS_MAJOR_VERSION == 3) ) || defined(HAVE_ML_JOSTLE)
   int     Cstyle = 0, dummy = -1;
 #endif
-#ifdef HAVE_ML_PARMETIS
-  idxtype ncon = 1;
+#if defined(HAVE_ML_PARMETIS) && (PARMETIS_MAJOR_VERSION == 3)
+  indextype ncon = 1;
   float  itr = 1000., ubvec = 1.05;
 #endif
 #ifdef HAVE_ML_JOSTLE
@@ -474,10 +476,10 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
   int    output_level, nnodes, *itmp = NULL, *proc_ids;
   int    *total_nz = NULL, *total_rows = NULL, *temp_part, zz;
   int    msgtype;
-  USR_REQ *request = NULL; 
+  USR_REQ *request = NULL;
   char str[80];
 #endif
-#if defined(HAVE_ML_METIS) || defined(HAVE_ML_PARMETIS)
+#if ( defined(HAVE_ML_METIS) && (METIS_VER_MAJOR < 5) ) || ( defined(HAVE_ML_PARMETIS) && (PARMETIS_MAJOR_VERSION == 3) )
   int     options[5]={0,3,1,1,0};
   int     weightflag = 0;
 #endif
@@ -508,7 +510,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 #endif
 #ifndef HAVE_ML_ZOLTAN
   if ( which_partitioner == ML_USEZOLTAN) {
-    if (myid == 0) 
+    if (myid == 0)
       printf("ML_partitionBlocksNodes: Zoltan not linked\n");
     for (ii = 0; ii < n; ii++) pnode_part[ii] = myid;
     return 1;
@@ -516,7 +518,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 #endif
 #if !defined(HAVE_ML_PARMETIS)
   if ( which_partitioner == ML_USEPARMETIS ) {
-    if (myid == 0) 
+    if (myid == 0)
       printf("ML_partitionBlocksNodes: Parmetis is not linked\n");
     for (ii = 0; ii < n; ii++) pnode_part[ii] = myid;
     return 1;
@@ -524,7 +526,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 #endif
 #if !(defined(HAVE_ML_JOSTLE))
   if ( which_partitioner==ML_USEJOSTLE) {
-    if (myid == 0) 
+    if (myid == 0)
       printf("ML_partitionBlocksNodes: Jostle is not linked\n");
     for (ii = 0; ii < n; ii++) pnode_part[ii] = myid;
     return 1;
@@ -535,7 +537,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
   /* local matrix. If ParMetis or Jostle is used the adjacency data       */
   /* is my part of the global matrix. Zoltan does not need this structure.*/
   /* Note: matrix does not include self connections (diag entries)        */
- 
+
   Nrows = n;
   if (which_partitioner != ML_USEZOLTAN) {
     /* count number of nonzeros */
@@ -550,7 +552,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     /* processors are idle on the next level. This space will hold */
     /* the fine grid graph from "idle" processors that will be     */
     /*  shipped to the active processors.                          */
-    
+
 #ifdef HAVE_ML_JOSTLE
     if ( (which_partitioner == ML_USEJOSTLE) && (*nblks != nprocs)) {
       total_nz  = (int *) ML_allocate(sizeof(int)*nprocs);
@@ -567,25 +569,25 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
       /* lowest numbered rows followed by proc 1, etc.                */
       offset = 0; zz = 1;
       for (jj = 0 ; jj < *nblks; jj++) {
-	for (j = jj; j < nprocs; j += (*nblks) ) {
-	  if (j == myid) zz = 0;
-	  if (zz == 1   ) offset += total_rows[j];
-	}
+        for (j = jj; j < nprocs; j += (*nblks) ) {
+          if (j == myid) zz = 0;
+          if (zz == 1   ) offset += total_rows[j];
+        }
       }
 
       if ( myid < *nblks ) {
-	for (jj = *nblks ; jj < nprocs; jj++) 
-	  if (  (jj%(*nblks)) == myid ) {
-	    ii    += total_nz[jj]; 
-	    Nrows += total_rows[jj];
-	  }
+        for (jj = *nblks ; jj < nprocs; jj++)
+          if (  (jj%(*nblks)) == myid ) {
+            ii    += total_nz[jj];
+            Nrows += total_rows[jj];
+          }
       }
     }
 #endif
 
-    adjncy = (idxtype *) ML_allocate( (ii+1) * sizeof(idxtype) );
+    adjncy = (indextype *) ML_allocate( (ii+1) * sizeof(indextype) );
     if (adjncy == NULL) pr_error("ML_Operator_BlockPartition: out of space\n");
-    xadj = (idxtype *) ML_allocate( (Nrows+1) * sizeof(idxtype) );
+    xadj = (indextype *) ML_allocate( (Nrows+1) * sizeof(indextype) );
     if (xadj == NULL) pr_error("ML_Operator_BlockPartition: out of space\n");
 
     /* fill graph */
@@ -593,28 +595,28 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     if (which_partitioner == ML_USEMETIS) {
       ii = 0;
       for( jj = 0 ; jj < n ; jj++ ) {
-	xadj[jj] = ii;
-	ML_get_matrix_row(matrix,1,&jj,&allocated,&bindx,&val,&row_length,0);
-	for (j = 0; j < row_length; j++) {
-	  /* do not record diagonal or off-processor entries */
-	  if (( bindx[j] != jj ) && (bindx[j] < n))
-	    adjncy[ii++] = bindx[j];
-	}
+        xadj[jj] = ii;
+        ML_get_matrix_row(matrix,1,&jj,&allocated,&bindx,&val,&row_length,0);
+        for (j = 0; j < row_length; j++) {
+          /* do not record diagonal or off-processor entries */
+          if (( bindx[j] != jj ) && (bindx[j] < n))
+            adjncy[ii++] = bindx[j];
+        }
       }
       xadj[n] = ii;
     }
     else {
       ML_create_unique_id(n, &map, matrix->getrow->pre_comm, matrix->comm,
-			  offset);
+                          offset);
       ii = 0;
       for( jj = 0 ; jj < n ; jj++ )   {
-	xadj[jj] = ii;
-	ML_get_matrix_row(matrix,1,&jj,&allocated,&bindx,&val,&row_length,0);
-	for (j = 0; j < row_length; j++)     {
-	  if ( bindx[j] != jj ) {
-	    adjncy[ii++] = map[bindx[j]];
-	  }
-	}
+        xadj[jj] = ii;
+        ML_get_matrix_row(matrix,1,&jj,&allocated,&bindx,&val,&row_length,0);
+        for (j = 0; j < row_length; j++)     {
+          if ( bindx[j] != jj ) {
+            adjncy[ii++] = map[bindx[j]];
+          }
+        }
       }
       xadj[n] = ii;
     }
@@ -628,57 +630,57 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     if ( myid < *nblks ) {
       ii = n;
       zz = 0;
-      
+
       request = (USR_REQ *) ML_allocate((2+(nprocs - *nblks)/(*nblks))*
-					sizeof(USR_REQ)); /* estimated number*/
+                                        sizeof(USR_REQ)); /* estimated number*/
                                                           /* of rcv neighbors*/
       for (jj = *nblks ; jj < nprocs; jj++) {
-	if (  (jj%(*nblks)) == myid ) {
-	  /* receive xadj and adjncy */
-	  if (total_rows[jj] != 0) {
-	    msgtype = 95539;
-	    matrix->comm->USR_irecvbytes((void *) &(xadj[ii+1]), 
-					 total_rows[jj]*sizeof(int), &jj,
-					 &msgtype, matrix->comm->USR_comm, 
-					 request+zz);
-	    matrix->comm->USR_cheapwaitbytes((void *) &(xadj[ii+1]), 
-					 total_rows[jj]*sizeof(int), &jj,
-					 &msgtype, matrix->comm->USR_comm, 
-					 request+zz);
-	    
-	    /* fix xadj so that it is correct */
-	    for (j = ii+1; j <= ii+total_rows[jj]; j++) {
-	      xadj[j] += xadj[ii];
-	    }
-	    msgtype = 94539;
-	    matrix->comm->USR_irecvbytes((void *) &(adjncy[xadj[ii]]), 
-					 total_nz[jj]*sizeof(int), &jj,
-					 &msgtype, matrix->comm->USR_comm, 
-					 request+zz);
-	    matrix->comm->USR_cheapwaitbytes((void *) &(adjncy[xadj[ii]]), 
-					 total_nz[jj]*sizeof(int), &jj,
-					 &msgtype, matrix->comm->USR_comm, 
-					 request+zz);
-	    zz++;
-	    ii += total_rows[jj];
-	  } /* total_rows[jj] != 0) */
-	} /* (jj%nblks)) == myid */
+        if (  (jj%(*nblks)) == myid ) {
+          /* receive xadj and adjncy */
+          if (total_rows[jj] != 0) {
+            msgtype = 95539;
+            matrix->comm->USR_irecvbytes((void *) &(xadj[ii+1]),
+                                         total_rows[jj]*sizeof(int), &jj,
+                                         &msgtype, matrix->comm->USR_comm,
+                                         request+zz);
+            matrix->comm->USR_cheapwaitbytes((void *) &(xadj[ii+1]),
+                                         total_rows[jj]*sizeof(int), &jj,
+                                         &msgtype, matrix->comm->USR_comm,
+                                         request+zz);
+
+            /* fix xadj so that it is correct */
+            for (j = ii+1; j <= ii+total_rows[jj]; j++) {
+              xadj[j] += xadj[ii];
+            }
+            msgtype = 94539;
+            matrix->comm->USR_irecvbytes((void *) &(adjncy[xadj[ii]]),
+                                         total_nz[jj]*sizeof(int), &jj,
+                                         &msgtype, matrix->comm->USR_comm,
+                                         request+zz);
+            matrix->comm->USR_cheapwaitbytes((void *) &(adjncy[xadj[ii]]),
+                                         total_nz[jj]*sizeof(int), &jj,
+                                         &msgtype, matrix->comm->USR_comm,
+                                         request+zz);
+            zz++;
+            ii += total_rows[jj];
+          } /* total_rows[jj] != 0) */
+        } /* (jj%nblks)) == myid */
       } /* for (jj = *nblks; jj < nprocs; jj++) */
     } /* if ( myid < *nblks ) */
     else {
       request = (USR_REQ *) ML_allocate(sizeof(USR_REQ));
-                                                         
+
       /* send xadj and adjncy */
       if (n != 0) {
-	msgtype = 95539;
-	matrix->comm->USR_sendbytes((void *) &(xadj[1]), n*sizeof(int), 
-				    myid%(*nblks), msgtype, 
-				    matrix->comm->USR_comm);
-	msgtype = 94539;
-	matrix->comm->USR_sendbytes((void *) adjncy,
-				    total_nz[myid]*sizeof(int), 
-				    myid%(*nblks), msgtype, 
-				    matrix->comm->USR_comm);
+        msgtype = 95539;
+        matrix->comm->USR_sendbytes((void *) &(xadj[1]), n*sizeof(int),
+                                    myid%(*nblks), msgtype,
+                                    matrix->comm->USR_comm);
+        msgtype = 94539;
+        matrix->comm->USR_sendbytes((void *) adjncy,
+                                    total_nz[myid]*sizeof(int),
+                                    myid%(*nblks), msgtype,
+                                    matrix->comm->USR_comm);
       } /* if (n != 0) */
       Nrows = 0;
     } /* if ( myid < *nblks ) */
@@ -697,10 +699,10 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
         printf("Repartitioning using Zoltan %3.2f\n",ZoltanVersion);
       }
     if (ML_DecomposeGraph_with_Zoltan(matrix, *nblks, pnode_part, NULL,
-				      x_coord, y_coord, z_coord, matrix->to->levelnum,
+                                      x_coord, y_coord, z_coord, matrix->to->levelnum,
                                       grid_info->zoltan_type,
                                       grid_info->zoltan_estimated_its,
-				      grid_info->zoltan_timers,
+                                      grid_info->zoltan_timers,
                                       grid_info->smoothing_steps,
                                       num_PDE_eqns
                                       ) < 0)
@@ -708,15 +710,15 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 #endif
     break;
   case ML_USEMETIS:
-#ifdef HAVE_ML_METIS
+#if defined(HAVE_ML_METIS) && (METIS_VER_MAJOR < 5)
     if (matrix->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 4)
       printf("Repartitioning using METIS\n");
     if (*nblks < 8)
       METIS_PartGraphRecursive( &n, xadj, adjncy, NULL, NULL, &weightflag,
-				&Cstyle, nblks, options, &dummy, pnode_part );
+                                &Cstyle, nblks, options, &dummy, pnode_part );
     else
       METIS_PartGraphKway( &n, xadj, adjncy, NULL, NULL, &weightflag, &Cstyle,
-			   nblks, options, &dummy, pnode_part );
+                           nblks, options, &dummy, pnode_part );
 #endif
 
     /* It looks like this handles an empty block */
@@ -728,16 +730,16 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     ii = 0;
     for (j = 0; j < *nblks; j++) {
       if ( blks[j] == -2) {
-	blks[j] = ii;
-	ii++;
+        blks[j] = ii;
+        ii++;
       }
     }
     for (j = 0; j < n; j++) pnode_part[j] = blks[pnode_part[j]];
     *nblks = ii;
     break;
   case ML_USEPARMETIS:
-    tpwts   = (idxtype *) ML_allocate(sizeof(idxtype)*ML_max(*nblks,nprocs));
-    vtxdist = (idxtype *) ML_allocate(sizeof(idxtype)*(nprocs+1));
+    tpwts   = (indextype *) ML_allocate(sizeof(indextype)*ML_max(*nblks,nprocs));
+    vtxdist = (indextype *) ML_allocate(sizeof(indextype)*(nprocs+1));
     for (ii = 0; ii <= nprocs; ii++) vtxdist[ii] = 0;
     vtxdist[myid] = n;
     ML_gsum_vec_int(&vtxdist,&tpwts,nprocs,matrix->comm);
@@ -749,11 +751,11 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
       itemp1 += itemp2;
     }
     vtxdist[nprocs] = itemp1;
-    
+
     for (ii = 0; ii < n; ii++) pnode_part[ii] = matrix->comm->ML_mypid;
 
-#ifdef HAVE_ML_PARMETIS
-    node_wt = (idxtype *) ML_allocate( (Nrows+1) * sizeof(idxtype) );
+#if defined(HAVE_ML_PARMETIS) && (PARMETIS_MAJOR_VERSION == 3)
+    node_wt = (indextype *) ML_allocate( (Nrows+1) * sizeof(indextype) );
     for (j = 0; j < Nrows; j++) {
       node_wt[j] = xadj[j+1] - xadj[j] + 1;
     }
@@ -762,10 +764,10 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     if (matrix->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 4)
       printf("Repartitioning using ParMETIS3x\n");
     ParMETIS_V3_AdaptiveRepart( vtxdist,xadj,adjncy, node_wt,
-				NULL, NULL, &weightflag,
-				&Cstyle, &ncon, nblks, NULL, &ubvec, 
-				&itr, options, &dummy, pnode_part,
-				&(matrix->comm->USR_comm));
+                                NULL, NULL, &weightflag,
+                                &Cstyle, &ncon, nblks, NULL, &ubvec,
+                                &itr, options, &dummy, pnode_part,
+                                &(matrix->comm->USR_comm));
 #endif
     break;
 
@@ -781,12 +783,12 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
     nnodes = ML_Comm_GsumInt(matrix->comm,n);
     jostle_env("format = contiguous");
     proc_ids = (int *) ML_allocate( nprocs*sizeof(int));
-    if (itmp == NULL) 
+    if (itmp == NULL)
       itmp  = (int *) ML_allocate( nprocs*sizeof(int));
     for (j = 0; j < nprocs; j++) proc_ids[j] = 0;
     proc_ids[myid] = Nrows;
     ML_gsum_vec_int(&proc_ids, &itmp, nprocs, matrix->comm);
-    node_wt = (idxtype *) ML_allocate( (Nrows+1) * sizeof(idxtype) );
+    node_wt = (indextype *) ML_allocate( (Nrows+1) * sizeof(indextype) );
 
     for (j = 0; j < Nrows; j++) {
       xadj[j] = xadj[j+1] - xadj[j];
@@ -807,45 +809,45 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 
     if ( *nblks < nprocs) {
       sprintf(str,"idle = %d",nprocs - *nblks);
-      jostle_env(str); 
+      jostle_env(str);
     }
     pjostle(&nnodes,&Cstyle,&Nrows,&dummy,proc_ids,xadj,node_wt,temp_part,
-	    /*    pjostle(&nnodes,&Cstyle,&Nrows,&dummy,proc_ids,xadj,(int *) NULL,temp_part, */
-	    &(xadj[Nrows]),adjncy,(int *) NULL, &nprocs, (int *) NULL,
-	    &output_level, &dummy, (double *) NULL);
+            /*    pjostle(&nnodes,&Cstyle,&Nrows,&dummy,proc_ids,xadj,(int *) NULL,temp_part, */
+            &(xadj[Nrows]),adjncy,(int *) NULL, &nprocs, (int *) NULL,
+            &output_level, &dummy, (double *) NULL);
 
     /* ship over temp pnode part */
     if ( (which_partitioner == ML_USEPARMETIS) && (*nblks != nprocs)) {
       msgtype = 93539;
       if ( myid < *nblks) {
-	for (jj = 0; jj < n; jj++) pnode_part[jj] = temp_part[jj];
-	ii = n;
-	for (jj = *nblks ; jj < nprocs; jj++) {
-	  if (  (jj%(*nblks)) == myid ) {
-	    /* send pnode part */
-	    if (total_rows[jj] != 0) {
-	      matrix->comm->USR_sendbytes((void *) &(temp_part[ii]),
-				    total_rows[jj]*sizeof(int), 
-				    jj, msgtype, 
-				    matrix->comm->USR_comm);
-	      ii += total_rows[jj];
-	    }
-	  }
-	}
+        for (jj = 0; jj < n; jj++) pnode_part[jj] = temp_part[jj];
+        ii = n;
+        for (jj = *nblks ; jj < nprocs; jj++) {
+          if (  (jj%(*nblks)) == myid ) {
+            /* send pnode part */
+            if (total_rows[jj] != 0) {
+              matrix->comm->USR_sendbytes((void *) &(temp_part[ii]),
+                                    total_rows[jj]*sizeof(int),
+                                    jj, msgtype,
+                                    matrix->comm->USR_comm);
+              ii += total_rows[jj];
+            }
+          }
+        }
       }
       else {
-	/*receive pnode part stuff */
-	zz = myid%(*nblks);
-	if (n != 0) {
-	  matrix->comm->USR_irecvbytes((void *) pnode_part,
-				     n*sizeof(int), &zz,
-				     &msgtype, matrix->comm->USR_comm, 
-				     request);
-	  matrix->comm->USR_cheapwaitbytes((void *) pnode_part,
-					 n*sizeof(int), &zz,
-					 &msgtype, matrix->comm->USR_comm, 
-					 request);
-	}
+        /*receive pnode part stuff */
+        zz = myid%(*nblks);
+        if (n != 0) {
+          matrix->comm->USR_irecvbytes((void *) pnode_part,
+                                     n*sizeof(int), &zz,
+                                     &msgtype, matrix->comm->USR_comm,
+                                     request);
+          matrix->comm->USR_cheapwaitbytes((void *) pnode_part,
+                                         n*sizeof(int), &zz,
+                                         &msgtype, matrix->comm->USR_comm,
+                                         request);
+        }
       } /* end else */
       ML_free(temp_part);
       ML_free(total_rows);
@@ -857,7 +859,7 @@ int ML_Operator_BlockPartition(ML_Operator *matrix, int n, int *nblks,
 /* -------------------------------------- */
   default:
     printf("ML_partitionBlocksNodes: Unknown partitioner requested %d\n",
-	   which_partitioner);
+           which_partitioner);
   }
   if (map     != NULL) ML_free(map);
   if (val     != NULL) ML_free(val);
@@ -912,12 +914,12 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
    remap_leng = osize + Nrcv + Nsend;
    remap = (int *) ML_allocate( remap_leng*sizeof(int));
    for (i = 0; i < osize; i++) remap[i] = i;
-   for (i = osize; i < osize+Nrcv+Nsend; i++) 
+   for (i = osize; i < osize+Nrcv+Nsend; i++)
       remap[i] = -1;
- 
+
    c2_info     = &(Amat_trans->getrow->post_comm);
    ML_CommInfoOP_Set_neighbors(c2_info, Nneighbors,
- 			      neigh_list,ML_ADD,remap,remap_leng);
+                              neigh_list,ML_ADD,remap,remap_leng);
    ML_free(remap);
    for (i = 0; i < Nneighbors; i++) {
       Nsend      = ML_CommInfoOP_Get_Nsendlist(c_info, neigh_list[i]);
@@ -927,14 +929,14 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
       rcv_list   = ML_CommInfoOP_Get_rcvlist(c_info, neigh_list[i]);
       /* handle empty rows ... i.e. ghost variables not used */
       if (rcv_list != NULL) {
-	for (j = 0; j < Nrcv; j++) {
+        for (j = 0; j < Nrcv; j++) {
             if (rcv_list[j] > Nghost2 + osize - 1)
                Nghost2 = rcv_list[j] - osize + 1;
          }
       }
- 
+
       ML_CommInfoOP_Set_exch_info(*c2_info, neigh_list[i], Nsend, send_list,
- 				 Nrcv,rcv_list);
+                                 Nrcv,rcv_list);
       if (send_list != NULL) ML_free(send_list);
       if ( rcv_list != NULL) ML_free( rcv_list);
    }
@@ -947,7 +949,7 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
 
    /* count the total number of nonzeros and compute */
    /* the length of each row in the transpose.       */
- 
+
    for (i = 0; i < Nghost+osize; i++) row_ptr[i] = 0;
 
    N_nzs = 0;
@@ -961,7 +963,7 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
 
    cols    = (int    *) ML_allocate(sizeof(int   )*(N_nzs+1));
    vals    = (double *) ML_allocate(sizeof(double)*(N_nzs+1));
-   if (vals == NULL) 
+   if (vals == NULL)
       pr_error("ML_Gen_Restrictor_TransP: Out of space\n");
 
    /* set 'row_ptr' so it points to the beginning of each row */
@@ -1002,8 +1004,8 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
    temp->rowptr  = row_ptr;
    Amat_trans->N_nonzeros = N_nzs;
    Amat_trans->data_destroy = ML_CSR_MSRdata_Destroy;
-   
-   ML_Operator_Set_ApplyFuncData(Amat_trans, isize, osize, 
+
+   ML_Operator_Set_ApplyFuncData(Amat_trans, isize, osize,
                                   temp, osize, NULL, 0);
    ML_Operator_Set_ApplyFunc(Amat_trans, CSR_matvec);
    ML_Operator_Set_Getrow(Amat_trans, Nghost+osize, CSR_getrow);
@@ -1020,22 +1022,22 @@ int ML_Operator_Transpose(ML_Operator *Amat, ML_Operator *Amat_trans )
 
 int ML_Operator_ColPartition2RowPartition(ML_Operator *A, ML_Operator *Atrans)
 {
- 
+
   ML_Operator *eye1;
- 
+
   eye1 = ML_Operator_Create(A->comm);
- 
+
   ML_Operator_Set_ApplyFuncData(eye1, A->invec_leng, A->invec_leng,
             NULL, A->invec_leng, eye_matvec, 0);
   ML_Operator_Set_Getrow(eye1, A->invec_leng, eye_getrows);
- 
+
   ML_2matmult(A, eye1, Atrans, ML_CSR_MATRIX);
 
   ML_Operator_Destroy(&eye1);
 
- 
+
   return 1;
-}  
+}
 
 
 #ifdef new2row
@@ -1043,28 +1045,28 @@ int ML_Operator_ColPartition2RowPartition(ML_Operator *A, ML_Operator *Atrans)
 {
   int         max_per_proc;
   ML_Operator *Acomm, *tptr;
- 
+
   if (A->getrow->use_loc_glob_map == ML_YES)
      pr_error("ML_Operator_ColPartition2RowPartition: Matrix already has local"
               "column indices mapped to global indices\n");
   if (A->getrow->pre_comm != NULL)
      pr_error("ML_Operator_ColPartition2RowPartiion: Matrix has a"
               "pre-communication structure?\n");
- 
+
   ML_create_unique_col_id(A->invec_leng, &(A->getrow->loc_glob_map),
                            NULL, &max_per_proc, A->comm);
- 
+
   A->getrow->use_loc_glob_map = ML_YES;
- 
+
   if (A->getrow->post_comm != NULL)
       ML_exchange_rows( A, &Acomm, A->getrow->post_comm);
   else Acomm = A;
- 
+
   ML_back_to_csrlocal(Acomm, Atrans, max_per_proc);
- 
+
   ML_free(A->getrow->loc_glob_map); A->getrow->loc_glob_map = NULL;
   A->getrow->use_loc_glob_map = ML_NO;
- 
+
   if (A->getrow->post_comm != NULL) {
       tptr = Acomm;
       while ( (tptr!= NULL) && (tptr->sub_matrix != A))
@@ -1073,9 +1075,9 @@ int ML_Operator_ColPartition2RowPartition(ML_Operator *A, ML_Operator *Atrans)
       ML_RECUR_CSR_MSRdata_Destroy(Acomm);
       ML_Operator_Destroy(&Acomm);
    }
- 
+
   return 1;
-} 
+}
 #endif
 
 
@@ -1085,11 +1087,11 @@ int ML_Operator_ColPartition2RowPartition(ML_Operator *A, ML_Operator *Atrans)
 
 int eye_getrows(ML_Operator *data, int N_requested_rows, int requested_rows[],
                 int allocated_space, int columns[], double values[],
-				int row_lengths[])
+                                int row_lengths[])
 {
    int    i;
 
-   
+
    if (allocated_space < N_requested_rows) {
      ML_avoid_unused_param( data);
      return(0);
@@ -1129,6 +1131,8 @@ int ML_Operator_Transpose_byrow(ML_Operator *A, ML_Operator *Atrans)
 
   temp = ML_Operator_Create(A->comm);
   ML_Operator_Transpose(A, temp);
+  if (Atrans->label != NULL)
+    ML_Operator_Set_Label(temp,Atrans->label);
   ML_Operator_ColPartition2RowPartition(temp, Atrans);
   ML_Operator_Destroy(&temp);
   return 1;
@@ -1136,7 +1140,7 @@ int ML_Operator_Transpose_byrow(ML_Operator *A, ML_Operator *Atrans)
 #include "ml_utils.h"
 #include "ml_xyt.h"
 int ML_Operator_Dump(ML_Operator *Ke, double *x, double *rhs,
-		     char *istr, int print_matrix)	
+                     char *istr, int print_matrix)
 {
   double *global_nodes, *global_rows, *colVal = NULL;
   int    N_nodes, node_offset, row_offset;
@@ -1147,7 +1151,7 @@ int ML_Operator_Dump(ML_Operator *Ke, double *x, double *rhs,
   int Nnodes_global, Nrows_global;
   int Nghost_nodes;
   int Nrows;
-  
+
 
   comm = Ke->comm;
   if (Ke->getrow->pre_comm == NULL) Nghost_nodes = 0;
@@ -1176,8 +1180,8 @@ int ML_Operator_Dump(ML_Operator *Ke, double *x, double *rhs,
 
   for (i = 0 ; i < Nghost_nodes; i++) global_nodes[i+N_nodes] = -1;
 
-  ML_exchange_bdry(global_nodes,Ke->getrow->pre_comm, 
- 		 Ke->invec_leng,comm,ML_OVERWRITE,NULL);
+  ML_exchange_bdry(global_nodes,Ke->getrow->pre_comm,
+                 Ke->invec_leng,comm,ML_OVERWRITE,NULL);
 
   /* spit out Ke  */
 
@@ -1189,10 +1193,10 @@ int ML_Operator_Dump(ML_Operator *Ke, double *x, double *rhs,
                         &ncnt, 0);
 
       for (j = 0; j < ncnt; j++) {
-	if (colVal[j] != 0.0) {
-	  fprintf(fid,"%5d %5d %20.13e\n",(int) global_rows[i]+1,
-		  (int) global_nodes[colInd[j]]+1, colVal[j]);
-	}
+        if (colVal[j] != 0.0) {
+          fprintf(fid,"%5d %5d %20.13e\n",(int) global_rows[i]+1,
+                  (int) global_nodes[colInd[j]]+1, colVal[j]);
+        }
       }
     }
     fclose(fid);
@@ -1232,24 +1236,24 @@ int ML_Operator_Getrow_Diag(ML_Operator *Amat, double **diagonal)
 {
   int allocated_space, *cols, i, j, n, Nghost;
   double *vals, *tdiag;
-   if (Amat->diagonal == NULL) 
+   if (Amat->diagonal == NULL)
    {
-      if (Amat->getrow->func_ptr == NULL) 
+      if (Amat->getrow->func_ptr == NULL)
          pr_error("Error(ML_Operator_Getrow_Diag): No getrow function\n");
-      else 
+      else
       {
          Nghost = ML_CommInfoOP_Compute_TotalRcvLength(Amat->getrow->pre_comm);
          allocated_space = 30;
          cols = (int    *) ML_allocate(allocated_space*sizeof(int   ));
          vals = (double *) ML_allocate(allocated_space*sizeof(double));
          tdiag = (double *) ML_allocate((Amat->outvec_leng+Nghost+1)*sizeof(double));
-         for (i = 0; i < Amat->outvec_leng; i++) 
+         for (i = 0; i < Amat->outvec_leng; i++)
          {
             while(ML_Operator_Getrow(Amat,1,&i,allocated_space,
-                                     cols,vals,&n) == 0) 
+                                     cols,vals,&n) == 0)
             {
                allocated_space = 2*allocated_space + 1;
-               ML_free(vals); ML_free(cols); 
+               ML_free(vals); ML_free(cols);
                cols = (int    *) ML_allocate(allocated_space*sizeof(int   ));
                vals = (double *) ML_allocate(allocated_space*sizeof(double));
                if (vals == NULL)
@@ -1259,17 +1263,17 @@ int ML_Operator_Getrow_Diag(ML_Operator *Amat, double **diagonal)
                   exit(1);
                }
             }
-            for (j = 0; j < n; j++) 
+            for (j = 0; j < n; j++)
                if (cols[j] == i) tdiag[i] = vals[j];
          }
          if ( Amat->getrow->pre_comm != NULL )
-           ML_exchange_bdry(tdiag,Amat->getrow->pre_comm,Amat->getrow->Nrows, 
+           ML_exchange_bdry(tdiag,Amat->getrow->pre_comm,Amat->getrow->Nrows,
                             Amat->comm, ML_OVERWRITE,NULL);
 
          ML_free(cols); ML_free(vals);
          ML_Operator_Set_Diag(Amat, Amat->matvec->Nrows, tdiag);
          ML_free(tdiag);
-      } 
+      }
    }
    ML_DVector_GetDataPtr( Amat->diagonal, diagonal);
    return 0;
@@ -1277,10 +1281,10 @@ int ML_Operator_Getrow_Diag(ML_Operator *Amat, double **diagonal)
 
 /*******************************************************************
  *  Take an ML_Operator and make a new copy of its data corresponding
- *  to a scaled ML_Operator. 
+ *  to a scaled ML_Operator.
  *******************************************************************/
 ML_Operator *ML_Operator_ExplicitlyScale(ML_Operator *matrix,
-					 double scalar)
+                                         double scalar)
 {
   int i, k, Nrows, Nnz, allocated = 0, *columns = NULL, row_length;
   int *row_ptr, *col_ptr;
@@ -1307,14 +1311,14 @@ ML_Operator *ML_Operator_ExplicitlyScale(ML_Operator *matrix,
   col_ptr = (int   *) ML_allocate(sizeof(int  )*(Nnz + 1));
   val_ptr = (double *) ML_allocate(sizeof(double)*(Nnz + 1));
   temp    = (struct ML_CSR_MSRdata *) ML_allocate(sizeof(struct ML_CSR_MSRdata));
-  
+
   /* getrow everything and scale it */
 
    row_ptr[0] = 0;
    Nnz = 0;
    for (i = 0 ; i < Nrows; i++) {
      ML_get_matrix_row(matrix, 1, &i, &allocated, &columns, &values,
-		       &row_length, 0);
+                       &row_length, 0);
      for (k = 0; k < row_length; k++) {
          val_ptr[Nnz  ] = scalar*values[k];
          col_ptr[Nnz++] = columns[k];
@@ -1331,10 +1335,10 @@ ML_Operator *ML_Operator_ExplicitlyScale(ML_Operator *matrix,
    new_matrix = ML_Operator_Create(matrix->comm);
    /*   ML_Operator_Init(new_matrix, matrix->comm); */
 
-   ML_Operator_Set_ApplyFuncData(new_matrix,matrix->invec_leng, 
-				 matrix->outvec_leng,temp,
-				 matrix->matvec->Nrows, CSR_matvec,
-				 matrix->from_an_ml_operator);
+   ML_Operator_Set_ApplyFuncData(new_matrix,matrix->invec_leng,
+                                 matrix->outvec_leng,temp,
+                                 matrix->matvec->Nrows, CSR_matvec,
+                                 matrix->from_an_ml_operator);
    ML_Operator_Set_Getrow(new_matrix,matrix->getrow->Nrows,CSR_getrow);
    ML_CommInfoOP_Clone(&(new_matrix->getrow->pre_comm),matrix->getrow->pre_comm);
    new_matrix->data_destroy   = ML_CSR_MSRdata_Destroy;
@@ -1347,7 +1351,7 @@ ML_Operator *ML_Operator_ExplicitlyScale(ML_Operator *matrix,
 /*******************************************************************
  *  Take an ML_Operator and using getrow() make a new copy of the
  *  matrix in CSR format using single precision numbers. Then,
- *  get rid of the data in the old matrix (by calling the 
+ *  get rid of the data in the old matrix (by calling the
  *  data destroy function) and replace the old data with the
  *  new data.
  *******************************************************************/
@@ -1386,14 +1390,14 @@ int ML_Operator_ChangeToSinglePrecision(ML_Operator *matrix)
   col_ptr = (int   *) ML_allocate(sizeof(int  )*(Nnz + 1));
   val_ptr = (float *) ML_allocate(sizeof(float)*(Nnz + 1));
   temp    = (struct ML_CSR_MSRdata *) ML_allocate(sizeof(struct ML_CSR_MSRdata));
-  
+
   /* getrow everything and copy it to single precision */
 
    row_ptr[0] = 0;
    Nnz = 0;
    for (i = 0 ; i < Nrows; i++) {
      ML_get_matrix_row(matrix, 1, &i, &allocated, &columns, &values,
-		       &row_length, 0);
+                       &row_length, 0);
      for (k = 0; k < row_length; k++) {
          val_ptr[Nnz  ] = (float) values[k];
          col_ptr[Nnz++] = columns[k];
@@ -1411,10 +1415,10 @@ int ML_Operator_ChangeToSinglePrecision(ML_Operator *matrix)
       matrix->data = NULL;
    }
 
-   ML_Operator_Set_ApplyFuncData(matrix,matrix->invec_leng, 
-				 matrix->outvec_leng,temp,
-				 matrix->matvec->Nrows, sCSR_matvec,
-				 matrix->from_an_ml_operator);
+   ML_Operator_Set_ApplyFuncData(matrix,matrix->invec_leng,
+                                 matrix->outvec_leng,temp,
+                                 matrix->matvec->Nrows, sCSR_matvec,
+                                 matrix->from_an_ml_operator);
 
    ML_Operator_Set_Getrow(matrix,matrix->getrow->Nrows,sCSR_getrows);
    matrix->data_destroy   = ML_CSR_MSRdata_Destroy;
@@ -1457,14 +1461,14 @@ int ML_Operator_ChangeToChar(ML_Operator *matrix)
   col_ptr = (int   *) ML_allocate(sizeof(int  )*(Nnz + 1));
   val_ptr = (char  *) ML_allocate(sizeof(char)*(Nnz + 1));
   temp    = (struct ML_CSR_MSRdata *) ML_allocate(sizeof(struct ML_CSR_MSRdata));
-  
+
   /* getrow everything and copy it to single precision */
 
    row_ptr[0] = 0;
    Nnz = 0;
    for (i = 0 ; i < Nrows; i++) {
      ML_get_matrix_row(matrix, 1, &i, &allocated, &columns, &values,
-		       &row_length, 0);
+                       &row_length, 0);
      for (k = 0; k < row_length; k++) {
        if      (values[k] == -1.)  val_ptr[Nnz] = (int) 2;
        else if (values[k] == 1.)   val_ptr[Nnz] = (int) 1;
@@ -1485,10 +1489,10 @@ int ML_Operator_ChangeToChar(ML_Operator *matrix)
       matrix->data = NULL;
    }
 
-   ML_Operator_Set_ApplyFuncData(matrix,matrix->invec_leng, 
-				 matrix->outvec_leng,temp,
-				 matrix->matvec->Nrows, cCSR_matvec,
-				 matrix->from_an_ml_operator);
+   ML_Operator_Set_ApplyFuncData(matrix,matrix->invec_leng,
+                                 matrix->outvec_leng,temp,
+                                 matrix->matvec->Nrows, cCSR_matvec,
+                                 matrix->from_an_ml_operator);
 
    ML_Operator_Set_Getrow(matrix,matrix->getrow->Nrows,cCSR_getrows);
    matrix->data_destroy   = ML_CSR_MSRdata_Destroy;
@@ -1499,23 +1503,23 @@ int ML_Operator_ChangeToChar(ML_Operator *matrix)
 }
 
 /*******************************************************************
- *  Take an ML_Operator single precision or char CSR matrix in Pmat and use it 
- *  to implicitly define a transpose matvec that is stored in Rmat. This 
+ *  Take an ML_Operator single precision or char CSR matrix in Pmat and use it
+ *  to implicitly define a transpose matvec that is stored in Rmat. This
  *  implies that Rmat will not have a getrow() function ... so it is important
  *  that this function only be called on matrices where getrow() is
  *  no longer needed. If there is already data in Rmat, get rid of
- *  it. 
+ *  it.
  *
  *  Note: The main tricky thing about this function is that we must
  *  set up a post commuication data structure. This post communication
  *  structure is fairly fragile. We also allow for the possibility
  *  that the post communciation structure is already set up. In
- *  this case, we leave the existing communication structure in 
+ *  this case, we leave the existing communication structure in
  *  Rmat.
  *******************************************************************/
-int ML_Operator_ImplicitTranspose(ML_Operator *Rmat, 
-				  ML_Operator *Pmat,
-				  int PostCommAlreadySet)
+int ML_Operator_ImplicitTranspose(ML_Operator *Rmat,
+                                  ML_Operator *Pmat,
+                                  int PostCommAlreadySet)
 {
 
   if (ML_Use_LowMemory() != ML_TRUE)
@@ -1532,17 +1536,17 @@ int ML_Operator_ImplicitTranspose(ML_Operator *Rmat,
     if (Rmat->getrow->post_comm != NULL)
       ML_CommInfoOP_Destroy(&(Rmat->getrow->post_comm));
     ML_CommInfoOP_TransComm(Pmat->getrow->pre_comm,&(Rmat->getrow->post_comm),
-			    Pmat->invec_leng);
+                            Pmat->invec_leng);
   }
 
   if (Pmat->getrow->func_ptr == sCSR_getrows)
     ML_Operator_Set_ApplyFuncData(Rmat, Pmat->outvec_leng,
-				Pmat->invec_leng, 
-				Pmat->data, -1, sCSR_trans_matvec, 0);
+                                Pmat->invec_leng,
+                                Pmat->data, -1, sCSR_trans_matvec, 0);
   else
     ML_Operator_Set_ApplyFuncData(Rmat, Pmat->outvec_leng,
-				Pmat->invec_leng, 
-				Pmat->data, -1, cCSR_trans_matvec, 0);
+                                Pmat->invec_leng,
+                                Pmat->data, -1, cCSR_trans_matvec, 0);
 
   Rmat->getrow->func_ptr = NULL;
   Rmat->data_destroy = NULL;
@@ -1556,11 +1560,11 @@ int ML_Operator_ImplicitTranspose(ML_Operator *Rmat,
  * is built to obtain them.
  *******************************************************************/
 int ML_build_overlapped_pre_comm(ML_Operator *tempA, ML_CommInfoOP
-				 *old_comm, int max_per_proc,
-				 int *hash_list, int hash_length, 
-				 int *hash_used, int old_Nrows, 
-				 int *Nexternal, int *external[],
-				 int *Nexternal_allocated)
+                                 *old_comm, int max_per_proc,
+                                 int *hash_list, int hash_length,
+                                 int *hash_used, int old_Nrows,
+                                 int *Nexternal, int *external[],
+                                 int *Nexternal_allocated)
 {
   int    i, j, k, NGhost, index;
   int allocated = 0, *column = NULL, row_length, current, proc_id;
@@ -1595,25 +1599,25 @@ int ML_build_overlapped_pre_comm(ML_Operator *tempA, ML_CommInfoOP
 
       /* check if a nonlocal guy */
       if ( (current < max_per_proc*proc_id) ||
-	   (current >= max_per_proc*(proc_id+1))) {
-	/* now check if it is already in the hash table       */
-	/* if not, add to hash table and mark gid as external */
-	ML_hash_it( current, hash_list, hash_length, hash_used, &index);
-	if ( hash_list[index] == -1 ) {
-	  hash_list[index] = current;
+           (current >= max_per_proc*(proc_id+1))) {
+        /* now check if it is already in the hash table       */
+        /* if not, add to hash table and mark gid as external */
+        ML_hash_it( current, hash_list, hash_length, hash_used, &index);
+        if ( hash_list[index] == -1 ) {
+          hash_list[index] = current;
 
-	  /* we must add current to the list of guys that we need */
+          /* we must add current to the list of guys that we need */
 
-	  if (*Nexternal == *Nexternal_allocated) {
-	    *Nexternal_allocated += (NGhost+10+ *Nexternal_allocated-oldNexternal);
-	    temp = (int *) ML_allocate(*Nexternal_allocated*sizeof(int));
-	    if (temp == NULL) perror("ML_build_overlapped_pre_comm: Not enough space\n");	  
-	    for (k = 0; k < *Nexternal; k++) temp[k] = (*external)[k];
-	    ML_free(*external);
-	    *external = temp;
-	  }
-	  (*external)[(*Nexternal)++] = current;
-	}
+          if (*Nexternal == *Nexternal_allocated) {
+            *Nexternal_allocated += (NGhost+10+ *Nexternal_allocated-oldNexternal);
+            temp = (int *) ML_allocate(*Nexternal_allocated*sizeof(int));
+            if (temp == NULL) perror("ML_build_overlapped_pre_comm: Not enough space\n");
+            for (k = 0; k < *Nexternal; k++) temp[k] = (*external)[k];
+            ML_free(*external);
+            *external = temp;
+          }
+          (*external)[(*Nexternal)++] = current;
+        }
       }
     }
   }
@@ -1625,7 +1629,7 @@ int ML_build_overlapped_pre_comm(ML_Operator *tempA, ML_CommInfoOP
   ML_az_sort(&((*external)[oldNexternal]),*Nexternal-oldNexternal,NULL,NULL);
   tempA->invec_leng = tempA->outvec_leng;
   ML_CommInfoOP_GenUsingGIDExternals(*Nexternal - oldNexternal,
-			     &((*external)[oldNexternal]),max_per_proc,tempA);
+                             &((*external)[oldNexternal]),max_per_proc,tempA);
 
   if (val != NULL) ML_free(val);
   if (column != NULL) ML_free(column);
@@ -1640,12 +1644,12 @@ int ML_build_overlapped_pre_comm(ML_Operator *tempA, ML_CommInfoOP
  *  has already been processed and extern is used to assign local ids
  *  for the ghost nodes.
  *******************************************************************/
-int ML_Operator_HashGlobalRcvList(ML_CommInfoOP *pre_comm, int Nrows, 
-				  int hash_list[], int hash_length, 
-				  int *hash_used, int Gid_assigned_to_proc[], 
-				  ML_Comm *comm, 
-				  int *Nexternal, int **external,
-				  int *Nexternal_allocated) 
+int ML_Operator_HashGlobalRcvList(ML_CommInfoOP *pre_comm, int Nrows,
+                                  int hash_list[], int hash_length,
+                                  int *hash_used, int Gid_assigned_to_proc[],
+                                  ML_Comm *comm,
+                                  int *Nexternal, int **external,
+                                  int *Nexternal_allocated)
 
 {
   double *global_ids;
@@ -1691,18 +1695,18 @@ int ML_Operator_HashGlobalRcvList(ML_CommInfoOP *pre_comm, int Nrows,
     rlist = ML_CommInfoOP_Get_rcvlist(pre_comm, neighbors[i]);
     for (j = 0; j < Nrcv; j++) {
       ML_hash_it((int)(global_ids[rlist[j]]),hash_list,hash_length,
-			 hash_used, &index);
+                         hash_used, &index);
       if (hash_list[index] == -1) {
-	if (*Nexternal == *Nexternal_allocated) {/* Need to increase extern[]*/
-	  *Nexternal_allocated +=(*Nexternal_allocated+NGhost+10-oldNexternal);
-	  temp = (int *) ML_allocate(*Nexternal_allocated*sizeof(int));
-	  if (temp == NULL) perror("ML_build_overlapped_pre_comm: No space\n");
-	  for (k = 0; k < *Nexternal; k++) temp[k] = (*external)[k];
-	  ML_free(*external);
-	  *external = temp;
-	}
-	(*external)[(*Nexternal)++] = (int) global_ids[rlist[j]];
-	hash_list[index]            = (int) global_ids[rlist[j]];
+        if (*Nexternal == *Nexternal_allocated) {/* Need to increase extern[]*/
+          *Nexternal_allocated +=(*Nexternal_allocated+NGhost+10-oldNexternal);
+          temp = (int *) ML_allocate(*Nexternal_allocated*sizeof(int));
+          if (temp == NULL) perror("ML_build_overlapped_pre_comm: No space\n");
+          for (k = 0; k < *Nexternal; k++) temp[k] = (*external)[k];
+          ML_free(*external);
+          *external = temp;
+        }
+        (*external)[(*Nexternal)++] = (int) global_ids[rlist[j]];
+        hash_list[index]            = (int) global_ids[rlist[j]];
       }
     }
     ML_free(rlist);
@@ -1721,10 +1725,10 @@ int ML_Operator_HashGlobalRcvList(ML_CommInfoOP *pre_comm, int Nrows,
  *  processor's piece of the original matrix is considered as a subdomain.
  *  For overlap = 1, we do the following on each subdomain
  *      a) make up a set of global indices for the matrix columns
- *      b) append to the matrix any rows corresponding to the 
+ *      b) append to the matrix any rows corresponding to the
  *         recv list of the subdomain.
  *      c) Create new send and receive lists to indicate column
- *         indices within the new appended rows that reside on other 
+ *         indices within the new appended rows that reside on other
  *         processors.
  *  For overlap > 1, we repeat b) and c) 'overlap' times. When finished,
  *  we post-process the overlapped matrix in the following way:
@@ -1732,17 +1736,17 @@ int ML_Operator_HashGlobalRcvList(ML_CommInfoOP *pre_comm, int Nrows,
  *         is different from the ones in 'ML_back2****' as global column
  *         indices corresponding to overlap regions should use the correct
  *         local index within the processor as opposed to an index on another
- *         processor (that corresponds to this unknown in the 
- *         nonoverlapped matrix). 
+ *         processor (that corresponds to this unknown in the
+ *         nonoverlapped matrix).
  *      2) Throw away any column indices that do not reside on processor.
- *      3) Build a communication object so that we can take unoverlapped 
- *         vectors and map them to overlapped vectors. 
+ *      3) Build a communication object so that we can take unoverlapped
+ *         vectors and map them to overlapped vectors.
  *
  *
  *******************************************************************/
 
 int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
-	       ML_CommInfoOP **nonOverlapped_2_Overlapped)
+               ML_CommInfoOP **nonOverlapped_2_Overlapped)
 {
 
   ML_Operator   *tempA, *bogus, *orig_A, *tptr;
@@ -1767,12 +1771,12 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
 
   /* Compute global ids for column indices. This makes        */
   /* it easier to keep track of things. Once we are filling   */
-  /* the final overlapped matrix, we can replace these global */ 
+  /* the final overlapped matrix, we can replace these global */
   /* columns with the correct local column index and build a  */
   /* proper communication object.                             */
 
   ML_create_unique_col_id(N_input_vector, &(oldA->getrow->loc_glob_map),
-			  getrow_comm, &max_per_proc, comm);
+                          getrow_comm, &max_per_proc, comm);
   oldA->getrow->use_loc_glob_map = ML_YES;
   map = oldA->getrow->loc_glob_map;
 
@@ -1805,10 +1809,10 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
     /* to build communication structures for the overlapped matrices.   */
 
     ML_Operator_HashGlobalRcvList(getrow_comm, oldA->outvec_leng,
-				  hash_list, hash_length, 
-				  &hash_used, map, oldA->comm,
-				  &Nexternal, &external,
-				  &Nexternal_allocated);
+                                  hash_list, hash_length,
+                                  &hash_used, map, oldA->comm,
+                                  &Nexternal, &external,
+                                  &Nexternal_allocated);
 
     /* Increase the overlap in oldA one at a time. We do this by appending */
     /* the new rows to oldA, building a new communication object which is  */
@@ -1820,12 +1824,12 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
       ML_exchange_rows( oldA, &tempA, getrow_comm);
       oldA = tempA;
       if (i != overlap - 1) {
-	ML_build_overlapped_pre_comm(tempA, getrow_comm, max_per_proc,
-				     hash_list, hash_length, &hash_used,
-				     old_Nrows, &Nexternal, 
-				     &external, &Nexternal_allocated);
+        ML_build_overlapped_pre_comm(tempA, getrow_comm, max_per_proc,
+                                     hash_list, hash_length, &hash_used,
+                                     old_Nrows, &Nexternal,
+                                     &external, &Nexternal_allocated);
 
-	getrow_comm = tempA->getrow->pre_comm;
+        getrow_comm = tempA->getrow->pre_comm;
       }
     }
   }
@@ -1848,7 +1852,7 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
   /*    4) throw away nonlocal matrix column enties and make an empty    */
   /*       pre_comm structure for the matrix itself.                     */
 
- if (tempA->N_nonzeros == -1) 
+ if (tempA->N_nonzeros == -1)
    tempA->N_nonzeros = ML_Operator_ComputeNumNzs(tempA);
 
  permute_array = (int *) ML_allocate((Nexternal+1)*sizeof(int));
@@ -1862,7 +1866,7 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
 
 
  for (i = 0; i < tempA->outvec_leng; i++ ) {
-    if (i < Nrows_orig) 
+    if (i < Nrows_orig)
       ML_get_matrix_row(tempA, 1, &i, &allocated, &column, &val,
                         &row_length, 0);
     else { /* ghost rows are reordered so that those from the same */
@@ -1876,27 +1880,27 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
 
       /* check if a local guy */
       if ( (current >= max_per_proc*proc_id) &&
-	   (current < max_per_proc*(proc_id+1))) {
-	newval[nz_ptr  ] = val[j];
-	newcol[nz_ptr++] = current - max_per_proc*proc_id;
+           (current < max_per_proc*(proc_id+1))) {
+        newval[nz_ptr  ] = val[j];
+        newcol[nz_ptr++] = current - max_per_proc*proc_id;
       }
       else {
 
-	/* If in the hash table, then it is an element that will be */
-	/* kept in overlapped matrix. Othewise, this element gets   */
-	/* thrown away as it extends too far.                       */
-	ML_hash_it( current, hash_list, hash_length, &hash_used, &index);
-	if ( hash_list[index] == -1 ) {
-	  hash_used--;   /* ML_hash_it assumes that the element will be */
-	                 /* added to the hash table and so it increments*/
+        /* If in the hash table, then it is an element that will be */
+        /* kept in overlapped matrix. Othewise, this element gets   */
+        /* thrown away as it extends too far.                       */
+        ML_hash_it( current, hash_list, hash_length, &hash_used, &index);
+        if ( hash_list[index] == -1 ) {
+          hash_used--;   /* ML_hash_it assumes that the element will be */
+                         /* added to the hash table and so it increments*/
                          /* hash_used. Since this is not the case, we   */
                          /* must decrement hash_used.                   */
-	}
-	else {
+        }
+        else {
             k = ML_find_index(current,external,Nexternal);
-	    newval[nz_ptr  ] = val[j];
-	    newcol[nz_ptr++] = k + Nrows_orig;
-	}
+            newval[nz_ptr  ] = val[j];
+            newcol[nz_ptr++] = k + Nrows_orig;
+        }
       }
     }
     rowptr[i+1] = nz_ptr;
@@ -1911,8 +1915,8 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
 
  newA->data_destroy = ML_CSR_MSRdata_Destroy;
  ML_Operator_Set_ApplyFuncData(newA, tempA->outvec_leng,
-			       tempA->outvec_leng, (void*)temp,
-			       tempA->outvec_leng, NULL, 0);
+                               tempA->outvec_leng, (void*)temp,
+                               tempA->outvec_leng, NULL, 0);
  ML_Operator_Set_Getrow(newA, tempA->outvec_leng, CSR_getrow);
  newA->max_nz_per_row = tempA->max_nz_per_row;
  newA->min_nz_per_row = tempA->min_nz_per_row;
@@ -1960,8 +1964,8 @@ int ML_overlap(ML_Operator *oldA, ML_Operator *newA, int overlap,
   }
   return 0;
 
-}    
- 
+}
+
 /*******************************************************************************
   ML_Operator_ReportStatistics() dumps out static, communication, and
   performance statistics for a particular operator.  It's meant to be used in
@@ -1972,7 +1976,7 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
                                   int perfAndCommStats)
 {
   double t1;
-  double j, Nglobrows, Nglobcols, NglobNonzeros;
+  double Nglobrows, Nglobcols, NglobNonzeros;
   int i,k,NumActiveProc, proc_active;
   ML_Comm *comm = mat->comm;
   int mypid = mat->comm->ML_mypid;
@@ -2008,9 +2012,9 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
   else proc_active = 0;
   NumActiveProc = ML_gsum_int(proc_active, comm);
 
-  i = mat->invec_leng; 
+  i = mat->invec_leng;
   Nglobcols = ML_gsum_double((double)i, comm);
-  i = mat->outvec_leng; 
+  i = mat->outvec_leng;
   Nglobrows = ML_gsum_double((double)i, comm);
   NglobNonzeros = ML_Comm_GsumDouble(comm, (double) mat->N_nonzeros);
 
@@ -2067,6 +2071,30 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
 
     maxStencil = ML_gmax_int(mat->max_nz_per_row, comm);
     maxproc = ML_gmax_int( (maxStencil == mat->max_nz_per_row ? mypid:0), comm);
+    /*
+    mfh 31 Dec 2014: Clang 3.5 emits the following warning on the line
+    of code below:
+
+    warning: implicit conversion from 'double' to 'int' changes value
+    from 1.0E+11 to 2147483647 [-Wliteral-conversion]
+
+    My guess is that the actual value doesn't matter, since the value
+    in question only takes effect if proc_active is false (which
+    likely means that the calling process is not active, so the number
+    of nonzeros per row doesn't matter).  Since the first branch of
+    the trinary operator returns something called "min nonzeros per
+    row", it would make more sense to return a literal integer in the
+    second branch.  When I tried changing 1e11 to 100000000000, I got
+    the following build warning:
+
+    warning: implicit conversion from 'long' to 'int' changes value
+    from 100000000000 to 1215752192 [-Wconstant-conversion]
+
+    I realized then that the author must have intended the equivalent
+    of INT_MAX.  It could be that they had to support a system on
+    which limits.h did not exist.  In any case, I decided to leave the
+    line of code alone.
+    */
     minStencil = ML_gmin_int( (proc_active ? mat->min_nz_per_row : 1e11), comm);
     minproc = ML_gmax_int( (minStencil == mat->min_nz_per_row ? mypid:0), comm);
     t1 = NglobNonzeros/((double) Nglobrows);
@@ -2101,7 +2129,7 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
         if (mypid == 0)
           printf("%s: avg pre_comm recv length \t\t= %2.3e\n",mat->label,t1);
         if (mypid == 0) printf("\n");
-  
+
         t1 = ML_gmax_double( (proc_active ? c_info->time: 0.0), comm);
         i =ML_gmax_int((t1 == c_info->time ? mypid:0),comm);
         if (mypid == 0)
@@ -2120,7 +2148,7 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
            printf("%s: avg pre_comm exch bdry time \t\t= %2.3e\n\n",
                   mat->label,t1);
       }
-  
+
       if (mat->getrow->post_comm != NULL) {
         c_info = mat->getrow->post_comm;
         total_rcv_leng = ML_CommInfoOP_Compute_TotalRcvLength(c_info);
@@ -2182,7 +2210,7 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
       t1 = t1/((double) NumActiveProc);
       if (mypid == 0)
          printf("%s: avg apply+comm time \t\t= %2.3e\n\n",mat->label,t1);
-  
+
       t1 = ML_gmax_double( (proc_active ?mat->apply_without_comm_time:0.0),mat->comm);
       i =ML_gmax_int((t1 == mat->apply_without_comm_time ? mypid:0),mat->comm);
       if (mypid == 0)
@@ -2222,7 +2250,7 @@ void ML_Operator_ReportStatistics(ML_Operator *mat, char *appendlabel,
   time, communication time, and number of applies are set for the operator.
 
   ML_Operator *A            operator to profile
-  char *appendlabel         string to append to operator's label for id purposes
+  char *appendlabel         std::string to append to operator's label for id purposes
   int numits                number of applies to perform
 *******************************************************************************/
 
@@ -2319,7 +2347,7 @@ void ML_Operator_Profile(ML_Operator *A, char *appendlabel)
     for (j = 0; j < A->invec_leng; j++) bvec[j] = xvec[j];
 
     for (j=0; j<numits; j++) {
-       ML_exchange_bdry(bvec,A->getrow->pre_comm, A->invec_leng, 
+       ML_exchange_bdry(bvec,A->getrow->pre_comm, A->invec_leng,
                         A->comm, ML_OVERWRITE,NULL);
     ML_Comm_Barrier(A->comm);
     }
@@ -2378,7 +2406,7 @@ int ML_Operator_Get_Nnz(ML_Operator *A)
     if (columns != NULL) ML_free(columns);
     if (values != NULL) ML_free(values);
   }
-  return A->N_nonzeros; 
+  return A->N_nonzeros;
 }
 
 /* ******************************************************************** */
@@ -2389,14 +2417,14 @@ int ML_Operator_Get_Nnz(ML_Operator *A)
 /* ******************************************************************** */
 
 int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
-			    int **aggr_index)
+                            int **aggr_index)
 {
   /*
    * Take Amatrix and perform a maximal independent set on the associated
    * block matrix (where the block size is num_PDE_eqns). The resulting
-   * independent set is returned in aggr_index[] where 
+   * independent set is returned in aggr_index[] where
    *            aggr_index[k] = -1  ==> not part of independent set
-   *            aggr_index[k] > -1  ==> aggr_index[k]th local point in 
+   *            aggr_index[k] > -1  ==> aggr_index[k]th local point in
    *                                    independent set
    * NOTE: This routine has not yet been checked in parallel.
    *
@@ -2427,7 +2455,7 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
 
    /*= `amalgamate' refers to the conversion from block matrices
      to point matrices */
-   
+
    ML_Operator_AmalgamateAndDropWeak(Amatrix, num_PDE_eqns, 0.0);
 
    Nrows     /= num_PDE_eqns;
@@ -2452,8 +2480,8 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
       rcvbuf[i]    = (int *) ML_allocate(sizeof(int)*(rcvleng[i]+1));
       sndbuf[i]    = (int *) ML_allocate(sizeof(int)*(sndleng[i]+1));
                            /* +1 needed inside ML_Aggregate_LabelVertices */
-      for (j = 0; j < rcvleng[i]; j++) 
-         if (recvlist[i][j] > max_element ) 
+      for (j = 0; j < rcvleng[i]; j++)
+         if (recvlist[i][j] > max_element )
             max_element = recvlist[i][j];
    }
    Nghost = max_element - nvertices + 1;
@@ -2465,11 +2493,11 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
       for ( j = 0; j < sndleng[i]; j++ ) {
          index = sendlist[i][j];
          if ( index >= nvertices || index < 0 ) {
-	   printf("%d : Error : in sendlist.\n", comm->ML_mypid);
+           printf("%d : Error : in sendlist.\n", comm->ML_mypid);
             exit(0);
          }
          templist[index]++;
-	 /*= templist[j] is the number of processors who need `j' */	 
+         /*= templist[j] is the number of processors who need `j' */
       }
    }
 
@@ -2560,13 +2588,13 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
    /* delete nodes that are just isolated Dirichlet points */
 
    for (i = 0; i < nvertices ; i++) {
-     if (bdry[i] == 'T') state[i] = 'D'; 
+     if (bdry[i] == 'T') state[i] = 'D';
    }
 
-   aggr_count = ML_Aggregate_LabelVertices(nvertices, vlist,'x',state, vtype, 
-					   nvertices, rowptr, 
-					   columns, comm->ML_mypid,
-					   proclist, 
+   aggr_count = ML_Aggregate_LabelVertices(nvertices, vlist,'x',state, vtype,
+                                           nvertices, rowptr,
+                                           columns, comm->ML_mypid,
+                                           proclist,
                       Nneigh,sndbuf,neigh, sndleng,
                       Nneigh,rcvbuf, neigh, rcvleng,
                       recvlist, 1532, comm, *aggr_index);
@@ -2587,7 +2615,7 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
    ML_free(neigh);
 
 
-   ML_free(bdry); 
+   ML_free(bdry);
    ML_free(columns); ML_free(rowptr);
 
    /* communicate aggregate information so that ghost nodes which */
@@ -2605,10 +2633,10 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
 
    for (i = ntotal - 1; i >= 0; i-- ) {
       for (j = num_PDE_eqns-1; j >= 0; j--) {
-	if ( (*aggr_index)[i] == -1) 
-	  (*aggr_index)[i*num_PDE_eqns+j] = -1;
-	else 
-	  (*aggr_index)[i*num_PDE_eqns+j] = num_PDE_eqns*(*aggr_index)[i] + j;
+        if ( (*aggr_index)[i] == -1)
+          (*aggr_index)[i*num_PDE_eqns+j] = -1;
+        else
+          (*aggr_index)[i*num_PDE_eqns+j] = num_PDE_eqns*(*aggr_index)[i] + j;
       }
    }
 
@@ -2630,7 +2658,7 @@ int ML_Operator_MisRootPts( ML_Operator *Amatrix,  int num_PDE_eqns,
 Modify matrix by dropping small entries.
  *************************************************************************/
 int ML_CSR_DropSmall(ML_Operator *Pe, double AbsoluteDrop,
-		     double RelativeRowDrop, double RelativeColDrop)
+                     double RelativeRowDrop, double RelativeColDrop)
 
 {
   /* Drop entry Pe(I,J) when all of the following conditions are true:
@@ -2659,17 +2687,17 @@ int ML_CSR_DropSmall(ML_Operator *Pe, double AbsoluteDrop,
 
   if (RelativeColDrop != 0.0) {
     nn = Pe->invec_leng + ML_CommInfoOP_Compute_TotalRcvLength(
-				       Pe->getrow->pre_comm);
+                                       Pe->getrow->pre_comm);
     col_maxs = (double *) ML_allocate(sizeof(double)*(nn+1));
     for (i = 0; i < nn; i++) col_maxs[i] = 0.;
     for (i = 0; i < Pe->outvec_leng; i++) {
       for (j = csr_data->rowptr[i]; j < csr_data->rowptr[i+1]; j++) {
-	nn = csr_data->columns[j];
-	if (ML_abs(csr_data->values[j]) > col_maxs[nn] )
-	  col_maxs[nn] = ML_abs(csr_data->values[j]);
+        nn = csr_data->columns[j];
+        if (ML_abs(csr_data->values[j]) > col_maxs[nn] )
+          col_maxs[nn] = ML_abs(csr_data->values[j]);
       }
     }
-    for (i = 0; i < nn; i++) col_maxs[nn] *= RelativeColDrop; 
+    for (i = 0; i < nn; i++) col_maxs[nn] *= RelativeColDrop;
     for (i = Pe->invec_leng ; i < nn; i++) col_maxs[nn] = 0.;
   }
 
@@ -2679,8 +2707,8 @@ int ML_CSR_DropSmall(ML_Operator *Pe, double AbsoluteDrop,
     if (RelativeRowDrop != 0.0) {
       row_max = 0.;
       for (j = lower; j < csr_data->rowptr[i+1]; j++) {
-	if (ML_abs(csr_data->values[j]) > row_max) 
-	  row_max = ML_abs(csr_data->values[j]);
+        if (ML_abs(csr_data->values[j]) > row_max)
+          row_max = ML_abs(csr_data->values[j]);
       }
       if (row_max > 1.) row_max = 1.;
                   /* Ugh: For now ml_agg_min_energy seems   */
@@ -2692,22 +2720,22 @@ int ML_CSR_DropSmall(ML_Operator *Pe, double AbsoluteDrop,
 
     if (RelativeColDrop == 0.) {
       for (j = lower; j < csr_data->rowptr[i+1]; j++) {
-	dtemp = ML_abs(csr_data->values[j]);
-	if  (dtemp > row_max) {
-	  csr_data->values[nz_ptr] = csr_data->values[j];
-	  csr_data->columns[nz_ptr] = csr_data->columns[j];
-	  nz_ptr++;
-	}
+        dtemp = ML_abs(csr_data->values[j]);
+        if  (dtemp > row_max) {
+          csr_data->values[nz_ptr] = csr_data->values[j];
+          csr_data->columns[nz_ptr] = csr_data->columns[j];
+          nz_ptr++;
+        }
       }
     }
     else {
       for (j = lower; j < csr_data->rowptr[i+1]; j++) {
-	dtemp = ML_abs(csr_data->values[j]);
-	if  ( (dtemp > row_max) || (dtemp > col_maxs[csr_data->columns[j]])) {
-	  csr_data->values[nz_ptr] = csr_data->values[j];
-	  csr_data->columns[nz_ptr] = csr_data->columns[j];
-	  nz_ptr++;
-	}
+        dtemp = ML_abs(csr_data->values[j]);
+        if  ( (dtemp > row_max) || (dtemp > col_maxs[csr_data->columns[j]])) {
+          csr_data->values[nz_ptr] = csr_data->values[j];
+          csr_data->columns[nz_ptr] = csr_data->columns[j];
+          nz_ptr++;
+        }
       }
     }
     lower = csr_data->rowptr[i+1];
@@ -2723,7 +2751,7 @@ int ML_CSR_DropSmall(ML_Operator *Pe, double AbsoluteDrop,
 /* -1 in the array 'subset' */
 
 ML_Operator *ML_CSRmatrix_ColumnSubset(ML_Operator *Amat, int Nsubset,
-					       int subset[])
+                                               int subset[])
 {
   struct ML_CSR_MSRdata *csr_data;
   int    *row_ptr, *columns, *newrowptr, *newcolumns;
@@ -2760,9 +2788,9 @@ ML_Operator *ML_CSRmatrix_ColumnSubset(ML_Operator *Amat, int Nsubset,
     nnz_in_row = 0;
     for (j = row_ptr[i]; j < row_ptr[i+1]; j++) {
       if ( subset[columns[j]] != -1) {
-	nnz_in_row++;
-	newvalues[count   ] = values[j];
-	newcolumns[count++] = subset[columns[j]];
+        nnz_in_row++;
+        newvalues[count   ] = values[j];
+        newcolumns[count++] = subset[columns[j]];
       }
     }
     if (nnz_in_row > max_nz_per_row) max_nz_per_row = nnz_in_row;
@@ -2868,7 +2896,7 @@ int  ML_Operator_BlkMatInit(ML_Operator *BlkMat, ML_Comm *comm,
   int     i;
 
 
-  /* fill data structure */ 
+  /* fill data structure */
 
   ML_Operator_Clean(BlkMat);
   ML_Operator_Init(BlkMat,comm);
@@ -2886,7 +2914,7 @@ int  ML_Operator_BlkMatInit(ML_Operator *BlkMat, ML_Comm *comm,
   widget->matdata    = (ML_BlkMatData **) ML_allocate((NBlockRows*NBlockCols+1)*
                                            sizeof(ML_BlkMatData *));
 
-  for (i = 0; i < NBlockRows*NBlockCols; i++) { 
+  for (i = 0; i < NBlockRows*NBlockCols; i++) {
      widget->matrix[i] = NULL;
      widget->matdata[i] = NULL;
   }
@@ -2894,7 +2922,7 @@ int  ML_Operator_BlkMatInit(ML_Operator *BlkMat, ML_Comm *comm,
 
 
   BlkMat->data_destroy = ML_Operator_BlkMatDestroy;
- 
+
   ML_Operator_Set_ApplyFuncData(BlkMat, 0, 0,
                                 widget, 0,
                                 ML_Operator_BlkMatMatvec,0);
@@ -2915,10 +2943,10 @@ int ML_Operator_BlkMatInsert(ML_Operator *BlkMat, ML_Operator *Entry,
 
   widget = (struct MLBlkMat *) BlkMat->data;
 
-      
+
   if (widget == NULL) pr_error("ML_Operator_BlkMatInsert: empty data field\n");
   if (widget->final_called) pr_error("ML_Operator_BlkMatInsert: finalize already invoked\n");
-  if (   Row < 0    ) pr_error("ML_Operator_BlkMatInsert: Row index < 0\n"); 
+  if (   Row < 0    ) pr_error("ML_Operator_BlkMatInsert: Row index < 0\n");
   if (   Col < 0    ) pr_error("ML_Operator_BlkMatInsert: Col index < 0\n");
   if (Row >= widget->NBlockRows) pr_error("ML_Operator_BlkMatInsert: Row index too large\n");
   if (Col >= widget->NBlockCols) pr_error("ML_Operator_BlkMatInsert: Col index too large\n");
@@ -2939,14 +2967,13 @@ ML_Operator *ML_Operator_BlkMatExtract(ML_Operator *BlkMat, int Row, int Col)
 {
   struct  MLBlkMat  *widget;
   int i;
-  ML_Operator *Entry;
 
   widget = (struct MLBlkMat *) BlkMat->data;
 
-      
+
   if (widget == NULL) pr_error("ML_Operator_BlkMatExtract: empty data field\n");
   if (widget->final_called==0) pr_error("ML_Operator_BlkMatExtract: finalize not invoked\n");
-  if (   Row < 0    ) pr_error("ML_Operator_BlkMatExtract: Row index < 0\n"); 
+  if (   Row < 0    ) pr_error("ML_Operator_BlkMatExtract: Row index < 0\n");
   if (   Col < 0    ) pr_error("ML_Operator_BlkMatExtract: Col index < 0\n");
   if (Row >= widget->NBlockRows) pr_error("ML_Operator_BlkMatExtract: Row index too large\n");
   if (Col >= widget->NBlockCols) pr_error("ML_Operator_BlkMatExtract: Col index too large\n");
@@ -3059,10 +3086,10 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
         }
      }
   }
-  for (i =0; i < NBlkRows; i++) 
+  for (i =0; i < NBlkRows; i++)
      if (RowStart[i] == -1) RowStart[i] = 0;
 
-  for (j =0; j < NBlkCols; j++) 
+  for (j =0; j < NBlkCols; j++)
      if (ColStart[j] == -1) ColStart[j] = 0;
 
   k = RowStart[0];
@@ -3072,7 +3099,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
      RowStart[i+1] = RowStart[i] + k;
      k = kk;
   }
-    
+
   k = ColStart[0];
   ColStart[0] = 0;
   for (j =0; j < NBlkCols; j++) {
@@ -3105,7 +3132,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
       }
     }
   }
-       
+
   /***************************************************************************/
   /* 1) Assign global ids to each subblock:                                  */
   /*                                                                         */
@@ -3117,7 +3144,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
   /*     ColOffset is sum of MaxCols(0:j-1)*Nprocs                           */
   /*     k is the local index.                                               */
   /*                                                                         */
-  /* 2) Communicate so that ghost dofs also have global ids available.       */ 
+  /* 2) Communicate so that ghost dofs also have global ids available.       */
   /*                                                                         */
   /* 3) Build list (MasterGhostGid) holding all the ghost global ids for all */
   /*    the blocks as well as OwnProc which records the owning processor.    */
@@ -3136,7 +3163,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
       SubMat  = widget->matrix[i+j*NBlkRows];
       SubData = widget->matdata[i+j*NBlkRows];
       if (SubMat != NULL) {
-         if (SubMat->getrow->pre_comm == NULL) 
+         if (SubMat->getrow->pre_comm == NULL)
            SubMat->getrow->pre_comm = ML_CommInfoOP_Create();
 
 
@@ -3149,8 +3176,8 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
            GlobalId[k] = k + BlkMat->comm->ML_mypid*MaxCols[j] + ColOffset;
            dGlobalId[k]= (double) GlobalId[k];
          }
-         if (SubMat->getrow->pre_comm != NULL) 
-            ML_exchange_bdry(dGlobalId, SubMat->getrow->pre_comm, SubMat->invec_leng, 
+         if (SubMat->getrow->pre_comm != NULL)
+            ML_exchange_bdry(dGlobalId, SubMat->getrow->pre_comm, SubMat->invec_leng,
                              SubMat->comm, ML_OVERWRITE,NULL);
          for (k = 0; k < SubMat->getrow->pre_comm->total_rcv_length; k++) {
            GlobalId[k+SubMat->invec_leng] = (int) dGlobalId[k+SubMat->invec_leng];
@@ -3191,7 +3218,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
       k = kk;
     }
   }
-  
+
   /* remove duplicates */
   kk = 0;
   for (k = 1; k < MasterGhostIndex; k++) {
@@ -3271,7 +3298,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
   ML_az_sort(MyNeighbors,NneighTotal,NULL,NULL);
   ML_rm_duplicates(MyNeighbors, &NneighTotal);
 
-  ML_CommInfoOP_Set_neighbors(&(BlkMat->getrow->pre_comm), NneighTotal, 
+  ML_CommInfoOP_Set_neighbors(&(BlkMat->getrow->pre_comm), NneighTotal,
                    MyNeighbors, ML_OVERWRITE, NULL, 0);
 
 
@@ -3287,7 +3314,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
   request      = (USR_REQ  *) ML_allocate(sizeof(USR_REQ)*(NneighTotal+1));
 
   for (kk = 0; kk < NneighTotal; kk++) NrcvFromProc[kk] = 0;
-  kk = 0; 
+  kk = 0;
   for (k = 0; k < NneighTotal; k++) {
     while ( (kk < MasterGhostIndex) && (OwnProc[kk] == MyNeighbors[k])) {
        NrcvFromProc[k]++;
@@ -3301,10 +3328,10 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
   for (i = 0; i < NneighTotal; i++)   /*** post receives ***/
     BlkMat->comm->USR_irecvbytes((void *) &(NSndToProc[i]), sizeof(int),
                 &(MyNeighbors[i]), &type, BlkMat->comm->USR_comm, request+i);
-  for (i = 0; i < NneighTotal; i++)   /*** send data *******/ 
-    BlkMat->comm->USR_sendbytes((void *) &(NrcvFromProc[i]), sizeof(int), 
+  for (i = 0; i < NneighTotal; i++)   /*** send data *******/
+    BlkMat->comm->USR_sendbytes((void *) &(NrcvFromProc[i]), sizeof(int),
                 MyNeighbors[i], type, BlkMat->comm->USR_comm);
-  for (i = 0; i < NneighTotal; i++)  /*** recv data ********/ 
+  for (i = 0; i < NneighTotal; i++)  /*** recv data ********/
     BlkMat->comm->USR_cheapwaitbytes((void *) &(NSndToProc[i]), sizeof(int),
                 &(MyNeighbors[i]), &type, BlkMat->comm->USR_comm, request+i);
 
@@ -3323,13 +3350,13 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
               (sizeof(int)*NSndToProc[i]),&(MyNeighbors[i]),
               &type,BlkMat->comm->USR_comm, request+i);
   kk = 0;
-  for (i = 0; i < NneighTotal; i++) { /*** send data *******/ 
+  for (i = 0; i < NneighTotal; i++) { /*** send data *******/
     BlkMat->comm->USR_sendbytes((void *) &(MasterGhostGid[kk]),
                 sizeof(int)*NrcvFromProc[i], MyNeighbors[i],
                 type, BlkMat->comm->USR_comm);
     kk += NrcvFromProc[i];
   }
-  for (i = 0; i < NneighTotal; i++)  /*** recv data *******/ 
+  for (i = 0; i < NneighTotal; i++)  /*** recv data *******/
     BlkMat->comm->USR_cheapwaitbytes((void *) SendIds[i], (unsigned int)
               (sizeof(int)*NSndToProc[i]),&(MyNeighbors[i]),
               &type, BlkMat->comm->USR_comm, request+i);
@@ -3348,7 +3375,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
   count = widget->invec;
   for (kk = 0; kk < NneighTotal; kk++) {
     for (k = 0; k < NSndToProc[kk]; k++) {
-      i = 0; 
+      i = 0;
       while ( SendIds[kk][k]  >= Offsets[i])  i++; /* linear search */
       SendIds[kk][k] = SendIds[kk][k] - BlkMat->comm->ML_mypid*MaxCols[i-1] +
                                       ColStart[i-1] - Offsets[i-1];
@@ -3379,7 +3406,7 @@ int  ML_Operator_BlkMatFinalize(ML_Operator *BlkMat)
 
   ML_Operator_Set_Getrow(BlkMat, widget->outvec, ML_Operator_BlkMatGetrow);
 
-
+  return 0;
 }
 
 
@@ -3407,9 +3434,9 @@ void  ML_Operator_BlkMatDestroy(void *data)
   if (widget != NULL) {
     for (i = 0; i < widget->NBlockRows*widget->NBlockCols; i++) {
       if ( widget->matdata[i] != NULL) {
-        ML_free(widget->matdata[i]->LocalId); 
-        ML_free(widget->matdata[i]->GlobalId); 
-        ML_free(widget->matdata[i]); 
+        ML_free(widget->matdata[i]->LocalId);
+        ML_free(widget->matdata[i]->GlobalId);
+        ML_free(widget->matdata[i]);
       }
     }
     if (widget->destroy_level == ML_DESTROY_EVERYTHING) {
@@ -3464,7 +3491,7 @@ int ML_Operator_BlkMatMatvec(ML_Operator *BlkMat, int ilen,
            ML_Operator_Apply(SubMat, SubMat->invec_leng,
             &(p[ColStart[j]]), SubMat->outvec_leng, temp);
            ptr = &(ap[RowStart[i]]);
-           for (k = 0; k < SubMat->outvec_leng; k++) 
+           for (k = 0; k < SubMat->outvec_leng; k++)
               ptr[k] += temp[k];
         }
 
@@ -3512,7 +3539,7 @@ int ML_Operator_BlkMatGetrow(ML_Operator *BlkMat, int N_requested_rows,
         LocalId = matdata[BlockRow+j*NBlkRows]->LocalId;
 
         SubInvecLeng = SubMat->invec_leng;
-        i = ML_Operator_Getrow(SubMat, 1, &row, allocated_space-k, 
+        i = ML_Operator_Getrow(SubMat, 1, &row, allocated_space-k,
                   &(columns[k]), &( values[k]), row_lengths);
         if (i != 1) return(0);
         /******************************************************/
@@ -3545,12 +3572,12 @@ int ML_Operator_BlkMatGetrow(ML_Operator *BlkMat, int N_requested_rows,
 /*******************************************************************/
 
 
-int ML_Blkrap(ML_Operator *Rmat, ML_Operator *Amat, ML_Operator *Pmat, 
+int ML_Blkrap(ML_Operator *Rmat, ML_Operator *Amat, ML_Operator *Pmat,
               ML_Operator *Result, int matrix_type)
 {
   struct MLBlkMat    *Rwidget, *Pwidget, *Awidget;
   int    RNBlkRows,ANBlkRows,PNBlkRows,RNBlkCols,ANBlkCols,PNBlkCols;
-  ML_Operator *RSubMat, *ASubMat, *PSubMat, *SubMat; 
+  ML_Operator *RSubMat, *ASubMat, *PSubMat, *SubMat;
   ML_Operator **Rmatrix, **Amatrix, **Pmatrix;
   int         i, j;
 
@@ -3632,7 +3659,7 @@ int ML_Blkrap(ML_Operator *Rmat, ML_Operator *Amat, ML_Operator *Pmat,
 /* for off-diagonals which would require a BlockRowLocation and  */
 /* a BlockColLocation. I'm not sure if this is really needed?    */
 /*****************************************************************/
-ML_Operator *ProjectMe(ML *mlptr, int BlockLocation, int FromLevel, 
+ML_Operator *ProjectMe(ML *mlptr, int BlockLocation, int FromLevel,
                        ML_Operator *Matrix,int matrix_type)
 {
   ML_Operator *Answer, *CompR, *CompP, *Rmat, *Pmat;

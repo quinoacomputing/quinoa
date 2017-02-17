@@ -22,7 +22,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Mike A. Heroux (maherou@sandia.gov)
 //
@@ -86,6 +86,10 @@ static Int analyze_worker       /* returns KLU_OK or < 0 if error */
     /* ---------------------------------------------------------------------- */
     /* initializations */
     /* ---------------------------------------------------------------------- */
+    for (k = 0 ; k < AMD_INFO ; k++)
+    {
+        amd_Info[k] = 0;
+    }
 
     /* compute the inverse of Pbtf */
 #ifndef NDEBUG
@@ -186,7 +190,7 @@ static Int analyze_worker       /* returns KLU_OK or < 0 if error */
             /* -------------------------------------------------------------- */
 
             /*result = AMD_order (nk, Cp, Ci, Pblk, NULL, amd_Info) ;*/
-            result = KLU_OrdinalTraits<int>::amd_order (nk, Cp, Ci, Pblk, 
+            result = KLU_OrdinalTraits<Int>::amd_order (nk, Cp, Ci, Pblk, 
                         NULL, amd_Info) ;
             ok = (result >= AMD_OK) ;
             if (result == AMD_OUT_OF_MEMORY)
@@ -386,6 +390,7 @@ static KLU_symbolic<Entry, Int> *order_and_analyze  /* returns NULL if error, or
     /* ---------------------------------------------------------------------- */
 
     Common->work = 0 ;
+    work = 0;
 
     if (do_btf)
     {
@@ -530,7 +535,7 @@ KLU_symbolic<Entry, Int> *KLU_analyze       /* returns NULL if error, or a valid
         /* natural ordering */
         /* TODO : c++ sees Ap, Ai as int *& Why ? */
         /* TODO : c++ does not allow NULL to be passed directly */
-        int *dummy = NULL ;
+        Int *dummy = NULL ;
         return (KLU_analyze_given (n, Ap, Ai, dummy, dummy, Common)) ;
     }
     else

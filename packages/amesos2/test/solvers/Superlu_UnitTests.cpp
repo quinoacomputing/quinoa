@@ -117,8 +117,8 @@ namespace {
     clp.setOption("filedir",&filedir,"Directory of matrix files.");
     clp.addOutputSetupOptions(true);
     clp.setOption("test-mpi", "test-serial", &testMpi,
-		  "Test MPI by default or force serial test.  In a serial build,"
-		  " this option is ignored and a serial comm is always used." );
+                  "Test MPI by default or force serial test.  In a serial build,"
+                  " this option is ignored and a serial comm is always used." );
   }
 
   RCP<const Comm<int> > getDefaultComm()
@@ -132,10 +132,12 @@ namespace {
     return ret;
   }
 
+  /*
   RCP<FancyOStream> getDefaultOStream()
   {
     return( VerboseObjectBase::getDefaultOStream() );
   }
+  */
 
 
   /*
@@ -201,7 +203,6 @@ namespace {
     typedef ScalarTraits<SCALAR> ST;
     typedef CrsMatrix<SCALAR,LO,GO,Node> MAT;
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
-    typedef Superlu<MAT,MV> SOLVER;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
     RCP<const Comm<int> > comm = getDefaultComm();
@@ -236,7 +237,6 @@ namespace {
     typedef ScalarTraits<SCALAR> ST;
     typedef CrsMatrix<SCALAR,LO,GO,Node> MAT;
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
-    typedef Superlu<MAT,MV> SOLVER;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
     RCP<const Comm<int> > comm = getDefaultComm();
@@ -274,7 +274,6 @@ namespace {
     typedef ScalarTraits<SCALAR> ST;
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
     typedef typename ST::magnitudeType Mag;
-    typedef ScalarTraits<Mag> MT;
     const size_t numVecs = 7;
 
     Platform &platform = Tpetra::DefaultPlatform::getDefaultPlatform();
@@ -333,7 +332,6 @@ namespace {
     typedef ScalarTraits<SCALAR> ST;
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
     typedef typename ST::magnitudeType Mag;
-    typedef ScalarTraits<Mag> MT;
     const size_t numVecs = 7;
 
     Platform &platform = Tpetra::DefaultPlatform::getDefaultPlatform();
@@ -389,7 +387,6 @@ namespace {
     typedef ScalarTraits<cmplx> ST;
     typedef MultiVector<cmplx,LO,GO,Node> MV;
     typedef typename ST::magnitudeType Mag;
-    typedef ScalarTraits<Mag> MT;
     Platform &platform = Tpetra::DefaultPlatform::getDefaultPlatform();
     RCP<const Comm<int> > comm = platform.getComm();
     RCP<Node>             node = platform.getNode();
@@ -412,8 +409,8 @@ namespace {
 
     for( it = xValues.begin(); it != xValues.end(); ++it ){
       if( rngmap->isNodeGlobalElement( (*it).first ) ){
-	out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
-	X->replaceGlobalValue( (*it).first, 0, (*it).second );
+        out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
+        X->replaceGlobalValue( (*it).first, 0, (*it).second );
       }
     }
 
@@ -428,8 +425,8 @@ namespace {
 
     for( it = bValues.begin(); it != bValues.end(); ++it ){
       if( rngmap->isNodeGlobalElement( (*it).first ) ){
-	out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
-	B->replaceGlobalValue( (*it).first, 0, (*it).second );
+        out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
+        B->replaceGlobalValue( (*it).first, 0, (*it).second );
       }
     }
 
@@ -459,7 +456,6 @@ namespace {
     typedef ScalarTraits<cmplx> ST;
     typedef MultiVector<cmplx,LO,GO,Node> MV;
     typedef typename ST::magnitudeType Mag;
-    typedef ScalarTraits<Mag> MT;
     const size_t numVecs = 7;
 
     Platform &platform = Tpetra::DefaultPlatform::getDefaultPlatform();
@@ -507,7 +503,6 @@ namespace {
     typedef ScalarTraits<cmplx> ST;
     typedef MultiVector<cmplx,LO,GO,Node> MV;
     typedef typename ST::magnitudeType Mag;
-    typedef ScalarTraits<Mag> MT;
     const size_t numVecs = 7;
 
     Platform &platform = Tpetra::DefaultPlatform::getDefaultPlatform();
@@ -557,14 +552,14 @@ namespace {
    * Instantiations
    */
 #ifdef HAVE_TEUCHOS_COMPLEX
-#  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, SCALAR)	\
+#  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, SCALAR)        \
   typedef std::complex<SCALAR>  Complex##SCALAR;                        \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Superlu, Initialization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Superlu, SymbolicFactorization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Superlu, NumericFactorization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Superlu, ComplexSolve, SCALAR, LO, GO) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Superlu, ComplexSolve2, SCALAR, LO, GO)
-  
+
 #  ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO) \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, float)
@@ -585,13 +580,13 @@ namespace {
 #endif
 
 #ifdef HAVE_TPETRA_INST_FLOAT
-#  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )       \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, float )
 #else
 #  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-#  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )      \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, double )
 #else
 #  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )
@@ -613,29 +608,37 @@ namespace {
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( ORDINAL, ORDINAL )
 
 #ifdef FAST_DEVELOPMENT_UNIT_TEST_BUILD
-#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )     \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, double)       \
   UNIT_TEST_GROUP_ORDINAL(int)
   UNIT_TEST_GROUP_ORDINAL_COMPLEX(LO,GO,float)
 
 #else // not FAST_DEVELOPMENT_UNIT_TEST_BUILD
 
-#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )	\
-  UNIT_TEST_GROUP_ORDINAL_FLOAT(LO, GO)			\
-  UNIT_TEST_GROUP_ORDINAL_DOUBLE(LO, GO)		\
-  UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO,GO)		\
+#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )     \
+  UNIT_TEST_GROUP_ORDINAL_FLOAT(LO, GO)                 \
+  UNIT_TEST_GROUP_ORDINAL_DOUBLE(LO, GO)                \
+  UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO,GO)          \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO,GO)
 
+  //Add JDB (10-19-215)
+#ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   UNIT_TEST_GROUP_ORDINAL(int)
-
-#  ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   typedef long int LongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongInt )
-#    ifdef HAVE_TEUCHOS_LONG_LONG_INT
+  #ifdef HAVE_TPETRA_INT_LONG_LONG
   typedef long long int LongLongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongLongInt )
-#    endif
-#  endif  // EXPL-INST
+  #endif
+#else  //ETI
+  #ifdef HAVE_TPETRA_INST_INT_INT
+  UNIT_TEST_GROUP_ORDINAL(int)
+  #endif
+  #ifdef HAVE_TPETRA_INST_INT_LONG
+  typedef long int LongInt;
+  UNIT_TEST_GROUP_ORDINAL_ORDINAL(int,LongInt)
+  #endif
+#endif  // EXPL-INST
 
 #endif // FAST_DEVELOPMENT_UNIT_TEST_BUILD
 

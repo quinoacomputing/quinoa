@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -36,8 +36,8 @@
 // URL: http://math.nist.gov/MatrixMarket/data/NEP/mhd/mhd1280b.html
 // Size: 1280 x 1280
 // NNZ: 22778 entries
-// 
-// NOTE: No preconditioner is used in this case. 
+//
+// NOTE: No preconditioner is used in this case.
 //
 
 #include "AnasaziConfigDefs.hpp"
@@ -53,37 +53,39 @@
 #include <Tpetra_CrsMatrix.hpp>
 
 // I/O for Harwell-Boeing files
-#include <iohb.h>
+#include <Trilinos_Util_iohb.h>
 
-using namespace Teuchos;
-using Tpetra::Platform;
-using Tpetra::Operator;
-using Tpetra::CrsMatrix;
-using Tpetra::MultiVector;
-using Tpetra::Map;
-using std::vector;
-
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
+#ifndef HAVE_TPETRA_COMPLEX_DOUBLE
+#  error "Anasazi: This test requires Scalar = std::complex<double> to be enabled in Tpetra."
+#else
+  using namespace Teuchos;
+  using Tpetra::CrsMatrix;
+  using Tpetra::Map;
+  using Tpetra::MultiVector;
+  using Tpetra::Operator;
+  using std::vector;
   using std::cout;
   using std::endl;
 
-  typedef std::complex<double>                ST;
-  typedef ScalarTraits<ST>                   SCT;
-  typedef SCT::magnitudeType                  MT;
-  typedef MultiVector<ST,int>                 MV;
-  typedef Operator<ST,int>                    OP;
-  typedef Anasazi::MultiVecTraits<ST,MV>     MVT;
-  typedef Anasazi::OperatorTraits<ST,MV,OP>  OPT;
+  typedef std::complex<double>                 ST;
+  typedef ScalarTraits<ST>                    SCT;
+  typedef SCT::magnitudeType                   MT;
+  typedef MultiVector<ST>                      MV;
+  typedef MultiVector<ST>::global_ordinal_type GO;
+  typedef Operator<ST>                         OP;
+  typedef Anasazi::MultiVecTraits<ST,MV>      MVT;
+  typedef Anasazi::OperatorTraits<ST,MV,OP>   OPT;
+
+  Teuchos::GlobalMPISession mpisess (&argc, &argv, &std::cout);
+
   const ST ONE  = SCT::one();
-
-  GlobalMPISession mpisess(&argc,&argv,&std::cout);
-
   int info = 0;
   int MyPID = 0;
 
-  RCP<const Platform<int> > platform = Tpetra::DefaultPlatform<int>::getPlatform();
-  RCP<const Comm<int> > comm = platform->getComm();
+  RCP<const Teuchos::Comm<int> > comm =
+    Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
 
   MyPID = rank(*comm);
 
@@ -150,8 +152,8 @@ int main(int argc, char *argv[])
     return -1;
   }
   // create map
-  Map<int> map(dim,0,comm);
-  RCP<CrsMatrix<ST,int> > K = rcp(new CrsMatrix<ST,int>(map,rnnzmax));
+  RCP<const Map<> > map = rcp (new Map<> (dim, 0, comm));
+  RCP<CrsMatrix<ST> > K = rcp(new CrsMatrix<ST> (map, rnnzmax));
   if (MyPID == 0) {
     // Convert interleaved doubles to complex values
     // HB format is compressed column. CrsMatrix is compressed row.
@@ -159,7 +161,7 @@ int main(int argc, char *argv[])
     const int *rptr = rowind;
     for (int c=0; c<dim; ++c) {
       for (int colnnz=0; colnnz < colptr[c+1]-colptr[c]; ++colnnz) {
-        K->insertGlobalValues(*rptr++ - 1,tuple(c),tuple(ST(dptr[0],dptr[1])));
+        K->insertGlobalValues (*rptr++ - 1, tuple<GO> (c), tuple (ST (dptr[0], dptr[1])));
         dptr += 2;
       }
     }
@@ -174,7 +176,7 @@ int main(int argc, char *argv[])
 
   // Create initial vectors
   RCP<MV> ivec = rcp( new MV(map,blockSize) );
-  ivec->random();
+  ivec->randomize ();
 
   // Create eigenproblem
   RCP<Anasazi::BasicEigenproblem<ST,MV,OP> > problem =
@@ -196,7 +198,6 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-
   // Set verbosity level
   int verbosity = Anasazi::Errors + Anasazi::Warnings + Anasazi::FinalSummary + Anasazi::TimingDetails;
   if (verbose) {
@@ -205,8 +206,6 @@ int main(int argc, char *argv[])
   if (debug) {
     verbosity += Anasazi::Debug;
   }
-
-
 
   // Eigensolver parameters
   int numBlocks = 8;
@@ -288,4 +287,5 @@ int main(int argc, char *argv[])
   }
   return 0;
 
+#endif // HAVE_TPETRA_COMPLEX_DOUBLE
 }

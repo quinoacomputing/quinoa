@@ -20,7 +20,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -126,8 +126,17 @@ int main(int argc, char *argv[])
   // Create uniform distributed map.
   // Note that linear map are used for simplicity only!
   // Amesos (through Epetra) can support *any* map.
-  Epetra_Map map(readMap->NumGlobalElements(), 0, Comm);
-
+  Epetra_Map* mapPtr = 0;
+  
+  if(readMap->GlobalIndicesInt())
+    mapPtr = new Epetra_Map((int) readMap->NumGlobalElements(), 0, Comm);
+  else if(readMap->GlobalIndicesLongLong())
+    mapPtr = new Epetra_Map(readMap->NumGlobalElements(), 0, Comm);
+  else
+    assert(false);
+  
+  Epetra_Map& map = *mapPtr;
+  
   // Create the distributed matrix, based on Map.
   Epetra_CrsMatrix A(Copy, map, 0);
 
@@ -152,6 +161,7 @@ int main(int argc, char *argv[])
   delete readx; 
   delete readb;
   delete readxexact;
+  delete mapPtr;
 
   // Creates an epetra linear problem, contaning matrix
   // A, solution x and rhs b.
@@ -192,34 +202,36 @@ int main(int argc, char *argv[])
   Solver->PrintStatus();
   Solver->PrintTiming();
 
-  Teuchos::ParameterList TimingsList;
-  Solver->GetTiming( TimingsList );
+  // Nothing done with timing information, so commenting out.
+
+  //Teuchos::ParameterList TimingsList;
+  //Solver->GetTiming( TimingsList );
 
   // You can find out how much time was spent in ...
-  double sfact_time, nfact_time, solve_time;
-  double mtx_conv_time, mtx_redist_time, vec_redist_time;
+  //double sfact_time, nfact_time, solve_time;
+  //double mtx_conv_time, mtx_redist_time, vec_redist_time;
 
   // 1) The symbolic factorization
   //    (parameter doesn't always exist)
-  sfact_time = TimingsList.get( "Total symbolic factorization time", 0.0 );
+  //sfact_time = TimingsList.get( "Total symbolic factorization time", 0.0 );
 
   // 2) The numeric factorization
   //    (always exists if NumericFactorization() is called)
-  nfact_time = Teuchos::getParameter<double>( TimingsList, "Total numeric factorization time" );
+  //nfact_time = Teuchos::getParameter<double>( TimingsList, "Total numeric factorization time" );
 
   // 3) Solving the linear system
   //    (always exists if Solve() is called)
-  solve_time = Teuchos::getParameter<double>( TimingsList, "Total solve time" );
+  //solve_time = Teuchos::getParameter<double>( TimingsList, "Total solve time" );
 
   // 4) Converting the matrix to the accepted format for the solver
   //    (always exists if SymbolicFactorization() is called)
-  mtx_conv_time = Teuchos::getParameter<double>( TimingsList, "Total solve time" );
+  //mtx_conv_time = Teuchos::getParameter<double>( TimingsList, "Total solve time" );
 
   // 5) Redistributing the matrix for each solve to the accepted format for the solver
-  mtx_redist_time = TimingsList.get( "Total matrix redistribution time", 0.0 );
+  //mtx_redist_time = TimingsList.get( "Total matrix redistribution time", 0.0 );
 
   // 6) Redistributing the vector for each solve to the accepted format for the solver
-  vec_redist_time = TimingsList.get( "Total vector redistribution time", 0.0 );
+  //vec_redist_time = TimingsList.get( "Total vector redistribution time", 0.0 );
 
   // =========================================== //
   // E N D   O F   T H E   A M E S O S   P A R T //

@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 */
@@ -52,15 +52,15 @@ class Epetra_SerialComm;
 /*! The Epetra_SerialDistributor class is an Serial implement of Epetra_Distributor that is essentially a trivial class
     since a serial machine is a trivial parallel machine.
   An Epetra_SerialDistributor object is actually produced by calling a method in the Epetra_SerialComm class.
-  
+
 */
 
 class Epetra_SerialDistributor: public Epetra_Object, public virtual Epetra_Distributor {
-    
+
   public:
 
     //! @name Constructor/Destructor
-  //@{ 
+  //@{
 
   //! Constructor.
   Epetra_SerialDistributor(const Epetra_SerialComm & Comm);
@@ -71,11 +71,17 @@ class Epetra_SerialDistributor: public Epetra_Object, public virtual Epetra_Dist
   //! Clone method
   Epetra_Distributor * Clone(){return(dynamic_cast<Epetra_Distributor *>(new Epetra_SerialDistributor(*this)));};
 
+  //! Create and extract the reverse version of the distributor.
+  /*! This is not implemented for SeriaDistributor.
+   */
+  Epetra_Distributor * ReverseClone() {return 0;}
+
   //! Epetra_Comm Destructor.
   virtual ~Epetra_SerialDistributor();
+
   //@}
 
-  
+
   int CreateFromSends( const int & NumExportIDs,
                        const int * ExportPIDs,
 		       bool Deterministic,
@@ -89,6 +95,15 @@ class Epetra_SerialDistributor: public Epetra_Object, public virtual Epetra_Dist
                        int *& ExportGIDs,
                        int *& ExportPIDs);
 
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  int CreateFromRecvs( const int & NumRemoteIDs,
+                       const long long * RemoteGIDs,
+                       const int * RemotePIDs,
+		       bool Deterministic,
+                       int & NumExportIDs,
+                       long long *& ExportGIDs,
+                       int *& ExportPIDs);
+#endif
 
   int Do       (char * export_objs,
                 int obj_size,
@@ -135,8 +150,7 @@ class Epetra_SerialDistributor: public Epetra_Object, public virtual Epetra_Dist
                      int & len_import_objs,
                      char *& import_objs);
 
-
-  virtual void Print(ostream & os) const;
+  virtual void Print(std::ostream & os) const;
 
  private:
   int nrecvs_;

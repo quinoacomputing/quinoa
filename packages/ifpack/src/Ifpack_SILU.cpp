@@ -1,30 +1,44 @@
-//@HEADER
+/*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
+*/
 
 #include "Ifpack_ConfigDefs.h"
 #include "Ifpack_SILU.h"
@@ -61,7 +75,7 @@ Ifpack_SILU::Ifpack_SILU(Epetra_RowMatrix* Matrix_in) :
   DropTol_(1e-4),
   FillTol_(1e-2),
   FillFactor_(10.0),
-  DropRule_(9), 
+  DropRule_(9),
   Condest_(-1.0),
   IsInitialized_(false),
   IsComputed_(false),
@@ -102,7 +116,7 @@ void Ifpack_SILU::Destroy()
     // Cleanup stuff I allocated
     delete [] etree_;etree_=0;
     delete [] perm_r_;perm_r_=0;
-    delete [] perm_c_;perm_c_=0;  
+    delete [] perm_c_;perm_c_=0;
   }
 }
 
@@ -116,12 +130,13 @@ int Ifpack_SILU::SetParameters(Teuchos::ParameterList& List)
 
   // set label
   sprintf(Label_, "IFPACK SILU (drop=%d, zpv=%f, ffact=%f, rthr=%f)",
-	  DropRule(),FillTol(),FillFactor(),DropTol());
+          DropRule(),FillTol(),FillFactor(),DropTol());
   return(0);
 }
 
 //==========================================================================
-int Ifpack_SILU::Initialize() 
+template<typename int_type>
+int Ifpack_SILU::TInitialize()
 {
 
 #ifdef IFPACK_TEUCHOS_TIME_MONITOR
@@ -147,25 +162,25 @@ int Ifpack_SILU::Initialize()
     int size = A_->MaxNumEntries();
     int N=A_->NumMyRows();
     Aover_ = rcp(new Epetra_CrsMatrix(Copy,A_->RowMatrixRowMap(), size));
-    vector<int> Indices(size);
-    vector<double> Values(size);
+    std::vector<int_type> Indices(size);
+    std::vector<double> Values(size);
 
     int i,j,ct,*rowptr,*colind;
     double *values;
     IFPACK_CHK_ERR(CrsMatrix->ExtractCrsDataPointers(rowptr,colind,values));
 
-    // Use the fact that EpetraCrsMatrices always number the off-processor columns *LAST*   
+    // Use the fact that EpetraCrsMatrices always number the off-processor columns *LAST*
     for(i=0;i<N;i++){
       for(j=rowptr[i],ct=0;j<rowptr[i+1];j++){
-	if(colind[j]<N){
-	  Indices[ct]=CrsMatrix->GCID(colind[j]);
-	  Values[ct]=values[j];
-	  ct++;
-	}
+        if(colind[j]<N){
+          Indices[ct]= (int_type) CrsMatrix->GCID64(colind[j]);
+          Values[ct]=values[j];
+          ct++;
+        }
       }
-      Aover_->InsertGlobalValues(CrsMatrix->GRID(i),ct,&Values[0],&Indices[0]);
+      Aover_->InsertGlobalValues((int_type) CrsMatrix->GRID64(i),ct,&Values[0],&Indices[0]);
     }
-    IFPACK_CHK_ERR(Aover_->FillComplete(CrsMatrix->RowMap(),CrsMatrix->RowMap()));  
+    IFPACK_CHK_ERR(Aover_->FillComplete(CrsMatrix->RowMap(),CrsMatrix->RowMap()));
   }
   else{
     // Case #3: Extract using copys
@@ -173,36 +188,37 @@ int Ifpack_SILU::Initialize()
     Aover_ = rcp(new Epetra_CrsMatrix(Copy,A_->RowMatrixRowMap(), size));
     if (Aover_.get() == 0) IFPACK_CHK_ERR(-5); // memory allocation error
 
-    vector<int> Indices1(size),Indices2(size);
-    vector<double> Values1(size),Values2(size);
+    std::vector<int> Indices1(size);
+    std::vector<int_type> Indices2(size);
+    std::vector<double> Values1(size),Values2(size);
 
     // extract each row at-a-time, and insert it into
     // the graph, ignore all off-process entries
     int N=A_->NumMyRows();
     for (int i = 0 ; i < N ; ++i) {
       int NumEntries;
-      int GlobalRow = A_->RowMatrixRowMap().GID(i);
-      IFPACK_CHK_ERR(A_->ExtractMyRowCopy(i, size, NumEntries, 
-					  &Values1[0], &Indices1[0]));
+      int_type GlobalRow = (int_type) A_->RowMatrixRowMap().GID64(i);
+      IFPACK_CHK_ERR(A_->ExtractMyRowCopy(i, size, NumEntries,
+                                          &Values1[0], &Indices1[0]));
 
       // convert to global indices, keeping only on-proc entries
       int ct=0;
       for (int j=0; j < NumEntries ; ++j) {
-	if(Indices1[j] < N){
-	  Indices2[ct] = A_->RowMatrixColMap().GID(Indices1[j]);
-	  Values2[ct]=Values1[j];
-	  ct++;
-	} 
+        if(Indices1[j] < N){
+          Indices2[ct] = (int_type) A_->RowMatrixColMap().GID64(Indices1[j]);
+          Values2[ct]=Values1[j];
+          ct++;
+        }
       }
       IFPACK_CHK_ERR(Aover_->InsertGlobalValues(GlobalRow,ct,
-						&Values2[0],&Indices2[0]));
-    }    
+                                                &Values2[0],&Indices2[0]));
+    }
     IFPACK_CHK_ERR(Aover_->FillComplete(A_->RowMatrixRowMap(),A_->RowMatrixRowMap()));
   }
 
   // Finishing touches
   Aover_->OptimizeStorage();
-  Graph_=rcp(const_cast<Epetra_CrsGraph*>(&Aover_->Graph()),false); 
+  Graph_=rcp(const_cast<Epetra_CrsGraph*>(&Aover_->Graph()),false);
 
   IsInitialized_ = true;
   NumInitialize_++;
@@ -211,15 +227,32 @@ int Ifpack_SILU::Initialize()
   return(0);
 }
 
+int Ifpack_SILU::Initialize() {
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  if(A_->RowMatrixRowMap().GlobalIndicesInt()) {
+    return TInitialize<int>();
+  }
+  else
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  if(A_->RowMatrixRowMap().GlobalIndicesLongLong()) {
+    return TInitialize<long long>();
+  }
+  else
+#endif
+    throw "Ifpack_SILU::Initialize: GlobalIndices type unknown for A_";
+}
+
+
 //==========================================================================
-int Ifpack_SILU::Compute() 
+int Ifpack_SILU::Compute()
 {
 
 #ifdef IFPACK_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Ifpack_SILU::Compute");
 #endif
 
-  if (!IsInitialized()) 
+  if (!IsInitialized())
     IFPACK_CHK_ERR(Initialize());
 
   Time_.ResetStartTime();
@@ -241,7 +274,7 @@ int Ifpack_SILU::Compute()
 
   // Copy the data over to SuperLU land - mark as a transposed CompCol Matrix
   dCreate_CompCol_Matrix(&SA_,N,N,Aover_->NumMyNonzeros(),
-			 values,colind,rowptr,SLU_NC,SLU_D,SLU_GE);
+                         values,colind,rowptr,SLU_NC,SLU_D,SLU_GE);
 
   // Fill any zeros on the diagonal
   // Commented out for now
@@ -275,8 +308,8 @@ int Ifpack_SILU::Compute()
 
 //=============================================================================
 // This function finds Y such that LDU Y = X or U(trans) D L(trans) Y = X for multiple RHS
-int Ifpack_SILU::Solve(bool Trans, const Epetra_MultiVector& X, 
-                      Epetra_MultiVector& Y) const 
+int Ifpack_SILU::Solve(bool Trans, const Epetra_MultiVector& X,
+                      Epetra_MultiVector& Y) const
 {
 
 #ifdef IFPACK_TEUCHOS_TIME_MONITOR
@@ -306,8 +339,8 @@ int Ifpack_SILU::Solve(bool Trans, const Epetra_MultiVector& X,
 
 //=============================================================================
 // This function finds X such that LDU Y = X or U(trans) D L(trans) Y = X for multiple RHS
-int Ifpack_SILU::Multiply(bool Trans, const Epetra_MultiVector& X, 
-				Epetra_MultiVector& Y) const 
+int Ifpack_SILU::Multiply(bool Trans, const Epetra_MultiVector& X,
+                                Epetra_MultiVector& Y) const
 {
 
   if (!IsComputed())
@@ -318,7 +351,7 @@ int Ifpack_SILU::Multiply(bool Trans, const Epetra_MultiVector& X,
 
 //=============================================================================
 // This function finds X such that LDU Y = X or U(trans) D L(trans) Y = X for multiple RHS
-int Ifpack_SILU::ApplyInverse(const Epetra_MultiVector& X, 
+int Ifpack_SILU::ApplyInverse(const Epetra_MultiVector& X,
                              Epetra_MultiVector& Y) const
 {
 
@@ -352,7 +385,7 @@ int Ifpack_SILU::ApplyInverse(const Epetra_MultiVector& X,
 }
 
 //=============================================================================
-double Ifpack_SILU::Condest(const Ifpack_CondestType CT, 
+double Ifpack_SILU::Condest(const Ifpack_CondestType CT,
                            const int MaxIters, const double Tol,
                               Epetra_RowMatrix* Matrix_in)
 {
@@ -373,6 +406,8 @@ double Ifpack_SILU::Condest(const Ifpack_CondestType CT,
 std::ostream&
 Ifpack_SILU::Print(std::ostream& os) const
 {
+  using std::endl;
+
   if (!Comm().MyPID()) {
     os << endl;
     os << "================================================================================" << endl;
@@ -382,7 +417,7 @@ Ifpack_SILU::Print(std::ostream& os) const
     os << "Max fill factor    = "<< FillFactor() << endl;
     os << "Drop tolerance     = "<< DropTol() << endl;
     os << "Condition number estimate = " << Condest() << endl;
-    os << "Global number of rows     = " << A_->NumGlobalRows() << endl;
+    os << "Global number of rows     = " << A_->NumGlobalRows64() << endl;
     if (IsComputed_) {
       // Internal SuperLU info
       int fnnz=0;
@@ -395,20 +430,20 @@ Ifpack_SILU::Print(std::ostream& os) const
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize() 
-       << "  " << std::setw(15) << InitializeTime() 
+    os << "Initialize()    "   << std::setw(5) << NumInitialize()
+       << "  " << std::setw(15) << InitializeTime()
        << "              0.0              0.0" << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute() 
+    os << "Compute()       "   << std::setw(5) << NumCompute()
        << "  " << std::setw(15) << ComputeTime()
        << "  " << std::setw(15) << 1.0e-6 * ComputeFlops();
-    if (ComputeTime() != 0.0) 
+    if (ComputeTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops() / ComputeTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse() 
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse()
        << "  " << std::setw(15) << ApplyInverseTime()
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops();
-    if (ApplyInverseTime() != 0.0) 
+    if (ApplyInverseTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops() / ApplyInverseTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;

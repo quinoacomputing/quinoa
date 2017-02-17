@@ -55,11 +55,13 @@
 Piro::Epetra::InvertMassMatrixDecorator::InvertMassMatrixDecorator(
                           Teuchos::RCP<Teuchos::ParameterList> stratParams,
                           Teuchos::RCP<EpetraExt::ModelEvaluator>& model_,
-                          bool massMatrixIsConstant_, bool lumpMassMatrix_) :
+                          bool massMatrixIsConstant_, bool lumpMassMatrix_,
+                          bool massMatrixIsCoeffOfSecondDeriv_) :
   model(model_),
-  calcMassMatrix(true),
   massMatrixIsConstant(massMatrixIsConstant_),
-  lumpMassMatrix(lumpMassMatrix_)
+  lumpMassMatrix(lumpMassMatrix_),
+  massMatrixIsCoeffOfSecondDeriv(massMatrixIsCoeffOfSecondDeriv_),
+  calcMassMatrix(true)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -71,7 +73,8 @@ Piro::Epetra::InvertMassMatrixDecorator::InvertMassMatrixDecorator(
   x_dot->PutScalar(0.0);
 
   // get allocated space for Mass Matrix
-  massMatrix = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix> (model->create_W(), true);
+  //massMatrix = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix> (model->create_W(), true);
+  massMatrix = Teuchos::rcp_dynamic_cast<Epetra_Operator> (model->create_W(), true);
   if (lumpMassMatrix) invDiag = Teuchos::rcp(new Epetra_Vector(*(model->get_x_map())));
 
   Teuchos::RCP<Teuchos::FancyOStream> out
@@ -153,7 +156,7 @@ void Piro::Epetra::InvertMassMatrixDecorator::evalModel( const InArgs& inArgs,
 
   if (outArgs.Np()>0) {
    if (outArgs.get_DfDp(0).getMultiVector() != Teuchos::null) 
-     cout << "InvertMassMatrixDecorator:: NOT IMPLEMENTED FOR dfdp!! " << endl;
+     std::cout << "InvertMassMatrixDecorator:: NOT IMPLEMENTED FOR dfdp!! " << std::endl;
   }
 
   if (outArgs.get_f() == Teuchos::null) {
@@ -165,13 +168,20 @@ void Piro::Epetra::InvertMassMatrixDecorator::evalModel( const InArgs& inArgs,
     OutArgs modelOutArgs(outArgs);
     InArgs modelInArgs(inArgs);
 
-    modelInArgs.set_x_dot(x_dot);
-
+    if (!massMatrixIsCoeffOfSecondDeriv) {
+      modelInArgs.set_x_dot(x_dot);
+      modelInArgs.set_alpha(-1.0); 
+      modelInArgs.set_beta(0.0);
+    }
+    else {  // Mass Matric is coeff of Second deriv
+      modelInArgs.set_x_dotdot(x_dot);
+      modelInArgs.set_alpha(0.0); 
+      modelInArgs.set_beta(0.0);
+      modelInArgs.set_omega(-1.0);
+    }
     
     if (calcMassMatrix) {
       modelOutArgs.set_W(massMatrix);
-      modelInArgs.set_alpha(-1.0); 
-      modelInArgs.set_beta(0.0);
     }
 
     //Evaluate the underlying model
@@ -192,12 +202,13 @@ void Piro::Epetra::InvertMassMatrixDecorator::evalModel( const InArgs& inArgs,
       RCP<const Thyra::VectorBase<double> >
         b = Thyra::create_Vector( modelOutArgs.get_f(), A->range() );
 
-      lows->solve(Thyra::NONCONJ_ELE, *b, x.get());
+      ::Thyra::solve<double>(*lows, ::Thyra::NOTRANS, *b, x.ptr());
     }
     else { // Lump matrix into inverse of diagonal
       if (calcMassMatrix) {
         invDiag->PutScalar(1.0);
-        massMatrix->Multiply(false,*invDiag, *invDiag);
+        //massMatrix->Multiply(false,*invDiag, *invDiag);
+        massMatrix->Apply(*invDiag, *invDiag);
         invDiag->Reciprocal(*invDiag);
       }
       outArgs.get_f()->Multiply(1.0, *invDiag, *modelOutArgs.get_f(), 0.0);

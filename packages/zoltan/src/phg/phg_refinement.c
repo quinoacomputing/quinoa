@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
@@ -249,7 +282,7 @@ int    best_imbalance, imbalance;
   Zoltan_Heap_Make(&heap[1]);
 
   /* Initialize given partition as best partition */
-  best_cutsize = cutsize_beforepass = Zoltan_PHG_Compute_NetCut(hg->comm, hg, part, p);
+  best_cutsize = cutsize_beforepass = Zoltan_PHG_Compute_NetCut(hg->comm, hg, part);
   best_error = MAX (part_weight[0]-max_weight[0], part_weight[1]-max_weight[1]);
   best_imbalance = (part_weight[0]>max_weight[0])||(part_weight[1]>max_weight[1]);
   do {
@@ -297,7 +330,7 @@ int    best_imbalance, imbalance;
         imbal = (tw0==0.0) ? 0.0 : (part_weight[0]-tw0)/tw0;
         uprintf(hg->comm, "%4d: SEQ moving %4d from %d to %d cut=%6.0lf bal=%.3lf\n", step, vertex, sour, dest, cur_cutsize, imbal);
         /* Just for debugging */
-        cutsize = Zoltan_PHG_Compute_NetCut(hg->comm, hg, part, p);
+        cutsize = Zoltan_PHG_Compute_NetCut(hg->comm, hg, part);
         if (cur_cutsize!=cutsize) {
             errexit("%s: SEQ after move cutsize=%.2lf Verify: total=%.2lf\n", uMe(hg->comm), cur_cutsize,
                     cutsize);
@@ -669,13 +702,13 @@ static int refine_fm2 (ZZ *zz,
     }
 
     if (hgc->myProc_y==rootRank) { /* only root needs mark, adj, gain and heaps*/
+        Zoltan_Heap_Init(zz, &heap[0], hg->nVtx);
+        Zoltan_Heap_Init(zz, &heap[1], hg->nVtx);  
         if (hg->nVtx &&
             (!(mark     = (int*)   ZOLTAN_CALLOC(hg->nVtx, sizeof(int)))
              || !(adj   = (int*)   ZOLTAN_MALLOC(hg->nVtx * sizeof(int)))   
              || !(gain  = (float*) ZOLTAN_MALLOC(hg->nVtx * sizeof(float)))))
             MEMORY_ERROR;
-        Zoltan_Heap_Init(zz, &heap[0], hg->nVtx);
-        Zoltan_Heap_Init(zz, &heap[1], hg->nVtx);  
     }
 
     /* Initial calculation of the local pin distribution (sigma in UVC's papers)  */
@@ -760,7 +793,7 @@ static int refine_fm2 (ZZ *zz,
         
 #ifdef _DEBUG
         /* Just for debugging */
-        best_cutsize = Zoltan_PHG_Compute_NetCut(hgc, hg, part, p);
+        best_cutsize = Zoltan_PHG_Compute_NetCut(hgc, hg, part);
         if (best_cutsize!=cutsize) {
             errexit("%s: Initial cutsize=%.2lf Verify: total=%.2lf\n", uMe(hgc), cutsize,
                     best_cutsize);
@@ -916,16 +949,16 @@ static int refine_fm2 (ZZ *zz,
             
             /* roll back the moves without any improvement */
             for (i=movecnt-1; i>=best_cutsizeat; --i) {
-                int v = moves[i];
-                if (v<0)
-                    v = -v-1;
+                int vv = moves[i];
+                if (vv<0)
+                    vv = -vv-1;
                 else /* we don't need to roll pins, or weights etc; rolling local ones suffices */
-                    fm2_move_vertex_oneway_nonroot(v, hg, part, lpins, lweights);
-                mark[v] = 0;
+                    fm2_move_vertex_oneway_nonroot(vv, hg, part, lpins, lweights);
+                mark[vv] = 0;
             }
             for (i=0; i<best_cutsizeat; ++i){
-                int v = (moves[i] < 0 ) ? -moves[i] - 1 : moves[i];
-                mark[v] = 0;
+                int vv = (moves[i] < 0 ) ? -moves[i] - 1 : moves[i];
+                mark[vv] = 0;
             }
             if (detail_timing) 
                 ZOLTAN_TIMER_STOP(zz->ZTime, timer->rfroll, hgc->Communicator);            
@@ -939,9 +972,9 @@ static int refine_fm2 (ZZ *zz,
         MPI_Bcast(moves, best_cutsizeat, MPI_INT, rootRank, hgc->col_comm);
         if (hgc->myProc_y!=rootRank) { /* now non-root does move simulation */
             for (i=0; i<best_cutsizeat; ++i) {
-                int v = moves[i];
-                if (v>=0)
-                    fm2_move_vertex_oneway_nonroot(v, hg, part, lpins, lweights);
+                int vv = moves[i];
+                if (vv>=0)
+                    fm2_move_vertex_oneway_nonroot(vv, hg, part, lpins, lweights);
             }
         }
         if (detail_timing) 
@@ -1030,7 +1063,7 @@ static int refine_fm2 (ZZ *zz,
             successivefails = 0; 
 #ifdef _DEBUG
         /* Just for debugging */
-        best_cutsize = Zoltan_PHG_Compute_NetCut(hgc, hg, part, p);
+        best_cutsize = Zoltan_PHG_Compute_NetCut(hgc, hg, part);
         imbal = (targetw0 == 0.0) ? 0.0 : fabs(weights[0]-targetw0)/targetw0;
         printf("%s End of Pass %d Comp.Cut=%.2lf RealCut=%.2lf W[%5.0lf, %5.0lf] Imbal=%.2lf\n", uMe(hgc), passcnt, cutsize, best_cutsize, weights[0], weights[1], imbal);
         /* debuggging code ends here */
@@ -1060,13 +1093,14 @@ static int refine_fm2 (ZZ *zz,
     if (detail_timing)         
         ZOLTAN_TIMER_STOP(zz->ZTime, timer->rfiso, hgc->Communicator);            
 #endif
+ End:    
+
     if (hgc->myProc_y==rootRank) { /* only root needs mark, adj, gain and heaps*/        
         Zoltan_Multifree(__FILE__,__LINE__, 3, &mark, &adj, &gain);
         Zoltan_Heap_Free(&heap[0]);
         Zoltan_Heap_Free(&heap[1]);        
     }
     
- End:    
     Zoltan_Multifree(__FILE__, __LINE__, 4, &pins[0], &lpins[0], &moves, &lgain);
 
     if (do_timing) 

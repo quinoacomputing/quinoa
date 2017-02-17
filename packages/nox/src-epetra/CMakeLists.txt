@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 SET(HEADERS "")
 SET(SOURCES "")
@@ -29,6 +28,8 @@ APPEND_SET(HEADERS
   NOX_Epetra_LinearSystem_Amesos.H
   NOX_Epetra_LinearSystem_Stratimikos.H
   NOX_Epetra_Observer.H
+  NOX_Epetra_AdaptManager.H
+  NOX_Epetra_AdaptiveSolutionManager.H
   )
 
 APPEND_SET(SOURCES
@@ -46,6 +47,7 @@ APPEND_SET(SOURCES
   NOX_Epetra_ModelEvaluatorInterface.C
   NOX_Epetra_LinearSystem_Amesos.C
   NOX_Epetra_LinearSystem_Stratimikos.C
+  NOX_Epetra_AdaptiveSolutionManager.C
   )
 
 IF (NOX_ENABLE_EpetraExt)
@@ -55,9 +57,9 @@ IF (NOX_ENABLE_EpetraExt)
   )
 
   APPEND_SET(SOURCES
-    NOX_Epetra_FiniteDifferenceColoringWithUpdate.C	
+    NOX_Epetra_FiniteDifferenceColoringWithUpdate.C
   )
- 
+
 ENDIF()
 
 IF (NOX_ENABLE_ABSTRACT_IMPLEMENTATION_EPETRA)

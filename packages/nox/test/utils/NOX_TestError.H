@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-// 
+//
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -44,8 +44,8 @@
 //  $Revision$
 // ************************************************************************
 //@HEADER
-                                                                                
-/* The purpose of this file is to allow for 
+
+/* The purpose of this file is to allow for
 informative error reporting that will not abort a test program after a single
 error the way that an assert command does. */
 
@@ -56,12 +56,12 @@ error the way that an assert command does. */
 #ifndef _NOX_TEST_ERR_H_
 #define _NOX_TEST_ERR_H_
 #include "NOX_Common.H"
-using namespace std;
+
 // This function is to be used when first identifying an error.
 #define NOX_TEST_ERR(a,b) { { int nox_testing_err = a; \
   if (nox_testing_err != 0) {\
-    cerr << "Non zero error code " << nox_testing_err << \
-       ", file: " << __FILE__ << ", line: " << __LINE__ << endl;\
+    std::cerr << "Non zero error code " << nox_testing_err << \
+       ", file: " << __FILE__ << ", line: " << __LINE__ << std::endl;\
  b+=1;\
   }\
   }\

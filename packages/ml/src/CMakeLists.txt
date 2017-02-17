@@ -1,12 +1,18 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
 #
 
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_MPI)
+SET(HAVE_MPI ${${PACKAGE_NAME}_ENABLE_MPI})
+
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_PETSC)
-SET(HAVE_PETSC ${${PACKAGE_NAME}_ENABLE_PETSC})
+SET(HAVE_ML_PETSC ${${PACKAGE_NAME}_ENABLE_PETSC})
+
+# BLAS and LAPACK are required in the CMake build
+SET(HAVE_BLAS ON)
+SET(HAVE_LAPACK ON)
 
 TRIBITS_CONFIGURE_FILE(ml_config.h)
 
@@ -52,6 +58,7 @@ APPEND_SET(HEADERS
   Coarsen/ml_check.h
   Coarsen/ml_aggregate.h
   Coarsen/ml_ggraph.h
+  Coarsen/ml_parmetis_constants.h
   FEGrid/ml_mapper.h
   FEGrid/ml_gridagx.h
   FEGrid/ml_pde.h
@@ -206,6 +213,7 @@ APPEND_SET(HEADERS
   Utils/Epetra_Multi_CrsMatrix.h
   Utils/ml_ValidateParameters.h
   Utils/ml_petsc.h
+  RefMaxwell/ml_RefMaxwell_Utils.h
   RefMaxwell/ml_EdgeMatrixFreePreconditioner.h
   RefMaxwell/ml_FaceMatrixFreePreconditioner.h
   RefMaxwell/ml_RefMaxwell_11_Operator.h
@@ -286,6 +294,7 @@ APPEND_SET(SOURCES
   Utils/ml_DD_prec.cpp
   Utils/Epetra_Multi_CrsMatrix.cpp
   Utils/ml_ValidateParameters.cpp
+  RefMaxwell/ml_RefMaxwell_Utils.cpp
   RefMaxwell/ml_FaceMatrixFreePreconditioner.cpp
   RefMaxwell/ml_EdgeMatrixFreePreconditioner.cpp
   RefMaxwell/ml_RefMaxwell_11_Operator.cpp

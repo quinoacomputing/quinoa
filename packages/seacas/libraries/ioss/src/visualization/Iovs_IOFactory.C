@@ -7,9 +7,13 @@
 /*--------------------------------------------------------------------*/
 
 #include <visualization/Iovs_IOFactory.h>
-#include <visualization/Iovs_DatabaseIO.h>
+#include <stddef.h>                     // for nullptr
+#include <visualization/Iovs_DatabaseIO.h>  // for DatabaseIO
+#include <string>                       // for string
+#include "Ioss_DBUsage.h"               // for DatabaseUsage
+#include "Ioss_IOFactory.h"             // for IOFactory
+namespace Ioss { class PropertyManager; }
 // #include <visualization/Iovs_Internals.h>
-#include <string>
 
 namespace Iovs {
 
@@ -20,10 +24,8 @@ namespace Iovs {
   }
 
   IOFactory::IOFactory()
-    : Ioss::IOFactory("visualization")
+    : Ioss::IOFactory("catalyst")
   {
-    Ioss::IOFactory::alias("visualization", "visualization_output");
-
     // Tell the database to register itself with sierra's product registry.
     // XXX exodus doesn't do this, do we need to?
     // register_library_versions();
@@ -33,7 +35,9 @@ namespace Iovs {
 				       Ioss::DatabaseUsage db_usage,
 				       MPI_Comm communicator,
 				       const Ioss::PropertyManager &properties) const
-  { return new DatabaseIO(NULL, filename, db_usage, communicator, properties); }
+  {
+    return new DatabaseIO(nullptr, filename, db_usage, communicator, properties);
+  }
 
   /**
    * Call the sierra product registry and register all dependent third-party libraries

@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -143,12 +143,18 @@ exactResidualNorm (const Teuchos::RCP<const sparse_matrix_type>& A,
 /// \param numItersPerformed [out] Number of iterations that the Belos
 ///   solver performed.
 ///
+/// \param solverName [in] Which iterative linear solver to use.
+///   Any name that Belos::SolverFactory knows will work here.
+///
 /// \param tol [in] Convergence tolerance for the iterative method.
 ///   The meaning of this depends on the particular iterative method.
 ///
 /// \param maxNumIters [in] Maximum number of iterations that the
 ///   iterative method should perform, regardless of whether it
 ///   converged.
+///
+/// \param num_steps [in] Number of "time steps", i.e., the number of
+//    times the solver is called in a fake time-step loop.
 ///
 /// \param X [in/out] On input: the initial guess(es) for the iterative
 ///   method.  On output: the computed approximate solution.
@@ -167,13 +173,15 @@ exactResidualNorm (const Teuchos::RCP<const sparse_matrix_type>& A,
 void
 solveWithBelos (bool& converged,
                 int& numItersPerformed,
+                const std::string& solverName,
                 const Teuchos::ScalarTraits<ST>::magnitudeType& tol,
                 const int maxNumIters,
+                const int num_steps,
                 const Teuchos::RCP<multivector_type>& X,
                 const Teuchos::RCP<const sparse_matrix_type>& A,
                 const Teuchos::RCP<const multivector_type>& B,
-                const Teuchos::RCP<const operator_type>& M_left=Teuchos::null,
-                const Teuchos::RCP<const operator_type>& M_right=Teuchos::null);
+                const Teuchos::RCP<operator_type>& M_left=Teuchos::null,
+                const Teuchos::RCP<operator_type>& M_right=Teuchos::null);
 
 } // namespace EpetraIntrepidPoissonExample
 } // namespace TrilinosCouplings

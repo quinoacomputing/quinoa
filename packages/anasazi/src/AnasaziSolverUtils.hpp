@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -58,47 +58,47 @@
 namespace Anasazi {
 
   template<class ScalarType, class MV, class OP>
-  class SolverUtils 
-  {  
+  class SolverUtils
+  {
   public:
     typedef typename Teuchos::ScalarTraits<ScalarType>::magnitudeType MagnitudeType;
     typedef typename Teuchos::ScalarTraits<ScalarType>  SCT;
-    
-    //! @name Constructor/Destructor
-    //@{ 
 
-    //! Constructor.  
+    //! @name Constructor/Destructor
+    //@{
+
+    //! Constructor.
     SolverUtils();
-    
+
     //! Destructor.
     virtual ~SolverUtils() {};
-    
+
     //@}
-    
+
     //! @name Sorting Methods
-    //@{ 
-    
+    //@{
+
     //! Permute the vectors in a multivector according to the permutation vector \c perm, and optionally the residual vector \c resids
     static void permuteVectors(const int n, const std::vector<int> &perm, MV &Q, std::vector< typename Teuchos::ScalarTraits<ScalarType>::magnitudeType >* resids = 0);
 
     //! Permute the columns of a Teuchos::SerialDenseMatrix according to the permutation vector \c perm
     static void permuteVectors(const std::vector<int> &perm, Teuchos::SerialDenseMatrix<int,ScalarType> &Q);
 
-    //@} 
+    //@}
 
     //! @name Basis update methods
     //@{
 
     //! Apply a sequence of Householder reflectors (from \c GEQRF) to a multivector, using minimal workspace.
-    /*! 
+    /*!
       @param k [in] the number of Householder reflectors composing the product
       @param V [in/out] the multivector to be modified, with \f$n\f$ columns
       @param H [in] a \f$n \times k\f$ matrix containing the encoded Householder vectors, as returned from \c GEQRF (see below)
       @param tau [in] the \f$n\f$ coefficients for the Householder reflects, as returned from \c GEQRF
       @param workMV [work] (optional) a multivector used for workspace. it need contain only a single vector; it if contains more, only the first vector will be modified.
 
-      This routine applies a sequence of Householder reflectors, \f$H_1 H_2 \cdots H_k\f$, to a multivector \f$V\f$. The 
-      reflectors are applied individually, as rank-one updates to the multivector. The benefit of this is that the only 
+      This routine applies a sequence of Householder reflectors, \f$H_1 H_2 \cdots H_k\f$, to a multivector \f$V\f$. The
+      reflectors are applied individually, as rank-one updates to the multivector. The benefit of this is that the only
       required workspace is a one-column multivector. This workspace can be provided by the user. If it is not, it will
       be allocated locally on each call to applyHouse.
 
@@ -116,20 +116,20 @@ namespace Anasazi {
     //@}
 
     //! @name Eigensolver Projection Methods
-    //@{ 
+    //@{
 
     //! Routine for computing the first NEV generalized eigenpairs of the Hermitian pencil <tt>(KK, MM)</tt>
     /*!
       @param size [in] Dimension of the eigenproblem (KK, MM)
-      @param KK [in] Hermitian "stiffness" matrix 
+      @param KK [in] Hermitian "stiffness" matrix
       @param MM [in] Hermitian positive-definite "mass" matrix
-      @param EV [in] Dense matrix to store the nev eigenvectors 
+      @param EV [in] Dense matrix to store the nev eigenvectors
       @param theta [in] Array to store the eigenvalues (Size = nev )
       @param nev [in/out] Number of the smallest eigenvalues requested (in) / computed (out)
       @param esType [in] Flag to select the algorithm
       <ul>
       <li> esType =  0  (default) Uses LAPACK routine (Cholesky factorization of MM)
-                        with deflation of MM to get orthonormality of 
+                        with deflation of MM to get orthonormality of
                         eigenvectors (\f$S^TMMS = I\f$)
       <li> esType =  1  Uses LAPACK routine (Cholesky factorization of MM)
                         (no check of orthonormality)
@@ -145,7 +145,7 @@ namespace Anasazi {
       <li> info = - 20 >> Failure in LAPACK routine
       </ul>
     */
-    static int directSolver(int size, const Teuchos::SerialDenseMatrix<int,ScalarType> &KK, 
+    static int directSolver(int size, const Teuchos::SerialDenseMatrix<int,ScalarType> &KK,
                      Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,ScalarType> > MM,
                      Teuchos::SerialDenseMatrix<int,ScalarType> &EV,
                      std::vector< typename Teuchos::ScalarTraits<ScalarType>::magnitudeType > &theta,
@@ -153,19 +153,19 @@ namespace Anasazi {
     //@}
 
     //! @name Sanity Checking Methods
-    //@{ 
+    //@{
 
     //! Return the maximum coefficient of the matrix \f$M * X - MX\f$ scaled by the maximum coefficient of \c MX.
     /*! \note When \c M is not specified, the identity is used.
      */
     static typename Teuchos::ScalarTraits<ScalarType>::magnitudeType errorEquality(const MV &X, const MV &MX, Teuchos::RCP<const OP> M = Teuchos::null);
-    
+
     //@}
-    
+
   private:
 
     //! @name Internal Typedefs
-    //@{ 
+    //@{
 
     typedef MultiVecTraits<ScalarType,MV> MVT;
     typedef OperatorTraits<ScalarType,MV,OP> OPT;
@@ -174,33 +174,33 @@ namespace Anasazi {
   };
 
   //-----------------------------------------------------------------------------
-  // 
+  //
   //  CONSTRUCTOR
   //
-  //-----------------------------------------------------------------------------  
+  //-----------------------------------------------------------------------------
 
   template<class ScalarType, class MV, class OP>
   SolverUtils<ScalarType, MV, OP>::SolverUtils() {}
 
 
   //-----------------------------------------------------------------------------
-  // 
+  //
   //  SORTING METHODS
   //
   //-----------------------------------------------------------------------------
-  
+
   //////////////////////////////////////////////////////////////////////////
   // permuteVectors for MV
   template<class ScalarType, class MV, class OP>
   void SolverUtils<ScalarType, MV, OP>::permuteVectors(
               const int n,
-              const std::vector<int> &perm, 
-              MV &Q, 
+              const std::vector<int> &perm,
+              MV &Q,
               std::vector< typename Teuchos::ScalarTraits<ScalarType>::magnitudeType >* resids)
   {
     // Permute the vectors according to the permutation vector \c perm, and
     // optionally the residual vector \c resids
-    
+
     int i, j;
     std::vector<int> permcopy(perm), swapvec(n-1);
     std::vector<int> index(1);
@@ -209,7 +209,7 @@ namespace Anasazi {
 
     TEUCHOS_TEST_FOR_EXCEPTION(n > MVT::GetNumberVecs(Q), std::invalid_argument, "Anasazi::SolverUtils::permuteVectors(): argument n larger than width of input multivector.");
 
-    // We want to recover the elementary permutations (individual swaps) 
+    // We want to recover the elementary permutations (individual swaps)
     // from the permutation vector. Do this by constructing the inverse
     // of the permutation, by sorting them to {1,2,...,n}, and recording
     // the elementary permutations of the inverse.
@@ -229,7 +229,7 @@ namespace Anasazi {
 
       swapvec[i] = j;
     }
-      
+
     // now apply the elementary permutations of the inverse in reverse order
     for (i=n-2; i>=0; i--) {
       j = swapvec[i];
@@ -257,7 +257,7 @@ namespace Anasazi {
   // permuteVectors for MV
   template<class ScalarType, class MV, class OP>
   void SolverUtils<ScalarType, MV, OP>::permuteVectors(
-              const std::vector<int> &perm, 
+              const std::vector<int> &perm,
               Teuchos::SerialDenseMatrix<int,ScalarType> &Q)
   {
     // Permute the vectors in Q according to the permutation vector \c perm, and
@@ -265,11 +265,11 @@ namespace Anasazi {
     Teuchos::BLAS<int,ScalarType> blas;
     const int n = perm.size();
     const int m = Q.numRows();
-    
+
     TEUCHOS_TEST_FOR_EXCEPTION(n != Q.numCols(), std::invalid_argument, "Anasazi::SolverUtils::permuteVectors(): size of permutation vector not equal to number of columns.");
 
     // Sort the primitive ritz vectors
-    Teuchos::SerialDenseMatrix<int,ScalarType> copyQ( Q );
+    Teuchos::SerialDenseMatrix<int,ScalarType> copyQ(Teuchos::Copy, Q);
     for (int i=0; i<n; i++) {
       blas.COPY(m, copyQ[perm[i]], 1, Q[i], 1);
     }
@@ -277,7 +277,7 @@ namespace Anasazi {
 
 
   //-----------------------------------------------------------------------------
-  // 
+  //
   //  BASIS UPDATE METHODS
   //
   //-----------------------------------------------------------------------------
@@ -291,7 +291,7 @@ namespace Anasazi {
     const ScalarType ZERO = SCT::zero();
 
     // early exit if V has zero-size or if k==0
-    if (MVT::GetNumberVecs(V) == 0 || MVT::GetVecLength(V) == 0 || k == 0) {
+    if (MVT::GetNumberVecs(V) == 0 || MVT::GetGlobalLength(V) == 0 || k == 0) {
       return;
     }
 
@@ -345,17 +345,17 @@ namespace Anasazi {
     }
   }
 
-  
+
   //-----------------------------------------------------------------------------
-  // 
+  //
   //  EIGENSOLVER PROJECTION METHODS
   //
   //-----------------------------------------------------------------------------
-  
+
   template<class ScalarType, class MV, class OP>
   int SolverUtils<ScalarType, MV, OP>::directSolver(
-      int size, 
-      const Teuchos::SerialDenseMatrix<int,ScalarType> &KK, 
+      int size,
+      const Teuchos::SerialDenseMatrix<int,ScalarType> &KK,
       Teuchos::RCP<const Teuchos::SerialDenseMatrix<int,ScalarType> > MM,
       Teuchos::SerialDenseMatrix<int,ScalarType> &EV,
       std::vector< typename Teuchos::ScalarTraits<ScalarType>::magnitudeType > &theta,
@@ -367,11 +367,11 @@ namespace Anasazi {
     //
     // size : Dimension of the eigenproblem (KK, MM)
     //
-    // KK : Hermitian "stiffness" matrix 
+    // KK : Hermitian "stiffness" matrix
     //
     // MM : Hermitian positive-definite "mass" matrix
     //
-    // EV : Matrix to store the nev eigenvectors 
+    // EV : Matrix to store the nev eigenvectors
     //
     // theta : Array to store the eigenvalues (Size = nev )
     //
@@ -382,7 +382,7 @@ namespace Anasazi {
     // esType : Flag to select the algorithm
     //
     // esType =  0 (default) Uses LAPACK routine (Cholesky factorization of MM)
-    //                       with deflation of MM to get orthonormality of 
+    //                       with deflation of MM to get orthonormality of
     //                       eigenvectors (S^T MM S = I)
     //
     // esType =  1           Uses LAPACK routine (Cholesky factorization of MM)
@@ -408,7 +408,7 @@ namespace Anasazi {
 
     int rank = 0;
     int info = 0;
-    
+
     if (size < nev || size < 0) {
       return -1;
     }
@@ -443,7 +443,7 @@ namespace Anasazi {
     // tt contains the eigenvalues from HEGV, which are necessarily real, and
     // HEGV expects this vector to be real as well
     std::vector<MagnitudeType> tt( size );
-    typedef typename std::vector<MagnitudeType>::iterator MTIter;
+    //typedef typename std::vector<MagnitudeType>::iterator MTIter; // unused
 
     MagnitudeType tol = SCT::magnitude(SCT::squareroot(SCT::eps()));
     // MagnitudeType tol = 1e-12;
@@ -461,7 +461,7 @@ namespace Anasazi {
         //
         for (rank = size; rank > 0; --rank) {
 
-          U = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>(rank,rank) );              
+          U = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>(rank,rank) );
           //
           // Copy KK & MM
           //
@@ -471,7 +471,7 @@ namespace Anasazi {
           // Solve the generalized eigenproblem with LAPACK
           //
           info = 0;
-          lapack.HEGV(1, 'V', 'U', rank, KKcopy->values(), KKcopy->stride(), 
+          lapack.HEGV(1, 'V', 'U', rank, KKcopy->values(), KKcopy->stride(),
               MMcopy->values(), MMcopy->stride(), &tt[0], &work[0], lwork,
               &rwork[0], &info);
           //
@@ -498,11 +498,11 @@ namespace Anasazi {
             }
           }
           // U = 0*U + 1*MMcopy*KKcopy = MMcopy * KKcopy
-          TEUCHOS_TEST_FOR_EXCEPTION( 
+          TEUCHOS_TEST_FOR_EXCEPTION(
               U->multiply(Teuchos::NO_TRANS,Teuchos::NO_TRANS,one,*MMcopy,*KKcopy,zero) != 0,
               std::logic_error, "Anasazi::SolverUtils::directSolver() call to Teuchos::SerialDenseMatrix::multiply() returned an error.");
           // MMcopy = 0*MMcopy + 1*KKcopy^H*U = KKcopy^H * MMcopy * KKcopy
-          TEUCHOS_TEST_FOR_EXCEPTION( 
+          TEUCHOS_TEST_FOR_EXCEPTION(
               MMcopy->multiply(Teuchos::CONJ_TRANS,Teuchos::NO_TRANS,one,*KKcopy,*U,zero) != 0,
               std::logic_error, "Anasazi::SolverUtils::directSolver() call to Teuchos::SerialDenseMatrix::multiply() returned an error.");
           MagnitudeType maxNorm = SCT::magnitude(zero);
@@ -511,8 +511,8 @@ namespace Anasazi {
             for (int j = i; j < rank; ++j) {
               if (j == i)
                 maxNorm = SCT::magnitude((*MMcopy)(i,j) - one) > maxNorm
-                  ? SCT::magnitude((*MMcopy)(i,j) - one) : maxNorm;            
-              else 
+                  ? SCT::magnitude((*MMcopy)(i,j) - one) : maxNorm;
+              else
                 maxOrth = SCT::magnitude((*MMcopy)(i,j)) > maxOrth
                   ? SCT::magnitude((*MMcopy)(i,j)) : maxOrth;
             }
@@ -554,7 +554,7 @@ namespace Anasazi {
         // Solve the generalized eigenproblem with LAPACK
         //
         info = 0;
-        lapack.HEGV(1, 'V', 'U', size, KKcopy->values(), KKcopy->stride(), 
+        lapack.HEGV(1, 'V', 'U', size, KKcopy->values(), KKcopy->stride(),
             MMcopy->values(), MMcopy->stride(), &tt[0], &work[0], lwork,
             &rwork[0], &info);
         //
@@ -573,7 +573,7 @@ namespace Anasazi {
             std::cerr << std::endl;
             std::cerr << "Anasazi::SolverUtils::directSolver(): In HEGV, DPOTRF or DHEEV returned an error code (" << info << ").\n";
             std::cerr << std::endl;
-            return -20; 
+            return -20;
           }
         }
         //
@@ -625,29 +625,29 @@ namespace Anasazi {
 
 
   //-----------------------------------------------------------------------------
-  // 
+  //
   //  SANITY CHECKING METHODS
   //
   //-----------------------------------------------------------------------------
 
   template<class ScalarType, class MV, class OP>
-  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType 
+  typename Teuchos::ScalarTraits<ScalarType>::magnitudeType
   SolverUtils<ScalarType, MV, OP>::errorEquality(const MV &X, const MV &MX, Teuchos::RCP<const OP> M)
   {
     // Return the maximum coefficient of the matrix M * X - MX
     // scaled by the maximum coefficient of MX.
     // When M is not specified, the identity is used.
-    
+
     MagnitudeType maxDiff = SCT::magnitude(SCT::zero());
-    
+
     int xc = MVT::GetNumberVecs(X);
     int mxc = MVT::GetNumberVecs(MX);
-    
+
     TEUCHOS_TEST_FOR_EXCEPTION(xc != mxc,std::invalid_argument,"Anasazi::SolverUtils::errorEquality(): input multivecs have different number of columns.");
     if (xc == 0) {
       return maxDiff;
     }
-    
+
     MagnitudeType maxCoeffX = SCT::magnitude(SCT::zero());
     std::vector<MagnitudeType> tmp( xc );
     MVT::MvNorm(MX, tmp);
@@ -657,7 +657,7 @@ namespace Anasazi {
     }
 
     std::vector<int> index( 1 );
-    Teuchos::RCP<MV> MtimesX; 
+    Teuchos::RCP<MV> MtimesX;
     if (M != Teuchos::null) {
       MtimesX = MVT::Clone( X, xc );
       OPT::Apply( *M, X, *MtimesX );
@@ -667,15 +667,15 @@ namespace Anasazi {
     }
     MVT::MvAddMv( -1.0, MX, 1.0, *MtimesX, *MtimesX );
     MVT::MvNorm( *MtimesX, tmp );
-   
+
     for (int i = 0; i < xc; ++i) {
       maxDiff = (tmp[i] > maxDiff) ? tmp[i] : maxDiff;
     }
-    
+
     return (maxCoeffX == 0.0) ? maxDiff : maxDiff/maxCoeffX;
-    
-  }    
-  
+
+  }
+
 } // end namespace Anasazi
 
 #endif // ANASAZI_SOLVER_UTILS_HPP

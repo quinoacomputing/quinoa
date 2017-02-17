@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsPackageMacros)
 
 #
 # A) Forward delcare the package so that certain options are also defined for
@@ -45,11 +44,19 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   "Enable Thyra features for complex data types."
   ${${PACKAGE_NAME}_ENABLE_COMPLEX_DEFAULT} )
 
+IF (MSVC)
+  # See Trilinos bug 5785
+  SET(${PACKAGE_NAME}_ENABLE_ME_POLYNOMIAL_DEFAULT OFF)
+ELSE()
+  SET(${PACKAGE_NAME}_ENABLE_ME_POLYNOMIAL_DEFAULT
+    ${${PROJECT_NAME}_ENABLE_SECONDARY_STABLE_CODE} )
+ENDIF()
+
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_ME_POLYNOMIAL
   HAVE_THYRA_ME_POLYNOMIAL
   "Enable Thyra ModelEvalutor Polynomial InArgs and OutArgs."
-  ${${PROJECT_NAME}_ENABLE_SECONDARY_STABLE_CODE} )
+  ${${PACKAGE_NAME}_ENABLE_ME_POLYNOMIAL_DEFAULT} )
 
 #
 # C) Process the subpackages for Thyra

@@ -14,14 +14,14 @@
 #include "Epetra_Export.h"
 #include "Amesos.h"
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Galeri_ReadHB.h"
 
 //============ //
 // main driver //
 //============ //
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
@@ -68,7 +68,15 @@ int main(int argc, char *argv[])
   // Note that linear map are used for simplicity only!
   // Amesos (through Epetra) can support *any* map.
 
-  Epetra_Map map(readMap->NumGlobalElements(), 0, Comm);
+  Epetra_Map* mapPtr = 0;
+  if(readMap->GlobalIndicesInt())
+    mapPtr = new Epetra_Map((int) readMap->NumGlobalElements(), 0, Comm);
+  else if(readMap->GlobalIndicesLongLong())
+    mapPtr = new Epetra_Map(readMap->NumGlobalElements(), 0, Comm);
+  else
+    assert(false);
+
+  Epetra_Map& map = *mapPtr;
 
   // Create the distributed matrix, based on Map.
   Epetra_CrsMatrix A(Copy, map, 0);
@@ -120,7 +128,7 @@ int main(int argc, char *argv[])
   int numRet = solver->NumericFactorization();
   if (numRet != 0) {
     std::cout << "Processor "<< map.Comm().MyPID() << " : Numeric factorization did not complete!" << std::endl;
-  } 
+  }
 
   // Check that all processors returned error -22 (Numerically Singular)!
   int minRet = 0;
@@ -134,7 +142,9 @@ int main(int argc, char *argv[])
     if (Comm.MyPID()==0)
       std::cout << std::endl << "End Result: TEST PASSED" << std::endl;
   }
- 
+
+  delete mapPtr;
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif

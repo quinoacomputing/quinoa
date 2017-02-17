@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // 
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
@@ -34,12 +34,8 @@
 // Have to do this first to pull in all of Dakota's #define's
 #include "TriKota_ConfigDefs.hpp"
 
-#include "DirectApplicInterface.H"
-#include "CommandLineHandler.H"
-#include "DakotaStrategy.H"
-#include "DakotaModel.H"
-#include "ParallelLibrary.H"
-#include "ProblemDescDB.H"
+#include "DirectApplicInterface.hpp"
+#include "ProblemDescDB.hpp"
 
 #include "EpetraExt_ModelEvaluator.h"
 #include "Epetra_Vector.h"

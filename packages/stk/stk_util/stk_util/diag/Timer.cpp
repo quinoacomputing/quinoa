@@ -1,10 +1,35 @@
-/*------------------------------------------------------------------------*/
-/*                 Copyright 2010 - 2011 Sandia Corporation.              */
-/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
-/*  license for use of this work by or on behalf of the U.S. Government.  */
-/*  Export of this program may require a license from the                 */
-/*  United States Government.                                             */
-/*------------------------------------------------------------------------*/
+// Copyright (c) 2013, Sandia Corporation.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+// 
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+// 
+//     * Neither the name of Sandia Corporation nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 
 #include <math.h>
 #include <sstream>
@@ -14,10 +39,41 @@
 #include <stdexcept>
 #include <limits>
 
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#ifdef __JVN
+#include <sys/wait.h>
+#endif
+
+#include <stk_util/util/FeatureTest.hpp>
+
+#ifdef SIERRA_INCLUDE_LIBPAPI
+#  include <papi.h>
+#  if defined(PAPI_VERSION) && (PAPI_VERSION_MAJOR(PAPI_VERSION) != 3)
+#    error "Compiling against an unknown PAPI version"
+#  endif
+#endif
+
+// #include <fenv.h>
+#include <math.h>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <functional>
+#include <stdexcept>
+#include <limits>
+
+#include <memory>
+
+#include <stk_util/util/Writer.hpp>
+#include <stk_util/diag/Timer.hpp>
+#include <stk_util/diag/PrintTable.hpp>
+#include <stk_util/parallel/MPI.hpp>
+
 #include <stk_util/util/string_case_compare.hpp>
 
-#include <stk_util/diag/Timer.hpp>
-#include <stk_util/diag/Writer.hpp>
 #include <stk_util/diag/WriterExt.hpp>
 
 namespace stk {
@@ -197,10 +253,6 @@ public:
   /**
    * Member function <b>shouldRecord</b> returns true if any of the specified timer
    * bit masks are set in the enable timer bit mask.
-   *
-   * @param timer_mask    a <b>TimerMask</b> value to test the enable timer
-   *        bit mask against.
-   *
    */
   bool shouldRecord() const {
     return m_timerSet.shouldRecord(m_timerMask) && s_enabledMetricsMask;
@@ -209,8 +261,7 @@ public:
   /**
    * Member function <b>getSubtimerLapCount</b> returns the subtimer lap counter.
    *
-   * @return      a <b>Counter</b> value of the subtimer lap
-   *        counter.
+   * @return      a <b>Counter</b> value of the subtimer lap counter.
    */
   double getSubtimerLapCount() const {
     return m_subtimerLapCount;
@@ -694,6 +745,8 @@ TimerImpl::dump(
 }
 
 
+Timer::~Timer() {}
+
 Timer::Timer(const std::string &name, const Timer parent)
   : m_timerImpl(TimerImpl::reg(name, parent.getTimerMask(), parent.m_timerImpl, parent.getTimerSet()))
 {}
@@ -890,3 +943,289 @@ TimeBlockSynchronized::stop()
 
 } // namespace diag
 } // namespace stk
+
+
+
+#ifdef SIERRA_INCLUDE_LIBPAPI
+class PAPIRuntimeError : public std::runtime_error
+{
+public:
+  PAPIRuntimeError(const char *message, int status)
+    : std::runtime_error(message),
+      m_status(status)
+  {}
+
+  virtual const char *what() const throw() {
+    static std::string message;
+    static char papi_message[PAPI_MAX_STR_LEN];
+
+    PAPI_perror(m_status, papi_message, sizeof(papi_message));
+
+    message = std::runtime_error::what();
+    message += papi_message;
+
+    return message.c_str();
+  }
+
+private:
+  int m_status;
+};
+#endif
+
+
+namespace sierra {
+namespace Diag {
+
+namespace {
+
+size_t
+s_timerNameMaxWidth = DEFAULT_TIMER_NAME_MAX_WIDTH;		///< Maximum width for names
+
+} // namespace
+
+
+// 
+// SierraRootTimer member functions:
+// 
+SierraRootTimer::SierraRootTimer()
+  : m_sierraTimer(stk::diag::createRootTimer("Sierra", sierraTimerSet()))
+{ }
+
+
+SierraRootTimer::~SierraRootTimer()
+{
+  stk::diag::deleteRootTimer(m_sierraTimer);
+}
+
+
+stk::diag::Timer & SierraRootTimer::sierraTimer()
+{
+  return m_sierraTimer;
+}
+
+
+TimerSet &
+sierraTimerSet()
+{
+  static TimerSet s_sierraTimerSet(TIMER_PROCEDURE | TIMER_REGION);
+
+  return s_sierraTimerSet;
+}
+
+
+std::shared_ptr<SierraRootTimer> sierraRootTimer()
+{
+  static std::shared_ptr<SierraRootTimer> s_sierraRootTimer(new SierraRootTimer());
+  if ( ! s_sierraRootTimer ) {
+    s_sierraRootTimer.reset(new SierraRootTimer());
+  }
+  return s_sierraRootTimer;
+}
+
+
+Timer &
+sierraTimer()
+{
+  return sierraRootTimer()->sierraTimer();
+}
+
+void
+sierraTimerDestroy()
+{
+  sierraRootTimer().reset();
+}
+
+
+void
+setEnabledTimerMask(
+  TimerMask     timer_mask)
+{
+  sierraTimerSet().setEnabledTimerMask(timer_mask);
+}
+
+
+TimerMask
+getEnabledTimerMask()
+{
+  return sierraTimerSet().getEnabledTimerMask();
+}
+
+
+void
+setTimeFormat(int time_format) {
+  stk::diag::setTimerTimeFormat(time_format);
+}
+
+
+void
+setTimeFormatMillis()
+{
+  if ((getTimeFormat() & stk::TIMEFORMAT_STYLE_MASK ) == stk::TIMEFORMAT_HMS) {
+    if (getSierraWallTime() > 3600.0)
+      setTimeFormat(getTimeFormat() & ~stk::TIMEFORMAT_MILLIS);
+    else
+      setTimeFormat(getTimeFormat() | stk::TIMEFORMAT_MILLIS);
+  }
+  else if ((getTimeFormat() & stk::TIMEFORMAT_STYLE_MASK ) == stk::TIMEFORMAT_SECONDS) {
+    if (getSierraWallTime() > 1000.0)
+      setTimeFormat(getTimeFormat() & ~stk::TIMEFORMAT_MILLIS);
+    else
+      setTimeFormat(getTimeFormat() | stk::TIMEFORMAT_MILLIS);
+  }
+}
+
+
+int
+getTimeFormat()
+{
+  return stk::diag::getTimerTimeFormat();
+}
+
+
+void
+setTimerNameMaxWidth(
+  size_t        width)
+{
+  s_timerNameMaxWidth = width;
+}
+
+
+size_t
+getTimerNameMaxWidth()
+{
+  return s_timerNameMaxWidth;
+}
+
+
+stk::diag::MetricTraits<stk::diag::CPUTime>::Type
+getSierraCPUTime()
+{
+  return sierraTimer().getMetric<stk::diag::CPUTime>().getAccumulatedLap(false);
+}
+
+
+stk::diag::MetricTraits<stk::diag::WallTime>::Type
+getSierraWallTime()
+{
+  return sierraTimer().getMetric<stk::diag::WallTime>().getAccumulatedLap(false);
+}
+
+
+stk::diag::MetricTraits<stk::diag::CPUTime>::Type
+getCPULapTime(Timer timer) {
+  return timer.getMetric<stk::diag::CPUTime>().getLap();
+}
+
+stk::diag::MetricTraits<stk::diag::CPUTime>::Type
+getCPUAccumulatedLapTime(Timer timer) {
+  return timer.getMetric<stk::diag::CPUTime>().getAccumulatedLap(false);
+}
+
+
+TimerParser &
+theTimerParser()
+{
+  static TimerParser parser;
+
+  return parser;
+}
+
+
+TimerParser::TimerParser()
+  : sierra::OptionMaskParser(),
+    m_metricsSetMask(0),
+    m_metricsMask(0)
+{
+  mask("cpu", 0, "Display CPU times");
+  mask("wall", 0, "Display wall times");
+
+  mask("hms", 0, "Display times in HH:MM:SS format");
+  mask("seconds", 0, "Display times in seconds");
+
+  
+//   mask("table", TIMER_TABLE, "Format output as a table");
+//   mask("xml", TIMER_XML, "Format output as an XML file");
+
+  mask("all", TIMER_ALL, "Enable all metrics");
+  mask("none", TIMER_NONE, "Disable all timers");
+
+  mask("domain", TIMER_DOMAIN, "Enable metrics on the domain");
+  mask("region", TIMER_REGION, "Enable metrics on regions");
+  mask("procedure", TIMER_PROCEDURE, "Enable metrics on procedures");
+  mask("mechanics", TIMER_MECHANICS, "Enable metrics on mechanics");
+  mask("algorithm", TIMER_ALGORITHM, "Enable metrics on algorithms");
+  mask("solver", TIMER_SOLVER, "Enable metrics on solvers");
+  mask("contact", TIMER_CONTACT, "Enable metrics on contact");
+  mask("material", TIMER_MATERIAL, "Enable metrics on materials");
+  mask("search", TIMER_SEARCH, "Enable metrics on searches");
+  mask("transfer", TIMER_TRANSFER, "Enable metrics on user functions");
+  mask("adaptivity", TIMER_ADAPTIVITY, "Enable metrics on adaptivity");
+  mask("recovery", TIMER_RECOVERY, "Enable metrics on encore recovery");
+  mask("profile1", TIMER_PROFILE_1, "Enable app defined profiling metrics");
+  mask("profile2", TIMER_PROFILE_2, "Enable app defined profiling metrics");
+  mask("profile3", TIMER_PROFILE_3, "Enable app defined profiling metrics");
+  mask("profile4", TIMER_PROFILE_4, "Enable app defined profiling metrics");
+  mask("app1", TIMER_APP_1, "Enable app defined metrics");
+  mask("app2", TIMER_APP_2, "Enable app defined metrics");
+  mask("app3", TIMER_APP_3, "Enable app defined metrics");
+  mask("app4", TIMER_APP_4, "Enable app defined metrics");
+}
+
+
+OptionMaskParser::Mask
+TimerParser::parse(
+  const char *          mask) const
+{
+  m_metricsSetMask = 0;
+  m_metricsMask = 0;
+  m_optionMask = getEnabledTimerMask();
+  
+  m_optionMask = OptionMaskParser::parse(mask);
+
+//   if ((m_optionMask & TIMER_FORMAT) == 0)
+//     m_optionMask |= TIMER_TABLE;
+
+  setEnabledTimerMask(m_optionMask);
+  
+  if (m_metricsSetMask != 0)
+    stk::diag::setEnabledTimerMetricsMask(m_metricsMask);
+    
+  return m_optionMask;
+}
+
+
+void
+TimerParser::parseArg(
+  const std::string &   name,
+  const std::string &   arg) const
+{
+  if (name == "cpu") {
+    m_metricsMask |= stk::diag::METRICS_CPU_TIME;
+    m_metricsSetMask |= stk::diag::METRICS_CPU_TIME;
+  }
+  else if (name == "wall") {
+    m_metricsMask |= stk::diag::METRICS_WALL_TIME;
+    m_metricsSetMask |= stk::diag::METRICS_WALL_TIME;
+  }
+  else if (name == "heap") {
+    m_metricsMask |= stk::diag::METRICS_HEAP_ALLOC;
+    m_metricsSetMask |= stk::diag::METRICS_HEAP_ALLOC;
+  }
+  else if (name == "none") {
+    m_optionMask = 0;
+    m_metricsSetMask = stk::diag::METRICS_WALL_TIME | stk::diag::METRICS_CPU_TIME;
+  }
+
+  else if (name == "hms") {
+    Diag::setTimeFormat(stk::TIMEFORMAT_HMS);
+  }
+  else if (name == "seconds") {
+    Diag::setTimeFormat(stk::TIMEFORMAT_SECONDS);
+  }
+
+  else
+    OptionMaskParser::parseArg(name, arg);
+}
+
+} // namespace Diag
+} // namespace sierra

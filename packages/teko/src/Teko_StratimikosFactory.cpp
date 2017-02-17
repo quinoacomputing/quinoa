@@ -14,6 +14,7 @@
 #include "Teko_InverseLibrary.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 #include "Teko_BlockedEpetraOperator.hpp"
+#include "Teko_ReorderedLinearOp.hpp"
 
 #include "EpetraExt_RowMatrixOut.h"
 
@@ -24,7 +25,7 @@ using Teuchos::ParameterList;
 
 // hide stuff
 namespace {
-   // Simple preconditioner class that adds a counter 
+   // Simple preconditioner class that adds a counter
    class StratimikosFactoryPreconditioner :  public Thyra::DefaultPreconditioner<double>{
    public:
       StratimikosFactoryPreconditioner() : iter_(0) {}
@@ -40,14 +41,16 @@ namespace {
 
    // factory used to initialize the Teko::StratimikosFactory
    // user data
-   class TekoFactoryBuilder 
+   class TekoFactoryBuilder
          : public Teuchos::AbstractFactory<Thyra::PreconditionerFactoryBase<double> > {
    public:
-      TekoFactoryBuilder(const Teuchos::RCP<Teko::RequestHandler> & rh) : requestHandler_(rh) {}
+      TekoFactoryBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & builder,
+                         const Teuchos::RCP<Teko::RequestHandler> & rh) : builder_(builder), requestHandler_(rh) {}
       Teuchos::RCP<Thyra::PreconditionerFactoryBase<double> > create() const
-      { return Teuchos::rcp(new StratimikosFactory(requestHandler_)); }
- 
+      { return Teuchos::rcp(new StratimikosFactory(builder_,requestHandler_)); }
+
    private:
+      Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> builder_;
       Teuchos::RCP<Teko::RequestHandler> requestHandler_;
    };
 }
@@ -60,6 +63,13 @@ StratimikosFactory::StratimikosFactory()
 // Constructors/initializers/accessors
 StratimikosFactory::StratimikosFactory(const Teuchos::RCP<Teko::RequestHandler> & rh)
   :epetraFwdOpViewExtractor_(Teuchos::rcp(new Thyra::EpetraOperatorViewExtractorStd()))
+{
+   setRequestHandler(rh);
+}
+
+StratimikosFactory::StratimikosFactory(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & builder,
+                                       const Teuchos::RCP<Teko::RequestHandler> & rh)
+  :epetraFwdOpViewExtractor_(Teuchos::rcp(new Thyra::EpetraOperatorViewExtractorStd())), builder_(builder)
 {
    setRequestHandler(rh);
 }
@@ -77,7 +87,7 @@ bool StratimikosFactory::isCompatible(const Thyra::LinearOpSourceBase<double> &f
    Thyra::EApplyEpetraOpAs epetraFwdOpApplyAs;
    Thyra::EAdjointEpetraOp epetraFwdOpAdjointSupport;
    double epetraFwdOpScalar;
-  
+
    // check to make sure this is an epetra CrsMatrix
    Teuchos::RCP<const LinearOpBase<double> > fwdOp = fwdOpSrc.getOp();
    epetraFwdOpViewExtractor_->getEpetraOpView(
@@ -154,7 +164,7 @@ void StratimikosFactory::initializePrec_Thyra(
   Teuchos::RCP<const LinearOpBase<double> > fwdOp = fwdOpSrc->getOp();
 
   // Get the concrete preconditioner object
-  StratimikosFactoryPreconditioner & defaultPrec 
+  StratimikosFactoryPreconditioner & defaultPrec
         = Teuchos::dyn_cast<StratimikosFactoryPreconditioner>(*prec);
   Teuchos::RCP<LinearOpBase<double> > prec_Op = defaultPrec.getNonconstUnspecifiedPrecOp();
 
@@ -171,7 +181,7 @@ void StratimikosFactory::initializePrec_Thyra(
     timer.start(true);
 
     // build library, and set request handler (user defined!)
-    invLib_  = Teko::InverseLibrary::buildFromParameterList(paramList_->sublist("Inverse Factory Library"));
+    invLib_  = Teko::InverseLibrary::buildFromParameterList(paramList_->sublist("Inverse Factory Library"),builder_);
     invLib_->setRequestHandler(reqHandler_);
 
     // build preconditioner factory
@@ -185,10 +195,31 @@ void StratimikosFactory::initializePrec_Thyra(
   if(mediumVerbosity)
     *out << "\nComputing the preconditioner ...\n";
 
-  if(prec_Op==Teuchos::null)
-     prec_Op = Teko::buildInverse(*invFactory_,fwdOp);
-  else
-     Teko::rebuildInverse(*invFactory_,fwdOp,prec_Op);
+  // setup reordering if required
+  std::string reorderType = paramList_->get<std::string>("Reorder Type");
+  if(reorderType!="") {
+
+     Teuchos::RCP<const Thyra::BlockedLinearOpBase<double> > blkFwdOp =
+         Teuchos::rcp_dynamic_cast<const Thyra::BlockedLinearOpBase<double> >(fwdOp,true);
+     RCP<const Teko::BlockReorderManager> brm = Teko::blockedReorderFromString(reorderType);
+     Teko::LinearOp blockedFwdOp = Teko::buildReorderedLinearOp(*brm,blkFwdOp);
+
+     if(prec_Op==Teuchos::null) {
+        Teko::ModifiableLinearOp reorderedPrec = Teko::buildInverse(*invFactory_,blockedFwdOp);
+        prec_Op = Teuchos::rcp(new ReorderedLinearOp(brm,reorderedPrec));
+     }
+     else {
+        Teko::ModifiableLinearOp reorderedPrec = Teuchos::rcp_dynamic_cast<ReorderedLinearOp>(prec_Op,true)->getBlockedOp();
+        Teko::rebuildInverse(*invFactory_,blockedFwdOp,reorderedPrec);
+     }
+  }
+  else {
+     // no reordering required
+     if(prec_Op==Teuchos::null)
+        prec_Op = Teko::buildInverse(*invFactory_,fwdOp);
+     else
+        Teko::rebuildInverse(*invFactory_,fwdOp,prec_Op);
+  }
 
   // construct preconditioner
   timer.stop();
@@ -237,7 +268,7 @@ void StratimikosFactory::initializePrec_Epetra(
   TEUCHOS_TEST_FOR_EXCEPT(fwdOp.get()==NULL);
   TEUCHOS_TEST_FOR_EXCEPT(prec==NULL);
 #endif
- 
+
   //
   // Unwrap and get the forward Epetra_Operator object
   //
@@ -251,11 +282,11 @@ void StratimikosFactory::initializePrec_Epetra(
     outArg(epetraFwdOpAdjointSupport),outArg(epetraFwdOpScalar)
                                              );
   // Get the concrete preconditioner object
-  StratimikosFactoryPreconditioner & defaultPrec 
+  StratimikosFactoryPreconditioner & defaultPrec
         = Teuchos::dyn_cast<StratimikosFactoryPreconditioner>(*prec);
 
   // Get the EpetraLinearOp object that is used to implement the preconditoner linear op
-  RCP<Thyra::EpetraLinearOp> epetra_precOp 
+  RCP<Thyra::EpetraLinearOp> epetra_precOp
         = rcp_dynamic_cast<Thyra::EpetraLinearOp>(defaultPrec.getNonconstUnspecifiedPrecOp(),true);
 
   // Get the embedded ML_Epetra::MultiLevelPreconditioner object if it exists
@@ -290,7 +321,7 @@ void StratimikosFactory::initializePrec_Epetra(
     }
 
     // build library, and set request handler (user defined!)
-    invLib_  = Teko::InverseLibrary::buildFromParameterList(paramList_->sublist("Inverse Factory Library"));
+    invLib_  = Teko::InverseLibrary::buildFromParameterList(paramList_->sublist("Inverse Factory Library"),builder_);
     invLib_->setRequestHandler(reqHandler_);
 
     // build preconditioner factory
@@ -298,7 +329,7 @@ void StratimikosFactory::initializePrec_Epetra(
 
     // Create the initial preconditioner: DO NOT compute it yet
     teko_precOp = rcp( new Teko::Epetra::InverseFactoryOperator(invFactory_));
-    
+
     timer.stop();
     if(mediumVerbosity)
       Teuchos::OSTab(out).o() <<"> Creation time = "<<timer.totalElapsedTime()<<" sec\n";
@@ -324,7 +355,7 @@ void StratimikosFactory::initializePrec_Epetra(
         }
      }
      else {
-        Teuchos::RCP<Epetra_Operator> wrappedFwdOp 
+        Teuchos::RCP<Epetra_Operator> wrappedFwdOp
            = buildWrappedEpetraOperator(epetraFwdOp,teko_precOp->getNonconstForwardOp(),*out);
 
         // write out to disk
@@ -341,7 +372,7 @@ void StratimikosFactory::initializePrec_Epetra(
            }
            else TEUCHOS_ASSERT(false);
         }
-   
+
         teko_precOp->rebuildInverseOperator(wrappedFwdOp);
      }
 
@@ -427,7 +458,6 @@ StratimikosFactory::getValidParameters() const
   using Teuchos::tuple;
   using Teuchos::implicit_cast;
   using Teuchos::rcp_implicit_cast;
-  typedef Teuchos::ParameterEntryValidator PEV;
 
   static RCP<const ParameterList> validPL;
 
@@ -442,11 +472,11 @@ StratimikosFactory::getValidParameters() const
     pl->set("Write Block Operator",false,
             "Write out the segregated operator to disk with the name \"block-?_xx\"");
     pl->set("Strided Blocking","1",
-            "Assuming that the user wants Strided blocking, break the operating into\n"
+            "Assuming that the user wants Strided blocking, break the operator into\n"
             "blocks. The syntax can be thought to be associated with the solution\n"
             "vector. For example if your variables are [u v w p T], and we want [u v w]\n"
-            "blocked together, and p and T seperate then the relevant string is \"3 1 1\".\n"
-            "Meaning put the first 3 unknowns per node together and sperate the v and w\n"
+            "blocked together, and p and T separate then the relevant string is \"3 1 1\".\n"
+            "Meaning put the first 3 unknowns per node together and separate the v and w\n"
             "components.");
     pl->set("Reorder Type","",
             "This specifies how the blocks are reordered for use in the preconditioner.\n"
@@ -457,11 +487,11 @@ StratimikosFactory::getValidParameters() const
             "velocity and pressure forming an inner two-by-two block, and then the\n"
             "temperature unknowns forming a two-by-two system with the velocity-pressure\n"
             "block.");
-    pl->set("Inverse Type","Amesos", 
+    pl->set("Inverse Type","Amesos",
             "The type of inverse operator the user wants. This can be one of the defaults\n"
             "from Stratimikos, or a Teko preconditioner defined in the\n"
             "\"Inverse Factory Library\".");
-    pl->sublist("Inverse Factory Library",false,"Definition of Teko preconditioners."); 
+    pl->sublist("Inverse Factory Library",false,"Definition of Teko preconditioners.");
 
     validPL = pl;
   }
@@ -484,12 +514,12 @@ Teuchos::RCP<Epetra_Operator> StratimikosFactory::buildWrappedEpetraOperator(
 //    if(wrappedOp==Teuchos::null)
 //    {
 //       wrappedOp = Teuchos::rcp(new Teko::Epetra::StridedEpetraOperator(decomp_,Jac));
-// 
+//
 //       // reorder the blocks if requested
 //       std::string reorderType = paramList_->get<std::string>("Reorder Type");
 //       if(reorderType!="") {
 //          RCP<const Teko::BlockReorderManager> brm = Teko::blockedReorderFromString(reorderType);
-// 
+//
 //          // out << "Teko: Reordering = " << brm->toString() << std::endl;
 //          Teuchos::rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)->Reorder(*brm);
 //       }
@@ -497,12 +527,12 @@ Teuchos::RCP<Epetra_Operator> StratimikosFactory::buildWrappedEpetraOperator(
 //    else {
 //       Teuchos::rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)->RebuildOps();
 //    }
-// 
+//
 //    // test blocked operator for correctness
 //    if(paramList_->get<bool>("Test Block Operator")) {
 //       bool result
 //          = Teuchos::rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)->testAgainstFullOperator(600,1e-14);
-// 
+//
 //       out << "Teko: Tested operator correctness:  " << (result ? "passed" : "FAILED!") << std::endl;
 //    }
 
@@ -559,7 +589,7 @@ void StratimikosFactory::buildStridedVectors(const Epetra_Operator & Jac,
    // verify that the decomposition is appropriate for this matrix
    TEUCHOS_ASSERT((rangeMap.NumMyElements() % numVars)==0);
    TEUCHOS_ASSERT((rangeMap.NumGlobalElements() % numVars)==0);
-  
+
    int * globalIds = rangeMap.MyGlobalElements();
 
    vars.resize(decomp.size());
@@ -581,10 +611,12 @@ void addTekoToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & build
    TEUCHOS_TEST_FOR_EXCEPTION(builder.getValidParameters()->sublist("Preconditioner Types").isParameter(stratName),std::logic_error,
                       "Teko::addTekoToStratimikosBuilder cannot add \"" + stratName +"\" because it is already included in builder!");
 
+   Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> builderCopy
+       = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder(builder));
+
    // use default constructor to add Teko::StratimikosFactory
-   builder.setPreconditioningStrategyFactory(
-         Teuchos::abstractFactoryStd<Thyra::PreconditionerFactoryBase<double>,Teko::StratimikosFactory>(),
-         stratName);
+   Teuchos::RCP<TekoFactoryBuilder> tekoFactoryBuilder = Teuchos::rcp(new TekoFactoryBuilder(builderCopy,Teuchos::null));
+   builder.setPreconditioningStrategyFactory(tekoFactoryBuilder,stratName);
 }
 
 void addTekoToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & builder,
@@ -594,9 +626,12 @@ void addTekoToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & build
    TEUCHOS_TEST_FOR_EXCEPTION(builder.getValidParameters()->sublist("Preconditioner Types").isParameter(stratName),std::logic_error,
                       "Teko::addTekoToStratimikosBuilder cannot add \"" + stratName +"\" because it is already included in builder!");
 
+   Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> builderCopy
+       = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder(builder));
+
    // build an instance of a Teuchos::AbsractFactory<Thyra::PFB> so request handler is passed onto
    // the resulting StratimikosFactory
-   Teuchos::RCP<TekoFactoryBuilder> tekoFactoryBuilder = Teuchos::rcp(new TekoFactoryBuilder(rh));
+   Teuchos::RCP<TekoFactoryBuilder> tekoFactoryBuilder = Teuchos::rcp(new TekoFactoryBuilder(builderCopy,rh));
    builder.setPreconditioningStrategyFactory(tekoFactoryBuilder,stratName);
 }
 

@@ -3,13 +3,13 @@
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -71,32 +71,32 @@ LOCA::Epetra::Factory::~Factory()
 
 void
 LOCA::Epetra::Factory::init(
-		   const Teuchos::RCP<LOCA::GlobalData>& global_data)
+           const Teuchos::RCP<LOCA::GlobalData>& global_data)
 {
   globalData = global_data;
 }
 
 bool
 LOCA::Epetra::Factory::createBorderedSolverStrategy(
-       const string& strategyName,
+       const std::string& strategyName,
        const Teuchos::RCP<LOCA::Parameter::SublistParser>& topParams,
        const Teuchos::RCP<Teuchos::ParameterList>& solverParams,
        Teuchos::RCP<LOCA::BorderedSolver::AbstractStrategy>& strategy)
 {
   // Instantiate Householder strategy if requested
   if (strategyName == "Householder") {
-    strategy = 
+    strategy =
       Teuchos::rcp(new LOCA::BorderedSolver::EpetraHouseholder(globalData,
-							       topParams,
-							       solverParams));
+                                   topParams,
+                                   solverParams));
     return true;
   }
   // Instantiate augmented strategy if requested
   else if (strategyName == "Augmented") {
-    strategy = 
+    strategy =
       Teuchos::rcp(new LOCA::BorderedSolver::EpetraAugmented(globalData,
-							     topParams,
-							     solverParams));
+                                 topParams,
+                                 solverParams));
     return true;
   }
   else
@@ -105,7 +105,7 @@ LOCA::Epetra::Factory::createBorderedSolverStrategy(
 
 bool
 LOCA::Epetra::Factory::createAnasaziOperatorStrategy(
-       const string& strategyName,
+       const std::string& strategyName,
        const Teuchos::RCP<LOCA::Parameter::SublistParser>& topParams,
        const Teuchos::RCP<Teuchos::ParameterList>& eigenParams,
        const Teuchos::RCP<Teuchos::ParameterList>& solverParams,
@@ -116,7 +116,7 @@ LOCA::Epetra::Factory::createAnasaziOperatorStrategy(
 #ifdef HAVE_MPI
 if (strategyName == "Floquet") {
 
-    strategy = 
+    strategy =
       Teuchos::rcp(new LOCA::Epetra::AnasaziOperator::Floquet(globalData,
                                 topParams, eigenParams, solverParams, grp));
     return true;

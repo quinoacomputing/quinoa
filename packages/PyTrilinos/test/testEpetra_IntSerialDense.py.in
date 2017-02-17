@@ -2,31 +2,45 @@
 # -*- python -*-
 
 # @HEADER
-# ************************************************************************
+# ***********************************************************************
 #
-#                PyTrilinos: Python Interface to Trilinos
-#                   Copyright (2005) Sandia Corporation
+#          PyTrilinos: Python Interfaces to Trilinos Packages
+#                 Copyright (2014) Sandia Corporation
 #
-# Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-# license for use of this work by or on behalf of the U.S. Government.
+# Under the terms of Contract DE-AC04-94AL85000 with Sandia
+# Corporation, the U.S. Government retains certain rights in this
+# software.
 #
-# This library is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation; either version 2.1 of the
-# License, or (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-# This library is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
 #
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA
-# Questions? Contact Bill Spotz (wfspotz@sandia.gov)
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
 #
-# ************************************************************************
+# 3. Neither the name of the Corporation nor the names of the
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+#
+# ***********************************************************************
 # @HEADER
 
 #
@@ -104,7 +118,7 @@ class EpetraIntSerialDenseMatrixTestCase(unittest.TestCase):
         "Test Epetra.IntSerialDenseMatrix (2D-array) constructor"
         isdm = Epetra.IntSerialDenseMatrix(self.array)
         self.assertEqual(isdm.Label(), "Epetra::IntSerialDenseMatrix")
-        self.assertEqual(isdm.CV(),    Epetra.View                   )
+        self.assertEqual(isdm.CV(),    Epetra.Copy                   )
         self.assertEqual(isdm.M(),     self.rows                     )
         self.assertEqual(isdm.N(),     self.cols                     )
 
@@ -160,15 +174,15 @@ class EpetraIntSerialDenseMatrixTestCase(unittest.TestCase):
         result = isdm.Shape(self.cols,self.rows)
         self.failUnless((isdm == zeros((self.cols,self.rows),'i')).all())
 
-    def testShape2(self):
-        "Test Epetra.IntSerialDenseMatrix Shape method, negative rows"
-        isdm = Epetra.IntSerialDenseMatrix()
-        self.assertRaises(ValueError, isdm.Shape, -self.rows, self.cols)
+    # def testShape2(self):
+    #     "Test Epetra.IntSerialDenseMatrix Shape method, negative rows"
+    #     isdm = Epetra.IntSerialDenseMatrix()
+    #     self.assertRaises(ValueError, isdm.Shape, -self.rows, self.cols)
 
-    def testShape3(self):
-        "Test Epetra.IntSerialDenseMatrix Shape method, negative columns"
-        isdm = Epetra.IntSerialDenseMatrix()
-        self.assertRaises(ValueError, isdm.Shape, self.rows, -self.cols)
+    # def testShape3(self):
+    #     "Test Epetra.IntSerialDenseMatrix Shape method, negative columns"
+    #     isdm = Epetra.IntSerialDenseMatrix()
+    #     self.assertRaises(ValueError, isdm.Shape, self.rows, -self.cols)
 
     def testReshape1(self):
         "Test Epetra.IntSerialDenseMatrix Reshape method to smaller"
@@ -188,15 +202,15 @@ class EpetraIntSerialDenseMatrixTestCase(unittest.TestCase):
         self.assertEqual(result, 0)
         self.failUnless((isdm2[:-1,:-1] == isdm1).all())
 
-    def testReshape3(self):
-        "Test Epetra.IntSerialDenseMatrix Reshape method, negative rows"
-        isdm = Epetra.IntSerialDenseMatrix()
-        self.assertRaises(ValueError, isdm.Reshape, -self.rows, self.cols)
+    # def testReshape3(self):
+    #     "Test Epetra.IntSerialDenseMatrix Reshape method, negative rows"
+    #     isdm = Epetra.IntSerialDenseMatrix()
+    #     self.assertRaises(ValueError, isdm.Reshape, -self.rows, self.cols)
 
-    def testReshape4(self):
-        "Test Epetra.IntSerialDenseMatrix Reshape method, negative columns"
-        isdm = Epetra.IntSerialDenseMatrix()
-        self.assertRaises(ValueError, isdm.Reshape, self.rows, -self.cols)
+    # def testReshape4(self):
+    #     "Test Epetra.IntSerialDenseMatrix Reshape method, negative columns"
+    #     isdm = Epetra.IntSerialDenseMatrix()
+    #     self.assertRaises(ValueError, isdm.Reshape, self.rows, -self.cols)
 
     def testOneNorm(self):
         "Test Epetra.IntSerialDenseMatrix OneNorm method"
@@ -215,7 +229,7 @@ class EpetraIntSerialDenseMatrixTestCase(unittest.TestCase):
         isdm = Epetra.IntSerialDenseMatrix(self.array)
         for i in range(isdm.M()):
             for j in range(isdm.N()):
-                self.assertEqual(isdm(i,j), self.array[i][j])
+                self.assertEqual(isdm[i,j], self.array[i][j])
 
     def testGetItem1(self):
         "Test Epetra.IntSerialDenseMatrix __getitem__ method for two ints"
@@ -325,8 +339,8 @@ class EpetraIntSerialDenseMatrixTestCase(unittest.TestCase):
         isdm.Print(f)
         f.close()
         self.assertEqual(open(filename, "r").read(),
-                         "Data access mode: View\n"
-                         "A_Copied: no\n"
+                         "Data access mode: Copy\n"
+                         "A_Copied: yes\n"
                          "Rows(M): 3\n"
                          "Columns(N): 4\n"
                          "LDA: 3\n"
@@ -383,7 +397,7 @@ class EpetraIntSerialDenseVectorTestCase(unittest.TestCase):
     def testConstructor2(self):
         "Test Epetra.IntSerialDenseVector (1D-list) constructor"
         isdv = Epetra.IntSerialDenseVector(self.list)
-        self.assertEqual(isdv.CV(), Epetra.View)
+        self.assertEqual(isdv.CV(), Epetra.Copy)
         self.assertEqual(isdv.Length(), len(self.list))
         self.failUnless((isdv == self.list).all())
 
@@ -391,7 +405,8 @@ class EpetraIntSerialDenseVectorTestCase(unittest.TestCase):
         "Test Epetra.IntSerialDenseVector (2D-list) constructor"
         list = [[0, -1, 2], [-3, 4, -5]]
         isdv = Epetra.IntSerialDenseVector(list)
-        self.assertEqual(isdv.CV(), Epetra.View)
+        isdv.shape = (2,3)
+        self.assertEqual(isdv.CV(), Epetra.Copy)
         self.assertEqual(isdv.Length(), len(list)*len(list[0]))
         self.failUnless((isdv == list).all())
 
@@ -497,7 +512,7 @@ class EpetraIntSerialDenseVectorTestCase(unittest.TestCase):
         "Test Epetra.IntSerialDenseVector __call__ method"
         isdv = Epetra.IntSerialDenseVector(self.list)
         for i in range(len(self.list)):
-            self.assertEqual(isdv(i),self.list[i])
+            self.assertEqual(isdv[i],self.list[i])
 
     def testSetitem(self):
         "Test Epetra.IntSerialDenseVector __setitem__ method"
@@ -543,7 +558,7 @@ class EpetraIntSerialDenseVectorTestCase(unittest.TestCase):
 
     def testValues(self):
         "Test Epetra.IntSerialDenseVector Values method"
-        isdv  = Epetra.IntSerialDenseVector(self.list)
+        isdv = Epetra.IntSerialDenseVector(self.list)
         vals = isdv.Values()
         self.assertNotEqual(type(isdv), type(vals))
         self.assertEqual(isdv.Length(), len(vals))

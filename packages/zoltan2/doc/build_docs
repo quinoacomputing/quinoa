@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd ../scripts
+python xml2dox.py
+cd -
+cp ../scripts/parameters.dox .
+
+doxygen Doxyfile
+

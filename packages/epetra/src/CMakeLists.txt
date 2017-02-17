@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -12,6 +11,10 @@ ENDIF()
 SET(Epetra_HAVE_OMP ${${PROJECT_NAME}_ENABLE_OpenMP})
 # This is the preferred macro to key on, but am keeping the old one for backward compatibility
 SET(EPETRA_HAVE_OMP ${${PROJECT_NAME}_ENABLE_OpenMP})
+
+SET(HAVE_BLAS ON)
+SET(HAVE_LAPACK ON)
+SET(HAVE_MPI ${Epetra_ENABLE_MPI})
 
 TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
@@ -68,8 +71,11 @@ SET(HEADERS ${HEADERS}
 #  Epetra_FastCrsMatrix.h
   Epetra_Flops.h
   Epetra_Fortran_wrappers.h
+  Epetra_GIDTypeSerialDenseVector.h
+  Epetra_GIDTypeVector.h
   Epetra_HashTable.h
   Epetra_Import.h
+  Epetra_Import_Util.h
   Epetra_IntSerialDenseMatrix.h
   Epetra_IntSerialDenseVector.h
   Epetra_IntVector.h
@@ -107,6 +113,14 @@ SET(HEADERS ${HEADERS}
   Epetra_Version.h
   )
 
+IF(NOT Trilinos_NO_64BIT_GLOBAL_INDICES)
+  SET(HEADERS ${HEADERS}
+    Epetra_LongLongSerialDenseMatrix.h
+    Epetra_LongLongSerialDenseVector.h
+    Epetra_LongLongVector.h
+  )
+ENDIF()
+
 # Set sources
 SET(SOURCES ${SOURCES}
   Epetra_BLAS.cpp
@@ -131,6 +145,7 @@ SET(SOURCES ${SOURCES}
   Epetra_Flops.cpp
   Epetra_Fortran_wrappers.cpp
   Epetra_Import.cpp
+  Epetra_Import_Util.cpp
   Epetra_IntSerialDenseMatrix.cpp
   Epetra_IntSerialDenseVector.cpp
   Epetra_IntVector.cpp
@@ -161,6 +176,15 @@ SET(SOURCES ${SOURCES}
   Epetra_Vector.cpp
   )
 
+IF(NOT Trilinos_NO_64BIT_GLOBAL_INDICES)
+  SET(SOURCES ${SOURCES}
+    Epetra_LongLongSerialDenseMatrix.cpp
+    Epetra_LongLongSerialDenseVector.cpp
+    Epetra_LongLongVector.cpp
+  )
+ENDIF()
+
+
 IF(Epetra_ENABLE_Oski)
   APPEND_SET(HEADERS
     Epetra_OskiUtils.h
@@ -190,7 +214,7 @@ IF(${PACKAGE_NAME}_ENABLE_Fortran)
     )	
 ENDIF()
 
-# Set addition headers and source based on package-specific 
+# Set addition headers and source based on package-specific
 # configuration options
 
 IF(TPL_ENABLE_MPI)

@@ -12,8 +12,11 @@ rm -r html
 
 mkdir ../browser/doc/html
 
-mkdir html
+mkdir -p html/common
+cp -r ../../../doc/DocumentingParameterLists/webfiles html/common/parameterList
+
 
 # Build the documentation
-
 ./build_docs_guts
+
+

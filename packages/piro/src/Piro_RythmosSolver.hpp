@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-// 
+//
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,101 +36,170 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-// 
+//
 // ************************************************************************
 // @HEADER
 
 #ifndef PIRO_RYTHMOSSOLVER_H
 #define PIRO_RYTHMOSSOLVER_H
 
-#include <iostream>
-
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+#include "Piro_ConfigDefs.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 
 #include "Rythmos_DefaultIntegrator.hpp"
 #include "Rythmos_IntegrationObserverBase.hpp"
 #include "Rythmos_TimeStepNonlinearSolver.hpp"
 
+#include "Piro_ObserverBase.hpp"
 
-/** \brief Thyra-based Model Evaluator subclass for Charon!
- *
- * This class will support a wide number of different types of abstract
- * problem types that will allow NOX, LOCA, Rythmos, Aristos, and MOOCHO to
- * solve different types of problems with Charon.
- * 
- * ToDo: Finish documentation!
- */
+#include "Piro_RythmosStepperFactory.hpp"
+#include "Piro_RythmosStepControlFactory.hpp"
+
+#ifdef ALBANY_BUILD
+#include "Kokkos_DefaultNode.hpp"
+#endif
+
+#include <map>
+#include <string>
 
 namespace Piro {
 
+/** \brief Thyra-based Model Evaluator for Rythmos solves
+ *  \ingroup Piro_Thyra_solver_grp
+ * */
+#ifdef ALBANY_BUILD
+template <typename Scalar, typename LocalOrdinal = int, typename GlobalOrdinal = LocalOrdinal, 
+          typename Node = KokkosClassic::DefaultNode::DefaultNodeType>
+#else
 template <typename Scalar>
+#endif
 class RythmosSolver
     : public Thyra::ResponseOnlyModelEvaluatorBase<Scalar>
 {
-
-  public:
-
+public:
   /** \name Constructors/initializers */
   //@{
 
-  /** \brief Takes the number of elements in the discretization . */
-  RythmosSolver(Teuchos::RCP<Teuchos::ParameterList> appParams,
-                Teuchos::RCP< Thyra::ModelEvaluatorDefaultBase<Scalar> > model,
-                Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > observer = Teuchos::null
-                );
+  /** \brief Initializes the internals, though the object is a blank slate. To initialize it call <code>initialize</code> */
+  RythmosSolver();
 
+  /** \brief Initialize with internally built objects according to the given parameter list. */
+  RythmosSolver(
+      const Teuchos::RCP<Teuchos::ParameterList> &appParams,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+      const Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > &observer = Teuchos::null);
+
+  /** \brief Initialize using prebuilt objects. */
+  RythmosSolver(
+      const Teuchos::RCP<Rythmos::DefaultIntegrator<Scalar> > &stateIntegrator,
+      const Teuchos::RCP<Rythmos::StepperBase<Scalar> > &stateStepper,
+      const Teuchos::RCP<Thyra::NonlinearSolverBase<Scalar> > &timeStepSolver,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+      Scalar finalTime,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &initialConditionModel = Teuchos::null,
+      Teuchos::EVerbosityLevel verbosityLevel = Teuchos::VERB_DEFAULT);
   //@}
 
-  ~RythmosSolver();
+  /** \brief Initialize using prebuilt objects - supplying initial time value. */
+  RythmosSolver(
+      const Teuchos::RCP<Rythmos::DefaultIntegrator<Scalar> > &stateIntegrator,
+      const Teuchos::RCP<Rythmos::StepperBase<Scalar> > &stateStepper,
+      const Teuchos::RCP<Thyra::NonlinearSolverBase<Scalar> > &timeStepSolver,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+      Scalar initialTime,
+      Scalar finalTime,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &initialConditionModel = Teuchos::null,
+      Teuchos::EVerbosityLevel verbosityLevel = Teuchos::VERB_DEFAULT);
+  //@}
+
+  void initialize(
+      const Teuchos::RCP<Teuchos::ParameterList> &appParams,
+      const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+      const Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > &observer = Teuchos::null);
 
   Teuchos::RCP<const Rythmos::IntegratorBase<Scalar> > getRythmosIntegrator() const;
 
-  /** \name Overridden from Thyra::ModelEvaluatorBase . */
+  /** \name Overridden from Thyra::ModelEvaluatorBase. */
   //@{
-
   /** \brief . */
   Thyra::ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
   /** \brief . */
   Thyra::ModelEvaluatorBase::InArgs<Scalar> createInArgs() const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::OutArgs<Scalar> createOutArgsImpl() const;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_p_space(int l) const;
   /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_p_space(int i) const;
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_g_space(int i) const;
-
-  /** \brief . */
-  void evalModelImpl( const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
-                  const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs ) const;
-
-  private:
-  /** \brief . */
-  Teuchos::RCP<const Teuchos::ParameterList> getValidRythmosParameters() const;
-
+  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_g_space(int j) const;
   //@}
 
-  private:
+  void addStepperFactory(const std::string & stepperName,
+                         const Teuchos::RCP<Piro::RythmosStepperFactory<Scalar> > & stepperFactories);
 
-   //These are set in the constructor and used in evalModel
-   mutable Teuchos::RCP<Teuchos::ParameterList> appParams;
-   Teuchos::RCP< Thyra::ModelEvaluatorDefaultBase<Scalar> > model;
-   Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > observer;
-  
-   int num_p;
-   int num_g;
+  void addStepControlFactory(const std::string & stepControlName,
+                             const Teuchos::RCP<Piro::RythmosStepControlFactory<Scalar> > & step_control_strategy);
 
-   Teuchos::RCP<Rythmos::StepperBase<Scalar> > fwdStateStepper;
-   Teuchos::RCP<Teuchos::FancyOStream> out;
-   Teuchos::EVerbosityLevel solnVerbLevel;
-   Teuchos::RCP<Rythmos::DefaultIntegrator<Scalar> > fwdStateIntegrator;
-   Teuchos::RCP<Thyra::NonlinearSolverBase<double> > fwdTimeStepSolver;
-  //Teuchos::RCP<Rythmos::TimeStepNonlinearSolver<double> > fwdTimeStepSolver;
-   Scalar t_final;
+private:
+  /** \name Overridden from Thyra::ModelEvaluatorDefaultBase. */
+  //@{
+  /** \brief . */
+  Thyra::ModelEvaluatorBase::OutArgs<Scalar> createOutArgsImpl() const;
 
+  /** \brief . */
+  void evalModelImpl(
+      const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
+      const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs) const;
+  //@}
+
+  Teuchos::RCP<Thyra::LinearOpBase<Scalar> > create_DgDp_op_impl(int j, int l) const;
+
+  /** \brief . */
+  Teuchos::RCP<const Teuchos::ParameterList> getValidRythmosParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidRythmosSolverParameters() const;
+
+  Teuchos::RCP<Rythmos::DefaultIntegrator<Scalar> > fwdStateIntegrator;
+  Teuchos::RCP<Rythmos::StepperBase<Scalar> > fwdStateStepper;
+  Teuchos::RCP<Thyra::NonlinearSolverBase<Scalar> > fwdTimeStepSolver;
+
+  Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > model;
+  Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<double> > thyraModel;
+  Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > initialConditionModel;
+
+  Scalar t_initial;
+  Scalar t_final;
+
+  int num_p;
+  int num_g;
+
+  Teuchos::RCP<Teuchos::FancyOStream> out;
+  Teuchos::EVerbosityLevel solnVerbLevel;
+
+  // used for adding user defined steppers externally, this gives us "the open-close principal"
+  std::map<std::string,Teuchos::RCP<Piro::RythmosStepperFactory<Scalar> > > stepperFactories;
+
+  std::map<std::string,Teuchos::RCP<Piro::RythmosStepControlFactory<Scalar> > > stepControlFactories;
+
+  bool isInitialized;
 };
+
+/** \brief Non-member constructor function */
+#ifdef ALBANY_BUILD
+template <typename Scalar, typename LocalOrdinal = int, typename GlobalOrdinal = LocalOrdinal,
+          typename Node = KokkosClassic::DefaultNode::DefaultNodeType>
+Teuchos::RCP<RythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
+#else
+template <typename Scalar>
+Teuchos::RCP<RythmosSolver<Scalar> >
+#endif
+rythmosSolver(
+    const Teuchos::RCP<Teuchos::ParameterList> &appParams,
+    const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+    const Teuchos::RCP<ObserverBase<Scalar> > &piroObserver);
 
 }
 
+/** \class Piro::RythmosSolver
+ *  \ingroup Piro_Thyra_solver_grp
+ * */
+
 #include "Piro_RythmosSolver_Def.hpp"
+
 #endif

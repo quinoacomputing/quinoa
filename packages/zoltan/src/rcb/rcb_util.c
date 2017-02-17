@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *  
- *****************************************************************************/
-
-
-#ifdef __cplusplus
-/* if C++, define the rest of this header file as extern C */
-extern "C" {
-#endif
-
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #include "zz_const.h"
 #include "rcb.h"
@@ -166,62 +199,6 @@ int Zoltan_RCB_Copy_Structure(ZZ *toZZ, ZZ const *fromZZ)
   return ZOLTAN_OK;
 }
 
-/*
-** For debugging purposes, print out the RCB structure
-**   Indicate how many objects you want printed out, -1 for all.
-*/
-void Zoltan_RCB_Print_Structure(ZZ *zz, int howMany)
-{
-  int num_obj, i, len;
-  RCB_STRUCT *rcb;
-  struct rcb_tree r;
-  struct rcb_box *b;
-  int printed = 0;
-
-  rcb = (RCB_STRUCT *)zz->LB.Data_Structure;
-  num_obj = Zoltan_Print_Obj_List(zz, rcb->Global_IDs, rcb->Local_IDs, 
-    0, NULL, NULL, howMany);
-
-#if 0               /* TODO64 fix this */
-  struct Dot_Struct dot;
-  for (i=0; rcb->Dots && (i<num_obj); i++){
-    dot = rcb->Dots[i];
-    printf("(Dots %d) (%6.4f %6.4f %6.4f) (%6.4f %6.4f %6.4f %6.4f) proc %d, part %d, new part %dn",
-     i, dot.X[0], dot.X[1], dot.X[2], 
-     dot.Weight[0], dot.Weight[1], dot.Weight[2], dot.Weight[3],
-     dot.Proc, dot.Input_Part, dot.Part);
-    printed = 1;
-  }
-  if (!printed){
-    printf("Dots: NULL\n");
-  }
-#endif
-  len = zz->LB.Num_Global_Parts;
-  printed = 0;
-
-  for (i=0; rcb->Tree_Ptr && (i<len); i++){
-    r = rcb->Tree_Ptr[i];
-    printf("(Tree %d) cut: %6.4f, dim %d, up %d, left %d, right %d\n",
-      i, r.cut, r.dim, r.parent, r.left_leaf, r.right_leaf);
-    printed=1;
-  }
-  if (!printed){
-    printf("Tree: NULL\n");
-  }
-
-  b = rcb->Box;
-  if (b){
-     printf("Box: (%6.4f, %6.4f) (%6.4f, %6.4f) (%6.4f, %6.4f)\n",
-       b->lo[0], b->hi[0],
-       b->lo[1], b->hi[1],
-       b->lo[2], b->hi[2]);
-  }
-  else{
-    printf("Box: NULL\n");
-  }
-
-  Zoltan_Print_Transformation(&(rcb->Tran));
-}
 
 #ifdef __cplusplus
 } /* closing bracket for extern "C" */

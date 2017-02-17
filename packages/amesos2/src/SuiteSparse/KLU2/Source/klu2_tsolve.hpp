@@ -22,7 +22,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Mike A. Heroux (maherou@sandia.gov)
 //
@@ -45,6 +45,7 @@
 #define KLU2_TSOLVE_HPP
 
 #include "klu2_internal.h"
+#include "klu2.hpp"
 
 template <typename Entry, typename Int>
 Int KLU_tsolve
@@ -56,7 +57,7 @@ Int KLU_tsolve
     Int nrhs,               /* number of right-hand-sides */
 
     /* right-hand-side on input, overwritten with solution to Ax=b on output */
-    double B [ ],           /* size n*nrhs, in column-oriented form, with
+    Entry B [ ],           /* size n*nrhs, in column-oriented form, with
                              * leading dimension d. */
 #ifdef COMPLEX
     Int conj_solve,         /* TRUE for conjugate transpose solve, FALSE for

@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -39,6 +39,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_Time.hpp"
 
 /*! \class Anasazi::SolverManager
   \brief The Anasazi::SolverManager is a templated virtual base class that defines the
@@ -70,6 +72,13 @@ class SolverManager {
 
   //! Get the iteration count for the most recent call to \c solve().
   virtual int getNumIters() const = 0;
+
+  //! Return the timers for this object. 
+  virtual Teuchos::Array<Teuchos::RCP<Teuchos::Time> > getTimers() const 
+  {
+    Teuchos::Array<Teuchos::RCP<Teuchos::Time> > null_time;
+    return null_time;
+  }
 
   //@}
 

@@ -49,10 +49,13 @@
 namespace Thyra {
 
 
-/** \brief . */
+/** \brief Determines what to do if inverse solve fails.
+ *
+ * \ingroup Thyra_Op_Vec_ANA_Development_grp
+ */
 enum EThrowOnSolveFailure {
-  THROW_ON_SOLVE_FAILURE=1 ///< Throw an exception if a solve fails to converge
-  ,IGNORE_SOLVE_FAILURE=0  ///< Don't throw an exception if a solve fails to converge
+  THROW_ON_SOLVE_FAILURE=1, ///< Throw an exception if a solve fails to converge
+  IGNORE_SOLVE_FAILURE=0  ///< Don't throw an exception if a solve fails to converge
 };
 
 
@@ -347,51 +350,6 @@ void DefaultInverseLinearOp<Scalar>::assertInitialized() const
 #ifdef TEUCHOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPT( !lows_.getConstObj().get() );
 #endif
-}
-
-
-//
-// Deprecated
-//
-
-
-/** \brief Deprecated
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED RCP<LinearOpBase<Scalar> >
-nonconstInverse(
-  const RCP<LinearOpWithSolveBase<Scalar> > &A,
-  const SolveCriteria<Scalar> *fwdSolveCriteria,
-  const EThrowOnSolveFailure throwOnFwdSolveFailure = THROW_ON_SOLVE_FAILURE,
-  const SolveCriteria<Scalar> *adjSolveCriteria = NULL,
-  const EThrowOnSolveFailure throwOnAdjSolveFailure = THROW_ON_SOLVE_FAILURE
-  )
-{
-  using Teuchos::ptr;
-  return nonconstInverse<Scalar>(A, ptr(fwdSolveCriteria), throwOnFwdSolveFailure,
-    ptr(adjSolveCriteria), throwOnAdjSolveFailure);
-}
-
-
-/** \brief Deprecated
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED RCP<LinearOpBase<Scalar> >
-inverse(
-  const RCP<const LinearOpWithSolveBase<Scalar> > &A,
-  const SolveCriteria<Scalar> *fwdSolveCriteria,
-  const EThrowOnSolveFailure throwOnFwdSolveFailure = THROW_ON_SOLVE_FAILURE,
-  const SolveCriteria<Scalar> *adjSolveCriteria = NULL,
-  const EThrowOnSolveFailure throwOnAdjSolveFailure = THROW_ON_SOLVE_FAILURE
-  )
-{
-  using Teuchos::ptr;
-  return inverse<Scalar>(A, ptr(fwdSolveCriteria), throwOnFwdSolveFailure,
-    ptr(adjSolveCriteria), throwOnAdjSolveFailure);
 }
 
 

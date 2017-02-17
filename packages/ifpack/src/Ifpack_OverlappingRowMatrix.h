@@ -8,20 +8,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -36,7 +49,8 @@
 #include "Epetra_CombineMode.h"
 #include "Teuchos_RefCountPtr.hpp"
 #include "Epetra_Import.h"
-#ifdef IFPACK_SUBCOMM_CODE
+#include "Epetra_Map.h"
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 #include "Epetra_IntVector.h"
 #else
 # ifdef IFPACK_NODE_AWARE_CODE
@@ -56,7 +70,7 @@ class Ifpack_OverlappingRowMatrix : public virtual Epetra_RowMatrix {
 public:
 
   //@{ Constructors/Destructors
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
   Ifpack_OverlappingRowMatrix(const Teuchos::RefCountPtr<const Epetra_RowMatrix>& Matrix_in,
                               int OverlapLevel_in, int subdomainID);
 #else
@@ -68,7 +82,7 @@ public:
   Ifpack_OverlappingRowMatrix(const Teuchos::RefCountPtr<const Epetra_RowMatrix>& Matrix_in,
                               int OverlapLevel_in);
 
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
   ~Ifpack_OverlappingRowMatrix() {};
 #else
 # ifdef IFPACK_NODE_AWARE_CODE
@@ -82,10 +96,10 @@ public:
   //@{ \name Matrix data extraction routines
 
   //! Returns the number of nonzero entries in MyRow.
-  /*! 
-    \param 
+  /*!
+    \param
     MyRow - (In) Local row.
-    \param 
+    \param
     NumEntries - (Out) Number of nonzero values present.
 
     \return Integer error code, set to 0 if successful.
@@ -99,7 +113,7 @@ public:
   }
 
   //! Returns a copy of the specified local row in user-provided arrays.
-  /*! 
+  /*!
     \param
     MyRow - (In) Local row to extract.
     \param
@@ -108,13 +122,13 @@ public:
     NumEntries - (Out) Number of nonzero entries extracted.
     \param
     Values - (Out) Extracted values for this row.
-    \param 
+    \param
     Indices - (Out) Extracted global column indices for the corresponding values.
 
     \return Integer error code, set to 0 if successful.
     */
   virtual int ExtractMyRowCopy(int MyRow, int Length, int & NumEntries, double *Values, int * Indices) const;
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
   virtual int ExtractGlobalRowCopy(int MyRow, int Length, int & NumEntries, double* Values, int* Indices) const;
 #else
 # ifdef IFPACK_NODE_AWARE_CODE
@@ -123,7 +137,7 @@ public:
 #endif
 
   //! Returns a copy of the main diagonal in a user-provided vector.
-  /*! 
+  /*!
     \param
     Diagonal - (Out) Extracted main diagonal.
 
@@ -135,12 +149,12 @@ public:
   //@{ \name Mathematical functions.
 
   //! Returns the result of a Epetra_RowMatrix multiplied by a Epetra_MultiVector X in Y.
-  /*! 
-    \param 
+  /*!
+    \param
     TransA -(In) If true, multiply by the transpose of matrix, otherwise just use matrix.
-    \param 
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
-    \param 
+    \param
     Y -(Out) A Epetra_MultiVector of dimension NumVectorscontaining result.
 
     \return Integer error code, set to 0 if successful.
@@ -148,17 +162,17 @@ public:
   virtual int Multiply(bool TransA, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Returns result of a local-only solve using a triangular Epetra_RowMatrix with Epetra_MultiVectors X and Y (NOT IMPLEMENTED).
-  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal, const Epetra_MultiVector& X, 
-		    Epetra_MultiVector& Y) const
+  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal, const Epetra_MultiVector& X,
+                    Epetra_MultiVector& Y) const
   {
-    IFPACK_RETURN(-1); // not implemented 
+    IFPACK_RETURN(-1); // not implemented
   }
 
   virtual int Apply(const Epetra_MultiVector& X,
-		    Epetra_MultiVector& Y) const;
+                    Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverse(const Epetra_MultiVector& X,
-			   Epetra_MultiVector& Y) const;
+                           Epetra_MultiVector& Y) const;
   //! Computes the sum of absolute values of the rows of the Epetra_RowMatrix, results returned in x (NOT IMPLEMENTED).
   virtual int InvRowSums(Epetra_Vector& x) const
   {
@@ -179,7 +193,7 @@ public:
 
 
   //! Scales the Epetra_RowMatrix on the right with a Epetra_Vector x (NOT IMPLEMENTED).
-  virtual int RightScale(const Epetra_Vector& x) 
+  virtual int RightScale(const Epetra_Vector& x)
   {
     IFPACK_RETURN(-1); // not implemented
   }
@@ -197,7 +211,7 @@ public:
   //! Returns the infinity norm of the global matrix.
   /* Returns the quantity \f$ \| A \|_\infty\f$ such that
      \f[\| A \|_\infty = \max_{1\lei\len} \sum_{i=1}^m |a_{ij}| \f].
-     */ 
+     */
   virtual double NormInf() const
   {
     return(A().NormInf());
@@ -206,16 +220,20 @@ public:
   //! Returns the one norm of the global matrix.
   /* Returns the quantity \f$ \| A \|_1\f$ such that
      \f[\| A \|_1= \max_{1\lej\len} \sum_{j=1}^n |a_{ij}| \f].
-     */ 
+     */
   virtual double NormOne() const
   {
-    IFPACK_RETURN(A().NormOne());
+    return(A().NormOne());
   }
 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   //! Returns the number of nonzero entries in the global matrix.
   virtual int NumGlobalNonzeros() const
   {
-    return(NumGlobalNonzeros_);
+    if(A().RowMatrixRowMap().GlobalIndicesInt())
+       return (int) NumGlobalNonzeros_;
+    else
+       throw "Ifpack_OverlappingRowMatrix::NumGlobalNonzeros: Global indices not int";
   }
 
   //! Returns the number of global matrix rows.
@@ -234,6 +252,30 @@ public:
   virtual int NumGlobalDiagonals() const
   {
     return(A().NumGlobalDiagonals());
+  }
+#endif
+  //! Returns the number of nonzero entries in the global matrix.
+  virtual long long NumGlobalNonzeros64() const
+  {
+    return(NumGlobalNonzeros_);
+  }
+
+  //! Returns the number of global matrix rows.
+  virtual long long NumGlobalRows64() const
+  {
+    return(A().NumGlobalRows64());
+  }
+
+  //! Returns the number of global matrix columns.
+  virtual long long NumGlobalCols64() const
+  {
+    return(A().NumGlobalCols64());
+  }
+
+  //! Returns the number of global nonzero diagonal entries, based on global row/column index comparisons.
+  virtual long long NumGlobalDiagonals64() const
+  {
+    return(A().NumGlobalDiagonals64());
   }
 
   //! Returns the number of nonzero entries in the calling processor's portion of the matrix.
@@ -281,7 +323,7 @@ public:
   //! Returns the Epetra_Map object associated with the columns of this matrix.
   virtual const Epetra_Map & RowMatrixColMap() const
   {
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
     return(*colMap_);
 #else
 #   ifdef IFPACK_NODE_AWARE_CODE
@@ -315,7 +357,7 @@ public:
   }
 
   //! Returns the current UseTranspose setting.
-  bool UseTranspose() const 
+  bool UseTranspose() const
   {
     return(UseTranspose_);
   }
@@ -333,13 +375,13 @@ public:
   }
 
   //! Returns the Epetra_Map object associated with the domain of this operator.
-  const Epetra_Map & OperatorDomainMap() const 
+  const Epetra_Map & OperatorDomainMap() const
   {
     return(*Map_);
   }
 
   //! Returns the Epetra_Map object associated with the range of this operator.
-  const Epetra_Map & OperatorRangeMap() const 
+  const Epetra_Map & OperatorRangeMap() const
   {
     return(*Map_);
   }
@@ -363,8 +405,8 @@ int ImportMultiVector(const Epetra_MultiVector& X,
 int ExportMultiVector(const Epetra_MultiVector& OvX,
                       Epetra_MultiVector& X,
                       Epetra_CombineMode CM = Add);
-#ifdef IFPACK_SUBCOMM_CODE
-  inline const Epetra_RowMatrix& A() const 
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
+  inline const Epetra_RowMatrix& A() const
   {
     return(*Matrix_);
   }
@@ -375,7 +417,7 @@ int ExportMultiVector(const Epetra_MultiVector& OvX,
   }
 #else
 # ifdef IFPACK_NODE_AWARE_CODE
-  inline const Epetra_RowMatrix& A() const 
+  inline const Epetra_RowMatrix& A() const
   {
     return(*Matrix_);
   }
@@ -387,10 +429,10 @@ int ExportMultiVector(const Epetra_MultiVector& OvX,
 # endif
 #endif
 
-private: 
-#ifndef IFPACK_SUBCOMM_CODE
+private:
+#ifndef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 # ifndef IFPACK_NODE_AWARE_CODE
-  inline const Epetra_RowMatrix& A() const 
+  inline const Epetra_RowMatrix& A() const
   {
     return(*Matrix_);
   }
@@ -404,7 +446,7 @@ private:
   int NumMyDiagonals_;
   int NumMyNonzeros_;
 
-  int NumGlobalNonzeros_;
+  long long NumGlobalNonzeros_;
   int MaxNumEntries_;
 
   int NumMyRowsA_;
@@ -413,7 +455,7 @@ private:
   bool UseTranspose_;
 
   Teuchos::RefCountPtr<const Epetra_Map> Map_;
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
   const Epetra_Map *colMap_;
 #else
 # ifdef IFPACK_NODE_AWARE_CODE
@@ -428,7 +470,10 @@ private:
   Teuchos::RefCountPtr<Epetra_Import> ExtImporter_;
 
   int OverlapLevel_;
-  string Label_;
+  std::string Label_;
+
+  template<typename int_type>
+  void BuildMap(int OverlapLevel_in);
 
 }; // class Ifpack_OverlappingRowMatrix
 

@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -45,7 +58,7 @@ class Epetra_RowMatrix;
 
 //! Ifpack_Amesos: a class to use Amesos' factorizations as preconditioners.
 /*!
-Class Ifpack_Amesos enables the use of Amesos' factorizations as 
+Class Ifpack_Amesos enables the use of Amesos' factorizations as
 Ifpack_Preconditioners.
 
 Ifpack_Amesos is just a bare-bone wrap to Amesos. Currently, the
@@ -66,7 +79,7 @@ process, that is, either serial matrices, or Ifpack_LocalFilter'd matrices.
 
 */
 class Ifpack_Amesos : public Ifpack_Preconditioner {
-      
+
 public:
 
   //@{ \name Constructors/Destructors.
@@ -89,26 +102,26 @@ public:
   //@{ \name Attribute set methods.
 
    //! If set true, transpose of this operator will be applied (not implemented).
-    /*! This flag allows the transpose of the given operator to be used 
-     * implicitly.  
-      
-    \param 
-	   UseTranspose_in - (In) If true, multiply by the transpose of operator, 
-	   otherwise just use operator.
+    /*! This flag allows the transpose of the given operator to be used
+     * implicitly.
+
+    \param
+           UseTranspose_in - (In) If true, multiply by the transpose of operator,
+           otherwise just use operator.
 
     \return Integer error code, set to 0 if successful.  Set to -1 if this implementation does not support transpose.
   */
 
   virtual int SetUseTranspose(bool UseTranspose_in);
   //@}
-  
+
   //@{ \name Mathematical functions.
 
     //! Applies the matrix to an Epetra_MultiVector.
-  /*! 
+  /*!
     \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
-    \param 
+    \param
     Y - (Out) A Epetra_MultiVector of dimension NumVectors containing the result.
 
     \return Integer error code, set to 0 if successful.
@@ -116,15 +129,15 @@ public:
     virtual int Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
     //! Applies the preconditioner to X, returns the result in Y.
-  /*! 
-    \param 
+  /*!
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to be preconditioned.
-    \param 
+    \param
     Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
 
-    \warning In order to work with AztecOO, any implementation of this method 
+    \warning In order to work with AztecOO, any implementation of this method
     must support the case where X and Y are the same object.
     */
     virtual int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -132,7 +145,7 @@ public:
     //! Returns the infinity norm of the global matrix (not implemented)
     virtual double NormInf() const;
   //@}
-  
+
   //@{ \name Attribute access functions
 
     //! Returns a character string describing the operator
@@ -156,7 +169,7 @@ public:
   //@}
 
   //@{ \name Construction and application methods.
- 
+
   //! Returns \c true is the preconditioner has been successfully initialized.
   virtual bool IsInitialized() const
   {
@@ -188,7 +201,7 @@ public:
    *
    * The input list will be copied, then passed to the Amesos
    * object through Amesos::SetParameters().
-   */   
+   */
   virtual int SetParameters(Teuchos::ParameterList& List);
 
   //@}
@@ -205,8 +218,8 @@ public:
   virtual double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                          const int MaxIters = 1550,
                          const double Tol = 1e-9,
-			 Epetra_RowMatrix* Matrix_in= 0);
-  
+                         Epetra_RowMatrix* Matrix_in= 0);
+
   //! Returns the estimated condition number, never computes it.
   virtual double Condest() const
   {
@@ -267,8 +280,8 @@ public:
     return(ApplyInverseFlops_);
   }
 
-  // Returns a constant reference to the internally stored 
-  virtual const Teuchos::ParameterList& List() const 
+  // Returns a constant reference to the internally stored
+  virtual const Teuchos::ParameterList& List() const
   {
     return(List_);
   }
@@ -279,11 +292,11 @@ public:
   //@}
 
 protected:
-  
+
   //@{ \name Methods to get/set private data
 
   //! Sets the label.
-  inline void SetLabel(const char* Label_in) 
+  inline void SetLabel(const char* Label_in)
   {
     Label_ = Label_in;
   }
@@ -354,7 +367,7 @@ protected:
     List_ = List_in;
   }
   //@}
-  
+
 private:
 
   //! Pointers to the matrix to be preconditioned.
@@ -368,7 +381,7 @@ private:
   Teuchos::ParameterList List_;
 
   //! Contains the label of \c this object.
-  string Label_;
+  std::string Label_;
   //! If true, the linear system on this processor is empty, thus the preconditioner is null operation.
   bool IsEmpty_;
   //! If true, the preconditioner has been successfully initialized.

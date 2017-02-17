@@ -7,26 +7,38 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
 //@HEADER
 */
-
 #include "Ifpack_ConfigDefs.h"
 #include "Ifpack.h"
 #include "Ifpack_Preconditioner.h"
@@ -35,10 +47,12 @@
 #include "Ifpack_IC.h"
 #include "Ifpack_ICT.h"
 #include "Ifpack_ILU.h"
+#include "Ifpack_SILU.h"
 #include "Ifpack_ILUT.h"
 #include "Ifpack_SPARSKIT.h"
 #include "Ifpack_AdditiveSchwarz.h"
 #include "Ifpack_DenseContainer.h"
+#include "Ifpack_TriDiContainer.h"
 #include "Ifpack_SparseContainer.h"
 #ifdef HAVE_IFPACK_AMESOS
 #include "Ifpack_Amesos.h"
@@ -49,8 +63,13 @@
 #ifdef HAVE_IFPACK_SUPERLU
 #include "Ifpack_SILU.h"
 #endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+#include "Ifpack_SupportGraph.h"
+#endif
 
 #include "Ifpack_Chebyshev.h"
+#include "Ifpack_Polynomial.h"
+#include "Ifpack_Krylov.h"
 #include "Ifpack_IHSS.h"
 #include "Ifpack_SORa.h"
 
@@ -76,6 +95,11 @@ const Ifpack::EPrecType Ifpack::precTypeValues[Ifpack::numPrecTypes] =
   ,BLOCK_RELAXATION
   ,BLOCK_RELAXATION_STAND_ALONE
   ,BLOCK_RELAXATION_STAND_ALONE_ILU
+  ,BLOCK_RELAXATION_STAND_ALONE_ILUT
+  ,BLOCK_RELAXATION_STAND_ALONE_IC
+#ifdef HAVE_IFPACK_SUPERLU
+  ,BLOCK_RELAXATION_STAND_ALONE_SILU
+#endif
 #ifdef HAVE_IFPACK_AMESOS
   ,BLOCK_RELAXATION_STAND_ALONE_AMESOS
   ,BLOCK_RELAXATION_AMESOS
@@ -102,9 +126,19 @@ const Ifpack::EPrecType Ifpack::precTypeValues[Ifpack::numPrecTypes] =
 #ifdef HAVE_IFPACK_SUPERLU
   ,SILU
 #endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
+  ,MSF_AMESOS
+#endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+  ,MSF_IC
+#endif
   ,CHEBYSHEV
+  ,POLYNOMIAL
+  ,KRYLOV
   ,IHSS
   ,SORA
+  ,TRIDI_RELAXATION
+  ,TRIDI_RELAXATION_STAND_ALONE
 };
 
 //==============================================================================
@@ -115,6 +149,11 @@ const char* Ifpack::precTypeNames[Ifpack::numPrecTypes] =
   ,"block relaxation"
   ,"block relaxation stand-alone"
   ,"block relaxation stand-alone (ILU)"
+  ,"block relaxation stand-alone (ILUT)"
+  ,"block relaxation stand-alone (IC)"
+#ifdef HAVE_IFPACK_SUPERLU
+  ,"block relaxation stand-alone (SILU)"
+#endif
 #ifdef HAVE_IFPACK_AMESOS
   ,"block relaxation stand-alone (Amesos)"
   ,"block relaxation (Amesos)"
@@ -141,9 +180,19 @@ const char* Ifpack::precTypeNames[Ifpack::numPrecTypes] =
 #ifdef HAVE_IFPACK_SUPERLU
   ,"SILU"
 #endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
+  ,"MSF Amesos"
+#endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+  ,"MSF IC"
+#endif
   ,"Chebyshev"
+  ,"Polynomial"
+  ,"Krylov"
   ,"IHSS"
   ,"SORa"
+  ,"tridi relaxation"
+  ,"tridi relaxation stand-alone"
 };
 
 //==============================================================================
@@ -154,11 +203,16 @@ const bool Ifpack::supportsUnsymmetric[Ifpack::numPrecTypes] =
   ,true // block relaxation
   ,true // block relaxation stand-alone
   ,true // block relaxation stand-alone (ILU)
+  ,true // block relaxation stand-alone (ILUT)
+  ,false // block relaxation stand-alone (IC)
+#ifdef HAVE_IFPACK_SUPERLU
+  ,true // block relaxation stand-alone (SILU)
+#endif
 #ifdef HAVE_IFPACK_AMESOS
   ,true // block relaxation stand-alone (Amesos)
   ,true // block relaxation (Amesos)
   ,true // Amesos
-  ,true // Amesos stand-alone 
+  ,true // Amesos stand-alone
 #endif
   ,false // IC
   ,false // IC stand-alone
@@ -173,35 +227,62 @@ const bool Ifpack::supportsUnsymmetric[Ifpack::numPrecTypes] =
 #endif
 #ifdef HAVE_IFPACK_HIPS
   ,true // HIPS
-#endif  
+#endif
 #ifdef HAVE_HYPRE
   ,true
 #endif
 #ifdef HAVE_IFPACK_SUPERLU
   ,true // SuperLU's Supernodal ILUTP
 #endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
+  ,false
+#endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+  ,false
+#endif
   ,false // CHEBYSHEV
+  ,true  // POLYNOMIAL
+  ,true  // KRYLOV
   ,true  // IHSS
   ,true  // SORa
+  ,true  // tridi relaxation
+  ,true  // tridi relaxation standalone
 };
 
 //==============================================================================
 Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
                                       Epetra_RowMatrix* Matrix,
-                                      const int Overlap)
+                                      const int Overlap,
+                                      bool overrideSerialDefault)
 {
+  const bool serial = (Matrix->Comm().NumProc() == 1);
+
   switch(PrecType) {
     case POINT_RELAXATION:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_PointRelaxation>(Matrix, Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_PointRelaxation(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_PointRelaxation>(Matrix, Overlap));
     case POINT_RELAXATION_STAND_ALONE:
       return(new Ifpack_PointRelaxation(Matrix));
     case BLOCK_RELAXATION:
-      return(new Ifpack_AdditiveSchwarz<
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_BlockRelaxation<Ifpack_DenseContainer>(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<
              Ifpack_BlockRelaxation<Ifpack_DenseContainer> >(Matrix,Overlap));
     case BLOCK_RELAXATION_STAND_ALONE:
       return(new Ifpack_BlockRelaxation<Ifpack_DenseContainer>(Matrix));
     case BLOCK_RELAXATION_STAND_ALONE_ILU:
       return(new Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_ILU> >(Matrix));
+    case BLOCK_RELAXATION_STAND_ALONE_ILUT:
+      return(new Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_ILUT> >(Matrix));
+    case BLOCK_RELAXATION_STAND_ALONE_IC:
+      return(new Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_IC> >(Matrix));
+#ifdef HAVE_IFPACK_SUPERLU
+    case BLOCK_RELAXATION_STAND_ALONE_SILU:
+      return(new Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_SILU> >(Matrix));
+#endif
 #ifdef HAVE_IFPACK_AMESOS
     case BLOCK_RELAXATION_STAND_ALONE_AMESOS:
       return(new Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_Amesos> >(Matrix));
@@ -209,24 +290,39 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
       return(new Ifpack_AdditiveSchwarz<
              Ifpack_BlockRelaxation<Ifpack_SparseContainer<Ifpack_Amesos> > >(Matrix,Overlap));
     case AMESOS:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_Amesos>(Matrix,Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_Amesos(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_Amesos>(Matrix,Overlap));
     case AMESOS_STAND_ALONE:
       return(new Ifpack_Amesos(Matrix));
 #endif
     case IC:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_IC>(Matrix,Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_IC(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_IC>(Matrix,Overlap));
     case IC_STAND_ALONE:
       return(new Ifpack_IC(Matrix));
     case ICT:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_ICT>(Matrix,Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_ICT(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_ICT>(Matrix,Overlap));
     case ICT_STAND_ALONE:
       return(new Ifpack_ICT(Matrix));
     case ILU:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_ILU>(Matrix,Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_ILU(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_ILU>(Matrix,Overlap));
     case ILU_STAND_ALONE:
       return(new Ifpack_ILU(Matrix));
     case ILUT:
-      return(new Ifpack_AdditiveSchwarz<Ifpack_ILUT>(Matrix,Overlap));
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_ILUT(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_ILUT>(Matrix,Overlap));
     case ILUT_STAND_ALONE:
       return(new Ifpack_ILUT(Matrix));
 #ifdef HAVE_IFPACK_SPARSKIT
@@ -234,9 +330,9 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
       return(new Ifpack_SPARSKIT(Matrix));
 #endif
 #ifdef HAVE_IFPACK_HIPS
-    case HIPS:      
+    case HIPS:
       return(new Ifpack_HIPS(Matrix));
-#endif      
+#endif
 #ifdef HAVE_HYPRE
     case HYPRE:
       return(new Ifpack_Hypre(Matrix));
@@ -245,30 +341,60 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
     case SILU:
       return(new Ifpack_SILU(Matrix));
 #endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
+    case MSF_AMESOS:
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_SupportGraph<Ifpack_Amesos>(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_Amesos> >(Matrix,Overlap));
+#endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+    case MSF_IC:
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_SupportGraph<Ifpack_SupportGraph<Ifpack_IC> >(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_IC> >(Matrix,Overlap));
+#endif
     case CHEBYSHEV:
       return(new Ifpack_Chebyshev(Matrix));
+    case POLYNOMIAL:
+      return(new Ifpack_Polynomial(Matrix));
+    case KRYLOV:
+      if (serial && !overrideSerialDefault)
+        return(new Ifpack_Krylov(Matrix));
+      else
+        return(new Ifpack_AdditiveSchwarz<Ifpack_Krylov>(Matrix, Overlap));
 #ifdef HAVE_IFPACK_EPETRAEXT
     case IHSS:
-      return(new Ifpack_IHSS(Matrix));  
+      return(new Ifpack_IHSS(Matrix));
     case SORA:
-      return(new Ifpack_SORa(Matrix));  
+      return(new Ifpack_SORa(Matrix));
 #endif
+    case TRIDI_RELAXATION:
+     if (serial && !overrideSerialDefault)
+      return(new Ifpack_BlockRelaxation<Ifpack_TriDiContainer>(Matrix));
+     else
+      return(new Ifpack_AdditiveSchwarz<
+             Ifpack_BlockRelaxation<Ifpack_TriDiContainer> >(Matrix,Overlap));
+    case TRIDI_RELAXATION_STAND_ALONE:
+      return(new Ifpack_BlockRelaxation<Ifpack_TriDiContainer>(Matrix));
     default:
       TEUCHOS_TEST_FOR_EXCEPT(true);
       // The only way to get here is if some code developer does a cast like
       // (EPrecType)(anyNumber).  You can never get here by passing in a
-      // string value for the preconditioner!
+      // std::string value for the preconditioner!
   } // end switch
   return 0; // This will never ever be executed!
 }
 
 //==============================================================================
-Ifpack_Preconditioner* Ifpack::Create(const string PrecType,
+Ifpack_Preconditioner* Ifpack::Create(const std::string PrecType,
                                       Epetra_RowMatrix* Matrix,
-                                      const int Overlap)
+                                      const int Overlap,
+                                      bool overrideSerialDefault)
 {
   try {
-    return Ifpack::Create(Teuchos::get<EPrecType>(::precTypeNameToIntMap,PrecType),Matrix,Overlap);
+    return Ifpack::Create(Teuchos::get<EPrecType>(::precTypeNameToIntMap,PrecType),Matrix,Overlap,overrideSerialDefault);
   }
   catch( const Teuchos::StringToIntMap::DoesNotExist &excpt ) {
     // The old implementation of this function just silently returned a NULL
@@ -283,7 +409,7 @@ Ifpack_Preconditioner* Ifpack::Create(const string PrecType,
 
 // ======================================================================
 int Ifpack::SetParameters(int argc, char* argv[],
-                          Teuchos::ParameterList& List, string& PrecType,
+                          Teuchos::ParameterList& List, std::string& PrecType,
                           int& Overlap)
 {
   // THIS FUNCTION IS VERY INCOMPLETE...
@@ -291,13 +417,13 @@ int Ifpack::SetParameters(int argc, char* argv[],
   Teuchos::CommandLineProcessor CLP;
 
   // prec type
-  string ifp_prec_type = "ILU";
+  std::string ifp_prec_type = "ILU";
   CLP.setOption("ifp-prec-type",&ifp_prec_type,"Preconditioner type");
   // overlap among the processors
   int ifp_overlap = 0;
   CLP.setOption("ifp-overlap",&ifp_overlap,"Overlap among processors");
   // relaxation type
-  string ifp_relax_type = "Jacobi";
+  std::string ifp_relax_type = "Jacobi";
   CLP.setOption("ifp-relax-type",&ifp_relax_type,"Relaxation type");
   // sweeps (for relax only)
   int ifp_relax_sweeps = 1;
@@ -308,7 +434,7 @@ int Ifpack::SetParameters(int argc, char* argv[],
   CLP.setOption("ifp-relax-damping",
                 &ifp_relax_damping,"Damping for relaxation");
   // partitioner type (for block relaxation only)
-  string ifp_part_type = "greedy";
+  std::string ifp_part_type = "greedy";
   CLP.setOption("ifp-part-type",&ifp_part_type,"Partitioner type");
   // number of local parts (for block relaxation only)
   int ifp_part_local = 1;

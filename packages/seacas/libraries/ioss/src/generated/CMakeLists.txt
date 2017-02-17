@@ -1,5 +1,3 @@
-INCLUDE(TribitsLibraryMacros)
-INCLUDE(CheckIncludeFile)
 
 SET(HEADERS "")
 SET(SOURCES "")

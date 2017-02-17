@@ -1,5 +1,3 @@
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(TribitsCopyFilesToBinaryDir)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   example_AmesosFactory_Tridiag
@@ -20,11 +18,13 @@ IF(Amesos_ENABLE_Galeri)
     COMM serial mpi
     )
 
-  TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    compare_solvers
-    SOURCES compare_solvers.cpp
-    COMM serial mpi
-    )
+  IF(Amesos_ENABLE_Triutils)
+    TRIBITS_ADD_EXECUTABLE_AND_TEST(
+      compare_solvers
+      SOURCES compare_solvers.cpp
+      COMM serial mpi
+      )
+  ENDIF()
 ENDIF()
 
 IF(Amesos_ENABLE_MC64)

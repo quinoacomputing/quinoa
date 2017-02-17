@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -207,7 +207,7 @@ namespace Anasazi {
      * Note, for any pointer in \c newstate which directly points to the multivectors in 
      * the solver, the data is not copied.
      */
-    void initialize(BlockKrylovSchurState<ScalarType,MV> state);
+    void initialize(BlockKrylovSchurState<ScalarType,MV>& state);
 
     /*! \brief Initialize the solver with the initial vectors from the eigenproblem
      *  or random data.
@@ -716,7 +716,7 @@ namespace Anasazi {
       newsd = blockSize_*numBlocks_+1;
     }
     // check that new size is valid
-    TEUCHOS_TEST_FOR_EXCEPTION(newsd > MVT::GetVecLength(*tmp),std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION(static_cast<ptrdiff_t>(newsd) > MVT::GetGlobalLength(*tmp),std::invalid_argument,
         "Anasazi::BlockKrylovSchur::setSize(): maximum basis size is larger than problem dimension.");
 
     ritzValues_.resize(newsd);
@@ -769,7 +769,7 @@ namespace Anasazi {
    */
 
   template <class ScalarType, class MV, class OP>
-  void BlockKrylovSchur<ScalarType,MV,OP>::initialize(BlockKrylovSchurState<ScalarType,MV> newstate)
+  void BlockKrylovSchur<ScalarType,MV,OP>::initialize(BlockKrylovSchurState<ScalarType,MV>& newstate)
   {
     // NOTE: memory has been allocated by setBlockSize(). Use SetBlock below; do not Clone
 
@@ -790,7 +790,7 @@ namespace Anasazi {
 
       // initialize V_,H_, and curDim_
 
-      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetVecLength(*newstate.V) != MVT::GetVecLength(*V_),
+      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetGlobalLength(*newstate.V) != MVT::GetGlobalLength(*V_),
                           std::invalid_argument, errstr );
       if (newstate.V != V_) {
         TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetNumberVecs(*newstate.V) < blockSize_,
@@ -1282,6 +1282,17 @@ namespace Anasazi {
           // Compute the current Ritz vectors      
           MVT::MvTimesMatAddMv( ST_ONE, *Vtemp, subQ, ST_ZERO, *ritzVectors_ );
           
+          // Double check that no complex Ritz values have snuck into the set of converged nev.
+          bool complexRitzVals = false;
+          for (int i=0; i<numRitzVecs_; i++) {
+            if (ritzIndex_[i] != 0) {
+              complexRitzVals = true;
+              break;
+            }
+          }
+          if (complexRitzVals)
+            om_->stream(Warnings) << " Eigenproblem is Hermitian and complex eigenvalues have converged, corresponding eigenvectors will be incorrect!!!" 
+                                  << std::endl;
         } else {
 
           // Get a view into the current Schur vectors.
@@ -1444,9 +1455,41 @@ namespace Anasazi {
           lapack.GEES( jobvs,curDim_, schurH_->values(), schurH_->stride(), &sdim, &tmp_rRitzValues[0],
                        &tmp_iRitzValues[0], subQ.values(), subQ.stride(), &work[0], lwork, 
                        &rwork[0], &bwork[0], &info );
-          
+ 
           TEUCHOS_TEST_FOR_EXCEPTION(info != 0, std::logic_error,
                              "Anasazi::BlockKrylovSchur::computeSchurForm(): GEES(n==" << curDim_ << ") returned info " << info << " != 0.");
+         
+          // Check if imaginary part is detected by the Schur factorization of subH for Hermitian eigenproblems
+          // NOTE: Because of full orthogonalization, there will be small entries above the block tridiagonal in the block Hessenberg matrix.
+          //       The spectrum of this matrix may include imaginary eigenvalues with small imaginary part, which will mess up the Schur
+          //       form sorting below.
+          bool hermImagDetected = false;
+          if (problem_->isHermitian()) {
+            for (int i=0; i<curDim_; i++)
+            {
+              if (tmp_iRitzValues[i] != MT_ZERO)
+              {
+                hermImagDetected = true;
+                break;
+              }
+            }
+            if (hermImagDetected) {
+              // Warn the user that complex eigenvalues have been detected.
+              om_->stream(Warnings) << " Eigenproblem is Hermitian and complex eigenvalues have been detected!!!" << std::endl; 
+              // Compute || H - H' || to indicate how bad the symmetry is in the projected eigenproblem
+              Teuchos::SerialDenseMatrix<int,ScalarType> localH( Teuchos::View, *H_, curDim_, curDim_ );
+              Teuchos::RCP<Teuchos::SerialDenseMatrix<int,ScalarType> > tLocalH;
+              if (Teuchos::ScalarTraits<ScalarType>::isComplex)
+                tLocalH = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>( localH, Teuchos::CONJ_TRANS ) );
+              else
+                tLocalH = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>( localH, Teuchos::TRANS ) );
+              (*tLocalH) -= localH;
+              MagnitudeType normF = tLocalH->normFrobenius();
+              MagnitudeType norm1 = tLocalH->normOne();
+              om_->stream(Warnings) << " Symmetry error in projected eigenproblem:  || S - S' ||_F = " << normF 
+                                    << ", || S - S' ||_1 = " << norm1 << std::endl;
+            }
+          } 
           //
           //---------------------------------------------------
           // Use the Krylov-Schur factorization to compute the current Ritz residuals 
@@ -1474,7 +1517,7 @@ namespace Anasazi {
           // Determine what 's' is and compute Ritz residuals.
           //
           ScalarType* b_ptr = subB.values();
-          if (problem_->isHermitian()) {
+          if (problem_->isHermitian() && !hermImagDetected) {
             //
             // 's' is the i-th canonical basis vector.
             //
@@ -1543,7 +1586,7 @@ namespace Anasazi {
             Teuchos::TimeMonitor LocalTimer2(*timerSortRitzVal_);
 #endif
             int i=0;
-            if (problem_->isHermitian()) {
+            if (problem_->isHermitian() && !hermImagDetected) {
               //
               // Sort using just the real part of the Ritz values.
               sm_->sort(tmp_rRitzValues, Teuchos::rcpFromRef(ritzOrder_), curDim_); // don't catch exception

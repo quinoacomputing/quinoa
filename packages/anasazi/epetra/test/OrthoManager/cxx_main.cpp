@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -52,18 +52,19 @@
 
 using namespace Teuchos;
 using namespace Anasazi;
-using namespace std;
+using std::cout;
+using std::endl;
+using std::vector;
+using std::swap;
+using std::invalid_argument;
 
 typedef double                       ST;
 typedef Epetra_MultiVector           MV;
 typedef Epetra_Operator              OP;
-typedef MultiVecTraits<double,MV>    MVT;
-typedef ScalarTraits<double>         SCT;
-typedef SCT::magnitudeType           MT;
 
 // this is the tolerance that all tests are performed against
-const MT TOL = 1.0e-12;
-const MT ATOL = 10;
+const double TOL = 1.0e-12;
+const double ATOL = 10;
 
 // declare an output manager for handling local output
 RCP< Anasazi::BasicOutputManager<ST> > MyOM;
@@ -73,10 +74,13 @@ int testProject(RCP<OrthoManager<ST,MV> > OM, RCP<const MV> S, RCP<const MV> X1,
 int testNormalize(RCP<OrthoManager<ST,MV> > OM, RCP<const MV> S);
 int testProjectAndNormalize(RCP<OrthoManager<ST,MV> > OM, RCP<const MV> S, RCP<const MV> X1, RCP<const MV> X2);
 
-MT MVDiff(const MV &X, const MV &Y);
+double MVDiff(const MV &X, const MV &Y);
 
 int main(int argc, char *argv[]) 
 {
+  typedef MultiVecTraits<double,MV>    MVT;
+  typedef ScalarTraits<double>         SCT;
+  typedef SCT::magnitudeType           MT;
   
 #ifdef EPETRA_MPI
   // Initialize MPI
@@ -364,7 +368,11 @@ int main(int argc, char *argv[])
 ////////////////////////////////////////////////////////////////////////////
 int testProjectAndNormalize(RCP<OrthoManager<ST,MV> > OM, 
                             RCP<const MV> S, 
-                            RCP<const MV> X1, RCP<const MV> X2) {
+                            RCP<const MV> X1, RCP<const MV> X2) 
+{
+  typedef MultiVecTraits<double,MV>    MVT;
+  typedef ScalarTraits<double>         SCT;
+  typedef SCT::magnitudeType           MT;
 
   const ST ONE = SCT::one();
   const MT ZERO = SCT::magnitude(SCT::zero());
@@ -633,6 +641,9 @@ int testProjectAndNormalize(RCP<OrthoManager<ST,MV> > OM,
 ////////////////////////////////////////////////////////////////////////////
 int testNormalize(RCP<OrthoManager<ST,MV> > OM, RCP<const MV> S)
 {
+  typedef MultiVecTraits<double,MV>    MVT;
+  typedef ScalarTraits<double>         SCT;
+  typedef SCT::magnitudeType           MT;
 
   const ST ONE = SCT::one();
   const MT ZERO = SCT::magnitude(SCT::zero());
@@ -743,7 +754,11 @@ int testNormalize(RCP<OrthoManager<ST,MV> > OM, RCP<const MV> S)
 ////////////////////////////////////////////////////////////////////////////
 int testProject(RCP<OrthoManager<ST,MV> > OM, 
                    RCP<const MV> S, 
-                   RCP<const MV> X1, RCP<const MV> X2) {
+                   RCP<const MV> X1, RCP<const MV> X2) 
+{
+  typedef MultiVecTraits<double,MV>    MVT;
+  typedef ScalarTraits<double>         SCT;
+  typedef SCT::magnitudeType           MT;
 
   const ST ONE = SCT::one();
   const int sizeS = MVT::GetNumberVecs(*S);
@@ -970,7 +985,12 @@ int testProject(RCP<OrthoManager<ST,MV> > OM,
 
 
 
-MT MVDiff(const MV &X, const MV &Y) {
+double MVDiff(const MV &X, const MV &Y) 
+{
+  typedef MultiVecTraits<double,MV>    MVT;
+  typedef ScalarTraits<double>         SCT;
+  typedef SCT::magnitudeType           MT;
+
   const ST ONE = SCT::one();
   const int sizeX = MVT::GetNumberVecs(X);
   SerialDenseMatrix<int,ST> xTmx(sizeX,sizeX);

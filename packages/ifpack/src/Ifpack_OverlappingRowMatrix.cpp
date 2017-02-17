@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -35,7 +48,7 @@
 #include "Epetra_Comm.h"
 #include "Epetra_MultiVector.h"
 
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 #include "Epetra_IntVector.h"
 #include "Epetra_MpiComm.h"
 #include "Teuchos_Hashtable.hpp"
@@ -58,6 +71,95 @@
 using namespace Teuchos;
 
 // ====================================================================== 
+
+template<typename int_type>
+void Ifpack_OverlappingRowMatrix::BuildMap(int OverlapLevel_in)
+{
+  RCP<Epetra_Map> TmpMap;
+  RCP<Epetra_CrsMatrix> TmpMatrix; 
+  RCP<Epetra_Import> TmpImporter;
+
+  // importing rows corresponding to elements that are 
+  // in ColMap, but not in RowMap 
+  const Epetra_Map *RowMap; 
+  const Epetra_Map *ColMap; 
+
+  std::vector<int_type> ExtElements; 
+
+  for (int overlap = 0 ; overlap < OverlapLevel_in ; ++overlap) {
+    if (TmpMatrix != Teuchos::null) {
+      RowMap = &(TmpMatrix->RowMatrixRowMap()); 
+      ColMap = &(TmpMatrix->RowMatrixColMap()); 
+    }
+    else {
+      RowMap = &(A().RowMatrixRowMap()); 
+      ColMap = &(A().RowMatrixColMap()); 
+    }
+
+    int size = ColMap->NumMyElements() - RowMap->NumMyElements(); 
+    std::vector<int_type> list(size); 
+
+    int count = 0; 
+
+    // define the set of rows that are in ColMap but not in RowMap 
+    for (int i = 0 ; i < ColMap->NumMyElements() ; ++i) { 
+      int_type GID = (int_type) ColMap->GID64(i); 
+      if (A().RowMatrixRowMap().LID(GID) == -1) { 
+        typename std::vector<int_type>::iterator pos 
+          = find(ExtElements.begin(),ExtElements.end(),GID); 
+        if (pos == ExtElements.end()) { 
+          ExtElements.push_back(GID);
+          list[count] = GID; 
+          ++count; 
+        } 
+      } 
+    } 
+
+    const int_type *listptr = NULL;
+    if ( ! list.empty() ) listptr = &list[0];
+    TmpMap = rcp( new Epetra_Map(-1,count, listptr,0,Comm()) ); 
+
+    TmpMatrix = rcp( new Epetra_CrsMatrix(Copy,*TmpMap,0) ); 
+
+    TmpImporter = rcp( new Epetra_Import(*TmpMap,A().RowMatrixRowMap()) ); 
+
+    TmpMatrix->Import(A(),*TmpImporter,Insert); 
+    TmpMatrix->FillComplete(A().OperatorDomainMap(),*TmpMap); 
+
+  }
+
+  // build the map containing all the nodes (original
+  // matrix + extended matrix)
+  std::vector<int_type> list(NumMyRowsA_ + ExtElements.size());
+  for (int i = 0 ; i < NumMyRowsA_ ; ++i)
+    list[i] = (int_type) A().RowMatrixRowMap().GID64(i);
+  for (int i = 0 ; i < (int)ExtElements.size() ; ++i)
+    list[i + NumMyRowsA_] = ExtElements[i];
+
+  const int_type *listptr = NULL;
+  if ( ! list.empty() ) listptr = &list[0];
+  {
+    Map_ = rcp( new Epetra_Map((int_type) -1, NumMyRowsA_ + ExtElements.size(),
+                               listptr, 0, Comm()) );
+  }
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
+  colMap_ = &*Map_;
+#else
+# ifdef IFPACK_NODE_AWARE_CODE
+  colMap_ = &*Map_;
+# endif
+#endif
+  // now build the map corresponding to all the external nodes
+  // (with respect to A().RowMatrixRowMap().
+  {
+    const int_type * extelsptr = NULL;
+    if ( ! ExtElements.empty() ) extelsptr = &ExtElements[0];
+    ExtMap_ = rcp( new Epetra_Map((int_type) -1,ExtElements.size(),
+                                  extelsptr,0,A().Comm()) );
+  }
+}
+
+// ====================================================================== 
 // Constructor for the case of one core per subdomain
 Ifpack_OverlappingRowMatrix::
 Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
@@ -76,78 +178,21 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   NumMyRowsA_ = A().NumMyRows();
 
   // construct the external matrix
-  vector<int> ExtElements; 
 
-  RCP<Epetra_Map> TmpMap;
-  RCP<Epetra_CrsMatrix> TmpMatrix; 
-  RCP<Epetra_Import> TmpImporter;
-
-  // importing rows corresponding to elements that are 
-  // in ColMap, but not in RowMap 
-  const Epetra_Map *RowMap; 
-  const Epetra_Map *ColMap; 
-
-  for (int overlap = 0 ; overlap < OverlapLevel_in ; ++overlap) {
-    if (TmpMatrix != Teuchos::null) {
-      RowMap = &(TmpMatrix->RowMatrixRowMap()); 
-      ColMap = &(TmpMatrix->RowMatrixColMap()); 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    if(A().RowMatrixRowMap().GlobalIndicesInt()) {
+      BuildMap<int>(OverlapLevel_in);
     }
-    else {
-      RowMap = &(A().RowMatrixRowMap()); 
-      ColMap = &(A().RowMatrixColMap()); 
-    }
-
-    int size = ColMap->NumMyElements() - RowMap->NumMyElements(); 
-    vector<int> list(size); 
-
-    int count = 0; 
-
-    // define the set of rows that are in ColMap but not in RowMap 
-    for (int i = 0 ; i < ColMap->NumMyElements() ; ++i) { 
-      int GID = ColMap->GID(i); 
-      if (A().RowMatrixRowMap().LID(GID) == -1) { 
-        vector<int>::iterator pos 
-          = find(ExtElements.begin(),ExtElements.end(),GID); 
-        if (pos == ExtElements.end()) { 
-          ExtElements.push_back(GID);
-          list[count] = GID; 
-          ++count; 
-        } 
-      } 
-    } 
-
-    TmpMap = rcp( new Epetra_Map(-1,count, &list[0],0,Comm()) ); 
-
-    TmpMatrix = rcp( new Epetra_CrsMatrix(Copy,*TmpMap,0) ); 
-
-    TmpImporter = rcp( new Epetra_Import(*TmpMap,A().RowMatrixRowMap()) ); 
-
-    TmpMatrix->Import(A(),*TmpImporter,Insert); 
-    TmpMatrix->FillComplete(A().OperatorDomainMap(),*TmpMap); 
-
-  }
-
-  // build the map containing all the nodes (original
-  // matrix + extended matrix)
-  vector<int> list(NumMyRowsA_ + ExtElements.size());
-  for (int i = 0 ; i < NumMyRowsA_ ; ++i)
-    list[i] = A().RowMatrixRowMap().GID(i);
-  for (int i = 0 ; i < (int)ExtElements.size() ; ++i)
-    list[i + NumMyRowsA_] = ExtElements[i];
-
-  Map_ = rcp( new Epetra_Map(-1, NumMyRowsA_ + ExtElements.size(),
-	  			      &list[0], 0, Comm()) );
-#ifdef IFPACK_SUBCOMM_CODE
-  colMap_ = &*Map_;
-#else
-# ifdef IFPACK_NODE_AWARE_CODE
-  colMap_ = &*Map_;
-# endif
+    else
 #endif
-  // now build the map corresponding to all the external nodes
-  // (with respect to A().RowMatrixRowMap().
-  ExtMap_ = rcp( new Epetra_Map(-1,ExtElements.size(),
-					 &ExtElements[0],0,A().Comm()) );
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    if(A().RowMatrixRowMap().GlobalIndicesLongLong()) {
+      BuildMap<long long>(OverlapLevel_in);
+    }
+    else
+#endif
+      throw "Ifpack_OverlappingRowMatrix::Ifpack_OverlappingRowMatrix: GlobalIndices type unknown";
+
   ExtMatrix_ = rcp( new Epetra_CrsMatrix(Copy,*ExtMap_,*Map_,0) ); 
 
   ExtImporter_ = rcp( new Epetra_Import(*ExtMap_,A().RowMatrixRowMap()) ); 
@@ -164,7 +209,8 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   NumMyDiagonals_ = A().NumMyDiagonals() + B().NumMyDiagonals();
   
   NumMyNonzeros_ = A().NumMyNonzeros() + B().NumMyNonzeros();
-  Comm().SumAll(&NumMyNonzeros_,&NumGlobalNonzeros_,1);
+  long long NumMyNonzeros_tmp = NumMyNonzeros_;
+  Comm().SumAll(&NumMyNonzeros_tmp,&NumGlobalNonzeros_,1);
   MaxNumEntries_ = A().MaxNumEntries();
   
   if (MaxNumEntries_ < B().MaxNumEntries())
@@ -172,7 +218,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
 
 }
 
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 
 // ====================================================================== 
 // Constructor for the case of two or more cores per subdomain
@@ -482,7 +528,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
     gidsarray.clear(); votesarray.clear();
     ghostTable.arrayify(gidsarray,votesarray);
 
-    vector<int> list(size); 
+    std::vector<int> list(size); 
     count=0;
     for (int i=0; i<ghostTable.size(); i++) {
       // if votesarray[i] == votesmax, then this GID was found during a previous overlap round
@@ -571,7 +617,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   /* ** ************************************************************************ ** */
 
   // off-node GIDs that will be in the overlap
-  vector<int> ghostElements; 
+  std::vector<int> ghostElements; 
 
   Teuchos::Array<int> gidsarray,votesarray;
   ghostTable.arrayify(gidsarray,votesarray);
@@ -592,7 +638,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
     }
 
     // GIDs that will be in the overlapped matrix's column map
-    vector<int> colMapElements; 
+    std::vector<int> colMapElements; 
 
   gidsarray.clear(); votesarray.clear();
   colMapTable.arrayify(gidsarray,votesarray);
@@ -610,7 +656,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
 */
 
   // build the row map containing all the nodes (original matrix + off-node matrix)
-  vector<int> rowList(NumMyRowsA_ + ghostElements.size());
+  std::vector<int> rowList(NumMyRowsA_ + ghostElements.size());
   for (int i = 0 ; i < NumMyRowsA_ ; ++i)
     rowList[i] = A().RowMatrixRowMap().GID(i);
   for (int i = 0 ; i < (int)ghostElements.size() ; ++i)
@@ -625,7 +671,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   //colMap_ = rcp( new Epetra_Map(-1, colMapElements.size(), &colList[0], 0, Comm()) );
   //for (int i = 0 ; i < (int)colMapElements.size() ; i++)
   //  colList[i] = colMapElements[i];
-  vector<int> colList(A().RowMatrixColMap().NumMyElements() + colMapElements.size());
+  std::vector<int> colList(A().RowMatrixColMap().NumMyElements() + colMapElements.size());
   int nc = A().RowMatrixColMap().NumMyElements();
   for (int i = 0 ; i < nc; i++)
     colList[i] = A().RowMatrixColMap().GID(i);
@@ -835,7 +881,8 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   NumMyDiagonals_ = A().NumMyDiagonals() + B().NumMyDiagonals();
   
   NumMyNonzeros_ = A().NumMyNonzeros() + B().NumMyNonzeros();
-  Comm().SumAll(&NumMyNonzeros_,&NumGlobalNonzeros_,1);
+  long long NumMyNonZerosTemp = NumMyNonzeros_;
+  Comm().SumAll(&NumMyNonZerosTemp,&NumGlobalNonzeros_,1);
   MaxNumEntries_ = A().MaxNumEntries();
   
   if (MaxNumEntries_ < B().MaxNumEntries())
@@ -1167,7 +1214,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
     gidsarray.clear(); votesarray.clear();
     ghostTable.arrayify(gidsarray,votesarray);
 
-    vector<int> list(size); 
+    std::vector<int> list(size); 
     count=0;
     for (int i=0; i<ghostTable.size(); i++) {
       // if votesarray[i] == votesmax, then this GID was found during a previous overlap round
@@ -1256,7 +1303,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   /* ** ************************************************************************ ** */
 
   // off-node GIDs that will be in the overlap
-  vector<int> ghostElements; 
+  std::vector<int> ghostElements; 
 
   Teuchos::Array<int> gidsarray,votesarray;
   ghostTable.arrayify(gidsarray,votesarray);
@@ -1277,7 +1324,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
     }
 
     // GIDs that will be in the overlapped matrix's column map
-    vector<int> colMapElements; 
+    std::vector<int> colMapElements; 
 
   gidsarray.clear(); votesarray.clear();
   colMapTable.arrayify(gidsarray,votesarray);
@@ -1295,7 +1342,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
 */
 
   // build the row map containing all the nodes (original matrix + off-node matrix)
-  vector<int> rowList(NumMyRowsA_ + ghostElements.size());
+  std::vector<int> rowList(NumMyRowsA_ + ghostElements.size());
   for (int i = 0 ; i < NumMyRowsA_ ; ++i)
     rowList[i] = A().RowMatrixRowMap().GID(i);
   for (int i = 0 ; i < (int)ghostElements.size() ; ++i)
@@ -1310,7 +1357,7 @@ Ifpack_OverlappingRowMatrix(const RCP<const Epetra_RowMatrix>& Matrix_in,
   //colMap_ = rcp( new Epetra_Map(-1, colMapElements.size(), &colList[0], 0, Comm()) );
   //for (int i = 0 ; i < (int)colMapElements.size() ; i++)
   //  colList[i] = colMapElements[i];
-  vector<int> colList(A().RowMatrixColMap().NumMyElements() + colMapElements.size());
+  std::vector<int> colList(A().RowMatrixColMap().NumMyElements() + colMapElements.size());
   int nc = A().RowMatrixColMap().NumMyElements();
   for (int i = 0 ; i < nc; i++)
     colList[i] = A().RowMatrixColMap().GID(i);
@@ -1547,7 +1594,7 @@ Ifpack_OverlappingRowMatrix::~Ifpack_OverlappingRowMatrix() {
 }
 
 # endif //ifdef IFPACK_NODE_AWARE_CODE
-#endif // ifdef IFPACK_SUBCOMM_CODE
+#endif // ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 
 
 // ======================================================================
@@ -1560,7 +1607,7 @@ NumMyRowEntries(int MyRow, int & NumEntries) const
     return(B().NumMyRowEntries(MyRow - NumMyRowsA_, NumEntries));
 }
 
-#ifdef IFPACK_SUBCOMM_CODE
+#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 // ======================================================================
 int Ifpack_OverlappingRowMatrix::
 ExtractMyRowCopy(int LocRow, int Length, int & NumEntries, double *Values, 
@@ -1674,7 +1721,7 @@ ExtractMyRowCopy(int MyRow, int Length, int & NumEntries, double *Values,
   IFPACK_RETURN(ierr);
 }
 # endif // ifdef IFPACK_NODE_AWARE_CODE
-#endif // ifdef IFPACK_SUBCOMM_CODE
+#endif // ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 
 // ======================================================================
 int Ifpack_OverlappingRowMatrix::
@@ -1689,8 +1736,8 @@ int Ifpack_OverlappingRowMatrix::
 Multiply(bool TransA, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
   int NumVectors = X.NumVectors();
-  vector<int> Ind(MaxNumEntries_);
-  vector<double> Val(MaxNumEntries_);
+  std::vector<int> Ind(MaxNumEntries_);
+  std::vector<double> Val(MaxNumEntries_);
 
   Y.PutScalar(0.0);
 
@@ -1736,7 +1783,7 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 }
 
 // ======================================================================
-#ifndef IFPACK_SUBCOMM_CODE
+#ifndef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
 # ifndef IFPACK_NODE_AWARE_CODE
 Epetra_RowMatrix& Ifpack_OverlappingRowMatrix::B() const
 {

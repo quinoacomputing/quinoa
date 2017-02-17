@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -51,15 +64,15 @@ class Epetra_CrsMatrix;
 
 //! Ifpack_PointRelaxation: a class to define point relaxation preconditioners of for Epetra_RowMatrix's.
 
-/*! 
+/*!
   The Ifpack_PointRelaxation class enables the construction of point
   relaxation
-  preconditioners of an Epetra_RowMatrix. Ifpack_PointRelaxation 
-  is derived from 
+  preconditioners of an Epetra_RowMatrix. Ifpack_PointRelaxation
+  is derived from
   the Ifpack_Preconditioner class, which is itself derived from Epetra_Operator.
   Therefore this object can be used as preconditioner everywhere an
   ApplyInverse() method is required in the preconditioning step.
- 
+
 This class enables the construction of the following simple preconditioners:
 - Jacobi;
 - Gauss-Seidel;
@@ -112,7 +125,7 @@ Ifpack_GaussSeidel does not consider backward Gauss-Seidel methods.
 \author Marzio Sala, SNL 9214.
 
 \date Last modified on 22-Jan-05.
-  
+
 */
 class Ifpack_PointRelaxation : public Ifpack_Preconditioner {
 
@@ -133,9 +146,9 @@ public:
   //@}
 
   /*! This flag can be used to apply the preconditioner to the transpose of
-   * the input operator. 
-   * 
-   * \return Integer error code, set to 0 if successful.  
+   * the input operator.
+   *
+   * \return Integer error code, set to 0 if successful.
    * Set to -1 if this implementation does not support transpose.
     */
   virtual inline int SetUseTranspose(bool UseTranspose_in)
@@ -149,10 +162,10 @@ public:
   //@{ \name Mathematical functions.
 
   //! Applies the matrix to an Epetra_MultiVector.
-  /*! 
-    \param 
+  /*!
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
-    \param 
+    \param
     Y - (Out) A Epetra_MultiVector of dimension NumVectors containing the result.
 
     \return Integer error code, set to 0 if successful.
@@ -170,7 +183,7 @@ public:
   }
 
   //! Applies the preconditioner to X, returns the result in Y.
-  /*! 
+  /*!
     \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to be preconditioned.
     \param
@@ -218,7 +231,7 @@ public:
   virtual const Epetra_Map & OperatorRangeMap() const;
 
   virtual int Initialize();
-  
+
   virtual bool IsInitialized() const
   {
     return(IsInitialized_);
@@ -234,10 +247,10 @@ public:
   virtual int Compute();
 
   //@}
- 
+
   //@{ \name Miscellaneous
 
-  virtual const Epetra_RowMatrix& Matrix() const 
+  virtual const Epetra_RowMatrix& Matrix() const
   {
     return(*Matrix_);
   }
@@ -246,7 +259,7 @@ public:
   virtual double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                          const int MaxIters = 1550,
                          const double Tol = 1e-9,
-			 Epetra_RowMatrix* Matrix = 0);
+                         Epetra_RowMatrix* Matrix = 0);
 
   //! Returns the condition number estimate, or -1.0 if not computed.
   virtual double Condest() const
@@ -258,7 +271,7 @@ public:
   virtual int SetParameters(Teuchos::ParameterList& List);
 
   //! Prints object to an output stream
-  virtual ostream& Print(ostream & os) const;
+  virtual std::ostream& Print(std::ostream & os) const;
 
   //@}
 
@@ -321,53 +334,62 @@ public:
   // @}
 
 private:
- 
+
   // @{ Application of the preconditioner
-  
+
   //! Applies the Jacobi preconditioner to X, returns the result in Y.
-  virtual int ApplyInverseJacobi(const Epetra_MultiVector& X, 
+  virtual int ApplyInverseJacobi(const Epetra_MultiVector& X,
                                  Epetra_MultiVector& Y) const;
 
   //! Applies the Gauss-Seidel preconditioner to X, returns the result in Y.
-  virtual int ApplyInverseGS(const Epetra_MultiVector& X, 
+  virtual int ApplyInverseGS(const Epetra_MultiVector& X,
                               Epetra_MultiVector& Y) const;
 
-  virtual int ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, 
+  virtual int ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X,
                                         Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverseGS_CrsMatrix(const Epetra_CrsMatrix* A,
-                                        const Epetra_MultiVector& X, 
+                                        const Epetra_MultiVector& X,
                                         Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverseGS_FastCrsMatrix(const Epetra_CrsMatrix* A,
-                                            const Epetra_MultiVector& X, 
+                                            const Epetra_MultiVector& X,
+                                            Epetra_MultiVector& Y) const;
+  virtual int ApplyInverseGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A,
+                                            const Epetra_MultiVector& X,
                                             Epetra_MultiVector& Y) const;
 
   //! Applies the symmetric Gauss-Seidel preconditioner to X, returns the result in Y.
-  virtual int ApplyInverseSGS(const Epetra_MultiVector& X, 
+  virtual int ApplyInverseSGS(const Epetra_MultiVector& X,
                               Epetra_MultiVector& Y) const;
 
-  virtual int ApplyInverseSGS_RowMatrix(const Epetra_MultiVector& X, 
+  virtual int ApplyInverseSGS_RowMatrix(const Epetra_MultiVector& X,
                                         Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverseSGS_CrsMatrix(const Epetra_CrsMatrix* A,
-                                        const Epetra_MultiVector& X, 
+                                        const Epetra_MultiVector& X,
                                         Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverseSGS_FastCrsMatrix(const Epetra_CrsMatrix* A,
-                                            const Epetra_MultiVector& X, 
+                                            const Epetra_MultiVector& X,
                                             Epetra_MultiVector& Y) const;
+
+  virtual int ApplyInverseSGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A,
+                                            const Epetra_MultiVector& X,
+                                            Epetra_MultiVector& Y) const;
+
+
   //@}
 
 private:
-  
+
   //! Sets the label.
   virtual void SetLabel();
 
   //! Copy constructor (PRIVATE, should not be used)
   Ifpack_PointRelaxation(const Ifpack_PointRelaxation& rhs)
   {}
-  
+
   //! operator = (PRIVATE, should not be used)
   Ifpack_PointRelaxation& operator=(const Ifpack_PointRelaxation& rhs)
   {
@@ -406,10 +428,14 @@ private:
   bool UseTranspose_;
   //! Contains the estimated condition number
   double Condest_;
+#if 0
+  // Unused; commented out to avoid build warnings
+
   //! If true, Compute() also computes the condition number estimate.
   bool ComputeCondest_;
+#endif // 0
   //! Contains the label of this object.
-  string Label_;
+  std::string Label_;
   int PrecType_;
   double MinDiagonalValue_;
   // @}
@@ -420,9 +446,9 @@ private:
   //! Number of local nonzeros.
   int NumMyNonzeros_;
   //! Number of global rows.
-  int NumGlobalRows_;
+  long long NumGlobalRows_;
   //! Number of global nonzeros.
-  int NumGlobalNonzeros_;
+  long long NumGlobalNonzeros_;
   //! Pointers to the matrix to be preconditioned.
   Teuchos::RefCountPtr<const Epetra_RowMatrix> Matrix_;
   //! Importer for parallel GS and SGS
@@ -435,11 +461,21 @@ private:
   bool IsParallel_;
   //! If \c true, the starting solution is always the zero vector.
   bool ZeroStartingSolution_;
-  //! Backward-Mode Gauss Seidel 
+  //! Backward-Mode Gauss Seidel
   bool DoBackwardGS_;
+  //! Do L1 Jacobi/GS/SGS
+  bool DoL1Method_;
+  //! Eta parameter for modified L1 method
+  double L1Eta_;
+
+  //! Number of (local) unknowns for local smoothing
+  int NumLocalSmoothingIndices_;
+  //! List of (local) unknowns for local smoothing (if any)
+  int * LocalSmoothingIndices_;
+
   // @}
 
-  
+
 
 };
 

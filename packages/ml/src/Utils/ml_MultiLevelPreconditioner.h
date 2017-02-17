@@ -8,7 +8,7 @@
  */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 /*#############################################################################
 # CVS File Information
@@ -23,7 +23,7 @@
 
 #include "ml_include.h"
 
-#if defined(HAVE_ML_EPETRA) && defined(HAVE_ML_TEUCHOS) 
+#if defined(HAVE_ML_EPETRA) && defined(HAVE_ML_TEUCHOS)
 // define the following to allow compilation without AztecOO
 #ifndef HAVE_ML_AZTECOO
 #ifndef AZ_PROC_SIZE
@@ -75,7 +75,7 @@ class Epetra_VbrMatrix;
 #include "Epetra_Operator.h"
 #include "Epetra_RowMatrix.h"
 #ifdef HAVE_ML_AZTECOO
-#include "Epetra_MultiVector.h"                                                 
+#include "Epetra_MultiVector.h"
 #include "Epetra_MsrMatrix.h"
 #endif
 #include "Teuchos_ParameterList.hpp"
@@ -83,6 +83,7 @@ class Epetra_VbrMatrix;
 #ifdef HAVE_ML_EPETRAEXT
 #include "EpetraExt_SolverMap_CrsMatrix.h"
 #endif
+#include "ml_epetra_utils.h"
 
 namespace ML_Epetra
 {
@@ -104,61 +105,61 @@ namespace ML_Epetra
     \param options (In/Out) : integer array, of size \c AZ_OPTIONS_SIZE, that will be
     populated with suitable values. A pointer to \c options will be stick into
     the parameters list. Note that this array is still required to apply the
-    preconditioner! Do not delete options, nor let it go out of scope. The default value is 
+    preconditioner! Do not delete options, nor let it go out of scope. The default value is
     0, meaning that \c SetDefaults() will allocate the array.
     \param params (In/Out) : double array, of size \c AZ_PARAMS_SIZE. See comments
     for \c options.
     \param OverWrite (In) : boolean.  If false, any pre-existing values in the
     parameter list will be preserved.  Default value is true, i.e., any
-    pre-existing values may be overwritten. 
+    pre-existing values may be overwritten.
    */
   int SetDefaults(std::string ProblemType, Teuchos::ParameterList & List,
 		  int * options = 0, double * params = 0, const bool OverWrite=true);
-  
+
   //! Sets default parameters for aggregation-based 2-level domain decomposition preconditioners.
-  int SetDefaultsDD(Teuchos::ParameterList & List, 
+  int SetDefaultsDD(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
-  
+
   //! Sets default parameters for aggregation-based 2-level domain decomposition preconditioners, using LU on each subdomain
-  int SetDefaultsDD_LU(Teuchos::ParameterList & List, 
+  int SetDefaultsDD_LU(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
-  
-  //! Sets default parameters for aggregation-based 3-level domain decomposition preconditioners.  
-  int SetDefaultsDD_3Levels(Teuchos::ParameterList & List, 
+
+  //! Sets default parameters for aggregation-based 3-level domain decomposition preconditioners.
+  int SetDefaultsDD_3Levels(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
-  
+
   //! Sets default parameters for aggregation-based 3-level domain decomposition preconditioners with LU.
-  int SetDefaultsDD_3Levels_LU(Teuchos::ParameterList & List, 
+  int SetDefaultsDD_3Levels_LU(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
 
   //! Sets default parameters for the eddy current equations equations.
-  int SetDefaultsMaxwell(Teuchos::ParameterList & List, 
+  int SetDefaultsMaxwell(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
-  
+
   //! Sets default parameters for classical smoothed aggregation.
-  int SetDefaultsSA(Teuchos::ParameterList & List, 
+  int SetDefaultsSA(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
-  
+
   //! Sets defaults for energy minimization preconditioning for nonsymmetric problems.
-  int SetDefaultsNSSA(Teuchos::ParameterList & List, 
+  int SetDefaultsNSSA(Teuchos::ParameterList & List,
 		               Teuchos::RCP<std::vector<int> > &options,
                        Teuchos::RCP<std::vector<double> > &params,
                        bool Overwrite=true);
 
   //! Reads in parameter list options from file.
-  int ReadXML(const string &FileName, Teuchos::ParameterList &List,
+  int ReadXML(const std::string &FileName, Teuchos::ParameterList &List,
                    const Epetra_Comm &Comm);
 
   //! Enumerated type indicating the type of AMG solver to be used.
@@ -171,22 +172,22 @@ namespace ML_Epetra
   };
 
 /*!
- 
+
    \brief MultiLevelPreconditioner: a class to define black-box multilevel preconditioners using aggregation methods.
 
    Class ML_Epetra::MultiLevelPreconditioner defined black-box algebraic
    multilevel preconditioners of matrices defined as Epetra_RowMatrix derived
    objects. The resulting preconditioner can be used in AztecOO, and in any
    other solver that accepts Epetra_Operator derived objects, and apply the
-   action of the given Epetra_Operator using ApplyInverse(). 
-  
+   action of the given Epetra_Operator using ApplyInverse().
+
    Please refer to the user's guide for a detailed introduction to
    this class, examples, and description of input parameters.
-  
+
     This file requires ML to be configured with the following options:
     - \c --enable-epetra
     - \c --enable-teuchos
-    
+
     The following option is suggested:
     - \c --enable-amesos
     - \c --enable-ifpack
@@ -194,45 +195,45 @@ namespace ML_Epetra
     Some part of this class needs the following options:
     - \c --enable-aztecoo
     - \c --enable-anasazi
-    
+
     It is important to note that ML is more restrictive than Epetra for
-    the definition of maps. It is required that RowMatrixRowMap() is equal 
+    the definition of maps. It is required that RowMatrixRowMap() is equal
     to OperatorRangeMap(). This is because ML needs to perform matrix-std::vector
     product, as well as getrow() functions, on the same data distribution.
-    
-    Also, for square matrices, OperatorDomainMap() must be as 
-    OperatorRangeMap(). 
+
+    Also, for square matrices, OperatorDomainMap() must be as
+    OperatorRangeMap().
 
     Several examples are provided in the \c examples subdirectories:
-    - \ref ml_preconditioner_cpp is an introductory 
+    - \ref ml_preconditioner_cpp is an introductory
       example;
     - \ref ml_2level_DD_cpp shows how to
-      define a 2-level domain decomposition preconditioner using 
+      define a 2-level domain decomposition preconditioner using
       this class;
     - \ref ml_viz_cpp details how to visualize the aggregates;
     - \ref ml_maxwell_cpp reports how to
       use this class for Maxwell problems.
-      
+
    \note
-   Namespace ML_Epetra contains another Epetra_Operator derived class, 
-   ML_Epetra::MultiLevelOperator. 
+   Namespace ML_Epetra contains another Epetra_Operator derived class,
+   ML_Epetra::MultiLevelOperator.
    - you should use MultiLevelOperator
      when your code already defines the required ML objects, with the optimal
-     choice of parameters, and you just want to wrap the already defined ML 
+     choice of parameters, and you just want to wrap the already defined ML
      preconditioners for AztecOO problems;
    - you should use MultiLevelPreconditioner
      when you have an Epetra_RowMatrix, and you don't want to code the
      conversion to ML_Operator, the creation of the hierarchy and the
      aggregates, and/or you want to experiment various combinations of the
      parameters, simply changing some parameters in a Teuchos::ParameterList.
-  
+
    Defaults parameters can be specified using function SetDefaults().
 
     \author Marzio Sala, SNL 9214
-*/  
+*/
 class MultiLevelPreconditioner : public virtual Epetra_Operator {
-      
-public:  
+
+public:
 
   //@{ \name Constructors.
 
@@ -242,28 +243,28 @@ public:
                            const bool ComputePrec = true);
 
   //! Constructs a MultiLevelPreconditioner. Retrieves parameters from \c List.
-  
+
   MultiLevelPreconditioner(const Epetra_RowMatrix & RowMatrix,
 			   const Teuchos::ParameterList & List,
 			   const bool ComputePrec = true);
 
   //! Constructs a MultiLevelPreconditioner from an ML_Operator. Retrieves parameters from \c List.
-  
+
   MultiLevelPreconditioner(ML_Operator* Operator,
 			   const Teuchos::ParameterList& List,
 			   const bool ComputePrec = true);
-  
+
   //! Constructs a MultiLevelPreconditioner which is actually a composite AMG hierarchy using an array of ML_Operator's and an array of parameter lists.
-  
-  MultiLevelPreconditioner(ML_Operator *Operator, 
+
+  MultiLevelPreconditioner(ML_Operator *Operator,
                            const Teuchos::ParameterList& List,
                            Epetra_RowMatrix **DiagOperators,
 			   Teuchos::ParameterList *DiagLists,
                            int NBlocks = 1,
 			   const bool ComputePrec = true);
-  
+
   //! \brief MultiLevelPreconditioner constructor for Maxwell's equations.
-  /*! Takes the stiffness and mass terms of the matrix combined. 
+  /*! Takes the stiffness and mass terms of the matrix combined.
 
       \param EdgeMatrix - (In) Linear matrix to be solved.
       \param GradMatrix - (In) Node-to-edge connectivity matrix, a.k.a,
@@ -271,10 +272,10 @@ public:
       \param NodeMatrix - (In) Auxiliary nodal finite element matrix
       \param List - (In) Teuchos parameter list containing solver options.
       \param ComputePrec - (In) Optional argument that specifies whether to
-                                create preconditioner immediately. 
+                                create preconditioner immediately.
                                 Default is true.
       \param UseNodeMatrixForSmoother - (In) Use the nodal matrix for the nodal
-                            portion of the Hipmair smoother (if used).                          
+                            portion of the Hipmair smoother (if used).
   */
 
   MultiLevelPreconditioner(const Epetra_RowMatrix& EdgeMatrix,
@@ -283,9 +284,9 @@ public:
 			   const Teuchos::ParameterList& List,
 			   const bool ComputePrec = true,
                            const bool UseNodeMatrixForSmoother = false);
-  
+
   //! \brief MultiLevelPreconditioner constructor for Maxwell's equations.
-  /*! Takes the stiffness and mass terms of the matrix separately. 
+  /*! Takes the stiffness and mass terms of the matrix separately.
 
       \param CurlCurlMatrix - (In) The curl-curl (stiffness) term of the
                                    matrix to be solved.
@@ -305,7 +306,53 @@ public:
              const Epetra_RowMatrix & NodeMatrix,
              const Teuchos::ParameterList & List,
              const bool ComputePrec = true);
-  
+
+#define NewStuff
+#ifdef NewStuff
+  //! Constructs a MultiLevelPreconditioner for multiphysics with variable dofs per node
+
+  MultiLevelPreconditioner(Epetra_RowMatrix & RowMatrix,
+			   const Teuchos::ParameterList & List,
+                           const int & nNodes,
+                           const int & maxDofPerNode,
+                           bool * dofPresent,
+                           Epetra_Vector & Lhs, 
+                           Epetra_Vector & Rhs, 
+                           const bool  rhsAndsolProvided,
+			   const bool ComputePrec = true);
+// ================================================ ====== ==== ==== == =
+/*! Constructor for scalar PDE problems based on applying AMG to the distance
+ *  Laplacian operator when constructing grid transfers. The main unique
+ *  feature is that there may be some dofs that correspond to the same node
+ *  location. These shared dofs fall into two categories. If these dofs are
+ *  strongly connected to each other (as determined by tol), they are
+ *  explicitly elminated from the Laplacian (merged into a supernode). Once
+ *  a P is obtained, this P is then expanded to account for shared nodes
+ *  by simply duplicating the supernodes row of P for each of the individual
+ *  vertices that contribute to the supernode. If share dofs are weakly
+ *  connected (or not connected at all), nothing special is done (other than
+ *  the ususal ignoring of weak connections). One last trick is employed, 
+ *  connections between supernodes and non-supernodes (i.e., regular nodes)
+ *  are always assumed to be weak. Shared nodes are often used to capture
+ *  interfaces or other features. By breaking these connections, the AMG
+ *  can better maintain these features throughout the hierarchy. Finally, the
+ *  constructor also allows for *  the removal of column nonzeros associated
+ *  with Dirichlet points. To use this option the rhs and initial guess must be
+ *  provided. Modification of the matrix, rhs, and initial guess must be 
+ *  allowable to use this option.
+ */
+
+  MultiLevelPreconditioner(Epetra_RowMatrix & RowMatrix,
+    const Teuchos::ParameterList & List,
+    const double distTol, // two points are at the same location when
+                          // || (x_1,y_1,z_1) -  (x_2,y_2,z_2)||_2 < distTol
+    const double tol,     // ignore values when
+                          //       A(i,j)^2 < A(i,i)*A(j,j)*tol^2
+    Epetra_Vector & Lhs,
+    Epetra_Vector & Rhs,
+    const bool  rhsAndsolProvided,
+    const bool ComputePrec = true);
+#endif
 #ifdef HAVE_ML_AZTECOO
   //! MultiLevelPreconditioner constructor for Maxwell's equations.
   /*! Takes the stiffness and mass terms of the matrix combined.  The edge
@@ -332,22 +379,22 @@ public:
 #endif
 
   //@}
-  
+
   //@{ \name Destructor.
 
   //! Destroys the preconditioner.
   virtual ~MultiLevelPreconditioner() {
-    if (IsComputePreconditionerOK_) 
-      DestroyPreconditioner(); 
+    if (IsComputePreconditionerOK_)
+      DestroyPreconditioner();
   }
 
   //@}
-  
+
   //@{ \name Query functions
 
   //! Prints label associated to this object.
-  const char* Label() const{return(Label_);};  
-  
+  const char* Label() const{return(Label_);};
+
   //! Prints unused parameters in the input ParameterList on standard output.
   void PrintUnused() const
   {
@@ -360,22 +407,22 @@ public:
     List_.unused(os);
   }
 
-  //! Prints unused parameters in the input ParameterList to std::cout on proc \c MyPID. 
+  //! Prints unused parameters in the input ParameterList to std::cout on proc \c MyPID.
   /*! Mispelled parameters are simply ignored. Therefore, it is often the best
    * choice to print out the parameters that have not been used in the
-   * construction phase. 
+   * construction phase.
    * - \param MyPID (In) : ID of process that should print the unused parameters.
    */
   void PrintUnused(const int MyPID) const;
 
   //! Gets a reference to the internally stored parameters' list.
-  Teuchos::ParameterList& GetList() 
+  Teuchos::ParameterList& GetList()
   {
     return List_;
   }
 
   // Get a copy of the internally stored output list.
-  Teuchos::ParameterList GetOutputList() 
+  Teuchos::ParameterList GetOutputList()
   {
     return OutputList_;
   }
@@ -387,7 +434,7 @@ public:
   int SetParameterList(const Teuchos::ParameterList& List);
 
   //@}
-  
+
   //@{ \name Mathematical functions.
 
   //! Apply the inverse of the preconditioner to an Epetra_MultiVector (NOT AVAILABLE)
@@ -398,7 +445,7 @@ public:
   int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //@}
-  
+
   //@{ \name Attribute access functions
 
 
@@ -409,10 +456,10 @@ public:
     or by the destructor,
 
     In a Newton-type procedure, several linear systems have to be solved, Often, these systems
-    are not too different. In this case, it might be convenient to keep the already 
+    are not too different. In this case, it might be convenient to keep the already
     computed preconditioner (with hierarchy, coarse solver, smoothers), and use it to
-    precondition the next linear system. ML offers a way to determine whether the 
-    already available preconditioner is "good enough" for the next linear system. 
+    precondition the next linear system. ML offers a way to determine whether the
+    already available preconditioner is "good enough" for the next linear system.
     The user should proceed as follows:
     - define \c "reuse: enable" == \c true
     - solve the first linear system. ML tries to estimate the rate of convergence, and record it;
@@ -421,18 +468,16 @@ public:
     It is supposed that the pointer to the Epetra_RowMatrix remains constant. Currently,
     it is not possible to modify this pointer (other than creating a new preconditioner)
   */
-  
+
   int ComputePreconditioner(const bool CheckFiltering = false);
 
-  //! Computes an empty multilevel hierarchy ignoring any aggregation specific information.
-  /*! Computes an empty multilevel hierarchy ignoring any aggregation specific information
-      that might be in the user defined parameters (as specified in the input ParameterList), 
-      or takes default values otherwise.  Allocated data can be freed used DestroyPreconditioner(),
-      or by the destructor.
-  */
+  /*! @brief Recompute the preconditioner (not implemented for Maxwell).
 
-  //! Recomputed the preconditioner (not implemented for Maxwell).
-  int ReComputePreconditioner();
+    @param[in] keepFineLevelSmoother : If true, the fine level smoother is not recomputed.  This is useful
+    if the smoother is expensive to create, e.g., an incomplete factorization, and the fine level matrix
+    has not changed.
+  */
+  int ReComputePreconditioner(bool keepFineLevelSmoother=false);
 
   //! Print the individual operators in the multigrid hierarchy.
   void Print(int level = -2);
@@ -459,16 +504,16 @@ public:
 
   //! Returns the current UseTranspose setting.
   bool UseTranspose() const {return(false);};
-  
+
   //! Returns true if the \e this object can provide an approximate Inf-norm, false otherwise.
   bool HasNormInf() const{return(false);};
-  
+
   //! Returns a pointer to the Epetra_Comm communicator associated with this operator.
   const Epetra_Comm& Comm() const{return(*Comm_);};
-  
+
   //! Returns the Epetra_Map object associated with the domain of this operator.
   const Epetra_Map& OperatorDomainMap() const {return(*DomainMap_);};
-  
+
   //! Returns the Epetra_Map object associated with the range of this operator.
   const Epetra_Map& OperatorRangeMap() const {return(*RangeMap_);};
   //@}
@@ -493,19 +538,19 @@ public:
   {
     return(RowMatrix_->NumGlobalRows());
   }
-  
+
   //! Returns the global number of columns in the matrix.
   int NumGlobalCols() const
   {
     return(RowMatrix_->NumGlobalCols());
   }
-  
+
   //! Returns the local number of rows in the matrix.
   int NumMyRows() const
   {
     return(RowMatrix_->NumMyRows());
   }
-  
+
   //! Returns the local number of columns in the matrix.
   int NumMyCols() const
   {
@@ -522,14 +567,14 @@ public:
    *   stencil. If set to -1, the code will automatically chose an internal node.
    *   Default: -1.
    * \param EquationID (In) : ID of the equation that will be used to print the
-   *   stencil (default = 0)  
+   *   stencil (default = 0)
    */
-  int PrintStencil2D(const int nx, const int ny, 
+  int PrintStencil2D(const int nx, const int ny,
 		     int NodeID = -1,
 		     const int EquationID = 0);
 
   //! Cheap analysis of each level matrix.
-  int AnalyzeHierarchy(const bool AnalyzeMatrices, 
+  int AnalyzeHierarchy(const bool AnalyzeMatrices,
                        const int PreCycles, const int PostCycles,
                        const int MLCycles);
 
@@ -564,7 +609,7 @@ public:
   }
 
   //! Returns a pointer to the internally stored agg pointer
-  const ML_Aggregate* GetML_Aggregate() const 
+  const ML_Aggregate* GetML_Aggregate() const
   {
     return agg_;
   }
@@ -592,12 +637,15 @@ public:
 
   void ReportTime();
 
+  //! Return operator complexity and #nonzeros in fine grid matrix.
+  void Complexities(double &complexity, double &fineNnz);
+
 //@}
 
 private:
 
   //! Copy constructor (NOT DEFINED)
-  MultiLevelPreconditioner(const MultiLevelPreconditioner & rhs) 
+  MultiLevelPreconditioner(const MultiLevelPreconditioner & rhs)
   {};
 
   //! operator = (NOT DEFINED)
@@ -610,8 +658,11 @@ private:
   //! Initializes object with defauls values.
   int Initialize();
 
-  //! Sets smoothers.
-  int SetSmoothers();
+  /*! Sets smoothers.
+    @param[in] skipFineLevelSmoother : If true, the fine level smoother is not set.  This is intended to be used in
+    combination with ReComputePreconditioner.
+  */
+  int SetSmoothers(bool skipFineLevelSmoother=false);
 
   //! Sets coarse level solvers.
   int SetCoarse();
@@ -659,7 +710,7 @@ private:
 
   int SetLevelIds(int Direction);
 
-  //! Set eigenvalue scheme to be used by ML for spectral radius 
+  //! Set eigenvalue scheme to be used by ML for spectral radius
 
   int SetEigenScheme();
 
@@ -693,7 +744,7 @@ private:
   int SetFiltering();
 
   void RandomAndZero(double *, double *, int);
-  
+
   //! Checks whether the previously computed preconditioner is still valuable for the newly available linear system.
   /*! Used only when \c "reuse: enable" is \c true, and
    * ComputePreconditioner(true) is called. */
@@ -704,7 +755,7 @@ private:
   //@}
 
   //@{ \name Internal data
-  
+
   //! Pointer to ML_Struct
   ML* ml_;
   //! ML communicator, convenient to have separately from ml_,
@@ -730,13 +781,13 @@ private:
   ML_Operator *AfineML_;
 
   //! Multigrid hierarchies applied to submatrices and used in a composite
-  //  form to define the overall AMG hierarchy 
+  //  form to define the overall AMG hierarchy
 
   ML_Epetra::MultiLevelPreconditioner **SubMatMLPrec_;
 
   //! specifies whether a hierarchy already exists or not.
   bool IsComputePreconditionerOK_;
-  
+
   //! Number of levels
   int NumLevels_;
   //! Domain Map
@@ -758,7 +809,7 @@ private:
   //! List containing all input parameters.
   Teuchos::ParameterList List_;
   //! List containing all output parameters
-  Teuchos::ParameterList OutputList_;      
+  Teuchos::ParameterList OutputList_;
 
   //! Maximum number of levels
   int MaxLevels_;
@@ -778,8 +829,8 @@ private:
   */
   std::vector<int> LevelID_;
 
-  //! If not NULL, contains the allocated null space std::vector 
-  double* NullSpaceToFree_;              
+  //! If not NULL, contains the allocated null space std::vector
+  double* NullSpaceToFree_;
 
   //! all std::cout's have this prefix (default'd in Initialize() )
   std::string PrintMsg_;
@@ -801,13 +852,15 @@ private:
   int NBlocks_;
 
   //! Array of Diagonal Operators
- 
+
   Epetra_RowMatrix **DiagOperators_;
 
   //! Array of Parameter lists for diagonal operators
- 
+
   Teuchos::ParameterList *DiagLists_;
 
+  //! special flag (currently for variable dof per node multiphysics AMG) skips smoother when building Laplacian hierarchy. 
+  bool DontSetSmoothers_;
   //@}
 
   //@{ \name Maxwell variables
@@ -871,27 +924,417 @@ private:
   double ConstructionTime_;
 
   //@}
-  
+
   // other stuff for old ML's compatibility
   Epetra_CrsMatrix* RowMatrixAllocated_;
   bool  AllocatedRowMatrix_; // used for composite constructor only
 
   bool AnalyzeMemory_;
-  
+
   int memory_[ML_MEM_SIZE];
 
   // filtering stuff
   std::vector<double> flt_NullSpace_;
   ML* flt_ml_;
   ML_Aggregate* flt_agg_;
-  
+
   // for reuse of preconditioning
   double RateOfConvergence_;
 
 }; // class MultiLevelPreconditioner
- 
+
 } // namespace ML_Epetra
 
+#ifdef NewStuff
+/******************************************************************************
+  Vector class that is used for for multiphysics multigrid on matrices with
+  varaible dofs per node. Didn't want anything specific to epetra, ML, and 
+  MueLu; didn't like new/malloc features of std::vector, and I have a hard
+  time figuring out teuchos stuff ... so I implemented my own. The syntax
+  is pretty similar to std::vector, but it is more efficient from a memory
+  allocation perspective (though less flexible). 
+******************************************************************************/
+
+enum free_s {useFree, useDelete, neither};
+template <class T> class MLVec {
+  public:
+
+    // different constructors & destructors
+
+    MLVec();              
+    MLVec(int mysize);
+    MLVec(T *startptr, T *endptr, bool okToChangePtr = false, free_s freeType = neither);
+    ~MLVec();
+
+    int     size() const;        // return vector size
+    T       *getptr();           // return pointer to start of raw vector data
+    void    wrap(T *startptr, T *endptr,// same as above construct but allows
+            bool okToChangePtr = false, // one to first create an empty MLVec
+            free_s freeType = neither); // and then wrap it with data.
+                                 // is not invoked when MLVec goes away
+    void    relinquishData();    // disassociates data from MLVec, so free 
+                                 // is not invoked when MLVec goes away
+    void    resize(int newSize); // change vector size. If newSize is smaller
+                                 // than size(), keep first newSize values
+    bool    empty() const;       // indicates whether vector is empty
+
+    inline T& operator [] (int index) { return data_[index]; }
+    inline const T& operator [] (int index) const { return data_[index]; }
+
+  private:
+    int    size_;
+    T      *data_;
+    bool   okToChangePtr_;   // These last few indicate the status of vector.
+    free_s freeType_;        // This is used to see if memory can be freed, 
+    bool   getPtrInvoked_;   // reallocated, or pointers can be moved. 
+};
+
+// Create an empty vector 
+
+template <class T> MLVec<T>::MLVec() {
+  data_          = NULL;      size_          = 0;
+  okToChangePtr_ = true;      getPtrInvoked_ = false;
+  freeType_      = neither;
+}
+
+// Create an vector without any data but allocate space
+template <class T> MLVec<T>::MLVec(int mysize) {
+
+  TEUCHOS_TEST_FOR_EXCEPTION(mysize < 0,std::logic_error,
+  "MLVec error, cannot create a negative size (= " << mysize << ") vector\n");
+
+  data_          = NULL;        size_          = mysize;
+  okToChangePtr_ = true;        getPtrInvoked_ = false;
+  freeType_      = neither;
+
+  if (size_ > 0) {
+     data_ = (T *) ML_allocate(sizeof(T)*size_); 
+
+     TEUCHOS_TEST_FOR_EXCEPTION(data_ == NULL,std::logic_error,
+     "MLVec error, not enough space for vector of size " << size_ << "\n");
+
+     freeType_ = useFree;
+  }
+}
+
+// Create a vector that wraps existing data that starts and ends at 'start'
+// and 'end' respectively. In most cases, this means that the pointers
+// associated with the raw data cannot be changed, and that the raw data
+// should remain when this vector goes away 
+template <class T> MLVec<T>::MLVec(T *start, T *end, bool okToChangePtr,
+                                   free_s freeType) { 
+
+  TEUCHOS_TEST_FOR_EXCEPTION(end < start,std::logic_error,
+  "MLVec error, cannot create a negative size (= " << end-start<< ") vector\n");
+
+  freeType_      = freeType;   okToChangePtr_ = okToChangePtr;
+  data_          = start;      size_          = end - start;
+  if (size_ == 0) data_ = NULL;
+  getPtrInvoked_ = false;
+}
+template <class T> void MLVec<T>::wrap(T *start, T *end, bool okToChangePtr,
+                                   free_s freeType) { 
+
+  TEUCHOS_TEST_FOR_EXCEPTION((data_ != NULL)||(size_  != 0)||(okToChangePtr_ != true)||
+                             (getPtrInvoked_ != false)||(freeType_!= neither),
+                             std::logic_error,
+  "MLVec wrap error, wrap() must be invoked on vectors created with default constructor\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(end < start,std::logic_error,
+  "MLVec error, cannot create a negative size (= " << end-start<< ") vector\n");
+
+  freeType_      = freeType;   okToChangePtr_ = okToChangePtr;
+  data_          = start;      size_          = end - start;
+  if (size_ == 0) data_ = NULL;
+  getPtrInvoked_ = false;
+}
+
+template <class T> MLVec<T>::~MLVec()              { 
+   if (data_ != NULL) {
+      TEUCHOS_TEST_FOR_EXCEPTION(size_ == 0,std::logic_error,
+      "MLVec error, data pointer should be null for 0 length vectors\n");
+      if (okToChangePtr_ && (freeType_ == useFree))   ML_free(data_); 
+      if (okToChangePtr_ && (freeType_ == useDelete)) delete data_;
+   }
+}
+
+// data_ is no longer associated with this vector. The raw data continues to
+// exist.  Can be used in conjunction with getptr() to first get the raw
+// data out of MLVec and then effectively empty MLVec.
+template <class T> void MLVec<T>::relinquishData() { 
+
+  TEUCHOS_TEST_FOR_EXCEPTION((data_ != NULL) && (getPtrInvoked_ == false),
+  std::logic_error,"relinquishData without invoking getPtr() should lead"
+  " to memory leak\n");
+
+  data_          = NULL;     size_          = 0; 
+  okToChangePtr_ = true;     getPtrInvoked_ = false;
+  freeType_      = neither;
+}
+template <class T> int MLVec<T>::size() const  {   return size_; }
+template <class T> T* MLVec<T>::getptr() {getPtrInvoked_ =true; return data_;}
+template <class T> bool MLVec<T>::empty() const {if (size_ > 0) return false; 
+                                                 else return true;}
+
+// change the size of the vector. There are lots of restrictions as to when 
+// this is allowed. There are also lots of cases depending on whether the 
+// original vector was zero length (i.e. just allocate memory), the new vector
+// is zero length (i.e. just free memory), the new vector is longer or shorter
+// than the original vector.
+template <class T> void MLVec<T>::resize(int newsize) {
+
+  if (newsize == size_) return;
+
+  TEUCHOS_TEST_FOR_EXCEPTION( newsize < 0, 
+  std::logic_error,"MLVec error, cannot resize to a negative length (= " << 
+  newsize << ") vector \n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION((newsize > size_) && (size_ > 0) && 
+                             (freeType_ == useDelete), std::logic_error,
+  "MLVec error, cannot resize vector allocated with new\n");
+
+  if ( (newsize <= size_) && (size_ > 0) && (freeType_ == useDelete) &&
+       (okToChangePtr_) ) { size_ = newsize; return; }
+
+  if (okToChangePtr_) {
+     if (size_ == 0) {
+       if ( newsize > 0) {
+         data_ = (T *) ML_allocate(sizeof(T)*newsize);
+
+         TEUCHOS_TEST_FOR_EXCEPTION( data_ == NULL, std::logic_error,
+         "MLVec error, not enough resize space for " << newsize <<
+         " length vector\n");
+
+         freeType_ = useFree;
+       }
+       else data_ = NULL;
+     }
+     else {
+       if ( newsize > 0) {
+          T* newStuff = (T *) ML_allocate(sizeof(T)*newsize);
+          if (size_ < newsize) 
+             for (int i = 0; i < size_; i++) newStuff[i] = data_[i];
+          else 
+             for (int i = 0; i < newsize; i++) newStuff[i] = data_[i];
+          ML_free(data_);
+          data_ = newStuff;
+         TEUCHOS_TEST_FOR_EXCEPTION( data_ == NULL, std::logic_error,
+         "MLVec error, not enough resize realloc space for " << newsize <<
+         " length vector\n");
+
+       }
+       else {
+          if (freeType_ == useFree) { ML_free(data_); data_ = NULL; }
+          else if (freeType_ == useDelete) { delete data_; data_ = NULL; }
+
+         TEUCHOS_TEST_FOR_EXCEPTION( freeType_ == neither, std::logic_error,
+         "MLVec error, do not know how to free this vector\n"); 
+        
+       }
+     }
+     size_ = newsize;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(okToChangePtr_ == false, std::logic_error,
+  "MLVec error, not allowed to resize this type of wrapped vector\n"); 
+}
+
+
+/******************************************************************************
+  Data structures & functions to hide communication details associated with 
+  epetra matrices, ML matrices, or MueLu matrices (i.e.  xpetra operators). 
+******************************************************************************/
+
+enum epetraOrMLOrMueLu {epetraType , mlType, mueluType}; 
+
+struct wrappedCommStruct {
+    epetraOrMLOrMueLu whichOne;
+    void                 *data;  // matrix on which communication is based
+    int                 nProcs;  // total number of processors participating
+    int                  myPid;  
+    int          maxDofPerNode;
+    int                vecSize;  
+};
+
+template <class T> int nodalComm(MLVec<T>& vector, MLVec<int>& myLocalNodeIds,
+                                 struct wrappedCommStruct& framework)
+{
+   /***************************************************************************
+    Performs communication to update an amalgamated/nodal vector using either
+    an ML style or an epetra style unamalgamated/dof matrix to define the
+    communication/import pattern. To do this, it utilzes myLocalNodeIds[i]
+    which indicates that the ith dof lies within the myLocalNodeIds[i]th
+    node. The ghost portion of myLocalNodeIds[] was computed by 
+    assignGhostLocalNodeIds().
+
+    Note: As several dofs lie within each node, several of myLocalNodeIds[]'s
+    entries will be duplicates. 
+   ***************************************************************************/
+
+    MLVec<T> temp(myLocalNodeIds.size());
+
+    // copy from nodal vector to dof vector
+    for (int i = 0; i < myLocalNodeIds.size(); i++)
+       temp[i] = vector[ myLocalNodeIds[i]];
+
+    dofComm(temp, framework);
+
+    // copy from dof vector to nodal vector
+    for (int i = 0; i < myLocalNodeIds.size(); i++)
+       vector[ myLocalNodeIds[i]] = temp[i];
+
+    return 0;
+}
+
+template <class T> int dofComm(MLVec<T>& vector,
+                               struct wrappedCommStruct& framework)
+{
+   /***************************************************************************
+    Performs communication to update vector using either an ML style matrix
+    or an epetra style matrix to define the communication/import pattern.
+
+    Note: Directly utilizes the communication of the underlying matrix
+    as opposed to nodalComm() and dofCommUsingMlNodalMatrix(). nodalComm() uses
+    an unamalgamated matrix to define the communication associated with an
+    amalgamated matrix. dofCommUsingMlNodalMatrix() uses an amalgamated/nodal
+    matrix maxDofPerNode times to interpolate each dof of an unamalgamated
+    matrix. dofCommUsingMlNodalMatrix() assumes all nodes have maxDofPerNode
+    degrees-of-freedom (so it is only appropriate on coarser levels).
+   ***************************************************************************/
+
+   MLVec<double> aCopy(vector.size());
+
+   // need to make a copy of the data as we will only use framework comm()
+   // functions that work with doubles
+
+   for (int i = 0; i < vector.size(); i++) aCopy[i] = (double) vector[i];
+
+   double *vectorData = aCopy.getptr();
+
+   if (framework.whichOne == mlType) {
+
+      ML_Operator *Amat = (ML_Operator *) framework.data;
+
+      // grab the data pointer
+
+      if (Amat == NULL) return 0;
+      if (Amat->getrow == NULL) return 0;
+      if (Amat->getrow->pre_comm == NULL) return 0;
+
+      ML_exchange_bdry(vectorData,Amat->getrow->pre_comm,
+                 Amat->invec_leng,Amat->comm,ML_OVERWRITE,NULL);
+   }
+   else {
+      Epetra_CrsMatrix *Amat = (Epetra_CrsMatrix *) framework.data;
+      Epetra_RowMatrix *ArMat = (Epetra_RowMatrix *) Amat;
+
+      ML_Epetra_comm_wrapper(vectorData, (void *) ArMat);
+   }
+
+   for (int i = 0; i < vector.size(); i++) vector[i] = (T) aCopy[i];
+
+   return(0);
+}
+
+extern "C" int dofCommUsingMlNodalMatrix(double *data, void *widget);
+
+extern int MLsortCols(const MLVec<int>& ARowPtr, MLVec<int>& ACols, 
+                    MLVec<double>& AVals);
+
+extern int MLnMyGhost(struct wrappedCommStruct& framework);
+
+extern int MLfillNodalMaps(MLVec<int> &amalgRowMap, MLVec<int> &amalgColMap,
+        MLVec<int> &myLocalNodeIds, int nLocalDofs, 
+        struct wrappedCommStruct &framework,
+        int nLocalNodes, int nLocalPlusGhostNodes);
+
+extern int MLcolGlobalIds(struct wrappedCommStruct& framework, MLVec<int>& myGids);
+
+extern int MLassignGhostLocalNodeIds(MLVec<int> &myLocalNodeIds, int nLocalDofs,
+                   int nLocalPlusGhostDofs, struct wrappedCommStruct &framework,
+                   int &nLocalNodes, int &nLocalPlusGhostNodes);
+
+extern int MLextractDiag(const MLVec<int>& rowPtr, const MLVec<int>& cols,
+                       const MLVec<double>& , MLVec<double>& diagonal,
+                       struct wrappedCommStruct &framework);
+
+extern int MLfindDirichlets(const MLVec<int>& rowPtr, const MLVec<int>& cols,
+                          const MLVec<double>& vals,
+                          const MLVec<double>& diagonal,
+                          double tol, MLVec<bool>& dirOrNot,
+                          struct wrappedCommStruct &framework);
+
+extern int MLrmDirichletCols(MLVec<int>& rowPtr, MLVec<int>& cols,
+                           MLVec<double>& vals, const MLVec<double>& diagonal,
+                           bool squeeze, MLVec<double>& solution,
+                           MLVec<double>& rhs, const MLVec<bool>& dirOrNot, 
+                           struct wrappedCommStruct &framework);
+
+extern int MLsqueezeOutNnzs(MLVec<int>& rowPtr, MLVec<int>& cols,
+                          MLVec<double>& vals, const MLVec<bool>& keep);
+
+extern int MLbuildMap(const MLVec<bool>& dofPresent, MLVec<int>& map, int NDof);
+
+extern int MLvariableDofAmalg(int nCols, const MLVec<int>& rowPtr,
+                          const MLVec<int>& cols, const MLVec<double>& vals,
+                          int nNodes, int maxDofPerNode, const MLVec<int>& map,
+                          const MLVec<double>& diag, double tol,
+                          MLVec<int>& amalgRowPtr, MLVec<int>& amalgCols,
+                          struct wrappedCommStruct &framework,
+                          MLVec<int>& myLocalNodeIds);
+
+
+extern int MLrmDifferentDofsCrossings(const MLVec<bool>& dofPresent,
+                                    int maxDofPerNode, MLVec<int>& rowPtr,
+                                    MLVec<int>& cols, int nCols,
+                                    struct wrappedCommStruct& framework, 
+                                    MLVec<int> &myLocalNodeIds);
+
+extern int MLbuildLaplacian(const MLVec<int>& rowPtr, const MLVec<int>& cols,
+                          MLVec<double>& vals, const MLVec<double>& x,
+                          const MLVec<double>& y, const MLVec<double>& z);
+
+extern int MLunamalgP(const MLVec<int>& amalgRowPtr,
+                    const MLVec<int>& amalgCols,
+                    const MLVec<double>& amalgVals, int maxDofPerNode,
+                    const MLVec<char>& status, bool fineIsPadded,
+                  MLVec<int>& rowPtr, MLVec<int>& cols, MLVec<double>& vals);
+
+extern int MLfindEmptyRows(const MLVec<int>& rowPtr, const MLVec<int>& cols,
+                         const MLVec<double>& vals, MLVec<bool>& rowEmpty);
+
+extern int MLreplaceEmptyByDirichlet(MLVec<int>& rowPtr, MLVec<int>& cols,
+                        MLVec<double>& vals, const MLVec<bool>& colEmpty);
+
+extern int MLfineStatus(const MLVec<bool>& dofPresent,
+                           const MLVec<int>& map, const MLVec<bool>& dirOrNot,
+                           MLVec<char>& status);
+
+extern int MLcoarseStatus(const MLVec<bool>& rowEmpty,
+                        const MLVec<bool>& dirOrNot, MLVec<char>& status);
+
+
+
+extern int MLShove(ML_Operator *Mat, MLVec<int>& rowPtr, MLVec<int>& cols, MLVec<double>& vals, int invec_leng, int (*commfunc  )(double *vec, void *data), struct wrappedCommStruct& framework, int nGhost);
+
+
+extern int ZeroDist(MLVec<double>& xxx, MLVec<double>& yyy, MLVec<double>& zzz,
+             MLVec<int>& rowPtr, MLVec<int>& cols, MLVec<double>& vals,
+             MLVec<double>& diagonal, double tol, MLVec<int>& rowZeros, MLVec<int>& colZeros,
+             double disttol);
+
+extern int MergeShared(MLVec<int>& cols, MLVec<int>& rowZeros, MLVec<int>& colZeros, 
+                       MLVec<int>& groupHead, MLVec<int>& groupNext);
+
+extern int BuildNonSharedMap(MLVec<int>& newMap, MLVec<int>& groupHead, MLVec<int>& groupNext);
+
+extern int buildCompressedA(MLVec<int>& inputRowPtr, MLVec<int>& inputCols,
+                     MLVec<double>& inputVals, MLVec<double>& diagonal,
+                     MLVec<int>& groupHead, MLVec<int>& groupNext, 
+                     MLVec<int>& outputRowptr, MLVec<int>& outputCols,
+                     MLVec<int>& map, int newN, double tol);
+
+
+#endif /* NewStuff */
 #endif /* defined HAVE_ML_EPETRA and HAVE_ML_TEUCHOS */
 
 #endif /* define ML_MULTILEVELPRECONDITIONER_H */

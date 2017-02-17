@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -50,7 +50,9 @@
 #include "AnasaziOperatorTraits.hpp"
 #include "AnasaziOutputManager.hpp"
 
+#include "Teuchos_MatrixMarket_SetScientific.hpp"
 #include "Teuchos_RCP.hpp"
+#include "Teuchos_as.hpp"
 
 namespace Anasazi {
 
@@ -65,6 +67,7 @@ namespace Anasazi {
                 const Teuchos::RCP<const MV> &A ) {
 
     using std::endl;
+    using Teuchos::MatrixMarket::details::SetScientific;
 
     /* MVT Contract:
 
@@ -84,7 +87,7 @@ namespace Anasazi {
            destruction of the view, changes in the view are not reflected in the
            source multivector.
 
-         GetVecLength 
+         GetGlobalLength 
              MV: will always be positive (MV cannot have zero vectors)
 
          GetNumberVecs 
@@ -147,6 +150,7 @@ namespace Anasazi {
     const ScalarType one      = SCT::one();
     const ScalarType zero     = SCT::zero();
     const MagType    zero_mag = Teuchos::ScalarTraits<MagType>::zero();
+    const MagType    tol = SCT::eps()*100;
 
     // Don't change these two without checking the initialization of ind below
     const int numvecs   = 10;
@@ -180,18 +184,16 @@ namespace Anasazi {
       return false;
     }
 
-
-    /*********** GetVecLength() ******************************************
+    /*********** GetGlobalLength() ***************************************
        Verify:
        1) This number should be strictly positive
     *********************************************************************/
-    if ( MVT::GetVecLength(*A) <= 0 ) {
+    if ( MVT::GetGlobalLength(*A) <= 0 ) {
       om->stream(Warnings)
-        << "*** ERROR *** MultiVectorTraits::GetVecLength()" << endl
+        << "*** ERROR *** MultiVectorTraitsExt::GetGlobalLength()" << endl
         << "Returned <= 0." << endl;
       return false;
     }
-
 
     /*********** Clone() and MvNorm() ************************************
        Verify:
@@ -201,24 +203,26 @@ namespace Anasazi {
     *********************************************************************/
     {
       Teuchos::RCP<MV> B = MVT::Clone(*A,numvecs);
-      std::vector<MagType> norms(numvecs);
+      std::vector<MagType> norms(2*numvecs);
+      bool ResizeWarning = false;
       if ( MVT::GetNumberVecs(*B) != numvecs ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::Clone()." << endl
           << "Did not allocate requested number of vectors." << endl;
         return false;
       }
-      if ( MVT::GetVecLength(*B) != MVT::GetVecLength(*A) ) {
+      if ( MVT::GetGlobalLength(*B) != MVT::GetGlobalLength(*A) ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::Clone()." << endl
           << "Did not allocate requested number of vectors." << endl;
         return false;
       }
       MVT::MvNorm(*B, norms);
-      if ( (int)norms.size() != numvecs ) {
+      if ( (int)norms.size() != 2*numvecs && (ResizeWarning == false) ) {
         om->stream(Warnings)
-          << "*** ERROR *** MultiVecTraits::MvNorm()." << endl
+          << "*** WARNING *** MultiVecTraits::MvNorm()." << endl
           << "Method resized the output vector." << endl;
+        ResizeWarning = true;
       }
       for (int i=0; i<numvecs; i++) {
         if ( norms[i] < zero_mag ) {
@@ -353,12 +357,12 @@ namespace Anasazi {
             << "Vector had negative norm." << endl;
           return false;
         }
-        else if ( norms[i] != SCT::squareroot(MVT::GetVecLength(*B)) && !BadNormWarning ) {
+        else if ( norms[i] != SCT::squareroot(MVT::GetGlobalLength(*B)) && !BadNormWarning ) {
           om->stream(Warnings)
             << endl
             << "Warning testing MultiVecTraits::MvInit()." << endl
             << "Ones vector should have norm sqrt(dim)." << endl
-            << "norms[i]: " << norms[i] << "\tdim: " << MVT::GetVecLength(*B) << endl << endl;
+            << "norms[i]: " << norms[i] << "\tdim: " << MVT::GetGlobalLength(*B) << endl << endl;
           BadNormWarning = true;
         }
       }
@@ -414,28 +418,33 @@ namespace Anasazi {
           << "Wrong number of vectors." << endl;
         return false;
       }
-      if ( MVT::GetVecLength(*C) != MVT::GetVecLength(*B) ) {
+      if ( MVT::GetGlobalLength(*C) != MVT::GetGlobalLength(*B) ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
           << "Vector lengths don't match." << endl;
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        if ( norms2[i] != norms[ind[i]] ) {
+        if ( SCT::magnitude( norms2[i] - norms[ind[i]] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
             << "Copied vectors do not agree:" 
-            << norms2[i] << " != " << norms[ind[i]] << endl;
+            << norms2[i] << " != " << norms[ind[i]] << endl
+            << "Difference " << SCT::magnitude (norms2[i] - norms[ind[i]])
+            << " exceeds the tolerance 100*eps = " << tol << endl;
+
           return false;
         }
       }
       MVT::MvInit(*B,zero);
       MVT::MvNorm(*C, norms2); 
       for (int i=0; i<numvecs_2; i++) {
-        if ( norms2[i] != norms2[i] ) {
+        if ( SCT::magnitude( norms2[i] - norms2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
-            << "Copied vectors were not independent." << endl;
+            << "Copied vectors were not independent." << endl
+            << "Difference " << SCT::magnitude (norms2[i] - norms[i])
+            << " exceeds the tolerance 100*eps = " << tol << endl;
           return false;
         }
       }
@@ -463,20 +472,24 @@ namespace Anasazi {
         return false;
       }
       for (int i=0; i<numvecs; i++) {
-        if ( norms2[i] != norms[i] ) {
+        if ( SCT::magnitude( norms2[i] - norms[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy()." << endl
-            << "Copied vectors do not agree." << endl;
+            << "Copied vectors do not agree." << endl
+            << "Difference " << SCT::magnitude (norms2[i] - norms[i])
+            << " exceeds the tolerance 100*eps = " << tol << endl;
           return false;
         }
       }
       MVT::MvInit(*B,zero);
       MVT::MvNorm(*C, norms); 
       for (int i=0; i<numvecs; i++) {
-        if ( norms2[i] != norms[i] ) {
+        if ( SCT::magnitude( norms2[i] - norms[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy()." << endl
-            << "Copied vectors were not independent." << endl;
+            << "Copied vectors were not independent." << endl
+            << "Difference " << SCT::magnitude (norms2[i] - norms[i])
+            << " exceeds the tolerance 100*eps = " << tol << endl;
           return false;
         }
       }
@@ -505,7 +518,7 @@ namespace Anasazi {
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        if ( norms2[i] != norms[ind[i]] ) {
+        if ( SCT::magnitude( norms2[i] - norms[ind[i]] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneView(ind)." << endl
             << "Viewed vectors do not agree." << endl;
@@ -542,7 +555,7 @@ namespace Anasazi {
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        if ( normsC[i] != normsB[ind[i]] ) {
+        if ( SCT::magnitude( normsC[i] - normsB[ind[i]] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** const MultiVecTraits::CloneView(ind)." << endl
             << "Viewed vectors do not agree." << endl;
@@ -586,7 +599,7 @@ namespace Anasazi {
 
       // check that C was not changed by SetBlock
       for (int i=0; i<numvecs_2; i++) {
-        if ( normsC1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
             << "Operation modified source vectors." << endl;
@@ -598,16 +611,18 @@ namespace Anasazi {
       for (int i=0; i<numvecs; i++) {
         if (i % 2 == 0) {
           // should be a vector from C
-          if ( normsB2[i] != normsC1[i/2] ) {
+          if ( SCT::magnitude(normsB2[i]-normsC1[i/2]) > tol ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-              << "Copied vectors do not agree." << endl;
+              << "Copied vectors do not agree." << endl
+              << "Difference " << SCT::magnitude (normsB2[i] - normsC1[i/2])
+              << " exceeds the tolerance 100*eps = " << tol << endl;
             return false;
           }
         }
         else {
           // should be an original vector
-          if ( normsB1[i] != normsB2[i] ) {
+          if ( SCT::magnitude(normsB1[i]-normsB2[i]) > tol ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
               << "Incorrect vectors were modified." << endl;
@@ -619,7 +634,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB1);
       // verify that we copied and didn't reference
       for (int i=0; i<numvecs; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude(normsB1[i]-normsB2[i]) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
             << "Copied vectors were not independent." << endl;
@@ -768,8 +783,9 @@ namespace Anasazi {
     *********************************************************************/
     {
       const int p = 7;
+      const int q = 9;
       Teuchos::RCP<MV> B, C;
-      std::vector<ScalarType> iprods(p);
+      std::vector<ScalarType> iprods(q);
       std::vector<MagType> normsB(p), normsC(p);
 
       B = MVT::Clone(*A,p);
@@ -780,7 +796,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB);
       MVT::MvNorm(*C,normsC);
       MVT::MvDot( *B, *C, iprods );
-      if ( (int)iprods.size() != p ) {
+      if ( (int)iprods.size() != q ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::MvDot." << endl
           << "Routine resized results vector." << endl;
@@ -851,19 +867,19 @@ namespace Anasazi {
       MVT::MvNorm(*C,normsC2);
       MVT::MvNorm(*D,normsD1);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsC1[i] != normsC2[i] ) {
+        else if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsC1[i] != normsD1[i] ) {
+        else if ( SCT::magnitude(normsC1[i]-normsD1[i]) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Assignment did not work." << endl;
@@ -877,19 +893,19 @@ namespace Anasazi {
       MVT::MvNorm(*C,normsC2);
       MVT::MvNorm(*D,normsD1);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsC1[i] != normsC2[i] ) {
+        else if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsB1[i] != normsD1[i] ) {
+        else if ( SCT::magnitude( normsB1[i] - normsD1[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Assignment did not work." << endl;
@@ -906,13 +922,13 @@ namespace Anasazi {
       MVT::MvNorm(*D,normsD1);
       // check that input args are not modified
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsC1[i] != normsC2[i] ) {
+        else if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
@@ -928,19 +944,19 @@ namespace Anasazi {
       // check that input args are not modified and that D is the same
       // as the above test
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsC1[i] != normsC2[i] ) {
+        else if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if ( normsD1[i] != normsD2[i] ) {
+        else if ( SCT::magnitude( normsD1[i] - normsD2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Results varies depending on initial state of dest vectors." << endl;
@@ -987,7 +1003,7 @@ namespace Anasazi {
       MVT::MvAddMv(zero,*B,one,*C,*D);
       MVT::MvNorm(*D,normsD);
       for (int i=0; i<p; i++) {
-        if ( normsB[i] != normsD[i] ) {
+        if ( SCT::magnitude( normsB[i] - normsD[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv() #2" << endl
             << "Assignment did not work." << endl;
@@ -999,7 +1015,7 @@ namespace Anasazi {
       MVT::MvAddMv(one,*B,zero,*C,*D);
       MVT::MvNorm(*D,normsD);
       for (int i=0; i<p; i++) {
-        if ( normsB[i] != normsD[i] ) {
+        if ( SCT::magnitude( normsB[i] - normsD[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv() #2" << endl
             << "Assignment did not work." << endl;
@@ -1039,7 +1055,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1047,7 +1063,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<q; i++) {
-        if ( normsC1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 1 failed." << endl;
@@ -1065,7 +1081,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1099,7 +1115,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1107,7 +1123,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<q; i++) {
-        if ( normsB1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 3 failed: "
@@ -1129,7 +1145,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1137,7 +1153,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<q; i++) {
-        if ( normsC1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 4 failed." << endl;
@@ -1175,7 +1191,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1183,7 +1199,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<q; i++) {
-        if ( normsC1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 5 failed." << endl;
@@ -1201,7 +1217,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1234,7 +1250,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1242,7 +1258,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 7 failed." << endl;
@@ -1268,7 +1284,7 @@ namespace Anasazi {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if ( normsB1[i] != normsB2[i] ) {
+        if ( SCT::magnitude( normsB1[i] - normsB2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1276,7 +1292,7 @@ namespace Anasazi {
         }
       }
       for (int i=0; i<q; i++) {
-        if ( normsC1[i] != normsC2[i] ) {
+        if ( SCT::magnitude( normsC1[i] - normsC2[i] ) > tol ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 8 failed." << endl;
@@ -1316,6 +1332,8 @@ namespace Anasazi {
     typedef OperatorTraits<ScalarType, MV, OP> OPT;
     typedef typename SCT::magnitudeType        MagType;
 
+    const MagType    tol = SCT::eps()*100;
+
     const int numvecs = 10;
 
     Teuchos::RCP<MV> B = MVT::Clone(*A,numvecs), 
@@ -1323,7 +1341,6 @@ namespace Anasazi {
 
     std::vector<MagType> normsB1(numvecs), normsB2(numvecs),
                          normsC1(numvecs), normsC2(numvecs);
-    bool NonDeterministicWarning;
 
     /*********** Apply() *************************************************
         Verify:
@@ -1339,7 +1356,7 @@ namespace Anasazi {
     MVT::MvNorm(*B,normsB2);
     MVT::MvNorm(*C,normsC2);
     for (int i=0; i<numvecs; i++) {
-      if (normsB2[i] != normsB1[i]) {
+      if ( SCT::magnitude( normsB2[i] - normsB1[i] ) > tol ) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [1]" << endl
           << "Apply() modified the input vectors." << endl;
@@ -1361,7 +1378,7 @@ namespace Anasazi {
     MVT::MvNorm(*C,normsC2);
     bool ZeroWarning = false;
     for (int i=0; i<numvecs; i++) {
-      if (normsB2[i] != normsB1[i]) {
+      if ( SCT::magnitude( normsB2[i] - normsB1[i] ) > tol ) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [2]" << endl
           << "Apply() modified the input vectors." << endl;
@@ -1383,7 +1400,7 @@ namespace Anasazi {
     MVT::MvNorm(*B,normsB2);
     MVT::MvNorm(*C,normsC1);
     for (int i=0; i<numvecs; i++) {
-      if (normsB2[i] != normsB1[i]) {
+      if ( SCT::magnitude( normsB2[i] - normsB1[i] ) > tol ) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [3]" << endl
           << "Apply() modified the input vectors." << endl;
@@ -1400,20 +1417,18 @@ namespace Anasazi {
     OPT::Apply(*M,*B,*C);
     MVT::MvNorm(*B,normsB2);
     MVT::MvNorm(*C,normsC2);
-    NonDeterministicWarning = false;
     for (int i=0; i<numvecs; i++) {
-      if (normsB2[i] != normsB1[i]) {
+      if ( SCT::magnitude( normsB2[i] - normsB1[i] ) > tol ) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [4]" << endl
           << "Apply() modified the input vectors." << endl;
         return false;
       }
-      if (normsC1[i] != normsC2[i] && !NonDeterministicWarning) {
+      if ( SCT::magnitude( normsC1[i] - normsC2[i]) > tol ) {
         om->stream(Warnings)
           << endl
           << "*** WARNING *** OperatorTraits::Apply() [4]" << endl
           << "Apply() returned two different results." << endl << endl;
-        NonDeterministicWarning = true;
       }
     }
 

@@ -315,7 +315,7 @@ public:
   //@{
 
   // 2010/08/22: rabartl: To properly handle the new SolveCriteria struct with
-  // redution functionals (bug 4915) the function solveSupports() must be
+  // reduction functionals (bug 4915) the function solveSupports() must be
   // refactored.  Here is how this refactoring can be done incrementally and
   // safely:
   //
@@ -357,17 +357,17 @@ public:
   //
   //   (-) Run all tests.
   //
-  //   (-) Remove all of the eixsting solveSupportsSolveMeasureTypeImpl()
+  //   (-) Remove all of the existing solveSupportsSolveMeasureTypeImpl()
   //   overrides.
   //
   //   (-) Run all tests.
   //
-  //   (-) Clean up all deprecated working about calling
+  //   (-) Clean up all deprecated warnings about calling
   //   solveSupportsSolveMeasureType() and instead have them call
   //   solveSupports(...) with a SolveCritera object.
   //
-  // (*) Enter an item about this breaking backward compatiblilty for existing
-  // subclasses of LOWSB.
+  // (*) Enter a release notes item about this breaking backward compatiblilty
+  // for existing subclasses of LOWSB.
   //
   // This refactoring will be done by and by has bug 4915 is implemented.
   // 
@@ -457,51 +457,6 @@ public:
 
   //@}
 
-  /** \name Deprecated. */
-  //@{
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  bool solveSupportsConj(EConj conj) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  bool solveTransposeSupportsConj(EConj conj) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  void solve(
-    const EConj conj,
-    const MultiVectorBase<Scalar> &B,
-    MultiVectorBase<Scalar> *X,
-    const int numBlocks = 0,
-    const BlockSolveCriteria<Scalar> blockSolveCriteria[] = NULL,
-    SolveStatus<Scalar> blockSolveStatus[] = NULL
-    ) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  bool solveSupportsSolveMeasureType(EConj conj,
-    const SolveMeasureType& solveMeasureType) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  bool solveTransposeSupportsSolveMeasureType(EConj conj,
-    const SolveMeasureType& solveMeasureType) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED
-  void solveTranspose(
-    const EConj conj,
-    const MultiVectorBase<Scalar> &B,
-    MultiVectorBase<Scalar> *X,
-    const int numBlocks = 0,
-    const BlockSolveCriteria<Scalar> blockSolveCriteria[] = NULL,
-    SolveStatus<Scalar> blockSolveStatus[] = NULL
-    ) const;
-
-  //@}
-
 protected:
 
   /** \name Protected virtual functions to be overridden by subclasses. */
@@ -534,15 +489,6 @@ protected:
   //@}
 
 private:
-
-  // Deprecated.  NOTE: I could not mark with THYRA_DEPRECATED because newer
-  // versions of g++ give warnings when deprecated code calls other
-  // depreciated code.
-  static Ptr<const SolveCriteria<Scalar> >
-  convertBlockSolveCriteriaToSolveCritiera(
-    const int numBlocks,
-    const BlockSolveCriteria<Scalar> blockSolveCriteria[]
-    );
 
 private:
   
@@ -581,6 +527,23 @@ bool solveSupports(
 }
 
 
+/** \brief Call <tt>solveSupportsSolveMeasureType()</tt> as a non-member
+ * function.
+ *
+ * \relates LinearOpWithSolveBase
+ */
+template<class Scalar>
+inline
+bool solveSupportsSolveMeasureType(
+  const LinearOpWithSolveBase<Scalar> &A,
+  const EOpTransp transp,
+  const SolveMeasureType &solveMeasureType
+  )
+{
+  return A.solveSupportsSolveMeasureType(transp, solveMeasureType);
+}
+
+
 /** \brief Call <tt>solve()</tt> as a non-member function
  *
  * \relates LinearOpWithSolveBase
@@ -598,189 +561,6 @@ SolveStatus<Scalar> solve(
   return A.solve(A_trans, B, X, solveCriteria);
 }
 
-
-// Deprecated
-
-
-/** \brief Call <tt>solveSupportsSolveMeasureType()</tt> as a non-member
- * function.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-inline
-bool solveSupportsSolveMeasureType(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EOpTransp transp,
-  const SolveMeasureType &solveMeasureType
-  )
-{
-  return A.solveSupportsSolveMeasureType(transp, solveMeasureType);
-}
-
-
-/** \brief Deprecated.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-void solve(
-  const LinearOpWithSolveBase<Scalar> &M,
-  const EOpTransp M_trans,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const int numBlocks,
-  const BlockSolveCriteria<Scalar> blockSolveCriteria[],
-  SolveStatus<Scalar> blockSolveStatus[]
-  )
-{
-  if (real_trans(M_trans) == NOTRANS) {
-    M.solve(transToConj(M_trans),
-      B,X,numBlocks,blockSolveCriteria,blockSolveStatus);
-  }
-  else {
-    M.solveTranspose(transToConj(M_trans),
-      B,X,numBlocks,blockSolveCriteria,blockSolveStatus);
-  }
-}
-
-
-/** \brief Deprecated.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-SolveStatus<Scalar> solve(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EOpTransp A_trans,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const SolveCriteria<Scalar> *solveCriteria = NULL
-  )
-{
-  using Teuchos::ptr;
-  return A.solve(A_trans, B, ptr(X), ptr(solveCriteria));
-}
-
-
-/** \brief Solve a set of forward linear systems with a single set of
- * tolerances.
- *
- * See the implementation of this function for details.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-SolveStatus<Scalar>
-solve(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const SolveCriteria<Scalar> *solveCriteria = NULL
-  )
-{
-  typedef SolveCriteria<Scalar> SC;
-  typedef BlockSolveCriteria<Scalar> BSC;
-  typedef SolveStatus<Scalar> BSS;
-  SC defaultSolveCriteria;
-  BSC blockSolveCriteria[1];
-  BSS blockSolveStatus[1];
-  blockSolveCriteria[0] = BSC(
-    solveCriteria ? *solveCriteria : defaultSolveCriteria,
-    B.domain()->dim() );
-  A.solve(
-    conj,B,X,1,
-    blockSolveCriteria,
-    blockSolveStatus
-    );
-  return blockSolveStatus[0];
-}
-
-
-/** \brief Solve a set of transpose linear systems with a single set of
- * tolerances.
- *
- * See the implementation of this function for details.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-SolveStatus<Scalar>
-solveTranspose(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const SolveCriteria<Scalar> *solveCriteria = NULL
-  )
-{
-  typedef SolveCriteria<Scalar> SC;
-  typedef BlockSolveCriteria<Scalar> BSC;
-  typedef SolveStatus<Scalar> BSS;
-  SC defaultSolveCriteria;
-  BSC blockSolveCriteria[1];
-  BSS blockSolveStatus[1];
-  blockSolveCriteria[0] = BSC(
-    solveCriteria ? *solveCriteria : defaultSolveCriteria,
-    B.domain()->dim());
-  A.solveTranspose(
-    conj,B,X,1,
-    blockSolveCriteria,
-    blockSolveStatus
-    );
-  return blockSolveStatus[0];
-}
-
-
-/** \brief Solve a set of forward linear systems with two or more sets of
- * tolerances.
- *
- * See the implementation of this function for details.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-void solve(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const int numBlocks,
-  const BlockSolveCriteria<Scalar> blockSolveCriteria[] = NULL,
-  SolveStatus<Scalar> blockSolveStatus[] = NULL
-  )
-{
-  A.solve(conj,B,X,numBlocks,blockSolveCriteria,blockSolveStatus);
-}
-
-
-/** \brief Solve a set of transpose linear systems with two or more sets of
- * tolerances.
- *
- * See the implementation of this function for details.
- *
- * \ingroup Thyra_deprecated_grp
- */
-template<class Scalar>
-THYRA_DEPRECATED
-void solveTranspose(
-  const LinearOpWithSolveBase<Scalar> &A,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &B,
-  MultiVectorBase<Scalar> *X,
-  const int numBlocks,
-  const BlockSolveCriteria<Scalar> blockSolveCriteria[] = NULL,
-  SolveStatus<Scalar> blockSolveStatus[] = NULL
-  )
-{
-  A.solveTranspose(conj,B,X,numBlocks,blockSolveCriteria,blockSolveStatus);
-}
 
 
 } // namespace Thyra

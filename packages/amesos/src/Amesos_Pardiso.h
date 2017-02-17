@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -196,10 +196,13 @@ private:
   void* pt_[64];
 
   int iparm_[64];
+  double dparm_[64];
   int maxfct_; // Maximal number of factors with idential nonzero pattern (always 1)
   int mnum_; //! Actual matrix for solution phase (always 1)
   int msglvl_; //! Output level
   int nrhs_; // Number of RHS
+
+  Teuchos::ParameterList param_;
 
 };  // class Amesos_Pardiso  
 #endif

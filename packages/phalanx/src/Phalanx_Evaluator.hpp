@@ -48,10 +48,20 @@
 #include <vector>
 
 #include "Teuchos_RCP.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_FieldTag.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
+
+#ifdef PHX_ENABLE_KOKKOS_AMT
+// amt only works with pthread and qthreads
+#include "Kokkos_TaskPolicy.hpp"
+#include "Threads/Kokkos_Threads_TaskPolicy.hpp"
+#include "Kokkos_Threads.hpp"
+#endif
 
 namespace PHX {
 
+  class any;
   template<typename Traits> class FieldManager;
 
   /*! Pure virtual base class that provides field evaluation
@@ -61,6 +71,8 @@ namespace PHX {
   class Evaluator {
     
   public:
+
+    typedef typename PHX::Device execution_space;
     
     //! Ctor
     Evaluator() {};
@@ -75,7 +87,7 @@ namespace PHX {
 	Once the field manager has allocated all data arrays, this
 	method passes the field manager to the providers to allow each
 	provider to grab and store pointers to the field data arrays.
-	Grabbing the data arrays from the varible manager during an
+	Grabbing the data arrays from the variable manager during an
 	actual call to evaluateFields call is too slow due to the map
 	lookup and FieldTag comparison (which uses a string compare).
 	So lookups on field data are only allowed during this setup
@@ -89,6 +101,13 @@ namespace PHX {
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
     evaluatedFields() const = 0;
 
+    /*! \brief Returns vector of fields that contribute partially to
+        the evaluation of a field. This allows users to spread the
+        evaluation of a field over multiple evaluators.
+     */
+    virtual const std::vector< Teuchos::RCP<FieldTag> >& 
+    contributedFields() const = 0;
+
     //! Returns vector of fields needed to compute the evaluated fields.
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
     dependentFields() const = 0;
@@ -99,7 +118,26 @@ namespace PHX {
 	@param d - user defined data object defined by the EvalData typedef in the traits class.
     */ 
     virtual void evaluateFields(typename Traits::EvalData d) = 0;
-    
+
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    //! Create and return a task for aynchronous multi-tasking.
+    /*!
+        Input:
+	@param policy Kokkos task policy object used to create the task/future.
+	@param num_adjacencies The dependence capacity in Kokkos. The maximum number of node adjacencies (task dependencies) that this task directly depends on. 
+	@param work_size The number of parallel work units.
+	@param d User defined data.
+    */ 
+    virtual Kokkos::Future<void,PHX::Device::execution_space>
+    createTask(Kokkos::TaskPolicy<PHX::Device::execution_space>& policy,
+	       const int& work_size,
+               const std::vector<Kokkos::Future<void,PHX::Device::execution_space>>& dependent_futures,
+	       typename Traits::EvalData d) = 0;
+
+    //! Returns the size of the kokkos task for AMT.
+    virtual unsigned taskSize() const = 0;
+#endif
+
     /*! \brief This routine is called before each residual/Jacobian fill.
 
         This routine is called ONCE on the provider before the fill
@@ -122,6 +160,18 @@ namespace PHX {
     //! Returns the name/identifier of this provider.
     virtual const std::string& getName() const = 0;
 
+    /*! \brief Binds memory to a field. WARNING: this is a POWER-USER function. Only use this if you understand the memory binding sequence (see detailed description for more information).
+
+      WARNING: This is a power user function. It sets/swaps the field
+      memory for the suppied field (either an externally defined user
+      managed field or a internally managed from the
+      FieldManager). All evaluators that evaluate or depend on this
+      field should be bound to the same memory. Otherwise you will get
+      undefined results. To use this consistently, do not call this
+      directly. Instead, bind all memory through calls to the
+      PHX::FieldManager class.
+     */
+    virtual void bindField(const PHX::FieldTag& ft, const PHX::any& f) = 0;
   };
 
 } 

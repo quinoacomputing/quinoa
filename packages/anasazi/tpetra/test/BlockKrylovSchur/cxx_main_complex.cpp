@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -50,41 +50,45 @@
 #include <Tpetra_CrsMatrix.hpp>
 
 // I/O for Harwell-Boeing files
-#include <iohb.h>
+#include <Trilinos_Util_iohb.h>
 
-using namespace Teuchos;
-using Tpetra::Platform;
-using Tpetra::Operator;
 using Tpetra::CrsMatrix;
-using Tpetra::MultiVector;
 using Tpetra::Map;
 using std::vector;
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
+#ifndef HAVE_TPETRA_COMPLEX_DOUBLE
+#  error "Anasazi: This test requires Scalar = std::complex<double> to be enabled in Tpetra."
+#else
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::tuple;
   using std::cout;
   using std::endl;
 
   typedef std::complex<double>                ST;
-  typedef ScalarTraits<ST>                   SCT;
+  typedef Teuchos::ScalarTraits<ST>          SCT;
   typedef SCT::magnitudeType                  MT;
-  typedef MultiVector<ST,int>                 MV;
-  typedef Operator<ST,int>                    OP;
+  typedef Tpetra::MultiVector<ST>             MV;
+  typedef MV::global_ordinal_type             GO;
+  typedef Tpetra::Operator<ST>                OP;
   typedef Anasazi::MultiVecTraits<ST,MV>     MVT;
   typedef Anasazi::OperatorTraits<ST,MV,OP>  OPT;
-  ST ONE  = SCT::one();
 
-  GlobalMPISession mpisess(&argc,&argv,&std::cout);
+  Teuchos::GlobalMPISession mpisess (&argc, &argv, &std::cout);
+
+  bool success = false;
+
+  const ST ONE = SCT::one ();
 
   int info = 0;
-  int MyPID = 0;
 
-  RCP<const Platform<int> > platform = Tpetra::DefaultPlatform<int>::getPlatform();
-  RCP<const Comm<int> > comm = platform->getComm();
+  RCP<const Teuchos::Comm<int> > comm =
+    Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
 
-  MyPID = rank(*comm);
+  const int MyPID = comm->getRank ();
 
-  bool testFailed;
   bool verbose = false;
   bool debug = false;
   bool insitu = false;
@@ -95,7 +99,7 @@ int main(int argc, char *argv[])
   int blockSize = 4;
   MT tol = 1.0e-6;
 
-  CommandLineProcessor cmdp(false,true);
+  Teuchos::CommandLineProcessor cmdp(false,true);
   cmdp.setOption("verbose","quiet",&verbose,"Print messages and results.");
   cmdp.setOption("debug","nodebug",&debug,"Print debugging information.");
   cmdp.setOption("insitu","exsitu",&insitu,"Perform in situ restarting.");
@@ -105,7 +109,7 @@ int main(int argc, char *argv[])
   cmdp.setOption("nev",&nev,"Number of eigenvalues to compute.");
   cmdp.setOption("blockSize",&blockSize,"Block size for the algorithm.");
   cmdp.setOption("tol",&tol,"Tolerance for convergence.");
-  if (cmdp.parse(argc,argv) != CommandLineProcessor::PARSE_SUCCESSFUL) {
+  if (cmdp.parse(argc,argv) != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
     return -1;
   }
   if (debug) verbose = true;
@@ -156,8 +160,8 @@ int main(int argc, char *argv[])
     return -1;
   }
   // create map
-  Map<int> map(dim,0,comm);
-  RCP<CrsMatrix<ST,int> > K = rcp(new CrsMatrix<ST,int>(map,rnnzmax));
+  RCP<const Map<> > map = rcp (new Map<> (dim, 0, comm));
+  RCP<CrsMatrix<ST> > K = rcp (new CrsMatrix<ST> (map, rnnzmax));
   if (MyPID == 0) {
     // Convert interleaved doubles to complex values
     // HB format is compressed column. CrsMatrix is compressed row.
@@ -165,7 +169,7 @@ int main(int argc, char *argv[])
     const int *rptr = rowind;
     for (int c=0; c<dim; ++c) {
       for (int colnnz=0; colnnz < colptr[c+1]-colptr[c]; ++colnnz) {
-        K->insertGlobalValues(*rptr++ - 1,tuple(c),tuple(ST(dptr[0],dptr[1])));
+        K->insertGlobalValues (static_cast<GO> (*rptr++ - 1), tuple<GO> (c), tuple (ST (dptr[0], dptr[1])));
         dptr += 2;
       }
     }
@@ -181,7 +185,7 @@ int main(int argc, char *argv[])
 
   // Create initial vectors
   RCP<MV> ivec = rcp( new MV(map,blockSize) );
-  ivec->random();
+  ivec->randomize ();
 
   // Create eigenproblem
   RCP<Anasazi::BasicEigenproblem<ST,MV,OP> > problem =
@@ -220,7 +224,7 @@ int main(int argc, char *argv[])
   int maxRestarts = 10;
   //
   // Create parameter list to pass into the solver manager
-  ParameterList MyPL;
+  Teuchos::ParameterList MyPL;
   MyPL.set( "Verbosity", verbosity );
   MyPL.set( "Which", which );
   MyPL.set( "Block Size", blockSize );
@@ -234,10 +238,7 @@ int main(int argc, char *argv[])
 
   // Solve the problem to the specified tolerances or length
   Anasazi::ReturnType returnCode = MySolverMgr.solve();
-  testFailed = false;
-  if (returnCode != Anasazi::Converged) {
-    testFailed = true;
-  }
+  success = (returnCode == Anasazi::Converged);
 
   // Get the eigenvalues and eigenvectors from the eigenproblem
   Anasazi::Eigensolution<ST,MV> sol = problem->getSolution();
@@ -251,7 +252,7 @@ int main(int argc, char *argv[])
 
     // Compute the direct residual
     std::vector<MT> normV( numev );
-    SerialDenseMatrix<int,ST> T(numev,numev);
+    Teuchos::SerialDenseMatrix<int,ST> T (numev, numev);
     for (int i=0; i<numev; i++) {
       T(i,i) = ST(sol.Evals[i].realpart,sol.Evals[i].imagpart);
     }
@@ -270,27 +271,20 @@ int main(int argc, char *argv[])
         normV[i] = SCT::magnitude(normV[i]/T(i,i));
       }
       os << std::setw(20) << T(i,i) << std::setw(20) << normV[i] << endl;
-      if ( normV[i] > tol ) {
-        testFailed = true;
-      }
+      success = (normV[i] < tol);
     }
     if (MyPID==0) {
       cout << endl << os.str() << endl;
     }
   }
 
-  if (testFailed) {
-    if (MyPID==0) {
-      cout << "End Result: TEST FAILED" << endl;
-    }
-    return -1;
-  }
-  //
-  // Default return value
-  //
   if (MyPID==0) {
-    cout << "End Result: TEST PASSED" << endl;
+    if (success)
+      cout << "End Result: TEST PASSED" << endl;
+    else
+      cout << "End Result: TEST FAILED" << endl;
   }
-  return 0;
 
+  return ( success ? EXIT_SUCCESS : EXIT_FAILURE );
+#endif // HAVE_TPETRA_COMPLEX_DOUBLE
 }

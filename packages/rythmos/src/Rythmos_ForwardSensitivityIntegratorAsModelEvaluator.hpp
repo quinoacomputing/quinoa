@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -834,12 +834,12 @@ void ForwardSensitivityIntegratorAsModelEvaluator<Scalar>::evalModelImpl(
     }
       
     if (print_norms) {
-      *out << "\n||x_bar||inf = " << norms_inf(*x_bar) << endl;
-      *out << "\n||x_bar_dot||inf = " << norms_inf(*x_bar_dot) << endl;
+      *out << "\n||x_bar||inf = " << norms_inf(*x_bar) << std::endl;
+      *out << "\n||x_bar_dot||inf = " << norms_inf(*x_bar_dot) << std::endl;
     }
     if (print_x) {
-      *out << "\nx_bar = " << *x_bar << endl;
-      *out << "\nx_bar_dot = " << *x_bar_dot << endl;
+      *out << "\nx_bar = " << *x_bar << std::endl;
+      *out << "\nx_bar_dot = " << *x_bar_dot << std::endl;
     }
       
     // Extra underlying state and sensitivities

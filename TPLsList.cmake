@@ -108,26 +108,33 @@
 #
 
 SET( Trilinos_TPLS_FINDMODS_CLASSIFICATIONS
+  MKL             "cmake/TPLs/"    EX
   yaml-cpp        "cmake/TPLs/"    EX
   Peano           "cmake/TPLs/"    EX
-  CUDA            "cmake/TPLs/"    SS
+  CUDA            "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/"    SS
   CUSPARSE        "cmake/TPLs/"    SS
   Thrust          "cmake/TPLs/"    SS
   Cusp            "cmake/TPLs/"    SS
   TBB             "cmake/TPLs/"    EX
   Pthread         "cmake/TPLs/"    SS
   HWLOC           "cmake/TPLs/"    SS
-  BinUtils        "cmake/TPLs/"    SS
-  ARPREC          "cmake/TPLs/"    SS
-  QD              "cmake/TPLs/"    SS
-  MPI             "${${PROJECT_NAME}_TRIBITS_DIR}/tpls/"    PS
-  BLAS            "cmake/TPLs/"    PS
-  LAPACK          "cmake/TPLs/"    PS
-  Boost           "cmake/TPLs/"    SS
+  QTHREAD         "cmake/TPLs/"    SS
+  BinUtils        "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"    SS
+  ARPREC          "packages/teuchos/cmake/tpls/"    SS
+  QD              "packages/teuchos/cmake/tpls/"    SS
+  MPI             "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/" PS
+  BLAS            "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"   PS
+  LAPACK          "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"   PS
+  Boost           "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"   SS
   Scotch          "cmake/TPLs/"    SS
   OVIS            "cmake/TPLs/"    SS
+  gpcd            "cmake/TPLs/"    SS
+  CGNS            "cmake/TPLs/"    SS
   METIS           "cmake/TPLs/"    TS
   ParMETIS        "cmake/TPLs/"    SS
+  PuLP            "cmake/TPLs/"    EX
+  TopoManager     "cmake/TPLs/"    EX
+  LibTopoMap      "cmake/TPLs/"    SS
   PaToH           "cmake/TPLs/"    SS
   CppUnit         "cmake/TPLs/"    SS
   ADOLC           "cmake/TPLs/"    SS
@@ -137,43 +144,72 @@ SET( Trilinos_TPLS_FINDMODS_CLASSIFICATIONS
   ExodusII        "cmake/TPLs/"    SS
   Nemesis         "cmake/TPLs/"    SS
   XDMF            "cmake/TPLs/"    TS
+  Zlib            "cmake/TPLs/"    SS
+  HDF5            "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"    EX
   Netcdf          "cmake/TPLs/"    SS
   y12m            "cmake/TPLs/"    SS
   SuperLUDist     "cmake/TPLs/"    SS
-  SuperLUMT	  "cmake/TPLs/"	SS
+  SuperLUMT	  "cmake/TPLs/"	   SS
   SuperLU         "cmake/TPLs/"    SS
-  Zlib            "cmake/TPLs/"    SS
+  Cholmod	  "cmake/TPLs/"	   EX
   UMFPACK         "cmake/TPLs/"    SS
   MA28            "cmake/TPLs/"    TS
   AMD             "cmake/TPLs/"    TS
   CSparse         "cmake/TPLs/"    EX
-  PETSC           "cmake/TPLs/"    SS
-  HYPRE           "cmake/TPLs/"    EX
+  HYPRE           "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"   EX
+  PETSC           "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"   SS
   BLACS           "cmake/TPLs/"    SS
   SCALAPACK       "cmake/TPLs/"    SS
   MUMPS           "cmake/TPLs/"    SS
   PARDISO_MKL     "cmake/TPLs/"    EX
+  PARDISO         "cmake/TPLs/"    EX
   Oski            "cmake/TPLs/"    SS
   TAUCS           "cmake/TPLs/"    SS
   ForUQTK         "cmake/TPLs/"    EX
   Dakota          "cmake/TPLs/"    EX
   HIPS            "cmake/TPLs/"    EX
-  HDF5            "cmake/TPLs/"    EX
   MATLAB          "cmake/TPLs/"    EX
   CASK            "cmake/TPLs/"    EX
   SPARSKIT        "cmake/TPLs/"    SS
-  QT              "cmake/TPLs/"    SS
+  QT              "packages/teuchos/cmake/tpls/"    SS
   gtest           "cmake/TPLs/"    EX
   BoostLib        "cmake/TPLs/"    SS
+  BoostAlbLib     "cmake/TPLs/"    SS
   OpenNURBS       "cmake/TPLs/"    EX
   Portals         "cmake/TPLs/"    SS
   CrayPortals     "cmake/TPLs/"    SS
   Gemini          "cmake/TPLs/"    SS
   InfiniBand      "cmake/TPLs/"    SS
+  BGPDCMF         "cmake/TPLs/"    SS
+  BGQPAMI         "cmake/TPLs/"    SS
   Pablo           "cmake/TPLs/"    SS
+  HPCToolkit      "cmake/TPLs/"    SS
   Pnetcdf         "cmake/TPLs/"    SS
   Clp             "cmake/TPLs/"    EX
   GLPK            "cmake/TPLs/"    EX
+  qpOASES         "cmake/TPLs/"    EX
+  Matio           "cmake/TPLs/"    SS
+  PAPI            "cmake/TPLs/"    SS
+  MATLABLib       "cmake/TPLs/"    EX
+  Eigen           "packages/teuchos/cmake/tpls/"    EX
+  X11             "cmake/TPLs/"    SS
+  Lemon           "cmake/TPLs/"    EX
+  GLM             "cmake/TPLs/"    EX
+  quadmath        "cmake/TPLs/"    EX
+  CAMAL           "cmake/TPLs/"    SS
+  RTlib           "cmake/TPLs/"    SS
+  DLlib           "cmake/TPLs/"    SS
+  AmgX            "cmake/TPLs/"    EX
+  CGAL            "cmake/TPLs/"    EX
+  CGALCore        "cmake/TPLs/"    EX
+  VTune           "cmake/TPLs/"    SS
+  TASMANIAN       "cmake/TPLs/"    EX
+  ArrayFireCPU    "cmake/TPLs/"    EX
+  SimMesh         "SCOREC/cmake/TPLs/"    EX
+  SimModel        "SCOREC/cmake/TPLs/"    EX
+  SimParasolid    "SCOREC/cmake/TPLs/"    EX
+  SimAcis         "SCOREC/cmake/TPLs/"    EX
+  SimField        "SCOREC/cmake/TPLs/"    EX
   )
 
 # NOTES:

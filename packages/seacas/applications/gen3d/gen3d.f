@@ -92,7 +92,12 @@ C   --   "User's Manual for GEN3D"
       CHARACTER*(MXSTLN) NAMECO(6)
 C      --NAMECO - the coordinate names
 
+C... String containing name of common element topology in model
+C    or 'MULTIPLE_TOPOLOGIES' if not common topology.
+      character*(MXSTLN) comtop
+
       CHARACTER CDUM
+      logical l64bit
 
       INTEGER CMPSIZ, IOWS
 
@@ -122,16 +127,31 @@ C      --A - the dynamic numeric memory base array
       IF (NERR .GT. 0) GOTO 40
 
 C .. Get filename from command line.  If not specified, emit error message
+      l64bit = .false.
       NARG = argument_count()
+      iarg = 1
+
       if (narg .lt. 2) then
         CALL PRTERR ('FATAL', 'Filenames not specified.')
         CALL PRTERR ('FATAL',
-     *    'Syntax is: "gen3d 2dfilename 3dfilename"')
+     *    'Syntax is: "gen3d [-64] 2dfilename 3dfilename"')
         GOTO 60
-      else if (narg .gt. 2) then
+      else if (narg .eq. 3) then
+        CALL get_argument(iarg,FILIN, LNAM)
+        if (filin(:lnam) .eq. '-64') then
+          l64bit = .true.
+        else
+          SCRATCH = 'Unrecognized command option "'//FILIN(:LNAM)//'"'
+          CALL PRTERR ('FATAL', SCRATCH(:LENSTR(SCRATCH)))
+          CALL PRTERR ('FATAL',
+     *      'Syntax is: "gen3d [-64] 2dfilename 3dfilename"')
+          GOTO 60
+        end if
+        iarg = 2;
+      else if (narg .gt. 3) then
         CALL PRTERR ('FATAL', 'Too many arguments specified.')
         CALL PRTERR ('FATAL',
-     *    'Syntax is: "gen3d 2dfilename 3dfilename"')
+     *      'Syntax is: "gen3d [-64] 2dfilename 3dfilename"')
         GOTO 60
       end if
 
@@ -144,7 +164,7 @@ C   --Open the input database and read the initial variables
       IOWS   = 0
 
       FILIN = ' '
-      CALL get_argument(1,FILIN, LNAM)
+      CALL get_argument(iarg,FILIN, LNAM)
       NDBIN = exopen(filin(:lnam), EXREAD, CMPSIZ, IOWS, vers, IERR)
       IF (IERR .NE. 0) THEN
         SCRATCH = 'Database "'//FILIN(:LNAM)//'" does not exist.'
@@ -193,8 +213,6 @@ C   --Reserve memory for the 2D information
       CALL MCRSRV ('NAMELB', KNMLB, MXSTLN*NELBLK)
       CALL MCRSRV ('BLKTYP', KBKTYP, NELBLK)
 
-      CALL MDRSRV ('MAPEL', KMAPEL, NUMEL)
-
       CALL MDRSRV ('LINK', KLINK, 4 * NUMEL)
       CALL MDRSRV ('IDNPS',  KIDNS, NUMNPS)
       CALL MDRSRV ('NNNPS',  KNNNS, NUMNPS)
@@ -226,7 +244,6 @@ C   --Read 2D information from the database and close file
 
 C ... Don't warn about no map stored in file
       call exopts (0, ierr)
-      call exgmap (ndbin, ia(kmapel), ierr)
       call exopts (EXVRBS, ierr)
 
       CALL INISTR (NDIM, ' ', NAMECO)
@@ -236,6 +253,8 @@ C ... Don't warn about no map stored in file
      &  IA(KNATR), IA(KLINK), KATRIB, *60)
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
+
+      call CHKTOP(NELBLK, C(KNMLB), COMTOP)
 
       if (numnps .gt. 0) then
          call exgcns(ndbin, ia(kidns), ia(knnns), ia(kndnps),
@@ -376,7 +395,7 @@ C   --Get the side sets, and the front and back side sets
       END IF
 
       LESSEO = INTADD (NUMESS, IA(KNESS)) * NEREPL
-      LESSNO = INTADD (NUMESS, IA(KNNSS)) * NEREPL * 4
+      LESSNO = 4 * LESSEO
       CALL MDRSRV ('NEES3', KNES3, NUMESS)
       CALL MDRSRV ('NNES3', KNNS3, NUMESS)
       CALL MDRSRV ('IXEES3', KIXES3, NUMESS)
@@ -420,15 +439,24 @@ C   --Get the side sets, and the front and back side sets
 C   --Open the output database
 
       FILOUT = ' '
-      CALL get_argument(2,FILOUT, LFIL)
+      CALL get_argument(iarg+1,FILOUT, LFIL)
       CMPSIZ = 0
       IOWS   = iowdsz()
-      ndbout = excre(filout(:lfil), EXCLOB, CMPSIZ, IOWS, IERR)
+      MODE = EXCLOB
+      if (l64bit) then
+        MODE = MODE + EX_ALL_INT64_DB + EX_ALL_INT64_API
+      end if
+      ndbout = excre(filout(:lfil), MODE, CMPSIZ, IOWS, IERR)
       if (ierr .lt. 0) then
          call exopts (EXVRBS, ierr)
          call exerr('grepos', 'Error from excre', ierr)
          go to 50
       endif
+      if (l64bit) then
+C ... Compress the output
+        call exsetopt(ndbout, EX_OPT_COMPRESSION_LEVEL, 1, ierr)
+        call exsetopt(ndbout, EX_OPT_COMPRESSION_SHUFFLE, 1, ierr)
+      end if
 
 C   --Write the QA records
       CALL DBOQA (NDBOUT, QAINFO, NQAREC, c(kqarec),
@@ -488,25 +516,7 @@ C   --Write the coordinates
       CALL MDDEL ('XN3')
       CALL MDDEL ('YN3')
       CALL MDDEL ('ZN3')
-      CALL MDSTAT (NERR, MEM)
-      IF (NERR .GT. 0) GOTO 40
-
-C   --Write the element order map
-
-      CALL MDRSRV ('MAPEL3', KMAPE3, NUMEL3)
-      CALL MDSTAT (NERR, MEM)
-      IF (NERR .GT. 0) GOTO 40
-
-      CALL NEWMAP (IA(KMAPEL), IA(KMAPE3),
-     &   IA(KIXEL), IA(KINCEL), IA(KNREL), IA(KIECOL))
-      call expmap (ndbout, ia(kmape3), ierr)
-      if (ierr .lt. 0) then
-         call exerr('gen3d2', 'Error from expmap', exlmsg)
-         go to 40
-      endif
-
-      CALL MDDEL ('MAPEL')
-      CALL MDDEL ('MAPEL3')
+      CALL MDRSRV ('NUMELB3', KNELB3, NELBLK)
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
 
@@ -514,7 +524,7 @@ C   --Write the element order map
      &     IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
      &     IA(KLINK), A(KATRIB), A(KELATT), 
      &     IA(KIXEL), IA(KINCEL), IA(KNREL), IA(KIECOL), IA(KIXNP),
-     &     IA(KNRNP))
+     &     IA(KNRNP), IA(KNELB3))
 
       CALL MDDEL ('LINK')
       CALL MDDEL ('ATRIB')
@@ -537,9 +547,17 @@ C   --Write the node sets
 
 C   --Fixup sides sets if mirrored
       IF (XMIRR * YMIRR * ZMIRR .LT. 0.0) THEN
-         CALL MIRSS (IDESET(0,1), IDESET(0,2),
-     &        NESUR, IA(KISFRO), IA(KISBCK), IA(KLTSS3))
+        CALL MDRSRV ('IDXELB', KIDXELB, NELBLK+1)
+        CALL MDSTAT (NERR, MEM)
+        IF (NERR .GT. 0) GOTO 40
+        CALL MIRSS (IDESET(0,1), IDESET(0,2),
+     &    NESUR, IA(KISFRO), IA(KISBCK), IA(KLTES3), IA(KLTSS3),
+     *    COMTOP, C(KNMLB), IA(KNELB3), IA(KIDXELB))
+        CALL MDDEL ('IDXELB')
+        CALL MDSTAT (NERR, MEM)
+        IF (NERR .GT. 0) GOTO 40
       END IF
+      CALL MDDEL('NUMELB3')
 C     --Write the side sets
       
       CALL WRESS (A, IA, IDESET(0,1), IDESET(0,2),
@@ -614,3 +632,23 @@ C     --Write the side sets
       call exginf(ndb, info, ierr)
       return
       end
+
+C...Check whether model contains elements of a single topology.
+C   This is currently used in the sideset mirroring code
+      subroutine chktop(nelblk, blktyp, comtop)
+
+      include 'exodusII.inc'
+      integer nelblk
+      character*(MXSTLN) blktyp(nelblk)
+      character*(MXSTLN) comtop
+      
+      comtop = blktyp(1)(:3)
+      do 10 i=2, nelblk
+         if (blktyp(i)(:3) .ne. comtop(:3)) then
+            comtop = 'MULTIPLE_TOPOLOGIES'
+            return
+         end if
+ 10   continue
+      return
+      end
+

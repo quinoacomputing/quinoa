@@ -73,6 +73,11 @@ Superlu<Matrix,Vector>::Superlu(
   , rowind_()
   , colptr_()
 {
+  // ilu_set_default_options is called later in set parameter list if required.
+  // This is not the ideal way, but the other option to always call
+  // ilu_set_default_options here and assuming it won't have any side effect
+  // in the TPL is more dangerous. It is not a good idea to rely on external
+  // libraries' internal "features".
   SLU::set_default_options(&(data_.options));
   // Override some default options
   data_.options.PrintStat = SLU::NO;
@@ -94,6 +99,8 @@ Superlu<Matrix,Vector>::Superlu(
   data_.U.Store = NULL;
   data_.X.Store = NULL;
   data_.B.Store = NULL;
+
+  ILU_Flag_=false; // default: turn off ILU
 }
 
 
@@ -113,10 +120,64 @@ Superlu<Matrix,Vector>::~Superlu( )
   }
 
   // only root allocated these SuperMatrices.
-  if ( data_.L.Store != NULL ){	// will only be true for this->root_
+  if ( data_.L.Store != NULL ){ // will only be true for this->root_
     SLU::Destroy_SuperNode_Matrix( &(data_.L) );
     SLU::Destroy_CompCol_Matrix( &(data_.U) );
   }
+}
+
+template <class Matrix, class Vector>
+std::string
+Superlu<Matrix,Vector>::description() const
+{
+  std::ostringstream oss;
+  oss << "SuperLU solver interface";
+  if (ILU_Flag_) {
+    oss << ", \"ILUTP\" : {";
+    oss << "drop tol = " << data_.options.ILU_DropTol;
+    oss << ", fill factor = " << data_.options.ILU_FillFactor;
+    oss << ", fill tol = " << data_.options.ILU_FillTol;
+    switch(data_.options.ILU_MILU) {
+      case SLU::SMILU_1 :
+         oss << ", MILU 1";
+         break;
+      case SLU::SMILU_2  :
+         oss << ", MILU 2";
+         break;
+      case SLU::SMILU_3  :
+         oss << ", MILU 3";
+         break;
+      case SLU::SILU     :
+      default:
+         oss << ", regular ILU";
+    }
+    switch(data_.options.ILU_Norm) {
+      case SLU::ONE_NORM :
+         oss << ", 1-norm";
+         break;
+      case SLU::TWO_NORM  :
+         oss << ", 2-norm";
+         break;
+      case SLU::INF_NORM  :
+      default:
+         oss << ", infinity-norm";
+    }
+    oss << "}";
+  } else {
+    oss << ", direct solve";
+  }
+  return oss.str();
+  /*
+
+  // ILU parameters
+  if( parameterList->isParameter("RowPerm") ){
+    RCP<const ParameterEntryValidator> rowperm_validator = valid_params->getEntry("RowPerm").validator();
+    parameterList->getEntry("RowPerm").setValidator(rowperm_validator);
+    data_.options.RowPerm = getIntegralValue<SLU::rowperm_t>(*parameterList, "RowPerm");
+  }
+
+
+  */
 }
 
 template<class Matrix, class Vector>
@@ -204,9 +265,33 @@ Superlu<Matrix,Vector>::numericFactorization_impl()
       function_map::gsequ(&(data_.A), data_.R.getRawPtr(),
                           data_.C.getRawPtr(), &rowcnd, &colcnd,
                           &amax, &info2);
-      TEUCHOS_TEST_FOR_EXCEPTION( info2 != 0,
-                          std::runtime_error,
-                          "SuperLU gsequ returned with status " << info2 );
+      TEUCHOS_TEST_FOR_EXCEPTION
+        (info2 < 0, std::runtime_error,
+         "SuperLU's gsequ function returned with status " << info2 << " < 0."
+         "  This means that argument " << (-info2) << " given to the function"
+         " had an illegal value.");
+      if (info2 > 0) {
+        if (info2 <= data_.A.nrow) {
+          TEUCHOS_TEST_FOR_EXCEPTION
+            (true, std::runtime_error, "SuperLU's gsequ function returned with "
+             "info = " << info2 << " > 0, and info <= A.nrow = " << data_.A.nrow
+             << ".  This means that row " << info2 << " of A is exactly zero.");
+        }
+        else if (info2 > data_.A.ncol) {
+          TEUCHOS_TEST_FOR_EXCEPTION
+            (true, std::runtime_error, "SuperLU's gsequ function returned with "
+             "info = " << info2 << " > 0, and info > A.ncol = " << data_.A.ncol
+             << ".  This means that column " << (info2 - data_.A.nrow) << " of "
+             "A is exactly zero.");
+        }
+        else {
+          TEUCHOS_TEST_FOR_EXCEPTION
+            (true, std::runtime_error, "SuperLU's gsequ function returned "
+             "with info = " << info2 << " > 0, but its value is not in the "
+             "range permitted by the documentation.  This should never happen "
+             "(it appears to be SuperLU's fault).");
+        }
+      }
 
       // apply row and column scalings if necessary
       function_map::laqgs(&(data_.A), data_.R.getRawPtr(),
@@ -235,10 +320,19 @@ Superlu<Matrix,Vector>::numericFactorization_impl()
       std::cout << "colptr_ : " << colptr_.toString() << std::endl;
 #endif
 
-      function_map::gstrf(&(data_.options), &(data_.AC),
-                          data_.relax, data_.panel_size, data_.etree.getRawPtr(),
-                          NULL, 0, data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(),
-                          &(data_.L), &(data_.U), &(data_.stat), &info);
+      if(ILU_Flag_==false) {
+        function_map::gstrf(&(data_.options), &(data_.AC),
+            data_.relax, data_.panel_size, data_.etree.getRawPtr(),
+            NULL, 0, data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(),
+            &(data_.L), &(data_.U), &(data_.stat), &info);
+      }
+      else {
+        function_map::gsitrf(&(data_.options), &(data_.AC),
+            data_.relax, data_.panel_size, data_.etree.getRawPtr(),
+            NULL, 0, data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(),
+            &(data_.L), &(data_.U), &(data_.stat), &info);
+      }
+
     }
     // Cleanup. AC data will be alloc'd again for next factorization (if at all)
     SLU::Destroy_CompCol_Permuted( &(data_.AC) );
@@ -288,7 +382,7 @@ Superlu<Matrix,Vector>::solve_impl(const Teuchos::Ptr<MultiVecAdapter<Vector> > 
     Util::get_1d_copy_helper<MultiVecAdapter<Vector>,
                              slu_type>::do_get(B, bValues(),
                                                as<size_t>(ld_rhs),
-                                               ROOTED);
+                                               ROOTED, this->rowIndexBase_);
   }
 
   int ierr = 0; // returned error code
@@ -320,12 +414,22 @@ Superlu<Matrix,Vector>::solve_impl(const Teuchos::Ptr<MultiVecAdapter<Vector> > 
     Teuchos::TimeMonitor solveTimer(this->timers_.solveTime_);
 #endif
 
-    function_map::gssvx(&(data_.options), &(data_.A),
-      data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(), data_.etree.getRawPtr(),
-      &(data_.equed), data_.R.getRawPtr(), data_.C.getRawPtr(), &(data_.L),
-      &(data_.U), NULL, 0, &(data_.B), &(data_.X), &rpg, &rcond,
-      data_.ferr.getRawPtr(), data_.berr.getRawPtr(), &(data_.mem_usage),
-      &(data_.stat), &ierr);
+    if(ILU_Flag_==false) {
+      function_map::gssvx(&(data_.options), &(data_.A),
+          data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(),
+          data_.etree.getRawPtr(), &(data_.equed), data_.R.getRawPtr(),
+          data_.C.getRawPtr(), &(data_.L), &(data_.U), NULL, 0, &(data_.B),
+          &(data_.X), &rpg, &rcond, data_.ferr.getRawPtr(),
+          data_.berr.getRawPtr(), &(data_.mem_usage), &(data_.stat), &ierr);
+    }
+    else {
+      function_map::gsisx(&(data_.options), &(data_.A),
+          data_.perm_c.getRawPtr(), data_.perm_r.getRawPtr(),
+          data_.etree.getRawPtr(), &(data_.equed), data_.R.getRawPtr(),
+          data_.C.getRawPtr(), &(data_.L), &(data_.U), NULL, 0, &(data_.B),
+          &(data_.X), &rpg, &rcond, &(data_.mem_usage), &(data_.stat), &ierr);
+    }
+
     }
 
     // Cleanup X and B stores
@@ -359,7 +463,7 @@ Superlu<Matrix,Vector>::solve_impl(const Teuchos::Ptr<MultiVecAdapter<Vector> > 
     Util::put_1d_data_helper<
       MultiVecAdapter<Vector>,slu_type>::do_put(X, xValues(),
                                          as<size_t>(ld_rhs),
-                                         ROOTED);
+                                         ROOTED, this->rowIndexBase_);
   }
 
 
@@ -387,6 +491,13 @@ Superlu<Matrix,Vector>::setParameters_impl(const Teuchos::RCP<Teuchos::Parameter
   using Teuchos::ParameterEntryValidator;
 
   RCP<const Teuchos::ParameterList> valid_params = getValidParameters_impl();
+
+  ILU_Flag_ = parameterList->get<bool>("ILU_Flag",false);
+  if (ILU_Flag_) {
+      SLU::ilu_set_default_options(&(data_.options));
+      // Override some default options
+      data_.options.PrintStat = SLU::NO;
+  }
 
   data_.options.Trans = this->control_.useTranspose_ ? SLU::TRANS : SLU::NOTRANS;
   // The SuperLU transpose option can override the Amesos2 option
@@ -418,6 +529,38 @@ Superlu<Matrix,Vector>::setParameters_impl(const Teuchos::RCP<Teuchos::Parameter
 
   bool symmetric_mode = parameterList->get<bool>("SymmetricMode", false);
   data_.options.SymmetricMode = symmetric_mode ? SLU::YES : SLU::NO;
+
+  // ILU parameters
+  if( parameterList->isParameter("RowPerm") ){
+    RCP<const ParameterEntryValidator> rowperm_validator = valid_params->getEntry("RowPerm").validator();
+    parameterList->getEntry("RowPerm").setValidator(rowperm_validator);
+    data_.options.RowPerm = getIntegralValue<SLU::rowperm_t>(*parameterList, "RowPerm");
+  }
+
+  /*if( parameterList->isParameter("ILU_DropRule") ) {
+    RCP<const ParameterEntryValidator> droprule_validator = valid_params->getEntry("ILU_DropRule").validator();
+    parameterList->getEntry("ILU_DropRule").setValidator(droprule_validator);
+    data_.options.ILU_DropRule = getIntegralValue<SLU::rule_t>(*parameterList, "ILU_DropRule");
+  }*/
+
+  data_.options.ILU_DropTol = parameterList->get<double>("ILU_DropTol", 0.0001);
+
+  data_.options.ILU_FillFactor = parameterList->get<double>("ILU_FillFactor", 10.0);
+
+  if( parameterList->isParameter("ILU_Norm") ) {
+    RCP<const ParameterEntryValidator> norm_validator = valid_params->getEntry("ILU_Norm").validator();
+    parameterList->getEntry("ILU_Norm").setValidator(norm_validator);
+    data_.options.ILU_Norm = getIntegralValue<SLU::norm_t>(*parameterList, "ILU_Norm");
+  }
+
+  if( parameterList->isParameter("ILU_MILU") ) {
+    RCP<const ParameterEntryValidator> milu_validator = valid_params->getEntry("ILU_MILU").validator();
+    parameterList->getEntry("ILU_MILU").setValidator(milu_validator);
+    data_.options.ILU_MILU = getIntegralValue<SLU::milu_t>(*parameterList, "ILU_MILU");
+  }
+
+  data_.options.ILU_FillTol = parameterList->get<double>("ILU_FillTol", 0.01);
+
 }
 
 
@@ -450,13 +593,13 @@ Superlu<Matrix,Vector>::getValidParameters_impl() const
 
     setStringToIntegralParameter<SLU::IterRefine_t>("IterRefine", "NOREFINE",
                                                     "Type of iterative refinement to use",
-                                                    tuple<string>("NOREFINE", "SINGLE", "DOUBLE"),
+                                                    tuple<string>("NOREFINE", "SLU_SINGLE", "SLU_DOUBLE"),
                                                     tuple<string>("Do not use iterative refinement",
                                                                   "Do single iterative refinement",
                                                                   "Do double iterative refinement"),
                                                     tuple<SLU::IterRefine_t>(SLU::NOREFINE,
-                                                                             SLU::SINGLE,
-                                                                             SLU::DOUBLE),
+                                                                             SLU::SLU_SINGLE,
+                                                                             SLU::SLU_DOUBLE),
                                                     pl.getRawPtr());
 
     // Note: MY_PERMC not yet supported
@@ -487,6 +630,56 @@ Superlu<Matrix,Vector>::getValidParameters_impl() const
             "Specifies whether to use the symmetric mode. "
             "Gives preference to diagonal pivots and uses "
             "an (A^T + A)-based column permutation.");
+
+    // ILU parameters
+
+    setStringToIntegralParameter<SLU::rowperm_t>("RowPerm", "LargeDiag",
+            "Type of row permutation strategy to use",
+            tuple<string>("NOROWPERM","LargeDiag","MY_PERMR"),
+            tuple<string>("Use natural ordering",
+            "Use weighted bipartite matching algorithm",
+            "Use the ordering given in perm_r input"),
+            tuple<SLU::rowperm_t>(SLU::NOROWPERM,
+            SLU::LargeDiag,
+            SLU::MY_PERMR),
+            pl.getRawPtr());
+
+    /*setStringToIntegralParameter<SLU::rule_t>("ILU_DropRule", "DROP_BASIC",
+            "Type of dropping strategy to use",
+            tuple<string>("DROP_BASIC","DROP_PROWS",
+            "DROP_COLUMN","DROP_AREA",
+            "DROP_DYNAMIC","DROP_INTERP"),
+            tuple<string>("ILUTP(t)","ILUTP(p,t)",
+            "Variant of ILUTP(p,t) for j-th column",
+            "Variant of ILUTP to control memory",
+            "Dynamically adjust threshold",
+            "Compute second dropping threshold by interpolation"),
+            tuple<SLU::rule_t>(SLU::DROP_BASIC,SLU::DROP_PROWS,SLU::DROP_COLUMN,
+            SLU::DROP_AREA,SLU::DROP_DYNAMIC,SLU::DROP_INTERP),
+            pl.getRawPtr());*/
+
+    pl->set("ILU_DropTol", 0.0001, "ILUT drop tolerance");
+
+    pl->set("ILU_FillFactor", 10.0, "ILUT fill factor");
+
+    setStringToIntegralParameter<SLU::norm_t>("ILU_Norm", "INF_NORM",
+            "Type of norm to use",
+            tuple<string>("ONE_NORM","TWO_NORM","INF_NORM"),
+            tuple<string>("1-norm","2-norm","inf-norm"),
+            tuple<SLU::norm_t>(SLU::ONE_NORM,SLU::TWO_NORM,SLU::INF_NORM),
+            pl.getRawPtr());
+
+    setStringToIntegralParameter<SLU::milu_t>("ILU_MILU", "SILU",
+            "Type of modified ILU to use",
+            tuple<string>("SILU","SMILU_1","SMILU_2","SMILU_3"),
+            tuple<string>("Regular ILU","MILU 1","MILU 2","MILU 3"),
+            tuple<SLU::milu_t>(SLU::SILU,SLU::SMILU_1,SLU::SMILU_2,
+            SLU::SMILU_3),
+            pl.getRawPtr());
+
+    pl->set("ILU_FillTol", 0.01, "ILUT fill tolerance");
+
+    pl->set("ILU_Flag", false, "ILU flag: if true, run ILU routines");
 
     valid_params = pl;
   }
@@ -527,10 +720,15 @@ Superlu<Matrix,Vector>::loadA_impl(EPhase current_phase)
     Teuchos::TimeMonitor mtxRedistTimer( this->timers_.mtxRedistTime_ );
 #endif
 
+    TEUCHOS_TEST_FOR_EXCEPTION( this->rowIndexBase_ != this->columnIndexBase_,
+                        std::runtime_error,
+                        "Row and column maps have different indexbase ");
     Util::get_ccs_helper<
     MatrixAdapter<Matrix>,slu_type,int,int>::do_get(this->matrixA_.ptr(),
-                                                    nzvals_(), rowind_(), colptr_(),
-                                                    nnz_ret, ROOTED, ARBITRARY);
+                                                    nzvals_(), rowind_(),
+                                                    colptr_(), nnz_ret, ROOTED,
+                                                    ARBITRARY,
+                                                    this->rowIndexBase_);
   }
 
   // Get the SLU data type for this type of matrix
@@ -556,7 +754,7 @@ Superlu<Matrix,Vector>::loadA_impl(EPhase current_phase)
 
 template<class Matrix, class Vector>
 const char* Superlu<Matrix,Vector>::name = "SuperLU";
-  
+
 
 } // end namespace Amesos2
 

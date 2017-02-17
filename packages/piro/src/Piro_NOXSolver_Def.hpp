@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-// 
+//
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,209 +36,109 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-// 
+//
 // ************************************************************************
 // @HEADER
 
-#include <cmath>
+#ifndef PIRO_NOXSOLVER_DEF_HPP
+#define PIRO_NOXSOLVER_DEF_HPP
 
-//#include "Piro_NOXSolver.hpp"
+#include "Piro_NOXSolver.hpp"
+#include "Piro_MatrixFreeDecorator.hpp"
 
+#include "Thyra_ModelEvaluatorHelpers.hpp"
+
+#include "Thyra_DefaultScaledAdjointLinearOp.hpp"
+#include "Thyra_DefaultAddedLinearOp.hpp"
+#include "Thyra_DefaultMultipliedLinearOp.hpp"
+#include "Thyra_DefaultInverseLinearOp.hpp"
+#include "Thyra_DefaultIdentityLinearOp.hpp"
+#include "Thyra_DefaultZeroLinearOp.hpp"
+#include "Thyra_MultiVectorStdOps.hpp"
+#include "Thyra_VectorStdOps.hpp"
+
+#include "Teuchos_ScalarTraits.hpp"
+#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_Tuple.hpp"
+
+#include <stdexcept>
+#include <cstddef>
+#include <ostream>
 
 template <typename Scalar>
 Piro::NOXSolver<Scalar>::
-NOXSolver(Teuchos::RCP<Teuchos::ParameterList> appParams_,
-	  Teuchos::RCP< Thyra::ModelEvaluatorDefaultBase<Scalar> > model_) :
+NOXSolver(const Teuchos::RCP<Teuchos::ParameterList> &appParams_,
+	  const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model_,
+          const Teuchos::RCP<ObserverBase<Scalar> > &observer_) :
+  SteadyStateSolver<Scalar>(model_),
   appParams(appParams_),
-  model(model_)
+  observer(observer_),
+  model(model_), 
+  solver(new Thyra::NOXNonlinearSolver),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   using Teuchos::RCP;
-  using Teuchos::rcp;
 
-  out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  const RCP<Teuchos::ParameterList> noxParams =
+    Teuchos::sublist(appParams, "NOX", /*mustAlreadyExist =*/ false);
 
-  RCP<Teuchos::ParameterList> noxParams =
-	rcp(&(appParams->sublist("NOX")),false);
-
-//   string jacobianSource = appParams->get("Jacobian Operator", "Have Jacobian");
-
-//   if (jacobianSource == "Matrix-Free") {
-//     TEUCHOS_TEST_FOR_EXCEPTION(jacobianSource == "Matrix-Free", std::logic_error,
-//        "MATRIX_free not yet implemented for Piro Thyra");
-//     model = rcp(new Piro::Thyra::MatrixFreeDecorator(model));
-//   }
-
-  // Grab some modelEval stuff from underlying model
-  num_p = model->createInArgs().Np();
-  num_g = model->createOutArgs().Ng();
-
-  solver = rcp(new Thyra::NOXNonlinearSolver);
   solver->setParameterList(noxParams);
+
+  std::string jacobianSource = appParams->get("Jacobian Operator", "Have Jacobian");
+
+  if (jacobianSource == "Matrix-Free") {
+    if (appParams->isParameter("Matrix-Free Perturbation")) {
+      model = Teuchos::rcp(new Piro::MatrixFreeDecorator<Scalar>(model_,
+                           appParams->get<double>("Matrix-Free Perturbation")));
+    }
+    else 
+      model = Teuchos::rcp(new Piro::MatrixFreeDecorator<Scalar>(model_));
+  }
   solver->setModel(model);
 }
 
 template <typename Scalar>
-Piro::NOXSolver<Scalar>::~NOXSolver()
-{
-}
-
-template<typename Scalar>
-Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> >
-Piro::NOXSolver<Scalar>::get_p_space(int l) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in Piro::NOXSolver::get_p_map():  " <<
-                     "Invalid parameter index l = " <<
-                     l << std::endl);
-  return model->get_p_space(l);
-}
-
-template<typename Scalar>
-Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> >
-Piro::NOXSolver<Scalar>::get_g_space(int j) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(j > num_g || j < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in Piro::NOXSolver::get_g_map():  " <<
-                     "Invalid response index j = " <<
-                     j << std::endl);
-
-  if      (j < num_g) return model->get_g_space(j);
-  else return model->get_x_space(); // j == num_g
-}
-
-template<typename Scalar>
-Thyra::ModelEvaluatorBase::InArgs<Scalar>
-Piro::NOXSolver<Scalar>::getNominalValues() const
-{
-  return model->getNominalValues();
-}
-
-template <typename Scalar>
-Thyra::ModelEvaluatorBase::InArgs<Scalar> Piro::NOXSolver<Scalar>::createInArgs() const
-{
-  Thyra::ModelEvaluatorBase::InArgsSetup<Scalar> inArgs;
-  inArgs.setModelEvalDescription(this->description());
-  inArgs.set_Np(num_p);
-  return inArgs;
-}
-
-template <typename Scalar>
-Thyra::ModelEvaluatorBase::OutArgs<Scalar> Piro::NOXSolver<Scalar>::createOutArgsImpl() const
-{
-  Thyra::ModelEvaluatorBase::OutArgsSetup<Scalar> outArgs;
-  outArgs.setModelEvalDescription(this->description());
-
-  // Ng is 1 bigger then model-Ng so that the solution vector can be an outarg
-  outArgs.set_Np_Ng(num_p, num_g+1);
-
-  Thyra::ModelEvaluatorBase::OutArgs<Scalar> model_outargs = model->createOutArgs();
-  for (int i=0; i<num_g; i++)
-    for (int j=0; j<num_p; j++)
-      if (!model_outargs.supports( Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j).none())
-        outArgs.setSupports( Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j,
-             Thyra::ModelEvaluatorBase::DerivativeSupport( Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL));
-
-  return outArgs;
-}
-
-template <typename Scalar>
 void Piro::NOXSolver<Scalar>::evalModelImpl(
-       const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
-       const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs ) const
+    const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
+    const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs) const
 {
   using Teuchos::RCP;
-  using Teuchos::rcp;
 
-  //*out << "In eval Modle " << endl;
-
-  // Parse InArgs
-
-  RCP<const Thyra::VectorBase<Scalar> > p_in;
-  if (num_p > 0) p_in = inArgs.get_p(0);
-
-  // Parse OutArgs: always 1 extra
-  RCP< Thyra::VectorBase<Scalar> > g_out; 
-  if (num_g > 0) g_out = outArgs.get_g(0); 
-  RCP< Thyra::VectorBase<Scalar> > gx_out = outArgs.get_g(num_g); 
-
-  // Parse out-args for sensitivity calculation
-
-
-  ::Thyra::SolveCriteria<double> solve_criteria;
-  ::Thyra::SolveStatus<double> solve_status;
-
-  RCP< ::Thyra::VectorBase<double> >
-    initial_guess = model->getNominalValues().get_x()->clone_v();
-
-  solve_status = solver->solve(initial_guess.get(), &solve_criteria, NULL);
-
-//   if (solve_status.solveStatus == ::Thyra::SOLVE_STATUS_CONVERGED)
-//     std::cout << "Test passed!" << std::endl;
-
-  // return the final solution as an additional g-vector, if requested
-  RCP<const Thyra::VectorBase<Scalar> > finalSolution = solver->get_current_x();
-
-  if (gx_out != Teuchos::null)  Thyra::copy(*finalSolution, gx_out.ptr());
-
-  if (g_out != Teuchos::null) {
-     // As post-processing step, calc responses at final solution
-     Thyra::ModelEvaluatorBase::InArgs<Scalar>  model_inargs = model->createInArgs();
-     Thyra::ModelEvaluatorBase::OutArgs<Scalar> model_outargs = model->createOutArgs();
-     model_inargs.set_x(finalSolution);
-     if (num_p > 0)  model_inargs.set_p(0, p_in);
-     if (g_out != Teuchos::null) {
-       Thyra::put_scalar(0.0,g_out.ptr());
-       model_outargs.set_g(0, g_out);
-     }
-
-     model->evalModel(model_inargs, model_outargs);
+  // Forward all parameters to underlying model
+  Thyra::ModelEvaluatorBase::InArgs<Scalar> modelInArgs = this->getModel().createInArgs();
+  for (int l = 0; l < this->num_p(); ++l) {
+    modelInArgs.set_p(l, inArgs.get_p(l));
   }
 
-/*********************  NEED TO CONVERT TO THYRA *******************
-  RCP< Thyra::MultiVectorBase<Scalar> > dgdp_out;
-  if (num_p>0 && num_g>0)
-    dgdp_out = outArgs.get_DgDp(0,0).getMultiVector();
+  // Find the solution of the implicit underlying model
+  {
+    solver->setBasePoint(modelInArgs);
 
-  if (dgdp_out == Teuchos::null) {
+    const RCP<const Thyra::VectorBase<Scalar> > modelNominalState =
+      this->getModel().getNominalValues().get_x();
 
-     Teuchos::RCP<Epetra_MultiVector> dgdx
-          = Teuchos::rcp(new Epetra_MultiVector(finalSolution->Map(),
-                                                   dgdp_out->GlobalLength()));
-     Teuchos::Array<int> p_indexes =
-       outArgs.get_DgDp(0,0).getDerivativeMultiVector().getParamIndexes();
- 
-     EpetraExt::ModelEvaluator::DerivativeMultiVector dmv_dgdp(dgdp_out,
-                                                               DERIV_MV_BY_COL,
-                                                               p_indexes);
- 
-     EpetraExt::ModelEvaluator::InArgs model_inargs = model->createInArgs();
-     EpetraExt::ModelEvaluator::OutArgs model_outargs = model->createOutArgs();
-     model_inargs.set_x(finalSolution);
-     model_inargs.set_p(0, p_in);
+    const RCP<Thyra::VectorBase<Scalar> > initial_guess = modelNominalState->clone_v();
 
-     if (g_out != Teuchos::null) {
-       g_out->PutScalar(0.0);
-       model_outargs.set_g(0, g_out);
-     }
-     model_outargs.set_DgDp(0,0,dmv_dgdp);
-     model_outargs.set_DgDx(0,dgdx);
+    const Thyra::SolveCriteria<Scalar> solve_criteria;
+    const Thyra::SolveStatus<Scalar> solve_status =
+      solver->solve(initial_guess.get(), &solve_criteria, /*delta =*/ NULL);
 
-     model->evalModel(model_inargs, model_outargs);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        solve_status.solveStatus != ::Thyra::SOLVE_STATUS_CONVERGED,
+        std::runtime_error,
+        "Nonlinear solver failed to converge");
+  }
 
- 
-     // (3) Calculate dg/dp = dg/dx*dx/dp + dg/dp
-     // This may be the transpose of what we want since we specified
-     // we want dg/dp by column in createOutArgs().
-     // In this case just interchange the order of dgdx and dxdp
-     // We should really probably check what the underlying ME does
+  // Retrieve final solution to evaluate underlying model
+  const RCP<const Thyra::VectorBase<Scalar> > convergedSolution = solver->get_current_x();
+  modelInArgs.set_x(convergedSolution);
 
-     if (Teuchos::VERB_MEDIUM <= solnVerbLevel) cout << " dgdx \n" << *dgdx << endl;
-     if (Teuchos::VERB_MEDIUM <= solnVerbLevel) cout << " dxdp \n" << *dxdp << endl;
+  if (Teuchos::nonnull(this->observer)) {
+    this->observer->observeSolution(*convergedSolution);
+  }
 
-     dgdp_out->Multiply('T', 'N', 1.0, *dgdx, *dxdp, 1.0);
-   }
-*********************/
+  this->evalConvergedModel(modelInArgs, outArgs);
 }
 
+#endif /*PIRO_NOXSOLVER_DEF_HPP*/

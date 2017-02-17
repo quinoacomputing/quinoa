@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
 extern "C" {
@@ -269,9 +302,6 @@ int Zoltan_PHG_Coarsening
     for (i = 0; i < hg->nVtx; ++i){
         if (match[i] == VTX_LNO_TO_GNO(hg, i)) {
             LevelMap[i] = (ZOLTAN_GNO_TYPE)c_hg->nVtx;
-#ifdef KDDKDD_DEBUG
-if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO(hg, i) == 66) printf("%d MATCH %d (%f %f %f) to %d; LevelMap = %d\n", zz->Proc, VTX_LNO_TO_GNO(hg, i), hg->coor[i*3], hg->coor[i*3+1], hg->coor[i*3+2], match[i], LevelMap[i]);
-#endif
             if (c_hg->fixed_part)
                 c_hg->fixed_part[c_hg->nVtx] = hg->fixed_part[i];
             if (c_hg->pref_part)
@@ -297,9 +327,6 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
 /*                  uprintf(hgc, "LOCMAT:  match[%d (gno=%zd)] = %zd   new vtxno=%d\n", i, VTX_LNO_TO_GNO(hg, i), match[i], LevelMap[i]);*/
               }
       }
-#ifdef KDDKDD_DEBUG
-if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO(hg, i) == 66) printf("%d MATCH %d (%f %f %f) to %d; LevelMap = %d\n", zz->Proc, VTX_LNO_TO_GNO(hg, i), hg->coor[i*3], hg->coor[i*3+1], hg->coor[i*3+2], match[i], LevelMap[i]);
-#endif
     }
     *LevelSndCnt = count;
 /*      errexit("this type of coarsening is not implemented yet"); */
@@ -362,9 +389,6 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
       int lno = listlno[i];
       for (j = 0; j < hg->nDim; j++)
 	coordbuf[i * hg->nDim + j] = hg->coor[lno * hg->nDim + j];
-#ifdef KDDKDD_DEBUG
-if (VTX_LNO_TO_GNO(hg, lno) == 35 || VTX_LNO_TO_GNO(hg, lno) == 65 || VTX_LNO_TO_GNO(hg, lno) == 66) printf("%d LOADING %d (%f %f %f) (%f %f %f)\n", zz->Proc, VTX_LNO_TO_GNO(hg, lno), hg->coor[lno*hg->nDim], hg->coor[lno*hg->nDim+1], hg->coor[lno*hg->nDim+2], coordbuf[i*hg->nDim], coordbuf[i*hg->nDim+1], coordbuf[i*hg->nDim+2]);
-#endif
     }
   }
   /* Create comm plan. */
@@ -388,15 +412,12 @@ if (VTX_LNO_TO_GNO(hg, lno) == 35 || VTX_LNO_TO_GNO(hg, lno) == 65 || VTX_LNO_TO
 
     /* Accumulating on-processor coordinates */
     for (i = 0; i < hg->nVtx; i++) {
-      ZOLTAN_GNO_TYPE ni = LevelMap[i];
-      if (ni >= 0) {
+      ZOLTAN_GNO_TYPE nni = LevelMap[i];
+      if (nni >= 0) {
         double hg_vwgt = hg->vwgt[i*hg->VtxWeightDim];
 	for (j = 0; j < hg->nDim; j++)
-	  c_hg->coor[ni*hg->nDim + j] += (hg_vwgt * hg->coor[i*hg->nDim + j]);
-	coorcount[ni] += hg_vwgt;
-#ifdef KDDKDD_DEBUG
-if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO(hg, i) == 66) printf("%d SUMMING %d (%f %f %f) into ni %d coorcount %f\n", zz->Proc, VTX_LNO_TO_GNO(hg, i), hg->coor[i*3], hg->coor[i*3+1], hg->coor[i*3+2], ni, coorcount[ni]);
-#endif
+	  c_hg->coor[nni*hg->nDim + j] += (hg_vwgt * hg->coor[i*hg->nDim + j]);
+	coorcount[nni] += hg_vwgt;
       }
     }
   }
@@ -428,10 +449,10 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
                                              sizeof(float))))
       MEMORY_ERROR;
   for (i=0; i < hg->nVtx; ++i) {
-      ZOLTAN_GNO_TYPE ni=LevelMap[i];
-      if (ni>=0)
-          for (j=0; j<hg->VtxWeightDim; ++j)
-              c_hg->vwgt[ni*hg->VtxWeightDim+j] += hg->vwgt[i*hg->VtxWeightDim+j];
+      ZOLTAN_GNO_TYPE nni=LevelMap[i];
+      if (nni>=0)
+        for (j=0; j<hg->VtxWeightDim; ++j)
+          c_hg->vwgt[nni*hg->VtxWeightDim+j] += hg->vwgt[i*hg->VtxWeightDim+j];
   }
       
   /* index all received data for rapid lookup */ 
@@ -442,7 +463,7 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
     doubleptr = (double *)coordrecbuf;
 
   while (b < b_end){
-    int j, sz, source_lno;
+    int sz, source_lno;
     /* ZOLTAN_GNO_TYPE lno; */
     int lno;               /* we get memory errors using ZOLTAN_GNO_TYPE to index int arrays TODO64 */
 
@@ -501,7 +522,7 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
   b_end = rbuffer + (size * sizeof(int));
 
   while (b < b_end){
-    int lno, sz, j;
+    int lno, sz;
 
     gnoptr = (ZOLTAN_GNO_TYPE *)b;
     intptr = (int *)(gnoptr + 1);
@@ -606,20 +627,26 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
   if (size > hg->nEdge) {
       Zoltan_Multifree(__FILE__, __LINE__, 2, &lhash, &listproc);
       if (!(lhash=(unsigned int *) ZOLTAN_MALLOC(size * sizeof(unsigned int)))
-          || !(listproc=(int *) ZOLTAN_MALLOC(size * sizeof(int))))
+          || !(listproc=(int *) ZOLTAN_MALLOC(size * sizeof(int)))){
+          Zoltan_Comm_Destroy (&plan);
           MEMORY_ERROR;
+      }
   }
   Zoltan_Comm_Do(plan, PLAN_TAG+11, (char *) hash, sizeof(unsigned int), (char *) lhash);
   ZOLTAN_FREE(&hash); /* we don't need it anymore */
 
   /* now local sizes */
-  if (!(ahindex = (int *)  ZOLTAN_MALLOC((1+size) * sizeof(int))))
-    MEMORY_ERROR;
+  if (!(ahindex = (int *)  ZOLTAN_MALLOC((1+size) * sizeof(int)))) {
+      Zoltan_Comm_Destroy (&plan);
+      MEMORY_ERROR;
+  }
   if (size && (
        !(ip      = (int *)  ZOLTAN_MALLOC(size * sizeof(int)))
     || !(hsize =   (int *)  ZOLTAN_MALLOC(size * sizeof(int)))       
-    || !(c_ewgt  = (float *)ZOLTAN_MALLOC(size * sizeof(float)*c_hg->EdgeWeightDim)))) 
+    || !(c_ewgt  = (float *)ZOLTAN_MALLOC(size * sizeof(float)*c_hg->EdgeWeightDim)))) {
+      Zoltan_Comm_Destroy (&plan);
       MEMORY_ERROR;
+  }
 
   Zoltan_Comm_Do(plan, PLAN_TAG+12, (char *) hlsize, sizeof(int), (char *) ip);
   /* now ewgt  */
@@ -628,8 +655,10 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
   /* now vertices of hyperedges */
 
   Zoltan_Comm_Resize(plan, hlsize, PLAN_TAG+13, &idx);
-  if (idx && !(ahvertex = (int *) ZOLTAN_MALLOC(idx * sizeof(int))))
+  if (idx && !(ahvertex = (int *) ZOLTAN_MALLOC(idx * sizeof(int)))){
+      Zoltan_Comm_Destroy (&plan);
       MEMORY_ERROR;
+  }
 
   Zoltan_Comm_Do(plan, PLAN_TAG+14, (char *) c_hg->hvertex, sizeof(int), (char *) ahvertex);
   Zoltan_Comm_Destroy (&plan);
@@ -791,7 +820,7 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
           if (j!=rootRank) {
               int *enets=allemptynets+j*emptynetsize;
               int *inets=allidennets+idennetdest[j], rootnet=-1;
-              int *x, *y, *a, *b;
+              int *x, *y, *aa, *bb;
 
               for (i=0; i<size; ++i) {
                   ip[i] = BITCHECK(enets, i) ? -1 : 0;
@@ -807,20 +836,20 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
               /* merge received identical net info with the local one */
               /*
                 identical operator:
-                a[i]  b[i]     res[i]
+                aa[i]  bb[i]     res[i]
                 -1    -1       -1  : -1 means no edge in that proc; identical to everything :)
-                -1    y        -1==a[y] ? y : 0   --> UVC note that this is same as x < y
-                x     -1       -1==b[x] ? x : 0   --> UVC note that this is same as y < x
+                -1    y        -1==aa[y] ? y : 0   --> UVC note that this is same as x < y
+                x     -1       -1==bb[x] ? x : 0   --> UVC note that this is same as y < x
                 0     y        0   : 0 means not identical to anyone in this proc; hence not identical anyone in all
                 x     0        0   
                 x     x        x   : they are identical to same net
                 x <   y       x==a[y] ? y : 0
-                x >   y       y==b[x] ? x : 0
+                x >   y       y==bb[x] ? x : 0
               */
               
               x = ip;   y = iden;
               memcpy(ids, iden, size*sizeof(int));
-              a = ip-1; b=ids-1; /* net ids in the a and b are base-1 numbers */
+              aa = ip-1; bb=ids-1; /* net ids in the aa and bb are base-1 numbers */
               for (i=0; i < size; ++i, ++x, ++y) {
                   if (*x == -1 && *y == -1)
                       ; /* no op *y = *y */
@@ -829,9 +858,9 @@ if (VTX_LNO_TO_GNO(hg, i) == 35 || VTX_LNO_TO_GNO(hg, i) == 65 || VTX_LNO_TO_GNO
                   else if (*x==*y)
                       ; /* no op */
                   else if (*x < *y)
-                      *y = (*x==a[*y]) ? *y : 0;
+                      *y = (*x==aa[*y]) ? *y : 0;
                   else /* *x > *y */ 
-                      *y = (*y==b[*x]) ? *x : 0;
+                      *y = (*y==bb[*x]) ? *x : 0;
               }
           }
       }

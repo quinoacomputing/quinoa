@@ -12,7 +12,7 @@
 */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include "ml_common.h"
@@ -39,9 +39,9 @@ namespace MLAPI {
 
 \brief Black-box multilevel adaptive smoothed aggregation preconditioner.
 
-This class implements an adaptive smoothed aggregation preconditioner. 
+This class implements an adaptive smoothed aggregation preconditioner.
 An example of usage is reported in file \ref ml_adaptivesa.
-We note that the usage of this class is slightly different from that of 
+We note that the usage of this class is slightly different from that of
 MultiLevelSA.
 
 An instance of this class can be created as follows:
@@ -53,18 +53,18 @@ MultiLevelAdaptiveSA Prec(FineMatrix, List, NumPDEEqns, MaxLevels);
 
 Important methods of this class:
 - The number of PDE equations on the finest level can be queried using
-  GetInputNumPDEEqns(). 
-- GetNumPDEEqns() returns the number of PDE equations on the current level. 
+  GetInputNumPDEEqns().
+- GetNumPDEEqns() returns the number of PDE equations on the current level.
   This value can be set via SetNumPDEEqns().
 - GetNullSpace() returns a reference to the internally stored null space;
   the null space is set using SetNullSpace().
-- GetMaxLevels() returns the number of levels. If called before Compute(), 
+- GetMaxLevels() returns the number of levels. If called before Compute(),
   GetMaxLevels() returns the maximum number of levels used in the
   constructor, otherwise returns the actual number of levels.
 - GetSmootherType() and GetCoarseType() return the smoother and coarse type.
 - The number of application of the cycle in IncrementNullSpace() is given
   by GetNumItersCoarse() and GetNumItersFine().
-- Methods \c A(level), \c P(level), \c R(level) and \c S(level) return a 
+- Methods \c A(level), \c P(level), \c R(level) and \c S(level) return a
   reference to the internally stored operators.
 - Method SetList() can be used at any time to reset the internally stored
   list.
@@ -72,10 +72,10 @@ Important methods of this class:
 The general usage is:
 - Specify the null space using SetNullSpace(NS), where NS is a MultiVector,
   then compute the hierarchy using Compute(), or
-- Compute the first component of the null space using SetupInitialNullSpace(). 
+- Compute the first component of the null space using SetupInitialNullSpace().
   This will define a single-vector null space, and store it using
   SetNullSpace(NS).
-- When a non-empty null space is provided, the user can increment by one 
+- When a non-empty null space is provided, the user can increment by one
   the dimension of the null space by calling IncrementNullSpace().
 - Method AdaptCompute() performs all these operations.
 
@@ -95,7 +95,7 @@ public:
   // @{ \name Constructors and destructors
 
   //! Constructs the hierarchy for given Operator and parameters.
-  MultiLevelAdaptiveSA(const Operator FineMatrix, Teuchos::ParameterList& List,
+  MultiLevelAdaptiveSA(const Operator & FineMatrix, Teuchos::ParameterList& List,
                        const int NumPDEEqns, const int MaxLevels = 20) :
     IsComputed_(false)
   {
@@ -117,31 +117,31 @@ public:
   // @{ \name Set and Get methods
 
   //! Returns a copy of the internally stored domain space.
-  const Space GetOperatorDomainSpace() const 
+  const Space GetOperatorDomainSpace() const
   {
     return(FineMatrix_.GetDomainSpace());
   }
 
   //! Returns a copy of the internally stored range space.
-  const Space GetOperatorRangeSpace() const 
+  const Space GetOperatorRangeSpace() const
   {
     return(FineMatrix_.GetRangeSpace());
   }
 
   //! Returns a copy of the internally stored domain space.
-  inline const Space GetDomainSpace() const 
+  inline const Space GetDomainSpace() const
   {
     return(FineMatrix_.GetDomainSpace());
   }
 
   //! Returns a copy of the internally stored range space.
-  inline const Space GetRangeSpace() const 
+  inline const Space GetRangeSpace() const
   {
     return(FineMatrix_.GetRangeSpace());
   }
 
   //! Returns a reference to the restriction operator of level \c i.
-  inline Operator& R(const int i) 
+  inline Operator& R(const int i)
   {
     return(R_[i]);
   }
@@ -225,31 +225,31 @@ public:
   }
 
   //! Returns the smoother solver type.
-  inline string GetSmootherType()
+  inline std::string GetSmootherType()
   {
     return(List_.get("smoother: type", "symmetric Gauss-Seidel"));
   }
 
   //! Returns the coarse solver type.
-  inline string GetCoarseType() 
+  inline std::string GetCoarseType()
   {
     return(List_.get("coarse: type", "Amesos-KLU"));
   }
 
   //! Returns the number of PDE equations on the finest level.
-  inline void SetInputNumPDEEqns(const int n) 
+  inline void SetInputNumPDEEqns(const int n)
   {
     NumPDEEqns_ = n;
   }
 
   //! Returns the number of PDE equations on the current level.
-  inline int GetInputNumPDEEqns() 
+  inline int GetInputNumPDEEqns()
   {
     return(NumPDEEqns_);
   }
 
   //! Sets the number of PDE equations on the current level.
-  inline int GetNumPDEEqns() 
+  inline int GetNumPDEEqns()
   {
     return(List_.get("PDE equations", 1));
   }
@@ -298,10 +298,10 @@ public:
   // @}
   // @{ \name Hierarchy construction methods
 
-  // ====================================================================== 
+  // ======================================================================
   //! Creates an hierarchy using the provided or default null space.
-  // ====================================================================== 
-  void Compute() 
+  // ======================================================================
+  void Compute()
   {
 
     ResetTimer();
@@ -310,15 +310,15 @@ public:
 
     // get parameter from the input list
     SetNumPDEEqns(GetInputNumPDEEqns());
-    
+
     // retrive null space
     MultiVector ThisNS = GetNullSpace();
 
     if (GetPrintLevel()) {
-      cout << endl;
+      std::cout << std::endl;
       ML_print_line("-", 80);
-      cout << "Computing the hierarchy, input null space dimension = "
-           << ThisNS.GetNumVectors() << endl;
+      std::cout << "Computing the hierarchy, input null space dimension = "
+           << ThisNS.GetNumVectors() << std::endl;
     }
 
     // build up the default null space
@@ -382,14 +382,14 @@ public:
 
   }
 
-  // ====================================================================== 
+  // ======================================================================
   //! Setup the adaptive multilevel hierarchy.
   /* Computes the multilevel hierarchy as specified by the user.
    *
    * \param UseDefaultOrSpecified - (In) if \c true, the first call to Compute()
    *                     uses either the default null space or the null space
    *                     that has been set using SetNullSpace().
-   *                     If \c false, then one null space component is 
+   *                     If \c false, then one null space component is
    *                     computed using SetupInitialNullSpace().
    *
    * \param AdditionalCandidates - (In) Number of candidates, that is the
@@ -401,13 +401,13 @@ public:
    *                     IncrementNullSpace().
    */
   // time is tracked within each method.
-  // ====================================================================== 
+  // ======================================================================
   void AdaptCompute(const bool UseDefaultOrSpecified, int AdditionalCandidates)
   {
 
     StackPush();
 
-    if (UseDefaultOrSpecified) 
+    if (UseDefaultOrSpecified)
       Compute();
     else {
       SetupInitialNullSpace();
@@ -423,10 +423,10 @@ public:
     StackPop();
   }
 
-  // ====================================================================== 
+  // ======================================================================
   //! Computes the first component of the null space.
-  // ====================================================================== 
-  void SetupInitialNullSpace() 
+  // ======================================================================
+  void SetupInitialNullSpace()
   {
     ResetTimer();
     StackPush();
@@ -434,9 +434,9 @@ public:
     SetNumPDEEqns(GetInputNumPDEEqns());
 
     if (GetPrintLevel()) {
-      cout << endl;
+      std::cout << std::endl;
       ML_print_line("-", 80);
-      cout << "Computing the first null space component" << endl;
+      std::cout << "Computing the first null space component" << std::endl;
     }
 
     MultiVector NS(A_[0].GetDomainSpace());
@@ -446,7 +446,7 @@ public:
 
     NS = (NS + 1.0) / 2.0;
 
-    // zero out everything except for first dof on every  node 
+    // zero out everything except for first dof on every  node
     for (int j=0; j < NS.GetMyLength(); ++j)
     {
       if (j % GetNumPDEEqns() != 0)
@@ -486,11 +486,11 @@ public:
 
       if (GetPrintLevel()) {
         ML_print_line("-", 80);
-        cout << "current working level   = " << level << endl;
-        cout << "number of global rows   = " 
-          << A(level).GetDomainSpace().GetNumGlobalElements() << endl;
-        cout << "number of PDE equations = " << GetNumPDEEqns() << endl;
-        cout << "null space dimension    = " << NS.GetNumVectors() << endl;
+        std::cout << "current working level   = " << level << std::endl;
+        std::cout << "number of global rows   = "
+          << A(level).GetDomainSpace().GetNumGlobalElements() << std::endl;
+        std::cout << "number of PDE equations = " << GetNumPDEEqns() << std::endl;
+        std::cout << "null space dimension    = " << NS.GetNumVectors() << std::endl;
       }
 
       GetSmoothedP(A(level), List_, NS, P(level), NewNS);
@@ -512,13 +512,13 @@ public:
       S(level + 1).Apply(locF, NS);
       MyEnergyAfter = sqrt((A(level + 1) * NS) * NS);
       if (GetPrintLevel() == 0) {
-        cout << "Energy before smoothing = " << MyEnergyBefore << endl;
-        cout << "Energy after smoothing  = " << MyEnergyAfter << endl;
+        std::cout << "Energy before smoothing = " << MyEnergyBefore << std::endl;
+        std::cout << "Energy after smoothing  = " << MyEnergyAfter << std::endl;
       }
 
       if (pow(MyEnergyAfter/MyEnergyBefore,1.0/SweepsBefore) < GetMaxReduction()) {
         ++level;
-        break; 
+        break;
       }
     }
 
@@ -558,10 +558,10 @@ public:
       ML_THROW("Empty null space not allowed", -1);
 
     if (GetPrintLevel()) {
-      cout << endl;
+      std::cout << std::endl;
       ML_print_line("-", 80);
-      cout << "Incrementing the hierarchy, input null space dimension = "
-           << InputNS.GetNumVectors() << endl;
+      std::cout << "Incrementing the hierarchy, input null space dimension = "
+           << InputNS.GetNumVectors() << std::endl;
     }
 
     int level;
@@ -590,7 +590,7 @@ public:
     if (NCand+1 <= GetNumPDEEqns())
     {
       for (int i=0; i< AdditionalNS.GetMyLength(); i++)
-        if ( (i+1) % (NCand+1) != 0) 
+        if ( (i+1) % (NCand+1) != 0)
           AdditionalNS(i) = 0;
     }
 
@@ -638,7 +638,7 @@ public:
       if (level != 0)
         S(level).Reshape(A(level), GetSmootherType(), List_);
 
-      S(level + 1).Reshape(A(level + 1), GetSmootherType(), List_); 
+      S(level + 1).Reshape(A(level + 1), GetSmootherType(), List_);
 
       // ======================================================= //
       // Need to setup the bridge. We need to extract the NCand  //
@@ -706,8 +706,8 @@ public:
       ExpandedNS.Scale(NormFirstComponent / NormExpanded, NCand);
 
       if (GetPrintLevel() == 0) {
-        cout << "energy before cycle =" << MyEnergyBefore << endl;
-        cout << "energy after        =" << MyEnergyAfter << endl;
+        std::cout << "energy before cycle =" << MyEnergyBefore << std::endl;
+        std::cout << "energy after        =" << MyEnergyAfter << std::endl;
       }
 
       // FIXME: still to do:
@@ -752,9 +752,9 @@ public:
   // @}
   // @{ \name Mathematical methods
 
-  // ====================================================================== 
+  // ======================================================================
   //! Applies the preconditioner to \c b_f, returns the result in \c x_f.
-  // ====================================================================== 
+  // ======================================================================
   int Apply(const MultiVector& b_f, MultiVector& x_f) const
   {
     ResetTimer();
@@ -771,10 +771,10 @@ public:
     return(0);
   }
 
-  // ====================================================================== 
+  // ======================================================================
   //! Recursively called core of the multi level preconditioner.
-  // ====================================================================== 
-  int SolveMultiLevelSA(const MultiVector& b_f,MultiVector& x_f, int level) const 
+  // ======================================================================
+  int SolveMultiLevelSA(const MultiVector& b_f,MultiVector& x_f, int level) const
   {
     if (level == GetMaxLevels() - 1) {
       x_f = S(level) * b_f;
@@ -792,7 +792,7 @@ public:
     P(level).SetFlops(0.0);
 
     // apply pre-smoother
-    S(level).Apply(b_f,x_f); 
+    S(level).Apply(b_f,x_f);
     // new residual
     r_f = b_f - A(level) * x_f;
     // restrict to coarse
@@ -802,7 +802,7 @@ public:
     // prolongate back and add to solution
     x_f = x_f + P(level) * z_c;
     // apply post-smoother
-    S(level).Apply(b_f,x_f); 
+    S(level).Apply(b_f,x_f);
 
     UpdateFlops(2.0 * S(level).GetFlops());
     UpdateFlops(A(level).GetFlops());
@@ -817,29 +817,29 @@ public:
   // @{ \name Miscellaneous methods
 
   //! Prints basic information about \c this preconditioner.
-  std::ostream& Print(std::ostream& os, 
+  std::ostream& Print(std::ostream& os,
                       const bool verbose = true) const
   {
     if (GetMyPID() == 0) {
-      os << endl;
-      os << "*** MLAPI::MultiLevelSA, label = `" << GetLabel() << "'" << endl;
-      os << endl;
-      os << "Number of levels = " << GetMaxLevels() << endl;
-      os << "Flop count       = " << GetFlops() << endl;
-      os << "Cumulative time  = " << GetTime() << endl;
+      os << std::endl;
+      os << "*** MLAPI::MultiLevelSA, label = `" << GetLabel() << "'" << std::endl;
+      os << std::endl;
+      os << "Number of levels = " << GetMaxLevels() << std::endl;
+      os << "Flop count       = " << GetFlops() << std::endl;
+      os << "Cumulative time  = " << GetTime() << std::endl;
       if (GetTime() != 0.0)
-        os << "MFlops rate      = " << 1.0e-6 * GetFlops() / GetTime() << endl;
+        os << "MFlops rate      = " << 1.0e-6 * GetFlops() / GetTime() << std::endl;
       else
-        os << "MFlops rate      = 0.0" << endl;
-      os << endl;
+        os << "MFlops rate      = 0.0" << std::endl;
+      os << std::endl;
 
       for (int level = 0 ; level < GetMaxLevels() ; ++level) {
         ML_print_line("-", 80);
-        cout << "Information for level   = " << level;
-        cout << "number of global rows   = " 
-             << A(level).GetNumGlobalRows() << endl;
-        cout << "number of global nnz    = " 
-             << A(level).GetNumGlobalNonzeros() << endl;
+        std::cout << "Information for level   = " << level;
+        std::cout << "number of global rows   = "
+             << A(level).GetNumGlobalRows() << std::endl;
+        std::cout << "number of global nnz    = "
+             << A(level).GetNumGlobalNonzeros() << std::endl;
       }
       ML_print_line("-", 80);
     }
@@ -851,12 +851,12 @@ public:
 private:
 
   //! Returns the smoothed prolongator operator.
-  void GetSmoothedP(Operator Aop, Teuchos::ParameterList& List, MultiVector& NS,
+  void GetSmoothedP(const Operator & Aop, Teuchos::ParameterList& List, MultiVector& NS,
                     Operator& Pop, MultiVector& NewNS)
   {
     double LambdaMax;
     Operator IminusA;
-    string EigenAnalysis = List.get("eigen-analysis: type", "Anorm");
+    std::string EigenAnalysis = List.get("eigen-analysis: type", "Anorm");
     double Damping       = List.get("aggregation: damping", 1.333);
 
     Operator Ptent;
@@ -873,9 +873,9 @@ private:
       ML_THROW("incorrect parameter (" + EigenAnalysis + ")", -1);
 
     if (GetPrintLevel()) {
-      cout << "omega                   = " << Damping << endl;
-      cout << "lambda max              = " << LambdaMax << endl;
-      cout << "damping factor          = " << Damping / LambdaMax << endl;
+      std::cout << "omega                   = " << Damping << std::endl;
+      std::cout << "lambda max              = " << LambdaMax << std::endl;
+      std::cout << "damping factor          = " << Damping / LambdaMax << std::endl;
     }
 
     if (Damping != 0.0) {
@@ -892,14 +892,14 @@ private:
     return;
   }
 
-  void ResizeArrays(const int MaxLevels) 
+  void ResizeArrays(const int MaxLevels)
   {
     A_.resize(MaxLevels);
     R_.resize(MaxLevels);
     P_.resize(MaxLevels);
     S_.resize(MaxLevels);
   }
-    
+
   //! Maximum number of levels.
   int MaxLevels_;
   //! Fine-level matrix.

@@ -1,45 +1,10 @@
-/*
-// @HEADER
-// ************************************************************************
-//             FEI: Finite Element Interface to Linear Solvers
-//                  Copyright (2005) Sandia Corporation.
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
-// U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Alan Williams (william@sandia.gov) 
-//
-// ************************************************************************
-// @HEADER
-*/
-
+/*--------------------------------------------------------------------*/
+/*    Copyright 2005 Sandia Corporation.                              */
+/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
+/*    non-exclusive license for use of this work by or on behalf      */
+/*    of the U.S. Government.  Export of this program may require     */
+/*    a license from the United States Government.                    */
+/*--------------------------------------------------------------------*/
 
 #ifndef _fei_Matrix_Impl_hpp_
 #define _fei_Matrix_Impl_hpp_
@@ -56,7 +21,6 @@
 #include <fei_MatrixTraits_LinSysCore.hpp>
 #include <fei_MatrixTraits_FEData.hpp>
 #include <fei_MatrixTraits_FillableMat.hpp>
-#include <fei_FillableVec.hpp>
 #include <fei_FillableMat.hpp>
 
 #include <snl_fei_FEMatrixTraits.hpp>
@@ -91,7 +55,8 @@ namespace fei {
     /** Constructor */
     Matrix_Impl(fei::SharedPtr<T> matrix,
                fei::SharedPtr<fei::MatrixGraph> matrixGraph,
-                int numLocalEqns);
+                int numLocalEqns,
+                bool zeroSharedRows=true);
 
     /** Destructor */
     virtual ~Matrix_Impl();
@@ -265,6 +230,8 @@ namespace fei {
      */
     int multiply(fei::Vector* x,
                  fei::Vector* y);
+
+    void setCommSizes();
 
     /** After local overlapping data has been input, (e.g., element-data for a
         finite-element application) call this method to have data that 
@@ -468,7 +435,8 @@ int fei::Matrix_Impl<T>::giveToUnderlyingBlockMatrix(int row,
 template<typename T>
 fei::Matrix_Impl<T>::Matrix_Impl(fei::SharedPtr<T> matrix,
                            fei::SharedPtr<fei::MatrixGraph> matrixGraph,
-                                int numLocalEqns)
+                                int numLocalEqns,
+                                bool zeroSharedRows)
   : Matrix_core(matrixGraph, numLocalEqns),
     matrix_(matrix),
     globalAssembleCalled_(false),
@@ -487,6 +455,27 @@ fei::Matrix_Impl<T>::Matrix_Impl(fei::SharedPtr<T> matrix,
   }
   else {
     setBlockMatrix(false);
+  }
+
+  if (zeroSharedRows && matrixGraph->getGlobalNumSlaveConstraints() == 0) {
+    std::vector<double> zeros;
+    fei::SharedPtr<fei::SparseRowGraph> srg = matrixGraph->getRemotelyOwnedGraphRows();
+    if (srg.get() != NULL) {
+      for(size_t row=0; row<srg->rowNumbers.size(); ++row) {
+        int rowLength = srg->rowOffsets[row+1] - srg->rowOffsets[row];
+        if (rowLength == 0) continue;
+        zeros.resize(rowLength, 0.0);
+        const double* zerosPtr = &zeros[0];
+        const int* cols = &srg->packedColumnIndices[srg->rowOffsets[row]];
+        sumIn(1, &srg->rowNumbers[row], rowLength, cols, &zerosPtr);
+      }
+      setCommSizes();
+      std::map<int,FillableMat*>& remote = getRemotelyOwnedMatrices();
+      for(std::map<int,FillableMat*>::iterator iter=remote.begin(), end=remote.end(); iter!=end; ++iter)
+      {
+        iter->second->clear();
+      }
+    }
   }
 }
 
@@ -518,7 +507,7 @@ int fei::Matrix_Impl<T>::getRowLength(int row, int& length) const
       int proc = getOwnerProc(row);
       const FillableMat* remote_mat = getRemotelyOwnedMatrix(proc);
       if (remote_mat->hasRow(row)) {
-        const FillableVec* row_entries = remote_mat->getRow(row);
+        const CSVec* row_entries = remote_mat->getRow(row);
         length = row_entries->size();
       }
       else {
@@ -580,11 +569,12 @@ int fei::Matrix_Impl<T>::copyOutRow(int row, int len,
       int proc = getOwnerProc(row);
       const FillableMat* remote_mat = getRemotelyOwnedMatrix(proc);
       if (remote_mat->hasRow(row)) {
-        const FillableVec* row_entries = remote_mat->getRow(row);
-        FillableVec::const_iterator it=row_entries->begin(); 
-        for(int i=0; it!=row_entries->end(); ++it, ++i) {
-          indices[i] = it->first;
-          coefs[i] = it->second;
+        const CSVec* row_entries = remote_mat->getRow(row);
+        const std::vector<int>& row_indices = row_entries->indices();
+        const std::vector<double>& row_coefs = row_entries->coefs();
+        for(size_t i=0; i<row_indices.size(); ++i) {
+          indices[i] = row_indices[i];
+          coefs[i] = row_coefs[i];
         }
       }
     }
@@ -736,8 +726,8 @@ int fei::Matrix_Impl<T>::sumIn(int blockID, int connectivityID,
 
   if (haveFEMatrix() || haveBlockMatrix()) {
     FieldDofMap<int>& fdofmap = rspace->getFieldDofMap();
-    const IndexType<int,int>& connIDs = cblock->getNativeConnectivityIDs();
-    IndexType<int,int>::const_iterator
+    const std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+    std::map<int,int>::const_iterator
       iter = connIDs.find(connectivityID);
     if (iter == connIDs.end()) ERReturn(-1);
     int connOffset = iter->second;
@@ -937,6 +927,17 @@ int fei::Matrix_Impl<T>::multiply(fei::Vector* x,
                                  fei::Vector* y)
 {
   return( fei::MatrixTraits<T>::matvec(matrix_.get(), x, y) );
+}
+
+//----------------------------------------------------------------------------
+template<typename T>
+void fei::Matrix_Impl<T>::setCommSizes()
+{
+  if (output_level_ >= fei::BRIEF_LOGS && output_stream_ != NULL) {
+    (*output_stream_) << dbgprefix_<<"setCommSizes"<<FEI_ENDL;
+  }
+
+  Matrix_core::setCommSizes();
 }
 
 //----------------------------------------------------------------------------

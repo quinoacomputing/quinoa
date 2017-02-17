@@ -1,3 +1,36 @@
+C    Copyright (c) 2014, Sandia Corporation.
+C    Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+C    the U.S. Government retains certain rights in this software.
+C    
+C    Redistribution and use in source and binary forms, with or without
+C    modification, are permitted provided that the following conditions are
+C    met:
+C    
+C        * Redistributions of source code must retain the above copyright
+C          notice, this list of conditions and the following disclaimer.
+C    
+C        * Redistributions in binary form must reproduce the above
+C          copyright notice, this list of conditions and the following
+C          disclaimer in the documentation and/or other materials provided
+C          with the distribution.
+C    
+C        * Neither the name of Sandia Corporation nor the names of its
+C          contributors may be used to endorse or promote products derived
+C          from this software without specific prior written permission.
+C    
+C    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+C    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+C    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+C    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+C    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+C    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+C    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+C    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+C    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+C    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+C    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+C    
+
 C $Id: qmesh.f,v 1.8 2007/07/24 13:10:18 gdsjaar Exp $
 C $Log: qmesh.f,v $
 C Revision 1.8  2007/07/24 13:10:18  gdsjaar
@@ -782,7 +815,7 @@ C  BEGIN FULL SCHEME CONTROL FOR A GROUP SUB-REGION
 C
                      RECT = .NOT.(PENTAG .OR. TRIANG .OR.
      &                  TRNSIT .OR. FILL)
-                     IF (STEP) CALL MINMAX (MXNPER, NPER, A(K(1)),
+                     IF (STEP) CALL MINMAX_FQ (MXNPER, NPER, A(K(1)),
      &                  A(K(2)), XMIN, XMAX, YMIN, YMAX)
 CC* MODIFIED BY: TED BLACKER
 CC* MODIFICATION DATE: 7/31/90
@@ -973,7 +1006,7 @@ C
                   GO TO 300
                END IF
 C
-               IF (STEP) CALL MINMAX (MXND, NNN, A(K(7)), A(K(8)),
+               IF (STEP) CALL MINMAX_FQ (MXND, NNN, A(K(7)), A(K(8)),
      &            XMIN, XMAX, YMIN, YMAX)
 C
                CALL PSCHEM (MP, ML, MS, MR, N, IPOINT, COOR, IPBOUN,
@@ -1306,8 +1339,8 @@ C
 C  BEGIN FULL SCHEME CONTROL
 C
             RECT = .NOT.(PENTAG .OR. TRIANG .OR. TRNSIT .OR. FILL)
-            IF (STEP) CALL MINMAX (MXNPER, NPER, A(K(1)), A(K(2)), XMIN,
-     &         XMAX, YMIN, YMAX)
+            IF (STEP) CALL MINMAX_FQ (MXNPER, NPER, A(K(1)), A(K(2)),
+     *        XMIN, XMAX, YMIN, YMAX)
             NNNOLD = 0
             KKKOLD = 0
 C

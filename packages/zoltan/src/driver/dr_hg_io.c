@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #include <mpi.h>
 
@@ -372,7 +405,7 @@ int read_hypergraph_file(
 
     if (!chaco_dist_graph(MPI_COMM_WORLD, pio_info, 0, &gnvtxs, &nvtxs,
 	     &ch_start, &ch_adj, &vwgt_dim, &vwgts, &ch_ewgt_dim, &ch_ewgts,
-	     &ch_ndim, &ch_x, &ch_y, &ch_z, &ch_assignments) != 0) {
+	     &ch_ndim, &ch_x, &ch_y, &ch_z, &ch_assignments)) {
       Gen_Error(0, "fatal: Error returned from chaco_dist_graph");
       return 0;
     }
@@ -386,7 +419,7 @@ int read_hypergraph_file(
   }
 
   /* Initialize mesh structure for Hypergraph. */
-  mesh->data_type = HYPERGRAPH;
+  mesh->data_type = ZOLTAN_HYPERGRAPH;
   mesh->num_elems = nvtxs;
   mesh->vwgt_dim = vwgt_dim;
   mesh->ewgt_dim = ch_ewgt_dim;
@@ -675,7 +708,7 @@ int read_mtxplus_file(
   safe_free((void **)(void *)&myPinJ);
 
   /* Initialize mesh structure for Hypergraph. */
-  mesh->data_type = HYPERGRAPH;
+  mesh->data_type = ZOLTAN_HYPERGRAPH;
   mesh->num_elems = nMyVtx;
   mesh->vwgt_dim = vtxWDim;
   mesh->ewgt_dim = 0;
@@ -1201,7 +1234,7 @@ static int process_mtxp_file(PARIO_INFO_PTR pio_info,
   int preprocessed)
 {
 ZOLTAN_ID_TYPE nedges, nvtxs, npins, numew;
-ZOLTAN_ID_TYPE eid, vid, i, j;
+ZOLTAN_ID_TYPE eid, vid, i;
 ZOLTAN_ID_TYPE myminPin=0, mymaxPin=0, myminVtx=0, mymaxVtx=0, myshare, share;
 ZOLTAN_ID_TYPE *myi, *myj, *myvno, *myeno;
 int ok, not_ok;
@@ -1268,18 +1301,18 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
       if (myrank < nDistProcs){
         share = nvtxs / nDistProcs;
         i = nvtxs - (nDistProcs * share);
-        myshare = ((myrank < i) ? share+1 : share);
+        myshare = ((myrank < (int)i) ? share+1 : share);
         myminVtx = myrank * myshare;
-        if (myrank >= i) myminVtx += i;
+        if (myrank >= (int)i) myminVtx += i;
         mymaxVtx = myminVtx + myshare - 1;
       }
     }
     if (pio_info->init_dist_pins == INITIAL_LINEAR){ /* pin distribution */
       share = npins / nprocs;
       i = npins - (nprocs * share);
-      myshare = ((myrank < i) ? share+1 : share);
+      myshare = ((myrank < (int)i) ? share+1 : share);
       myminPin = myrank * myshare;
-      if (myrank >= i) myminPin += i;
+      if (myrank >= (int)i) myminPin += i;
       mymaxPin = myminPin + myshare - 1;
     }
   }
@@ -1336,7 +1369,15 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
 
     line = pinBuf;
     counter = 0;
-
+    /* Skip any additional comment lines before pins begin
+     * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+     */
+    while (line) {
+      if (line[0] != COMMENT_CHAR)
+        break;
+      line = next_line(line, fsize);
+    }
+     
     while (line){          /* PINS */
 
       make_string(line, linestr);
@@ -1363,6 +1404,14 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
     }
 
     line = vwgtBuf;
+    /* Skip any additional comment lines before vwgts begin
+     * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+     */
+    while (line) {
+      if (line[0] != COMMENT_CHAR)
+        break;
+      line = next_line(line, fsize);
+    }
 
     while(line) {        /* VERTICES and possibly WEIGHTS */
   
@@ -1392,6 +1441,14 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
 
     if (numew > 0){                      /* HYPEREDGE WEIGHTS */
       line = ewgtBuf;
+      /* Skip any additional comment lines before ewgts begin
+       * Zoltan_Generate_Files adds an extra comment line here to mtxp files.
+       */
+      while (line) {
+        if (line[0] != COMMENT_CHAR)
+          break;
+        line = next_line(line, fsize);
+      }
 
       while(line) {   
         make_string(line, linestr);
@@ -1486,15 +1543,16 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
       }
 
       if (mine){
+        int jj;
 	myvno[nextv] = vid;
-	for (j=0; j<vdim; j++){
-	  token = get_nth_token(linestr, 1 + j, strlen(linestr), 1, (char)0);
+	for (jj=0; jj<vdim; jj++){
+	  token = get_nth_token(linestr, 1 + jj, strlen(linestr), 1, (char)0);
 	  if (!token){
 	    sprintf(cmesg,"%s\nCan't find %d vertex weights\n",linestr,vdim);
 	    Gen_Error(0, cmesg);
 	    goto failure;
 	  }
-	  myvwgt[nextv*vdim + j] = (float)atof(token);
+	  myvwgt[nextv*vdim + jj] = (float)atof(token);
 	}
 	nextv++;
       }
@@ -1530,15 +1588,16 @@ char linestr[MATRIX_MARKET_MAX_LINE+1];
       }
 
       if (mine){
+        int jj;
 	myeno[nexte] = eid;
-	for (j=0; j<edim; j++){
-	  token = get_nth_token(linestr, 1 + j, strlen(linestr), 1, (char)0);
+	for (jj=0; jj<edim; jj++){
+	  token = get_nth_token(linestr, 1 + jj, strlen(linestr), 1, (char)0);
 	  if (!token){
 	    sprintf(cmesg,"%s\nCan't find %d edge weights\n",linestr,edim);
 	    Gen_Error(0, cmesg);
 	    goto failure;
 	  }
-	  myewgt[nexte*edim + j] = (float)atof(token);
+	  myewgt[nexte*edim + jj] = (float)atof(token);
 	}
 	nexte++;
       }
@@ -1598,7 +1657,7 @@ char *c_in, *c_out, *c_end;
 char *c_in_end;
 char *buf;
 long count_mine;
-int rc, max_sanity, total_line_found, line_size;
+int rc, max_sanity, total_line_found, line_size=0;
 ZOLTAN_ID_TYPE nedges, nvtxs, npins, numew; 
 int numOwners, vdim, edim;
 int i=0;
@@ -1694,25 +1753,25 @@ FILE *fp=NULL;
 
   while (1){
     /* read next chunk */
-
-    rc = fread(inbuf, 1, inbufsize, fp);
-    if (rc < inbufsize){
-      if ((rc == 0) && feof(fp)) break;
+    size_t rrc;
+    rrc = fread(inbuf, 1, inbufsize, fp);
+    if (rrc < inbufsize){
+      if ((rrc == 0) && feof(fp)) break;
       if (ferror(fp)){
         status = 0;
         goto End;
       }
     }
 
-    bytes_read += rc;
+    bytes_read += rrc;
 
-    if ((bytes_read == fsize) && (inbuf[rc-1] != '\n')){
+    if ((bytes_read == fsize) && (inbuf[rrc-1] != '\n')){
       /* we assume last character in the file is new line */
-      inbuf[rc++] = '\n';
+      inbuf[rrc++] = '\n';
     }
 
     c_in = inbuf;
-    c_in_end = inbuf + rc;
+    c_in_end = inbuf + rrc;
 
     while (c_in < c_in_end){
       c_in = first_char(c_in, max_sanity);  /* skip blanks */
@@ -2047,7 +2106,7 @@ static int my_vtx(int proc,
   }
   else if (pio_info->init_dist_type == INITIAL_CYCLIC){
     /* Deal out the vertices in a random fashion */
-    mine = ((vtx % nprocs) == myrank);
+    mine = ((int)(vtx % nprocs) == myrank);
   }
   else if (pio_info->init_dist_type == INITIAL_LINEAR){
     /* First process gets first nvtxs/nprocs vertices, and so on */
@@ -2075,7 +2134,7 @@ static int my_pin(ZOLTAN_ID_TYPE eid, ZOLTAN_ID_TYPE vid, int proc,
   }
   else if (pio_info->init_dist_pins == INITIAL_CYCLIC){
     /* Deal out the pins in a random fashion */
-    mine = ((pin % nprocs) == myrank);
+    mine = ((int)(pin % nprocs) == myrank);
   }
   else if (pio_info->init_dist_pins == INITIAL_LINEAR){
     /* First process gets first npins/nprocs pins, and so on */
@@ -2085,12 +2144,12 @@ static int my_pin(ZOLTAN_ID_TYPE eid, ZOLTAN_ID_TYPE vid, int proc,
     /* Each process gets entire rows (hyperedges) of pins, no
        row is split across processes  */
 
-    mine = ((eid % nprocs) == myrank);
+    mine = ((int)(eid % nprocs) == myrank);
   }
   else if (pio_info->init_dist_pins == INITIAL_COL){
     /* Each process gets entire columns of pins, no column is split
        across processes  */
-    mine = ((vid % nprocs) == myrank);
+    mine = ((int)(vid % nprocs) == myrank);
   }
 
   return mine;

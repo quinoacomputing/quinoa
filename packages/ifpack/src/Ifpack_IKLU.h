@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -34,7 +47,7 @@
 #include "Ifpack_CondestType.h"
 #include "Ifpack_ScalingType.h"
 #include "Ifpack_Preconditioner.h"
-#include "Ifpack_IKLU_Utils.h"	
+#include "Ifpack_IKLU_Utils.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Time.h"
@@ -52,25 +65,25 @@ namespace Teuchos {
 
 //! Ifpack_IKLU: A class for constructing and using an incomplete LU factorization of a given Epetra_RowMatrix.
 
-/*! The Ifpack_IKLU class computes a "Relaxed" IKLU factorization with level k fill 
-    of a given Epetra_RowMatrix. 
+/*! The Ifpack_IKLU class computes a "Relaxed" IKLU factorization with level k fill
+    of a given Epetra_RowMatrix.
 
     <P> Please refer to \ref ifp_ilu for a general description of the ILU algorithm.
 
-    <P>The complete list of supported parameters is reported in page \ref ifp_params. 
+    <P>The complete list of supported parameters is reported in page \ref ifp_params.
 
     \author Heidi Thornquist, Org. 1437
 
     \date Last modified on 28-Nov-06.
-*/    
+*/
 class Ifpack_IKLU: public Ifpack_Preconditioner {
-      
+
 public:
   // @{ Constructors and Destructors
   //! Ifpack_IKLU constuctor with variable number of indices per row.
   Ifpack_IKLU(const Epetra_RowMatrix* A);
-  
-  //! Ifpack_IKLU Destructor 
+
+  //! Ifpack_IKLU Destructor
   virtual ~Ifpack_IKLU();
 
   // @}
@@ -79,7 +92,7 @@ public:
   /* This method is only available if the Teuchos package is enabled.
      This method recognizes five parameter names: level_fill, drop_tolerance,
      absolute_threshold, relative_threshold and overlap_mode. These names are
-     case insensitive. For level_fill the ParameterEntry must have type int, the 
+     case insensitive. For level_fill the ParameterEntry must have type int, the
      threshold entries must have type double and overlap_mode must have type
      Epetra_CombineMode.
   */
@@ -87,10 +100,10 @@ public:
 
   //! Initialize L and U with values from user matrix A.
   /*! Copies values from the user's matrix into the nonzero pattern of L and U.
-    \param In 
+    \param In
            A - User matrix to be factored.
     \warning The graph of A must be identical to the graph passed in to Ifpack_IlukGraph constructor.
-             
+
    */
   int Initialize();
 
@@ -115,14 +128,14 @@ public:
   bool IsComputed() const {return(IsComputed_);};
 
   // Mathematical functions.
-  
+
   //! Returns the result of a Ifpack_IKLU forward/back solve on a Epetra_MultiVector X in Y.
-  /*! 
-    \param 
+  /*!
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
-    \param 
+    \param
     Y - (Out) A Epetra_MultiVector of dimension NumVectorscontaining result.
-    
+
     \return Integer error code, set to 0 if successful.
   */
   int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -130,10 +143,10 @@ public:
   int Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Computed the estimated condition number and returns the value.
-  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap, 
+  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                  const int MaxIters = 1550,
                  const double Tol = 1e-9,
-		 Epetra_RowMatrix* Matrix_in = 0);
+                 Epetra_RowMatrix* Matrix_in = 0);
 
   //! Returns the computed estimated condition number, or -1.0 if no computed.
   double Condest() const
@@ -143,9 +156,9 @@ public:
 
   //! If set true, transpose of this operator will be applied.
   /*! This flag allows the transpose of the given operator to be used implicitly.  Setting this flag
-      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface 
+      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface
       does not support transpose use, this method should return a value of -1.
-      
+
      \param
      UseTranspose_in - (In) If true, multiply by the transpose of operator, otherwise just use operator.
 
@@ -179,10 +192,10 @@ public:
 
   //! Returns a reference to the L factor.
   const Epetra_CrsMatrix & L() const {return(*L_);};
-  
+
   //! Returns a reference to the U factor.
   const Epetra_CrsMatrix & U() const {return(*U_);};
-    
+
   //! Returns the label of \c this object.
   const char* Label() const
   {
@@ -195,9 +208,9 @@ public:
     Label_ = Label_in;
     return(0);
   }
- 
+
   //! Prints basic information on iostream. This function is used by operator<<.
-  virtual ostream& Print(std::ostream& os) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 
   //! Returns the number of calls to Initialize().
   virtual int NumInitialize() const
@@ -271,26 +284,32 @@ public:
   {
     return(Rthresh_);
   }
-    
+
   //! Gets the dropping tolerance
   inline double DropTolerance() const
   {
     return(DropTolerance_);
   }
-    
+
   //! Returns the number of nonzero entries in the global graph.
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   int NumGlobalNonzeros() const {
     // FIXME: diagonal of L_ should not be stored
     return(L().NumGlobalNonzeros() + U().NumGlobalNonzeros() - L().NumGlobalRows());
   }
- 
+#endif
+  long long NumGlobalNonzeros64() const {
+    // FIXME: diagonal of L_ should not be stored
+    return(L().NumGlobalNonzeros64() + U().NumGlobalNonzeros64() - L().NumGlobalRows64());
+  }
+
   //! Returns the number of nonzero entries in the local graph.
   int NumMyNonzeros() const {
     return(L().NumMyNonzeros() + U().NumMyNonzeros());
   }
 
 private:
-  
+
   // @}
   // @{ Internal methods
 
@@ -334,7 +353,7 @@ private:
   //! Discards all elements below this tolerance
   double DropTolerance_;
   //! Label for \c this object
-  string Label_;
+  std::string Label_;
   //! \c true if \c this object has been initialized
   bool IsInitialized_;
   //! \c true if \c this object has been computed
@@ -364,7 +383,7 @@ private:
   //! Used for timing purposed
   mutable Epetra_Time Time_;
   //! Global number of nonzeros in L and U factors
-  int GlobalNonzeros_;
+  long long GlobalNonzeros_;
   Teuchos::RefCountPtr<Epetra_SerialComm> SerialComm_;
   Teuchos::RefCountPtr<Epetra_Map> SerialMap_;
 

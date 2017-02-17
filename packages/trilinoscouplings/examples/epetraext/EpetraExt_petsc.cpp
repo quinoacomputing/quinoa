@@ -38,7 +38,11 @@ Input parameters include:\n\
   -m <mesh_x>       : number of mesh points in x-direction\n\
   -n <mesh_n>       : number of mesh points in y-direction\n\n";
 
+#if (PETSC_VERSION_MAJOR < 3) || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 1)
 extern PetscErrorCode ShellApplyML(void*,Vec,Vec);
+#else
+extern PetscErrorCode ShellApplyML(PC,Vec,Vec);
+#endif
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -54,7 +58,7 @@ int main(int argc,char **args)
   PetscInt       i,j,Ii,J,Istart,Iend,its;
   PetscInt       m = 50,n = 50; /* #mesh points in x & y directions, resp. */
   PetscErrorCode ierr;
-  PetscTruth     flg;
+  PetscBool     flg;
   PetscScalar    v,one = 1.0,neg_one = -1.0;
   PetscInt rank=0;
   MPI_Comm comm;
@@ -68,6 +72,7 @@ int main(int argc,char **args)
   ierr = MatSetType(A, MATAIJ);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatMPIAIJSetPreallocation(A,5,PETSC_NULL,5,PETSC_NULL);CHKERRQ(ierr);
+  ierr = MatSetUp(A);CHKERRQ(ierr);
   PetscObjectGetComm( (PetscObject)A, &comm);
   ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
   if (!rank) printf("Matrix has %d (%dx%d) rows\n",m*n,m,n);
@@ -102,7 +107,7 @@ int main(int argc,char **args)
     ierr = PetscRandomCreate(PETSC_COMM_WORLD,&rctx);CHKERRQ(ierr);
     ierr = PetscRandomSetFromOptions(rctx);CHKERRQ(ierr);
     ierr = VecSetRandom(u,rctx);CHKERRQ(ierr);
-    ierr = PetscRandomDestroy(rctx);CHKERRQ(ierr);
+    ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr);
   } else {
     ierr = VecSet(u,one);CHKERRQ(ierr);
   }
@@ -156,7 +161,7 @@ int main(int argc,char **args)
   ierr = PetscOptionsHasName(PETSC_NULL,"-petsc_smoother",&flg);CHKERRQ(ierr);
   if (flg) {
     ierr = KSPCreate(comm,&kspSmoother);CHKERRQ(ierr);
-    ierr = KSPSetOperators(kspSmoother,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+    ierr = KSPSetOperators(kspSmoother,A,A);CHKERRQ(ierr);
     ierr = KSPSetType(kspSmoother,KSPRICHARDSON);CHKERRQ(ierr);
     ierr = KSPSetTolerances(kspSmoother, 1e-12, 1e-50, 1e7,1);
     ierr = KSPSetInitialGuessNonzero(kspSmoother,PETSC_TRUE);CHKERRQ(ierr);
@@ -188,7 +193,7 @@ int main(int argc,char **args)
 
   /* PETSc CG */
   ierr = KSPCreate(PETSC_COMM_WORLD,&ksp);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetTolerances(ksp,1e-12,1.e-50,PETSC_DEFAULT,
                           PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
@@ -210,14 +215,14 @@ int main(int argc,char **args)
   ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
   ierr = KSPGetIterationNumber(ksp,&its);CHKERRQ(ierr);
 
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Norm of error %A iterations %D\n",
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Norm of error %e iterations %D\n",
                      norm,its);CHKERRQ(ierr);
 
-  ierr = KSPDestroy(ksp);CHKERRQ(ierr);
-  ierr = VecDestroy(u);CHKERRQ(ierr);  ierr = VecDestroy(x);CHKERRQ(ierr);
-  ierr = VecDestroy(b);CHKERRQ(ierr);  ierr = MatDestroy(A);CHKERRQ(ierr);
+  ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
+  ierr = VecDestroy(&u);CHKERRQ(ierr);  ierr = VecDestroy(&x);CHKERRQ(ierr);
+  ierr = VecDestroy(&b);CHKERRQ(ierr);  ierr = MatDestroy(&A);CHKERRQ(ierr);
 
-  if (kspSmoother) {ierr = KSPDestroy(kspSmoother);CHKERRQ(ierr);}
+  if (kspSmoother) {ierr = KSPDestroy(&kspSmoother);CHKERRQ(ierr);}
   if (Prec) delete Prec;
 
   ierr = PetscFinalize();CHKERRQ(ierr);
@@ -226,15 +231,26 @@ int main(int argc,char **args)
 
 /* ***************************************************************** */
 
+#if (PETSC_VERSION_MAJOR < 3) || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 1)
 PetscErrorCode ShellApplyML(void *ctx,Vec x,Vec y)
+#else
+PetscErrorCode ShellApplyML(PC pc,Vec x,Vec y)
 {
   PetscErrorCode  ierr;
-  ML_Epetra::MultiLevelPreconditioner *mlp = (ML_Epetra::MultiLevelPreconditioner*)ctx;
+  ML_Epetra::MultiLevelPreconditioner *mlp = 0;
+  void* ctx;
+
+  ierr = PCShellGetContext(pc,&ctx); CHKERRQ(ierr);  
+  mlp = (ML_Epetra::MultiLevelPreconditioner*)ctx;
+#endif
 
   /* Wrap x and y as Epetra_Vectors. */
-  PetscScalar *xvals,*yvals;
-  ierr = VecGetArray(x,&xvals);CHKERRQ(ierr);
-  Epetra_Vector epx(View,mlp->OperatorDomainMap(),xvals);
+  // NOTE: We should not be const casting xvals, but we do promise not to modify the entries.
+  const PetscScalar *xvals;
+  PetscScalar *nonconst_xvals, *yvals;
+  ierr = VecGetArrayRead(x,&xvals);CHKERRQ(ierr);
+  nonconst_xvals = const_cast<PetscScalar*>(xvals);
+  Epetra_Vector epx(View,mlp->OperatorDomainMap(),nonconst_xvals);
   ierr = VecGetArray(y,&yvals);CHKERRQ(ierr);
   Epetra_Vector epy(View,mlp->OperatorRangeMap(),yvals);
 
@@ -242,7 +258,7 @@ PetscErrorCode ShellApplyML(void *ctx,Vec x,Vec y)
   mlp->ApplyInverse(epx,epy);
   
   /* Clean up and return. */
-  ierr = VecRestoreArray(x,&xvals);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(x,&xvals);CHKERRQ(ierr);
   ierr = VecRestoreArray(y,&yvals);CHKERRQ(ierr);
   return 0;
 } /*ShellApplyML*/

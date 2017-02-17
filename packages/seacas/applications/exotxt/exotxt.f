@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -78,15 +78,12 @@ C     C(1) dynamic memory base array for character data
       DIMENSION A(1)
       CHARACTER*1 C(1)
 
-C     Set ExodusII error reporting level
-C     Set level to EXABRT for production use
-      call exopts(EXABRT, ierr)
 
 C     Program Information
 C.
       QAINFO(1) = 'exotxt                          '
-      QAINFO(2) = '2011/06/29                      '
-      QAINFO(3) = ' 1.21                           '
+      QAINFO(2) = '2013/08/07                      '
+      QAINFO(3) = ' 1.23                           '
       QAINFO(4) = '                                '
       QAINFO(5) = '                                '
       QAINFO(6) = '                                '
@@ -144,7 +141,6 @@ C     Open the input database; Exit on error
       END IF
 
 C   --Read the initial variables
-
       CALL EXGINI (NDB, TITLE, NNDIM, NUMNP, NUMEL, NELBLK,
      &             NUMNPS, NUMESS, IERR)
 

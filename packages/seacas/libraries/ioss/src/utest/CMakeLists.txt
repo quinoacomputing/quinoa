@@ -1,9 +1,7 @@
-INCLUDE(TribitsAddExecutableAndTest)
 
 TRIBITS_ADD_EXECUTABLE(
  Utst_ioel
  SOURCES Utst_ioel.C
- DEPLIBS Ionit
 )
 
 TRIBITS_ADD_TEST(
@@ -12,11 +10,21 @@ TRIBITS_ADD_TEST(
 	NUM_MPI_PROCS 1
 )
 
-IF (${PACKAGE_NAME}_ENABLE_EXODUS)
+TRIBITS_ADD_EXECUTABLE(
+ Utst_sort
+ SOURCES Utst_sort.C
+)
+
+TRIBITS_ADD_TEST(
+	Utst_sort
+	NAME Utst_sort
+	NUM_MPI_PROCS 1
+)
+
+IF (${PACKAGE_NAME}_ENABLE_SEACASExodus)
 TRIBITS_ADD_EXECUTABLE(
  Utst_superelement
  SOURCES Utst_superelement.C
- DEPLIBS Ionit
 )
 
 TRIBITS_ADD_TEST(

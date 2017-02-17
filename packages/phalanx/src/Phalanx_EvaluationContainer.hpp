@@ -47,14 +47,17 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
 #include "Phalanx_EvaluationContainer_Base.hpp"
 #include "Phalanx_FieldTag.hpp"
 #include "Phalanx_Evaluator.hpp"
-#include "Phalanx_DataContainer_TemplateManager.hpp"
+#include "Phalanx_any.hpp"
+#include <unordered_map>
+#include <string>
 
 namespace PHX {
 
-  /*! \brief Container that holds all data associated with a scalar type.
+  /*! \brief Container that holds all data associated with an evaluation type.
 
 
   */
@@ -73,17 +76,33 @@ namespace PHX {
     void 
     registerEvaluator(const Teuchos::RCP<PHX::Evaluator<Traits> >& p);
 
-    template <typename DataT> 
-    Teuchos::ArrayRCP<DataT> getFieldData(const PHX::FieldTag& f);
+    PHX::any getFieldData(const PHX::FieldTag& f);
+
+    //! Bind the memory pointer for a field in all evaluators
+    void bindField(const PHX::FieldTag& f, const PHX::any& a);
 
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& fm);
 
     void evaluateFields(typename Traits::EvalData d);
 
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    /*! \brief Evaluate the fields using hybrid functional (asynchronous multi-tasking) and data parallelism.
+
+      @param work_size The number of work units to parallelize over.
+      @param d User defined data.
+     */
+    void evaluateFieldsTaskParallel(const int& work_size,
+				    typename Traits::EvalData d);
+#endif
+
     void preEvaluate(typename Traits::PreEvalData d);
 
     void postEvaluate(typename Traits::PostEvalData d);
+
+    void setKokkosExtendedDataTypeDimensions(const std::vector<PHX::index_size_type>& dims);
+
+    const std::vector<PHX::index_size_type> & getKokkosExtendedDataTypeDimensions() const;
 
     //! Return true if the postRegistrationSetupMethod has been called
     bool setupCalled() const;
@@ -92,17 +111,15 @@ namespace PHX {
 
     void print(std::ostream& os) const;
 
+    void analyzeGraph(double& speedup, double& parallelizability) const;
+
   protected:
-
-    typedef PHX::DataContainer_TemplateManager<EvalT, Traits> DCTM;
-
-    PHX::DataContainer_TemplateManager<EvalT, Traits> 
-    data_container_template_manager_;
-    
-    typename Traits::Allocator allocator_;
 
     bool post_registration_setup_called_;
 
+    std::unordered_map<std::string,PHX::any> fields_;
+
+    std::vector<PHX::index_size_type> kokkos_extended_data_type_dimensions_;
   };
   
 } 

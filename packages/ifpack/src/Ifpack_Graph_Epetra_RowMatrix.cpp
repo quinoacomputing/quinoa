@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -40,8 +53,8 @@ RowMatrix_(RowMatrix)
 {
   NumMyRows_ = RowMatrix_->NumMyRows();
   NumMyCols_ = RowMatrix_->NumMyCols();
-  NumGlobalRows_ = RowMatrix_->NumGlobalRows();
-  NumGlobalCols_ = RowMatrix_->NumGlobalCols();
+  NumGlobalRows_ = RowMatrix_->NumGlobalRows64();
+  NumGlobalCols_ = RowMatrix_->NumGlobalCols64();
   MaxNumIndices_ = RowMatrix_->MaxNumEntries();
 
   Values_.resize(MaxNumIndices_);
@@ -58,8 +71,9 @@ bool Ifpack_Graph_Epetra_RowMatrix::Filled() const
 {
   return(RowMatrix_->Filled());
 }
- 
+
 //==============================================================================
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Ifpack_Graph_Epetra_RowMatrix::GRID(int LRID_in) const
 {
   return(RowMatrix_->RowMatrixRowMap().GID(LRID_in));
@@ -70,8 +84,21 @@ int Ifpack_Graph_Epetra_RowMatrix::GCID(int LCID_in) const
 {
   return(RowMatrix_->RowMatrixColMap().GID(LCID_in));
 }
+#endif
+
+long long Ifpack_Graph_Epetra_RowMatrix::GRID64(int LRID_in) const
+{
+  return(RowMatrix_->RowMatrixRowMap().GID64(LRID_in));
+}
 
 //==============================================================================
+long long Ifpack_Graph_Epetra_RowMatrix::GCID64(int LCID_in) const
+{
+  return(RowMatrix_->RowMatrixColMap().GID64(LCID_in));
+}
+
+//==============================================================================
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Ifpack_Graph_Epetra_RowMatrix::LRID(int GRID_in) const
 {
   return(RowMatrix_->RowMatrixRowMap().LID(GRID_in));
@@ -82,15 +109,28 @@ int Ifpack_Graph_Epetra_RowMatrix::LCID(int GCID_in) const
 {
   return(RowMatrix_->RowMatrixColMap().LID(GCID_in));
 }
+#endif
+//==============================================================================
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+int Ifpack_Graph_Epetra_RowMatrix::LRID(long long GRID_in) const
+{
+  return(RowMatrix_->RowMatrixRowMap().LID(GRID_in));
+}
 
 //==============================================================================
+int Ifpack_Graph_Epetra_RowMatrix::LCID(long long GCID_in) const
+{
+  return(RowMatrix_->RowMatrixColMap().LID(GCID_in));
+}
+#endif
+//==============================================================================
 int Ifpack_Graph_Epetra_RowMatrix::
-ExtractMyRowCopy(int MyRow, int LenOfIndices, 
-		 int &NumIndices, int *Indices) const
+ExtractMyRowCopy(int MyRow, int LenOfIndices,
+                 int &NumIndices, int *Indices) const
 {
   return(RowMatrix_->ExtractMyRowCopy(MyRow, LenOfIndices,
-				      NumIndices, &Values_[0],
-				      Indices));
+                                      NumIndices, &Values_[0],
+                                      Indices));
 }
 
 //==============================================================================
@@ -100,8 +140,9 @@ int Ifpack_Graph_Epetra_RowMatrix::NumMyNonzeros() const
 }
 
 // ======================================================================
-ostream& Ifpack_Graph_Epetra_RowMatrix::Print(std::ostream& os) const
+std::ostream& Ifpack_Graph_Epetra_RowMatrix::Print(std::ostream& os) const
 {
+  using std::endl;
 
   if (Comm().MyPID())
     return(os);

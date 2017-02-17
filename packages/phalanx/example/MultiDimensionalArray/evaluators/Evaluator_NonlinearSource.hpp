@@ -45,14 +45,23 @@
 #ifndef PHX_EXAMPLE_VP_NONLINEAR_SOURCE_HPP
 #define PHX_EXAMPLE_VP_NONLINEAR_SOURCE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
+#ifdef  PHX_ENABLE_KOKKOS_AMT
+#include "Phalanx_Evaluator_TaskBase.hpp"
+#else
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#endif
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 template<typename EvalT, typename Traits>
-class NonlinearSource : public PHX::EvaluatorWithBaseImpl<Traits>,
-			public PHX::EvaluatorDerived<EvalT, Traits> {
+class NonlinearSource :
+#ifdef PHX_ENABLE_KOKKOS_AMT
+  public PHX::TaskBase<Traits,NonlinearSource<EvalT,Traits>>,
+#else
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+#endif
+  public PHX::EvaluatorDerived<EvalT, Traits> {
   
 public:
   
@@ -67,13 +76,16 @@ public:
   
   void postEvaluate(typename Traits::PostEvalData d);
   
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
 private:
   
   typedef typename EvalT::ScalarT ScalarT;
 
   PHX::MDField<ScalarT,Cell,Point> source;
-  PHX::MDField<ScalarT,Cell,Point> density;
-  PHX::MDField<ScalarT,Cell,Point> temp;
+  PHX::MDField<const ScalarT,Cell,Point> density;
+  PHX::MDField<const ScalarT,Cell,Point> temp;
 
   std::size_t cell_data_size;
 };

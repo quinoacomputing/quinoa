@@ -48,22 +48,16 @@
 // mpl (Meta Programming Library) templates
 #include "Sacado_mpl_vector.hpp"
 #include "Sacado_mpl_find.hpp"
-#include "boost/mpl/map.hpp"
-#include "boost/mpl/find.hpp"
 
 // traits Base Class
 #include "Phalanx_Traits_Base.hpp"
 
 // Include User Data Types
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Sacado.hpp"
 #include "Dimension.hpp"
 #include "Element_Linear2D.hpp"
 #include "Workset.hpp"
-#include "Phalanx_Allocator_Contiguous.hpp"
-
-// Debugging information
-#include "Phalanx_TypeStrings.hpp"
 
 namespace PHX {
 
@@ -101,18 +95,6 @@ namespace PHX {
     // Jacobian Vector Product (default scalar type is Fad<double, double>)
     typedef Sacado::mpl::vector<JvFadType> JvDataTypes;
 
-    // Maps the key EvalType a vector of DataTypes
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Jv, JvDataTypes>
-    >::type EvalToDataMap;
-
-    // ******************************************************************
-    // *** Allocator Type
-    // ******************************************************************
-    typedef PHX::ContiguousAllocator<double> Allocator;
-
     // ******************************************************************
     // *** User Defined Object Passed in for Evaluation Method
     // ******************************************************************
@@ -122,33 +104,6 @@ namespace PHX {
     typedef void* PostEvalData;
 
   };
- 
-  // ******************************************************************
-  // ******************************************************************
-  // Debug strings.  Specialize the Evaluation and Data types for the
-  // TypeString object in phalanx/src/Phalanx_TypeString.hpp.
-  // ******************************************************************
-  // ******************************************************************
-
-  // Evaluation Types
-  template<> struct TypeString<MyTraits::Residual> 
-  { static const std::string value; };
-
-  template<> struct TypeString<MyTraits::Jacobian> 
-  { static const std::string value; };
-
-  template<> struct TypeString<MyTraits::Jv> 
-  { static const std::string value; };
-
-  // Data Types
-  template<> struct TypeString<double> 
-  { static const std::string value; };
-
-  template<> struct TypeString< Sacado::Fad::SFad<double,8> > 
-  { static const std::string value; };
-
-  template<> struct TypeString< Sacado::Fad::SFad<double,1> > 
-  { static const std::string value; };
 
 }
 

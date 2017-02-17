@@ -2,7 +2,7 @@
 //
 // ***********************************************************************
 //
-//           Amesos2: Templated Direct Sparse Solver Package 
+//           Amesos2: Templated Direct Sparse Solver Package
 //                  Copyright 2011 Sandia Corporation
 //
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
@@ -47,20 +47,16 @@
 
 #include <Tpetra_CrsMatrix.hpp>
 
+#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
 #include <Epetra_CrsMatrix.h>
 
 #define AMESOS2_SOLVER_EPETRA_INST(SOLVERNAME) \
   template class SOLVERNAME<Epetra_CrsMatrix, Epetra_MultiVector>
-#endif	// HAVE_AMESOS2_EPETRA
+#endif  // HAVE_AMESOS2_EPETRA
+#endif  // HAVE_TPETRA_INST_INT_INT
 
 #define AMESOS2_SOLVER_TPETRA_INST(SOLVERNAME,S,LO,GO) \
-  template class SOLVERNAME<Tpetra::CrsMatrix<S,LO,GO, \
-					      Kokkos::DefaultNode::DefaultNodeType, \
-					      Kokkos::DefaultKernels<S, \
-								     LO, \
-								     Kokkos::DefaultNode::DefaultNodeType>::SparseOps>, \
-			    Tpetra::MultiVector<S,LO,GO, \
-						Kokkos::DefaultNode::DefaultNodeType> >
+  template class SOLVERNAME<Tpetra::CrsMatrix<S, LO, GO>, Tpetra::MultiVector<S, LO, GO> >
 
-#endif	// AMESOS2_EXPLICITINSTANTIATIONHELPER_HPP
+#endif  // AMESOS2_EXPLICITINSTANTIATIONHELPER_HPP

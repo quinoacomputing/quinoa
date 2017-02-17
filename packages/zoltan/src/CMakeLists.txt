@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -21,7 +20,10 @@ ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_OVIS)
 SET(HAVE_OVIS ${${PACKAGE_NAME}_ENABLE_OVIS})
 
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Zlib)
-SET(HAVE_GZIP ${${PACKAGE_NAME}_ENABLE_Zlib})
+SET(ZHAVE_GZIP ${${PACKAGE_NAME}_ENABLE_Zlib})
+
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_PURIFY)
+SET(HAVE_PURIFY ${${PACKAGE_NAME}_ENABLE_PURIFY})
 
 TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
@@ -61,6 +63,7 @@ APPEND_SET(HEADERS
   include/zoltan_timer_cpp.h
   include/zoltan_timer.h
   include/zoltan_dd.h
+  Utilities/DDirectory/zoltan_dd_const.h
   include/zoltan_dd_cpp.h
   include/zoltan_mem.h
   include/zoltan_eval.h
@@ -202,7 +205,7 @@ APPEND_SET(SOURCES
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/matrix)
 
 APPEND_SET(NOINSTALLHEADERS
-  matrix/matrix.h
+  matrix/zoltan_matrix.h
   )
 
 APPEND_SET(SOURCES
@@ -463,7 +466,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Utilities/shared)
 
 APPEND_SET(NOINSTALLHEADERS
   Utilities/Communication/comm.h
-  Utilities/DDirectory/DD.h
+  Utilities/DDirectory/DD_Memory.h
   Utilities/Timer/timer.h
   Utilities/shared/zoltan_util.h
   Utilities/shared/zoltan_id.h
@@ -490,6 +493,7 @@ APPEND_SET(SOURCES
   Utilities/DDirectory/DD_Update.c
   Utilities/DDirectory/DD_Stats.c
   Utilities/DDirectory/DD_Hash2.c
+  Utilities/DDirectory/DD_Memory.c
   Utilities/DDirectory/DD_Print.c
   Utilities/DDirectory/DD_Set_Neighbor_Hash_Fn2.c
   Utilities/DDirectory/DD_Set_Hash_Fn.c
@@ -513,7 +517,6 @@ APPEND_SET(NOINSTALLHEADERS
   zz/zz_rand.h
   zz/zz_sort.h
   zz/zz_util_const.h
-  zz/murmur3.h
   )
 
 APPEND_SET(SOURCES
@@ -530,7 +533,6 @@ APPEND_SET(SOURCES
   zz/zz_struct.c
   zz/zz_back_trace.c
   zz/zz_util.c
-  zz/murmur3.c
   )
 
 
@@ -662,12 +664,18 @@ IF (NOT TPL_ENABLE_MPI)
   SET(DEPLIBS simpi)
 ENDIF()
 
+IF(NOT MSVC)
+  # Add libm linking for ceil, floor and such.
+  LIST(APPEND IMPORTEDLIBS m)
+ENDIF()
+
 TRIBITS_ADD_LIBRARY(
   zoltan
   HEADERS ${HEADERS}
   NOINSTALLHEADERS ${NOINSTALLHEADERS}
   SOURCES ${SOURCES}
   DEPLIBS ${DEPLIBS}
+  IMPORTEDLIBS ${IMPORTEDLIBS}
   )
 
 INSTALL(FILES ${MODULES} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)

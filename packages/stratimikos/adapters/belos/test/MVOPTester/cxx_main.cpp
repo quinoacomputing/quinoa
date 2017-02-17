@@ -1,31 +1,43 @@
-//@HEADER
-// ************************************************************************
-// 
+// @HEADER
+// ***********************************************************************
 //
-//                 Belos: Block Linear Solvers Package
-//                 Copyright (2004) Sandia Corporation
-// 
+//         Stratimikos: Thyra-based strategies for linear solvers
+//                Copyright (2006) Sandia Corporation
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
-// ************************************************************************
-//@HEADER
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov)
+//
+// ***********************************************************************
+// @HEADER
 //
 //  This test uses the MVOPTester.hpp functions to test the Belos adapters
 //  to Epetra and Thyra.
@@ -57,7 +69,7 @@
 
 int main(int argc, char *argv[])
 {
-  
+
   using Teuchos::rcp_implicit_cast;
 
   int i, ierr, gerr;
@@ -87,17 +99,17 @@ int main(int argc, char *argv[])
     }
   }
 
-  // Construct a Map that puts approximately the same number of 
+  // Construct a Map that puts approximately the same number of
   // equations on each processor.
   Teuchos::RCP<Epetra_Map> Map = Teuchos::rcp( new Epetra_Map(dim, 0, *Comm) );
-  
+
   // Get update list and number of local equations from newly created Map.
   int NumMyElements = Map->NumMyElements();
   std::vector<int> MyGlobalElements(NumMyElements);
   Map->MyGlobalElements(&MyGlobalElements[0]);
 
   // Create an integer std::vector NumNz that is used to build the Petra Matrix.
-  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation 
+  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation
   // on this processor
   std::vector<int> NumNz(NumMyElements);
 
@@ -114,7 +126,7 @@ int main(int argc, char *argv[])
 
   // Create an Epetra_Matrix
   Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp( new Epetra_CrsMatrix(Copy, *Map, &NumNz[0]) );
-   
+
   // Add  rows one-at-a-time
   // Need some vectors to help
   // Off diagonal Values will always be -1
@@ -143,7 +155,7 @@ int main(int argc, char *argv[])
     ierr = A->InsertGlobalValues(MyGlobalElements[i],1,&two,&MyGlobalElements[i]);
     assert(ierr==0);
   }
-   
+
   // Finish building the epetra matrix A
   ierr = A->FillComplete();
   assert(ierr==0);
@@ -152,8 +164,8 @@ int main(int argc, char *argv[])
   Teuchos::RCP<Belos::EpetraOp> op = Teuchos::rcp(new Belos::EpetraOp(A));
 
   // Issue several useful typedefs;
-  typedef Belos::MultiVec<double> EMV;
-  typedef Belos::Operator<double> EOP;
+  // typedef Belos::MultiVec<double> EMV; // unused
+  // typedef Belos::Operator<double> EOP; // unused
 
   // Create an Epetra_MultiVector for an initial std::vector to start the solver.
   // Note that this needs to have the same number of columns as the blocksize.
@@ -172,15 +184,15 @@ int main(int argc, char *argv[])
   // create thyra objects from the epetra objects
 
   // first, a Thyra::VectorSpaceBase
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > epetra_vs = 
+  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > epetra_vs =
     Thyra::create_VectorSpace(Map);
 
   // then, a MultiVectorBase (from the Epetra_MultiVector)
-  Teuchos::RCP<Thyra::MultiVectorBase<double> > thyra_ivec = 
+  Teuchos::RCP<Thyra::MultiVectorBase<double> > thyra_ivec =
     Thyra::create_MultiVector(rcp_implicit_cast<Epetra_MultiVector>(ivec),epetra_vs);
 
   // then, a LinearOpBase (from the Epetra_CrsMatrix)
-  Teuchos::RCP<Thyra::LinearOpBase<double> > thyra_op = 
+  Teuchos::RCP<Thyra::LinearOpBase<double> > thyra_op =
     Teuchos::rcp( new Thyra::EpetraLinearOp(A) );
 
 
@@ -195,13 +207,13 @@ int main(int argc, char *argv[])
     break;
   case Belos::Error:
     if ( verbose && MyPID==0 ) {
-      std::cout << "*** ThyraAdapter FAILED TestMultiVecTraits() ***" 
+      std::cout << "*** ThyraAdapter FAILED TestMultiVecTraits() ***"
            << std::endl << std::endl;
     }
     break;
   }
 
-  // test the Thyra adapter operator 
+  // test the Thyra adapter operator
   ierr = Belos::TestOperatorTraits<double,TMVB,TLOB>(MyOM,thyra_ivec,thyra_op);
   gerr |= ierr;
   switch (ierr) {
@@ -212,7 +224,7 @@ int main(int argc, char *argv[])
     break;
   case Belos::Error:
     if ( verbose && MyPID==0 ) {
-      std::cout << "*** ThyraAdapter FAILED TestOperatorTraits() ***" 
+      std::cout << "*** ThyraAdapter FAILED TestOperatorTraits() ***"
            << std::endl << std::endl;
     }
     break;
@@ -225,7 +237,7 @@ int main(int argc, char *argv[])
 
   if (gerr) {
     if (verbose && MyPID==0)
-      std::cout << "End Result: TEST FAILED" << std::endl;	
+      std::cout << "End Result: TEST FAILED" << std::endl;
     return -1;
   }
   //

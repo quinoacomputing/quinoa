@@ -1,10 +1,35 @@
-/*------------------------------------------------------------------------*/
-/*                 Copyright 2010 Sandia Corporation.                     */
-/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
-/*  license for use of this work by or on behalf of the U.S. Government.  */
-/*  Export of this program may require a license from the                 */
-/*  United States Government.                                             */
-/*------------------------------------------------------------------------*/
+// Copyright (c) 2013, Sandia Corporation.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+// 
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+// 
+//     * Neither the name of Sandia Corporation nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 
 #include <iostream>
 #include <sstream>
@@ -12,11 +37,9 @@
 #include <cmath>
 #include <unistd.h>
 
-#include <mpi.h>
-
 #include <stk_util/diag/PrintTimer.hpp>
 #include <stk_util/diag/Timer.hpp>
-#include <stk_util/diag/Writer.hpp>
+#include <stk_util/util/Writer.hpp>
 #include <stk_util/environment/ReportHandler.hpp>
 #include <stk_util/use_cases/UseCaseEnvironment.hpp>
 
@@ -55,7 +78,7 @@ work()
 
   for (int i = 0; i < 100000; ++i)
 //  for (int i = 0; i < 100; ++i)
-    x += std::sin((double) i);
+    x += std::sin(i);
 
   return x;
 }
@@ -217,9 +240,9 @@ use_case_timer(
       }
     }
 
-    out() << "One object run 100 times" << std::endl;
+    sierra::out() << "One object run 100 times" << std::endl;
 
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
 
     stk::diag::MetricTraits<stk::diag::LapCount>::Type lap_count = 0;
     for (size_t j = 0; j < object_vector.size(); ++j)
@@ -230,9 +253,9 @@ use_case_timer(
     for (size_t j = 0; j < object_vector.size(); ++j)
       object_vector[j].run();
 
-    out() << "Object tree run once" << std::endl;
+    sierra::out() << "Object tree run once" << std::endl;
 
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
 
     lap_count = 0;
     for (size_t j = 0; j < object_vector.size(); ++j)
@@ -244,9 +267,9 @@ use_case_timer(
       for (size_t j = 0; j < object_vector.size(); ++j)
         object_vector[j].run();
 
-    out() << "Object tree 100 times (checkpointed)" << std::endl;
+    sierra::out() << "Object tree 100 times (checkpointed)" << std::endl;
 
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
 
     lap_count = 0;
     for (size_t j = 0; j < object_vector.size(); ++j)
@@ -258,12 +281,12 @@ use_case_timer(
       for (size_t j = 0; j < object_vector.size(); ++j)
         object_vector[j].run();
 
-    out() << "Object tree 100 more times (checkpointed)" << std::endl;
+    sierra::out() << "Object tree 100 more times (checkpointed)" << std::endl;
 
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
 
-    out() << "Object tree (not checkpointed)" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
+    sierra::out() << "Object tree (not checkpointed)" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false);
 
     // Add a static function timer on odd processors
     if (parallel_rank%2 == 1) {
@@ -281,38 +304,38 @@ use_case_timer(
       }
     }
 
-    out() << "Add asymetric timers on odd processors, parallel collected output (checkpointed)" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
+    sierra::out() << "Add asymetric timers on odd processors, parallel collected output (checkpointed)" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, true);
 
     for (size_t i = 0; i < 100; ++i)
       for (size_t j = 0; j < object_vector.size(); ++j)
         object_vector[j].run();
 
-    out() << "Object tree 100 more times, parallel collected output (checkpointed)" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, true, MPI_COMM_WORLD);
+    sierra::out() << "Object tree 100 more times, parallel collected output (checkpointed)" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, true, MPI_COMM_WORLD);
 
-    out() << "Object tree, parallel collected output (not checkpointed)" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
+    sierra::out() << "Object tree, parallel collected output (not checkpointed)" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
 
     stk::diag::setTimerTimeFormat(stk::TIMEFORMAT_SECONDS);
     
-    out() << "Object tree, parallel collected output (not checkpointed), seconds" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
+    sierra::out() << "Object tree, parallel collected output (not checkpointed), seconds" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
 
     stk::diag::setTimerTimeFormat(stk::TIMEFORMAT_SECONDS | stk::TIMEFORMAT_MILLIS);
     
-    out() << "Object tree, parallel collected output (not checkpointed), seconds and milliseconds" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
+    sierra::out() << "Object tree, parallel collected output (not checkpointed), seconds and milliseconds" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
 
     stk::diag::setTimerTimeFormat(stk::TIMEFORMAT_HMS);
     
-    out() << "Object tree, parallel collected output (not checkpointed), hh:mm:ss" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
+    sierra::out() << "Object tree, parallel collected output (not checkpointed), hh:mm:ss" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
 
     stk::diag::setTimerTimeFormat(stk::TIMEFORMAT_HMS | stk::TIMEFORMAT_MILLIS);
     
-    out() << "Object tree, parallel collected output (not checkpointed), hh:mm:ss.mmm" << std::endl;
-    stk::diag::printTimersTable(out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
+    sierra::out() << "Object tree, parallel collected output (not checkpointed), hh:mm:ss.mmm" << std::endl;
+    stk::diag::printTimersTable(sierra::out(), unitTestTimer(), stk::diag::METRICS_ALL, false, MPI_COMM_WORLD);
   }
 
   return 0;

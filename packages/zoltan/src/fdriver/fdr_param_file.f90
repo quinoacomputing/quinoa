@@ -1,16 +1,50 @@
-!/*****************************************************************************
-! * Zoltan Library for Parallel Applications                                  *
-! * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
-! * For more info, see the README file in the top-level Zoltan directory.     *
-! *****************************************************************************/
-!/*****************************************************************************
-! * CVS File Information :
-! *    $RCSfile$
-! *    $Author$
-! *    $Date$
-! *    $Revision$
-! ****************************************************************************/
-!/*
+!! 
+!! @HEADER
+!!
+!!!!**********************************************************************
+!!
+!!  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+!!                  Copyright 2012 Sandia Corporation
+!!
+!! Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+!! the U.S. Government retains certain rights in this software.
+!!
+!! Redistribution and use in source and binary forms, with or without
+!! modification, are permitted provided that the following conditions are
+!! met:
+!!
+!! 1. Redistributions of source code must retain the above copyright
+!! notice, this list of conditions and the following disclaimer.
+!!
+!! 2. Redistributions in binary form must reproduce the above copyright
+!! notice, this list of conditions and the following disclaimer in the
+!! documentation and/or other materials provided with the distribution.
+!!
+!! 3. Neither the name of the Corporation nor the names of the
+!! contributors may be used to endorse or promote products derived from
+!! this software without specific prior written permission.
+!!
+!! THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+!! EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+!! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+!! PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+!! CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+!! EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+!! PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+!! PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+!! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+!! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+!! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+!!
+!! Questions? Contact Karen Devine	kddevin@sandia.gov
+!!                    Erik Boman	egboman@sandia.gov
+!!
+!!!!**********************************************************************
+!!
+!! @HEADER
+ !!
+! ***************************************************************************
+!
 !   Code imported to Zoltan zdrive from
 !
 !   zoltanParams_read_file.c
@@ -29,7 +63,7 @@
 !   Computer Science Research Institute
 !   Sandia National Laboratories
 !
-!*/
+!
 
 !  Translated to Fortran by Bill Mitchell, NIST, March 2007
 
@@ -56,7 +90,7 @@ public ztnPrm_read_file
 
 integer, parameter :: stderr = 0, stdout = 6
 
-!/*#define DEBUG 1*/
+!#define DEBUG 1
 
 logical, parameter :: DEBUG = .false.
 
@@ -425,7 +459,7 @@ end subroutine get_method
 
 !void zoltanParams_set_comm(MPI_Comm thecomm) {
 !
-!  /* remember the comm passed in */
+!   remember the comm passed in 
 !  MPI_Comm_dup(thecomm, &comm);
 !}
 
@@ -440,7 +474,7 @@ end subroutine ztnPrm_set_comm
 
 !void zoltanParams_hier_setup(struct Zoltan_Struct *zz) {
 !
-!  /* make sure the hierarchical balancing callbacks are in place */
+!   make sure the hierarchical balancing callbacks are in place 
 !  if (Zoltan_Set_Fn(zz, ZOLTAN_HIER_NUM_LEVELS_FN_TYPE, 
 !		    (void (*)()) get_num_levels, NULL) == ZOLTAN_FATAL) {
 !    fprintf(stderr,"zoltanParams_hier_setup: set NUM_LEVELS callback failed\n");
@@ -480,7 +514,7 @@ integer(Zoltan_INT) :: dummy(1) = (/0/)
 
 end subroutine ztnPrm_hier_setup
 
-!/*
+!
 !
 !  zoltanParams_read_file
 !
@@ -506,7 +540,7 @@ end subroutine ztnPrm_hier_setup
 !
 !  End file with EOF
 !
-!*/
+!
 
 !void zoltanParams_read_file(struct Zoltan_Struct *lb, char *file, 
 !			    MPI_Comm thecomm) {
@@ -528,7 +562,7 @@ integer :: mypid, numprocs
 logical :: not2
 integer, allocatable :: partition(:)
 
-!  /* remember the comm passed in */
+!   remember the comm passed in 
 !  MPI_Comm_dup(thecomm, &comm);
 !
 !  MPI_Comm_rank(comm, &mypid);
@@ -608,7 +642,7 @@ integer, allocatable :: partition(:)
 
       call ztnPrm_hier_setup(lb)
  
-!      /* the rest of the file contains hierarchical balancing parameters */
+!       the rest of the file contains hierarchical balancing parameters 
 !      fscanf(fp, "%d", &numlevels);
 
 ! the rest of the file contains hierarchical balancing parameters
@@ -629,7 +663,7 @@ integer, allocatable :: partition(:)
       call ztnPrm_hier_set_num_levels(numlevels)
 
 !      for (level=0; level<numlevels; level++) {
-!	/* first, a list of partitions for each proc should be in the file */
+!	 first, a list of partitions for each proc should be in the file 
 !	for (proc=0; proc<numprocs; proc++) {
 !	  fscanf(fp, "%d", &partition);
 !	  if (proc == mypid) zoltanParams_hier_set_partition(level, partition);
@@ -641,7 +675,7 @@ integer, allocatable :: partition(:)
          read(fp,*) partition ! assumes the line has exactly numprocs numbers
          call ztnPrm_hier_set_partition(level,partition(mypid))
 
-!	/* then parameters until we get LEVEL END */
+!	 then parameters until we get LEVEL END 
 !	while ((fscanf(fp, "%s %s\n", str1, str2) == 2) &&
 !	       (strcmp(str1, "LEVEL") != 0) &&
 !	       (strcmp(str2, "END") != 0)) {

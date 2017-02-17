@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -44,35 +57,35 @@
 //! Ifpack: a function class to define Ifpack preconditioners.
 /*!
 Class Ifpack is a function class, that contains just one method:
-Create(). Using Create(), users can easily define a variety of 
-IFPACK preconditioners. 
+Create(). Using Create(), users can easily define a variety of
+IFPACK preconditioners.
 
 Create requires 3 arguments:
-- a string, indicating the preconditioner to be built;
+- a std::string, indicating the preconditioner to be built;
 - a pointer to an Epetra_RowMatrix, representing the matrix
   to be used to define the preconditioner;
 - an interger (defaulted to 0), that specifies the amount of
   overlap among the processes.
 
 The first argument can assume the following values:
-- \c "point relaxation" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_PointRelaxation>
+- \c "point relaxation" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_PointRelaxation> (no Additive Schwarz in serial)
 - \c "point relaxation stand-alone" : returns an instance of Ifpack_PointRelaxation (value of overlap is ignored).
-- \c "block relaxation" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_BlockRelaxation>
+- \c "block relaxation" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_BlockRelaxation> (no Additive Schwarz in serial)
 - \c "block relaxation stand-alone)" : returns an instance of Ifpack_BlockRelaxation.
-- \c "Amesos" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_Amesos>.
+- \c "Amesos" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_Amesos> (no Additive Schwarz in serial)
 - \c "Amesos stand-alone" : returns an instance of Ifpack_Amesos.
-- \c "IC" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_IC>.
-- \c "IC stand-alone" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_IC>.
-- \c "ICT" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ICT>.
+- \c "IC" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_IC> (no Additive Schwarz in serial)
+- \c "IC stand-alone" : returns an instance of Ifpack_IC.
+- \c "ICT" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ICT> (no Additive Schwarz in serial)
 - \c "ICT stand-alone" : returns an instance of Ifpack_ICT.
-- \c "ILU" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ILU>.
+- \c "ILU" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ILU> (no Additive Schwarz in serial)
 - \c "ILU stand-alone" : returns an instance of Ifpack_ILU.
-- \c "ILUT" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ILUT>.
+- \c "ILUT" : returns an instance of Ifpack_AdditiveSchwarz<Ifpack_ILUT> (no Additive Schwarz in serial)
 - \c "ILUT stand-alone" : returns an instance of Ifpack_ILUT.
 - otherwise, Create() returns 0.
 
 \note Objects in stand-alone mode cannot use reordering, variable overlap, and singleton filters.
-However, their construction can be slightly faster than the non stand-alone counterpart. 
+However, their construction can be slightly faster than the non stand-alone counterpart.
 
 <P> The following fragment of code shows the
 basic usage of this class.
@@ -84,7 +97,7 @@ basic usage of this class.
 Ifpack Factory;
 
 Epetra_RowMatrix* A; // A is FillComplete()'d.
-string PrecType = "ILU"; // use incomplete LU on each process
+std::string PrecType = "ILU"; // use incomplete LU on each process
 int OverlapLevel = 1; // one row of overlap among the processes
 Ifpack_Preconditioner* Prec = Factory.Create(PrecType, A, OverlapLevel);
 assert (Prec != 0);
@@ -132,6 +145,11 @@ public:
     ,BLOCK_RELAXATION
     ,BLOCK_RELAXATION_STAND_ALONE
     ,BLOCK_RELAXATION_STAND_ALONE_ILU
+    ,BLOCK_RELAXATION_STAND_ALONE_ILUT
+    ,BLOCK_RELAXATION_STAND_ALONE_IC
+#ifdef HAVE_IFPACK_SUPERLU
+    ,BLOCK_RELAXATION_STAND_ALONE_SILU
+#endif
 #ifdef HAVE_IFPACK_AMESOS
     ,BLOCK_RELAXATION_STAND_ALONE_AMESOS
     ,BLOCK_RELAXATION_AMESOS
@@ -158,14 +176,24 @@ public:
 #ifdef HAVE_IFPACK_SUPERLU
   ,SILU
 #endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
+    ,MSF_AMESOS
+#endif
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+    ,MSF_IC
+#endif
     ,CHEBYSHEV
+    ,POLYNOMIAL
+    ,KRYLOV
     ,IHSS
     ,SORA
+    ,TRIDI_RELAXATION
+    ,TRIDI_RELAXATION_STAND_ALONE
   };
 
   /** \brief . */
   static const int numPrecTypes =
-    +5
+    +7
 #ifdef HAVE_IFPACK_AMESOS
     +4
 #endif
@@ -175,27 +203,33 @@ public:
 #endif
 #ifdef HAVE_IFPACK_HIPS
     +1
-#endif    
+#endif
 #ifdef HAVE_HYPRE
     +1
 #endif
 #ifdef HAVE_IFPACK_SUPERLU
+    +2
+#endif
+#if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
     +1
 #endif
-    +3
+#ifdef HAVE_IFPACK_SUPPORTGRAPH
+    +1
+#endif
+    +7
     ;
 
   /** \brief List of the preconditioner types as enum values . */
   static const EPrecType precTypeValues[numPrecTypes];
 
-  /** \brief List of preconditioner types as string values. */
+  /** \brief List of preconditioner types as std::string values. */
   static const char* precTypeNames[numPrecTypes];
 
   /** \brief List of bools that determines if the preconditioner type supports
    * unsymmetric matrices. */
   static const bool supportsUnsymmetric[numPrecTypes];
 
-  /** \brief Function that gives the string name for preconditioner given its
+  /** \brief Function that gives the std::string name for preconditioner given its
    * enumerication value. */
   static const char* toString(const EPrecType precType)
       { return precTypeNames[precType]; }
@@ -203,20 +237,20 @@ public:
   /** \brief Creates an instance of Ifpack_Preconditioner given the enum value
    * of the preconditioner type (can not fail, no bad input possible).
    *
-   * \param PrecType (In) - Enum value of preconditioner type to be created. 
+   * \param PrecType (In) - Enum value of preconditioner type to be created.
    *
    * \param Matrix (In) - Matrix used to define the preconditioner
    *
    * \param overlap (In) - specified overlap, defaulted to 0.
    */
   static Ifpack_Preconditioner* Create(
-    EPrecType PrecType, Epetra_RowMatrix* Matrix, const int overlap = 0
+    EPrecType PrecType, Epetra_RowMatrix* Matrix, const int overlap = 0, bool overrideSerialDefault = false
     );
 
-  /** \brief Creates an instance of Ifpack_Preconditioner given the string
+  /** \brief Creates an instance of Ifpack_Preconditioner given the std::string
    * name of the preconditioner type (can fail with bad input).
    *
-   * \param PrecType (In) - String name of preconditioner type to be created. 
+   * \param PrecType (In) - String name of preconditioner type to be created.
    *
    * \param Matrix (In) - Matrix used to define the preconditioner
    *
@@ -227,9 +261,10 @@ public:
    * that the client is responsible for calling <tt>delete</tt> on the
    * returned object once it is finished using it!
    */
-  Ifpack_Preconditioner* Create(const string PrecType,
-				Epetra_RowMatrix* Matrix,
-				const int overlap = 0);
+  Ifpack_Preconditioner* Create(const std::string PrecType,
+                                Epetra_RowMatrix* Matrix,
+                                const int overlap = 0,
+                                bool overrideSerialDefault = false);
 
   /** \brief Sets the options in List from the command line.
    *
@@ -239,7 +274,7 @@ public:
    * <tt>Teuchos::updateParametersFromXmlStream()</tt>.
    */
   int SetParameters(int argc, char* argv[],
-                    Teuchos::ParameterList& List, string& PrecType,
+                    Teuchos::ParameterList& List, std::string& PrecType,
                     int& Overlap);
 
 };

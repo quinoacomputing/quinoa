@@ -1,32 +1,44 @@
+/*@HEADER
+// ***********************************************************************
+//
+//       Ifpack: Object-Oriented Algebraic Preconditioner Package
+//                 Copyright (2002) Sandia Corporation
+//
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
+// ***********************************************************************
 //@HEADER
-/*
-************************************************************************
-
-              IFPACK: Robust Algebraic Preconditioning Package
-                Copyright (2001) Sandia Corporation
-
-Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-license for use of this work by or on behalf of the U.S. Government.
-
-This library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as
-published by the Free Software Foundation; either version 2.1 of the
-License, or (at your option) any later version.
- 
-This library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
- 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-USA
-Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-
-************************************************************************
 */
-//@HEADER
 
 /* \file Ifpack_HashTable.h
  *
@@ -45,7 +57,7 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 // ============================================================================
 // Hash table with good performances and high level of memory reuse.
 // Given a maximum number of keys n_keys, this class allocates chunks of memory
-// to store n_keys keys and values. 
+// to store n_keys keys and values.
 //
 // Usage:
 //
@@ -53,12 +65,12 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 //    Ifpack_HashTable Hash(n_keys);
 //
-//    n_keys - maximum number of keys (This will be the n_keys with zero 
+//    n_keys - maximum number of keys (This will be the n_keys with zero
 //             collisons.)
 //
 // 3) use it, then delete it:
 //
-//    Hash.get(key, value)       --> returns the value stored on key, or 0.0 
+//    Hash.get(key, value)       --> returns the value stored on key, or 0.0
 //                                   if not found.
 //    Hash.set(key, value)       --> sets the value in the hash table, replace
 //                                   existing values.
@@ -72,13 +84,13 @@ Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 // \author Marzio Sala, ETHZ/COLAB
 //
 // \date 30-Jun-06
-// ============================================================================ 
-
-class Ifpack_HashTable 
+// ============================================================================
+template<typename key_type>
+class TIfpack_HashTable
 {
   public:
     //! constructor.
-    Ifpack_HashTable(const int n_keys = 1031, const int n_sets = 1)
+    TIfpack_HashTable(const int n_keys = 1031, const int n_sets = 1)
     {
       n_keys_ = getRecommendedHashSize(n_keys) ;
       n_sets_ = n_sets;
@@ -101,13 +113,13 @@ class Ifpack_HashTable
     }
 
     //! Returns an element from the hash table, or 0.0 if not found.
-    inline double get(const int key)
+    inline double get(const key_type key)
     {
       int hashed_key = doHash(key);
 
       for (int set_ptr = 0; set_ptr < counter_[hashed_key]; ++set_ptr)
       {
-        if (keys_[set_ptr][hashed_key] == key)  
+        if (keys_[set_ptr][hashed_key] == key)
           return(vals_[set_ptr][hashed_key]);
       }
 
@@ -115,7 +127,7 @@ class Ifpack_HashTable
     }
 
     //! Sets an element in the hash table.
-    inline void set(const int key, const double value,
+    inline void set(const key_type key, const double value,
                     const bool addToValue = false)
     {
       int hashed_key = doHash(key);
@@ -141,7 +153,7 @@ class Ifpack_HashTable
         return;
       }
 
-      std::vector<int> new_key;
+      std::vector<key_type> new_key;
       std::vector<double> new_val;
 
       keys_.push_back(new_key);
@@ -165,7 +177,7 @@ class Ifpack_HashTable
     }
 
     //! Returns the number of stored entries.
-    inline int getNumEntries() const 
+    inline int getNumEntries() const
     {
       int n_entries = 0;
       for (int key = 0; key < n_keys_; ++key)
@@ -174,7 +186,7 @@ class Ifpack_HashTable
     }
 
     //! Converts the contents in array format for both keys and values.
-    void arrayify(int* key_array, double* val_array)
+    void arrayify(key_type* key_array, double* val_array)
     {
       int count = 0;
       for (int key = 0; key < n_keys_; ++key)
@@ -189,6 +201,9 @@ class Ifpack_HashTable
     //! Basic printing routine.
     void print()
     {
+      using std::cout;
+      using std::endl;
+
       cout << "n_keys = " << n_keys_ << endl;
       cout << "n_sets = " << n_sets_ << endl;
     }
@@ -196,7 +211,7 @@ class Ifpack_HashTable
     int getRecommendedHashSize (int n)
     {
         /* Prime number approximately in the middle of the range [2^x..2^(x+1)]
-         * is in primes[x-1]. Every prime number stored is approximately two 
+         * is in primes[x-1]. Every prime number stored is approximately two
          * times the previous one, so hash table size doubles every time.
          */
         int primes[] = {
@@ -206,8 +221,8 @@ class Ifpack_HashTable
         805306457, 1610612741 } ;
         int i, hsize ;
 
-        /* SRSR : err on the side of performance and choose the next largest 
-         * prime number. One can also choose primes[i-1] below to cut the 
+        /* SRSR : err on the side of performance and choose the next largest
+         * prime number. One can also choose primes[i-1] below to cut the
          * memory by half.
          */
         hsize = primes[29] ;
@@ -226,7 +241,7 @@ class Ifpack_HashTable
 
   private:
     //! Performs the hashing.
-    inline int doHash(const int key)
+    inline int doHash(const key_type key)
     {
       return (key % n_keys_);
       //return ((seed_ ^ key) % n_keys_);
@@ -235,8 +250,27 @@ class Ifpack_HashTable
     int n_keys_;
     int n_sets_;
     std::vector<std::vector<double> > vals_;
-    std::vector<std::vector<int> > keys_;
+    std::vector<std::vector<key_type> > keys_;
     std::vector<int> counter_;
     unsigned int seed_;
 };
+
+class Ifpack_HashTable : public TIfpack_HashTable<int>
+{
+  public:
+    Ifpack_HashTable(const int n_keys = 1031, const int n_sets = 1)
+      : TIfpack_HashTable<int>(n_keys, n_sets)
+    {
+    }
+};
+
+class Ifpack_HashTable64 : public TIfpack_HashTable<long long>
+{
+  public:
+    Ifpack_HashTable64(const int n_keys = 1031, const int n_sets = 1)
+      : TIfpack_HashTable<long long>(n_keys, n_sets)
+    {
+    }
+};
+
 #endif

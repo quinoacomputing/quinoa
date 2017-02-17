@@ -1,6 +1,3 @@
-INCLUDE(TribitsSubPackageMacros)
-INCLUDE(TribitsAddExecutable)
-INCLUDE(TribitsLibraryMacros)
 
 TRIBITS_SUBPACKAGE(Exomatlab)
 
@@ -9,10 +6,15 @@ INCLUDE_DIRECTORIES(
 )
 
 SET(HEADERS "")
-SET(SOURCES EML_SystemInterface.C)
+APPEND_GLOB(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.C)
 
-TRIBITS_ADD_LIBRARY(exomatlab_app_lib SOURCES ${SOURCES} DEPLIBS Ioss suplib)
-TRIBITS_ADD_EXECUTABLE(exomatlab NOEXEPREFIX NOEXESUFFIX SOURCES exomatlab.C DEPLIBS exomatlab_app_lib COMM serial mpi)
+TRIBITS_ADD_EXECUTABLE(
+  exomatlab
+  NOEXEPREFIX
+  NOEXESUFFIX
+  SOURCES ${SOURCES}
+  COMM serial mpi
+  )
 install_executable(exomatlab)
 
 TRIBITS_SUBPACKAGE_POSTPROCESS()
