@@ -1,3 +1,36 @@
+// Copyright (c) 2013, Sandia Corporation.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+// 
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+// 
+//     * Neither the name of Sandia Corporation nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+
 #ifndef SIERRA_ExprEval_h
 #define SIERRA_ExprEval_h
 
@@ -36,8 +69,9 @@ public:
    *
    * @param expr		a <b>std::string</b> const reference to the
    *				expression to be parsed.
+   *
    */
-  Eval(VariableMap::Resolver &resolver = VariableMap::getDefaultResolver(), const std::string &expr = "");
+  Eval(VariableMap::Resolver &resolver = VariableMap::getDefaultResolver(), const std::string &expr = "", const Variable::ArrayOffset arrayOffsetType = Variable::ZERO_BASED_INDEX);
 
 private:
   explicit Eval(const Eval &);
@@ -46,7 +80,6 @@ private:
 public:
   /**
    * Destroys a <b>Eval</b> instance.
-   *
    */
   ~Eval();
 
@@ -118,23 +151,11 @@ public:
     return m_parseStatus;
   }
 
-  /**
-   * @brief Member function <b>setValue</b> assigns a variables value in the
-   * variable map.
-   *
-   * @param name		a <b>std::string</b> const reference of the name of the
-   *				variable.
-   *
-   * @param value		a <b>double</b> value to be assigned to the
-   *				variable.
-   *
-   * @return			an <b>Eval</b> reference to this expression
-   *				evaluator.
-   */
-  inline Eval &setValue(const std::string &name, double value) {
+  inline Eval &setValue(const std::string &name, double* value, int definedLength) {
     VariableMap::iterator it = m_variableMap.find(name);
-    if (it != m_variableMap.end())
-      *(*it).second = value;
+    if (it != m_variableMap.end()) {
+      (*it).second->bind(*value, definedLength);
+    }
     return *this;
   }
 
@@ -159,29 +180,28 @@ public:
    * new node is allocated on a node list so that it may be
    * deallocated properly on exception.
    *
-   * @param opcode		a <b>int</b> value of the opcode for the node.
+   * @param op		a <b>int</b> value of the opcode for the node.
    *
-   * @return                    a <b>Node</b> pointer to the newly allocated node.
+   * @return            a <b>Node</b> pointer to the newly allocated node.
    */
   Node *newNode(int op);
   
   /**
    * @brief Member function <b>bindVariable</b> binds the variable to the address of
    * the specified value.  This address must remain in scope during the lifetime of the
-   * variable are until rebound to a new address.
+   * variable or until the variable is rebound to a new address.
    *
-   * @param name		a <b>std::string</b> const reference to the variable's
-   *				name.
+   * @param name		a <b>std::string</b> const reference to the variable's name.
    *
    * @param value_ref		a <b>double</b> reference to be used for this variable.
    *
-   * @return			an <b>Eval</b> reference to this expression
-   *				evaluator.
+   * @return			an <b>Eval</b> reference to this expression evaluator.
    */
-  inline Eval &bindVariable(const std::string &name, double &value_ref) {
+  inline Eval &bindVariable(const std::string &name, double &value_ref, int definedLength=std::numeric_limits<int>::max()) {
     VariableMap::iterator it = m_variableMap.find(name);
-    if (it != m_variableMap.end())
-      (*it).second->bind(value_ref);
+    if (it != m_variableMap.end()) {
+      (*it).second->bind(value_ref, definedLength);
+    }
     return *this;
   }
 
@@ -219,7 +239,6 @@ public:
   /**
    * @brief Member function <b>syntax</b> performs a syntax check on the current
    * expression.  If successful, the syntax status is set to true.
-   *
    */
   void syntax();
 
@@ -227,8 +246,7 @@ public:
    * @brief Member function <b>parse</b> parses the expression.  If successful, the
    * parse status is set to true.
    *
-   * @param expr		a <b>std::string</b> const reference to the
-   *				expression to parse.
+   * @param expr		a <b>std::string</b> const reference to the expression to parse.
    *
    */
   inline void parse(const std::string &expr) {
@@ -239,14 +257,12 @@ public:
   /**
    * @brief Member function <b>parse</b> parses the current expression.  If
    * successful, the parse status is set to true.
-   *
    */
   void parse();
 
   /**
    * @brief Member function <b>resolve</b> calls the variable name resolver for each
    * variable in the variable map.
-   *
    */
   void resolve();
 
@@ -258,6 +274,18 @@ public:
    */
   double evaluate() const;
 
+  /**
+   * @brief Member function <b>undefinedFunction</b> checks if any allocated node
+   * represents an undefined (i.e. unknown at this point) function.
+   *
+   * @return			The returned <b>bool</b> is true if any allocated node
+   *                            is an undefined function, as indicated by bool in the 
+   *                            member union, which is set whenever a function is parsed.
+   */
+  bool undefinedFunction() const;
+
+  Variable::ArrayOffset getArrayOffsetType() {return m_arrayOffsetType;}
+
 private:
   VariableMap		m_variableMap;		///< Variable map
   UndefinedFunctionSet	m_undefinedFunctionSet;	///< Vector of undefined functions
@@ -268,6 +296,7 @@ private:
 
   Node *		m_headNode;		///< Head of compiled expression
   std::vector<Node *>   m_nodes;                ///< Allocated nodes
+  Variable::ArrayOffset m_arrayOffsetType;      ///< Zero or one based array indexing
 };
 
 } // namespace expreval

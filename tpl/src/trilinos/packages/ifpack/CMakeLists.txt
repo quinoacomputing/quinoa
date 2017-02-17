@@ -1,6 +1,4 @@
 
-INCLUDE(TribitsPackageMacros)
-INCLUDE(TribitsAddOptionAndDefine)
 
 #
 # A) Define the package
@@ -19,9 +17,27 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_METIS
   "Enable support for Metis in Ifpack."
   OFF )
 
-#Adding a define for when the TPL Metis is enabled.
-#This replaces an option that was reusing an existing name.
-SET(HAVE_HYPRE "${${PACKAGE_NAME}_ENABLE_HYPRE}")
+# Add option to enable or disable support for MPI parallel subdomain solvers
+TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_PARALLEL_SUBDOMAIN_SOLVERS
+  HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
+  "Enable support for MPI parallel subdomain solvers."
+  OFF )
+
+# Add option to enable or disable the Ifpack_DynamicFactory class
+TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_DYNAMIC_FACTORY
+  HAVE_IFPACK_DYNAMIC_FACTORY
+  "Enable usage of the Ifpack_DynamicFactory class."
+  OFF )
+
+# Enable Ifpack's HYPRE interface.  This requires the HYPRE TPL
+# (set TPL_ENABLE_HYPRE=ON and point Trilinos to the HYPRE header 
+# files and libraries).
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_HYPRE)
+IF (${PACKAGE_NAME}_ENABLE_HYPRE)
+  SET (HAVE_IFPACK_HYPRE ON)
+ELSE ()
+  SET (HAVE_IFPACK_HYPRE OFF)
+ENDIF ()
 
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_Euclid
   HAVE_EUCLID
@@ -49,6 +65,73 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_FLOPCOUNTERS
 IF(${PACKAGE_NAME}_ENABLE_SPARSKIT)
   SET(HAVE_IFPACK_SPARSKIT ON )
 ENDIF()
+
+ASSERT_DEFINED( ${PACKAGE_NAME}_ENABLE_Boost )
+ASSERT_DEFINED( TPL_ENABLE_CUDA )
+# FIXME (mfh 29 Apr 2015) The part of Boost that Ifpack_SupportGraph
+# uses does not currently build with NVCC.  It's unlikely that
+# Ifpack_SupportGraph users care about CUDA.  Thus, I am disabling
+# Ifpack_SupportGraph if CUDA is enabled.
+IF (${PACKAGE_NAME}_ENABLE_Boost)
+  IF (TPL_ENABLE_CUDA)
+    MESSAGE (WARNING "Ifpack_SupportGraph requires Boost, but CUDA is enabled.  The parts of Boost that it uses do not currently build correctly with CUDA.  Ifpack_SupportGraph users are unlikely to depend on CUDA.  Thus, we are turning off Ifpack_SupportGraph support.")
+    SET (${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH_DEFAULT OFF)
+  ELSE ()
+    # mfh 04 Jun 2015: Boost Graph Library build issues mean that it's
+    # likely Ifpack_SupportGraph won't build with newer versions of
+    # Boost.  See Bug 6343.  Thus, I'm disabling it by default.
+    SET (${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH_DEFAULT OFF)
+  ENDIF ()
+ELSE ()
+  SET (${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH_DEFAULT OFF)
+ENDIF ()
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH
+  HAVE_IFPACK_SUPPORTGRAPH
+  "Enable Ifpack_SupportGraph support graph preconditioner.  It requires Boost to build, and it does not build correctly if CUDA is ON.  It also may not build correctly with new versions of Boost (see Bug 6343).  Thus, it is disabled by default.  You must explicitly enable it by setting Ifpack_ENABLE_SUPPORTGRAPH:BOOL=ON."
+  ${${PACKAGE_NAME}_ENABLE_SUPPORTGRAPH_DEFAULT}
+  )
+
+# "Experimental" code lives in Ifpack, but is not quite ready for use
+# by a general audience.  You have to enable the CMake option below in
+# order to install experimental headers, include experimental source
+# files in the libraries, and build experimental tests.
+#
+# It's up to Ifpack developers to define what headers and source files
+# are experimental, and what tests depend on experimental code.  They
+# must use ${PACKAGE_NAME}_ENABLE_Experimental to conditionally
+# disable tests or examples that have a required dependency on
+# experimental code.  (${PACKAGE_NAME} evaluates to Ifpack, but we
+# write it out so you know what to look for in the file.)  Code that
+# _optionally_ depends on experimental code must be protected by
+# #ifdef HAVE_IFPACK_EXPERIMENTAL ... #endif.
+#
+# Ifpack developers must maintain the lists of experimental header
+# resp. source files in src/CMakeLists.txt, as
+# ${PACKAGE_NAME}_EXPERIMENTAL_HEADERS
+# resp. ${PACKAGE_NAME}_EXPERIMENTAL_SOURCES.
+#
+# Note that some experimental files may be excluded from the release
+# tarball.  Ifpack uses the TRIBITS_EXCLUDE_FILES macro later in
+# this file to list the files and directories to exclude from the
+# release tarball.  That macro must NOT include conditional
+# expressions; it must evaluate to the same list, no matter how
+# Trilinos is configured.  We ensure this in Ifpack by listing
+# explicitly the files and directories to exclude from the release
+# tarball, rather than using variables or conditional CMake
+# expressions.
+#
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_Experimental
+  HAVE_IFPACK_EXPERIMENTAL
+  "Enable building and installation of experimental Ifpack features."
+  NO )
+
+# See above discussion of "experimental" Ifpack headers and source
+# files.  src/CMakeLists.txt may append to these lists.
+SET(${PACKAGE_NAME}_EXPERIMENTAL_HEADERS "")
+SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES "")
 
 
 #

@@ -12,7 +12,7 @@
 */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include "ml_common.h"
@@ -50,12 +50,12 @@ public:
 
   //! Empty constructor.
   InverseOperator() {}
-  
+
   //! Constructor for a given Operator and type, and default parameters.
-  InverseOperator(const Operator& Op, const string Type);
+  InverseOperator(const Operator& Op, const std::string Type);
 
   //! Constructor for a given Operator, type and parameters.
-  InverseOperator(const Operator& Op, const string Type,
+  InverseOperator(const Operator& Op, const std::string Type,
                   Teuchos::ParameterList& List);
 
   //! Copy constructor.
@@ -78,20 +78,20 @@ public:
   void Reshape();
 
   //! Reshapes the object with default values.
-  void Reshape(const Operator& Op, const string Type);
+  void Reshape(const Operator& Op, const std::string Type);
 
   //! Reshapes the object by setting the Operator and the specified type.
-  void Reshape(const Operator& Op, const string Type,
+  void Reshape(const Operator& Op, const std::string Type,
                Teuchos::ParameterList& List,
                Teuchos::ParameterList* pushlist = NULL);
 
   //! Reshape with preconstructed smoother as Ifpack_Preconditioner
-  void Reshape(Ifpack_Preconditioner* prec, const Operator& Op, 
+  void Reshape(Ifpack_Preconditioner* prec, const Operator& Op,
                const bool ownership);
 
   // @}
   // @{ Get and Set methods.
-  
+
   //! Returns a reference to the range space of \c this object.
   const Space GetOperatorRangeSpace() const;
 
@@ -127,7 +127,7 @@ public:
 
   // @}
   // @{ Mathematical methods
-  
+
   //! Applies \c this object to vector \c lhs, returns values in \c rhs.
   int Apply(const MultiVector& x, MultiVector& y) const;
 
@@ -142,13 +142,13 @@ public:
   // @{ \name Miscellaneous methods
 
   //! Prints out basic information about \c this object.
-  ostream& Print(std::ostream& os, const bool verbose = true) const;
+  std::ostream& Print(std::ostream& os, const bool verbose = true) const;
 
 private:
 
   // @}
   // @{ \name Private data and methods
-  
+
   void Destroy();
 
   //! Operator of which \c this object define the inverse.
@@ -160,7 +160,7 @@ private:
   //! ML preconditioner
   Teuchos::RefCountPtr<ML_Epetra::MultiLevelPreconditioner>  RCPMLPrec_;
   // @}
-  
+
 }; // InverseOperator
 
 } // namespace MLAPI

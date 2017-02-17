@@ -1,29 +1,42 @@
 //@HEADER
 // ************************************************************************
-// 
+//
 //         Claps: A Collection of Domain Decomposition Preconditioners
 //                and Solvers
 //         Copyright (2006) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
@@ -119,10 +132,10 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
   
   MAXDEF=10;
   ASDEF=0;
-  //  cout << "N    = " << N << endl;
-  //  cout << "NTOT = " << NTOT << endl;
-  //  cout << "NADJ = " << NADJ << endl;
-  //  cout << "NNZA = " << NNZA << endl;
+  //  std::cout << "N    = " << N << std::endl;
+  //  std::cout << "NTOT = " << NTOT << std::endl;
+  //  std::cout << "NADJ = " << NADJ << std::endl;
+  //  std::cout << "NNZA = " << NNZA << std::endl;
   int* ADJ = new int[NTOT];
   int* XADJ = new int[N+1];
   LINDX = new int[NTOT];
@@ -176,8 +189,8 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
   if (order_opt == 1) {
     ORDMMD2_F77(N,XLINDX,LINDX,INVP,PERM,IWSIZE,IWORK,NSUB,IFLAG);
     if (IFLAG != 0) {
-      cout << "error in call to ordmmd2 in CLAPS_sparse_lu::factor" << endl;
-      cout << "ORDMMD2 IFLAG=" << IFLAG << endl;
+      std::cout << "error in call to ordmmd2 in CLAPS_sparse_lu::factor" << std::endl;
+      std::cout << "ORDMMD2 IFLAG=" << IFLAG << std::endl;
       return -1;
     }
   }
@@ -200,8 +213,8 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
   SFINIT_F77(N,NADJ,XADJ,ADJ,PERM,INVP,MAXSUP,DEFBLK,COLCNT,
 	     NNZL,NSUB,NSUPER,XSUPER,SNODE,IWSIZE,IWORK,IFLAG);
   if (IFLAG != 0) {
-    cout << "error in call to sfinit in CLAPS_sparse_lu::factor" << endl;
-    cout << "SFINIT IFLAG=" << IFLAG << endl;
+    std::cout << "error in call to sfinit in CLAPS_sparse_lu::factor" << std::endl;
+    std::cout << "SFINIT IFLAG=" << IFLAG << std::endl;
     return -1;
   }
   //
@@ -215,16 +228,16 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
   SYMFCT_F77(N,NADJ,XADJ,ADJ,PERM,INVP,COLCNT,NSUPER,XSUPER,
 	     SNODE,NSUB,XLINDX,LINDX,XLNZ,IWSIZE,IWORK,IFLAG);
   if (IFLAG != 0) {
-    cout << "error in call to symfct in CLAPS_sparse_lu::factor" << endl;
-    cout << "SYMFCT IFLAG=" << IFLAG << endl;
+    std::cout << "error in call to symfct in CLAPS_sparse_lu::factor" << std::endl;
+    std::cout << "SYMFCT IFLAG=" << IFLAG << std::endl;
     return -1;
   }
   //
   // input numerical values into data structures
   //
   NLNZ=XLNZ[N];
-  //  cout << "number of nonzeros in LU factorization = " << NLNZ << endl;
-  //  cout << "NLNZ = " << NLNZ << endl;
+  //  std::cout << "number of nonzeros in LU factorization = " << NLNZ << std::endl;
+  //  std::cout << "NLNZ = " << NLNZ << std::endl;
 
   // later, sparsepak will call dgemm on some of the "panels" in this data. We need to have
   // memory on the end of the array to ensure we don't overrun. Without the extra "N", we
@@ -256,8 +269,8 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
 	     LBDEF,DEF,TOL,IPROW,IPCOL,TMPSIZ,TMPVEC,IWSIZE,IWORK,
 	     RWSIZE,RWORK,IFLAG);
   if (IFLAG != 0) {
-    cout << "error in call to blkldl in CLAPS_sparse_lu::factor" << endl;
-    cout << "BLKLDL IFLAG=" << IFLAG << endl;
+    std::cout << "error in call to blkldl in CLAPS_sparse_lu::factor" << std::endl;
+    std::cout << "BLKLDL IFLAG=" << IFLAG << std::endl;
     return -1;
   }
   //  if (DEFBLK == 0) {
@@ -272,12 +285,12 @@ int CLAPS_sparse_lu::factor(int N_, int NNZ, int COLPTR[], int ROWIDX[],
     LDNS=N;
     BLKNS_F77(NSUPER,XSUPER,XLINDX,LINDX,XLNZ,LNZ,DEFBLK,NDEF,LBDEF,
 	      DEF,IPCOL,INVP,NS,LDNS,RWORK);
-    cout << "null space dimension = " << NDEF << endl;
+    std::cout << "null space dimension = " << NDEF << std::endl;
     /*
-    cout << "NS = " << endl;
+    std::cout << "NS = " << std::endl;
     for (int i=0;i<NDEF;i++) {
-      for (int j=0;j<N;j++) cout << NS[j+N*i] << " ";
-      cout << endl;
+      for (int j=0;j<N;j++) std::cout << NS[j+N*i] << " ";
+      std::cout << std::endl;
     }
     */
   }
@@ -315,8 +328,8 @@ int CLAPS_sparse_lu::sol(int NRHS, double RHS[], double SOL[], double TEMP[])
   }
   int LRHS=N;
   int LSOL=N;
-  //  cout << "LBDEF = " << LBDEF << endl;
-  //  cout << "NDEF  = " << NDEF << endl;
+  //  std::cout << "LBDEF = " << LBDEF << std::endl;
+  //  std::cout << "NDEF  = " << NDEF << std::endl;
   BLKSLVN_F77(NSUPER,XSUPER,XLINDX,LINDX,XLNZ,LNZ,DEFBLK,NDEF,LBDEF,
 	      DEF,IPROW,IPCOL,PERM,INVP,LRHS,NRHS,RHS,LSOL,SOL,N,TEMP);
   if (scale_flag == 1) {

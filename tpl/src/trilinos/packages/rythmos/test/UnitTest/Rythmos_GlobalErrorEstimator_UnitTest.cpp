@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -92,8 +92,8 @@ TEUCHOS_UNIT_TEST( Rythmos_GlobalErrorEstimator, SinCos ) {
     double a = 0.0;
     double x_ic_0 = 0.0;
     double x_ic_1 = 1.0;
-    double x_0 = dt/(1.0+pow(dt*f/L,2))*(x_ic_0/dt+x_ic_1+dt*pow(f/L,2)*a);
-    double x_1 = dt/(1.0+pow(dt*f/L,2))*(-pow(f/L,2)*x_ic_0+x_ic_1/dt+pow(f/L,2)*a);
+    double x_0 = dt/(1.0+std::pow(dt*f/L,2))*(x_ic_0/dt+x_ic_1+dt*std::pow(f/L,2)*a);
+    double x_1 = dt/(1.0+std::pow(dt*f/L,2))*(-std::pow(f/L,2)*x_ic_0+x_ic_1/dt+std::pow(f/L,2)*a);
     double tol = 1.0e-10;
     Thyra::ConstDetachedVectorView<double> x_final_view( *x_final );
     TEST_FLOATING_EQUALITY( x_final_view[0], x_0, tol );
@@ -183,8 +183,8 @@ TEUCHOS_UNIT_TEST( Rythmos_GlobalErrorEstimator, SinCos ) {
     double f = 1.0;
     double L = 1.0;
     double h = -dt;
-    double phi_0 = 1.0/(1.0+pow(f*h/L,2.0))*(phi_ic_0+pow(f/L,2.0)*h*phi_ic_1);
-    double phi_1 = 1.0/(1.0+pow(f*h/L,2.0))*(-h*phi_ic_0+phi_ic_1);
+    double phi_0 = 1.0/(1.0+std::pow(f*h/L,2.0))*(phi_ic_0+std::pow(f/L,2.0)*h*phi_ic_1);
+    double phi_1 = 1.0/(1.0+std::pow(f*h/L,2.0))*(-h*phi_ic_0+phi_ic_1);
     double tol = 1.0e-10;
     Thyra::ConstDetachedVectorView<double> phi_final_view( *phi_final );
     TEST_FLOATING_EQUALITY( phi_final_view[0], phi_0, tol );

@@ -59,9 +59,15 @@
 #include <fei_MatrixTraits_Epetra.hpp>
 #include <fei_Matrix_Impl.hpp>
 #include <fei_LinearSystem.hpp>
+
+#ifdef HAVE_FEI_ML
+#include <ml_LevelWrap.h>
+#endif
+
 //---------------------------------------------------------------------------
 Solver_AztecOO::Solver_AztecOO()
   : tolerance_(1.e-6), maxIters_(500), useTranspose_(false), paramlist_(NULL),
+    linProb(NULL),
     useML_(false),
 #ifdef HAVE_FEI_ML
    ml_prec_(NULL), ml_defaults_set_(false),
@@ -84,6 +90,7 @@ Solver_AztecOO::~Solver_AztecOO()
 {
   delete azoo_;
   delete paramlist_;
+  delete linProb;
 #ifdef HAVE_FEI_ML
   delete [] ml_aztec_options_;
   delete [] ml_aztec_params_;
@@ -165,8 +172,6 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
     return(-1);
   }
 
-  Epetra_LinearProblem linProb(epetra_op,x,b);
-
   //when we call azoo_->SetProblem, it will set some options. So we will
   //first take a copy of all options and params, then reset them after the
   //call to SetProblem. That way we preserve any options that have already
@@ -206,7 +211,10 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   }
 
   if (precond != NULL) {
-    azoo_->SetProblem(linProb);
+    Epetra_LinearProblem * newlinProb = new Epetra_LinearProblem(epetra_op,x,b);
+    azoo_->SetProblem(*newlinProb);
+    delete linProb;
+    linProb = newlinProb;
 
     azoo_->SetAllAztecOptions(&(azoptions[0]));
     azoo_->SetAllAztecParams(&(azparams[0]));
@@ -224,7 +232,10 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   }
 
   if (needNewPreconditioner) {
-    azoo_->SetProblem(linProb);
+    Epetra_LinearProblem * newlinProb = new Epetra_LinearProblem(epetra_op,x,b);
+    azoo_->SetProblem(*newlinProb);
+    delete linProb;
+    linProb = newlinProb;
 
     azoo_->SetAllAztecOptions(&(azoptions[0]));
     azoo_->SetAllAztecParams(&(azparams[0]));
@@ -270,7 +281,7 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   std::string param2;
   parameterSet.getStringParamValue("FEI_OUTPUT_LEVEL", param2);
 
-  if (olevel >= 3 || param2 == "MATRIX_FILES") {
+  if (olevel >= 3 || param2 == "MATRIX_FILES" || param2 == "ALL") {
     std::string param1;
     parameterSet.getStringParamValue("debugOutput", param1);
 
@@ -328,9 +339,42 @@ int Solver_AztecOO::setup_ml_operator(AztecOO& azoo, Epetra_CrsMatrix* A)
     delete ml_prec_; ml_prec_ = NULL;
   }
 
-  ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_, true);
-  azoo_->SetPrecOperator(ml_prec_);
+  const bool variableDof = paramlist_->get("ML variable DOF",false);
+  const bool levelWrap = paramlist_->get("ML LevelWrap",false);
+  assert(!variableDof || !levelWrap);
+  if (variableDof)
+  {
+    bool * dofPresent = paramlist_->get("DOF present",(bool*)0);
+    int nOwnedEntities = paramlist_->get("num owned entities", 0);
+    assert( (nullptr != dofPresent) || (nOwnedEntities == 0));
+    int maxDofPerEntity = paramlist_->get("max DOF per entity", 0);
+    
+    Epetra_Vector *dummy = nullptr;
+    ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_,
+                                       nOwnedEntities,maxDofPerEntity, dofPresent,
+                                       *dummy, *dummy, false,true);
+  }
+  else if (levelWrap)
+  {
+    // Set the LevelWrap default parameters
+    ML_Epetra::SetDefaultsLevelWrap(*paramlist_, false);
+    Teuchos::ParameterList &crsparams = paramlist_->sublist("levelwrap: coarse list");
+    // Set the smoother parameters to the provided arrays
+    Teuchos::ParameterList &ifparams = crsparams.sublist("smoother: ifpack list");
+    int N_indices = paramlist_->get("LevelWrap number of local smoothing indices",(int)0);
+    int * smth_indices = paramlist_->get("LevelWrap local smoothing indices",(int*)0);
+    ifparams.set("relaxation: number of local smoothing indices",N_indices);
+    ifparams.set("relaxation: local smoothing indices",smth_indices);
 
+    Epetra_CrsMatrix * volAvgMtx = paramlist_->get("LevelWrap volume average matrix",(Epetra_CrsMatrix*)0);
+    ml_prec_ = new ML_Epetra::LevelWrap(Teuchos::rcp(A, false), Teuchos::rcp(volAvgMtx, false), *paramlist_);
+  }
+  else
+  {
+    ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_, true);
+  }
+  
+  azoo_->SetPrecOperator(ml_prec_);
 #endif
 
   return(0);

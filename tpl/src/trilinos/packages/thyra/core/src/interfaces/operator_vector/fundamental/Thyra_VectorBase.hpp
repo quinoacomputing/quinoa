@@ -565,33 +565,6 @@ void applyOp(
 }
 
 
-/** \brief Deprecated.
- *
- * \relates VectorBase
- */
-template<class Scalar>
-inline
-void applyOp(
-  const RTOpPack::RTOpT<Scalar> &op,
-  const int num_vecs,
-  const VectorBase<Scalar>*const vecs_in[],
-  const int num_targ_vecs,
-  VectorBase<Scalar>*const targ_vecs_inout[],
-  RTOpPack::ReductTarget *reduct_obj,
-  const Ordinal global_offset = 0
-  )
-{
-  using Teuchos::ptr;
-  Array<Ptr<const VectorBase<Scalar> > > vecs(num_vecs);
-  for ( int k = 0; k < num_vecs; ++k )
-    vecs[k] = ptr(vecs_in[k]);
-  Array<Ptr<VectorBase<Scalar> > > targ_vecs(num_targ_vecs);
-  for ( int k = 0; k < num_targ_vecs; ++k )
-    targ_vecs[k] = ptr(targ_vecs_inout[k]);
-  applyOp<Scalar>(op, vecs(), targ_vecs(), ptr(reduct_obj), global_offset);
-}
-
-
 } // end namespace Thyra
 
 

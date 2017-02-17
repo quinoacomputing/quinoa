@@ -7,14 +7,21 @@
 /* compile and run any of them on any platform, but your performance with the */
 /* non-native version will be less than optimal. */
 
-#include "murmur3.h"
-
 /*----------------------------------------------------------------------------*/
 /* Platform-specific functions and macros */
 
-#define FORCE_INLINE __attribute__((always_inline))
+#include <stdint.h>
 
-/* KDDKDD 
+#if defined(_MSC_VER)
+#define FORCE_INLINE	__forceinline
+#else
+#if __GNUC__ && __GNUC_STDC_INLINE__
+#define FORCE_INLINE inline __attribute__((always_inline))
+#else
+#define FORCE_INLINE __attribute__((always_inline))
+#endif
+#endif
+/* KDDKDD
 inline uint32_t rotl32 ( uint32_t x, int8_t r )
 {
   return (x << r) | (x >> (32 - r));
@@ -42,7 +49,17 @@ inline uint64_t rotl64 ( uint64_t x, int8_t r )
 /*--------------------------------------------------------------------------- */
 /* Finalization mix - force all bits of a hash block to avalanche */
 
-FORCE_INLINE uint32_t fmix32 ( uint32_t h )
+
+/* Disable warnings associated with FORCE_INLINE */
+/* Copied from ml/src/Smoother/ml_smoother.c     */
+#if defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
+#define GCC_VERSION __GNUC__*100+__GNUC_MINOR__*10+__GNUC_PATCHLEVEL__
+#endif
+#if defined(GCC_VERSION) && GCC_VERSION >= 460
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+static FORCE_INLINE uint32_t fmix32 ( uint32_t h )
 {
   h ^= h >> 16;
   h *= 0x85ebca6b;
@@ -52,10 +69,15 @@ FORCE_INLINE uint32_t fmix32 ( uint32_t h )
 
   return h;
 }
+#if defined(GCC_VERSION) && GCC_VERSION >= 460
+#pragma GCC diagnostic pop
+#endif
 
 /*---------- */
 
-FORCE_INLINE uint64_t fmix64 ( uint64_t k )
+#if 0
+/* KDDKDD NOT USED BY ZOLTAN  */
+static FORCE_INLINE uint64_t fmix64 ( uint64_t k )
 {
   k ^= k >> 33;
   k *= BIG_CONSTANT(0xff51afd7ed558ccd);
@@ -65,11 +87,12 @@ FORCE_INLINE uint64_t fmix64 ( uint64_t k )
 
   return k;
 }
+#endif
 
 /*--------------------------------------------------------------------------- */
 
-void MurmurHash3_x86_32 ( const void * key, int len,
-                          uint32_t seed, void * out )
+static void MurmurHash3_x86_32 ( const void * key, int len,
+                                 uint32_t seed, void * out )
 {
   const uint8_t * data = (const uint8_t*)key;
   const int nblocks = len / 4;
@@ -92,7 +115,7 @@ void MurmurHash3_x86_32 ( const void * key, int len,
     k1 *= c1;
     k1 = ROTL32(k1,15);
     k1 *= c2;
-    
+
     h1 ^= k1;
     h1 = ROTL32(h1,13);
     h1 = h1*5+0xe6546b64;
@@ -101,6 +124,7 @@ void MurmurHash3_x86_32 ( const void * key, int len,
   /*---------- */
   /* tail */
 
+  {
   const uint8_t * tail = (const uint8_t*)(data + nblocks*4);
 
   uint32_t k1 = 0;
@@ -112,6 +136,7 @@ void MurmurHash3_x86_32 ( const void * key, int len,
   case 1: k1 ^= tail[0];
           k1 *= c1; k1 = ROTL32(k1,15); k1 *= c2; h1 ^= k1;
   };
+  }
 
   /*---------- */
   /* finalization */
@@ -125,8 +150,10 @@ void MurmurHash3_x86_32 ( const void * key, int len,
 
 /*--------------------------------------------------------------------------- */
 
-void MurmurHash3_x86_128 ( const void * key, const int len,
-                           uint32_t seed, void * out )
+#if 0
+/* KDDKDD NOT USED BY ZOLTAN */
+static void MurmurHash3_x86_128 ( const void * key, const int len,
+                                  uint32_t seed, void * out )
 {
   const uint8_t * data = (const uint8_t*)key;
   const int nblocks = len / 16;
@@ -228,11 +255,14 @@ void MurmurHash3_x86_128 ( const void * key, const int len,
   ((uint32_t*)out)[2] = h3;
   ((uint32_t*)out)[3] = h4;
 }
+#endif
 
 /*--------------------------------------------------------------------------- */
 
-void MurmurHash3_x64_128 ( const void * key, const int len,
-                           const uint32_t seed, void * out )
+#if 0
+/* KDDKDD NOT USED BY ZOLTAN */
+static void MurmurHash3_x64_128 ( const void * key, const int len,
+                                  const uint32_t seed, void * out )
 {
   const uint8_t * data = (const uint8_t*)key;
   const int nblocks = len / 16;
@@ -310,3 +340,4 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
   ((uint64_t*)out)[0] = h1;
   ((uint64_t*)out)[1] = h2;
 }
+#endif

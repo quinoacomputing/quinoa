@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // 
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
@@ -69,7 +69,7 @@ DiagonalROME<Scalar>::DiagonalROME(
   }
 
   // Locally replicated space for g
-  g_space_ = Thyra::defaultSpmdVectorSpace<Scalar>(comm_, 1, 1);
+  g_space_ = Thyra::locallyReplicatedDefaultSpmdVectorSpace<Scalar>(comm_, 1);
 
   // Distributed space for p
   p_space_ = Thyra::defaultSpmdVectorSpace<Scalar>(comm_, localDim, -1);

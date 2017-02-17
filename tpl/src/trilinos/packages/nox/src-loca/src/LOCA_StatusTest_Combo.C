@@ -1,15 +1,15 @@
-// $Id$ 
-// $Source$ 
+// $Id$
+// $Source$
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -65,7 +65,7 @@ Combo(ComboType t, const Teuchos::RCP<const LOCA::GlobalData> globalDataPtr ) :
 }
 
 LOCA::StatusTest::Combo::
-Combo(ComboType t, 
+Combo(ComboType t,
       const Teuchos::RCP<Abstract>& a,
       const Teuchos::RCP<const LOCA::GlobalData> globalDataPtr ) :
   type(t)
@@ -79,7 +79,7 @@ Combo(ComboType t,
 }
 
 LOCA::StatusTest::Combo::
-Combo(ComboType t, 
+Combo(ComboType t,
       const Teuchos::RCP<Abstract>& a,
       const Teuchos::RCP<Abstract>& b,
       const Teuchos::RCP<const LOCA::GlobalData> globalDataPtr ) :
@@ -99,7 +99,7 @@ addStatusTest(const Teuchos::RCP<Abstract>& a)
 {
   if (isSafe(*(a.get())))
     tests.push_back(a);
-  else 
+  else
   {
     const int indent = 2;
     globalDataPtr_->locaUtils->err() << "\n*** WARNING! ***\n";
@@ -117,15 +117,15 @@ bool LOCA::StatusTest::Combo::isSafe(Abstract& a)
   // Are we trying to add "this" to "this"? This would result in an infinite recursion.
   if (&a == this)
     return false;
-  
+
   // Recursively test that we're not adding something that's already
   // in the list because that can also lead to infinite recursions.
-  for (vector<Teuchos::RCP<Abstract> >::iterator i = tests.begin(); i != tests.end(); ++i)
+  for (std::vector<Teuchos::RCP<Abstract> >::iterator i = tests.begin(); i != tests.end(); ++i)
   {
     Combo* ptr = dynamic_cast<Combo*>(i->get());
     if (ptr != NULL)
       if (!ptr->isSafe(a))
-	return false;
+    return false;
   }
 
   // Otherwise, it's safe to add a to the list.
@@ -137,8 +137,9 @@ LOCA::StatusTest::Combo::~Combo()
 }
 
 LOCA::StatusTest::StatusType LOCA::StatusTest::Combo::
-checkStatus(const LOCA::Stepper& stepper,
-	    LOCA::StatusTest::CheckType checkType)
+//checkStatus(const LOCA::Stepper& stepper,
+checkStatus(const LOCA::Abstract::Iterator& stepper,
+        LOCA::StatusTest::CheckType checkType)
 {
   if (type == OR)
     orOp(stepper, checkType);
@@ -154,8 +155,9 @@ getStatus() const
   return status;
 }
 
-void LOCA::StatusTest::Combo::orOp(const LOCA::Stepper& stepper,
-				   LOCA::StatusTest::CheckType checkType)
+//void LOCA::StatusTest::Combo::orOp(const LOCA::Stepper& stepper,
+void LOCA::StatusTest::Combo::orOp(const LOCA::Abstract::Iterator& stepper,
+                   LOCA::StatusTest::CheckType checkType)
 {
   if (checkType == LOCA::StatusTest::None)
     status = LOCA::StatusTest::Unevaluated;
@@ -164,7 +166,7 @@ void LOCA::StatusTest::Combo::orOp(const LOCA::Stepper& stepper,
 
   // Checks the status of each test. The first test it encounters, if
   // any, that is NotFinished is the status that it sets itself too.
-  for (vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i)
+  for (std::vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i)
   {
     LOCA::StatusTest::StatusType s = (*i)->checkStatus(stepper, checkType);
 
@@ -174,7 +176,7 @@ void LOCA::StatusTest::Combo::orOp(const LOCA::Stepper& stepper,
 
       // Turn off checking for the remaining tests
       if (checkType == LOCA::StatusTest::Minimal)
-	checkType = LOCA::StatusTest::None;
+    checkType = LOCA::StatusTest::None;
     }
 
   }
@@ -182,8 +184,9 @@ void LOCA::StatusTest::Combo::orOp(const LOCA::Stepper& stepper,
   return;
 }
 
-void LOCA::StatusTest::Combo::andOp(const LOCA::Stepper& stepper,
-				   LOCA::StatusTest::CheckType checkType)
+//void LOCA::StatusTest::Combo::andOp(const LOCA::Stepper& stepper,
+void LOCA::StatusTest::Combo::andOp(const LOCA::Abstract::Iterator& stepper,
+                   LOCA::StatusTest::CheckType checkType)
 {
   if (checkType == LOCA::StatusTest::None)
     status = LOCA::StatusTest::Unevaluated;
@@ -192,7 +195,7 @@ void LOCA::StatusTest::Combo::andOp(const LOCA::Stepper& stepper,
 
   bool isUnconverged = false;
 
-  for (vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i) {
+  for (std::vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i) {
 
     LOCA::StatusTest::StatusType s = (*i)->checkStatus(stepper, checkType);
 
@@ -205,7 +208,7 @@ void LOCA::StatusTest::Combo::andOp(const LOCA::Stepper& stepper,
 
       // Turn off checking for the remaining tests
       if (checkType == LOCA::StatusTest::Minimal)
-	checkType = LOCA::StatusTest::None;
+    checkType = LOCA::StatusTest::None;
     }
 
     // If this is the first test and it's converged/failed, copy its
@@ -221,18 +224,17 @@ void LOCA::StatusTest::Combo::andOp(const LOCA::Stepper& stepper,
 }
 
 
-ostream& LOCA::StatusTest::Combo::
-print(ostream& stream, int indent) const
+std::ostream& LOCA::StatusTest::Combo::print(std::ostream& stream, int indent) const
 {
   for (int j = 0; j < indent; j ++)
     stream << ' ';
   stream << status;
   stream << ((type == OR) ? "OR" : "AND");
   stream << " Combination";
-  stream << " -> " << endl;
+  stream << " -> " << std::endl;
 
-  for (vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i)
+  for (std::vector<Teuchos::RCP<Abstract> >::const_iterator i = tests.begin(); i != tests.end(); ++i)
     (*i)->print(stream, indent+2);
-    
+
   return stream;
 }

@@ -60,6 +60,7 @@ namespace Teuchos {
 
 class AztecOO;
 class Epetra_CrsMatrix;
+class Epetra_LinearProblem;
 
 #ifdef HAVE_FEI_ML
 #include <ml_include.h>
@@ -142,9 +143,11 @@ class Solver_AztecOO : public fei::Solver, private fei::Logger {
   bool useTranspose_;
   Teuchos::ParameterList* paramlist_;
 
+  Epetra_LinearProblem *linProb;
+
   bool useML_;
 #ifdef HAVE_FEI_ML
-  ML_Epetra::MultiLevelPreconditioner* ml_prec_;
+  Epetra_Operator* ml_prec_;
   bool ml_defaults_set_;
   int *ml_aztec_options_;
   double *ml_aztec_params_;

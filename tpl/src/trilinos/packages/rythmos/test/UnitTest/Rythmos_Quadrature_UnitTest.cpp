@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -86,7 +86,7 @@ TEUCHOS_UNIT_TEST( Rythmos_Quadrature, computeLegendreArea) {
       TEST_EQUALITY_CONST( n, n );
       p = rcp(new Teuchos::Polynomial<double>(n,1.0) );
       me = polynomialModel(p);
-      exact_area += (pow(double(T1),int(n+1))-pow(double(T0),int(n+1)))/(n+1.0);
+      exact_area += (std::pow(double(T1),int(n+1))-std::pow(double(T0),int(n+1)))/(n+1.0);
       area = computeArea<double>(*me,*tr,*gqPtr);
       TEST_EQUALITY_CONST( Teuchos::is_null(area), false );
       { // scope to delete CosntDetachedVectorView
@@ -100,7 +100,7 @@ TEUCHOS_UNIT_TEST( Rythmos_Quadrature, computeLegendreArea) {
     TEST_EQUALITY( n, n );
     p = rcp(new Teuchos::Polynomial<double>(n,1.0) );
     me = polynomialModel(p);
-    exact_area += (pow(double(T1),int(n+1))-pow(double(T0),int(n+1)))/(n+1.0);
+    exact_area += (std::pow(double(T1),int(n+1))-std::pow(double(T0),int(n+1)))/(n+1.0);
     area = computeArea<double>(*me,*tr,*gqPtr);
     TEST_EQUALITY_CONST( Teuchos::is_null(area), false );
     { // scope to delete CosntDetachedVectorView
@@ -132,7 +132,7 @@ TEUCHOS_UNIT_TEST( Rythmos_Quadrature, computeLobattoArea) {
       TEST_EQUALITY_CONST( n, n );
       p = rcp(new Teuchos::Polynomial<double>(n,1.0) );
       me = polynomialModel(p);
-      exact_area += (pow(double(T1),int(n+1))-pow(double(T0),int(n+1)))/(n+1.0);
+      exact_area += (std::pow(double(T1),int(n+1))-std::pow(double(T0),int(n+1)))/(n+1.0);
       area = computeArea<double>(*me,*tr,*gqPtr);
       TEST_EQUALITY_CONST( Teuchos::is_null(area), false );
       { // scope to delete CosntDetachedVectorView
@@ -146,7 +146,7 @@ TEUCHOS_UNIT_TEST( Rythmos_Quadrature, computeLobattoArea) {
     TEST_EQUALITY( n, n );
     p = rcp(new Teuchos::Polynomial<double>(n,1.0) );
     me = polynomialModel(p);
-    exact_area += (pow(double(T1),int(n+1))-pow(double(T0),int(n+1)))/(n+1.0);
+    exact_area += (std::pow(double(T1),int(n+1))-std::pow(double(T0),int(n+1)))/(n+1.0);
     area = computeArea<double>(*me,*tr,*gqPtr);
     TEST_EQUALITY_CONST( Teuchos::is_null(area), false );
     { // scope to delete CosntDetachedVectorView

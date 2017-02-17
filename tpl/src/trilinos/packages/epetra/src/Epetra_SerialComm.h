@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 */
@@ -59,10 +59,10 @@ class Epetra_Distributor;
 */
 
 class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virtual Epetra_Comm {
-    
+
   public:
     //! @name Constructor/Destructor Methods
-  //@{ 
+  //@{
 
   //! Epetra_SerialComm Serial Constructor.
   /*! Builds an instance of a serial communicator.  Even
@@ -84,7 +84,7 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
 	};
 
   //! Epetra_SerialComm Destructor.
-  /*! Completely deletes a Epetra_SerialComm object.  
+  /*! Completely deletes a Epetra_SerialComm object.
     \warning Note:  All objects that depend
     on a Epetra_SerialComm instance should be destroyed prior to calling this
     function.
@@ -93,7 +93,7 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
   //@}
 
   //! @name Barrier Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm Barrier function.
   /*! A no-op for a serial communicator.
   */
@@ -101,7 +101,7 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
   //@}
 
   //! @name Broadcast Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm Broadcast function.
   /*! A no-op for a serial communicator.
     \param MyVals InOut
@@ -156,11 +156,25 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
            On entry, contains the processor from which all processors will receive a copy of MyVals.
   */
 
+  int Broadcast(long long * MyVals, int Count, int Root) const;
+
+  //! Epetra_SerialComm Broadcast function.
+  /*! A no-op for a serial communicator.
+    \param MyVals InOut
+           On entry, the root processor contains the list of values.  On exit,
+	   all processors will have the same list of values.  Note that values must be
+	   allocated on all processor before the broadcast.
+    \param Count In
+           On entry, contains the length of the list of MyVals.
+    \param Root In
+           On entry, contains the processor from which all processors will receive a copy of MyVals.
+  */
+
   int Broadcast(char * MyVals, int Count, int Root) const;
   //@}
 
   //! @name Gather Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm All Gather function.
   /*! A copy for a serial communicator.
     \param MyVals In
@@ -196,10 +210,22 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
   */
 
   int GatherAll(long * MyVals, long * AllVals, int Count) const;
+
+  //! Epetra_SerialComm All Gather function.
+  /*! A copy for a serial communicator.
+    \param MyVals In
+           On entry, contains the list of values, to be sent to all processors.
+    \param AllVals Out
+           On exit, contains the list of values from all processors. Must by of size NumProc*Count.
+    \param Count In
+           On entry, contains the length of the list of MyVals.
+  */
+
+  int GatherAll(long long * MyVals, long long * AllVals, int Count) const;
   //@}
 
   //! @name Sum Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm Global Sum function.
   /*! A copy for a serial communicator.
     \param PartialSums In
@@ -236,10 +262,22 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
            On entry, contains the length of the list of values.
   */
   int SumAll(long * PartialSums, long * GlobalSums, int Count) const;
+
+  //! Epetra_SerialComm Global Sum function.
+  /*! A copy for a serial communicator.
+    \param PartialSums In
+           On entry, contains the list of values, usually partial sums computed locally,
+	   to be summed across all processors.
+    \param GlobalSums Out
+           On exit, contains the list of values summed across all processors.
+    \param Count In
+           On entry, contains the length of the list of values.
+  */
+  int SumAll(long long * PartialSums, long long * GlobalSums, int Count) const;
   //@}
 
   //! @name Max/Min Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm Global Max function.
   /*! A copy for a serial communicator.
     \param PartialMaxs In
@@ -276,6 +314,18 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
   */
   int MaxAll(long * PartialMaxs, long * GlobalMaxs, int Count) const;
 
+  //! Epetra_SerialComm Global Max function.
+  /*! A copy for a serial communicator.
+    \param PartialMaxs In
+           On entry, contains the list of values, usually partial maxs computed locally;
+					 using these Partial Maxs, the max across all processors will be computed.
+    \param GlobalMaxs Out
+           On exit, contains the list of maxs computed across all processors.
+    \param Count In
+           On entry, contains the length of the list of values.
+  */
+  int MaxAll(long long * PartialMaxs, long long * GlobalMaxs, int Count) const;
+
   //! Epetra_SerialComm Global Min function.
   /*! A copy for a serial communicator.
     \param PartialMins In
@@ -311,10 +361,22 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
            On entry, contains the length of the list of values.
   */
   int MinAll(long * PartialMins, long * GlobalMins, int Count) const;
+
+  //! Epetra_SerialComm Global Min function.
+  /*! A copy for a serial communicator.
+    \param PartialMins In
+           On entry, contains the list of values, usually partial mins computed locally;
+					 using these Partial Mins, the min across all processors will be computed.
+    \param GlobalMins Out
+           On exit, contains the list of mins computed across all processors.
+    \param Count In
+           On entry, contains the length of the list of values.
+  */
+  int MinAll(long long * PartialMins, long long * GlobalMins, int Count) const;
   //@}
 
   //! @name Parallel Prefix Methods
-  //@{ 
+  //@{
   //! Epetra_SerialComm Scan Sum function.
   /*! A copy for a serial communicator.
     \param MyVals In
@@ -347,24 +409,35 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
            On entry, contains the length of the list of values.
   */
   int ScanSum(long * MyVals, long * ScanSums, int Count) const;
+
+  //! Epetra_SerialComm Scan Sum function.
+  /*! A copy for a serial communicator.
+    \param MyVals In
+           On entry, contains the list of values to be summed across all processors.
+    \param ScanSums Out
+           On exit, contains the list of values summed across processors 0 through i.
+    \param Count In
+           On entry, contains the length of the list of values.
+  */
+  int ScanSum(long long * MyVals, long long * ScanSums, int Count) const;
   //@}
 
   //! @name Attribute Accessor Methods
-  //@{ 
-  
-  //! Return my process ID. 
+  //@{
+
+  //! Return my process ID.
   /*! In MPI mode returns the rank of the calling process.  In serial mode
     returns 0.
   */
   int MyPID() const {return(SerialCommData_->MyPID_);};
-  
-  //! Returns total number of processes (always returns 1 for SerialComm). 
+
+  //! Returns total number of processes (always returns 1 for SerialComm).
   int NumProc() const {return(SerialCommData_->NumProc_);};
 
   //@}
 
   //! @name Gather/Scatter and Directory Constructors
-  //@{ 
+  //@{
   //! Create a distributor object.
   Epetra_Distributor * CreateDistributor() const;
   //! Create a directory object for the given Epetra_BlockMap.
@@ -372,40 +445,40 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
   //@}
 
   //! @name Print object to an output stream
-  //@{ 
+  //@{
   //! Print method that implements Epetra_Object virtual Print method
-  inline void Print(ostream & os) const {
+  inline void Print(std::ostream & os) const {
 #ifdef EPETRA_HAVE_OMP
-#pragma omp parallel 
+#pragma omp parallel
 {
   int numThreads = omp_get_num_threads();
   int threadNum = omp_get_thread_num();
 #pragma omp single
                os << "::Processor "<< MyPID()<<" of " << NumProc() << " total processors.";
 #pragma omp critical
-                os << "\n   Thread " << threadNum << " of " << numThreads << " total threads."; 
+                os << "\n   Thread " << threadNum << " of " << numThreads << " total threads.";
 }
 #else
-		os << "::Processor "<< MyPID()<<" of " << NumProc() << " total processors."; 
+		os << "::Processor "<< MyPID()<<" of " << NumProc() << " total processors.";
 #endif
 
-		return; 
+		return;
 	}
   //! Print method that implements Epetra_Comm virtual PrintInfo method
-  void PrintInfo(ostream & os) const {
+  void PrintInfo(std::ostream & os) const {
 		Epetra_SerialComm::Print(os);
 		return;
 	};
   //@}
 
   //! @name Expert Users and Developers Only
-  //@{ 
+  //@{
 
 	//! Returns the reference count of SerialCommData.
 	/*! (Intended for testing purposes.) */
 	int ReferenceCount() const;
 
-	//! Returns a pointer to the SerialCommData instance this SerialComm uses. 
+	//! Returns a pointer to the SerialCommData instance this SerialComm uses.
 	/*! (Intended for developer use only for testing purposes.) */
 	const Epetra_SerialCommData * DataPtr() const {return(SerialCommData_);};
 
@@ -418,6 +491,6 @@ class EPETRA_LIB_DLL_EXPORT Epetra_SerialComm: public Epetra_Object, public virt
 
 	void CleanupData();
 	Epetra_SerialCommData * SerialCommData_;
-  
+
 };
 #endif /* EPETRA_SERIALCOMM_H */

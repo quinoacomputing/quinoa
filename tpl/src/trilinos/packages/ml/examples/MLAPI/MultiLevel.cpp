@@ -1,7 +1,7 @@
 
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include "ml_config.h"
@@ -25,7 +25,7 @@ using namespace MLAPI;
 
 int main(int argc, char *argv[])
 {
-  
+
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
 #endif
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     // NOTE: only a limited subset of the parameters accepted by
     // class ML_Epetra::MultiLevelPreconditioner is supported
     // by MLAPI::MultiLevelSA
-    
+
     Teuchos::ParameterList MLList;
     MLList.set("max levels",2);
     MLList.set("increasing or decreasing","increasing");
@@ -74,13 +74,13 @@ int main(int argc, char *argv[])
     MLList.set("krylov: output level", 10);
     Krylov(FineMatrix, LHS, RHS, Prec, MLList);
 
-    cout << Prec;
+    std::cout << Prec;
   }
   catch (const int e) {
-    cerr << "Caught exception, code = " << e << endl;
+    std::cerr << "Caught exception, code = " << e << std::endl;
   }
   catch (...) {
-    cerr << "Caught exception..." << endl;
+    std::cerr << "Caught exception..." << std::endl;
   }
 
   Finalize();

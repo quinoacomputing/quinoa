@@ -1,51 +1,72 @@
 /*! 
-\mainpage Trilinos/Kokkos: Core Kernels Package
+\mainpage Trilinos/Kokkos: Shared-memory programming interface and computational kernels
 
-\section kokkos_intro Introduction
+\section Kokkos_Intro Introduction
 
-%Kokkos provides two main capabilities for Trilinos. The first is an abstract
-programming interface (API) for handling memory and specifying work for
-shared-memory parallel nodes (the \ref kokkos_node_api "Kokkos Node API"). The second is a collection
-of local (i.e., not distributed) linear algebra classes and the kernels
-needed to realized their functionality in parallel (the %Kokkos Linear Algebra kernels library). In addition to providing 
-basic data structures and kernels, %Kokkos also specifies APIs for extension via user-provided kernels (see, e.g., the \ref kokkos_crs_ops "Kokkos Compressed-Row Sparse API").
+The %Kokkos package has two main components.  The first, sometimes
+called "%Kokkos Array" or just "%Kokkos," implements a
+performance-portable shared-memory parallel programming model and data
+containers.  The second, called "%Kokkos Classic," consists of
+computational kernels that support the %Tpetra package.
 
-%Kokkos is typically not used directly in applications, but instead as a significant
-component in higher-level Trilinos packages, such as Tpetra. The functionality
-contained here-in has been put in the %Kokkos package in order to facilitate
-code re-use between Trilinos packages and to ease experimentation for kernel researchers.
+\section Kokkos_Kokkos The %Kokkos programming model
 
-\section kokkos_startup Overview of Kokkos.
+%Kokkos implements a performance-portable shared-memory parallel
+programming model and data containers.  It lets you write an algorithm
+once, and just change a template parameter to get the optimal data
+layout for your hardware.  %Kokkos has back-ends for the following
+parallel programming models:
 
-\subsection kokkos_formulations Kokkos Classes
+- Kokkos::Threads: POSIX Threads (Pthreads)
+- Kokkos::OpenMP: OpenMP
+- Kokkos::Cuda: NVIDIA's CUDA programming model for graphics
+  processing units (GPUs)
+- Kokkos::Serial: No thread parallelism
 
-%Kokkos contains a number of classes.  They can be categorized as follows:
+%Kokkos also has optimizations for shared-memory parallel systems with
+nonuniform memory access (NUMA).  Its containers can hold data of any
+primitive ("plain old") data type (and some aggregate types).  %Kokkos
+Array may be used as a stand-alone programming model.
 
-- %Kokkos Node API
-  - Nodes based on the Kokkos::CUDANodeMemoryModel: GPU nodes using the <a href="http://www.nvidia.com/object/cuda_home.html">NVIDIA/CUDA</a> graphic processing units (GPUs)
-     - Kokkos::ThrustGPUNode provides parallel compute capability for  via the <a href="http://code.google.com/p/thrust/">Thrust library</a>.
-  - Nodes based on the Kokkos::StandardNodeMemoryModel: Host-bound/CPU nodes using standard memory allocation.
-     - Kokkos::SerialNode: provides a simple node, where all kernels are executed in serial.
-     - Kokkos::TBBNode: provides support for multi-core CPUs using <a href="http://www.threadingbuildingblocks.org/">Intel TBB</a> (requires third-party library TBB).
-     - Kokkos::TPINode: provides support for multi-core CPUs using Pthreads, via the ThreadPool package (requires ThreadPool package and Pthreads TPL).
-- %Kokkos Linear Algebra Kernels Library
-  - Data structures:
-    - Kokkos::CrsMatrix, Kokkos::CrsGraph classes:  Classes providing the
-    storage structure for a row-oriented sparse matrix.
-    - Kokkos::MultiVector class: A class providing the structure of a dense
-    multivector. Here, as throughout most of Trilinos, a "multivector" refers to a
-    collection of vectors.
-  - Arithmetic interfaces:
-    - Kokkos::DefaultArithmetic: Provides basic functionality for 
-    performing arithmetic of multivectors.
-    - Kokkos::DefaultHostSparseOps, Kokkos::DefaultDeviceSparseOps: Provides basic functionality for 
-    computing multiplication and solve of a sparse matrix against a multivector.
-  
-\subsection kokkos_trilinos Building Kokkos and using it in Trilinos
+%Kokkos' parallel operations include the following:
 
-Kokkos can be used as a stand-alone package. However, its primary use case is via the functionality provided to other packages, such as Tpetra,
-Ifpack2 and Isorropia.
+- parallel_for: a thread-parallel "for loop"
+- parallel_reduce: a thread-parallel reduction
+- parallel_scan: a thread-parallel prefix scan operation
 
-See \ref kokkos_cuda_support "Kokkos CUDA Support" for instructions on building with support for NVIDIA CUDA GPUs.
+as well as expert-level platform-independent interfaces to thread
+"teams," per-team "shared memory," synchronization, and atomic update
+operations.
 
+%Kokkos' data containers include the following:
+
+- Kokkos::View: A multidimensional array suitable for thread-parallel
+  operations.  Its layout (e.g., row-major or column-major) is
+  optimized by default for the particular thread-parallel device.
+- Kokkos::Vector: A drop-in replacement for std::vector that eases
+  porting from standard sequential C++ data structures to %Kokkos'
+  parallel data structures.
+- Kokkos::UnorderedMap: A parallel lookup table comparable in
+  functionality to std::unordered_map.
+
+%Kokkos also uses the above basic containers to implement higher-level
+data structures, like sparse graphs and matrices.
+
+A good place to start learning about %Kokkos would be <a href="http://trilinos.sandia.gov/events/trilinos_user_group_2013/presentations/2013-11-TUG-Kokkos-Tutorial.pdf">these tutorial slides</a> from the 2013 Trilinos Users' Group meeting.
+
+\section Kokkos_Classic %Kokkos Classic
+
+"%Kokkos Classic" consists of computational kernels that support the
+%Tpetra package.  These kernels include sparse matrix-vector multiply,
+sparse triangular solve, Gauss-Seidel, and dense vector operations.
+They are templated on the type of objects (\c Scalar) on which they
+operate.  This component was not meant to be visible to users; it is
+an implementation detail of the %Tpetra distributed linear algebra
+package.  
+
+%Kokkos Classic also implements a shared-memory parallel programming
+model.  This inspired and preceded the %Kokkos programming model
+described in the previous section.  Users should consider the %Kokkos
+Classic programming model deprecated, and prefer the new %Kokkos
+programming model.
 */

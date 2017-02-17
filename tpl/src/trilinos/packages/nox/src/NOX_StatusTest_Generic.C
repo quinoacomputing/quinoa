@@ -1,15 +1,15 @@
-// $Id$ 
-// $Source$ 
+// $Id$
+// $Source$
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -50,11 +50,12 @@
 
 #include "NOX_StatusTest_Generic.H"
 #include "NOX_Common.H"
+#include <iomanip>
 
-ostream& 
-NOX::StatusTest::operator<<(ostream& os, NOX::StatusTest::StatusType type)
+std::ostream&
+NOX::StatusTest::operator<<(std::ostream& os, NOX::StatusTest::StatusType type)
 {
-  os << setiosflags(ios::left) << setw(13) << setfill('.');
+  os << std::setiosflags(std::ios::left) << std::setw(13) << std::setfill('.');
   switch (type) {
   case  NOX::StatusTest::Failed:
     os << "Failed";
@@ -70,6 +71,6 @@ NOX::StatusTest::operator<<(ostream& os, NOX::StatusTest::StatusType type)
     os << "**";
     break;
   }
-  os << resetiosflags(ios::adjustfield) << setfill(' ');
+  os << std::resetiosflags(std::ios::adjustfield) << std::setfill(' ');
   return os;
 }

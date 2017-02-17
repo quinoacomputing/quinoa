@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -132,6 +132,15 @@ typedef Teuchos_Ordinal Array_size_type;
     Undefined = 0x4     /*!< The test has not been evaluated on the solver */ 
   };
 
+  /*! \enum ResType 
+      \brief Enumerated type used to specify which residual norm used by residual norm status tests.
+  */
+  enum ResType {
+    RES_ORTH,
+    RES_2NORM,
+    RITZRES_2NORM
+  };
+
 
   /*! \enum MsgType
       \brief Enumerated list of available message types recognized by the eigensolvers.
@@ -143,7 +152,7 @@ typedef Teuchos_Ordinal Array_size_type;
     IterationDetails = 0x2,     /*!< Approximate eigenvalues, errors */
     OrthoDetails = 0x4,         /*!< Orthogonalization/orthonormalization details */
     FinalSummary = 0x8,         /*!< Final computational summary */
-    TimingDetails = 0x10,       /*!< Timing details */
+    TimingDetails = 0x10,       /*!< Timing details, uses MPI_COMM_WORLD by default. */
     StatusTestDetails = 0x20,   /*!< Status test details */
     Debug = 0x40                /*!< Debugging information */
   };

@@ -3,13 +3,13 @@
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -54,6 +54,8 @@
 #include "Teuchos_RCP.hpp"
 
 #include "NOX_Common.H"
+#include <string>
+#include <map>
 
 // Forward declarations
 namespace Teuchos {
@@ -77,8 +79,7 @@ namespace LOCA {
     class SublistParser {
 
       //! Map type to hold sublists
-      typedef map<string, 
-		  Teuchos::RCP<Teuchos::ParameterList> > SublistMap;
+      typedef std::map<std::string,Teuchos::RCP<Teuchos::ParameterList> > SublistMap;
 
       //! Iterator type to traverse SublistMap
       typedef SublistMap::iterator SublistMapIterator;
@@ -93,11 +94,11 @@ namespace LOCA {
 
       //! Parse parameter list to find sublists
       void parseSublists(
-	     const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
+         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
 
       //! Return sublist of name \c name
-      Teuchos::RCP<Teuchos::ParameterList> 
-      getSublist(const string& name);
+      Teuchos::RCP<Teuchos::ParameterList>
+      getSublist(const std::string& name);
 
     private:
 

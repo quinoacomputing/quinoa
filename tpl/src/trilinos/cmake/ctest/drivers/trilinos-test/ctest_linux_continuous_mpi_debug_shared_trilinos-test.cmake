@@ -77,18 +77,12 @@ SET (CTEST_TEST_TIMEOUT 720)
 SET( CTEST_BUILD_FLAGS "-j11 -i" )
 SET( CTEST_PARALLEL_LEVEL "4" )
 
-SET(EXTRA_EXCLUDE_PACKAGES Claps)
+SET(EXTRA_EXCLUDE_PACKAGES Claps PyTrilinos)
 
 SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DBUILD_SHARED_LIBS:BOOL=ON"
   )
-#  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-#  "-DParMETIS_LIBRARY_DIRS:PATH=/home/kddevin/code/ParMETIS3_1"
-#  "-DTPL_ENABLE_Scotch:BOOL=ON"
-#  "-DScotch_INCLUDE_DIRS:PATH=/home/kddevin/code/scotch_5.1/include"
-#  "-DScotch_LIBRARY_DIRS:PATH=/home/kddevin/code/scotch_5.1/lib"
-#  )
 
 #
 # Set the rest of the system-specific options and run the dashboard build/test

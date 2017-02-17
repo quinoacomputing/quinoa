@@ -1,0 +1,8 @@
+ADD_SUBDIRECTORY(square_mesh)
+ADD_SUBDIRECTORY(PoissonExample)
+ADD_SUBDIRECTORY(CurlLaplacianExample)
+ADD_SUBDIRECTORY(MixedPoissonExample)
+ADD_SUBDIRECTORY(PoissonInterfaceExample)
+ADD_SUBDIRECTORY(assembly_engine)
+ADD_SUBDIRECTORY(main_driver)
+ADD_SUBDIRECTORY(ModelEvaluator)

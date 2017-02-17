@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -51,9 +51,9 @@ operator()( OriginalTypeRef orig )
   origObj_ = &orig;
 
   if( orig.RowMap().DistributedGlobal() )
-  { cout << "FAIL for Global!\n"; abort(); }
+  { std::cout << "FAIL for Global!\n"; abort(); }
   if( orig.IndicesAreGlobal() )
-  { cout << "FAIL for Global Indices!\n"; abort(); }
+  { std::cout << "FAIL for Global Indices!\n"; abort(); }
 
   // Extract the CCS information
   int n = orig.NumMyRows();
@@ -71,17 +71,17 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    cout << "-----------------------------------------\n";
-    cout << "CRS Format Graph\n";
-    cout << "-----------------------------------------\n";
+    std::cout << "-----------------------------------------\n";
+    std::cout << "CRS Format Graph\n";
+    std::cout << "-----------------------------------------\n";
     for( int i = 0; i < n; ++i )
       {
-	cout << Ap[i] << " - " << Ap[i+1] << " : ";
+	std::cout << Ap[i] << " - " << Ap[i+1] << " : ";
 	for( int j = Ap[i]; j<Ap[i+1]; ++j )
-	  cout << " " << Ai[j];
-	cout << endl;
+	  std::cout << " " << Ai[j];
+	std::cout << std::endl;
       }
-    cout << "-----------------------------------------\n";
+    std::cout << "-----------------------------------------\n";
   }
 
   // Control and information vector
@@ -114,10 +114,10 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    cout << "New Row Map\n";
-    cout << *NewRowMap_ << endl;
-    cout << "New Col Map\n";
-    cout << *NewColMap_ << endl;
+    std::cout << "New Row Map\n";
+    std::cout << *NewRowMap_ << std::endl;
+    std::cout << "New Col Map\n";
+    std::cout << *NewColMap_ << std::endl;
   }
 
   //Generate New Graph
@@ -128,8 +128,8 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    cout << "New CrsGraph\n";
-    cout << *NewGraph_ << endl;
+    std::cout << "New CrsGraph\n";
+    std::cout << *NewGraph_ << std::endl;
   }
 
   newObj_ = &*NewGraph_;

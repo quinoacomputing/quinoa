@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-// 
+//
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -44,7 +44,7 @@
 //  $Revision$
 // ************************************************************************
 //@HEADER
-                                                                                
+
 #include "NOX_Common.H"
 #include "Epetra_Comm.h"
 #include "Epetra_Map.h"
@@ -57,9 +57,9 @@
 #include "Problem_Manager.H"
 #include "Equation_A.H"
 
-// Constructor - creates the Epetra objects (maps and vectors) 
+// Constructor - creates the Epetra objects (maps and vectors)
 Equation_A::Equation_A(Epetra_Comm& comm, int numGlobalNodes,
-                                           string name_) :
+                                           std::string name_) :
   GenericEpetraProblem(comm, numGlobalNodes, name_),
   xmin(0.0),
   xmax(1.0),
@@ -120,7 +120,7 @@ void Equation_A::initialize()
 {
   // Get id of required Species problem
   map<string, int>::iterator id_ptr = nameToMyIndex.find("Species");
-  if( id_ptr == nameToMyIndex.end() ) 
+  if( id_ptr == nameToMyIndex.end() )
   {
     std::string msg = "ERROR: Equation_A (\"" + myName + "\") could not get "
          + "vector for problem \"Species\" !!";
@@ -128,16 +128,16 @@ void Equation_A::initialize()
   }
   else
     id_spec = (*id_ptr).second;
-  
+
   // Check for dependence on velocity (convection)
 
   // Rather than merely existing, we should change this to search the
   // dependent problems vector
   id_ptr = nameToMyIndex.find("Burgers");
-  if( id_ptr == nameToMyIndex.end() ) 
+  if( id_ptr == nameToMyIndex.end() )
   {
-    cout << "WARNING: Equation_A (\"" << myName << "\") could not get "
-         << "vector for problem \"Burgers\". Omitting convection." << endl;
+    std::cout << "WARNING: Equation_A (\"" << myName << "\") could not get "
+         << "vector for problem \"Burgers\". Omitting convection." << std::endl;
 
     useConvection = false;
   }
@@ -146,7 +146,7 @@ void Equation_A::initialize()
     id_vel = (*id_ptr).second;
     useConvection = true;
   }
-  
+
   return;
 }
 
@@ -163,8 +163,8 @@ void Equation_A::reset(const Epetra_Vector& x)
 // Empty Reset function
 void Equation_A::reset()
 {
-  cout << "WARNING: reset called without passing any update vector !!" 
-       << endl;
+  std::cout << "WARNING: reset called without passing any update vector !!"
+       << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -183,17 +183,17 @@ void Equation_A::initializeSolution()
 
   for (int i=0; i<x.MyLength(); i++)
     soln[i] = 0.6 + 1.e-1*sin(1.0*pi*x[i]);
-  
+
   *oldSolution = soln;
-} 
+}
 
 //-----------------------------------------------------------------------------
 
 // Matrix and Residual Fills
 bool Equation_A::evaluate(
                     NOX::Epetra::Interface::Required::FillType fillType,
-		    const Epetra_Vector* soln, 
-		    Epetra_Vector* rhs)
+            const Epetra_Vector* soln,
+            Epetra_Vector* rhs)
 {
   bool fillRes = false;
   bool fillJac = false;
@@ -214,7 +214,7 @@ bool Equation_A::evaluate(
   // Create the overlapped solution and position vectors
   Epetra_Vector u(*OverlapMap);
   Epetra_Vector uold(*OverlapMap);
-  vector<Epetra_Vector*> dep(numDep);
+  std::vector<Epetra_Vector*> dep(numDep);
   for( int i = 0; i<numDep; i++)
     dep[i] = new Epetra_Vector(*OverlapMap);
   Epetra_Vector xvec(*OverlapMap);
@@ -251,9 +251,9 @@ bool Equation_A::evaluate(
   double beta = 2.0;
   double jac;
   double xx[2];
-  double uu[2]; 
+  double uu[2];
   double uuold[2];
-  vector<double*> ddep(numDep);
+  std::vector<double*> ddep(numDep);
   for( int i = 0; i<numDep; i++)
     ddep[i] = new double[2];
   Basis basis;
@@ -265,20 +265,20 @@ bool Equation_A::evaluate(
   if ( fillRes ) rhs->PutScalar(0.0);
 
   // Loop Over # of Finite Elements on Processor
-  for (int ne=0; ne < OverlapNumMyNodes-1; ne++) 
+  for (int ne=0; ne < OverlapNumMyNodes-1; ne++)
   {
-    
+
     // Loop Over Gauss Points
-    for(int gp=0; gp < 2; gp++) 
+    for(int gp=0; gp < 2; gp++)
     {
-      // Get the solution and coordinates at the nodes 
+      // Get the solution and coordinates at the nodes
       xx[0]=xvec[ne];
       xx[1]=xvec[ne+1];
       uu[0] = u[ne];
       uu[1] = u[ne+1];
       uuold[0] = uold[ne];
       uuold[1] = uold[ne+1];
-      for( int i = 0; i<numDep; i++ ) 
+      for( int i = 0; i<numDep; i++ )
       {
         ddep[i][0] = (*dep[i])[ne];
         ddep[i][1] = (*dep[i])[ne+1];
@@ -287,47 +287,47 @@ bool Equation_A::evaluate(
       basis.getBasis(gp, xx, uu, uuold, ddep);
 
       // Loop over Nodes in Element
-      for (int i=0; i< 2; i++) 
+      for (int i=0; i< 2; i++)
       {
-	row=OverlapMap->GID(ne+i);
-	if (StandardMap->MyGID(row)) 
+    row=OverlapMap->GID(ne+i);
+    if (StandardMap->MyGID(row))
         {
-	  if ( fillRes ) 
+      if ( fillRes )
           {
             convection = 0.0;
             if( useConvection )
               convection = basis.ddep[id_vel]*basis.duu/basis.dx;
 
-	    (*rhs)[StandardMap->LID(OverlapMap->GID(ne+i))]+=
-	      + basis.wt*basis.dx
-	      * ((basis.uu - basis.uuold)/dt * basis.phi[i] 
-	      + convection * basis.phi[i] 
+        (*rhs)[StandardMap->LID(OverlapMap->GID(ne+i))]+=
+          + basis.wt*basis.dx
+          * ((basis.uu - basis.uuold)/dt * basis.phi[i]
+          + convection * basis.phi[i]
               + (1.0/(basis.dx*basis.dx))*Dcoeff*basis.duu*basis.dphide[i]
               + basis.phi[i] * ( -alpha + (beta+1.0)*basis.uu
                 - basis.uu*basis.uu*basis.ddep[id_spec]) );
-	  }
-	}
-	// Loop over Trial Functions
-	if ( fillJac ) 
+      }
+    }
+    // Loop over Trial Functions
+    if ( fillJac )
         {
-	  for( int j = 0; j < 2; ++j ) 
+      for( int j = 0; j < 2; ++j )
           {
-	    if (StandardMap->MyGID(row)) 
+        if (StandardMap->MyGID(row))
             {
-	      column=OverlapMap->GID(ne+j);
-	      jac=basis.wt*basis.dx*(
-                      basis.phi[j]/dt*basis.phi[i] 
+          column=OverlapMap->GID(ne+j);
+          jac=basis.wt*basis.dx*(
+                      basis.phi[j]/dt*basis.phi[i]
                       +(1.0/(basis.dx*basis.dx))*Dcoeff*basis.dphide[j]*
                                                         basis.dphide[i]
                       + basis.phi[i] * ( (beta+1.0)*basis.phi[j]
-                      - 2.0*basis.uu*basis.phi[j]*basis.ddep[id_spec]) );  
-	      A->SumIntoGlobalValues(row, 1, &jac, &column);
-	    }
-	  }
-	}
+                      - 2.0*basis.uu*basis.phi[j]*basis.ddep[id_spec]) );
+          A->SumIntoGlobalValues(row, 1, &jac, &column);
+        }
       }
     }
-  } 
+      }
+    }
+  }
 
   // Insert Boundary Conditions and modify Jacobian and function (F)
   // U(0)=1
@@ -361,17 +361,17 @@ bool Equation_A::evaluate(
 
   // Sync up processors to be safe
   Comm->Barrier();
- 
+
   A->FillComplete();
 
 #ifdef DEBUG
   A->Print(cout);
 
   if( fillRes )
-    cout << "For residual fill :" << endl << *rhs << endl;
+    std::cout << "For residual fill :" << std::endl << *rhs << std::endl;
 
   if( fillJac ) {
-    cout << "For jacobian fill :" << endl;
+    std::cout << "For jacobian fill :" << std::endl;
     A->Print(cout);
   }
 
@@ -392,13 +392,13 @@ bool Equation_A::evaluate(
 Epetra_Vector& Equation_A::getOldSoln()
 {
   return *oldSolution;
-} 
-  
+}
+
 //-----------------------------------------------------------------------------
 
 void Equation_A::generateGraph()
 {
-  
+
   // Declare required variables
   int i;
   int row, column;
@@ -406,10 +406,10 @@ void Equation_A::generateGraph()
   int OverlapMinMyNodeGID;
   if (MyPID==0) OverlapMinMyNodeGID = StandardMap->MinMyGID();
   else OverlapMinMyNodeGID = StandardMap->MinMyGID()-1;
-  
+
   // Loop Over # of Finite Elements on Processor
   for (int ne=0; ne < OverlapNumMyNodes-1; ne++) {
-          
+
     // Loop over Nodes in Element
     for (i=0; i<2; i++) {
 
@@ -420,7 +420,7 @@ void Equation_A::generateGraph()
         row=OverlapMap->GID(ne+i);
 
         // Loop over supporting nodes
-        for( int j = 0; j < 2; ++j) 
+        for( int j = 0; j < 2; ++j)
         {
           // Loop over unknowns at supporting nodes
           column=OverlapMap->GID(ne+j);
@@ -430,6 +430,6 @@ void Equation_A::generateGraph()
     }
   }
   AA->FillComplete();
-  
+
   return;
 }

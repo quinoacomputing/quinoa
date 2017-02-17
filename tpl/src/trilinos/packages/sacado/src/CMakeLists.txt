@@ -1,6 +1,3 @@
-
-INCLUDE(TribitsLibraryMacros)
-
 #
 # A) Package-specific configuration options
 #
@@ -25,9 +22,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # FAD
 SET(HEADERS ${HEADERS}
   Sacado_Fad_GeneralFad.hpp
-  Sacado_Fad_GeneralFadImp.hpp
   Sacado_Fad_GeneralFadExpr.hpp
   Sacado_Fad_ExpressionTraits.hpp
+  Sacado_Fad_ExpressionFwd.hpp
   Sacado_Fad_Expression.hpp
   Sacado_Fad_Ops.hpp
   Sacado_Fad_DynamicStorage.hpp
@@ -37,7 +34,6 @@ SET(HEADERS ${HEADERS}
   Sacado_Fad_SLFad.hpp
   Sacado_Fad_SLFadTraits.hpp
   Sacado_Fad_SFad.hpp
-  Sacado_Fad_SFadImp.hpp
   Sacado_Fad_SFadTraits.hpp
   Sacado_Fad_MemPool.hpp
   Sacado_Fad_MemPoolImp.hpp
@@ -55,12 +51,18 @@ SET(HEADERS ${HEADERS}
   Sacado_Fad_SimpleFadImp.hpp
   Sacado_Fad_SimpleFadOps.hpp
   Sacado_Fad_SimpleFadTraits.hpp
-  ) 
+  Sacado_Fad_ViewStorage.hpp
+  Sacado_Fad_ViewFad.hpp
+  Sacado_Fad_ViewFadTraits.hpp
+  Sacado_Fad_DFad_tmpl.hpp
+  Sacado_Fad_SFad_tmpl.hpp
+  Sacado_Fad_SLFad_tmpl.hpp
+  Sacado_Fad_ViewFad_tmpl.hpp
+  )
 
 # ELRFAD
 SET(HEADERS ${HEADERS}
   Sacado_ELRFad_GeneralFad.hpp
-  Sacado_ELRFad_GeneralFadImp.hpp
   Sacado_ELRFad_GeneralFadExpr.hpp
   Sacado_ELRFad_ExpressionTraits.hpp
   Sacado_ELRFad_Expression.hpp
@@ -70,14 +72,14 @@ SET(HEADERS ${HEADERS}
   Sacado_ELRFad_SLFad.hpp
   Sacado_ELRFad_SLFadTraits.hpp
   Sacado_ELRFad_SFad.hpp
-  Sacado_ELRFad_SFadImp.hpp
   Sacado_ELRFad_SFadTraits.hpp
+  Sacado_ELRFad_ViewFad.hpp
+  Sacado_ELRFad_ViewFadTraits.hpp
   )
 
 # LFAD
 SET(HEADERS ${HEADERS}
   Sacado_LFad_LogicalSparse.hpp
-  Sacado_LFad_LogicalSparseImp.hpp
   Sacado_LFad_LogicalSparseOps.hpp
   Sacado_LFad_LogicalSparseTraits.hpp
   Sacado_LFad_ExpressionTraits.hpp
@@ -86,7 +88,6 @@ SET(HEADERS ${HEADERS}
 # CACHEFAD
 SET(HEADERS ${HEADERS}
   Sacado_CacheFad_GeneralFad.hpp
-  Sacado_CacheFad_GeneralFadImp.hpp
   Sacado_CacheFad_GeneralFadExpr.hpp
   Sacado_CacheFad_ExpressionTraits.hpp
   Sacado_CacheFad_Expression.hpp
@@ -95,15 +96,15 @@ SET(HEADERS ${HEADERS}
   Sacado_CacheFad_DFad.hpp
   Sacado_CacheFad_SFadTraits.hpp
   Sacado_CacheFad_SFad.hpp
-  Sacado_CacheFad_SFadImp.hpp
   Sacado_CacheFad_SLFadTraits.hpp
   Sacado_CacheFad_SLFad.hpp
+  Sacado_CacheFad_ViewFad.hpp
+  Sacado_CacheFad_ViewFadTraits.hpp
   )
 
 # ELRCacheFAD
 SET(HEADERS ${HEADERS}
   Sacado_ELRCacheFad_GeneralFad.hpp
-  Sacado_ELRCacheFad_GeneralFadImp.hpp
   Sacado_ELRCacheFad_GeneralFadExpr.hpp
   Sacado_ELRCacheFad_ExpressionTraits.hpp
   Sacado_ELRCacheFad_Expression.hpp
@@ -113,8 +114,9 @@ SET(HEADERS ${HEADERS}
   Sacado_ELRCacheFad_SLFad.hpp
   Sacado_ELRCacheFad_SLFadTraits.hpp
   Sacado_ELRCacheFad_SFad.hpp
-  Sacado_ELRCacheFad_SFadImp.hpp
   Sacado_ELRCacheFad_SFadTraits.hpp
+  Sacado_ELRCacheFad_ViewFad.hpp
+  Sacado_ELRCacheFad_ViewFadTraits.hpp
   )
 
 #TAYLOR
@@ -160,6 +162,12 @@ SET(HEADERS ${HEADERS}
   Sacado_Handle.hpp
   )
 
+# TEMPLATE
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/template)
+SET(HEADERS ${HEADERS}
+  template/Sacado_TemplateContainer.hpp
+  )
+
 IF (${PACKAGE_NAME}_ENABLE_Teuchos)
 
   # BLAS
@@ -173,15 +181,14 @@ IF (${PACKAGE_NAME}_ENABLE_Teuchos)
     )
 
   # TEMPLATE
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/template)
   SET(HEADERS ${HEADERS}
     template/Sacado_TemplateManager.hpp
     template/Sacado_TemplateManagerImp.hpp
     template/Sacado_TemplateIterator.hpp
     )
-  
+
   IF (${PACKAGE_NAME}_ENABLE_PARAMLIB)
-    
+
     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/parameter)
     SET(HEADERS ${HEADERS}
       parameter/Sacado_ParameterFamilyBase.hpp
@@ -194,17 +201,20 @@ IF (${PACKAGE_NAME}_ENABLE_Teuchos)
       parameter/Sacado_ScalarParameterLibrary.hpp
       parameter/Sacado_ScalarParameterVector.hpp
       parameter/Sacado_ParameterAccessor.hpp
+      parameter/Sacado_ParameterAccessorImp.hpp
       parameter/Sacado_ParameterRegistration.hpp
       )
 
   ENDIF(${PACKAGE_NAME}_ENABLE_PARAMLIB)
-  
+
 ENDIF(${PACKAGE_NAME}_ENABLE_Teuchos)
 
 #mpl
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/mpl)
 SET(HEADERS ${HEADERS}
   mpl/Sacado_mpl_is_same.hpp
+  mpl/Sacado_mpl_is_convertible.hpp
+  mpl/Sacado_mpl_enable_if.hpp
   mpl/Sacado_mpl_disable_if.hpp
   mpl/Sacado_mpl_if.hpp
   mpl/Sacado_mpl_none.hpp
@@ -232,6 +242,7 @@ SET(HEADERS ${HEADERS}
   mpl/Sacado_mpl_quote.hpp
   mpl/Sacado_mpl_type_wrap.hpp
   mpl/Sacado_mpl_is_placeholder.hpp
+  mpl/Sacado_mpl_integral_nonzero_constant.hpp
   )
 
 # Scalar flop counters
@@ -249,9 +260,18 @@ SET(HEADERS ${HEADERS}
   Sacado_Version.hpp
   Sacado_Traits.hpp
   Sacado.hpp
+  Sacado_No_Kokkos.hpp
+  Kokkos_View_Fad.hpp
+  Kokkos_DynRankView_Fad.hpp
+  Kokkos_LayoutContiguous.hpp
+  KokkosExp_View_Fad.hpp
+  Kokkos_ViewFactory.hpp
+  Sacado_DisableKokkosCuda.hpp
   Sacado_MathFunctions.hpp
   Sacado_cmath.hpp
   Sacado_dummy_arg.hpp
+  Sacado_Base.hpp
+  Sacado_SFINAE_Macros.hpp
   )
 
 #

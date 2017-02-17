@@ -2,36 +2,51 @@
 # -*- python -*-
 
 # @HEADER
-# ************************************************************************
+# ***********************************************************************
 #
-#                PyTrilinos: Python Interface to Trilinos
-#                   Copyright (2005) Sandia Corporation
+#          PyTrilinos: Python Interfaces to Trilinos Packages
+#                 Copyright (2014) Sandia Corporation
 #
-# Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-# license for use of this work by or on behalf of the U.S. Government.
+# Under the terms of Contract DE-AC04-94AL85000 with Sandia
+# Corporation, the U.S. Government retains certain rights in this
+# software.
 #
-# This library is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation; either version 2.1 of the
-# License, or (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-# This library is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
 #
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA
-# Questions? Contact Bill Spotz (wfspotz@sandia.gov)
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
 #
-# ************************************************************************
+# 3. Neither the name of the Corporation nor the names of the
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+#
+# ***********************************************************************
 # @HEADER
 
 #
 # System imports
 from optparse import *
+import sys
 
 #
 # Parse the command-line arguments
@@ -52,46 +67,78 @@ Epetra  = fromPyTrilinosImport('Epetra' , options.testharness)
 Galeri  = fromPyTrilinosImport('Galeri' , options.testharness)
 AztecOO = fromPyTrilinosImport('AztecOO', options.testharness)
 
-comm = Epetra.PyComm()
+# Main routine, takes a communicator and a solution tolerance
+def main(comm, tol):
 
-nx = 30; ny = 30
-GaleriList = {"n": nx * ny,  # for Linear map
-              "nx": nx,      # for Laplace2D, which requires nx
-              "ny": ny       # and ny
-              }
-Map = Galeri.CreateMap("Linear", comm, GaleriList)
-Matrix = Galeri.CreateCrsMatrix("Laplace2D", Map, GaleriList)
-Exact = Epetra.Vector(Map) 
-LHS = Epetra.Vector(Map) 
-RHS = Epetra.Vector(Map) 
-Exact.Random()       # fix exact solution
-LHS.PutScalar(0.0)   # fix starting solution
-Matrix.Multiply(False, Exact, RHS) # fix rhs corresponding to Exact
+   # Obtain the example matrix from Galeri
+   nx = 30
+   ny = 30
+   galeriList = {"n": nx * ny,  # for Linear map
+                 "nx": nx,      # for Laplace2D, which requires nx
+                 "ny": ny       # and ny
+                 }
+   map = Galeri.CreateMap("Linear", comm, galeriList)
+   matrix = Galeri.CreateCrsMatrix("Laplace2D", map, galeriList)
 
-# Solve the linear problem
-if 0:
-   # this does not work on most installations
-   Problem = Epetra.LinearProblem(Matrix, LHS, RHS)
-   Solver = AztecOO.AztecOO(Problem)
-else:
-   Solver = AztecOO.AztecOO(Matrix, LHS, RHS)
+   # Allocate and initialize the solution and RHS vector
+   exact = Epetra.Vector(map)
+   x = Epetra.Vector(map)
+   b = Epetra.Vector(map)
+   exact.Random()       # Fix exact solution
+   x.PutScalar(0.0)     # Fix starting guess for solution
+   matrix.Multiply(False, exact, b) # Fix rhs corresponding to exact
 
-try:
-   plist = {"Solver"          : "CG",
-            "Precond"         : "Dom_Decomp",
-            "Subdomain_Solve" : "ICC",
-            "Output"          : 16
-            }
-   Solver.SetParameters(plist,True)
-except AttributeError:
-   # If AztecOO and its python wrappers have been compiled without Teuchos
-   # support, then then the SetParameters method will not exist, thus raising an
-   # AttributeError exception
-   print "Teuchos ParameterLists not supported"
-   Solver.SetAztecOption(AztecOO.AZ_solver, AztecOO.AZ_cg)
-   Solver.SetAztecOption(AztecOO.AZ_precond, AztecOO.AZ_dom_decomp)
-   Solver.SetAztecOption(AztecOO.AZ_subdomain_solve, AztecOO.AZ_icc)
-   Solver.SetAztecOption(AztecOO.AZ_output, 16)
-   Solver.Iterate(1550, 1e-5)
+   # Build the solver object
+   if 0:
+      # this does not work on most installations
+      problem = Epetra.LinearProblem(matrix, x, b)
+      solver = AztecOO.AztecOO(problem)
+   else:
+      solver = AztecOO.AztecOO(matrix, x, b)
 
-if comm.MyPID() == 0: print "End Result: TEST PASSED"
+   # Set the solver parameters
+   try:
+      plist = {"Solver"          : "CG",
+               "Precond"         : "Dom_Decomp",
+               "Subdomain_Solve" : "ICC",
+               "Output"          : 16
+               }
+      solver.SetParameters(plist,True)
+   except AttributeError:
+      # If AztecOO and its python wrappers have been compiled without Teuchos
+      # support, then then the SetParameters method will not exist, thus raising
+      # an AttributeError exception
+      print "Teuchos ParameterLists not supported"
+      solver.SetAztecOption(AztecOO.AZ_solver, AztecOO.AZ_cg)
+      solver.SetAztecOption(AztecOO.AZ_precond, AztecOO.AZ_dom_decomp)
+      solver.SetAztecOption(AztecOO.AZ_subdomain_solve, AztecOO.AZ_icc)
+      solver.SetAztecOption(AztecOO.AZ_output, 16)
+
+   # Solve the system
+   solver.Iterate(galeriList["n"], tol)
+
+   # Compute and return the solution error
+   return Epetra.Vector(map, (x - exact))
+
+if __name__ == "__main__":
+
+   # Call the main routine
+   comm  = Epetra.PyComm()
+   tol   = 1e-5
+   error = main(comm, tol)
+
+   # Check the results
+   myErrors = 0
+   solnError = error.Norm2() / error.Map().NumGlobalElements()
+   if solnError > tol:
+      myErrors = 1
+   totalErrors = comm.SumAll(myErrors)
+
+   # Print results message and exit
+   if comm.MyPID() == 0:
+      print "solution error norm =", solnError
+      if totalErrors == 0:
+         print "End Result: TEST PASSED"
+      else:
+         print "End Result: TEST FAILED"
+   sys.exit(totalErrors)

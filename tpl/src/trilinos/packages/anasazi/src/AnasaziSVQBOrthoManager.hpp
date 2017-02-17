@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -421,12 +421,12 @@ namespace Anasazi {
 
     // get sizes of X,MX
     int xc = MVT::GetNumberVecs(X);
-    int xr = MVT::GetVecLength( X );
+    ptrdiff_t xr = MVT::GetGlobalLength( X );
 
     // get sizes of Q[i]
     int nq = Q.length();
-    int qr = (nq == 0) ? 0 : MVT::GetVecLength(*Q[0]);
-    int qsize = 0;
+    ptrdiff_t qr = (nq == 0) ? 0 : MVT::GetGlobalLength(*Q[0]);
+    ptrdiff_t qsize = 0;
     std::vector<int> qcs(nq);
     for (int i=0; i<nq; i++) {
       qcs[i] = MVT::GetNumberVecs(*Q[i]);
@@ -463,7 +463,7 @@ namespace Anasazi {
     // check the size of the C[i] against the Q[i] and consistency between Q[i]
     for (int i=0; i<nq; i++) {
       // check size of Q[i]
-      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetVecLength( *Q[i] ) != qr, std::invalid_argument, 
+      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetGlobalLength( *Q[i] ) != qr, std::invalid_argument, 
                           "Anasazi::SVQBOrthoManager::findBasis(): Size of Q not mutually consistant" );
       TEUCHOS_TEST_FOR_EXCEPTION( qr < qcs[i], std::invalid_argument, 
                           "Anasazi::SVQBOrthoManager::findBasis(): Q has less rows than columns" );
@@ -477,7 +477,7 @@ namespace Anasazi {
       }
       // clear C[i]
       C[i]->putScalar(ZERO);
-      newC[i] = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>(*C[i]) );
+      newC[i] = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>(C[i]->numRows(),C[i]->numCols()) );
     }
 
 
@@ -551,7 +551,7 @@ namespace Anasazi {
 
     // test sizes of X,MX
     int mxc = (this->_hasOp) ? MVT::GetNumberVecs( *MX ) : xc;
-    int mxr = (this->_hasOp) ? MVT::GetVecLength( *MX )  : xr;
+    ptrdiff_t mxr = (this->_hasOp) ? MVT::GetGlobalLength( *MX )  : xr;
     TEUCHOS_TEST_FOR_EXCEPTION( xc != mxc || xr != mxr, std::invalid_argument, 
                         "Anasazi::SVQBOrthoManager::findBasis(): Size of X not consistant with MX" );
 
@@ -809,14 +809,15 @@ namespace Anasazi {
 
           condT = SCTM::magnitude(maxLambda / minLambda);
           if (debug_) {
-            std::cout << dbgstr << "condT: " << condT << std::endl;
+            std::cout << dbgstr << "condT: " << condT << ", tolerance = " << tolerance << std::endl;
           }
-          
-        } // end while (condT >= tolerance)
+      
+          // if multiple passes of SVQB are necessary, then pass through outer GS loop again    
+          if ((doGramSchmidt == false) && (condT > SCTM::squareroot(tolerance))) {
+            doGramSchmidt = true;
+          }
 
-        if ((doGramSchmidt == false) && (condT > SCTM::squareroot(tolerance))) {
-          doGramSchmidt = true;
-        }
+        } // end while (condT >= tolerance)
       }
       // end if(normalize_in)
        

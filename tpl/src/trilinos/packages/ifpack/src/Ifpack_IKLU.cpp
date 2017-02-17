@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -44,6 +57,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include <functional>
+#include <algorithm>
 
 using namespace Teuchos;
 
@@ -101,7 +115,10 @@ void Ifpack_IKLU::Destroy()
 //==========================================================================
 int Ifpack_IKLU::SetParameters(Teuchos::ParameterList& List)
 {
-  try 
+  using std::cerr;
+  using std::endl;
+
+  try
   {
     LevelOfFill_ = List.get<double>("fact: ilut level-of-fill", LevelOfFill());
     if (LevelOfFill_ <= 0.0)
@@ -135,6 +152,10 @@ int Ifpack_IKLU::SetParameters(Teuchos::ParameterList& List)
 //==========================================================================
 int Ifpack_IKLU::Initialize()
 {
+  using std::cerr;
+  using std::cout;
+  using std::endl;
+
   // delete previously allocated factorization
   Destroy();
 
@@ -147,17 +168,17 @@ int Ifpack_IKLU::Initialize()
     cerr << "and it is currently not meant to be used otherwise." << endl;
     exit(EXIT_FAILURE);
   }
-  
+
   // check dimensions of input matrix only in serial
   if (Comm().NumProc() == 1 && Matrix().NumMyRows() != Matrix().NumMyCols())
     IFPACK_CHK_ERR(-2);
-    
+
   NumMyRows_ = Matrix().NumMyRows();
   NumMyNonzeros_ = Matrix().NumMyNonzeros();
 
   int RowNnz, Length = Matrix().MaxNumEntries();
-  vector<int>    RowIndices(Length);
-  vector<double> RowValues(Length);
+  std::vector<int>    RowIndices(Length);
+  std::vector<double> RowValues(Length);
 
   //cout << "Processor " << Comm().MyPID() << " owns " << NumMyRows_ << " rows and has " << NumMyNonzeros_ << " nonzeros " << endl;
   // get general symbolic structure of the matrix
@@ -169,7 +190,7 @@ int Ifpack_IKLU::Initialize()
   for (int i = 0; i < NumMyRows_; ++i ) {
 
     IFPACK_CHK_ERR(A_.ExtractMyRowCopy(i,Length,RowNnz,
-				       &RowValues[0],&RowIndices[0]));
+                                       &RowValues[0],&RowIndices[0]));
     for (int j = 0 ; j < RowNnz ; ++j) {
       csrA_->j[count++] = RowIndices[j];
       //cout << "Row = " << i << ", Column = " << RowIndices[j] << ", Value = " << RowValues[j] << endl;
@@ -193,10 +214,10 @@ int Ifpack_IKLU::Initialize()
 }
 
 //==========================================================================
-class Ifpack_AbsComp 
+class Ifpack_AbsComp
 {
  public:
-  inline bool operator()(const double& x, const double& y) 
+  inline bool operator()(const double& x, const double& y)
   {
     return(IFPACK_ABS(x) > IFPACK_ABS(y));
   }
@@ -204,9 +225,12 @@ class Ifpack_AbsComp
 
 //==========================================================================
 
-int Ifpack_IKLU::Compute() 
+int Ifpack_IKLU::Compute()
 {
-  if (!IsInitialized()) 
+  using std::cout;
+  using std::endl;
+
+  if (!IsInitialized())
     IFPACK_CHK_ERR(Initialize());
 
   Time_.ResetStartTime();
@@ -216,6 +240,7 @@ int Ifpack_IKLU::Compute()
   int Length = A_.MaxNumEntries();
 
   bool distributed = (Comm().NumProc() > 1)?true:false;
+#if !defined(EPETRA_NO_32BIT_GLOBAL_INDICES) || !defined(EPETRA_NO_64BIT_GLOBAL_INDICES)
   if (distributed)
   {
     SerialComm_ = rcp(new Epetra_SerialComm);
@@ -225,28 +250,29 @@ int Ifpack_IKLU::Compute()
   }
   else
     SerialMap_ = rcp(const_cast<Epetra_Map*>(&A_.RowMatrixRowMap()), false);
+#endif
 
   int RowNnz;
-  vector<int>    RowIndices(Length);
-  vector<double> RowValues(Length);
+  std::vector<int>    RowIndices(Length);
+  std::vector<double> RowValues(Length);
 
   // copy the values from A_ into csrA_
   int count = 0;
   for (int i = 0; i < NumMyRows_; ++i ) {
 
     IFPACK_CHK_ERR(A_.ExtractMyRowCopy(i,Length,RowNnz,
-				       &RowValues[0],&RowIndices[0]));
+                                       &RowValues[0],&RowIndices[0]));
     // make sure each row has the same number of nonzeros
     if (RowNnz != (csrA_->p[i+1]-csrA_->p[i])) {
       cout << "The number of nonzeros for this row does not math the expected number of nonzeros!!!" << endl;
     }
     for (int j = 0 ; j < RowNnz ; ++j) {
-      
+
       csrA_->x[count++] = RowValues[j];
       //cout << "Row = " << i << ", Column = " << RowIndices[j] << ", Value = " << RowValues[j] << endl;
     }
   }
-  
+
   // compute the lu factors
   double tol = 0.1;
   csrnN_ = csr_lu( &*csrA_, &*cssS_, tol );
@@ -254,7 +280,7 @@ int Ifpack_IKLU::Compute()
   // Create L and U as a view of the information stored in csrnN_->L and csrnN_->U
   csr* L_tmp = csrnN_->L;
   csr* U_tmp = csrnN_->U;
-  vector<int> numEntriesL( NumMyRows_ ), numEntriesU( NumMyRows_ );
+  std::vector<int> numEntriesL( NumMyRows_ ), numEntriesU( NumMyRows_ );
   for (int i=0; i < NumMyRows_; ++i) {
     numEntriesL[i] = ( L_tmp->p[i+1] - L_tmp->p[i] );
     numEntriesU[i] = ( U_tmp->p[i+1] - U_tmp->p[i] );
@@ -263,15 +289,37 @@ int Ifpack_IKLU::Compute()
   U_ = rcp(new Epetra_CrsMatrix(View, *SerialMap_, &numEntriesU[0]));
 
   // Insert the values into L and U
-  for (int i=0; i < NumMyRows_; ++i) {
-    L_->InsertGlobalValues( i, numEntriesL[i], &(L_tmp->x[L_tmp->p[i]]), &(L_tmp->j[L_tmp->p[i]]) );
-    U_->InsertGlobalValues( i, numEntriesU[i], &(U_tmp->x[U_tmp->p[i]]), &(U_tmp->j[U_tmp->p[i]]) );
-  }
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    if(SerialMap_->GlobalIndicesInt()) {
+      for (int i=0; i < NumMyRows_; ++i) {
+        L_->InsertGlobalValues( i, numEntriesL[i], &(L_tmp->x[L_tmp->p[i]]), &(L_tmp->j[L_tmp->p[i]]) );
+        U_->InsertGlobalValues( i, numEntriesU[i], &(U_tmp->x[U_tmp->p[i]]), &(U_tmp->j[U_tmp->p[i]]) );
+      }
+    }
+    else
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    if(SerialMap_->GlobalIndicesLongLong()) {
+
+      const int MaxNumEntries_L_U = std::max(L_->MaxNumEntries(), U_->MaxNumEntries());
+          std::vector<long long> entries(MaxNumEntries_L_U);
+
+      for (int i=0; i < NumMyRows_; ++i) {
+        std::copy(&(L_tmp->j[L_tmp->p[i]]), &(L_tmp->j[L_tmp->p[i]]) + numEntriesL[i], entries.begin());
+        L_->InsertGlobalValues( i, numEntriesL[i], &(L_tmp->x[L_tmp->p[i]]), &(entries[0]) );
+
+        std::copy(&(U_tmp->j[U_tmp->p[i]]), &(U_tmp->j[U_tmp->p[i]]) + numEntriesU[i], entries.begin());
+        U_->InsertGlobalValues( i, numEntriesU[i], &(U_tmp->x[U_tmp->p[i]]), &(entries[0]) );
+      }
+    }
+    else
+#endif
+      throw "Ifpack_IKLU::Compute: GlobalIndices type unknown for SerialMap_";
 
   IFPACK_CHK_ERR(L_->FillComplete());
   IFPACK_CHK_ERR(U_->FillComplete());
 
-  int MyNonzeros = L_->NumGlobalNonzeros() + U_->NumGlobalNonzeros();
+  long long MyNonzeros = L_->NumGlobalNonzeros64() + U_->NumGlobalNonzeros64();
   Comm().SumAll(&MyNonzeros, &GlobalNonzeros_, 1);
 
   IsComputed_ = true;
@@ -282,15 +330,15 @@ int Ifpack_IKLU::Compute()
   return(0);
 
 }
-  
+
 //=============================================================================
-int Ifpack_IKLU::ApplyInverse(const Epetra_MultiVector& X, 
-			     Epetra_MultiVector& Y) const
+int Ifpack_IKLU::ApplyInverse(const Epetra_MultiVector& X,
+                             Epetra_MultiVector& Y) const
 {
   if (!IsComputed())
     IFPACK_CHK_ERR(-2); // compute preconditioner first
 
-  if (X.NumVectors() != Y.NumVectors()) 
+  if (X.NumVectors() != Y.NumVectors())
     IFPACK_CHK_ERR(-3); // Return error: X and Y not the same size
 
   Time_.ResetStartTime();
@@ -301,7 +349,7 @@ int Ifpack_IKLU::ApplyInverse(const Epetra_MultiVector& X,
   //
   // AztecOO gives X and Y pointing to the same memory location,
   // need to create an auxiliary vector, Xcopy and apply permutation.
-  vector<int> invq( NumMyRows_ );
+  std::vector<int> invq( NumMyRows_ );
 
   for (int i=0; i<NumMyRows_; ++i ) {
     csrnN_->perm[ csrnN_->pinv[i] ] = i;
@@ -319,7 +367,7 @@ int Ifpack_IKLU::ApplyInverse(const Epetra_MultiVector& X,
 
   if (!UseTranspose_)
   {
-    // solves LU Y = X 
+    // solves LU Y = X
     IFPACK_CHK_ERR(L_->Solve(false,false,false,*Xcopy,*Ytemp));
     IFPACK_CHK_ERR(U_->Solve(true,false,false,*Ytemp,*Ytemp));
   }
@@ -348,17 +396,17 @@ int Ifpack_IKLU::ApplyInverse(const Epetra_MultiVector& X,
 }
 //=============================================================================
 // This function finds X such that LDU Y = X or U(trans) D L(trans) Y = X for multiple RHS
-int Ifpack_IKLU::Apply(const Epetra_MultiVector& X, 
-		      Epetra_MultiVector& Y) const 
+int Ifpack_IKLU::Apply(const Epetra_MultiVector& X,
+                      Epetra_MultiVector& Y) const
 {
 
   return(-98);
 }
 
 //=============================================================================
-double Ifpack_IKLU::Condest(const Ifpack_CondestType CT, 
+double Ifpack_IKLU::Condest(const Ifpack_CondestType CT,
                             const int MaxIters, const double Tol,
-			    Epetra_RowMatrix* Matrix_in)
+                            Epetra_RowMatrix* Matrix_in)
 {
   if (!IsComputed()) // cannot compute right now
     return(-1.0);
@@ -374,6 +422,8 @@ double Ifpack_IKLU::Condest(const Ifpack_CondestType CT,
 std::ostream&
 Ifpack_IKLU::Print(std::ostream& os) const
 {
+  using std::endl;
+
   if (!Comm().MyPID()) {
     os << endl;
     os << "================================================================================" << endl;
@@ -383,32 +433,32 @@ Ifpack_IKLU::Print(std::ostream& os) const
     os << "Relative threshold = " << RelativeThreshold() << endl;
     os << "Relax value        = " << RelaxValue() << endl;
     os << "Condition number estimate       = " << Condest() << endl;
-    os << "Global number of rows           = " << A_.NumGlobalRows() << endl;
+    os << "Global number of rows           = " << A_.NumGlobalRows64() << endl;
     if (IsComputed_) {
-      os << "Number of nonzeros in A         = " << A_.NumGlobalNonzeros() << endl;
-      os << "Number of nonzeros in L + U     = " << NumGlobalNonzeros() 
-         << " ( = " << 100.0 * NumGlobalNonzeros() / A_.NumGlobalNonzeros() 
+      os << "Number of nonzeros in A         = " << A_.NumGlobalNonzeros64() << endl;
+      os << "Number of nonzeros in L + U     = " << NumGlobalNonzeros64()
+         << " ( = " << 100.0 * NumGlobalNonzeros64() / A_.NumGlobalNonzeros64()
          << " % of A)" << endl;
-      os << "nonzeros / rows                 = " 
-        << 1.0 * NumGlobalNonzeros() / U_->NumGlobalRows() << endl;
+      os << "nonzeros / rows                 = "
+        << 1.0 * NumGlobalNonzeros64() / U_->NumGlobalRows64() << endl;
     }
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize() 
-       << "  " << std::setw(15) << InitializeTime() 
+    os << "Initialize()    "   << std::setw(5) << NumInitialize()
+       << "  " << std::setw(15) << InitializeTime()
        << "               0.0            0.0" << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute() 
+    os << "Compute()       "   << std::setw(5) << NumCompute()
        << "  " << std::setw(15) << ComputeTime()
-       << "  " << std::setw(15) << 1.0e-6 * ComputeFlops(); 
+       << "  " << std::setw(15) << 1.0e-6 * ComputeFlops();
     if (ComputeTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops() / ComputeTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse() 
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse()
        << "  " << std::setw(15) << ApplyInverseTime()
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops();
-    if (ApplyInverseTime() != 0.0) 
+    if (ApplyInverseTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops() / ApplyInverseTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;

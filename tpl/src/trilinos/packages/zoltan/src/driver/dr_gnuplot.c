@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *  
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 #include "dr_const.h"
 #include "dr_util_const.h"
@@ -33,6 +66,25 @@ extern void Zoltan_quicksort_pointer_inc_int_int(int*, int*, int*, int, int);
 /*****************************************************************************/
 /*****************************************************************************/
 
+static void printcoord(FILE *fp, int ndims, char *str, ELEM_INFO *elem)
+{
+  switch (ndims) {
+  case 1:
+    fprintf(fp, "%s%e\n", str,
+          elem->coord[0][0]);
+    break;
+  case 2:
+    fprintf(fp, "%s%e %e\n", str,
+          elem->coord[0][0], elem->coord[0][1]);
+    break;
+  case 3:
+  default:
+    fprintf(fp, "%s%e %e %e\n", str,
+          elem->coord[0][0], elem->coord[0][1], elem->coord[0][2]);
+    break;
+  }
+}
+
 /*--------------------------------------------------------------------------*/
 /* Purpose: Output the element assignments in gnuplot format.               */
 /*--------------------------------------------------------------------------*/
@@ -48,12 +100,12 @@ int output_gnu(const char *cmd_file,
  * results.
  * We'll do 3D problems later.
  *
- * One gnuplot file is written for each partition.  
- * When number of partitions == number of processors, there is one file per
+ * One gnuplot file is written for each part.  
+ * When number of part == number of processors, there is one file per
  * processor.
  *
  * For Chaco input files, the file written contains coordinates of owned
- * nodes and all nodes in that partition connected to the owned nodes. When
+ * nodes and all nodes in that part connected to the owned nodes. When
  * drawn "with linespoints", the subdomains are drawn, but lines connecting the
  * subdomains are not drawn.
  *
@@ -93,17 +145,12 @@ int output_gnu(const char *cmd_file,
 
   if(Output.Gnuplot < 0)
   {
-    Gen_Error(0,"warning: 'gnuplot output' parameter set to invalid negative value.");
+    Gen_Error(0,
+              "warning: 'gnuplot output' parameter set to invalid value.");
     return 0;
   }
 
   DEBUG_TRACE_START(Proc, yo);
-
-  if (mesh->num_dims > 2) {
-    Gen_Error(0, "warning: cannot generate gnuplot data for 3D problems.");
-    DEBUG_TRACE_END(Proc, yo);
-    return 0;
-  }
 
   if (mesh->eb_nnodes[0] == 0) {
     /* No coordinate information is available.  */
@@ -114,7 +161,7 @@ int output_gnu(const char *cmd_file,
   }
 
   /* 
-   * Build arrays of partition number to sort by.  Index and elem_index arrays 
+   * Build arrays of part number to sort by.  Index and elem_index arrays 
    * will be used even when plotting by processor numbers (for generality), 
    * so build it regardless. 
    */
@@ -139,7 +186,7 @@ int output_gnu(const char *cmd_file,
     }
   }
   if (Output.Plot_Partition) {
-    /* Sort by partition numbers.  Assumes # parts >= # proc. */
+    /* Sort by part numbers.  Assumes # parts >= # proc. */
     if (nelems > 0) 
       Zoltan_quicksort_pointer_inc_int_int(index, parts, NULL, 0, nelems-1);
     MPI_Allreduce(&max_part, &gmax_part, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
@@ -162,7 +209,7 @@ int output_gnu(const char *cmd_file,
      * Then, for each neighboring node on the processor, print the neighbor's
      * coordinates.
      */
-    datastyle = "linespoints";
+    datastyle = "points";
     for (i = 0; i < nelems; i++) {
       current_elem = &(mesh->elements[elem_index[index[i]]]);
       if (parts[index[i]] != prev_part) {
@@ -175,8 +222,7 @@ int output_gnu(const char *cmd_file,
     
       /* Include the point itself, so that even if there are no edges,
        * the point will appear.  */
-      fprintf(fp, "\n%e %e\n", 
-              current_elem->coord[0][0], current_elem->coord[0][1]);
+      printcoord(fp, mesh->num_dims, "\n", current_elem);
 
       /* save max and min x/y coords */
       if(current_elem->coord[0][0] < locMinX)
@@ -198,6 +244,7 @@ int output_gnu(const char *cmd_file,
 
       if (Output.Gnuplot>1)
       {
+        datastyle = "linespoints";
 
         for (j = 0; j < current_elem->nadj; j++) {
           if (current_elem->adj_proc[j] == Proc) {  /* Nbor is on same proc */
@@ -206,22 +253,17 @@ int output_gnu(const char *cmd_file,
             if (!Output.Plot_Partition || 
                 mesh->elements[current_elem->adj[j]].my_part == 
                              current_elem->my_part) {  
-              /* Not plotting partitions, or nbor is in same partition */
+              /* Not plotting parts, or nbor is in same part */
               /* Plot the edge.  Need to include current point and nbor point
                * for each edge. */
-              fprintf(fp, "\n%e %e\n", 
-                  current_elem->coord[0][0], current_elem->coord[0][1]);
+              printcoord(fp, mesh->num_dims, "\n", current_elem);
               nbor = current_elem->adj[j];
               nbor_elem = &(mesh->elements[nbor]);
-              fprintf(fp, "%e %e\n",
-                      nbor_elem->coord[0][0], nbor_elem->coord[0][1]);
+              printcoord(fp, mesh->num_dims, "", nbor_elem);
             }
           }
         }
-
       }
-
-
     }
 
     MPI_Reduce(&locMinX,&globMinX,1,MPI_FLOAT,MPI_MIN,0,MPI_COMM_WORLD);
@@ -236,6 +278,14 @@ int output_gnu(const char *cmd_file,
      *  nodes.  No need to follow neighbors, as decomposition is by elements.
      */
     double sum[2];
+
+    if (mesh->num_dims > 2) {
+      Gen_Error(0,
+         "warning: cannot generate gnuplot for 3D NEMESIS_FILE problems yet.");
+      DEBUG_TRACE_END(Proc, yo);
+      return 0;
+    }
+
     datastyle = "lines";
     for (i = 0; i < nelems; i++) {
       current_elem = &(mesh->elements[elem_index[index[i]]]);
@@ -289,7 +339,7 @@ int output_gnu(const char *cmd_file,
     fprintf(fp, "set noyzeroaxis\n");
     fprintf(fp, "set noxtics\n");
     fprintf(fp, "set noytics\n");
-    fprintf(fp, "set data style %s\n", datastyle);
+    fprintf(fp, "set style data %s\n", datastyle);
 
     /* resize range so that there is a 5% border around data */
     fprintf(fp, "set xrange [%f:%f] \n ",globMinX-(globMaxX-globMinX)/20
@@ -298,7 +348,11 @@ int output_gnu(const char *cmd_file,
 	                            ,globMaxY+(globMaxY-globMinY)/20);
 
 
-    fprintf(fp, "plot ");
+    if (mesh->num_dims < 3)
+      fprintf(fp, "plot ");
+    else
+      fprintf(fp, "splot ");
+
     strcpy(ctemp, pio_info->pexo_fname);
     strcat(ctemp, ".");
     strcat(ctemp, tag);

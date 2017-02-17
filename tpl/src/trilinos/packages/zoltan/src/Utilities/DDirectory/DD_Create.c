@@ -1,22 +1,54 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * This software is distributed under the GNU Lesser General Public License. *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "DD.h"
+#include "zoltan_dd_const.h"
 #include "zoltan_align.h"
 #include "zz_hash.h"
 
@@ -62,11 +94,12 @@ int Zoltan_DD_Create (
  int num_gid,                 /* Number of entries in a global ID.     */
  int num_lid,                 /* Number of entries in a local ID.      
                                  If zero, ignore LIDs                  */
- int user_length,             /* Optional user data length in chars, 0 ignore   */
+ int user_length,             /* Optional user data length in chars, 0 ignore */
  int table_length,            /* sizeof hash table, use default if 0   */
- int debug_level)             /* control actions to errors, normally 0 */
-   {
-   int size;
+ int debug_level              /* control actions to errors, normally 0 */
+)
+{
+   int size, i;
    int my_proc;
    int array[3], max_array[3], min_array[3];
    char *yo = "Zoltan_DD_Create";
@@ -100,7 +133,7 @@ int Zoltan_DD_Create (
    size = (table_length) ? table_length: ZOLTAN_DD_HASH_TABLE_COUNT;
    size = Zoltan_Recommended_Hash_Size(size);
    *dd  = (Zoltan_DD_Directory*) ZOLTAN_MALLOC (sizeof (Zoltan_DD_Directory)
-        + size * sizeof(DD_Node*));
+        + size * sizeof(DD_NodeIdx));
    if (*dd == NULL)  {
       ZOLTAN_PRINT_ERROR (my_proc, yo, "Can not malloc hash table");
       if (debug_level > 4)
@@ -109,7 +142,12 @@ int Zoltan_DD_Create (
    }
 
    /* NULL heads of link list in hash table */
-   memset ((char*) (*dd)->table, '\0', size * sizeof(DD_Node*));
+   for (i = 0; i < size; i++) (*dd)->table[i] = -1;  /* NULL values */
+   (*dd)->nodecnt = 0;
+   (*dd)->nodelist = NULL;
+   (*dd)->nodedata = NULL;
+   (*dd)->nodelistlen = 0;
+   (*dd)->nextfreenode = -1;
 
    /* save useful constants into directory for convenience */
    (*dd)->debug_level      = debug_level;  /* [0,3], default 0          */
@@ -119,13 +157,13 @@ int Zoltan_DD_Create (
    (*dd)->user_data_length = user_length;  /* optional user data length */
    (*dd)->hash             = Zoltan_DD_Hash2;/* default hash algorithm   */
    (*dd)->hashdata         = NULL;         /* no hash data */
-   (*dd)->hashfn         = NULL;         /* no hash function */
+   (*dd)->hashfn           = NULL;         /* no hash function */
    (*dd)->cleanup          = NULL;         /* user registered cleanup   */
    (*dd)->max_id_length    = (num_gid > num_lid) ? num_gid : num_lid;
 
    /* frequently used dynamic allocation computed sizes */
    size = ((num_gid + num_lid) * sizeof(ZOLTAN_ID_TYPE)) + user_length;
-   (*dd)->node_size       = size + sizeof(DD_Node);
+   (*dd)->nodedata_size   = size;
    (*dd)->update_msg_size = size + sizeof(DD_Update_Msg);
 
    size = num_gid * sizeof(ZOLTAN_ID_TYPE);
@@ -135,9 +173,10 @@ int Zoltan_DD_Create (
    (*dd)->find_msg_size   = size + sizeof(DD_Find_Msg);
 
    /* force alignment */
-   (*dd)->update_msg_size = Zoltan_Align((*dd)->update_msg_size);
-   (*dd)->remove_msg_size = Zoltan_Align((*dd)->remove_msg_size);
-   (*dd)->find_msg_size   = Zoltan_Align((*dd)->find_msg_size);
+   (*dd)->nodedata_size   = Zoltan_Align_size_t((*dd)->nodedata_size);
+   (*dd)->update_msg_size = Zoltan_Align_size_t((*dd)->update_msg_size);
+   (*dd)->remove_msg_size = Zoltan_Align_size_t((*dd)->remove_msg_size);
+   (*dd)->find_msg_size   = Zoltan_Align_size_t((*dd)->find_msg_size);
 
    /* duplicate MPI comm to prevent future comm changes from disrupting  */
    /* directory communications & save the associated comm size & rank    */
@@ -151,11 +190,10 @@ int Zoltan_DD_Create (
    if (debug_level > 4)
       ZOLTAN_TRACE_OUT (my_proc, yo, NULL);
    return ZOLTAN_OK;
-   }
+}
 
 /*******************  Copy functions  ***************************/
     
-static void allocate_copy_list(DD_Node **new, DD_Node *l, int len);
 
 Zoltan_DD_Directory *Zoltan_DD_Copy(Zoltan_DD_Directory *from)
 {
@@ -165,69 +203,53 @@ Zoltan_DD_Directory *Zoltan_DD_Copy(Zoltan_DD_Directory *from)
 
   return to;
 }
+
+
 int Zoltan_DD_Copy_To(Zoltan_DD_Directory **toptr, Zoltan_DD_Directory *from)
 {
   static char *yo = "Zoltan_DD_Copy_To";
-  int i, proc = 0;
   Zoltan_DD_Directory *to= NULL;
 
-  if (!toptr){
+  if (!toptr) {
     return ZOLTAN_FATAL;
   }
 
-  if (*toptr){
+  if (*toptr) {
     Zoltan_DD_Destroy(toptr);
   }
 
-  if (from){
-    proc = from->my_proc;
+  if (from) {
+    DD_NodeIdx i;
 
     to = *toptr = 
       (Zoltan_DD_Directory *)ZOLTAN_MALLOC(
         sizeof (Zoltan_DD_Directory) + 
-        (from->table_length * sizeof(DD_Node*)));
+        (from->table_length * sizeof(DD_NodeIdx)));
 
-    if (!to){
-      ZOLTAN_PRINT_ERROR(proc, yo, "Insufficient memory."); 
+    if (!to) {
+      ZOLTAN_PRINT_ERROR(from->my_proc, yo, "Insufficient memory."); 
       return ZOLTAN_MEMERR;
     }
   
     *to = *from;
+    memcpy(to->table, from->table, to->table_length * sizeof(DD_NodeIdx));
 
     MPI_Comm_dup(from->comm, &(to->comm));
 
-    for (i=0; i<to->table_length; i++){
-      allocate_copy_list(&(to->table[i]), from->table[i], 
-                                to->node_size);
+    if (to->nodelistlen) {
+      to->nodelist = (DD_Node *) ZOLTAN_MALLOC(to->nodelistlen * sizeof(DD_Node));
+      memcpy(to->nodelist, from->nodelist, to->nodelistlen * sizeof(DD_Node));
+
+      to->nodedata = (char *) ZOLTAN_MALLOC(to->nodelistlen * to->nodedata_size);
+      memcpy(to->nodedata, from->nodedata, to->nodelistlen * to->nodedata_size);
+
+      for (i = 0; i < to->nodelistlen; i++) {
+        to->nodelist[i].gid = (ZOLTAN_ID_PTR)(to->nodedata + i*to->nodedata_size);
+      }
     }
   }
 
   return ZOLTAN_OK;
-}
-static void allocate_copy_list(DD_Node **new, DD_Node *l, int len)
-{
-  DD_Node *next = l;
-  DD_Node *node = NULL, *prev = NULL;
-
-  *new = NULL;
-
-  if (len == 0){
-    return ;
-  }
-
-  while (next){
-    node = (DD_Node *)ZOLTAN_MALLOC(len);
-    memcpy(node, next, len);
-    if (prev){
-      prev->next = node;
-    }
-    else{
-      *new = node;
-    }
-    node->next = NULL;
-    prev = node;
-    next = next->next;
-  }
 }
   
 #ifdef __cplusplus

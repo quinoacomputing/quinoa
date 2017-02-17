@@ -1,3 +1,46 @@
+/*
+// @HEADER
+// ***********************************************************************
+// 
+//                           Stokhos Package
+//                 Copyright (2009) Sandia Corporation
+// 
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
+// 
+// ***********************************************************************
+// @HEADER
+*/
+
 #include <Teuchos_ConfigDefs.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_TimeMonitor.hpp>
@@ -150,7 +193,7 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, test_interface)
    int porder = 3;
 
    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis = buildBasis(num_KL,porder);
-   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor(basis->size());
+   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor();
 
    std::vector<int> order(3);
    order[0] = 2; order[1] = 3; order[2] = 1;
@@ -200,7 +243,7 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, sum_in_op_eq_order)
    Teuchos::RCP<Epetra_CrsMatrix> determOp = buildTridiagonalOp(*determGraph,stencil);
 
    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis = buildBasis(num_KL,porder);
-   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor(basis->size());
+   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor();
    Teuchos::RCP<Stokhos::EpetraSparse3Tensor> epetraCijk =
          Teuchos::rcp(new Stokhos::EpetraSparse3Tensor(basis,Cijk,multiComm));
 
@@ -244,10 +287,10 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, sum_in_op_eq_order)
          apply_ordering(indices,order);     
          apply_ordering(values,order);     
       
-         int rowTerm = basis->getIndex(sa_BasisPerDRow[determDof]->getTerm(stochBasis));
-         int colTerm0 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(0));
-         int colTerm1 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(1));
-         int colTerm2 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(2));
+         int rowTerm = basis->index(sa_BasisPerDRow[determDof]->term(stochBasis));
+         int colTerm0 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(0));
+         int colTerm1 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(1));
+         int colTerm2 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(2));
          double normValue = basis->norm_squared(rowTerm);
       
          // test middle row values
@@ -302,10 +345,10 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, sum_in_op_eq_order)
          apply_ordering(indices,order);     
          apply_ordering(values,order);     
       
-         int rowTerm = basis->getIndex(sa_BasisPerDRow[determDof]->getTerm(stochBasis));
-         int colTerm0 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(0));
-         int colTerm1 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(1));
-         int colTerm2 = basis->getIndex(adaptMngr.getColStochasticBasis(determDof)->getTerm(2));
+         int rowTerm = basis->index(sa_BasisPerDRow[determDof]->term(stochBasis));
+         int colTerm0 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(0));
+         int colTerm1 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(1));
+         int colTerm2 = basis->index(adaptMngr.getColStochasticBasis(determDof)->term(2));
       
          // test middle row values
          TEST_EQUALITY(values[0],stencil[0]*Cijk->getValue(rowTerm,colTerm0,0));
@@ -345,7 +388,7 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, sum_in_op_var_order)
    Teuchos::RCP<Epetra_CrsMatrix> determOp = buildTridiagonalOp(*determGraph,stencil);
 
    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis = buildBasis(num_KL,porder);
-   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor(basis->size());
+   Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = basis->computeTripleProductTensor();
    Teuchos::RCP<Stokhos::EpetraSparse3Tensor> epetraCijk =
          Teuchos::rcp(new Stokhos::EpetraSparse3Tensor(basis,Cijk,multiComm));
 
@@ -398,14 +441,14 @@ TEUCHOS_UNIT_TEST(tAdaptivityManager, sum_in_op_var_order)
          apply_ordering(values,order);     
       
          out << "grabbing row index, and row norm" << std::endl;
-         int rowTerm = basis->getIndex(sa_BasisPerDRow[determDof]->getTerm(stochBasis));
+         int rowTerm = basis->index(sa_BasisPerDRow[determDof]->term(stochBasis));
 
          out << "checking matrix" << std::endl;
          // test middle row values
          int offset = 0;
          for(int stochColBasisIndex = 0;stochColBasisIndex<3;stochColBasisIndex++) {
             for(int stochCol=0;stochCol<adaptMngr.getColStochasticBasisSize(stochColBasisIndex);stochCol++) {
-               int colTerm = basis->getIndex(adaptMngr.getColStochasticBasis(stochColBasisIndex)->getTerm(stochCol));
+               int colTerm = basis->index(adaptMngr.getColStochasticBasis(stochColBasisIndex)->term(stochCol));
    
                if(big(rowTerm,colTerm)) { 
                   TEST_EQUALITY(indices[offset],adaptMngr.getGlobalColId(stochColBasisIndex,stochCol));

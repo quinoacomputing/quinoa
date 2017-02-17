@@ -45,7 +45,8 @@
 #define EPETRAEXT_XMLREADER_H
 
 #include "EpetraExt_ConfigDefs.h"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Epetra_ConfigDefs.h"
+#include "Teuchos_RCP.hpp"
 #include <fstream>
 
 class Epetra_Map;
@@ -59,9 +60,9 @@ namespace Teuchos {
   class ParameterList;
 }
 
-namespace EpetraExt 
+namespace EpetraExt
 {
-/*! 
+/*!
 \brief class XMLReader: A class for reading Epetra objects stored in XML files.
 
 Class EpetraExt::XMLReader allows to read several Trilinos objects stored in
@@ -96,7 +97,7 @@ XMLReader.Read("MyLHS", MyLHS);
 XMLReader.Read("MyRHS", MyRHS);
 XMLReader.Read("MyContent", MyContent);
 XMLReader.Read("MyParameters", MyParameters);
-\endcode 
+\endcode
 In distributed environments, Epetra_MultiVector, Epetra_CrsGraph and
 Epetra_CrsMatrix objects have a linear distribution. Epetra_Map objects can be
 read only when  using the same number of processors used for writing.
@@ -110,28 +111,56 @@ read only when  using the same number of processors used for writing.
 */
 class XMLReader
 {
-  public: 
+  public:
     // @{ \name Constructor and destructor.
     //! ctor
-    XMLReader(const Epetra_Comm& Comm, const std::string& FileName); 
+    XMLReader(const Epetra_Comm& Comm, const std::string& FileName);
 
     //! dtor
     ~XMLReader() {}
 
     // @}
     // @{ \name Read operations
-    
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     //! Reads the Epetra_Map stored with label \c Label.
     void Read(const std::string& Label, Epetra_Map*& Map);
+#endif
 
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    //! Reads the Epetra_Map stored with label \c Label. Long Long version.
+    void Read64(const std::string& Label, Epetra_Map*& Map);
+#endif
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     //! Reads the Epetra_CrsGraph stored with label \c Label.
     void Read(const std::string& Label, Epetra_CrsGraph*& Graph);
+#endif
 
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    //! Reads the Epetra_CrsGraph stored with label \c Label. Long Long version.
+    void Read64(const std::string& Label, Epetra_CrsGraph*& Graph);
+#endif
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     //! Reads the Epetra_CrsMatrix stored with label \c Label.
     void Read(const std::string& Label, Epetra_CrsMatrix*& Matrix);
+#endif
 
-    //! Reads the Epetra_MultiVector stored with label \c Label.
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    //! Reads the Epetra_CrsMatrix stored with label \c Label. Long Long version.
+    void Read64(const std::string& Label, Epetra_CrsMatrix*& Matrix);
+#endif
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+        //! Reads the Epetra_MultiVector stored with label \c Label.
     void Read(const std::string& Label, Epetra_MultiVector*& MultiVector);
+#endif
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+        //! Reads the Epetra_MultiVector stored with label \c Label. Long Long version.
+    void Read64(const std::string& Label, Epetra_MultiVector*& MultiVector);
+#endif
 
     //! Reads a std::vector of strings with label \c Label.
     void Read(const std::string& Label, std::vector<std::string>& Content);
@@ -146,7 +175,7 @@ class XMLReader
     //! Communicator object.
     const Epetra_Comm& Comm_;
     //! parsed XML object.
-    Teuchos::RefCountPtr<Teuchos::XMLObject> fileXML_;
+    Teuchos::RCP<Teuchos::XMLObject> fileXML_;
 };
 
 } // namespace EpetraExt

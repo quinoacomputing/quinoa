@@ -41,7 +41,9 @@
 //@HEADER
 */
 
+#include <climits>
 #include "AztecOO.h"
+#include "Epetra_ConfigDefs.h"
 #ifdef AZTEC_MPI
 #include "Epetra_MpiComm.h"
 #else
@@ -67,7 +69,7 @@
 #include <Teuchos_StrUtils.hpp>
 #else
 //If Trilinos wasn't configured with Teuchos-extended enabled, then we need
-//to write our own function for converting a string to upper-case, and to do
+//to write our own function for converting a std::string to upper-case, and to do
 //that we need the toupper() prototype that's declared in ctype.h.
 #include <ctype.h>
 #endif
@@ -187,9 +189,10 @@ int AztecOO::AllocAzArrays()
 
   options_ = new int[AZ_OPTIONS_SIZE];
   params_ = new double[AZ_PARAMS_SIZE];
-  status_ = new double[AZ_STATUS_SIZE];
+  status_ = new double[AZ_STATUS_SIZE];  
 
   if (proc_config_ ==0 ||options_ == 0 || params_ == 0 || status_ == 0) EPETRA_CHK_ERR(-1);
+  for ( int i = 0; i < AZ_STATUS_SIZE; ++i ) status_[i] = 0.0;
 
   return(0);
 }
@@ -224,15 +227,15 @@ void AztecOO::DeleteMemory() {
 }
 
 //=============================================================================
-string AztecOO_uppercase(const string& s)
+std::string AztecOO_uppercase(const std::string& s)
 {
-  //convert incoming string to uppercase, and prepend 'AZ_' if the first
+  //convert incoming std::string to uppercase, and prepend 'AZ_' if the first
   //two characters aren't already 'AZ'.
 
 #ifdef HAVE_TEUCHOS_EXTENDED
-  string upp = Teuchos::StrUtils::allCaps(s);
+  std::string upp = Teuchos::StrUtils::allCaps(s);
 #else
-  string upp(s);
+  std::string upp(s);
   for(unsigned i=0; i<upp.length(); ++i) {
     upp[i] = toupper(upp[i]);
   }
@@ -242,7 +245,7 @@ string AztecOO_uppercase(const string& s)
     return(upp);
   }
 
-  string az_("AZ_");
+  std::string az_("AZ_");
   return(az_+upp);
 }
 
@@ -270,7 +273,7 @@ bool AztecOO_SetOptionOrParam(int offset,
 
   int dummy_int;
   double dummy_double;
-  string dummy_string;
+  std::string dummy_string;
 
   if (entry.isType<int>() || entry.isType<unsigned>()) {
     if (offset < AZ_FIRST_USER_OPTION) {
@@ -279,12 +282,12 @@ bool AztecOO_SetOptionOrParam(int offset,
       entry_used = true;
     }
   }
-  else if (entry.isType<string>()) {
+  else if (entry.isType<std::string>()) {
     if (offset < AZ_FIRST_USER_OPTION) {
-      string sname = AztecOO_uppercase(entry.getValue(&dummy_string));
-      Teuchos::map<string,int>& val_map = AztecOO_value_map();
+      std::string sname = AztecOO_uppercase(entry.getValue(&dummy_string));
+      Teuchos::map<std::string,int>& val_map = AztecOO_value_map();
 
-      Teuchos::map<string,int>::iterator result = val_map.find(sname);
+      Teuchos::map<std::string,int>::iterator result = val_map.find(sname);
       if (result != val_map.end()) {
         azoo->SetAztecOption(offset, (*result).second);
         entry_used = true;
@@ -310,7 +313,7 @@ int AztecOO::SetParameters(Teuchos::ParameterList& parameterlist,
 
   AztecOO_initialize_maps();
 
-  Teuchos::map<string,int>& azoo_key_map = AztecOO_key_map();
+  Teuchos::map<std::string,int>& azoo_key_map = AztecOO_key_map();
 
   //Iterate the ParameterList, setting any options/parameters for which the
   //ParameterEntry's name matches a key-word that we recoginze.
@@ -321,11 +324,11 @@ int AztecOO::SetParameters(Teuchos::ParameterList& parameterlist,
 
   for(; pl_iter != pl_end; ++pl_iter) {
     //create an upper-case copy of the entry's name and prepend AZ_ if necessary
-    string name = AztecOO_uppercase((*pl_iter).first);
+    std::string name = AztecOO_uppercase((*pl_iter).first);
 
     const Teuchos::ParameterEntry& entry = (*pl_iter).second;
 
-    Teuchos::map<string,int>::iterator result = azoo_key_map.find(name);
+    Teuchos::map<std::string,int>::iterator result = azoo_key_map.find(name);
     bool entry_used = false;
 
     if (result != azoo_key_map.end()) {
@@ -334,7 +337,7 @@ int AztecOO::SetParameters(Teuchos::ParameterList& parameterlist,
 
     if (cerr_warning_if_unused && !entry_used) {
       std::ostream& ostrm = err_stream_ ? *err_stream_ : std::cerr;
-      ostrm << "AztecOO:SetParameters warning: '"<<name<<"' not used."<<endl;
+      ostrm << "AztecOO:SetParameters warning: '"<<name<<"' not used."<<std::endl;
     }
 
     name = " ";
@@ -846,7 +849,7 @@ int AztecOO::recursiveIterate(int MaxIters, double Tolerance)
 
   //If status is not AZ_normal or AZ_maxits, then we have to decide
   //which error-code to return, and also decide whether to print an
-  //error-message to cerr, and what to print.
+  //error-message to std::cerr, and what to print.
 
   int MyPID = X_->Map().Comm().MyPID();
 
@@ -863,26 +866,26 @@ int AztecOO::recursiveIterate(int MaxIters, double Tolerance)
   if (status_[AZ_why] == AZ_param) {
     ierr = -1;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_param: option not implemented" << endl;
+      *ostrm << "Aztec status AZ_param: option not implemented" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_breakdown) {
     ierr = -2;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << endl;
+      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_loss) {
     ierr = -3;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_loss: loss of precision" << endl;
+      *ostrm << "Aztec status AZ_loss: loss of precision" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_ill_cond) {
     ierr = -4;
     if (print_msg) {
       *ostrm << "Aztec status AZ_ill_cond: GMRES hessenberg ill-conditioned"
-           << endl;
+           << std::endl;
     }
   }
   else {
@@ -892,19 +895,32 @@ int AztecOO::recursiveIterate(int MaxIters, double Tolerance)
   return(ierr);
 }
 //=============================================================================
-int AztecOO::Iterate(int MaxIters, double Tolerance)
+int AztecOO::Iterate(long long MaxIters, double Tolerance)
 {
-  if (X_ == 0 || B_ == 0 || UserOperatorData_ == 0) EPETRA_CHK_ERR(-11);
+  // jhurani@txcorp.com -- The "units/type" of MaxIters should be same as
+  // the "units/type" of matrix size, and it can be long long after Epetra
+  // has support for long long.  Hence the option should be set using
+  // long long, and if called using int, the int value will be automatically
+  // upgraded.  However, currently we can't store MaxIters value that is
+  // greater than maximum int, so we error out.  This seems like a reasonable
+  // design assumption since one would rarely want O(10^9) billion iterations.
+  // In future, long long is stored in the options, the interface will not
+  // have to change.
+
+  if (X_ == 0 || B_ == 0 || UserOperatorData_ == 0 || MaxIters > INT_MAX) EPETRA_CHK_ERR(-11);
 
   if (UserMatrixData_!=0)
     if (GetUserMatrix()!=0) {
-      int nnz = GetUserMatrix()->NumGlobalNonzeros();
+
+      long long nnz = GetUserMatrix()->NumGlobalNonzeros64();
       if (nnz==0) {
 	EPETRA_CHK_ERR(-12); // Matrix has no entries.
       }
     }
 
-  SetAztecOption(AZ_max_iter, MaxIters);
+  // MaxIters not greater than INT_MAX because of check above.
+  int MaxIters_int = static_cast<int>(MaxIters);
+  SetAztecOption(AZ_max_iter, MaxIters_int);
   SetAztecParam(AZ_tol, Tolerance);
 
   
@@ -950,7 +966,7 @@ int AztecOO::Iterate(int MaxIters, double Tolerance)
 
   //If status is not AZ_normal or AZ_maxits, then we have to decide
   //which error-code to return, and also decide whether to print an
-  //error-message to cerr, and what to print.
+  //error-message to std::cerr, and what to print.
 
   int MyPID = X_->Map().Comm().MyPID();
 
@@ -967,26 +983,26 @@ int AztecOO::Iterate(int MaxIters, double Tolerance)
   if (status_[AZ_why] == AZ_param) {
     ierr = -1;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_param: option not implemented" << endl;
+      *ostrm << "Aztec status AZ_param: option not implemented" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_breakdown) {
     ierr = -2;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << endl;
+      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_loss) {
     ierr = -3;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_loss: loss of precision" << endl;
+      *ostrm << "Aztec status AZ_loss: loss of precision" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_ill_cond) {
     ierr = -4;
     if (print_msg) {
       *ostrm << "Aztec status AZ_ill_cond: GMRES hessenberg ill-conditioned"
-           << endl;
+           << std::endl;
     }
   }
   else {
@@ -1231,7 +1247,7 @@ int AztecOO::AdaptiveIterate(int MaxIters, int MaxSolveAttempts, double Toleranc
 
   //If status is not AZ_normal or AZ_maxits, then we have to decide
   //which error-code to return, and also decide whether to print an
-  //error-message to cerr, and what to print.
+  //error-message to std::cerr, and what to print.
 
   int MyPID = X_->Map().Comm().MyPID();
 
@@ -1248,26 +1264,26 @@ int AztecOO::AdaptiveIterate(int MaxIters, int MaxSolveAttempts, double Toleranc
   if (status_[AZ_why] == AZ_param) {
     ierr = -1;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_param: option not implemented" << endl;
+      *ostrm << "Aztec status AZ_param: option not implemented" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_breakdown) {
     ierr = -2;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << endl;
+      *ostrm << "Aztec status AZ_breakdown: numerical breakdown" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_loss) {
     ierr = -3;
     if (print_msg) {
-      *ostrm << "Aztec status AZ_loss: loss of precision" << endl;
+      *ostrm << "Aztec status AZ_loss: loss of precision" << std::endl;
     }
   }
   else if (status_[AZ_why] == AZ_ill_cond) {
     ierr = -4;
     if (print_msg) {
       *ostrm << "Aztec status AZ_ill_cond: GMRES hessenberg ill-conditioned"
-           << endl;
+           << std::endl;
     }
   }
   else {
@@ -1344,6 +1360,11 @@ void AztecOO::PrintLinearSystem(const char* name)
           }
         }
         else {
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES // CJ: TODO FIXME
+          // ifdef-out dynamic_cast to Epetra_VbrMatrix to avoid linker
+          // error of missing typeinfo.  Issue in Epetra 64 bit.
+
           Epetra_VbrMatrix* vbr =
             dynamic_cast<Epetra_VbrMatrix*>(GetUserMatrix());
           if (vbr != 0) {
@@ -1356,6 +1377,7 @@ void AztecOO::PrintLinearSystem(const char* name)
                    << afilename << "'."<<std::endl;
             }
           }
+#endif
         }
       }
     }

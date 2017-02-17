@@ -1,14 +1,44 @@
-/*------------------------------------------------------------------------*/
-/*                 Copyright 2010 Sandia Corporation.                     */
-/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
-/*  license for use of this work by or on behalf of the U.S. Government.  */
-/*  Export of this program may require a license from the                 */
-/*  United States Government.                                             */
-/*------------------------------------------------------------------------*/
+// Copyright (c) 2013, Sandia Corporation.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+// 
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+// 
+//     * Neither the name of Sandia Corporation nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 
-#include <cstdio>
-#include <stdexcept>
+#include "stk_util/stk_config.h"        // for STK_HAS_MPI
 #include <stk_util/parallel/ParallelInputStream.hpp>
+#include <cstdio>                       // for NULL, EOF, fclose, fopen, etc
+#include <cstring>                      // for memset
+#include <iostream>                     // for cerr
+#include <stdexcept>                    // for runtime_error
+#include <string>                       // for string
+#include "stk_util/parallel/Parallel.hpp"  // for ParallelMachine, etc
 
 /*--------------------------------------------------------------------*/
 
@@ -60,12 +90,13 @@ private:
 };
 
 ParInBuf::ParInBuf( ParallelMachine comm , const char * const file_name )
-  : m_comm( comm ), m_root_fp( NULL )
+  : m_comm( comm ), m_root_fp( nullptr )
 {
+  std::memset(m_buffer, BUFFER_LENGTH, sizeof(char));
   int result = 1 ;
 
-  if ( 0 == parallel_machine_rank( comm ) && NULL != file_name ) {
-    result = NULL != ( m_root_fp = std::fopen( file_name , "r" ) );
+  if ( 0 == parallel_machine_rank( comm ) && nullptr != file_name ) {
+    result = nullptr != ( m_root_fp = std::fopen( file_name , "r" ) );
   }
 
   broadcast( m_comm , & result , sizeof(int) );
@@ -73,7 +104,7 @@ ParInBuf::ParInBuf( ParallelMachine comm , const char * const file_name )
   if ( ! result ) {
     std::string msg;
     msg.append("stk::ParallelInputStream( " );
-    if ( 0 == parallel_machine_rank( comm ) && NULL != file_name ) {
+    if ( 0 == parallel_machine_rank( comm ) && nullptr != file_name ) {
       msg.append( file_name );
     }
     else {
@@ -86,20 +117,29 @@ ParInBuf::ParInBuf( ParallelMachine comm , const char * const file_name )
 
 void ParInBuf::close()
 {
-  if ( NULL != m_root_fp ) { std::fclose( m_root_fp ); m_root_fp = NULL ; }
-  setg(NULL,NULL,NULL);
+  if ( nullptr != m_root_fp ) { std::fclose( m_root_fp ); m_root_fp = nullptr ; }
+  setg(nullptr,nullptr,nullptr);
 }
 
 ParInBuf::~ParInBuf()
-{ close(); }
+{
+    try
+    {
+        close();
+    }
+    catch(...)
+    {
+        std::cerr << "Caught exception when trying to close file at " << __FILE__ ":" << __LINE__ << std::endl;
+    }
+}
 
 int ParInBuf::underflow()
 {
   char * const buf = m_buffer + BUFFER_PUTBACK ;
   int nread = 0 ;
 
-  if ( gptr() == NULL || egptr() <= gptr() ) {
-    if ( NULL != m_root_fp ) { nread = std::fread(buf,1,MAX_READ,m_root_fp); }
+  if ( gptr() == nullptr || egptr() <= gptr() ) {
+    if ( nullptr != m_root_fp ) { nread = std::fread(buf,1,MAX_READ,m_root_fp); }
     broadcast( m_comm , & nread , sizeof(int) );
   }
 

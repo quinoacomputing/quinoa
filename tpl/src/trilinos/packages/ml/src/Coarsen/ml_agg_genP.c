@@ -23,10 +23,9 @@
 #include "ml_viz_stats.h"
 #include "ml_agg_min_energy.h"
 
-
 #ifndef ML_CPP
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 {
 #endif
 #endif
@@ -68,7 +67,7 @@ int ML_AGG_Smoother_Wrapper(void *obj, int leng1, double *outvec, int leng2,
 /* generate multilevel hierarchy based on Vanek's method                     */
 /* ------------------------------------------------------------------------- */
 
-int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start, 
+int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
                        int increment_or_decrement, ML_Aggregate *ag)
 {
    int    level, idata, i;
@@ -100,7 +99,7 @@ int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
 
    idata = 0;
    idata = ML_gmax_int(idata, ml->comm);
-   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel())
       ML_Aggregate_Print( ml_ag );
 #ifdef ML_TIMING
    t0 = GetClock();
@@ -136,9 +135,9 @@ int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
 				    ML_AGG_Gen_Prolongator, NULL, ml_ag);
       }
    }
-   else 
+   else
    {
-      if ( ml->comm->ML_mypid == 0 ) 
+      if ( ml->comm->ML_mypid == 0 )
       {
          printf("ML_Gen_MGHierarchy_UsingAggregation : Unknown ");
          printf("increment_or_decrement choice\n");
@@ -147,7 +146,7 @@ int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
    }
 #ifdef ML_TIMING
    t0 = GetClock() - t0;
-   if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 9 ) 
+   if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 9 )
       printf("Aggregation total setup time = %e seconds\n", t0);
 #endif
 
@@ -172,7 +171,7 @@ int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
    }
 
    idata = ML_gmax_int(idata, ml->comm);
-   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel())
       ML_Aggregate_Print_Complexity( ml_ag );
    idata = ML_gmax_int(idata, ml->comm);
 
@@ -187,7 +186,7 @@ int ML_Gen_MGHierarchy_UsingAggregation(ML *ml, int start,
 /* prolongation operators (version 2 : with ML_Aggregate given)              */
 /* ------------------------------------------------------------------------- */
 
-int ML_Gen_MGHierarchy(ML *ml, int fine_level, 
+int ML_Gen_MGHierarchy(ML *ml, int fine_level,
 		       int (*next_level)(ML *, int,  void *),
 		       int (*user_gen_prolongator)(ML *, int, int, void *),
 		       void *data, ML_Aggregate *ag)
@@ -195,7 +194,7 @@ int ML_Gen_MGHierarchy(ML *ml, int fine_level,
    int level, next, flag, count=1;
    int i, j, k, bail_flag, N_input_vector;
    ML_Operator *Pmat;
-   ML_CommInfoOP *getrow_comm; 
+   ML_CommInfoOP *getrow_comm;
    ML_Operator *Ptent;
    ML_Aggregate_Viz_Stats *grid_info;
 #ifdef ML_TIMING
@@ -219,7 +218,7 @@ int ML_Gen_MGHierarchy(ML *ml, int fine_level,
    k = 0;
    ml->LevelID[k++] = fine_level;
 
-   while (next >= 0) 
+   while (next >= 0)
    {
 
       /* This if-else supports an ALEGRA capability. */
@@ -262,7 +261,7 @@ int ML_Gen_MGHierarchy(ML *ml, int fine_level,
             fflush(stdout);
          }
          break; /* from main loop */
- 
+
       }
       /* end of check */
       ML_Gen_Restrictor_TransP(ml, level, next, NULL);
@@ -336,18 +335,21 @@ int ML_AGG_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
    double *dampingFactors; /* coefficients of prolongator smoother */
    ML_Operator *tmpmat1=NULL,*tmpmat2=NULL;
 
+   double t1=0, createPtentTime=0, smooPTime=0, eigenTime=0;
 #ifdef ML_TIMING
    double t0;
    t0 =  GetClock();
 #endif
    widget.Adiag = NULL;
 
+   StartTimer(&t1);
+
    Amat = &(ml->Amat[level]);
    numSmSweeps = ML_Aggregate_Get_DampingSweeps(ag,level);
 
    if (Amat->num_PDEs < ag->num_PDE_eqns) Amat->num_PDEs = ag->num_PDE_eqns;
    if (ag->block_scaled_SA == 1) {
-     /* 
+     /*
          Create block scaled and compute its eigenvalues
      a) if the user has requested it, save this Amat into
         the aggregate data structure.
@@ -358,7 +360,7 @@ int ML_AGG_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
      max_eigen = blockMat->lambda_max;
    }
    else    max_eigen = Amat->lambda_max;
-   
+
    widget.near_bdry = NULL;
    Amat->num_PDEs = ag->num_PDE_eqns;
    prev_P_tentatives = ag->P_tentative;
@@ -406,7 +408,7 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
        if (Pmatrix->getrow != NULL) {
          if (Pmatrix->getrow->pre_comm != NULL)
            ML_CommInfoOP_Destroy(&(Pmatrix->getrow->pre_comm));
-       } 
+       }
        ML_memory_free( (void**)&(Pmatrix->getrow) );
        Pmatrix->getrow = ml->Pmat[clevel].getrow;
        ml->Pmat[clevel].getrow = NULL;
@@ -453,26 +455,33 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
            ML_memory_free( (void**)&(ml->Pmat[clevel].getrow) );
            ml->Pmat[clevel].getrow = Pmatrix->getrow;
            Pmatrix->getrow = NULL;
-           
+
            ml->Pmat[clevel].data = Pmatrix->data;
            Pmatrix->data = NULL;
         }
         ML_Operator_Destroy(&Pmatrix);
      }
      if (mls_widget != NULL) ML_Smoother_Destroy_MLS(mls_widget);
+     if ( ml->comm->ML_mypid == 0 && 3 < ML_Get_PrintLevel()) {
+        printf("Warning: ML aborts further coarsening, perhaps diagonally dominant matrix after dropping is nearly diagonal!\n");
+        fflush(stdout);
+      }
      return -1;
    }
+
+   StopTimer(&t1,&createPtentTime);
+   StartTimer(&t1);
 
    if ( ag->smoothP_damping_factor != 0.0 && numSmSweeps > 0 )
    {
      /*********************************************************
      * If we symmetrize we need the symmetrized matrix so we
-     * don't call ML_Gimmie_Eigenvalues() here.              
-     * ML_Gimmie_Eigenvalues(Amat, ML_DIAGSCALE, 
+     * don't call ML_Gimmie_Eigenvalues() here.
+     * ML_Gimmie_Eigenvalues(Amat, ML_DIAGSCALE,
      *             Amat->spectral_radius_scheme, ml->symmetrize_matrix);
      * max_eigen = Amat->lambda_max;
      *********************************************************/
-     
+
      if (ml->symmetrize_matrix == ML_TRUE) {
        t2 = ML_Operator_Create(Amat->comm);
        ML_Operator_Transpose_byrow(Amat,t2);
@@ -482,11 +491,15 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
      }
 
      if ((max_eigen < -666.) && (max_eigen > -667)) {
+       if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+         printf("Calculating eigenvalue estimate using ");
 
        switch( Amat->spectral_radius_scheme ) {
 
        case ML_USE_CG:  /* compute it using CG */
-     
+         if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+           printf("CG method\n");
+
          kdata = ML_Krylov_Create( ml->comm );
          ML_Krylov_Set_PrintFreq( kdata, 0 );
          ML_Krylov_Set_MaxIterations(kdata, Amat->spectral_radius_max_iters);
@@ -500,8 +513,8 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
          /* the eigenvalue of Dinv Afilt.                                 */
          max_eigen = ML_Krylov_Get_MaxEigenvalue(kdata);
 
-         Amat->lambda_max = max_eigen; 
-         Amat->lambda_min = kdata->ML_eigen_min; 
+         Amat->lambda_max = max_eigen;
+         Amat->lambda_min = kdata->ML_eigen_min;
          ML_Krylov_Destroy( &kdata );
          if ( max_eigen <= 0.0 ) {
             printf("Gen_Prolongator warning : max eigen <= 0.0 \n");
@@ -514,6 +527,8 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
 #if defined(HAVE_ML_EPETRA) && defined(HAVE_ML_ANASAxI) && defined(HAVE_ML_TEUCHOS)
          ML_Anasazi_Get_SpectralNorm_Anasazi(Amat, 0, 10, 1e-5,
                          ML_FALSE, ML_TRUE, &max_eigen);
+         if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+           printf("Anasazi\n");
 #else
          fprintf(stderr,
              "--enable-epetra --enable-anasazi --enable-teuchos required\n"
@@ -522,7 +537,7 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
              __LINE__);
          exit(EXIT_FAILURE);
 #endif
-         Amat->lambda_max = max_eigen; 
+         Amat->lambda_max = max_eigen;
          Amat->lambda_min = -12345.6789;
          if ( max_eigen <= 0.0 ) {
            printf("Gen_Prolongator warning : max eigen <= 0.0 \n");
@@ -532,6 +547,8 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
          break;
 
        case ML_USE_POWER: /* use ML's power method */
+         if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+           printf("power method\n");
          kdata = ML_Krylov_Create( ml->comm );
          ML_Krylov_Set_PrintFreq( kdata, 0 );
          ML_Krylov_Set_MaxIterations(kdata, Amat->spectral_radius_max_iters);
@@ -539,32 +556,37 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
          ML_Krylov_Set_Amatrix(kdata, Amat);
          ML_Krylov_Solve(kdata, Nfine, NULL, NULL);
          max_eigen = ML_Krylov_Get_MaxEigenvalue(kdata);
-         Amat->lambda_max = max_eigen; 
-         Amat->lambda_min = kdata->ML_eigen_min; 
+         Amat->lambda_max = max_eigen;
+         Amat->lambda_min = kdata->ML_eigen_min;
          ML_Krylov_Destroy( &kdata );
          if ( max_eigen <= 0.0 ) {
            printf("Gen_Prolongator warning : max eigen <= 0.0 \n");
            max_eigen = 1.0;
          }
-     
+
          break;
 
        default: /* using matrix max norm */
+         if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+           printf("matrix max norm\n");
          max_eigen = ML_Operator_MaxNorm(Amat, ML_TRUE);
          break;
-     
+
        } /* switch( Amat->spectral_radius_scheme ) */
 
+     } else {
+       if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 5)
+         printf("Using stashed eigenvalue estimate");
      } /* if ((max_eigen < -666.) && (max_eigen > -667)) */
 
 
      widget.omega  = ag->smoothP_damping_factor / max_eigen;
      ml->spectral_radius[level] = max_eigen;
-     
+
      if ( ml->comm->ML_mypid == 0 && 7 < ML_Get_PrintLevel())
        printf("Gen_Prolongator (level %d) : Max eigenvalue = %2.4e\n",
           ag->cur_level, max_eigen);
-     
+
    }
    else  /* damping fact = 0 ==> no need to compute spectral radius */
    {
@@ -574,6 +596,9 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
         printf("\nProlongator/Restriction smoother (level %d) : damping = %2.3e , sweeps = %d\n", level, ag->smoothP_damping_factor, numSmSweeps );
 
    } /* if ( ag->smoothP_damping_factor != 0.0 ) */
+
+   StopTimer(&t1,&eigenTime);
+   StartTimer(&t1);
 
    /* Smooth tentative prolongator. */
    if ( ag->smoothP_damping_factor != 0.0 && numSmSweeps > 0 )
@@ -608,6 +633,7 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
 
      /* Create the prolongator smoother operator, I-omega*inv(D)*A. */
      AGGsmoother = ML_Operator_Create(ml->comm);
+     ML_Operator_Set_Label(AGGsmoother,"Prolongator smoother");
      widget.drop_tol = ag->drop_tol_for_smoothing;
      if (ml->symmetrize_matrix == ML_TRUE) widget.Amat   = t3;
      else widget.Amat   = &(ml->Amat[level]);
@@ -615,8 +641,8 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
      ML_Operator_Set_ApplyFuncData(AGGsmoother, widget.Amat->invec_leng,
                                    widget.Amat->outvec_leng, &widget,
                                    widget.Amat->matvec->Nrows, NULL, 0);
-     ML_Operator_Set_Getrow(AGGsmoother, 
-                            widget.Amat->getrow->Nrows, 
+     ML_Operator_Set_Getrow(AGGsmoother,
+                            widget.Amat->getrow->Nrows,
 #ifdef USE_MOREACCURATE
                             ML_AGG_JacobiMoreAccurate_Getrows);
 #else
@@ -643,7 +669,7 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
        if (ag->block_scaled_SA == 1) {
          /* Computed the following:
           *    a) turn off the usual 2 mat mult.
-          *    b) Ptemp = A*P 
+          *    b) Ptemp = A*P
           *    c) Ptemp = Dinv*Ptemp;
           *    d) do an ML_Operator_Add() with the original P.
           */
@@ -685,6 +711,32 @@ else ML_DVector_GetDataPtr( Amat->diagonal, &(widget.Adiag) );
    } /* if ( ag->smoothP_damping_factor != 0.0 ) */
    else if ( ml->comm->ML_mypid == 0 && 5 < ML_Get_PrintLevel() )
      printf("Gen_Prolongator (level %d) : not smoothing prolongator\n", level);
+   StopTimer(&t1,&smooPTime);
+   if ( ML_Get_PrintLevel() > 9) {
+     char eigmethod[32];
+#    ifdef ML_TIMING
+     if (ml->comm->ML_mypid == 0)
+       printf("Detailed timing for forming smoothed prolongator (level %d)\n", level);
+#    endif
+     ReportTimer(createPtentTime,"Create tentative P (total)",ml->comm);
+     switch( Amat->spectral_radius_scheme ) {
+       case ML_USE_CG:
+         sprintf(eigmethod,"Eigen estimate (cg)       ");
+         break;
+       case ML_USE_POWER:
+         sprintf(eigmethod,"Eigen estimate (power)    ");
+         break;
+       default:
+         sprintf(eigmethod,"Eigen estimate (max norm) ");
+         break;
+     }
+     ReportTimer(eigenTime,      eigmethod,ml->comm);
+     ReportTimer(smooPTime,      "Smooth tentative P        ",ml->comm);
+#    ifdef ML_TIMING
+     if (ml->comm->ML_mypid == 0)
+       printf("\n");
+#    endif
+   }
    ML_Operator_Set_1Levels(&(ml->Pmat[clevel]),
               &(ml->SingleLevel[clevel]), &(ml->SingleLevel[level]));
 
@@ -709,7 +761,7 @@ int ML_AGG_Increment_Level(ML *ml, int current_level,
    int total_size, temp;
    ML_Operator * Amat = &(ml->Amat[current_level]);
    ML_Aggregate * ag = (ML_Aggregate *)data;
-     
+
    if (current_level == ml->ML_num_levels-1) return(-1);
 
    total_size = Amat->invec_leng;
@@ -729,7 +781,7 @@ int ML_AGG_Decrement_Level(ML *ml, int current_level, void * data)
    int total_size, temp;
    ML_Operator * Amat = &(ml->Amat[current_level]);
    ML_Aggregate * ag = (ML_Aggregate *)data;
-   
+
    if (current_level == 0 ) return(-1);
 
    total_size = Amat->invec_leng;
@@ -769,8 +821,8 @@ int ML_AGG_Decrement_Two_Level(ML *ml,int current_level,void * data)
 /* getrow function for the aggregation tentative prolongator                 */
 /* ------------------------------------------------------------------------- */
 
-int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows, 
-   int requested_rows[], int allocated_space, int columns[], 
+int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
+   int requested_rows[], int allocated_space, int columns[],
    double values[], int row_lengths[])
 {
    struct ML_AGG_Matrix_Context *widget;
@@ -796,7 +848,7 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
    /* ----------------------------------------------------------------- */
 
    getrow_obj = widget->Amat->getrow;
-   if (N_requested_rows > 1) 
+   if (N_requested_rows > 1)
    {
       printf("Too bad. This routine only works with 1 row at a time\n");
       exit(1);
@@ -829,9 +881,9 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
 
    if ( widget->drop_tol > 0.0 )
    {
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
       {
-         if (columns[i] == requested_rows[0]) 
+         if (columns[i] == requested_rows[0])
          {
             threshold = ML_dabs(values[i])*widget->drop_tol;
             break;
@@ -839,9 +891,9 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
       }
       j = 0;
       dropped = 0.0;
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
       {
-         if ( ML_dabs(values[i]) >= threshold) 
+         if ( ML_dabs(values[i]) >= threshold)
          {
             columns[j] = columns[i];
             values[j]  = values[i];
@@ -855,7 +907,7 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
    else
    {
       dropped = 0.0;
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
          if (columns[i] == requested_rows[0]) { diag = i; break;}
    }
 
@@ -863,7 +915,7 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
    /* if diagonal is not found, append one                              */
    /* ----------------------------------------------------------------- */
 
-   if (diag == -1) 
+   if (diag == -1)
    {
       if (row_lengths[0] >= allocated_space) return(0);
       columns[row_lengths[0]] = requested_rows[0];
@@ -882,7 +934,7 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
 /*
    aggr_info = widget->aggr_info;
    N = widget->Amat->outvec_leng;
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
    {
       if (columns[i] < N &&
           aggr_info[columns[i]] != aggr_info[requested_rows[0]])
@@ -894,9 +946,9 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
    N = 0;
    for (i = 0; i < row_lengths[0]; i++)
    {
-      if ( values[i] != 0.0 ) 
+      if ( values[i] != 0.0 )
       {
-         values[N] = values[i]; 
+         values[N] = values[i];
          columns[N++] = columns[i];}
       }
    }
@@ -909,19 +961,19 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
    /* ----------------------------------------------------------------- */
 #ifdef RST_MODIF
    if (diag_val == 0.) { row_lengths[0] = 0; return 1; }
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
       values[i] *= -widget->omega/diag_val;
    values[diag] += 1.;
 #else
 #ifndef MB_MODIF
    if (ML_dabs(diag_val) > 0.0)
    {
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
          values[i] *= (-widget->omega)/diag_val;
       values[diag] += 1.;
    }
 #else
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
       values[i] *= -widget->omega;
    values[diag] += 1.;
 #endif
@@ -936,8 +988,8 @@ int ML_AGG_JacobiSmoother_Getrows(ML_Operator *data, int N_requested_rows,
 /* aggregation. Additionally, the Dinv is that of filtered A.                */
 /* ------------------------------------------------------------------------- */
 
-int ML_AGG_JacobiMoreAccurate_Getrows(ML_Operator *data, int N_requested_rows, 
-   int requested_rows[], int allocated_space, int columns[], 
+int ML_AGG_JacobiMoreAccurate_Getrows(ML_Operator *data, int N_requested_rows,
+   int requested_rows[], int allocated_space, int columns[],
    double values[], int row_lengths[])
 {
    struct ML_AGG_Matrix_Context *widget;
@@ -963,7 +1015,7 @@ int ML_AGG_JacobiMoreAccurate_Getrows(ML_Operator *data, int N_requested_rows,
    /* ----------------------------------------------------------------- */
 
    getrow_obj = widget->Amat->getrow;
-   if (N_requested_rows > 1) 
+   if (N_requested_rows > 1)
    {
       printf("Too bad. This routine only works with 1 row at a time\n");
       exit(1);
@@ -997,9 +1049,9 @@ int ML_AGG_JacobiMoreAccurate_Getrows(ML_Operator *data, int N_requested_rows,
 thediag = widget->Adiag;
    if ( widget->drop_tol > 0.0 )
    {
-      for (i = 0; i < -row_lengths[0]; i++) 
+      for (i = 0; i < -row_lengths[0]; i++)
       {
-         if (columns[i] == requested_rows[0]) 
+         if (columns[i] == requested_rows[0])
          {
             threshold = ML_dabs(values[i])*widget->drop_tol;
             break;
@@ -1009,7 +1061,7 @@ thediag = widget->Adiag;
 threshold = sqrt(ML_dabs(thediag[requested_rows[0]]))*widget->drop_tol;
       j = 0;
       dropped = 0.0;
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
       {
          if ( ML_dabs(values[i]) >= threshold*sqrt(ML_dabs(thediag[columns[i]])))
          {
@@ -1025,7 +1077,7 @@ threshold = sqrt(ML_dabs(thediag[requested_rows[0]]))*widget->drop_tol;
    else
    {
       dropped = 0.0;
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
          if (columns[i] == requested_rows[0]) { diag = i; break;}
    }
 
@@ -1033,7 +1085,7 @@ threshold = sqrt(ML_dabs(thediag[requested_rows[0]]))*widget->drop_tol;
    /* if diagonal is not found, append one                              */
    /* ----------------------------------------------------------------- */
 
-   if (diag == -1) 
+   if (diag == -1)
    {
       if (row_lengths[0] >= allocated_space) return(0);
       columns[row_lengths[0]] = requested_rows[0];
@@ -1053,7 +1105,7 @@ diag_val += dropped;  /* rst new */
 /*
    aggr_info = widget->aggr_info;
    N = widget->Amat->outvec_leng;
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
    {
       if (columns[i] < N &&
           aggr_info[columns[i]] != aggr_info[requested_rows[0]])
@@ -1065,9 +1117,9 @@ diag_val += dropped;  /* rst new */
    N = 0;
    for (i = 0; i < row_lengths[0]; i++)
    {
-      if ( values[i] != 0.0 ) 
+      if ( values[i] != 0.0 )
       {
-         values[N] = values[i]; 
+         values[N] = values[i];
          columns[N++] = columns[i];}
       }
    }
@@ -1080,7 +1132,7 @@ diag_val += dropped;  /* rst new */
    /* ----------------------------------------------------------------- */
 #ifdef RST_MODIF
    if (diag_val == 0.) { row_lengths[0] = 0; return 1; }
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
       values[i] *= -widget->omega/diag_val;
    values[diag] += 1.;
 
@@ -1088,13 +1140,13 @@ diag_val += dropped;  /* rst new */
 #ifndef MB_MODIF
    if (ML_dabs(diag_val) > 0.0)
    {
-      for (i = 0; i < row_lengths[0]; i++) 
+      for (i = 0; i < row_lengths[0]; i++)
          values[i] *= (-widget->omega)/diag_val;
       values[diag] += 1.;
 
    }
 #else
-   for (i = 0; i < row_lengths[0]; i++) 
+   for (i = 0; i < row_lengths[0]; i++)
       values[i] *= -widget->omega;
    values[diag] += 1.;
 
@@ -1108,8 +1160,8 @@ diag_val += dropped;  /* rst new */
 /* getrow function for the aggregation tentative prolongator                 */
 /* ------------------------------------------------------------------------- */
 
-int ML_AGG_Amat_Getrows(ML_Operator *data, int N_requested_rows, 
-   int requested_rows[], int allocated_space, int columns[], 
+int ML_AGG_Amat_Getrows(ML_Operator *data, int N_requested_rows,
+   int requested_rows[], int allocated_space, int columns[],
    double values[], int row_lengths[])
 {
    struct ML_AGG_Matrix_Context *widget;
@@ -1120,7 +1172,7 @@ int ML_AGG_Amat_Getrows(ML_Operator *data, int N_requested_rows,
    mat_in = (ML_Operator *) data;
    widget = (struct ML_AGG_Matrix_Context *) ML_Get_MyGetrowData(mat_in);
    getrow_obj = widget->Amat->getrow;
-   if (N_requested_rows > 1) 
+   if (N_requested_rows > 1)
    {
       printf("Too bad. This routine only works with 1 row at a time\n");
       exit(1);
@@ -1157,7 +1209,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    int           (*getrowfunc)(ML_Operator *,int,int*,int,int*,double*,int*);
    void          *getrowdata;
    ML_Aggregate * ag = (ML_Aggregate *)data;
-   
+
 #ifdef ML_TIMING
    double t0;
    t0 =  GetClock();
@@ -1167,9 +1219,9 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    /* coarsen local smoothed aggregation method                         */
    /* ----------------------------------------------------------------- */
 
-   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
       printf("Aggregation : building multilevel hierarchy at level %d\n",level);
-   widget.near_bdry = NULL; 
+   widget.near_bdry = NULL;
    Amat     = &(ml->Amat[level]);
    Nfine    = Amat->outvec_leng;
    getrow_obj = Amat->getrow;
@@ -1205,7 +1257,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    /* setup local smoothed aggregation method                           */
    /* ----------------------------------------------------------------- */
 
-   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
       printf("Aggregation : setting up diagonal block at level %d\n",level);
 
    newNlevels = 15;
@@ -1237,7 +1289,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    newClevel = ML_Gen_MGHierarchy_UsingAggregation(newml, newNlevels-1,
                                   ML_DECREASING, newag);
    newClevel = newNlevels - newClevel;
-   for (k = newNlevels-1; k > newClevel; k--) 
+   for (k = newNlevels-1; k > newClevel; k--)
    {
       ML_Gen_Smoother_SymGaussSeidel(newml, k, ML_PRESMOOTHER, 1, 1.);
       ML_Gen_Smoother_SymGaussSeidel(newml, k, ML_POSTSMOOTHER, 1, 1.);
@@ -1250,7 +1302,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    /* set up Krylov solver to compute eigenvalues                       */
    /* ----------------------------------------------------------------- */
 
-   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
       printf("Aggregation : computing max eigenvalues at level %d\n",level);
 
 /*
@@ -1271,7 +1323,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
        printf("Gen_DDProlongator warning : max eigen <= 0.0 \n");
        max_eigen = 1.0;
      }
-   if ( ml->comm->ML_mypid == 0 ) 
+   if ( ml->comm->ML_mypid == 0 )
      printf("Gen_DDProlongator : max eigen = %e \n", max_eigen);
    widget.omega  = ag->smoothP_damping_factor / max_eigen;
    ml->spectral_radius[level] = max_eigen;
@@ -1294,7 +1346,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
 
    i = 1;
    j = ML_gmax_int(i, ml->comm );
-   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
       printf("Aggregation : computing tentative prolongators at level %d\n",level);
 
    /* ----------------------------------------------------------------- */
@@ -1304,17 +1356,17 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
    darray  = (double *) ML_allocate( Nfine * sizeof(double) );
    darray2 = (double *) ML_allocate( Nfine * sizeof(double) );
 
-   for ( i = 0; i < newml->Amat[newClevel].outvec_leng; i++ )  
+   for ( i = 0; i < newml->Amat[newClevel].outvec_leng; i++ )
       darray[i] = 1.0;
 
-   for ( i = newClevel; i < newNlevels-1; i++ )  
+   for ( i = newClevel; i < newNlevels-1; i++ )
    {
       lengc = newml->Amat[i].outvec_leng;
       lengf = newml->Amat[i+1].outvec_leng;
       ML_Operator_ApplyAndResetBdryPts(&(newml->Pmat[i]),lengc,darray,lengf,
                                        darray2);
       for ( j = 0; j < lengf; j++ ) darray[j] = darray2[j];
-   }  
+   }
    ML_free( darray2 );
    norm = 0.0;
    for ( j = 0; j < Nfine; j++ ) norm += (darray[j] * darray[j]);
@@ -1333,7 +1385,7 @@ int ML_AGG_Gen_DDProlongator(ML *ml,int level, int clevel, void *data)
 if ( ml->comm->ML_mypid == 0 )
    printf("Tentative prolongator set to 1.\n");
 for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
-/* */ 
+/* */
    for (i = 0; i < Nfine; i++) new_val[i] = darray[i];
 
    p_ncols = 1;
@@ -1341,7 +1393,7 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
    p_cols[0] = 0;
    p_aa = (double **) ML_allocate(sizeof(double*));
    p_aa[0] = darray;
- 
+
    ML_memory_alloc((void**) &csr_data,sizeof(struct ML_CSR_MSRdata),"AVP");
    csr_data->rowptr  = new_ia;
    csr_data->columns = new_ja;
@@ -1379,17 +1431,17 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
    */
       i = 1;
       j = ML_gmax_int(i, ml->comm );
-      if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+      if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
          printf("Aggregation : computing comm pattern of A*tentP at level %d\n",
               level);
 
       APMat = &(ml->Pmat[clevel]);
       ML_2matmult(Amat, tentP, APMat, ML_CSR_MATRIX );
       ML_AGG_Extract_Matrix(APMat, &ap_ncols, &ap_cols, &ap_aa);
- 
+
       i = 1;
       j = ML_gmax_int(i, ml->comm );
-      if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+      if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
          printf("Aggregation : computing prolongators at level %d\n",level);
 
       ML_Set_MaxIterations(newml, 10);
@@ -1401,12 +1453,12 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
          ML_Iterate( newml, darray, ap_aa[i] );
          if ( i == 0 )
          {
-            for ( j = 0; j < Nfine; j++ ) 
+            for ( j = 0; j < Nfine; j++ )
                ap_aa[i][j] = p_aa[0][j] - widget.omega * darray[j];
          }
          else
          {
-            for ( j = 0; j < Nfine; j++ ) 
+            for ( j = 0; j < Nfine; j++ )
                ap_aa[i][j] = - widget.omega * darray[j];
          }
       }
@@ -1443,10 +1495,10 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
    new_ia[0] = nnz;
    for ( i = 0; i < Nfine; i++ )
    {
-      for ( j = 0; j < ap_ncols; j++ ) 
-         if ( ap_aa[j][i] != 0.0 ) 
+      for ( j = 0; j < ap_ncols; j++ )
+         if ( ap_aa[j][i] != 0.0 )
          {
-            new_ja[nnz] = ap_cols[j]; 
+            new_ja[nnz] = ap_cols[j];
             new_val[nnz++] = ap_aa[j][i];
          }
       new_ia[i+1] = nnz;
@@ -1461,7 +1513,7 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
       if ( nnz > max_nz_per_row ) max_nz_per_row = nnz;
       if ( nnz < min_nz_per_row && nnz > 0 ) min_nz_per_row = nnz;
    }
-   
+
    ML_memory_alloc((void**)&csr_data,sizeof(struct ML_CSR_MSRdata),"CSR");
    csr_data->rowptr  = new_ia;
    csr_data->columns = new_ja;
@@ -1476,7 +1528,7 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
 /*
    if ( ag->smoothP_damping_factor == 0.0 )
    {
-      ML_CommInfoOP_Generate( &(APMat->getrow->pre_comm), 
+      ML_CommInfoOP_Generate( &(APMat->getrow->pre_comm),
                            ML_Aggregate_ExchangeBdry, aggr_comm, ml->comm, 1, 0);
    }
 */
@@ -1489,7 +1541,7 @@ for (i = 0; i < Nfine; i++) darray[i] = 1.0/sqrt((double) Nfine);
 
    i = 1;
    j = ML_gmax_int(i, ml->comm );
-   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel())
       printf("Aggregation : building P complete at level %d\n",level);
 
 /*
@@ -1548,7 +1600,7 @@ int ML_AGG_DD_Matvec(ML_Operator *obj,int leng1,double p[],int leng2,double ap[]
          col_val = (double *) ML_allocate( max_row_nnz * sizeof(double) );
       }
       dtmp = 0.0;
-      
+
       for ( j = 0; j < m; j++ )
       {
          index = col_ind[j];
@@ -1566,7 +1618,7 @@ int ML_AGG_DD_Matvec(ML_Operator *obj,int leng1,double p[],int leng2,double ap[]
 /* local getrow                                                              */
 /* ------------------------------------------------------------------------- */
 
-int ML_AGG_DD_Getrow(ML_Operator *obj,int inNrows, int *rowlist,int alloc_space, 
+int ML_AGG_DD_Getrow(ML_Operator *obj,int inNrows, int *rowlist,int alloc_space,
                      int *col_ind, double *col_val, int *rowcnt)
 {
    int         i, count, status, nRows, *local_ind = NULL;
@@ -1603,7 +1655,7 @@ int ML_AGG_DD_Getrow(ML_Operator *obj,int inNrows, int *rowlist,int alloc_space,
    }
    status = getrowfunc((ML_Operator *) getrowdata, 1, rowlist, alloc_space, local_ind,
                        local_val, rowcnt);
-   if ( status == 0 ) 
+   if ( status == 0 )
    {
       ML_free( local_ind );
       ML_free( local_val );
@@ -1612,7 +1664,7 @@ int ML_AGG_DD_Getrow(ML_Operator *obj,int inNrows, int *rowlist,int alloc_space,
    count = 0;
    for ( i = 0; i < (*rowcnt); i++ )
    {
-      if ( local_ind[i] < nRows ) 
+      if ( local_ind[i] < nRows )
       {
          col_ind[count] = local_ind[i];
          col_val[count++] = local_val[i];
@@ -1622,7 +1674,7 @@ int ML_AGG_DD_Getrow(ML_Operator *obj,int inNrows, int *rowlist,int alloc_space,
    ML_free( local_ind );
    ML_free( local_val );
    return 1;
-}  
+}
 
 /* ************************************************************************* */
 /* extract diagonal                                                          */
@@ -1683,7 +1735,7 @@ void ML_AGG_Matrix_Context_Clean(void *data)
 /* solve local subproblem using smoothed aggregation                         */
 /* ------------------------------------------------------------------------- */
 
-int ML_AGG_DD_Solve(void *data, int leng1, double *outvec, int leng2, 
+int ML_AGG_DD_Solve(void *data, int leng1, double *outvec, int leng2,
                     double *invec)
 {
    ML  *ml = (ML *) data;
@@ -1757,7 +1809,7 @@ int ML_AGG_Extract_Matrix(ML_Operator *mat, int *ncols, int **cols,
    local_ncols = 0;
    for ( i = 1; i < nnz; i++ )
    {
-      if ( col_ind[i] != col_ind[local_ncols] ) 
+      if ( col_ind[i] != col_ind[local_ncols] )
          col_ind[++local_ncols] = col_ind[i];
    }
    local_ncols++;
@@ -1772,7 +1824,7 @@ int ML_AGG_Extract_Matrix(ML_Operator *mat, int *ncols, int **cols,
 
    local_vals = (double **) ML_allocate(local_ncols * sizeof(double*));
    for ( i = 0; i < local_ncols; i++ )
-   { 
+   {
       local_vals[i] = (double *) ML_allocate(local_nrows * sizeof(double));
       for ( j = 0; j < local_nrows; j++ ) local_vals[i][j] = 0.0;
    }
@@ -1813,7 +1865,7 @@ int ML_AGG_Gen_DDProlongator2(ML *ml,int level, int clevel, void *data)
    struct ML_CSR_MSRdata        *csr_data;
    struct ML_AGG_Matrix_Context widget, *context;
    ML_Aggregate *ag = (ML_Aggregate *)data;
-   
+
 #ifdef ML_TIMING
    double t0;
    t0 =  GetClock();
@@ -1911,7 +1963,7 @@ tentP = ML_Operator_Create(ml->comm);
    ML_CommInfoOP_Generate( &(tentP->getrow->pre_comm),
                            ML_Aggregate_ExchangeBdry, aggr_comm, ml->comm, 1, 0);
    ML_Operator_Set_Getrow(tentP, Nfine, CSR_getrow);
-   ML_Operator_Set_ApplyFunc(tentP, 
+   ML_Operator_Set_ApplyFunc(tentP,
 CSR_matvec);
    ML_Operator_Set_1Levels(&(ml->Pmat[clevel]),
               &(ml->SingleLevel[clevel]), &(ml->SingleLevel[level]));
@@ -1923,8 +1975,8 @@ CSR_matvec);
    ML_Operator_Set_ApplyFuncData(AGGsmoother, widget.Amat->invec_leng,
                         widget.Amat->outvec_leng, &widget,
                         widget.Amat->matvec->Nrows, NULL, 0);
-   ML_Operator_Set_Getrow(AGGsmoother, 
-                          widget.Amat->getrow->Nrows, 
+   ML_Operator_Set_Getrow(AGGsmoother,
+                          widget.Amat->getrow->Nrows,
                           ML_AGG_Amat_Getrows);
    ML_CommInfoOP_Clone(&(AGGsmoother->getrow->pre_comm),
                           widget.Amat->getrow->pre_comm);
@@ -1975,7 +2027,7 @@ int ML_AGG_Compute_Near_Bdry(ML_Operator *Amatrix, char *near_bdry)
       for (j = 0; j < rowi_N; j++) if (rowi_val[j] != 0.) count2++;
       if (count2 <= 1) dtemp[i] = 1.;
    }
-  
+
    /* if one DOF within a node is fixed, mark all the DOFs within node */
 
    bsize = Amatrix->num_PDEs;
@@ -1988,9 +2040,9 @@ int ML_AGG_Compute_Near_Bdry(ML_Operator *Amatrix, char *near_bdry)
        for (j = 0; j < bsize; j++) dtemp[i*bsize+j] = 1.;
      }
    }
-      
 
-   
+
+
    ML_exchange_bdry(dtemp,Amatrix->getrow->pre_comm,Amatrix->outvec_leng,
                     Amatrix->comm, ML_OVERWRITE,NULL);
    for (i = 0; i < Nrows+Nghost; i++) {
@@ -2020,11 +2072,11 @@ int ML_AGG_Compute_Near_Bdry(ML_Operator *Amatrix, char *near_bdry)
      }
    }
 
-   
-   
+
+
    ML_free(rowi_col); ML_free(rowi_val);
    rowi_col = NULL; rowi_val = NULL;
-   allocated = 0; 
+   allocated = 0;
 
    ML_free(dtemp);
 
@@ -2056,7 +2108,7 @@ int  ML_Gen_MGHierarchy_ReuseExistingOperators(ML *ml)
    return 0;
 }
 /******************************************************************************
-Regenerate the multigrid hierarchy using smoothed aggregation reusing the 
+Regenerate the multigrid hierarchy using smoothed aggregation reusing the
 existing aggregates.
 ******************************************************************************/
 
@@ -2111,27 +2163,28 @@ int  ML_Gen_MGHierarchy_UsingSmoothedAggr_ReuseExistingAgg(ML *ml,
 /* array Filter has already been computed. Filter[i][0] indicates how many   */
 /* column entries in the ith row WILL be removed. Filter[i][1:Filter[i][0]]  */
 /* indicates which column values should be removed.  In addition, the matrix */
-/* diagonal is also modified so that piecewise constants are still in the    */ 
+/* diagonal is also modified so that piecewise constants are still in the    */
 /* null space (assuming that they were originally). This code appears to work*/
 /* even when we have a block PDE system.                                     */
 /*****************************************************************************/
- 
+
 static int ML_Aux_Getrow(ML_Operator *data, int N_requested_rows, int requested_rows[],
                          int allocated_space, int columns[], double values[],
                          int row_lengths[])
 {
+
   int ierr;
   int i, j, count, mod;
   int BlockCol, BlockRow, RowMod;
   double DiagValue = 0.0;
   int DiagID;
   int* Filter;
-
+  
   ierr = (*(data->aux_data->aux_func_ptr))(data, N_requested_rows, requested_rows,
                                       allocated_space, columns, values, row_lengths);
   if (ierr == 0)
     return(0);
- 
+
   if (N_requested_rows != 1) {
     fprintf(stderr, "ML_Aux_Getrow() works only if N_requested_rows == 1\n"
             "(file %s, line %d)\n",
@@ -2152,7 +2205,7 @@ static int ML_Aux_Getrow(ML_Operator *data, int N_requested_rows, int requested_
   {
     BlockCol = columns[i] / mod;
 
-    if (BlockCol ==  BlockRow) 
+    if (BlockCol ==  BlockRow)
     {
       columns[count] = columns[i];
       values[count]  = values[i];
@@ -2195,6 +2248,14 @@ after:
 
   values[DiagID] += DiagValue;
   row_lengths[0] = count;
+
+  /* EXPERIMENTAL: Special handling code for handling zero diagonals.
+     If sufficient dropping has occurred to zero the diagonal, we reset the 
+     diagonal to its normal value. This keeps the eigenvalue
+     estimate for prolongator smoothing from being hideously wrong.
+   */
+  if(ML_dabs(values[DiagID]  / (values[DiagID] - DiagValue)) < 1e-10)
+    values[DiagID]= -DiagValue;
 
   return(ierr);
 }
@@ -2247,7 +2308,7 @@ void ML_Project_Coordinates(ML_Operator* Amat, ML_Operator* Pmat,
   if (Agrid_info == NULL)
     pr_error("Amat->to->Grid->Grid == NULL\nERROR: (file %s, line %d)\n",
             __FILE__, __LINE__);
-  
+
   Rmat = ML_Operator_Create(Pmat->comm);
 #ifdef ML_TESTING_ONLY
   ML_Operator_Transpose(Pmat,Rmat);
@@ -2260,7 +2321,7 @@ void ML_Project_Coordinates(ML_Operator* Amat, ML_Operator* Pmat,
 			    Pmat->invec_leng);
 
   ML_Operator_Set_ApplyFuncData(Rmat, Pmat->outvec_leng,
-                                Pmat->invec_leng, 
+                                Pmat->invec_leng,
                                 Pmat->data, -1, CSR_trans_ones_matvec, 0);
 
   Rmat->getrow->func_ptr = NULL;
@@ -2300,7 +2361,7 @@ void ML_Project_Coordinates(ML_Operator* Amat, ML_Operator* Pmat,
   /* project the coordinates */
 
   Cgrid_info = (ML_Aggregate_Viz_Stats *) Cmat->to->Grid->Grid;
-  if (Agrid_info->x!= NULL) 
+  if (Agrid_info->x!= NULL)
   {
     for (i = 0 ; i < size_old ; i+=oldPDEs)
       tmp_old[i] = Agrid_info->x[i / oldPDEs];
@@ -2333,7 +2394,7 @@ void ML_Project_Coordinates(ML_Operator* Amat, ML_Operator* Pmat,
     Cgrid_info->x = new_x_coord;
   }
 
-  if (Agrid_info->y != NULL) 
+  if (Agrid_info->y != NULL)
   {
     for (i = 0 ; i < size_old ; i+=oldPDEs)
       tmp_old[i] = Agrid_info->y[i / oldPDEs];
@@ -2367,7 +2428,7 @@ void ML_Project_Coordinates(ML_Operator* Amat, ML_Operator* Pmat,
     Cgrid_info->y = new_y_coord;
   }
 
-  if (Agrid_info->z != NULL) 
+  if (Agrid_info->z != NULL)
   {
     for (i = 0 ; i < size_old ; i+=oldPDEs)
       tmp_old[i] = Agrid_info->z[i / oldPDEs];
@@ -2555,7 +2616,7 @@ static void ML_Init_Aux(ML* ml, int level)
 
     count = 0;
     for (j = 0 ; j < entries ; ++j) {
-      if (  (i != columns[j]) && 
+      if (  (i != columns[j]) &&
             (values[j]*values[j] <
        LaplacianDiag[BlockRow]*LaplacianDiag[columns[j]]*threshold*threshold)){
         columns[count++] = columns[j];
@@ -2595,6 +2656,14 @@ static void ML_Finalize_Aux(ML* ml, const int level)
   for (i = 0 ; i < A->aux_data->filter_size ; ++i)
     ML_free((A->aux_data->filter[i]));
   ML_free(A->aux_data->filter);
+
+  /* Kill the filtered diagonal.  This is to prevent later code, like ML_Smoother_NewGS
+   from using the filtered diagonal instead of the real thing.  */
+  if(A->diagonal) {
+    ML_DVector_Destroy(&A->diagonal);
+    A->diagonal=NULL;
+  }
+  
 }
 
 /* ************************************************************************* */
@@ -2602,7 +2671,7 @@ static void ML_Finalize_Aux(ML* ml, const int level)
 /* I dropped out the domain_decomposition lines                              */
 /* ------------------------------------------------------------------------- */
 
-int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start, 
+int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
 						int increment_or_decrement,
 						ML_Aggregate *ag)
 {
@@ -2629,11 +2698,11 @@ int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
    /* FIXME: I don't know when P_tentative is freed !!!!! */
    /*   if( ag->smoothP_damping_factor == 0.0 ) ag->Restriction_smoothagg_transpose == ML_FALSE;*/
    if( ag->Restriction_smoothagg_transpose == ML_TRUE ) ag->keep_P_tentative = ML_TRUE;
-   
+
    idata = 0;
    idata = ML_gmax_int(idata, ml->comm);
    /*
-   if ( ml->comm->ML_mypid == 0 && 9 < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && 9 < ML_Get_PrintLevel())
       ML_Aggregate_Print( ml_ag );
    */
 #ifdef ML_TIMING
@@ -2658,7 +2727,7 @@ int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
 					(void *)ml_ag);
    }
    else {
-     if ( ml->comm->ML_mypid == 0 ) 
+     if ( ml->comm->ML_mypid == 0 )
        {
 	 printf("ML_Gen_MultiLevelHierarchy_UsingAggregation : Unknown ");
          printf("increment_or_decrement choice\n");
@@ -2670,7 +2739,7 @@ int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
    if ( ml->comm->ML_mypid == 0 && ML_Get_PrintLevel() > 10 )
      printf("Aggregation total setup time = %e seconds\n", t0);
 #endif
-   
+
    /* ----------------------------------------------------------------- */
    /* compute operator complexity                                       */
    /* ----------------------------------------------------------------- */
@@ -2681,7 +2750,7 @@ int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
       dnnz = ml->Amat[start+1-level].N_nonzeros;
    dnnz = ML_gsum_double( dnnz, ml->comm );
    ml_ag->operator_complexity += dnnz;
-                                                                                
+
    if (ML_Get_PrintLevel() > 10)
      for (i=0; i<level; i++) {
        int thisLevel = ml->LevelID[i];
@@ -2691,7 +2760,7 @@ int ML_Gen_MultiLevelHierarchy_UsingAggregation(ML *ml, int start,
      }
 
    idata = ML_gmax_int(idata, ml->comm);
-   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel()) 
+   if ( ml->comm->ML_mypid == 0 && ml_ag->print_flag < ML_Get_PrintLevel())
       ML_Aggregate_Print_Complexity( ml_ag );
    idata = ML_gmax_int(idata, ml->comm);
 
@@ -2719,7 +2788,7 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
    ML_Aggregate *ag;
    char str[80];
    int R_is_Ptranspose;
-   
+
 #ifdef ML_TIMING
    double trap,    /*RAP*/
           tpart,   /*repartitioning: Zoltan, migrating Acoarse, prolongator, restrictor*/
@@ -2735,7 +2804,7 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
    k = 0;
    ml->LevelID[k++] = fine_level;
 
-   while (next >= 0) 
+   while (next >= 0)
    {
 #    ifdef ML_TIMING
      ttotal = GetClock();
@@ -2743,7 +2812,7 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
      Amat = &(ml->Amat[level]);
      if (Amat->to != NULL && Amat->to->Grid != NULL)
        grid_info =(ML_Aggregate_Viz_Stats *) Amat->to->Grid->Grid;
-     else 
+     else
        grid_info = NULL;
 
      if ( ml->comm->ML_mypid == 0 && 5 < ML_Get_PrintLevel()) {
@@ -2752,16 +2821,16 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
        printf("-----------------------------------------------------------------------\n");
      }
 
-     aux_flag = (ml->Amat[fine_level].aux_data->enable && 
+     aux_flag = (ml->Amat[fine_level].aux_data->enable &&
                  level <= ml->Amat[fine_level].aux_data->max_level);
 
      if (aux_flag)
      {
-       if (ml->comm->ML_mypid == 0 && 6 < ML_Get_PrintLevel()) 
+       if (ml->comm->ML_mypid == 0 && 6 < ML_Get_PrintLevel())
        {
          printf("ML_Gen_MultiLevelHierarchy (level %d) : Using auxiliary matrix\n",
                 level);
-         printf("ML_Gen_MultiLevelHierarchy (level %d) : threshold = %e\n", 
+         printf("ML_Gen_MultiLevelHierarchy (level %d) : threshold = %e\n",
                 level, Amat->aux_data->threshold);
        }
 
@@ -2809,7 +2878,7 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
             fflush(stdout);
          }
          break; /* from main loop */
- 
+
       }
       /* end of check */
 
@@ -2899,7 +2968,7 @@ int ML_Gen_MultiLevelHierarchy(ML *ml, int fine_level,
       /* project the coordinates (if any) to the next
        * coarser level */
       if (grid_info) {
-        if (grid_info->x != NULL || grid_info->y != NULL || 
+        if (grid_info->x != NULL || grid_info->y != NULL ||
             grid_info->z != NULL) {
           ML_Project_Coordinates(Amat, Ptent, &(ml->Amat[next]));
         }
@@ -2947,6 +3016,11 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
    ML_Aggregate *ag = (ML_Aggregate *) data;
    struct ML_Field_Of_Values * fov;
    int flag=0; /* For the return value */
+   int RelativeLevel, NumZDir, Zorientation, *LayerId = NULL, *VertLineId = NULL;
+   int  Nnodes;
+   struct SemiCoarsen_Struct   widget;
+   void *old_field;
+
 #if defined(HAVE_ML_ANASAxI) && defined(HAVE_ML_TEUCHOS)
    double dtemp, dtemp2, eta;
 #endif
@@ -2960,12 +3034,15 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 
    ML_Aggregate_Set_CurrentLevel( ag, level );
 
+   RelativeLevel = ml->ML_finest_level - level;
+   if (RelativeLevel < 0) RelativeLevel = -RelativeLevel;
+
    /* ********************************************************************** */
    /* May require computationof field-of-values for non-diagonally scaled A  */
    /* ********************************************************************** */
 
    if( ag->field_of_values != NULL ) {
-     
+
      fov = (struct ML_Field_Of_Values * )(ag->field_of_values);
 
      if( fov->compute_field_of_values_non_scaled == ML_YES ) {
@@ -2991,18 +3068,18 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 	 printf("Non-Scaled Field of Values Box (level %d) : eta = %e\n\n",
 		level,
 		fov->eta );
-       } 
-     } 
+       }
+     }
    }
 
-       
+
    /* ********************************************************************** */
    /* May require field-of-values computations for classic ML                */
    /* ********************************************************************** */
 
    if( ag->Restriction_smoothagg_transpose == ML_FALSE &&
        ag->field_of_values != NULL ) {
-     
+
      fov = (struct ML_Field_Of_Values * )(ag->field_of_values);
 
      if( fov->compute_field_of_values == ML_YES ) {
@@ -3029,18 +3106,18 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 		level,
 		fov->eta );
        }
-       
+
      }
-     
+
    }
-   
+
    /* ********************************************************************** */
    /* Methods based on field-of-values requires to stick some parameres now  */
    /* This is not an error! Here use R (this P will become R later)          */
    /* ********************************************************************** */
-   
+
    if( ag->Restriction_smoothagg_transpose == ML_TRUE ) {
-     
+
      fov = (struct ML_Field_Of_Values * )(ag->field_of_values);
 
      /* compute box surrounding field-of-values */
@@ -3048,7 +3125,7 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 #if defined(HAVE_ML_EPETRA) && defined(HAVE_ML_ANASAxI) && defined(HAVE_ML_TEUCHOS)
 
      if( fov->compute_field_of_values == ML_YES && fov->choice != 1 ) {
-       
+
        ML_Anasazi_Get_FieldOfValuesBox_Interface(Amat,fov);
        if( ml->comm->ML_mypid == 0 && 5 < ML_Get_PrintLevel() ) {
 	 printf("\nField of Values Box (level %d) : Max Real = %e\n",
@@ -3061,9 +3138,9 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 		level,
 		fov->eta );
        }
-       
+
      }
-     
+
      if( fov->choice == 0 ) {
 
        fov->eta = 0;
@@ -3071,12 +3148,12 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 	 printf("\n(level %d) : Using non-smoothed aggregation\n\n",
 		level );
        }
-       
+
        ag->smoothP_damping_factor = 0.00000001;
        Amat->lambda_max = 1.0;
 
      } else if( fov->choice == 1 ) {
-       
+
        ML_Anasazi_Get_FieldOfValuesBox_Interface(Amat,fov);
        if( ml->comm->ML_mypid == 0 && 5 < ML_Get_PrintLevel() ) {
 	 printf("\nField of Values Box (level %d) : Max Real = %e\n",
@@ -3094,10 +3171,10 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
        dtemp = fov->R_coeff[0] + eta * (fov->R_coeff[1]) + pow(eta,2.) * (fov->R_coeff[2]);
        if( dtemp < 0.0 ) dtemp = 0.000001;
        dtemp2 = fov->real_max;
-       
+
        ag->smoothP_damping_factor = dtemp;
        Amat->lambda_max = dtemp2;
-       
+
      } else if( fov->choice == 2 ) {
 
        ML_Anasazi_Get_FieldOfValuesBox_Interface(Amat,fov);
@@ -3112,12 +3189,12 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
        dtemp = fov->R_coeff[0] + eta * (fov->R_coeff[1]) + pow(eta,2.) * (fov->R_coeff[2]);
        if( dtemp < 0.0 ) dtemp = 0.000001;
        dtemp2 = fov->real_max;
-       
+
        ag->smoothP_damping_factor = dtemp;
        Amat->lambda_max = dtemp2;
-       
+
      } else {
-       
+
        fprintf( stderr,
 		"ERROR: value of choice not correct (%d)\n"
 		"ERROR: (file %s, line %d)\n",
@@ -3125,7 +3202,7 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
 		__FILE__,
 		__LINE__ );
        exit( EXIT_FAILURE );
-       
+
      }
 #else
      fprintf( stderr,
@@ -3150,22 +3227,69 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
      ml->symmetrize_matrix = ML_FALSE;
      ag->keep_P_tentative = ML_YES;
      ag->use_transpose = ML_TRUE;
-     
+
    }
-   
+
+  NumZDir     = Amat->NumZDir;
+  Zorientation= Amat->Zorientation;
+  if ( (ml->Pmat[level]).NumZDir      != -1) NumZDir     = (ml->Pmat[level]).NumZDir;
+  if ( (ml->Pmat[level]).Zorientation != -1) Zorientation= (ml->Pmat[level]).Zorientation;
+
+  if (NumZDir == -7 )  {
+     if (ml->comm->ML_mypid == 0  && ag->semicoarsen_levels != -1) {
+       printf("It appears that repartitioning has been performed and so further semicoarsening is aborted.\n");
+       printf("Any further line smoothing is going to numerically act as point smoothing .\n");
+     }
+     (ml->Pmat[level]).NumZDir = 1;
+     ml->Pmat[clevel].Zorientation = 1;
+     NumZDir = 1;
+     Zorientation= 1;
+  }
+  if ( (RelativeLevel < ag->semicoarsen_levels ) && (NumZDir != 1) ) {
+
+     Nnodes = Amat->invec_leng/Amat->num_PDEs;
+     LayerId    = (int *) ML_allocate(sizeof(int)*(Nnodes+1));
+     VertLineId = (int *) ML_allocate(sizeof(int)*(Nnodes+1));
+
+     NumZDir = ML_compute_line_info(LayerId, VertLineId,Amat->invec_leng,
+            Amat->num_PDEs,  ag->semicoarsen_coordinate,Zorientation, NumZDir, ml->Grid[level].Grid, ml->comm);
+  }
+  if ( (RelativeLevel < ag->semicoarsen_levels ) && (NumZDir > 1) ) {
+     widget.nz = NumZDir;
+     widget.CoarsenRate = ag->coarsen_rate;
+     widget.LayerId = LayerId;
+     widget.VertLineId = VertLineId;
+
+     old_field = ag->field_of_values;
+     ag->field_of_values = (void *) &widget;
+     flag=ML_AGG_SemiCoarseP(ml,level, clevel, data);
+     ag->field_of_values = old_field;
+   }
+   else {
+   /* this is a bit of a hack to get the line smoothing to default to */
+   /* point smoothing (block size of 1) when we are using a combination */
+   /* of semi-coarsening and regular coarsening. The user should really */
+   /* set the level dependent smoothers so that something sane is used  */
+   /* on levels associated with regular coarsening, but if they are     */
+   /* lazy we can just do line smoothing with tiny (length 1) lines.    */
+   if ( (0 < ag->semicoarsen_levels ) && (NumZDir > 0) ) {
+     ml->Pmat[clevel].NumZDir      = 1;
+     ml->Pmat[clevel].Zorientation = 1;
+   }
+
    /* Added on Jul-05 */
    switch (ag->minimizing_energy) {
    case -1:
    case 0:
-     flag=ML_AGG_Gen_Prolongator(ml,level,clevel,data);   
+     flag=ML_AGG_Gen_Prolongator(ml,level,clevel,data);
      break;
    case 1: /* Z_1 */
    case 2: /* Z_2 */
    case 3: /* Z_1 */
-     flag=ML_AGG_Gen_Prolongator_MinEnergy(ml,level,clevel,data);   
+     flag=ML_AGG_Gen_Prolongator_MinEnergy(ml,level,clevel,data);
      break;
-   case 4: 
-     flag = ML_AGG_Gen_Prolongator_MandelMinEnergy(ml,level,clevel,data);  
+   case 4:
+     flag = ML_AGG_Gen_Prolongator_MandelMinEnergy(ml,level,clevel,data);
      break;
    default:
      printf("Value of ag->minimizing_energy not correct (%d)\n"
@@ -3175,7 +3299,10 @@ int ML_MultiLevel_Gen_Prolongator(ML *ml,int level, int clevel, void *data)
             __LINE__);
      exit(EXIT_FAILURE);
    }
-   
+   }
+   if (VertLineId != NULL)  ML_free(VertLineId);
+   if (LayerId    != NULL)  ML_free(LayerId);
+
    return flag;
 }
 
@@ -3202,10 +3329,10 @@ int ML_MultiLevel_Gen_Restriction(ML *ml,int level, int next, void *data)
 	       "ERROR: (file %s, line %d)\n",
 	       __FILE__,
 	       __LINE__ );
-    
+
       exit( EXIT_FAILURE );
-    }  
-    
+    }
+
     /* ********************************************************************** */
     /* Previous P has been built based on A^T and not on A. Now, first we     */
     /* transpose P into R (formed with A^T, so that now R is based on A).     */
@@ -3230,11 +3357,11 @@ int ML_MultiLevel_Gen_Restriction(ML *ml,int level, int next, void *data)
 
     fov = (struct ML_Field_Of_Values *)(ag->field_of_values);
     eta = fov->eta;
-    
+
     dtemp = fov->P_coeff[0] + eta * (fov->P_coeff[1]) + pow(eta,2.) * (fov->P_coeff[2]);
     if( dtemp < 0.0 ) dtemp = 0.000001;
     dtemp2 = fov->real_max;
- 	      
+
     ag->smoothP_damping_factor = dtemp;
     Amat->lambda_max = dtemp2;
 
@@ -3246,14 +3373,14 @@ int ML_MultiLevel_Gen_Restriction(ML *ml,int level, int next, void *data)
 	     level,
 	     ag->smoothP_damping_factor,
 	     dtemp2 );
-    }    
-    
+    }
+
     /* use old-fashioned functions to create the actual prolongator based on A */
-    
+
     ML_AGG_Gen_Prolongator(ml,level,next,data);
 
   } else {
-    
+
     /* Added on Jul-05 */
     switch (ag->minimizing_energy) {
     case -1:
@@ -3267,17 +3394,17 @@ int ML_MultiLevel_Gen_Restriction(ML *ml,int level, int next, void *data)
       ML_Gen_Restrictor_TransP(ml, level, next, ag->P_tentative[next]);
       break;
     case 0:
-      ML_Gen_Restrictor_TransP(ml, level, next, NULL);   
+      ML_Gen_Restrictor_TransP(ml, level, next, NULL);
       /* To do NSR we need to turn on NSR in ml_agg_min_energy.cpp */
       /* and change the above line to                              */
-      /* ML_AGG_Gen_Restriction_MinEnergy(ml, level, next, data);  */  
+      /* ML_AGG_Gen_Restriction_MinEnergy(ml, level, next, data);  */
       break;
     case 1: /* Z_1 */
     case 2: /* Z_2 */
     case 3: /* Z_3 */
-      ML_AGG_Gen_Restriction_MinEnergy(ml, level, next, data);   
+      ML_AGG_Gen_Restriction_MinEnergy(ml, level, next, data);
       break;
-    case 4: 
+    case 4:
       ML_Gen_Restrictor_TransP(ml, level, next, NULL);
       break;
     default:
@@ -3294,7 +3421,7 @@ int ML_MultiLevel_Gen_Restriction(ML *ml,int level, int next, void *data)
 }
 
 /******************************************************************************
-Regenerate the multigrid hierarchy using smoothed aggregation reusing the 
+Regenerate the multigrid hierarchy using smoothed aggregation reusing the
 existing aggregates.
 ******************************************************************************/
 
@@ -3402,12 +3529,12 @@ void ML_AGG_Calculate_Smoothing_Factors(int numSweeps, double *factors)
 /* scaling is applied.                                                        */
 
 int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
-                 int BlkSize,   int ScalingType) 
+                 int BlkSize,   int ScalingType)
 /*
- * X           (On input ) Matrix to be scaled. 
- *             (On output) Scaled matrix. 
+ * X           (On input ) Matrix to be scaled.
+ *             (On output) Scaled matrix.
  *
- * mls_widget  This effectively holds the block diagonal scaling matrix. 
+ * mls_widget  This effectively holds the block diagonal scaling matrix.
  *             Do something like y = ML_Operator_ImplicitlyBlockDinvScale(Amat);
  *             to compute it (in y->data).
  */
@@ -3418,20 +3545,20 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
 
   int      info, one = 1, **IntPtr, NBlocks, Nghost = 0,  column, last;
   int      nz_ptr, first, *new_columns = NULL, NumNnz = 0, i, j;
-  int      *columns, *rowptr, **perms, block; 
-  double   *buffer, **DblPtr, *new_values = NULL, *values = NULL, **blockdata; 
+  int      *columns, *rowptr, **perms, block;
+  double   *buffer, **DblPtr, *new_values = NULL, *values = NULL, **blockdata;
   char       N[2];
-  double   *WhichDOF = NULL; 
+  double   *WhichDOF = NULL;
   int      *NewLocalIds =NULL, max_per_proc, CurBlock, Nneighbors, *neigh_list = NULL;
   int      Nrcv, *rcv_list, prev, *GlobalBlockIds = NULL;
 
   blockdata  = mls_widget->block_scaling->blockfacts;
   perms      = mls_widget->block_scaling->perms;
 
-  if (X->getrow->pre_comm != NULL) 
+  if (X->getrow->pre_comm != NULL)
      Nghost = ML_CommInfoOP_Compute_TotalRcvLength(X->getrow->pre_comm);
 
-  if ( (ScalingType == ROW_SCALE_WITH_D) || (ScalingType == COL_SCALE_WITH_DT)) 
+  if ( (ScalingType == ROW_SCALE_WITH_D) || (ScalingType == COL_SCALE_WITH_DT))
      strcpy(N,"T");
   else strcpy(N,"N");
 
@@ -3448,8 +3575,8 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
 
   /* sort the blocks */
   for (i = 0; i < X_or_XT->outvec_leng; i++) {
-    ML_az_sort( &(columns[rowptr[i]]), rowptr[i+1]-rowptr[i], NULL, 
-              &(values[rowptr[i]])); 
+    ML_az_sort( &(columns[rowptr[i]]), rowptr[i+1]-rowptr[i], NULL,
+              &(values[rowptr[i]]));
   }
 
   /* See if the matrix should be padded with zeros so that the sparsity*/
@@ -3473,13 +3600,13 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
   if (((ScalingType == COL_SCALE_WITH_D)||(ScalingType == COL_SCALE_WITH_DT))
        && (X->comm->ML_nprocs > 1)) {
 
-     ML_create_unique_BlockCol_id(X->invec_leng, &GlobalBlockIds, 
+     ML_create_unique_BlockCol_id(X->invec_leng, &GlobalBlockIds,
                 BlkSize, X->getrow->pre_comm, &max_per_proc, X->comm);
 
      WhichDOF = (double *) ML_allocate((X->invec_leng+Nghost+1)*sizeof(double));
 
      for (i = 0; i < X->invec_leng; i++) WhichDOF[i] = (double) (i%BlkSize);
-       
+
      ML_exchange_bdry(WhichDOF, X->getrow->pre_comm, X->invec_leng,
                         X->comm, ML_OVERWRITE, NULL);
 
@@ -3494,7 +3621,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
          rcv_list =ML_CommInfoOP_Get_rcvlist(X->getrow->pre_comm,neigh_list[i]);
          prev = -1;
          for (j = 0; j < Nrcv; j++) {
-            if ( GlobalBlockIds[rcv_list[j]] > prev ) 
+            if ( GlobalBlockIds[rcv_list[j]] > prev )
                CurBlock++;    /* new block */
             else if ( GlobalBlockIds[rcv_list[j]] < prev ) {
                printf("Ugh: I think this means that the send list is out of\n");
@@ -3520,7 +3647,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
      if (WhichDOF       != NULL) ML_free(WhichDOF);
      if (GlobalBlockIds != NULL) ML_free(GlobalBlockIds);
   }
-                
+
 
   /* Count the number of nonzeros in the new local matrix */
 
@@ -3571,7 +3698,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
     csr_data->columns = new_columns;
     columns = csr_data->columns;
     values  = csr_data->values;
-  } 
+  }
 
   /* Fix the communication object as well so it corresponds to the padded *
    * matrix. This will also be used if D needs to be communicated.        */
@@ -3579,10 +3706,10 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
   if (((ScalingType == COL_SCALE_WITH_D)||(ScalingType == COL_SCALE_WITH_DT))
        && (X_or_XT->comm->ML_nprocs > 1)) {
 
-       ML_CommInfoOP_PopulateBlks(X->getrow->pre_comm, &Blkd_comm, 
+       ML_CommInfoOP_PopulateBlks(X->getrow->pre_comm, &Blkd_comm,
                                   X->invec_leng, BlkSize,X->comm);
 
-       if (X->getrow->pre_comm != NULL) 
+       if (X->getrow->pre_comm != NULL)
             ML_CommInfoOP_Destroy( &(X->getrow->pre_comm) );
 
        X->getrow->pre_comm = Blkd_comm;
@@ -3596,7 +3723,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
      /* Since we scale the columns, we must communicate the block diagonals. */
 
      Nghost = 0;
-     if (X->getrow->pre_comm != NULL) 
+     if (X->getrow->pre_comm != NULL)
         Nghost = ML_CommInfoOP_Compute_TotalRcvLength(X->getrow->pre_comm);
 
      NBlocks = (X->invec_leng + Nghost)/BlkSize;
@@ -3611,14 +3738,14 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
      /* pointers to a new pointer-pointer array.                        */
 
      DblPtr = (double **)  ML_allocate(sizeof(double *)*(NBlocks+1));
-     for (i = 0; i < mls_widget->block_scaling->Nblocks; i++) 
+     for (i = 0; i < mls_widget->block_scaling->Nblocks; i++)
         DblPtr[i] = blockdata[i];
      if (blockdata != NULL) ML_free(blockdata);
      blockdata = DblPtr;
      mls_widget->block_scaling->blockfacts = blockdata;
 
      IntPtr = (int **)  ML_allocate(sizeof(int *)*(NBlocks+1));
-     for (i = 0; i < mls_widget->block_scaling->Nblocks; i++) 
+     for (i = 0; i < mls_widget->block_scaling->Nblocks; i++)
         IntPtr[i] = perms[i];
      if (perms != NULL) ML_free(perms);
      perms = IntPtr;
@@ -3643,7 +3770,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
     /* to communicate the column. Then, pull the ghost information out */
     /* and put it back into blockdata.                                 */
 
-     
+
     buffer = (double *) ML_allocate(sizeof(double)*(X->invec_leng+Nghost+1));
     if (buffer == NULL) {printf("Not enough space for buffer\n"); exit(1); }
 
@@ -3675,17 +3802,17 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
     ML_free(buffer);
 
   }
-  
+
 
   if ((ScalingType == ROW_SCALE_WITH_D) || (ScalingType == COL_SCALE_WITH_DT)){
-    if (mls_widget->block_scaling->optimized == 1) { 
+    if (mls_widget->block_scaling->optimized == 1) {
        /* optimized inv(A^T): ML_permute_for_dgetrs_special()     */
       /* must be called after the factorization is computed.      */
 
       for (i = 0; i < X_or_XT->getrow->Nrows; i++) {
         for (j = csr_data->rowptr[i];j < csr_data->rowptr[i+1]; j += BlkSize) {
            block  = (csr_data->columns[j])/BlkSize;
-           ML_dgetrs_trans_special(BlkSize, blockdata[block], perms[block], 
+           ML_dgetrs_trans_special(BlkSize, blockdata[block], perms[block],
                                    &(values[j]));
         }
       }
@@ -3697,14 +3824,14 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
            DGETRS_F77(N,&BlkSize,&one,blockdata[block],&BlkSize, perms[block],
                       &(values[j]), &BlkSize, &info);
            if ( info != 0 ) {
-              printf("dgetrs returns with %d at block %d\n",info,i); 
+              printf("dgetrs returns with %d at block %d\n",info,i);
               exit(1);
            }
         }
       }
     }
   }
-  else { 
+  else {
     if (mls_widget->block_scaling->optimized == 1) {
       /* optimized inv(A): ML_permute_for_dgetrs_special()      */
       /* must be called after the factorization is computed.    */
@@ -3712,7 +3839,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
       for (i = 0; i < X_or_XT->getrow->Nrows; i++) {
         for (j = csr_data->rowptr[i];j < csr_data->rowptr[i+1]; j += BlkSize) {
             block  = (csr_data->columns[j])/BlkSize;
-            ML_dgetrs_special(BlkSize, blockdata[block], perms[block], 
+            ML_dgetrs_special(BlkSize, blockdata[block], perms[block],
                             &(values[j]));
         }
       }
@@ -3722,9 +3849,9 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
         for (j = csr_data->rowptr[i];j < csr_data->rowptr[i+1]; j += BlkSize) {
             block  = (csr_data->columns[j])/BlkSize;
             DGETRS_F77(N,&BlkSize,&one,blockdata[block],&BlkSize,
-                       perms[block], &(values[j]), &BlkSize, &info); 
+                       perms[block], &(values[j]), &BlkSize, &info);
             if ( info != 0 ) {
-              printf("dgetrs returns with %d at block %d\n",info,i); 
+              printf("dgetrs returns with %d at block %d\n",info,i);
               exit(1);
             }
         }
@@ -3741,7 +3868,7 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
   if ((ScalingType == ROW_SCALE_WITH_D)||(ScalingType == ROW_SCALE_WITH_DT)) {
     TmpMat = ML_Operator_Create(X->comm);
     i = X_or_XT->outvec_leng;  /* need to make ML_Operator_Transpose work */
-    X_or_XT->outvec_leng = X_or_XT->getrow->Nrows; 
+    X_or_XT->outvec_leng = X_or_XT->getrow->Nrows;
     ML_Operator_Transpose(X_or_XT, TmpMat); /* Do not change to by_row! */
     X_or_XT->outvec_leng = i;
     ML_Operator_Destroy(&X_or_XT);
@@ -3755,4 +3882,795 @@ int ML_AGG_DinvP(ML_Operator *X, struct MLSthing *mls_widget,
   }
   return 0;
 }
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+int ML_AGG_SemiCoarseP(ML *ml,int level, int clevel, void *data)
+{
+  /* See comments for MakeSemiCoarsenP */
 
+  int                 Ncoarse;
+  struct SemiCoarsen_Struct  *widget;
+  struct  ML_CSR_MSRdata *csr_data;
+  ML_Operator *Pmatrix;
+  double *Pvals, *cnull = NULL;
+  int    *Pptr, *Pcols, Nglobal, Ncglobal;
+
+  ML_Aggregate * ag = (ML_Aggregate *) data;
+
+  ML_Operator* Amat = &(ml->Amat[level]);
+#ifdef ML_TIMING
+  double t0;
+  t0 =  GetClock();
+#endif
+
+  Pmatrix = &(ml->Pmat[clevel]);
+  Amat->num_PDEs    = ag->num_PDE_eqns;
+  widget            = (struct SemiCoarsen_Struct *) ag->field_of_values;
+
+  /* int NVertLines = Amat->invec_leng/(ag->num_PDE_eqns*widget->nz); */
+  Ncoarse = MakeSemiCoarsenP(Amat->invec_leng/ag->num_PDE_eqns, widget->nz,
+                   widget->CoarsenRate, widget->LayerId, widget->VertLineId,
+                   ag->num_PDE_eqns, ag->nullspace_dim, ag->nullspace_vect, Amat, &Pptr, &Pcols, &Pvals, &cnull);
+   ML_Aggregate_Set_NullSpace(ag, ag->num_PDE_eqns, ag->nullspace_dim,
+                              cnull, Ncoarse);
+   if (cnull != NULL) { free(cnull); cnull = NULL; }
+
+  csr_data = (struct ML_CSR_MSRdata *) ML_allocate(sizeof(struct ML_CSR_MSRdata));
+  csr_data->rowptr  = Pptr;
+  csr_data->columns = Pcols;
+  csr_data->values  = Pvals;
+  ML_Operator_Set_ApplyFuncData(Pmatrix,Ncoarse,Amat->invec_leng,csr_data,Amat->invec_leng,NULL,0);
+  Pmatrix->data_destroy = ML_CSR_MSRdata_Destroy;
+  ML_Operator_Set_Getrow(Pmatrix, Amat->invec_leng, CSR_getrow);
+  ML_Operator_Set_ApplyFunc(Pmatrix, CSR_matvec);
+
+  Pmatrix->Zorientation= 1;                                  /* for the next level coarsening      */
+  Pmatrix ->num_PDEs    = ag->num_PDE_eqns;
+
+  ML_Operator_Set_1Levels(&(ml->Pmat[clevel]), &(ml->SingleLevel[clevel]),
+                          &(ml->SingleLevel[level]));
+
+  Nglobal = Amat->invec_leng;
+  Ncglobal = Ncoarse;
+  Nglobal = ML_Comm_GsumInt( ml->comm, Nglobal);
+  Ncglobal= ML_Comm_GsumInt( ml->comm, Ncglobal);
+
+  /* doing it this way to avoid overflow (and to handle empty procs) */
+  Pmatrix->NumZDir = (int) ( (((double)Ncglobal)/((double)Nglobal))*((double) widget->nz) + .001);
+  if (ml->comm->ML_mypid == 0 && ag->print_flag < ML_Get_PrintLevel()) {
+       printf("SemiCoarsening: Coarsening from %d to %d\n",Nglobal,Ncglobal);
+  }
+  ag->curr_threshold = ag->threshold;
+
+
+#ifdef ML_TIMING
+  ml->Pmat[clevel].build_time   =  GetClock() - t0;
+  ml->timing->total_build_time += ml->Pmat[clevel].build_time;
+#endif
+  return(0);
+
+}
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+
+int FindCpts(int PtsPerLine, int CoarsenRate, int Thin, int **LayerCpts)
+{
+/*
+ * Given the number of points in the z direction (PtsPerLine) and a
+ * coarsening rate (CoarsenRate), determine which z-points will serve
+ * as Cpts and return the total number of Cpts.
+ *
+ * Input
+ *    PtsPerLine:   Number of fine level points in the z direction
+ *
+ *    CoarsenRate:  Roughly, number of Cpts  = (PtsPerLine+1)/CoarsenRate - 1
+ *
+ *    Thin:         Must be either 0 or 1. Thin decides what to do when
+ *                  (PtsPerLine+1)/CoarsenRate is not an integer.
+ *
+ *                    Thin == 0  ==>   ceil() the above fraction
+ *                    Thin == 1  ==>   floor() the above fraction
+ *
+ * Output
+ *    LayerCpts     Array where LayerCpts[i] indicates that the
+ *                  LayerCpts[i]th fine level layer is a Cpt Layer.
+ *                  Note: fine level layers are assumed to be numbered starting
+ *                        a one.
+ */
+   double temp, RestStride, di;
+   int    NCpts, i;
+   int    NCLayers = -1;
+   int    FirstStride;
+
+   temp =  ((double) (PtsPerLine+1))/((double) (CoarsenRate)) - 1.0;
+   if  (Thin == 1) NCpts = (int) ceil(temp);
+   else            NCpts = (int) floor(temp);
+
+   if (PtsPerLine == 1) { printf("cannot coarsen further\n"); return -1; }
+   if (NCpts < 1) NCpts = 1;
+
+
+
+   FirstStride= (int) ceil( ((double) PtsPerLine+1)/( (double) (NCpts+1)));
+   RestStride = ((double) (PtsPerLine-FirstStride+1))/((double) NCpts);
+
+   NCLayers   = (int) floor((((double) (PtsPerLine-FirstStride+1))/RestStride)+.00001);
+
+   if ( NCLayers != NCpts) { printf("sizes do not match %d %d\n",NCpts,NCLayers); exit(1); }
+   *LayerCpts = (int *) malloc((NCLayers+1)*sizeof(int));
+
+   di  = (double) FirstStride;
+   for (i = 1; i <= NCpts; i++) {
+      (*LayerCpts)[i] = (int) floor(di);
+      di += RestStride;
+   }
+
+   return(NCLayers);
+}
+
+
+#define MaxHorNeighborNodes 75
+#define HOOKED_TO_ML
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+
+
+int MakeSemiCoarsenP(int Ntotal, int nz, int CoarsenRate, int LayerId[],
+                     int VertLineId[], int DofsPerNode,
+                     int nullspace_dim, double *fnull, 
+#ifdef HOOKED_TO_ML
+                     ML_Operator *Amat,
+#else
+                     int *OrigARowPtr, int *OrigAcols, double *OrigAvals,
+#endif
+                     int **ParamPptr, int **ParamPcols, double **ParamPvals,
+                     double **Paramcnull)
+{
+/*
+ * Given a CSR matrix (OrigARowPtr, OrigAcols, OrigAvals), information
+ * describing the z-layer and vertical line (LayerId and VertLineId)
+ * of each matrix block row, a coarsening rate, and dofs/node information,
+ * construct a prolongator that coarsening to semicoarsening in the z-direction
+ * using something like an operator-dependent grid transfer. In particular,
+ * matrix stencils are collapsed to vertical lines. Thus, each vertical line
+ * gives rise to a block tridiagonal matrix. BlkRows corresponding to
+ * Cpts are replaced by identity matrices. This tridiagonal is solved
+ * to determine each interpolation basis functions. Each Blk Rhs corresponds
+ * to all zeros except at the corresponding C-pt which has an identity
+ *
+ * On termination, return the number of local prolongator columns owned by
+ * this processor.
+ *
+ * Note: This code was adapted from a matlab code where offsets/arrays
+ *       start from 1. In most parts of the code, this 1 offset is kept
+ *       (in some cases wasting the first element of the array). The
+ *       input and output matrices of this function has been changed to
+ *       have offsets/rows/columns which start from 0. LayerId[] and
+ *       VertLineId[] currently start from 1.
+ *
+ * Input
+ * =====
+ *    Ntotal       Number of fine level Blk Rows owned by this processor
+ *
+ *    nz           Number of vertical layers. Note: partitioning must be done
+ *                 so that each processor owns an entire vertical line. This
+ *                 means that nz is the global number of layers, which should
+ *                 be equal to the local number of layers.
+ *    CoarsenRate  Rate of z semicoarsening. Smoothed aggregation-like coarsening
+ *                 would correspond to CoarsenRate = 3.
+ *    LayerId      Array from 0 to Ntotal-1 + Ghost. LayerId(BlkRow) gives the
+ *                 layer number associated with the dofs within BlkRow.
+ *    VertLineId   Array from 1 to Ntotal, VertLineId(BlkRow) gives a unique
+ *                 vertical line id (from 0 to Ntotal/nz-1) of BlkRow. All
+ *                 BlkRows associated with nodes along the same vertical line
+ *                 in the mesh should have the same LineId.
+ *    DofsPerNode  Number of degrees-of-freedom per mesh node.
+ *
+ *    OrigARowPtr, CSR arrays corresponding to the fine level matrix.
+ *    OrigAcols,
+ *    OrigAvals
+ *
+ * Output
+ * =====
+ *    ParamPptr,   CSR arrays corresponding to the final prolongation matrix.
+ *    ParamPcols,
+ *    ParamsPvals
+ *    ParamsCnull  coarse null space array
+ */
+ int    NLayers, NVertLines, MaxNnz, NCLayers, MyLine, MyLayer;
+ int    *InvLineLayer=NULL, *CptLayers=NULL, StartLayer, NStencilNodes;
+ int    BlkRow, dof_i, dof_j, node_k, *Sub2FullMap=NULL, *Acols=NULL, RowLeng;
+ int    i, j, iii, col, count, index, loc, PtRow, PtCol;
+ double *Avals=NULL, *BandSol=NULL, *BandMat=NULL, TheSum;
+ int    *IPIV=NULL, KL, KU, KLU, N, NRHS, LDAB,INFO;
+ int    *Pcols, *Pptr;
+ double *Pvals, *dtemp = NULL, *cnull = NULL;
+ int    MaxStencilSize, MaxNnzPerRow;
+ int    *LayDiff=NULL;
+ int    CurRow, LastGuy = -1, NewPtr;
+ int    allocated = 0, Ndofs;
+ int    Nghost;
+ int    *Layerdofs = NULL, *Col2Dof = NULL;
+ int    FineStride, CoarseStride, k;
+
+
+  MaxNnzPerRow = MaxHorNeighborNodes*DofsPerNode*3;
+  LayDiff = (int *) malloc( (1+MaxNnzPerRow)*sizeof(int));
+
+  *ParamPptr = NULL;
+  *ParamPcols= NULL;
+  *ParamPvals= NULL;
+  *Paramcnull= NULL;
+  
+
+   Nghost = 0;
+#ifdef HOOKED_TO_ML
+   Nghost = ML_CommInfoOP_Compute_TotalRcvLength(Amat->getrow->pre_comm);
+#endif
+   dtemp    = (double *) malloc(sizeof(double)*(Ntotal*DofsPerNode+Nghost+1));
+   Layerdofs= (int *) malloc(sizeof(int)*(Ntotal*DofsPerNode+Nghost+1));
+   Col2Dof  = (int *) malloc(sizeof(int)*(Ntotal*DofsPerNode+Nghost+1));
+   for (i = 0; i < Ntotal*DofsPerNode; i++)
+      dtemp[i]= (double)LayerId[i/DofsPerNode];
+#ifdef HOOKED_TO_ML
+   ML_exchange_bdry(dtemp,Amat->getrow->pre_comm,Amat->outvec_leng,
+                    Amat->comm, ML_OVERWRITE,NULL);
+#endif
+   for (i = 0; i < Ntotal*DofsPerNode+Nghost; i++) Layerdofs[i]=dtemp[i];
+   for (i = 0; i < Ntotal*DofsPerNode;        i++) dtemp[i]= i%DofsPerNode;
+#ifdef HOOKED_TO_ML
+   ML_exchange_bdry(dtemp,Amat->getrow->pre_comm,Amat->outvec_leng,
+                    Amat->comm, ML_OVERWRITE,NULL);
+#endif
+   for (i = 0; i < Ntotal*DofsPerNode+Nghost; i++) Col2Dof[i]=dtemp[i];
+   if (dtemp != NULL) free(dtemp);
+
+   if (Ntotal != 0) {
+     NLayers   = LayerId[0];
+     NVertLines= VertLineId[0];
+   }
+   else { NLayers = -1; NVertLines = -1; }
+
+  for (i = 1; i < Ntotal; i++) {
+      if ( VertLineId[i] > NVertLines ) NVertLines = VertLineId[i];
+      if ( LayerId[i]    >   NLayers  ) NLayers    = LayerId[i];
+  }
+  NLayers++;
+  NVertLines++;
+
+ /*
+  * Make an inverse map so that we can quickly find the dof
+  * associated with a particular vertical line and layer.
+  */
+
+  InvLineLayer = (int *) malloc( (1+NVertLines*NLayers)*sizeof(int));
+  for (i=0; i < Ntotal; i++) {
+     InvLineLayer[ VertLineId[i]+1+LayerId[i]*NVertLines ] = i;
+  }
+
+ /*
+  * Determine coarse layers where injection will be applied.
+  */
+
+  NCLayers = FindCpts(nz,CoarsenRate,0, &CptLayers);
+
+  /* initialize coarse null space */
+
+  cnull = (double *) malloc(sizeof(double)*nullspace_dim*
+                                        (NCLayers*DofsPerNode*NVertLines+1));
+  for (i = 0; i < NCLayers*DofsPerNode*NVertLines*nullspace_dim; i++) 
+     cnull[i] = 0.;
+
+ /*
+  * Compute the largest possible interpolation stencil width based
+  * on the location of the Clayers. This stencil width is actually
+  * nodal (i.e. assuming 1 dof/node). To get the true max stencil width
+  * one needs to multiply this by DofsPerNode.
+  */
+
+  if  (NCLayers < 2) MaxStencilSize = nz;
+  else MaxStencilSize = CptLayers[2];
+
+  for (i = 3; i <= NCLayers; i++) {
+     if (MaxStencilSize < CptLayers[i]- CptLayers[i-2])
+         MaxStencilSize = CptLayers[i]- CptLayers[i-2];
+  }
+  if (NCLayers > 1) {
+     if (MaxStencilSize < nz - CptLayers[NCLayers-1]+1)
+       MaxStencilSize =  nz - CptLayers[NCLayers-1]+1;
+  }
+
+ /*
+  * Allocate storage associated with solving a banded sub-matrix needed to
+  * determine the interpolation stencil. Note: we compute interpolation stencils
+  * for all dofs within a node at the same time, and so the banded solution
+  * must be large enough to hold all DofsPerNode simultaneously.
+  */
+
+  Sub2FullMap= (int    *) malloc(sizeof(int   )*(MaxStencilSize+1)*DofsPerNode);
+  BandSol    = (double *) malloc(sizeof(double)*(MaxStencilSize+1)*DofsPerNode*
+                                                 DofsPerNode);
+ /*
+  * Lapack variables. See comments for dgbsv().
+  */
+  KL     = 2*DofsPerNode-1;
+  KU     = 2*DofsPerNode-1;
+  KLU    = KL+KU;
+  LDAB   = 2*KL+KU+1;
+  NRHS = DofsPerNode;
+  BandMat=(double *) malloc(sizeof(double)*(LDAB*MaxStencilSize*DofsPerNode+1));
+  IPIV   =(int    *) malloc(sizeof(int   )*(MaxStencilSize+1)*DofsPerNode);
+
+ /*
+  * Allocate storage for the final interpolation matrix. Note: each prolongator
+  * row might have entries corresponding to at most two nodes.
+  * Note: the total fine level dofs equals DofsPerNode*Ntotal and the max
+  *       nnz per prolongator row is DofsPerNode*2.
+  */
+
+  Ndofs  = DofsPerNode*Ntotal;
+  MaxNnz = 2*DofsPerNode*Ndofs;
+  Pvals  = (double *) malloc( (1+MaxNnz)*sizeof(double));
+  Pptr   = (int    *) malloc( DofsPerNode*(2+Ntotal)*sizeof(int   ));
+  Pptr[0] = 0; Pptr[1] = 0;
+  Pcols  = (int    *) malloc( (1+MaxNnz)*sizeof(int   ));
+
+  if (Pcols == NULL) {
+     printf("MakeSemiCoarsenP: Not enough space \n");
+     if (allocated       != 0) free(Avals);
+     if (allocated       != 0) free(Acols);
+     if (InvLineLayer != NULL) free(InvLineLayer);
+     if (CptLayers    != NULL) free(CptLayers);
+     if (Sub2FullMap  != NULL) free(Sub2FullMap);
+     if (BandSol      != NULL) free(BandSol);
+     if (BandMat      != NULL) free(BandMat);
+     if (IPIV         != NULL) free(IPIV);
+     if (LayDiff      != NULL) free(LayDiff);
+     if (Layerdofs    != NULL) free(Layerdofs);
+     if (Col2Dof      != NULL) free(Col2Dof);
+     if (Pvals        != NULL) free(Pvals);
+     if (Pptr         != NULL) free(Pptr);
+     if (cnull        != NULL) free(cnull);
+     return -1;
+  }
+
+ /*
+  * Setup P's rowptr as if each row had its maximum of 2*DofsPerNode nonzeros.
+  * This will be useful while filling up P, and then later we will squeeze out
+  * the unused nonzeros locations.
+  */
+
+  for (i = 1; i <= MaxNnz; i++) Pcols[i] = -1;  /* mark all entries as unused */
+  count = 1;
+  for (i = 1; i <= DofsPerNode*Ntotal+1; i++) {
+     Pptr[i]  = count;
+     count   += (2*DofsPerNode);
+  }
+
+ /*
+  * Build P column by column. The 1st block column corresponds to the 1st coarse
+  * layer and the first line. The 2nd block column corresponds to the 2nd coarse
+  * layer and the first line. The NCLayers+1 block column corresponds to the
+  * 1st coarse layer and the 2nd line, etc.
+  */
+
+  col = 0;
+  for (MyLine=1; MyLine <= NVertLines; MyLine += 1) {
+    for (iii=1; iii <= NCLayers;  iii+= 1) {
+      col = col+1;
+      MyLayer = CptLayers[iii];
+
+      /*
+       * StartLayer gives the layer number of the lowest layer that
+       * is nonzero in the interpolation stencil that is currently
+       * being computed. Normally, if we are not near a boundary this
+       * is simply CptsLayers[iii-1]+1.
+       *
+       * NStencilNodes indicates the number of nonzero nodes in the
+       * interpolation stencil that is currently being computed. Normally,
+       * if we are not near a boundary this is CptLayers[iii+1]-StartLayer.
+       */
+
+      if (iii !=    1    ) StartLayer = CptLayers[iii-1]+1;
+      else                 StartLayer = 1;
+
+      if (iii != NCLayers) NStencilNodes= CptLayers[iii+1]-StartLayer;
+      else                 NStencilNodes= NLayers - StartLayer + 1;
+
+
+      N = NStencilNodes*DofsPerNode;
+
+      /*
+       *  dgbsv() does not require that the first KL rows be initialized,
+       *  so we could avoid zeroing out some entries?
+       */
+
+       for (i = 0; i < NStencilNodes*DofsPerNode*DofsPerNode; i++)
+          BandSol[ i] = 0.0;
+       for (i = 0; i < LDAB*N; i++) BandMat[ i] = 0.0;
+
+      /*
+       *  Fill BandMat and BandSol (which is initially the rhs) for each
+       *  node in the interpolation stencil that is being computed.
+       */
+
+      for (node_k=1; node_k <= NStencilNodes ; node_k++) {
+
+         /*  Map a Line and Layer number to a BlkRow in the fine level  matrix
+          *  and record the mapping from the sub-system to the BlkRow of the
+          *  fine level matrix.
+          */
+         BlkRow  = InvLineLayer[MyLine+(StartLayer+node_k-2)*NVertLines]+1;
+         Sub2FullMap[node_k] = BlkRow;
+
+         /* Two cases:
+          *    1) the current layer is not a Cpoint layer. In this case we
+          *       want to basically stick the matrix couplings to other
+          *       nonzero stencil rows into the band matrix. One way to do
+          *       this is to include couplings associated with only MyLine
+          *       and ignore all the other couplings. However, what we do
+          *       instead is to sum all the coupling at each layer participating
+          *       in this interpolation stencil and stick this sum into BandMat.
+          *    2) the current layer is a Cpoint layer and so we
+          *       stick an identity block in BandMat and rhs.
+          */
+         if (StartLayer+node_k-1 != MyLayer) {
+            for (dof_i=0; dof_i < DofsPerNode; dof_i++) {
+
+#ifdef HOOKED_TO_ML
+                j = (BlkRow-1)*DofsPerNode+dof_i;
+                ML_get_matrix_row(Amat,1,&j,&allocated,&Acols,&Avals,&RowLeng,0);
+#else
+                Acols = &(OrigAcols[OrigARowPtr[(BlkRow-1)*DofsPerNode+dof_i]]);
+                Avals = &(OrigAvals[OrigARowPtr[(BlkRow-1)*DofsPerNode+dof_i]]);
+                RowLeng= OrigARowPtr[(BlkRow-1)*DofsPerNode+dof_i+1] -
+                                    OrigARowPtr[(BlkRow-1)*DofsPerNode+dof_i];
+#endif
+
+                if (RowLeng >= MaxNnzPerRow) {
+                   printf("MakeSemiCoarsenP: recompile with larger Max(HorNeighborNodes)\n");
+                    if (allocated       != 0) free(Avals);
+                    if (allocated       != 0) free(Acols);
+                    if (InvLineLayer != NULL) free(InvLineLayer);
+                    if (CptLayers    != NULL) free(CptLayers);
+                    if (Sub2FullMap  != NULL) free(Sub2FullMap);
+                    if (BandSol      != NULL) free(BandSol);
+                    if (BandMat      != NULL) free(BandMat);
+                    if (IPIV         != NULL) free(IPIV);
+                    if (LayDiff      != NULL) free(LayDiff);
+                    if (Layerdofs    != NULL) free(Layerdofs);
+                    if (Col2Dof      != NULL) free(Col2Dof);
+                    if (Pvals        != NULL) free(Pvals);
+                    if (Pptr         != NULL) free(Pptr);
+                    if (Pcols        != NULL) free(Pcols);
+                    if (cnull        != NULL) free(cnull);
+                    return -1;
+                }
+
+                for (i = 0; i < RowLeng; i++) {
+                   LayDiff[i]  = Layerdofs[Acols[i]]-StartLayer-node_k+2;
+
+                   /* This is the main spot where there might be off- */
+                   /* processor communication. That is, when we       */
+                   /* average the stencil in the horizontal direction,*/
+                   /* we need to know the layer id of some            */
+                   /* neighbors that might reside off-processor.      */
+                }
+                PtRow = (node_k-1)*DofsPerNode+dof_i+1;
+                for (dof_j=0; dof_j < DofsPerNode; dof_j++) {
+                   PtCol = (node_k-1)*DofsPerNode+dof_j + 1;
+                   /* Stick in entry corresponding to Mat(PtRow,PtCol) */
+                   /* see dgbsv() comments for matrix format.          */
+                   TheSum = 0.0;
+                   for (i = 0; i < RowLeng; i++) {
+                     if ((LayDiff[i] == 0)  && (Col2Dof[Acols[i]] == dof_j))
+                          TheSum += Avals[i];
+                   }
+                   index = LDAB*(PtCol-1)+KLU+PtRow-PtCol;
+                   BandMat[index] = TheSum;
+
+                   if (node_k != NStencilNodes) {
+                      /* Stick Mat(PtRow,PtCol+DofsPerNode) entry  */
+                      /* see dgbsv() comments for matrix format.  */
+                      TheSum = 0.0;
+                      for (i = 0; i < RowLeng; i++) {
+                         if ((LayDiff[i] == 1) &&(Col2Dof[Acols[i]]== dof_j))
+                             TheSum += Avals[i];
+                      }
+                      j = PtCol+DofsPerNode;
+                      index=LDAB*(j-1)+KLU+PtRow-j;
+                      BandMat[index] = TheSum;
+
+                   }
+                   if (node_k != 1) {
+                      /* Stick Mat(PtRow,PtCol-DofsPerNode) entry  */
+                      /* see dgbsv() comments for matrix format.  */
+                      TheSum = 0.0;
+                      for (i = 0; i < RowLeng; i++) {
+                         if ((LayDiff[i]== -1) &&(Col2Dof[Acols[i]]== dof_j))
+                             TheSum += Avals[i];
+                      }
+                      j = PtCol-DofsPerNode;
+                      index=LDAB*(j-1)+KLU+PtRow-j;
+                      BandMat[index] = TheSum;
+                   }
+                }
+            }
+         }
+         else {
+             /* inject the null space */
+             FineStride  = Ntotal*DofsPerNode;
+             CoarseStride= NVertLines*NCLayers*DofsPerNode;
+             if (fnull == NULL) {
+                for (dof_i = 0; dof_i < DofsPerNode; dof_i++) {
+                   cnull[dof_i*CoarseStride+(col-1)*DofsPerNode+dof_i]=1.0;
+                }
+             }
+             else {
+               for (k = 0; k < nullspace_dim; k++) {
+                 for (dof_i = 0; dof_i < DofsPerNode; dof_i++) {
+                   cnull[k*CoarseStride + (   col-1)*DofsPerNode+dof_i] = 
+                      fnull[k * FineStride + (BlkRow-1)*DofsPerNode+dof_i];
+                 }
+               }
+             }
+
+             for (dof_i = 0; dof_i < DofsPerNode; dof_i++) {
+                /* Stick Mat(PtRow,PtRow) and Rhs(PtRow,dof_i+1) */
+                /* see dgbsv() comments for matrix format.     */
+                PtRow = (node_k-1)*DofsPerNode+dof_i+1;
+                index = LDAB*(PtRow-1)+KLU;
+                BandMat[index] = 1.0;
+                BandSol[(dof_i)*DofsPerNode*NStencilNodes+PtRow-1] = 1.;
+             }
+         }
+      }
+
+      /* Solve banded system and then stick result in Pmatrix arrays */
+
+      DGBSV_F77( &N, &KL, &KU, &NRHS, BandMat, &LDAB, IPIV, BandSol, &N, &INFO );
+
+      for (dof_j=0; dof_j < DofsPerNode; dof_j++) {
+         for (dof_i=0; dof_i < DofsPerNode; dof_i++) {
+            for (i =1; i <= NStencilNodes ; i++) {
+               index = (Sub2FullMap[i]-1)*DofsPerNode+dof_i+1;
+               loc = Pptr[index];
+               Pcols[loc] = (col-1)*DofsPerNode+dof_j+1;
+               Pvals[loc] = BandSol[dof_j*DofsPerNode*NStencilNodes +
+                                           (i-1)*DofsPerNode + dof_i];
+               Pptr[index]= Pptr[index] + 1;
+            }
+         }
+      }
+    }
+  }
+
+  if (allocated       != 0) free(Avals);
+  if (allocated       != 0) free(Acols);
+  if (InvLineLayer != NULL) free(InvLineLayer);
+  if (CptLayers    != NULL) free(CptLayers);
+  if (Sub2FullMap  != NULL) free(Sub2FullMap);
+  if (BandSol      != NULL) free(BandSol);
+  if (BandMat      != NULL) free(BandMat);
+  if (IPIV         != NULL) free(IPIV);
+  if (LayDiff      != NULL) free(LayDiff);
+  if (Layerdofs    != NULL) free(Layerdofs);
+  if (Col2Dof      != NULL) free(Col2Dof);
+
+ /*
+  * Squeeze the -1's out of the columns. At the same time convert Pcols
+  * so that now the first column is numbered '0' as opposed to '1'.
+  * Also, the arrays Pcols and Pvals should now use the zeroth element
+  * as opposed to just starting with the first element. Pptr will be
+  * fixed in the for loop below so that Pptr[0] = 0, etc.
+  */
+  CurRow = 1;
+  NewPtr = 1;
+  for (i=1; i <= Pptr[Ntotal*DofsPerNode]-1; i++) {
+     if (i == Pptr[CurRow]) {
+        Pptr[CurRow] = LastGuy;
+        CurRow++;
+        while (i > Pptr[CurRow]) {
+           Pptr[CurRow] = LastGuy;
+           CurRow++;
+        }
+     }
+     if (Pcols[i] != -1) {
+        Pcols[NewPtr-1] = Pcols[i]-1;   /* these -1's fix the offset and */
+        Pvals[NewPtr-1] = Pvals[i];     /* start using the zeroth element */
+        LastGuy = NewPtr;
+        NewPtr++;
+     }
+  }
+  for (i = CurRow; i <= Ntotal*DofsPerNode; i++) Pptr[CurRow] = LastGuy;
+
+ /* Now move the pointers so that they now point to the beginning of each
+  * row as opposed to the end of each row
+  */
+  for (i=-Ntotal*DofsPerNode+1; i>= 2 ; i--) {
+     Pptr[i-1] = Pptr[i-2];  /* extra -1 added to start from 0 */
+  }
+  Pptr[0] = 0;
+
+  Pcols = (int    *) realloc(Pcols, (LastGuy+1)*sizeof(int));
+  Pvals = (double *) realloc(Pvals, (LastGuy+1)*sizeof(double));
+
+  *ParamPptr  = Pptr;
+  *ParamPcols = Pcols;
+  *ParamPvals = Pvals;
+  *Paramcnull = cnull;
+
+  return NCLayers*NVertLines*DofsPerNode;
+}
+
+int ML_compute_line_info(int LayerId[], int VertLineId[],
+                         int Ndof, int DofsPerNode, char semicoarsen_coordinate,
+                         int MeshNumbering, int NumNodesPerVertLine,
+                         ML_Aggregate_Viz_Stats *grid_info, ML_Comm *comm)
+{
+   double *xvals= NULL, *yvals = NULL, *zvals = NULL;
+   int    Nnodes, NVertLines, MyNode;
+   int    NumCoords, NumBlocks, index, next, subindex, subnext;
+   double xfirst, yfirst;
+   double *xtemp, *ytemp, *ztemp;
+   int    *OrigLoc;
+   int    i,j,count;
+   int    RetVal, gRetVal;
+   int    mypid;
+
+   mypid = comm->ML_mypid;
+   RetVal = 0;
+   if ((MeshNumbering != 1) && (MeshNumbering != 2)) {
+      if (grid_info != NULL) xvals = grid_info->x;
+      if (grid_info != NULL) yvals = grid_info->y;
+      if (grid_info != NULL) zvals = grid_info->z;
+
+      ztemp = zvals;
+      if (semicoarsen_coordinate == 'x') 
+         { zvals = xvals; if (ztemp == NULL) xvals=yvals; else xvals= ztemp;}
+      if (semicoarsen_coordinate == 'y') 
+         { zvals = yvals; if (ztemp == NULL) yvals=xvals; else yvals= ztemp;}
+      if (semicoarsen_coordinate == 'z') {
+        if ( (zvals == NULL) && (xvals != NULL) && (yvals != NULL) ) {
+         printf("Cannot coarsen 2D problems in z direction. Must set semicoarsen_coordinate to x or y\n");
+         exit(1);
+        }
+      }
+
+      if ( (xvals == NULL) || (yvals == NULL) || (zvals == NULL)) RetVal = -1;
+   }
+   else {
+      if  (NumNodesPerVertLine == -1)                     RetVal = -4;
+      if ( ((Ndof/DofsPerNode)%NumNodesPerVertLine) != 0) RetVal = -3;
+   }
+   if ( (Ndof%DofsPerNode) != 0) RetVal = -2;
+
+   gRetVal = ML_gmax_int(RetVal, comm);
+   if ( gRetVal < 0)  {
+      i = comm->ML_nprocs;
+      if (RetVal < 0) i = mypid;
+      j = ML_gmin_int(i, comm);
+
+      if (mypid == j) {
+         if (RetVal == -1) printf("Not semicoarsening as no mesh numbering information or coordinates are given\n");
+         if (RetVal == -4) printf("Not semicoarsening as the number of z nodes is not given.\n");
+         if (RetVal == -3) printf("Not semicoarsening as the total number of nodes is not evenly divisible by the number of z direction nodes .\n");
+         if (RetVal == -2) printf("Not semicoarsening as something is off with the number of degrees-of-freedom per node.\n");
+      }
+      return gRetVal;
+   }
+
+   Nnodes = Ndof/DofsPerNode;
+
+   for (MyNode = 0; MyNode < Nnodes;  MyNode++) VertLineId[MyNode]= -1;
+   for (MyNode = 0; MyNode < Nnodes;  MyNode++) LayerId[MyNode]   = -1;
+
+
+   if (MeshNumbering == 1) {
+      for (MyNode = 0; MyNode < Nnodes; MyNode++) {
+         LayerId[MyNode]= MyNode%NumNodesPerVertLine;
+         VertLineId[MyNode]= (MyNode- LayerId[MyNode])/NumNodesPerVertLine;
+      }
+   }
+   else if (MeshNumbering == 2) {
+      NVertLines = Nnodes/NumNodesPerVertLine;
+      for (MyNode = 0; MyNode < Nnodes; MyNode++) {
+         VertLineId[MyNode]   = MyNode%NVertLines;
+         LayerId[MyNode]   = (MyNode- VertLineId[MyNode])/NVertLines;
+      }
+   }
+   else {
+
+
+          NumCoords = Ndof/DofsPerNode;
+
+          /* sort coordinates so that we can order things according to lines */
+
+          OrigLoc = (int    *) ML_allocate(sizeof(int   )*(NumCoords+1));
+          xtemp   = (double *) ML_allocate(sizeof(double)*(NumCoords+1));
+          ytemp   = (double *) ML_allocate(sizeof(double)*(NumCoords+1));
+          ztemp   = (double *) ML_allocate(sizeof(double)*(NumCoords+1));
+
+          if (ztemp == NULL) {
+             printf("Not enough memory for line smoothers\n");
+             exit(EXIT_FAILURE);
+          }
+          for (i = 0; i < NumCoords; i++) ytemp[i]= yvals[i];
+          for (i = 0; i < NumCoords; i++) OrigLoc[i]= i;
+
+          ML_az_dsort2(ytemp,NumCoords,OrigLoc);
+          for (i = 0; i < NumCoords; i++) xtemp[i]= xvals[OrigLoc[i]];
+
+          index = 0;
+
+          while ( index < NumCoords ) {
+             yfirst = ytemp[index];
+             next   = index+1;
+             while ( (next != NumCoords) && (ytemp[next] == yfirst))
+             next++;
+             ML_az_dsort2(&(xtemp[index]),next-index,&(OrigLoc[index]));
+             for (i = index; i < next; i++) ztemp[i]= zvals[OrigLoc[i]];
+             /* One final sort so that the ztemps are in order */
+             subindex = index;
+             while (subindex != next) {
+                xfirst = xtemp[subindex]; subnext = subindex+1;
+                while ( (subnext != next) && (xtemp[subnext] == xfirst)) subnext++;
+                ML_az_dsort2(&(ztemp[subindex]),subnext-subindex,&(OrigLoc[subindex]));
+                subindex = subnext;
+             }
+             index = next;
+          }
+
+         /* go through each vertical line and populate blockIndices so all   */
+         /* dofs within a PDE within a vertical line correspond to one block.*/
+
+         NumBlocks = 0;
+         index = 0;
+
+         while ( index < NumCoords ) {
+            xfirst = xtemp[index];  yfirst = ytemp[index];
+            next = index+1;
+            while ( (next != NumCoords) && (xtemp[next] == xfirst) &&
+                    (ytemp[next] == yfirst))
+               next++;
+            if (NumBlocks == 0) NumNodesPerVertLine = next-index;
+            if (next-index != NumNodesPerVertLine) {
+               printf("%d: Error code only works for constant block size now!!! A size of %d found instead of %d\n",mypid,next-index,NumNodesPerVertLine);
+               exit(EXIT_FAILURE);
+            }
+            count = 0;
+            for (j= index; j < next; j++) {
+               VertLineId[OrigLoc[j]] = NumBlocks;
+               LayerId[OrigLoc[j]] = count++;
+            }
+            NumBlocks++;
+            index = next;
+         }
+         ML_free(ztemp);
+         ML_free(ytemp);
+         ML_free(xtemp);
+         ML_free(OrigLoc);
+       }
+
+       /* check that everyone was assigned */
+
+       for (i = 0; i < Nnodes;  i++) {
+          if (VertLineId[i] == -1) {
+             printf("Warning: did not assign %d to a vertical line?????\n",i);
+          }
+          if (LayerId[i] == -1) {
+             printf("Warning: did not assign %d to a Layer?????\n",i);
+          }
+       }
+       i = ML_gmax_int(NumNodesPerVertLine, comm);
+       if (NumNodesPerVertLine == -1)  NumNodesPerVertLine = i;
+
+       if (NumNodesPerVertLine != i)  {
+          printf("%d: Different processors have different z direction line lengths? %d vs. %d\n",mypid,i,NumNodesPerVertLine);
+          exit(EXIT_FAILURE);
+       }
+       return NumNodesPerVertLine;
+}

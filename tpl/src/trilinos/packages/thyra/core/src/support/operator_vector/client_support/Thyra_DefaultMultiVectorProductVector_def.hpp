@@ -159,7 +159,6 @@ void DefaultMultiVectorProductVector<Scalar>::describe(
   const Teuchos::EVerbosityLevel verbLevel
   ) const
 {
-  typedef Teuchos::ScalarTraits<Scalar>  ST;
   using Teuchos::OSTab;
   using Teuchos::describe;
   RCP<FancyOStream> out = rcp(&out_arg,false);
@@ -322,6 +321,16 @@ void DefaultMultiVectorProductVector<Scalar>::setSubVectorImpl(
   )
 {
   TEUCHOS_TEST_FOR_EXCEPT("ToDo: Implement DefaultMultiVectorProductVector<Scalar>::setSubVector(...)!");
+}
+
+
+// Overridden protected functions from VectorBase
+
+
+template <class Scalar>
+void DefaultMultiVectorProductVector<Scalar>::assignImpl(Scalar alpha)
+{
+  multiVec_.getNonconstObj()->assign(alpha);
 }
 
 

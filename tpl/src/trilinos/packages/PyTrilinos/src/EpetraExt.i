@@ -3,27 +3,41 @@
 // @HEADER
 // ***********************************************************************
 //
-//              PyTrilinos: Python Interface to Trilinos
-//                 Copyright (2005) Sandia Corporation
+//          PyTrilinos: Python Interfaces to Trilinos Packages
+//                 Copyright (2014) Sandia Corporation
 //
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia
+// Corporation, the U.S. Government retains certain rights in this
+// software.
 //
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
@@ -89,27 +103,33 @@ example subdirectory of the PyTrilinos package:
 #undef HAVE_STDINT_H
 #endif
 
+// PyTrilinos includes
+#include "PyTrilinos_PythonException.hpp"
+
 // Teuchos includes
 #include "Teuchos_Comm.hpp"
+#include "Teuchos_DefaultComm.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
 #ifdef HAVE_MPI
 #include "Teuchos_DefaultMpiComm.hpp"
 #endif
 #include "Teuchos_XMLObject.hpp"
-#include "PyTrilinos_Teuchos_Util.h"
+#include "PyTrilinos_Teuchos_Util.hpp"
 
 // Epetra includes
 #include "Epetra_ConfigDefs.h"
 #include "Epetra_Object.h"
-#include "Epetra_SrcDistObject.h"
-#include "Epetra_DistObject.h"
 #include "Epetra_Comm.h"
 #include "Epetra_SerialComm.h"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #endif
 #include "Epetra_LocalMap.h"
+#include "Epetra_CompObject.h"
+#include "Epetra_DistObject.h"
+#include "Epetra_SrcDistObject.h"
 #include "Epetra_CrsGraph.h"
+#include "Epetra_Operator.h"
 #include "Epetra_InvOperator.h"
 #include "Epetra_BasicRowMatrix.h"
 #include "Epetra_CrsMatrix.h"
@@ -121,6 +141,9 @@ example subdirectory of the PyTrilinos package:
 #include "Epetra_FEVector.h"
 #include "Epetra_IntVector.h"
 #include "Epetra_MapColoring.h"
+#include "Epetra_SerialDenseOperator.h"
+#include "Epetra_SerialDenseMatrix.h"
+#include "Epetra_SerialSymDenseMatrix.h"
 #include "Epetra_SerialDenseSVD.h"
 #include "Epetra_SerialDenseSolver.h"
 #include "Epetra_SerialDistributor.h"
@@ -128,20 +151,13 @@ example subdirectory of the PyTrilinos package:
 #include "Epetra_Export.h"
 #include "Epetra_OffsetIndex.h"
 #include "Epetra_Time.h"
+#include "Epetra_GIDTypeVector.h"
+#include "PyTrilinos_LinearProblem.hpp"
 
 // Epetra python includes
 #define NO_IMPORT_ARRAY
-#include "numpy_include.h"
-#include "PyTrilinos_Epetra_Util.h"
-#include "Epetra_NumPyIntVector.h"
-#include "Epetra_NumPyMultiVector.h"
-#include "Epetra_NumPyVector.h"
-#include "Epetra_NumPyFEVector.h"
-#include "Epetra_NumPyIntSerialDenseMatrix.h"
-#include "Epetra_NumPyIntSerialDenseVector.h"
-#include "Epetra_NumPySerialDenseMatrix.h"
-#include "Epetra_NumPySerialSymDenseMatrix.h"
-#include "Epetra_NumPySerialDenseVector.h"
+#include "numpy_include.hpp"
+#include "PyTrilinos_Epetra_Util.hpp"
 
 // EpetraExt includes
 #include "EpetraExt_config.h"
@@ -165,7 +181,7 @@ example subdirectory of the PyTrilinos package:
 #include "EpetraExt_ModelEvaluator.h"
 
 // EpetraExt python includes
-#include "PyTrilinos_EpetraExt_Util.h"
+#include "PyTrilinos_EpetraExt_Util.hpp"
 %}
 
 // PyTrilinos configuration
@@ -227,10 +243,10 @@ example subdirectory of the PyTrilinos package:
 // Macros //
 ////////////
 
-// The overloaded HDF5 and XMLReader Read() methods cannot be
-// type-disambiguated in python.  We therefore replace selected
-// overloaded Read() methods with a python version that has the type
-// in the method name.  For example,
+// The overloaded HDF5 and XMLReader Read() and Read64() methods
+// cannot be type-disambiguated in python.  We therefore replace
+// selected overloaded Read() and Read64() methods with a python
+// version that has the type in the method name.  For example,
 //
 //   void HDF5::Read(const std::string &, Epetra_Map *&)
 //
@@ -247,11 +263,27 @@ readtype Read ## TypeName(const std::string & group, const std::string & name)
   return obj;
 }
 %enddef
+%define %epetraext_primitive_read64_method(readtype,TypeName,initVal)
+readtype Read64 ## TypeName(const std::string & group, const std::string & name)
+{
+  readtype obj = initVal;
+  self->Read64(group, name, obj);
+  return obj;
+}
+%enddef
 %define %epetraext_epetra_read_method(ClassName)
 Epetra_ ## ClassName * Read ## ClassName(const std::string & name)
 {
   Epetra_ ## ClassName * obj = NULL;
   self->Read(name, obj);
+  return obj;
+}
+%enddef
+%define %epetraext_epetra_read64_method(ClassName)
+Epetra_ ## ClassName * Read64 ## ClassName(const std::string & name)
+{
+  Epetra_ ## ClassName * obj = NULL;
+  self->Read64(name, obj);
   return obj;
 }
 %enddef
@@ -428,15 +460,20 @@ EpetraExt::XMLReader::ReadCrsMatrix
 Return a CrsMatrix read from an XML file specified by filename 'name'.
 "
 %ignore EpetraExt::XMLReader::Read;
+%ignore EpetraExt::XMLReader::Read64;
 %include "EpetraExt_XMLReader.h"
 namespace EpetraExt
 {
   %extend XMLReader
   {
-    %epetraext_epetra_read_method(Map        )
-    %epetraext_epetra_read_method(MultiVector)
-    %epetraext_epetra_read_method(CrsGraph   )
-    %epetraext_epetra_read_method(CrsMatrix  )
+    %epetraext_epetra_read_method(  Map        )
+    %epetraext_epetra_read64_method(Map        )
+    %epetraext_epetra_read_method(  MultiVector)
+    %epetraext_epetra_read64_method(MultiVector)
+    %epetraext_epetra_read_method(  CrsGraph   )
+    %epetraext_epetra_read64_method(CrsGraph   )
+    %epetraext_epetra_read_method(  CrsMatrix  )
+    %epetraext_epetra_read64_method(CrsMatrix  )
   } // XMLReader
 }
 
@@ -449,24 +486,91 @@ namespace EpetraExt
 // EpetraExt_Transform support //
 /////////////////////////////////
 %include "EpetraExt_Transform.h"
-%template () std::vector<Epetra_IntVector>;
 
-%template () EpetraExt::Transform<Epetra_CrsGraph, Epetra_MapColoring>;
-%template () EpetraExt::Transform<Epetra_CrsGraph,
-				  std::vector<Epetra_IntVector,
-					      std::allocator<Epetra_IntVector> > >;
-%template () EpetraExt::Transform<Epetra_CrsMatrix, Epetra_CrsMatrix >;
+%template ()
+std::vector<Epetra_IntVector>;
 
-%template () EpetraExt::StructuralTransform<Epetra_CrsGraph, Epetra_MapColoring>;
-%template () EpetraExt::StructuralTransform<Epetra_CrsGraph,
-					    std::vector<Epetra_IntVector> >;
+%include "Epetra_IntVector.h"
+%include "Epetra_CrsGraph.h"
+%include "Epetra_MapColoring.h"
 
-%template () EpetraExt::SameTypeTransform<Epetra_CrsMatrix >;
+%template (Xform_CrsGraph_MapColoring)
+EpetraExt::Transform<Epetra_CrsGraph, Epetra_MapColoring>;
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+
+%template (Xform_CrsGraph_vecIntVector)
+EpetraExt::
+Transform< Epetra_CrsGraph,
+           std::vector< Epetra_GIDTypeVector< int >::impl,
+                        std::allocator< Epetra_GIDTypeVector< int >::impl > > >;
+ //Transform<Epetra_CrsGraph, std::vector<Epetra_IntVector,
+ //                                      std::allocator<Epetra_IntVector> > >;
+
+#endif
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+
+%template (Xform_CrsGraph_vecLongVector)
+EpetraExt::
+Transform< Epetra_CrsGraph,
+           std::vector< Epetra_GIDTypeVector< long long >::impl,
+                        std::allocator< Epetra_GIDTypeVector< long long >::impl > > >;
+
+#endif
+
+//%template (Xform_CrsGraph_vecIntVector)
+//EpetraExt::Transform<Epetra_CrsGraph, std::vector<Epetra_IntVector,
+//                                                  std::allocator<Epetra_IntVector> > >;
+%template (Xform_CrsMatrix_CrsMatrix)
+EpetraExt::Transform<Epetra_CrsMatrix, Epetra_CrsMatrix >;
+
+%template (SXform_CrsGraph_MapColoring)
+EpetraExt::StructuralTransform<Epetra_CrsGraph, Epetra_MapColoring>;
+
+// %template (SXform_CrsGraph_vecIntVector)
+// EpetraExt::StructuralTransform<Epetra_CrsGraph, std::vector<Epetra_IntVector> >;
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+
+%template (SXform_CrsGraph_vecIntVector)
+EpetraExt::
+StructuralTransform<Epetra_CrsGraph,
+                    std::vector< Epetra_GIDTypeVector< int >::impl > >;
+
+#endif
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+
+%template (SXform_CrsGraph_vecLongVector)
+EpetraExt::
+StructuralTransform<Epetra_CrsGraph,
+                    std::vector< Epetra_GIDTypeVector<long long>::impl > >;
+
+#endif
+
+//%template (SXform_CrsGraph_vecIntVector)
+//EpetraExt::StructuralTransform<Epetra_CrsGraph, std::vector<Epetra_IntVector> >;
+
+%template (SameXform_CrsMatrix)
+EpetraExt::SameTypeTransform<Epetra_CrsMatrix >;
 
 ///////////////////////////////////
 // EpetraExt_MapColoring support //
 ///////////////////////////////////
 %include "EpetraExt_MapColoring.h"
+
+//////////////////////////////////////////////////
+// EpetraExt_TCrsGraph_MapColoringIndex support //
+//////////////////////////////////////////////////
+%ignore EpetraExt::TCrsGraph_MapColoringIndex::operator();
+%include "EpetraExt_TCrsGraph_MapColoringIndex.h"
+
+%template (TCrsGraph_MapColoringIndex_int)
+EpetraExt::TCrsGraph_MapColoringIndex<int>;
+
+%template (TCrsGraph_MapColoringIndex_long)
+EpetraExt::TCrsGraph_MapColoringIndex<long long>;
 
 ////////////////////////////////////////
 // EpetraExt_MapColoringIndex support //
@@ -955,7 +1059,11 @@ class OutArgs(PropertyBase):
 //
 %feature("director") EpetraExt::ModelEvaluator;
 
-namespace EpetraExt {
+%teuchos_rcp(EpetraExt::ModelEvaluator)
+
+namespace EpetraExt
+{
+
 class ModelEvaluator : virtual public Teuchos::Describable
 {
 public:

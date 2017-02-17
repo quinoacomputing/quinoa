@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 
   // Create an Epetra_Matrix
 
-  Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp( new Epetra_CrsMatrix(Copy, Map, &NumNz[0]) );
+  Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp( new Epetra_CrsMatrix(Epetra_DataAccess::Copy, Map, &NumNz[0]) );
 
   // Diffusion coefficient, can be set by user.
   // When rho*h/2 <= 1, the discrete convection-diffusion operator has real eigenvalues.
@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
   boolret = MyProblem->setProblem();
   if (boolret != true) {
     if (verbose && MyPID == 0) {
-      cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
+      std::cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << std::endl;
     }
 #ifdef HAVE_MPI
     MPI_Finalize() ;
@@ -337,18 +337,18 @@ int main(int argc, char *argv[]) {
   // Output computed eigenvalues and their direct residuals
   if (verbose && MyPID==0) {
     int numritz = (int)ritzValues.size();
-    cout.setf(std::ios_base::right, std::ios_base::adjustfield);        
-    cout<<endl<< "Computed Ritz Values"<< endl;
-    cout<< std::setw(16) << "Real Part"
+    std::cout.setf(std::ios_base::right, std::ios_base::adjustfield);        
+    std::cout<<std::endl<< "Computed Ritz Values"<< std::endl;
+    std::cout<< std::setw(16) << "Real Part"
         << std::setw(16) << "Imag Part"
-        << endl;
-    cout<<"-----------------------------------------------------------"<<endl;
+        << std::endl;
+    std::cout<<"-----------------------------------------------------------"<<std::endl;
     for (int i=0; i<numritz; i++) {
-      cout<< std::setw(16) << ritzValues[i].realpart 
+      std::cout<< std::setw(16) << ritzValues[i].realpart 
           << std::setw(16) << ritzValues[i].imagpart 
-          << endl;
+          << std::endl;
     }  
-    cout<<"-----------------------------------------------------------"<<endl;
+    std::cout<<"-----------------------------------------------------------"<<std::endl;
   }
 
   // Get the eigenvalues and eigenvectors from the eigenproblem
@@ -432,21 +432,21 @@ int main(int argc, char *argv[]) {
 
     // Output computed eigenvalues and their direct residuals
     if (verbose && MyPID==0) {
-      cout.setf(std::ios_base::right, std::ios_base::adjustfield);        
-      cout<<endl<< "Actual Residuals"<<endl;
-      cout<< std::setw(16) << "Real Part"
+      std::cout.setf(std::ios_base::right, std::ios_base::adjustfield);        
+      std::cout<<std::endl<< "Actual Residuals"<<std::endl;
+      std::cout<< std::setw(16) << "Real Part"
           << std::setw(16) << "Imag Part"
-          << std::setw(20) << "Direct Residual"<< endl;
-      cout<<"-----------------------------------------------------------"<<endl;
+          << std::setw(20) << "Direct Residual"<< std::endl;
+      std::cout<<"-----------------------------------------------------------"<<std::endl;
       for (int j=0; j<numev; j++) {
-        cout<< std::setw(16) << evals[j].realpart 
+        std::cout<< std::setw(16) << evals[j].realpart 
             << std::setw(16) << evals[j].imagpart 
-            << std::setw(20) << normA[j] << endl;
+            << std::setw(20) << normA[j] << std::endl;
         if ( normA[j] > tol ) {
           testFailed = true;
         }
       }  
-      cout<<"-----------------------------------------------------------"<<endl;
+      std::cout<<"-----------------------------------------------------------"<<std::endl;
     }
   }
 
@@ -456,7 +456,7 @@ int main(int argc, char *argv[]) {
 
   if (testFailed) {
     if (verbose && MyPID==0) {
-      cout << "End Result: TEST FAILED" << endl;        
+      std::cout << "End Result: TEST FAILED" << std::endl;        
     }
     return -1;
   }
@@ -464,7 +464,7 @@ int main(int argc, char *argv[]) {
   // Default return value
   //
   if (verbose && MyPID==0) {
-    cout << "End Result: TEST PASSED" << endl;
+    std::cout << "End Result: TEST PASSED" << std::endl;
   }
 
   return 0;

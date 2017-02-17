@@ -1,0 +1,17 @@
+<ParameterList name="MJ Parameter List">
+    <!--
+    <Parameter name="memory_output_stream" type ="string" value="std::cout" />
+    <Parameter name="memory_procs" type ="int" value="0" />
+    -->
+    <Parameter name="timer_output_stream" type ="string" value="std::cout" />
+    
+    <Parameter name="algorithm" type ="string" value="multijagged" />
+    <Parameter name="compute_metrics" type ="bool" value="true" />
+    <Parameter name="imbalance_tolerance" type ="double" value="1.0" />
+	
+    <Parameter name="rectilinear_blocks" type ="string" value="0" />
+    <Parameter name="mj_concurrent_part_count" type ="int" value="1" />
+    <Parameter name="mj_migration_option" type ="int" value="1" />
+    <Parameter name="mj_minimum_migration_imbalance" type ="double" value="1.30" />
+    <Parameter name="mapping_type" type ="int" value="-1"/>
+</ParameterList>

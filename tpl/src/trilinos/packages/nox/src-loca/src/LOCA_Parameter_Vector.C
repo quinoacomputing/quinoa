@@ -1,15 +1,15 @@
-// $Id$ 
-// $Source$ 
+// $Id$
+// $Source$
 
 //@HEADER
 // ************************************************************************
-// 
+//
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -52,7 +52,7 @@
 
 #include "Teuchos_Assert.hpp" // for errors
 
-LOCA::ParameterVector::ParameterVector() : 
+LOCA::ParameterVector::ParameterVector() :
   x(),
   l()
 {
@@ -64,7 +64,7 @@ LOCA::ParameterVector::ParameterVector(const LOCA::ParameterVector& source) :
 {
 }
 
-LOCA::ParameterVector* 
+LOCA::ParameterVector*
 LOCA::ParameterVector::clone() const
 {
   LOCA::ParameterVector* y = new LOCA::ParameterVector(*this);
@@ -75,8 +75,8 @@ LOCA::ParameterVector::~ParameterVector()
 {
 }
 
-int 
-LOCA::ParameterVector::addParameter(string label, double value)
+int
+LOCA::ParameterVector::addParameter(std::string label, double value)
 {
   unsigned int size = x.size();
   x.push_back(value);
@@ -84,7 +84,7 @@ LOCA::ParameterVector::addParameter(string label, double value)
   return (size);
 }
 
-bool 
+bool
 LOCA::ParameterVector::init(double value)
 {
   for (unsigned int i = 0; i < x.size(); i ++)
@@ -92,7 +92,7 @@ LOCA::ParameterVector::init(double value)
   return true;
 }
 
-bool 
+bool
 LOCA::ParameterVector::scale(double value)
 {
   for (unsigned int i = 0; i < x.size(); i ++)
@@ -100,7 +100,7 @@ LOCA::ParameterVector::scale(double value)
   return true;
 }
 
-bool 
+bool
 LOCA::ParameterVector::scale(const LOCA::ParameterVector& p)
 {
   //make sure vectors are of compatible size
@@ -112,10 +112,10 @@ LOCA::ParameterVector::scale(const LOCA::ParameterVector& p)
   return true;
 }
 
-bool 
-LOCA::ParameterVector::update(double alpha, 
-			      const LOCA::ParameterVector& alphaVector, 
-			      double b)
+bool
+LOCA::ParameterVector::update(double alpha,
+                  const LOCA::ParameterVector& alphaVector,
+                  double b)
 {  //make sure vectors are of compatible size
   if (x.size() != alphaVector.x.size())
     return false;
@@ -127,7 +127,7 @@ LOCA::ParameterVector::update(double alpha,
   return true;
 }
 
-LOCA::ParameterVector& 
+LOCA::ParameterVector&
 LOCA::ParameterVector::operator=(const LOCA::ParameterVector& source)
 {
   x = source.x;
@@ -135,40 +135,40 @@ LOCA::ParameterVector::operator=(const LOCA::ParameterVector& source)
   return *this;
 }
 
-double& 
+double&
 LOCA::ParameterVector::operator[] (unsigned int i)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(), 
-		     std::out_of_range,
-		     "Error:  LOCA::ParameterVector::operator[]:  " << 
-		     " Index " << i << " is out of range!");
+  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(),
+             std::out_of_range,
+             "Error:  LOCA::ParameterVector::operator[]:  " <<
+             " Index " << i << " is out of range!");
   return x[i];
 }
 
-const double& 
+const double&
 LOCA::ParameterVector::operator[] (unsigned int i) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(), 
-		     std::out_of_range,
-		     "Error:  LOCA::ParameterVector::operator[]:  " << 
-		     " Index " << i << " is out of range!");
+  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(),
+             std::out_of_range,
+             "Error:  LOCA::ParameterVector::operator[]:  " <<
+             " Index " << i << " is out of range!");
   return x[i];
 }
 
-void 
+void
 LOCA::ParameterVector::setValue(unsigned int i, double value)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(), 
-		     std::out_of_range,
-		     "Error:  LOCA::ParameterVector::setValue():  " << 
-		     " Index " << i << " is out of range!");
+  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(),
+             std::out_of_range,
+             "Error:  LOCA::ParameterVector::setValue():  " <<
+             " Index " << i << " is out of range!");
 
   x[i] = value;
   return;
 }
 
-void 
-LOCA::ParameterVector::setValue(string label, double value)
+void
+LOCA::ParameterVector::setValue(std::string label, double value)
 {
   for (unsigned int i = 0; i < x.size(); i++) {
     if (l[i] == label) {
@@ -177,53 +177,53 @@ LOCA::ParameterVector::setValue(string label, double value)
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(true, 
-		     std::invalid_argument,
-		     "Error:  LOCA::ParameterVector::setValue():  " << 
-		     " Label " << label << " is not valid!");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+             std::invalid_argument,
+             "Error:  LOCA::ParameterVector::setValue():  " <<
+             " Label " << label << " is not valid!");
 }
 
-double 
+double
 LOCA::ParameterVector::getValue(unsigned int i) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(), 
-		     std::out_of_range,
-		     "Error:  LOCA::ParameterVector::getValue():  " << 
-		     " Index " << i << " is out of range!");
+  TEUCHOS_TEST_FOR_EXCEPTION(i >= x.size(),
+             std::out_of_range,
+             "Error:  LOCA::ParameterVector::getValue():  " <<
+             " Index " << i << " is out of range!");
   return x[i];
 }
 
-double 
-LOCA::ParameterVector::getValue(string label) const
+double
+LOCA::ParameterVector::getValue(std::string label) const
 {
   for (unsigned int i = 0; i < x.size(); i++) {
     if (l[i] == label)
       return x[i];
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(true, 
-		     std::invalid_argument,
-		     "Error:  LOCA::ParameterVector::getValue():  " << 
-		     " Label " << label << " is not valid!");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+             std::invalid_argument,
+             "Error:  LOCA::ParameterVector::getValue():  " <<
+             " Label " << label << " is not valid!");
   return 0.0;
 }
 
-int 
-LOCA::ParameterVector::getIndex(string label) const
+int
+LOCA::ParameterVector::getIndex(std::string label) const
 {
   for (unsigned int i = 0; i < x.size(); i++) {
     if (l[i] == label)
       return i;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(true, 
-		     std::invalid_argument,
-		     "Error:  LOCA::ParameterVector::getIndex():  " << 
-		     " Label " << label << " is not valid!");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+             std::invalid_argument,
+             "Error:  LOCA::ParameterVector::getIndex():  " <<
+             " Label " << label << " is not valid!");
   return -1;
 }
 
-double* 
+double*
 LOCA::ParameterVector::getDoubleArrayPointer()
 {
   if (x.size() == 0)
@@ -231,8 +231,8 @@ LOCA::ParameterVector::getDoubleArrayPointer()
   return &x[0];
 }
 
-bool 
-LOCA::ParameterVector::isParameter(string label) const
+bool
+LOCA::ParameterVector::isParameter(std::string label) const
 {
   for (unsigned int i = 0; i < x.size(); i++) {
     if (l[i] == label)
@@ -241,20 +241,20 @@ LOCA::ParameterVector::isParameter(string label) const
   return false;
 }
 
-string 
+std::string
 LOCA::ParameterVector::getLabel(unsigned int i) const
 {
   return l[i];
 }
 
-int 
+int
 LOCA::ParameterVector::length() const
 {
   return x.size();
 }
 
-void 
-LOCA::ParameterVector::print(ostream& stream) const
+void
+LOCA::ParameterVector::print(std::ostream& stream) const
 {
   stream << "LOCA::ParameterVector \n(size = " << x.size() << ")";
   for (unsigned int i = 0; i < x.size(); i++) {
@@ -263,20 +263,20 @@ LOCA::ParameterVector::print(ostream& stream) const
   stream << std::endl;
 }
 
-ostream& 
-LOCA::operator<<(ostream& stream, const LOCA::ParameterVector& p)
+std::ostream&
+LOCA::operator<<(std::ostream& stream, const LOCA::ParameterVector& p)
 {
   p.print(stream);
   return stream;
 }
 
-const vector<double>& 
+const std::vector<double>&
 LOCA::ParameterVector::getValuesVector() const
 {
   return x;
 }
 
-const vector<string>& 
+const std::vector<std::string>&
 LOCA::ParameterVector::getNamesVector() const
 {
   return l;

@@ -131,7 +131,6 @@ void DefaultProductMultiVector<Scalar>::describe(
   const Teuchos::EVerbosityLevel verbLevel
   ) const
 {
-  typedef Teuchos::ScalarTraits<Scalar>  ST;
   using Teuchos::OSTab;
   using Teuchos::describe;
   if (verbLevel == Teuchos::VERB_NONE)
@@ -245,6 +244,15 @@ DefaultProductMultiVector<Scalar>::domain() const
 
 
 // Overriden protected functions from MultiVectorBase
+
+
+template<class Scalar>
+void DefaultProductMultiVector<Scalar>::assignImpl(Scalar alpha)
+{
+  for ( int k = 0; k < numBlocks_; ++k ) {
+    multiVecs_[k].getNonconstObj()->assign(alpha);
+  }
+}
 
 
 template<class Scalar>

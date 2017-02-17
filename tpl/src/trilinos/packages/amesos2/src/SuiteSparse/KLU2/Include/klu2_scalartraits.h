@@ -4,7 +4,7 @@
 //                   KLU2: A Direct Linear Solver package
 //                    Copyright 2011 Sandia Corporation
 //
-// Under terms of Contract DE-AC04-94AL85000, with Sandia Corporation, the 
+// Under terms of Contract DE-AC04-94AL85000, with Sandia Corporation, the
 // U.S. Government retains certain rights in this software.
 //
 // This library is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
@@ -38,9 +38,9 @@ template <typename T>
 struct KLU_ScalarTraits
 {
     typedef T magnitudeType ;
-    static inline double reciprocal (double c) {}
-    static inline double divide (double a, double b) { }
-    static inline double divideConjugate (double a, double b) { }
+    static inline double reciprocal (double c) {return 0;}
+    static inline double divide (double a, double b) {return 0.0;}
+    static inline double divideConjugate (double a, double b) {return 0.0;}
     static inline magnitudeType approxABS (double a)
     {
     }
@@ -66,6 +66,30 @@ struct KLU_ScalarTraits<double>
     }
 };
 
+template <>
+struct KLU_ScalarTraits<float>
+{
+    typedef float magnitudeType ;
+    static inline float reciprocal (float c) { return 1.0/c ; }
+    static inline float divide (float a, float b) { return a/b ; }
+    static inline float divideConjugate (float a, float b) { return a/b ; }
+    static inline magnitudeType approxABS (float a)
+    {
+        return (SCALAR_ABS (a));
+    }
+    static inline magnitudeType abs (float a)
+    {
+        return (SCALAR_ABS (a));
+    }
+};
+
+// mfh 13 Sep 2012: The Teuchos::ScalarTraits<std::complex<T> >
+// specialization doesn't exist unless Teuchos was built with complex
+// arithmetic support.  To enable complex arithmetic support in
+// Teuchos, set the CMake Boolean option Teuchos_ENABLE_COMPLEX to ON
+// at configure time.
+#ifdef HAVE_TEUCHOS_COMPLEX
+
 template <typename T>
 struct KLU_ScalarTraits<
 std::complex<T>
@@ -74,7 +98,7 @@ std::complex<T>
     typedef std::complex<T> ComplexT ;
     typedef typename KLU_ScalarTraits<T>::magnitudeType magnitudeType ;
 
-    static inline ComplexT reciprocal (ComplexT c) 
+    static inline ComplexT reciprocal (ComplexT c)
     {
         T r, den, cr, ci ;
         ComplexT ret ;
@@ -94,7 +118,7 @@ std::complex<T>
         }
         return ret;
     }
-    
+
     static inline ComplexT divide (ComplexT a, ComplexT b)
     {
         T r, den, ar, ai, br, bi ;
@@ -118,7 +142,7 @@ std::complex<T>
         }
         return ret;
     }
-    
+
     static inline ComplexT divideConjugate (ComplexT a, ComplexT b)
     {
         T r, den, ar, ai, br, bi ;
@@ -142,13 +166,13 @@ std::complex<T>
         }
         return ret;
     }
-    
+
     static inline magnitudeType approxABS (ComplexT a)
     {
-        return ( SCALAR_ABS (Teuchos::ScalarTraits<ComplexT>::real(a)) + 
+        return ( SCALAR_ABS (Teuchos::ScalarTraits<ComplexT>::real(a)) +
                     SCALAR_ABS (Teuchos::ScalarTraits<ComplexT>::imag(a)) ) ;
     }
-    
+
     static inline magnitudeType abs (ComplexT a)
     {
         T r, ar, ai ;
@@ -183,5 +207,7 @@ std::complex<T>
         return s;
     }
 };
+
+#endif // HAVE_TEUCHOS_COMPLEX
 
 #endif

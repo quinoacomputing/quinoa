@@ -316,35 +316,6 @@ public:
 
   //@}
 
-  /** \name Deprecated. */
-  //@{
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED bool applySupports( const EConj conj ) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED void apply(
-    const EConj conj,
-    const MultiVectorBase<Scalar> &X,
-    MultiVectorBase<Scalar> *Y,
-    const Scalar alpha = static_cast<Scalar>(1.0),
-    const Scalar beta = static_cast<Scalar>(0.0)
-    ) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED bool applyTransposeSupports( const EConj conj ) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED void applyTranspose(
-    const EConj conj,
-    const MultiVectorBase<Scalar> &X,
-    MultiVectorBase<Scalar> *Y,
-    const Scalar alpha = static_cast<Scalar>(1.0),
-    const Scalar beta = static_cast<Scalar>(0.0)
-    ) const;
-
-  //@}
-
 protected:
 
   /** \name Protected virtual functions to be overridden by subclasses. */
@@ -441,47 +412,6 @@ void apply(
   );
 
 
-// Deprecated
-
-
-/** \brief Deprecated. */
-template<class Scalar>
-inline
-THYRA_DEPRECATED void apply(
-  const LinearOpBase<Scalar> &M,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha = static_cast<Scalar>(1.0),
-  const Scalar beta = static_cast<Scalar>(0.0)
-  );
-
-
-/** \brief Deprecated. */
-template<class Scalar>
-inline
-THYRA_DEPRECATED void applyTranspose(
-  const LinearOpBase<Scalar> &M,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha = static_cast<Scalar>(1.0),
-  const Scalar beta = static_cast<Scalar>(0.0)
-  );
-
-
-/** \brief Deprecated. */
-template<class Scalar>
-THYRA_DEPRECATED void apply(
-  const LinearOpBase<Scalar> &M,
-  const EOpTransp M_trans,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha = static_cast<Scalar>(1.0),
-  const Scalar beta = static_cast<Scalar>(0.0)
-  );
-
-
 }	// end namespace Thyra
 
 
@@ -547,54 +477,6 @@ void Thyra::apply(
   )
 {
   apply<double>(M, M_trans, X, Y, alpha, beta);
-}
-
-
-// Deprecated
-
-
-template<class Scalar>
-inline
-void Thyra::apply(
-  const LinearOpBase<Scalar> &M,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha,
-  const Scalar beta
-  )
-{
-  M.apply(conj, X, Y, alpha, beta);
-}
-
-
-template<class Scalar>
-inline
-void Thyra::applyTranspose(
-  const LinearOpBase<Scalar> &M,
-  const EConj conj,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha,
-  const Scalar beta
-  )
-{
-  M.applyTranspose(conj, X, Y, alpha, beta);
-}
-
-
-template<class Scalar>
-inline
-void Thyra::apply(
-  const LinearOpBase<Scalar> &M,
-  const EOpTransp M_trans,
-  const MultiVectorBase<Scalar> &X,
-  MultiVectorBase<Scalar> *Y,
-  const Scalar alpha,
-  const Scalar beta
-  )
-{
-  apply(M, M_trans, X, Teuchos::ptr(Y), alpha, beta);
 }
 
 

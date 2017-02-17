@@ -63,8 +63,17 @@ namespace Teuchos { template<typename Ordinal> class Comm; }
 namespace RTOpPack {
 
 
+/** \brief Set up to show a dump of RTOps applied through SPMD_apply_op().
+ *
+ * \param dumOut [in] RCP to output stream.  If non-null, output will be
+ * dumped to this stream.  If null, then no output will be dumped.
+ *
+ * \ingroup RTOpPack_parallel_helpers_grp
+ */
+void set_SPMD_apply_op_dump_out(const RCP<FancyOStream> &dumpOut);
+
 #ifdef RTOPPACK_ENABLE_SHOW_DUMP
-extern bool show_spmd_apply_op_dump;
+RTOP_DEPRECATED extern bool show_spmd_apply_op_dump;
 #endif // RTOPPACK_ENABLE_SHOW_DUMP
 
 
@@ -161,11 +170,11 @@ private:
  */
 template<class Scalar>
 class ReductTargetReductionOp
-  : public Teuchos::ReferenceTypeReductionOp<Teuchos_Index,ReductTarget>
+  : public Teuchos::ReferenceTypeReductionOp<Teuchos_Ordinal,ReductTarget>
 {
 public:
   /** \brief . */
-  typedef Teuchos_Index Ordinal;
+  typedef Teuchos_Ordinal Ordinal;
   /** \brief . */
   ReductTargetReductionOp(
     const Teuchos::RCP<const RTOpT<Scalar> >  &op

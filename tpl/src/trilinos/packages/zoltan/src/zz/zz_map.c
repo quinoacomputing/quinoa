@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile $
- *    $Author $
- *    $Date $
- *    $Revision $
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 
 #ifdef __cplusplus
@@ -102,12 +135,15 @@ ZOLTAN_MAP* Zoltan_Map_Create(ZZ *zz,     /* just need this for error messages *
 
     top = (ZOLTAN_ENTRY *)ZOLTAN_CALLOC(num_entries, sizeof(ZOLTAN_ENTRY));
     if (!top){
+      ZOLTAN_FREE(&map);
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Out of memory\n");
       return NULL;
     }
     if (store_keys) {
       keys = (char *)ZOLTAN_CALLOC(num_entries, num_bytes);
       if (!keys) {
+        ZOLTAN_FREE(&top);
+        ZOLTAN_FREE(&map);
 	ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Out of memory\n");
 	return NULL;
       }
@@ -135,6 +171,9 @@ ZOLTAN_MAP* Zoltan_Map_Create(ZZ *zz,     /* just need this for error messages *
   entries = (ZOLTAN_ENTRY **)ZOLTAN_CALLOC(hash_range_max+1, sizeof(ZOLTAN_ENTRY*));
 
   if (!entries){
+    ZOLTAN_FREE(&top);
+    ZOLTAN_FREE(&map);
+    ZOLTAN_FREE(&keys);
     ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Out of memory\n");
     return NULL;
   }
@@ -144,11 +183,11 @@ ZOLTAN_MAP* Zoltan_Map_Create(ZZ *zz,     /* just need this for error messages *
    * of ZOLTAN_ID_TYPEs, because Zoltan_Hash takes a tuple of ZOLTAN_ID_TYPEs.
    */
 
-  if (num_bytes < sizeof(ZOLTAN_ID_TYPE)){
+  if (num_bytes < (int)(sizeof(ZOLTAN_ID_TYPE))){
     map->num_zoltan_id_types = 1;
     map->zid = (ZOLTAN_ID_PTR)calloc(sizeof(ZOLTAN_ID_TYPE), 1);
   }
-  else if (num_bytes == sizeof(ZOLTAN_ID_TYPE)){
+  else if (num_bytes == (int)(sizeof(ZOLTAN_ID_TYPE))){
     map->num_zoltan_id_types = 1;
     map->zid = NULL;
   }
@@ -301,8 +340,10 @@ int Zoltan_Map_Find_Add(ZZ *zz, ZOLTAN_MAP* map, char *key, intptr_t datain, int
     if (map->copyKeys){
       if(map->dynamicEntries) {
 	element->key = (char *)ZOLTAN_MALLOC(map->key_size);
-	if (!element->key)
+	if (!element->key) {
+          ZOLTAN_FREE(&element);
 	  return ZOLTAN_MEMERR;
+        }
       }
       else
 	element->key = (char *)map->keys + (map->entry_count * map->key_size);

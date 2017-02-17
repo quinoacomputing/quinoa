@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -50,52 +50,48 @@
 #endif
 #include "Epetra_Map.h"
 
-typedef Teuchos::ScalarTraits<double> SCT;
 
-int main(int argc, char *argv[]) 
+
+int main(int argc, char *argv[])
 {
-  
-#ifdef EPETRA_MPI
-  
-  // Initialize MPI
-  MPI_Init(&argc,&argv);
-  Epetra_MpiComm Comm(MPI_COMM_WORLD);
-
-#else
-
-  Epetra_SerialComm Comm;
-
-#endif
-  
-  int MyPID = Comm.MyPID();
-  
-  bool verbose = false;
-  if (argc>1) if (strncmp("-v",argv[1],2) == 0) verbose = true;
-  
-  if (verbose && MyPID == 0) {
-    cout << Anasazi::Anasazi_Version() << endl << endl;
-  }
-  
-  int numberFailedTests = 0;
-
-  //  Create SolverUtils object
-  typedef Anasazi::SolverUtils<double, Epetra_MultiVector, Epetra_Operator> Utils;
-  
-  //  Dimension of the multivector
-  int NumGlobalElements = 99;
-  int NumColumns = 7;
-  
-  // Construct a Map that puts approximately the same number of
-  // equations on each processor.
-  Epetra_Map Map(NumGlobalElements, 0, Comm);
-  
-  int NumMyElements = Map.NumMyElements();
-  std::vector<int> MyGlobalElements(NumMyElements);
-  Map.MyGlobalElements(&MyGlobalElements[0]);
-  
   typedef Epetra_MultiVector MV;
   typedef Epetra_Operator OP;
   typedef Anasazi::MultiVecTraits<double,MV> MVT;
+  // Type of SolverUtils specialization that we will use
+  typedef Anasazi::SolverUtils<double, MV, OP> Utils;
+  typedef Teuchos::ScalarTraits<double> SCT;
+
+#ifdef EPETRA_MPI
+  // Initialize MPI
+  MPI_Init(&argc,&argv);
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
+#else
+  Epetra_SerialComm Comm;
+#endif // EPETRA_MPI
+
+  const int MyPID = Comm.MyPID ();
+
+  bool verbose = false;
+  if (argc>1) if (strncmp("-v",argv[1],2) == 0) verbose = true;
+
+  if (verbose && MyPID == 0) {
+    std::cout << Anasazi::Anasazi_Version() << std::endl << std::endl;
+  }
+
+  int numberFailedTests = 0;
+
+
+  // Dimensions of the MultiVector
+  int NumGlobalElements = 99;
+  int NumColumns = 7;
+
+  // Construct a Map that puts approximately the same number of
+  // equations on each processor.
+  Epetra_Map Map (NumGlobalElements, 0, Comm);
+
+  int NumMyElements = Map.NumMyElements ();
+  std::vector<int> MyGlobalElements (NumMyElements);
+  Map.MyGlobalElements (&MyGlobalElements[0]);
 
   // declare an orthomanager for use below
   Anasazi::BasicOrthoManager<double,MV,OP> orthman;
@@ -108,7 +104,7 @@ int main(int argc, char *argv[])
     double err;
 
     if (verbose && MyPID == 0) {
-      cout << endl << "************* Householder Apply Test *************" << endl << endl;
+      std::cout << std::endl << "************* Householder Apply Test *************" << std::endl << std::endl;
     }
 
 
@@ -133,13 +129,13 @@ int main(int argc, char *argv[])
     // test orthonormality of V
     err = orthman.orthonormError(V);
     if (verbose && MyPID == 0) {
-      cout << "             orthonorm error of V: " << err << endl;
+      std::cout << "             orthonorm error of V: " << err << std::endl;
     }
 
     if (err > 1e-14) {
       numberFailedTests++;
       if (verbose && MyPID == 0) {
-        cout<< "ERROR:  orthonormalization failed." << endl;
+        std::cout<< "ERROR:  orthonormalization failed." << std::endl;
       }
     }
 
@@ -149,12 +145,12 @@ int main(int argc, char *argv[])
     // test orthonormality of V*Q
     err = orthman.orthonormError(VQ);
     if (verbose && MyPID == 0) {
-      cout << "            orthonorm error of VQ: " << err << endl;
+      std::cout << "            orthonorm error of VQ: " << err << std::endl;
     }
     if (err > 1e-14) {
       numberFailedTests++;
       if (verbose && MyPID == 0) {
-        cout<< "ERROR:  V*Q failed." << endl;
+        std::cout<< "ERROR:  V*Q failed." << std::endl;
       }
     }
 
@@ -162,24 +158,24 @@ int main(int argc, char *argv[])
     Utils::applyHouse(H.numCols(),V,H,tau);
     err = orthman.orthonormError(V);
     if (verbose && MyPID == 0) {
-      cout << "    orthonorm error of applyHouse: " << err << endl;
+      std::cout << "    orthonorm error of applyHouse: " << err << std::endl;
     }
     if (err > 1e-14) {
       numberFailedTests++;
       if (verbose && MyPID == 0) {
-        cout<< "ERROR:  applyHouse failed." << endl;
+        std::cout<< "ERROR:  applyHouse failed." << std::endl;
       }
     }
 
     // test house(V,H,tau) == V*Q
     err = Utils::errorEquality(V,VQ);
     if (verbose && MyPID == 0) {
-      cout << "        error(VQ - house(V,H,tau): " << err << endl;
+      std::cout << "        error(VQ - house(V,H,tau): " << err << std::endl;
     }
     if (err > 1e-14) {
       numberFailedTests++;
       if (verbose && MyPID == 0) {
-        cout<< "ERROR:  applyHouse failed." << endl;
+        std::cout<< "ERROR:  applyHouse failed." << std::endl;
       }
     }
 
@@ -190,7 +186,7 @@ int main(int argc, char *argv[])
   //--------------------------------------------------------------------------
   {
     if (verbose && MyPID == 0) {
-      cout << endl << "************* DirectSolver Test *************" << endl << endl;
+      std::cout << std::endl << "************* DirectSolver Test *************" << std::endl << std::endl;
     }
 
     int size = 11;
@@ -202,7 +198,7 @@ int main(int argc, char *argv[])
     for (int i=0; i<nev; ++i) {
       lambda1[i] = SCT::random();
     }
-    // this will order the eigenvalues and give us a random permutation 
+    // this will order the eigenvalues and give us a random permutation
     // to use below
     std::vector<int> rperm(nev);
     sorter.sort(lambda1,Teuchos::rcp(&rperm,false),nev);
@@ -219,13 +215,13 @@ int main(int argc, char *argv[])
       if (info != 0) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(10) returned error " << info << endl;
+          std::cout << "ERROR: directSolve(10) returned error " << info << std::endl;
         }
       }
       else if (rank != nev) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(10) didn't return all eigenpairs" << endl;
+          std::cout << "ERROR: directSolve(10) didn't return all eigenpairs" << std::endl;
         }
       }
       else {
@@ -235,15 +231,15 @@ int main(int argc, char *argv[])
             testfailed = true;
             numberFailedTests++;
             if (verbose && MyPID==0) {
-              cout << "ERROR: directSolve(diag(lambda)) produced wrong eigenvalues: " 
-                   << "i: " << i << "   " << lambda1[i] << " vs. " << lambda2[i] << endl;
+              std::cout << "ERROR: directSolve(diag(lambda)) produced wrong eigenvalues: "
+                   << "i: " << i << "   " << lambda1[i] << " vs. " << lambda2[i] << std::endl;
             }
             break;
           }
         }
         if (testfailed == false) {
           if (verbose && MyPID == 0) {
-            cout << "pass: directSolve(diag(lambda)) correct." << endl;
+            std::cout << "pass: directSolve(diag(lambda)) correct." << std::endl;
           }
         }
       }
@@ -262,13 +258,13 @@ int main(int argc, char *argv[])
       if (info != 0) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(1) returned error " << info << endl;
+          std::cout << "ERROR: directSolve(1) returned error " << info << std::endl;
         }
       }
       else if (rank != nev) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(10) didn't return all eigenpairs" << endl;
+          std::cout << "ERROR: directSolve(10) didn't return all eigenpairs" << std::endl;
         }
       }
       else {
@@ -278,15 +274,15 @@ int main(int argc, char *argv[])
             testfailed = true;
             numberFailedTests++;
             if (verbose && MyPID==0) {
-              cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: " 
-                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << endl;
+              std::cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: "
+                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << std::endl;
             }
             break;
           }
         }
         if (testfailed == false) {
           if (verbose && MyPID == 0) {
-            cout << "pass: directSolve(diag(lambda),2I) correct." << endl;
+            std::cout << "pass: directSolve(diag(lambda),2I) correct." << std::endl;
           }
         }
       }
@@ -307,13 +303,13 @@ int main(int argc, char *argv[])
       if (info != 0) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(0) returned error " << info << endl;
+          std::cout << "ERROR: directSolve(0) returned error " << info << std::endl;
         }
       }
       else if (rank != nev-2) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(10) didn't return all eigenpairs" << endl;
+          std::cout << "ERROR: directSolve(10) didn't return all eigenpairs" << std::endl;
         }
       }
       else {
@@ -323,15 +319,15 @@ int main(int argc, char *argv[])
             testfailed = true;
             numberFailedTests++;
             if (verbose && MyPID==0) {
-              cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: " 
-                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << endl;
+              std::cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: "
+                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << std::endl;
             }
             break;
           }
         }
         if (testfailed == false) {
           if (verbose && MyPID == 0) {
-            cout << "pass: directSolve(diag(lambda),2I) correct." << endl;
+            std::cout << "pass: directSolve(diag(lambda),2I) correct." << std::endl;
           }
         }
       }
@@ -342,7 +338,7 @@ int main(int argc, char *argv[])
     //            3) shows that Q'*K*Q gives permuted L
     // this tests the eigenvectors and the permutation routine
     {
-      Teuchos::SerialDenseMatrix<int,double> K(size,size), M(size,size), Q(nev,nev), 
+      Teuchos::SerialDenseMatrix<int,double> K(size,size), M(size,size), Q(nev,nev),
                                              T1(nev,nev), TK(nev,nev), TM(nev,nev);
       std::vector<double> lambda2(nev);
       for (int i=0; i<nev; i++) {
@@ -354,17 +350,17 @@ int main(int argc, char *argv[])
       if (info != 0) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(0) returned error " << info << endl;
+          std::cout << "ERROR: directSolve(0) returned error " << info << std::endl;
         }
       }
       else if (rank != nev) {
         numberFailedTests++;
         if (verbose && MyPID == 0) {
-          cout << "ERROR: directSolve(10) didn't return all eigenpairs" << endl;
+          std::cout << "ERROR: directSolve(10) didn't return all eigenpairs" << std::endl;
         }
       }
       else {
-        Teuchos::SerialDenseMatrix<int,double> KK(Teuchos::View,K,nev,nev), 
+        Teuchos::SerialDenseMatrix<int,double> KK(Teuchos::View,K,nev,nev),
                                                MM(Teuchos::View,M,nev,nev);
         // permute Q
         Utils::permuteVectors(rperm,Q);
@@ -385,8 +381,8 @@ int main(int argc, char *argv[])
             testfailed = true;
             numberFailedTests++;
             if (verbose && MyPID==0) {
-              cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: " << endl
-                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << endl;
+              std::cout << "ERROR: directSolve(diag(lambda),2I) produced wrong eigenvalues: " << std::endl
+                   << "i: " << i << "   " << K(i,i)/M(i,i) << " vs. " << lambda2[i] << std::endl;
             }
             break;
           }
@@ -395,8 +391,8 @@ int main(int argc, char *argv[])
             testfailed = true;
             numberFailedTests++;
             if (verbose && MyPID==0) {
-              cout << "ERROR: Q'*K*Q diagonals don't match lambdas" << endl
-                   << "i: " << i << "   " << TK(i,i) << " vs. " << lambda2[rperm[i]] << endl;
+              std::cout << "ERROR: Q'*K*Q diagonals don't match lambdas" << std::endl
+                   << "i: " << i << "   " << TK(i,i) << " vs. " << lambda2[rperm[i]] << std::endl;
             }
             break;
           }
@@ -409,8 +405,8 @@ int main(int argc, char *argv[])
           testfailed = true;
           numberFailedTests++;
           if (verbose && MyPID==0) {
-            cout << "ERROR: permuted directSolve(diag(lambda),2I),  produced non-K-orthogonal Ritz vectors: " << endl
-              << "| Q'*K*Q - L |: " <<  TK.normFrobenius() << endl;
+            std::cout << "ERROR: permuted directSolve(diag(lambda),2I),  produced non-K-orthogonal Ritz vectors: " << std::endl
+              << "| Q'*K*Q - L |: " <<  TK.normFrobenius() << std::endl;
           }
         }
         // check Q'*M*Q == I
@@ -420,14 +416,14 @@ int main(int argc, char *argv[])
         if (TM.normFrobenius() > 1e-14) {
           numberFailedTests++;
           if (verbose && MyPID==0) {
-            cout << "ERROR: permuted directSolve(diag(lambda),2I) produced non-M-orthonormal Ritz vectors: " << endl
-              << "| Q'*M*Q - I |: " <<  TM.normFrobenius() << endl;
+            std::cout << "ERROR: permuted directSolve(diag(lambda),2I) produced non-M-orthonormal Ritz vectors: " << std::endl
+              << "| Q'*M*Q - I |: " <<  TM.normFrobenius() << std::endl;
           }
         }
 
         if (testfailed == false) {
           if (verbose && MyPID == 0) {
-            cout << "pass: directSolve(diag(lambda),2I) with permute correct." << endl;
+            std::cout << "pass: directSolve(diag(lambda),2I) with permute correct." << std::endl;
           }
         }
       }
@@ -440,7 +436,7 @@ int main(int argc, char *argv[])
 
  if (numberFailedTests) {
     if (verbose && MyPID==0) {
-      cout << endl << "End Result: TEST FAILED" << endl;
+      std::cout << std::endl << "End Result: TEST FAILED" << std::endl;
     }
     return -1;
   }
@@ -448,7 +444,7 @@ int main(int argc, char *argv[])
   // Default return value
   //
   if (verbose && MyPID==0) {
-    cout << endl << "End Result: TEST PASSED" << endl;
+    std::cout << std::endl << "End Result: TEST PASSED" << std::endl;
   }
   return 0;
 

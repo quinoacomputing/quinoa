@@ -287,6 +287,9 @@ namespace Amesos2 {
      * specific to a given solver.  If the solver does not recognize the
      * parameter, then it will simply be ignored
      *
+     * \note The ParameterList must be named "Amesos2".  A list with any other name
+     * will be ignored.
+     *
      * \post
      * - Internal variables controlling the factorization and solve will be
      *   updated and take effect on all subsequent calls to
@@ -477,6 +480,12 @@ namespace Amesos2 {
 
     /// Number of global non-zero values in \c matrixA_
     global_size_type globalNumNonZeros_;
+
+    /// Index base of rowmap of \c matrixA_
+    global_size_type rowIndexBase_;
+
+    /// Index base of column map of \c matrixA_
+    global_size_type columnIndexBase_;
 
 
     /// Holds status information about a solver

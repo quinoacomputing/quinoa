@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //    Thyra: Interfaces and Support for Abstract Numerical Algorithms
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov) 
-// 
+// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -126,12 +126,6 @@ using Teuchos::TypeNameTraits;
  */
 typedef Teuchos::Ordinal Ordinal;
 
-/** \brief Deprecated: Use Ordinal instead!
-`*
- * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
- */
-THYRA_DEPRECATED typedef Ordinal Index;
-
 
 /** \brief Enumeration for determining how a linear operator is applied.
 `*
@@ -155,7 +149,7 @@ const char* toString(EConj conj)
     case CONJ_ELE:       return "CONJ_ELE";
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return "BAD"; // Should never be called!
+  // return "BAD"; // Should never be called!
 }
 
 
@@ -170,20 +164,13 @@ enum EOpTransp {
    * (same as <tt>NOTRANS</tt> for real scalar types).
    */
   CONJ,
-  /** \brief Use the transposed operator. */ 
+  /** \brief Use the transposed operator. */
   TRANS,
   /** \brief Use the transposed operator with complex-conjugate clements (same
    * as <tt>TRANS</tt> for real scalar types).
    */
   CONJTRANS
 };
-
-
-/** \brief Deprecated (use EOpTransp instead).
- *
- * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
- */
-THYRA_DEPRECATED typedef EOpTransp ETransp;
 
 
 /** \brief Return a string name for a <tt>EOpTransp</tt> value.
@@ -200,7 +187,7 @@ const char* toString(EOpTransp transp)
     case CONJTRANS:  return "CONJTRANS";
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return "BAD"; // Should never be called!
+  // return "BAD"; // Should never be called!
 }
 
 
@@ -219,7 +206,7 @@ EOpTransp real_trans(EOpTransp transp)
     case CONJTRANS:  return TRANS;
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return NOTRANS; // Will never be called!
+  // return NOTRANS; // Will never be called!
 }
 
 
@@ -227,7 +214,7 @@ EOpTransp real_trans(EOpTransp transp)
  *
  * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
  */
-inline 
+inline
 EOpTransp not_trans( EOpTransp transp )
 {
   switch(transp) {
@@ -237,7 +224,7 @@ EOpTransp not_trans( EOpTransp transp )
     case CONJTRANS:  return NOTRANS;
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return NOTRANS; // Will never be called!
+  // return NOTRANS; // Will never be called!
 }
 
 
@@ -262,7 +249,7 @@ EOpTransp trans_trans( EOpTransp trans1, EOpTransp trans2 )
     return TRANS;
   else
     TEUCHOS_TEST_FOR_EXCEPT(true);
-  return NOTRANS; // Will never be executed!
+  // return NOTRANS; // Will never be executed!
 }
 
 
@@ -280,7 +267,7 @@ EConj transToConj( EOpTransp trans )
     case CONJTRANS:  return CONJ_ELE;
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return NONCONJ_ELE; // Will never be called!
+  // return NONCONJ_ELE; // Will never be called!
 }
 
 /** \brief Convert from <tt>EConj</tt> to <tt>EOpTransp</tt> for forward apply.
@@ -295,7 +282,7 @@ EOpTransp applyConjToTrans( EConj conj )
     case CONJ_ELE:    return CONJ;
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return NOTRANS; // Will never be called!
+  // return NOTRANS; // Will never be called!
 }
 
 
@@ -311,7 +298,7 @@ EOpTransp applyTransposeConjToTrans( EConj conj )
     case CONJ_ELE:    return CONJTRANS;
     default: TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  return NOTRANS; // Will never be called!
+  // return NOTRANS; // Will never be called!
 }
 
 /** \brief Determines if a view is a direct view of data or a detached copy of

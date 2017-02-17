@@ -82,10 +82,6 @@ public:
   void randomize(const Ptr<MultiVectorBase<Scalar> > &mv)
     { randomizeImpl(mv); }
 
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED void randomize(MultiVectorBase<Scalar> *mv)
-    { randomizeImpl(Teuchos::outArg(mv)); }
-
 private:
 
   /** \brief . */

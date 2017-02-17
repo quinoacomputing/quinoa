@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
@@ -46,13 +46,13 @@
 
 //=============================================================================
 Epetra_SerialComm::Epetra_SerialComm()
-  : Epetra_Object("Epetra::Comm"), 
+  : Epetra_Object("Epetra::Comm"),
 		SerialCommData_(new Epetra_SerialCommData()) {}
- 
+
 //=============================================================================
-Epetra_SerialComm::Epetra_SerialComm(const Epetra_SerialComm& Comm) 
-	: Epetra_Object(Comm.Label()), 
-		SerialCommData_(Comm.SerialCommData_) 
+Epetra_SerialComm::Epetra_SerialComm(const Epetra_SerialComm& Comm)
+	: Epetra_Object(Comm.Label()),
+		SerialCommData_(Comm.SerialCommData_)
 {
 	SerialCommData_->IncrementReferenceCount();
 }
@@ -74,6 +74,13 @@ int Epetra_SerialComm::Broadcast(int * Values, int Count, int Root) const {
 }
 //=============================================================================
 int Epetra_SerialComm::Broadcast(long * Values, int Count, int Root) const {
+  (void)Values;
+  (void)Count;
+  (void)Root;
+  return(0);
+}
+//=============================================================================
+int Epetra_SerialComm::Broadcast(long long * Values, int Count, int Root) const{
   (void)Values;
   (void)Count;
   (void)Root;
@@ -102,6 +109,11 @@ int Epetra_SerialComm::GatherAll(long * MyVals, long * AllVals, int Count) const
   return(0);
 }
 //=============================================================================
+int Epetra_SerialComm::GatherAll(long long * MyVals, long long * AllVals, int Count) const {
+  for (int i=0; i<Count; ++i) AllVals[i] = MyVals[i];
+  return(0);
+}
+//=============================================================================
 int Epetra_SerialComm::SumAll(double * PartialSums, double * GlobalSums, int Count) const {
   for (int i=0; i<Count; i++) GlobalSums[i] = PartialSums[i];
   return(0);
@@ -113,6 +125,11 @@ int Epetra_SerialComm::SumAll(int * PartialSums, int * GlobalSums, int Count) co
 }
 //=============================================================================
 int Epetra_SerialComm::SumAll(long * PartialSums, long * GlobalSums, int Count) const {
+  for (int i=0; i<Count; i++) GlobalSums[i] = PartialSums[i];
+  return(0);
+}
+//=============================================================================
+int Epetra_SerialComm::SumAll(long long * PartialSums, long long * GlobalSums, int Count) const {
   for (int i=0; i<Count; i++) GlobalSums[i] = PartialSums[i];
   return(0);
 }
@@ -132,6 +149,11 @@ int Epetra_SerialComm::MaxAll(long * PartialMaxs, long * GlobalMaxs, int Count) 
   return(0);
 }
 //=============================================================================
+int Epetra_SerialComm::MaxAll(long long * PartialMaxs, long long * GlobalMaxs, int Count) const {
+  for (int i=0; i<Count; i++) GlobalMaxs[i] = PartialMaxs[i];
+  return(0);
+}
+//=============================================================================
 int Epetra_SerialComm::MinAll(double * PartialMins, double * GlobalMins, int Count) const {
   for (int i=0; i<Count; i++) GlobalMins[i] = PartialMins[i];
   return(0);
@@ -147,6 +169,11 @@ int Epetra_SerialComm::MinAll(long * PartialMins, long * GlobalMins, int Count) 
   return(0);
 }
 //=============================================================================
+int Epetra_SerialComm::MinAll(long long * PartialMins, long long * GlobalMins, int Count) const {
+  for (int i=0; i<Count; i++) GlobalMins[i] = PartialMins[i];
+  return(0);
+}
+//=============================================================================
 int Epetra_SerialComm::ScanSum(double * MyVals, double * ScanSums, int Count) const {
   for (int i=0; i<Count; i++) ScanSums[i] = MyVals[i];
   return(0);
@@ -158,6 +185,11 @@ int Epetra_SerialComm::ScanSum(int * MyVals, int * ScanSums, int Count) const {
 }
 //=============================================================================
 int Epetra_SerialComm::ScanSum(long * MyVals, long * ScanSums, int Count) const {
+  for (int i=0; i<Count; i++) ScanSums[i] = MyVals[i];
+  return(0);
+}
+//=============================================================================
+int Epetra_SerialComm::ScanSum(long long * MyVals, long long * ScanSums, int Count) const {
   for (int i=0; i<Count; i++) ScanSums[i] = MyVals[i];
   return(0);
 }

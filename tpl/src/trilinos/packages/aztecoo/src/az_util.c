@@ -130,10 +130,13 @@ void AZ_compute_residual(double b[], double x[], double r[],
 
   /**************************** execution begins ******************************/
 
+  AZ_START_TIMER( "AztecOO: Operation Op*x", matvecID );
+
   N = Amat->data_org[AZ_N_internal] + Amat->data_org[AZ_N_border];
 
   Amat->matvec(x, r, Amat, proc_config);
 
+  AZ_STOP_TIMER( matvecID );
 
   for(i = 0; i < N; i++) r[i] = b[i] - r[i];
 
@@ -837,7 +840,7 @@ void AZ_free_memory(int label)
 *******************************************************************************/
 
 {
-  (void) AZ_manage_memory((int) NULL, AZ_CLEAR, label, (char *) NULL,
+  (void) AZ_manage_memory((unsigned int) NULL, AZ_CLEAR, label, (char *) NULL,
                           (int *) NULL);
 }
 
@@ -939,7 +942,7 @@ double *AZ_manage_memory(unsigned int input_size, int action, int type,
   static struct mem_ptr *head = NULL;
   struct mem_ptr        *current, *temp,*prev, *thenext;
   int                   found = 0, i,j, n2, nn;
-int aligned_str_mem,aligned_j,aligned_size;
+  long int aligned_str_mem, aligned_j, aligned_size;
 double *dtmp;
 
   /**************************** execution begins ******************************/
@@ -1002,6 +1005,19 @@ double *dtmp;
         exit(-1);
       }
       temp = (struct mem_ptr *) &(dtmp[aligned_size/sizeof(double)]);
+#ifdef NotPortable
+      /* Something does not quite work right with this check.         */
+      /* Every once in a while this prints in some unusual situations */
+      /* where it does not seem possible that we have requested too   */
+      /* much memory. Not really sure what is going on? It might be a */
+      /* good idea to print the binary form of each address so that at*/
+      /* the least we have a little more diagnostic information. It   */
+      /* might also be smart to print the 'name' and size info.       */ 
+      if ( (unsigned int) temp < (unsigned int) dtmp ) {
+        (void) AZ_printf_err( "Error: Something wrong here. Perhaps negative space has been requested? Could be a large number without enough bits to represent it.\n");
+        exit(-1);
+      }
+#endif
       temp->name = (char *)     &(dtmp[(aligned_str_mem+aligned_size)/
 				          sizeof(double)]);
       temp->address = dtmp;
@@ -1898,10 +1914,11 @@ char *AZ_allocate(unsigned int isize) {
 
     char *ptr, *header_start, *header_end;
     struct widget *widget;
-    int *size_ptr, i, size;
+    int *size_ptr, i;
+    unsigned int size;
     double *dptr;
 
-    size = (int) isize;
+    size = isize;
 
     size = size + 7*sizeof(double);
     widget = (struct widget *) malloc(sizeof(struct widget));
@@ -2599,6 +2616,7 @@ void AZ_matrix_destroy(AZ_MATRIX **Amat)
 {
   if ( (*Amat) == NULL) return;
    if ((*Amat)->must_free_data_org == 1) {
+      AZ_free_memory((*Amat)->data_org[AZ_name]);
       AZ_free((*Amat)->data_org);
       (*Amat)->data_org = NULL;
    }

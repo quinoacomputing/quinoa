@@ -1,217 +1,187 @@
-INCLUDE(TribitsPackageMacros)
-INCLUDE(TribitsAddOptionAndDefine)
-INCLUDE(CombinedOption)
-INCLUDE(GlobalSet)
+
+IF(COMMAND TRIBITS_PACKAGE_DECL)
+  SET(KOKKOS_HAS_TRILINOS ON CACHE BOOL "")
+ELSE()
+  SET(KOKKOS_HAS_TRILINOS OFF CACHE BOOL "")
+ENDIF()
+
+IF(NOT KOKKOS_HAS_TRILINOS)
+  CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11 FATAL_ERROR)
+  INCLUDE(cmake/tribits.cmake)
+ENDIF()
 
 #
-# A) Define the package
+# A) Forward delcare the package so that certain options are also defined for
+# subpackages
 #
 
-TRIBITS_PACKAGE(Kokkos)
+TRIBITS_PACKAGE_DECL(Kokkos) # ENABLE_SHADOWING_WARNINGS)
 
-SET(${PACKAGE_NAME}_VERSION "1.3d")
-
+#------------------------------------------------------------------------------
 #
-# B) Set up package-specific options
+# B) Define the common options for Kokkos first so they can be used by
+# subpackages as well.
 #
 
-TRIBITS_ADD_DEBUG_OPTION()
 
-# TRIBITS_ADD_OPTION_AND_DEFINE( 
-#   Kokkos_DEFAULT_NODE
-#   KOKKOS_DEFAULT_NODE
-#   "Kokkos default node: SerialNode, OpenMPNode, TBBNode, TPINode, ThrustGPUNode"
-#   "SerialNode"
-#   )
 
-TRIBITS_ADD_OPTION_AND_DEFINE( 
+# mfh 01 Aug 2016: See Issue #61:
+#
+# https://github.com/kokkos/kokkos/issues/61
+#
+# Don't use TRIBITS_ADD_DEBUG_OPTION() here, because that defines
+# HAVE_KOKKOS_DEBUG.  We define KOKKOS_HAVE_DEBUG here instead,
+# for compatibility with Kokkos' Makefile build system.
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_DEBUG
+  ${PACKAGE_NAME_UC}_HAVE_DEBUG
+  "Enable run-time debug checks.  These checks may be expensive, so they are disabled by default in a release build."
+  ${${PROJECT_NAME}_ENABLE_DEBUG}
+)
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_SIERRA_BUILD
+  KOKKOS_FOR_SIERRA
+  "Configure Kokkos for building within the Sierra build system."
+  OFF
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Cuda
+  KOKKOS_HAVE_CUDA
+  "Enable CUDA support in Kokkos."
+  "${TPL_ENABLE_CUDA}"
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Cuda_UVM
+  KOKKOS_USE_CUDA_UVM
+  "Enable CUDA Unified Virtual Memory support in Kokkos."
+  OFF
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Pthread
+  KOKKOS_HAVE_PTHREAD
+  "Enable Pthread support in Kokkos."
+  OFF
+  )
+
+ASSERT_DEFINED(TPL_ENABLE_Pthread)
+IF (Kokkos_ENABLE_Pthread AND NOT TPL_ENABLE_Pthread)
+  MESSAGE(FATAL_ERROR "You set Kokkos_ENABLE_Pthread=ON, but Trilinos' support for Pthread(s) is not enabled (TPL_ENABLE_Pthread=OFF).  This is not allowed.  Please enable Pthreads in Trilinos before attempting to enable Kokkos' support for Pthreads.")
+ENDIF ()
+IF (NOT TPL_ENABLE_Pthread)
+  ADD_DEFINITIONS(-DGTEST_HAS_PTHREAD=0)
+ENDIF()
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_OpenMP
-  HAVE_KOKKOS_OPENMP
-  "Enable OpenMP in Kokkos."
-  ${${PROJECT_NAME}_ENABLE_OpenMP}
+  KOKKOS_HAVE_OPENMP
+  "Enable OpenMP support in Kokkos."
+  "${${PROJECT_NAME}_ENABLE_OpenMP}"
   )
-IF(Kokkos_ENABLE_OpenMP AND NOT ${PROJECT_NAME}_ENABLE_OpenMP)
-  MESSAGE(WARNING "Disabling OpenMP in Kokkos because ${PROJECT_NAME}_ENABLE_OpenMP is ${${PROJECT_NAME}_ENABLE_OpenMP}")
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_QTHREAD
+  KOKKOS_HAVE_QTHREAD
+  "Enable QTHREAD support in Kokkos."
+  "${TPL_ENABLE_QTHREAD}"
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_CXX11
+  KOKKOS_HAVE_CXX11
+  "Enable C++11 support in Kokkos."
+  "${${PROJECT_NAME}_ENABLE_CXX11}"
+  )
+  
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_HWLOC
+  KOKKOS_HAVE_HWLOC
+  "Enable HWLOC support in Kokkos."
+  "${TPL_ENABLE_HWLOC}"
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_MPI
+  KOKKOS_HAVE_MPI
+  "Enable MPI support in Kokkos."
+  "${TPL_ENABLE_MPI}"
+  )
+
+# Set default value of Kokkos_ENABLE_Debug_Bounds_Check option
+#
+# CMake is case sensitive.  The Kokkos_ENABLE_Debug_Bounds_Check
+# option (defined below) is annoyingly not all caps, but we need to
+# keep it that way for backwards compatibility.  If users forget and
+# try using an all-caps variable, then make it count by using the
+# all-caps version as the default value of the original, not-all-caps
+# option.  Otherwise, the default value of this option comes from
+# Kokkos_ENABLE_DEBUG (see Issue #367).
+
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_DEBUG)
+IF(DEFINED Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
+  IF(Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
+    SET(Kokkos_ENABLE_Debug_Bounds_Check_DEFAULT ON)
+  ELSE()
+    SET(Kokkos_ENABLE_Debug_Bounds_Check_DEFAULT "${${PACKAGE_NAME}_ENABLE_DEBUG}")
+  ENDIF()
+ELSE()
+  SET(Kokkos_ENABLE_Debug_Bounds_Check_DEFAULT "${${PACKAGE_NAME}_ENABLE_DEBUG}")
 ENDIF()
-
+ASSERT_DEFINED(Kokkos_ENABLE_Debug_Bounds_Check_DEFAULT)
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_NodeAPI
-  HAVE_KOKKOS_NODEAPI
-  "Enable Kokkos node programming API."
-  ON
+  Kokkos_ENABLE_Debug_Bounds_Check
+  KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+  "Enable Kokkos::View run-time bounds checking."
+  "${Kokkos_ENABLE_Debug_Bounds_Check_DEFAULT}"
   )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_LinAlg
-  HAVE_KOKKOS_LINALG
-  "Enable Kokkos local linear algebra."
-  ON
+  Kokkos_ENABLE_Profiling
+  KOKKOS_ENABLE_PROFILING_INTERNAL
+  "Enable KokkosP profiling support for kernel data collections."
+  "${TPL_ENABLE_DLlib}"
   )
 
+# placeholder for future device...
 TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_Array
-  HAVE_KOKKOS_ARRAY
-  "Enable Kokkos multidimensional arrays."
+  Kokkos_ENABLE_Winthread
+  KOKKOS_HAVE_WINTHREAD
+  "Enable Winthread support in Kokkos."
+  "${TPL_ENABLE_Winthread}"
+  )
+
+# use new/old View
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_USING_DEPRECATED_VIEW
+  KOKKOS_USING_DEPRECATED_VIEW
+  "Choose whether to use the old, deprecated Kokkos::View"
   OFF
   )
 
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_CUDA_FLOAT
-  HAVE_KOKKOS_CUDA_FLOAT
-  "Enable float type for CUDA nodes."
-  ON
-)
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_CUDA_DOUBLE
-  HAVE_KOKKOS_CUDA_DOUBLE
-  "Enable double type for CUDA nodes."
-  OFF
-)
-
-# TRIBITS_ADD_OPTION_AND_DEFINE(
-#   Kokkos_ENABLE_CUDA_COMPLEX_FLOAT
-#   HAVE_KOKKOS_CUDA_COMPLEX_FLOAT
-#   "Enable complex<float> type for CUDA nodes (requires Teuchos_ENABLE_COMPLEX)"
-#   OFF
-# )
-# TRIBITS_ADD_OPTION_AND_DEFINE(
-#   Kokkos_ENABLE_CUDA_COMPLEX_DOUBLE
-#   HAVE_KOKKOS_CUDA_COMPLEX_DOUBLE
-#   "Enable complex<double> type for CUDA nodes (requires Teuchos_ENABLE_COMPLEX)."
-#   OFF
-# )
-# IF((Kokkos_ENABLE_CUDA_COMPLEX_FLOAT OR Kokkos_ENABLE_CUDA_COMPLEX_DOUBLE) AND NOT (Teuchos_ENABLE_COMPLEX AND Kokkos_ENABLE_Cusp))
-#   MESSAGE(FATAL_ERROR 
-#     "\nKokkos support for Complex requires enabling Teuchos support for Complex via Teuchos_ENABLE_COMPLEX and the Cusp TPL")
-# ENDIF()
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_CUDA_NODE_MEMORY_PROFILING
-  HAVE_KOKKOS_CUDA_NODE_MEMORY_PROFILING
-  "Enable profiling of memory transfers for CUDA nodes."
-  ${${PACKAGE_NAME}_ENABLE_DEBUG}
-)
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_CUDA_NODE_MEMORY_TRACE
-  HAVE_KOKKOS_CUDA_NODE_MEMORY_TRACE
-  "Enable memory movement trace for CUDA nodes."
-  OFF
-)
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_TREAT_SERIALNODE_AS_DEVICE
-  HAVE_KOKKOS_TREAT_SERIALNODE_AS_DEVICE
-  "Treat Kokkos::SerialNode as a device node instead of a host node, for kernels where there is a difference."
-  ${${PACKAGE_NAME}_ENABLE_DEBUG}
-  )
-
-######################################################################
-## BEGIN TSQR options
-######################################################################
-
-# Whether to enable TSQR (Tall Skinny QR factorization).
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_ENABLE_TSQR
-  HAVE_KOKKOS_TSQR
-  "Enable TSQR (Tall Skinny QR factorization) in Kokkos"
-  OFF
-  )
-
-# Whether to enable TSQR's complex arithmetic (std::complex<T>)
-# support.
+#------------------------------------------------------------------------------
 #
-# Enabled by default (unless disabled explicitly at the command line)
-# if Teuchos is built with complex arithmetic support.
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  TSQR_ENABLE_Complex
-  HAVE_TSQR_COMPLEX
-  "Enable complex arithmetic (std::complex<T>) support for TSQR"
-  "${Teuchos_ENABLE_COMPLEX}" 
-  )
-
-# Whether to enable TSQR's Fortran backend (TSQR::CombineFortran).
-#
-# Defaults to off, even if Trilinos is built with Fortran support.
-# This is because TSQR's Fortran backend must support the Fortran 2003
-# language standard.
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  TSQR_ENABLE_Fortran
-  HAVE_TSQR_FORTRAN
-  "For TSQR: Enable the CombineFortran backend option for Combine.  This requires Fortran 2003 support, so it is disabled by default, even if you have enabled Fortran in your build.  TSQR will work fine without CombineFortran; this option is only of interest to performance tuners."
-  OFF
-  )
-
-# Whether to build TbbTsqr and related classes.
-#
-# Enabled by default (unless disabled explicitly at the command line)
-# if Trilinos is built with the TBB (Intel's Threading Building
-# Blocks) TPL (third-party library) enabled.
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  TSQR_ENABLE_Intel_TBB
-  HAVE_TSQR_INTEL_TBB
-  "For TSQR: enable Intel Threading Building Blocks intranode parallelization.  This option is enabled by default if you are building Trilinos with TBB enabled as a 'third-party library' (TPL), so you should not have to enable this option manually.  TSQR will work without this, but enabling it will make TSQR go faster on multicore CPU nodes."
-  "${TPL_ENABLE_TBB}" 
-  )
-
-######################################################################
-## END TSQR options
-######################################################################
-
-#
-# C) Add the libraries, tests, and examples
+# C) Process the subpackages for Kokkos
 #
 
-ADD_SUBDIRECTORY(src)
-
-IF (Kokkos_ENABLE_NodeAPI)
-  ADD_SUBDIRECTORY(NodeAPI)
-ENDIF()
-
-if (Kokkos_ENABLE_LinAlg AND Kokkos_ENABLE_NodeAPI)
-  ADD_SUBDIRECTORY(LinAlg)
-ENDIF()
-
-IF (Kokkos_ENABLE_Array)
-  ADD_SUBDIRECTORY(array)
-ENDIF()
-
-######################################################################
-## BEGIN TSQR setup
-######################################################################
-
-if (Kokkos_ENABLE_TSQR)
-  # Intranode (shared-memory only) part of TSQR.
-  ADD_SUBDIRECTORY(NodeTSQR)
-  # Internode (distributed-memory) part of TSQR.  Depends only on
-  # Teuchos for distributed-memory communication.  We put this in
-  # Kokkos for lack of a better place: it's independent of Tpetra /
-  # Epetra and can work for both, so it shouldn't go in either
-  # package.
-  ADD_SUBDIRECTORY(DistTSQR)  
-ENDIF()
-
-######################################################################
-## END TSQR setup
-######################################################################
+TRIBITS_PROCESS_SUBPACKAGES()
 
 #
-# Exclude files for source package.
+# D) If Kokkos itself is enabled, process the Kokkos package
 #
+
+TRIBITS_PACKAGE_DEF()
 
 TRIBITS_EXCLUDE_AUTOTOOLS_FILES()
 
 TRIBITS_EXCLUDE_FILES(
-  doc
-  DistTSQR/doc
-  array/research
-  LinAlg/doc/CrsRefactorNotesMay2012
+  classic/doc
+  classic/LinAlg/doc/CrsRefactorNotesMay2012
   )
 
-#
-# D) Do standard postprocessing
-#
-
 TRIBITS_PACKAGE_POSTPROCESS()
+

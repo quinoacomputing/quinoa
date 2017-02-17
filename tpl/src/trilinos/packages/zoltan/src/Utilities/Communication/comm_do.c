@@ -1,16 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
-
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 
 #include <stdio.h>
@@ -99,9 +131,9 @@ char *recv_data)		/* array of data I'll own after comm */
 {
     char     *send_buff;	/* space to buffer outgoing data */
     int       my_proc;		/* processor ID */
-    unsigned int self_recv_address = 0;/* where in recv_data self info starts */
+    size_t    self_recv_address = 0;/* where in recv_data self info starts */
     int       self_num=0;       /* where in send list my_proc appears */
-    int       offset;		/* offset into array I'm copying into */
+    size_t    offset;		/* offset into array I'm copying into */
     int       self_index = 0;	/* send offset for data I'm keeping */
     int       out_of_mem;	/* am I out of memory? */
     int       nblocks;		/* number of procs who need my data */
@@ -128,7 +160,7 @@ char *recv_data)		/* array of data I'll own after comm */
     MPI_Comm_rank(plan->comm, &my_proc);
 
     if ((plan->nsends + plan->self_msg) && !send_data) {
-        int sum = 0;
+        size_t sum = 0;
         if (plan->sizes_to)   /* Not an error if all sizes_to == 0 */
             for (i = 0; i < (plan->nsends + plan->self_msg); i++) 
                 sum += plan->sizes_to[i];
@@ -139,7 +171,7 @@ char *recv_data)		/* array of data I'll own after comm */
         }
     }
     if ((plan->nrecvs + plan->self_msg) && !recv_data) {
-        int sum = 0;
+        size_t sum = 0;
         if (plan->sizes_from)   /* Not an error if all sizes_from == 0 */
             for (i = 0; i < (plan->nrecvs + plan->self_msg); i++) 
                 sum += plan->sizes_from[i];
@@ -164,8 +196,9 @@ char *recv_data)		/* array of data I'll own after comm */
 	plan->recv_buff = recv_data;
     }
     else {			/* Need to buffer receive to reorder */
-	plan->recv_buff = (char *) ZOLTAN_MALLOC(plan->total_recv_size * nbytes);
-	if (plan->recv_buff == NULL && plan->total_recv_size * nbytes != 0)
+        size_t rsize = (size_t) (plan->total_recv_size) * (size_t) nbytes;
+	plan->recv_buff = (char *) ZOLTAN_MALLOC(rsize);
+	if (plan->recv_buff == NULL && rsize != 0)
 	    out_of_mem = 1;
     }
 
@@ -174,14 +207,15 @@ char *recv_data)		/* array of data I'll own after comm */
 	    k = 0;
 	    for (i = 0; i < plan->nrecvs + plan->self_msg; i++) {
 		if (plan->procs_from[i] != my_proc) {
-		    MPI_Irecv((void *) & plan->recv_buff[plan->starts_from[i] * nbytes],
+		    MPI_Irecv((void *)
+                              &plan->recv_buff[(size_t)(plan->starts_from[i]) * (size_t)nbytes],
 			      plan->lengths_from[i] * nbytes,
 			      (MPI_Datatype) MPI_BYTE, plan->procs_from[i], tag,
 			      plan->comm, &plan->request[k]);
 		    k++;
 		}
 		else {
-		    self_recv_address = plan->starts_from[i] * nbytes;
+		    self_recv_address = (size_t)(plan->starts_from[i]) * (size_t)nbytes;
 		}
 	    }
 	}
@@ -190,18 +224,20 @@ char *recv_data)		/* array of data I'll own after comm */
 	    k = 0;
 	    for (i = 0; i < plan->nrecvs + plan->self_msg; i++) {
 		if (plan->procs_from[i] != my_proc) {
-                    if (plan->sizes_from[i]) 
+                    if (plan->sizes_from[i]) {
 		        MPI_Irecv((void *)
-                &plan->recv_buff[plan->starts_from_ptr[i] * nbytes],
-			          plan->sizes_from[i] * nbytes,
+                            &plan->recv_buff[(size_t)(plan->starts_from_ptr[i]) 
+                                              * (size_t)nbytes],
+		                  plan->sizes_from[i] * nbytes,
 			          (MPI_Datatype) MPI_BYTE, plan->procs_from[i], 
 			          tag, plan->comm, &plan->request[k]);
+                    }
                     else
                         plan->request[k] = MPI_REQUEST_NULL;
 	            k++;
 		}
 		else {
-		    self_recv_address = plan->starts_from_ptr[i] * nbytes;
+		    self_recv_address = (size_t)(plan->starts_from_ptr[i]) * (size_t)nbytes;
 		}
 	    }
 	}
@@ -210,8 +246,9 @@ char *recv_data)		/* array of data I'll own after comm */
 
     /* Do remaining allocation to check for any mem problems. */
     if (plan->indices_to != NULL) {	/* can't sent straight from input */
-	send_buff = (char *) ZOLTAN_MALLOC(plan->max_send_size * nbytes);
-	if (send_buff == 0 && plan->max_send_size * nbytes != 0)
+        size_t ssize = (size_t)(plan->max_send_size) * (size_t)nbytes;
+	send_buff = (char *) ZOLTAN_MALLOC(ssize);
+	if (send_buff == 0 && ssize != 0)
 	    out_of_mem = 1;
     }
     else
@@ -245,7 +282,7 @@ char *recv_data)		/* array of data I'll own after comm */
 	if (plan->indices_to == NULL) {	/* data already blocked by processor. */
 	    for (i = proc_index, j = 0; j < nblocks; j++) {
 		if (plan->procs_to[i] != my_proc) {
-		    MPI_Rsend((void *) &send_data[plan->starts_to[i] * nbytes],
+		    MPI_Rsend((void *) &send_data[(size_t)(plan->starts_to[i]) * (size_t)nbytes],
 			      plan->lengths_to[i] * nbytes,
 			      (MPI_Datatype) MPI_BYTE, plan->procs_to[i], tag,
 			      plan->comm);
@@ -276,7 +313,7 @@ char *recv_data)		/* array of data I'll own after comm */
 		    j = plan->starts_to[i];
 		    for (k = 0; k < plan->lengths_to[i]; k++) {
 			memcpy(&send_buff[offset],
-			       &send_data[plan->indices_to[j++] * nbytes], nbytes);
+			       &send_data[(size_t)(plan->indices_to[j++]) * (size_t)nbytes], nbytes);
 			offset += nbytes;
 		    }
 		    MPI_Rsend((void *) send_buff, plan->lengths_to[i] * nbytes,
@@ -292,7 +329,7 @@ char *recv_data)		/* array of data I'll own after comm */
 	    if (plan->self_msg) {	/* Copy data to self. */
 		for (k = 0; k < plan->lengths_to[self_num]; k++) {
 		    memcpy(&plan->recv_buff[self_recv_address],
-		      &send_data[plan->indices_to[self_index++] * nbytes], nbytes);
+		      &send_data[(size_t)(plan->indices_to[self_index++]) * (size_t)nbytes], nbytes);
 		    self_recv_address += nbytes;
 		}
 	    }
@@ -307,7 +344,7 @@ char *recv_data)		/* array of data I'll own after comm */
 		if (plan->procs_to[i] != my_proc) {
                     if (plan->sizes_to[i]) {
 		        MPI_Rsend((void *)
-                                  &send_data[plan->starts_to_ptr[i] * nbytes],
+                                  &send_data[(size_t)(plan->starts_to_ptr[i]) * (size_t)nbytes],
 			          plan->sizes_to[i] * nbytes,
 			          (MPI_Datatype) MPI_BYTE, plan->procs_to[i],
 			          tag, plan->comm);
@@ -322,8 +359,7 @@ char *recv_data)		/* array of data I'll own after comm */
 	    if (plan->self_msg) {	/* Copy data to self. */
                 if (plan->sizes_to[self_num]) {
                     char* lrecv = &plan->recv_buff[self_recv_address];
-                    char* lsend = &send_data[plan->starts_to_ptr[self_num] 
-                                             * nbytes];
+                    char* lsend = &send_data[(size_t)(plan->starts_to_ptr[self_num]) * (size_t)nbytes];
                     int sindex = plan->sizes_to[self_num], idx;
                     for (idx=0; idx<nbytes; idx++) {
                         memcpy(lrecv, lsend, sindex);
@@ -343,9 +379,9 @@ char *recv_data)		/* array of data I'll own after comm */
 		    for (k = 0; k < plan->lengths_to[i]; k++) {
                         if (plan->sizes[plan->indices_to[j]]) {
 			    memcpy(&send_buff[offset],
-			       &send_data[plan->indices_to_ptr[j] * nbytes],
-			       plan->sizes[plan->indices_to[j]] * nbytes);
-			    offset += plan->sizes[plan->indices_to[j]] * nbytes;
+			       &send_data[(size_t)(plan->indices_to_ptr[j]) * (size_t)nbytes],
+			       (size_t)(plan->sizes[plan->indices_to[j]]) * (size_t)nbytes);
+			    offset += (size_t)(plan->sizes[plan->indices_to[j]]) * (size_t)nbytes;
                         }
 			j++;
 		    }
@@ -367,7 +403,7 @@ char *recv_data)		/* array of data I'll own after comm */
 		    for (k = 0; k < plan->lengths_to[self_num]; k++) {
 		        int kk = plan->indices_to_ptr[j];
                         char* lrecv = &plan->recv_buff[self_recv_address];
-                        unsigned int send_idx = kk * nbytes;
+                        size_t send_idx = (size_t)kk * (size_t)nbytes;
                         char* lsend = &send_data[send_idx];
                         int sindex = plan->sizes[plan->indices_to[j]], idx;
                         for (idx=0; idx<nbytes; idx++) {
@@ -375,8 +411,8 @@ char *recv_data)		/* array of data I'll own after comm */
                             lrecv += sindex;
                             lsend += sindex;
                         }
-		        self_recv_address += plan->sizes[plan->indices_to[j]] 
-                                           * nbytes;
+		        self_recv_address += (size_t)(plan->sizes[plan->indices_to[j]])
+                                           * (size_t) nbytes;
 		        j++;
 		    }
 		}
@@ -427,8 +463,8 @@ char *recv_data)		/* array of data I'll own after comm */
 	    k = plan->starts_from[self_num];
             if (!plan->sizes_from || plan->sizes_from[self_num]) {
 	        for (j = plan->lengths_from[self_num]; j; j--) {
-		    memcpy(&recv_data[plan->indices_from[k] * nbytes],
-		        &plan->recv_buff[k * nbytes], nbytes);
+		    memcpy(&recv_data[(size_t)(plan->indices_from[k]) * (size_t)nbytes],
+		        &plan->recv_buff[(size_t)k * (size_t)nbytes], nbytes);
 		    k++;
 	        }
 	    }
@@ -446,8 +482,8 @@ char *recv_data)		/* array of data I'll own after comm */
 
 	    k = plan->starts_from[i];
 	    for (j = plan->lengths_from[i]; j; j--) {
-		memcpy(&recv_data[plan->indices_from[k] * nbytes],
-		    &plan->recv_buff[k * nbytes], nbytes);
+		memcpy(&recv_data[(size_t)(plan->indices_from[k]) * (size_t)nbytes],
+		    &plan->recv_buff[(size_t)k * (size_t)nbytes], nbytes);
 		k++;
 	    }
 	}
@@ -475,7 +511,7 @@ char *recv_data)		/* array of data I'll own after comm */
   char *outbuf=NULL, *inbuf=NULL, *buf=NULL;
   int *outbufCounts=NULL, *outbufOffsets=NULL; 
   int *inbufCounts=NULL, *inbufOffsets=NULL;
-  int nprocs, me, rc, i, j, k, p, sorted;
+  int nprocs, me, i, j, k, p, sorted;
   int nSendMsgs, nSendItems, nRecvMsgs, nRecvItems;
   int length, offset, itemSize, outbufLen;
 
@@ -538,7 +574,7 @@ char *recv_data)		/* array of data I'll own after comm */
        * items are not grouped by message
        */
 
-      buf = outbuf = (char *)ZOLTAN_MALLOC(outbufLen * nbytes);
+      buf = outbuf = (char *)ZOLTAN_MALLOC((size_t)outbufLen * (size_t)nbytes);
       if (outbufLen && nbytes && !outbuf){
         ZOLTAN_COMM_ERROR("memory error", yo, me);
       }
@@ -576,7 +612,7 @@ char *recv_data)		/* array of data I'll own after comm */
 
       if (!sorted || (plan->nvals > nSendItems) ){
 
-        buf = outbuf = (char *)ZOLTAN_MALLOC(outbufLen * nbytes);
+        buf = outbuf = (char *)ZOLTAN_MALLOC((size_t)outbufLen * (size_t)nbytes);
         if (outbufLen && nbytes && !outbuf){
           ZOLTAN_COMM_ERROR("memory error", yo, me);
         }
@@ -618,7 +654,7 @@ char *recv_data)		/* array of data I'll own after comm */
      * message may not be contiguous in send_data
      */
 
-    buf = outbuf = (char *)ZOLTAN_MALLOC(nSendItems * nbytes);
+    buf = outbuf = (char *)ZOLTAN_MALLOC((size_t)nSendItems * (size_t)nbytes);
     if (nSendMsgs && nbytes && !outbuf){
       ZOLTAN_COMM_ERROR("memory error", yo, me);
     }
@@ -652,7 +688,7 @@ char *recv_data)		/* array of data I'll own after comm */
      */
 
     if (!sorted || (plan->nvals > nSendItems)){
-      buf = outbuf = (char *)ZOLTAN_MALLOC(nSendItems * nbytes);
+      buf = outbuf = (char *)ZOLTAN_MALLOC((size_t)nSendItems * (size_t)nbytes);
       if (nSendItems && nbytes && !outbuf){
         ZOLTAN_COMM_ERROR("memory error", yo, me);
       }
@@ -709,7 +745,7 @@ char *recv_data)		/* array of data I'll own after comm */
     inbuf = recv_data;
   }
   else{
-    inbuf = (char *)ZOLTAN_MALLOC(plan->total_recv_size * nbytes);
+    inbuf = (char *)ZOLTAN_MALLOC((size_t)(plan->total_recv_size) * (size_t)nbytes);
     if (plan->total_recv_size && nbytes && !inbuf){
       ZOLTAN_COMM_ERROR("memory error", yo, me);
     }
@@ -739,9 +775,9 @@ char *recv_data)		/* array of data I'll own after comm */
 
   /* EXCHANGE DATA */
 
-  rc = MPI_Alltoallv(outbuf, outbufCounts, outbufOffsets, MPI_BYTE,
-                     inbuf, inbufCounts, inbufOffsets, MPI_BYTE,
-                     plan->comm);
+   MPI_Alltoallv(outbuf, outbufCounts, outbufOffsets, MPI_BYTE,
+                 inbuf, inbufCounts, inbufOffsets, MPI_BYTE,
+                 plan->comm);
 
   if (outbuf != send_data){
     ZOLTAN_FREE(&outbuf);

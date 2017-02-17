@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 
 
@@ -93,8 +126,6 @@ ZOLTAN_GNO_TYPE gnos[2];
 ZOLTAN_GNO_TYPE tmpgno;
 MPI_Datatype zoltan_gno_mpi_type;
 
-int gno_size_for_dd;
-
 ZOLTAN_ID_PTR fromID, toID;
 
 zoltan_objects       myObjs;
@@ -124,8 +155,6 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
    */
 
   ZOLTAN_TRACE_ENTER(zz, yo);
-
-  gno_size_for_dd = sizeof(ZOLTAN_GNO_TYPE) / sizeof(ZOLTAN_ID_TYPE);
 
   /* initialize temporary search structures */
 
@@ -223,7 +252,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
 
     ierr = Zoltan_Comm_Create(&plan, zhg->nObj, myObjs.vtxHash, comm, msg_tag, &myHshVtxs.size);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -242,14 +271,14 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)zhg->objGID, gid_chars, (char *)myHshVtxs.vtxGID);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)zhg->objGNO, sizeof(ZOLTAN_GNO_TYPE), (char *)myHshVtxs.vtxGNO);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -258,7 +287,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
             NULL, NULL, NULL, NULL, NULL, myHshVtxs.vtxOwner,
             NULL);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -320,7 +349,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Create(&plan, myPins.nHedges, myPins.edgeHash, comm, msg_tag, &nRequests);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -346,7 +375,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)sendIdBuf, sizeof(ZOLTAN_ID_TYPE) * cnt, (char *)recvIdBuf);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -398,6 +427,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
 
 #ifdef CEDRIC_2D_PARTITIONS
     if (hgp->keep_tree) {
+      int gno_size_for_dd = sizeof(ZOLTAN_GNO_TYPE) / sizeof(ZOLTAN_ID_TYPE);
       ZOLTAN_GNO_TYPE offset;
       ZOLTAN_GNO_TYPE *egno = NULL;
       MPI_Scan(&zhg->nHedges, &offset, 1, zoltan_gno_mpi_type, MPI_SUM, zz->Communicator);
@@ -442,14 +472,14 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Resize(plan, myPins.esizes, msg_tag, &cnt);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)myPins.pinGID, gid_chars, (char *)pin_gid_buf);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -472,7 +502,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
 
       toID = myHshEdges.pinGID + (pinIdx[j] * gid_size);
 
-      for (k=0; k < recvIdBuf[i]; k++){
+      for (k=0;(ZOLTAN_ID_TYPE) k < recvIdBuf[i]; k++){
         ZOLTAN_SET_GID(zz, toID , fromID);
         toID += gid_size;
         fromID += gid_size;
@@ -497,7 +527,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Create(&plan, zhg->nPins, myHshEdges.pinHash, comm, msg_tag, &nRequests);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -512,7 +542,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
 
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)myHshEdges.pinGID, gid_chars, (char *)gid_buf);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -537,7 +567,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     ierr = Zoltan_Comm_Do_Reverse(plan, msg_tag, (char *)sendGnoBuf, 
                      sizeof(ZOLTAN_GNO_TYPE) * 2, NULL, (char *)recvGnoBuf);
 
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -566,7 +596,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
       msg_tag--;
       ierr = Zoltan_Comm_Create(&plan, zhg->nPins, zhg->Pin_Procs, comm, msg_tag, &nRequests);
 
-      if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+      if (ierr != ZOLTAN_OK){
         goto End;
       }
 
@@ -578,7 +608,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
       msg_tag--;
       ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)zhg->pinGNO, sizeof(ZOLTAN_GNO_TYPE), (char *)recvGnoBuf);
 
-      if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+      if (ierr != ZOLTAN_OK){
         goto End;
       }
 
@@ -652,7 +682,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
       msg_tag--;
       ierr = Zoltan_Comm_Create(&plan, myEWs.size, myEWs.edgeHash, comm, msg_tag, &nRequests);
 
-      if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+      if (ierr != ZOLTAN_OK){
         goto End;
       }
 
@@ -666,14 +696,14 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
       msg_tag--;
       ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)myEWs.edgeGID, gid_chars, (char *)gid_requests);
 
-      if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+      if (ierr != ZOLTAN_OK){
         goto End;
       }
 
       msg_tag--;
       ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)myEWs.wgt, cnt, (char *)gid_weights);
 
-      if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+      if (ierr != ZOLTAN_OK){
         goto End;
       }
 
@@ -752,7 +782,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Create(&plan, zhg->nPins, zhg->Pin_Procs, comm, msg_tag, &nRequests);
   
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
   
@@ -766,7 +796,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)myPins.pinGID, gid_chars, (char *)gid_buf);
   
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -794,7 +824,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     ierr = Zoltan_Comm_Do_Reverse(plan, msg_tag, (char *)sendGnoBuf, sizeof(ZOLTAN_GNO_TYPE),
                   NULL, (char *)zhg->pinGNO);
   
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -897,7 +927,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Create(&plan, cnt, procBuf, comm, msg_tag, &nRequests);
   
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -913,7 +943,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
     msg_tag--;
     ierr = Zoltan_Comm_Do(plan, msg_tag, (char *)sendGnoBuf, sizeof(ZOLTAN_GNO_TYPE) * 2, (char *)recvGnoBuf);
   
-    if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+    if (ierr != ZOLTAN_OK){
       goto End;
     }
 
@@ -967,7 +997,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
         ierr = Zoltan_Comm_Do_Reverse(plan, msg_tag, (char *)sendFloatBuf, sizeof(float) * ew_dim,
                       NULL, (char *)recvFloatBuf);
       
-        if ((ierr != ZOLTAN_OK) && (ierr != ZOLTAN_WARN)){
+        if (ierr != ZOLTAN_OK){
           goto End;
         }
         ZOLTAN_FREE(&sendFloatBuf);
@@ -1096,6 +1126,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
 
       if (nEdge && (!edgeBuf || !procBuf)) MEMORY_ERROR;
 
+
       wgts = (float *)ZOLTAN_MALLOC(sizeof(float) * nEdge * ew_dim);  /* edge weight */
       if (nEdge && ew_dim && !wgts) MEMORY_ERROR;
 
@@ -1149,7 +1180,6 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
           zhg->Ewgt = (float *)ZOLTAN_MALLOC(sizeof(float) * cnt * ew_dim);
           if (!zhg->Ewgt) MEMORY_ERROR;
           memcpy(zhg->Ewgt, wgts, ew_dim * cnt * sizeof(float));
-          ZOLTAN_FREE(&wgts);
         }
   
         zhg->edgeGNO = (ZOLTAN_GNO_TYPE *)ZOLTAN_MALLOC(sizeof(ZOLTAN_GNO_TYPE) * cnt);
@@ -1169,6 +1199,7 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
           zhg->Esize[i] = 2;
         }
       }
+      ZOLTAN_FREE(&wgts);
       ZOLTAN_FREE(&edgeBuf);
       ZOLTAN_FREE(&procBuf);
     }
@@ -1280,6 +1311,8 @@ phg_GID_lookup       *lookup_myHshVtxs = NULL;
   }
 
 End:
+
+  Zoltan_Comm_Destroy(&plan);
 
   ZOLTAN_FREE(&sendGnoBuf);
   ZOLTAN_FREE(&recvGnoBuf);
@@ -1737,6 +1770,7 @@ int *numEdges = NULL;
   if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
     ZOLTAN_PRINT_ERROR(zz->Proc, yo,
                        "Error returned from Zoltan_Get_Num_Edges_Per_Obj");
+    ZOLTAN_FREE(&numEdges);
     ZOLTAN_TRACE_EXIT(zz, yo);
     return ZOLTAN_MEMERR;
   }
@@ -1750,8 +1784,8 @@ int *numEdges = NULL;
   gewgts = (float *)ZOLTAN_MALLOC(sizeof(float) * ew_dim * sumNumEntries);
 
   if (!nbor_gids || !nbor_procs || (ew_dim && !gewgts)){
-    Zoltan_Multifree(__FILE__, __LINE__, 3, &nbor_gids, &nbor_procs, &gewgts);
-    ZOLTAN_FREE(&num_nbors);
+    Zoltan_Multifree(__FILE__, __LINE__, 4,
+                     &numEdges, &nbor_gids, &nbor_procs, &gewgts);
     ZOLTAN_TRACE_EXIT(zz, yo);
     return ZOLTAN_MEMERR;
   }
@@ -1764,8 +1798,8 @@ int *numEdges = NULL;
 
     if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Error in edge list query function");
-      Zoltan_Multifree(__FILE__, __LINE__, 3, &nbor_gids, &nbor_procs, &gewgts);
-      ZOLTAN_FREE(&numEdges);
+      Zoltan_Multifree(__FILE__, __LINE__, 4,
+                       &numEdges, &nbor_gids, &nbor_procs, &gewgts);
       goto End;
     }
   }
@@ -1784,8 +1818,8 @@ int *numEdges = NULL;
 
       if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
         ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Error in edge list query function");
-        Zoltan_Multifree(__FILE__,__LINE__,3,&nbor_gids,&nbor_procs,&gewgts);
-        ZOLTAN_FREE(&num_nbors);
+        Zoltan_Multifree(__FILE__, __LINE__, 4,
+                         &numEdges, &nbor_gids, &nbor_procs, &gewgts);
         goto End;
       }
 

@@ -56,6 +56,7 @@
 #define __Teko_Utilities_hpp__
 
 #include "Epetra_CrsMatrix.h"
+#include "Tpetra_CrsMatrix.hpp"
 
 // Teuchos includes
 #include "Teuchos_VerboseObject.hpp"
@@ -76,6 +77,16 @@
 #include "Thyra_DefaultAddedLinearOp.hpp"
 #include "Thyra_DefaultIdentityLinearOp.hpp"
 #include "Thyra_DefaultZeroLinearOp.hpp"
+
+#include "Teko_ConfigDefs.hpp"
+
+#ifdef _MSC_VER
+#ifndef _MSC_EXTENSIONS
+#define _MSC_EXTENSIONS
+#define TEKO_DEFINED_MSC_EXTENSIONS
+#endif
+#include <iso646.h> // For C alternative tokens
+#endif
 
 // #define Teko_DEBUG_OFF
 #define Teko_DEBUG_INT 5
@@ -110,6 +121,7 @@ using Thyra::block1x2;
   * \returns The graph Laplacian matrix to be filled according to the <code>stencil</code> matrix.
   */
 Teuchos::RCP<Epetra_CrsMatrix> buildGraphLaplacian(int dim,double * coords,const Epetra_CrsMatrix & stencil);
+Teuchos::RCP<Tpetra::CrsMatrix<ST,LO,GO,NT> > buildGraphLaplacian(int dim,ST * coords,const Tpetra::CrsMatrix<ST,LO,GO,NT> & stencil);
 
 /** \brief Build a graph Laplacian stenciled on a Epetra_CrsMatrix.
   *
@@ -134,6 +146,7 @@ Teuchos::RCP<Epetra_CrsMatrix> buildGraphLaplacian(int dim,double * coords,const
   * \returns The graph Laplacian matrix to be filled according to the <code>stencil</code> matrix.
   */
 Teuchos::RCP<Epetra_CrsMatrix> buildGraphLaplacian(double * x,double * y,double * z,int stride,const Epetra_CrsMatrix & stencil);
+Teuchos::RCP<Tpetra::CrsMatrix<ST,LO,GO,NT> > buildGraphLaplacian(ST * x,ST * y,ST * z,GO stride,const Tpetra::CrsMatrix<ST,LO,GO,NT> & stencil);
 
 /** \brief Function used internally by Teko to find the output stream.
   * 
@@ -146,6 +159,7 @@ const Teuchos::RCP<Teuchos::FancyOStream> getOutputStream();
 // { return Teuchos::VerboseObjectBase::getDefaultOStream(); }
 
 #ifndef Teko_DEBUG_OFF
+//#if 0
    #define Teko_DEBUG_EXPR(str) str
    #define Teko_DEBUG_MSG(str,level) if(level<=Teko_DEBUG_INT) { \
       Teuchos::RCP<Teuchos::FancyOStream> out = Teko::getOutputStream(); \
@@ -160,15 +174,16 @@ const Teuchos::RCP<Teuchos::FancyOStream> getOutputStream();
                               Teko::getOutputStream()->popTab(); }
    #define Teko_DEBUG_PUSHTAB() Teko::getOutputStream()->pushTab(3)
    #define Teko_DEBUG_POPTAB() Teko::getOutputStream()->popTab()
+   #define Teko_DEBUG_SCOPE(str,level)
 
-   struct __DebugScope__ {
-      __DebugScope__(const std::string & str,int level)
-         : str_(str), level_(level)
-      { Teko_DEBUG_MSG("BEGIN "+str_,level_); Teko_DEBUG_PUSHTAB(); }      
-      ~__DebugScope__()
-      { Teko_DEBUG_POPTAB(); Teko_DEBUG_MSG("END "+str_,level_); } 
-      std::string str_; int level_; };
-   #define Teko_DEBUG_SCOPE(str,level) __DebugScope__ __dbgScope__(str,level);
+//   struct __DebugScope__ {
+//      __DebugScope__(const std::string & str,int level)
+//         : str_(str), level_(level)
+//      { Teko_DEBUG_MSG("BEGIN "+str_,level_); Teko_DEBUG_PUSHTAB(); }      
+//      ~__DebugScope__()
+//      { Teko_DEBUG_POPTAB(); Teko_DEBUG_MSG("END "+str_,level_); } 
+//      std::string str_; int level_; };
+//   #define Teko_DEBUG_SCOPE(str,level) __DebugScope__ __dbgScope__(str,level);
 #else 
    #define Teko_DEBUG_EXPR(str)
    #define Teko_DEBUG_MSG(str,level)
@@ -303,14 +318,17 @@ Teuchos::RCP<Thyra::VectorBase<double> > indicatorVector(
 
 //! @name LinearOp utilities
 //@{
-typedef Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<double> > BlockedLinearOp;
-typedef Teuchos::RCP<const Thyra::LinearOpBase<double> > LinearOp;
-typedef Teuchos::RCP<Thyra::LinearOpBase<double> > InverseLinearOp;
-typedef Teuchos::RCP<Thyra::LinearOpBase<double> > ModifiableLinearOp;
+typedef Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> > BlockedLinearOp;
+typedef Teuchos::RCP<const Thyra::LinearOpBase<ST> > LinearOp;
+typedef Teuchos::RCP<Thyra::LinearOpBase<ST> > InverseLinearOp;
+typedef Teuchos::RCP<Thyra::LinearOpBase<ST> > ModifiableLinearOp;
 
 //! Build a square zero operator from a single vector space
 inline LinearOp zero(const VectorSpace & vs)
-{ return Thyra::zero<double>(vs,vs); }
+{ return Thyra::zero<ST>(vs,vs); }
+
+//! Replace nonzeros with a scalar value, used to zero out an operator
+void putScalar(const ModifiableLinearOp & op,double scalar);
 
 //! Get the range space of a linear operator
 inline VectorSpace rangeSpace(const LinearOp & lo)
@@ -490,6 +508,27 @@ ModifiableLinearOp getInvLumpedMatrix(const LinearOp & op);
   */
 void applyOp(const LinearOp & A,const MultiVector & x,MultiVector & y,double alpha=1.0,double beta=0.0);
 
+
+/** \brief Apply a transposed linear operator to a multivector (think of this as a matrix
+  *        vector multiply).
+  *
+  * Apply a transposed linear operator to a multivector. This also permits arbitrary scaling
+  * and addition of the result. This function gives
+  *     
+  *    \f$ y = \alpha A^T x + \beta y \f$
+  *
+  * It is required that the domain space of <code>A</code> is compatible with <code>y</code> and the range space
+  * of <code>A</code> is compatible with <code>x</code>.
+  *
+  * \param[in]     A
+  * \param[in]     x
+  * \param[in,out] y
+  * \param[in]     alpha
+  * \param[in]     beta
+  *
+  */
+void applyTransposeOp(const LinearOp & A,const MultiVector & x,MultiVector & y,double alpha=1.0,double beta=0.0);
+
 /** \brief Apply a linear operator to a blocked multivector (think of this as a matrix
   *        vector multiply).
   *
@@ -511,6 +550,28 @@ void applyOp(const LinearOp & A,const MultiVector & x,MultiVector & y,double alp
 inline void applyOp(const LinearOp & A,const BlockedMultiVector & x,BlockedMultiVector & y,double alpha=1.0,double beta=0.0)
 { const MultiVector x_mv = toMultiVector(x); MultiVector y_mv = toMultiVector(y);
   applyOp(A,x_mv,y_mv,alpha,beta); }
+
+/** \brief Apply a transposed linear operator to a blocked multivector (think of this as a matrix
+  *        vector multiply).
+  *
+  * Apply a transposed linear operator to a blocked multivector. This also permits arbitrary scaling
+  * and addition of the result. This function gives
+  *     
+  *    \f$ y = \alpha A^T x + \beta y \f$
+  *
+  * It is required that the domain space of <code>A</code> is compatible with <code>y</code> and the range space
+  * of <code>A</code> is compatible with <code>x</code>.
+  *
+  * \param[in]     A
+  * \param[in]     x
+  * \param[in,out] y
+  * \param[in]     alpha
+  * \param[in]     beta
+  *
+  */
+inline void applyTransposeOp(const LinearOp & A,const BlockedMultiVector & x,BlockedMultiVector & y,double alpha=1.0,double beta=0.0)
+{ const MultiVector x_mv = toMultiVector(x); MultiVector y_mv = toMultiVector(y);
+  applyTransposeOp(A,x_mv,y_mv,alpha,beta); }
 
 /** \brief Update the <code>y</code> vector so that \f$y = \alpha x+\beta y\f$
   *
@@ -667,10 +728,19 @@ const LinearOp explicitAdd(const LinearOp & opl,const LinearOp & opr);
 const ModifiableLinearOp explicitAdd(const LinearOp & opl,const LinearOp & opr,
                                      const ModifiableLinearOp & destOp);
 
+/** Sum into the modifiable linear op.
+  */
+const ModifiableLinearOp explicitSum(const LinearOp & opl,
+                                     const ModifiableLinearOp & destOp);
+
 /** Build an explicit transpose of a linear operator. (Concrete data
   * underneath.
   */
 const LinearOp explicitTranspose(const LinearOp & op);
+
+/** Rturn the frobenius norm of a linear operator
+  */
+const double frobeniusNorm(const LinearOp & op);
 
 /** \brief Take the first column of a multivector and build a
   *        diagonal linear operator
@@ -799,6 +869,35 @@ double norm_1(const MultiVector & v,std::size_t col);
   */
 double norm_2(const MultiVector & v,std::size_t col);
 
+/** This replaces entries of a vector falling below a particular
+  * bound. Thus a an entry will be greater than or equal to \code{lowerBound}.
+  */
+void clipLower(MultiVector & v,double lowerBound);
+
+/** This replaces entries of a vector above a particular
+  * bound. Thus a an entry will be less than or equal to \code{upperBound}.
+  */
+void clipUpper(MultiVector & v,double upperBound);
+
+/** This replaces entries of a vector equal to a particular value
+  * with a new value.
+  */
+void replaceValue(MultiVector & v,double currentValue,double newValue);
+
+/** Compute the averages of each column of the multivector.
+  */
+void columnAverages(const MultiVector & v,std::vector<double> & averages);
+
+/** Compute the average of the solution.
+  */
+double average(const MultiVector & v);
+
 } // end namespace Teko
+
+#ifdef _MSC_VER
+#ifdef TEKO_DEFINED_MSC_EXTENSIONS
+#undef _MSC_EXTENSIONS
+#endif
+#endif
 
 #endif

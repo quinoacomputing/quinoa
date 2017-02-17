@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -39,19 +39,34 @@ namespace EpetraIntrepidPoissonExample {
 void
 solveWithBelos (bool& converged,
                 int& numItersPerformed,
+                const std::string& solverName,
                 const Teuchos::ScalarTraits<ST>::magnitudeType& tol,
                 const int maxNumIters,
+                const int num_steps,
                 const Teuchos::RCP<multivector_type>& X,
                 const Teuchos::RCP<const sparse_matrix_type>& A,
                 const Teuchos::RCP<const multivector_type>& B,
-                const Teuchos::RCP<const operator_type>& M_left,
-                const Teuchos::RCP<const operator_type>& M_right)
+                const Teuchos::RCP<operator_type>& M_left,
+                const Teuchos::RCP<operator_type>& M_right)
 {
   typedef multivector_type MV;
   typedef operator_type OP;
 
+  // Create prec operator out of M (Apply->ApplyInverse)
+  Teuchos::RCP<const operator_type> Mp_left = M_left;
+  Teuchos::RCP<const operator_type> Mp_right = M_right;
+  if (! M_left.is_null ()) {
+    Mp_left = Teuchos::rcp (new Belos::EpetraPrecOp (M_left));
+  }
+  if (! M_right.is_null ()) {
+    Mp_right = Teuchos::rcp (new Belos::EpetraPrecOp (M_right));
+  }
+
   // Invoke the generic solve routine.
-  IntrepidPoissonExample::solveWithBelos<ST, MV, OP> (converged, numItersPerformed, tol, maxNumIters, X, A, B, M_left, M_right);
+  IntrepidPoissonExample::solveWithBelos<ST, MV, OP> (converged, numItersPerformed,
+                                                      solverName, tol, maxNumIters,
+                                                      num_steps,
+                                                      X, A, B, Mp_left, Mp_right);
 }
 
 } // namespace EpetraIntrepidPoissonExample

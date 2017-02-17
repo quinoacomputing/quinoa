@@ -83,31 +83,6 @@ typename Teuchos::ScalarTraits<Scalar>::magnitudeType
 relVectorErr( const VectorBase<Scalar> &v1, const VectorBase<Scalar> &v2 );
 
 
-/** \brief Deprecated. */
-template<class Scalar>
-inline
-THYRA_DEPRECATED
-bool testRelErr(
-  const std::string &v1_name,
-  const Scalar &v1,
-  const std::string &v2_name,
-  const Scalar &v2,
-  const std::string &maxRelErr_error_name,
-  const typename Teuchos::ScalarTraits<Scalar>::magnitudeType &maxRelErr_error,
-  const std::string &maxRelErr_warning_name,
-  const typename Teuchos::ScalarTraits<Scalar>::magnitudeType &maxRelErr_warning,
-  std::ostream *out,
-  const std::string &leadingIndent = std::string("")
-  )
-{
-  // ToDo: Indent correctly!
-  return Teuchos::testRelErr(v1_name, v1, v2_name, v2,
-    maxRelErr_error_name, maxRelErr_error,
-    maxRelErr_warning_name, maxRelErr_warning,
-    Teuchos::ptr(out) );
-}
-
-
 /** \brief Compute, check and optionally print the relative errors in two
  * scalar arays.
  *
@@ -131,35 +106,6 @@ bool testRelErrors(
   const Ptr<std::ostream> &out,
   const std::string &leadingIndent = std::string("")
   );
-
-
-/** \brief Deprecated. */
-template<class Scalar1, class Scalar2, class ScalarMag>
-THYRA_DEPRECATED
-bool testRelErrors(
-  const int num_scalars,
-  const std::string &v1_name,
-  const Scalar1 v1[],
-  const std::string &v2_name,
-  const Scalar2 v2[],
-  const std::string &maxRelErr_error_name,
-  const ScalarMag &maxRelErr_error,
-  const std::string &maxRelErr_warning_name,
-  const ScalarMag &maxRelErr_warning,
-  std::ostream *out,
-  const std::string &leadingIndent = std::string("")
-  )
-{
-  using Teuchos::arrayView;
-  return testRelErrors(
-    v1_name, arrayView(v1, num_scalars),
-    v2_name, arrayView(v2, num_scalars),
-    maxRelErr_error_name, maxRelErr_error,
-    maxRelErr_warning_name, maxRelErr_warning,
-    Teuchos::ptr(out),
-    leadingIndent
-    );
-}
 
 
 /** \brief Compute, check and optionally print the relative errors in two vectors.
@@ -228,29 +174,6 @@ bool testMaxErrors(
   );
 
 
-/** \brief Deprecated. */
-template<class Scalar>
-THYRA_DEPRECATED
-bool testMaxErrors(
-  const int num_scalars,
-  const std::string &error_name,
-  const Scalar error[],
-  const std::string &max_error_name,
-  const typename Teuchos::ScalarTraits<Scalar>::magnitudeType &max_error,
-  const std::string &max_warning_name,
-  const typename Teuchos::ScalarTraits<Scalar>::magnitudeType &max_warning,
-  std::ostream *out,
-  const std::string &leadingIndent = std::string("")
-  )
-{
-  return testMaxErrors<Scalar>(error_name,
-    Teuchos::arrayView<const Scalar>(error, num_scalars),
-    max_error_name, max_error, max_warning_name, max_warning,
-    Teuchos::ptr(out), leadingIndent
-    );
-}
-
-
 /** \brief Check a boolean result against expected result.
  *
  * ToDo: Finish documentation!
@@ -264,22 +187,6 @@ bool testBoolExpr(
   const Ptr<std::ostream> &out,
   const std::string &leadingIndent = std::string("")
   );
-
-
-/** \brief Deprecated. */
-inline
-THYRA_DEPRECATED
-bool testBoolExpr(
-  const std::string &boolExprName,
-  const bool &boolExpr,
-  const bool &boolExpected,
-  std::ostream *out,
-  const std::string &leadingIndent = std::string("")
-  )
-{
-  return testBoolExpr(boolExprName, boolExpr, boolExpected,
-    Teuchos::ptr(out), leadingIndent);
-}
 
 
 /** \brief Print summary outputting for a test or just <tt>passed</tt> or
@@ -310,9 +217,57 @@ void printTestResults(
   const bool result,
   const std::string &test_summary,
   const bool show_all_tests,
+  const Ptr<bool> &success,
+  const Ptr<std::ostream> &out
+  );
+
+/** \brief Deprecated (call overload without raw pointers). */
+THYRA_DEPRECATED void printTestResults(
+  const bool result,
+  const std::string &test_summary,
+  const bool show_all_tests,
   bool *success,
   std::ostream *out
   );
+
+/** \brief Control printing of test results.
+ *
+ * This class is designed to help control printing of test results and to help
+ * summarize test results.  The idea is that by default, we might want to
+ * limit output when the test passes but allow it to be printed in full if the
+ * test fails.  However, we want to ahve a testing mode show_all_tests==true
+ * where the test results are printed to the direct std::ostream object in
+ * real time to aid in debugging.  To accomplish this, when
+ * show_all_tests==false, the output from the test is sent to disconnected
+ * std::ostringstream object and then is only printed if the test fails.
+ * Otherwise, the detailed output from the test is never printed to the direct
+ * std::ostream object.
+ *
+ * ToDo: Fill in detailed documentation!
+ */
+class TestResultsPrinter {
+public:
+  /** \brief . */
+  TestResultsPrinter(const RCP<FancyOStream> &out, const bool show_all_tests);
+  /** \brief Print the test results on destruction if not already printed. */
+  ~TestResultsPrinter();
+  /** \brief Replace the underlying output stream (used for unit testing this
+   * class).
+   */
+  RCP<FancyOStream> replaceOStream(const RCP<FancyOStream> &out);
+  /** \brief Return the stream used for  testing */
+  RCP<FancyOStream> getTestOStream();
+  /** \brief Print the test result. */
+  void printTestResults(const bool this_result, const Ptr<bool> &success);
+private:
+  RCP<FancyOStream> out_;
+  bool show_all_tests_;
+  std::ostringstream ossStore_;
+  RCP<FancyOStream> oss_;
+  bool printedTestResults_;
+  TestResultsPrinter(); // Not defined!
+  TestResultsPrinter(const TestResultsPrinter&); // Not defined!
+};
 
 
 /** \brief Output operator to pretty print any <tt>Thyra::VectorBase</tt>
@@ -337,29 +292,6 @@ template<class Scalar>
 std::ostream& operator<<( std::ostream& o, const LinearOpBase<Scalar>& M );
 
 } // namespace Thyra
-
-
-// //////////////////////////
-// Inline functions                        
-
-
-inline
-void Thyra::printTestResults(
-  const bool result,
-  const std::string &test_summary,
-  const bool show_all_tests,
-  bool *success,
-  std::ostream *out
-  )
-{
-  if (!result) *success = false;
-  if (out) {
-    if( !result || show_all_tests )
-      *out << std::endl << test_summary;
-    else
-      *out << "passed!\n";
-  }
-}
 
 
 #endif // THYRA_TESTING_TOOLS_DECL_HPP

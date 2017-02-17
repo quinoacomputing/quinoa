@@ -1,7 +1,0 @@
-INCLUDE(TribitsLibraryMacros)
-INCLUDE(TribitsAddOptionAndDefine)
-
-
-TRIBITS_ADD_EXAMPLE_DIRECTORIES(explicit_dynamics)
-TRIBITS_ADD_EXAMPLE_DIRECTORIES(implicit_thermal)
-

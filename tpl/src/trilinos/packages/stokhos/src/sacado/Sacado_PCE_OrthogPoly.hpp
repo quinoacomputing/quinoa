@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 // 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
 // 
 // ***********************************************************************
@@ -62,6 +75,9 @@ namespace Sacado {
 
       //! Typename of values
       typedef T value_type;
+
+      //! Typename of scalar's (which may be different from T)
+      typedef typename ScalarType<T>::type scalar_type;
 
       //! Typename of ordinals
       typedef int ordinal_type;
@@ -175,6 +191,16 @@ namespace Sacado {
 
       //! Compute standard deviation of expansion
       value_type standard_deviation() const { return th->standard_deviation(); }
+
+      //! Compute the two-norm of expansion
+      value_type two_norm() const { return th->two_norm(); }
+
+      //! Compute the squared two-norm of expansion
+      value_type two_norm_squared() const { return th->two_norm_squared(); }
+
+      //! Compute the L2 inner product of 2 PCEs
+      value_type inner_product(const OrthogPoly& b) const { 
+	return th->inner_product(b.getOrthogPolyApprox()); }
 
       //! Print approximation in basis
       std::ostream& print(std::ostream& os) const { return th->print(os); }
@@ -378,6 +404,9 @@ namespace Sacado {
     sqrt(const OrthogPoly<T,Storage>& a);
 
     template <typename T, typename Storage> OrthogPoly<T,Storage> 
+    cbrt(const OrthogPoly<T,Storage>& a);
+
+    template <typename T, typename Storage> OrthogPoly<T,Storage> 
     pow(const OrthogPoly<T,Storage>& a, const OrthogPoly<T,Storage>& b);
 
     template <typename T, typename Storage> OrthogPoly<T,Storage> 
@@ -537,6 +566,9 @@ namespace Sacado {
 
     template <typename T, typename Storage> std::ostream& 
     operator << (std::ostream& os, const OrthogPoly<T,Storage>& a);
+
+    template <typename T, typename Storage> std::istream& 
+    operator >> (std::istream& os, OrthogPoly<T,Storage>& a);
 
   } // namespace PCE
 

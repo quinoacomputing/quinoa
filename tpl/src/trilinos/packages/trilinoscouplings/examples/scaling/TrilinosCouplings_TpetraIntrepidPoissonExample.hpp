@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -36,7 +36,13 @@
 #include "Tpetra_Vector.hpp"
 #include "Teuchos_FancyOStream.hpp"
 #include "Teuchos_ScalarTraits.hpp"
+#include "TrilinosCouplings_config.h"
 
+#ifdef HAVE_TRILINOSCOUPLINGS_MUELU
+#  include "MueLu_TpetraOperator.hpp"
+#endif // HAVE_TRILINOSCOUPLINGS_MUELU
+
+#include "TrilinosCouplings_IntrepidPoissonExample_SolveWithBelos.hpp"
 
 namespace TrilinosCouplings {
 /// \namespace TpetraIntrepidPoissonExample
@@ -199,12 +205,18 @@ exactResidualNorm (const Teuchos::RCP<const sparse_matrix_type>& A,
 /// \param numItersPerformed [out] Number of iterations that the Belos
 ///   solver performed.
 ///
+/// \param solverName [in] Which iterative linear solver to use.
+///   Any name that Belos::SolverFactory knows will work here.
+///
 /// \param tol [in] Convergence tolerance for the iterative method.
 ///   The meaning of this depends on the particular iterative method.
 ///
 /// \param maxNumIters [in] Maximum number of iterations that the
 ///   iterative method should perform, regardless of whether it
 ///   converged.
+///
+/// \param num_steps [in] Number of "time steps", i.e., the number of
+//    times the solver is called in a fake time-step loop.
 ///
 /// \param X [in/out] On input: the initial guess(es) for the iterative
 ///   method.  On output: the computed approximate solution.
@@ -223,13 +235,52 @@ exactResidualNorm (const Teuchos::RCP<const sparse_matrix_type>& A,
 void
 solveWithBelos (bool& converged,
                 int& numItersPerformed,
+                const std::string& solverName,
                 const Teuchos::ScalarTraits<ST>::magnitudeType& tol,
                 const int maxNumIters,
+                const int num_steps,
                 const Teuchos::RCP<multivector_type>& X,
                 const Teuchos::RCP<const sparse_matrix_type>& A,
                 const Teuchos::RCP<const multivector_type>& B,
                 const Teuchos::RCP<const operator_type>& M_left=Teuchos::null,
                 const Teuchos::RCP<const operator_type>& M_right=Teuchos::null);
+
+/// \brief Solve the linear system(s) AX=B with Belos on the GPU.
+///
+/// In addition to the parameters taken by solveWithBelos(), this function
+/// additionally takes the following parameters to determine which GPU
+/// device should be attached to which MPI rank:
+///
+/// \param ranks_per_node [in]  Number of MPI ranks per node.  For OpenMPI and
+///   MVAPICH MPI libraries, this is determined automatically and thus needn't
+///   be specified.  For other MPI libraries it must be supplied by the user.
+///
+/// \param gpu_ranks_per_node [in] Number of MPI ranks per node associated
+///   with GPUs.  This must be less than or equal to the number of devices
+///   per node.
+///
+/// \param device_offset [in] Offset for computing the CUDA device ID for
+///   each MPI rank associated with a GPU.  If there are n GPU's per node,
+///   the first n MPI ranks for each node will be associated with a GPU starting
+///   at device number device_offset.
+///
+/// \param prec_type [in] The preconditioner type (e.g., "MueLu").
+void
+solveWithBelosGPU (
+  bool& converged,
+  int& numItersPerformed,
+  const Teuchos::ScalarTraits<ST>::magnitudeType& tol,
+  const int maxNumIters,
+  const int num_steps,
+  const int ranks_per_node,
+  const int gpu_ranks_per_node,
+  const int device_offset,
+  const std::string& prec_type,
+  const Teuchos::RCP<multivector_type>& X,
+  const Teuchos::RCP<const sparse_matrix_type>& A,
+  const Teuchos::RCP<const multivector_type>& B,
+  const Teuchos::RCP<const operator_type>& M_left=Teuchos::null,
+  const Teuchos::RCP<const operator_type>& M_right=Teuchos::null);
 
 } // namespace TpetraIntrepidPoissonExample
 } // namespace TrilinosCouplings

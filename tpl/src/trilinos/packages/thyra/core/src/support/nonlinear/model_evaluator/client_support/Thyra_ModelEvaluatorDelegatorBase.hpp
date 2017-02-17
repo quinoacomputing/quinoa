@@ -143,6 +143,8 @@ public:
   /** \brief . */
   RCP<const VectorSpaceBase<Scalar> > get_g_space(int j) const;
   /** \brief . */
+  Teuchos::ArrayView<const std::string> get_g_names(int j) const;
+  /** \brief . */
   ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
   /** \brief . */
   ModelEvaluatorBase::InArgs<Scalar> getLowerBounds() const;
@@ -152,6 +154,8 @@ public:
   RCP<LinearOpWithSolveBase<Scalar> > create_W() const;
   /** \brief . */
   RCP<LinearOpBase<Scalar> > create_W_op() const;
+  /** \brief . */
+  RCP<PreconditionerBase<Scalar> > create_W_prec() const;
   /** \brief . */
   RCP<const LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
   /** \brief . */
@@ -431,6 +435,14 @@ ModelEvaluatorDelegatorBase<Scalar>::get_g_space(int j) const
 
 
 template<class Scalar>
+Teuchos::ArrayView<const std::string>
+ModelEvaluatorDelegatorBase<Scalar>::get_g_names(int j) const
+{
+  return getUnderlyingModel()->get_g_names(j);
+}
+
+
+template<class Scalar>
 ModelEvaluatorBase::InArgs<Scalar>
 ModelEvaluatorDelegatorBase<Scalar>::getNominalValues() const
 {
@@ -467,6 +479,14 @@ RCP<LinearOpBase<Scalar> >
 ModelEvaluatorDelegatorBase<Scalar>::create_W_op() const
 {
   return getUnderlyingModel()->create_W_op();
+}
+
+
+template<class Scalar>
+RCP<PreconditionerBase<Scalar> >
+ModelEvaluatorDelegatorBase<Scalar>::create_W_prec() const
+{
+  return getUnderlyingModel()->create_W_prec();
 }
 
 

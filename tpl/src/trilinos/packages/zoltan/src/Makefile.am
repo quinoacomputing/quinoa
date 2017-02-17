@@ -1,10 +1,45 @@
 # @HEADER
-##############################################################################
-# Zoltan Library for Parallel Applications                                   #
-# Copyright (c) 2000,2001,2002, Sandia National Laboratories.                #
-# This software is distributed under the GNU Lesser General Public License.  #
-# For more info, see the README file in the top-level Zoltan directory.      #
-##############################################################################
+#
+########################################################################
+#
+#  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+#                  Copyright 2012 Sandia Corporation
+#
+# Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+# the U.S. Government retains certain rights in this software.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Corporation nor the names of the
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Questions? Contact Karen Devine	kddevin@sandia.gov
+#                    Erik Boman	        egboman@sandia.gov
+#
+########################################################################
+#
 # @HEADER
 
 # The following line helps the test harness recover from build errors.
@@ -308,6 +343,7 @@ UTILITIES = \
 	$(srcdir)/Utilities/Communication/comm_invert_plan.c \
 	$(srcdir)/Utilities/Timer/zoltan_timer.c \
 	$(srcdir)/Utilities/Timer/timer.c \
+	$(srcdir)/Utilities/DDirectory/DD_Memory.c \
 	$(srcdir)/Utilities/DDirectory/DD_Find.c \
 	$(srcdir)/Utilities/DDirectory/DD_Destroy.c \
 	$(srcdir)/Utilities/DDirectory/DD_Set_Neighbor_Hash_Fn3.c \
@@ -523,19 +559,17 @@ EXTRA_libzoltan_a_SOURCES = \
 	$(EXTRA_FORTRAN_H) \
 	$(EXTRA_FORTRAN)
 
-#if F90_MODULE_LOWERCASE
-#FORTRAN_MODULES = \
-#	lb_user_const.mod \
-#	zoltan_types.mod \
-#	zoltan.mod \
-#	zoltan_user_data.mod
-#else
-#FORTRAN_MODULES = \
-#	LB_USER_CONST.mod \
-#	ZOLTAN_TYPES.mod \
-#	ZOLTAN.mod \
-#	ZOLTAN_USER_DATA.mod
-#endif
+if F90_MODULE_LOWERCASE
+FORTRAN_MODULES = \
+	zoltan_types.mod \
+	zoltan.mod \
+	zoltan_user_data.mod
+else
+FORTRAN_MODULES = \
+	ZOLTAN_TYPES.mod \
+	ZOLTAN.mod \
+	ZOLTAN_USER_DATA.mod
+endif
 
 include $(top_builddir)/Makefile.export.zoltan
 
@@ -711,18 +745,22 @@ AM_FFLAGS = -I@abs_top_srcdir@/src/fort
 # siMPI's Fortran interface yet (and serial zfdrive is not an important
 # use case).
 
+FDRIVER_SUBDIR =
+if BUILD_TESTS
 if BUILD_ZOLTAN_F90_INTERFACE
 if HAVE_MPI
-FDRIVER_SUBDIR = fdriver
-else
-FDRIVER_SUBDIR =
+FDRIVER_SUBDIR += fdriver
 endif
-else
-FDRIVER_SUBDIR =
+endif
 endif
 
 #SUBDIRS = . 
+if BUILD_TESTS
 SUBDIRS = . driver $(FDRIVER_SUBDIR)
+else
+SUBDIRS = .
+endif
+
 
 # ------------------------------------------------------------------------
 # Files to be deleted by 'make maintainer-clean'
@@ -732,3 +770,28 @@ MAINTAINERCLEANFILES = Makefile.in
 
 MOSTLYCLEANFILES = *.mod
 
+# ------------------------------------------------------------------------
+# Explicit FORTRAN dependencies to allow parallel builds (make -j)
+# KDD:  4/28/15  Specifying the dependencies does not seem to help 
+# KDD:           the parallel F90 builds (although articles online 
+# KDD:           indicate it should).  I'll comment them out
+# KDD:           and use .NOTPARALLEL: instead.
+# ------------------------------------------------------------------------
+
+#if BUILD_ZOLTAN_F90_INTERFACE
+#if F90_MODULE_LOWERCASE
+#zoltan.mod:  zoltan_types.mod zoltan_user_data.mod $(srcdir)/fort/fwrap.f90 \
+#             $(EXTRA_FORTRAN_H)
+#zoltan_user_data.mod:  $(srcdir)/fort/zoltan_user_data.f90 zoltan_types.mod
+#zoltan_types.mod:  $(srcdir)/fort/ztypes.f90
+#else
+#ZOLTAN.mod:  ZOLTAN_TYPES.mod ZOLTAN_USER_DATA.mod $(srcdir)/fort/fwrap.f90 \
+#             $(EXTRA_FORTRAN_H)
+#ZOLTAN_USER_DATA.mod:  $(srcdir)/fort/zoltan_user_data.f90 ZOLTAN_TYPES.mod
+#ZOLTAN_TYPES.mod:  $(srcdir)/fort/ztypes.f90
+#endif
+#endif
+
+if BUILD_ZOLTAN_F90_INTERFACE
+.NOTPARALLEL:
+endif

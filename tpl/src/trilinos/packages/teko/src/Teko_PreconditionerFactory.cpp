@@ -61,8 +61,10 @@
 #include "Teko_DiagonallyScaledPreconditionerFactory.hpp"
 #include "Teko_DiagonalPreconditionerFactory.hpp"
 #include "Teko_ProbingPreconditionerFactory.hpp"
+#include "Teko_IdentityPreconditionerFactory.hpp"
 #include "NS/Teko_LSCPreconditionerFactory.hpp"
 #include "NS/Teko_SIMPLEPreconditionerFactory.hpp"
+#include "NS/Teko_TimingsSIMPLEPreconditionerFactory.hpp"
 
 #ifdef Teko_ENABLE_ML_SMOOTHERS
 #include "Teko_SmootherPreconditionerFactory.hpp"
@@ -304,6 +306,9 @@ void PreconditionerFactory::initializePrecFactoryBuilder()
    clone = rcp(new AutoClone<NS::SIMPLEPreconditionerFactory>());
    precFactoryBuilder_.addClone("NS SIMPLE",clone);
 
+   clone = rcp(new AutoClone<NS::TimingsSIMPLEPreconditionerFactory>());
+   precFactoryBuilder_.addClone("NS SIMPLE-Timed",clone);
+
    clone = rcp(new AutoClone<IterativePreconditionerFactory>());
    precFactoryBuilder_.addClone("Iterative Preconditioner",clone);
 
@@ -315,6 +320,9 @@ void PreconditionerFactory::initializePrecFactoryBuilder()
 
    clone = rcp(new AutoClone<DiagonallyScaledPreconditionerFactory>());
    precFactoryBuilder_.addClone("Diagonal Scaling",clone);
+
+   clone = rcp(new AutoClone<IdentityPreconditionerFactory>());
+   precFactoryBuilder_.addClone("Identity",clone);
 
 #ifdef Teko_ENABLE_Isorropia
    clone = rcp(new AutoClone<ProbingPreconditionerFactory>());

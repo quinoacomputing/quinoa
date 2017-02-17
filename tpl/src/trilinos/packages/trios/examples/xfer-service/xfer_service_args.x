@@ -1,41 +1,45 @@
-/* ************************************************************************
-
-                   Trios: Trilinos I/O Support
-                 Copyright 2011 Sandia Corporation
-
- Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- the U.S. Government retains certain rights in this software.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are
- met:
-
- 1. Redistributions of source code must retain the above copyright
- notice, this list of conditions and the following disclaimer.
-
- 2. Redistributions in binary form must reproduce the above copyright
- notice, this list of conditions and the following disclaimer in the
- documentation and/or other materials provided with the distribution.
-
- 3. Neither the name of the Corporation nor the names of the
- contributors may be used to endorse or promote products derived from
- this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-
-*************************************************************************/
+/**
+//@HEADER
+// ************************************************************************
+//
+//                   Trios: Trilinos I/O Support
+//                 Copyright 2011 Sandia Corporation
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
+//
+// *************************************************************************
+//@HEADER
+ */
 /* -------------------------------------------------------------------------- */
 /**
  *   @file xfer_xdr.x
@@ -73,17 +77,18 @@ Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
 
 /* Extra stuff to put at the beginning of the header file */
 #ifdef RPC_HDR
+%#include "Trios_xdr.h"
 #endif
 
 /* Extra stuff to put at the beginning of the C file. */
 #ifdef RPC_XDR
-%#include <xfer_service_args.h>
+%#include "Trios_xdr.h"
 #endif
 
 
 
 /**
- * @brief Opcodes for the types of transfer operations.  
+ * @brief Opcodes for the types of transfer operations.
  */
 enum xfer_op {
     /** Opcode for writing the data through the function arguments. */
@@ -160,7 +165,7 @@ typedef data_t data_array_t<>;
  * structures as an argument of the remote operation.  This will
  * cause the array to be sent to the server as part of the request.
  * The client encodes the data before sending it to the server, the server
- * decodes the data structure when it arrives. 
+ * decodes the data structure when it arrives.
  */
 struct xfer_write_encode_args {
         /** The length of the data array. */
@@ -210,11 +215,11 @@ struct xfer_read_encode_args {
 /**
  * @brief Results for the third transfer operation, XFER_READ_ENCODE.
  *
- * The result of the xfer_read_encode operation includes the 
- * array of \ref data_t structures.  If the size of array is large, 
- * the address of array will be sent as part of the result and the 
+ * The result of the xfer_read_encode operation includes the
+ * array of \ref data_t structures.  If the size of array is large,
+ * the address of array will be sent as part of the result and the
  * client will fetch array via RDMA.  In either case, the structures
- * are encoded by the server and decoded by the client. 
+ * are encoded by the server and decoded by the client.
  */
 struct xfer_read_encode_res {
         /** The array of \ref data_t structures, including length. */

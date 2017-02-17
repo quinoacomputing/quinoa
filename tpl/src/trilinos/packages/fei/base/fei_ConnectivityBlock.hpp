@@ -1,51 +1,16 @@
-/*
-// @HEADER
-// ************************************************************************
-//             FEI: Finite Element Interface to Linear Solvers
-//                  Copyright (2005) Sandia Corporation.
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
-// U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Alan Williams (william@sandia.gov) 
-//
-// ************************************************************************
-// @HEADER
-*/
-
+/*--------------------------------------------------------------------*/
+/*    Copyright 2005 Sandia Corporation.                              */
+/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
+/*    non-exclusive license for use of this work by or on behalf      */
+/*    of the U.S. Government.  Export of this program may require     */
+/*    a license from the United States Government.                    */
+/*--------------------------------------------------------------------*/
 
 #ifndef _fei_ConnectivityBlock_hpp_
 #define _fei_ConnectivityBlock_hpp_
 
 #include <fei_macros.hpp>
-#include <fei_IndexType.hpp>
+
 #include <map>
 #include <vector>
 
@@ -109,39 +74,13 @@ namespace fei {
 
     void setColPattern(fei::Pattern* pattern) { colPattern_ = pattern; }
 
-  private:
-    /** If someone has a reference to std::map of our data and we are using 
-	something else, sync from that map to us 
-     */
-    void syncFrom() const {
-      if (doesSomeoneHaveMyMap)
-	connIDsOffsetMap_.resyncFromMap(connIDsOffsetMap_map_);
-    }
-
-    /** If someone has a reference to std::map of our data and we are using 
-	something else, sync to that map from us 
-     */
-    void syncTo() {
-      if (doesSomeoneHaveMyMap)
-	connIDsOffsetMap_.resyncToMap(connIDsOffsetMap_map_);
-    }
-
-  public:
-    /** get native data structure of connectivity-ids with associated offsets
-    	 */
-    IndexType<int,int>& getNativeConnectivityIDs(){return(connIDsOffsetMap_);}
-
-    /** get native data structure of connectivity-ids with associated offsets
-    	 */
-    const IndexType<int,int>& getNativeConnectivityIDs()const {return(connIDsOffsetMap_);}
-
     /** get map of connectivity-ids with associated offsets
-    	 */
-    FEI_DEPRECATED const std::map<int,int>& getConnectivityIDs() const;
+    */
+    const std::map<int,int>& getConnectivityIDs() const { return( connIDsOffsetMap_ ); }
 
     /** get map of connectivity-ids with associated offsets
     */
-    FEI_DEPRECATED std::map<int,int>& getConnectivityIDs();
+    std::map<int,int>& getConnectivityIDs() { return( connIDsOffsetMap_ ); }
 
     /** get vector of connectivity-offsets. Only available if this
       object was constructed using constructor 3 or 4. Power users only.
@@ -188,14 +127,9 @@ namespace fei {
     fei::Pattern* colPattern_;
     bool isSymmetric_;
     bool isDiagonal_;
-    /// This will cause a lot of work once this is set
-    bool doesSomeoneHaveMyMap;
 
-    /// this is for backwards compatability for an outdated send reference
-    mutable std::map<int,int> connIDsOffsetMap_map_;
-    /// This has to be mutable to maintain backwards compatability when 
-    /// people give out refs to private data which breaks const anyway
-    mutable IndexType<int,int> connIDsOffsetMap_;
+    std::map<int,int> connIDsOffsetMap_;
+
     std::vector<int> connectivityOffsets_;
 
     int numRecordsPerConnectivity_;

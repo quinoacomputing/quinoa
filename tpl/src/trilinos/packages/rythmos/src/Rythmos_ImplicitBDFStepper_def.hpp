@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -41,7 +41,19 @@ namespace Rythmos {
 // Nonmember constructor
 template<class Scalar>
 RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper() {
-  RCP<ImplicitBDFStepper<Scalar> > stepper = rcp(new ImplicitBDFStepper<Scalar>() );
+  RCP<ImplicitBDFStepper<Scalar> >
+    stepper = rcp(new ImplicitBDFStepper<Scalar>() );
+  return stepper;
+}
+
+template<class Scalar>
+RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper(
+  const RCP<Thyra::ModelEvaluator<Scalar> >& model,
+  const RCP<Thyra::NonlinearSolverBase<Scalar> >& solver
+  )
+{
+  RCP<ImplicitBDFStepper<Scalar> >
+    stepper = Teuchos::rcp(new ImplicitBDFStepper<Scalar>(model, solver));
   return stepper;
 }
 
@@ -52,7 +64,10 @@ RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper(
   const RCP<Teuchos::ParameterList>& parameterList
   )
 {
-  RCP<ImplicitBDFStepper<Scalar> > stepper = Teuchos::rcp(new ImplicitBDFStepper<Scalar>(model,solver,parameterList));
+  RCP<ImplicitBDFStepper<Scalar> >
+    stepper = Teuchos::rcp(new ImplicitBDFStepper<Scalar>(model,
+                                                          solver,
+                                                          parameterList));
   return stepper;
 }
 
@@ -100,7 +115,7 @@ ImplicitBDFStepper<Scalar>::ImplicitBDFStepper(
 }
 
 template<class Scalar>
-const Thyra::VectorBase<Scalar>& 
+const Thyra::VectorBase<Scalar>&
   ImplicitBDFStepper<Scalar>::getxHistory(int index) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!isInitialized_,std::logic_error,
@@ -114,11 +129,11 @@ template<class Scalar>
 void ImplicitBDFStepper<Scalar>::setStepControlStrategy(const RCP<StepControlStrategyBase<Scalar> >& stepControl)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(stepControl == Teuchos::null,std::logic_error,"Error, stepControl == Teuchos::null!\n");
-  stepControl_ = stepControl;    
+  stepControl_ = stepControl;
 }
 
 template<class Scalar>
-RCP<StepControlStrategyBase<Scalar> > ImplicitBDFStepper<Scalar>::getNonconstStepControlStrategy() 
+RCP<StepControlStrategyBase<Scalar> > ImplicitBDFStepper<Scalar>::getNonconstStepControlStrategy()
 {
   return(stepControl_);
 }
@@ -189,7 +204,7 @@ ImplicitBDFStepper<Scalar>::cloneStepperAlgorithm() const
 
   if (!is_null(solver_))
     stepper->setSolver(solver_->cloneNonlinearSolver().assert_not_null());
-  
+
   if (!is_null(parameterList_))
     stepper->setParameterList(Teuchos::parameterList(*parameterList_));
 
@@ -198,7 +213,7 @@ ImplicitBDFStepper<Scalar>::cloneStepperAlgorithm() const
       stepper->setStepControlStrategy(
         stepControl_->cloneStepControlStrategyAlgorithm().assert_not_null());
   }
-  
+
   // At this point, we should have a valid algorithm state.  What might be
   // missing is the initial condition if it was not given in *model_ but was
   // set explicitly.  However, the specification for this function does not
@@ -214,7 +229,7 @@ void ImplicitBDFStepper<Scalar>::setModel(
   const RCP<const Thyra::ModelEvaluator<Scalar> >& model
   )
 {
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
   TEUCHOS_TEST_FOR_EXCEPT( is_null(model) );
   assertValidModel( *this, *model );
   model_ = model;
@@ -251,12 +266,12 @@ void ImplicitBDFStepper<Scalar>::setInitialCondition(
   )
 {
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  typedef Thyra::ModelEvaluatorBase MEB;
+  // typedef Thyra::ModelEvaluatorBase MEB; // unused
   TEUCHOS_TEST_FOR_EXCEPT(is_null(initialCondition.get_x()));
   TEUCHOS_TEST_FOR_EXCEPT(is_null(initialCondition.get_x_dot()));
   basePoint_ = initialCondition;
   xn0_ = initialCondition.get_x()->clone_v();
-  xpn0_ = initialCondition.get_x_dot()->clone_v(); 
+  xpn0_ = initialCondition.get_x_dot()->clone_v();
   time_ = initialCondition.get_t();
   // Generate vectors for use in calculations
   x_dot_base_ = createMember(xpn0_->space());
@@ -276,7 +291,7 @@ void ImplicitBDFStepper<Scalar>::setInitialCondition(
 
 
 template<class Scalar>
-Thyra::ModelEvaluatorBase::InArgs<Scalar> 
+Thyra::ModelEvaluatorBase::InArgs<Scalar>
 ImplicitBDFStepper<Scalar>::getInitialCondition() const
 {
   return basePoint_;
@@ -286,13 +301,13 @@ ImplicitBDFStepper<Scalar>::getInitialCondition() const
 template<class Scalar>
 Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
 {
-  
+
   RYTHMOS_FUNC_TIME_MONITOR("Rythmos::ImplicitBDFStepper::takeStep");
-  
+
   using Teuchos::as;
   using Teuchos::incrVerbLevel;
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  typedef typename Thyra::ModelEvaluatorBase::InArgs<Scalar>::ScalarMag TScalarMag;
+  // typedef typename Thyra::ModelEvaluatorBase::InArgs<Scalar>::ScalarMag TScalarMag; // unused
   typedef Thyra::NonlinearSolverBase<Scalar> NSB;
   typedef Teuchos::VerboseObjectTempState<NSB> VOTSNSB;
 
@@ -304,11 +319,11 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
     *out
       << "\nEntering " << this->Teuchos::Describable::description()
-      << "::takeStep("<<dt<<","<<toString(stepType)<<") ...\n"; 
+      << "::takeStep("<<dt<<","<<toString(stepType)<<") ...\n";
   }
 
   if (!isInitialized_) {
-    initialize_(); 
+    initialize_();
   }
 
   stepControl_->setOStream(out);
@@ -321,7 +336,8 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
     Scalar hh_old = hh_;
     int desiredOrder;
     stepControl_->nextStepSize(*this,&hh_,&stepType,&desiredOrder);
-    TEUCHOS_TEST_FOR_EXCEPT(!((1 <= desiredOrder) && (desiredOrder <= maxOrder_)));
+    TEUCHOS_TEST_FOR_EXCEPT(!((1 <= desiredOrder) &&
+                              (desiredOrder <= maxOrder_)));
     TEUCHOS_TEST_FOR_EXCEPT(!(desiredOrder <= usedOrder_+1));
     currentOrder_ = desiredOrder;
     if (numberOfSteps_ == 0) {
@@ -336,11 +352,12 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
     // compute predictor
     obtainPredictor_();
     // solve nonlinear problem (as follows)
-    
+
     //
     // Setup the nonlinear equations:
     //
-    //   f_bar( x_dot_coeff * x_bar + x_dot_base, x_coeff * x_bar + x_base, t_base ) = 0
+    //   f_bar( x_dot_coeff * x_bar + x_dot_base,
+    //          x_coeff * x_bar + x_base, t_base ) = 0
     //   x_dot_coeff = -alpha_s/dt
     //   x_dot_base = x_prime_pred + (alpha_s/dt) * x_pred
     //   x_coeff = 1
@@ -370,16 +387,22 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
       );
     //
     // Solve the implicit nonlinear system to a tolerance of ???
-    // 
+    //
     if (solver_->getModel().get() != &neModel_) {
       solver_->setModel( Teuchos::rcpFromRef(neModel_) );
     }
-    /* // Rythmos::TimeStepNonlinearSolver uses a built in solveCriteria, so you can't pass one in.
+    // Rythmos::TimeStepNonlinearSolver uses a built in solveCriteria,
+    // so you can't pass one in.
     // I believe this is the correct solveCriteria for IDA though.
-    Thyra::SolveMeasureType nonlinear_solve_measure_type(Thyra::SOLVE_MEASURE_NORM_RESIDUAL,Thyra::SOLVE_MEASURE_ONE); 
-    TScalarMag tolerance = relErrTol_/TScalarMag(10.0); // This should be changed to match the condition in IDA
-    Thyra::SolveCriteria<Scalar> nonlinearSolveCriteria(nonlinear_solve_measure_type, tolerance);
-    Thyra::SolveStatus<Scalar> nonlinearSolveStatus = solver_->solve( &*xn0_, &nonlinearSolveCriteria, &*delta_ ); 
+    /*
+    Thyra::SolveMeasureType nonlinear_solve_measure_type(
+      Thyra::SOLVE_MEASURE_NORM_RESIDUAL,Thyra::SOLVE_MEASURE_ONE);
+    // This should be changed to match the condition in IDA
+    TScalarMag tolerance = relErrTol_/TScalarMag(10.0);
+    Thyra::SolveCriteria<Scalar> nonlinearSolveCriteria(
+      nonlinear_solve_measure_type, tolerance);
+    Thyra::SolveStatus<Scalar> nonlinearSolveStatus =
+      solver_->solve( &*xn0_, &nonlinearSolveCriteria, &*delta_ );
     */
     if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_EXTREME) ) {
       *out << "xn0 = " << std::endl;
@@ -387,7 +410,7 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
       *out << "ee = " << std::endl;
       ee_->describe(*out,verbLevel);
     }
-    Thyra::SolveStatus<Scalar> nonlinearSolveStatus = solver_->solve( &*xn0_, NULL, &*ee_ ); 
+    nonlinearSolveStatus_ = solver_->solve( &*xn0_, NULL, &*ee_ );
     if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_EXTREME) ) {
       *out << "xn0 = " << std::endl;
       xn0_->describe(*out,verbLevel);
@@ -398,7 +421,7 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
     // the predictor.  On output, *xn0_ is the solved for solution and *ee_ is
     // the difference computed from the intial guess in *xn0_ to the final
     // solved value of *xn0_.  This is needed for basic numerical stability.
-    if (nonlinearSolveStatus.solveStatus == Thyra::SOLVE_STATUS_CONVERGED)  {
+    if (nonlinearSolveStatus_.solveStatus == Thyra::SOLVE_STATUS_CONVERGED)  {
       newtonConvergenceStatus_ = 0;
     }
     else {
@@ -408,7 +431,7 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
     // check error and evaluate LTE
     stepControl_->setCorrection(*this,xn0_,ee_,newtonConvergenceStatus_);
     bool stepPass = stepControl_->acceptStep(*this,&LETvalue_);
-    
+
     if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
       *out << "xn0_ = " << std::endl;
       xn0_->describe(*out,verbLevel);
@@ -438,18 +461,18 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
     }
   }
 
-  // 08/22/07 the history array must be updated before stepControl_->completeStep.
-  completeStep_();   
+  // 08/22/07 the history array must be updated before
+  // stepControl_->completeStep.
+  completeStep_();
   stepControl_->completeStep(*this);
 
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
     *out
       << "\nLeaving " << this->Teuchos::Describable::description()
-      << "::takeStep("<<dt<<","<<toString(stepType)<<") ...\n"; 
+      << "::takeStep("<<dt<<","<<toString(stepType)<<") ...\n";
   }
 
   return(usedStep_);
-
 }
 
 
@@ -468,20 +491,23 @@ const StepStatus<Scalar> ImplicitBDFStepper<Scalar>::getStepStatus() const
     stepStatus.stepSize = Scalar(-ST::one());
     stepStatus.order = -1;
     stepStatus.time = Scalar(-ST::one());
-    return(stepStatus);
+//    return(stepStatus);
   }
-
-  if (numberOfSteps_ > 0) {
-    stepStatus.stepStatus = STEP_STATUS_CONVERGED; 
+  else if (numberOfSteps_ > 0) {
+    stepStatus.stepStatus = STEP_STATUS_CONVERGED;
   } else {
     stepStatus.stepStatus = STEP_STATUS_UNKNOWN;
   }
+
   stepStatus.stepLETStatus = stepLETStatus_;
-  stepStatus.stepSize = usedStep_; 
+  stepStatus.stepSize = usedStep_;
   stepStatus.order = usedOrder_;
   stepStatus.time = time_;
-  stepStatus.stepLETValue = LETvalue_; 
-  stepStatus.solution = xHistory_[0];
+  stepStatus.stepLETValue = LETvalue_;
+  if(xHistory_.size() > 0)
+    stepStatus.solution = xHistory_[0];
+  else
+    stepStatus.solution = Teuchos::null;
   stepStatus.solutionDot = Teuchos::null; // This is *not* free!
   stepStatus.residual = Teuchos::null; // This is *not* free!
 
@@ -541,7 +567,7 @@ void ImplicitBDFStepper<Scalar>::getPoints(
 
   TEUCHOS_ASSERT(haveInitialCondition_);
   // Only do this if we're being called pre-initialization to get the IC.
-  if ( (numberOfSteps_ == -1) && 
+  if ( (numberOfSteps_ == -1) &&
        (time_vec.length() == 1) &&
        (compareTimeValues<Scalar>(time_vec[0],time_)==0) ) {
     defaultGetPoints<Scalar>(
@@ -617,7 +643,7 @@ void ImplicitBDFStepper<Scalar>::getNodes(Array<Scalar>* time_vec) const
 
 
 template<class Scalar>
-void ImplicitBDFStepper<Scalar>::removeNodes(Array<Scalar>& time_vec) 
+void ImplicitBDFStepper<Scalar>::removeNodes(Array<Scalar>& time_vec)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
     "Error, removeNodes is not implemented for ImplicitBDFStepper.\n");
@@ -670,32 +696,25 @@ template<class Scalar>
 RCP<const Teuchos::ParameterList>
 ImplicitBDFStepper<Scalar>::getValidParameters() const
 {
-
   static RCP<Teuchos::ParameterList> validPL;
-
   if (is_null(validPL)) {
-
-    RCP<Teuchos::ParameterList>
-      pl = Teuchos::parameterList();
-
+    RCP<Teuchos::ParameterList> pl = Teuchos::parameterList();
+    // This line is required to pass StepperValidator UnitTest!
     pl->sublist(RythmosStepControlSettings_name);
-
     Teuchos::setupVerboseObjectSublist(&*pl);
-
     validPL = pl;
-
   }
 
-  RCP<Teuchos::FancyOStream> out = this->getOStream();
   Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
-  Teuchos::OSTab ostab(out,1,"getValidParameters");
   if (Teuchos::as<int>(verbLevel) == Teuchos::VERB_HIGH) {
+    RCP<Teuchos::FancyOStream> out = this->getOStream();
+    Teuchos::OSTab ostab(out,1,"getValidParameters");
     *out << "Setting up valid parameterlist." << std::endl;
     validPL->print(*out);
   }
 
   return (validPL);
-  
+
 }
 
 
@@ -730,7 +749,7 @@ void ImplicitBDFStepper<Scalar>::describe(
     out << this->description();
     return;
   }
-  
+
   if ( (as<int>(verbLevel) == as<int>(Teuchos::VERB_DEFAULT) ) ||
     (as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW)     )
     )
@@ -811,12 +830,12 @@ void ImplicitBDFStepper<Scalar>::obtainPredictor_()
   if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
     *out << "currentOrder_ = " << currentOrder_ << std::endl;
   }
-  
+
   // prepare history array for prediction
   for (int i=nscsco_;i<=currentOrder_;++i) {
     Vt_S(xHistory_[i].ptr(),beta_[i]);
   }
-  
+
   // evaluate predictor
   V_V(xn0_.ptr(),*xHistory_[0]);
   V_S(xpn0_.ptr(),ST::zero());
@@ -842,7 +861,7 @@ void ImplicitBDFStepper<Scalar>::interpolateSolution_(
   ) const
 {
 
-  typedef std::numeric_limits<Scalar> NL;
+  // typedef std::numeric_limits<Scalar> NL; // unused
   typedef Teuchos::ScalarTraits<Scalar> ST;
 
 #ifdef HAVE_RYTHMOS_DEBUG
@@ -868,7 +887,7 @@ void ImplicitBDFStepper<Scalar>::interpolateSolution_(
   // Initialize interploation
   Thyra::V_V(ptr(x_ptr),*xHistory_[0]);
   Thyra::V_S(ptr(xdot_ptr),ST::zero());
-  
+
   // Add history array contributions
   const Scalar delt = timepoint - tn;
   Scalar c = ST::one(); // coefficient for interpolation of x
@@ -884,9 +903,9 @@ void ImplicitBDFStepper<Scalar>::interpolateSolution_(
 
   // Set approximate accuracy
   if (accuracy_ptr) {
-    *accuracy_ptr = pow(usedStep_,kord);
+    *accuracy_ptr = Teuchos::ScalarTraits<Scalar>::pow(usedStep_,kord);
   }
-  
+
 }
 
 
@@ -945,7 +964,7 @@ void ImplicitBDFStepper<Scalar>::restoreHistory_()
     }
   }
 
-} 
+}
 
 
 template<class Scalar>
@@ -959,7 +978,7 @@ void ImplicitBDFStepper<Scalar>::updateCoeffs_()
   // more than the current order + 1 then we don't bother to update the
   // coefficients because we've reached a constant step-size formula.  When
   // this is is not true, then we update the coefficients for the variable
-  // step-sizes. 
+  // step-sizes.
   if ((hh_ != usedStep_) || (currentOrder_ != usedOrder_)) {
     nscsco_ = 0;
   }
@@ -994,6 +1013,13 @@ void ImplicitBDFStepper<Scalar>::updateCoeffs_()
       *out << "psi_[" << i << "] = " << psi_[i] << std::endl;
       *out << "alpha_s_ = " << alpha_s_ << std::endl;
     }
+    //std::cout << "alpha_s_ = " << alpha_s_ << std::endl;
+    //for (int i=0;i<=maxOrder_;++i) {
+    //  std::cout << "  alpha_[" << i << "] = " << alpha_[i] << std::endl;
+    //  std::cout << "  beta_[" << i << "] = " << beta_[i] << std::endl;
+    //  std::cout << "  gamma_[" << i << "] = " << gamma_[i] << std::endl;
+    //  std::cout << "  psi_[" << i << "] = " << psi_[i] << std::endl;
+    //}
   }
 }
 
@@ -1023,7 +1049,8 @@ void ImplicitBDFStepper<Scalar>::initialize_()
 
   // Initialize Parameter List if none provided.
   if (parameterList_ == Teuchos::null) {
-    RCP<Teuchos::ParameterList> emptyParameterList = Teuchos::rcp(new Teuchos::ParameterList);
+    RCP<Teuchos::ParameterList> emptyParameterList =
+      Teuchos::rcp(new Teuchos::ParameterList);
     this->setParameterList(emptyParameterList);
   }
 
@@ -1031,7 +1058,7 @@ void ImplicitBDFStepper<Scalar>::initialize_()
   if (stepControl_ == Teuchos::null) {
     RCP<ImplicitBDFStepperStepControl<Scalar> > implicitBDFStepperStepControl =
       Teuchos::rcp(new ImplicitBDFStepperStepControl<Scalar>());
-    RCP<Teuchos::ParameterList> stepControlPL = 
+    RCP<Teuchos::ParameterList> stepControlPL =
       Teuchos::sublist(parameterList_, RythmosStepControlSettings_name);
     implicitBDFStepperStepControl->setParameterList(stepControlPL);
     this->setStepControlStrategy(implicitBDFStepperStepControl);
@@ -1041,22 +1068,24 @@ void ImplicitBDFStepper<Scalar>::initialize_()
   maxOrder_ = stepControl_->getMaxOrder(); // maximum order
   TEUCHOS_TEST_FOR_EXCEPTION(
       !((1 <= maxOrder_) && (maxOrder_ <= 5)), std::logic_error,
-      "Error, maxOrder returned from stepControl_->getMaxOrder() = " << maxOrder_ << " is outside range of [1,5]!\n"
-      );
+      "Error, maxOrder returned from stepControl_->getMaxOrder() = "
+      << maxOrder_ << " is outside range of [1,5]!\n");
 
   Scalar zero = ST::zero();
 
   currentOrder_ = 1; // Current order of integration
-  usedOrder_ = 1;  // order used in current step (used after currentOrder_ is updated)
+  usedOrder_ = 1;    // order used in current step (used after currentOrder_
+                     // is updated)
   usedStep_ = zero;
   nscsco_  =  0;
   LETvalue_ = zero;
 
-  alpha_.clear();  // $\alpha_j(n)=h_n/\psi_j(n)$ coefficient used in local error test
+  alpha_.clear();  // $\alpha_j(n)=h_n/\psi_j(n)$ coefficient used in
+                   // local error test
   // note:   $h_n$ = current step size, n = current time step
-  gamma_.clear();  // calculate time derivative of history array for predictor 
+  gamma_.clear();  // calculate time derivative of history array for predictor
   beta_.clear();   // coefficients used to evaluate predictor from history array
-  psi_.clear();    // $\psi_j(n) = t_n-t_{n-j}$ intermediary variable used to 
+  psi_.clear();    // $\psi_j(n) = t_n-t_{n-j}$ intermediary variable used to
   // compute $\beta_j(n):$
   for (int i=0 ; i<=maxOrder_ ; ++i) {
     alpha_.push_back(zero);
@@ -1064,7 +1093,8 @@ void ImplicitBDFStepper<Scalar>::initialize_()
     gamma_.push_back(zero);
     psi_.push_back(zero);
   }
-  alpha_s_=Scalar(-ST::one());  // $\alpha_s$ fixed-leading coefficient of this BDF method
+  alpha_s_=Scalar(-ST::one());  // $\alpha_s$ fixed-leading coefficient of
+                                // this BDF method
   hh_=zero;
   numberOfSteps_=0;   // number of total time integration steps taken
   nef_ = 0;
@@ -1080,10 +1110,10 @@ void ImplicitBDFStepper<Scalar>::initialize_()
     *out << "numberOfSteps_ = " << numberOfSteps_ << std::endl;
   }
 
-  // setInitialCondition initialized xHistory with xn0, xpn0.  Now we add the rest of the vectors.
-  // Store maxOrder_+1 vectors
+  // setInitialCondition initialized xHistory with xn0, xpn0.
+  // Now we add the rest of the vectors.  Store maxOrder_+1 vectors
   for (int i=2 ; i<=maxOrder_ ; ++i) {
-    xHistory_.push_back(createMember(xn0_->space())); 
+    xHistory_.push_back(createMember(xn0_->space()));
     V_S(xHistory_[i].ptr(),zero);
   }
 
@@ -1107,7 +1137,7 @@ void ImplicitBDFStepper<Scalar>::completeStep_()
 
 #ifdef HAVE_RYTHMOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPT(ST::isnaninf(hh_));
-#endif  
+#endif
 
   numberOfSteps_ ++;
   nef_ = 0;
@@ -1122,7 +1152,7 @@ void ImplicitBDFStepper<Scalar>::completeStep_()
     *out << "numberOfSteps_ = " << numberOfSteps_ << std::endl;
     *out << "time_ = " << time_ << std::endl;
   }
-  
+
   // 03/22/04 tscoffe:  Note that updating the history has nothing to do with
   // the step-size and everything to do with the newton correction vectors.
   updateHistory_();
@@ -1130,7 +1160,8 @@ void ImplicitBDFStepper<Scalar>::completeStep_()
 }
 
 template<class Scalar>
-void ImplicitBDFStepper<Scalar>::setStepControlData(const StepperBase<Scalar> & stepper)
+void ImplicitBDFStepper<Scalar>::setStepControlData(
+  const StepperBase<Scalar> & stepper)
 {
   if (!isInitialized_) {
     initialize_();
@@ -1138,7 +1169,13 @@ void ImplicitBDFStepper<Scalar>::setStepControlData(const StepperBase<Scalar> & 
   stepControl_->setStepControlData(stepper);
 }
 
-// 
+template<class Scalar>
+const Thyra::SolveStatus<Scalar>& ImplicitBDFStepper<Scalar>::getNonlinearSolveStatus() const
+{
+  return nonlinearSolveStatus_;
+}
+
+//
 // Explicit Instantiation macro
 //
 // Must be expanded from within the Rythmos namespace!

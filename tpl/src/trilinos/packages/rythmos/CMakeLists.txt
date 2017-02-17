@@ -1,6 +1,4 @@
 
-INCLUDE(TribitsPackageMacros)
-INCLUDE(TribitsAddOptionAndDefine)
 INCLUDE(CombinedOption)
 
 #
@@ -113,6 +111,9 @@ ADD_SUBDIRECTORY(adapters)
 
 TRIBITS_EXCLUDE_AUTOTOOLS_FILES()
 
+TRIBITS_EXCLUDE_FILES(
+  doc/manual
+  )
 #
 # D) Do standard postprocessing
 #

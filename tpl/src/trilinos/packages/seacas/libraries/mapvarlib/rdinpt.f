@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@ C
     3   CONTINUE
     2 CONTINUE
 C
-      CALL EXINQ (NTP2EX,EXTIMS,NUMTIM,FDUM,CDUM,IERR)
+      NUMTIM = EXINQI (NTP2EX,EXTIMS)
       CALL EXGATM (NTP2EX,TIMES,IERR)
       OUTTIM = -1.
       ISTEP = NUMTIM
@@ -121,7 +121,11 @@ C
       CALL FREFLD (0,0,'CMD >',MFIELD,IOSTAT,NFIELD,KVALUE,CVAL,     
      1IVALUE,RVALUE)
 C
+      if (iostat .ne. 0) go to 100
+      if (nfield .eq. 0) go to 5
       IF (KVALUE(1)      .NE. 0)     GO TO 10
+      if (cval(1)(1:1) .EQ. '#') go to 5
+      if (cval(1)(1:1) .EQ. '$') go to 5
       IF (CVAL(1)(1:3) .EQ. 'HEL') GO TO 20
       IF (CVAL(1)(1:3) .EQ. 'TIM') GO TO 30
       IF (CVAL(1)(1:3) .EQ. 'STE') GO TO 35

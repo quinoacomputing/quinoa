@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -176,11 +176,17 @@ namespace Anasazi {
     //! @name Attribute methods
     //@{ 
 
+    //! The number of rows in the multivector.
+    ptrdiff_t GetGlobalLength () const 
+    {
+       if ( Epetra_MV->Map().GlobalIndicesLongLong() )
+          return static_cast<ptrdiff_t>( Epetra_MV->GlobalLength64() );       
+       else
+          return static_cast<ptrdiff_t>( Epetra_MV->GlobalLength() ); 
+    }
+
     //! Obtain the vector length of *this.
     int GetNumberVecs () const { return Epetra_MV->NumVectors(); }
-
-    //! Obtain the number of vectors in *this.
-    int GetVecLength () const { return Epetra_MV->GlobalLength(); }
 
     //@}
 

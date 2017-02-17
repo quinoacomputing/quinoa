@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 /*
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   }
 
   if ( test_bug2863(Comm, verbose) ) {
-    cout << "test_bug2863 FAILED."<<endl;
+    std::cout << "test_bug2863 FAILED."<<std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -56,10 +56,10 @@ int main(int argc, char *argv[])
 #endif
 
   if (Comm.MyPID() == 0)
-    cout << "TEST PASSED" << endl;
+    std::cout << "TEST PASSED" << std::endl;
 
   exit(EXIT_SUCCESS);
-  
+
 } //end of main program
 
 // == =========================================================== ==

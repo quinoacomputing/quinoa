@@ -46,9 +46,9 @@
 #if defined(HAVE_MPI) && defined(HAVE_EPETRA)
 #include "Epetra_MpiComm.h"
 #endif
-#include "Epetra_CrsMatrix.h" 
-#include "Epetra_Import.h" 
-#include "Epetra_BlockMap.h" 
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_Import.h"
+#include "Epetra_BlockMap.h"
 
 // Teuchos includes
 #include "Teuchos_GlobalMPISession.hpp"
@@ -64,10 +64,7 @@ int main(int argc, char *argv[])
     Teuchos::GlobalMPISession mpiSession(&argc, &argv, 0);
     Epetra_MpiComm Comm(MPI_COMM_WORLD);
 
-    int rank, MyPID, NumProc ;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MyPID = Comm.MyPID();
-    NumProc = Comm.NumProc();
+    int NumProc = Comm.NumProc();
 
     int NumMyEquations = 5;
     int NumGlobalEquations = NumMyEquations * NumProc;
@@ -83,7 +80,7 @@ int main(int argc, char *argv[])
     int i, ierr;
     for (i=0; i<NumMyElements; i++)
     {
-        if (MyGlobalElements[i]==0 || 
+        if (MyGlobalElements[i]==0 ||
                 MyGlobalElements[i] == NumGlobalEquations-1)
             NumNz[i] = 2;
         else
@@ -100,7 +97,7 @@ int main(int argc, char *argv[])
     std::vector<int> Indices(2);
     double two = 2.0;
     int NumEntries;
-      
+
     for (i=0; i<NumMyElements; i++)
     {
         if (MyGlobalElements[i]==0)
@@ -127,17 +124,17 @@ int main(int argc, char *argv[])
                         &MyGlobalElements[i]);
         assert(ierr==0);
     }
-       
+
     // Finish up matrix construction
     ierr = A.FillComplete();
     assert(ierr==0);
 
-    cout << A << endl;
+    std::cout << A << std::endl;
 
     // Construct the graph for a diagonal matrix
     for (i=0; i<NumMyElements; i++)
     {
-        if (MyGlobalElements[i]==0 || 
+        if (MyGlobalElements[i]==0 ||
                 MyGlobalElements[i] == NumGlobalEquations-1)
             NumNz[i] = 1;
         else
@@ -180,17 +177,17 @@ int main(int argc, char *argv[])
     Teuchos::ParameterList pList;
     Isorropia::Epetra::Prober prober(RCPG1, pList, false);
 
-    cout << "Created prober" << endl;
-    cout << G1 << endl;
+    std::cout << "Created prober" << std::endl;
+    std::cout << G1 << std::endl;
 
     prober.color();
 
-    //cout << "Importer = " << (G1.Importer())->TargetMap().MinMyGID() ;
-    cout << "Done Coloring" << endl;
+    //std::cout << "Importer = " << (G1.Importer())->TargetMap().MinMyGID() ;
+    std::cout << "Done Coloring" << std::endl;
     Teuchos::RCP<Epetra_CrsMatrix> D = prober.probe(A);
-    cout << "Done Probing" << endl;
+    std::cout << "Done Probing" << std::endl;
 
-    cout << *D << endl;
+    std::cout << *D << std::endl;
     return 1;
 
 #else

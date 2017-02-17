@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */        
+/* person and disclaimer.                                               */
 /* ******************************************************************** */
 
 #include "ml_common.h"
@@ -21,9 +21,9 @@
 #include "Epetra_Vector.h"
 #include "Epetra_Map.h"
 
-namespace ML_Epetra 
+namespace ML_Epetra
 {
-  
+
 //==============================================================================
 // constructor -- it's presumed that the user has constructed the ML
 // object somewhere else
@@ -47,11 +47,11 @@ MultiLevelOperator::~MultiLevelOperator() {
 int MultiLevelOperator::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const {
 
 
-  if (!X.Map().SameAs(OperatorDomainMap())) 
+  if (!X.Map().SameAs(OperatorDomainMap()))
     ML_CHK_ERR(-1);
-  if (!Y.Map().SameAs(OperatorRangeMap())) 
+  if (!Y.Map().SameAs(OperatorRangeMap()))
     ML_CHK_ERR(-2);
-  if (Y.NumVectors()!=X.NumVectors()) 
+  if (Y.NumVectors()!=X.NumVectors())
     ML_CHK_ERR(-3);
 
   Epetra_MultiVector xtmp(X); // Make copy of X (needed in case X is scaled
@@ -61,8 +61,16 @@ int MultiLevelOperator::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVe
   // a time on them.
   double **xvectors;
   double **yvectors;
-  int ierr = xtmp.ExtractView(&xvectors);
-  ierr = Y.ExtractView(&yvectors);
+
+  // FIXME (mfh 11 Feb 2015) We should actually pass along the error
+  // code to the return value.  For now, I'm commenting out collection
+  // of the error code, since it results in "set but not used"
+  // warnings for ierr.
+
+  //int ierr = xtmp.ExtractView(&xvectors);
+  (void) xtmp.ExtractView(&xvectors);
+  //ierr = Y.ExtractView(&yvectors);
+  (void) Y.ExtractView(&yvectors);
 
   //note: solver_ is the ML handle
   for (int i=0; i < X.NumVectors(); i++)
@@ -95,11 +103,11 @@ int MultiLevelOperator::ApplyInverse(const Epetra_MultiVector& X,
                 Epetra_MultiVector& Y ) const {
 
 
-  if (!X.Map().SameAs(OperatorDomainMap())) 
+  if (!X.Map().SameAs(OperatorDomainMap()))
     ML_CHK_ERR(-1);
-  if (!Y.Map().SameAs(OperatorRangeMap())) 
+  if (!Y.Map().SameAs(OperatorRangeMap()))
     ML_CHK_ERR(-2);
-  if (Y.NumVectors()!=X.NumVectors()) 
+  if (Y.NumVectors()!=X.NumVectors())
     ML_CHK_ERR(-3);
 
 #ifdef ML_MPI
@@ -142,11 +150,11 @@ int MultiLevelOperator::ApplyInverse(const Epetra_MultiVector& X,
 //==============================================================================
 int MultiLevelOperator::ApplyInverse_WKC(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const {
 
-  if (!X.Map().SameAs(OperatorDomainMap())) 
+  if (!X.Map().SameAs(OperatorDomainMap()))
     ML_CHK_ERR(-1);
-  if (!Y.Map().SameAs(OperatorRangeMap())) 
+  if (!Y.Map().SameAs(OperatorRangeMap()))
     ML_CHK_ERR(-2);
-  if (Y.NumVectors()!=X.NumVectors()) 
+  if (Y.NumVectors()!=X.NumVectors())
     ML_CHK_ERR(-3);
 
   Epetra_MultiVector xtmp(X); // Make copy of X (needed in case X is scaled
@@ -183,7 +191,7 @@ int MultiLevelOperator::ApplyInverse_WKC(const Epetra_MultiVector& X, Epetra_Mul
   return 0;
 }
 #endif
- 
+
 }
 
 #endif //ifdef ML_WITH_EPETRA

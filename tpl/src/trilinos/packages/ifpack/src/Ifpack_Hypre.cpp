@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2009) Sandia Corporation
-// 
+//                 Copyright (2002) Sandia Corporation
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -104,18 +117,17 @@ Ifpack_Hypre::Ifpack_Hypre(Epetra_RowMatrix* A):
 
   YVec_ = (hypre_ParVector *) hypre_IJVectorObject(((hypre_IJVector *) YHypre_));
   YLocal_ = hypre_ParVectorLocalVector(YVec_);
-  std::vector<int> rows; rows.resize(iupper - ilower +1);
-  for(int i = ilower; i <= iupper; i++){
-    rows[i-ilower] = i;
-  }
-  MySimpleMap_ = rcp(new Epetra_Map(-1, iupper-ilower+1, &rows[0], 0, Comm()));
+
+  // amk November 24, 2015: This previously created a map that Epetra does not consider
+  // to be contiguous.  hypre doesn't like that, so I changed it.
+  MySimpleMap_ = rcp(new Epetra_Map(A_->NumGlobalRows(), iupper-ilower+1, 0, Comm()));
 } //Constructor
 
 //==============================================================================
 void Ifpack_Hypre::Destroy(){
   if(IsInitialized()){
     IFPACK_CHK_ERRV(HYPRE_IJMatrixDestroy(HypreA_));
-  } 
+  }
   IFPACK_CHK_ERRV(HYPRE_IJVectorDestroy(XHypre_));
   IFPACK_CHK_ERRV(HYPRE_IJVectorDestroy(YHypre_));
   if(IsSolverSetup_[0]){
@@ -149,7 +161,7 @@ int Ifpack_Hypre::Initialize(){
     }
     int GlobalRow[1];
     GlobalRow[0] = A_->RowMatrixRowMap().GID(i);
-    IFPACK_CHK_ERR(HYPRE_IJMatrixSetValues(HypreA_, 1, &numEntries, GlobalRow, &indices[0], &values[0]));
+    IFPACK_CHK_ERR(HYPRE_IJMatrixAddToValues(HypreA_, 1, &numEntries, GlobalRow, &indices[0], &values[0]));
   }
   IFPACK_CHK_ERR(HYPRE_IJMatrixAssemble(HypreA_));
   IFPACK_CHK_ERR(HYPRE_IJMatrixGetObject(HypreA_, (void**)&ParMatrix_));
@@ -282,6 +294,21 @@ int Ifpack_Hypre::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& 
   if(IsComputed() == false){
     IFPACK_CHK_ERR(-1);
   }
+  // These are hypre requirements
+  // hypre needs A, X, and Y to have the same contiguous distribution
+  // NOTE: Maps are only considered to be contiguous if they were generated using a
+  // particular constructor.  Otherwise, LinearMap() will not detect whether they are
+  // actually contiguous.
+  if(!X.Map().LinearMap() || !Y.Map().LinearMap()) {
+    std::cerr << "ERROR: X and Y must have contiguous maps.\n";
+    IFPACK_CHK_ERR(-1);
+  }
+  if(!X.Map().PointSameAs(*MySimpleMap_) ||
+     !Y.Map().PointSameAs(*MySimpleMap_)) {
+    std::cerr << "ERROR: X, Y, and A must have the same distribution.\n";
+    IFPACK_CHK_ERR(-1);
+  }
+
   Time_.ResetStartTime();
   bool SameVectors = false;
   int NumVectors = X.NumVectors();
@@ -291,6 +318,7 @@ int Ifpack_Hypre::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& 
   }
   for(int VecNum = 0; VecNum < NumVectors; VecNum++) {
     //Get values for current vector in multivector.
+    // FIXME amk Nov 23, 2015: This will not work for funky data layouts
     double * XValues;
     IFPACK_CHK_ERR((*X(VecNum)).ExtractView(&XValues));
     double * YValues;
@@ -386,7 +414,9 @@ int Ifpack_Hypre::Multiply(bool TransA, const Epetra_MultiVector& X, Epetra_Mult
 } //Multiply()
 
 //==============================================================================
-ostream& Ifpack_Hypre::Print(ostream& os) const{
+std::ostream& Ifpack_Hypre::Print(std::ostream& os) const{
+  using std::endl;
+
   if (!Comm().MyPID()) {
     os << endl;
     os << "================================================================================" << endl;
@@ -422,7 +452,7 @@ ostream& Ifpack_Hypre::Print(ostream& os) const{
 } //Print()
 
 //==============================================================================
-double Ifpack_Hypre::Condest(const Ifpack_CondestType CT, 
+double Ifpack_Hypre::Condest(const Ifpack_CondestType CT,
                              const int MaxIters,
                              const double Tol,
                              Epetra_RowMatrix* Matrix_in){

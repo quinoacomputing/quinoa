@@ -84,7 +84,7 @@ C   --   LISEV - SCRATCH - size = NVAREL (if 'V' in OPTION)
       LOGICAL ISABRT
       LOGICAL DONAM, DOVTBL, DOCONN, DOATR
       LOGICAL BLK1
-      CHARACTER*20 STRA, STRB
+      CHARACTER*32 STRA, STRB
 
       DONAM  = ((OPTION .EQ. '*') .OR. (INDEX (OPTION, 'N') .GT. 0))
       DOVTBL = ((OPTION .EQ. '*') .OR. (INDEX (OPTION, 'V') .GT. 0))
@@ -109,7 +109,7 @@ C   --   LISEV - SCRATCH - size = NVAREL (if 'V' in OPTION)
       CALL PCKSTR (1, STRA)
       LSTRA = LENSTR (STRA)
       WRITE (STRB, 10010, IOSTAT=IDUM) LENE(NELBLK), LENE(NELBLK)
-10010  FORMAT ('(', I8, '..', I8, ')')
+10010  FORMAT ('(', I10, '..', I10, ')')
       CALL PCKSTR (1, STRB)
       LSTRB = LENSTR (STRB)
 
@@ -191,7 +191,7 @@ C   --   LISEV - SCRATCH - size = NVAREL (if 'V' in OPTION)
 
 10020  FORMAT (/, 1X, 'ELEMENT BLOCKS', :, ' - ', A)
 10030  FORMAT (1X, 'Block', I9, 1X, A, ':',
-     &   I6, ' elements', 1X, A,
+     &   I9, ' elements', 1X, A,
      &   I4, '-node', I4, ' attributes')
 10040  FORMAT (4X, 'Element block name = "',A
      $      ,'", type = "', A, '"')

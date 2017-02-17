@@ -99,3 +99,24 @@
 
 /* Define if you want to build amesos2-lapack */
 #cmakedefine HAVE_AMESOS2_LAPACK
+
+/* Define if you want to build amesos2-cholmod */
+#cmakedefine HAVE_AMESOS2_CHOLMOD
+
+/* Define if you want to enable experimental features */
+#cmakedefine HAVE_AMESOS2_EXPERIMENTAL
+
+/*Define if you want to use amesos-Basker */
+#cmakedefine HAVE_AMESOS2_BASKER
+
+/* Define to 1 if SuperLU_DIST uses a SLU_ prefix on a few of its enums */
+#cmakedefine HAVE_SUPERLUDIST_ENUM_NAMESPACE
+
+/* Define to 1 if SuperLU_DIST's LUstructInit is declared with 2 arguments. */
+#cmakedefine HAVE_SUPERLUDIST_LUSTRUCTINIT_2ARG
+
+/* Defined if you want to enable amesos2-MUMPS */
+#cmakedefine HAVE_AMESOS2_MUMPS
+
+/* For experimental Basker in ShyLU*/
+#cmakedefine HAVE_AMESOS2_KOKKOS

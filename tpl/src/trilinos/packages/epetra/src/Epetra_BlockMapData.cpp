@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,11 +35,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
+#include "Epetra_ConfigDefs.h"
 #include "Epetra_BlockMapData.h"
 #include "Epetra_HashTable.h"
 #include "Epetra_Comm.h"
@@ -49,11 +50,16 @@
 #define EPETRA_BLOCKMAP_NEW_LID
 
 //=============================================================================
-Epetra_BlockMapData::Epetra_BlockMapData(int NumGlobalElements, int ElementSize, int IndexBase, const Epetra_Comm & Comm) 
+Epetra_BlockMapData::Epetra_BlockMapData(long long NumGlobalElements, int ElementSize, long long IndexBase, const Epetra_Comm & Comm, bool IsLongLong)
   : Comm_(Comm.Clone()),
     Directory_(0),
     LID_(0),
-    MyGlobalElements_(0),
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    MyGlobalElements_int_(0),
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+    MyGlobalElements_LL_(0),
+#endif
     FirstPointInElementList_(0),
     ElementSizeList_(0),
     PointToElementList_(0),
@@ -78,11 +84,13 @@ Epetra_BlockMapData::Epetra_BlockMapData(int NumGlobalElements, int ElementSize,
     DistributedGlobal_(false),
     OneToOneIsDetermined_(false),
     OneToOne_(false),
+    GlobalIndicesInt_(!IsLongLong),
+    GlobalIndicesLongLong_(IsLongLong),
     LastContiguousGID_(0),
     LastContiguousGIDLoc_(0),
     LIDHash_(0)
 {
-  //cout << "--BMD created, addr: " << this << endl; //DATA_DEBUG
+  //cout << "--BMD created, addr: " << this << std::endl; //DATA_DEBUG
 }
 
 //=============================================================================
@@ -102,5 +110,5 @@ Epetra_BlockMapData::~Epetra_BlockMapData()
     delete Comm_;
     Comm_ = 0;
   }
-  //cout << "--BMD destroyed, addr: " << this << endl; //DATA_DEBUG
+  //cout << "--BMD destroyed, addr: " << this << std::endl; //DATA_DEBUG
 }

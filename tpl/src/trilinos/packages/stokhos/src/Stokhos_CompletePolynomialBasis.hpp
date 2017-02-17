@@ -7,20 +7,33 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 // 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 // Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
 // 
 // ***********************************************************************
@@ -35,6 +48,7 @@
 #include "Stokhos_ProductBasis.hpp"
 #include "Stokhos_DerivBasis.hpp"
 #include "Stokhos_OneDOrthogPolyBasis.hpp"
+#include "Stokhos_ProductBasisUtils.hpp"
 
 namespace Stokhos {
 
@@ -75,7 +89,7 @@ namespace Stokhos {
     CompletePolynomialBasis(
       const Teuchos::Array< Teuchos::RCP<const OneDOrthogPolyBasis<ordinal_type,
  value_type> > >& bases,
-      const value_type& sparse_tol = 1.0e-15,
+      const value_type& sparse_tol = 1.0e-12,
       bool use_old_cijk_alg = false,
       const Teuchos::RCP< Teuchos::Array<value_type> >& deriv_coeffs = Teuchos::null);
 
@@ -108,13 +122,17 @@ namespace Stokhos {
     /*!
      * The \f$(i,j,k)\f$ entry of the tensor \f$C_{ijk}\f$ is given by
      * \f$C_{ijk} = \langle\Psi_i\Psi_j\Psi_k\rangle\f$ where \f$\Psi_l\f$
-     * represents basis polynomial \f$l\f$ and \f$i,j=0,\dots,P\f$ where
-     * \f$P\f$ is size()-1 and \f$k=0,\dots,p\f$ where \f$p\f$
-     * is the supplied \c order.
+     * represents basis polynomial \f$l\f$ and \f$i,j,k=0,\dots,P\f$ where
+     * \f$P\f$ is size()-1.
      */
     virtual 
     Teuchos::RCP< Stokhos::Sparse3Tensor<ordinal_type, value_type> > 
-    computeTripleProductTensor(ordinal_type order) const;
+    computeTripleProductTensor() const;
+
+    //! Compute linear triple product tensor where k = 0,1,..,d
+    virtual 
+    Teuchos::RCP< Stokhos::Sparse3Tensor<ordinal_type, value_type> > 
+    computeLinearTripleProductTensor() const;
 
     //! Evaluate basis polynomial \c i at zero
     virtual value_type evaluateZero(ordinal_type i) const;
@@ -124,8 +142,9 @@ namespace Stokhos {
      * Size of returned array is given by size(), and coefficients are
      * ordered from order 0 up to size size()-1.
      */
-    virtual void evaluateBases(const Teuchos::Array<value_type>& point,
-			       Teuchos::Array<value_type>& basis_vals) const;
+    virtual void evaluateBases(
+      const Teuchos::ArrayView<const value_type>& point,
+      Teuchos::Array<value_type>& basis_vals) const;
 
     //! Print basis to stream \c os
     virtual void print(std::ostream& os) const;
@@ -144,15 +163,14 @@ namespace Stokhos {
      * the basis, and entry \f$l\f$ is given by \f$i_l\f$ where
      * \f$\Psi_i(x) = \psi_{i_1}(x_1)\dots\psi_{i_d}(x_d)\f$.
      */
-    virtual Teuchos::Array<ordinal_type> getTerm(ordinal_type i) const;
+    virtual const MultiIndex<ordinal_type>& term(ordinal_type i) const;
 
     //! Get index of the multivariate polynomial given orders of each coordinate
     /*!
      * Given the array \c term storing \f$i_1,\dots,\i_d\f$, returns the index
      * \f$i\f$ such that \f$\Psi_i(x) = \psi_{i_1}(x_1)\dots\psi_{i_d}(x_d)\f$.
      */
-    virtual ordinal_type 
-    getIndex(const Teuchos::Array<ordinal_type>& term) const;
+    virtual ordinal_type index(const MultiIndex<ordinal_type>& term) const;
 
     //! Return coordinate bases
     /*!
@@ -161,6 +179,9 @@ namespace Stokhos {
     Teuchos::Array< Teuchos::RCP<const OneDOrthogPolyBasis<ordinal_type, 
 							   value_type> > > 
     getCoordinateBases() const;
+
+    //! Return maximum order allowable for each coordinate basis
+    virtual MultiIndex<ordinal_type> getMaxOrders() const;
 
     //@}
 
@@ -211,18 +232,6 @@ namespace Stokhos {
     Teuchos::RCP< Stokhos::Sparse3Tensor<ordinal_type, value_type> > 
     computeTripleProductTensorNew(ordinal_type order) const;
 
-    /*!
-     * \brief Compute the 2-D array of basis terms which maps a basis index
-     * into the orders for each basis dimension
-     */
-    void compute_terms();
-
-    /*!
-     * \brief Compute basis index given the orders for each basis
-     * dimension.
-     */
-    ordinal_type compute_index(const Teuchos::Array<ordinal_type>& terms) const;
-
   private:
 
     // Prohibit copying
@@ -232,6 +241,8 @@ namespace Stokhos {
     CompletePolynomialBasis& operator=(const CompletePolynomialBasis& b);
     
   protected:
+
+    typedef Stokhos::CompletePolynomialBasisUtils<ordinal_type,value_type> CPBUtils;
 
     //! Name of basis
     std::string name;
@@ -264,7 +275,7 @@ namespace Stokhos {
     Teuchos::Array<value_type> norms;
 
     //! 2-D array of basis terms
-    Teuchos::Array< Teuchos::Array<ordinal_type> > terms;
+    Teuchos::Array< MultiIndex<ordinal_type> > terms;
 
     //! Number of terms up to each order
     Teuchos::Array<ordinal_type> num_terms;

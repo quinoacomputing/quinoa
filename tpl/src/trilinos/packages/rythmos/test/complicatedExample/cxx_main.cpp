@@ -20,7 +20,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -61,12 +61,12 @@
 #include "Rythmos_TimeStepNonlinearSolver.hpp"
 #include "Thyra_TestingTools.hpp"
 
-#ifdef HAVE_RYTHMOS_NOX
+#ifdef Rythmos_ENABLE_NOX
 #  include "Thyra_NonlinearSolver_NOX.hpp"
 #endif
 
 // Includes for Stratimikos:
-#ifdef HAVE_RYTHMOS_STRATIMIKOS
+#ifdef Rythmos_ENABLE_Stratimikos
 #  include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 #endif
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
     // Parse the command-line options:
     Teuchos::CommandLineProcessor  clp(false); // Don't throw exceptions
     clp.addOutputSetupOptions(true);
-#ifdef HAVE_RYTHMOS_STRATIMIKOS
+#ifdef Rythmos_ENABLE_Stratimikos
     Stratimikos::DefaultLinearSolverBuilder lowsfCreator;
     lowsfCreator.setupCLP(&clp);
 #endif
@@ -171,10 +171,12 @@ int main(int argc, char *argv[])
     Teuchos::CommandLineProcessor::EParseCommandLineReturn parse_return = clp.parse(argc,argv);
     if( parse_return != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL ) return parse_return;
 
-#ifdef HAVE_RYTHMOS_STRATIMIKOS
+#ifdef Rythmos_ENABLE_Stratimikos
     lowsfCreator.readParameters(out.get());
-    if(extraLSParamsFile.length())
-      Teuchos::updateParametersFromXmlFile( "./"+extraLSParamsFile, &*lowsfCreator.getNonconstParameterList() );
+    if (extraLSParamsFile.length()) {
+      Teuchos::updateParametersFromXmlFile( "./"+extraLSParamsFile, 
+        lowsfCreator.getNonconstParameterList().ptr() );
+    }
     *out << "\nThe parameter list after being read in:\n";
     lowsfCreator.getParameterList()->print(*out,2,true,false);
 #endif
@@ -221,7 +223,7 @@ int main(int argc, char *argv[])
     RCP<Thyra::LinearOpWithSolveFactoryBase<double> >
       W_factory;
     if((method_val == METHOD_BE) | (method_val == METHOD_BDF)) {
-#ifdef HAVE_RYTHMOS_STRATIMIKOS
+#ifdef Rythmos_ENABLE_Stratimikos
       W_factory = lowsfCreator.createLinearSolveStrategy("");
       *out
         << "\nCreated a LinearOpWithSolveFactory described as:\n"
@@ -275,16 +277,16 @@ int main(int argc, char *argv[])
       RCP<Thyra::NonlinearSolverBase<double> >
         nonlinearSolverSlave;
       if (useNOX) {
-#ifdef HAVE_RYTHMOS_NOX
+#ifdef Rythmos_ENABLE_NOX
         RCP<Thyra::NOXNonlinearSolver>
           _nonlinearSolver = rcp(new Thyra::NOXNonlinearSolver);
         RCP<Thyra::NOXNonlinearSolver>
           _nonlinearSolverSlave = rcp(new Thyra::NOXNonlinearSolver);
         nonlinearSolver = _nonlinearSolver;
         nonlinearSolverSlave = _nonlinearSolverSlave;
-#else // HAVE_RYTHMOS_NOX
+#else // Rythmos_ENABLE_NOX
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Error: NOX is not enabled!");
-#endif // HAVE_RYTHMOS_NOX
+#endif // Rythmos_ENABLE_NOX
       } 
       else {
         RCP<Rythmos::TimeStepNonlinearSolver<double> >
@@ -415,7 +417,7 @@ int main(int argc, char *argv[])
             stepper.describe(*out,verbLevel);
           if (dt_taken != dt)
           {
-            cerr << "Error, stepper took step of dt = " << dt_taken 
+            std::cerr << "Error, stepper took step of dt = " << dt_taken 
               << " when asked to take step of dt = " << dt << std::endl;
             break;
           }
@@ -505,10 +507,10 @@ int main(int argc, char *argv[])
             TEUCHOS_TEST_FOR_EXCEPT(stepStatusMaster.stepSize != stepStatusSlave.stepSize);
             TEUCHOS_TEST_FOR_EXCEPT(stepStatusMaster.time != stepStatusSlave.time);
             if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-              *out << "Master order = " << stepStatusMaster.order << endl;
-              *out << " Slave order = " << stepStatusSlave.order << endl;
-              *out << "Master LET Value = " << stepStatusMaster.stepLETValue << endl;
-              *out << " Slave LET Value = " << stepStatusSlave.stepLETValue << endl;
+              *out << "Master order = " << stepStatusMaster.order << std::endl;
+              *out << " Slave order = " << stepStatusSlave.order << std::endl;
+              *out << "Master LET Value = " << stepStatusMaster.stepLETValue << std::endl;
+              *out << " Slave LET Value = " << stepStatusSlave.stepLETValue << std::endl;
             }
             TEUCHOS_TEST_FOR_EXCEPTION(stepStatusMaster.order != stepStatusSlave.order, std::logic_error,
                 "Error, stepStatusMaster.order = " << stepStatusMaster.order << 
@@ -528,7 +530,7 @@ int main(int argc, char *argv[])
             Thyra::V_StVpStV<double>(vec_temp.ptr(),1.0,*stepStatusMaster.solution,-1.0,*stepStatusSlave.solution);
             double normSolutionDiff = Thyra::norm_inf<double>(*vec_temp);
             if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-              *out << "normSolutionDiff = " << normSolutionDiff << endl;
+              *out << "normSolutionDiff = " << normSolutionDiff << std::endl;
             }
             const double eps = 1.0e6*Teuchos::ScalarTraits<double>::prec();
             TEUCHOS_TEST_FOR_EXCEPTION(normSolutionDiff > eps, std::logic_error,
@@ -542,7 +544,7 @@ int main(int argc, char *argv[])
               Thyra::V_VmV<double>(vec_temp.ptr(),*master_x_dot,*slave_x_dot);
               double normSolutionDotDiff = Thyra::norm_inf<double>(*vec_temp);
               if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-                *out << "normSolutionDotDiff = " << normSolutionDotDiff << endl;
+                *out << "normSolutionDotDiff = " << normSolutionDotDiff << std::endl;
               }
               TEUCHOS_TEST_FOR_EXCEPTION(normSolutionDotDiff > eps, std::logic_error,
                   "Error, normSolutionDotDiff = " << normSolutionDotDiff << " > eps = " << eps << "!");
@@ -554,7 +556,7 @@ int main(int argc, char *argv[])
             stepper.describe(*out,verbLevel);
           if (dt_taken < 0)
           {
-            *out << "Error, stepper failed for some reason with step taken = " << dt_taken << endl;
+            *out << "Error, stepper failed for some reason with step taken = " << dt_taken << std::endl;
             break;
           }
           if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) )
@@ -614,14 +616,14 @@ int main(int argc, char *argv[])
             }
           }
           time += dt_taken;
-          *out << "Took stepsize of: " << dt_taken << " time = " << time << endl;
+          *out << "Took stepsize of: " << dt_taken << " time = " << time << std::endl;
         }
         // Get solution out of stepper:
         stepStatus = stepper.getStepStatus();
         x_computed_thyra_ptr = stepStatus.solution;
       }
     }
-    *out << "Integrated to time = " << time << endl;
+    *out << "Integrated to time = " << time << std::endl;
 
     // Convert solution from Thyra::VectorBase to Epetra_Vector
     RCP<const Epetra_Vector>
@@ -758,7 +760,7 @@ int main(int argc, char *argv[])
       );
     if(!result) success = false;
 
-#ifdef HAVE_RYTHMOS_STRATIMIKOS
+#ifdef Rythmos_ENABLE_Stratimikos
     // Write the final parameters to file
     if(W_factory.get())
       lowsfCreator.writeParamsFile(*W_factory);

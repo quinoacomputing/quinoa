@@ -51,6 +51,11 @@
 #  include "Teuchos_Polynomial.hpp"
 #endif
 
+namespace Stokhos {
+  class ProductEpetraVector;
+  class ProductEpetraMultiVector;
+  class ProductEpetraOperator;
+}
 
 namespace Thyra {
 
@@ -89,12 +94,21 @@ public:
     ,IN_ARG_x ///< .
     ,IN_ARG_x_dot_poly ///< .
     ,IN_ARG_x_poly ///< .
+    ,IN_ARG_x_dot_mp ///< .
+    ,IN_ARG_x_mp ///< .
     ,IN_ARG_t ///< .
     ,IN_ARG_alpha ///< .
     ,IN_ARG_beta ///< .
+    ,IN_ARG_step_size///< .
+    ,IN_ARG_stage_number///< .
   };
   /** \brief .  */
-  static const int NUM_E_IN_ARGS_MEMBERS=7;
+  static const int NUM_E_IN_ARGS_MEMBERS=11;
+
+  /** \brief .  */
+  enum EInArgs_p_mp {
+    IN_ARG_p_mp ///< .
+  };
 
   /** \brief Concrete aggregate class for all output arguments computable by a
    * <tt>ModelEvaluator</tt> subclass object.
@@ -126,6 +140,7 @@ public:
     void set_x( const RCP<const VectorBase<Scalar> > &x );
     /** \brief Precondition: <tt>supports(IN_ARG_x)==true</tt>.  */
     RCP<const VectorBase<Scalar> > get_x() const;
+
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
     /** \brief Precondition: <tt>supports(IN_ARG_x_poly)==true</tt>.  */
     void set_x_poly( 
@@ -142,6 +157,24 @@ public:
     void set_p( int l, const RCP<const VectorBase<Scalar> > &p_l );
     /** \brief Get <tt>p(l)</tt> where <tt>0 <= l && l < this->Np()</tt>.  */
     RCP<const VectorBase<Scalar> > get_p(int l) const;
+
+
+    /** \brief Precondition: <tt>supports(IN_ARG_x_dot_mp)==true</tt>.  */
+    void set_x_dot_mp( const RCP<const Stokhos::ProductEpetraVector > &x_dot_mp );
+    /** \brief Precondition: <tt>supports(IN_ARG_x_dotmp)==true</tt>.  */
+    RCP<const Stokhos::ProductEpetraVector > get_x_dot_mp() const;
+
+    /** \brief Precondition: <tt>supports(IN_ARG_x_mp)==true</tt>.  */
+    void set_x_mp( const RCP<const Stokhos::ProductEpetraVector > &x_mp );
+    /** \brief Precondition: <tt>supports(IN_ARG_x_mp)==true</tt>.  */
+    RCP<const Stokhos::ProductEpetraVector > get_x_mp() const;
+
+    void set_p_mp( int l, const RCP<const Stokhos::ProductEpetraVector > &p_mp_l );
+    RCP<const Stokhos::ProductEpetraVector > get_p_mp(int l) const;
+    /** Whether p_mp is supported for parameter vector l */
+    bool supports(EInArgs_p_mp arg, int l) const;
+
+
     /** \brief Precondition: <tt>supports(IN_ARG_t)==true</tt>.  */
     void set_t( ScalarMag t );
     /** \brief .Precondition: <tt>supports(IN_ARG_t)==true</tt>  */
@@ -154,6 +187,14 @@ public:
     void set_beta( Scalar beta );
     /** \brief Precondition: <tt>supports(IN_ARG_beta)==true</tt>.  */
     Scalar get_beta() const;
+    /** \brief Precondition: <tt>supports(IN_ARG_step_size)==true</tt>.  */
+    void set_step_size( Scalar step_size);
+    /** \brief Precondition: <tt>supports(IN_ARG_step_size)==true</tt>.  */
+    Scalar get_step_size() const;
+    /** \brief Precondition: <tt>supports(IN_ARG_stage_number)==true</tt>.  */
+    void set_stage_number( Scalar stage_number);
+    /** \brief Precondition: <tt>supports(IN_ARG_stage_number)==true</tt>.  */
+    Scalar get_stage_number() const;
     /** \brief Set non-null arguments (does not overwrite non-NULLs with
      * NULLs) .  */
     void setArgs(
@@ -179,6 +220,8 @@ public:
     /** \brief . */
     void _setSupports( EInArgsMembers arg, bool supports );
     /** \brief . */
+    void _setSupports( EInArgs_p_mp arg, int l, bool supports );
+    /** \brief . */
     void _setSupports( const InArgs<Scalar>& inputInArgs, const int Np );
     /** \brief . */
     void _setUnsupportsAndRelated( EInArgsMembers arg );
@@ -189,6 +232,9 @@ public:
     std::string modelEvalDescription_;
     RCP<const VectorBase<Scalar> > x_dot_;
     RCP<const VectorBase<Scalar> > x_;
+    RCP<const Stokhos::ProductEpetraVector > x_dot_mp_;
+    RCP<const Stokhos::ProductEpetraVector > x_mp_;
+    Teuchos::Array< RCP< const Stokhos::ProductEpetraVector > > p_mp_;
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
     RCP<const Teuchos::Polynomial< VectorBase<Scalar> > > x_dot_poly_;
     RCP<const Teuchos::Polynomial< VectorBase<Scalar> > > x_poly_;
@@ -197,10 +243,50 @@ public:
     ScalarMag t_;
     Scalar alpha_;
     Scalar beta_;
+    Scalar step_size_;
+    Scalar stage_number_;
     bool supports_[NUM_E_IN_ARGS_MEMBERS];
+    Teuchos::Array<bool> supports_p_mp_; //Np
     // functions
     void assert_supports(EInArgsMembers arg) const;
+    void assert_supports(EInArgs_p_mp arg, int l) const;
     void assert_l(int l) const;
+  };
+
+  /** \brief The type of an evaluation. */
+  enum EEvalType {
+    EVAL_TYPE_EXACT = 0, /// Do an exact evaluation (default)
+    EVAL_TYPE_APPROX_DERIV, /// An approx. eval. for a F.D. deriv.
+    EVAL_TYPE_VERY_APPROX_DERIV /// An approx. eval. for a F.D. prec.
+  };
+
+  /** \brief Type to embed evaluation accuracy with an RCP-managed object.
+   *
+   * This type derives from Teuchos::RCP and therefore is a drop in
+   * replacement for an RCP object as it implicitly converts to an from such a
+   * type.
+   */
+  template<class ObjType>
+  class Evaluation : public RCP<ObjType> {
+  public:
+    /** \brief . */
+    Evaluation(Teuchos::ENull)
+      : evalType_(EVAL_TYPE_EXACT)  {}
+    /** \brief . */
+    Evaluation() : evalType_(EVAL_TYPE_EXACT) {}
+    /** \brief Implicit conversion from RCP<ObjType>. */
+    Evaluation( const RCP<ObjType> &obj )
+      : RCP<ObjType>(obj), evalType_(EVAL_TYPE_EXACT) {}
+    /** \brief . */
+    Evaluation( const RCP<ObjType> &obj, EEvalType evalType )
+      : RCP<ObjType>(obj), evalType_(evalType) {}
+    /** \brief . */
+    EEvalType getType() const { return evalType_; }
+    /** \brief . */
+    void reset( const RCP<ObjType> &obj, EEvalType evalType ) 
+    { this->operator=(obj); evalType_ = evalType; }
+   private:
+    EEvalType evalType_;
   };
 
   /** \brief . */
@@ -421,15 +507,124 @@ public:
     DerivativeMultiVector<Scalar> dmv_;
   };
 
+  /** \brief Simple aggregate class for a derivative object represented as a
+   * column-wise multi-vector or its transpose as a row-wise multi-vector.
+   */
+  class MPDerivativeMultiVector {
+  public:
+    /** \brief . */
+    MPDerivativeMultiVector()
+      :orientation_(DERIV_MV_BY_COL)
+      {}
+    /** \brief . */
+    MPDerivativeMultiVector(
+      const RCP<Stokhos::ProductEpetraMultiVector > &mv
+      ,const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
+      ,const Teuchos::Array<int> &paramIndexes = Teuchos::Array<int>()
+      ) : mv_(mv.assert_not_null()), orientation_(orientation), paramIndexes_(paramIndexes) {}
+    /** \brief . */
+    void changeOrientation( const EDerivativeMultiVectorOrientation orientation )
+      { orientation_ = orientation; };
+    /** \brief . */
+    const MPDerivativeMultiVector& assert_not_null() const
+      { mv_.assert_not_null(); return *this; }
+    /** \brief . */
+    RCP<Stokhos::ProductEpetraMultiVector > getMultiVector() const
+      { return mv_; }
+    /** \brief . */
+    EDerivativeMultiVectorOrientation getOrientation() const
+      { return orientation_; }
+    /** \brief . */
+    const Teuchos::Array<int>& getParamIndexes() const
+      { return paramIndexes_; }
+    /** \brief . */
+    std::string description() const {return "\n";}
+    /** \brief . */
+    void describe( 
+      Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel
+      ) const {}
+  private:
+    RCP<Stokhos::ProductEpetraMultiVector > mv_;
+    EDerivativeMultiVectorOrientation orientation_;
+    Teuchos::Array<int> paramIndexes_;
+  };
+
+  /** \brief Simple aggregate class that stores a derivative object
+   * as a general linear operator or as a multi-vector.
+   */
+  class MPDerivative {
+  public:
+    /** \brief . */
+    MPDerivative() {}
+    /** \brief . */
+    MPDerivative( const RCP<Stokhos::ProductEpetraOperator > &lo )
+      : lo_(lo.assert_not_null()) {}
+    /** \brief . */
+    MPDerivative(
+      const RCP<Stokhos::ProductEpetraMultiVector > &mv,
+      const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
+      ) : dmv_(mv,orientation) {}
+    /** \brief . */
+    MPDerivative( const MPDerivativeMultiVector &dmv )
+      : dmv_(dmv) {}
+    /** \brief . */
+    bool isEmpty() const
+      { return ( lo_.get()==NULL && dmv_.getMultiVector().get()==NULL ); }
+    /** \brief . */
+    const MPDerivative& assert_not_null() const
+      { dmv_.assert_not_null(); lo_.assert_not_null(); return *this; }
+    /** \brief . */
+    RCP<Stokhos::ProductEpetraOperator > getLinearOp() const
+      { return lo_; }
+    /** \brief . */
+    RCP<Stokhos::ProductEpetraMultiVector > getMultiVector() const
+      { return dmv_.getMultiVector(); }
+    /** \brief . */
+    EDerivativeMultiVectorOrientation getMultiVectorOrientation() const
+      { return dmv_.getOrientation(); }
+    /** \brief . */
+    MPDerivativeMultiVector getDerivativeMultiVector() const
+      { return dmv_; }
+    /** \brief Returns true if the form of the derivative contained here is
+     * supported by deriveSupport.
+     */
+    bool isSupportedBy( const DerivativeSupport &derivSupport ) const
+      {
+        // If there is not derivative support then we will return false!
+        if (derivSupport.none())
+          return false;
+        if (!is_null(getMultiVector())) {
+          return derivSupport.supports(getMultiVectorOrientation());
+        }
+        else if(!is_null(getLinearOp())) {
+          return derivSupport.supports(DERIV_LINEAR_OP);
+        }
+        // If nothing is set then of course we support that!
+        return true;
+      }
+    /** \brief . */
+    std::string description() const {return "\n";}
+    /** \brief . */
+    void describe( 
+      Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel
+      ) const {}
+  private:
+    RCP<Stokhos::ProductEpetraOperator > lo_;
+    MPDerivativeMultiVector dmv_;
+  };
+
   /** \brief .  */
   enum EOutArgsMembers {
-    OUT_ARG_f       ///< .
-    ,OUT_ARG_W      ///< .
-    ,OUT_ARG_W_op   ///< .
-    ,OUT_ARG_f_poly ///< .
+    OUT_ARG_f,  ///< .
+    OUT_ARG_W,  ///< .
+    OUT_ARG_f_mp,  ///< .
+    OUT_ARG_W_mp,  ///< .
+    OUT_ARG_W_op,  ///< .
+    OUT_ARG_W_prec, ///< .
+    OUT_ARG_f_poly  ///< .
   };
   /** \brief .  */
-  static const int NUM_E_OUT_ARGS_MEMBERS=4;
+  static const int NUM_E_OUT_ARGS_MEMBERS=7;
 
   /** \brief . */
   enum EOutArgsDfDp {
@@ -449,6 +644,31 @@ public:
   /** \brief . */
   enum EOutArgsDgDp {
     OUT_ARG_DgDp   ///< .
+  };
+  
+  /** \brief . */
+  enum EOutArgsDfDp_mp {
+    OUT_ARG_DfDp_mp   ///< .
+  };
+
+  /** \brief . */
+  enum EOutArgs_g_mp {
+    OUT_ARG_g_mp   ///< .
+  };
+
+  /** \brief . */
+  enum EOutArgsDgDx_dot_mp {
+    OUT_ARG_DgDx_dot_mp   ///< .
+  };
+
+  /** \brief . */
+  enum EOutArgsDgDx_mp {
+    OUT_ARG_DgDx_mp   ///< .
+  };
+
+  /** \brief . */
+  enum EOutArgsDgDp_mp {
+    OUT_ARG_DgDp_mp   ///< .
   };
   
   /** \brief Concrete aggregate class for all output arguments computable by a
@@ -497,21 +717,44 @@ public:
      * && j < Ng()</tt> and <tt>0 <= l && l < Np()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDp arg, int j, int l) const;
     /** \brief Precondition: <tt>supports(OUT_ARG_f)==true</tt>.  */
-    void set_f( const RCP<VectorBase<Scalar> > &f );
+    void set_f( const Evaluation<VectorBase<Scalar> > &f );
     /** \brief Precondition: <tt>supports(OUT_ARG_f)==true</tt>.  */
-    RCP<VectorBase<Scalar> > get_f() const;
+    Evaluation<VectorBase<Scalar> > get_f() const;
     /** \brief Precondition: <tt>supports(OUT_ARG_g)==true</tt>.  */
-    void set_g( int j, const RCP<VectorBase<Scalar> > &g_j );
+    void set_g( int j, const Evaluation<VectorBase<Scalar> > &g_j );
     /** \brief Precondition: <tt>supports(OUT_ARG_g)==true</tt>..  */
-    RCP<VectorBase<Scalar> > get_g(int j) const;
+    Evaluation<VectorBase<Scalar> > get_g(int j) const;
     /** \brief Precondition: <tt>supports(OUT_ARG_W)==true</tt>.  */
     void set_W( const RCP<LinearOpWithSolveBase<Scalar> > &W );
     /** \brief Precondition: <tt>supports(OUT_ARG_W)==true</tt>.  */
     RCP<LinearOpWithSolveBase<Scalar> > get_W() const;
+
+    const DerivativeSupport& supports(EOutArgsDfDp_mp arg, int l) const;
+    bool supports(EOutArgs_g_mp arg, int j) const;
+    const DerivativeSupport& supports(EOutArgsDgDx_dot_mp arg, int j) const;
+    const DerivativeSupport& supports(EOutArgsDgDx_mp arg, int j) const;
+    const DerivativeSupport& supports(EOutArgsDgDp_mp arg, int j, int l) const;
+    /** \brief Precondition: <tt>supports(OUT_ARG_f_mp)==true</tt>.  */
+    void set_f_mp( const RCP<Stokhos::ProductEpetraVector> &f_mp );
+    /** \brief Precondition: <tt>supports(OUT_ARG_f_mp)==true</tt>.  */
+    RCP<Stokhos::ProductEpetraVector> get_f_mp() const;
+    /** \brief Precondition: <tt>supports(OUT_ARG_g_mp)==true</tt>.  */
+    void set_g_mp( int j, const RCP<Stokhos::ProductEpetraVector> &g_mp_j );
+    /** \brief Precondition: <tt>supports(OUT_ARG_g_mp)==true</tt>..  */
+    RCP<Stokhos::ProductEpetraVector> get_g_mp(int j) const;
+    /** \brief Precondition: <tt>supports(OUT_ARG_W_mp)==true</tt>.  */
+    void set_W_mp( const RCP<Stokhos::ProductEpetraOperator> &W_mp );
+    /** \brief Precondition: <tt>supports(OUT_ARG_W_mp)==true</tt>.  */
+    RCP<Stokhos::ProductEpetraOperator> get_W_mp() const;
+
     /** \brief Precondition: <tt>supports(OUT_ARG_W_op)==true</tt>.  */
     void set_W_op( const RCP<LinearOpBase<Scalar> > &W_op );
     /** \brief Precondition: <tt>supports(OUT_ARG_W_op)==true</tt>.  */
     RCP<LinearOpBase<Scalar> > get_W_op() const;
+    /** \brief Precondition: <tt>supports(OUT_ARG_W_op)==true</tt>.  */
+    void set_W_prec( const RCP<PreconditionerBase<Scalar> > &W_prec );
+    /** \brief Precondition: <tt>supports(OUT_ARG_W_op)==true</tt>.  */
+    RCP<PreconditionerBase<Scalar> > get_W_prec() const;
     /** \brief Return the known properties of <tt>W</tt> (precondition:
      * <tt>supports(OUT_ARG_f)==true</tt>). */
     DerivativeProperties get_W_properties() const;
@@ -543,6 +786,20 @@ public:
     /** \brief Return the know properties of <tt>DgDp(j,l)</tt> (precondition:
      * <tt>supports(OUT_ARG_DgDp,j,l)==true</tt>). */
     DerivativeProperties get_DgDp_properties(int j, int l) const;
+
+    void set_DfDp_mp(int l,  const MPDerivative &DfDp_mp_l);
+    MPDerivative get_DfDp_mp(int l) const;
+    DerivativeProperties get_DfDp_mp_properties(int l) const;
+    void set_DgDx_dot_mp(int j, const MPDerivative &DgDx_dot_mp_j);
+    MPDerivative get_DgDx_dot_mp(int j) const;
+    DerivativeProperties get_DgDx_dot_mp_properties(int j) const;
+    void set_DgDx_mp(int j, const MPDerivative &DgDx_mp_j);
+    MPDerivative get_DgDx_mp(int j) const;
+    DerivativeProperties get_DgDx_mp_properties(int j) const;
+    void set_DgDp_mp( int j, int l, const MPDerivative &DgDp_mp_j_l );
+    MPDerivative get_DgDp_mp(int j, int l) const;
+    DerivativeProperties get_DgDp_mp_properties(int j, int l) const;
+
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
     /** \brief Precondition: <tt>supports(OUT_ARG_f_poly)==true</tt>.  */
     void set_f_poly( const RCP<Teuchos::Polynomial< VectorBase<Scalar> > > &f_poly );
@@ -601,6 +858,13 @@ public:
     void _setSupports( EOutArgsDgDx arg, int j, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDp arg, int j, int l, const DerivativeSupport& );
+
+    void _setSupports( EOutArgs_g_mp arg, int j, bool supports );
+    void _setSupports( EOutArgsDfDp_mp arg, int l, const DerivativeSupport& );
+    void _setSupports( EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& );
+    void _setSupports( EOutArgsDgDx_mp arg, int j, const DerivativeSupport& );
+    void _setSupports( EOutArgsDgDp_mp arg, int j, int l, const DerivativeSupport& );
+
     /** \brief . */
     void _set_W_properties( const DerivativeProperties &properties );
     /** \brief . */
@@ -611,6 +875,12 @@ public:
     void _set_DgDx_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDp_properties( int j, int l, const DerivativeProperties &properties );
+
+    void _set_DfDp_mp_properties( int l, const DerivativeProperties &properties );
+    void _set_DgDx_dot_mp_properties( int j, const DerivativeProperties &properties );
+    void _set_DgDx_mp_properties( int j, const DerivativeProperties &properties );
+    void _set_DgDp_mp_properties( int j, int l, const DerivativeProperties &properties );
+
     /** \brief . */
     void _setSupports( const OutArgs<Scalar>& inputOutArgs );
     /** \brief . */
@@ -619,7 +889,7 @@ public:
     void _setUnsupportsAndRelated( EOutArgsMembers arg );
   private:
     // types
-    typedef Teuchos::Array<RCP<VectorBase<Scalar> > > g_t;
+    typedef Teuchos::Array<Evaluation<VectorBase<Scalar> > > g_t;
     typedef Teuchos::Array<Derivative<Scalar> > deriv_t;
     typedef Teuchos::Array<DerivativeProperties> deriv_properties_t;
     typedef Teuchos::Array<DerivativeSupport> supports_t;
@@ -630,10 +900,11 @@ public:
     supports_t supports_DgDx_dot_; // Ng
     supports_t supports_DgDx_; // Ng
     supports_t supports_DgDp_; // Ng x Np
-    RCP<VectorBase<Scalar> > f_;
+    Evaluation<VectorBase<Scalar> > f_;
     g_t g_; // Ng
     RCP<LinearOpWithSolveBase<Scalar> > W_;
     RCP<LinearOpBase<Scalar> > W_op_;
+    RCP<PreconditionerBase<Scalar> > W_prec_;
     DerivativeProperties W_properties_;
     deriv_t DfDp_; // Np
     deriv_properties_t DfDp_properties_; // Np
@@ -643,6 +914,24 @@ public:
     deriv_properties_t DgDx_properties_; // Ng
     deriv_t DgDp_; // Ng x Np
     deriv_properties_t DgDp_properties_; // Ng x Np
+
+    Teuchos::Array<bool> supports_g_mp_; //Ng
+    supports_t supports_DfDp_mp_; // Np_mp
+    supports_t supports_DgDx_dot_mp_; // Ng_mp
+    supports_t supports_DgDx_mp_; // Ng_mp
+    supports_t supports_DgDp_mp_; // Ng_mp x Np_mp
+    Teuchos::Array< RCP< Stokhos::ProductEpetraVector > > g_mp_;
+    RCP<Stokhos::ProductEpetraVector> f_mp_;
+    RCP<Stokhos::ProductEpetraOperator> W_mp_;
+    Teuchos::Array<MPDerivative> DfDp_mp_;
+    Teuchos::Array<MPDerivative> DgDx_dot_mp_;
+    Teuchos::Array<MPDerivative> DgDx_mp_;
+    Teuchos::Array<MPDerivative> DgDp_mp_;
+    deriv_properties_t DfDp_mp_properties_;
+    deriv_properties_t DgDx_dot_mp_properties_;
+    deriv_properties_t DgDx_mp_properties_;
+    deriv_properties_t DgDp_mp_properties_;
+
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
    RCP<Teuchos::Polynomial< VectorBase<Scalar> > > f_poly_;
 #endif // HAVE_THYRA_ME_POLYNOMIAL
@@ -665,6 +954,25 @@ public:
       EOutArgsDgDp arg, int j, int l,
       const Derivative<Scalar> &deriv = Derivative<Scalar>()
       ) const;
+
+    void assert_supports(EOutArgs_g_mp arg, int j) const;
+    void assert_supports(
+      EOutArgsDfDp_mp arg, int l,
+      const MPDerivative &deriv = MPDerivative()
+      ) const;
+    void assert_supports(
+      EOutArgsDgDx_dot_mp arg, int j,
+      const MPDerivative &deriv = MPDerivative()
+      ) const;
+    void assert_supports(
+      EOutArgsDgDx_mp arg, int j,
+      const MPDerivative &deriv = MPDerivative()
+      ) const;
+    void assert_supports(
+      EOutArgsDgDp_mp arg, int j, int l,
+      const MPDerivative &deriv = MPDerivative()
+      ) const;
+
     void assert_l(int l) const;
     void assert_j(int j) const;
   };
@@ -703,6 +1011,8 @@ protected:
     void setSupports( const InArgs<Scalar>& inputInArgs, const int Np = -1 );
     /** \brief . */
     void setUnsupportsAndRelated( EInArgsMembers arg );
+
+    void setSupports( EInArgs_p_mp arg, int l, bool supports);
   };
 
   /** \brief Protected subclass of <tt>OutArgs</tt> that only
@@ -733,6 +1043,13 @@ protected:
     void setSupports(EOutArgsDgDx arg, int j, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDp arg, int j, int l, const DerivativeSupport& );
+
+    void setSupports( EOutArgs_g_mp arg, int j, bool supports);
+    void setSupports(EOutArgsDfDp_mp arg, int l, const DerivativeSupport& );
+    void setSupports(EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& );
+    void setSupports(EOutArgsDgDx_mp arg, int j, const DerivativeSupport& );
+    void setSupports(EOutArgsDgDp_mp arg, int j, int l, const DerivativeSupport& );
+
     /** \brief . */
     void set_W_properties( const DerivativeProperties &properties );
     /** \brief . */
@@ -743,6 +1060,12 @@ protected:
     void set_DgDx_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDp_properties( int j, int l, const DerivativeProperties &properties );
+
+    void set_DfDp_mp_properties( int l, const DerivativeProperties &properties );
+    void set_DgDx_dot_mp_properties( int j, const DerivativeProperties &properties );
+    void set_DgDx_mp_properties( int j, const DerivativeProperties &properties );
+    void set_DgDp_mp_properties( int j, int l, const DerivativeProperties &properties );
+
     /** \brief . */
     void setSupports( const OutArgs<Scalar>& inputOutArgs );
    /** \brief . */
@@ -753,7 +1076,20 @@ protected:
 
   //@}
 
-};
+  /** \brief constructor */
+  //@{
+ 
+  /** \brief . */
+  ModelEvaluatorBase();
+
+  //@}
+
+private:
+  // Not defined and not to be called
+  ModelEvaluatorBase(const ModelEvaluatorBase&);
+  ModelEvaluatorBase& operator=(const ModelEvaluatorBase&);
+
+}; // ModelEvaluatorBase
 
 
 /** \relates ModelEvaluatorBase */
@@ -801,12 +1137,20 @@ std::string Thyra::toString(ModelEvaluatorBase::EInArgsMembers arg)
       return "IN_ARG_x_dot_poly";
     case ModelEvaluatorBase::IN_ARG_x_poly:
       return "IN_ARG_x_poly";
+    case ModelEvaluatorBase::IN_ARG_x_dot_mp:
+      return "IN_ARG_x_dot_mp";
+    case ModelEvaluatorBase::IN_ARG_x_mp:
+      return "IN_ARG_x_mp";
     case ModelEvaluatorBase::IN_ARG_t:
       return "IN_ARG_t";
     case ModelEvaluatorBase::IN_ARG_alpha:
       return "IN_ARG_alpha";
     case ModelEvaluatorBase::IN_ARG_beta:
       return "IN_ARG_beta";
+    case ModelEvaluatorBase::IN_ARG_step_size:
+      return "IN_ARG_step_size";
+    case ModelEvaluatorBase::IN_ARG_stage_number:
+      return "IN_ARG_stage_number";
 #ifdef TEUCHOS_DEBUG
     default:
       TEUCHOS_TEST_FOR_EXCEPT(true);
@@ -824,8 +1168,14 @@ std::string Thyra::toString(ModelEvaluatorBase::EOutArgsMembers arg)
       return "OUT_ARG_f";
     case ModelEvaluatorBase::OUT_ARG_W:
       return "OUT_ARG_W";
+    case ModelEvaluatorBase::OUT_ARG_f_mp:
+      return "OUT_ARG_f_mp";
+    case ModelEvaluatorBase::OUT_ARG_W_mp:
+      return "OUT_ARG_W_mp";
     case ModelEvaluatorBase::OUT_ARG_W_op:
       return "OUT_ARG_W_op";
+    case ModelEvaluatorBase::OUT_ARG_W_prec:
+      return "OUT_ARG_W_prec";
     case ModelEvaluatorBase::OUT_ARG_f_poly:
       return "OUT_ARG_f_poly";
 #ifdef TEUCHOS_DEBUG

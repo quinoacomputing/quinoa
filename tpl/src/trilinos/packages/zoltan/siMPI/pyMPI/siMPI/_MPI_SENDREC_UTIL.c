@@ -120,6 +120,8 @@ int _MPI_getSize(MPI_Datatype type)
       return sizeof(int);
     case MPI_LONG:
       return sizeof(long);
+    case MPI_LONG_LONG:           /* KDD Added 11/19/15 */
+      return sizeof(long long);
     case MPI_FLOAT:
       return sizeof(float);
     case MPI_DOUBLE:
@@ -167,8 +169,13 @@ int _MPI_calculateStructureSize (MPI_Datatype type)
     MPI_Abort (MPI_COMM_NULL, MPI_ERR_TYPE);
   }
   datatype = &_MPI_TYPE_LIST[index];
+
+  /* KDD 6/2/16 Comment below says this return value should be extent, 
+     KDD 6/2/16 not size. I agree.
   size = datatype->size;
+  */
   /*EDIT should be extent */
+  size = datatype->extent;
 
   return size;
 }
@@ -281,7 +288,6 @@ int _MPI_Type_Invalid(int index)
   if ( (index>=0)&&(index<_MPI_TYPE_ARRAY_SIZE) )
   {
     _MPI_TYPE_LIST[index].id = _MPI_NOT_VALID;
-    _MPI_TYPE_LIST[index].size = 0;
     _MPI_TYPE_LIST[index].extent = 0;
     _MPI_TYPE_LIST[index].next = (_MPI_TYPE_DES *) NULL;
     return MPI_SUCCESS;

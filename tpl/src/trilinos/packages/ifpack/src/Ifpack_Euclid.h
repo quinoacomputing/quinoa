@@ -1,28 +1,41 @@
 /*@HEADER
 // ***********************************************************************
-// 
+//
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2009) Sandia Corporation
-// 
+//                 Copyright (2002) Sandia Corporation
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//  
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//  
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 //@HEADER
 */
@@ -62,30 +75,30 @@ namespace Teuchos {
 
 //! Ifpack_Euclid: A class for constructing and using an ILU factorization of a given Epetra_CrsMatrix, using the Euclid library by Argonne National Laboratories.
 
-/*! 
+/*!
   Class Ifpack_Euclid can use the euclid preconditioner as used in Hypre library.
 */
 
   //The other files that were modified for Trilinos are getRow.c, call_epetra.{cpp,h}.
 
 class Ifpack_Euclid: public Epetra_Object, public Epetra_CompObject, public virtual Epetra_Operator {
-      
-  friend ostream& operator << (ostream& os, const Ifpack_Euclid& A);
+
+  friend std::ostream& operator << (std::ostream& os, const Ifpack_Euclid& A);
 
 public:
   // @{ Constructors and destructors.
   //! Constructor
   Ifpack_Euclid(Epetra_CrsMatrix* A);
-  
+
   //! Destructor
   ~Ifpack_Euclid(){ Destroy();}
 
   // @}
   // @{ Construction methods
-  
+
   //! Initialize the preconditioner, does not touch matrix values.
   int Initialize();
-  
+
   //! Returns \c true if the preconditioner has been successfully initialized.
   bool IsInitialized() const{ return(IsInitialized_);}
 
@@ -120,7 +133,7 @@ public:
 
   \return Integer error code, set to 0 if successful.
  */
-  int SetParameter(string name, int Value);
+  int SetParameter(std::string name, int Value);
 
   //! Set a parameter that takes a single double.
   /*!
@@ -129,7 +142,7 @@ public:
 
   \return Integer error code, set to 0 if successful.
   */
-  int SetParameter(string name, double Value);
+  int SetParameter(std::string name, double Value);
 
   //! If parameter is true, will use transpose operations.
   int SetUseTranspose(bool UseTranspose_in) {UseTranspose_ = UseTranspose_in; return(0);};
@@ -137,17 +150,17 @@ public:
 
   // @{ Mathematical functions.
   // Applies the matrix to X, returns the result in Y.
-  int Apply(const Epetra_MultiVector& X, 
-	       Epetra_MultiVector& Y) const{ return(Multiply(false,X,Y));}
+  int Apply(const Epetra_MultiVector& X,
+               Epetra_MultiVector& Y) const{ return(Multiply(false,X,Y));}
 
   //! Returns the result of a Epetra_Operator multiplied with an Epetra_MultiVector X in Y.
   /*! This calls the multiply function on the stored matrix.
 
-    \param 
+    \param
       trans - (In) If true, use do a transpose multiply.
-	   X - (In) A Epetra_MultiVector of dimension NumVectors to multiply with.
+           X - (In) A Epetra_MultiVector of dimension NumVectors to multiply with.
     \param Out
-	   Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
+           Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful. -1 if compute() hasn't been called. -2 if the multivectors have differing numbers of vectors.
   */
@@ -155,15 +168,15 @@ public:
 
   //! Returns the result of a Epetra_Operator inverse applied to an Epetra_MultiVector X in Y.
   /*! In this implementation, we use several existing attributes to determine how virtual
-      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(), 
+      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(),
       the Epetra_CrsMatrix::UseTranspose(), and NoDiagonal() methods. The most notable warning is that
       if a matrix has no diagonal values we assume that there is an implicit unit diagonal that should
       be accounted for when doing a triangular solve.
 
-    \param 
-	   X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
+    \param
+           X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
-	   Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
+           Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful. -1 if compute() hasn't been called. -2 if the multivectors have differing numbers of vectors.
   */
@@ -178,13 +191,13 @@ public:
 
   // @}
   // @{ Query methods
-  
+
   //! Returns a character string describing the operator
   const char* Label() const {return(Label_);}
 
   //! Sets label for \c this object.
   void SetLabel(const char* Label_in){ strcpy(Label_,Label_in);}
-  
+
   //! Returns the domain map from the creating matrix.
   const Epetra_Map &OperatorDomainMap() const{return A_->DomainMap();}
 
@@ -254,40 +267,40 @@ private:
   int CallEuclid(double *x, double *y) const;
 
   //! Returns the result of a Ifpack_ILU forward/back solve on a Epetra_MultiVector X in Y.
-  /*! 
+  /*!
     \param In
     Trans -If true, solve transpose problem.
-    \param 
+    \param
     X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
     Y - (Out) A Epetra_MultiVector of dimension NumVectorscontaining result.
-    
+
     \return Integer error code, set to 0 if successful.
   */
   int Solve(bool Trans, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Returns the number of global matrix rows.
   int NumGlobalRows() const {return(A_->NumGlobalRows());};
-  
+
   //! Returns the number of global matrix columns.
   int NumGlobalCols() const {return(A_->NumGlobalCols());};
-  
+
   //! Returns the number of local matrix rows.
   int NumMyRows() const {return(A_->NumMyRows());};
-  
+
   //! Returns the number of local matrix columns.
   int NumMyCols() const {return(A_->NumMyCols());};
-  
+
   // @}
   // @{ Internal data
-  
+
   //! Pointer to the Epetra_CrsMatrix to factorize
   Teuchos::RefCountPtr<Epetra_CrsMatrix> A_;
   //! This objects copy of the ParamterList.
   Teuchos::ParameterList List_;
   //! If true, use transpose operator operations.
   bool UseTranspose_;
-  //! The condition estimate for this preconditioner, will be -1 for now. 
+  //! The condition estimate for this preconditioner, will be -1 for now.
   double Condest_;
   //! If \c true, the preconditioner has been successfully initialized.
   bool IsInitialized_;
@@ -332,7 +345,7 @@ private:
 };
 
 //! This is the print function.
-ostream& operator << (ostream& os, const Ifpack_Euclid& A);
+std::ostream& operator << (std::ostream& os, const Ifpack_Euclid& A);
 
 #endif // HAVE_EUCLID
 #endif /* IFPACK_EUCLID_H */

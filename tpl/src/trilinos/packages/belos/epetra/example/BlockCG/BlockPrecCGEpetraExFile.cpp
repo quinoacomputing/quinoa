@@ -63,6 +63,7 @@
 
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
 
 int main(int argc, char *argv[]) {
   //
@@ -88,7 +89,11 @@ int main(int argc, char *argv[]) {
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-  bool verbose = false, proc_verbose = false;
+bool verbose = false;
+bool success = true;
+try {
+bool proc_verbose = false;
+  bool leftprec = true;      // left preconditioning or right.
   int frequency = -1;        // frequency of status test output.
   int blocksize = 1;         // blocksize
   int numrhs = 1;            // number of right-hand sides to solve for
@@ -104,6 +109,7 @@ int main(int argc, char *argv[]) {
   cmdp.setOption("num-rhs",&numrhs,"Number of right-hand sides to be solved for.");
   cmdp.setOption("block-size",&blocksize,"Block size used by CG.");
   cmdp.setOption("max-iters",&maxiters,"Maximum number of iterations per linear system (-1 = adapted to problem/block size).");
+  cmdp.setOption("left-prec","right-prec",&leftprec,"Left preconditioning or right.");
   if (cmdp.parse(argc,argv) != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
     return -1;
   }
@@ -125,7 +131,6 @@ int main(int argc, char *argv[]) {
   if (numrhs>1) {
     X = rcp( new Epetra_MultiVector( *Map, numrhs ) );
     B = rcp( new Epetra_MultiVector( *Map, numrhs ) );
-    X->Seed();
     X->Random();
     OPT::Apply( *A, *X, *B );
     X->PutScalar( 0.0 );
@@ -138,30 +143,30 @@ int main(int argc, char *argv[]) {
   // ************Construct preconditioner*************
   //
   ParameterList ifpackList;
-    
+
   // allocates an IFPACK factory. No data is associated
   // to this object (only method Create()).
   Ifpack Factory;
 
   // create the preconditioner. For valid PrecType values,
   // please check the documentation
-  std::string PrecType = "ILU"; // incomplete LU
-  int OverlapLevel = 1; // must be >= 0. If Comm.NumProc() == 1,
+  std::string PrecType = "ICT"; // incomplete Cholesky
+  int OverlapLevel = 0; // must be >= 0. If Comm.NumProc() == 1,
                         // it is ignored.
-  
+
   RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( Factory.Create(PrecType, &*A, OverlapLevel) );
   assert(Prec != Teuchos::null);
-  
-  // specify parameters for ILU
+
+  // specify parameters for ICT
   ifpackList.set("fact: drop tolerance", 1e-9);
-  ifpackList.set("fact: level-of-fill", 1);
+  ifpackList.set("fact: ict level-of-fill", 1.0);
   // the combine mode is on the following:
   // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
   // Their meaning is as defined in file Epetra_CombineMode.h
   ifpackList.set("schwarz: combine mode", "Add");
   // sets the parameters
   IFPACK_CHK_ERR(Prec->SetParameters(ifpackList));
-    
+
   // initialize the preconditioner. At this point the matrix must
   // have been FillComplete()'d, but actual values are ignored.
   IFPACK_CHK_ERR(Prec->Initialize());
@@ -190,7 +195,7 @@ int main(int argc, char *argv[]) {
     belosList.set( "Show Maximum Residual Norm Only", true );  // Show only the maximum residual norm
   }
   if (verbose) {
-    belosList.set( "Verbosity", Belos::Errors + Belos::Warnings + 
+    belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
 		   Belos::TimingDetails + Belos::StatusTestDetails );
     if (frequency > 0)
       belosList.set( "Output Frequency", frequency );
@@ -202,7 +207,10 @@ int main(int argc, char *argv[]) {
   //
   RCP<Belos::LinearProblem<double,MV,OP> > problem
     = rcp( new Belos::LinearProblem<double,MV,OP>( A, X, B ) );
-  problem->setLeftPrec( belosPrec );
+  if (leftprec)
+    problem->setLeftPrec( belosPrec );
+  else
+    problem->setRightPrec( belosPrec );
 
   bool set = problem->setProblem();
   if (set == false) {
@@ -210,11 +218,11 @@ int main(int argc, char *argv[]) {
       std::cout << std::endl << "ERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
     return -1;
   }
-  
+
   // Create an iterative solver manager.
   RCP< Belos::SolverManager<double,MV,OP> > solver
     = rcp( new Belos::BlockCGSolMgr<double,MV,OP>(problem, rcp(&belosList,false)) );
-  
+
   //
   // *******************************************************************
   // *************Start the block CG iteration*************************
@@ -259,21 +267,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
-#ifdef EPETRA_MPI
-  MPI_Finalize();
-#endif
-
-  if (ret!=Belos::Converged || badRes) {
-    if (proc_verbose)
-      std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;
-    return -1;
-  }
-  //
-  // Default return value
-  //
+if (ret!=Belos::Converged || badRes) {
+  success = false;
+  if (proc_verbose)
+    std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;
+} else {
+  success = true;
   if (proc_verbose)
     std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
-  return 0;
+}
+}
+TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
 
-  //
-} 
+#ifdef EPETRA_MPI
+MPI_Finalize();
+#endif
+
+return success ? EXIT_SUCCESS : EXIT_FAILURE;
+}

@@ -1,41 +1,45 @@
-/* ************************************************************************
-
-                   Trios: Trilinos I/O Support
-                 Copyright 2011 Sandia Corporation
-
- Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- the U.S. Government retains certain rights in this software.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are
- met:
-
- 1. Redistributions of source code must retain the above copyright
- notice, this list of conditions and the following disclaimer.
-
- 2. Redistributions in binary form must reproduce the above copyright
- notice, this list of conditions and the following disclaimer in the
- documentation and/or other materials provided with the distribution.
-
- 3. Neither the name of the Corporation nor the names of the
- contributors may be used to endorse or promote products derived from
- this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-
-*************************************************************************/
+/**
+//@HEADER
+// ************************************************************************
+//
+//                   Trios: Trilinos I/O Support
+//                 Copyright 2011 Sandia Corporation
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
+//
+// *************************************************************************
+//@HEADER
+ */
 /**  @file timer.c
  *
  *   @brief A portable timer for Trios.
@@ -71,20 +75,16 @@ log_level timer_debug_level = LOG_UNDEFINED;
 #undef USING_CLOCK_GETTIME
 #undef USING_GETTIMEOFDAY
 
+
 #if defined(HAVE_TRIOS_PAPI)
 #define USING_PAPI
 #include <papi.h>
 long_long init_usec, init_cycles;
 
+
 #elif defined(HAVE_TRIOS_MACH_ABSOLUTE_TIME)
 #define USING_MACH_ABSOLUTE_TIME
 #include <mach/mach_time.h>
-
-#elif defined(HAVE_TRIOS_GETTIMEOFDAY)
-#define USING_GETTIMEOFDAY
-#include <sys/time.h>
-static struct timeval tv_init;
-
 
 #elif defined(HAVE_TRIOS_CLOCK_GETTIME)
 #define USING_CLOCK_GETTIME
@@ -99,6 +99,12 @@ static struct timeval tv_init;
 static const clockid_t clockid = CLOCK_REALTIME;
 static struct timespec ts_init;
 static struct timespec ts_res;
+
+#elif defined(HAVE_TRIOS_GETTIMEOFDAY)
+#define USING_GETTIMEOFDAY
+#include <sys/time.h>
+static struct timeval tv_init;
+
 
 #else
 #error No supported timers.
@@ -219,6 +225,7 @@ uint64_t trios_get_time_ns()
     result = result*(uint64_t)1000;
 #endif
 
+
     return result;
 }
 
@@ -228,9 +235,10 @@ uint64_t trios_get_time_ns()
  */
 double trios_get_time()
 {
-        uint64_t ns = trios_get_time_ns();
-        double result = (double)ns*1.0e-9;
-        return result;
+    double result = 0.0;
+    uint64_t ns = trios_get_time_ns();
+    result = (double)ns*1.0e-9;
+    return result;
 }
 
 long trios_get_time_us()
@@ -260,45 +268,53 @@ long trios_get_time_ms()
 int trios_timer_test()
 {
     int rc = 0;
-    static const uint64_t sleep_us = 1000000;  /* 1 second */
+/*    static const uint64_t sleep_us = 1000000; */  /* 1 second */
+    static const unsigned int sleep_s = 1;  /* 1 second */
 
     /* TODO: what should be the acceptable error (1/2 sec?) */
     static const uint64_t error_ms = 500;
-    uint64_t error_us = error_ms * 1000;
+
     uint64_t error_ns = error_ms * 1000000;
+    uint64_t error_us = error_ms * 1000;
     double error_sec = (double)error_ms/1000.0;
 
     uint64_t start_ns=0, t_ns=0;
-    uint64_t start_ms, t_ms;
     uint64_t start_us, t_us;
+    uint64_t start_ms, t_ms;
     double start_sec, t_sec;
 
     log_debug(timer_debug_level, "this is a timer test.  expect a 1 second delay.  starting...");
 
     /* run to initialize timer */
     start_ns = trios_get_time_ns();
-    if (usleep(sleep_us)) {
-        log_error(timer_debug_level, "Failed calling usleep()");
+    if (sleep(sleep_s)) {
+        log_error(timer_debug_level, "Failed calling sleep()");
         return 1;
     }
 
     /* run to get measurements */
     start_ns = trios_get_time_ns();
-    start_ms = trios_get_time_ms();
     start_us = trios_get_time_us();
+    start_ms = trios_get_time_ms();
     start_sec = trios_get_time();
 
     /* sleep one seconds */
-    usleep(sleep_us);
+    sleep(sleep_s);
 
     t_ns = trios_get_time_ns() - start_ns;
-    t_ms = trios_get_time_ms() - start_ms;
     t_us = trios_get_time_us() - start_us;
+    t_ms = trios_get_time_ms() - start_ms;
     t_sec = trios_get_time() - start_sec;
 
+    printf("slept for %u seconds:\n", sleep_s);
+    printf("\tns = %lu\n", t_ns);
+    printf("\tus = %lu\n", t_us);
+    printf("\tms = %lu\n", t_ms);
+    printf("\tsec = %f\n", t_sec);
+
     /* Make sure our values have a reasonable error */
-    if (labs(t_ns - (sleep_us * 1e3)) > error_ns) {
-        uint64_t actual_err = labs(t_ns - (sleep_us *1e3));
+    if (labs(t_ns - ((double)sleep_s * 1e9)) > error_ns) {
+        uint64_t actual_err = labs(t_ns - ((double)sleep_s * 1e9));
         log_error(timer_debug_level,
                 "trios_timer failed ns timer test: err = %llu ns"
                 " > acceptable err = %llu",
@@ -306,8 +322,8 @@ int trios_timer_test()
         rc = 1;
     }
 
-    if (labs(t_us - sleep_us) > error_us) {
-        uint64_t actual_err = labs(t_us - sleep_us);
+    if (labs(t_us - ((double)sleep_s * 1e6)) > error_us) {
+        uint64_t actual_err = labs(t_us - ((double)sleep_s * 1e6));
         log_error(timer_debug_level,
                 "trios_timer failed usec timer test: err = %llu usec"
                 " > acceptable err = %llu",
@@ -315,8 +331,8 @@ int trios_timer_test()
         rc |= 1;
     }
 
-    if (labs(t_ms - (sleep_us / 1e3)) > error_ms) {
-        uint64_t actual_err = labs(t_ms - (sleep_us / 1e3));
+    if (labs(t_ms - ((double)sleep_s * 1e3)) > error_ms) {
+        uint64_t actual_err = labs(t_ms - ((double)sleep_s * 1e3));
         log_error(timer_debug_level,
                 "trios_timer failed ns timer test: err = %llu ms"
                 " > acceptable err = %llu",
@@ -324,8 +340,8 @@ int trios_timer_test()
         rc |= 1;
     }
 
-    if (fabsl(t_sec - (sleep_us / 1e6)) > error_sec) {
-        double actual_err = fabsl(t_sec) - (double)sleep_us/1e6;
+    if (fabs(t_sec - (double)sleep_s) > error_sec) {
+        double actual_err = fabs(t_sec - (double)sleep_s);
         log_error(timer_debug_level,
                 "trios_timer failed sec timer test: err = %g sec "
                 " > acceptable err = %g",

@@ -1,15 +1,48 @@
-/*****************************************************************************
- * Zoltan Library for Parallel Applications                                  *
- * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
- * For more info, see the README file in the top-level Zoltan directory.     *
- *****************************************************************************/
-/*****************************************************************************
- * CVS File Information :
- *    $RCSfile$
- *    $Author$
- *    $Date$
- *    $Revision$
- ****************************************************************************/
+/* 
+ * @HEADER
+ *
+ * ***********************************************************************
+ *
+ *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
+ *                  Copyright 2012 Sandia Corporation
+ *
+ * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ * the U.S. Government retains certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the Corporation nor the names of the
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Questions? Contact Karen Devine	kddevin@sandia.gov
+ *                    Erik Boman	egboman@sandia.gov
+ *
+ * ***********************************************************************
+ *
+ * @HEADER
+ */
 
 
 #ifdef __cplusplus
@@ -104,21 +137,23 @@ int Zoltan_Preprocess_Graph(
   ZOLTAN_GNO_TYPE *sum, nobj;
   MPI_Datatype zoltan_gno_mpi_type;
 
-  char add_obj_weight[MAX_PARAM_STRING_LEN+1];
+  char add_obj_weight[MAX_PARAM_STRING_LEN];
 
   ZOLTAN_TRACE_ENTER(zz, yo);
 
   zoltan_gno_mpi_type = Zoltan_mpi_gno_type();
 
   if (zz->Debug_Level > 0 && zz->Debug_Proc == zz->Proc){
-    printf("Third party library index type is %ld-byte integer\n",
-           sizeof(indextype));
+    printf("Third party library real type is %lu-byte real number\n",
+           (unsigned long) (sizeof(realtype)));
+    printf("Third party library index type is %lu-byte integer\n",
+           (unsigned long) (sizeof(indextype)));
 #ifdef TPL_INTEGRAL_WEIGHT
-    printf("Third party library weight type is %ld-byte integer\n",
-           sizeof(weighttype));
+    printf("Third party library weight type is %lu-byte integer\n",
+           (unsigned long) (sizeof(weighttype)));
 #else
-    printf("Third party library weight type is %ld-byte floating point value\n",
-           sizeof(weighttype));
+    printf("Third party library weight type is %lu-byte floating point value\n",
+           (unsigned long) (sizeof(weighttype)));
 #endif    
 
 #if __parmetis__ + __metis__ + __ptscotch__ + __scotch__ > 1
@@ -253,8 +288,10 @@ int Zoltan_Preprocess_Graph(
 
 
       j = (int)gr->xadj[gr->num_obj];
-      gr->adjncy = (indextype *)ZOLTAN_MALLOC(sizeof(indextype) * j);
-      if (j && !gr->adjncy)
+      gr->adjncy = (indextype *)ZOLTAN_MALLOC(sizeof(indextype) * (j+1)); 
+                   /* KDD 10/7/14  ParMETIS 4 doesn't like NULL adjncy array
+                      when j (number of adjacencies) is 0; force non-NULL */
+      if ((j+1) && !gr->adjncy)
         ZOLTAN_PARMETIS_ERROR(ZOLTAN_MEMERR, "Out of memory.");
 
       for (i=0; i < j; i++)
@@ -263,9 +300,17 @@ int Zoltan_Preprocess_Graph(
     }
     else{
       gr->vtxdist = (indextype *)gno_ptr1;
-      gr->adjncy= (indextype *)gno_ptr2;
       FIELD_DO_NOT_FREE_WHEN_DONE(graph->mtx.delete_flag, FIELD_DIST_Y);
-      FIELD_DO_NOT_FREE_WHEN_DONE(graph->mtx.delete_flag, FIELD_PINGNO);
+
+      if (gr->xadj[gr->num_obj] > 0) {
+        gr->adjncy = (indextype *)gno_ptr2;
+        FIELD_DO_NOT_FREE_WHEN_DONE(graph->mtx.delete_flag, FIELD_PINGNO);
+      }
+      else {
+        gr->adjncy = (indextype *)ZOLTAN_MALLOC(sizeof(indextype));
+                   /* KDD 7/2/16   ParMETIS 4 doesn't like NULL adjncy array
+                      when number of adjacencies is 0; force non-NULL */
+      }
     }
 
     /* Find info about the graph according to the distribution */
@@ -492,8 +537,6 @@ Zoltan_Preprocess_Add_Weight (ZZ *zz,
   int ierr = ZOLTAN_OK;
   int i,j;
 
-  vwgt_new = (weighttype *)ZOLTAN_MALLOC((gr->obj_wgt_dim+1)*gr->num_obj
-                                            * sizeof(weighttype));
   if ((!strcasecmp(add_obj_weight, "UNIT")) ||
       (!strcasecmp(add_obj_weight, "VERTICES"))){
     add_type = 1;
@@ -509,6 +552,8 @@ Zoltan_Preprocess_Add_Weight (ZZ *zz,
     add_type = 0;
   }
   if (add_type){
+    vwgt_new = (weighttype *)ZOLTAN_MALLOC((gr->obj_wgt_dim+1)*gr->num_obj
+                                            * sizeof(weighttype));
     if (prt != NULL) {
       /* update part_sizes array */
       ierr = Zoltan_LB_Add_Part_Sizes_Weight(zz,
@@ -865,8 +910,8 @@ static int scale_round_weights(float *fwgts, weighttype *iwgts, int n, int dim,
       for (i=0; i<n; i++){
         for (j=0; j<dim; j++){
           if (!nonint_local[j]){
-            /* tmp = (int) roundf(fwgts[i]);  EB: Valid C99, but not C89 */
-            tmp = (int) floor((double) fwgts[i] + .5); /* Nearest int */
+            /* tmp = (int) roundf(fwgts[i*dim+j]);  EB: Valid C99, but not C89 */
+            tmp = (int) floor((double) fwgts[i*dim+j] + .5); /* Nearest int */
             if (fabs((double)tmp-fwgts[i*dim+j]) > INT_EPSILON){
               nonint_local[j] = 1;
             }
@@ -1062,7 +1107,7 @@ int ierr = ZOLTAN_OK;
     *new_part_sizes = (realtype *) ZOLTAN_MALLOC(new_part_dim
                                                * zz->LB.Num_Global_Parts
                                                * sizeof(realtype));
-    if (!new_part_sizes) {
+    if (!(*new_part_sizes)) {
       ierr = ZOLTAN_MEMERR;
       goto End;
     }
@@ -1099,8 +1144,8 @@ int64_t maxindextype = (int64_t)(((uint64_t) 1<<((sizeof(indextype)<<3)-1))-1);
     char msg[500];
     sprintf(msg, "Graph TPL is built with integer type that is too small for "
             "the partitioning problem.  Max number of objects supported is "
-            "%lld; global number of objects is " ZOLTAN_GNO_SPEC "\n", 
-            maxindextype, global_num_obj);
+            "2^%lu-1; global number of objects is " ZOLTAN_GNO_SPEC "\n", 
+            ((sizeof(indextype)<<3)-1), global_num_obj);
     ZOLTAN_PRINT_ERROR(zz->Proc, "check_data_sizes", msg);
     ierr = ZOLTAN_FATAL;
   }

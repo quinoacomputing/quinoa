@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-// 
+//
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,81 +36,62 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-// 
+//
 // ************************************************************************
 // @HEADER
 
-#ifndef PIRO_NOXSOLVER_H
-#define PIRO_NOXSOLVER_H
+#ifndef PIRO_NOXSOLVER_HPP
+#define PIRO_NOXSOLVER_HPP
 
-#include <iostream>
-// NOX Objects
+#include "Piro_SteadyStateSolver.hpp"
+
+#include "Piro_ObserverBase.hpp"
+
 #include "NOX.H"
 #include "NOX_Thyra.H"
 
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
-#include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
-#include "Teuchos_RCP.hpp"
-
-/** \brief Thyra-based Model Evaluator for NOX solves */
+#include "Teuchos_ParameterList.hpp"
 
 namespace Piro {
 
+/** \brief Thyra-based Model Evaluator for NOX solves
+ *  \ingroup Piro_Thyra_solver_grp
+ * */
 template <typename Scalar>
 class NOXSolver
-    : public Thyra::ResponseOnlyModelEvaluatorBase<Scalar>
+    : public SteadyStateSolver<Scalar>
 {
-
   public:
 
   /** \name Constructors/initializers */
   //@{
-
-  /** \brief Takes the number of elements in the discretization . */
-  NOXSolver(Teuchos::RCP<Teuchos::ParameterList> appParams,
-            Teuchos::RCP< Thyra::ModelEvaluatorDefaultBase<Scalar> > model
-            );
-
+  /** \brief . */
+  NOXSolver(const Teuchos::RCP<Teuchos::ParameterList> &appParams,
+            const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+            const Teuchos::RCP<ObserverBase<Scalar> > &observer = Teuchos::null);
   //@}
 
-  ~NOXSolver();
+  void reset(){ if(Teuchos::nonnull(solver)) solver->resetSolver(); }
 
-  /** \name Overridden from Thyra::ModelEvaluatorBase . */
+  private:
+  /** \name Overridden from Thyra::ModelEvaluatorDefaultBase . */
   //@{
-
   /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
-  /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<Scalar> createInArgs() const;
-  /** \brief . */
-  Thyra::ModelEvaluatorBase::OutArgs<Scalar> createOutArgsImpl() const;
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_p_space(int i) const;
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_g_space(int i) const;
-
-  /** \brief . */
-  void evalModelImpl( const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
-                  const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs ) const;
-
-  private:
-
+  void evalModelImpl(
+      const Thyra::ModelEvaluatorBase::InArgs<Scalar>& inArgs,
+      const Thyra::ModelEvaluatorBase::OutArgs<Scalar>& outArgs) const;
   //@}
 
-  private:
+  Teuchos::RCP<Teuchos::ParameterList> appParams;
+  Teuchos::RCP<ObserverBase<Scalar> > observer;
 
-   //These are set in the constructor and used in evalModel
-   mutable Teuchos::RCP<Teuchos::ParameterList> appParams;
-   Teuchos::RCP< Thyra::ModelEvaluatorDefaultBase<Scalar> > model;
-   Teuchos::RCP<Teuchos::FancyOStream> out;
+  Teuchos::RCP<Thyra::NOXNonlinearSolver> solver;
 
-  Teuchos::RCP< ::Thyra::NOXNonlinearSolver> solver;
+  Teuchos::RCP<Teuchos::FancyOStream> out;
 
-   int num_p;
-   int num_g;
+  Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > model; 
 };
 
 }
 
-#include "Piro_NOXSolver_Def.hpp"
-#endif
+#endif /*PIRO_NOXSOLVER_HPP*/

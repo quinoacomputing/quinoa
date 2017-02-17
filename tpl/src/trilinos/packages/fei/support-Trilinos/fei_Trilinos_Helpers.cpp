@@ -136,9 +136,9 @@ create_Epetra_CrsGraph(const fei::SharedPtr<fei::MatrixGraph>& matgraph,
   }
 
   int numLocallyOwnedRows = localSRGraph->rowNumbers.size();
-  int* rowNumbers = &(localSRGraph->rowNumbers[0]);
+  int* rowNumbers = numLocallyOwnedRows>0 ? &(localSRGraph->rowNumbers[0]) : NULL;
   int* rowOffsets = &(localSRGraph->rowOffsets[0]);
-  int* packedColumnIndices = &(localSRGraph->packedColumnIndices[0]);
+  int* packedColumnIndices = numLocallyOwnedRows>0 ? &(localSRGraph->packedColumnIndices[0]) : NULL;
 
   fei::SharedPtr<fei::VectorSpace> vecspace = matgraph->getRowSpace();
   MPI_Comm comm = vecspace->getCommunicator();
@@ -186,7 +186,8 @@ create_Epetra_CrsGraph(const fei::SharedPtr<fei::MatrixGraph>& matgraph,
   }
 
   bool staticProfile = true;
-  Epetra_CrsGraph egraph(Copy, emap, &(rowLengths[0]), staticProfile);
+  int* rowLengthsPtr = rowLengths.empty() ? NULL : &rowLengths[0];
+  Epetra_CrsGraph egraph(Copy, emap, rowLengthsPtr, staticProfile);
 
   const Epetra_Comm& ecomm = emap.Comm();
   int localProc = ecomm.MyPID();
@@ -244,8 +245,9 @@ create_from_Epetra_Matrix(fei::SharedPtr<fei::MatrixGraph> matrixGraph,
       fei::SharedPtr<Epetra_VbrMatrix>
         epetraMatrix(new Epetra_VbrMatrix(Copy, egraph));
 
+      bool zeroSharedRows = false;
       tmpmat.reset(new fei::Matrix_Impl<Epetra_VbrMatrix>(epetraMatrix,
-                                                   matrixGraph, localSize));
+                                     matrixGraph, localSize, zeroSharedRows));
       zero_Epetra_VbrMatrix(epetraMatrix.get());
     }
     else {

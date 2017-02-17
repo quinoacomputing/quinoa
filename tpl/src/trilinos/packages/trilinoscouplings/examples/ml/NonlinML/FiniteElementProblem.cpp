@@ -19,7 +19,7 @@
 //                                                                                 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA                                                                                
 // Questions? Contact Tammy Kolda (tgkolda@sandia.gov) or Roger Pawlowski
 // (rppawlo@sandia.gov), Sandia National Laboratories.
@@ -136,7 +136,7 @@ bool FiniteElementProblem::evaluate(FillType f,
     // A was allocated in the constructor
     //A = dynamic_cast<Epetra_CrsMatrix*> (tmp_matrix);
   } else {
-    cout << "ERROR: FiniteElementProblem::fillMatrix() - FillType flag is broken" << endl;
+    std::cout << "ERROR: FiniteElementProblem::fillMatrix() - FillType flag is broken" << std::endl;
     throw;
   }
 

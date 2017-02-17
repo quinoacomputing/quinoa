@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 */
@@ -46,10 +46,12 @@
 
 #include "Epetra_ConfigDefs.h"
 #include "Epetra_Object.h"
+#include <vector>
 class Epetra_Map;
 class Epetra_BlockMap;
 class Epetra_CrsMatrix;
 class Epetra_MultiVector;
+class Epetra_Import;
 
 //! Epetra_Util:  The Epetra Util Wrapper Class.
 /*! The Epetra_Util class is a collection of useful functions that cut across a broad
@@ -58,9 +60,9 @@ class Epetra_MultiVector;
 <li> A random number generator is provided, along with methods to set and
 retrieve the random-number seed.
 
-The random number generator is a multiplicative linear congruential generator, 
+The random number generator is a multiplicative linear congruential generator,
 with multiplier 16807 and modulus 2^31 - 1. It is based on the algorithm described in
-"Random Number Generators: Good Ones Are Hard To Find", S. K. Park and K. W. Miller, 
+"Random Number Generators: Good Ones Are Hard To Find", S. K. Park and K. W. Miller,
 Communications of the ACM, vol. 31, no. 10, pp. 1192-1201.
 
 <li> Sorting is provided by a static function on this class (i.e., it is not
@@ -71,11 +73,11 @@ necessary to construct an instance of this class to use the Sort function).
 appear on multiple processors.
 </ul>
 
-  Epetra_Util is a serial interface only.  This is appropriate since the standard 
+  Epetra_Util is a serial interface only.  This is appropriate since the standard
   utilities are only specified for serial execution (or shared memory parallel).
 */
 class EPETRA_LIB_DLL_EXPORT Epetra_Util {
-    
+
   public:
   //! Epetra_Util Constructor.
   /*! Builds an instance of a serial Util object.
@@ -92,7 +94,7 @@ class EPETRA_LIB_DLL_EXPORT Epetra_Util {
   virtual ~Epetra_Util();
 
   //! @name Random number utilities
-  //@{ 
+  //@{
 
   //! Returns a random integer on the interval (0, 2^31-1)
   unsigned int RandomInt();
@@ -116,13 +118,13 @@ class EPETRA_LIB_DLL_EXPORT Epetra_Util {
   int SetSeed(unsigned int Seed_in);
 
 	//@}
-  
+
   //! Epetra_Util Sort Routine (Shell sort)
-  /*! 
+  /*!
 
     This function sorts a list of integer values in ascending or descending order.  Additionally it sorts any
     number of companion lists of doubles or ints.  A shell sort is used, which is fast if indices are already sorted.
-    
+
     \param In
            SortAscending - Sort keys in ascending order if true, otherwise sort in descending order..
     \param In
@@ -135,19 +137,40 @@ class EPETRA_LIB_DLL_EXPORT Epetra_Util {
     \param In
            DoubleCompanions - DoubleCompanions[i] is a pointer to the ith list of doubles to be sorted with key.
     \param In
-           NumIntCompanions - Number of lists of integers to be sorted with the key.  If set to zero, 
+           NumIntCompanions - Number of lists of integers to be sorted with the key.  If set to zero,
 	   IntCompanions is ignored and can be set to zero.
     \param In
            IntCompanions - IntCompanions[i] is a pointer to the ith list of integers to be sorted with key.
-	   
+	
   */
-  static void Sort(bool SortAscending, int NumKeys, int * Keys, 
-		   int NumDoubleCompanions,double ** DoubleCompanions, 
+  template<typename T>
+  static void Sort(bool SortAscending, int NumKeys, T * Keys,
+		   int NumDoubleCompanions,double ** DoubleCompanions,
+		   int NumIntCompanions, int ** IntCompanions,
+		   int NumLongLongCompanions, long long ** LongLongCompanions);
+
+  static void Sort(bool SortAscending, int NumKeys, int * Keys,
+		   int NumDoubleCompanions,double ** DoubleCompanions,
+		   int NumIntCompanions, int ** IntCompanions,
+		   int NumLongLongCompanions, long long ** LongLongCompanions);
+
+  static void Sort(bool SortAscending, int NumKeys, long long * Keys,
+		   int NumDoubleCompanions,double ** DoubleCompanions,
+		   int NumIntCompanions, int ** IntCompanions,
+		   int NumLongLongCompanions, long long ** LongLongCompanions);
+
+  static void Sort(bool SortAscending, int NumKeys, int * Keys,
+		   int NumDoubleCompanions,double ** DoubleCompanions,
 		   int NumIntCompanions, int ** IntCompanions);
+
+  static void Sort(bool SortAscending, int NumKeys, double * Keys,
+		   int NumDoubleCompanions,double ** DoubleCompanions,
+		   int NumIntCompanions, int ** IntCompanions,
+		   int NumLongLongCompanions, long long ** LongLongCompanions);
 
   //! Epetra_Util Create_Root_Map function
   /*! Function to create a new Epetra_Map object with all GIDs sent to the root processor
-      which is zero by default.  All all processors will have no GIDs.  This root map can then 
+      which is zero by default.  All all processors will have no GIDs.  This root map can then
       be used to create an importer or exporter that will migrate all data to the root processor.
 
       If root is set to -1 then the user map will be replicated completely on all processors.
@@ -170,6 +193,45 @@ class EPETRA_LIB_DLL_EXPORT Epetra_Util {
   */
   static Epetra_BlockMap Create_OneToOne_BlockMap(const Epetra_BlockMap& usermap,
 						  bool high_rank_proc_owns_shared=false);
+
+
+
+  //! Epetra_Util SortCrsEntries function
+  // For each row, sort column entries from smallest to largest.
+  // Use shell sort. Stable sort so it is fast if indices are already sorted.
+  static int SortCrsEntries(int NumRows, const int *CRS_rowptr, int *CRS_colind, double *CRS_vals);
+
+  //! Epetra_Util SortAndMergeCrsEntries function
+  // For each row, sort column entries from smallest to largest, merging column ids that are identical by adding values.
+  // Use shell sort. Stable sort so it is fast if indices are already sorted.
+  static int SortAndMergeCrsEntries(int NumRows, int *CRS_rowptr, int *CRS_colind, double *CRS_vals);
+
+  //! Epetra_Util GetPidGidPairs function
+  /*!  For each GID in the TargetMap, find who owns the GID in the SourceMap.
+    This works entirely from the Distributor and has no communication at all.
+    This routine only works if your Importer is using an Epetra_MpiDistributor under the hood.
+
+    The routine returns (by reference) a std::vector of std::pair<int,int> which contains (PID,GID) pairs.
+    If the use_minus_one_for_local==true, any GIDs owned by this processor get -1 instead of their PID.
+  */
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  static int GetPidGidPairs(const Epetra_Import & Importer,std::vector< std::pair<int,int> > & gpids, bool use_minus_one_for_local);
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  static int GetPidGidPairs(const Epetra_Import & Importer,std::vector< std::pair<int,long long> > & gpids, bool use_minus_one_for_local);
+#endif
+
+
+  //! Epetra_Util GetPids function
+  /*! Like GetPidGidPairs, but just gets the PIDs, ordered by the columnmap
+   */
+  static int GetPids(const Epetra_Import & Importer, std::vector<int> &pids, bool use_minus_one_for_local);
+
+  //! Epetra_Util GetRemotePIDs
+  /*! Gets a list of remote PIDs from an importer in the order corresponding to the RemoteLIDs
+   */
+  static int GetRemotePIDs(const Epetra_Import & Importer, std::vector<int> &RemotePIDs);
+
 
   //! Epetra_Util Chop method.  Return zero if input Value is less than ChopValue
   static double Chop(const double & Value);
@@ -204,10 +266,57 @@ inline Epetra_Util::~Epetra_Util(){}
     maintained.
     @return offset Location in list at which item was found. -1 if not found.
 */
+template<typename T>
+int Epetra_Util_binary_search(T item,
+                              const T* list,
+                              int len,
+                              int& insertPoint);
+
 EPETRA_LIB_DLL_EXPORT int Epetra_Util_binary_search(int item,
                               const int* list,
                               int len,
                               int& insertPoint);
+
+EPETRA_LIB_DLL_EXPORT int Epetra_Util_binary_search(long long item,
+                              const long long* list,
+                              int len,
+                              int& insertPoint);
+
+/** Utility function to perform a binary-search on a list of data.
+    Important assumption: data is assumed to be sorted.
+
+    @param item to be searched for
+    @param list to be searched in
+    @param aux_list
+    @param len Length of list
+    @param insertPoint Input/Output. If item is found, insertPoint is not
+    referenced. If item is not found, insertPoint is set to the offset at which
+    item should be inserted in list such that order (sortedness) would be
+    maintained.
+    @return offset Location in list at which aux_list[list[i]] item was found. -1 if not found.
+*/
+template<typename T>
+int Epetra_Util_binary_search_aux(T item,
+                              const int* list,
+                              const T* aux_list,
+                              int len,
+                              int& insertPoint);
+
+EPETRA_LIB_DLL_EXPORT int Epetra_Util_binary_search_aux(int item,
+                              const int* list,
+                              const int* aux_list,						
+                              int len,
+                              int& insertPoint);
+
+EPETRA_LIB_DLL_EXPORT int Epetra_Util_binary_search_aux(long long item,
+                              const int* list,
+                              const long long* aux_list,						
+                              int len,
+                              int& insertPoint);
+
+
+
+
 
 template<class T>
 int Epetra_Util_insert_empty_positions(T*& array, int& usedLength,
@@ -291,7 +400,7 @@ int Epetra_Util_insert(T item, int offset, T*& list,
     in, but the RHS and LHS arguments may be set to zero (either or both of them).
     For each of the LHS or RHS arguments, if non-trivial and contain more than one vector, the
     vectors must have strided access.  If both LHS and RHS are non-trivial, they must have the
-    same number of vectors.  If the input objects are distributed, the returned matrices will 
+    same number of vectors.  If the input objects are distributed, the returned matrices will
     contain the local part of the matrix and vectors only.
 
     \param A (In) Epetra_CrsMatrix.

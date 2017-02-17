@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 */
@@ -44,6 +44,7 @@
 #ifndef EPETRA_FECRSGRAPH_H
 #define EPETRA_FECRSGRAPH_H
 
+#include "Epetra_ConfigDefs.h"
 #include "Epetra_Map.h"
 #include "Epetra_CrsGraph.h"
 
@@ -68,36 +69,37 @@ class EPETRA_LIB_DLL_EXPORT Epetra_FECrsGraph : public Epetra_CrsGraph {
 
   /** Constructor */
   Epetra_FECrsGraph(Epetra_DataAccess CV,
-		    const Epetra_BlockMap& RowMap,
-		    int* NumIndicesPerRow,
-		    bool ignoreNonLocalEntries=false,
+        const Epetra_BlockMap& RowMap,
+        int* NumIndicesPerRow,
+        bool ignoreNonLocalEntries=false,
         bool buildNonlocalGraph=false);
 
   /** Constructor */
   Epetra_FECrsGraph(Epetra_DataAccess CV,
-		    const Epetra_BlockMap& RowMap,
-		    int NumIndicesPerRow,
-		    bool ignoreNonLocalEntries=false,
+        const Epetra_BlockMap& RowMap,
+        int NumIndicesPerRow,
+        bool ignoreNonLocalEntries=false,
         bool buildNonlocalGraph=false);
 
   /** Constructor */
   Epetra_FECrsGraph(Epetra_DataAccess CV,
-		    const Epetra_BlockMap& RowMap, 
-		    const Epetra_BlockMap& ColMap,
-		    int* NumIndicesPerRow,
-		    bool ignoreNonLocalEntries=false,
+        const Epetra_BlockMap& RowMap,
+        const Epetra_BlockMap& ColMap,
+        int* NumIndicesPerRow,
+        bool ignoreNonLocalEntries=false,
         bool buildNonlocalGraph=false);
 
   /** Constructor */
   Epetra_FECrsGraph(Epetra_DataAccess CV,
-		    const Epetra_BlockMap& RowMap, 
-		    const Epetra_BlockMap& ColMap,
-		    int NumIndicesPerRow,
-		    bool ignoreNonLocalEntries=false,
+        const Epetra_BlockMap& RowMap,
+        const Epetra_BlockMap& ColMap,
+        int NumIndicesPerRow,
+        bool ignoreNonLocalEntries=false,
         bool buildNonlocalGraph=false);
 
   /** Constructor */
-  Epetra_FECrsGraph(const Epetra_FECrsGraph& Graph);
+  //  Using default copy constructor because there is no def in cpp file
+  //  Epetra_FECrsGraph(const Epetra_FECrsGraph& Graph);
 
   /** Destructor */
   virtual ~Epetra_FECrsGraph();
@@ -115,8 +117,14 @@ class EPETRA_LIB_DLL_EXPORT Epetra_FECrsGraph : public Epetra_CrsGraph {
     @param cols List of column-indices that will be used for each row in
         the 'rows' list.
   */
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   int InsertGlobalIndices(int numRows, const int* rows,
-			  int numCols, const int* cols);
+        int numCols, const int* cols);
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  int InsertGlobalIndices(int numRows, const long long* rows,
+        int numCols, const long long* cols);
+#endif
 
    /** Gather any overlapping/shared data into the non-overlapping partitioning
       defined by the Map that was passed to this matrix at construction time.
@@ -172,16 +180,16 @@ class EPETRA_LIB_DLL_EXPORT Epetra_FECrsGraph : public Epetra_CrsGraph {
 
   bool UseNonlocalGraph () const {return buildNonlocalGraph_; };
 
- private:     
+ private:
   void DeleteMemory();
   int InsertNonlocalRow(int row, int offset);
   int InputNonlocalIndices(int row,
-			   int numCols,
-			   const int* cols);
+         int numCols,
+         const int* cols);
   int InputNonlocalIndex(int rowoffset,
-			 int col);
+       int col);
 
-  int myFirstRow_;
+  long long myFirstRow_;
   int myNumRows_;
   bool ignoreNonLocalEntries_;
 
@@ -189,7 +197,15 @@ class EPETRA_LIB_DLL_EXPORT Epetra_FECrsGraph : public Epetra_CrsGraph {
    * This STL map holds all non-local data in format of Entries in the
    * individual rows together with the row number.
    */
-  std::map<int,Epetra_CrsGraphData::EntriesInOneRow> nonlocalRowData_;
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  std::map<int,Epetra_CrsGraphData::EntriesInOneRow<int> > nonlocalRowData_int_;
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  std::map<long long,Epetra_CrsGraphData::EntriesInOneRow<long long> > nonlocalRowData_LL_;
+#endif
+
+  template<typename int_type>
+  std::map<int_type,Epetra_CrsGraphData::EntriesInOneRow<int_type> >& nonlocalRowData();
 
   /**
    * A CrsGraph holding non-local data in case the respective flag is set in
@@ -199,8 +215,27 @@ class EPETRA_LIB_DLL_EXPORT Epetra_FECrsGraph : public Epetra_CrsGraph {
   bool buildNonlocalGraph_;
 
   Epetra_FECrsGraph & operator=(const Epetra_FECrsGraph& Graph);
-     
+
+  template<typename int_type>
+  int InsertGlobalIndices(int numRows, const int_type* rows, int numCols, const int_type* cols);
+
+  template<typename int_type>
+  int GlobalAssemble(const Epetra_Map& domain_map, const Epetra_Map& range_map, bool callFillComplete);
 
 };//class Epetra_FECrsGraph
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+template<> inline std::map<int,Epetra_CrsGraphData::EntriesInOneRow<int> >& Epetra_FECrsGraph::nonlocalRowData()
+{
+  return nonlocalRowData_int_;
+}
+#endif
+
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+template<> inline std::map<long long,Epetra_CrsGraphData::EntriesInOneRow<long long> >& Epetra_FECrsGraph::nonlocalRowData()
+{
+  return nonlocalRowData_LL_;
+}
+#endif
 
 #endif

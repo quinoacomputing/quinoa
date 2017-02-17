@@ -1,45 +1,10 @@
-/*
-// @HEADER
-// ************************************************************************
-//             FEI: Finite Element Interface to Linear Solvers
-//                  Copyright (2005) Sandia Corporation.
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
-// U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Alan Williams (william@sandia.gov) 
-//
-// ************************************************************************
-// @HEADER
-*/
-
+/*--------------------------------------------------------------------*/
+/*    Copyright 2005 Sandia Corporation.                              */
+/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
+/*    non-exclusive license for use of this work by or on behalf      */
+/*    of the U.S. Government.  Export of this program may require     */
+/*    a license from the United States Government.                    */
+/*--------------------------------------------------------------------*/
 
 #ifndef _fei_VectorSpace_hpp_
 #define _fei_VectorSpace_hpp_
@@ -154,6 +119,10 @@ namespace fei {
     void defineIDTypes(int numIDTypes,
                        const int* idTypes);
 
+    void setIDMap(int idType,
+                  const int* localIDs_begin, const int* localIDs_end,
+                  const int* globalIDs_begin, const int* globalIDs_end);
+
     /** Add a set of identifiers to this solution-space. These solution-space
         entries consist of fields residing at identifiers.<br>
         Example: temperature field at a set of finite-element nodes.
@@ -244,6 +213,8 @@ namespace fei {
                       const int* sharedIDs,
                       const int* numSharingProcsPerID,
                       const int* const* sharingProcs);
+
+    int setOwners(int numShared, int idType, const int* sharedIDs, const int* owners);
 
     /** Add the contents of another VectorSpace object to this one.
      */
@@ -366,6 +337,28 @@ namespace fei {
     */
     int getGlobalIndices(int numIDs,
                          const int* IDs,
+                         int idType,
+                         int fieldID,
+                         int* globalIndices);
+
+    /** Given a list of localIDs, fill an output-list of the global-indices that
+        correspond to the first instance of the specified field at each localID.
+
+        @param numIDs Input. Length of the IDs.
+        @param IDs Input. User-provided list of identifiers.
+        @param idType Input. Type of the IDs for which indices are being
+        requested.
+        @param fieldID Input. Specified field
+        @param globalIndices Output. User-allocated list which, on exit, will
+        contain the requested indices. Note that the length of this list is
+        assumed to be numIDs*getFieldSize(fieldID).
+
+        @return error-code 0 if successful Note that for any IDs that are not
+        found, or IDs which don't have the specified field, the corresponding
+        global-index will be -1.
+    */
+    int getGlobalIndicesLocalIDs(int numIDs,
+                         const int* localIDs,
                          int idType,
                          int fieldID,
                          int* globalIndices);
@@ -546,7 +539,7 @@ namespace fei {
     int getOwnedAndSharedIDs(int idtype,
                     int lenList,
                     int* IDs,
-                    int& numLocalIDs);
+                    int& numOwnedAndSharedIDs);
 
     /** Obtain a list of the locally owned identifiers.
      */
@@ -745,6 +738,8 @@ namespace fei {
 
     void getSendProcs(std::vector<int>& sendProcs) const;
 
+    fei::SharedIDs<int>& getSharedIDs(int idType);
+
   private:
     friend class fei::Lookup_Impl;
 
@@ -752,15 +747,17 @@ namespace fei {
     VectorSpace(const VectorSpace& src);
     VectorSpace& operator=(const VectorSpace& src);
 
-    void compute_shared_ids();
+    void compute_shared_ids(const std::vector<int>& global_min, const std::vector<int>& global_max);
 
     inline void check_version() { fei::utils::version(); }
 
-    void setOwners_lowestSharing();
+    void setOwners_shared();
 
     int calculateGlobalIndices();
 
     void runRecords(fei::Record_Operator<int>& record_op);
+
+    void runRecords(fei::Record_Operator<int>& record_op, int recordIndex);
 
     int synchronizeSharedRecords();
 
@@ -772,8 +769,6 @@ namespace fei {
                           fei::comm_map* sharerPattern,
                           snl_fei::RecordCollection* recordCollection,
                           std::vector<fei::FieldMask*>& fieldMasks);
-
-    fei::SharedIDs<int>& getSharedIDs_private(int idType);
 
     void setName(const char* name);
 

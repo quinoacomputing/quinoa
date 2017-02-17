@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 */
@@ -44,29 +44,34 @@
 #ifndef EPETRA_BLOCKMAPDATA_H
 #define EPETRA_BLOCKMAPDATA_H
 
+#include "Epetra_ConfigDefs.h"
 #include "Epetra_Data.h"
 #include "Epetra_IntSerialDenseVector.h"
 
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+#include "Epetra_LongLongSerialDenseVector.h"
+#endif
+
 class Epetra_Comm;
 class Epetra_Directory;
-class Epetra_HashTable;
+template<typename value_type> class Epetra_HashTable;
 
 //! Epetra_BlockMapData:  The Epetra BlockMap Data Class.
 /*! The Epetra_BlockMapData class is an implementation detail of Epetra_BlockMap.
-    It is reference-counted, and can be shared by multiple Epetra_BlockMap instances. 
+    It is reference-counted, and can be shared by multiple Epetra_BlockMap instances.
     It derives from Epetra_Data, and inherits reference-counting from it.
 */
 
 class Epetra_BlockMapData : public Epetra_Data {
   friend class Epetra_BlockMap;
-
+  friend class Epetra_Map;
  private:
 
   //! @name Constructor/Destructor Methods
-  //@{ 
+  //@{
 
   //! Epetra_BlockMapData Default Constructor.
-  Epetra_BlockMapData(int NumGlobalElements, int ElementSize, int IndexBase, const Epetra_Comm & Comm);
+  Epetra_BlockMapData(long long NumGlobalElements, int ElementSize, long long IndexBase, const Epetra_Comm & Comm, bool IsLongLong);
 
   //! Epetra_BlockMapData Destructor.
   ~Epetra_BlockMapData();
@@ -78,41 +83,48 @@ class Epetra_BlockMapData : public Epetra_Data {
   mutable Epetra_Directory* Directory_;
 
   Epetra_IntSerialDenseVector LID_;
-  Epetra_IntSerialDenseVector MyGlobalElements_;
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  Epetra_IntSerialDenseVector MyGlobalElements_int_;
+#endif
+#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
+  Epetra_LongLongSerialDenseVector MyGlobalElements_LL_;
+#endif
   Epetra_IntSerialDenseVector FirstPointInElementList_;
   Epetra_IntSerialDenseVector ElementSizeList_;
   Epetra_IntSerialDenseVector PointToElementList_;
-  
-  int NumGlobalElements_;
+
+  long long NumGlobalElements_;
   int NumMyElements_;
-  int IndexBase_;
+  long long IndexBase_;
   int ElementSize_;
   int MinMyElementSize_;
   int MaxMyElementSize_;
   int MinElementSize_;
   int MaxElementSize_;
-  int MinAllGID_;
-  int MaxAllGID_;
-  int MinMyGID_;
-  int MaxMyGID_;
+  long long MinAllGID_;
+  long long MaxAllGID_;
+  long long MinMyGID_;
+  long long MaxMyGID_;
   int MinLID_;
   int MaxLID_;
-  int NumGlobalPoints_;
+  long long NumGlobalPoints_;
   int NumMyPoints_;
-  
+
   bool ConstantElementSize_;
   bool LinearMap_;
   bool DistributedGlobal_;
   mutable bool OneToOneIsDetermined_;
   mutable bool OneToOne_;
+  bool GlobalIndicesInt_;
+  bool GlobalIndicesLongLong_;
 
-  int LastContiguousGID_;
+  long long LastContiguousGID_;
   int LastContiguousGIDLoc_;
-  Epetra_HashTable * LIDHash_;
+  Epetra_HashTable<int> * LIDHash_;
 
-	// these are intentionally declared but not defined. See Epetra Developer's Guide for details.
+  // these are intentionally declared but not defined. See Epetra Developer's Guide for details.
   Epetra_BlockMapData(const Epetra_BlockMapData & BlockMapData);
-	Epetra_BlockMapData& operator=(const Epetra_BlockMapData & BlockMapData);
+  Epetra_BlockMapData& operator=(const Epetra_BlockMapData & BlockMapData);
 
 };
 #endif /* EPETRA_BLOCKMAPDATA_H */

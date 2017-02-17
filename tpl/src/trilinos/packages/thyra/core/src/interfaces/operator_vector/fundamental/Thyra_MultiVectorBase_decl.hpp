@@ -43,6 +43,8 @@
 #define THYRA_MULTI_VECTOR_BASE_DECL_HPP
 
 #include "Thyra_LinearOpBase_decl.hpp"
+#include "Thyra_RowStatLinearOpBase.hpp"
+#include "Thyra_ScaledLinearOpBase.hpp"
 #include "RTOpPack_RTOpT.hpp"
 
 
@@ -488,13 +490,30 @@ namespace Thyra {
  * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
  */
 template<class Scalar>
-class MultiVectorBase : virtual public LinearOpBase<Scalar>
+class MultiVectorBase : virtual public LinearOpBase<Scalar>, 
+                        virtual public RowStatLinearOpBase<Scalar>,
+                        virtual public ScaledLinearOpBase<Scalar>
 {
 public:
 
 #ifdef THYRA_INJECT_USING_DECLARATIONS
   using LinearOpBase<Scalar>::apply;
 #endif
+
+  /** @name Minimal mathematical functions */
+  //@{
+
+  /** \brief V = alpha
+   *
+   * \param alpha [in] Scalar that is assigned to all multi-vector
+   * coefficients.
+   *
+   * NVI function.
+   */
+  void assign(Scalar alpha)
+    { assignImpl(alpha); }
+
+  //@}
 
   /** @name Provide access to the columns as VectorBase objects */
   //@{
@@ -664,6 +683,11 @@ protected:
 
   /** @name Protected virtual functions to be overridden by subclasses */
   //@{
+
+  /** \brief Virtual implementation for NVI assign().
+   *
+   */
+  virtual void assignImpl(Scalar alpha) = 0;
 
   /** \brief Return a non-changeable view of a constituent column vector.
    *
@@ -1083,47 +1107,46 @@ protected:
     RTOpPack::SubMultiVectorView<Scalar>* sub_mv
     ) = 0;
 
+  /** From RowStatLinearOpBase */
+  virtual bool rowStatIsSupportedImpl(
+    const RowStatLinearOpBaseUtils::ERowStat rowStat) const;
+
+  /** From RowStatLinearOpBase */
+  virtual void getRowStatImpl(
+    const RowStatLinearOpBaseUtils::ERowStat rowStat,
+    const Ptr<VectorBase<Scalar> > &rowStatVec) const;
+
+  /** From ScaledLinearOpBase */
+  virtual bool supportsScaleLeftImpl() const;
+ 	
+  /** From ScaledLinearOpBase */
+  virtual bool supportsScaleRightImpl() const;
+ 	
+  /** From ScaledLinearOpBase */
+  virtual void scaleLeftImpl(const VectorBase< Scalar > &row_scaling);
+ 	
+  /** From ScaledLinearOpBase */
+  virtual void scaleRightImpl(const VectorBase< Scalar > &col_scaling);
+
   //@}
+
+  /** Compute the absolute row sum of this multivector. Note that the
+    * implementation is suboptimal in that it requires an intermediate
+    * step of computing the absolute value of the multivector, then a "apply"
+    * operation by the rows. 
+    *
+    * \param[out] output A vector constructed from the range vector space.
+    */
+  void absRowSum(const Teuchos::Ptr<Thyra::VectorBase<Scalar> > & output) const;
+
+  /** Compute the absolute column sum of this multivector. Note that the
+    * implementation uses the <code>norms_1</code> function.
+    *
+    * \param[out] output A vector constructed from the domain vector space.
+    */
+  void absColSum(const Teuchos::Ptr<Thyra::VectorBase<Scalar> > & output) const;
 
 public:
-
-  /** @name Deprecated public functions */
-  //@{
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED RCP<const MultiVectorBase<Scalar> >
-  subView( const int numCols, const int cols[] ) const
-    { return subView( Teuchos::arrayView<const int>(cols,numCols) ); }
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED RCP<MultiVectorBase<Scalar> >
-  subView( const int numCols, const int cols[] )
-    { return subView( Teuchos::arrayView<const int>(cols,numCols) ); }
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED void applyOp(
-    const RTOpPack::RTOpT<Scalar> &primary_op,
-    const int num_multi_vecs,
-    const MultiVectorBase<Scalar>*const multi_vecs_in[],
-    const int num_targ_multi_vecs,
-    MultiVectorBase<Scalar>*const targ_multi_vecs_inout[],
-    RTOpPack::ReductTarget*const reduct_objs_inout[],
-    const Ordinal primary_global_offset
-    ) const;
-
-  /** \brief Deprecated. */
-  THYRA_DEPRECATED void applyOp(
-    const RTOpPack::RTOpT<Scalar> &primary_op,
-    const RTOpPack::RTOpT<Scalar> &secondary_op,
-    const int num_multi_vecs,
-    const MultiVectorBase<Scalar>*const multi_vecs_in[],
-    const int num_targ_multi_vecs,
-    MultiVectorBase<Scalar>*const targ_multi_vecs_inout[],
-    RTOpPack::ReductTarget* reduct_obj,
-    const Ordinal primary_global_offset
-    ) const;
-
-  //@}
 
 private:
   
@@ -1183,72 +1206,6 @@ void applyOp(
       reduct_obj, primary_global_offset);
   else if(targ_multi_vecs.size())
     targ_multi_vecs[0]->applyOp(primary_op, secondary_op, multi_vecs, targ_multi_vecs,
-      reduct_obj, primary_global_offset);
-}
-
-
-//
-// Deprecated non-members
-//
-
-
-/** \brief Deprecated.
- *
- * \relates MultiVectorBase
- */
-template<class Scalar>
-THYRA_DEPRECATED inline
-void applyOp(
-  const RTOpPack::RTOpT<Scalar> &primary_op,
-  const int num_multi_vecs,
-  const MultiVectorBase<Scalar>*const multi_vecs[],
-  const int num_targ_multi_vecs,
-  MultiVectorBase<Scalar>*const targ_multi_vecs[],
-  RTOpPack::ReductTarget*const reduct_objs[],
-  const Ordinal primary_global_offset = 0
-  )
-{
-  if(num_multi_vecs)
-    multi_vecs[0]->applyOp(
-      primary_op,
-      num_multi_vecs, multi_vecs, num_targ_multi_vecs, targ_multi_vecs,
-      reduct_objs, primary_global_offset);
-  else if(num_targ_multi_vecs)
-    targ_multi_vecs[0]->applyOp(
-      primary_op,
-      num_multi_vecs, multi_vecs, num_targ_multi_vecs, targ_multi_vecs,
-      reduct_objs, primary_global_offset);
-}
-
-
-/** \brief Deprecated.
- *
- * ToDo: Finish documentation!
- *
- * \relates MultiVectorBase
- */
-template<class Scalar>
-THYRA_DEPRECATED inline
-void applyOp(
-  const RTOpPack::RTOpT<Scalar> &primary_op,
-  const RTOpPack::RTOpT<Scalar> &secondary_op,
-  const int num_multi_vecs,
-  const MultiVectorBase<Scalar>*const multi_vecs[],
-  const int num_targ_multi_vecs,
-  MultiVectorBase<Scalar>*const targ_multi_vecs[],
-  RTOpPack::ReductTarget *reduct_obj,
-  const Ordinal primary_global_offset = 0
-  )
-{
-  if(num_multi_vecs)
-    multi_vecs[0]->applyOp(
-      primary_op, secondary_op,
-      num_multi_vecs, multi_vecs, num_targ_multi_vecs, targ_multi_vecs,
-      reduct_obj, primary_global_offset);
-  else if(num_targ_multi_vecs)
-    targ_multi_vecs[0]->applyOp(
-      primary_op, secondary_op,
-      num_multi_vecs, multi_vecs, num_targ_multi_vecs, targ_multi_vecs,
       reduct_obj, primary_global_offset);
 }
 

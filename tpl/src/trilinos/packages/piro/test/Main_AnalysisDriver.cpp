@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-// 
+//
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-// 
+//
 // ************************************************************************
 // @HEADER
 
@@ -46,6 +46,11 @@
 #include "MockModelEval_A.hpp"
 #include "ObserveSolution_Epetra.hpp"
 
+#include "Piro_Epetra_SolverFactory.hpp"
+#include "Piro_ProviderHelpers.hpp"
+
+#include "Piro_Epetra_PerformAnalysis.hpp"
+
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -53,25 +58,13 @@
 
 #include "Piro_ConfigDefs.hpp"
 
-#ifdef Piro_ENABLE_NOX
-#include "Piro_Epetra_NOXSolver.hpp"
-#include "Piro_Epetra_LOCASolver.hpp"
-#endif
-#ifdef Piro_ENABLE_Rythmos
-#include "Piro_Epetra_RythmosSolver.hpp"
-#endif
-
-#include "Piro_PerformAnalysis.hpp"
-#include "Thyra_EpetraModelEvaluator.hpp"
-
-
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   int overall_status=0; // 0 = pass, failures are incremented over multiple tests
   bool success=true;
 
-  // Initialize MPI 
+  // Initialize MPI
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   int Proc=mpiSession.getRank();
 #ifdef HAVE_MPI
@@ -87,15 +80,17 @@ int main(int argc, char *argv[]) {
   bool doAll = (argc==1);
   if (argc>1) doAll = !strcmp(argv[1],"-v");
 
+  Piro::Epetra::SolverFactory solverFactory;
 
-  for (int iTest=0; iTest<3; iTest++) {
+  for (int iTest=0; iTest<4; iTest++) {
 
     if (doAll) {
       switch (iTest) {
        case 0: inputFile="input_Analysis_Dakota.xml"; break;
-       case 1: inputFile="input_Analysis_OptiPack.xml"; break;
-       case 2: inputFile="input_Analysis_MOOCHO.xml"; break;
-       default : cout << "iTest logic error " << endl; exit(-1);
+       case 1: inputFile="input_Analysis_ROL.xml"; break;
+       case 2: inputFile="input_Analysis_OptiPack.xml"; break;
+       case 3: inputFile="input_Analysis_MOOCHO.xml"; break;
+       default : std::cout << "iTest logic error " << std::endl; exit(-1);
       }
     }
     else {
@@ -103,11 +98,11 @@ int main(int argc, char *argv[]) {
       iTest = 999;
     }
 
-    if (Proc==0) 
-     cout << "===================================================\n"
+    if (Proc==0)
+     std::cout << "===================================================\n"
           << "======  Running input file "<< iTest <<": "<< inputFile <<"\n"
           << "===================================================\n"
-          << endl;
+          << std::endl;
 
     try {
 
@@ -121,43 +116,26 @@ int main(int argc, char *argv[]) {
       Teuchos::ParameterList piroParams = appParams.sublist("Piro");
       Teuchos::ParameterList& analysisParams = appParams.sublist("Analysis");
 
-      // Use these two objects to construct a Piro solved application 
-      //   EpetraExt::ModelEvaluator is  base class of all Piro::Epetra solvers
-      RCP<EpetraExt::ModelEvaluator> piro;
+#ifdef HAVE_PIRO_NOX
+      solverFactory.setSource<NOX::Epetra::Observer>(
+          Piro::providerFromDefaultConstructor<ObserveSolution_Epetra>());
+#endif
 
-      std::string& solver = piroParams.get("Piro Solver","NOX");
+      // Use these two objects to construct a Piro solved application
+      // EpetraExt::ModelEvaluator is the base class of all Piro::Epetra solvers
       const RCP<Teuchos::ParameterList> piroParamsRCP = rcp(&piroParams, false);
-
-#ifdef Piro_ENABLE_NOX
-      RCP<NOX::Epetra::Observer> observer = rcp(new ObserveSolution_Epetra());
-
-      if (solver=="NOX")
-        piro = rcp(new Piro::Epetra::NOXSolver(piroParamsRCP, Model, observer));
-      else if (solver=="LOCA")
-        piro = rcp(new Piro::Epetra::LOCASolver(piroParamsRCP, Model, observer));
-      else
-#endif
-#ifdef Piro_ENABLE_Rythmos
-      if (solver=="Rythmos")
-        piro = rcp(new Piro::Epetra::RythmosSolver(piroParamsRCP, Model));
-      else 
-#endif
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Error: Unknown Piro Solver : " << solver);
+      const RCP<EpetraExt::ModelEvaluator> piro = solverFactory.createSolver(piroParamsRCP, Model);
       // END Builder
 
-      Thyra::EpetraModelEvaluator piroThyra;
-      piroThyra.initialize(piro, Teuchos::null);
+      // Call the analysis routine
+      RCP<Epetra_Vector> p;
+      status = Piro::Epetra::PerformAnalysis(*piro, analysisParams, p);
 
-      RCP< Thyra::VectorBase<double> > p;
-
-      // Now call the analysis routine
-      status = Piro::PerformAnalysis(piroThyra, analysisParams, p);
-
-      if (p != Teuchos::null) {
+      if (Teuchos::nonnull(p)) {
         // Can post-process results here
-         if (Proc==0) cout << 
-           "\nPiro_AnalysisDrvier:  Optimum printed above has exact soln = {1,3}" << endl;
+        if (Proc==0) {
+          std::cout << "\nPiro_AnalysisDrvier:  Optimum printed above has exact soln = {1,3}" << std::endl;
+        }
       }
 
     }
@@ -168,10 +146,10 @@ int main(int argc, char *argv[]) {
   }  // End loop over tests
 
   if (Proc==0) {
-    if (overall_status==0) 
-      cout << "\nTEST PASSED\n" << endl;
-    else 
-      cout << "\nTEST Failed: " << overall_status << "\n" << endl;
+    if (overall_status==0)
+      std::cout << "\nTEST PASSED\n" << std::endl;
+    else
+      std::cout << "\nTEST Failed: " << overall_status << "\n" << std::endl;
   }
 
   return status;

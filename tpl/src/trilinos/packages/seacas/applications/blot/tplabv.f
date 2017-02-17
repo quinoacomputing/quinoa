@@ -56,7 +56,7 @@ C   --   Uses NVARNP, NVAREL of /DBNUMS/
 
       CHARACTER TYP
 
-      CALL DBVTYP (IVAR, TYP, IDUM)
+      CALL DBVTYP_BL (IVAR, TYP, IDUM)
 
       IF (NPLT .LE. -1) THEN
          IF ((TYP .EQ. 'H') .OR. (TYP .EQ. 'G')) THEN
@@ -85,5 +85,5 @@ C   --   Uses NVARNP, NVAREL of /DBNUMS/
       CALL SQZSTR (LABSTR, LSTR)
 
       RETURN
-10000  FORMAT (A, :, ' ', A, I6)
+10000  FORMAT (A, :, ' ', A, I12)
       END

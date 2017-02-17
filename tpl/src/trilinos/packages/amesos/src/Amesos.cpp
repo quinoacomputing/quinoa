@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -32,7 +32,7 @@
 #ifdef HAVE_AMESOS_LAPACK
 #include "Amesos_Lapack.h"
 #endif
-#ifdef HAVE_AMESOS_MUMPS
+#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
 #include "Amesos_Mumps.h"
 #endif
 #ifdef HAVE_AMESOS_SCALAPACK
@@ -123,7 +123,7 @@ Amesos_BaseSolver* Amesos::Create(const std::string CT,
   } 
   
   if ((CT == "Amesos_Mumps") || (CT == "Mumps")) { 
-#ifdef HAVE_AMESOS_MUMPS
+#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
     return new Amesos_Mumps(LinearProblem); 
 #else
     if (verbose) std::cerr << "Amesos_Mumps is not implemented" << std::endl ; 
