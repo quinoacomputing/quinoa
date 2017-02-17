@@ -65,8 +65,7 @@ module linsysmerger {
                                             std::vector< tk::real > >& auxlhs );
       entry void adddiag( int fromch,
                           const std::map< std::size_t,
-                                          std::vector< tk::real > >& solution );
-
+                           std::vector< std::vector< tk::real > > >& solution );
       entry void rowsreceived();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

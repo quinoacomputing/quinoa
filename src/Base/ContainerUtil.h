@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 12:49:28 PM MDT
+  \date      Sun 29 Jan 2017 07:37:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -162,6 +162,20 @@ std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
   for (const auto& s : c) sum += s.size();
   return sum;
+}
+
+// *****************************************************************************
+//! Free memory of a container.
+//! \param[in] c Container defining ::swap() member function
+//! \details See http://stackoverflow.com/a/10465032 as to why this is done with
+//!   the swap() member function of the container.
+//! \see The specializations of std::swap at
+//!   http://en.cppreference.com/w/cpp/algorithm/swap
+//! \author J. Bakosi
+// *****************************************************************************
+template< class Container >
+void destroy( Container& c ) {
+  typename std::remove_reference< decltype(c) >::type().swap( c );
 }
 
 } // tk::

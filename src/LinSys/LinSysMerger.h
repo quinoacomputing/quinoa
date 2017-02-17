@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 13 Dec 2016 04:14:19 PM MST
+  \date      Fri 10 Feb 2017 06:25:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -702,28 +702,32 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       bc_complete();
     }
 
-    //! Chares contribute their solution nonzero values for diagnostics
+    //! \brief Chares contribute their numerical and analytical solutions
+    //!   nonzero values for computing diagnostics
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] solution Portion of the unknown/solution vector contributed
+    //! \param[in] num Portion of the numerical unknown/solution vector
+    //! \param[in] an Portion of the analytical solution vector
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charediag( int fromch,
                     const std::vector< std::size_t >& gid,
-                    const Fields& solution )
+                    const Fields& num,
+                    const Fields& an )
     {
-      Assert( gid.size() == solution.nunk(),
-              "Size of solution and row ID vectors must equal" );
-      // Store solution vector nonzero values owned and pack those to be
-      // exported, also build import map used to test for completion
-      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      Assert( gid.size() == num.nunk(),
+              "Size of numerical solution and row ID vectors must equal" );
+      // Store numerical and analytical solution vector nonzero values owned and
+      // pack those to be exported, also build import map used to test for
+      // completion
+      std::map< int, std::map< std::size_t,
+                       std::vector< std::vector< tk::real > > > > exp;
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
           m_diagimport[ fromch ].push_back( gid[i] );
-          m_diag[ gid[i] ] = solution[i];
-        } else {
-          exp[ pe(gid[i]) ][ gid[i] ] = solution[i];
-        }
+          m_diag[ gid[i] ] = {{ num[i], an[i] }};
+        } else
+          exp[ pe(gid[i]) ][ gid[i] ] = {{ num[i], an[i] }};
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -731,14 +735,15 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       }
       if (diagcomplete()) diagnostics();
     }
-    //! \brief Receive solution vector nonzeros from fellow group branches for
-    //!    diagnostics
+    //! \brief Receive numerical and analytical solution vector nonzeros from
+    //!   fellow group branches for computing diagnostics
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] solution Portion of the unknown/solution vector contributed,
-    //!   containing global row indices and values for all components
+    //! \param[in] solution Portion of the solution vector contributed,
+    //!   containing global row indices and values for all components of the
+    //!   numerical and analytical solutions (if available)
     void adddiag( int fromch,
                   const std::map< std::size_t,
-                                  std::vector< tk::real > >& solution )
+                          std::vector< std::vector< tk::real > > >& solution )
     {
       for (const auto& r : solution) {
         m_diagimport[ fromch ].push_back( r.first );
@@ -842,8 +847,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     std::map< std::size_t, std::vector< tk::real > > m_auxlhs;
     //! \brief Part of solution vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row IDs
-    std::map< std::size_t, std::vector< tk::real > > m_diag;
+    //!   to global mesh point row IDs. The map-value is a pair of vectors,
+    //!   where the first one is the numerical and the second one is the
+    //!   analytical solution. If the analytical solution for a PDE is not
+    //!   defined, it is the initial condition.
+    //! \see charediag(), adddiag(), e.g., inciter::Carrier::diagnostics()
+    std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -1142,10 +1151,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       Assert( diagcomplete(),
               "Values of distributed solution vector (for diagnostics) on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      std::vector< tk::real > diag( m_ncomp, 0.0 );
-      for (const auto& s : m_diag)
+      std::vector< tk::real > diag( m_ncomp*2, 0.0 );
+      for (const auto& s : m_diag) {
+        Assert( s.second.size() == 2, "Size of diagnostics vector must be 2" );
+        // Compute L1 norm of the numerical solution
         for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += std::abs( s.second[c] );
+          diag[c] += std::abs( s.second[0][c] );
+        // Compute L1 norm of the numerical - analytical solution
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          diag[m_ncomp+c] += std::abs( s.second[0][c] - s.second[1][c] );
+      }
       // Contribute to diagnostics across all PEs
       signal2host_diag( m_host, diag );
     }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 01:19:10 PM MST
+  \date      Tue 07 Feb 2017 09:15:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2881,7 +2881,7 @@ using shear_diff = keyword< shear_diff_info, pegtl_string_t("shear_diff") >;
 
 struct dir_neu_info {
   using code = Code< D >;
-  static std::string name() { return "Diricihlet & Neumann"; }
+  static std::string name() { return "Dirichlet & Neumann"; }
   static std::string shortDescription() { return
     "Select the Poisson equation test problem with Dirichlet and Neumann BCs"; }
   static std::string longDescription() { return
@@ -3372,7 +3372,7 @@ struct rcb_info {
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using rcb = keyword< rcb_info, pegtl_string_t("r,c,b") >;
+using rcb = keyword< rcb_info, pegtl_string_t("rcb") >;
 
 struct rib_info {
   static std::string name() { return "recursive inertial bisection"; }
@@ -3386,17 +3386,41 @@ struct rib_info {
 };
 using rib = keyword< rib_info, pegtl_string_t("rib") >;
 
-struct phg_info {
-  static std::string name() { return "hypergraph"; }
+struct hsfc_info {
+  static std::string name() { return "Hilbert space filling curve"; }
   static std::string shortDescription() { return
-    "Select hypergraph mesh partitioner"; }
+    "Select Hilbert Space Filling Curve (HSFC) mesh partitioner"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the hypergraph (HG)
-    mesh partitioner. HG is a graph-based partitioner used to distribute an
+    R"(This keyword is used to select the Hilbert Space Filling Curve (HSFC)
+    mesh partitioner. HSFC is a geometry-based partitioner used to distribute an
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using phg = keyword< phg_info, pegtl_string_t("hg") >;
+using hsfc = keyword< hsfc_info, pegtl_string_t("hsfc") >;
+
+struct mj_info {
+  static std::string name() { return "multi-jagged"; }
+  static std::string shortDescription() { return
+    "Select multi-jagged (MJ) mesh partitioner"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the multi-jagged (MJ) mesh partitioner.
+    MJ is a geometry-based partitioner used to distribute an input mesh among
+    processing elements. See
+    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+};
+using mj = keyword< mj_info, pegtl_string_t("mj") >;
+
+struct phg_info {
+  static std::string name() { return "hypergraph"; }
+  static std::string shortDescription() { return
+    "Select parallel hypergraph mesh partitioner"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the parallel hypergraph (PHG)
+    mesh partitioner. PHG is a graph-based partitioner used to distribute an
+    input mesh among processing elements. See
+    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+};
+using phg = keyword< phg_info, pegtl_string_t("phg") >;
 
 struct algorithm_info {
   static std::string name() { return "algorithm"; }
@@ -3410,6 +3434,8 @@ struct algorithm_info {
     static std::string choices() {
       return '\'' + rcb::string() + "\' | \'"
                   + rib::string() + "\' | \'"
+                  + hsfc::string() + "\' | \'"
+                  + mj::string() + "\' | \'"
                   + phg::string() + '\'';
     }
   };

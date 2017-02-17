@@ -3,9 +3,8 @@
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-# Save paths required for running tests
+# Set paths required for running tests
 set(NDIFF_EXECUTABLE ${CMAKE_BINARY_DIR}/regression/ndiff/numdiff)
-set(EXODIFF_EXECUTABLE ${TPL_DIR}/bin/exodiff)
 set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
 # Find gmsh executable
@@ -32,7 +31,9 @@ add_subdirectory(walker/MassFracBeta)
 add_subdirectory(walker/MixMassFracBeta)
 
 # RNGTest regression tests
-add_subdirectory(rngtest)
+if(HAS_TESTU01)
+  add_subdirectory(rngtest)
+endif()
 
 # MeshConv regression tests
 add_subdirectory(meshconv/gmsh_output)

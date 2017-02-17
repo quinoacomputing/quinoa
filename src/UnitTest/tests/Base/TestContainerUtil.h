@@ -272,6 +272,24 @@ void ContainerUtil_object::test< 7 >() {
   std::vector< std::vector< tk::real > > c{ {3,4.0}, {2,2.0} };
   ensure_equals( "sum of sizes incorrect", tk::sumsize(c), 4 );
 }
+
+//! Test destroy()
+//! \author J. Bakosi
+template<> template<>
+void ContainerUtil_object::test< 8 >() {
+  set_test_name( "destroy" );
+
+  // Test destroying a vector of vectors
+  std::vector< std::vector< tk::real > > c{ {3.2,4.0}, {2.1,2.0} };
+  tk::destroy( c );
+  ensure_equals( "destroy yields empty vec of vec", c.empty(), true );
+
+  // Test destroying a map of vectors
+  std::map< int, std::vector< tk::real > > m{ {3,{4.0,5.0}}, {2,{1.0,2.0}} };
+  tk::destroy( m );
+  ensure_equals( "destroy yields empty map of vec", m.empty(), true );
+}
+
 } // tut::
 
 #endif // test_ContainerUtil_h

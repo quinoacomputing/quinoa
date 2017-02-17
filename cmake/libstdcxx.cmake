@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find libc++ and offer to switch between libc++ and libstdc++
-# \date      Fri 06 May 2016 06:44:53 AM MDT
+# \date      Fri 20 Jan 2017 12:39:24 PM MST
 #
 ################################################################################
 
@@ -16,12 +16,12 @@ set(__libstdcxx YES)
 #### Attempt to find the libc++ library. Do not offer for gnu.
 # More infor: libstdc++: http://gcc.gnu.org/libstdc++,
 # libc++: http://libcxx.llvm.org.
-if (NOT NO_SYSTEM_libc++ AND NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  find_package(libc++)
+if (NOT NO_SYSTEM_LIBCXX AND NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  find_package(LibCXX)
 endif()
 
 #### If libc++ found, offer switch between libstdc++ and libc++.
-if (libc++_FOUND)
+if (LIBCXX_FOUND)
 
   # Offer switch between libstdc++ and libc++ for the C++ standard library, only
   # if libc++ has been found. We assume libstdc++ exists.

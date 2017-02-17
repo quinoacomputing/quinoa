@@ -22,8 +22,10 @@ addCharmModule( "testu01suite" "RNGTest" )
 # proxy defined in the Charm++ module rngtest (in Main/RNGTest.C).
 add_dependencies("RNGTest" "rngtestCharmModule")
 
+set_target_properties(RNGTest PROPERTIES LIBRARY_OUTPUT_NAME quinoa_rngtest)
+
 INSTALL(TARGETS RNGTest
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )

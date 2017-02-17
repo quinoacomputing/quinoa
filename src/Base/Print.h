@@ -442,7 +442,7 @@ class Print {
     //! Print end of a part
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void endpart() const { stream<s>() << '\n'; }
+    void endpart() const { stream<s>() << std::endl; }
 
     //! Print end of subsection
     //! \author J. Bakosi
