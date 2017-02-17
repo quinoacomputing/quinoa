@@ -42,7 +42,7 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
     GeometricMeshElemAdapter(
       std::size_t nelem,
       const std::array< std::vector< tk::real >, 3 >& centroid,
-      const std::vector< std::size_t >& elemid )
+      const std::vector< long >& elemid )
     : m_nelem( nelem ),
       m_topology( EntityTopologyType::TETRAHEDRON ),
       m_centroid( centroid ),
@@ -96,13 +96,13 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
     //! Mesh element coordinates (centroids)
     const std::array< std::vector< tk::real >, 3 >& m_centroid;
     //! Global mesh element ids
-    const std::vector< std::size_t >& m_elemid;
+    const std::vector< long >& m_elemid;
 };
 
 std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& centroid,
-              const std::vector< std::size_t >& elemid,
+              const std::vector< long >& elemid,
               std::size_t nelem,
               int npart )
 // *****************************************************************************
@@ -135,9 +135,8 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
   //    the application, i.e., quinoa, and Zoltan2 to represent global
   //    identifiers and global counts
   // See also
-  // <tpl>/src/trilinos/packages/zoltan2/src/input/Zoltan2_InputTraits.hpp
-  using ZoltanTypes =
-    Zoltan2::BasicUserTypes< tk::real, std::size_t, std::size_t >;
+  // tpl/src/trilinos/packages/zoltan2/src/input/Zoltan2_InputTraits.hpp
+  using ZoltanTypes = Zoltan2::BasicUserTypes< tk::real, long, long >;
 
   // Create mesh adapter for Zoltan for mesh element partitioning
   using InciterZoltanAdapter = GeometricMeshElemAdapter< ZoltanTypes >;
