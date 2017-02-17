@@ -163,7 +163,7 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
   std::vector< tk::real > px( num ), py( num ), pz( num );
 
   ErrChk(
-    ex_get_n_coord(
+    ex_get_partial_coord(
       m_inFile, static_cast<int64_t>(ext[0])+1, static_cast<int64_t>(num),
       px.data(), py.data(), pz.data() ) == 0,
       "Failed to read coordinates of nodes [" + std::to_string(ext[0]) +
@@ -187,7 +187,7 @@ ExodusIIMeshReader::readElemBlockIDs()
   std::vector< int > eid( m_neblk );
 
   // Read element block ids
-  ErrChk( ex_get_elem_blk_ids( m_inFile, eid.data()) == 0,
+  ErrChk( ex_get_ids( m_inFile, EX_ELEM_BLOCK, eid.data()) == 0,
           "Failed to read element block ids from ExodusII file: " +
           m_filename );
 
@@ -197,8 +197,8 @@ ExodusIIMeshReader::readElemBlockIDs()
     int n, nnpe, nattr;
 
     // Read element block information
-    ErrChk(
-      ex_get_elem_block( m_inFile, id, eltype, &n, &nnpe, &nattr ) == 0,
+    ErrChk( ex_get_block( m_inFile, EX_ELEM_BLOCK, id, eltype, &n, &nnpe,
+                          &nattr, nullptr, nullptr ) == 0,
       "Failed to read element block information from ExodusII file: " +
       m_filename );
 
@@ -240,8 +240,8 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
     int nel, nnpe, nattr;
 
     // Read element block information
-    ErrChk(
-      ex_get_elem_block( m_inFile, id, eltype, &nel, &nnpe, &nattr ) == 0,
+    ErrChk( ex_get_block( m_inFile, EX_ELEM_BLOCK, id, eltype, &nel, &nnpe,
+                          &nattr, nullptr, nullptr ) == 0,
       "Failed to read element block information from ExodusII file: " +
       m_filename );
 
@@ -250,8 +250,8 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
     if (nnpe == 4) {    // tetrahedra
 
       std::vector< int > inpoel( connectsize );
-      ErrChk(
-        ex_get_elem_conn( m_inFile, id, inpoel.data() ) == 0,
+      ErrChk( ex_get_conn( m_inFile, EX_ELEM_BLOCK, id, inpoel.data(),
+                           nullptr, nullptr ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
       for (auto n : inpoel)
@@ -260,8 +260,8 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
     } else if (nnpe == 3) {    // triangles
 
       std::vector< int > inpoel( connectsize );
-      ErrChk(
-        ex_get_elem_conn( m_inFile, id, inpoel.data() ) == 0,
+      ErrChk( ex_get_conn( m_inFile, EX_ELEM_BLOCK, id, inpoel.data(),
+                           nullptr, nullptr ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
       for (auto n : inpoel)
@@ -364,11 +364,14 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto b=lo_bid; b<=hi_bid; ++b, ++B) {
     const auto& r = rext[B];
     std::vector< int > c( (r[1]-r[0]+1) * m_nnpe[e] );
-    ErrChk( ex_get_n_elem_conn( m_inFile,
-                                bid[b],
-                                static_cast< int64_t >( r[0] ),
-                                static_cast< int64_t >( r[1]-r[0]+1 ),
-                                c.data() ) == 0,
+    ErrChk( ex_get_partial_conn( m_inFile,
+                                 EX_ELEM_BLOCK,
+                                 bid[b],
+                                 static_cast< int64_t >( r[0] ),
+                                 static_cast< int64_t >( r[1]-r[0]+1 ),
+                                 c.data(),
+                                 nullptr,
+                                 nullptr ) == 0,
             "Failed to read element connectivity of elements [" +
             std::to_string(r[0]) + "..." + std::to_string(r[1]) +
             "] from element block " + std::to_string(bid[b]) + " in ExodusII "
@@ -405,13 +408,13 @@ ExodusIIMeshReader::readSidesets()
   if (m_neset > 0) {
     // Read all side set ids from file
     std::vector< int > ids( m_neset );
-    ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
+    ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
             "Failed to read side set ids from ExodusII file: " + m_filename );
     // Read in node list for all side sets
     for (auto i : ids) {
       int nface, nnode;
       // Read number of faces and number of distribution factors in side set i
-      ErrChk( ex_get_side_set_param( m_inFile, i, &nface, &nnode ) == 0,
+      ErrChk( ex_get_set_param( m_inFile, EX_SIDE_SET, i, &nface, &nnode ) == 0,
               "Failed to read side set " + std::to_string(i) + " parameters "
               "from ExodusII file: " + m_filename );
       // Read number of nodes in side set i (overwrite nnode)
