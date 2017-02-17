@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Fri 25 Nov 2016 07:30:50 PM MST
+# \date      Fri 17 Feb 2017 12:47:01 PM MST
 #
 ################################################################################
 
@@ -14,13 +14,17 @@
 # Covert string to list of file names of text baseline(s) and text result(s)
 string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
 string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
-# Covert string to list of file names of binary baseline(s) and binary result(s)
+# Covert string to list of file names of binary baseline(s), binary result(s),
+# and binary diff program confguration file(s)
 string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
 string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
+string(REPLACE " " ";" BIN_DIFF_PROG_CONF "${BIN_DIFF_PROG_CONF}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
-
+# Covert string to list of test labels
 string(REPLACE " " ";" TEST_LABELS "${TEST_LABELS}")
+# Covert string to list of test executable arguments
+string(REPLACE " " ";" TEST_EXECUTABLE_ARGS "${TEST_EXECUTABLE_ARGS}")
 
 # Print test runner configuration
 message("Test runner configuration:")
@@ -45,7 +49,7 @@ message("  TEXT_RESULT (text output file(s) diffed with good solution) : ${TEXT_
 
 message("  BIN_DIFF_PROG (diff tool used for binary diffs)             : ${BIN_DIFF_PROG}")
 message("  BIN_DIFF_PROG_ARGS (binary diff tool arguments)             : ${BIN_DIFF_PROG_ARGS}")
-message("  BIN_DIFF_PROG_CONF (binary diff tool configuration file)    : ${BIN_DIFF_PROG_CONF}")
+message("  BIN_DIFF_PROG_CONF (binary diff tool configuration file(s)) : ${BIN_DIFF_PROG_CONF}")
 message("  BIN_BASELINE (binary output known good solution file(s))    : ${BIN_BASELINE}")
 message("  BIN_RESULT (binary output file(s) diffed with good solution): ${BIN_RESULT}")
 
@@ -137,9 +141,10 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS BIN_BASELINE)
       list(GET BIN_RESULT ${b} result)
-      set(bin_diff_command ${RUNNER} ${RUNNER_ARGS} ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
-                           -f ${BIN_DIFF_PROG_CONF}
-                           ${baseline} ${result})
+      list(GET BIN_DIFF_PROG_CONF ${b} conf)
+      set(bin_diff_command ${RUNNER} ${RUNNER_ARGS} ${BIN_DIFF_PROG}
+                           ${BIN_DIFF_PROG_ARGS}
+                           -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
       execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
