@@ -1,45 +1,3 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
 /*
  * ncGroup.h
  *
@@ -97,7 +55,7 @@ class NcGroupInfo {
 public:
 
     /** Create a new root group */
-    NcGroupInfo(const int ncid, const NcFileInfo &fileInfo);
+    NcGroupInfo(const int ncid, const NcFileInfo &finfo);
 
 
     /** Create a new child group. */
@@ -108,7 +66,7 @@ public:
 
 
     /** Create a root group from the struct nc_group. */
-    NcGroupInfo(const struct nc_group &group, const NcFileInfo &fileInfo);
+    NcGroupInfo(const struct nc_group &group, const NcFileInfo &finfo);
 
 
     virtual ~NcGroupInfo();
@@ -295,21 +253,21 @@ protected:
 
 
 private:
-    const int        _ncid;              /* id of this group */
-    const NcFileInfo _fileInfo;   /* points to root group (null if we are the root) */
-    NcGroupInfo     *_parent;   /* pointer to parent (null if we are the root) */
-    std::string      _name;            /* name of this group "/" if root */
-    int              _unlimdimid;
+    const int ncid;              /* id of this group */
+    const NcFileInfo fileInfo;   /* points to root group (null if we are the root) */
+    NcGroupInfo *parent;   /* pointer to parent (null if we are the root) */
+    std::string name;            /* name of this group "/" if root */
+    int unlimdimid;
 
 
 public:
-    std::map<int, NcVarInfo *>    _vars;          /* variables used by the group */
-    std::map<string, NcVarInfo *> _varsByName; /* variables mapped by name */
-    std::map<int, NcDimInfo *>    _dims;          /* Dimensions used by this group */
+    std::map<int, NcVarInfo *> vars;          /* variables used by the group */
+    std::map<string, NcVarInfo *> varsByName; /* variables mapped by name */
+    std::map<int, NcDimInfo *> dims;          /* Dimensions used by this group */
 
-    std::map<std::string, NcAttInfo *> _atts;  /* global attributes for this group */
+    std::map<std::string, NcAttInfo *> atts;  /* global attributes for this group */
 
-    std::map<int, NcGroupInfo *> _children;    /* Subgroups of this group */
+    std::map<int, NcGroupInfo *> children;    /* Subgroups of this group */
 };
 
 

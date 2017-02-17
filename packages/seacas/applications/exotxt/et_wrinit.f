@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -73,13 +73,6 @@ C     Side set info
 
       CHARACTER*(*) QAINFO(6)
 
-C ... Some codes are embedding carriage returns in title.
-C     Strip them out...
-      LTITLE = lenstr(title)
-      do i=1, ltitle
-        if (ichar(title(i:i)) .eq. 10) title(i:i) = ' '
-      end do
-      
       WRITE (NTXT, 10030) '! Database Title', (QAINFO(I),I=1,3)
       WRITE (NTXT, '(A)') TITLE
 

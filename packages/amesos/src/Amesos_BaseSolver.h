@@ -20,7 +20,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -406,10 +406,9 @@ revert to their default values.
   //! Prints timing information about the current solver. 
   virtual void PrintTiming() const = 0;
 
-  //! Redefined from Teuchos::ParameterListAcceptor (Does Not Work)
+  //! Redefined from Teuchos::ParameterListAcceptor
   virtual void setParameterList(Teuchos::RCP<Teuchos::ParameterList> const& paramList)
   {
-    Teuchos::RCP<Teuchos::ParameterList> temp = paramList;
     //    paramList_ = paramlist ;
     //    this->SetParameters( *paramList_ );
   }
@@ -429,12 +428,8 @@ revert to their default values.
     return PL ; 
   }
 
-  //! Extracts timing information from the current solver and places it in the parameter list. (Does Not Work)
-  virtual void GetTiming( Teuchos::ParameterList &TimingParameterList ) const 
-  {
-    Teuchos::ParameterList temp;
-    TimingParameterList = temp.setName("NULL");
-  }
+  //! Extracts timing information from the current solver and places it in the parameter list.
+  virtual void GetTiming( Teuchos::ParameterList &TimingParameterList ) const {}
 
   //@}
 

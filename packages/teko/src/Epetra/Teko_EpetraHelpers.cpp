@@ -56,7 +56,6 @@
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include "Thyra_SpmdVectorBase.hpp"
 #include "Thyra_SpmdVectorSpaceBase.hpp"
-#include "Thyra_ScalarProdVectorSpaceBase.hpp"
 
 // Epetra includes
 #include "Epetra_Vector.h"

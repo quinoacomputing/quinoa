@@ -7,8 +7,6 @@
 
 #cmakedefine HAVE_STRATIMIKOS_BELOS
 
-#cmakedefine HAVE_STRATIMIKOS_EPETRAEXT
-
 #cmakedefine HAVE_STRATIMIKOS_IFPACK
 
 #cmakedefine HAVE_STRATIMIKOS_ML

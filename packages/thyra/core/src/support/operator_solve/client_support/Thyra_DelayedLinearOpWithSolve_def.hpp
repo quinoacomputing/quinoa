@@ -59,7 +59,7 @@ namespace Thyra {
 
 template <class Scalar>
 DelayedLinearOpWithSolve<Scalar>::DelayedLinearOpWithSolve()
-  :supportSolveUse_(SUPPORT_SOLVE_UNSPECIFIED), lows_is_valid_(false)
+  :lows_is_valid_(false)
 {}
 
 

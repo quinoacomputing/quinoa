@@ -8,33 +8,20 @@
 # Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 # license for use of this work by or on behalf of the U.S. Government.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
 #
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
 # Questions? Contact Glen Hansen (gahanse@sandia.gov)
 #
 # ************************************************************************
@@ -151,7 +138,7 @@ MOERTEL::Interface::~Interface()
 }
 
 /*----------------------------------------------------------------------*
- |  print segments of this interface to std::cout                  (public)  |
+ |  print segments of this interface to cout                  (public)  |
  *----------------------------------------------------------------------*/
 bool MOERTEL::Interface::PrintSegments() const
 { 
@@ -164,8 +151,8 @@ bool MOERTEL::Interface::PrintSegments() const
     {
       if (lComm()->MyPID()==k)
       {
-        std::cout << "---global/local Proc " << gcomm_.MyPID() << "/" << k 
-             << ":\t Segments Side " << j << std::endl;
+        cout << "---global/local Proc " << gcomm_.MyPID() << "/" << k 
+             << ":\t Segments Side " << j << endl;
         for (curr=rseg_[j].begin(); curr!=rseg_[j].end(); ++curr)
         {
 		  Teuchos::RCP<MOERTEL::Segment> seg = curr->second;
@@ -173,12 +160,12 @@ bool MOERTEL::Interface::PrintSegments() const
           {
             if (seg == Teuchos::null)
             {
-              std::cout << "***ERR*** MOERTEL::Interface::PrintSegments:\n"
+              cout << "***ERR*** MOERTEL::Interface::PrintSegments:\n"
                    << "***ERR*** found NULL entry in map of segments\n"
                    << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
               return false;
             }
-            std::cout << *seg;
+            cout << *seg;
           }
         }
       }
@@ -190,7 +177,7 @@ bool MOERTEL::Interface::PrintSegments() const
 }
 
 /*----------------------------------------------------------------------*
- |  print nodes of this interface to std::cout                     (public)  |
+ |  print nodes of this interface to cout                     (public)  |
  *----------------------------------------------------------------------*/
 bool MOERTEL::Interface::PrintNodes() const
 { 
@@ -204,8 +191,8 @@ bool MOERTEL::Interface::PrintNodes() const
     {
       if (lComm()->MyPID()==k)
       {
-        std::cout << "---global/local Proc " << gcomm_.MyPID() << "/" << k  
-             << ":\t Nodes Side " << j << std::endl;
+        cout << "---global/local Proc " << gcomm_.MyPID() << "/" << k  
+             << ":\t Nodes Side " << j << endl;
         for (curr=rnode_[j].begin(); curr!=rnode_[j].end(); ++curr)
         {
 		  Teuchos::RCP<MOERTEL::Node> node = curr->second;
@@ -213,12 +200,12 @@ bool MOERTEL::Interface::PrintNodes() const
           {
             if (node == Teuchos::null)
             {
-              std::cout << "***ERR*** MOERTEL::Interface::PrintNodes:\n"
+              cout << "***ERR*** MOERTEL::Interface::PrintNodes:\n"
                    << "***ERR*** found NULL entry in map of nodes\n"
                    << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
               return false;
             }
-            std::cout << *node;
+            cout << *node;
           }
         }
         lComm()->Barrier();
@@ -230,7 +217,7 @@ bool MOERTEL::Interface::PrintNodes() const
 }
 
 /*----------------------------------------------------------------------*
- |  print interface to std::cout                                   (public)  |
+ |  print interface to cout                                   (public)  |
  *----------------------------------------------------------------------*/
 bool MOERTEL::Interface::Print() const
 { 
@@ -239,40 +226,40 @@ bool MOERTEL::Interface::Print() const
   {
     if (gcomm_.MyPID()==0)
     {
-      std::cout << "Complete() was NOT called\n";
-      std::cout << "Cannot print node/segment info\n";
+      cout << "Complete() was NOT called\n";
+      cout << "Cannot print node/segment info\n";
     }
     return true;
   }
   if (!lComm()) return true;
   if (gcomm_.MyPID()==0)
   {
-    std::cout << "===== MOERTEL Interface # " << Id() << " =====\n";
+    cout << "===== MOERTEL Interface # " << Id() << " =====\n";
     if (oneD_)
-      std::cout << "Dimension: 1D\n";
+      cout << "Dimension: 1D\n";
     else
-      std::cout << "Dimension: 2D\n";
+      cout << "Dimension: 2D\n";
     if (GetProjectionType()==MOERTEL::Interface::proj_none)
-      std::cout << "ProjectionType: none\n";
+      cout << "ProjectionType: none\n";
     else if (GetProjectionType()==MOERTEL::Interface::proj_continousnormalfield)
-      std::cout << "ProjectionType: continousnormalfield\n";
+      cout << "ProjectionType: continousnormalfield\n";
     else if (GetProjectionType()==MOERTEL::Interface::proj_orthogonal)
-      std::cout << "ProjectionType: orthogonal\n";
+      cout << "ProjectionType: orthogonal\n";
     int mside = MortarSide();
     int sside = MortarSide();
     if (mside==1 || mside==0)
       sside = OtherSide(mside);
-    std::cout << "Mortar Side " << mside << std::endl;
-    std::cout << "Slave  Side " << sside << std::endl;
+    cout << "Mortar Side " << mside << endl;
+    cout << "Slave  Side " << sside << endl;
   }
   
   if (gcomm_.MyPID()==0)
-    std::cout << "----- Segments -----\n";
+    cout << "----- Segments -----\n";
   fflush(stdout);
   PrintSegments();
 
   if (gcomm_.MyPID()==0)
-    std::cout << "----- Nodes    -----\n";
+    cout << "----- Nodes    -----\n";
   fflush(stdout);
   PrintNodes();
 
@@ -282,7 +269,7 @@ bool MOERTEL::Interface::Print() const
 /*----------------------------------------------------------------------*
  |  << operator                                              mwgee 06/05|
  *----------------------------------------------------------------------*/
-std::ostream& operator << (std::ostream& os, const MOERTEL::Interface& inter)
+ostream& operator << (ostream& os, const MOERTEL::Interface& inter)
 { 
   inter.Print();
   return (os);
@@ -297,7 +284,7 @@ bool MOERTEL::Interface::AddSegment(MOERTEL::Segment& seg, int side)
   if (IsComplete())
   {
     if (OutLevel()>0)
-      std::cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
+      cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
            << "***ERR*** Cannot add segment as Complete() was called before\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -307,7 +294,7 @@ bool MOERTEL::Interface::AddSegment(MOERTEL::Segment& seg, int side)
   if (side != 0 && side != 1)
   {
     if (OutLevel()>0)
-      std::cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
+      cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
            << "***ERR*** parameter side: " << side << " has to be 0 or 1\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -317,7 +304,7 @@ bool MOERTEL::Interface::AddSegment(MOERTEL::Segment& seg, int side)
   {
     if (seg.Nnode() != 4)
     {
-      std::cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
+      cout << "***ERR*** MOERTEL::Interface::AddSegment:\n"
            << "***ERR*** Unknown number of nodes " << seg.Nnode() << "for BilinearQuad\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -376,7 +363,7 @@ bool MOERTEL::Interface::AddNode(MOERTEL::Node& node, int side)
   if (IsComplete())
   {
     if (OutLevel()>0)
-      std::cout << "***ERR*** MOERTEL::Interface::AddNode:\n"
+      cout << "***ERR*** MOERTEL::Interface::AddNode:\n"
            << "***ERR*** Cannot add node as Complete() was called before\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -386,7 +373,7 @@ bool MOERTEL::Interface::AddNode(MOERTEL::Node& node, int side)
   if (side != 0 && side != 1)
   {
     if (OutLevel()>0)
-      std::cout << "***ERR*** MOERTEL::Interface::AddNode:\n"
+      cout << "***ERR*** MOERTEL::Interface::AddNode:\n"
            << "***ERR*** parameter side: " << side << " has to be 0 or 1\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -416,21 +403,21 @@ bool MOERTEL::Interface::SetFunctionAllSegmentsSide(int side,
 { 
   if (side!=0 && side!=1)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
          << "***ERR*** side = " << side << " not equal 0 or 1\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
   }
   if (id<0)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
          << "***ERR*** id = " << id << " < 0 (out of range)\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
   }
   if (!func)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetFunctionAllSegmentsSide:\n"
          << "***ERR*** func = NULL on input\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -459,7 +446,7 @@ bool MOERTEL::Interface::SetMortarSide(int side)
 { 
   if (side!=0 && side!=1 && side!=-2)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetMortarSide:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetMortarSide:\n"
          << "***ERR*** side = " << side << " not equal 0 or 1\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     mortarside_=-1;
@@ -483,14 +470,14 @@ int MOERTEL::Interface::GlobalNsegment(int side)
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
+    cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
          << "***WRN*** Complete() was not called on interface " << Id_ << "\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
   }
   if (side!=0 && side!=1)
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
+    cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
          << "***WRN*** side = " << side << " not equal 0 or 1\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -515,7 +502,7 @@ int MOERTEL::Interface::GlobalNsegment()
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
+    cout << "***WRN*** MOERTEL::Interface::GlobalNsegment:\n"
          << "***WRN*** Complete() was not called on interface " << Id_ << "\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -540,14 +527,14 @@ int MOERTEL::Interface::GlobalNnode(int side)
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GlobalNnode:\n"
+    cout << "***WRN*** MOERTEL::Interface::GlobalNnode:\n"
          << "***WRN*** Complete() was not called on interface " << Id_ << "\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
   }
   if (side!=0 && side!=1)
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GlobalNnode:\n"
+    cout << "***WRN*** MOERTEL::Interface::GlobalNnode:\n"
          << "***WRN*** side = " << side << " not equal 0 or 1\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -570,7 +557,7 @@ int MOERTEL::Interface::GlobalNnode()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::GlobalNnode:\n"
+    cout << "***ERR*** MOERTEL::Interface::GlobalNnode:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -592,7 +579,7 @@ int MOERTEL::Interface::NodePID(int nid) const
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::NodePID:\n"
+    cout << "***ERR*** MOERTEL::Interface::NodePID:\n"
          << "***ERR*** Cannot search node, Complete() not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -600,7 +587,7 @@ int MOERTEL::Interface::NodePID(int nid) const
   if (!lComm())
   {
     if (OutLevel()>0)
-    std::cout << "MOERTEL: ***WRN*** MOERTEL::Interface::NodePID:\n"
+    cout << "MOERTEL: ***WRN*** MOERTEL::Interface::NodePID:\n"
          << "MOERTEL: ***WRN*** Proc " << gcomm_.MyPID() << " not part of intra-communicator of interface " << Id() << "\n"
          << "MOERTEL: ***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -611,7 +598,7 @@ int MOERTEL::Interface::NodePID(int nid) const
     return(curr->second);
   else
   {
-    std::cout << "***ERR*** MOERTEL::Interface::NodePID:\n"
+    cout << "***ERR*** MOERTEL::Interface::NodePID:\n"
          << "***ERR*** Proc/Intra-Proc " << gcomm_.MyPID() << "/" << lcomm_->MyPID() << ": Cannot find node " << nid << " on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return(-1);
@@ -625,7 +612,7 @@ int MOERTEL::Interface::SegPID(int sid) const
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SegPID:\n"
+    cout << "***ERR*** MOERTEL::Interface::SegPID:\n"
          << "***ERR*** Cannot search segment, Complete() not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -633,7 +620,7 @@ int MOERTEL::Interface::SegPID(int sid) const
   if (!lComm())
   {
     if (OutLevel()>0)
-    std::cout << "MOERTEL: ***WRN*** MOERTEL::Interface::NodePID:\n"
+    cout << "MOERTEL: ***WRN*** MOERTEL::Interface::NodePID:\n"
          << "MOERTEL: ***WRN*** Proc " << gcomm_.MyPID() << " not part of intra-communicator of interface " << Id() << "\n"
          << "MOERTEL: ***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -644,7 +631,7 @@ int MOERTEL::Interface::SegPID(int sid) const
     return(curr->second);
   else
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SegPID:\n"
+    cout << "***ERR*** MOERTEL::Interface::SegPID:\n"
          << "***ERR*** Proc/Intra-Proc " << gcomm_.MyPID() << "/"<< lcomm_->MyPID() << ": Cannot find segment " << sid << "on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return(-1);
@@ -660,7 +647,7 @@ int MOERTEL::Interface::OtherSide(int side) const
   else if (side==1) return 0;
   else
   {
-    std::cout << "***WRN*** MOERTEL::Interface::OtherSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::OtherSide:\n"
          << "***WRN*** side " << side << " out of range (0 or 1)\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -716,7 +703,7 @@ MOERTEL::Node** MOERTEL::Interface::GetNodeView()
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetNodeView:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetNodeView:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return NULL;
@@ -742,7 +729,7 @@ bool MOERTEL::Interface::GetNodeView(std::vector<MOERTEL::Node*>& nodes)
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetNodeView:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetNodeView:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -794,7 +781,7 @@ MOERTEL::Segment** MOERTEL::Interface::GetSegmentView()
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSegmentView:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSegmentView:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return NULL;
@@ -822,14 +809,14 @@ int MOERTEL::Interface::GetSide(MOERTEL::Segment* seg)
   if (!lComm()) return -1;
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
   }
   if (!lComm())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Proc " << gcomm_.MyPID() << "not in intra-comm\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -851,14 +838,14 @@ int MOERTEL::Interface::GetSide(MOERTEL::Node* node)
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
   }
   if (!lComm())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Proc " << gcomm_.MyPID() << "not in intra-comm\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -880,14 +867,14 @@ int MOERTEL::Interface::GetSide(int nodeid)
 { 
   if (!IsComplete())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Complete() not called\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
   }
   if (!lComm())
   {
-    std::cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
+    cout << "***WRN*** MOERTEL::Interface::GetSide:\n"
          << "***WRN*** Interface " << Id() << ": Proc " << gcomm_.MyPID() << "not in intra-comm\n"
          << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return -1;
@@ -913,14 +900,14 @@ bool MOERTEL::Interface::RedundantSegments(int side)
 { 
   if (side != 0 && side != 1)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::RedundantSegments:\n"
+    cout << "***ERR*** MOERTEL::Interface::RedundantSegments:\n"
          << "***ERR*** side=" << side << " out of range (0 or 1)\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
   }
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::RedundantSegments:\n"
+    cout << "***ERR*** MOERTEL::Interface::RedundantSegments:\n"
          << "***ERR*** Complete() not called on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -1023,14 +1010,14 @@ bool MOERTEL::Interface::RedundantNodes(int side)
 { 
   if (side != 0 && side != 1)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::RedundantNodes:\n"
+    cout << "***ERR*** MOERTEL::Interface::RedundantNodes:\n"
          << "***ERR*** side=" << side << " out of range (0 or 1)\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
   }
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::RedundantNodes:\n"
+    cout << "***ERR*** MOERTEL::Interface::RedundantNodes:\n"
          << "***ERR*** Complete() not called on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (-1);
@@ -1125,7 +1112,7 @@ bool MOERTEL::Interface::BuildNodeSegmentTopology()
   if (!IsComplete())
   {
     if (OutLevel()>1)
-    std::cout << "MOERTEL: ***WRN*** MOERTEL::Interface::BuildNodeSegmentTopology:\n"
+    cout << "MOERTEL: ***WRN*** MOERTEL::Interface::BuildNodeSegmentTopology:\n"
          << "MOERTEL: ***WRN*** Complete() not called on interface " << Id() << "\n"
          << "MOERTEL: ***WRN*** Cannot build node<->segment topology\n"
          << "MOERTEL: ***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
@@ -1163,7 +1150,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (0);
@@ -1193,7 +1180,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
       if (D==Teuchos::null)
       {
         if (curr->second->GetM() != Teuchos::null)
-          std::cout << *curr->second << "has no D but has M!!!\n";
+          cout << *curr->second << "has no D but has M!!!\n";
         ++count;
         continue;
       }
@@ -1202,7 +1189,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
     }
     if (count != (int)rnode_[sside].size())
     {
-      std::cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
+      cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
            << "***ERR*** number of redundant nodes wrong\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return (0);
@@ -1265,7 +1252,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
+    cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (0);
@@ -1321,7 +1308,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
         if (D==Teuchos::null)
         {
           if (curr->second->GetM() != Teuchos::null)
-            std::cout << *curr->second << "has no D but has M!!!\n";
+            cout << *curr->second << "has no D but has M!!!\n";
           ++count;
           continue;
         }
@@ -1330,7 +1317,7 @@ int MOERTEL::Interface::SetLMDofs(int minLMGID)
       }
       if (count != (int)rnode_[sside].size())
       {
-        std::cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
+        cout << "***ERR*** MOERTEL::Interface::SetLMDofs:\n"
              << "***ERR*** number of redundant nodes wrong\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return (0);
@@ -1389,7 +1376,7 @@ std::vector<int>* MOERTEL::Interface::MyLMIds()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::MyLMIds:\n"
+    cout << "***ERR*** MOERTEL::Interface::MyLMIds:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return (0);
@@ -1440,7 +1427,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1463,7 +1450,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1545,7 +1532,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder:\n"
          << "***ERR*** Complete() was not called on interface " << Id_ << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1558,7 +1545,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D()
   int mside = MortarSide();
   if (mside != 1 && mside != 0)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D:\n"
          << "***ERR*** Mortar side not set on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1580,13 +1567,13 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D()
       if (nodes[i]->Id() == ncurr->second->Id()) continue;
       if (!nodes[i]->IsOnBoundary())
       {
-        //std::cout << "Supporting neighbor node on same element is \n" << *nodes[i];
+        //cout << "Supporting neighbor node on same element is \n" << *nodes[i];
         ncurr->second->AddSupportedByNode(nodes[i]);
       }
     }
     if (!ncurr->second->NSupportSet())
     {
-      std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D:\n"
+      cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_2D:\n"
            << "***ERR*** Cannot find a supporting internal node for corner node " << ncurr->second->Id() << "\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -1607,7 +1594,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
 { 
   if (!IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
          << "***ERR*** Complete() was not called on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1620,7 +1607,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
   int mside = MortarSide();
   if (mside != 1 && mside != 0)
   {
-    std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
+    cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
          << "***ERR*** Mortar side not set on interface " << Id() << "\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -1655,7 +1642,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
       if (nodes[i]->Id() == ncurr->second->Id()) continue;
       if (!nodes[i]->IsOnBoundary())
       {
-        //std::cout << "Supporting neighbor node on same element is \n" << *nodes[i];
+        //cout << "Supporting neighbor node on same element is \n" << *nodes[i];
         ncurr->second->AddSupportedByNode(nodes[i]);
       }
     }
@@ -1678,7 +1665,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
     }
     if (!ncurr->second->NSupportSet())
     {
-      std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
+      cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
            << "***ERR*** Cannot find a supporting internal node for corner node " << ncurr->second->Id() << "\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -1690,7 +1677,7 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
   {
     // do only nodes on boundary that don't have a supporting node yet
     if (!(ncurr->second->IsOnBoundary()) || ncurr->second->NSupportSet()) continue;
-    //std::cout << "Looking at boundary node  " << *(ncurr->second);
+    //cout << "Looking at boundary node  " << *(ncurr->second);
     // loop all segments adjacent to this node
     MOERTEL::Segment** segs = ncurr->second->Segments();
     for (int i=0; i<ncurr->second->Nseg(); ++i)
@@ -1699,13 +1686,13 @@ bool MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D()
       for (int j=0; j<segs[i]->Nnode(); ++j)
       {
         if (neighbornodes[j]->IsOnBoundary()) continue;
-        //std::cout << "Supporting neighbor node on same element is \n" << *neighbornodes[j];
+        //cout << "Supporting neighbor node on same element is \n" << *neighbornodes[j];
         ncurr->second->AddSupportedByNode(neighbornodes[j]);
       }
     }
     if (!ncurr->second->NSupportSet())
     {
-      std::cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
+      cout << "***ERR*** MOERTEL::Interface::DetectEndSegmentsandReduceOrder_3D:\n"
            << "***ERR*** Cannot find a supporting internal node for boundary node " << ncurr->second->Id() << "\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -1836,7 +1823,7 @@ bool MOERTEL::Interface::SetFunctionsFromFunctionTypes()
 	{
 	  std::stringstream oss;
       oss << "***ERR*** MOERTEL::Interface::SetFunctionsFromFunctionTypes:\n"
-           << "***ERR*** interface " << Id() << " : Unknown function type: " << primal_ << std::endl
+           << "***ERR*** interface " << Id() << " : Unknown function type: " << primal_ << endl
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
 		throw ReportError(oss);
 	}
@@ -1911,7 +1898,7 @@ bool MOERTEL::Interface::SetFunctionsFromFunctionTypes()
 	{
 	  std::stringstream oss;
       oss << "***ERR*** MOERTEL::Interface::SetFunctionsFromFunctionTypes:\n"
-           << "***ERR*** interface " << Id() << " : Unknown function type: " << dual_ << std::endl
+           << "***ERR*** interface " << Id() << " : Unknown function type: " << dual_ << endl
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
 		throw ReportError(oss);
 	}

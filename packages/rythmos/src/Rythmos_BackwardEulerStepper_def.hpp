@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -34,9 +34,6 @@
 #include "Rythmos_LinearInterpolator.hpp"
 #include "Rythmos_InterpolatorBaseHelpers.hpp"
 #include "Rythmos_StepperHelpers.hpp"
-#include "Rythmos_FixedStepControlStrategy.hpp"
-#include "Rythmos_SimpleStepControlStrategy.hpp"
-#include "Rythmos_FirstOrderErrorStepControlStrategy.hpp"
 
 #include "Thyra_ModelEvaluatorHelpers.hpp"
 #include "Thyra_AssertOp.hpp"
@@ -105,13 +102,11 @@ void BackwardEulerStepper<Scalar>::defaultInitializeAll_()
   haveInitialCondition_ = false;
   model_ = Teuchos::null;
   solver_ = Teuchos::null;
-  x_old_ = Teuchos::null;
   scaled_x_old_ = Teuchos::null;
   x_dot_old_ = Teuchos::null;
   // basePoint_;
   x_ = Teuchos::null;
   x_dot_ = Teuchos::null;
-  dx_ = Teuchos::null;
   t_ = ST::nan();
   t_old_ = ST::nan();
   dt_ = ST::nan();
@@ -119,8 +114,6 @@ void BackwardEulerStepper<Scalar>::defaultInitializeAll_()
   neModel_ = Teuchos::null;
   parameterList_ = Teuchos::null;
   interpolator_ = Teuchos::null;
-  stepControl_ = Teuchos::null;
-  newtonConvergenceStatus_ = -1;
 }
 
 // Overridden from InterpolatorAcceptingObjectBase
@@ -173,8 +166,8 @@ void BackwardEulerStepper<Scalar>::setSolver(
   using Teuchos::as;
 
   TEUCHOS_TEST_FOR_EXCEPTION(solver == Teuchos::null, std::logic_error,
-      "Error!  Thyra::NonlinearSolverBase RCP passed in through "
-      "BackwardEulerStepper::setSolver is null!");
+      "Error!  Thyra::NonlinearSolverBase RCP passed in through BackwardEulerStepper::setSolver is null!"
+      );
 
   RCP<Teuchos::FancyOStream> out = this->getOStream();
   Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
@@ -207,7 +200,7 @@ BackwardEulerStepper<Scalar>::getSolver() const
 
 
 // Overridden from StepperBase
-
+ 
 
 template<class Scalar>
 bool BackwardEulerStepper<Scalar>::supportsCloning() const
@@ -242,11 +235,6 @@ BackwardEulerStepper<Scalar>::cloneStepperAlgorithm() const
   if (!is_null(interpolator_))
     stepper->interpolator_
       = interpolator_->cloneInterpolator().assert_not_null(); // ToDo: Implement cloneInterpolator()
-  if (!is_null(stepControl_)) {
-    if (stepControl_->supportsCloning())
-      stepper->setStepControlStrategy(
-        stepControl_->cloneStepControlStrategyAlgorithm().assert_not_null());
-  }
   return stepper;
 }
 
@@ -258,8 +246,10 @@ bool BackwardEulerStepper<Scalar>::isImplicit() const
 
 template<class Scalar>
 void BackwardEulerStepper<Scalar>::setModel(
-  const RCP<const Thyra::ModelEvaluator<Scalar> >& model)
+  const RCP<const Thyra::ModelEvaluator<Scalar> >& model
+  )
 {
+
   using Teuchos::as;
 
   TEUCHOS_TEST_FOR_EXCEPT( is_null(model) );
@@ -272,6 +262,18 @@ void BackwardEulerStepper<Scalar>::setModel(
     *out << "model = " << model->description() << std::endl;
   }
   model_ = model;
+
+  // Wipe out x.  This will either be set thorugh setInitialCondition(...) or
+  // it will be taken from the model's nominal vlaues!
+//  x_ = Teuchos::null;
+//  scaled_x_old_ = Teuchos::null;
+//  x_dot_ = Teuchos::null;
+//  x_dot_old_ = Teuchos::null;
+
+//  isInitialized_ = false;
+//  haveInitialCondition_ = setDefaultInitialConditionFromNominalValues<Scalar>(
+//    *model_, Teuchos::ptr(this) );
+  
 }
 
 template<class Scalar>
@@ -292,7 +294,7 @@ BackwardEulerStepper<Scalar>::getModel() const
 
 template<class Scalar>
 RCP<Thyra::ModelEvaluator<Scalar> >
-BackwardEulerStepper<Scalar>::getNonconstModel()
+BackwardEulerStepper<Scalar>::getNonconstModel() 
 {
   return Teuchos::null;
 }
@@ -300,51 +302,59 @@ BackwardEulerStepper<Scalar>::getNonconstModel()
 
 template<class Scalar>
 void BackwardEulerStepper<Scalar>::setInitialCondition(
-  const Thyra::ModelEvaluatorBase::InArgs<Scalar> &initialCondition)
+  const Thyra::ModelEvaluatorBase::InArgs<Scalar> &initialCondition
+  )
 {
 
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  // typedef Thyra::ModelEvaluatorBase MEB; // unused
+  typedef Thyra::ModelEvaluatorBase MEB;
 
   basePoint_ = initialCondition;
 
   // x
-  RCP<const Thyra::VectorBase<Scalar> > x_init = initialCondition.get_x();
+
+  RCP<const Thyra::VectorBase<Scalar> >
+    x_init = initialCondition.get_x();
+
+#ifdef HAVE_RYTHMOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(
     is_null(x_init), std::logic_error,
-    "Error, if the client passes in an intial condition to "
-    "setInitialCondition(...), then x can not be null!" );
+    "Error, if the client passes in an intial condition to setInitialCondition(...),\n"
+    "then x can not be null!" );
+#endif
+
   x_ = x_init->clone_v();
 
   // x_dot
+
   RCP<const Thyra::VectorBase<Scalar> >
     x_dot_init = initialCondition.get_x_dot();
+
   if (!is_null(x_dot_init)) {
     x_dot_ = x_dot_init->clone_v();
   }
   else {
     x_dot_ = createMember(x_->space());
-    V_S(x_dot_.ptr(),ST::zero());
+    assign(x_dot_.ptr(),ST::zero());
   }
-
-  // dx
-  if (is_null(dx_)) dx_ = createMember(x_->space());
-  V_S(dx_.ptr(), ST::zero());
-
+  
   // t
+  
   t_ = initialCondition.get_t();
+
   t_old_ = t_;
 
-  // x_old
-  if (is_null(x_old_)) x_old_ = createMember(x_->space());
-  x_old_ = x_init->clone_v();
+  // x_old 
+
   scaled_x_old_ = x_->clone_v();
 
   // x_dot_old
-  if (is_null(x_dot_old_)) x_dot_old_ = createMember(x_->space());
+  
   x_dot_old_ = x_dot_->clone_v();
 
+
   haveInitialCondition_ = true;
+
 }
 
 
@@ -355,32 +365,9 @@ BackwardEulerStepper<Scalar>::getInitialCondition() const
   return basePoint_;
 }
 
-template<class Scalar>
-void BackwardEulerStepper<Scalar>::setStepControlStrategy(
-  const RCP<StepControlStrategyBase<Scalar> >& stepControl)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(stepControl == Teuchos::null,std::logic_error,
-    "Error, stepControl == Teuchos::null!\n");
-  stepControl_ = stepControl;
-}
 
 template<class Scalar>
-RCP<StepControlStrategyBase<Scalar> >
-BackwardEulerStepper<Scalar>::getNonconstStepControlStrategy()
-{
-  return(stepControl_);
-}
-
-template<class Scalar>
-RCP<const StepControlStrategyBase<Scalar> >
-BackwardEulerStepper<Scalar>::getStepControlStrategy() const
-{
-  return(stepControl_);
-}
-
-template<class Scalar>
-Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt,
-                                              StepSizeType stepSizeType)
+Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepSizeType)
 {
 
   using Teuchos::as;
@@ -389,133 +376,93 @@ Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt,
   typedef Thyra::NonlinearSolverBase<Scalar> NSB;
   typedef Teuchos::VerboseObjectTempState<NSB> VOTSNSB;
 
+  initialize();
+
   RCP<Teuchos::FancyOStream> out = this->getOStream();
   Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
   Teuchos::OSTab ostab(out,1,"BES::takeStep");
   VOTSNSB solver_outputTempState(solver_,out,incrVerbLevel(verbLevel,-1));
 
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
-    *out << "\nEntering "
-         << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
-         << "::takeStep("<<dt<<","<<toString(stepSizeType)<<") ...\n";
-  }
-
-  initialize_();
-
-  if(!neModel_.get()) {
-    neModel_ =Teuchos::rcp(new Rythmos::SingleResidualModelEvaluator<Scalar>());
+    *out
+      << "\nEntering " << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
+      << "::takeStep("<<dt<<","<<toString(stepSizeType)<<") ...\n"; 
   }
 
   dt_ = dt;
 
-  if (dt <= ST::zero()) {
+  if ((stepSizeType == STEP_TYPE_VARIABLE) || (dt == ST::zero())) {
     if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) )
-      *out << "\nThe arguments to takeStep are not valid for "
-           << "BackwardEulerStepper at this time.\n"
-           << "  dt = " << dt << "\n"
-           << "BackwardEulerStepper requires positive dt.\n" << std::endl;
+      *out << "\nThe arguments to takeStep are not valid for BackwardEulerStepper at this time." << std::endl;
+    // print something out about this method not supporting automatic variable step-size
     return(Scalar(-ST::one()));
   }
-  if ((stepSizeType == STEP_TYPE_VARIABLE) && (stepControl_ == Teuchos::null)) {
-    if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) )
-      *out << "\nFor 'variable' time stepping (step size adjustable by "
-           << "BackwardEulerStepper), BackwardEulerStepper requires "
-           << "Step-Control Strategy.\n"
-           << "  stepType = " << toString(stepSizeType) << "\n" << std::endl;
-    return(Scalar(-ST::one()));
+  if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
+    *out << "\ndt = " << dt << std::endl;
   }
 
-  stepControl_->setRequestedStepSize(*this,dt_,stepSizeType);
-  AttemptedStepStatusFlag status;
-  bool stepPass = false;
-  while (1) {
 
-    stepControl_->nextStepSize(*this,&dt_,&stepSizeType,NULL);
-    if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-      *out << "\nrequested dt = " << dt
-           << "\ncurrent dt   = " << dt_ << "\n";
-    }
+  //
+  // Setup the nonlinear equations:
+  //
+  //   f( (1/dt)* x + (-1/dt)*x_old), x, t ) = 0
+  //
 
-    // Setup the nonlinear equations:
-    //
-    //   f( (1/dt)* x + (-1/dt)*x_old), x, t ) = 0
+  V_StV( scaled_x_old_.ptr(), Scalar(-ST::one()/dt), *x_ );
+  t_old_ = t_;
+  if(!neModel_.get()) {
+    neModel_ = Teuchos::rcp(new Rythmos::SingleResidualModelEvaluator<Scalar>());
+  }
+  neModel_->initializeSingleResidualModel(
+    model_, basePoint_,
+    Scalar(ST::one()/dt), scaled_x_old_,
+    ST::one(), Teuchos::null,
+    t_old_+dt,
+    Teuchos::null
+    );
+  if( solver_->getModel().get() != neModel_.get() ) {
+    solver_->setModel(neModel_);
+  }
+  // 2007/05/18: rabartl: ToDo: Above, set the stream and the verbosity level
+  // on solver_ so that we an see what it is doing!
 
-    V_StV( scaled_x_old_.ptr(), Scalar(-ST::one()/dt_), *x_old_ );
-    t_old_ = t_;
-    neModel_->initializeSingleResidualModel(
-      model_, basePoint_,
-      Scalar(ST::one()/dt_), scaled_x_old_,
-      ST::one(), Teuchos::null,
-      t_old_+dt_,
-      Teuchos::null
-      );
-    if( solver_->getModel().get() != neModel_.get() ) {
-      solver_->setModel(neModel_);
-    }
-    // 2007/05/18: rabartl: ToDo: Above, set the stream and the verbosity level
-    // on solver_ so that we an see what it is doing!
-
-    obtainPredictor_();
-
-    // Solve the implicit nonlinear system to a tolerance of ???
-
-    if ( as<int>(verbLevel) > as<int>(Teuchos::VERB_LOW) ) {
-      *out << "\nSolving the implicit backward-Euler timestep equation ...\n";
-    }
-
-    Thyra::SolveStatus<Scalar> neSolveStatus =
-      solver_->solve(&*x_, NULL, &*dx_);
-
-    // In the above solve, on input *x_ is the initial guess that comes from
-    // the predictor.  On output, *x_ is the converged timestep solution and
-    // *dx_ is the difference computed from the intial guess in *x_ to the
-    // final solved value of *x_.  This is needed for basic numerical stability.
-
-    if ( as<int>(verbLevel) > as<int>(Teuchos::VERB_LOW) ) {
-      *out << "\nOutput status of nonlinear solve:\n" << neSolveStatus;
-    }
-
-    // 2007/05/18: rabartl: ToDo: Above, get the solve status from the above
-    // solve and at least print warning message if the solve fails!  Actually,
-    // you should most likely thrown an exception if the solve fails or return
-    // false if appropriate
-
-    if (neSolveStatus.solveStatus == Thyra::SOLVE_STATUS_CONVERGED)  {
-      newtonConvergenceStatus_ = 0;
-    }
-    else {
-      newtonConvergenceStatus_ = -1;
-    }
-
-    stepControl_->setCorrection(*this,x_,dx_,newtonConvergenceStatus_);
-
-    stepPass = stepControl_->acceptStep(*this,NULL);
-
-    if (!stepPass) { // stepPass = false
-      status = stepControl_->rejectStep(*this);
-
-      if (status != PREDICT_AGAIN)
-        break;
-    } else { // stepPass = true
-      break;
-    }
+  //
+  // Solve the implicit nonlinear system to a tolerance of ???
+  //
+  
+  if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
+    *out << "\nSolving the implicit backward-Euler timestep equation ...\n";
   }
 
+  Thyra::SolveStatus<Scalar>
+    neSolveStatus = solver_->solve(&*x_);
+
+  // In the above solve, on input *x_ is the old value of x for the previous
+  // time step which is used as the initial guess for the solver.  On output,
+  // *x_ is the converged timestep solution.
+ 
+  if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
+    *out << "\nOutput status of nonlinear solve:\n" << neSolveStatus;
+  }
+
+  // 2007/05/18: rabartl: ToDo: Above, get the solve status from the above
+  // solve and at least print warning message if the solve fails!  Actually,
+  // you should most likely thrown an exception if the solve fails or return
+  // false if appropriate
+
+  //
   // Update the step
+  //
 
-  if (stepPass) {
-    V_V( x_dot_old_.ptr(), *x_dot_ );
-    // x_dot = (1/dt)*x - (1/dt)*x_old
-    V_StVpStV( x_dot_.ptr(), Scalar(ST::one()/dt_), *x_,
-                             Scalar(-ST::one()/dt_), *x_old_ );
-    V_V( x_old_.ptr(), *x_ );
-    t_ += dt_;
-    numSteps_++;
-    stepControl_->completeStep(*this);
-  } else {
-    // Complete failure.  Return to Integrator with bad step size.
-    dt_ = Scalar(-ST::one());
-  }
+  assign( x_dot_old_.ptr(), *x_dot_ );
+
+  // x_dot = (1/dt)*x - (1/dt)*x_old 
+  V_StV( x_dot_.ptr(), Scalar(ST::one()/dt), *x_ );
+  Vp_StV( x_dot_.ptr(), Scalar(ST::one()), *scaled_x_old_ );
+
+  t_ += dt;
+
+  numSteps_++;
 
   if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
     *out << "\nt_old_ = " << t_old_ << std::endl;
@@ -526,13 +473,13 @@ Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt,
   // 04/14/09 tscoffe: This code should be moved to StepperValidator
 
   if ( includesVerbLevel(verbLevel,Teuchos::VERB_LOW) )
-    *out << "\nChecking to make sure that solution and "
-         << "the interpolated solution are the same! ...\n";
+    *out << "\nChecking to make sure that solution and the interpolated solution are the same! ...\n";
 
   {
 
+    typedef ScalarTraits<Scalar> ST;
     typedef ScalarTraits<ScalarMag> SMT;
-
+    
     Teuchos::OSTab tab(out);
 
     const StepStatus<Scalar> stepStatus = this->getStepStatus();
@@ -575,12 +522,13 @@ Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt,
 #endif // HAVE_RYTHMOS_DEBUG
 
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
-    *out << "\nLeaving "
-         << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
-         << "::takeStep("<<dt_<<","<<toString(stepSizeType)<<") ...\n";
+    *out
+      << "\nLeaving " << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
+      << "::takeStep(...) ...\n"; 
   }
 
-  return(dt_);
+  return(dt);
+
 }
 
 
@@ -588,7 +536,7 @@ template<class Scalar>
 const StepStatus<Scalar> BackwardEulerStepper<Scalar>::getStepStatus() const
 {
 
-  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
+  typedef Teuchos::ScalarTraits<Scalar> ST;
 
   StepStatus<Scalar> stepStatus; // Defaults to unknown status
 
@@ -596,7 +544,7 @@ const StepStatus<Scalar> BackwardEulerStepper<Scalar>::getStepStatus() const
     stepStatus.stepStatus = STEP_STATUS_UNINITIALIZED;
   }
   else if (numSteps_ > 0) {
-    stepStatus.stepStatus = STEP_STATUS_CONVERGED;
+    stepStatus.stepStatus = STEP_STATUS_CONVERGED; 
   }
   // else unknown
 
@@ -633,7 +581,7 @@ void BackwardEulerStepper<Scalar>::addPoints(
   typedef Teuchos::ScalarTraits<Scalar> ST;
   using Teuchos::as;
 
-  initialize_();
+  initialize();
 
 #ifdef HAVE_RYTHMOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -727,7 +675,7 @@ void BackwardEulerStepper<Scalar>::getPoints(
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
     *out
       << "\nEntering " << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
-      << "::getPoints(...) ...\n";
+      << "::getPoints(...) ...\n"; 
   }
   if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
     for (int i=0 ; i<Teuchos::as<int>(time_vec.size()) ; ++i) {
@@ -802,7 +750,7 @@ void BackwardEulerStepper<Scalar>::getPoints(
   if ( !is_null(out) && as<int>(verbLevel) >= as<int>(Teuchos::VERB_LOW) ) {
     *out
       << "Leaving " << Teuchos::TypeNameTraits<BackwardEulerStepper<Scalar> >::name()
-      << "::getPoints(...) ...\n";
+      << "::getPoints(...) ...\n"; 
   }
   */
 
@@ -841,9 +789,9 @@ void BackwardEulerStepper<Scalar>::getNodes(Array<Scalar>* time_vec) const
 
 
 template<class Scalar>
-void BackwardEulerStepper<Scalar>::removeNodes(Array<Scalar>& time_vec)
+void BackwardEulerStepper<Scalar>::removeNodes(Array<Scalar>& time_vec) 
 {
-  initialize_();
+  initialize();
   using Teuchos::as;
   RCP<Teuchos::FancyOStream> out = this->getOStream();
   Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
@@ -911,8 +859,6 @@ BackwardEulerStepper<Scalar>::getValidParameters() const
   static RCP<const ParameterList> validPL;
   if (is_null(validPL)) {
     RCP<ParameterList> pl = Teuchos::parameterList();
-    // This line is required to pass StepperValidator UnitTest!
-    pl->sublist(RythmosStepControlSettings_name);
     Teuchos::setupVerboseObjectSublist(&*pl);
     validPL = pl;
   }
@@ -932,8 +878,7 @@ void BackwardEulerStepper<Scalar>::describe(
   using Teuchos::as;
   Teuchos::OSTab tab(out);
   if (!isInitialized_) {
-    out << this->description() << " : This stepper is not initialized yet"
-        << std::endl;
+    out << this->description() << " : This stepper is not initialized yet" << std::endl;
     return;
   }
   if (
@@ -980,41 +925,19 @@ void BackwardEulerStepper<Scalar>::describe(
 
 
 template <class Scalar>
-void BackwardEulerStepper<Scalar>::initialize_()
+void BackwardEulerStepper<Scalar>::initialize()
 {
 
-  if (isInitialized_) return;
+  if (isInitialized_)
+    return;
 
   TEUCHOS_TEST_FOR_EXCEPT(is_null(model_));
   TEUCHOS_TEST_FOR_EXCEPT(is_null(solver_));
   TEUCHOS_TEST_FOR_EXCEPT(!haveInitialCondition_);
 
-  // Initialize Parameter List if none provided.
-  if (parameterList_ == Teuchos::null) {
-    RCP<Teuchos::ParameterList> emptyParameterList =
-      Teuchos::rcp(new Teuchos::ParameterList);
-    this->setParameterList(emptyParameterList);
-  }
-
-  // Initialize StepControl
-  if (stepControl_ == Teuchos::null) {
-    RCP<StepControlStrategyBase<Scalar> > stepControlStrategy =
-      Teuchos::rcp(new FixedStepControlStrategy<Scalar>());
-    RCP<Teuchos::ParameterList> stepControlPL =
-      Teuchos::sublist(parameterList_, RythmosStepControlSettings_name);
-
-    stepControlStrategy->setParameterList(stepControlPL);
-    this->setStepControlStrategy(stepControlStrategy);
-  }
-  stepControl_->initialize(*this);
-  stepControl_->setOStream(this->getOStream());
-  stepControl_->setVerbLevel(this->getVerbLevel());
-
-  //maxOrder_ = stepControl_->getMaxOrder(); // maximum order
-
 #ifdef HAVE_RYTHMOS_DEBUG
   THYRA_ASSERT_VEC_SPACES(
-    "Rythmos::BackwardEulerStepper::initialize_(...)",
+    "Rythmos::BackwardEulerStepper::initialize(...)",
     *x_->space(), *model_->get_x_space() );
 #endif // HAVE_RYTHMOS_DEBUG
 
@@ -1022,37 +945,33 @@ void BackwardEulerStepper<Scalar>::initialize_()
     // If an interpolator has not been explicitly set, then just create
     // a default linear interpolator.
     interpolator_ = linearInterpolator<Scalar>();
-    // 2007/05/18: rabartl: ToDo: Replace this with a Hermite interplator
+    // 2007/05/18: rabartl: ToDo: Replace this with a Hermete interplator
     // when it is implementated!
   }
-  isInitialized_ = true;
-}
 
+  isInitialized_ = true;
+
+}
 
 template<class Scalar>
 RCP<const MomentoBase<Scalar> >
 BackwardEulerStepper<Scalar>::getMomento() const
 {
-  RCP<BackwardEulerStepperMomento<Scalar> > momento =
-    Teuchos::rcp(new BackwardEulerStepperMomento<Scalar>());
+  RCP<BackwardEulerStepperMomento<Scalar> > momento = Teuchos::rcp(new BackwardEulerStepperMomento<Scalar>());
   momento->set_scaled_x_old(scaled_x_old_);
-  momento->set_x_old(x_old_);
   momento->set_x_dot_old(x_dot_old_);
   momento->set_x(x_);
   momento->set_x_dot(x_dot_);
-  momento->set_dx(dx_);
   momento->set_t(t_);
   momento->set_t_old(t_old_);
   momento->set_dt(dt_);
   momento->set_numSteps(numSteps_);
-  momento->set_newtonConvergenceStatus(newtonConvergenceStatus_);
   momento->set_isInitialized(isInitialized_);
   momento->set_haveInitialCondition(haveInitialCondition_);
   momento->set_parameterList(parameterList_);
   momento->set_basePoint(basePoint_);
   momento->set_neModel(neModel_);
   momento->set_interpolator(interpolator_);
-  momento->set_stepControl(stepControl_);
   return momento;
 }
 
@@ -1061,32 +980,27 @@ void BackwardEulerStepper<Scalar>::setMomento(
     const Ptr<const MomentoBase<Scalar> >& momentoPtr,
     const RCP<Thyra::ModelEvaluator<Scalar> >& model,
     const RCP<Thyra::NonlinearSolverBase<Scalar> >& solver
-    )
-{
-  Ptr<const BackwardEulerStepperMomento<Scalar> > beMomentoPtr =
-    Teuchos::ptr_dynamic_cast<const BackwardEulerStepperMomento<Scalar> >
-      (momentoPtr,true);
-  const BackwardEulerStepperMomento<Scalar>& beMomento = *beMomentoPtr;
+    ) 
+{ 
+  Ptr<const BackwardEulerStepperMomento<Scalar> > feMomentoPtr = 
+    Teuchos::ptr_dynamic_cast<const BackwardEulerStepperMomento<Scalar> >(momentoPtr,true);
+  const BackwardEulerStepperMomento<Scalar>& feMomento = *feMomentoPtr;
   model_ = model;
   solver_ = solver;
-  scaled_x_old_ = beMomento.get_scaled_x_old();
-  x_old_ = beMomento.get_x_old();
-  x_dot_old_ = beMomento.get_x_dot_old();
-  x_ = beMomento.get_x();
-  x_dot_ = beMomento.get_x_dot();
-  dx_ = beMomento.get_dx();
-  t_ = beMomento.get_t();
-  t_old_ = beMomento.get_t_old();
-  dt_ = beMomento.get_dt();
-  numSteps_ = beMomento.get_numSteps();
-  newtonConvergenceStatus_ = beMomento.get_newtonConvergenceStatus();
-  isInitialized_ = beMomento.get_isInitialized();
-  haveInitialCondition_ = beMomento.get_haveInitialCondition();
-  parameterList_ = beMomento.get_parameterList();
-  basePoint_ = beMomento.get_basePoint();
-  neModel_ = beMomento.get_neModel();
-  interpolator_ = beMomento.get_interpolator();
-  stepControl_ = beMomento.get_stepControl();
+  scaled_x_old_ = feMomento.get_scaled_x_old();
+  x_dot_old_ = feMomento.get_x_dot_old();
+  x_ = feMomento.get_x();
+  x_dot_ = feMomento.get_x_dot();
+  t_ = feMomento.get_t();
+  t_old_ = feMomento.get_t_old();
+  dt_ = feMomento.get_dt();
+  numSteps_ = feMomento.get_numSteps();
+  isInitialized_ = feMomento.get_isInitialized();
+  haveInitialCondition_ = feMomento.get_haveInitialCondition();
+  parameterList_ = feMomento.get_parameterList();
+  basePoint_ = feMomento.get_basePoint();
+  neModel_ = feMomento.get_neModel();
+  interpolator_ = feMomento.get_interpolator();
   this->checkConsistentState_();
 }
 
@@ -1098,7 +1012,6 @@ void BackwardEulerStepper<Scalar>::checkConsistentState_()
     TEUCHOS_ASSERT( !Teuchos::is_null(solver_) );
     TEUCHOS_ASSERT( haveInitialCondition_ );
     TEUCHOS_ASSERT( !Teuchos::is_null(interpolator_) );
-    TEUCHOS_ASSERT( !Teuchos::is_null(stepControl_) );
   }
   if (haveInitialCondition_) {
     // basePoint_ should be defined
@@ -1109,8 +1022,6 @@ void BackwardEulerStepper<Scalar>::checkConsistentState_()
     TEUCHOS_ASSERT( !Teuchos::is_null(x_dot_old_) );
     TEUCHOS_ASSERT( !Teuchos::is_null(x_) );
     TEUCHOS_ASSERT( !Teuchos::is_null(x_dot_) );
-    TEUCHOS_ASSERT( !Teuchos::is_null(x_old_) );
-    TEUCHOS_ASSERT( !Teuchos::is_null(dx_) );
     TEUCHOS_ASSERT( t_ >= basePoint_.get_t() );
     TEUCHOS_ASSERT( t_old_ >= basePoint_.get_t() );
   }
@@ -1119,33 +1030,8 @@ void BackwardEulerStepper<Scalar>::checkConsistentState_()
   }
 }
 
-template<class Scalar>
-void BackwardEulerStepper<Scalar>::obtainPredictor_()
-{
-  using Teuchos::as;
-  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
-  if (!isInitialized_) return;
-
-  RCP<Teuchos::FancyOStream> out = this->getOStream();
-  Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
-  Teuchos::OSTab ostab(out,1,"obtainPredictor_");
-
-  if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-    *out << "Before predictor x_ = " << std::endl;
-    x_->describe(*out,verbLevel);
-  }
-  // evaluate predictor -- basic Forward Euler
-  // x_ = dt_*x_dot_old_ + x_old_
-  V_StVpV(x_.ptr(), dt_, *x_dot_old_, *x_old_);
-
-  if ( as<int>(verbLevel) >= as<int>(Teuchos::VERB_HIGH) ) {
-    *out << "After predictor x_ = " << std::endl;
-    x_->describe(*out,verbLevel);
-  }
-}
-
-//
+// 
 // Explicit Instantiation macro
 //
 // Must be expanded from within the Rythmos namespace!
@@ -1161,8 +1047,8 @@ void BackwardEulerStepper<Scalar>::obtainPredictor_()
     const RCP<Thyra::NonlinearSolverBase< SCALAR > >& solver \
       ); \
   template RCP< BackwardEulerStepper< SCALAR > > \
-  backwardEulerStepper();
-
+  backwardEulerStepper(); 
+   
 
 
 

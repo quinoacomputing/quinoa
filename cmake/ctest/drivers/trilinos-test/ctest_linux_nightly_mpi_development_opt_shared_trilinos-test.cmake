@@ -75,13 +75,10 @@ SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_DATA_DIR:STRING=$ENV{TRILINOSDATADIRECTORY}"
   "-DBUILD_SHARED_LIBS:BOOL=ON"
-  "-DMPI_BASE_DIR:PATH=/home/trilinos/gcc4.7.2/openmpi-1.6.5"
+  "-DMPI_BASE_DIR:PATH=/home/trilinos/openmpi-1.4"
   "-DTPL_ENABLE_Pthread:BOOL=ON"
   "-DTPL_ENABLE_Boost:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0"
-  "-DBoostLib_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0_compiled/include"
-  "-DBoostLib_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0_compiled/lib"
-  "-DGLM_INCLUDE_DIRS=/home/trilinos/tpl/gcc4.1.2/glm-0.9.4.6"
+  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost_1_49_0"
   "-DSWIG_EXECUTABLE:FILEPATH=/home/trilinos/tpl/gcc4.1.2/swig-2.0.0/bin/swig"
   "-DNOX_ENABLE_ABSTRACT_IMPLEMENTATION_LAPACK=ON"
   "-DTPL_ENABLE_HDF5:BOOL=ON"
@@ -89,7 +86,6 @@ SET( EXTRA_CONFIGURE_OPTIONS
   "-DHDF5_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/phdf5-1.8.6/lib"
   "-DNetcdf_LIBRARY_DIRS=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/lib"
   "-DNetcdf_INCLUDE_DIRS=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/include"
-  "-DPyTrilinos_ENABLE_STK=OFF"
   )
 
 #

@@ -58,8 +58,8 @@ Piro::Epetra::StokhosNOXObserver::StokhosNOXObserver (
   product_map(product_map_),
   product_comm(product_comm_),
   importer(importer_),
-  numSGBlocks(basis->size()),
-  save_moments(save_moments_)
+  save_moments(save_moments_),
+  numSGBlocks(basis->size())
 {
  //if (noxObserver == Teuchos::null) cout << "XXX1" << endl;
   if (save_moments > 0)

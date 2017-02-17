@@ -71,18 +71,20 @@ namespace Amesos2 {
      * @{
      */
 
-    /* SR: We will not use external initialization for the static const types.
-     * Combined with template meta programming this fails in Intel compilers
-     * 11-13. Moving all the initializations inside the declarations.
-     */
     template <class T, T val>
     struct integral_constant
     {
       typedef integral_constant<T, val>  type;
       typedef T                          value_type;
-      static const T value = val;
+      static const T value;
     };
 
+    /* Some compilers support initializing static const members alongside the
+     * definition, but others do not, so we go we the safe method of external
+     * initialization.
+     */
+    template <class T, T val>
+    const T integral_constant<T,val>::value = val;
 
     typedef integral_constant<bool, true>  true_type;
     typedef integral_constant<bool, false> false_type;
@@ -226,17 +228,9 @@ namespace Amesos2 {
      *   // This will always execute
      * }
      */
-
-    /* SR: We will not use external initialization for the static const types.
-     * Combined with template meta programming this fails in Intel compilers
-     * 11-13. Moving all the initializations inside the declarations.
-     */
     template <typename list, typename elem>
     struct type_list_contains {
-      static const bool value =
-                   if_then_else<is_same<typename list::head, elem>::value,
-                   true_type,
-                   type_list_contains<typename list::tail,elem> >::type::value;
+      static const bool value;
     };
 
     // Base recursive case
@@ -244,6 +238,12 @@ namespace Amesos2 {
     struct type_list_contains<nil_t,elem> {
       static const bool value = false;
     };
+
+    template <typename list, typename elem>
+    const bool type_list_contains<list,elem>::value
+    = if_then_else<is_same<typename list::head, elem>::value,
+                   true_type,
+                   type_list_contains<typename list::tail,elem> >::type::value;
 
     /** @} */
 

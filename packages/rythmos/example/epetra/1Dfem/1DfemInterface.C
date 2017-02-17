@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -161,8 +161,8 @@ bool Interface::computePreconditioner(const Epetra_Vector& x,
 				      Epetra_Operator& my_Prec,
 				      Teuchos::ParameterList* precParams)
 {
-  std::cout << "ERROR: Interface::preconditionVector() - "
-       << "Use Explicit Jaciban only for this test problem!" << std::endl;
+  cout << "ERROR: Interface::preconditionVector() - "
+       << "Use Explicit Jaciban only for this test problem!" << endl;
   throw "Interface Error";
 }
 
@@ -209,11 +209,12 @@ bool Interface::evaluate(NOX::Epetra::Interface::Required::FillType flag,
   x.Import(*xptr, *Importer, Insert);
 
   // Declare required variables
+  int ierr;
   int OverlapNumMyElements = OverlapMap->NumMyElements();
 
-  //int OverlapMinMyGID;
-  //if (MyPID == 0) OverlapMinMyGID = StandardMap->MinMyGID();
-  //else OverlapMinMyGID = StandardMap->MinMyGID()-1;
+  int OverlapMinMyGID;
+  if (MyPID == 0) OverlapMinMyGID = StandardMap->MinMyGID();
+  else OverlapMinMyGID = StandardMap->MinMyGID()-1;
 
   int row, column;
   double jac;
@@ -262,7 +263,7 @@ bool Interface::evaluate(NOX::Epetra::Interface::Required::FillType flag,
 				     basis.dphide[j]*basis.dphide[i]
 				     +2.0*factor*basis.uu*basis.phi[j]*
 				     basis.phi[i]);  
-	      jacobian->SumIntoGlobalValues(row, 1, &jac, &column);
+	      ierr=jacobian->SumIntoGlobalValues(row, 1, &jac, &column);
 	    }
 	  }
 	}
@@ -331,9 +332,9 @@ bool Interface::createGraph()
   // Declare required variables
   int row, column;
   int OverlapNumMyElements = OverlapMap->NumMyElements();
-  //int OverlapMinMyGID;
-  //if (MyPID==0) OverlapMinMyGID = StandardMap->MinMyGID();
-  //else OverlapMinMyGID = StandardMap->MinMyGID()-1;
+  int OverlapMinMyGID;
+  if (MyPID==0) OverlapMinMyGID = StandardMap->MinMyGID();
+  else OverlapMinMyGID = StandardMap->MinMyGID()-1;
   
   // Loop Over # of Finite Elements on Processor
   for (int ne=0; ne < OverlapNumMyElements-1; ne++) {

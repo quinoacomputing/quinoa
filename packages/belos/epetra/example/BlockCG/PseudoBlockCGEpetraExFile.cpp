@@ -42,9 +42,9 @@
 // This driver reads a problem from a file, which can be in Harwell-Boeing (*.hb),
 // Matrix Market (*.mtx), or triplet format (*.triU, *.triS).  The right-hand side
 // from the problem, if it exists, will be used instead of multiple
-// random right-hand-sides.  The initial guesses are all set to zero.
+// random right-hand-sides.  The initial guesses are all set to zero. 
 //
-// NOTE: No preconditioner is used in this example.
+// NOTE: No preconditioner is used in this example. 
 //
 #include "BelosConfigDefs.hpp"
 #include "BelosLinearProblem.hpp"
@@ -62,7 +62,6 @@
 
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_StandardCatchMacros.hpp"
 
 int main(int argc, char *argv[]) {
   //
@@ -88,10 +87,7 @@ int main(int argc, char *argv[]) {
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-bool verbose = false;
-bool success = true;
-try {
-bool proc_verbose = false;
+  bool verbose = false, proc_verbose = false;
   int frequency = -1;        // frequency of status test output.
   int numrhs = 1;            // number of right-hand sides to solve for
   int maxiters = -1;         // maximum number of iterations allowed per linear system
@@ -125,6 +121,7 @@ bool proc_verbose = false;
   if (numrhs>1) {
     X = rcp( new Epetra_MultiVector( *Map, numrhs ) );
     B = rcp( new Epetra_MultiVector( *Map, numrhs ) );
+    X->Seed();
     X->Random();
     OPT::Apply( *A, *X, *B );
     X->PutScalar( 0.0 );
@@ -145,7 +142,7 @@ bool proc_verbose = false;
   belosList.set( "Maximum Iterations", maxiters );       // Maximum number of iterations allowed
   belosList.set( "Convergence Tolerance", tol );         // Relative convergence tolerance requested
   if (verbose) {
-    belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
+    belosList.set( "Verbosity", Belos::Errors + Belos::Warnings + 
 		   Belos::TimingDetails + Belos::StatusTestDetails );
     if (frequency > 0)
       belosList.set( "Output Frequency", frequency );
@@ -178,7 +175,7 @@ bool proc_verbose = false;
     std::cout << std::endl << std::endl;
     std::cout << "Dimension of matrix: " << NumGlobalElements << std::endl;
     std::cout << "Number of right-hand sides: " << numrhs << std::endl;
-    std::cout << "Max number of CG iterations: " << maxiters << std::endl;
+    std::cout << "Max number of CG iterations: " << maxiters << std::endl; 
     std::cout << "Relative residual tolerance: " << tol << std::endl;
     std::cout << std::endl;
   }
@@ -194,7 +191,7 @@ bool proc_verbose = false;
   std::vector<double> rhs_norm( numrhs );
   Epetra_MultiVector resid(*Map, numrhs);
   OPT::Apply( *A, *X, resid );
-  MVT::MvAddMv( -1.0, resid, 1.0, *B, resid );
+  MVT::MvAddMv( -1.0, resid, 1.0, *B, resid ); 
   MVT::MvNorm( resid, actual_resids );
   MVT::MvNorm( *B, rhs_norm );
   if (proc_verbose) {
@@ -206,21 +203,21 @@ bool proc_verbose = false;
     }
   }
 
-if (ret!=Belos::Converged || badRes) {
-  success = false;
-  if (proc_verbose)
-    std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;
-} else {
-  success = true;
-  if (proc_verbose)
-    std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
-}
-}
-TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
-
 #ifdef EPETRA_MPI
-MPI_Finalize();
+  MPI_Finalize();
 #endif
 
-return success ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+  if (ret!=Belos::Converged || badRes) {
+    if (proc_verbose)
+      std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;	
+    return -1;
+  }
+  //
+  // Default return value
+  //
+  if (proc_verbose)
+    std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
+  return 0;
+  
+  //
+} 

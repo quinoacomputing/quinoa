@@ -117,7 +117,7 @@ int Solver_Amesos::solve(fei::LinearSystem* linearSystem,
   std::string param2;
   parameterSet.getStringParamValue("FEI_OUTPUT_LEVEL", param2);
 
-  if (olevel >= 3 || param2 == "MATRIX_FILES" || param2 == "ALL") {
+  if (olevel >= 3 || param2 == "MATRIX_FILES") {
     std::string param1;
     parameterSet.getStringParamValue("debugOutput", param1);
 
@@ -179,8 +179,8 @@ int Solver_Amesos::solve(fei::LinearSystem* linearSystem,
       amesos_solver_ = amesos_factory_->Create(param, *epetra_linearproblem_);
     }
     if (amesos_solver_ == 0) {
-      std::cerr << "Solver_Amesos::solve ERROR, couldn't create Amesos solver named "
-	   << param << ", amesos_factory::Create returned NULL." << std::endl;
+      cerr << "Solver_Amesos::solve ERROR, couldn't create Amesos solver named "
+	   << param << ", amesos_factory::Create returned NULL." << endl;
       status = -999;
       return(-1);
     }
@@ -192,8 +192,8 @@ int Solver_Amesos::solve(fei::LinearSystem* linearSystem,
 						*epetra_linearproblem_);
     }
     if (amesos_solver_ == 0) {
-      std::cerr << "Solver_Amesos::solve ERROR, couldn't create Amesos solver named "
-	   << amesosklu << ", it's apparently not supported." << std::endl;
+      cerr << "Solver_Amesos::solve ERROR, couldn't create Amesos solver named "
+	   << amesosklu << ", it's apparently not supported." << endl;
       status = -999;
       return(-1);
     }

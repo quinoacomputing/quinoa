@@ -57,49 +57,32 @@
 # A) Define your project name and set up major project options
 #
 
-# To be safe, define your minimum CMake version.  This may be newer than the
-# min required by TriBITS.
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11 FATAL_ERROR)
-
-# Must set the project name as a variable at very beginning before including anything else
+# Must set the project name as a varaible at very beginning before including anything else
 # We set the project name in a separate file so CTest scripts can use it.
 INCLUDE(${CMAKE_SOURCE_DIR}/ProjectName.cmake)
+
+# To prevent most code being run before we know we have a compatible CMake the
+# required version check needs to be the first thing done. However, the version 
+# required by tribits is defined in this include which has some simple code. I
+# believe that it is reasonable to assume any version of cmake can handle IF
+# though.
+INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tribits/package_arch/TribitsConstants.cmake)
+
+# CMake requires this be in the top file and not in an include file :-(
+CMAKE_MINIMUM_REQUIRED(VERSION ${TRIBITS_CMAKE_MINIMUM_REQUIRED} FATAL_ERROR)
 
 # CMake requires that you declare the CMake project in the top-level file and
 # not in an include file :-(
 PROJECT(${PROJECT_NAME} NONE)
 
-# Set default C++ standard to C++11
-SET(Trilinos_ENABLE_CXX11_DEFAULT ON)
-
 #
 # B) Pull in the TriBITS system and execute
 #
 
-INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tribits/TriBITS.cmake)
-
+INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tribits/package_arch/TribitsProject.cmake)
 
 # Make Trilinos create <Package>Config.cmake files by default
 SET(${PROJECT_NAME}_ENABLE_INSTALL_CMAKE_CONFIG_FILES_DEFAULT ON)
-# Make Trilinos set up CPack support by default
-SET(${PROJECT_NAME}_ENABLE_CPACK_PACKAGING_DEFAULT ON)
-# Don't allow disabled subpackages to be excluded from tarball
-SET(${PROJECT_NAME}_EXCLUDE_DISABLED_SUBPACKAGES_FROM_DISTRIBUTION_DEFAULT FALSE)
-# Set up to automatically use standard dev envs by default
-SET(${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND
-  "${CMAKE_CURRENT_LIST_DIR}/cmake/StdDevEnvs.cmake" )
 
 # Do all of the processing for this Tribits project
 TRIBITS_PROJECT()
-
-# Install TriBITS so that other projects can use it.
-ADVANCED_SET(${PROJECT_NAME}_INSTALL_TriBITS ON CACHE BOOL
-  "If ture, install TriBITS into <lib-install-dir>/cmake/tribits/")
-IF (${PROJECT_NAME}_INSTALL_TriBITS)
-  ASSERT_DEFINED(Trilinos_SOURCE_DIR)
-  ASSERT_DEFINED(${PROJECT_NAME}_INSTALL_LIB_DIR)
-  INSTALL(
-    DIRECTORY "${Trilinos_SOURCE_DIR}/cmake/tribits"
-    DESTINATION "${${PROJECT_NAME}_INSTALL_LIB_DIR}/cmake"
-    )
-ENDIF()

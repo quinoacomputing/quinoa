@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -64,12 +65,12 @@ SET(SOURCES ${SOURCES}
   )
 
 SET(HEADERS ${HEADERS}
-  Trilinos_Util_iohb.h
+  iohb.h
   Trilinos_Util_Version.h
   )
 
 SET(SOURCES ${SOURCES}
-  Trilinos_Util_iohb.cpp
+  iohb.cpp
   )
 
 #

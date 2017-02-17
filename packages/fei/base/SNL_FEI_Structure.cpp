@@ -1,10 +1,45 @@
-/*--------------------------------------------------------------------*/
-/*    Copyright 2005 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
+
 
 #include "fei_sstream.hpp"
 #include "fei_fstream.hpp"
@@ -32,6 +67,7 @@ typedef snl_fei::Constraint<GlobalID> ConstraintType;
 #include "fei_ProcEqns.hpp"
 #include "fei_EqnBuffer.hpp"
 #include <fei_FillableMat.hpp>
+#include <fei_FillableVec.hpp>
 #include <fei_CSRMat.hpp>
 #include <fei_CSVec.hpp>
 #include "fei_EqnCommMgr.hpp"
@@ -178,9 +214,6 @@ int SNL_FEI_Structure::parameters(int numParams, const char*const* paramStrings)
     }
     if (!strcmp(param, "ProcWithLocalElem")) {
       nodeCommMgr_->setSharedOwnershipRule(NodeCommMgr::PROC_WITH_LOCAL_ELEM);
-    }
-    if (!strcmp(param, "SierraSpecifies")) {
-      nodeCommMgr_->setSharedOwnershipRule(NodeCommMgr::CALLER_SPECIFIES);
     }
   }
 
@@ -3088,6 +3121,7 @@ int SNL_FEI_Structure::setNumNodesAndEqnsPerBlock()
    int numBlocks = blockIDs_.size();
    std::vector<int> nodesPerBlock(numBlocks);
    std::vector<int> eqnsPerBlock(numBlocks);
+   GlobalID* blockIDsPtr = &blockIDs_[0];
 
    int j;
    for(j=0; j<numBlocks; j++) {
@@ -3608,11 +3642,12 @@ int SNL_FEI_Structure::gatherSlaveEqns(MPI_Comm comm,
   //We're going to send all of our slave equations to all other processors, and
   //receive the slave equations from all other processors.
   //So we'll first fill a ProcEqns object with all of our eqn/proc pairs,
-  //then use the regular exchange functions from EqnCommMgr.
+  //then use the regular exchange functions from EqnCommMgr. (This may not be
+  //the most efficient way to do it, but it involves the least amount of new
+  //code.)
   ProcEqns localProcEqns, remoteProcEqns;
   std::vector<int>& slvEqnNums = slaveEqns->eqnNumbers();
-  fei::CSVec** slvEqnsPtr = NULL;
-  if (slaveEqns->eqns().size() > 0) slvEqnsPtr = &(slaveEqns->eqns()[0]);
+  fei::CSVec** slvEqnsPtr = &(slaveEqns->eqns()[0]);
 
   for(size_t i=0; i<slvEqnNums.size(); i++) {
     for(int p=0; p<numProcs; p++) {

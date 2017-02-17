@@ -48,9 +48,9 @@
 #include "Teuchos_VerboseObject.hpp"
 
 #include "Piro_ConfigDefs.hpp"
-#ifdef HAVE_PIRO_NOX
+#ifdef Piro_ENABLE_NOX
 #include "Piro_Epetra_NOXSolver.hpp"
-#ifdef HAVE_PIRO_STOKHOS
+#ifdef Piro_ENABLE_Stokhos
 #include "Stokhos_Epetra.hpp"
 #include "Piro_Epetra_StokhosSolverFactory.hpp"
 #include "MockModelEval_C.hpp"
@@ -65,12 +65,12 @@
 #include "Thyra_DetachedVectorView.hpp"
 #endif
 #endif
-#include "Piro_Epetra_SolverFactory.hpp"
+#include "Piro_Epetra_Factory.hpp"
 
 
 namespace {
 
-#ifdef HAVE_PIRO_NOX
+#ifdef Piro_ENABLE_NOX
 
 void setOStream(const Teuchos::RCP<Teuchos::FancyOStream>& out,
                 Teuchos::ParameterList& params) 
@@ -112,7 +112,7 @@ void testSensitivities(const std::string& inputFile,
 
   // Set output arguments to evalModel call
   EpetraExt::ModelEvaluator::OutArgs outArgs = piro->createOutArgs();
-  TEUCHOS_ASSERT(outArgs.Ng() >= 2); // Number of *vectors* of responses
+  int num_g = outArgs.Ng(); // Number of *vectors* of responses
   RCP<Epetra_Vector> g1 = rcp(new Epetra_Vector(*(piro->get_g_map(0))));
   RCP<Epetra_Vector> gx = rcp(new Epetra_Vector(*(piro->get_g_map(1))));
   RCP<Epetra_MultiVector> dgdp_mv;
@@ -206,7 +206,7 @@ TEUCHOS_UNIT_TEST( Piro, AdjointOperatorSensitivities )
   testSensitivities(inputFile, false, true, out, success);
 }
 
-#ifdef HAVE_PIRO_STOKHOS
+#ifdef Piro_ENABLE_Stokhos
 TEUCHOS_UNIT_TEST( Piro, SGResponseStatisticsSensitivity )
 {
   using Teuchos::RCP;
@@ -423,9 +423,8 @@ TEUCHOS_UNIT_TEST( Piro, Coupled )
   coupledModel->setOStream(rcp(&out,false));
 
   // Setup solver
-  Piro::Epetra::SolverFactory solverFactory;
   RCP<EpetraExt::ModelEvaluator> coupledSolver =
-    solverFactory.createSolver(coupledParams, coupledModel);
+    Piro::Epetra::Factory::createSolver(coupledParams, coupledModel);
     
   // Solve coupled system
   EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();
@@ -612,7 +611,7 @@ TEUCHOS_UNIT_TEST( Piro, SGCoupled )
   Teuchos::VerboseObjectBase::setDefaultOStream(default_out);
 }
 
-#ifdef HAVE_PIRO_TRIKOTA
+#ifdef Piro_ENABLE_TriKota
 TEUCHOS_UNIT_TEST( Piro, SGAnalysis )
 {
   using Teuchos::RCP;

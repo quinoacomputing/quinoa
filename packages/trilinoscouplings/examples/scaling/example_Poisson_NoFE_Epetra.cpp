@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -85,7 +85,6 @@
 
 // TrilinosCouplings includes
 #include "TrilinosCouplings_config.h"
-#include "TrilinosCouplings_Pamgen_Utils.hpp"
 
 // Intrepid includes
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -127,8 +126,8 @@
 
 // Pamgen includes
 #include "create_inline_mesh.h"
-#include "pamgen_im_exodusII_l.h"
-#include "pamgen_im_ne_nemesisI_l.h"
+#include "im_exodusII_l.h"
+#include "im_ne_nemesisI_l.h"
 #include "pamgen_extras.h"
 
 // Belos includes
@@ -144,12 +143,8 @@
 #include "ml_MultiLevelPreconditioner.h"
 #include "ml_epetra_utils.h"
 
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#include "Sacado.hpp"
-#else
 // Sacado includes
-#include "Sacado_No_Kokkos.hpp"
-#endif
+#include "Sacado.hpp"
 
 using namespace std;
 using namespace Intrepid;
@@ -372,7 +367,7 @@ int main(int argc, char *argv[]) {
      if (MyPID == 0) {
       cout << "\nReading parameter list from the XML file \""<<xmlMeshInFileName<<"\" ...\n\n";
      }
-     Teuchos::updateParametersFromXmlFile(xmlMeshInFileName, Teuchos::inoutArg(inputMeshList));
+      Teuchos::updateParametersFromXmlFile(xmlMeshInFileName,&inputMeshList);
      if (MyPID == 0) {
       inputMeshList.print(cout,2,true,true);
       cout << "\n";
@@ -387,7 +382,7 @@ int main(int argc, char *argv[]) {
    if(xmlSolverInFileName.length()) {
      if (MyPID == 0)
         cout << "\nReading parameter list from the XML file \""<<xmlSolverInFileName<<"\" ...\n\n";
-     Teuchos::updateParametersFromXmlFile(xmlSolverInFileName, Teuchos::inoutArg(inputSolverList));
+     Teuchos::updateParametersFromXmlFile(xmlSolverInFileName,&inputSolverList);
    } else if (MyPID == 0) cout << "Using default solver values ..." << endl;
 
    // Get pamgen mesh definition
@@ -428,10 +423,9 @@ int main(int argc, char *argv[]) {
   long long ** comm_node_ids        = NULL;
   long long ** comm_node_proc_ids   = NULL;
 
-  // Generate mesh with Pamgen
-  long long maxInt = 9223372036854775807LL;
-  long long cr_result = Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
-  TrilinosCouplings::pamgen_error_check(std::cout,cr_result);
+   // Generate mesh with Pamgen
+    long long maxInt = 9223372036854775807LL;
+    Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
 
     string msg("Poisson: ");
     
@@ -786,7 +780,7 @@ int main(int argc, char *argv[]) {
         for(int cell = worksetBegin; cell < worksetEnd; cell++){
     
           // Compute cell ordinal relative to the current workset
-          //int worksetCellOrdinal = cell - worksetBegin;
+          int worksetCellOrdinal = cell - worksetBegin;
     
           // "CELL EQUATION" loop for the workset cell: cellRow is relative to the cell DoF numbering
           for (int cellRow = 0; cellRow < numFieldsG; cellRow++){

@@ -52,7 +52,7 @@
 #include <vector>
 #include <map>
 
-EpetraExt_HypreIJMatrix* newHypreMatrix(const int N, const int type)
+EpetraExt_HypreIJMatrix::EpetraExt_HypreIJMatrix* newHypreMatrix(const int N, const int type)
 {
   HYPRE_IJMatrix Matrix;
   int ierr = 0;
@@ -166,7 +166,7 @@ EpetraExt_HypreIJMatrix* newHypreMatrix(const int N, const int type)
   return RetMat;
 }
 
-Epetra_CrsMatrix* newCrsMatrix(EpetraExt_HypreIJMatrix &Matrix)
+Epetra_CrsMatrix::Epetra_CrsMatrix* newCrsMatrix(EpetraExt_HypreIJMatrix &Matrix)
 {
   int N = Matrix.NumGlobalRows();
   Epetra_CrsMatrix* TestMat = new Epetra_CrsMatrix(Copy, Matrix.RowMatrixRowMap(), Matrix.RowMatrixColMap(), N, false);

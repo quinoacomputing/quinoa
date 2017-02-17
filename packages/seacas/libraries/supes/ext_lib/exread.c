@@ -76,7 +76,7 @@ C
   if (debug == 1 || isatty(0) == 0 || isatty(1) == 0) {
     int icnt;
     
-    (void)write( 1, prompt, PromptLength );
+    write( 1, prompt, PromptLength );
     icnt = my_getline( input, InputLength );
     
     /* Next evaluate the error status. */
@@ -97,9 +97,9 @@ C
     internal_prompt[PromptLength]   = '\0';
 
     p = getline_int(internal_prompt);
+    gl_histadd(p);
 
     if (p) {
-      gl_histadd(p);
       int i = 0;
       /* Strip the trailing \n */
       p[strlen(p)-1] = '\0';
@@ -132,7 +132,7 @@ static int my_getline(char *s, int len)
   for( ; dlen > 0; dlen-- ){
     if (read(0, &c, 1) != 1){
       if (dlen == len) {
-	(void)write(1,&nl,1);		/* We've encountered the End of File */
+	write(1,&nl,1);		/* We've encountered the End of File */
 	return(-1);
       }
       else

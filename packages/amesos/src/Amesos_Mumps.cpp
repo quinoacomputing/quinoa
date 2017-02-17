@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -79,7 +79,7 @@ Amesos_Mumps::Amesos_Mumps(const Epetra_LinearProblem &prob ) :
   ICNTL[3]  = -1;  // Turn off global information messages   6=on, -1=off
   ICNTL[4]  = -1;  // 3 = most msgs; -1= none  
 
-#if defined(MUMPS_4_9) || defined(MUMPS_5_0)
+#ifdef MUMPS_4_9
 
   ICNTL[5]  = 0;   // Matrix is given in assembled (i.e. triplet) from
   ICNTL[6]  = 7;   // Choose column permutation automatically
@@ -472,16 +472,17 @@ int Amesos_Mumps::SymbolicFactorization()
 #endif
   }
 #else
+#ifdef IFPACK_SUBCOMM_CODE
   // This next three lines of code were required to make Amesos_Mumps work
-  // with Ifpack_SubdomainFilter. They is usefull in all cases
+  // with Ifpack_SubdomainFilter. They may actually be usefull in all cases
   // when using MUMPS on a subdomain.
   const Epetra_MpiComm* MpiComm = dynamic_cast<const Epetra_MpiComm*>(&Comm());
   assert (MpiComm != 0);
   MDS.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(MpiComm->GetMpiComm());
+#else
   // only thing I can do, use MPI_COMM_WORLD. This will work in serial as well
-  // Previously, the next line was uncommented, but we don't want MUMPS to work
-  // on the global MPI comm, but on the comm associated with the matrix
-  //  MDS.comm_fortran = -987654;
+  MDS.comm_fortran = -987654;
+#endif
 #endif
   
   MDS.job = -1  ;     //  Initialization

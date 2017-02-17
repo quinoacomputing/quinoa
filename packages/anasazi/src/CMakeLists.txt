@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -64,8 +65,6 @@ APPEND_SET(HEADERS
   AnasaziEigensolverDecl.hpp
   AnasaziLOBPCG.hpp
   AnasaziLOBPCGSolMgr.hpp
-  AnasaziGeneralizedDavidson.hpp
-  AnasaziGeneralizedDavidsonSolMgr.hpp
   AnasaziGenOrthoManager.hpp
   AnasaziHelperTraits.hpp
   AnasaziICGSOrthoManager.hpp
@@ -91,21 +90,8 @@ APPEND_SET(HEADERS
   AnasaziStatusTestWithOrdering.hpp
   AnasaziStatusTestOutput.hpp
   AnasaziStatusTestResNorm.hpp
-  AnasaziStubTsqrAdapter.hpp
   AnasaziSVQBOrthoManager.hpp
   AnasaziTypes.hpp
-  AnasaziTraceMinBase.hpp
-  AnasaziTraceMin.hpp
-  AnasaziTraceMinDavidson.hpp
-  AnasaziTraceMinBaseSolMgr.hpp
-  AnasaziTraceMinSolMgr.hpp
-  AnasaziTraceMinDavidsonSolMgr.hpp
-  AnasaziMinres.hpp
-  AnasaziSaddleContainer.hpp
-  AnasaziSaddleOperator.hpp
-  AnasaziTraceMinRitzOp.hpp
-  AnasaziTraceMinTypes.hpp
-  AnasaziStatusTestSpecTrans.hpp
   )
 
 APPEND_SET(SOURCES
@@ -137,12 +123,6 @@ APPEND_SET(HEADERS
   AnasaziLOBPCGSolMgr.hpp
   AnasaziSimpleLOBPCGSolMgr.hpp
   AnasaziRTRSolMgr.hpp
-  AnasaziTraceMinBase.hpp
-  AnasaziTraceMin.hpp
-  AnasaziTraceMinDavidson.hpp
-  AnasaziTraceMinBaseSolMgr.hpp
-  AnasaziTraceMinSolMgr.hpp
-  AnasaziTraceMinDavidsonSolMgr.hpp
   )
 
 ASSERT_DEFINED(Anasazi_ENABLE_ThyraCore)
@@ -157,8 +137,9 @@ ENDIF()
 ASSERT_DEFINED(Anasazi_ENABLE_Tpetra)
 IF (Anasazi_ENABLE_Tpetra)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../tpetra/src)
-  # The AnasaziTpetraAdapter headers are already pulled in by
-  # <./packages/anasazi/tpetra/src/CMakeLists.txt>.
+  APPEND_SET(HEADERS
+    ../tpetra/src/AnasaziTpetraAdapter.hpp
+    )
 ENDIF()
 
 IF (TPL_ENABLE_MPI)

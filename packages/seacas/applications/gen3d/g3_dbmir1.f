@@ -31,6 +31,7 @@ C (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 C OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 C 
 
+C   $Id: dbmir1.f,v 1.3 1999/01/25 16:38:35 gdsjaar Exp $
 C=======================================================================
       SUBROUTINE DBMIR1 (IELB, NUMELB, NUMLNK, LINK)
 C=======================================================================
@@ -50,7 +51,7 @@ C   --
       INTEGER LINK(NUMLNK,NUMELB)
 
       IF ((NUMLNK .EQ. 8) .AND. (NUMELB .GT. 0)) THEN
-         DO NE = 1, NUMELB
+         DO 10 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(4,NE)
             LINK(4,NE) = ILTMP
@@ -58,18 +59,7 @@ C   --
             ILTMP = LINK (6,NE)
             LINK(6,NE) = LINK(8,NE)
             LINK(8,NE) = ILTMP
-          end do
-        ELSE IF ((NUMLNK .EQ. 6) .AND. (NUMELB .GT. 0)) THEN
-C ... UNTESTED
-         DO NE = 1, NUMELB
-            ILTMP = LINK (2,NE)
-            LINK(2,NE) = LINK(3,NE)
-            LINK(3,NE) = ILTMP
-
-            ILTMP = LINK (5,NE)
-            LINK(5,NE) = LINK(6,NE)
-            LINK(6,NE) = ILTMP
-          end do
+   10    CONTINUE
       END IF
 
       RETURN

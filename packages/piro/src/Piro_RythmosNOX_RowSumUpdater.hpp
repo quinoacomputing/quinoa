@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-//
+// 
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-//
+// 
 // ************************************************************************
 // @HEADER
 
@@ -44,18 +44,13 @@
 #define PIRO_RYTHMOS_NOX_ROWSUM_UPDATER_OBSERVER_HPP
 
 #include "Rythmos_IntegrationObserverBase.hpp"
-
+#include "Teuchos_RCP.hpp"
 #include "Rythmos_StepperBase.hpp"
 #include "Rythmos_SolverAcceptingStepperBase.hpp"
-
-#include "NOX_Thyra.H"
-#include "NOX_Solver_Generic.H"
-
-#include "Thyra_RowStatLinearOpBase.hpp"
-
-#include "Teuchos_RCP.hpp"
+#include "Thyra_NonlinearSolver_NOX.hpp"
 
 namespace Piro {
+
 
 /** \brief For a Rythmos/NOX solve, this object updates the row sum scaling
  */
@@ -64,7 +59,7 @@ class RythmosNOXRowSumUpdaterObserver : virtual public Rythmos::IntegrationObser
 {
 public:
 
-  RythmosNOXRowSumUpdaterObserver();
+  RythmosNOXRowSumUpdaterObserver();  
 
   void set_f_scaling(const Teuchos::RCP< ::Thyra::VectorBase<Scalar> >& f_scaling);
 
@@ -72,8 +67,8 @@ public:
   //@{
 
   Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > cloneIntegrationObserver() const;
-
-  void
+  
+  void 
   resetIntegrationObserver(const Rythmos::TimeRange<Scalar> &integrationTimeDomain);
 
   void observeStartTimeIntegration(const Rythmos::StepperBase<Scalar> &stepper);
@@ -115,7 +110,7 @@ template<class Scalar>
 Teuchos::RCP<RythmosNOXRowSumUpdaterObserver<Scalar> >
 createRythmosNOXRowSumUpdaterObserver()
 {
-  const Teuchos::RCP<RythmosNOXRowSumUpdaterObserver<Scalar> > o =
+  const Teuchos::RCP<RythmosNOXRowSumUpdaterObserver<Scalar> > o = 
     Teuchos::rcp(new RythmosNOXRowSumUpdaterObserver<Scalar>);
 
   return o;
@@ -127,11 +122,11 @@ createRythmosNOXRowSumUpdaterObserver()
 
 template<typename Scalar>
 RythmosNOXRowSumUpdaterObserver<Scalar>::RythmosNOXRowSumUpdaterObserver()
-{
+{ 
 }
 
 template<typename Scalar>
-void
+void 
 RythmosNOXRowSumUpdaterObserver<Scalar>::
 set_f_scaling(const Teuchos::RCP< ::Thyra::VectorBase<Scalar> >& f_scaling)
 {
@@ -139,16 +134,16 @@ set_f_scaling(const Teuchos::RCP< ::Thyra::VectorBase<Scalar> >& f_scaling)
 }
 
 template<typename Scalar>
-Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> >
+Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > 
 RythmosNOXRowSumUpdaterObserver<Scalar>::cloneIntegrationObserver() const
 {
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > observer =
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > observer = 
     Teuchos::rcp(new RythmosNOXRowSumUpdaterObserver<Scalar>(*this));
   return observer;
 }
-
+  
 template<typename Scalar>
-void
+void 
 RythmosNOXRowSumUpdaterObserver<Scalar>::
 resetIntegrationObserver(const Rythmos::TimeRange<Scalar> &integrationTimeDomain)
 {
@@ -158,13 +153,13 @@ template<typename Scalar>
 void RythmosNOXRowSumUpdaterObserver<Scalar>::
 observeStartTimeIntegration(const Rythmos::StepperBase<Scalar> &stepper)
 {
-}
+}				
 
 template<typename Scalar>
 void RythmosNOXRowSumUpdaterObserver<Scalar>::
 observeEndTimeIntegration(const Rythmos::StepperBase<Scalar> &stepper)
 {
-}
+}				
 
 template<typename Scalar>
 void RythmosNOXRowSumUpdaterObserver<Scalar>::observeStartTimeStep(
@@ -174,7 +169,6 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeStartTimeStep(
     )
 {
   using Teuchos::RCP;
-  using Teuchos::rcp;
   using Teuchos::rcp_dynamic_cast;
 
   //std::cout << "ROGER - computing a new RYTHMOS scaling" << std::endl;
@@ -190,10 +184,10 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeStartTimeStep(
 
   const RCP<const Rythmos::SolverAcceptingStepperBase<Scalar> > stepper_with_solver =
     Teuchos::rcp_dynamic_cast<const Rythmos::SolverAcceptingStepperBase<Scalar> >(rcp_stepper);
-
+  
   TEUCHOS_ASSERT(nonnull(stepper_with_solver));
 
-  const RCP<const ::Thyra::NonlinearSolverBase<Scalar> > thyra_solver =
+  const RCP<const ::Thyra::NonlinearSolverBase<Scalar> > thyra_solver = 
     stepper_with_solver->getSolver();
 
   // NOTE:: NOX only supports double!!!
@@ -205,21 +199,21 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeStartTimeStep(
   RCP<const NOX::Solver::Generic> solver = nox_thyra_solver->getNOXSolver();
 
   RCP<const NOX::Abstract::Group> group = solver->getSolutionGroupPtr();
-
-  RCP<const NOX::Thyra::Group> thyra_group =
+  
+  RCP<const NOX::Thyra::Group> thyra_group = 
     rcp_dynamic_cast<const NOX::Thyra::Group>(group);
-
+  
   if (!thyra_group->isJacobian()) {
-    RCP<NOX::Thyra::Group> tmp_nox_thyra_group =
+    RCP<NOX::Thyra::Group> tmp_nox_thyra_group = 
       Teuchos::rcp_const_cast<NOX::Thyra::Group>(thyra_group);
     TEUCHOS_ASSERT( !tmp_nox_thyra_group.is_null() );
     tmp_nox_thyra_group->computeJacobian();
   }
+  
+  RCP< const ::Thyra::LinearOpBase< double > > jac = 
+    thyra_group->getJacobianOperator(); 	
 
-  RCP< const ::Thyra::LinearOpBase< double > > jac =
-    thyra_group->getJacobianOperator();
-
-  RCP< const ::Thyra::RowStatLinearOpBase< double > > row_stat_jac =
+  RCP< const ::Thyra::RowStatLinearOpBase< double > > row_stat_jac = 
     Teuchos::rcp_dynamic_cast< const ::Thyra::RowStatLinearOpBase< double > >(jac);
 
   TEUCHOS_ASSERT( !row_stat_jac.is_null() );
@@ -233,7 +227,7 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeStartTimeStep(
   //inv_row_sum_vec_->describe(*Teuchos::fancyOStream(Teuchos::RCP<std::ostream>(&std::cout, false)), Teuchos::VERB_EXTREME);
 
   //jac->describe(*Teuchos::fancyOStream(Teuchos::RCP<std::ostream>(&std::cout, false)), Teuchos::VERB_EXTREME);
-}
+}				
 
 template<typename Scalar>
 void RythmosNOXRowSumUpdaterObserver<Scalar>::observeCompletedTimeStep(
@@ -242,7 +236,7 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeCompletedTimeStep(
     const int timeStepIter
     )
 {
-}
+}				
 
 template<typename Scalar>
 void RythmosNOXRowSumUpdaterObserver<Scalar>::observeFailedTimeStep(
@@ -251,7 +245,7 @@ void RythmosNOXRowSumUpdaterObserver<Scalar>::observeFailedTimeStep(
     const int timeStepIter
     )
 {
-}
+}				
 
 }
 

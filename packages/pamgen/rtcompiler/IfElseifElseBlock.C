@@ -1,8 +1,8 @@
-#include "RTC_IfElseifElseBlockRTC.hh"
-#include "RTC_BlockRTC.hh"
-#include "RTC_ConditionalBlockRTC.hh"
-#include "RTC_NormalBlockRTC.hh"
-#include "RTC_commonRTC.hh"
+#include "IfElseifElseBlockRTC.hh"
+#include "BlockRTC.hh"
+#include "ConditionalBlockRTC.hh"
+#include "NormalBlockRTC.hh"
+#include "commonRTC.hh"
 
 #include <string>
 #include <list>
@@ -13,15 +13,13 @@ using namespace PG_RuntimeCompiler;
 
 /*****************************************************************************/
 IfElseifElseBlock::
-IfElseifElseBlock(
-    map<string, Variable*> vars,
-    Tokenizer& lines, string& errs
-    ):
-  Block(vars),
-  _if(NULL),
-  _else(NULL)
+IfElseifElseBlock(map<string, Variable*> vars, 
+		  Tokenizer& lines, string& errs) : Block(vars) 
+/*****************************************************************************/
 {
   if (errs != "") return;
+
+  _else = NULL;
 
   //create the conditionalBlock for the if part
   _if = new ConditionalBlock(_vars, lines, errs);
@@ -41,7 +39,8 @@ IfElseifElseBlock(
 }
 
 /*****************************************************************************/
-IfElseifElseBlock::~IfElseifElseBlock()
+IfElseifElseBlock::~IfElseifElseBlock() 
+/*****************************************************************************/
 {
   delete _if;
   list<ConditionalBlock*>::iterator itr = _elseifs.begin();
@@ -56,20 +55,21 @@ IfElseifElseBlock::~IfElseifElseBlock()
 }
 
 /*****************************************************************************/
-Value* IfElseifElseBlock::execute()
+Value* IfElseifElseBlock::execute() 
+/*****************************************************************************/
 {
   _if->execute();
-
+  
   if (_if->wasExecuted()) {
     _if->reset();
     return NULL;
   }
 
   list<ConditionalBlock*>::iterator itr = _elseifs.begin();
-
+    
   while(itr != _elseifs.end()) {
     (*itr)->execute();
-
+    
     if ( (*itr)->wasExecuted()) {
       (*itr)->reset();
       return NULL;
@@ -80,20 +80,21 @@ Value* IfElseifElseBlock::execute()
 
   if (_else != NULL)
     _else->execute();
-
+  
   return NULL;
-}
+} 
 
 /*****************************************************************************/
 ostream& IfElseifElseBlock::operator<<(ostream& os) const
+/*****************************************************************************/
 {
   os << *_if;
 
   for (list<ConditionalBlock*>::const_iterator itr = _elseifs.begin();
-      itr != _elseifs.end(); itr++) {
+       itr != _elseifs.end(); itr++) {
     os << *(*itr);
   }
-
+  
   if (_else != NULL) {
     os << *_else;
   }

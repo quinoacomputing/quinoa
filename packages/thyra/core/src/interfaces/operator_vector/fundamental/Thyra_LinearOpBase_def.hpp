@@ -61,6 +61,52 @@ LinearOpBase<Scalar>::clone() const
 }
 
 
+// Deprecated
+
+
+template<class Scalar>
+bool LinearOpBase<Scalar>::applySupports(
+  const EConj conj
+  ) const
+{
+  return Thyra::opSupported(*this, applyConjToTrans(conj));
+}
+
+template<class Scalar>
+void LinearOpBase<Scalar>::apply(
+  const EConj conj,
+  const MultiVectorBase<Scalar> &X,
+  MultiVectorBase<Scalar> *Y,
+  const Scalar alpha,
+  const Scalar beta
+  ) const
+{
+  Thyra::apply(*this, applyConjToTrans(conj), X, Teuchos::ptr(Y), alpha, beta);
+}
+
+
+template<class Scalar>
+bool LinearOpBase<Scalar>::applyTransposeSupports(
+  const EConj conj
+  ) const
+{
+  return Thyra::opSupported(*this, applyTransposeConjToTrans(conj));
+}
+
+
+template<class Scalar>
+void LinearOpBase<Scalar>::applyTranspose(
+  const EConj conj,
+  const MultiVectorBase<Scalar> &X,
+  MultiVectorBase<Scalar> *Y,
+  const Scalar alpha,
+  const Scalar beta
+  ) const
+{
+  Thyra::apply(*this, applyTransposeConjToTrans(conj), X, Teuchos::ptr(Y), alpha, beta);
+}
+
+
 }	// end namespace Thyra
 
 

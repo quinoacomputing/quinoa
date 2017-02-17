@@ -1,44 +1,30 @@
-/*@HEADER
+// @HEADER
 // ***********************************************************************
-//
-//       Ifpack: Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2002) Sandia Corporation
-//
+// 
+//                IFPACK
+//                 Copyright (2004) Sandia Corporation
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ***********************************************************************
-//@HEADER
-*/
+// @HEADER
 
 #include "Ifpack_ConfigDefs.h"
 
@@ -65,11 +51,9 @@
 
 bool verbose = false;
 
-bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const std::string what,
+bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const string what,
                        int Overlap, int ival)
 {
-  using std::cout;
-  using std::endl;
 
   AztecOO AztecOOSolver(Problem);
   AztecOOSolver.SetAztecOption(AZ_solver,AZ_gmres);
@@ -93,14 +77,14 @@ bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const std::string what,
   List.set("relaxation: sweeps", ival);
   List.set("relaxation: damping factor", 1.0);
   List.set("relaxation: zero starting solution", true);
-
+ 
   //default combine mode is as for AztecOO
   List.set("schwarz: combine mode", Zero);
 
   Epetra_Time Time(A->Comm());
 
   Teuchos::RefCountPtr<Ifpack_Preconditioner> Prec;
-
+  
   if (what == "Jacobi") {
     Prec = Teuchos::rcp( new Ifpack_PointRelaxation(&*A) );
     List.set("relaxation: type", "Jacobi");
@@ -172,7 +156,7 @@ bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const std::string what,
   // =========================================== //
   // Create the IFPACK preconditioner and solver //
   // =========================================== //
-
+ 
   Epetra_Time Time2(A->Comm());
   assert(Prec != Teuchos::null);
   IFPACK_CHK_ERR(Prec->SetParameters(List));
@@ -207,7 +191,7 @@ bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const std::string what,
   int IFPACKPrecIters = AztecOOSolver.NumIters();
 
   if (IFPACK_ABS(AztecOOPrecIters - IFPACKPrecIters) > 3) {
-    cerr << "TEST FAILED (" << AztecOOPrecIters << " != "
+    cerr << "TEST FAILED (" << AztecOOPrecIters << " != " 
          << IFPACKPrecIters << ")" << endl;
     return(false);
   }
@@ -216,7 +200,7 @@ bool CompareWithAztecOO(Epetra_LinearProblem& Problem, const std::string what,
 
 }
 
-// ======================================================================
+// ====================================================================== 
 int main(int argc, char *argv[])
 {
 
@@ -243,19 +227,19 @@ int main(int argc, char *argv[])
 
   // Jacobi as in AztecOO (no overlap)
   for (int ival = 1 ; ival < 10 ; ival += 3) {
-    TestPassed = TestPassed &&
+    TestPassed = TestPassed && 
       CompareWithAztecOO(Problem,"Jacobi",0,ival);
   }
 
 #if 0
   // AztecOO with IC and overlap complains, also with
   // large fill-ins (in parallel)
-  TestPassed = TestPassed &&
+  TestPassed = TestPassed && 
     CompareWithAztecOO(Problem,"IC no reord",0,0);
-  TestPassed = TestPassed &&
+  TestPassed = TestPassed && 
     CompareWithAztecOO(Problem,"IC reord",0,0);
 
-  vector<std::string> Tests;
+  vector<string> Tests;
   // now test solvers that accept overlap
   Tests.push_back("ILU no reord");
   Tests.push_back("ILU reord");
@@ -267,7 +251,7 @@ int main(int argc, char *argv[])
   for (unsigned int i = 0 ; i < Tests.size() ; ++i) {
     for (int overlap = 0 ; overlap < 1 ; overlap += 2) {
       for (int ival = 0 ; ival < 10 ; ival += 4)
-        TestPassed = TestPassed &&
+        TestPassed = TestPassed && 
           CompareWithAztecOO(Problem,Tests[i],overlap,ival);
     }
   }
@@ -279,7 +263,7 @@ int main(int argc, char *argv[])
   }
 
 #ifdef HAVE_MPI
-  MPI_Finalize() ;
+  MPI_Finalize() ; 
 #endif
   cout << "Test `CompareWithAztecOO.exe' passed!" << endl;
 

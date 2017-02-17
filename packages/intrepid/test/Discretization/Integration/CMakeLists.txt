@@ -1,3 +1,5 @@
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   Test_01
@@ -216,20 +218,10 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   ADD_DIR_TO_NAME
   )
 
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  Test_25
-  SOURCES test_25.cpp
-  ARGS PrintItAll
-  NUM_MPI_PROCS 1
-  PASS_REGULAR_EXPRESSION "TEST PASSED"
-  ADD_DIR_TO_NAME
-  )
-
 TRIBITS_COPY_FILES_TO_BINARY_DIR(IntegrationTestDataCopy
   SOURCE_FILES
     EDGE_integrals.dat
     HEX_integrals.dat
-    PYR_integrals.dat
     QUAD_integrals.dat
     TET_integrals.dat
     TRI_integrals.dat

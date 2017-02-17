@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -101,7 +88,7 @@ Ifpack_Amesos::Ifpack_Amesos(const Ifpack_Amesos& rhs) :
   List_ = RHSList;
 
   // I do not have a copy constructor for Amesos,
-  // so Initialize() and Compute() of this object
+  // so Initialize() and Compute() of this object 
   // are called if the rhs did so
   if (rhs.IsInitialized()) {
     IsInitialized_ = true;
@@ -125,8 +112,6 @@ int Ifpack_Amesos::SetParameters(Teuchos::ParameterList& List_in)
 //==============================================================================
 int Ifpack_Amesos::Initialize()
 {
-  using std::cerr;
-  using std::endl;
 
   IsEmpty_ = false;
   IsInitialized_ = false;
@@ -136,24 +121,22 @@ int Ifpack_Amesos::Initialize()
     IFPACK_CHK_ERR(-1);
 
 #if 0
-  using std::cout;
-
   // better to avoid strange games with maps, this class should be
   // used for Ifpack_LocalFilter'd matrices only
   if (Comm().NumProc() != 1) {
     cout << "Class Ifpack_Amesos must be used for serial runs;" << endl;
-    cout << "for parallel runs you should declare objects as:" << endl;
+    cout << "for parallel runs you should declare objects as:" << endl; 
     cout << "Ifpack_AdditiveSchwarz<Ifpack_Amesos> APrec(Matrix)" << endl;
     exit(EXIT_FAILURE);
   }
 #endif
 
   // only square matrices
-  if (Matrix_->NumGlobalRows64() != Matrix_->NumGlobalCols64())
+  if (Matrix_->NumGlobalRows() != Matrix_->NumGlobalCols())
     IFPACK_CHK_ERR(-1);
 
   // if the matrix has a dimension of 0, this is an empty preconditioning object.
-  if (Matrix_->NumGlobalRows64() == 0) {
+  if (Matrix_->NumGlobalRows() == 0) {
     IsEmpty_ = true;
     IsInitialized_ = true;
     ++NumInitialize_;
@@ -168,11 +151,10 @@ int Ifpack_Amesos::Initialize()
 
   Amesos Factory;
   Solver_ = Teuchos::rcp( Factory.Create((char*)Label_.c_str(),*Problem_) );
-
-  if (Solver_ == Teuchos::null)
+  
+  if (Solver_ == Teuchos::null) 
   {
     // try to create KLU, it is generally enabled
-    Label_ = "Amesos_Klu";
     Solver_ = Teuchos::rcp( Factory.Create("Amesos_Klu",*Problem_) );
   }
   if (Solver_ == Teuchos::null)
@@ -187,11 +169,10 @@ int Ifpack_Amesos::Initialize()
       cerr << "IFPACK WARNING: solvers are not available. LAPACK" << endl;
       cerr << "IFPACK WARNING: allocates memory to store the matrix as" << endl;
       cerr << "IFPACK WARNING: dense, I hope you have enough memory..." << endl;
-      cerr << "IFPACK WARNING: (file " << __FILE__ << ", line " << __LINE__
+      cerr << "IFPACK WARNING: (file " << __FILE__ << ", line " << __LINE__ 
            << ")" << endl;
       FirstTime = false;
     }
-    Label_ = "Amesos_Lapack";
     Solver_ = Teuchos::rcp( Factory.Create("Amesos_Lapack",*Problem_) );
   }
   // if empty, give up.
@@ -270,7 +251,7 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 
   if (X.NumVectors() != Y.NumVectors())
     IFPACK_CHK_ERR(-1); // wrong input
-
+  
   Time_->ResetStartTime();
 
   // AztecOO gives X and Y pointing to the same memory location,
@@ -280,7 +261,7 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
     Xcopy = Teuchos::rcp( new Epetra_MultiVector(X) );
   else
     Xcopy = Teuchos::rcp( &X, false );
-
+    
   Problem_->SetLHS(&Y);
   Problem_->SetRHS((Epetra_MultiVector*)Xcopy.get());
   IFPACK_CHK_ERR(Solver_->Solve());
@@ -336,7 +317,7 @@ const Epetra_Map & Ifpack_Amesos::OperatorRangeMap() const
 //==============================================================================
 double Ifpack_Amesos::Condest(const Ifpack_CondestType CT,
                               const int MaxIters, const double Tol,
-                              Epetra_RowMatrix* Matrix_in)
+			      Epetra_RowMatrix* Matrix_in)
 {
 
   if (!IsComputed()) // cannot compute right now
@@ -351,31 +332,29 @@ double Ifpack_Amesos::Condest(const Ifpack_CondestType CT,
 //==============================================================================
 std::ostream& Ifpack_Amesos::Print(std::ostream& os) const
 {
-  using std::endl;
-
   if (!Comm().MyPID()) {
     os << endl;
     os << "================================================================================" << endl;
     os << "Ifpack_Amesos: " << Label () << endl << endl;
     os << "Condition number estimate = " << Condest() << endl;
-    os << "Global number of rows            = " << Matrix_->NumGlobalRows64() << endl;
+    os << "Global number of rows            = " << Matrix_->NumGlobalRows() << endl;
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize_
-       << "  " << std::setw(15) << InitializeTime_
+    os << "Initialize()    "   << std::setw(5) << NumInitialize_ 
+       << "  " << std::setw(15) << InitializeTime_ 
        << "              0.0              0.0" << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute_
+    os << "Compute()       "   << std::setw(5) << NumCompute_ 
        << "  " << std::setw(15) << ComputeTime_
        << "  " << std::setw(15) << 1.0e-6 * ComputeFlops_;
-    if (ComputeTime_ != 0.0)
+    if (ComputeTime_ != 0.0) 
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops_ / ComputeTime_ << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse_
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse_ 
        << "  " << std::setw(15) << ApplyInverseTime_
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops_;
-    if (ApplyInverseTime_ != 0.0)
+    if (ApplyInverseTime_ != 0.0) 
       os << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops_ / ApplyInverseTime_ << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;

@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
 // (etphipp@sandia.gov).
@@ -32,7 +32,7 @@
 #include "Teuchos_GlobalMPISession.hpp"
 
 #include "Teuchos_Array.hpp"
-#include "Sacado_No_Kokkos.hpp"
+#include "Sacado.hpp"
 #include "Sacado_Tay_CacheTaylor.hpp"
 #include "Sacado_mpl_apply.hpp"
 #include "Sacado_Random.hpp"

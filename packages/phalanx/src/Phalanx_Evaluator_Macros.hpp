@@ -45,7 +45,7 @@
 #ifndef PHX_EVALUATOR_MACROS_H
 #define PHX_EVALUATOR_MACROS_H
 
-#include "Phalanx_config.hpp"
+#include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_FieldManager.hpp"
@@ -147,7 +147,7 @@
 #define PHX_POST_EVALUATE_FIELDS(NAME,POST_EVAL_DATA)			\
   template<typename EvalT, typename Traits>				\
   void NAME<EvalT, Traits>::						\
-  postEvaluate(typename Traits::PostEvalData POST_EVAL_DATA)
+  postEvaluate(typename Traits::PostEvalData POSTEVAL_DATA)
 
 // **********************************************************************
 

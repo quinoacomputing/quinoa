@@ -53,6 +53,15 @@
 #include "Thyra_LinearOpWithSolveFactoryHelpers.hpp"
 #include "Thyra_LinearOpWithSolveHelpers.hpp"
 
+/** \brief Epetra-based Model Evaluator subclass for Charon!
+ *
+ * This class will support a wide number of different types of abstract
+ * problem types that will allow NOX, LOCA, Rythmos, Aristos, and MOOCHO to
+ * solve different types of problems with Charon.
+ * 
+ * ToDo: Finish documentation!
+ */
+
 namespace Piro {
 namespace Epetra {
 
@@ -72,8 +81,7 @@ class InvertMassMatrixDecorator
                 Teuchos::RCP<Teuchos::ParameterList> stratParams,
                 Teuchos::RCP<EpetraExt::ModelEvaluator>& model,
                 bool massMatrixIsConstant=true,
-                bool lumpMassMatrix=false,
-                bool massMatrixIsCoeffOfSecondDeriv=false
+                bool lumpMassMatrix=false
                 );
 
   //@}
@@ -116,13 +124,11 @@ class InvertMassMatrixDecorator
    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
    Teuchos::RCP<Epetra_Vector> x_dot;
 
-   //Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
-   Teuchos::RCP<Epetra_Operator> massMatrix;
+   Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory;
 
    bool massMatrixIsConstant; // User Setting
    bool lumpMassMatrix; // User Setting to rowSum Matrix
-   bool massMatrixIsCoeffOfSecondDeriv; // Set to true for x_dotdot acceleration problems
    Teuchos::RCP<Epetra_Vector> invDiag;
 
    // The following get modified in evalModel and so are mutable

@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( gtest
+TRIBITS_TPL_DECLARE_LIBRARIES( gtest
   REQUIRED_HEADERS gtest/gtest.h 
   REQUIRED_LIBS_NAMES gtest
   )

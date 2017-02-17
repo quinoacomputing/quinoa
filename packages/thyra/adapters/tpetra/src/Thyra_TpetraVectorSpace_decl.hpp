@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-//
+// 
 //    Thyra: Interfaces and Support for Abstract Numerical Algorithms
 //                 Copyright (2004) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov)
-//
+// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov) 
+// 
 // ***********************************************************************
 // @HEADER
 
@@ -99,11 +99,6 @@ protected:
   /** \brief . */
   RCP<MultiVectorBase<Scalar> >
   createMembers(int numMembers) const;
-  //* \brief . */
-  void scalarProdsImpl(
-      const MultiVectorBase<Scalar> &X,
-      const MultiVectorBase<Scalar> &Y,
-      const ArrayView<Scalar> &scalarProds_out) const;
 
   //@}
 
@@ -125,20 +120,17 @@ private:
   // Private data members
 
   RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > tpetraMap_;
-  // The only reason Thyra needs this comm_ object is because Thyra
-  // uses Ordinal as the Comm template parameter, while Tpetra uses
-  // int.  Ordinal is some 64-bit type, which doesn't make any sense,
-  // given that MPI implementations currently only allow 32-bit
-  // process ranks.  This is why Thyra does not just use the Map's
-  // stored communicator.
   RCP<const Teuchos::Comm<Ordinal> > comm_;
+  Ordinal localSubDim_;
+  int numProc_;
+  int procRank_;
   RCP<this_t> weakSelfPtr_;
 
   // /////////////////////////////////////
   // Private member functions
-
+ 
   TpetraVectorSpace();
-
+ 
 }; // end class TpetraVectorSpace
 
 

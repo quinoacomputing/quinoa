@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -85,7 +85,7 @@
 #ifdef HAVE_AMESOS_PARAKLETE
 #include "Amesos_Paraklete.h"
 #endif
-#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
+#ifdef HAVE_AMESOS_MUMPS
 #include "Amesos_Mumps.h"
 #endif
 
@@ -344,7 +344,7 @@ int Amesos_TestSolver( Epetra_Comm &Comm, char *matrix_file,
       EPETRA_CHK_ERR( A_paraklete.Solve(  ) ); 
 
 #endif
-#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
+#ifdef HAVE_AMESOS_MUMPS
     } else if ( SparseSolver == MUMPS ) {
 
       Teuchos::ParameterList ParamList ;

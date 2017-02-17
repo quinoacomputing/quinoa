@@ -1,66 +1,32 @@
-!! 
-!! @HEADER
-!!
-!!!!**********************************************************************
-!!
-!!  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
-!!                  Copyright 2012 Sandia Corporation
-!!
-!! Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-!! the U.S. Government retains certain rights in this software.
-!!
-!! Redistribution and use in source and binary forms, with or without
-!! modification, are permitted provided that the following conditions are
-!! met:
-!!
-!! 1. Redistributions of source code must retain the above copyright
-!! notice, this list of conditions and the following disclaimer.
-!!
-!! 2. Redistributions in binary form must reproduce the above copyright
-!! notice, this list of conditions and the following disclaimer in the
-!! documentation and/or other materials provided with the distribution.
-!!
-!! 3. Neither the name of the Corporation nor the names of the
-!! contributors may be used to endorse or promote products derived from
-!! this software without specific prior written permission.
-!!
-!! THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-!! EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-!! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-!! PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-!! CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-!! EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-!! PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-!! PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-!! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-!! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-!! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-!!
-!! Questions? Contact Karen Devine	kddevin@sandia.gov
-!!                    Erik Boman	egboman@sandia.gov
-!!
-!!!!**********************************************************************
-!!
-!! @HEADER
- !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zoltan Library for Parallel Applications                                   !
+! For more info, see the README file in the top-level Zoltan directory.      ! 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  CVS File Information :
+!     $RCSfile$
+!     $Author$
+!     $Date$
+!     $Revision$
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!--------------------------------------------------------------------------
-! Purpose: Driver for dynamic load-balance library, ZOLTAN.                
-!                                                                          
-!--------------------------------------------------------------------------
-! Author(s):  Matthew M. St.John (9226)                                    
+!/*--------------------------------------------------------------------------*/
+!/* Purpose: Driver for dynamic load-balance library, ZOLTAN.                */
+!/*                                                                          */
+!/*--------------------------------------------------------------------------*/
+!/* Author(s):  Matthew M. St.John (9226)                                    */
 !   Translated to Fortran by William F. Mitchell
-!--------------------------------------------------------------------------
-!--------------------------------------------------------------------------
-! Revision History:                                                        
-!                                                                          
-!    30 March 1999:    Date of creation                                    
+!/*--------------------------------------------------------------------------*/
+!/*--------------------------------------------------------------------------*/
+!/* Revision History:                                                        */
+!/*                                                                          */
+!/*    30 March 1999:    Date of creation                                    */
 !       1 September 1999: Fortran translation
-!--------------------------------------------------------------------------
+!/*--------------------------------------------------------------------------*/
 
-!**************************************************************************
-!**************************************************************************
-!**************************************************************************
+!/****************************************************************************/
+!/****************************************************************************/
+!/****************************************************************************/
 
 
 program fdriver
@@ -75,7 +41,7 @@ use dr_mm_io
 use dr_sort
 implicit none
 
-! Local declarations. 
+!/* Local declarations. */
   character(len=64)  :: cmd_file
 
   real(Zoltan_FLOAT) :: version
@@ -86,7 +52,9 @@ implicit none
   type(PARIO_INFO) :: pio_info
   type(PROB_INFO) :: prob
 
-  character(len=MPI_MAX_PROCESSOR_NAME) :: procname
+  integer, parameter :: MAX_PROCNAME_LEN = 64
+  character(len=MAX_PROCNAME_LEN) :: procname
+  integer(Zoltan_INT) :: int_procname(MAX_PROCNAME_LEN)
   integer(Zoltan_INT) :: namelen
   integer(Zoltan_INT) :: alloc_stat
 
@@ -132,30 +100,38 @@ interface
 
 end interface
 
-!**************************** BEGIN EXECUTION *****************************
+!/***************************** BEGIN EXECUTION ******************************/
 
-!   initialize MPI 
+!  /* initialize MPI */
   call MPI_Init(error)
 
-!   get some machine information 
+!  /* get some machine information */
   call MPI_Comm_rank(MPI_COMM_WORLD, Proc, error)
   call MPI_Comm_size(MPI_COMM_WORLD, Num_Proc, error)
+  namelen = MAX_PROCNAME_LEN
+  call my_Get_Processor_Name(int_procname, namelen, error)
 
-  call MPI_Get_processor_name(procname, namelen, error)
+  if (namelen > MAX_PROCNAME_LEN) then
+     print *,"WARNING: processor name longer than MAX_PROCNAME_LEN (",MAX_PROCNAME_LEN,") characters"
+     namelen = MAX_PROCNAME_LEN
+  endif
+  do i=1,namelen
+     procname(i:i) = achar(int_procname(i))
+  end do
   print *,"Processor ",Proc," of ",Num_Proc," on host ",procname(1:namelen)
 
 ! Set the input file
 
   cmd_file = "zdrive.inp"
 
-!   initialize Zoltan 
+!  /* initialize Zoltan */
   error = Zoltan_Initialize(version)
   if (error /= ZOLTAN_OK) then
     print *, "fatal: Zoltan_Initialize returned error code, ", error
     goto 9999
   endif
 
-!   initialize some variables 
+!  /* initialize some variables */
 
   allocate(Mesh, stat=alloc_stat)
   if (alloc_stat /= 0) then
@@ -185,7 +161,7 @@ end interface
   prob%ztnPrm_file        = ''
   nullify(prob%params)
 
-!   Read in the ascii input file 
+!  /* Read in the ascii input file */
   if(Proc == 0) then
     print *
     print *
@@ -203,14 +179,14 @@ end interface
     call print_input_info(6, Num_Proc, prob)
   endif
 
-!   broadcast the command info to all of the processor 
+!  /* broadcast the command info to all of the processor */
   call brdcst_cmd_info(Proc, prob, pio_info)
 
-!  
+!  /*
 !   * now read in the mesh and element information.
 !   * This is the only function call to do this. Upon return,
 !   * the mesh struct and the elements array should be filled.
-!   
+!   */
   if (.not. read_mesh(Proc, Num_Proc, prob, pio_info)) then
       print *, "fatal: Error returned from read_mesh"
       goto 9999
@@ -232,18 +208,18 @@ end interface
 ! endif
 ! KDDKDD  END TEMPORARY OUTPUT
 
-!  
+!  /*
 !   * now run zoltan to get a new load balance and perform
 !   * the migration
-!   
+!   */
   if (.not. run_zoltan(Proc, prob, pio_info)) then
       print *, "fatal: Error returned from run_zoltan"
       goto 9999
   endif
 
-!  
+!  /*
 !   * output the results
-!   
+!   */
   if (.not. output_results(cmd_file, Proc, Num_Proc, prob, pio_info, Mesh%elements)) then
       print *, "fatal: Error returned from output_results"
       goto 9999
@@ -266,14 +242,14 @@ end interface
 
 end program fdriver
 
-!***************************************************************************
-!***************************************************************************
-!***************************************************************************
-! This function determines which input file type is being used,
+!/*****************************************************************************/
+!/*****************************************************************************/
+!/*****************************************************************************/
+!/* This function determines which input file type is being used,
 ! * and calls the appropriate read function. If a new type of input
 ! * file is added to the driver, then a section needs to be added for
 ! * it here.
-! *---------------------------------------------------------------------------
+! *---------------------------------------------------------------------------*/
 logical function read_mesh(Proc, Num_Proc, prob, pio_info)
 use zoltan
 use zoltan_user_data
@@ -287,8 +263,8 @@ implicit none
   type(PROB_INFO) :: prob
   type(PARIO_INFO) :: pio_info
 
-! local declarations 
-!-----------------------------Execution Begins------------------------------
+!/* local declarations */
+!/*-----------------------------Execution Begins------------------------------*/
   if (pio_info%file_type == CHACO_FILE) then
     if (.not. read_chaco_mesh(Proc, Num_Proc, prob, pio_info, Mesh%elements)) then
         print *, "fatal: Error returned from read_chaco_mesh"
@@ -317,8 +293,8 @@ implicit none
   return
 end function read_mesh
 
-!***************************************************************************
-!***************************************************************************
+!/*****************************************************************************/
+!/*****************************************************************************/
 subroutine print_input_info(fp, Num_Proc, prob)
 use zoltan
 use dr_const
@@ -359,13 +335,13 @@ type(PROB_INFO) :: prob
 type(PARIO_INFO) :: pio_info
 type(ELEM_INFO), pointer :: elements(:)
 
-!
+!/*
 ! * For the first swipe at this, don't try to create a new
 ! * exodus/nemesis file or anything. Just get the global ids,
 ! * sort them, and print them to a new ascii file.
-! 
+! */
 
-!   Local declarations. 
+!  /* Local declarations. */
   character(len=FILENAME_MAX+1) :: par_out_fname, ctemp
 
   integer(Zoltan_INT), allocatable :: global_ids(:), parts(:), index(:)
@@ -380,9 +356,15 @@ type(ELEM_INFO), pointer :: elements(:)
    integer :: fp
    end subroutine echo_cmd_file
 
+!   subroutine sort_index(n, ra, indx)
+!   use zoltan
+!   integer(Zoltan_INT) :: n
+!   integer(Zoltan_INT) :: ra(0:)
+!   integer(Zoltan_INT) :: indx(0:)
+!   end subroutine sort_index
   end interface
 
-!**************************** BEGIN EXECUTION *****************************
+!/***************************** BEGIN EXECUTION ******************************/
 
   allocate(global_ids(0:Mesh%num_elems),stat=alloc_stat)
   if (alloc_stat /= 0) then
@@ -427,9 +409,9 @@ type(ELEM_INFO), pointer :: elements(:)
     endif
   end do
 
-  call dr_sort_index(0, Mesh%num_elems-1, global_ids, index)
+  call dr_sort_index(Mesh%num_elems, global_ids, index)
 
-!   generate the parallel filename for this processor 
+!  /* generate the parallel filename for this processor */
   ctemp = pio_info%pexo_fname(1:len_trim(pio_info%pexo_fname))//".out"
   call gen_par_filename(ctemp, par_out_fname, pio_info, Proc, Num_Proc)
 
@@ -455,6 +437,63 @@ type(ELEM_INFO), pointer :: elements(:)
   output_results = .true.
 end function output_results
 
+!/*****************************************************************************/
+!subroutine sort_index(n, ra, indx)
+!use zoltan
+!integer(Zoltan_INT) :: n
+!integer(Zoltan_INT) :: ra(0:)
+!integer(Zoltan_INT) :: indx(0:)
+!
+!!/*
+!!*       Numerical Recipies in C source code
+!!*       modified to have first argument an integer array
+!!*
+!!*       Sorts the array ra[0,..,(n-1)] in ascending numerical order using
+!!*       heapsort algorithm.
+!!*
+!!*/
+!
+!integer(Zoltan_INT) :: l, j, ir, i
+!integer(Zoltan_INT) :: rra, irra
+!!  /*
+!!   *  No need to sort if one or fewer items.
+!!   */
+!if (n <= 1) return
+!
+!l=n/2
+!ir=n-1
+!do
+!    if (l > 0) then
+!      l = l-1
+!      rra=ra(indx(l))
+!      irra=indx(l)
+!    else
+!      rra=ra(indx(ir))
+!      irra=indx(ir)
+!
+!      indx(ir)=indx(0)
+!      ir = ir-1
+!      if (ir == 0) then
+!        indx(0)=irra
+!        return
+!      endif
+!    endif
+!    i=l
+!    j=2*l+1
+!    do while (j <= ir)
+!      if (j < ir .and. ra(indx(j)) < ra(indx(j+1))) j = j+1
+!      if (rra < ra(indx(j))) then
+!        indx(i)=indx(j)
+!        i = j
+!        j = j+i+1
+!      else
+!        j=ir+1
+!      endif
+!    end do
+!    indx(i)=irra
+!  end do
+!end subroutine sort_index
+
 !************************************************************************
 subroutine echo_cmd_file(fp, cmd_file)
 character(len=*) :: cmd_file
@@ -466,7 +505,7 @@ character(len=4096+1) :: inp_line
 ! we know what conditions were used to produce a given result).
 
 
-!   Open the file 
+!  /* Open the file */
   open(unit=file_cmd,file=cmd_file,action='read',iostat=iostat)
   if (iostat /= 0) then
     print *, "Error:  Could not find command file ", cmd_file

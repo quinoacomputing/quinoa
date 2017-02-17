@@ -61,6 +61,7 @@
 #include "RTOpPack_ROpWeightedNorm2.hpp"
 #include "RTOpPack_TOpAbs.hpp"
 #include "RTOpPack_TOpAddScalar.hpp"
+#include "RTOpPack_TOpAssignScalar.hpp"
 #include "RTOpPack_TOpAssignVectors.hpp"
 #include "RTOpPack_TOpAXPY.hpp"
 #include "RTOpPack_TOpEleWiseDivide.hpp"
@@ -210,7 +211,11 @@ void Thyra::set_ele( Ordinal i, Scalar alpha, const Ptr<VectorBase<Scalar> > &v 
 template<class Scalar>
 void Thyra::put_scalar( const Scalar& alpha, const Ptr<VectorBase<Scalar> > &v_lhs )
 {
-  v_lhs->assign(alpha);
+  using Teuchos::tuple; using Teuchos::null;
+  RTOpPack::TOpAssignScalar<Scalar> assign_scalar_op(alpha);
+  applyOp<Scalar>(assign_scalar_op,
+    ArrayView<Ptr<const VectorBase<Scalar> > >(null),
+    tuple(v_lhs), null );
 }
 
 

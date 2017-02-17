@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -66,17 +53,17 @@ void Ifpack_BreakForDebugger(Epetra_Comm& Comm);
 
 //! Creates an overlapping Epetra_CrsMatrix. Returns 0 if OverlappingLevel is 0.
 Epetra_CrsMatrix* Ifpack_CreateOverlappingCrsMatrix(const Epetra_RowMatrix* Matrix,
-                                                    const int OverlappingLevel);
+						    const int OverlappingLevel);
 
 //! Creates an overlapping Epetra_CrsGraph. Returns 0 if OverlappingLevel is 0.
 Epetra_CrsGraph* Ifpack_CreateOverlappingCrsMatrix(const Epetra_CrsGraph* Graph,
-                                                   const int OverlappingLevel);
+						   const int OverlappingLevel);
 
-//! Converts an integer to std::string.
-std::string Ifpack_toString(const int& x);
+//! Convertes an integer to string.
+string Ifpack_toString(const int& x);
 
-//! Converts a double to std::string.
-std::string Ifpack_toString(const double& x);
+//! Convertes a double to string.
+string Ifpack_toString(const double& x);
 
 //! Prints on cout the true residual.
 int Ifpack_PrintResidual(char* Label,  const Epetra_RowMatrix& A,
@@ -101,7 +88,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap = false,
  An example of output is reported \ref ifp_matrix.
  */
 int Ifpack_AnalyzeMatrixElements(const Epetra_RowMatrix& A,
-                                 const bool abs = false,
+                                 const bool abs = false, 
                                  const int steps = 10);
 
 //! Analyzes the distribution of values of the input vector Diagonal.
@@ -114,23 +101,23 @@ int Ifpack_AnalyzeMatrixElements(const Epetra_RowMatrix& A,
  An example of output is reported \ref ifp_vector.
  */
 int Ifpack_AnalyzeVectorElements(const Epetra_Vector& Diagonal,
-                                 const bool abs = false,
+                                 const bool abs = false, 
                                  const int steps = 10);
 
 //! Plots the sparsity pattern of an Epetra_RowMatrix into a PS file.
 /*!
  \param A (In) - Epetra_RowMatrix whose sparsity pattern will be plotted.
 
- \param FileName (In) - char std::string containing the filename.
+ \param FileName (In) - char string containing the filename.
                         If 0, then the matrix label is used as file name,
                         after appending .ps.
 
  \param NumPDEEqns (In) - number of PDE equations. The function will plot
                the block structure of the matrix if NumPDEEqns > 1
 
- \name Largely inspired from Yousef Saad's SPARSKIT plot function.
+ \name Largely inspired from Yousef Saad's SPARSKIT plot function. 
  */
-int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* FileName = 0,
+int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* FileName = 0, 
                          const int NumPDEEqns = 1);
 
 //==============================================================================
@@ -168,7 +155,7 @@ public:
     aval_ = IFPACK_ABS(val_);
   }
 
-  inline bool operator <(const Ifpack_Element& rhs) const
+  inline bool operator <(const Ifpack_Element& rhs) const 
   {
     if (rhs.AbsValue() > AbsValue())
       return(false);

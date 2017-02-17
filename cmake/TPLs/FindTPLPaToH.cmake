@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( PaToH
+TRIBITS_TPL_DECLARE_LIBRARIES( PaToH
   REQUIRED_HEADERS patoh.h 
   REQUIRED_LIBS_NAMES patoh
   )

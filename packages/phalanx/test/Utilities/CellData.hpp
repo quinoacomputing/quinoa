@@ -46,10 +46,8 @@
 #define PHX_EXAMPLE_CELL_DATA_HPP
 
 #include <vector>
-#include "Phalanx_config.hpp"
-#include "Kokkos_View.hpp"
-#include "Phalanx_KokkosDeviceTypes.hpp"
-#include <vector>
+#include "Phalanx_ConfigDefs.hpp" // for std::vector
+#include "AlgebraicTypes.hpp"
 
 class CellData {
   
@@ -58,18 +56,20 @@ public:
   CellData();
   
   virtual ~CellData() {}
-    
-  Kokkos::View<double***,PHX::Device> getNodeCoordinates();
   
-  Kokkos::View<double**,PHX::Device> getBasisFunctions();
+  std::vector< MyVector<double> >& getNodeCoordinates();
   
-  Kokkos::View<double***,PHX::Device> getBasisFunctionGradients();
+  std::vector< std::vector<double> >& getBasisFunctions();
+  
+  std::vector< std::vector< MyVector<double> > >& getBasisFunctionGradients();
   
 private:
   
-  Kokkos::View<double***,PHX::Device> m_coords;
-  Kokkos::View<double**,PHX::Device> m_phi;
-  Kokkos::View<double***,PHX::Device> m_grad_phi;
+  std::vector< MyVector<double> > coords_;
+  
+  std::vector< std::vector<double> > phi_;
+  
+  std::vector< std::vector< MyVector<double> > > grad_phi_;
 };
 
 #endif

@@ -1,36 +1,3 @@
-C    Copyright (c) 2014, Sandia Corporation.
-C    Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-C    the U.S. Government retains certain rights in this software.
-C    
-C    Redistribution and use in source and binary forms, with or without
-C    modification, are permitted provided that the following conditions are
-C    met:
-C    
-C        * Redistributions of source code must retain the above copyright
-C          notice, this list of conditions and the following disclaimer.
-C    
-C        * Redistributions in binary form must reproduce the above
-C          copyright notice, this list of conditions and the following
-C          disclaimer in the documentation and/or other materials provided
-C          with the distribution.
-C    
-C        * Neither the name of Sandia Corporation nor the names of its
-C          contributors may be used to endorse or promote products derived
-C          from this software without specific prior written permission.
-C    
-C    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-C    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-C    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-C    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-C    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-C    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-C    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-C    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-C    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-C    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-C    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-C    
-
 C $Id: getm5.f,v 1.2 1998/07/14 18:19:03 gdsjaar Exp $
 C $Log: getm5.f,v $
 C Revision 1.2  1998/07/14 18:19:03  gdsjaar
@@ -111,7 +78,7 @@ C
          CALL MESAGE ('TOLERANCE EXCEEDED')
          RETURN
       ELSE IF (IFIRST.NE.1) THEN
-         CALL FQ_ROTATE (NPER, X, Y, NID, IFIRST)
+         CALL ROTATE (NPER, X, Y, NID, IFIRST)
       END IF
 C
 C  DELETE THE STACKS
@@ -129,16 +96,16 @@ C
       IF (M1 .EQ. MMAX) THEN
          KNUM = 0
       ELSE IF (M2 .EQ. MMAX) THEN
-         CALL FQ_ROTATE (NPER, X, Y, NID, M1 + 1)
+         CALL ROTATE (NPER, X, Y, NID, M1 + 1)
          KNUM = 1
       ELSE IF (M3 .EQ. MMAX) THEN
-         CALL FQ_ROTATE (NPER, X, Y, NID, M1 + M2 + 1)
+         CALL ROTATE (NPER, X, Y, NID, M1 + M2 + 1)
          KNUM = 2
       ELSE IF (M4 .EQ. MMAX) THEN
-         CALL FQ_ROTATE (NPER, X, Y, NID, M1 + M2 + M3 + 1)
+         CALL ROTATE (NPER, X, Y, NID, M1 + M2 + M3 + 1)
          KNUM = 3
       ELSE IF (M5 .EQ. MMAX) THEN
-         CALL FQ_ROTATE (NPER, X, Y, NID, M1 + M2 + M3 + M4 + 1)
+         CALL ROTATE (NPER, X, Y, NID, M1 + M2 + M3 + M4 + 1)
          KNUM = 4
       END IF
       DO 100 KK = 1, KNUM

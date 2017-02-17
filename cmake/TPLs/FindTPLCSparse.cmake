@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( CSparse
+TRIBITS_TPL_DECLARE_LIBRARIES( CSparse
   REQUIRED_HEADERS cs.h
   REQUIRED_LIBS_NAMES csparse
   )

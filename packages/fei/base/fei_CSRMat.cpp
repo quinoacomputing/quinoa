@@ -1,11 +1,46 @@
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
 
-/*--------------------------------------------------------------------*/
-/*    Copyright 2005 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+
 
 #include "fei_CSRMat.hpp"
 #include <fei_impl_utils.hpp>
@@ -64,12 +99,11 @@ CSRMat::operator=(const fei::FillableMat& src)
 
   unsigned offset = 0;
   for(; iter != iter_end; ++iter) {
-    const CSVec* v = iter->second;
-    const std::vector<int>& v_ind = v->indices();
-    const std::vector<double>& v_coef = v->coefs();
-    for(size_t i=0; i<v_ind.size(); ++i) {
-      colind_ptr[offset] = v_ind[i];
-      coef_ptr[offset++] = v_coef[i];
+    const FillableVec* v = iter->second;
+    FillableVec::const_iterator viter = v->begin(), vend = v->end();
+    for(; viter != vend; ++viter) {
+      colind_ptr[offset] = viter->first;
+      coef_ptr[offset++] = viter->second;
     }
   }
 
@@ -106,13 +140,13 @@ void multiply_CSRMat_CSVec(const CSRMat& A, const CSVec& x, CSVec& y)
   const std::vector<int>& rows = A.getGraph().rowNumbers;
   const int* rowoffs = &(A.getGraph().rowOffsets[0]);
   const std::vector<int>& colinds = A.getGraph().packedColumnIndices;
-  const double* Acoef = A.getPackedCoefs().size() > 0 ? &(A.getPackedCoefs()[0]): NULL;
+  const double* Acoef = &(A.getPackedCoefs()[0]);
 
   const std::vector<int>& xind = x.indices();
   const std::vector<double>& xcoef = x.coefs();
 
-  const double* xcoef_ptr = xcoef.empty() ? NULL : &xcoef[0];
-  const int* xind_ptr = xind.empty() ? NULL : &xind[0];
+  const double* xcoef_ptr = &xcoef[0];
+  const int* xind_ptr = &xind[0];
   int xlen = xcoef.size();
 
   std::vector<int>& yind = y.indices();
@@ -123,8 +157,8 @@ void multiply_CSRMat_CSVec(const CSRMat& A, const CSVec& x, CSVec& y)
   yind.resize(nrows);
   ycoef.resize(nrows);
 
-  int* yind_ptr = yind.size() > 0 ? &yind[0] : NULL;
-  double* ycoef_ptr = ycoef.size() > 0 ? &ycoef[0] : NULL;
+  int* yind_ptr = &yind[0];
+  double* ycoef_ptr = &ycoef[0];
 
   int jbeg = *rowoffs++;
   for(unsigned i=0; i<nrows; ++i) {
@@ -149,13 +183,13 @@ void multiply_trans_CSRMat_CSVec(const CSRMat& A, const CSVec& x, CSVec& y)
 {
   const std::vector<int>& rows = A.getGraph().rowNumbers;
   const int* rowoffs = &(A.getGraph().rowOffsets[0]);
-  const int* colinds = A.getGraph().packedColumnIndices.empty() ? NULL : &(A.getGraph().packedColumnIndices[0]);
-  const double* Acoef = A.getPackedCoefs().empty() ? NULL : &(A.getPackedCoefs()[0]);
+  const int* colinds = &(A.getGraph().packedColumnIndices[0]);
+  const double* Acoef = &(A.getPackedCoefs()[0]);
 
   const std::vector<int>& xind = x.indices();
   const std::vector<double>& xcoef = x.coefs();
 
-  const double* xcoef_ptr = xcoef.empty() ? NULL : &xcoef[0];
+  const double* xcoef_ptr = &xcoef[0];
 
   unsigned nrows = A.getNumRows();
 
@@ -163,7 +197,7 @@ void multiply_trans_CSRMat_CSVec(const CSRMat& A, const CSVec& x, CSVec& y)
   fei::impl_utils::find_offsets(rows, xind, offsets);
   const int* offsetsptr = &offsets[0];
 
-  fei::CSVec fy;
+  fei::FillableVec fy;
 
   int jbeg = *rowoffs++;
   for(unsigned i=0; i<nrows; ++i) {
@@ -178,7 +212,7 @@ void multiply_trans_CSRMat_CSVec(const CSRMat& A, const CSVec& x, CSVec& y)
     double xcoeff = xcoef_ptr[xoff];
 
     while(jbeg<jend) {
-      add_entry(fy, colinds[jbeg],Acoef[jbeg]*xcoeff);
+      fy.addEntry(colinds[jbeg],Acoef[jbeg]*xcoeff);
       ++jbeg;
     }
   }
@@ -205,7 +239,7 @@ void multiply_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
 
   const int* Browoffs = &(B.getGraph().rowOffsets[0]);
   const std::vector<int>& Bcols = B.getGraph().packedColumnIndices;
-  const double* Bcoefs = B.getPackedCoefs().empty() ? NULL : &(B.getPackedCoefs()[0]);
+  const double* Bcoefs = &(B.getPackedCoefs()[0]);
 
   static double fei_min = std::numeric_limits<double>::min();
 
@@ -214,7 +248,7 @@ void multiply_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
     int row = Arows[i];
     int jend = *Arowoffs++;
 
-    fei::CSVec* fc_row = NULL;
+    fei::FillableVec* fc_row = NULL;
     if (storeResultZeros) {
       fc_row = fc.create_or_getRow(row);
     }
@@ -239,8 +273,8 @@ void multiply_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
         }
       }
 
-      const int* Brow_cols = Bcols.empty() ? NULL : &(Bcols[Browoffs[Brow_offset]]);
-      const double* Brow_coefs = Bcoefs==NULL ? NULL : &(Bcoefs[Browoffs[Brow_offset]]);
+      const int* Brow_cols = &(Bcols[Browoffs[Brow_offset]]);
+      const double* Brow_coefs = &(Bcoefs[Browoffs[Brow_offset]]);
       int Brow_len = Browoffs[Brow_offset+1]-Browoffs[Brow_offset];
 
       for(int k=0; k<Brow_len; ++k) {
@@ -257,7 +291,7 @@ void multiply_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
           fc_row = fc.create_or_getRow(row);
         }
 
-        add_entry(*fc_row, resultCol, resultCoef);
+        fc_row->addEntry(resultCol, resultCoef);
       }
     }
   }
@@ -281,12 +315,12 @@ void multiply_trans_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
 
   const size_t numArows = Arows.size();
   const int* Arowoffs = &(A.getGraph().rowOffsets[0]);
-  const int* Acols = A.getGraph().packedColumnIndices.empty() ? NULL : &(A.getGraph().packedColumnIndices[0]);
-  const double* Acoefs = A.getPackedCoefs().empty() ? NULL : &(A.getPackedCoefs()[0]);
+  const int* Acols = &(A.getGraph().packedColumnIndices[0]);
+  const double* Acoefs = &(A.getPackedCoefs()[0]);
 
   const int* Browoffs = &(B.getGraph().rowOffsets[0]);
   const std::vector<int>& Bcols = B.getGraph().packedColumnIndices;
-  const double* Bcoefs = B.getPackedCoefs().empty() ? NULL : &(B.getPackedCoefs()[0]);
+  const double* Bcoefs = &(B.getPackedCoefs()[0]);
 
   std::vector<double> row_coefs;
 
@@ -305,8 +339,8 @@ void multiply_trans_CSRMat_CSRMat(const CSRMat& A, const CSRMat& B, CSRMat& C,
       continue;
     }
 
-    const int* Brow_cols = Bcols.empty() ? NULL : &(Bcols[Browoffs[Brow_offset]]);
-    const double* Brow_coefs = Bcoefs==NULL ? NULL : &(Bcoefs[Browoffs[Brow_offset]]);
+    const int* Brow_cols = &(Bcols[Browoffs[Brow_offset]]);
+    const double* Brow_coefs = &(Bcoefs[Browoffs[Brow_offset]]);
     int Brow_len = Browoffs[Brow_offset+1]-Browoffs[Brow_offset];
 
     if ((int)row_coefs.size() < Brow_len) row_coefs.resize(Brow_len*2);

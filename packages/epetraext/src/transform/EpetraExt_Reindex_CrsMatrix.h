@@ -79,11 +79,6 @@ class CrsMatrix_Reindex : public ViewTransform<Epetra_CrsMatrix> {
    */
   NewTypeRef operator()( OriginalTypeRef orig );
 
-private:
-
-  template<typename int_type>
-  NewTypeRef Toperator( OriginalTypeRef orig );
-
 };
 
 } //namespace EpetraExt

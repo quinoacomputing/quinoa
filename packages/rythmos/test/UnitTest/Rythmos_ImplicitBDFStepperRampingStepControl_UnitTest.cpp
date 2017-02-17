@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -56,8 +56,7 @@ namespace Rythmos {
 using Teuchos::getParametersFromXmlString;
 using Thyra::VectorBase;
 
-TEUCHOS_UNIT_TEST( Rythmos_DefaultIntegrator,
-                   ImplicitBDFStepperRampingStepControl )
+TEUCHOS_UNIT_TEST( Rythmos_DefaultIntegrator, ImplicitBDFStepperRampingStepControl )
 {
   const RCP<SinCosModel> model = sinCosModel(true);
 
@@ -66,9 +65,11 @@ TEUCHOS_UNIT_TEST( Rythmos_DefaultIntegrator,
 
   const RCP<Teuchos::ParameterList> params = 
     Teuchos::parameterList();
-
   const RCP<ImplicitBDFStepper<double> > stepper =
     implicitBDFStepper<double>(model, nonlinearSolver, params);
+
+//   const RCP<ImplicitBDFStepperStepControl<double> > scs = 
+//     Teuchos::rcp(new ImplicitBDFStepperStepControl<double>);
 
   const RCP<ImplicitBDFStepperRampingStepControl<double> > rscs = 
     Teuchos::rcp(new ImplicitBDFStepperRampingStepControl<double>);
@@ -96,63 +97,11 @@ TEUCHOS_UNIT_TEST( Rythmos_DefaultIntegrator,
   // not the best way to test, but will do for now
   TEST_EQUALITY(rscs->numberOfSteps(), 47);
   TEST_EQUALITY(rscs->numberOfFailedSteps(), 3);
-  TEST_FLOATING_EQUALITY(rscs->currentStepSize(),
-                         Teuchos::as<double>(0.07864277), 1.0e-7);
+  TEST_FLOATING_EQUALITY(rscs->currentStepSize(), Teuchos::as<double>(0.07864277), 1.0e-7);
   TEST_EQUALITY(rscs->currentOrder(), 5);
 
 }
 
-
-TEUCHOS_UNIT_TEST( Rythmos_DefaultIntegrator,
-                   ImplicitBDFStepperRampingStepControlBreakPointing )
-{
-  const RCP<SinCosModel> model = sinCosModel(true);
-
-  const RCP<TimeStepNonlinearSolver<double> > nonlinearSolver =
-    timeStepNonlinearSolver<double>();
-
-  const RCP<Teuchos::ParameterList> params = 
-    Teuchos::parameterList();
-
-  const RCP<ImplicitBDFStepper<double> > stepper =
-    implicitBDFStepper<double>(model, nonlinearSolver, params);
-
-  const RCP<ImplicitBDFStepperRampingStepControl<double> > rscs = 
-    Teuchos::rcp(new ImplicitBDFStepperRampingStepControl<double>);
-
-  const RCP<Teuchos::ParameterList> rscs_params = 
-    Teuchos::parameterList();
-  rscs_params->set("Break Points","-1.0,8.5e-1,8.25e-1");
-  rscs->setParameterList(rscs_params);
-
-  rscs->setVerbLevel(Teuchos::VERB_HIGH);
-
-  const RCP<MockStepControlStrategyDecorator<double> > mscsd = 
-    mockStepControlStrategyDecorator<double>();
-  mscsd->initialize(rscs);
-  mscsd->addNonlinearSolverFailureOnStep(4,3);
-
-  stepper->setStepControlStrategy(mscsd);
-
-  stepper->setInitialCondition(model->getNominalValues());
-  const RCP<DefaultIntegrator<double> > integrator =
-    defaultIntegrator<double>();
-
-  const double finalTime = 1.0;
-  integrator->setStepper(stepper, finalTime);
-  integrator->setVerbLevel(Teuchos::VERB_MEDIUM);
-  integrator->setOStream(Teuchos::rcpFromRef(out));
-  const RCP<const Thyra::VectorBase<double> > x_final =
-    get_fwd_x<double>(*integrator, finalTime);
-
-  // not the best way to test, but will do for now
-  TEST_EQUALITY(rscs->numberOfSteps(), 51);
-  TEST_EQUALITY(rscs->numberOfFailedSteps(), 3);
-  TEST_FLOATING_EQUALITY(rscs->currentStepSize(),
-                         Teuchos::as<double>(0.0408), 1.0e-7);
-  TEST_EQUALITY(rscs->currentOrder(), 5);
-
-}
 
 } // namespace Rythmos
 

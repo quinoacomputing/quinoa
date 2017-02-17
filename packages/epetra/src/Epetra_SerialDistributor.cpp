@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -87,8 +87,8 @@ int Epetra_SerialDistributor::CreateFromSends( const int & NumExportIDs,
   //basically just do a sanity check.
   for(int i=0; i<NumExportIDs; ++i) {
     if (ExportPIDs[i] != myproc) {
-      std::cerr << "Epetra_SerialDistributor::CreateFromSends: ExportPIDs["<<i
-          <<"]=="<<ExportPIDs[i]<<", not allowed for serial case."<< std::endl;
+      cerr << "Epetra_SerialDistributor::CreateFromSends: ExportPIDs["<<i
+          <<"]=="<<ExportPIDs[i]<<", not allowed for serial case."<<endl;
       return(-1);
     }
     ++NumRemoteIDs;
@@ -119,35 +119,9 @@ int Epetra_SerialDistributor::CreateFromRecvs( const int & NumRemoteIDs,
   (void)NumExportIDs;
   (void)ExportGIDs;
   (void)ExportPIDs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
-
-//==============================================================================
-//---------------------------------------------------------------------------
-//CreateFromRecvs Method
-// - create communication plan given a known list of procs to recv from
-//---------------------------------------------------------------------------
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_SerialDistributor::CreateFromRecvs( const int & NumRemoteIDs,
-				   const long long * RemoteGIDs,
-			           const int * RemotePIDs,
-				   bool Deterministic,
-			           int & NumExportIDs,
-				   long long *& ExportGIDs,
-				   int *& ExportPIDs )
-{
-  (void)NumRemoteIDs;
-  (void)RemoteGIDs;
-  (void)RemotePIDs;
-  (void)Deterministic;
-  (void)NumExportIDs;
-  (void)ExportGIDs;
-  (void)ExportPIDs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
-  return(-1);
-}
-#endif
 
 //==============================================================================
 // GSComm_Comm Do method
@@ -177,7 +151,7 @@ int Epetra_SerialDistributor::DoReverse(char * export_objs,
   (void)obj_size;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 //==============================================================================
@@ -193,7 +167,7 @@ int Epetra_SerialDistributor::DoPosts(char * export_objs,
   (void)obj_size;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 //==============================================================================
@@ -202,7 +176,7 @@ int Epetra_SerialDistributor::DoPosts(char * export_objs,
 //---------------------------------------------------------------------------
 int Epetra_SerialDistributor::DoWaits()
 {
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
@@ -219,7 +193,7 @@ int Epetra_SerialDistributor::DoReversePosts(char * export_objs,
   (void)obj_size;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
@@ -229,7 +203,7 @@ int Epetra_SerialDistributor::DoReversePosts(char * export_objs,
 //---------------------------------------------------------------------------
 int Epetra_SerialDistributor::DoReverseWaits()
 {
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
@@ -246,7 +220,7 @@ int Epetra_SerialDistributor::Do(char * export_objs,
   (void)sizes;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
@@ -263,7 +237,7 @@ int Epetra_SerialDistributor::DoReverse(char * export_objs,
   (void)sizes;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 //==============================================================================
@@ -281,7 +255,7 @@ int Epetra_SerialDistributor::DoPosts(char * export_objs,
   (void)sizes;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
@@ -300,13 +274,13 @@ int Epetra_SerialDistributor::DoReversePosts(char * export_objs,
   (void)sizes;
   (void)len_import_objs;
   (void)import_objs;
-  EPETRA_CHK_ERR(-1); // This method should never be called
+  EPETRA_CHK_ERR(-1); // This method should never be called 
   return(-1);
 }
 
 //==============================================================================
-void Epetra_SerialDistributor::Print(std::ostream & os) const
+void Epetra_SerialDistributor::Print( ostream & os) const
 {
-  os << "Trivial Distributor" << std::endl;
+  os << "Trivial Distributor" << endl;
   return;
 }

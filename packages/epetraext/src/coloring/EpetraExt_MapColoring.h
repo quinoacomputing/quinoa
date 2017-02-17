@@ -96,8 +96,6 @@ class CrsGraph_MapColoring : public StructuralTransform<Epetra_CrsGraph,Epetra_M
 
   const int verbosity_;
 
-  template<typename int_type>
-  CrsGraph_MapColoring::NewTypeRef Toperator( CrsGraph_MapColoring::OriginalTypeRef orig );
 };
 
 } //namespace EpetraExt

@@ -231,7 +231,7 @@ AztecOO_StatusTestResNorm::CheckStatus(int CurrentIter,
    return(result);
  }
 
-std::ostream& AztecOO_StatusTestResNorm::Print(std::ostream& stream, int indent) const
+ostream& AztecOO_StatusTestResNorm::Print(ostream& stream, int indent) const
 {
   for (int j = 0; j < indent; j ++)
     stream << ' ';
@@ -262,7 +262,7 @@ std::ostream& AztecOO_StatusTestResNorm::Print(std::ostream& stream, int indent)
     stream << ((testvalue_<tolerance_) ? " < " : (testvalue_==tolerance_) ? " = " : (testvalue_>tolerance_) ? " > " : " <> ");
   }
   stream << tolerance_;
-  stream << std::endl;
+  stream << endl;
     
   return stream;
 }

@@ -3,12 +3,10 @@
 # a required dependence on Epetra but the Stratimikos Belos and ML adapters
 # need the Thyra/Epetra adapters.
 SET(LIB_REQUIRED_DEP_PACKAGES ThyraEpetraAdapters)
-SET(LIB_OPTIONAL_DEP_PACKAGES Amesos AztecOO Belos Ifpack ML EpetraExt)
+SET(LIB_OPTIONAL_DEP_PACKAGES Amesos AztecOO Belos Ifpack ML)
 SET(TEST_REQUIRED_DEP_PACKAGES)
-SET(TEST_OPTIONAL_DEP_PACKAGES Triutils)
+SET(TEST_OPTIONAL_DEP_PACKAGES Triutils EpetraExt)
 SET(LIB_REQUIRED_DEP_TPLS)
 SET(LIB_OPTIONAL_DEP_TPLS)
 SET(TEST_REQUIRED_DEP_TPLS)
 SET(TEST_OPTIONAL_DEP_TPLS)
-
-# Note: EpetraExt is used by the AztecOO adapters

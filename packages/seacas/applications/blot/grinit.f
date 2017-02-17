@@ -156,27 +156,11 @@ C ... Get graphics device name from executable (follows . in executable name)
           devnam(2) = ' '
         end if
       else
-        last = indexr(scratch, '.')
-        if (last .gt. 2) then
-          device = scratch(last+1:lfil)
-          if (device(:lenstr(device)) .eq. 'dual') then
-            devnam(1) = 'x11'
-            devnam(2) = 'met'
-          else if (device(:lenstr(device)) .eq. 'xcps') then
-            devnam(1) = 'x11'
-            devnam(2) = 'cps'
-          else
-            devnam(1) = device(:lenstr(device))
-            devnam(2) = ' '
-          end if
-        else
-          call PRTERR('ERROR',
-     *      'Could not determine graphics device type.')
-          call PRTERR('CMDSPEC',scratch(:lfil))
+        call PRTERR('ERROR','Could not determine graphics device type.')
+        call PRTERR('CMDSPEC',scratch(:lfil))
 C ... Assume single device, x11
-          devnam(1) = 'x11'
-          devnam(2) = ' '
-        end if
+        devnam(1) = 'x11'
+        devnam(2) = ' '
       end if
 
       CALL VDIQES (KDVDI, ION)

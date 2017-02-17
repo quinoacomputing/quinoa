@@ -108,43 +108,41 @@ bool VectorTester<Scalar>::check(
     three = Scalar(3)*one;
 
   {
-    using Teuchos::inoutArg;
+    using Teuchos::inOutArg;
 
-    TestResultsPrinter testResultsPrinter(out, show_all_tests());
-    const RCP<FancyOStream> testOut = testResultsPrinter.getTestOStream();
-
+    std::ostringstream oss;
     bool these_results = true;
     
-    *testOut <<endl<< "assign(t1.ptr(),2.0) ...\n";
+    oss <<endl<< "assign(t1.ptr(),2.0) ...\n";
     Thyra::assign( t1.ptr(), two );
-    if(dump_all()) *testOut <<endl<< "\nt1 =\n" << describe(*t1,verbLevel);
+    if(dump_all()) oss <<endl<< "\nt1 =\n" << describe(*t1,verbLevel);
     
     result = Teuchos::testRelErr<Scalar>(
       "sum(t1)", sum(*t1), "2*vs->dim()", two*Scalar(vs->dim()),
       "error_tol()", error_tol(), "warning_tol()", warning_tol(),
-      inoutArg(*testOut)
+      inOutArg(oss)
       );
     if(!result) these_results = false;
     
-    *testOut <<endl<< "assign(t2.ptr(),3.0) ...\n";
+    oss <<endl<< "assign(t2.ptr(),3.0) ...\n";
     Thyra::assign( t2.ptr(), three );
-    if(dump_all()) *testOut <<endl<< "t2 =\n" << *t1;
+    if(dump_all()) oss <<endl<< "t2 =\n" << *t1;
     
     result = Teuchos::testRelErr<Scalar>(
       "sum(t2)",sum(*t2),"3*vs->dim()",three*Scalar(vs->dim()),
       "error_tol()",error_tol(),"warning_tol()",warning_tol(),
-      inoutArg(*testOut)
+      inOutArg(oss)
       );
     if(!result) these_results = false;
     
     result = Teuchos::testRelErr<Scalar>(
       "vs->scalarProd(*t1,*t2)",vs->scalarProd(*t1,*t2),"2*3*vs->dim()",two*three*Scalar(vs->dim()),
       "error_tol()",error_tol(),"warning_tol()",warning_tol(),
-      inoutArg(*testOut)
+      inOutArg(oss)
       );
     if(!result) these_results = false;
 
-    testResultsPrinter.printTestResults(these_results, inoutArg(success));
+    printTestResults(these_results,oss.str(),show_all_tests(),&success,out.get());
 
   }
     

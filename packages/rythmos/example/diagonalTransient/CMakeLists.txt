@@ -1,16 +1,18 @@
 
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 INCLUDE(MultilineSet)
 
 ASSERT_DEFINED(PACKAGE_SOURCE_DIR CMAKE_CURRENT_SOURCE_DIR)
 
-TRIBITS_INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR}/../../../epetraext/example/model_evaluator/DiagonalTransient)
+INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR}/../../../epetraext/example/model_evaluator/DiagonalTransient)
 
 FILE(GLOB SOURCES *.cpp)
 
 TRIBITS_ADD_EXECUTABLE(
   diagonalTransient
   SOURCES ${SOURCES}
-  TESTONLYLIBS rythmos_test_models
+  DEPLIBS rythmos_test_models
   COMM serial mpi  
   )
 

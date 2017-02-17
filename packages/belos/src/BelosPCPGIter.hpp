@@ -256,7 +256,7 @@ namespace Belos {
      * \note For any pointer in \c newstate which directly points to the multivectors in 
      * the solver, the data is not (supposed to be) copied.
      */
-    void initialize(PCPGIterState<ScalarType,MV>& newstate);
+    void initialize(PCPGIterState<ScalarType,MV> newstate);
     
     /*! \brief Initialize the solver with the initial vectors from the linear problem.
      *  An exception is thrown if initialzed is called and newstate.R is null.
@@ -587,7 +587,7 @@ namespace Belos {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Initialize the iteration object
   template <class ScalarType, class MV, class OP>
-  void PCPGIter<ScalarType,MV,OP>::initialize(PCPGIterState<ScalarType,MV>& newstate)
+  void PCPGIter<ScalarType,MV,OP>::initialize(PCPGIterState<ScalarType,MV> newstate)
   {
 
     TEUCHOS_TEST_FOR_EXCEPTION(!stateStorageInitialized_,std::invalid_argument,
@@ -623,7 +623,7 @@ namespace Belos {
       if (!stateStorageInitialized_) 
         setStateSize();
 
-      //TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetGlobalLength(*newstate.V) != MVT::GetGlobalLength(*V_), std::invalid_argument, errstr );
+      //TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetVecLength(*newstate.V) != MVT::GetVecLength(*V_), std::invalid_argument, errstr );
       //TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetNumberVecs(*newstate.V) < 1, std::invalid_argument, errstr );
 
       newstate.prevUdim =  prevUdim_; // big change in functionality from GCRODR 
@@ -683,7 +683,7 @@ namespace Belos {
     if (initialized_ == false) {
       initialize();
     }
-    const bool debug = false;
+    bool debug = false;
 
     // Allocate memory for scalars.
     Teuchos::SerialDenseMatrix<int,ScalarType> alpha( 1, 1 );

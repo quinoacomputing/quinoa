@@ -1,47 +1,3 @@
-<!-------- @HEADER
- !
- ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !
- !  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- !                  Copyright 2012 Sandia Corporation
- !
- ! Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- ! the U.S. Government retains certain rights in this software.
- !
- ! Redistribution and use in source and binary forms, with or without
- ! modification, are permitted provided that the following conditions are
- ! met:
- !
- ! 1. Redistributions of source code must retain the above copyright
- ! notice, this list of conditions and the following disclaimer.
- !
- ! 2. Redistributions in binary form must reproduce the above copyright
- ! notice, this list of conditions and the following disclaimer in the
- ! documentation and/or other materials provided with the distribution.
- !
- ! 3. Neither the name of the Corporation nor the names of the
- ! contributors may be used to endorse or promote products derived from
- ! this software without specific prior written permission.
- !
- ! THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- ! EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- ! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- ! PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- ! CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- ! EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- ! PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- ! PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- ! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- !
- ! Questions? Contact Karen Devine	kddevin@sandia.gov
- !                    Erik Boman	egboman@sandia.gov
- !
- ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !
- ! @HEADER
--------> 
 <!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>
@@ -54,6 +10,18 @@
   <meta name="author" content="Zoltan PI">
 
   <title>Zoltan User's Guide: Release Notes</title>
+<!-----------------------------------------------------------------------------
+ ! Zoltan Library for Parallel Applications            !
+ ! Copyright (c) 2000,2001,2002, Sandia National Laboratories.                !
+ ! This document is released under the GNU Lesser General Public License.     !
+ ! For more info, see the README file in the top-level Zoltan directory.      !
+ !----------------------------------------------------------------------------!
+--><!-- CVS File Information
+     $RCSfile$
+     $Author$
+     $Date$
+     $Revision$
+-->
 </head>
 <body bgcolor="#ffffff">
 <div align="right"><b><i><a href="ug.html">Zoltan User's Guide</a>&nbsp;
@@ -66,10 +34,6 @@
 releases of Zoltan:
 </a>
 <blockquote>
-  <a href="#Release3.83">Zoltan Release v3.83 in Trilinos v12.6</a><br>
-  <a href="#Release3.82">Zoltan Release v3.82 in Trilinos v12</a><br>
-  <a href="#Release3.81">Zoltan Release v3.81 in Trilinos v11.12</a><br>
-  <a href="#Release3.8">Zoltan Release v3.8 in Trilinos v11</a><br>
   <a href="#Release3.7">Zoltan Release v3.7 in Trilinos v11</a><br>
   <a href="#Release3.6">Zoltan Release v3.6</a><br>
   <a href="#Release3.501">Zoltan Release v3.501</a><br>
@@ -89,52 +53,11 @@ releases of Zoltan:
   <a href="#Release1.3">Zoltan Release v1.3</a>
 </blockquote>
 <hr>
-<h2><a name="Release3.83">Zoltan Release v3.83 in Trilinos v12.6; January 2016</a></h2>
-<ul>
-<li> Autotools files updated to avoid deprecated perl features </li>
-<li> Added Zoltan_Get_Fn interface to return pointers to registered callback
-functions.</li>
-<li> Several bug fixes in Fortran90 interface </li>
-<li> Subtle rounding error fixed in PHG hypergraph partitioner </li>
-<li> Minor changes to distributed data directory to track number of nodes
-per processor; include file DD.h is now named zoltan_dd_const.h </li>
-</ul>
-<hr>
-<h2><a name="Release3.82">Zoltan Release v3.82 in Trilinos v12; May 2015</a></h2>
-<ul>
-<li>  Minor code clean-up to remove compiler warnings and handle error conditions.
-<li>  Enable "make -j" when building Zoltan's Fortran90 interface with autotools.
-</ul>
-<hr>
-<h2><a name="Release3.81">Zoltan Release v3.81 in Trilinos v11.12; November 2014</a></h2>
-<ul>
-<li>  Several improvements were made to Zoltan's interface to ParMETIS v4,
-METIS v5, and Scotch v6. 
-<li>  New statistics were added to the RCB and RIB algorithms' output.
-<li>  Checks for MPI_VERSION 1 or 2 were added where appropriate to handle
-MPI interface changes.
-<li>  For non-MPI builds of Zoltan, a bug in the serial MPI stubs siMPI was 
-fixed; the bug occurred when many MPI_Datatypes were defined by the 
-algorithm (e.g., in deep recursion level of multilevel partitioning methods).
-<li>  Several minor bugs were fixed.
-<li>  No Zoltan interfaces were changed; Zoltan 3.81 is fully 
-backward-compatible with Zoltan 3.8.
-</ul> 
-<hr>
-<h2><a name="Release3.8">Zoltan Release Notes v3.8: October 2013</a></h2>
-<ul>
-<li>  An improved hash function reduces execution time in partitioning, 
-particularly when parameter RETURN_LISTS=PARTS is used.
-<li>  Several bug fixes address overflow issues in cases where integers A and B
-are valid integers, but A*B overflows an integer.
-</ul>
-<hr>
-<h2><a name="Release3.7">Zoltan Release Notes v3.7: September 2012</a></h2>
+<h2><a name="Release3.7">Zoltan Release Notes v3.7: Summer 2012</a></h2>
 <ul>
 <li> The following features (deprecated in Trilinos v10.8) are no longer
 supported in Trilinos v11.
 <ul>
-<li>Zoltan is now released under Trilinos' BSD license.
 <li> Zoltan v1.1 interface (as described in Zoltan include file lbi_const.h):
 users should upgrade their Zoltan interface and include file zoltan.h.
 Instructions are at the <a href="../Zoltan_FAQ.html">Zoltan FAQ page</a>.
@@ -143,27 +66,6 @@ partitions with faster partitioning time.
 <li> Use of DRUM as a Zoltan TPL:  architecture-aware methods will be included
 in Zoltan2.
 </ul>
-<li> Improved memory usage in Zoltan Distributed Data Directories.  Memory is
-now managed in a single block, eliminating excessive calls to malloc and
-improving the runtime performance of the data directories and the
-hierarchical partitioning algorithms that use them.
-<li> Hierarchical partitioning received several performance, interface and 
-testing improvements.  In particular, an easier-to-use interface has been 
-added using simple parameters (HIER_ASSIST, PLATFORM_NAME, TOPOLOGY)
-instead of callback functions; the callback function interface is still
-supported.  Also, hierarchical partitioning can now be used with only
-geometric partitioners and callbacks, whereas before it required 
-graph-based callbacks as well.
-<li> Reduced the memory usage of RCB and RIB when parameter KEEP_CUTS=0.
-<li> Increased use of point-to-point communication (instead of MPI_Alltoall)
-in communication package for better performance on large number of 
-processors.
-<li> Compilation with gcc 4.7 is now supported.
-<li> Using MurmurHash for better hashing.  
-<li>  Zoltan supports PT-Scotch v5.1.12 and ParMETIS v4, as well as some older
-versions of these TPLs. 
-<li> Zoltan's graph build has been streamlined; if possible, use the parameter
-"GRAPH_BUILD_TYPE" == "FAST_NO_DUP" for faster graph builds.
 </ul>
 <hr>
 <h2><a name="Release3.6">Zoltan Release Notes v3.6: September 13, 2011</a></h2>

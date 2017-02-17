@@ -213,15 +213,34 @@ protected:
 
   //@}
 
-  /** @name Overridden protected functions from MultiVectorBase */
+public:
+
+  /** \name Deprecated */
   //@{
 
-  /** \brief . */
-  void assignImpl(Scalar alpha);
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED DefaultProductVector(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const RCP<VectorBase<Scalar> > vecs[]
+    )
+    :numBlocks_(0)
+    { initialize(productSpace_in, Teuchos::arrayView(vecs, productSpace_in->numBlocks())); }
 
-  //#}
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED void initialize(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const RCP<VectorBase<Scalar> > vecs[]
+    )
+    { initialize(productSpace_in, Teuchos::arrayView(vecs, productSpace_in->numBlocks())); }
 
-public:
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED void initialize(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const RCP<const VectorBase<Scalar> > vecs[]
+    )
+    { initialize(productSpace_in, Teuchos::arrayView(vecs, productSpace_in->numBlocks())); }
+
+  //@}
 
 private:
 
@@ -323,6 +342,34 @@ castOrCreateNonconstProductVectorBase(const RCP<VectorBase<Scalar> > v);
 template<class Scalar>
 RCP<const ProductVectorBase<Scalar> >
 castOrCreateProductVectorBase(const RCP<const VectorBase<Scalar> > v);
+
+
+/** \brief Deprecated. */
+template<class Scalar>
+THYRA_DEPRECATED
+RCP<DefaultProductVector<Scalar> >
+defaultProductVector(
+  const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace,
+  const RCP<VectorBase<Scalar> > vecs[]
+  )
+{
+  return defaultProductVector<Scalar>(
+    productSpace, Teuchos::arrayView(vecs, productSpace->numBlocks()));
+}
+
+
+/** \brief Deprecated. */
+template<class Scalar>
+THYRA_DEPRECATED
+RCP<DefaultProductVector<Scalar> >
+defaultProductVector(
+  const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace,
+  const RCP<const VectorBase<Scalar> > vecs[]
+  )
+{
+  return defaultProductVector<Scalar>(productSpace,
+    Teuchos::arrayView(vecs, productSpace->numBlocks()));
+}
 
 
 } // namespace Thyra

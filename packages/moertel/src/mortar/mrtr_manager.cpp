@@ -8,33 +8,20 @@
 # Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 # license for use of this work by or on behalf of the U.S. Government.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
 #
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
 # Questions? Contact Glen Hansen (gahanse@sandia.gov)
 #
 # ************************************************************************
@@ -136,7 +123,7 @@ Teuchos::ParameterList& MOERTEL::Manager::Default_Parameters()
 /*----------------------------------------------------------------------*
  |  << operator                                              mwgee 06/05|
  *----------------------------------------------------------------------*/
-std::ostream& operator << (std::ostream& os, const MOERTEL::Manager& man)
+ostream& operator << (ostream& os, const MOERTEL::Manager& man)
 { 
   man.Print();
   return (os);
@@ -150,7 +137,7 @@ bool MOERTEL::Manager::Print() const
   comm_.Barrier();
 
   if (Comm().MyPID()==0)
-  std::cout << "\n========================= Mortar Manager =========================\n\n";
+  cout << "\n========================= Mortar Manager =========================\n\n";
   fflush(stdout);
   
   comm_.Barrier();
@@ -161,49 +148,49 @@ bool MOERTEL::Manager::Print() const
 	Teuchos::RCP<MOERTEL::Interface> inter = curr->second;
     if (inter==Teuchos::null)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Print:\n"
+      cout << "***ERR*** MOERTEL::Manager::Print:\n"
            << "***ERR*** found NULL entry in map of interfaces\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
     }
-    std::cout << *inter;
+    cout << *inter;
   }
   comm_.Barrier();
   if (problemmap_ != Teuchos::null)
   {
     if (comm_.MyPID() == 0)
-    std::cout << "\n------------------ Input RowMap of original Problem ---------------\n";
+    cout << "\n------------------ Input RowMap of original Problem ---------------\n";
     comm_.Barrier();
-    std::cout << *problemmap_;
+    cout << *problemmap_;
   }
   comm_.Barrier();
   if (constraintsmap_ != Teuchos::null)
   {
     if (comm_.MyPID() == 0)
-    std::cout << "\n------------------ RowMap of Constraints ---------------\n";
+    cout << "\n------------------ RowMap of Constraints ---------------\n";
     comm_.Barrier();
-    std::cout << *constraintsmap_;
+    cout << *constraintsmap_;
   }
   comm_.Barrier();
   if (D_ != Teuchos::null)
   {
     if (comm_.MyPID() == 0)
-    std::cout << "\n------------------ Coupling Matrix D ---------------\n";
+    cout << "\n------------------ Coupling Matrix D ---------------\n";
     comm_.Barrier();
-    std::cout << *D_;
+    cout << *D_;
   }
   comm_.Barrier();
   if (M_ != Teuchos::null)
   {
     if (comm_.MyPID() == 0)
-    std::cout << "\n------------------ Coupling Matrix M ---------------\n";
+    cout << "\n------------------ Coupling Matrix M ---------------\n";
     comm_.Barrier();
-    std::cout << *M_;
+    cout << *M_;
   }
   comm_.Barrier();
 
   if (Comm().MyPID()==0)
-  std::cout << "\n========================= End Mortar Manager =========================\n\n";
+  cout << "\n========================= End Mortar Manager =========================\n\n";
   fflush(stdout);
 
   return true;
@@ -216,7 +203,7 @@ bool MOERTEL::Manager::AddInterface(MOERTEL::Interface& interface)
 {
   if (!interface.IsComplete())
   {
-    std::cout << "***ERR*** MOERTEL::Manager::AddInterface:\n"
+    cout << "***ERR*** MOERTEL::Manager::AddInterface:\n"
          << "***ERR*** Cannot add segment as Complete() was not called before\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -236,7 +223,7 @@ Teuchos::RCP<Epetra_Map> MOERTEL::Manager::LagrangeMultiplierDofs()
 {
   if (problemmap_==Teuchos::null)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::LagrangeMultiplierDofs:\n"
+    cout << "***ERR*** MOERTEL::Manager::LagrangeMultiplierDofs:\n"
          << "***ERR*** problemmap_==NULL, Need to set an input-rowmap first\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return Teuchos::null;
@@ -267,7 +254,7 @@ Teuchos::RCP<Epetra_Map> MOERTEL::Manager::LagrangeMultiplierDofs()
     maxLMGID = curr->second->SetLMDofs(minLMGID);
     if (!maxLMGID && maxLMGID!=minLMGID)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::LagrangeMultiplierDofs:\n"
+      cout << "***ERR*** MOERTEL::Manager::LagrangeMultiplierDofs:\n"
            << "***ERR*** interface " << curr->second->Id() << " returned false\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return Teuchos::null;
@@ -343,7 +330,7 @@ bool MOERTEL::Manager::Mortar_Integrate()
   }
   else
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+    cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
          << "***ERR*** problem dimension not set\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     status = false;
@@ -367,7 +354,7 @@ bool MOERTEL::Manager::Integrate_Interfaces()
     status = Integrate_Interfaces_3D();
   else
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces:\n"
+    cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces:\n"
          << "***ERR*** problem dimension not set\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     status = false;
@@ -387,7 +374,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
   // check for problem dimension
   if (Dimension() != MOERTEL::Manager::manager_2D)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+    cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
          << "***ERR*** problem dimension is not 2D?????\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -403,7 +390,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
   // check whether we have an input map
   if (problemmap_==Teuchos::null)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+    cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
          << "***ERR*** problemmap_==NULL, Need to set an input-rowmap first\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -459,7 +446,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
       bool ok  = curr->second->Project();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+        cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on projection\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -479,7 +466,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
       bool ok = curr->second->DetectEndSegmentsandReduceOrder();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+        cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false from DetectEndSegmentsandReduceOrder\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -495,7 +482,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
     constraintsmap_ = LagrangeMultiplierDofs();
     if (constraintsmap_==Teuchos::null)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+      cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
            << "***ERR*** LagrangeMultiplierDofs() returned NULL\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -508,7 +495,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
     bool ok = BuildSaddleMap();
     if (!ok)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+      cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
            << "***ERR*** BuildSaddleMap() returned false\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -530,7 +517,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
       bool ok = curr->second->Mortar_Integrate(*D_,*M_);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+        cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on integration\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -548,7 +535,7 @@ bool MOERTEL::Manager::Mortar_Integrate_2D()
   //-------------------------------------------------------------------
   // print this
   if (OutLevel()>9)
-    std::cout << *this;
+    cout << *this;
 
   return true;
 }
@@ -575,7 +562,7 @@ bool MOERTEL::Manager::Build_MD_2D()
       bool ok = curr->second->Mortar_Assemble(*D_,*M_);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Build_MD_2D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Build_MD_2D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on assembly\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -594,7 +581,7 @@ bool MOERTEL::Manager::Build_MD_2D()
   //-------------------------------------------------------------------
   // print this
   if (OutLevel()>9)
-    std::cout << *this;
+    cout << *this;
 
   return true;
 }
@@ -610,7 +597,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
   // check for problem dimension
   if (Dimension() != MOERTEL::Manager::manager_2D)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+    cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
          << "***ERR*** problem dimension is not 2D?????\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -626,7 +613,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
   // check whether we have an input map
   if (problemmap_==Teuchos::null)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+    cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
          << "***ERR*** problemmap_==NULL, Need to set an input-rowmap first\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -682,7 +669,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
       bool ok = curr->second->BuildNormals();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on building normals\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -703,7 +690,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
       bool ok = curr->second->DetectEndSegmentsandReduceOrder();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false from DetectEndSegmentsandReduceOrder\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -724,7 +711,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
       bool ok = curr->second->Mortar_Integrate_2D(integrationparams_);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on integration\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -739,7 +726,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
     constraintsmap_ = LagrangeMultiplierDofs();
     if (constraintsmap_==Teuchos::null)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+      cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
            << "***ERR*** LagrangeMultiplierDofs() returned NULL\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -752,7 +739,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_2D()
     bool ok = BuildSaddleMap();
     if (!ok)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
+      cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_2D:\n"
            << "***ERR*** BuildSaddleMap() returned false\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -784,7 +771,7 @@ bool MOERTEL::Manager::Build_MD_3D()
       bool ok = curr->second->Mortar_Assemble(*D_,*M_);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Build_MD_3D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Build_MD_3D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on assembly\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -803,7 +790,7 @@ bool MOERTEL::Manager::Build_MD_3D()
   //-------------------------------------------------------------------
   // print this
   if (OutLevel()>9)
-    std::cout << *this;
+    cout << *this;
 
   return true;
 }
@@ -818,7 +805,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
   // check for problem dimension
   if (Dimension() != MOERTEL::Manager::manager_3D)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+    cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
          << "***ERR*** problem dimension is not 3D?????\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -834,7 +821,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
   // check whether we have an input map
   if (problemmap_==Teuchos::null)
   {
-    std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+    cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
          << "***ERR*** problemmap_==NULL, Need to set an input-rowmap first\n"
          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     return false;
@@ -890,7 +877,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
       bool ok = curr->second->BuildNormals();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on building normals\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -911,7 +898,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
       bool ok = curr->second->DetectEndSegmentsandReduceOrder();
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false from DetectEndSegmentsandReduceOrder\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -928,7 +915,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
       bool ok = curr->second->Mortar_Integrate(integrationparams_);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+        cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on integration\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -943,7 +930,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
     constraintsmap_ = LagrangeMultiplierDofs();
     if (constraintsmap_==Teuchos::null)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+      cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
            << "***ERR*** LagrangeMultiplierDofs() returned NULL\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -956,7 +943,7 @@ bool MOERTEL::Manager::Integrate_Interfaces_3D()
     bool ok = BuildSaddleMap();
     if (!ok)
     {
-      std::cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
+      cout << "***ERR*** MOERTEL::Manager::Integrate_Interfaces_3D:\n"
            << "***ERR*** BuildSaddleMap() returned false\n"
            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
       return false;
@@ -981,7 +968,7 @@ bool MOERTEL::Manager::AssembleInterfacesIntoResidual(Lmselector *sel)
       bool ok = curr->second->AssembleJFNKVec(sel);
       if (!ok)
       {
-        std::cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
+        cout << "***ERR*** MOERTEL::Manager::Mortar_Integrate:\n"
              << "***ERR*** interface " << curr->second->Id() << " returned false on assembly\n"
              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         return false;
@@ -1084,10 +1071,10 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
     fflush(stdout);
     if (Comm().MyPID()==0)
     {
-      std::cout << "---MOERTEL::Manager: start interface coloring:\n";
+      cout << "---MOERTEL::Manager: start interface coloring:\n";
       for (int i=0; i<ninter; ++i)
-        std::cout << "Interface " << inter[i]->Id() << " : Mortar Side : " << inter[i]->MortarSide() << std::endl;
-      std::cout << "---MOERTEL::Manager: finding common nodes on interfaces:\n";
+        cout << "Interface " << inter[i]->Id() << " : Mortar Side : " << inter[i]->MortarSide() << endl;
+      cout << "---MOERTEL::Manager: finding common nodes on interfaces:\n";
     }
     fflush(stdout);
   }
@@ -1145,7 +1132,7 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
         // found node actnodeid on interface i and k
         if (OutLevel()>9)
         {
-          std::cout << "Node " << actnodeid << " on interfaces " << inter[i]->Id() << " and " << inter[k]->Id() << std::endl;
+          cout << "Node " << actnodeid << " on interfaces " << inter[i]->Id() << " and " << inter[k]->Id() << endl;
           fflush(stdout);
         }
         
@@ -1224,8 +1211,8 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
   {
     fflush(stdout);
     if (Comm().MyPID()==0)
-      std::cout << "---MOERTEL::Manager: finding common nodes: " 
-           << time.ElapsedTime() << " sec" << std::endl;
+      cout << "---MOERTEL::Manager: finding common nodes: " 
+           << time.ElapsedTime() << " sec" << endl;
     fflush(stdout);
   }
   time.ResetStartTime();
@@ -1339,10 +1326,10 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
        Comm().MaxAll(&(flags[0]),&(flagr[0]),(2*ninter));
 
 #if 0       
-       std::cout << "Flags side 0:\n";
-       for (int j=0; j<ninter; ++j) std::cout << "inter " << j << " flag " << flagr[j] << std::endl;
-       std::cout << "Flags side 1:\n";
-       for (int j=ninter; j<2*ninter; ++j) std::cout << "inter " << j << " flag " << flagr[j] << std::endl;
+       cout << "Flags side 0:\n";
+       for (int j=0; j<ninter; ++j) cout << "inter " << j << " flag " << flagr[j] << endl;
+       cout << "Flags side 1:\n";
+       for (int j=ninter; j<2*ninter; ++j) cout << "inter " << j << " flag " << flagr[j] << endl;
 #endif
        
        // loop through flags and make a decision what to chose on inter[i]
@@ -1360,7 +1347,7 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
            if (inter[i]->MortarSide()==1)
            {
              if (OutLevel()>3)
-             std::cout << "***WRN*** MOERTEL::Manager::ChooseMortarSide:\n"
+             cout << "***WRN*** MOERTEL::Manager::ChooseMortarSide:\n"
                   << "***WRN*** interface " << inter[i]->Id() << ": want to set mortar side to 0 but has been set to 1 before\n"
                   << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
              continue;
@@ -1374,7 +1361,7 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
            if (inter[i]->MortarSide()==0)
            {
              if (OutLevel()>3)
-             std::cout << "***WRN*** MOERTEL::Manager::ChooseMortarSide:\n"
+             cout << "***WRN*** MOERTEL::Manager::ChooseMortarSide:\n"
                   << "***WRN*** interface " << inter[i]->Id() << ": want to set mortar side to 1 but has been set to 0 before\n"
                   << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
              continue;
@@ -1489,8 +1476,8 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
   {
     fflush(stdout);
     if (Comm().MyPID()==0)
-      std::cout << "---MOERTEL::Manager: coloring interfaces : " 
-           << time.ElapsedTime() << " sec" << std::endl;
+      cout << "---MOERTEL::Manager: coloring interfaces : " 
+           << time.ElapsedTime() << " sec" << endl;
     fflush(stdout);
   }
 
@@ -1499,10 +1486,10 @@ bool MOERTEL::Manager::ChooseMortarSide_2D(std::vector<Teuchos::RCP<MOERTEL::Int
     fflush(stdout);
     if (Comm().MyPID()==0)
     {
-      std::cout << "---MOERTEL::Manager: chosen mortar sides : \n";
+      cout << "---MOERTEL::Manager: chosen mortar sides : \n";
       for (int i=0; i<ninter; ++i)
-        std::cout << "Interface " << inter[i]->Id() << " : Mortar Side : " << inter[i]->MortarSide() << std::endl;
-      std::cout << "---MOERTEL::Manager: end interface coloring\n";
+        cout << "Interface " << inter[i]->Id() << " : Mortar Side : " << inter[i]->MortarSide() << endl;
+      cout << "---MOERTEL::Manager: end interface coloring\n";
     }
     fflush(stdout);
   }

@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -54,26 +54,22 @@ int CrsMatrixTranspose( Epetra_CrsMatrix *In,  Epetra_CrsMatrix *Out ) {
    
   int iam = In->Comm().MyPID() ;
 
-  long long numentries = In->NumGlobalNonzeros64();
+  int numentries = In->NumGlobalNonzeros();
   int NumRowEntries = 0;
   double *RowValues = 0;
   int *ColIndices = 0;
 
-  long long numrows = In->NumGlobalRows64();
-  long long numcols = In->NumGlobalCols64();
+  int numrows = In->NumGlobalRows();
+  int numcols = In->NumGlobalCols();
 
   std::vector <int> Ap( numcols+1 );       // Column i is stored in Aval(Ap[i]..Ap[i+1]-1)
   std::vector <int> nextAp( numcols+1 );   // Where to store next value in Column i
-#ifdef EPETRA_NO_32BIT_GLOBAL_INDICES
-  std::vector <long long> Ai( EPETRA_MAX( numcols, numentries) ) ; //  Row indices
-#else
   std::vector <int> Ai( EPETRA_MAX( numcols, numentries) ) ; //  Row indices
-#endif
   std::vector <double> Aval( EPETRA_MAX( numcols, numentries) ) ; 
 
   if ( iam == 0 ) { 
 
-    assert( In->NumMyRows() == In->NumGlobalRows64() ) ; 
+    assert( In->NumMyRows() == In->NumGlobalRows() ) ; 
     //
     //  Count the number of entries in each column
     //
@@ -112,10 +108,8 @@ int CrsMatrixTranspose( Epetra_CrsMatrix *In,  Epetra_CrsMatrix *Out ) {
     //
     for ( int MyRow = 0; MyRow <numrows; MyRow++ ) {
       int NumInCol = Ap[MyRow+1] -  Ap[MyRow] ;
-#if !defined(EPETRA_NO_32BIT_GLOBAL_INDICES) || !defined(EPETRA_NO_64BIT_GLOBAL_INDICES)
       Out->InsertGlobalValues( MyRow, NumInCol, &Aval[Ap[MyRow]], 
 			   &Ai[Ap[MyRow]] );
-#endif
       assert( Out->IndicesAreGlobal() ) ; 
     }
   } else {

@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -80,11 +80,11 @@ int main(int argc, char *argv[]) {
   if (argc>2) if (argv[2][0]=='-' && argv[2][1]=='v') veryVerbose = true;
 
   if (verbose && Comm.MyPID()==0)
-    std::cout << Epetra_Version() << std::endl << std::endl;
+    cout << Epetra_Version() << endl << endl;
 
   if (!verbose) Comm.SetTracebackMode(0); // This should shut down any error traceback reporting
 
-  if (verbose) std::cout << Comm << std::endl << std::flush;
+  if (verbose) cout << Comm << endl << flush;
 
   bool verbose1 = verbose;
   if (verbose) verbose = (Comm.MyPID()==0);
@@ -129,14 +129,14 @@ int main(int argc, char *argv[]) {
     elementColors[i] = C0[i]; // Record color of ith element for use below
     colorCount[C0[i]]++; // Count how many of each color for checking below
   }
-
+  
   if (veryVerbose)
-    std::cout << "Original Map Coloring using element-by-element definitions" << std::endl;
+    cout << "Original Map Coloring using element-by-element definitions" << endl;
   if (veryVerbose1)
-    std::cout <<  C0 << std::endl;
+    cout <<  C0 << endl;
 
   int numColors = 0;
-  for (i=0; i<maxcolor; i++)
+  for (i=0; i<maxcolor; i++) 
     if (colorCount[i]>0) {
       numColors++;
       colorLIDs[i] = new int[colorCount[i]];
@@ -144,22 +144,22 @@ int main(int argc, char *argv[]) {
   for (i=0; i<maxcolor; i++) colorCount[i] = 0;
   for (i=0; i<Map.NumMyElements(); i++) colorLIDs[C0[i]][colorCount[C0[i]]++] = i;
 
-
+  
 
   int newDefaultColor = -1;
   Epetra_MapColoring C1(Map, elementColors, newDefaultColor);
   if (veryVerbose)
-    std::cout << "Same Map Coloring using one-time construction" << std::endl;
+    cout << "Same Map Coloring using one-time construction" << endl;
   if (veryVerbose1)
-    std::cout <<  C1 << std::endl;
+    cout <<  C1 << endl;
   assert(C1.DefaultColor()==newDefaultColor);
   for (i=0; i<Map.NumMyElements(); i++) assert(C1[i]==C0[i]);
 
   Epetra_MapColoring C2(C1);
   if (veryVerbose)
-    std::cout << "Same Map Coloring using copy constructor" << std::endl;
+    cout << "Same Map Coloring using copy constructor" << endl;
   if (veryVerbose1)
-    std::cout <<  C1 << std::endl;
+    cout <<  C1 << endl;
   for (i=0; i<Map.NumMyElements(); i++) assert(C2[i]==C0[i]);
   assert(C2.DefaultColor()==newDefaultColor);
 
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
   elementIDs0.Import(elementIDs, importer, Insert);
   elementColorValues0.Import(elementColorValues, importer, Insert);
 
-  Epetra_BlockMap MapOnPE0(-1,NumMyElements0, elementIDs0.Values(),
+  Epetra_BlockMap MapOnPE0(-1,NumMyElements0, elementIDs0.Values(), 
 			   elementSizes0.Values(), Map.IndexBase(), Comm);
 
   Epetra_Import importer1(MapOnPE0, Map);
@@ -220,23 +220,23 @@ int main(int argc, char *argv[]) {
     assert(ColoringOnPE0[i]==elementColorValues0[i]);
 
   if (veryVerbose)
-    std::cout << "Same Map Coloring on PE 0 only" << std::endl;
+    cout << "Same Map Coloring on PE 0 only" << endl;
   if (veryVerbose1)
-    std::cout <<  ColoringOnPE0 << std::endl;
+    cout <<  ColoringOnPE0 << endl;
   Epetra_MapColoring C3(Map);
   C3.Export(ColoringOnPE0, importer1, Insert);
   for (i=0; i<Map.NumMyElements(); i++) assert(C3[i]==C2[i]);
   if (veryVerbose)
-    std::cout << "Same Map Coloring after Import/Export exercise" << std::endl;
+    cout << "Same Map Coloring after Import/Export exercise" << endl;
   if (veryVerbose1)
-    std::cout <<  ColoringOnPE0 << std::endl;
-
-
-  if (verbose) std::cout << "Checked OK\n\n" << std::endl;
+    cout <<  ColoringOnPE0 << endl;
+   
+  
+  if (verbose) cout << "Checked OK\n\n" <<endl;
 
   if (verbose1) {
-    if (verbose) std::cout << "Test ostream << operator" << std::endl << std::flush;
-    std::cout << C0 << std::endl;
+    if (verbose) cout << "Test ostream << operator" << endl << flush;
+    cout << C0 << endl;
   }
 	
 

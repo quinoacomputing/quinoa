@@ -1,43 +1,31 @@
-// @HEADER
+/*@HEADER
 // ***********************************************************************
-//
-//         Stratimikos: Thyra-based strategies for linear solvers
-//                Copyright (2006) Sandia Corporation
-//
+// 
+//        AztecOO: An Object-Oriented Aztec Linear Solver Package 
+//                 Copyright (2002) Sandia Corporation
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ***********************************************************************
-// @HEADER
+//@HEADER
+*/
 #include "test_single_aztecoo_thyra_solver.hpp"
 
 #ifndef SUN_CXX
@@ -104,8 +92,8 @@ bool Thyra::test_single_aztecoo_thyra_solver(
         << "\n  dumpAll                = " << dumpAll
         << std::endl;
     }
-
-    const bool useAztecPrec = (
+    
+    const bool useAztecPrec = ( 
       aztecooLOWSFPL
       &&
       aztecooLOWSFPL->sublist("Forward Solve")
@@ -117,9 +105,9 @@ bool Thyra::test_single_aztecoo_thyra_solver(
       if(useAztecPrec)
         *out << "\nUsing aztec preconditioning so we will not test adjoint solves using internal preconditioning ...\n";
     }
-
+    
     if(out.get()) *out << "\nA) Reading in an epetra matrix A from the file \'"<<matrixFile<<"\' ...\n";
-
+  
 #ifdef HAVE_MPI
     Epetra_MpiComm comm(MPI_COMM_WORLD);
 #else
@@ -140,7 +128,6 @@ bool Thyra::test_single_aztecoo_thyra_solver(
       *out << "\nlowsFactory.getValidParameters() initially:\n";
       lowsFactory->getValidParameters()->print(OSTab(out).o(),PLPrintOptions().showTypes(true).showDoc(true));
     }
-    TEUCHOS_ASSERT(aztecooLOWSFPL != NULL);
     aztecooLOWSFPL->sublist("Forward Solve").set("Tolerance",maxResid);
     aztecooLOWSFPL->sublist("Adjoint Solve").set("Tolerance",maxResid);
     if(showAllTests) {
@@ -151,7 +138,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
       aztecooLOWSFPL->print(OSTab(out).o(),0,true);
     }
     if(aztecooLOWSFPL) lowsFactory->setParameterList(Teuchos::rcp(aztecooLOWSFPL,false));
-
+    
     if(out.get()) *out << "\nC) Creating a AztecOOLinearOpWithSolve object nsA from A ...\n";
 
     RCP<LinearOpWithSolveBase<double> >
@@ -173,7 +160,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     if(!result) success = false;
 
     if(out.get()) *out << "\nE) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+    
     LinearOpWithSolveTester<double> linearOpWithSolveTester;
     linearOpWithSolveTester.turn_off_all_tests();
     linearOpWithSolveTester.check_forward_default(true);
@@ -224,7 +211,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     initializeAndReuseOp<double>(*lowsFactory, A, nsA.ptr());
 
     if(out.get()) *out << "\nG) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+    
     Thyra::seed_randomize<double>(0);
     result = linearOpWithSolveTester.check(*nsA,out.get());
     if(!result) success = false;
@@ -232,11 +219,11 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     if(useAztecPrec) {
 
       if(out.get()) *out << "\nH) Reinitialize (A,A,PRECONDITIONER_INPUT_TYPE_AS_MATRIX) => nsA ...\n";
-
+      
       initializeApproxPreconditionedOp<double>(*lowsFactory, A, A, nsA.ptr());
 
       if(out.get()) *out << "\nI) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+      
       Thyra::seed_randomize<double>(0);
       result = linearOpWithSolveTester.check(*nsA,out.get());
       if(!result) success = false;
@@ -249,7 +236,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
         linearOpWithSolveTester.check_adjoint_default(false);
         linearOpWithSolveTester.check_adjoint_residual(false);
       }
-
+      
     }
     else {
 
@@ -257,7 +244,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
 
     }
 
-
+    
     RCP<PreconditionerFactoryBase<double> >
       precFactory;
 
@@ -269,7 +256,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
         linearOpWithSolveTester.check_adjoint_default(true);
         linearOpWithSolveTester.check_adjoint_residual(true);
       }
-
+      
       if(out.get()) *out << "\nJ) Create an ifpack preconditioner precA for A ...\n";
 
       precFactory = Teuchos::rcp(new IfpackPreconditionerFactory());
@@ -294,22 +281,22 @@ bool Thyra::test_single_aztecoo_thyra_solver(
       RCP<PreconditionerBase<double> >
         precA = precFactory->createPrec();
       Thyra::initializePrec<double>(*precFactory,A,&*precA);
-
+      
       if(out.get()) {
         *out << "\nifpackPFPL after setting parameters =\n";
         ifpackPFPL->print(OSTab(out).o(),0,true);
         *out << "\nprecFactory.description() = " << precFactory->description() << std::endl;
       }
-
+      
       if(out.get()) *out << "\nprecA.description() = " << precA->description() << std::endl;
       if(out.get() && dumpAll) *out << "\ndescribe(precA) =\n" << describe(*precA,Teuchos::VERB_EXTREME);
-
+      
       if(out.get()) *out << "\nK) Reinitialize (A,precA->getUnspecifiedPrecOp(),PRECONDITIONER_INPUT_TYPE_AS_OPERATOR) => nsA ...\n";
-
+      
       Thyra::initializePreconditionedOp<double>(*lowsFactory,A,precA,&*nsA);
-
+      
       if(out.get()) *out << "\nL) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+      
       Thyra::seed_randomize<double>(0);
       result = linearOpWithSolveTester.check(*nsA,out.get());
       if(!result) success = false;
@@ -322,7 +309,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
         linearOpWithSolveTester.check_adjoint_default(false);
         linearOpWithSolveTester.check_adjoint_residual(false);
       }
-
+      
     }
     else {
 
@@ -345,7 +332,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     initializeOp<double>(*lowsFactory, A, nsA.ptr());
 
     if(out.get()) *out << "\nN) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+    
     Thyra::seed_randomize<double>(0);
     result = linearOpWithSolveTester.check(*nsA,out.get());
     if(!result) success = false;
@@ -363,7 +350,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     // state of nsA was fine throughout
 
     if(out.get()) *out << "\nP) Testing the LinearOpWithSolveBase interface of nsA ...\n";
-
+    
     Thyra::seed_randomize<double>(0);
     result = linearOpWithSolveTester.check(*nsA,out.get());
     if(!result) success = false;
@@ -371,26 +358,26 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     if(!useAztecPrec) {
 
       if(out.get()) *out << "\nQ) Create an implicitly scaled (by 2.5) and transposed matrix A3 = scale(2.5,transpose(A)) and initialize nsA2 ...\n";
-
+    
       RCP<const LinearOpBase<double> >
         A3 = scale<double>(2.5,transpose<double>(A));
       RCP<LinearOpWithSolveBase<double> >
         nsA2 = linearOpWithSolve(*lowsFactory,A3);
-
+    
       if(out.get()) *out << "\nR) Testing the LinearOpWithSolveBase interface of nsA2 ...\n";
-
+    
       Thyra::seed_randomize<double>(0);
       result = linearOpWithSolveTester.check(*nsA2,out.get());
       if(!result) success = false;
-
+    
       if(out.get()) *out << "\nS) Testing that LinearOpBase interfaces of transpose(nsA) == nsA2 ...\n";
-
+    
       result = linearOpTester.compare(
         *transpose(Teuchos::rcp_implicit_cast<const LinearOpBase<double> >(nsA)),*nsA2
         ,out()
         );
       if(!result) success = false;
-
+      
     }
     else {
 
@@ -411,7 +398,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
   }
 
 #else // SUN_CXX
-
+    
     if(out.get()) *out << "\nTest failed since is was not even compiled since SUN_CXX was defined!\n";
     success = false;
 
@@ -422,7 +409,7 @@ bool Thyra::test_single_aztecoo_thyra_solver(
     std::cerr << "\n*** Caught standard exception : " << excpt.what() << std::endl;
     success = false;
   }
-
+   
   return success;
-
+    
 }

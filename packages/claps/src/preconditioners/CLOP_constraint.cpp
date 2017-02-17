@@ -1,42 +1,29 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //         Claps: A Collection of Domain Decomposition Preconditioners
 //                and Solvers
 //         Copyright (2006) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -114,8 +101,8 @@ int CLOP_constraint::factor()
   //
   determine_if_all_simple(simple_flag);
   if (print_flag > 0) {
-    if (simple_flag != 0) *fout << "constraints of type simple " << std::endl;
-    else                  *fout << "constraints of type complex" << std::endl;
+    if (simple_flag != 0) *fout << "constraints of type simple " << endl;
+    else                  *fout << "constraints of type complex" << endl;
   }
   //
   // forward factorization of constraints
@@ -165,7 +152,7 @@ int CLOP_constraint::factor()
   //
   delete [] dimcol; delete [] dvec; delete [] imap;
   delete [] row_degree; delete [] cola; delete [] sfaca;
-  if (print_flag > 0) *fout << "CLOP_constraint::factor completed" << std::endl;
+  if (print_flag > 0) *fout << "CLOP_constraint::factor completed" << endl;
   return 0;
 }
 
@@ -413,7 +400,7 @@ void CLOP_constraint::Tran(Epetra_CrsMatrix* & Tran, Epetra_Map* & RowMapMyCon,
   Comm.SumAll(&nc1, &nc1_sum, 1);
   if ((print_flag >= 0) && (ncol_global > nc1_sum)) {
     *fout << "Warning: there are " << ncol_global - nc1_sum 
-	  << " redundant constraints " << std::endl;
+	  << " redundant constraints " << endl;
   }
   //
   // determine non-constrained (type 1) dofs in sub_gdofs array

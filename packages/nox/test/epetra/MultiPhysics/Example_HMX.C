@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -44,7 +44,7 @@
 //  $Revision$
 // ************************************************************************
 //@HEADER
-
+                                                                                
 // HMX Cook-off Test Problem
 
 /* Solves the nonlinear equation:
@@ -78,20 +78,20 @@
 #include "Teuchos_ParameterList.hpp"
 #endif
 
-// Headers needed for FD coloring
-#include <vector>
+// Headers needed for FD coloring 
+#include <vector> 
 #ifdef HAVE_NOX_EPETRAEXT       // Use epetraext package in Trilinos
 #include "EpetraExt_MapColoring.h"
-#include "EpetraExt_MapColoringIndex.h"
+#include "EpetraExt_MapColoringIndex.h" 
 #endif
 
 // New coupling library headers
-#include "NOX_Multiphysics_Solver_Manager.H"
+#include "NOX_Multiphysics_Solver_Manager.H" 
 
-// User's application specific files
-#include "Problem_Manager.H"
-#include "Problem_Interface.H"
-#include "HMX_PDE.H"
+// User's application specific files 
+#include "Problem_Manager.H" 
+#include "Problem_Interface.H" 
+#include "HMX_PDE.H"              
 
 // Added to allow timings
 #include "Epetra_Time.h"
@@ -122,8 +122,8 @@ int main(int argc, char *argv[])
   bool          useMatlab       = false ;
   bool          doOffBlocks     = true  ;
   bool          libloose        = true  ;
-  std::string        outputDir       = "."   ;
-  std::string        goldDir         = "."   ;
+  string        outputDir       = "."   ;
+  string        goldDir         = "."   ;
 
   clp.setOption( "verbose", "no-verbose", &verbose, "Verbosity on or off." );
   clp.setOption( "n", &NumGlobalNodes, "Number of elements" );
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
   Teuchos::CommandLineProcessor::EParseCommandLineReturn parse_return = clp.parse(argc,argv);
 
-  if( parse_return != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL )
+  if( parse_return != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL ) 
     return parse_return;
 
   outputDir += "/";
@@ -153,10 +153,10 @@ int main(int argc, char *argv[])
   NumGlobalNodes++; // convert #elements to #nodes
 
   // The number of unknowns must be at least equal to the number of processors.
-  if (NumGlobalNodes < NumProc)
+  if (NumGlobalNodes < NumProc) 
   {
-    std::cout << "numGlobalNodes = " << NumGlobalNodes
-     << " cannot be < number of processors = " << NumProc << std::endl;
+    cout << "numGlobalNodes = " << NumGlobalNodes 
+	 << " cannot be < number of processors = " << NumProc << endl;
     exit(1);
   }
 
@@ -177,22 +177,22 @@ int main(int argc, char *argv[])
 
   // Set the printing parameters in the "Printing" sublist
   Teuchos::ParameterList& printParams = nlParams.sublist("Printing");
-  printParams.set("MyPID", MyPID);
+  printParams.set("MyPID", MyPID); 
   printParams.set("Output Precision", 3);
   printParams.set("Output Processor", 0);
-  printParams.set("Output Information",
-            NOX::Utils::Warning                  +
-            NOX::Utils::OuterIteration           +
-            NOX::Utils::InnerIteration           +
-            NOX::Utils::Parameters               +
-            NOX::Utils::Details                  +
-            NOX::Utils::OuterIterationStatusTest +
-            NOX::Utils::LinearSolverDetails      +
-            NOX::Utils::TestDetails               );
+  printParams.set("Output Information", 
+			NOX::Utils::Warning                  +
+			NOX::Utils::OuterIteration           + 
+			NOX::Utils::InnerIteration           +
+			NOX::Utils::Parameters               + 
+			NOX::Utils::Details                  + 
+			NOX::Utils::OuterIterationStatusTest + 
+			NOX::Utils::LinearSolverDetails      + 
+			NOX::Utils::TestDetails               );
 
   NOX::Utils outputUtils(printParams);
 
-  // Sublist for line search
+  // Sublist for line search 
   Teuchos::ParameterList& searchParams = nlParams.sublist("Line Search");
   searchParams.set("Method", "Full Step");
 
@@ -204,27 +204,27 @@ int main(int argc, char *argv[])
 
   // Sublist for linear solver for the Newton method
   Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
-  lsParams.set("Aztec Solver", "GMRES");
-  lsParams.set("Max Iterations", 800);
+  lsParams.set("Aztec Solver", "GMRES");  
+  lsParams.set("Max Iterations", 800);  
   lsParams.set("Tolerance", 1e-4);
-  lsParams.set("Output Frequency", 50);
-  lsParams.set("Preconditioner", "AztecOO");
+  lsParams.set("Output Frequency", 50);    
+  lsParams.set("Preconditioner", "AztecOO");   
 
   // Create the convergence tests
-  // Note: as for the parameter list, both (all) problems use the same
+  // Note: as for the parameter list, both (all) problems use the same 
   // convergence test(s) for now, but each could have its own.
   Teuchos::RCP<NOX::StatusTest::NormF>          absresid  =
       Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
-  Teuchos::RCP<NOX::StatusTest::NormUpdate>     update    =
+  Teuchos::RCP<NOX::StatusTest::NormUpdate>     update    = 
       Teuchos::rcp(new NOX::StatusTest::NormUpdate(1.0e-5));
-  Teuchos::RCP<NOX::StatusTest::Combo>          converged =
+  Teuchos::RCP<NOX::StatusTest::Combo>          converged = 
       Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::AND));
   converged->addStatusTest(absresid);
-  Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters =
+  Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters = 
     Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
-  Teuchos::RCP<NOX::StatusTest::FiniteValue> finiteValue =
+  Teuchos::RCP<NOX::StatusTest::FiniteValue> finiteValue = 
     Teuchos::rcp(new NOX::StatusTest::FiniteValue);
-  Teuchos::RCP<NOX::StatusTest::Combo> combo =
+  Teuchos::RCP<NOX::StatusTest::Combo> combo = 
     Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
   combo->addStatusTest(converged);
   combo->addStatusTest(maxiters);
@@ -234,28 +234,28 @@ int main(int argc, char *argv[])
   Problem_Manager problemManager(Comm, doOffBlocks, 0, useMatlab);
 
   // Note that each problem could contain its own nlParams list as well as
-  // its own convergence test(s).
+  // its own convergence test(s). 
   problemManager.registerParameters(nlParamsPtr);
   problemManager.registerStatusTest(combo);
 
-  std::string nameT         = "Temperature";
-  double Const_R        = 1.9872 ;
-  double Specific_H        = 0.42 ;
-  double Density        = 1.90 ;
-  double Thermal_K        = 0.8658e-3 ;
-  double diffCoef_T        = Thermal_K / (Density * Specific_H);
+  string nameT 		= "Temperature";
+  double Const_R		= 1.9872 ;
+  double Specific_H		= 0.42 ;
+  double Density		= 1.90 ;
+  double Thermal_K		= 0.8658e-3 ;
+  double diffCoef_T		= Thermal_K / (Density * Specific_H);
 
-  double StericCoef_T        = 0.0;
-  double PreExp_T         = 0.0;
-  double ActEnergy_T    = 0.0 ;
+  double StericCoef_T		= 0.0;
+  double PreExp_T 		= 0.0;
+  double ActEnergy_T	= 0.0 ;
   map<string, double> SrcTermExponent_T; // Leave empty if no volume source
-  map<string, double> SrcTermWeight_T;
+  map<string, double> SrcTermWeight_T; 
     SrcTermWeight_T.insert( pair<string, double> ("SpeciesA", -190.0) );
     SrcTermWeight_T.insert( pair<string, double> ("SpeciesB",  570.0) );
     SrcTermWeight_T.insert( pair<string, double> ("SpeciesC", 2280.0) );
 
   // Create each part of the HMX cook-off problem
-  HMX_PDE HMX_TempEq (Comm,
+  HMX_PDE HMX_TempEq (Comm, 
                   diffCoef_T,
                   Const_R,
                   StericCoef_T, // Dummy for Temp Eq.
@@ -273,19 +273,19 @@ int main(int argc, char *argv[])
   problemManager.addProblem(HMX_TempEq);
 
 
-  std::string nameA         = "SpeciesA";
-  double diffCoef_A         = 0.0 ;
-  //double stericCoef_A        = 0.0 ;
-  double stericCoef_A        = 2.0 ; // ROGER: high coupling
-  //double stericCoef_A        = 2.0 ; // ROGER: high coupling
-  double preExp_A         = exp(48.7) ;
-  double actEnergy_A         = 52700.0 ;
-  map<string, double> SrcTermExponent_A;
+  string nameA 		= "SpeciesA";
+  double diffCoef_A 		= 0.0 ;
+  //double stericCoef_A		= 0.0 ;
+  double stericCoef_A		= 2.0 ; // ROGER: high coupling
+  //double stericCoef_A		= 2.0 ; // ROGER: high coupling
+  double preExp_A 		= exp(48.7) ;
+  double actEnergy_A 		= 52700.0 ;
+  map<string, double> SrcTermExponent_A; 
     SrcTermExponent_A.insert( pair<string, double> (nameA, 1.0) );
-  map<string, double> SrcTermWeight_A;
+  map<string, double> SrcTermWeight_A; 
     SrcTermWeight_A.insert( pair<string, double> (nameA, -1.0) );
 
-  HMX_PDE HMX_RxnA(Comm,
+  HMX_PDE HMX_RxnA(Comm, 
                 diffCoef_A,
                 Const_R,
                 stericCoef_A,
@@ -303,19 +303,19 @@ int main(int argc, char *argv[])
   problemManager.addProblem(HMX_RxnA);
 
 
-  std::string nameB         = "SpeciesB";
-  double diffCoef_B         = 0.0 ;
-  double stericCoef_B        = 1.0 ;
-  //double stericCoef_B        = -1.0 ;
-  double preExp_B         = exp(37.5) ;
-  double actEnergy_B         = 44100.0 ;
-  map<string, double> SrcTermExponent_B;
+  string nameB 		= "SpeciesB";
+  double diffCoef_B 		= 0.0 ;
+  double stericCoef_B		= 1.0 ;
+  //double stericCoef_B		= -1.0 ;
+  double preExp_B 		= exp(37.5) ;
+  double actEnergy_B 		= 44100.0 ;
+  map<string, double> SrcTermExponent_B; 
     SrcTermExponent_B.insert( pair<string, double> (nameB, 1.0) );
-  map<string, double> SrcTermWeight_B;
+  map<string, double> SrcTermWeight_B; 
     SrcTermWeight_B.insert( pair<string, double> (nameA, 1.0) );
     SrcTermWeight_B.insert( pair<string, double> (nameB, -1.0) );
 
-  HMX_PDE HMX_RxnB(Comm,
+  HMX_PDE HMX_RxnB(Comm, 
                 diffCoef_B,
                 Const_R,
                 stericCoef_B,
@@ -333,18 +333,18 @@ int main(int argc, char *argv[])
   problemManager.addProblem(HMX_RxnB);
 
 
-  std::string nameC         = "SpeciesC";
-  double diffCoef_C         = 0.0 ;
-  double stericCoef_C        = 0.0 ;
-  double preExp_C         = exp(28.1) ;
-  double actEnergy_C         = 34100.0 ;
-  map<string, double> SrcTermExponent_C;
+  string nameC 		= "SpeciesC";
+  double diffCoef_C 		= 0.0 ;
+  double stericCoef_C		= 0.0 ;
+  double preExp_C 		= exp(28.1) ;
+  double actEnergy_C 		= 34100.0 ;
+  map<string, double> SrcTermExponent_C; 
     SrcTermExponent_C.insert( pair<string, double> (nameC, 2.0) );
-  map<string, double> SrcTermWeight_C;
+  map<string, double> SrcTermWeight_C; 
     SrcTermWeight_C.insert( pair<string, double> (nameB, 2.0) );
     SrcTermWeight_C.insert( pair<string, double> (nameC, -2.0) );
 
-  HMX_PDE HMX_RxnC(Comm,
+  HMX_PDE HMX_RxnC(Comm, 
                 diffCoef_C,
                 Const_R,
                 stericCoef_C,
@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
   double time = 0.;
   //double dt = HMX_TempEq.getdt();
   double dt = 10.0 * HMX_TempEq.getdt();
-
+  
   problemManager.registerComplete();
 
   problemManager.outputStatus(std::cout);
@@ -390,17 +390,17 @@ int main(int argc, char *argv[])
 
   // Identify the test problem
   if( outputUtils.isPrintType(NOX::Utils::TestDetails) )
-    outputUtils.out() << "Starting epetra/MultiPhysics/example_hmx.exe" << std::endl;
+    outputUtils.out() << "Starting epetra/MultiPhysics/example_hmx.exe" << endl;
 
   // Identify processor information
 #ifdef HAVE_MPI
-  outputUtils.out() << "This test is broken in parallel." << std::endl;
-  outputUtils.out() << "Test failed!" << std::endl;
+  outputUtils.out() << "This test is broken in parallel." << endl;
+  outputUtils.out() << "Test failed!" << endl;
   MPI_Finalize();
   return -1;
 #else
   if (outputUtils.isPrintType(NOX::Utils::TestDetails))
-    outputUtils.out() << "Serial Run" << std::endl;
+    outputUtils.out() << "Serial Run" << endl;
 #endif
 
   // Create a TestCompare class
@@ -414,9 +414,9 @@ int main(int argc, char *argv[])
 
     timeStep++;
     time += dt;
-
-    std::cout << "Time Step: " << timeStep << ",\tTime: " << time << std::endl;
-
+  
+    cout << "Time Step: " << timeStep << ",\tTime: " << time << endl;
+  
     // Solve the coupled problem
     if( runMF )
       problemManager.solveMF(); // Need a status test check here ....
@@ -426,13 +426,13 @@ int main(int argc, char *argv[])
     {
       // Create the loose coupling solver manager
       Teuchos::RCP<vector<Teuchos::RCP<NOX::Solver::Generic> > > solversVec =
-        Teuchos::rcp( new std::vector<Teuchos::RCP<NOX::Solver::Generic> > );
+        Teuchos::rcp( new vector<Teuchos::RCP<NOX::Solver::Generic> > );
 
       map<int, Teuchos::RCP<NOX::Solver::Generic> >::iterator iter = problemManager.getSolvers().begin(),
                                                                   iter_end = problemManager.getSolvers().end()   ;
       for( ; iter_end != iter; ++iter )
       {
-        std::cout << " ........  registered Solver::Manager # " << (*iter).first << std::endl;
+        cout << " ........  registered Solver::Manager # " << (*iter).first << endl;
         solversVec->push_back( (*iter).second );
       }
 
@@ -450,7 +450,7 @@ int main(int argc, char *argv[])
       // Reset all solver groups to force recomputation of residuals
       problemManager.resetAllCurrentGroupX();
     }
-
+  
   if( verbose )
     problemManager.outputSolutions( outputDir, timeStep );
 
@@ -459,17 +459,17 @@ int main(int argc, char *argv[])
     for( ; iter_end != iter; ++iter )
     {
       GenericEpetraProblem & problem = *(*iter).second;
-      std::string msg = "Numerical-to-Gold Solution comparison for problem \"" + problem.getName() + "\"";
+      string msg = "Numerical-to-Gold Solution comparison for problem \"" + problem.getName() + "\"";
 
       // Get the gold copy to comapre against current solution
-      std::string baseFileame = problemManager.createIOname( problem, timeStep );
-      std::string goldFileame = goldDir + "gold_hmx/" + baseFileame;
+      string baseFileame = problemManager.createIOname( problem, timeStep );
+      string goldFileame = goldDir + "gold_hmx/" + baseFileame;
 
       Epetra_Vector * tmpVec = NULL;
       int ierr = NOX::Epetra::DebugTools::readVector( goldFileame, Comm, tmpVec );
       if( ierr != 0 )
       {
-        outputUtils.out() << "ERROR opening gold copy file \"" << goldFileame << "\"." << std::endl;
+        outputUtils.out() << "ERROR opening gold copy file \"" << goldFileame << "\"." << endl;
         status = ierr;
         break;
       }
@@ -481,7 +481,7 @@ int main(int argc, char *argv[])
       NOX::Epetra::Vector goldVec   ( goldSoln       , NOX::Epetra::Vector::CreateView );
 
       status += tester.testVector( numerical, goldVec, reltol, abstol, msg );
-
+       
       // Quit if test fails
       if( status != 0 )
         break;
@@ -498,26 +498,26 @@ int main(int argc, char *argv[])
 
   // Output timing info
   if(MyPID==0)
-    std::cout << "\nTimings :\n\tWallTime --> " << myTimer.WallTime() - startWallTime << " sec."
-         << "\n\tElapsedTime --> " << myTimer.ElapsedTime() << " sec." << std::endl << std::endl;
+    cout << "\nTimings :\n\tWallTime --> " << myTimer.WallTime() - startWallTime << " sec."
+         << "\n\tElapsedTime --> " << myTimer.ElapsedTime() << " sec." << endl << endl;
 
   if( 1 ) // this will be turned on later
   {
-    // Summarize test results
+    // Summarize test results  
     if( status == 0 )
-      outputUtils.out() << "Test passed!" << std::endl;
-    else
-      outputUtils.out() << "Test failed!" << std::endl;
+      outputUtils.out() << "Test passed!" << endl;
+    else 
+      outputUtils.out() << "Test failed!" << endl;
   }
   else // force this test to pass for now, but at least warn of failure
   {
-    // Summarize test results
+    // Summarize test results  
     if( status == 0 )
-      outputUtils.out() << "Test passed!" << std::endl;
-    else
+      outputUtils.out() << "Test passed!" << endl;
+    else 
     {
-      outputUtils.out() << "This test actually F-A-I-L-E-D." << std::endl;
-      outputUtils.out() << "Test passed!" << std::endl;
+      outputUtils.out() << "This test actually F-A-I-L-E-D." << endl;
+      outputUtils.out() << "Test passed!" << endl;
     }
   }
 

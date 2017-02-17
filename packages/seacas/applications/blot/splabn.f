@@ -66,8 +66,8 @@ C   --   Uses XLAB, YLAB of /XYLAB/
       CHARACTER*(*) TXLAB, TYLAB
       INTEGER MAPEL(*), MAPND(*)
 
-      CHARACTER*32 STRNUM
-      CHARACTER*32 STRTIM
+      CHARACTER*20 STRNUM
+      CHARACTER*20 STRTIM
       CHARACTER*(MXNAME) NAM
 
 C   --Get the plot legend
@@ -81,7 +81,7 @@ C   --Get the plot legend
         WRITE (STRNUM, 10000, IOSTAT=IDUM)
      *    MAPEL(NENUM(1)), MAPEL(NENUM(NNENUM))
       end if
-10000  FORMAT (I9, '..', I9)
+10000  FORMAT (I6, '..', I6)
       CALL PCKSTR (1, STRNUM)
 
       CALL NUMSTR (1, 4, TIME, STRTIM, LSTR)

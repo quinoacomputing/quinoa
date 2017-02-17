@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -68,9 +68,6 @@
      \endverbatim
  **/
 
-// TrilinosCouplings includes
-#include "TrilinosCouplings_config.h"
-#include "TrilinosCouplings_Pamgen_Utils.hpp"
 
 // Intrepid includes
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -118,8 +115,8 @@
 
 // Pamgen includes
 #include "create_inline_mesh.h"
-#include "pamgen_im_exodusII_l.h"
-#include "pamgen_im_ne_nemesisI_l.h"
+#include "im_exodusII_l.h"
+#include "im_ne_nemesisI_l.h"
 #include "pamgen_extras.h"
 
 // AztecOO includes
@@ -342,11 +339,11 @@ int main(int argc, char *argv[]) {
     std::cout << "Generating mesh ... \n\n";
   }
 
-  // Generate mesh with Pamgen
-  long long maxInt = 9223372036854775807LL;
-  long long cr_result = Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
-  TrilinosCouplings::pamgen_error_check(std::cout,cr_result);
-  
+   // Generate mesh with Pamgen
+
+    long long maxInt = 9223372036854775807LL;
+    Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
+
    // Get local mesh size info
     char title[100];
     long long numDim;
@@ -883,8 +880,8 @@ int main(int argc, char *argv[]) {
    /**********************************************************************************/
    /*************************BUILD INCIDENCE MATRIX***********************************/
    /**********************************************************************************/
-   Epetra_FECrsMatrix DCurl(Epetra_DataAccess::Copy, globalMapD, 4);
-   Epetra_FECrsMatrix DGrad(Epetra_DataAccess::Copy, globalMapC, 2);
+   Epetra_FECrsMatrix DCurl(Copy, globalMapD, 4);
+   Epetra_FECrsMatrix DGrad(Copy, globalMapC, 2);
 
    // Edge to node incidence matrix
    double vals[2];
@@ -959,7 +956,7 @@ int main(int argc, char *argv[]) {
    // Build Face-Node Incidence Matrix
    Epetra_CrsMatrix DGrad1(DGrad);
    Epetra_CrsMatrix DCurl1(DCurl);
-   Epetra_CrsMatrix FaceNode(Epetra_DataAccess::Copy,globalMapD,0);
+   Epetra_CrsMatrix FaceNode(Copy,globalMapD,0);
    DGrad1.PutScalar(1.0);
    DCurl1.PutScalar(1.0);
    EpetraExt::MatrixMatrix::Multiply(DCurl1,false,DGrad1,false,FaceNode);
@@ -1098,10 +1095,10 @@ int main(int argc, char *argv[]) {
    // Global matrices arrays in Epetra format
 
    //THIS MATRIX IS FOR PRECONDITIONING
-    Epetra_FECrsMatrix StiffG(Epetra_DataAccess::Copy, globalMapG, numFieldsG);
+    Epetra_FECrsMatrix StiffG(Copy, globalMapG, numFieldsG);
 
     //last agr here is not that important, epetra will extend storage if needed
-    Epetra_FECrsMatrix jointMatrix(Epetra_DataAccess::Copy, globalMapJoint, numFieldsD);
+    Epetra_FECrsMatrix jointMatrix(Copy, globalMapJoint, numFieldsD);
 
     Epetra_FEVector rhsD(globalMapD);
 
@@ -1700,7 +1697,7 @@ int main(int argc, char *argv[]) {
     // ********  Calculate Error in Solution ***************
    // Import solution onto current processor
 
-     Epetra_Map  solnMap(static_cast<int>(numFacesGlobal+numNodesGlobal), static_cast<int>(numFacesGlobal+numNodesGlobal), 0, Comm);
+     Epetra_Map  solnMap(numFacesGlobal+numNodesGlobal, numFacesGlobal+numNodesGlobal, 0, Comm);
      Epetra_Import  solnImporter(solnMap, globalMapJoint);
      Epetra_FEVector  uCoeff(solnMap);
      uCoeff.Import(globalSoln, solnImporter, Insert);

@@ -1,15 +1,15 @@
-// $Id$
-// $Source$
+// $Id$ 
+// $Source$ 
 
 //@HEADER
 // ************************************************************************
-//
+// 
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -51,8 +51,7 @@
 #include "LOCA_StatusTest_MaxIters.H" // class definition
 #include "LOCA_StatusTest_Abstract.H"
 
-//#include "LOCA_Stepper.H"
-#include "LOCA_Abstract_Iterator.H"
+#include "LOCA_Stepper.H"
 
 // FIXME remove these headers?
 #include "NOX_Utils.H"
@@ -73,10 +72,10 @@ MaxIters(int maxIterations,
   if (maxiters < 0)
   {
     if ( globalDataPtr_.is_valid_ptr() && !globalDataPtr_.is_null() )
-        globalDataPtr_->locaUtils->err() << "LOCA::StatusTest::MaxIters - must choose a number greater than or equal to zero" << std::endl;
+        globalDataPtr_->locaUtils->err() << "LOCA::StatusTest::MaxIters - must choose a number greater than or equal to zero" << endl;
     else
         // This will spit out the error message NUMPROC times. -- Without locaUtils, there's nothing we can do..
-        std::cerr << "LOCA::StatusTest::MaxIters - must choose a number greater than or equal to zero" << std::endl;
+        std::cerr << "LOCA::StatusTest::MaxIters - must choose a number greater than or equal to zero" << endl;
     throw "LOCA Error";
   }
 }
@@ -86,9 +85,8 @@ LOCA::StatusTest::MaxIters::~MaxIters()
 }
 
 LOCA::StatusTest::StatusType LOCA::StatusTest::MaxIters::
-//checkStatus(const LOCA::Stepper& stepper,
-checkStatus(const LOCA::Abstract::Iterator& stepper,
-        LOCA::StatusTest::CheckType checkType)
+checkStatus(const LOCA::Stepper& stepper,
+	    LOCA::StatusTest::CheckType checkType)
 {
   switch (checkType)
   {
@@ -117,13 +115,13 @@ getStatus() const
   return status;
 }
 
-std::ostream& LOCA::StatusTest::MaxIters::print(std::ostream& stream, int indent) const
+ostream& LOCA::StatusTest::MaxIters::print(ostream& stream, int indent) const
 {
   for (int j = 0; j < indent; j ++)
     stream << ' ';
   stream << status;
   stream << "Number of Iterations = " << niters << " < " << maxiters;
-  stream << std::endl;
+  stream << endl;
  return stream;
 }
 

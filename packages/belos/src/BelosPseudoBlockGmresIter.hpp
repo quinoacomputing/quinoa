@@ -233,7 +233,7 @@ namespace Belos {
      * \note For any pointer in \c newstate which directly points to the multivectors in 
      * the solver, the data is not copied.
      */
-    void initialize(const PseudoBlockGmresIterState<ScalarType,MV> & newstate);
+    void initialize(PseudoBlockGmresIterState<ScalarType,MV> newstate);
     
     /*! \brief Initialize the solver with the initial vectors from the linear problem
      *  or random data.
@@ -525,7 +525,7 @@ namespace Belos {
   template <class ScalarType, class MV, class OP>
   void 
   PseudoBlockGmresIter<ScalarType,MV,OP>::
-  initialize (const PseudoBlockGmresIterState<ScalarType,MV> & newstate)
+  initialize (PseudoBlockGmresIterState<ScalarType,MV> newstate)
   {
     using Teuchos::RCP;
 
@@ -593,7 +593,7 @@ namespace Belos {
       }
       // Check that the newstate vector newstate.V[i] has dimensions
       // consistent with those of V_[i].
-      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetGlobalLength(*newstate.V[i]) != MVT::GetGlobalLength(*V_[i]),
+      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetVecLength(*newstate.V[i]) != MVT::GetVecLength(*V_[i]),
                           std::invalid_argument, errstr );
       TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetNumberVecs(*newstate.V[i]) < newstate.curDim,
                           std::invalid_argument, errstr );

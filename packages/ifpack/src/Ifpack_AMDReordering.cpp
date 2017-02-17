@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -86,7 +73,7 @@ operator=(const Ifpack_AMDReordering& RHS)
   NumMyRows_ = RHS.NumMyRows(); // set number of local rows
   IsComputed_ = RHS.IsComputed();
   // resize vectors, and copy values from RHS
-  Reorder_.resize(NumMyRows());
+  Reorder_.resize(NumMyRows()); 
   InvReorder_.resize(NumMyRows());
   if (IsComputed()) {
     for (int i = 0 ; i < NumMyRows_ ; ++i) {
@@ -99,14 +86,14 @@ operator=(const Ifpack_AMDReordering& RHS)
 
 //==============================================================================
 int Ifpack_AMDReordering::
-SetParameter(const std::string Name, const int Value)
+SetParameter(const string Name, const int Value)
 {
   return(0);
 }
 
 //==============================================================================
 int Ifpack_AMDReordering::
-SetParameter(const std::string Name, const double Value)
+SetParameter(const string Name, const double Value)
 {
   return(0);
 }
@@ -131,19 +118,16 @@ int Ifpack_AMDReordering::Compute(const Epetra_RowMatrix& Matrix)
 //==============================================================================
 int Ifpack_AMDReordering::Compute(const Ifpack_Graph& Graph)
 {
-  using std::cout;
-  using std::endl;
-
   IsComputed_ = false;
   NumMyRows_ = Graph.NumMyRows();
   int NumNz = Graph.NumMyNonzeros();
-
+  
   if (NumMyRows_ == 0)
     IFPACK_CHK_ERR(-1); // strange graph this one
-
+  
   // Extract CRS format
-  std::vector<int> ia(NumMyRows_+1,0);
-  std::vector<int> ja(NumNz);
+  vector<int> ia(NumMyRows_+1,0);
+  vector<int> ja(NumNz);
   int cnt;
   for( int i = 0; i < NumMyRows_; ++i )
   {
@@ -153,8 +137,8 @@ int Ifpack_AMDReordering::Compute(const Ifpack_Graph& Graph)
   }
 
   // Trim down to local only
-  std::vector<int> iat(NumMyRows_+1);
-  std::vector<int> jat(NumNz);
+  vector<int> iat(NumMyRows_+1);
+  vector<int> jat(NumNz);
   int loc = 0;
   for( int i = 0; i < NumMyRows_; ++i )
   {
@@ -164,21 +148,21 @@ int Ifpack_AMDReordering::Compute(const Ifpack_Graph& Graph)
       if( ja[j] < NumMyRows_ )
         jat[loc++] = ja[j];
       else
-        break;
+	break;
     }
   }
   iat[NumMyRows_] = loc;
 
   // Compute AMD permutation
   Reorder_.resize(NumMyRows_);
-  std::vector<double> info(AMD_INFO);
+  vector<double> info(AMD_INFO);
 
   amesos_amd_order( NumMyRows_, &iat[0], &jat[0], &Reorder_[0], NULL, &info[0] );
 
   if( info[AMD_STATUS] == AMD_INVALID )
-    cout << "AMD ORDERING: Invalid!!!!" << endl;
+    cout << "AMD ORDERING: Invalid!!!!\n";
 
-  // Build inverse reorder (will be used by ExtractMyRowCopy()
+  // Build inverse reorder (will be used by ExtractMyRowCopy() 
   InvReorder_.resize(NumMyRows_);
 
   for (int i = 0 ; i < NumMyRows_ ; ++i)
@@ -223,8 +207,8 @@ int Ifpack_AMDReordering::InvReorder(const int i) const
 }
 //==============================================================================
 int Ifpack_AMDReordering::P(const Epetra_MultiVector& Xorig,
-                            Epetra_MultiVector& X) const
-{
+			    Epetra_MultiVector& X) const
+{  
   int NumVectors = X.NumVectors();
 
   for (int j = 0 ; j < NumVectors ; ++j) {
@@ -239,7 +223,7 @@ int Ifpack_AMDReordering::P(const Epetra_MultiVector& Xorig,
 
 //==============================================================================
 int Ifpack_AMDReordering::Pinv(const Epetra_MultiVector& Xorig,
-                               Epetra_MultiVector& X) const
+			       Epetra_MultiVector& X) const
 {
   int NumVectors = X.NumVectors();
 
@@ -254,20 +238,18 @@ int Ifpack_AMDReordering::Pinv(const Epetra_MultiVector& Xorig,
 }
 
 //==============================================================================
-std::ostream& Ifpack_AMDReordering::Print(std::ostream& os) const
+ostream& Ifpack_AMDReordering::Print(std::ostream& os) const
 {
-  using std::endl;
-
   os << "*** Ifpack_AMDReordering" << endl << endl;
   if (!IsComputed())
     os << "*** Reordering not yet computed." << endl;
-
+  
   os << "*** Number of local rows = " << NumMyRows_ << endl;
   os << endl;
   os << "Local Row\tReorder[i]\tInvReorder[i]" << endl;
   for (int i = 0 ; i < NumMyRows_ ; ++i) {
     os << '\t' << i << "\t\t" << Reorder_[i] << "\t\t" << InvReorder_[i] << endl;
   }
-
+   
   return(os);
 }

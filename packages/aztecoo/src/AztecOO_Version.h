@@ -45,7 +45,7 @@
 #include "AztecOO.h"
 #include "Trilinos_version.h"
 
-	std::string AztecOO_Version() { 
+	string AztecOO_Version() { 
 		return("AztecOO in Trilinos " TRILINOS_VERSION_STRING); 
 	}
 

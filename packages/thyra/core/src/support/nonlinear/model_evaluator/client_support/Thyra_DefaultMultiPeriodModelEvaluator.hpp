@@ -255,8 +255,6 @@ public:
   /** \brief . */
   RCP<const VectorSpaceBase<Scalar> > get_g_space(int j) const;
   /** \brief . */
-  ArrayView<const std::string> get_g_names(int j) const;
-  /** \brief . */
   ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
   /** \brief . */
   ModelEvaluatorBase::InArgs<Scalar> getLowerBounds() const;
@@ -264,8 +262,6 @@ public:
   ModelEvaluatorBase::InArgs<Scalar> getUpperBounds() const;
   /** \breif . */
   RCP<LinearOpBase<Scalar> > create_W_op() const;
-  /** \breif . */
-  RCP<PreconditionerBase<Scalar> > create_W_prec() const;
   /** \breif . */
   RCP<const LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
   /** \brief . */
@@ -563,14 +559,6 @@ DefaultMultiPeriodModelEvaluator<Scalar>::get_g_space(int j) const
 
 
 template<class Scalar>
-ArrayView<const std::string>
-DefaultMultiPeriodModelEvaluator<Scalar>::get_g_names(int j) const
-{
-  return  periodModel_->get_g_names(j);
-}
-
-
-template<class Scalar>
 ModelEvaluatorBase::InArgs<Scalar>
 DefaultMultiPeriodModelEvaluator<Scalar>::getNominalValues() const
 {
@@ -608,14 +596,6 @@ DefaultMultiPeriodModelEvaluator<Scalar>::create_W_op() const
   }
   W_op_bar->endBlockFill();
   return W_op_bar;
-}
-
-
-template<class Scalar>
-RCP<PreconditionerBase<Scalar> >
-DefaultMultiPeriodModelEvaluator<Scalar>::create_W_prec() const
-{
-  return Teuchos::null;
 }
 
 

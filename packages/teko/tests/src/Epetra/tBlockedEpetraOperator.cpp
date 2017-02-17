@@ -188,14 +188,14 @@ bool tBlockedEpetraOperator::test_vector_constr(int verbosity,std::ostream & os)
          << "Running on " << comm.NumProc() << " processors");
 
    // pick 
-   int nx = 5 * comm.NumProc();
-   int ny = 5 * comm.NumProc();
+   int nx = 5; // * comm.NumProc();
+   int ny = 5; // * comm.NumProc();
 
    // create a big matrix to play with
    // note: this matrix is not really strided
    //       however, I just need a nontrivial
    //       matrix to play with
-   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm,false); // CJ TODO FIXME: change for Epetra64
+   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm);
    FGallery.Set("nx",nx);
    FGallery.Set("ny",ny);
    RCP<Epetra_CrsMatrix> A = rcp(FGallery.GetMatrix(),false);
@@ -311,7 +311,7 @@ bool tBlockedEpetraOperator::test_reorder(int verbosity,std::ostream & os,int to
    // note: this matrix is not really strided
    //       however, I just need a nontrivial
    //       matrix to play with
-   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm,false); // CJ TODO FIXME: change for Epetra64
+   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm);
    FGallery.Set("nx",nx);
    FGallery.Set("ny",ny);
    RCP<Epetra_CrsMatrix> A = rcp(FGallery.GetMatrix(),false);

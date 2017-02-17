@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -46,7 +46,7 @@ namespace Rythmos {
 /** \brief A concrete subclass for <tt>IntegratorBase</tt> that allows a good
  * deal of customization.
  */
-template<class Scalar>
+template<class Scalar> 
 class DefaultIntegrator
   : virtual public IntegrationControlStrategyAcceptingIntegratorBase<Scalar>,
     virtual public InterpolationBufferAppenderAcceptingIntegratorBase<Scalar>,
@@ -54,13 +54,13 @@ class DefaultIntegrator
     virtual public Teuchos::ParameterListAcceptorDefaultBase
 {
 public:
-
+  
   /** \brief . */
   typedef typename ScalarTraits<Scalar>::magnitudeType ScalarMag;
 
   /** \name Constructors, Initializers, Misc */
   //@{
-
+  
   /** \brief . */
   DefaultIntegrator();
 
@@ -90,21 +90,21 @@ public:
     unSetInterpolationBufferAppender();
 
   //@}
-
+  
   /** \name Overridden from IntegrationControlStrategyAcceptingIntegratorBase */
   //@{
-
+  
   /** \brief . */
   void setIntegrationControlStrategy(
     const RCP<IntegrationControlStrategyBase<Scalar> > &integrationControlStrategy
     );
 
   /** \brief . */
-  RCP<IntegrationControlStrategyBase<Scalar> >
+  RCP<IntegrationControlStrategyBase<Scalar> > 
     getNonconstIntegrationControlStrategy();
 
   /** \brief . */
-  RCP<const IntegrationControlStrategyBase<Scalar> >
+  RCP<const IntegrationControlStrategyBase<Scalar> > 
     getIntegrationControlStrategy() const;
 
   //@}
@@ -125,7 +125,7 @@ public:
 
   /** \brief . */
   RCP<IntegratorBase<Scalar> > cloneIntegrator() const;
-
+  
   /** \brief . */
   void setStepper(
     const RCP<StepperBase<Scalar> > &stepper,
@@ -144,7 +144,7 @@ public:
 
   /** \name Overridden from TrailingInterpolationBufferAcceptingIntegratorBase */
   //@{
-
+  
   /** \brief . */
   void setTrailingInterpolationBuffer(
     const RCP<InterpolationBufferBase<Scalar> > &trailingInterpBuffer
@@ -182,7 +182,7 @@ public:
 
   /** \brief . */
   RCP<const Thyra::VectorSpaceBase<Scalar> > get_x_space() const;
-
+    
   /** \brief . */
   void addPoints(
     const Array<Scalar>& time_vec,
@@ -222,17 +222,19 @@ private:
 
   RCP<InterpolationBufferBase<Scalar> > trailingInterpBuffer_;
   RCP<InterpolationBufferAppenderBase<Scalar> > interpBufferAppender_;
-
+  
   RCP<StepperBase<Scalar> > stepper_;
   TimeRange<Scalar> integrationTimeDomain_;
   bool landOnFinalTime_;
 
   int maxNumTimeSteps_;
+  bool observeInitCond_;
 
   int currTimeStepIndex_;
   StepControlInfo<Scalar> stepCtrlInfoLast_;
 
   static const std::string maxNumTimeSteps_name_;
+  static const std::string observeInitCond_name_;
   static const int maxNumTimeSteps_default_;
 
   // /////////////////////////
@@ -249,7 +251,7 @@ private:
  *
  * \relates DefaultIntegrator
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<DefaultIntegrator<Scalar> >
 defaultIntegrator();
 
@@ -258,7 +260,7 @@ defaultIntegrator();
  *
  * \relates DefaultIntegrator
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<DefaultIntegrator<Scalar> >
 defaultIntegrator(
   const RCP<IntegrationControlStrategyBase<Scalar> > &integrationControlStrategy,
@@ -270,7 +272,7 @@ defaultIntegrator(
  *
  * \relates DefaultIntegrator
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<DefaultIntegrator<Scalar> >
 controlledDefaultIntegrator(
   const RCP<IntegrationControlStrategyBase<Scalar> > &integrationControlStrategy
@@ -281,7 +283,7 @@ controlledDefaultIntegrator(
  *
  * \relates DefaultIntegrator
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<DefaultIntegrator<Scalar> >
 observedDefaultIntegrator(
   const RCP<IntegrationObserverBase<Scalar> > &integrationObserver

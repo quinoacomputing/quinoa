@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *  
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 
 #ifdef __cplusplus
@@ -505,8 +472,7 @@ static int rcb_fn(
   if ((wgtflag > 1) && (pivot_choice == PIVOT_CHOICE_RANDOM)){
     /* If RANDOM turns out to be wanted for wgtflag>1, we can implement it */
     ZOLTAN_PRINT_WARN(proc, yo, 
-      "random_pivots turned off because it is not implemented for "
-      "multiple weights");
+      "random_pivots turned off because it is not implemented for multiple weights");
     pivot_choice = PIVOT_CHOICE_BISECTION;
   }
 
@@ -526,8 +492,7 @@ static int rcb_fn(
                                     use_ids, gen_tree);
 
   if (ierr < 0) {
-    ZOLTAN_PRINT_ERROR(proc, yo,
-      "Error returned from Zoltan_RCB_Build_Structure.");
+    ZOLTAN_PRINT_ERROR(proc, yo, "Error returned from Zoltan_RCB_Build_Structure.");
     goto End;
   }
 
@@ -906,30 +871,26 @@ static int rcb_fn(
       if (wgtflag <= 1){
         if (pivot_choice == PIVOT_CHOICE_BISECTION){
           if (!Zoltan_RB_find_median(          
-               zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight,
-               dotmark, dotnum, proc, 
+               zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight, dotmark, dotnum, proc, 
                fraclo, local_comm, &valuehalf, first_guess,
                nprocs, old_nprocs, proclower, old_nparts, 
                wgtflag, rcbbox->lo[dim], rcbbox->hi[dim], 
                weight[0], weightlo, weighthi,
                dotlist, rectilinear_blocks, average_cuts)) {
-            ZOLTAN_PRINT_ERROR(proc, yo,
-               "Error returned from Zoltan_RB_find_median.");
+            ZOLTAN_PRINT_ERROR(proc, yo,"Error returned from Zoltan_RB_find_median.");
             ierr = ZOLTAN_FATAL;
             goto End;
           }
         }
         else{
           if (!Zoltan_RB_find_median_randomized(
-               zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight,
-               dotmark, dotnum, proc, 
+               zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight, dotmark, dotnum, proc, 
                fraclo, local_comm, &valuehalf, first_guess,
                nprocs, old_nprocs, proclower, old_nparts, 
                wgtflag, rcbbox->lo[dim], rcbbox->hi[dim], 
                weight[0], weightlo, weighthi,
                dotlist, rectilinear_blocks, average_cuts)) {
-            ZOLTAN_PRINT_ERROR(proc, yo,
-               "Error returned from Zoltan_RB_find_median_randomized.");
+            ZOLTAN_PRINT_ERROR(proc, yo,"Error returned from Zoltan_RB_find_median_randomized.");
             ierr = ZOLTAN_FATAL;
             goto End;
           }
@@ -937,8 +898,7 @@ static int rcb_fn(
       }
       else { 
         if (Zoltan_RB_find_bisector(
-               zz, zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight,
-               dotmark, dotnum, 
+               zz, zz->Tflops_Special, pts, dotpt->Weight, dotpt->uniformWeight, dotmark, dotnum, 
                wgtflag, mcnorm, fraclo, local_comm, 
                &valuehalf, first_guess,
                old_nprocs, proclower, old_nparts, 
@@ -946,8 +906,7 @@ static int rcb_fn(
                weight, weightlo, weighthi, &norm_max,
                dotlist, rectilinear_blocks, average_cuts)
           != ZOLTAN_OK) {
-          ZOLTAN_PRINT_ERROR(proc, yo,
-                             "Error returned from Zoltan_RB_find_bisector.");
+          ZOLTAN_PRINT_ERROR(proc, yo,"Error returned from Zoltan_RB_find_bisector.");
           ierr = ZOLTAN_FATAL;
           goto End;
         }
@@ -955,7 +914,7 @@ static int rcb_fn(
         /* test for better balance */
         if ((!one_cut_dir) && 
             ((norm_best<0.) ||
-             (!tfs_disregard_results && (norm_max < norm_best)))) {
+              (!tfs_disregard_results && (norm_max < norm_best)))) {
           norm_best = norm_max; 
           dim_best = dim;
           for (j=0; j<wgtdim; j++){
@@ -967,12 +926,11 @@ static int rcb_fn(
           valuehalf_best = valuehalf;
         }
         if (zz->Debug_Level >= ZOLTAN_DEBUG_ALL){
-          printf("[%1d] Debug: cut dim=%1d, norm_max=%f, dim_best=%1d, "
-                 "norm_best=%f, cut value=%f\n", 
-                 proc, dim, norm_max, dim_best, norm_best, valuehalf);
+          printf("[%1d] Debug: cut dim=%1d, norm_max=%f, dim_best=%1d, norm_best=%f, cut value=%f\n", 
+            proc, dim, norm_max, dim_best, norm_best, valuehalf);
           if (wgtflag>1)
             printf("[%1d] Debug: weightlo=(%f,%f), weighthi=(%f,%f)\n",
-                   proc, weightlo[0], weightlo[1],  weighthi[0], weighthi[1]);
+              proc, weightlo[0], weightlo[1],  weighthi[0], weighthi[1]);
         }
       }
       if (breakflag) break; /* if one_cut_dir is true */
@@ -1228,6 +1186,7 @@ EndReporting:
        goto End;
     }
   }
+  ZOLTAN_FREE(&dindx);
 
   if (gen_tree) {
     int *displ, *recvcount;
@@ -1240,8 +1199,6 @@ EndReporting:
     displ = (int *) ZOLTAN_MALLOC(2 * zz->Num_Proc * sizeof(int));
     if (!displ || !treetmp) {
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Memory error.");
-      ZOLTAN_FREE(&displ);
-      ZOLTAN_FREE(&treetmp);
       ierr = ZOLTAN_MEMERR;
       goto End;
     }
@@ -1277,7 +1234,7 @@ EndReporting:
 
   if (stats || (zz->Debug_Level >= ZOLTAN_DEBUG_ATIME)) 
     Zoltan_RB_stats(zz, timestop-timestart,&rcb->Dots,dotnum,part_sizes,
-                    timers,counters,stats,reuse_count,rcbbox,reuse);
+                timers,counters,stats,reuse_count,rcbbox,reuse);
 
   if (zz->Debug_Level >= ZOLTAN_DEBUG_ATIME) {
     if (zz->Proc == zz->Debug_Proc) {
@@ -1304,7 +1261,6 @@ End:
   MPI_Type_free(&box_type);
   MPI_Op_free(&box_op);
 
-  ZOLTAN_FREE(&dindx);
   ZOLTAN_FREE(&dotmark);
   ZOLTAN_FREE(&coord);
   ZOLTAN_FREE(&wgts);
@@ -1583,8 +1539,7 @@ static int serial_rcb(
   double weighthi[RB_MAX_WGTS];      /* weight in upper half */
   double weightlo_best[RB_MAX_WGTS]; /* temp weightlo */
   double weighthi_best[RB_MAX_WGTS]; /* temp weighthi */
-  int set0, set1, breakflag; 
-  int one_cut_dir=1;
+  int set0, set1, breakflag, one_cut_dir;
   struct rcb_box tmpbox;
   int *dotmark0 = NULL;             /* temp dotmark array */
   int *dotmark_best = NULL;         /* temp dotmark array */
@@ -1861,10 +1816,6 @@ static int serial_rcb(
   }
 End:
 
-  if (!one_cut_dir){   /* Needed here only if got to End on error condition */
-    ZOLTAN_FREE(&dotmark0);
-    ZOLTAN_FREE(&dotmark_best);
-  }
   return ierr;
 }
 

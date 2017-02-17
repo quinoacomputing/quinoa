@@ -145,7 +145,7 @@ class AztecOO_StatusTestCombo: public AztecOO_StatusTest {
 				 bool SolutionUpdated);
   AztecOO_StatusType GetStatus() const {return(status_);};
 
-  std::ostream& Print(std::ostream& stream, int indent = 0) const;
+  ostream& Print(ostream& stream, int indent = 0) const;
 
   //@}
 

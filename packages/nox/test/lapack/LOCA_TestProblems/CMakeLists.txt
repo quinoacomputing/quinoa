@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 SET(HEADERS "")
 SET(SOURCES "")
@@ -9,7 +10,7 @@ APPEND_SET(HEADERS
   ChanProblemInterface.H
   NormConstraint.H
   LOCALinearConstraint.H
-  )
+  ) 
 
 APPEND_SET(SOURCES
   ChanProblemInterface.C

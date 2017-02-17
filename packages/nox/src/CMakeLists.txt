@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -26,7 +27,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 APPEND_SET(HEADERS
   NOX.H
   NOX_Common.H
-  )
+  ) 
 
 # Abstract
 APPEND_SET(HEADERS
@@ -55,8 +56,7 @@ APPEND_SET(HEADERS
   NOX_LineSearch_Backtrack.H
   NOX_LineSearch_MoreThuente.H
   NOX_LineSearch_NonlinearCG.H
-  NOX_LineSearch_Polynomial.H
-  NOX_LineSearch_SafeguardedStep.H
+  NOX_LineSearch_Polynomial.H 
 )
 APPEND_SET(SOURCES
   NOX_LineSearch_Factory.C
@@ -67,8 +67,7 @@ APPEND_SET(SOURCES
   NOX_LineSearch_Backtrack.C
   NOX_LineSearch_MoreThuente.C
   NOX_LineSearch_NonlinearCG.C
-  NOX_LineSearch_Polynomial.C
-  NOX_LineSearch_SafeguardedStep.C
+  NOX_LineSearch_Polynomial.C 
 )
 
 # Direction
@@ -95,7 +94,7 @@ APPEND_SET(SOURCES
 
 # Prerelease Code
 IF (${PACKAGE_NAME}_BUILD_PRERELEASE)
-
+  
   APPEND_SET(HEADERS
     NOX_Solver_TensorBasedTest.H
     NOX_LineSearch_Tensor.H
@@ -123,7 +122,6 @@ APPEND_SET(HEADERS
   NOX_Solver_TrustRegionBased.H
   NOX_Solver_InexactTrustRegionBased.H
   NOX_Solver_TensorBased.H
-  NOX_Solver_AndersonAcceleration.H
   NOX_Solver_PrePostOperator.H
   )
 APPEND_SET(SOURCES
@@ -133,7 +131,6 @@ APPEND_SET(SOURCES
   NOX_Solver_TrustRegionBased.C
   NOX_Solver_InexactTrustRegionBased.C
   NOX_Solver_TensorBased.C
-  NOX_Solver_AndersonAcceleration.C
   NOX_Solver_PrePostOperator.C
   )
 
@@ -157,7 +154,7 @@ APPEND_SET(HEADERS
   NOX_StatusTest_MaxIters.H
   NOX_StatusTest_NormWRMS.H
   NOX_StatusTest_Stagnation.H
-  NOX_StatusTest_Divergence.H
+  NOX_StatusTest_Divergence.H 
   NOX_StatusTest_RelativeNormF.H
   NOX_StatusTest_NStep.H
   )
@@ -171,7 +168,7 @@ APPEND_SET(SOURCES
   NOX_StatusTest_MaxIters.C
   NOX_StatusTest_NormWRMS.C
   NOX_StatusTest_Stagnation.C
-  NOX_StatusTest_Divergence.C
+  NOX_StatusTest_Divergence.C 
   NOX_StatusTest_RelativeNormF.C
   NOX_StatusTest_NStep.C
   )
@@ -184,7 +181,6 @@ APPEND_SET(HEADERS
   NOX_Version.H
   NOX_GlobalData.H
   NOX_PrePostOperator_Vector.H
-  NOX_Assert.H
   )
 APPEND_SET(SOURCES
   NOX_Utils.C
@@ -215,35 +211,6 @@ APPEND_SET(SOURCES
   NOX_Multiphysics_Solver_Manager.C
   NOX_Multiphysics_Solver_FixedPointBased.C
   )
-
-IF(NOX_ENABLE_ABSTRACT_IMPLEMENTATION_THYRA)
-  INCLUDE_DIRECTORIES(${PACKAGE_SOURCE_DIR}/src-thyra)
-  APPEND_SET(HEADERS
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra.H
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_Vector.H
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_MultiVector.H
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_Group.H
-    ${PACKAGE_SOURCE_DIR}/src-thyra/Thyra_NonlinearSolver_NOX.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_PrePostOperator_RowSumScaling.H
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_MeritFunction_Weighted.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Solver_PseudoTransient.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_MatrixFreeJacobianOperator.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_MatrixFreeJacobianOperator_impl.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_MatrixFree_ModelEvaluatorDecorator.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_LineSearch_SafeguardedDirection.hpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_TOpEleWiseMinSwap.hpp
-  )
-  APPEND_SET(SOURCES
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_Vector.C
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_MultiVector.C
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Thyra_Group.C
-    ${PACKAGE_SOURCE_DIR}/src-thyra/Thyra_NonlinearSolver_NOX.cpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_PrePostOperator_RowSumScaling.C
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_MeritFunction_Weighted.cpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_Solver_PseudoTransient.cpp
-    ${PACKAGE_SOURCE_DIR}/src-thyra/NOX_LineSearch_SafeguardedDirection.cpp
-  )
-ENDIF()
 
 #
 # C) Define the targets for package's library(s)

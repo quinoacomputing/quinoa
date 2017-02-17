@@ -2,7 +2,7 @@
 //
 // ***********************************************************************
 //
-//           Amesos2: Templated Direct Sparse Solver Package
+//           Amesos2: Templated Direct Sparse Solver Package 
 //                  Copyright 2011 Sandia Corporation
 //
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
@@ -46,7 +46,7 @@
  * \file   Amesos2_TpetraCrsMatrix_MatrixAdapter_decl.hpp
  * \author Eric Bavier <etbavie@sandia.gov>
  * \date   Mon Jun 13 11:39:24 2011
- *
+ * 
  * \brief Specialization of the ConcreteMatrixAdapter for
  * Tpetra::CrsMatrix.  Inherits all its functionality from the
  * Tpetra::RowMatrix specialization of \c AbstractConcreteMatrixAdapter.
@@ -77,11 +77,13 @@ namespace Amesos2 {
   template <typename Scalar,
             typename LocalOrdinal,
             typename GlobalOrdinal,
-            typename Node>
+            typename Node,
+            typename LocalMatOps >
   class ConcreteMatrixAdapter<Tpetra::CrsMatrix<Scalar,
                                                 LocalOrdinal,
                                                 GlobalOrdinal,
-                                                Node> >
+                                                Node,
+                                                LocalMatOps> >
     : public AbstractConcreteMatrixAdapter<Tpetra::RowMatrix<Scalar,
                                                              LocalOrdinal,
                                                              GlobalOrdinal,
@@ -89,11 +91,12 @@ namespace Amesos2 {
                                            Tpetra::CrsMatrix<Scalar,
                                                              LocalOrdinal,
                                                              GlobalOrdinal,
-                                                             Node> >
+                                                             Node,
+                                                             LocalMatOps> >
   {
     // Give our matrix adapter class access to our private
     // implementation functions
-    friend class MatrixAdapter<Tpetra::RowMatrix<Scalar,
+    friend class MatrixAdapter<Tpetra::RowMatrix<Scalar,        
                                                  LocalOrdinal,
                                                  GlobalOrdinal,
                                                  Node> >;
@@ -101,7 +104,8 @@ namespace Amesos2 {
     typedef Tpetra::CrsMatrix<Scalar,
                               LocalOrdinal,
                               GlobalOrdinal,
-                              Node>                    matrix_t;
+                              Node,
+                              LocalMatOps>             matrix_t;
   private:
     typedef AbstractConcreteMatrixAdapter<
       Tpetra::RowMatrix<Scalar,
@@ -115,13 +119,15 @@ namespace Amesos2 {
     typedef typename super_t::global_ordinal_t global_ordinal_t;
     typedef typename super_t::node_t                     node_t;
     typedef typename super_t::global_size_t       global_size_t;
-
+    
+    typedef LocalMatOps                         local_mat_ops_t;
+    
     typedef ConcreteMatrixAdapter<matrix_t>                type;
-
+    
     ConcreteMatrixAdapter(RCP<matrix_t> m);
-
+    
     RCP<const MatrixAdapter<matrix_t> > get_impl(const Teuchos::Ptr<const Tpetra::Map<local_ordinal_t,global_ordinal_t,node_t> > map) const;
-
+    
   };
 
 } // end namespace Amesos2

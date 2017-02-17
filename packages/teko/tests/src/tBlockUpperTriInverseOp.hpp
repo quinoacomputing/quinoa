@@ -71,7 +71,6 @@ public:
 
    bool test_apply(int verbosity,std::ostream & os);
    bool test_alphabeta(int verbosity,std::ostream & os);
-   bool test_applyTranspose(int verbosity,std::ostream & os);
 
 protected:
    double tolerance_;

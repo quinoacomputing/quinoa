@@ -43,7 +43,7 @@
 #define BELOS_MVOPTESTER_HPP
 
 // Assumptions that I have made:
-// * I assume/verify that a multivector must have at least one std::vector. This seems
+// * I assume/verify that a multivector must have at least one std::vector. This seems 
 //   to be consistent with Epetra_MultiVec.
 // * I do not assume that an operator is deterministic; I do assume that the
 //   operator, applied to 0, will return 0.
@@ -60,45 +60,20 @@
 #include "BelosOutputManager.hpp"
 
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_MatrixMarket_SetScientific.hpp"
 
 namespace Belos {
 
-  /// \brief Test correctness of a MultiVecTraits specialization and
-  ///   multivector implementation.
-  ///
-  /// \tparam ScalarType The type of the entries in the multivectors;
-  ///   the first template parameter of MultiVecTraits.
-  /// \tparam MV The multivector type; the second template parameter
-  ///   of MultiVecTraits.
-  ///
-  /// \param om [in/out] A valid OutputManager, for displaying test results.
-  ///
-  /// \param A [in] An initial multivector, to use for making new
-  ///   multivectors.  (Belos doesn't currently have a "vector space"
-  ///   abstraction; making a new multivector requires a valid input
-  ///   multivector to clone.)
-  ///
-  /// \return Test result: true if all tests passed, else false.
+/*!  \brief This is a function to test the correctness of a MultiVecTraits
+ * specialization and multivector implementation.
+ *
+ *  \return Status of the test: true is success, false is error
+*/
   template< class ScalarType, class MV >
-  bool
-  TestMultiVecTraits (const Teuchos::RCP<OutputManager<ScalarType> > &om,
-                      const Teuchos::RCP<const MV> &A)
-  {
-    using Teuchos::MatrixMarket::details::SetScientific;
+  bool TestMultiVecTraits( 
+                const Teuchos::RCP<OutputManager<ScalarType> > &om,
+                const Teuchos::RCP<const MV> &A ) {
+
     using std::endl;
-    typedef MultiVecTraits<ScalarType, MV>    MVT;
-    typedef Teuchos::ScalarTraits<ScalarType> STS;
-    typedef typename STS::magnitudeType       MagType;
-
-    // Make sure that all floating-point numbers are printed with the
-    // right precision.
-    SetScientific<ScalarType> sci (om->stream (Warnings));
-
-    // FIXME (mfh 09 Jan 2013) Added an arbitrary tolerance in case
-    // norms are not computed deterministically (which is possible
-    // even with MPI only, and more likely with threads).
-    const MagType tol = Teuchos::as<MagType> (100) * STS::eps ();
 
     /* MVT Contract:
 
@@ -109,7 +84,7 @@ namespace Belos {
              MV: will return a multivector with exactly the number of
                    requested vectors.
                  vectors are the same dimension as the cloned MV
-
+         
 
          CloneView(MV,vector<int>) [const and non-const]
            USER: There is no assumed communication between creation and
@@ -118,17 +93,17 @@ namespace Belos {
            destruction of the view, changes in the view are not reflected in the
            source multivector.
 
-         GetGlobalLength 
+         GetVecLength 
              MV: will always be positive (MV cannot have zero vectors)
 
-         GetNumberVecs
+         GetNumberVecs 
              MV: will always be positive (MV cannot have zero vectors)
 
-         MvAddMv
+         MvAddMv 
            USER: multivecs will be of the same dimension and same number of vecs
              MV: input vectors will not be modified
                  performing C=0*A+1*B will assign B to C exactly
-
+         
          MvTimesMatAddMv
            USER: multivecs and serialdensematrix will be of the proper shape
              MV: input arguments will not be modified
@@ -137,34 +112,34 @@ namespace Belos {
                    0*B = B
                    1*B = B
 
-         MvTransMv
+         MvTransMv 
            USER: SerialDenseMatrix will be large enough to hold results.
              MV: SerialDenseMatrix will not be resized.
                  Inner products will satisfy |a'*b| <= |a|*|b|
                  alpha == 0  =>  SerialDenseMatrix == 0
 
-         MvDot
+         MvDot 
           USER: Results vector will be large enough for results.
                 Both multivectors will have the same number of vectors.
                     (Epetra crashes, otherwise.)
             MV: Inner products will satisfy |a'*b| <= |a|*|b|
                 Results vector will not be resized.
 
-         MvNorm
+         MvNorm 
              MV: vector norm is always non-negative, and zero
                    only for zero vectors.
                  results vector should not be resized
 
-         SetBlock
+         SetBlock 
           USER: indices will be distinct
             MV: assigns copies of the vectors to the specified
                 locations, leaving the other vectors untouched.
 
-         MvRandom
+         MvRandom 
              MV: Generate zero vector with "zero" probability
                  Don't gen the same vectors twice.
 
-         MvInit
+         MvInit 
              MV: Init(alpha) sets all elements to alpha
 
          MvScale (two versions)
@@ -174,8 +149,12 @@ namespace Belos {
              MV: routine does not modify vectors (not tested here)
     *********************************************************************/
 
-    const ScalarType one      = STS::one();
-    const ScalarType zero     = STS::zero();
+    typedef MultiVecTraits<ScalarType, MV>    MVT;
+    typedef Teuchos::ScalarTraits<ScalarType> SCT;
+    typedef typename SCT::magnitudeType       MagType;
+
+    const ScalarType one      = SCT::one();
+    const ScalarType zero     = SCT::zero();
     const MagType    zero_mag = Teuchos::ScalarTraits<MagType>::zero();
 
     // Don't change these two without checking the initialization of ind below
@@ -185,7 +164,7 @@ namespace Belos {
     std::vector<int> ind(numvecs_2);
 
     /* Initialize indices for selected copies/views
-       The MVT specialization should not assume that
+       The MVT specialization should not assume that 
        these are ordered or even distinct.
        Also retrieve the edges.
 
@@ -211,13 +190,13 @@ namespace Belos {
     }
 
 
-    /*********** GetGlobalLength() ***************************************
+    /*********** GetVecLength() ******************************************
        Verify:
        1) This number should be strictly positive
     *********************************************************************/
-    if ( MVT::GetGlobalLength(*A) <= 0 ) {
+    if ( MVT::GetVecLength(*A) <= 0 ) {
       om->stream(Warnings)
-        << "*** ERROR *** MultiVectorTraitsExt::GetGlobalLength()" << endl
+        << "*** ERROR *** MultiVectorTraits::GetVecLength()" << endl
         << "Returned <= 0." << endl;
       return false;
     }
@@ -240,7 +219,7 @@ namespace Belos {
           << "Did not allocate requested number of vectors." << endl;
         return false;
       }
-      if ( MVT::GetGlobalLength(*B) != MVT::GetGlobalLength(*A) ) {
+      if ( MVT::GetVecLength(*B) != MVT::GetVecLength(*A) ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::Clone()." << endl
           << "Did not allocate requested number of vectors." << endl;
@@ -250,7 +229,7 @@ namespace Belos {
       if ( norms.size() != 2*numvecs && ResizeWarning==false ) {
         om->stream(Warnings)
           << "*** WARNING *** MultiVecTraits::MvNorm()." << endl
-          << "Method resized the output vector." << endl;
+          << "Method resized the output std::vector." << endl;
         ResizeWarning = true;
       }
       for (int i=0; i<numvecs; i++) {
@@ -268,15 +247,15 @@ namespace Belos {
        Verify:
        1) Set vectors to zero
        2) Check that norm is zero
-       3) Perform MvRandom.
+       3) Perform MvRandom. 
        4) Verify that vectors aren't zero anymore
-       5) Perform MvRandom again.
+       5) Perform MvRandom again. 
        6) Verify that std::vector norms are different than before
-
-       Without knowing something about the random distribution,
-       this is about the best that we can do, to make sure that MvRandom
+       
+       Without knowing something about the random distribution, 
+       this is about the best that we can do, to make sure that MvRandom 
        did at least *something*.
-
+       
        Also, make sure std::vector norms aren't negative.
     *********************************************************************/
     {
@@ -290,7 +269,7 @@ namespace Belos {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvInit() "
             << "and MultiVecTraits::MvNorm()" << endl
-            << "Supposedly zero vector has non-zero norm." << endl;
+            << "Supposedly zero std::vector has non-zero norm." << endl;
           return false;
         }
       }
@@ -302,7 +281,7 @@ namespace Belos {
         if ( norms[i] == zero_mag || norms2[i] == zero_mag ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvRandom()." << endl
-            << "Random vector was empty (very unlikely)." << endl;
+            << "Random std::vector was empty (very unlikely)." << endl;
           return false;
         }
         else if ( norms[i] < zero_mag || norms2[i] < zero_mag ) {
@@ -323,7 +302,7 @@ namespace Belos {
 
     /*********** MvRandom() and MvNorm() and MvScale() *******************
        Verify:
-       1) Perform MvRandom.
+       1) Perform MvRandom. 
        2) Verify that vectors aren't zero
        3) Set vectors to zero via MvScale
        4) Check that norm is zero
@@ -333,7 +312,7 @@ namespace Belos {
       std::vector<MagType> norms(numvecs);
 
       MVT::MvRandom(*B);
-      MVT::MvScale(*B,STS::zero());
+      MVT::MvScale(*B,SCT::zero());
       MVT::MvNorm(*B, norms);
       for (int i=0; i<numvecs; i++) {
         if ( norms[i] != zero_mag ) {
@@ -345,7 +324,7 @@ namespace Belos {
       }
 
       MVT::MvRandom(*B);
-      std::vector<ScalarType> zeros(numvecs,STS::zero());
+      std::vector<ScalarType> zeros(numvecs,SCT::zero());
       MVT::MvScale(*B,zeros);
       MVT::MvNorm(*B, norms);
       for (int i=0; i<numvecs; i++) {
@@ -366,7 +345,7 @@ namespace Belos {
        3) Verify that norms aren't negative
 
        Note: I'm not sure that we can expect this to hold in practice.
-              Maybe something like std::abs(norm-std::sqrt(n)) < STS::eps()  ???
+              Maybe something like std::abs(norm-std::sqrt(n)) < SCT::eps()  ???
               The sum of 1^2==1 should be n, but what about std::sqrt(n)?
               They may be using a different square root than ScalartTraits
               On my iBook G4 and on jeter, this test works.
@@ -386,12 +365,12 @@ namespace Belos {
             << "Vector had negative norm." << endl;
           return false;
         }
-        else if ( norms[i] != STS::squareroot(MVT::GetGlobalLength(*B)) && !BadNormWarning ) {
+        else if ( norms[i] != SCT::squareroot(MVT::GetVecLength(*B)) && !BadNormWarning ) {
           om->stream(Warnings)
             << endl
             << "Warning testing MultiVecTraits::MvInit()." << endl
             << "Ones std::vector should have norm std::sqrt(dim)." << endl
-            << "norms[i]: " << norms[i] << "\tdim: " << MVT::GetGlobalLength(*B) << endl << endl;
+            << "norms[i]: " << norms[i] << "\tdim: " << MVT::GetVecLength(*B) << endl << endl;
           BadNormWarning = true;
         }
       }
@@ -447,40 +426,34 @@ namespace Belos {
           << "Wrong number of vectors." << endl;
         return false;
       }
-      if ( MVT::GetGlobalLength(*C) != MVT::GetGlobalLength(*B) ) {
+      if ( MVT::GetVecLength(*C) != MVT::GetVecLength(*B) ) {
         om->stream(Warnings)
           << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
           << "Vector lengths don't match." << endl;
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        if (STS::magnitude (norms2[i] - norms[ind[i]]) > tol) {
+        if ( norms2[i] != norms[ind[i]] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
-            << "Copied vectors do not agree: "
-            << norms2[i] << " != " << norms[ind[i]] << endl
-            << "Difference " << STS::magnitude (norms2[i] - norms[ind[i]])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
-          //MVT::MvPrint(*B,std::cout);
-          //MVT::MvPrint(*C,std::cout);
+            << "Copied vectors do not agree: " 
+            << norms2[i] << " != " << norms[ind[i]] << endl;
+          MVT::MvPrint(*B,std::cout);
+          MVT::MvPrint(*C,std::cout);
           return false;
         }
       }
       MVT::MvInit(*B,zero);
-      MVT::MvNorm(*C, norms);
+      MVT::MvNorm(*C, norms); 
       for (int i=0; i<numvecs_2; i++) {
-        //if ( norms2[i] != norms[i] ) {
-        if (STS::magnitude (norms2[i] - norms[i]) > tol) {
+        if ( norms2[i] != norms[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy(ind)." << endl
-            << "Copied vectors were not independent." << endl
-            << norms2[i] << " != " << norms[i] << endl
-            << "Difference " << STS::magnitude (norms2[i] - norms[i])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
+            << "Copied vectors were not independent." << endl;
           return false;
         }
       }
-    }
+    }    
 
     /*********** CloneCopy(MV) and MvNorm ********************************
        1) Check quantity
@@ -503,27 +476,20 @@ namespace Belos {
         return false;
       }
       for (int i=0; i<numvecs; i++) {
-        if (STS::magnitude (norms2[i] - norms[i]) > tol) {
+        if ( norms2[i] != norms[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy()." << endl
-            << "Copied vectors do not agree: "
-            << norms2[i] << " != " << norms[i] << endl
-            << "Difference " << STS::magnitude (norms2[i] - norms[i])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
+            << "Copied vectors do not agree." << endl;
           return false;
         }
       }
       MVT::MvInit(*B,zero);
-      MVT::MvNorm(*C, norms);
+      MVT::MvNorm(*C, norms); 
       for (int i=0; i<numvecs; i++) {
-        //if ( norms2[i] != norms[i] ) {
-        if (STS::magnitude (norms2[i] - norms[i]) > tol) {
+        if ( norms2[i] != norms[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneCopy()." << endl
-            << "Copied vectors were not independent." << endl
-            << norms2[i] << " != " << norms[i] << endl
-            << "Difference " << STS::magnitude (norms2[i] - norms[i])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
+            << "Copied vectors were not independent." << endl;
           return false;
         }
       }
@@ -540,7 +506,7 @@ namespace Belos {
       Teuchos::RCP<MV> B, C;
       std::vector<MagType> norms(numvecs), norms2(numvecs);
 
-      B = MVT::Clone(*A,numvecs);
+      B = MVT::Clone(*A,numvecs); 
       MVT::MvRandom(*B);
       MVT::MvNorm(*B, norms);
       C = MVT::CloneViewNonConst(*B,ind);
@@ -552,8 +518,7 @@ namespace Belos {
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        //if ( norms2[i] != norms[ind[i]] ) {
-        if (STS::magnitude (norms2[i] - norms[ind[i]]) > tol) {
+        if ( norms2[i] != norms[ind[i]] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::CloneView(ind)." << endl
             << "Viewed vectors do not agree." << endl;
@@ -590,8 +555,7 @@ namespace Belos {
         return false;
       }
       for (int i=0; i<numvecs_2; i++) {
-        //if ( normsC[i] != normsB[ind[i]] ) {
-        if (STS::magnitude (normsC[i] - normsB[ind[i]]) > tol) {
+        if ( normsC[i] != normsB[ind[i]] ) {
           om->stream(Warnings)
             << "*** ERROR *** const MultiVecTraits::CloneView(ind)." << endl
             << "Viewed vectors do not agree." << endl;
@@ -602,12 +566,12 @@ namespace Belos {
 
 
     /*********** SetBlock() and MvNorm() *********************************
-       SetBlock() will copy the vectors from C into B
+       SetBlock() will copy the vectors from C into B 
        1) Verify that the specified vectors were copied
        2) Verify that the other vectors were not modified
        3) Verify that C was not modified
        4) Change C and then check B to make sure it was not modified
-
+      
        Use a different index set than has been used so far (distinct entries).
        This is because duplicate entries will cause the std::vector to be
        overwritten, making it more difficult to test.
@@ -635,8 +599,7 @@ namespace Belos {
 
       // check that C was not changed by SetBlock
       for (int i=0; i<numvecs_2; i++) {
-        //if ( normsC1[i] != normsC2[i] ) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
             << "Operation modified source vectors." << endl;
@@ -647,26 +610,20 @@ namespace Belos {
       // and the others were not
       for (int i=0; i<numvecs; i++) {
         if (i % 2 == 0) {
-          // should be a vector from C
-          if (STS::magnitude (normsB2[i] - normsC1[i/2]) > tol) {
+          // should be a std::vector from C
+          if ( normsB2[i] != normsC1[i/2] ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-              << "Copied vectors do not agree: " << endl
-              << normsB2[i] << " != " << normsC1[i/2] << endl
-              << "Difference " << STS::magnitude (normsB2[i] - normsC1[i/2])
-              << " exceeds the tolerance 100*eps = " << tol << endl;
+              << "Copied vectors do not agree." << endl;
             return false;
           }
         }
         else {
-          // should be an original vector
-          if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+          // should be an original std::vector
+          if ( normsB1[i] != normsB2[i] ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-              << "Incorrect vectors were modified." << endl
-              << normsB1[i] << " != " << normsB2[i] << endl
-              << "Difference " << STS::magnitude (normsB2[i] - normsB2[i])
-              << " exceeds the tolerance 100*eps = " << tol << endl;
+              << "Incorrect vectors were modified." << endl;
             return false;
           }
         }
@@ -675,14 +632,10 @@ namespace Belos {
       MVT::MvNorm(*B,normsB1);
       // verify that we copied and didn't reference
       for (int i=0; i<numvecs; i++) {
-        //if ( normsB1[i] != normsB2[i] ) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-            << "Copied vectors were not independent." << endl
-            << normsB1[i] << " != " << normsB2[i] << endl
-            << "Difference " << STS::magnitude (normsB1[i] - normsB2[i])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
+            << "Copied vectors were not independent." << endl;
           return false;
         }
       }
@@ -690,7 +643,7 @@ namespace Belos {
 
 
     /*********** SetBlock() and MvNorm() *********************************
-       SetBlock() will copy the vectors from C into B
+       SetBlock() will copy the vectors from C into B 
        1) Verify that the specified vectors were copied
        2) Verify that the other vectors were not modified
        3) Verify that C was not modified
@@ -731,8 +684,7 @@ namespace Belos {
 
       // check that C was not changed by SetBlock
       for (int i=0; i<CSize; i++) {
-        //if ( normsC1[i] != normsC2[i] ) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
             << "Operation modified source vectors." << endl;
@@ -743,29 +695,20 @@ namespace Belos {
       // and the others were not
       for (int i=0; i<BSize; i++) {
         if (i % 2 == 0) {
-          // should be a vector from C
-          const MagType diff = STS::magnitude (normsB2[i] - normsC1[i/2]);
-          if (diff > tol) {
+          // should be a std::vector from C
+          if ( normsB2[i] != normsC1[i/2] ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-              << "Copied vectors do not agree: " << endl
-              << normsB2[i] << " != " << normsC1[i/2] << endl
-              << "Difference " << diff << " exceeds the tolerance 100*eps = "
-              << tol << endl;
+              << "Copied vectors do not agree." << endl;
             return false;
           }
         }
         else {
-          // should be an original vector
-          const MagType diff = STS::magnitude (normsB1[i] - normsB2[i]);
-          //if ( normsB1[i] != normsB2[i] ) {
-          if (diff > tol) {
+          // should be an original std::vector
+          if ( normsB1[i] != normsB2[i] ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-              << "Incorrect vectors were modified." << endl
-              << normsB1[i] << " != " << normsB2[i] << endl
-              << "Difference " << diff << " exceeds the tolerance 100*eps = "
-              << tol << endl;
+              << "Incorrect vectors were modified." << endl;
             return false;
           }
         }
@@ -774,14 +717,10 @@ namespace Belos {
       MVT::MvNorm(*B,normsB1);
       // verify that we copied and didn't reference
       for (int i=0; i<numvecs; i++) {
-        //if ( normsB1[i] != normsB2[i] ) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::SetBlock()." << endl
-            << "Copied vectors were not independent." << endl
-            << normsB1[i] << " != " << normsB2[i] << endl
-            << "Difference " << STS::magnitude (normsB1[i] - normsB2[i])
-            << " exceeds the tolerance 100*eps = " << tol << endl;
+            << "Copied vectors were not independent." << endl;
           return false;
         }
       }
@@ -816,16 +755,16 @@ namespace Belos {
 
       B = MVT::Clone(*A,p);
       C = MVT::Clone(*A,q);
-
+   
       // randomize the multivectors
       MVT::MvRandom(*B);
       MVT::MvNorm(*B,normsB);
       MVT::MvRandom(*C);
       MVT::MvNorm(*C,normsC);
-
+   
       // perform SDM  = zero() * B^H * C
       MVT::MvTransMv( zero, *B, *C, SDM );
-
+   
       // check the sizes: not allowed to have shrunk
       if ( SDM.numRows() != p || SDM.numCols() != q ) {
         om->stream(Warnings)
@@ -833,7 +772,7 @@ namespace Belos {
           << "Routine resized SerialDenseMatrix." << endl;
         return false;
       }
-
+   
       // check that zero**A^H*B == zero
       if ( SDM.normOne() != zero ) {
         om->stream(Warnings)
@@ -841,22 +780,22 @@ namespace Belos {
           << "Scalar argument processed incorrectly." << endl;
         return false;
       }
-
+   
       // perform SDM  = one * B^H * C
       MVT::MvTransMv( one, *B, *C, SDM );
-
+   
       // check the norms: a^H b = |a| |b| cos(theta) <= |a| |b|
       // with equality only when a and b are colinear
       for (int i=0; i<p; i++) {
         for (int j=0; j<q; j++) {
-          if (   STS::magnitude(SDM(i,j))
-               > STS::magnitude(normsB[i]*normsC[j]) ) {
+          if (   SCT::magnitude(SDM(i,j)) 
+               > SCT::magnitude(normsB[i]*normsC[j]) ) {
             om->stream(Warnings)
               << "*** ERROR *** MultiVecTraits::MvTransMv()." << endl
-              << "Triangle inequality did not hold: "
-              << STS::magnitude(SDM(i,j))
-              << " > "
-              << STS::magnitude(normsB[i]*normsC[j])
+              << "Triangle inequality did not hold: " 
+              << SCT::magnitude(SDM(i,j)) 
+              << " > " 
+              << SCT::magnitude(normsB[i]*normsC[j]) 
               << endl;
             return false;
           }
@@ -888,7 +827,7 @@ namespace Belos {
           }
         }
       }
-    }
+    } 
 
 
     /*********** MvDot() *************************************************
@@ -919,8 +858,8 @@ namespace Belos {
         return false;
       }
       for (int i=0; i<BELOS_MIN(p,q); i++) {
-        if ( STS::magnitude(iprods[i])
-             > STS::magnitude(normsB[i]*normsC[i]) ) {
+        if ( SCT::magnitude(iprods[i]) 
+             > SCT::magnitude(normsB[i]*normsC[i]) ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvDot()." << endl
             << "Inner products not valid." << endl;
@@ -957,7 +896,7 @@ namespace Belos {
        1) Use alpha==0,beta==1 and check that D == C
        2) Use alpha==1,beta==0 and check that D == B
        3) Use D==0 and D!=0 and check that result is the same
-       4) Check that input arguments are not modified
+       4) Check that input arguments are not modified 
     *********************************************************************/
     {
       const int p = 7;
@@ -965,8 +904,8 @@ namespace Belos {
       std::vector<MagType> normsB1(p), normsB2(p),
                            normsC1(p), normsC2(p),
                            normsD1(p), normsD2(p);
-      ScalarType alpha = STS::random(),
-                  beta = STS::random();
+      ScalarType alpha = SCT::random(),
+                  beta = SCT::random();
 
       B = MVT::Clone(*A,p);
       C = MVT::Clone(*A,p);
@@ -976,26 +915,26 @@ namespace Belos {
       MVT::MvRandom(*C);
       MVT::MvNorm(*B,normsB1);
       MVT::MvNorm(*C,normsC1);
-
+   
       // check that 0*B+1*C == C
       MVT::MvAddMv(zero,*B,one,*C,*D);
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       MVT::MvNorm(*D,normsD1);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        else if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsC1[i] - normsD1[i]) > tol) {
+        else if ( normsC1[i] != normsD1[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Assignment did not work." << endl;
@@ -1009,19 +948,19 @@ namespace Belos {
       MVT::MvNorm(*C,normsC2);
       MVT::MvNorm(*D,normsD1);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        else if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsB1[i] - normsD1[i]) > tol) {
+        else if ( normsB1[i] != normsD1[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Assignment did not work." << endl;
@@ -1038,13 +977,13 @@ namespace Belos {
       MVT::MvNorm(*D,normsD1);
       // check that input args are not modified
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        else if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
@@ -1060,19 +999,19 @@ namespace Belos {
       // check that input args are not modified and that D is the same
       // as the above test
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        else if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Input arguments were modified." << endl;
           return false;
         }
-        else if (STS::magnitude (normsD1[i] - normsD2[i]) > tol) {
+        else if ( normsD1[i] != normsD2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv()." << endl
             << "Results varies depending on initial state of dest vectors." << endl;
@@ -1082,16 +1021,16 @@ namespace Belos {
     }
 
     /*********** MvAddMv() ***********************************************
-       Similar to above, but where B or C are potentially the same
+       Similar to above, but where B or C are potentially the same 
        object as D. This case is commonly used, for example, to affect
        A <- alpha*A
-       via
+       via 
        MvAddMv(alpha,A,zero,A,A)
           ** OR **
        MvAddMv(zero,A,alpha,A,A)
-
-       The result is that the operation has to be "atomic". That is,
-       B and C are no longer reliable after D is modified, so that
+      
+       The result is that the operation has to be "atomic". That is, 
+       B and C are no longer reliable after D is modified, so that 
        the assignment to D must be the last thing to occur.
 
        D = alpha*B + beta*C
@@ -1114,12 +1053,12 @@ namespace Belos {
 
       MVT::MvRandom(*B);
       MVT::MvNorm(*B,normsB);
-
+   
       // check that 0*B+1*C == C
       MVT::MvAddMv(zero,*B,one,*C,*D);
       MVT::MvNorm(*D,normsD);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB[i] - normsD[i]) > tol) {
+        if ( normsB[i] != normsD[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv() #2" << endl
             << "Assignment did not work." << endl;
@@ -1131,7 +1070,7 @@ namespace Belos {
       MVT::MvAddMv(one,*B,zero,*C,*D);
       MVT::MvNorm(*D,normsD);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB[i] - normsD[i]) > tol) {
+        if ( normsB[i] != normsD[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvAddMv() #2" << endl
             << "Assignment did not work." << endl;
@@ -1149,7 +1088,7 @@ namespace Belos {
        3) Use alpha==1, SDM==I, beta==0 and check that C is set to B
        4) Use alpha==1, SDM==0, beta==1 and check that C is unchanged
        5) Test with non-square matrices
-       6) Always check that input arguments are not modified
+       6) Always check that input arguments are not modified 
     *********************************************************************/
     {
       const int p = 7, q = 5;
@@ -1157,7 +1096,7 @@ namespace Belos {
       Teuchos::SerialDenseMatrix<int,ScalarType> SDM(p,q);
       std::vector<MagType> normsC1(q), normsC2(q),
                            normsB1(p), normsB2(p);
-
+      
       B = MVT::Clone(*A,p);
       C = MVT::Clone(*A,q);
 
@@ -1171,7 +1110,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1179,7 +1118,7 @@ namespace Belos {
         }
       }
       for (int i=0; i<q; i++) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 1 failed." << endl;
@@ -1197,7 +1136,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1208,10 +1147,10 @@ namespace Belos {
         if ( normsC2[i] != zero ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
-            << "Arithmetic test 2 failed: "
-            << normsC2[i]
-            << " != "
-            << zero
+            << "Arithmetic test 2 failed: " 
+            << normsC2[i] 
+            << " != " 
+            << zero 
             << endl;
           return false;
         }
@@ -1231,7 +1170,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1239,11 +1178,11 @@ namespace Belos {
         }
       }
       for (int i=0; i<q; i++) {
-        if (STS::magnitude (normsB1[i] - normsC2[i]) > tol) {
+        if ( normsB1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 3 failed: "
-            << normsB1[i]
+            << normsB1[i] 
             << " != "
             << normsC2[i]
             << endl;
@@ -1261,7 +1200,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1269,7 +1208,7 @@ namespace Belos {
         }
       }
       for (int i=0; i<q; i++) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 4 failed." << endl;
@@ -1285,7 +1224,7 @@ namespace Belos {
        3) Use alpha==1, SDM==I, beta==0 and check that C is set to B
        4) Use alpha==1, SDM==0, beta==1 and check that C is unchanged
        5) Test with non-square matrices
-       6) Always check that input arguments are not modified
+       6) Always check that input arguments are not modified 
     *********************************************************************/
     {
       const int p = 5, q = 7;
@@ -1293,7 +1232,7 @@ namespace Belos {
       Teuchos::SerialDenseMatrix<int,ScalarType> SDM(p,q);
       std::vector<MagType> normsC1(q), normsC2(q),
                            normsB1(p), normsB2(p);
-
+      
       B = MVT::Clone(*A,p);
       C = MVT::Clone(*A,q);
 
@@ -1307,7 +1246,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1315,7 +1254,7 @@ namespace Belos {
         }
       }
       for (int i=0; i<q; i++) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 5 failed." << endl;
@@ -1333,7 +1272,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1344,10 +1283,10 @@ namespace Belos {
         if ( normsC2[i] != zero ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
-            << "Arithmetic test 6 failed: "
-            << normsC2[i]
-            << " != "
-            << zero
+            << "Arithmetic test 6 failed: " 
+            << normsC2[i] 
+            << " != " 
+            << zero 
             << endl;
           return false;
         }
@@ -1366,7 +1305,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1374,7 +1313,7 @@ namespace Belos {
         }
       }
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsC2[i]) > tol) {
+        if ( normsB1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 7 failed." << endl;
@@ -1400,7 +1339,7 @@ namespace Belos {
       MVT::MvNorm(*B,normsB2);
       MVT::MvNorm(*C,normsC2);
       for (int i=0; i<p; i++) {
-        if (STS::magnitude (normsB1[i] - normsB2[i]) > tol) {
+        if ( normsB1[i] != normsB2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Input vectors were modified." << endl;
@@ -1408,7 +1347,7 @@ namespace Belos {
         }
       }
       for (int i=0; i<q; i++) {
-        if (STS::magnitude (normsC1[i] - normsC2[i]) > tol) {
+        if ( normsC1[i] != normsC2[i] ) {
           om->stream(Warnings)
             << "*** ERROR *** MultiVecTraits::MvTimesMatAddMv()." << endl
             << "Arithmetic test 8 failed." << endl;
@@ -1423,47 +1362,18 @@ namespace Belos {
 
 
 
-  /// \brief Test correctness of OperatorTraits specialization and its
-  ///   operator implementation.
-  ///
-  /// \tparam ScalarType The type of the entries in the multivectors;
-  ///   the first template parameter of MultiVecTraits and
-  ///   OperatorTraits.
-  /// \tparam MV The multivector type; the second template parameter
-  ///   of MultiVecTraits and OperatorTraits.
-  /// \tparam OP The operator type; the third template parameter
-  ///   of OperatorTraits.
-  ///
-  /// \param om [in/out] A valid OutputManager, for displaying test results.
-  ///
-  /// \param A [in] An initial multivector, to use for making new
-  ///   multivectors.  (Belos doesn't currently have a "vector space"
-  ///   abstraction; making a new multivector requires a valid input
-  ///   multivector to clone.)
-  ///
-  /// \param M [in] The operator to test.
-  ///
-  /// \return Test result: true if all tests passed, else false.
+/*!  \brief This function tests the correctness of an operator implementation
+ * with respect to an OperatorTraits specialization 
+ *
+ *  \return Status of the test: true is successful, false otherwise.
+*/
   template< class ScalarType, class MV, class OP>
-  bool
-  TestOperatorTraits (const Teuchos::RCP<OutputManager<ScalarType> > &om,
-                      const Teuchos::RCP<const MV> &A,
-                      const Teuchos::RCP<const OP> &M)
-  {
-    using Teuchos::MatrixMarket::details::SetScientific;
+  bool TestOperatorTraits( 
+                const Teuchos::RCP<OutputManager<ScalarType> > &om,
+                const Teuchos::RCP<const MV> &A,
+                const Teuchos::RCP<const OP> &M) {
+
     using std::endl;
-    typedef MultiVecTraits<ScalarType, MV>    MVT;
-    typedef Teuchos::ScalarTraits<ScalarType> STS;
-    typedef typename STS::magnitudeType       MagType;
-
-    // Make sure that all floating-point numbers are printed with the
-    // right precision.
-    SetScientific<ScalarType> sci (om->stream (Warnings));
-
-    // FIXME (mfh 09 Jan 2013) Added an arbitrary tolerance in case
-    // norms are not computed deterministically (which is possible
-    // even with MPI only, and more likely with threads).
-    const MagType tol = Teuchos::as<MagType> (100) * STS::eps ();
 
     /* OPT Contract:
        Apply()
@@ -1473,13 +1383,13 @@ namespace Belos {
     *********************************************************************/
 
     typedef MultiVecTraits<ScalarType, MV>     MVT;
-    typedef Teuchos::ScalarTraits<ScalarType>  STS;
+    typedef Teuchos::ScalarTraits<ScalarType>  SCT;
     typedef OperatorTraits<ScalarType, MV, OP> OPT;
-    typedef typename STS::magnitudeType        MagType;
+    typedef typename SCT::magnitudeType        MagType;
 
     const int numvecs = 10;
 
-    Teuchos::RCP<MV> B = MVT::Clone(*A,numvecs),
+    Teuchos::RCP<MV> B = MVT::Clone(*A,numvecs), 
                              C = MVT::Clone(*A,numvecs);
 
     std::vector<MagType> normsB1(numvecs), normsB2(numvecs),
@@ -1500,16 +1410,13 @@ namespace Belos {
     MVT::MvNorm(*B,normsB2);
     MVT::MvNorm(*C,normsC2);
     for (int i=0; i<numvecs; i++) {
-      if (STS::magnitude (normsB2[i] - normsB1[i]) > tol) {
+      if (normsB2[i] != normsB1[i]) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [1]" << endl
-          << "Apply() modified the input vectors." << endl
-          << "Original: " << normsB1[i] << "; After: " << normsB2[i] << endl
-          << "Difference " << STS::magnitude (normsB2[i] - normsB1[i])
-          << " exceeds the tolerance 100*eps = " << tol << endl;
+          << "Apply() modified the input vectors." << endl;
         return false;
       }
-      if (normsC2[i] != STS::zero()) {
+      if (normsC2[i] != SCT::zero()) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [1]" << endl
           << "Operator applied to zero did not return zero." << endl;
@@ -1525,16 +1432,13 @@ namespace Belos {
     MVT::MvNorm(*C,normsC2);
     bool ZeroWarning = false;
     for (int i=0; i<numvecs; i++) {
-      if (STS::magnitude (normsB2[i] - normsB1[i]) > tol) {
+      if (normsB2[i] != normsB1[i]) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [2]" << endl
-          << "Apply() modified the input vectors." << endl
-          << "Original: " << normsB1[i] << "; After: " << normsB2[i] << endl
-          << "Difference " << STS::magnitude (normsB2[i] - normsB1[i])
-          << " exceeds the tolerance 100*eps = " << tol << endl;
+          << "Apply() modified the input vectors." << endl;
         return false;
       }
-      if (normsC2[i] == STS::zero() && ZeroWarning==false ) {
+      if (normsC2[i] == SCT::zero() && ZeroWarning==false ) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [2]" << endl
           << "Operator applied to random vectors returned zero." << endl;
@@ -1550,13 +1454,10 @@ namespace Belos {
     MVT::MvNorm(*B,normsB2);
     MVT::MvNorm(*C,normsC1);
     for (int i=0; i<numvecs; i++) {
-      if (STS::magnitude (normsB2[i] - normsB1[i]) > tol) {
+      if (normsB2[i] != normsB1[i]) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [3]" << endl
-          << "Apply() modified the input vectors." << endl
-          << "Original: " << normsB1[i] << "; After: " << normsB2[i] << endl
-          << "Difference " << STS::magnitude (normsB2[i] - normsB1[i])
-          << " exceeds the tolerance 100*eps = " << tol << endl;
+          << "Apply() modified the input vectors." << endl;
         return false;
       }
     }
@@ -1564,7 +1465,7 @@ namespace Belos {
     // Apply operator with C init'd to random
     // Check that result is the same as before; warn if not.
     // This could be a result of a bug, or a stochastic
-    //   operator. We do not want to prejudice against a
+    //   operator. We do not want to prejudice against a 
     //   stochastic operator.
     MVT::MvRandom(*C);
     OPT::Apply(*M,*B,*C);
@@ -1572,13 +1473,10 @@ namespace Belos {
     MVT::MvNorm(*C,normsC2);
     NonDeterministicWarning = false;
     for (int i=0; i<numvecs; i++) {
-      if (STS::magnitude (normsB2[i] - normsB1[i]) > tol) {
+      if (normsB2[i] != normsB1[i]) {
         om->stream(Warnings)
           << "*** ERROR *** OperatorTraits::Apply() [4]" << endl
-          << "Apply() modified the input vectors." << endl
-          << "Original: " << normsB1[i] << "; After: " << normsB2[i] << endl
-          << "Difference " << STS::magnitude (normsB2[i] - normsB1[i])
-          << " exceeds the tolerance 100*eps = " << tol << endl;
+          << "Apply() modified the input vectors." << endl;
         return false;
       }
       if (normsC1[i] != normsC2[i] && !NonDeterministicWarning) {

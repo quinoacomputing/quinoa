@@ -45,7 +45,7 @@
 #include "Epetra_ConfigDefs.h"
 #include "Trilinos_version.h"
 
-	std::string Komplex_Version() { 
+	string Komplex_Version() { 
 		return("Komplex in Trilinos " TRILINOS_VERSION_STRING); 
 	};
 

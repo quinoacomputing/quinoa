@@ -1,18 +1,12 @@
-#include "Pamgen_config.h"
-#include "RTC_LineRTC.hh"
-#include "RTC_RegistrarRTC.hh"
-#include "RTC_ArrayVarRTC.hh"
-#include "RTC_Bessel_I_RTC.hh"
+#include "LineRTC.hh"
+#include "RegistrarRTC.hh"
+#include "ArrayVarRTC.hh"
+#include "Bessel_I.hh"
 #include <map>
 #include <string>
 #include <iostream>
 #include <math.h>
 #include <cstdlib>
-
-#ifdef HAVE_PAMGEN_BOOST
-#include <boost/math/special_functions/ellint_rj.hpp>
-#include <boost/math/special_functions/ellint_rf.hpp>
-#endif
 
 using namespace std;
 using namespace PG_RuntimeCompiler;
@@ -27,7 +21,7 @@ FixedArgFunctionCall::FixedArgFunctionCall(RTBoundFunc* rt) : FunctionCall()
   assert(!rt->variableNumArgs());
   _func     = rt;
   _argIndex = 0;
-
+  
   if (_func->numArgs() != 0) {
     _argExpressions = new Line*[_func->numArgs()];
     _argValues      = new Value*[_func->numArgs()];
@@ -48,10 +42,10 @@ FixedArgFunctionCall::~FixedArgFunctionCall()
 {
   if (_argExpressions != NULL) {
     assert(_argValues != NULL);
-
-    for (int i = 0; i < _func->numArgs(); ++i)
+    
+    for (int i = 0; i < _func->numArgs(); ++i) 
       delete _argExpressions[i];
-
+    
     delete[] _argExpressions;
     delete[] _argValues;
   }
@@ -80,7 +74,7 @@ double FixedArgFunctionCall::execute()
     assert(_argExpressions[i] != NULL);
     _argValues[i] = _argExpressions[i]->execute();
   }
-
+  
   return _func->execute(_argValues);
 }
 
@@ -99,7 +93,7 @@ bool FixedArgFunctionCall::canGoEarly() const
 {
   if (!_func->isOptimizable())
     return false;
-
+  
   for (int i = 0; i < _func->numArgs(); ++i) {
     assert(_argExpressions[i] != NULL);
     if (!_argExpressions[i]->can_go())
@@ -109,12 +103,12 @@ bool FixedArgFunctionCall::canGoEarly() const
 }
 
 /*****************************************************************************/
-VariableArgFunctionCall::VariableArgFunctionCall(RTBoundFunc* rt)
-  : FunctionCall()
+VariableArgFunctionCall::VariableArgFunctionCall(RTBoundFunc* rt) 
+  : FunctionCall() 
 /*****************************************************************************/
 {
   assert(rt->variableNumArgs());
-
+  
   _func      = rt;
   _argValues = NULL;
 }
@@ -124,12 +118,13 @@ VariableArgFunctionCall::~VariableArgFunctionCall()
 /*****************************************************************************/
 {
   if (_argExpressionList.size() > 0) {
-
+    assert(_argValues != NULL);
+    
     list<Line*>::iterator itr = _argExpressionList.begin();
-    for ( ; itr != _argExpressionList.end(); ++itr)
+    for ( ; itr != _argExpressionList.end(); ++itr) 
       delete (*itr);
-    if(_argValues != 0)
-      delete[] _argValues;
+    
+    delete[] _argValues;
   }
 }
 
@@ -140,7 +135,7 @@ ostream& VariableArgFunctionCall::operator<<(ostream& os) const
   os << _func->name() << "(";
 
   list<Line*>::const_iterator itr = _argExpressionList.begin();
-  for ( ; itr != _argExpressionList.end(); ++itr)
+  for ( ; itr != _argExpressionList.end(); ++itr) 
     os << *(*itr) << ", ";
 
   os << ")";
@@ -157,11 +152,11 @@ double VariableArgFunctionCall::execute()
     _argValues = new Value*[_argExpressionList.size()];
     _func->numArgs(_argExpressionList.size());
   }
-
+  
   list<Line*>::iterator itr = _argExpressionList.begin();
-  for (int i = 0; itr != _argExpressionList.end(); ++itr, ++i)
+  for (int i = 0; itr != _argExpressionList.end(); ++itr, ++i) 
     _argValues[i] = (*itr)->execute();
-
+  
   return _func->execute(_argValues);
 }
 
@@ -178,7 +173,7 @@ bool VariableArgFunctionCall::canGoEarly() const
 {
   if (!_func->isOptimizable())
     return false;
-
+  
   list<Line*>::const_iterator itr = _argExpressionList.begin();
   for ( ; itr != _argExpressionList.end(); ++itr) {
     if (!(*itr)->can_go())
@@ -196,16 +191,16 @@ void Registrar::registerFunction(RTBoundFunc* func)
 }
 
 /*****************************************************************************/
-RTBoundFunc* Registrar::findByName(const string& str)
+RTBoundFunc* Registrar::findByName(const string& str) 
 /*****************************************************************************/
 {
   if (!ISINIT) setupStandardFunctions();
-
+  
   return (FUNCTIONS.find(str) != FUNCTIONS.end()) ? FUNCTIONS[str] : NULL;
 }
 
 /*****************************************************************************/
-FunctionCall* Registrar::generateCall(const string& str)
+FunctionCall* Registrar::generateCall(const string& str) 
 /*****************************************************************************/
 {
   RTBoundFunc* rt = findByName(str);
@@ -219,7 +214,7 @@ FunctionCall* Registrar::generateCall(const string& str)
 }
 
 /*****************************************************************************/
-void Registrar::setupStandardFunctions()
+void Registrar::setupStandardFunctions() 
 /*****************************************************************************/
 {
   if (!ISINIT) {
@@ -251,41 +246,41 @@ void Registrar::setupStandardFunctions()
     static Erfc      f26; FUNCTIONS[f26.name()] = &f26;
     static Gamma     f27; FUNCTIONS[f27.name()] = &f27;
     static Print     f28; FUNCTIONS[f28.name()] = &f28;
-    static GeneralizedCompleteEllipticIntegral      f29; FUNCTIONS[f29.name()] = &f29;
+
     ISINIT = true;
   }
 }
 
 /*****************************************************************************/
-double Fabs::execute(Value** args)
+double Fabs::execute(Value** args) 
 /*****************************************************************************/
 {
   return fabs(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Sin::execute(Value** args)
+double Sin::execute(Value** args) 
 /*****************************************************************************/
 {
   return sin(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Cos::execute(Value** args)
+double Cos::execute(Value** args) 
 /*****************************************************************************/
 {
   return cos(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Tan::execute(Value** args)
+double Tan::execute(Value** args) 
 /*****************************************************************************/
 {
   return tan(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Sqrt::execute(Value** args)
+double Sqrt::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getValue() >= 0); //cant take sqrt of a negative
@@ -293,28 +288,28 @@ double Sqrt::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Tanh::execute(Value** args)
+double Tanh::execute(Value** args) 
 /*****************************************************************************/
 {
   return tanh(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Sinh::execute(Value** args)
+double Sinh::execute(Value** args) 
 /*****************************************************************************/
 {
   return sinh(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Cosh::execute(Value** args)
+double Cosh::execute(Value** args) 
 /*****************************************************************************/
 {
   return cosh(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Log::execute(Value** args)
+double Log::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getValue() >= 0); //cant take log of a negative
@@ -322,7 +317,7 @@ double Log::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Log10::execute(Value** args)
+double Log10::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getValue() >= 0); //cant take log of a negative
@@ -330,28 +325,28 @@ double Log10::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Exp::execute(Value** args)
+double Exp::execute(Value** args) 
 /*****************************************************************************/
 {
   return exp(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Atan::execute(Value** args)
+double Atan::execute(Value** args) 
 /*****************************************************************************/
 {
   return atan(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Atantwo::execute(Value** args)
+double Atantwo::execute(Value** args) 
 /*****************************************************************************/
 {
   return atan2(args[0]->getValue(), args[1]->getValue());
 }
 
 /*****************************************************************************/
-double Asin::execute(Value** args)
+double Asin::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getValue() >= -1 && args[0]->getValue() <= 1);
@@ -359,7 +354,7 @@ double Asin::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Acos::execute(Value** args)
+double Acos::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getValue() >= -1 && args[0]->getValue() <= 1);
@@ -367,14 +362,14 @@ double Acos::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Pow::execute(Value** args)
+double Pow::execute(Value** args) 
 /*****************************************************************************/
 {
   return pow(args[0]->getValue(), args[1]->getValue());
 }
 
 /*****************************************************************************/
-double Rand::execute(Value** args)
+double Rand::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args == NULL);
@@ -382,7 +377,7 @@ double Rand::execute(Value** args)
 }
 
 /*****************************************************************************/
-double DRand::execute(Value** args)
+double DRand::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args == NULL);
@@ -391,7 +386,7 @@ double DRand::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Gamma::execute(Value** args)
+double Gamma::execute(Value** args) 
 /*****************************************************************************/
 {
 #if _MSC_VER
@@ -402,7 +397,7 @@ double Gamma::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Print::execute(Value** args)
+double Print::execute(Value** args) 
 /*****************************************************************************/
 {
   cout << *(args[0]) << endl;
@@ -410,16 +405,16 @@ double Print::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Printf::execute(Value** args)
+double Printf::execute(Value** args) 
 /*****************************************************************************/
 {
   //first argument to printf should be a character array
   assert(args[0]->getObjectType() == ArrayNumberOT);
   assert(args[0]->getType() == CharT);
-
+  
   int numVarArgsUsed = 0;
 
-  for (long i = 0; i < args[0]->getSize(); ++i) {
+  for (int i = 0; i < args[0]->getSize(); ++i) {
     if ( ((char) args[0]->getArrayValue(i)) == '%') {
       assert(numVarArgsUsed+1 < _numArgs);
       cout << *(args[numVarArgsUsed+1]);
@@ -442,27 +437,27 @@ double Printf::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Tester::execute(Value** args)
+double Tester::execute(Value** args) 
 /*****************************************************************************/
 {
   assert(args[0]->getObjectType() == ArrayVarOT);
 
   //fills the array in args[0] with the value of args[1]
-  for (long i = 0; i < args[0]->getSize(); ++i)
+  for (int i = 0; i < args[0]->getSize(); ++i) 
     args[0]->setArrayValue(args[1]->getValue(), i);
 
   return args[1]->getValue();
 }
 
 /*****************************************************************************/
-double Bessel_J0::execute(Value** args)
+double Bessel_J0::execute(Value** args) 
 /*****************************************************************************/
 {
   return j0(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Bessel_J1::execute(Value** args)
+double Bessel_J1::execute(Value** args) 
 /*****************************************************************************/
 {
   return j1(args[0]->getValue());
@@ -470,21 +465,21 @@ double Bessel_J1::execute(Value** args)
 
 
 /*****************************************************************************/
-double Bessel_I0::execute(Value** args)
+double Bessel_I0::execute(Value** args) 
 /*****************************************************************************/
 {
   return PAMGEN_NEVADA::Bessel_I0(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Bessel_I1::execute(Value** args)
+double Bessel_I1::execute(Value** args) 
 /*****************************************************************************/
 {
   return PAMGEN_NEVADA::Bessel_I1(args[0]->getValue());
 }
 
 /*****************************************************************************/
-double Erf::execute(Value** args)
+double Erf::execute(Value** args) 
 /*****************************************************************************/
 {
 #ifdef _MSC_VER
@@ -495,7 +490,7 @@ double Erf::execute(Value** args)
 }
 
 /*****************************************************************************/
-double Erfc::execute(Value** args)
+double Erfc::execute(Value** args) 
 /*****************************************************************************/
 {
 #ifdef _MSC_VER
@@ -505,18 +500,3 @@ double Erfc::execute(Value** args)
 #endif
 }
 
-/*****************************************************************************/
-double GeneralizedCompleteEllipticIntegral::execute(Value** args)
-/*****************************************************************************/
-{
-#ifdef HAVE_PAMGEN_BOOST
-  // Generalized complete elliptic integral, implemented using Carlson's functions
-  // See Derby and Olbert, "Cylindrical magnets and ideal solenoids," Am. J. Phys. 78, pp. 229-235, 2010.
-  // C(kc,p,c,s) = c *R_F(0,kc^2,1) + 1/3 * (s-p*c) * R_J(0,kc^2,1,p)
-  double kc2 = args[0]->getValue() * args[0]->getValue();
-  return args[2]->getValue() * boost::math::ellint_rf<double,double,double>(0.0,kc2,1.0) +
-    (1.0/3.0)*(args[3]->getValue() - args[1]->getValue()*args[2]->getValue())* boost::math::ellint_rj<double,double,double,double>(0.0,kc2,1.0,args[1]->getValue());
-#else
-  return 0;
-#endif
-}

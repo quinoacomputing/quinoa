@@ -43,7 +43,7 @@
 */
 
 #include "Piro_Epetra_NECoupledModelEvaluator.hpp"
-#include "Piro_Epetra_SolverFactory.hpp"
+#include "Piro_Epetra_Factory.hpp"
 #include "Piro_Epetra_StokhosSolver.hpp"
 
 #include "Epetra_LocalMap.h"
@@ -53,7 +53,8 @@
 #include "Teuchos_VerboseObjectParameterListHelpers.hpp"
 
 #include "Stokhos_Epetra.hpp"
-#include "Stokhos_ReducedBasisFactory.hpp"
+#include "Stokhos_StieltjesGramSchmidtBuilder.hpp"
+#include "Stokhos_MonomialGramSchmidtSimplexPCEBasis.hpp"
 #include "EpetraExt_MultiComm.h"
 
 Piro::Epetra::NECoupledModelEvaluator::
@@ -62,14 +63,12 @@ NECoupledModelEvaluator(
   const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& piroParams_,
   const Teuchos::RCP<AbstractNetworkModel>& network_model_,
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
-  const Teuchos::RCP<const Epetra_Comm>& comm_,
-  const Teuchos::Array< Teuchos::RCP<NOX::Epetra::Observer> >& observers_):
+  const Teuchos::RCP<const Epetra_Comm>& comm_):
   models(models_),
   piroParams(piroParams_),
   network_model(network_model_),
   params(params_),
-  comm(comm_),
-  observers(observers_)
+  comm(comm_)
 {
   // Setup VerboseObject
   Teuchos::readVerboseObjectSublist(params.get(), this);
@@ -79,23 +78,20 @@ NECoupledModelEvaluator(
 
   // Create solvers for models A and B
   bool stochastic = params->get("Stochastic", false);
-  if (observers.size() < n_models)
-    observers.resize(n_models);
   if (stochastic) {
     sgSolvers.resize(n_models);
     for (int i=0; i<n_models; i++) {
       sgSolvers[i] = 
 	Teuchos::rcp(new Piro::Epetra::StokhosSolver(piroParams[i], 
 						     comm));
-      sgSolvers[i]->setup(models[i], observers[i]);
+      sgSolvers[i]->setup(models[i]);
       solvers[i] = sgSolvers[i];
     }
   }
   else {
-    Piro::Epetra::SolverFactory solverFactory;
     for (int i=0; i<n_models; i++)
-      solvers[i] = solverFactory.createSolver(
-          piroParams[i], models[i]);
+      solvers[i] = Piro::Epetra::Factory::createSolver(piroParams[i], 
+						       models[i]);
   }
 
   // Get connectivity information
@@ -198,7 +194,7 @@ NECoupledModelEvaluator(
   // Build the Jacobian graph (currently dense)
   if (supports_W || supports_W_sg) {
     W_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *f_map, nx));
-    int *indices = f_overlap_map->MyGlobalElements();
+    int *indices = f_map->MyGlobalElements();
     for (int i=0; i<f_map->NumMyElements(); i++) {
       int row = f_map->GID(i);
       W_graph->InsertGlobalIndices(row, nx, indices);
@@ -207,9 +203,10 @@ NECoupledModelEvaluator(
 
     W_overlap_graph = 
       Teuchos::rcp(new Epetra_CrsGraph(Copy, *f_overlap_map, nx));
+    int *overlap_indices = f_overlap_map->MyGlobalElements();
     for (int i=0; i<f_overlap_map->NumMyElements(); i++) {
       int row = f_overlap_map->GID(i);
-      W_overlap_graph->InsertGlobalIndices(row, nx, indices);
+      W_overlap_graph->InsertGlobalIndices(row, nx, overlap_indices);
     }
     W_overlap_graph->FillComplete();
     W_overlap = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *W_overlap_graph));
@@ -252,20 +249,9 @@ NECoupledModelEvaluator(
   g_sg.resize(n_models);
   dgdp_sg_layout.resize(n_models);
   dgdp_sg.resize(n_models);
-  Teuchos::ParameterList& dim_reduct_params = 
-    params->sublist("Dimension Reduction");
-  if (!dim_reduct_params.isParameter("Reduce Dimension"))
-    reduce_dimension.resize(n_models, 0);
-  else if (dim_reduct_params.isType<bool>("Reduce Dimension"))
-    reduce_dimension.resize(n_models, 
-			    dim_reduct_params.get<bool>("Reduce Dimension"));
-  else if (dim_reduct_params.isType< Teuchos::Array<int> >("Reduce Dimension"))
-    reduce_dimension = 
-      dim_reduct_params.get< Teuchos::Array<int> >("Reduce Dimension");
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, std::logic_error, 
-      "Invalid type for parameter \"Dimension Reduction\"");
+  reduce_dimension = 
+    params->sublist("Dimension Reduction").get("Reduce Dimension", false);
+  red_basis_vals.resize(n_models);
 }
 
 // Overridden from EpetraExt::ModelEvaluator
@@ -467,8 +453,10 @@ evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const
   //
   // Deterministic calculation
   //
+  bool do_deterministic = false;
   Teuchos::RCP<const Epetra_Vector> x = inArgs.get_x();
   if (x != Teuchos::null) {
+    do_deterministic = true;
 
     // p
     x_overlap->Import(*x, *x_importer, Insert);
@@ -536,10 +524,12 @@ evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const
   //
   // Stochastic calculation
   //
+  bool do_stochastic = false;
   InArgs::sg_const_vector_t x_sg;
   if (supports_x_sg)
     x_sg = inArgs.get_x_sg();
   if (x_sg != Teuchos::null) {
+    do_stochastic = true;
 
     // SG data
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
@@ -696,46 +686,30 @@ evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> > piroParams_red(n_models);
   
   for (int i=0; i<n_models; i++) {
-    do_dimension_reduction(i, inArgs, 
+    do_dimension_reduction(inArgs, 
 			   solver_inargs[i], solver_outargs[i],
 			   models[i], solvers[i], piroParams[i],
 			   solver_inargs_red[i], solver_outargs_red[i],
-			   solvers_red[i], piroParams_red[i]);
+			   solvers_red[i], piroParams_red[i],
+			   red_basis_vals[i]);
   }
   
 
-  // Evaluate models
-  if (n_models == 2) {
-    {
-      TEUCHOS_FUNC_TIME_MONITOR(
-	"NECoupledModelEvaluator -- Model 1 nonlinear elimination");
-      if (verbLevel != Teuchos::VERB_NONE)
-	*out << "Eliminating model " << 1 << " states...";
-      solvers_red[0]->evalModel(solver_inargs_red[0], solver_outargs_red[0]);
-    }
+  int proc = comm->MyPID();
 
-    {
-      TEUCHOS_FUNC_TIME_MONITOR(
-	"NECoupledModelEvaluator -- Model 2 nonlinear elimination");
-      if (verbLevel != Teuchos::VERB_NONE)
-	*out << "Eliminating model " << 2 << " states...";
-      solvers_red[1]->evalModel(solver_inargs_red[1], solver_outargs_red[1]);
-    }
-  }
-  else {
-    for (int i=0; i<n_models; i++) {
-      TEUCHOS_FUNC_TIME_MONITOR(
-	"NECoupledModelEvaluator -- Model nonlinear elimination");
-      if (verbLevel != Teuchos::VERB_NONE)
-	*out << "Eliminating model " << i+1 << " states...";
-      solvers_red[i]->evalModel(solver_inargs_red[i], solver_outargs_red[i]);
-    }
+  // Evaluate models
+  for (int i=0; i<n_models; i++) {
+    TEUCHOS_FUNC_TIME_MONITOR(
+      "NECoupledModelEvaluator -- Model nonlinear elimination");
+    if (verbLevel != Teuchos::VERB_NONE)
+      *out << "Eliminating model " << i+1 << " states...";
+    solvers_red[i]->evalModel(solver_inargs_red[i], solver_outargs_red[i]);
   }
 
   // Project back to original stochastic bases
   for (int i=0; i<n_models; i++)
-    do_dimension_projection(i, inArgs, solver_inargs_red[i], 
-			    solver_outargs_red[i], solver_outargs[i]);
+    do_dimension_projection(inArgs, solver_inargs_red[i], solver_outargs_red[i],
+			    red_basis_vals[i], solver_outargs[i]);
 
   // Evaluate network model
   network_model->evalModel(solver_inargs, solver_outargs, 
@@ -788,7 +762,6 @@ evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const
 void
 Piro::Epetra::NECoupledModelEvaluator:: 
 do_dimension_reduction(
-  int model_index,
   const InArgs& inArgs,
   const InArgs& solver_inargs, 
   const OutArgs& solver_outargs,
@@ -798,7 +771,8 @@ do_dimension_reduction(
   InArgs& reduced_inargs, 
   OutArgs& reduced_outargs,
   Teuchos::RCP<EpetraExt::ModelEvaluator>& reduced_solver,
-  Teuchos::RCP<Teuchos::ParameterList>& reduced_params) const
+  Teuchos::RCP<Teuchos::ParameterList>& reduced_params,
+  Teuchos::RCP<const Teuchos::Array< Teuchos::Array<double> > >& red_basis_vals) const
 {
   TEUCHOS_FUNC_TIME_MONITOR("NECoupledModelEvaluator -- dimension reduction");
 
@@ -812,7 +786,7 @@ do_dimension_reduction(
   InArgs::sg_const_vector_t x_sg;
   if (supports_x_sg)
     x_sg = inArgs.get_x_sg();
-  if (!reduce_dimension[model_index] || x_sg == Teuchos::null)
+  if (!reduce_dimension || x_sg == Teuchos::null)
     return;
 
   Teuchos::RCP<const Stokhos::ProductBasis<int,double> > basis = 
@@ -855,31 +829,112 @@ do_dimension_reduction(
   Teuchos::Array<Stokhos::OrthogPolyApprox<int,double> > red_pces;
   Teuchos::ParameterList& reduct_params = 
     params->sublist("Dimension Reduction");
-  int order = basis->order();
-  int new_order = reduct_params.get("Reduced Order", -1);
-  if (new_order == -1)
-    new_order = order;
-  if (st_quad == Teuchos::null) {
-    st_quad = quad;
-    // st_quad =
-    //   Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(
-    // 		 basis, new_order+1));
-    // st_quad =
-    //   Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(
-    // 		 basis, 4*new_order+1));
-    // std::cout << "st_quad->size() = " << st_quad->size() << std::endl;
+  std::string reduction_method = reduct_params.get("Dimension Reduction Method",
+						   "Tensor Product Stieltjes");
+  if (reduction_method == "Tensor Product Stieltjes") {
+    bool orthogonalize_bases = reduct_params.get("Orthogonalize Bases", false);
+    int order = basis->order();
+    int new_order = reduct_params.get("Reduced Order", -1);
+    if (new_order == -1)
+      new_order = order;
+    if (orthogonalize_bases) {
+      Stokhos::StieltjesGramSchmidtBuilder<int,double> gs_builder(
+	quad, p_opa, new_order, true, false);
+      red_basis = gs_builder.getReducedBasis();
+      red_quad = gs_builder.getReducedQuadrature();
+      red_basis_vals = Teuchos::rcp(&(red_quad->getBasisAtQuadPoints()),false);
+      gs_builder.computeReducedPCEs(p_opa, red_pces);
+    }
+    else {
+      Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double > > >
+	coordinate_bases = basis->getCoordinateBases();
+      Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double > > >
+	new_coordinate_bases(p_opa.size());
+      Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > Cijk = 
+	expansion->getTripleProduct();
+      if (st_quad == Teuchos::null) {
+	st_quad = quad;
+	// st_quad =
+	//   Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(
+	// 		 basis, new_order+1));
+      }
+      for (int i=0; i<p_opa.size(); i++) {
+	new_coordinate_bases[i] = Teuchos::rcp(
+	  new Stokhos::StieltjesPCEBasis<int,double>(
+	    new_order, Teuchos::rcp(&(p_opa[i]),false), st_quad, 
+	    false, false, true, Cijk));
+      }
+      Teuchos::RCP<const Stokhos::ProductBasis<int,double> > tensor_basis = 
+	Teuchos::rcp(
+	  new Stokhos::CompletePolynomialBasis<int,double>(new_coordinate_bases)
+	  );
+      red_basis = tensor_basis;
+      if (red_basis->dimension() <= 3)
+	red_quad = 
+	  Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(
+			 tensor_basis));
+      else
+#ifdef HAVE_STOKHOS_DAKOTA
+	red_quad = 
+	  Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(
+			 tensor_basis, new_order));
+#else
+      red_quad = 
+	Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(
+		       tensor_basis));
+#endif
+      const Teuchos::Array< Teuchos::Array<double> >& points = 
+	quad->getQuadPoints();
+      const Teuchos::Array< Teuchos::Array<double> >& basis_vals = 
+	quad->getBasisAtQuadPoints();
+      int nqp = points.size();
+      Teuchos::Array<double> p_opa_val(p_opa.size());
+      Teuchos::RCP< Teuchos::Array< Teuchos::Array<double> > > ncred_basis_vals
+	= Teuchos::rcp(new Teuchos::Array< Teuchos::Array<double> >(nqp));
+      for (int i=0; i<nqp; i++) {
+	for (int j=0; j<p_opa_val.size(); j++)
+	  p_opa_val[j] = p_opa[j].evaluate(points[i], basis_vals[i]);
+	(*ncred_basis_vals)[i].resize(red_basis->size());
+	red_basis->evaluateBases(p_opa_val, (*ncred_basis_vals)[i]);
+      }
+      red_basis_vals = ncred_basis_vals;
+      red_pces.resize(p_opa.size());
+      for (int k=0; k<p_opa.size(); k++) {
+	red_pces[k].reset(red_basis);
+	red_pces[k].term(k, 0) = p_opa[k].mean();
+	red_pces[k].term(k, 1) = 1.0; 
+      }
+    }
   }
-  Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > Cijk = 
-    expansion->getTripleProduct();
-  Stokhos::ReducedBasisFactory<int,double> factory(reduct_params);
-  Teuchos::RCP< Stokhos::ReducedPCEBasis<int,double> > gs_basis = 
-    factory.createReducedBasis(new_order, p_opa, st_quad, Cijk);
-  red_basis = gs_basis;
-  red_quad = gs_basis->getReducedQuadrature();
-  red_pces.resize(p_opa.size());
-  for (int i=0; i<p_opa.size(); i++) {
-    red_pces[i].reset(red_basis);
-    gs_basis->transformFromOriginalBasis(p_opa[i].coeff(), red_pces[i].coeff());
+  else if (reduction_method == "Gram-Schmidt QR") {
+    int order = basis->order();
+    int new_order = reduct_params.get("Reduced Order", -1);
+    if (new_order == -1)
+      new_order = order;
+    if (st_quad == Teuchos::null) {
+      st_quad = quad;
+      // st_quad =
+      //   Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(
+      // 		 basis, new_order+1));
+      // st_quad =
+      //   Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(
+      // 		 basis, 4*new_order+1));
+      // std::cout << "st_quad->size() = " << st_quad->size() << std::endl;
+    }
+    Teuchos::RCP< Stokhos::MonomialGramSchmidtSimplexPCEBasis<int,double> > gs_basis = 
+      Teuchos::rcp(new Stokhos::MonomialGramSchmidtSimplexPCEBasis<int,double>(
+		     new_order, p_opa, st_quad, reduct_params));
+    red_basis = gs_basis;
+    red_quad = gs_basis->getReducedQuadrature();
+    red_pces.resize(p_opa.size());
+    for (int i=0; i<p_opa.size(); i++) {
+      red_pces[i].reset(red_basis);
+      gs_basis->computeTransformedPCE(i, red_pces[i]);
+    }
+    Teuchos::RCP< Teuchos::Array< Teuchos::Array<double> > > ncred_basis_vals
+	= Teuchos::rcp(new Teuchos::Array< Teuchos::Array<double> >);
+    gs_basis->getBasisAtOriginalQuadraturePoints(*ncred_basis_vals);
+    red_basis_vals = ncred_basis_vals;
   }
     
   Teuchos::RCP<const EpetraExt::MultiComm> multiComm = x_sg->productComm();
@@ -972,7 +1027,7 @@ do_dimension_reduction(
     red_sg_params.remove("Triple Product Tensor");
   Teuchos::RCP<Piro::Epetra::StokhosSolver> reduced_piro_solver = 
     Teuchos::rcp(new Piro::Epetra::StokhosSolver(reduced_params, comm));
-  reduced_piro_solver->setup(model, observers[model_index]);
+  reduced_piro_solver->setup(model);
   reduced_solver = reduced_piro_solver;
 
   if (reduced_inargs.supports(IN_ARG_sg_basis))
@@ -986,10 +1041,10 @@ do_dimension_reduction(
 void 
 Piro::Epetra::NECoupledModelEvaluator:: 
 do_dimension_projection(
-  int model_index,
   const InArgs& inArgs, 
   const InArgs& reduced_inargs, 
   const OutArgs& reduced_outargs,
+  const Teuchos::RCP<const Teuchos::Array< Teuchos::Array<double> > >& red_basis_vals,
   OutArgs& solver_outargs) const
 {
   TEUCHOS_FUNC_TIME_MONITOR("NECoupledModelEvaluator -- dimension projection");
@@ -998,15 +1053,18 @@ do_dimension_projection(
   InArgs::sg_const_vector_t x_sg;
   if (supports_x_sg)
     x_sg = inArgs.get_x_sg();
-  if (!reduce_dimension[model_index] || x_sg == Teuchos::null)
+  if (!reduce_dimension || x_sg == Teuchos::null)
     return;
 
   Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
     inArgs.get_sg_basis();
   Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad =
     inArgs.get_sg_quadrature();
-  Teuchos::RCP<const Stokhos::ReducedPCEBasis<int,double> > red_basis = 
-    Teuchos::rcp_dynamic_cast<const Stokhos::ReducedPCEBasis<int,double> >(reduced_inargs.get_sg_basis());
+  const Teuchos::Array<double>& weights = quad->getQuadWeights();
+  const Teuchos::Array< Teuchos::Array<double> >& basis_vals = 
+    quad->getBasisAtQuadPoints();
+  int nqp = weights.size();
+  const Teuchos::Array<double>& norms = basis->norm_squared();
 
   for (int i=0; i<solver_outargs.Ng(); i++) {
 
@@ -1015,11 +1073,12 @@ do_dimension_projection(
       OutArgs::sg_vector_t g_sg = solver_outargs.get_g_sg(i);
       if (g_sg != Teuchos::null) {
 	OutArgs::sg_vector_t g_red = reduced_outargs.get_g_sg(i);
-	red_basis->transformToOriginalBasis(
-	  (*g_red)[0].Values(), 
-	  (*g_sg)[0].Values(), 
-	  g_red->coefficientMap()->NumMyElements(), 
-	  true);
+	Epetra_Vector g_val(*(g_red->coefficientMap()));
+	g_sg->init(0.0);
+	for (int qp=0; qp<nqp; qp++) {
+	  g_red->evaluate((*red_basis_vals)[qp], g_val);
+	  g_sg->sumIntoAllTerms(weights[qp], basis_vals[qp], norms, g_val);
+	}
       }
     }
 
@@ -1030,19 +1089,14 @@ do_dimension_projection(
       if (dgdx_sg != Teuchos::null) {
 	Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdx_red = 
 	  reduced_outargs.get_DgDx_sg(i).getMultiVector();
-
-	// transformToOriginalBasis() needs the entries for each pce
-	  // coefficient stored contiguously.  This isn't the case for the
-	  // full multivector (each column along with all of its pce
-	  // coefficients is stored in one contiguous chunk).  Thus we need
-	  // to transform each column individually
-	  int ncol = dgdx_red->numVectors();
-	  for (int col=0; col<ncol; col++)
-	    red_basis->transformToOriginalBasis(
-	      (*dgdx_red)[0](col)->Values(), 
-	      (*dgdx_sg)[0](col)->Values(), 
-	      dgdx_red->coefficientMap()->NumMyElements(), 
-	      true);
+	Epetra_MultiVector dgdx_val(*(dgdx_red->coefficientMap()), 
+				    dgdx_red->numVectors());
+	dgdx_sg->init(0.0);
+	for (int qp=0; qp<nqp; qp++) {
+	  dgdx_red->evaluate((*red_basis_vals)[qp], dgdx_val);
+	  dgdx_sg->sumIntoAllTerms(weights[qp], basis_vals[qp], norms, 
+				   dgdx_val);
+	}
       }
     }
 
@@ -1054,19 +1108,14 @@ do_dimension_projection(
 	if (dgdp_sg != Teuchos::null) {
 	  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_red = 
 	    reduced_outargs.get_DgDp_sg(i,j).getMultiVector();
-
-	  // transformToOriginalBasis() needs the entries for each pce
-	  // coefficient stored contiguously.  This isn't the case for the
-	  // full multivector (each column along with all of its pce
-	  // coefficients is stored in one contiguous chunk).  Thus we need
-	  // to transform each column individually
-	  int ncol = dgdp_red->numVectors();
-	  for (int col=0; col<ncol; col++)
-	    red_basis->transformToOriginalBasis(
-	      (*dgdp_red)[0](col)->Values(), 
-	      (*dgdp_sg)[0](col)->Values(), 
-	      dgdp_red->coefficientMap()->NumMyElements(), 
-	      true);
+	  Epetra_MultiVector dgdp_val(*(dgdp_red->coefficientMap()), 
+				      dgdp_red->numVectors());
+	  dgdp_sg->init(0.0);
+	  for (int qp=0; qp<nqp; qp++) {
+	    dgdp_red->evaluate((*red_basis_vals)[qp], dgdp_val);
+	    dgdp_sg->sumIntoAllTerms(weights[qp], basis_vals[qp], norms, 
+				     dgdp_val);
+	  }
 	}
       }
     }
@@ -1154,8 +1203,6 @@ evalModel(
     EpetraExt::ModelEvaluator::OutArgs::sg_vector_t f_sg = 
       network_outargs.get_f_sg();
     if (f_sg != Teuchos::null) {
-      // std::cout << "g_sg[0] = " << *g_sg[0] << std::endl;
-      // std::cout << "g_sg[1] = " << *g_sg[1] << std::endl;
       f_sg->init(0.0);
       for (int block=0; block<f_sg->size(); block++) {
 	for (int i=0; i<n_p[0]; i++)
@@ -1165,7 +1212,6 @@ evalModel(
 	  (*f_sg)[block][i+n_p[0]] = 
 	    (*p_sg[1])[block][i] - (*g_sg[0])[block][i];
       }
-      //std::cout << "f_sg = " << *f_sg << std::endl;
     }
   }
   
@@ -1174,8 +1220,6 @@ evalModel(
     EpetraExt::ModelEvaluator::OutArgs::sg_operator_t W_sg = 
       network_outargs.get_W_sg();
     if (W_sg != Teuchos::null) {
-      // std::cout << "dgdp_sg[0] = " << *dgdp_sg[0] << std::endl;
-      // std::cout << "dgdp_sg[1] = " << *dgdp_sg[1] << std::endl;
       for (int block=0; block<W_sg->size(); block++) {
 	Teuchos::RCP<Epetra_CrsMatrix> W_crs = 
 	  Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_sg->getCoeffPtr(block), 

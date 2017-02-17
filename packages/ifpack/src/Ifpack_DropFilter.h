@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -45,7 +32,7 @@
 
 #include "Ifpack_ConfigDefs.h"
 #include "Epetra_RowMatrix.h"
-#include "Teuchos_RefCountPtr.hpp"
+#include "Teuchos_RefCountPtr.hpp"	
 
 class Epetra_Comm;
 class Epetra_Map;
@@ -83,7 +70,7 @@ class Ifpack_DropFilter : public virtual Epetra_RowMatrix {
 public:
   //! Constructor.
   Ifpack_DropFilter(const Teuchos::RefCountPtr<Epetra_RowMatrix>& Matrix,
-                    double DropTol);
+		    double DropTol);
 
   //! Destructor.
   virtual ~Ifpack_DropFilter() {};
@@ -105,18 +92,18 @@ public:
 
   virtual int ExtractDiagonalCopy(Epetra_Vector & Diagonal) const;
 
-  virtual int Multiply(bool TransA, const Epetra_MultiVector& X,
-                       Epetra_MultiVector& Y) const;
+  virtual int Multiply(bool TransA, const Epetra_MultiVector& X, 
+		       Epetra_MultiVector& Y) const;
 
-  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal,
-                    const Epetra_MultiVector& X,
-                    Epetra_MultiVector& Y) const;
+  virtual int Solve(bool Upper, bool Trans, bool UnitDiagonal, 
+		    const Epetra_MultiVector& X,
+		    Epetra_MultiVector& Y) const;
 
   virtual int Apply(const Epetra_MultiVector& X,
-                    Epetra_MultiVector& Y) const;
+		    Epetra_MultiVector& Y) const;
 
   virtual int ApplyInverse(const Epetra_MultiVector& X,
-                           Epetra_MultiVector& Y) const;
+			   Epetra_MultiVector& Y) const;
 
   virtual int InvRowSums(Epetra_Vector& x) const;
 
@@ -127,7 +114,7 @@ public:
 
   virtual int InvColSums(Epetra_Vector& x) const;
 
-  virtual int RightScale(const Epetra_Vector& x)
+  virtual int RightScale(const Epetra_Vector& x) 
   {
     return(A_->RightScale(x));
   }
@@ -147,7 +134,6 @@ public:
     return(-1.0);
   }
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   virtual int NumGlobalNonzeros() const
   {
     return(NumNonzeros_);
@@ -164,27 +150,6 @@ public:
   }
 
   virtual int NumGlobalDiagonals() const
-  {
-    return(NumRows_);
-  }
-#endif
-
-  virtual long long NumGlobalNonzeros64() const
-  {
-    return(NumNonzeros_);
-  }
-
-  virtual long long NumGlobalRows64() const
-  {
-    return(NumRows_);
-  }
-
-  virtual long long NumGlobalCols64() const
-  {
-    return(NumRows_);
-  }
-
-  virtual long long NumGlobalDiagonals64() const
   {
     return(NumRows_);
   }
@@ -234,12 +199,12 @@ public:
     return(A_->RowMatrixImporter());
   }
 
-  int SetUseTranspose(bool useTranspose)
+  int SetUseTranspose(bool UseTranspose)
   {
-    return(A_->SetUseTranspose(useTranspose));
+    return(A_->SetUseTranspose(UseTranspose));
   }
 
-  bool UseTranspose() const
+  bool UseTranspose() const 
   {
     return(A_->UseTranspose());
   }
@@ -254,17 +219,17 @@ public:
     return(A_->Comm());
   }
 
-  const Epetra_Map & OperatorDomainMap() const
+  const Epetra_Map & OperatorDomainMap() const 
   {
     return(A_->OperatorDomainMap());
   }
 
-  const Epetra_Map & OperatorRangeMap() const
+  const Epetra_Map & OperatorRangeMap() const 
   {
     return(A_->OperatorRangeMap());
   }
 
-  const Epetra_BlockMap& Map() const
+  const Epetra_BlockMap& Map() const 
   {
     return(A_->Map());
   }
@@ -283,7 +248,7 @@ private:
   int MaxNumEntries_;
   int MaxNumEntriesA_;
   int NumRows_;
-
+  
   //! Number of nonzeros for the dropped matrix.
   int NumNonzeros_;
 

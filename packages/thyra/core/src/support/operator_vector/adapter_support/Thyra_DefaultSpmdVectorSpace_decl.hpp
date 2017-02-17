@@ -142,8 +142,7 @@ public:
    */
   void initialize(
     const RCP<const Teuchos::Comm<Ordinal> > &comm,
-    const Ordinal localSubDim, const Ordinal globalDim,
-    const bool isLocallyReplicated = false
+    const Ordinal localSubDim, const Ordinal globalDim
     );
 
   /** \brief Set to an uninitialized state.
@@ -226,6 +225,24 @@ private:
 
 public:
 
+  /** \name Deprecated */
+  //@{
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultSpmdVectorSpace(
+    const Ordinal dim
+    );
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultSpmdVectorSpace(
+    const RCP<const Teuchos::Comm<Ordinal> > &comm,
+    const Ordinal localSubDim, const Ordinal globalDim
+    );
+
+  //@}
+ 
 }; // end class DefaultSpmdVectorSpace
 
 
@@ -265,32 +282,12 @@ template<class Scalar>
 RCP<DefaultSpmdVectorSpace<Scalar> >
 defaultSpmdVectorSpace(
   const RCP<const Teuchos::Comm<Ordinal> > &comm,
-  const Ordinal localSubDim, const Ordinal globalDim,
-  const int isLocallyReplicated = false
+  const Ordinal localSubDim, const Ordinal globalDim
   )
 {
   RCP<DefaultSpmdVectorSpace<Scalar> > vs =
     DefaultSpmdVectorSpace<Scalar>::create();
-  vs->initialize(comm, localSubDim, globalDim, isLocallyReplicated);
-  return vs;
-}
-
-
-/** \brief Nonmember consturctor function that creates a locally-replicated
- * parallel vector space.
- *
- * \relates DefaultSpmdVectorSpace
- */
-template<class Scalar>
-RCP<DefaultSpmdVectorSpace<Scalar> >
-locallyReplicatedDefaultSpmdVectorSpace(
-  const RCP<const Teuchos::Comm<Ordinal> > &comm,
-  const Ordinal globalDim
-  )
-{
-  RCP<DefaultSpmdVectorSpace<Scalar> > vs =
-    DefaultSpmdVectorSpace<Scalar>::create();
-  vs->initialize(comm, globalDim, globalDim, true);
+  vs->initialize(comm, localSubDim, globalDim);
   return vs;
 }
 

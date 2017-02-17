@@ -48,7 +48,7 @@
 #include <cstddef>
 #include <string>
 #include <map>
-#include "Phalanx_DAG_Manager.hpp"
+#include "Phalanx_Evaluator_Manager.hpp"
 
 namespace PHX {
 
@@ -88,7 +88,7 @@ namespace PHX {
     
   protected:
     
-    PHX::DagManager<Traits> dag_manager_;
+    PHX::EvaluatorManager<Traits> vp_manager_;
 
   };
 

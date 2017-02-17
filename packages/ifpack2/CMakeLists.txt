@@ -1,51 +1,16 @@
+
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
+
 #
-# Define the package
+# A) Define the package
 #
+
 TRIBITS_PACKAGE( Ifpack2 )
 
-# If deprecated warnings are on, and the compiler supports them, then
-# define IFPACK2_DEPRECATED to emit deprecated warnings.  Otherwise,
-# give it an empty definition.
-TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
-
 #
-# Set up package-specific options
+# B) Set up package-specific options
 #
-
-#
-# Do explicit template instantiation (ETI) and testing over the same
-# Scalar, LocalOrdinal, and GlobalOrdinal types as for Tpetra objects.
-# However, by default, exclude all of Tpetra's GlobalOrdinal (GO)
-# types from the ETI list.  This is because Tpetra adds all GO ETI
-# types to the list of Scalar ETI types.  (This lets it implement
-# certain communication patterns involving e.g., Vector<GO, LO, GO>.)
-#
-
-# Make sure that Tpetra actually defined these variables, even if they
-# are empty.
-ASSERT_DEFINED(TpetraCore_ETI_SCALARS)
-ASSERT_DEFINED(TpetraCore_ETI_LORDS)
-ASSERT_DEFINED(TpetraCore_ETI_GORDS)
-ASSERT_DEFINED(TpetraCore_ETI_NODES)
-
-# Exclude GlobalOrdinal types from the list of Scalar types over which
-# Ifpack2 does ETI.
-#
-# Look at each entry in Tpetra's list of ETI Scalar types.  If it is
-# also a Tpetra ETI GlobalOrdinal type, don't append it to Ifpack2's
-# list of ETI Scalar types.  Otherwise, do.
-SET (Ifpack2_ETI_SCALARS_TEMP ) # start with the empty list
-FOREACH (scalarName IN LISTS TpetraCore_ETI_SCALARS)
-  LIST (FIND TpetraCore_ETI_GORDS ${scalarName} scalarNameIndex)
-  IF (-1 EQUAL scalarNameIndex) # not in the list of integer types
-    LIST (APPEND Ifpack2_ETI_SCALARS_TEMP ${scalarName})
-  ENDIF ()
-ENDFOREACH ()
-
-SET(Ifpack2_ETI_SCALARS ${Ifpack2_ETI_SCALARS_TEMP})
-SET(Ifpack2_ETI_LORDS   ${TpetraCore_ETI_LORDS})
-SET(Ifpack2_ETI_GORDS   ${TpetraCore_ETI_GORDS})
-SET(Ifpack2_ETI_NODES   ${TpetraCore_ETI_NODES})
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_Trilinos
@@ -63,9 +28,6 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
 
 TRIBITS_ADD_EXPLICIT_INSTANTIATION_OPTION()
 
-# we use this for testing as well as library eti, so do it regardless
-TRIBITS_ADD_ETI_SUPPORT()
-
 #Adding a define for when the TPL QD is enabled.
 #This replaces an option that was reusing an existing name.
 SET(HAVE_${PACKAGE_NAME}_QD "${PACKAGE_NAME}_ENABLE_QD")
@@ -74,57 +36,96 @@ SET(HAVE_${PACKAGE_NAME}_QD "${PACKAGE_NAME}_ENABLE_QD")
 #This replaces an option that was reusing an existing name.
 SET(HAVE_${PACKAGE_NAME}_MPI "${${PACKAGE_NAME}_ENABLE_MPI}")
 
-ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Lemon)
-ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Amesos2)
-ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Cholmod)
-IF(${PACKAGE_NAME}_ENABLE_Lemon AND ${PACKAGE_NAME}_ENABLE_Amesos2 AND ${PACKAGE_NAME}_ENABLE_Cholmod)
-  SET(HAVE_IFPACK2_SUPPORTGRAPH ON )
-ENDIF()
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_ENABLE_Experimental	
-  HAVE_IFPACK2_EXPERIMENTAL
-  "Enable building and installation of experimental Ifpack2 features."
-  NO )
-
-IF(TpetraKernels_ENABLE_Experimental AND ${PACKAGE_NAME}_ENABLE_Experimental)
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_ENABLE_Experimental
-  HAVE_IFPACK2_AND_TPETRAKERNELS_EXPERIMENTAL
-  "Enable building and installation of experimental Ifpack2 and TpetraKernels features."
-  NO )
-ENDIF()
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_ENABLE_IFPACK2_TIMER_BARRIER
-  HAVE_IFPACK2_TIMER_BARRIER
-  "Enables a barrier in Ifpack2 Additive Schwarz so that timing information is useful"
-  NO )
-
 #
 # C) Add the libraries, tests, and examples
 #
 
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(adapters)
+ADD_SUBDIRECTORY(test)
 
-TRIBITS_ADD_TEST_DIRECTORIES(test)
-TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
-
-# Promote these variables to be visible outside of the "scope" of this
-# directory -- e.g., to other packages.
-GLOBAL_SET(Ifpack2_ETI_SCALARS ${Ifpack2_ETI_SCALARS})
-GLOBAL_SET(Ifpack2_ETI_LORDS   ${Ifpack2_ETI_LORDS})
-GLOBAL_SET(Ifpack2_ETI_GORDS   ${Ifpack2_ETI_GORDS})
-GLOBAL_SET(Ifpack2_ETI_NODES   ${Ifpack2_ETI_NODES})
-
-#
-# Exclude files for source package.
-#
-
+TRIBITS_EXCLUDE_FILES(
+  src/Tifpack_AMDReordering.cpp
+  src/Tifpack_AMDReordering.hpp
+  src/Tifpack_AdditiveSchwarz.hpp
+  src/Tifpack_Amesos.cpp
+  src/Tifpack_Amesos.hpp
+  src/Tifpack_BlockRelaxation.hpp
+  src/Tifpack_ConstructLevelFillGraph.hpp
+  src/Tifpack_Container.hpp
+  src/Tifpack_CrsGraph.hpp
+  src/Tifpack_DenseContainer.cpp
+  src/Tifpack_DenseContainer.hpp
+  src/Tifpack_DiagPreconditioner.cpp
+  src/Tifpack_DiagPreconditioner.hpp
+  src/Tifpack_DiagonalFilter.cpp
+  src/Tifpack_DiagonalFilter.hpp
+  src/Tifpack_DropFilter.cpp
+  src/Tifpack_DropFilter.hpp
+  src/Tifpack_EquationPartitioner.cpp
+  src/Tifpack_EquationPartitioner.hpp
+  src/Tifpack_Graph.hpp
+  src/Tifpack_Graph_Tpetra_CrsGraph.cpp
+  src/Tifpack_Graph_Tpetra_CrsGraph.hpp
+  src/Tifpack_Graph_Tpetra_RowMatrix.cpp
+  src/Tifpack_Graph_Tpetra_RowMatrix.hpp
+  src/Tifpack_GreedyPartitioner.cpp
+  src/Tifpack_GreedyPartitioner.hpp
+  src/Tifpack_HashTable.cpp
+  src/Tifpack_HashTable.hpp
+  src/Tifpack_IC.cpp
+  src/Tifpack_IC.hpp
+  src/Tifpack_ICT.cpp
+  src/Tifpack_ICT.hpp
+  src/Tifpack_IC_Utils.cpp
+  src/Tifpack_IC_Utils.hpp
+  src/Tifpack_IKLU.cpp
+  src/Tifpack_IKLU.hpp
+  src/Tifpack_IKLU_Utils.cpp
+  src/Tifpack_IKLU_Utils.hpp
+  src/Tifpack_ILU.cpp
+  src/Tifpack_ILU.hpp
+  src/Tifpack_LinearPartitioner.cpp
+  src/Tifpack_LinearPartitioner.hpp
+  src/Tifpack_LocalFilter.cpp
+  src/Tifpack_LocalFilter.hpp
+  src/Tifpack_METISPartitioner.cpp
+  src/Tifpack_METISPartitioner.hpp
+  src/Tifpack_METISReordering.cpp
+  src/Tifpack_METISReordering.hpp
+  src/Tifpack_NodeFilter.cpp
+  src/Tifpack_NodeFilter.hpp
+  src/Tifpack_OverlapFactor.cpp
+  src/Tifpack_OverlapFactorObject.hpp
+  src/Tifpack_OverlapSolveObject.cpp
+  src/Tifpack_OverlapSolveObject.hpp
+  src/Tifpack_OverlappingPartitioner.cpp
+  src/Tifpack_OverlappingPartitioner.hpp
+  src/Tifpack_OverlappingRowMatrix.cpp
+  src/Tifpack_OverlappingRowMatrix.hpp
+  src/Tifpack_Partitioner.hpp
+  src/Tifpack_PerturbedMatrix.hpp
+  src/Tifpack_RCMReordering.cpp
+  src/Tifpack_RCMReordering.hpp
+  src/Tifpack_ReorderFilter.cpp
+  src/Tifpack_ReorderFilter.hpp
+  src/Tifpack_Reordering.hpp
+  src/Tifpack_SPARSKIT.cpp
+  src/Tifpack_SPARSKIT.hpp
+  src/Tifpack_SingletonFilter.cpp
+  src/Tifpack_SingletonFilter.hpp
+  src/Tifpack_SparseContainer.hpp
+  src/Tifpack_SparsityFilter.cpp
+  src/Tifpack_SparsityFilter.hpp
+  src/Tifpack_UserPartitioner.cpp
+  src/Tifpack_UserPartitioner.hpp
+  src/Tifpack_Utils.cpp
+  src/Tifpack_Utils.hpp
+  )
 
 #
 # D) Do standard postprocessing
 #
 
 TRIBITS_PACKAGE_POSTPROCESS()
+
+

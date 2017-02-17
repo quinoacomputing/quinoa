@@ -77,7 +77,7 @@ MACRO(TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER)
   SET_DEFAULT( Trilinos_ENABLE_SECONDARY_STABLE_CODE ON)
 
   # Only turn on PyTrilinos for shared libraries
-  SET_DEFAULT( Trilinos_EXCLUDE_PACKAGES ${EXTRA_EXCLUDE_PACKAGES} PyTrilinos TriKota Optika Ifpack2 Panzer)
+  SET_DEFAULT( Trilinos_EXCLUDE_PACKAGES ${EXTRA_EXCLUDE_PACKAGES} PyTrilinos TriKota Optika)
   
   SET( EXTRA_SYSTEM_CONFIGURE_OPTIONS
     "-DCMAKE_BUILD_TYPE:STRING=${BUILD_TYPE}"
@@ -86,19 +86,12 @@ MACRO(TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER)
       "-DCMAKE_LIBRARY_PATH:PATH=/usr/lib64"
       "-DTPL_LAPACK_LIBRARIES:STRING=-L/opt/intel/Compiler/11.1/064/mkl/lib/em64t -lmkl_lapack"
       "-DTPL_BLAS_LIBRARIES:STRING=-L/opt/intel/Compiler/11.1/064/mkl/lib/em64t/ -L/opt/intel/Compiler/11.1/064/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread"
-    "-DSuperLU_INCLUDE_DIRS:PATH=/home/trilinos/tpl/intel/SuperLU_4.3/SRC"
-    "-DSuperLU_LIBRARY_DIRS:PATH=/home/trilinos/tpl/intel/SuperLU_4.3/lib"
-    "-DSuperLU_LIBRARY_NAMES:STRING=superlu_4.3"
-    "-DTPL_ENABLE_Matio=OFF"
-    "-DTPL_ENABLE_SuperLU=ON"
-    "-DTPL_ENABLE_GLM=OFF"
-    "-DIntrepid_ENABLE_DEBUG_INF_CHECK=OFF"
+    "-DTPL_ENABLE_MATLAB=OFF"
     )
 
   SET_DEFAULT(COMPILER_VERSION "ICPC-11.1.064")
   
   IF (COMM_TYPE STREQUAL MPI)
-    SET(TPL_ENABLE_MPI ON)
 
     #MESSAGE(FATAL_ERROR "Error, Intel build does not support MPI yet!")
     SET( EXTRA_SYSTEM_CONFIGURE_OPTIONS

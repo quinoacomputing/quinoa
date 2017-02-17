@@ -14,9 +14,9 @@
    Library General Public License for more details.
 
    You should have received a copy of the GNU Library General Public
-   License along with the GNU C Library; see the file COPYING.LIB.  If
-   not, write to the Free Software Foundation, Inc., 51 Franklin St,
-   Fifth Floor, Boston, MA 02110-1301 USA.  */
+   License along with the GNU C Library; see the file COPYING.LIB.  If not,
+   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* This code has been modified from the original to conform to the action
    of the getsubopt() function contained in the C library of many Unix
@@ -25,8 +25,9 @@
 
    Modified by Gary L. Hennigan, SNL, Dept. 9221, 3 Feb 1997 */
 
-#include <cstdlib>
-#include <cstring>
+#include <stdlib.h>
+#include <string.h>
+
 
 /* Parse comma separated suboption from *OPTIONP and match against
    strings in TOKENS.  If found return index and set *VALUEP to
@@ -34,45 +35,47 @@
    not part of TOKENS return in *VALUEP beginning of unknown
    suboption.  On exit *OPTIONP is set to the beginning of the next
    token or at the terminating NUL character.  */
-int md_getsubopt(char **optionp, const char **tokens, char **valuep)
+int
+md_getsubopt (char **optionp, const char **tokens, char **valuep)
 {
   char *endp, *vstart;
-  int   cnt;
+  int cnt;
 
   if (**optionp == '\0')
     return -1;
 
   /* Find end of next token.  */
-  endp = strchr(*optionp, ',');
-  if (endp == nullptr)
-    endp = strchr(*optionp, '\0');
+  endp = strchr (*optionp, ',');
+  if (endp == NULL)
+    endp = strchr (*optionp, '\0');
 
   /* Find start of value.  */
-  vstart = (char *)memchr(*optionp, '=', endp - *optionp);
-  if (vstart == nullptr)
+  vstart = (char*)memchr (*optionp, '=', endp - *optionp);
+  if (vstart == NULL)
     vstart = endp;
 
   /* Try to match the characters between *OPTIONP and VSTART against
      one of the TOKENS.  */
-  for (cnt = 0; tokens[cnt] != nullptr; ++cnt)
-    if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0 &&
-        tokens[cnt][vstart - *optionp] == '\0') {
-      /* We found the current option in TOKENS.  */
-      *valuep = vstart != endp ? vstart + 1 : nullptr;
+  for (cnt = 0; tokens[cnt] != NULL; ++cnt)
+    if (memcmp (*optionp, tokens[cnt], vstart - *optionp) == 0
+	&& tokens[cnt][vstart - *optionp] == '\0')
+      {
+	/* We found the current option in TOKENS.  */
+        *valuep = vstart != endp ? vstart + 1 : NULL;
 
-      if (*endp != '\0')
-        *endp++ = '\0';
-      *optionp  = endp;
+	if (*endp != '\0')
+	  *endp++ = '\0';
+	*optionp = endp;
 
-      return cnt;
-    }
+	return cnt;
+      }
 
   /* The current suboption does not match any option.  */
   *valuep = *optionp;
 
   if (*endp != '\0')
     *endp++ = '\0';
-  *optionp  = endp;
+  *optionp = endp;
 
   return -1;
 }

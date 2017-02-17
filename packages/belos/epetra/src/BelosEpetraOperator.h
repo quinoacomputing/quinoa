@@ -59,7 +59,6 @@
 #include "BelosBlockGmresSolMgr.hpp"
 #include "BelosPseudoBlockGmresSolMgr.hpp"
 #include "BelosBlockCGSolMgr.hpp"
-#include "BelosPseudoBlockCGSolMgr.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 

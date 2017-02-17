@@ -50,14 +50,16 @@
 
 using namespace Galeri;
 
-int main(int argc, char* argv[])
+int main(int argv, char* argc[])
 {
 #ifdef HAVE_MPI
-  MPI_Init(&argc, &argv);
+  MPI_Init(&argv, &argc);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
 #endif
+
+  bool verbose = (Comm.MyPID() == 0);
 
   // Creates an Epetra_Map corresponding to a 2D Cartesian grid
   // on the unit square. For parallel runs, the nodes are divided into
@@ -66,7 +68,7 @@ int main(int argc, char* argv[])
   // Pointer to the object to be created
   Epetra_Map* Map = 0; 
   // Type of the object
-  std::string MapType = "Cartesian2D";
+  string MapType = "Cartesian2D";
   // Container for parameters
   Teuchos::ParameterList GaleriList;
   GaleriList.set("nx", 2 * Comm.NumProc()); 
@@ -77,11 +79,8 @@ int main(int argc, char* argv[])
   try
   {
     // Creation of the map
-#ifndef GALERI_TEST_USE_LONGLONG_GO
     Map = CreateMap("Cartesian2D", Comm, GaleriList);
-#else
-    Map = CreateMap64("Cartesian2D", Comm, GaleriList);
-#endif
+
     // print out the map
     cout << *Map;
 

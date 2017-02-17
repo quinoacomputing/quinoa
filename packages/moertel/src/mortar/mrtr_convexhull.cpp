@@ -8,33 +8,20 @@
 # Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 # license for use of this work by or on behalf of the U.S. Government.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
 #
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
 # Questions? Contact Glen Hansen (gahanse@sandia.gov)
 #
 # ************************************************************************
@@ -106,10 +93,10 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
 
 #if 0
   // printout the polygon
-  std::cout << "Input polygon:\n";
+  cout << "Input polygon:\n";
   for (pcurr=p.begin(); pcurr != p.end(); ++pcurr)
     if (pcurr->second != Teuchos::null)
-      std::cout << *(pcurr->second);
+      cout << *(pcurr->second);
 #endif  
 
   //===========================================================================
@@ -117,13 +104,13 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   std::map<int,Teuchos::RCP<MOERTEL::Point> > upper;
   PointView(p,points);
   // put in the first 2 points
-  AddPointtoPolygon(upper,0,points[0]->Xi()); //std::cout << *points[0];
-  AddPointtoPolygon(upper,1,points[1]->Xi()); //std::cout << *points[1];
+  AddPointtoPolygon(upper,0,points[0]->Xi()); //cout << *points[0];
+  AddPointtoPolygon(upper,1,points[1]->Xi()); //cout << *points[1];
   //---------------------------------------------------------------------------
   for (int i=2; i<np; ++i)
   {
     // add point[i] to upper
-    AddPointtoPolygon(upper,i,points[i]->Xi()); //std::cout << *points[i];
+    AddPointtoPolygon(upper,i,points[i]->Xi()); //cout << *points[i];
 
     // find whether we still have a convex hull
     while (upper.size()>2 && !MakeRightTurnUpper(i,upper))
@@ -133,7 +120,7 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   std::map<int,MOERTEL::Point*>::iterator pcurr;
   for (pcurr=upper.begin(); pcurr != upper.end(); ++pcurr)
     if (pcurr->second)
-      std::cout << *(pcurr->second);
+      cout << *(pcurr->second);
 #endif  
   } // for (int i=2; i<np; ++i)
 
@@ -141,13 +128,13 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   // build the lower hull
   std::map<int,Teuchos::RCP<MOERTEL::Point> > lower;
   // put in the first 2 points
-  AddPointtoPolygon(lower,np-1,points[np-1]->Xi()); //std::cout << *points[np-1];
-  AddPointtoPolygon(lower,np-2,points[np-2]->Xi()); //std::cout << *points[np-2];
+  AddPointtoPolygon(lower,np-1,points[np-1]->Xi()); //cout << *points[np-1];
+  AddPointtoPolygon(lower,np-2,points[np-2]->Xi()); //cout << *points[np-2];
   //---------------------------------------------------------------------------
   for (int i=np-3; i>=0; --i)
   {
     // add point[i] to lower
-    AddPointtoPolygon(lower,i,points[i]->Xi()); //std::cout << *points[i];
+    AddPointtoPolygon(lower,i,points[i]->Xi()); //cout << *points[i];
 
     // find whether we still have a convex hull
     while (lower.size()>2 && !MakeRightTurnLower(i,lower))
@@ -157,7 +144,7 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   std::map<int,Teuchos::RCP<MOERTEL::Point> >::iterator pcurr;
   for (pcurr=lower.begin(); pcurr != lower.end(); ++pcurr)
     if (pcurr->second)
-      std::cout << *(pcurr->second);
+      cout << *(pcurr->second);
 #endif  
   } // for (int i=np-3; i>=0; --i)  
 
@@ -174,7 +161,7 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   int i=0;
   for (pcurr=upper.begin(); pcurr != upper.end(); ++pcurr)
   {
-    //std::cout << *(pcurr->second);
+    //cout << *(pcurr->second);
     AddPointtoPolygon(finalp,i,pcurr->second->Xi());
     ++i;
   }
@@ -184,18 +171,18 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   --pcurr; --pcurr;
   for (; pcurr != lower.begin(); --pcurr)
   {
-    //std::cout << *(pcurr->second);
+    //cout << *(pcurr->second);
     AddPointtoPolygon(finalp,i,pcurr->second->Xi());
     ++i;
   }
 
 #if 0
   // printout the polygon
-  std::cout << "--------------------------------------------\n";
-  std::cout << "Final polygon:\n";
+  cout << "--------------------------------------------\n";
+  cout << "Final polygon:\n";
   for (pcurr=finalp.begin(); pcurr != finalp.end(); ++pcurr)
     if (pcurr->second != Teuchos::null)
-      std::cout << *(pcurr->second);
+      cout << *(pcurr->second);
 #endif  
 
   // compare size of convex hull polygon newp to size of p, all
@@ -203,8 +190,8 @@ bool MOERTEL::Overlap::ConvexHull(std::map<int,Teuchos::RCP<MOERTEL::Point> >& p
   if (finalp.size() != p.size())
   {
     if (OutLevel()>8)
-    std::cout << "MOERTEL: ***WRN*** MOERTEL::Overlap::ConvexHull:\n"
-         << "MOERTEL: ***WRN*** size of convex hull " << finalp.size() << " not # nodes " << p.size() << std::endl
+    cout << "MOERTEL: ***WRN*** MOERTEL::Overlap::ConvexHull:\n"
+         << "MOERTEL: ***WRN*** size of convex hull " << finalp.size() << " not # nodes " << p.size() << endl
          << "MOERTEL: ***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
   }
   
@@ -239,11 +226,11 @@ bool MOERTEL::Overlap::MakeRightTurnUpper(int i,std::map<int,Teuchos::RCP<MOERTE
 	  throw ReportError(oss);
   }
 
-  Teuchos::RCP<MOERTEL::Point> point = curr->second; //std::cout << *point;
+  Teuchos::RCP<MOERTEL::Point> point = curr->second; //cout << *point;
   curr--;
-  Teuchos::RCP<MOERTEL::Point> pointm1 = curr->second; //std::cout << *pointm1;
+  Teuchos::RCP<MOERTEL::Point> pointm1 = curr->second; //cout << *pointm1;
   curr--;
-  Teuchos::RCP<MOERTEL::Point> pointm2 = curr->second; //std::cout << *pointm2;
+  Teuchos::RCP<MOERTEL::Point> pointm2 = curr->second; //cout << *pointm2;
   double N[2];
   N[0] =  pointm1->Xi()[1] - pointm2->Xi()[1];
   N[1] = -(pointm1->Xi()[0] - pointm2->Xi()[0]);
@@ -254,12 +241,12 @@ bool MOERTEL::Overlap::MakeRightTurnUpper(int i,std::map<int,Teuchos::RCP<MOERTE
   double dotp = MOERTEL::dot(N,P,2);
   if (dotp>=0.0000)
   {
-    //std::cout << "Makes a right\n";
+    //cout << "Makes a right\n";
     return true;
   }
   else 
   {
-    //std::cout << "Makes NO right\n";
+    //cout << "Makes NO right\n";
     return false;
   }
 }
@@ -285,11 +272,11 @@ bool MOERTEL::Overlap::MakeRightTurnLower(int i,std::map<int,Teuchos::RCP<MOERTE
 
   }
 
-  Teuchos::RCP<MOERTEL::Point> point = curr->second; //std::cout << *point;
+  Teuchos::RCP<MOERTEL::Point> point = curr->second; //cout << *point;
   curr++;
-  Teuchos::RCP<MOERTEL::Point> pointm1 = curr->second; //std::cout << *pointm1;
+  Teuchos::RCP<MOERTEL::Point> pointm1 = curr->second; //cout << *pointm1;
   curr++;
-  Teuchos::RCP<MOERTEL::Point> pointm2 = curr->second; //std::cout << *pointm2;
+  Teuchos::RCP<MOERTEL::Point> pointm2 = curr->second; //cout << *pointm2;
   double N[2];
   N[0] =  pointm1->Xi()[1] - pointm2->Xi()[1];
   N[1] = -(pointm1->Xi()[0] - pointm2->Xi()[0]);
@@ -300,12 +287,12 @@ bool MOERTEL::Overlap::MakeRightTurnLower(int i,std::map<int,Teuchos::RCP<MOERTE
   double dotp = MOERTEL::dot(N,P,2);
   if (dotp>=0.0000)
   {
-    //std::cout << "Makes a right\n";
+    //cout << "Makes a right\n";
     return true;
   }
   else 
   {
-    //std::cout << "Makes NO right\n";
+    //cout << "Makes NO right\n";
     return false;
   }
 }
@@ -330,7 +317,7 @@ void MOERTEL::Overlap::RemovePointBefore(int i,std::map<int,Teuchos::RCP<MOERTEL
   }
 
   curr--;
-  //std::cout << "Erasing point " << curr->first << " from hull\n";
+  //cout << "Erasing point " << curr->first << " from hull\n";
   hull.erase(curr->first);
   return;
 }
@@ -355,7 +342,7 @@ void MOERTEL::Overlap::RemovePointAfter(int i,std::map<int,Teuchos::RCP<MOERTEL:
   }
 
   curr++;
-  //std::cout << "Erasing point " << curr->first << " from hull\n";
+  //cout << "Erasing point " << curr->first << " from hull\n";
   hull.erase(curr->first);
   return;
 }
@@ -391,7 +378,7 @@ bool MOERTEL::Overlap::CollapsePoints(std::map<int,Teuchos::RCP<MOERTEL::Point> 
       continue;
     
     // put point i into vector with collapse points
-    // std::cout << "Adding " << i << " to collapse\n";
+    // cout << "Adding " << i << " to collapse\n";
     collapse[0] = points[i];
     int count = 1;
     
@@ -403,10 +390,10 @@ bool MOERTEL::Overlap::CollapsePoints(std::map<int,Teuchos::RCP<MOERTEL::Point> 
       xi1xi2[0] = points[j]->Xi()[0] - points[i]->Xi()[0];
       xi1xi2[1] = points[j]->Xi()[1] - points[i]->Xi()[1];
       double dist = MOERTEL::length(xi1xi2,2);
-      // std::cout << "distance between " << i << " and " << j << " : " << dist << std::endl;
+      // cout << "distance between " << i << " and " << j << " : " << dist << endl;
       if (dist<eps)
       {
-        // std::cout << "Adding " << j << " to collapse\n";
+        // cout << "Adding " << j << " to collapse\n";
         // add point2 to collapse vector
         collapse[count] = points[j];
         ++count;
@@ -418,7 +405,7 @@ bool MOERTEL::Overlap::CollapsePoints(std::map<int,Teuchos::RCP<MOERTEL::Point> 
     // id above 100 (if there is any)
     bool foundit = false;
     //if (count>1)
-    //  std::cout << "Collapsing " << count << " nodes\n";
+    //  cout << "Collapsing " << count << " nodes\n";
     for (int j=0; j<count; ++j)
     {
       if (collapse[j]->Id()>=100)

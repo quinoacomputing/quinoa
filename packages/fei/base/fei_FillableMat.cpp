@@ -1,10 +1,45 @@
-/*--------------------------------------------------------------------*/
-/*    Copyright 2005 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
+
 
 #include <fei_FillableMat.hpp>
 #include <fei_EqnBuffer.hpp>
@@ -64,13 +99,15 @@ FillableMat::operator=(const FillableMat& src)
 
   for(; s_iter != s_end; ++s_iter) {
     int row = s_iter->first;
-    const CSVec* srow = s_iter->second;
-    const std::vector<int>& s_ind = srow->indices();
-    const std::vector<double>& s_coef = srow->coefs();
+    const FillableVec* srow = s_iter->second;
 
-    for(size_t i=0; i<s_ind.size(); ++i) {
-      int col = s_ind[i];
-      double coef = s_coef[i];
+    FillableVec::const_iterator
+      r_iter = srow->begin(),
+      r_end = srow->end();
+
+    for(; r_iter != r_end; ++r_iter) {
+      int col = r_iter->first;
+      double coef = r_iter->second;
 
       putCoef(row, col, coef);
     }
@@ -87,7 +124,7 @@ FillableMat::setValues(double value)
     iter = matdata_.begin(), iter_end = matdata_.end();
 
   for(; iter != iter_end; ++iter) {
-    set_values(*(iter->second), value);
+    iter->second->setValues(value);
   }
 }
 
@@ -103,17 +140,12 @@ FillableMat::feipoolmat::iterator
 insert_row(FillableMat::feipoolmat& matdata,
            FillableMat::feipoolmat::iterator iter,
            int row,
-           fei_Pool_alloc<CSVec>& vecpool)
+           fei_Pool_alloc<FillableVec>& vecpool)
 {
-  static CSVec dummy;
+  static FillableVec dummy;
 
-  CSVec* vptr = vecpool.allocate(1);
+  FillableVec* vptr = vecpool.allocate(1);
   vecpool.construct(vptr, dummy);
-
-  if (vptr->indices().capacity() == 0) {
-    vptr->indices().reserve(16);
-    vptr->coefs().reserve(16);
-  }
 
   return matdata.insert(iter, std::make_pair(row, vptr));
 }
@@ -122,18 +154,18 @@ insert_row(FillableMat::feipoolmat& matdata,
 void
 FillableMat::sumInCoef(int row, int col, double coef)
 {
-  CSVec* rowvec = create_or_getRow(row);
+  FillableVec* rowvec = create_or_getRow(row);
 
-  add_entry(*rowvec, col, coef);
+  rowvec->addEntry(col, coef);
 }
 
 //-----------------------------------------------------------------
 void
 FillableMat::putCoef(int row, int col, double coef)
 {
-  CSVec* rowvec = create_or_getRow(row);
+  FillableVec* rowvec = create_or_getRow(row);
 
-  put_entry(*rowvec, col, coef);
+  rowvec->putEntry(col, coef);
 }
 
 //-----------------------------------------------------------------
@@ -141,10 +173,10 @@ void
 FillableMat::sumInRow(int row, const int* cols, const double* coefs,
                       unsigned len)
 {
-  CSVec* rowvec = create_or_getRow(row);
+  FillableVec* rowvec = create_or_getRow(row);
 
   for(unsigned i=0; i<len; ++i) {
-    add_entry(*rowvec, cols[i], coefs[i]);
+    rowvec->addEntry(cols[i], coefs[i]);
   }
 }
 
@@ -153,10 +185,10 @@ void
 FillableMat::putRow(int row, const int* cols, const double* coefs,
                     unsigned len)
 {
-  CSVec* rowvec = create_or_getRow(row);
+  FillableVec* rowvec = create_or_getRow(row);
 
   for(unsigned i=0; i<len; ++i) {
-    put_entry(*rowvec, cols[i], coefs[i]);
+    rowvec->putEntry(cols[i], coefs[i]);
   }
 }
 
@@ -176,7 +208,7 @@ FillableMat::hasRow(int row) const
 }
 
 //-----------------------------------------------------------------
-const CSVec*
+const FillableVec*
 FillableMat::getRow(int row) const
 {
   feipoolmat::const_iterator iter = matdata_.lower_bound(row);
@@ -189,7 +221,7 @@ FillableMat::getRow(int row) const
 }
 
 //-----------------------------------------------------------------
-CSVec*
+FillableVec*
 FillableMat::create_or_getRow(int row)
 {
   feipoolmat::iterator iter = matdata_.lower_bound(row);
@@ -225,15 +257,17 @@ FillableMat::operator==(const FillableMat& rhs) const
     this_it = begin(),
     this_end = end();
 
-  FillableMat::const_iterator rhs_it = rhs.begin();
+  FillableMat::const_iterator
+    rhs_it = rhs.begin(),
+    rhs_end = rhs.end();
 
   for(; this_it != this_end; ++this_it, ++rhs_it) {
     int this_row = this_it->first;
     int rhs_row = rhs_it->first;
     if (this_row != rhs_row) return false;
 
-    const CSVec* this_row_vec = this_it->second;
-    const CSVec* rhs_row_vec = rhs_it->second;
+    const FillableVec* this_row_vec = this_it->second;
+    const FillableVec* rhs_row_vec = rhs_it->second;
 
     if (*this_row_vec != *rhs_row_vec) return false;
   }
@@ -255,12 +289,12 @@ void print(std::ostream& os, const FillableMat& mat)
     irow = mat.begin(), irowend = mat.end();
   for(; irow!=irowend; ++irow) {
     int row = irow->first;
-    const CSVec* vec = irow->second;
-    const std::vector<int>& v_ind = vec->indices();
-    const std::vector<double>& v_coef = vec->coefs();
+    const FillableVec* vec = irow->second;
     os << "row " << row << ": ";
-    for(size_t i=0; i<v_ind.size(); ++i) {
-      os << "("<<v_ind[i]<<","<<v_coef[i]<<") ";
+    FillableVec::const_iterator
+      ivec = vec->begin(), ivecend = vec->end();
+    for(; ivec!=ivecend; ++ivec) {
+      os << "("<<ivec->first<<","<<ivec->second<<") ";
     }
     os << std::endl;
   }
@@ -276,7 +310,7 @@ int count_nnz(const FillableMat& mat)
     r_end = mat.end();
 
   for(; r_iter != r_end; ++r_iter) {
-    CSVec* row = r_iter->second;
+    FillableVec* row = r_iter->second;
     nnz += row->size();
   }
 

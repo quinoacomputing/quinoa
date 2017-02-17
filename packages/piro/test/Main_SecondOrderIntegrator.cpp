@@ -56,7 +56,6 @@
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_TrapezoidRuleSolver.hpp"
-#include "Piro_Epetra_NewmarkSolver.hpp"
 
 
 int main(int argc, char *argv[]) {
@@ -81,14 +80,13 @@ int main(int argc, char *argv[]) {
   bool doAll = (argc==1);
   if (argc>1) doAll = !strcmp(argv[1],"-v");
 
-  for (int iTest=0; iTest<3; iTest++) {
+  for (int iTest=0; iTest<2; iTest++) {
 
     if (doAll) {
       switch (iTest) {
        case 0: inputFile="input_Solve_VV.xml"; break;
        case 1: inputFile="input_Solve_TR.xml"; break;
-       case 2: inputFile="input_Solve_NB.xml"; break;
-       default : std::cout << "iTest logic error " << std::endl; exit(-1);
+       default : cout << "iTest logic error " << endl; exit(-1);
       }
     }
      else {
@@ -97,10 +95,10 @@ int main(int argc, char *argv[]) {
     }
 
     if (Proc==0)
-     std::cout << "===================================================\n"
+     cout << "===================================================\n"
           << "======  Running input file: "<< inputFile <<"\n"
           << "===================================================\n"
-          << std::endl;
+          << endl;
     
     try {
 
@@ -115,7 +113,7 @@ int main(int argc, char *argv[]) {
       //   EpetraExt::ModelEvaluator is  base class of all Piro::Epetra solvers
       RCP<EpetraExt::ModelEvaluator> piro;
 
-      std::string& solver = piroParams->get("Solver Type","NOX");
+      std::string& solver = piroParams->get("Piro Solver","NOX");
       RCP<NOX::Epetra::Observer> observer = rcp(new ObserveSolution_Epetra());
 
       if (solver=="NOX") {
@@ -129,23 +127,20 @@ int main(int argc, char *argv[]) {
         piro = rcp(new Piro::Epetra::TrapezoidRuleSolver(
                        piroParams, Model, observer));
       }
-      else if (solver=="Newmark") {
-        piro = rcp(new Piro::Epetra::NewmarkSolver(
-                       piroParams, Model, observer));
-      }
       else
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error: Unknown Piro Solver : " << solver);
 
       // Now the (somewhat cumbersome) setting of inputs and outputs
       EpetraExt::ModelEvaluator::InArgs inArgs = piro->createInArgs();
-      TEUCHOS_ASSERT(inArgs.Np() > 0); // Number of *vectors* of parameters
+      int num_p = inArgs.Np();     // Number of *vectors* of parameters
       RCP<Epetra_Vector> p1 = rcp(new Epetra_Vector(*(piro->get_p_init(0))));
+      int numParams = p1->MyLength(); // Number of parameters in p1 vector
       inArgs.set_p(0,p1);
 
       // Set output arguments to evalModel call
       EpetraExt::ModelEvaluator::OutArgs outArgs = piro->createOutArgs();
-      TEUCHOS_ASSERT(outArgs.Ng() >= 2); // Number of *vectors* of responses
+      int num_g = outArgs.Ng(); // Number of *vectors* of responses
       RCP<Epetra_Vector> g1 = rcp(new Epetra_Vector(*(piro->get_g_map(0))));
       outArgs.set_g(0,g1);
       // Solution vector is returned as extra respons vector
@@ -157,16 +152,16 @@ int main(int argc, char *argv[]) {
 
       // Print out everything
       if (Proc == 0)
-        std::cout << "Finished Model Evaluation: Printing everything {Exact in brackets}" 
+        cout << "Finished Model Evaluation: Printing everything {Exact in brackets}" 
              << "\n-----------------------------------------------------------------"
-             << std::setprecision(9) << std::endl;
+             << std::setprecision(9) << endl;
 
-      p1->Print(std::cout << "\nParameters! {1}\n");
-      g1->Print(std::cout << "\nResponses! {0.0}\n");
-      gx->Print(std::cout << "\nSolution! {0.0}\n");
+      p1->Print(cout << "\nParameters! {1}\n");
+      g1->Print(cout << "\nResponses! {0.0}\n");
+      gx->Print(cout << "\nSolution! {0.0}\n");
 
       if (Proc == 0)
-        std::cout <<
+        cout <<
           "\n-----------------------------------------------------------------\n";
     }
     TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
@@ -177,8 +172,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (Proc==0) {
-    if (overall_status==0) std::cout << "\nTEST PASSED\n" << std::endl;
-    else std::cout << "\nTEST Failed:  " << overall_status << std::endl;
+    if (overall_status==0) cout << "\nTEST PASSED\n" << endl;
+    else cout << "\nTEST Failed:  " << overall_status << endl;
   }
 
   return status;

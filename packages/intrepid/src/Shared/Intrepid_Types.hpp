@@ -85,11 +85,11 @@
  */
 #define INTREPID_MAX_CUBATURE_DEGREE_TET 20
 
-/** \def    INTREPID_MAX_CUBATURE_DEGREE_PYR
+/** \def    INTREPID_MAX_CUBATURE_DEGREE_PYRAMID
     \brief  The maximum degree of the polynomial that can be integrated exactly by
             a direct pyramid rule.
  */
-#define INTREPID_MAX_CUBATURE_DEGREE_PYR 11
+#define INTREPID_MAX_CUBATURE_DEGREE_PYRAMID 4
 
 /** \def    INTREPID_MAX_DIMENSION
     \brief  The maximum ambient space dimension.

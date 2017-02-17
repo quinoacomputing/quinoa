@@ -69,13 +69,8 @@
 
 namespace Amesos2{
   namespace PMKL {
-    //Update JDB 6.25.15
-    //MKL has changed _INTEGER_t to deprecated
-    //MKL has changed _INTEGER_t to define from typedef 
-    #include <mkl_dss.h>
-    #include <mkl_types.h>
-    #undef _INTEGER_t
-    typedef MKL_INT _INTEGER_t;
+#   include <mkl_dss.h>
+#   include <mkl_types.h>
   } // end namespace PMKL
 } // end namespace Amesos2
 
@@ -251,7 +246,6 @@ namespace Amesos2 {
   struct TypeMap<PardisoMKL,int>
   {
     typedef PMKL::_INTEGER_t type;
-    //typedef int   type;
   };
 
   template <>

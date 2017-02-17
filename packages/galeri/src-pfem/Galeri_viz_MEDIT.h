@@ -55,13 +55,13 @@ public:
 
   static
   void write(Galeri::grid::Loadable& patch,
-             const std::string& BaseName,
+             const string& BaseName,
              const Epetra_MultiVector& vector)
   {
     const Epetra_Comm& comm = patch.getComm();
 
     std::ofstream medit;
-    std::string FileName = BaseName + ".mesh";
+    string FileName = BaseName + ".mesh";
 
     const Epetra_MultiVector& linearCoord = patch.getLinearCoordinates();
 

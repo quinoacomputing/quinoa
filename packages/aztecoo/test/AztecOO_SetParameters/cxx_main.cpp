@@ -77,8 +77,8 @@ int main(int argc, char* argv[]) {
   paramlist.set("AZ_kspace", 2.5);//bad type
 
   if (verbose1==true) {
-    std::cout << "Test: parameter 'AZ_kspace' given bad type (double), warning should"
-         << "be printed to std::cerr"<<std::endl;
+    cout << "Test: parameter 'AZ_kspace' given bad type (double), warning should"
+         << "be printed to cerr"<<endl;
     err = azoo.SetParameters(paramlist, verbose1);
   }
   else {
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
   }
   if (err != 0) {
     if (verbose1) {
-      std::cerr << "err " << err << " returned from AztecOO::SetParameters"<<std::endl;
+      cerr << "err " << err << " returned from AztecOO::SetParameters"<<endl;
     }
     return(-1);
   }
@@ -94,21 +94,21 @@ int main(int argc, char* argv[]) {
   const int* options = azoo.GetAllAztecOptions();
   if (options[AZ_solver] != AZ_cg) {
     if (verbose1) {
-      std::cerr << "SetParameters test failed to correctly set AZ_solver."<<std::endl;
+      cerr << "SetParameters test failed to correctly set AZ_solver."<<endl;
     }
     return(-1);
   }
 
   if (options[AZ_max_iter] != 200) {
     if (verbose1) {
-      std::cerr << "SetParameters test failed to correctly set AZ_max_iter."<<std::endl;
+      cerr << "SetParameters test failed to correctly set AZ_max_iter."<<endl;
     }
     return(-1);
   }
 
   if (options[AZ_precond] != AZ_Jacobi) {
     if (verbose1) {
-      std::cerr << "SetParameters test failed to correctly set AZ_precond."<<std::endl;
+      cerr << "SetParameters test failed to correctly set AZ_precond."<<endl;
     }
     return(-1);
   }
@@ -116,8 +116,8 @@ int main(int argc, char* argv[]) {
   const double* params = azoo.GetAllAztecParams();
   if (params[AZ_tol] != 1.0e-09) {
     if (verbose1) {
-      std::cerr << "SetParameters test failed to correctly set AZ_tol."<<std::endl;
-      std::cout << "********* Test failed **********" << std::endl;
+      cerr << "SetParameters test failed to correctly set AZ_tol."<<endl;
+      cout << "********* Test failed **********" << endl;
     }
     return(-1);
   }
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 // in the output for the script, so for now we will produce the output
 // below whenever the test passes.
 //  if (verbose1==true) {
-    std::cout << "********* Test passed **********" << std::endl;
+    cout << "********* Test passed **********" << endl;
 //  }
 
 #ifdef HAVE_MPI

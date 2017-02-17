@@ -617,7 +617,7 @@ C   --"Munch" the element side sets
      &     IA(KIDSS), IA(KNESS), IA(KNDSS), IA(KIXESS), IA(KIXDSS),
      &     IA(KLTESS), IA(KLTSSS), A(KFACSS), 
      &     IA(KLTESO), IA(KLTSSO), A(KFACS0), IA(KIXESO), IA(KIXDS0),
-     &     IA(KNESO), IA(KNDS0), IA(KISCR), USESDF)
+     &     IA(KNESO), IA(KNDS0), IA(KISCR))
 
          CALL MDDEL ('LTEESO')
          CALL MDDEL ('LTSSO')
@@ -635,8 +635,7 @@ C      --Squeeze the element side sets
          IF (DELEL) THEN
            CALL ZMESS (NEWESS, NEWSEL, NEWSDL, 
      &       IA(KIDSS), IA(KNESS), IA(KNDSS), IA(KIXESS),
-     *       IA(KIXDSS), IA(KLTESS), IA(KLTSSS), IA(KLTSNC),
-     *       A(KFACSS), USESDF)
+     *       IA(KIXDSS), IA(KLTESS), IA(KLTSSS), IA(KLTSNC), A(KFACSS))
          END IF
 
          CALL MDLONG ('IDESS', KIDSS, NEWESS)
@@ -726,7 +725,7 @@ C   --Write the QA records
 
   150 CONTINUE
       CALL WRAPUP (QAINFO(1))
-      call addlog (QAINFO(1)(:lenstr(QAINFO(1))))
+      call addlog (QAINFO(1))
       OPEN (UNIT=9, FILE='%gjoin', FORM='unformatted',
      &   STATUS='old', IOSTAT=IERR)
       IF (IERR .EQ. 0) THEN

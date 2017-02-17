@@ -70,20 +70,17 @@ SET(ENV{LD_LIBRARY_PATH} "$ENV{LD_LIBRARY_PATH}:/opt/intel/Compiler/11.1/064/lib
 #SET(CTEST_TEST_TIMEOUT 900)
 
 #SET(Trilinos_PACKAGES Teuchos RTOp GlobiPack Thyra OptiPack Stratimikos Phalanx Rythmos)
-SET(EXTRA_EXCLUDE_PACKAGES Sundance Rythmos STK Phalanx Thyra Panzer MueLu)
+SET(EXTRA_EXCLUDE_PACKAGES Sundance Rythmos STK Phalanx Thyra)
 
 SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Fortran:BOOL=ON"
   "-DTPL_ENABLE_Boost:BOOL=ON"
   "-DBoost_INCLUDE_DIRS=$ENV{HOME}/tpls/intel/11.1/boost/1.46.1/include"
   "-DTrilinos_ENABLE_STK:BOOL=OFF"
-  "-DTrilinos_ENABLE_MueLu:BOOL=OFF"
   "-DNetcdf_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.4.4/netcdf-4.2/include"
   "-DNetcdf_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.4.4/netcdf-4.2/lib"
   "-DHDF5_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.4.4/hdf5-1.8.6/include"
   "-DHDF5_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.4.4/hdf5-1.8.6/lib"
-  "-DZoltan2_ENABLE_Experimental=ON"
-  "-DAmesos2_ENABLE_TESTS=OFF"
   )
 
 #

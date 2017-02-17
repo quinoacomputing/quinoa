@@ -256,32 +256,40 @@ char *T2 = "N";
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Operation Prec*x", precID );
+        /* Start timer. */
+      static int precID = -1;
+      precID = Teuchos_startTimer( "AztecOO: Operation Prec*x", precID );
 #endif
 #endif
       precond->prec_function(UU[i],options,proc_config,params,Amat,precond);
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( precID );
+      /* Stop timer. */
+      Teuchos_stopTimer( precID );
 #endif
 #endif
       if (iter == 1) status[AZ_first_precond] = AZ_second() - init_time;
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Operation Op*x", matvecID );
+      /* Start timer. */
+      static int matvecID = -1;
+      matvecID = Teuchos_startTimer( "AztecOO: Operation Op*x", matvecID );
 #endif
 #endif
       Amat->matvec(UU[i], CC[i], Amat, proc_config);
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( matvecID );
+      /* Stop timer. */
+      Teuchos_stopTimer( matvecID );
 #endif
 #endif
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Orthogonalization", orthoID );
+      /* Start the timer. */
+      static int orthoID = -1;
+      orthoID = Teuchos_startTimer( "AztecOO: Orthogonalization", orthoID );
 #endif
 #endif
 
@@ -293,7 +301,9 @@ char *T2 = "N";
             if (N == 0) for (k = 0 ; k < i ; k++) dots[k] = 0.0;
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Ortho (Inner Product)", orthoInnerProdID );
+      /* Start the timer. */
+      static int orthoInnerProdID = -1;
+      orthoInnerProdID = Teuchos_startTimer( "AztecOO: Ortho (Inner Product)", orthoInnerProdID );
 #endif
 #endif
             DGEMV_F77(CHAR_MACRO(T[0]), &N, &mm, &doubleone, CCblock, &NN, CC[i], 
@@ -302,13 +312,15 @@ char *T2 = "N";
             AZ_gdot_vec(i, dots, tmp, proc_config);
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( orthoInnerProdID );
+      Teuchos_stopTimer( orthoInnerProdID );
 #endif
 #endif
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Ortho (Update)", orthoUpdateID );
+      /* Start the timer. */
+      static int orthoUpdateID = -1;
+      orthoUpdateID = Teuchos_startTimer( "AztecOO: Ortho (Update)", orthoUpdateID );
 #endif
 #endif
             DGEMV_F77(CHAR_MACRO(T2[0]), &N, &mm, &minusone, CCblock, &NN, dots, 
@@ -317,7 +329,7 @@ char *T2 = "N";
                    &one, &doubleone, UU[i], &one);
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( orthoUpdateID );
+      Teuchos_stopTimer( orthoUpdateID );
 #endif
 #endif
          }
@@ -335,13 +347,14 @@ char *T2 = "N";
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_START_TIMER( "AztecOO: Ortho (Norm)", orthoNormID );
+      static int orthoNormID = -1;
+      orthoNormID = Teuchos_startTimer( "AztecOO: Ortho (Norm)", orthoNormID );
 #endif
 #endif
       dble_tmp = sqrt(AZ_gdot(N, CC[i], CC[i], proc_config));
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( orthoNormID );
+      Teuchos_stopTimer( orthoNormID );
 #endif
 #endif
 
@@ -360,7 +373,8 @@ char *T2 = "N";
 
 #ifdef AZ_ENABLE_TIMEMONITOR
 #ifdef HAVE_AZTECOO_TEUCHOS
-      AZ_STOP_TIMER( orthoID );
+      /* Stop the timer. */
+      Teuchos_stopTimer( orthoID );
 #endif
 #endif
 

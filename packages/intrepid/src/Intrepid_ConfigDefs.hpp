@@ -46,6 +46,7 @@
     \brief Intrepid header file which uses auto-configuration information
            to include necessary C++ headers.
 */
+
 #ifndef INTREPID_CONFIGDEFS_HPP
 #define INTREPID_CONFIGDEFS_HPP
 
@@ -83,6 +84,7 @@
 #endif
 
 #include "Intrepid_config.h"
+
 
 /******************************************************************************
  *   Choose header file flavor: either ANSI-style (no .h, e.g. <iostream>) or

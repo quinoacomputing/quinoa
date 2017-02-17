@@ -1,3 +1,4 @@
+INCLUDE(TribitsAddExecutableAndTest)
 
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
@@ -17,16 +18,6 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   RTOpSubRangeDecoratorUnitTests
   SOURCES
     RTOpSubRangeDecorator_UnitTests.cpp
-    ${TEUCHOS_STD_UNIT_TEST_MAIN}
-  NUM_MPI_PROCS 1
-  STANDARD_PASS_OUTPUT
-  )
-
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  SparseSubVectorUnitTests
-  SOURCES
-    SparseSubVector_UnitTests.cpp
     ${TEUCHOS_STD_UNIT_TEST_MAIN}
   NUM_MPI_PROCS 1
   STANDARD_PASS_OUTPUT

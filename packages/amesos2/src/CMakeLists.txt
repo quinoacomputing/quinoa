@@ -42,6 +42,7 @@
 # @HEADER
 
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -79,22 +80,11 @@ APPEND_SET(HEADERS
 # will know to include this file in the dependency analysis
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/basker)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU2/Include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU2/Source)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../amesos/src/SuiteSparse/AMD/Include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../amesos/src/SuiteSparse/COLAMD/Include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../amesos/src/SuiteSparse/BTF/Include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../amesos/src/SuiteSparse/UFconfig)
 
 APPEND_SET(HEADERS
   Amesos2.hpp
   Amesos2_AbstractConcreteMatrixAdapter_def.hpp
   Amesos2_Control.hpp
-  Amesos2_Details_LinearSolverFactory.hpp
-  Amesos2_Details_LinearSolverFactory_decl.hpp
-  Amesos2_Details_LinearSolverFactory_def.hpp
-  Amesos2_Details_registerLinearSolverFactory.hpp
   Amesos2_Factory.hpp
   Amesos2_FunctionMap.hpp
   Amesos2_TpetraRowMatrix_AbstractMatrixAdapter.hpp
@@ -138,8 +128,6 @@ APPEND_SET(HEADERS
 
 APPEND_SET(SOURCES
   Amesos2_Control.cpp
-  Amesos2_Details_LinearSolverFactory.cpp
-  Amesos2_Details_registerLinearSolverFactory.cpp
   Amesos2_Factory.cpp
   Amesos2_MatrixAdapter.cpp
   Amesos2_ConcreteMatrixAdapter.cpp
@@ -157,135 +145,7 @@ APPEND_SET(SOURCES
 # configuration options.  In Amesos2, each solver interface should be
 # added only if that solver has been enabled by the user.
 
-SET(AMESOS2_CU_SOURCES "")
-
-IF (${PACKAGE_NAME}_ENABLE_LAPACK)
-  APPEND_SET(HEADERS
-    Amesos2_Lapack.hpp
-    Amesos2_Lapack_decl.hpp
-    Amesos2_Lapack_def.hpp
-    )
-
-  APPEND_SET(SOURCES
-    Amesos2_Lapack.cpp
-    )
-ENDIF()
-
-IF (${PACKAGE_NAME}_ENABLE_KLU2)
-
-  APPEND_SET(HEADERS
-    Amesos2_KLU2.hpp
-    Amesos2_KLU2_decl.hpp
-    Amesos2_KLU2_def.hpp
-    Amesos2_KLU2_FunctionMap.hpp
-    Amesos2_KLU2_TypeMap.hpp
-    )
-
-   APPEND_SET(SOURCES
-     Amesos2_KLU2_TypeMap.cpp
-     )
-
-   APPEND_SET(SOURCES
-      Amesos2_KLU2.cpp
-      )
-
-
-   SET(KLU_HEADERS
-        SuiteSparse/KLU2/Source/klu2_analyze_given.hpp
-        SuiteSparse/KLU2/Source/klu2_analyze.hpp
-        SuiteSparse/KLU2/Source/klu2_defaults.hpp
-        SuiteSparse/KLU2/Source/klu2_diagnostics.hpp
-        SuiteSparse/KLU2/Source/klu2_dump.hpp
-        SuiteSparse/KLU2/Source/klu2_extract.hpp
-        SuiteSparse/KLU2/Source/klu2_factor.hpp
-        SuiteSparse/KLU2/Source/klu2_free_numeric.hpp
-        SuiteSparse/KLU2/Source/klu2_free_symbolic.hpp
-        SuiteSparse/KLU2/Source/klu2_refactor.hpp
-        SuiteSparse/KLU2/Source/klu2.hpp
-        SuiteSparse/KLU2/Source/klu2_kernel.hpp
-        SuiteSparse/KLU2/Source/klu2_memory.hpp
-        SuiteSparse/KLU2/Source/klu2_refactor.hpp
-        SuiteSparse/KLU2/Source/klu2_scale.hpp
-        SuiteSparse/KLU2/Source/klu2_solve.hpp
-        SuiteSparse/KLU2/Source/klu2_sort.hpp
-        SuiteSparse/KLU2/Source/klu2_tsolve.hpp
-        SuiteSparse/KLU2/Include/klu2_ext.hpp
-        SuiteSparse/KLU2/Include/klu2.h
-        SuiteSparse/KLU2/Include/klu2_internal.h
-        SuiteSparse/KLU2/Include/klu2_ordinaltraits.h
-        SuiteSparse/KLU2/Include/klu2_scalartraits.h
-        SuiteSparse/KLU2/Include/klu2_version.h
-     )
-
-     #IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-              SET_SOURCE_FILES_PROPERTIES(${KLU_HEADERS},
-              PROPERTIES
-              COMPILE_FLAGS "-Wno-shadow")
-
-
-    APPEND_SET(HEADERS
-        SuiteSparse/KLU2/Source/klu2_analyze_given.hpp
-        SuiteSparse/KLU2/Source/klu2_analyze.hpp
-        SuiteSparse/KLU2/Source/klu2_defaults.hpp
-        SuiteSparse/KLU2/Source/klu2_diagnostics.hpp
-        SuiteSparse/KLU2/Source/klu2_dump.hpp
-        SuiteSparse/KLU2/Source/klu2_extract.hpp
-        SuiteSparse/KLU2/Source/klu2_factor.hpp
-        SuiteSparse/KLU2/Source/klu2_free_numeric.hpp
-        SuiteSparse/KLU2/Source/klu2_free_symbolic.hpp
-        SuiteSparse/KLU2/Source/klu2_refactor.hpp
-        SuiteSparse/KLU2/Source/klu2.hpp
-        SuiteSparse/KLU2/Source/klu2_kernel.hpp
-        SuiteSparse/KLU2/Source/klu2_memory.hpp
-        SuiteSparse/KLU2/Source/klu2_refactor.hpp
-        SuiteSparse/KLU2/Source/klu2_scale.hpp
-        SuiteSparse/KLU2/Source/klu2_solve.hpp
-        SuiteSparse/KLU2/Source/klu2_sort.hpp
-        SuiteSparse/KLU2/Source/klu2_tsolve.hpp
-        SuiteSparse/KLU2/Include/klu2_ext.hpp
-        SuiteSparse/KLU2/Include/klu2.h
-        SuiteSparse/KLU2/Include/klu2_internal.h
-        SuiteSparse/KLU2/Include/klu2_ordinaltraits.h
-        SuiteSparse/KLU2/Include/klu2_scalartraits.h
-        SuiteSparse/KLU2/Include/klu2_version.h
-     )
-
-ENDIF()
-
-IF (${PACKAGE_NAME}_ENABLE_Basker)
-
-
-  APPEND_SET(HEADERS
-    Amesos2_Basker.hpp
-    Amesos2_Basker_decl.hpp
-    Amesos2_Basker_def.hpp
-    Amesos2_Basker_FunctionMap.hpp
-    Amesos2_Basker_TypeMap.hpp
-    )
-
-   APPEND_SET(SOURCES
-     Amesos2_Basker_TypeMap.cpp
-     )
-
-   APPEND_SET(SOURCES
-      Amesos2_Basker.cpp
-      )
-
-      IF(NOT Trilinos_ENABLE_ShyLUBasker)      
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/basker)
-    APPEND_SET(HEADERS				
-        basker/basker.hpp
-        basker/basker_decl.hpp
-        basker/basker_def.hpp
-        basker/basker_scalartraits.hpp
-        basker/basker_types.hpp
-     )
-     ENDIF()
-
-ENDIF()
-
 IF (${PACKAGE_NAME}_ENABLE_SuperLU)
-
   APPEND_SET(HEADERS
     Amesos2_Superlu.hpp
     Amesos2_Superlu_decl.hpp
@@ -295,10 +155,9 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLU)
     )
 
   APPEND_SET(SOURCES
-    Amesos2_Superlu_TypeMap.cpp
     Amesos2_Superlu.cpp
+    Amesos2_Superlu_TypeMap.cpp
     )
-
 ENDIF()
 
 IF (${PACKAGE_NAME}_ENABLE_SuperLUMT)
@@ -332,7 +191,7 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLUDist) # This naming syntax is consistent with 
 ENDIF()
 
 IF (${PACKAGE_NAME}_ENABLE_PARDISO_MKL)
-  APPEND_SET(HEADERS
+  APPEND_SET(HEADER
     Amesos2_PardisoMKL.hpp
     Amesos2_PardisoMKL_FunctionMap.hpp
     Amesos2_PardisoMKL_TypeMap.hpp
@@ -345,23 +204,7 @@ IF (${PACKAGE_NAME}_ENABLE_PARDISO_MKL)
   )
 ENDIF()
 
-IF (${PACKAGE_NAME}_ENABLE_MUMPS)
-   APPEND_SET(HEADERS
-   Amesos2_MUMPS.hpp
-   Amesos2_MUMPS_FunctionMap.hpp
-   Amesos2_MUMPS_TypeMap.hpp
-   Amesos2_MUMPS_decl.hpp
-   Amesos2_MUMPS_def.hpp
-   )
 
-   APPEND_SET(SOURCES
-   Amesos2_MUMPS.cpp
-   Amesos2_MUMPS_TypeMap.cpp
-   )
-ENDIF()
-
-
-IF (Tpetra_INST_INT_INT)
 IF (${PACKAGE_NAME}_ENABLE_Epetra)
   APPEND_SET(HEADERS
     Amesos2_EpetraRowMatrix_AbstractMatrixAdapter.hpp
@@ -386,29 +229,6 @@ IF (${PACKAGE_NAME}_ENABLE_Epetra)
     Amesos2_EpetraMultiVecAdapter.cpp
     )
 ENDIF()
-ENDIF()
-
-IF (Trilinos_ENABLE_Amesos)
-    ADD_SUBDIRECTORY(SuiteSparse/KLU2/Source)
-ENDIF()
-
-IF (${PACKAGE_NAME}_ENABLE_Experimental)
-   IF (${PACKAGE_NAME}_ENABLE_Cholmod)
-      APPEND_SET(HEADERS
-        Amesos2_Cholmod.hpp
-        Amesos2_Cholmod_decl.hpp
-        Amesos2_Cholmod_def.hpp
-        Amesos2_Cholmod_FunctionMap.hpp
-        Amesos2_Cholmod_TypeMap.hpp
-        )
-
-      APPEND_SET(SOURCES
-        Amesos2_Cholmod.cpp
-        )
-ENDIF()
-ENDIF()
-
-
 
 #
 # C) Define the targets for package's library(s)

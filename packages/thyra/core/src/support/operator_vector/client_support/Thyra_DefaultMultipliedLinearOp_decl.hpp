@@ -257,15 +257,56 @@ protected:
 
 public:
 
+  /** \name Deprecated. */
+  //@{
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultMultipliedLinearOp(
+    const int numOps_in,
+    const RCP<LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultMultipliedLinearOp(
+    const int numOps_in,
+    const RCP<const LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  void initialize(
+    const int numOps_in,
+    const RCP<LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  void initialize(
+    const int numOps_in,
+    const RCP<const LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  //@}
+
 private:
 
   Array<Teuchos::ConstNonconstObjectContainer<LinearOpBase<Scalar> > > Ops_;
 
-  inline void assertInitialized() const;
-  inline std::string getClassName() const;
-  inline Ordinal getRangeDim() const;
-  inline Ordinal getDomainDim() const;
-
+  void assertInitialized() const;
   void validateOps();
   void setupDefaultObjectLabel();
 
@@ -358,6 +399,20 @@ multiply(
   const RCP<const LinearOpBase<Scalar> > &C,
   const std::string &M_label = ""
   );
+
+
+// /////////////////////////////////
+// Inline members
+
+
+template<class Scalar>
+inline
+void DefaultMultipliedLinearOp<Scalar>::assertInitialized() const
+{
+#ifdef TEUCHOS_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPT( !( numOps() > 0 ) );
+#endif
+}
 
 
 }	// end namespace Thyra

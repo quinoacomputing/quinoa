@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,8 @@ C      --   (6) = time of current run
 
       
       qainfo(1) = 'mapvar-kd                       '
-      qainfo(2) = '2015/08/20                      '
-      qainfo(3) = ' 1.22                           '
+      qainfo(2) = '2012/03/06                      '
+      qainfo(3) = ' 1.21                           '
       qainfo(4) = '                                '
       qainfo(5) = '                                '
       qainfo(6) = '                                '

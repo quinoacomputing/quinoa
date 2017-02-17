@@ -1,15 +1,15 @@
-// $Id$
-// $Source$
+// $Id$ 
+// $Source$ 
 
 //@HEADER
 // ************************************************************************
-//
+// 
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -53,10 +53,10 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Thyra_ModelEvaluator.hpp"
-#include "NOX_Abstract_Group.H"    // base class
-#include "NOX_Common.H"             // class data element (std::string)
-#include "NOX_Thyra_Vector.H"        // class data element
-#include "NOX_SharedObjectTemplate.H"  // class data element
+#include "NOX_Abstract_Group.H"	// base class
+#include "NOX_Common.H"             // class data element (string)
+#include "NOX_Thyra_Vector.H"	    // class data element
+#include "NOX_SharedObjectTemplate.H"  // class data element 
 
 // Forward declares
 namespace NOX {
@@ -80,7 +80,7 @@ namespace NOX {
 
   namespace Thyra {
 
-    /** \brief A concrete implementation of the NOX::Abstract::Group using Thyra.
+    /** \brief A concrete implementaiton of the NOX::Abstract::Group using Thyra.
 
         NOTE: This Group supports row sum scaling of the function
         (residual and Jacobian).  This is enabled by setting a weight
@@ -95,48 +95,10 @@ namespace NOX {
 
     public:
 
-      /** \brief The default constructor that uses the linear solver from the ModelEvaluator.
-
-          Most users should use this constructor.  It is meant to be
-          used in conjunction with a stratimikos linear solver that is
-          built as part of the input model evaluator.  For finer
-          grained control over the use of the preconditioner and for
-          Jacobian-Free Newton-Krylov cases, the power user
-          constructor should be used.
-
-          \param[in] initial_guess Initial guess for the solution vector
-      \param[in] model ModelEvaluator
-      \param[in] weight_vector Optional diagonal weighting vector for the model.
-      */
+      //! Constructor
       Group(const NOX::Thyra::Vector& initial_guess,
-        const Teuchos::RCP<const ::Thyra::ModelEvaluator<double> >& model,
-        const Teuchos::RCP<const ::Thyra::VectorBase<double> >& weight_vector = Teuchos::null,
-        const Teuchos::RCP<const ::Thyra::VectorBase<double> >& right_weight_vector = Teuchos::null);
-
-      /** \brief Power user constructor that takes explicit linear solver objects to handle different combinations.
-
-          This class allows the user to set user-defined linear
-          operators and preconditioners (and corresponding
-          factories). The user can set the linear_op to be a
-          Jacobian-Free Newton Krylov operator (use the class
-          NOX::Thyra::MatrixFreeJacobianOperator).
-
-          \param[in] initial_guess (Required) Initial guess for the solution vector
-      \param[in] model (Required) ModelEvaluator
-      \param[in] linear_op (Optional) Forward operator for the Jacobian.  Must be non-null for Newton-based solvers.
-      \param[in] lows_factory (Optional) Factory for building and updating linear solver.
-      \param[in] prec_op (Optional) Preconditioner operator.  If set to Teuchos::null and a non-null prec_factory exists, the prec_op will be constructed using the preconditioner factory.
-      \param[in] prec_factory (Optional) Factory for updating the precondiitoner.  If set to Teuchos::null and there is a non-null prec_op, then the preconditioner will be updated using the model evaluator as long as the ModelEvaluator::outArgs supports W_prec.
-      \param[in] weight_vector (Optional) diagonal weighting vector for the model.
-      */
-      Group(const NOX::Thyra::Vector& initial_guess,
-        const Teuchos::RCP<const ::Thyra::ModelEvaluator<double> >& model,
-        const Teuchos::RCP< ::Thyra::LinearOpBase<double> >& linear_op,
-        const Teuchos::RCP<const ::Thyra::LinearOpWithSolveFactoryBase<double> >& lows_factory,
-        const Teuchos::RCP< ::Thyra::PreconditionerBase<double> >& prec_op,
-        const Teuchos::RCP< ::Thyra::PreconditionerFactoryBase<double> >& prec_factory,
-        const Teuchos::RCP<const ::Thyra::VectorBase<double> >& weight_vector = Teuchos::null,
-        const Teuchos::RCP<const ::Thyra::VectorBase<double> >& right_weight_vector = Teuchos::null);
+	    const Teuchos::RCP< const ::Thyra::ModelEvaluator<double> >& model,
+	    const Teuchos::RCP<const ::Thyra::VectorBase<double> >& weight_vector = Teuchos::null);
 
       //! Copy constructor
       Group(const NOX::Thyra::Group& source, NOX::CopyType type = DeepCopy);
@@ -159,14 +121,8 @@ namespace NOX {
       Teuchos::RCP< ::Thyra::LinearOpWithSolveBase<double> >
       getNonconstJacobian();
 
-      Teuchos::RCP<const ::Thyra::LinearOpWithSolveBase<double> >
+      Teuchos::RCP<const ::Thyra::LinearOpWithSolveBase<double> > 
       getJacobian() const;
-
-      Teuchos::RCP< ::Thyra::PreconditionerBase<double> >
-      getNonconstPreconditioner();
-
-      Teuchos::RCP<const ::Thyra::PreconditionerBase<double> >
-      getPreconditioner() const;
 
       /** @name "Compute" functions. */
       //@{
@@ -175,13 +131,13 @@ namespace NOX {
       //! See above
       void setX(const NOX::Thyra::Vector& y);
 
-      void computeX(const NOX::Abstract::Group& grp,
-            const NOX::Abstract::Vector& d,
-            double step);
+      void computeX(const NOX::Abstract::Group& grp, 
+		    const NOX::Abstract::Vector& d, 
+		    double step);
       //! See above.
-      void computeX(const NOX::Thyra::Group& grp,
-            const NOX::Thyra::Vector& d,
-            double step);
+      void computeX(const NOX::Thyra::Group& grp, 
+		    const NOX::Thyra::Vector& d, 
+		    double step);
 
       NOX::Abstract::Group::ReturnType computeF();
 
@@ -189,7 +145,7 @@ namespace NOX {
 
       NOX::Abstract::Group::ReturnType computeGradient();
 
-      NOX::Abstract::Group::ReturnType
+      NOX::Abstract::Group::ReturnType 
       computeNewton(Teuchos::ParameterList& params);
 
       //@}
@@ -200,53 +156,48 @@ namespace NOX {
        * matrix-free scenarios. */
 
       //@{
+  
+      NOX::Abstract::Group::ReturnType 
+      applyJacobian(const NOX::Abstract::Vector& input, 
+		    NOX::Abstract::Vector& result) const;
+      
+      NOX::Abstract::Group::ReturnType 
+      applyJacobian(const NOX::Thyra::Vector& input, 
+		    NOX::Thyra::Vector& result) const;
 
-      NOX::Abstract::Group::ReturnType
-      applyJacobian(const NOX::Abstract::Vector& input,
-            NOX::Abstract::Vector& result) const;
+      NOX::Abstract::Group::ReturnType 
+      applyJacobianMultiVector(const NOX::Abstract::MultiVector& input, 
+			       NOX::Abstract::MultiVector& result) const;
+      
+      NOX::Abstract::Group::ReturnType 
+      applyJacobianTranspose(const NOX::Abstract::Vector& input, 
+			     NOX::Abstract::Vector& result) const;
+      
+      NOX::Abstract::Group::ReturnType 
+      applyJacobianTranspose(const NOX::Thyra::Vector& input, 
+			     NOX::Thyra::Vector& result) const;
 
-      NOX::Abstract::Group::ReturnType
-      applyJacobian(const NOX::Thyra::Vector& input,
-            NOX::Thyra::Vector& result) const;
-
-      NOX::Abstract::Group::ReturnType
-      applyJacobianMultiVector(const NOX::Abstract::MultiVector& input,
-                   NOX::Abstract::MultiVector& result) const;
-
-      NOX::Abstract::Group::ReturnType
-      applyJacobianTranspose(const NOX::Abstract::Vector& input,
-                 NOX::Abstract::Vector& result) const;
-
-      NOX::Abstract::Group::ReturnType
-      applyJacobianTranspose(const NOX::Thyra::Vector& input,
-                 NOX::Thyra::Vector& result) const;
-
-      NOX::Abstract::Group::ReturnType
+      NOX::Abstract::Group::ReturnType 
       applyJacobianTransposeMultiVector(
-                     const NOX::Abstract::MultiVector& input,
-                     NOX::Abstract::MultiVector& result) const;
+				     const NOX::Abstract::MultiVector& input, 
+				     NOX::Abstract::MultiVector& result) const;
+      
+      NOX::Abstract::Group::ReturnType 
+      applyJacobianInverse(Teuchos::ParameterList& params, 
+			   const NOX::Abstract::Vector& input, 
+			   NOX::Abstract::Vector& result) const;
 
-      NOX::Abstract::Group::ReturnType
-      applyJacobianInverse(Teuchos::ParameterList& params,
-               const NOX::Abstract::Vector& input,
-               NOX::Abstract::Vector& result) const;
-
-      NOX::Abstract::Group::ReturnType
-      applyJacobianInverse(Teuchos::ParameterList& params,
-               const NOX::Thyra::Vector& input,
-               NOX::Thyra::Vector& result) const;
-
-      NOX::Abstract::Group::ReturnType
+      NOX::Abstract::Group::ReturnType 
+      applyJacobianInverse(Teuchos::ParameterList& params, 
+			   const NOX::Thyra::Vector& input, 
+			   NOX::Thyra::Vector& result) const;
+      
+      NOX::Abstract::Group::ReturnType 
       applyJacobianInverseMultiVector(
-                    Teuchos::ParameterList& params,
-                    const NOX::Abstract::MultiVector& input,
-                    NOX::Abstract::MultiVector& result) const;
-
-      NOX::Abstract::Group::ReturnType
-      applyRightPreconditioning(bool useTranspose,
-                Teuchos::ParameterList& params,
-                const NOX::Abstract::Vector& input,
-                NOX::Abstract::Vector& result) const;
+				    Teuchos::ParameterList& params, 
+				    const NOX::Abstract::MultiVector& input, 
+				    NOX::Abstract::MultiVector& result) const;
+  
       //@}
 
       /** @name "Is" functions
@@ -264,7 +215,7 @@ namespace NOX {
 
       //@}
 
-      /** @name "Get" functions
+      /** @name "Get" functions 
        *
        * Note that these function do not check whether or not the vectors
        * are valid. Must use the "Is" functions for that purpose. */
@@ -272,10 +223,8 @@ namespace NOX {
 
       const NOX::Abstract::Vector& getX() const;
 
-      const NOX::Abstract::Vector& getScaledX() const;
-
       const NOX::Abstract::Vector& getF() const;
-
+  
       double getNormF() const;
 
       const NOX::Abstract::Vector& getGradient() const;
@@ -285,25 +234,18 @@ namespace NOX {
       Teuchos::RCP< const NOX::Abstract::Vector > getXPtr() const;
 
       Teuchos::RCP< const NOX::Abstract::Vector > getFPtr() const;
-
+  
       Teuchos::RCP< const NOX::Abstract::Vector > getGradientPtr() const;
 
       Teuchos::RCP< const NOX::Abstract::Vector > getNewtonPtr() const;
 
       //@}
 
-      virtual Teuchos::RCP<NOX::Abstract::Group>
+      virtual Teuchos::RCP<NOX::Abstract::Group> 
       clone(NOX::CopyType type = NOX::DeepCopy) const;
 
       //! Print out the group
       void print() const;
-
-      /** FOR POWER USERS ONLY!  Grab the inargs used by nox and allow the user to change it.  Used by pseudo-transient solver to add an x_dot and alpha/beta to the model evaluator call. */
-      ::Thyra::ModelEvaluatorBase::InArgs<double>& getNonconstInArgs();
-
-      const ::Thyra::ModelEvaluatorBase::InArgs<double>& getInArgs() const;
-
-      Teuchos::RCP< const ::Thyra::ModelEvaluator<double> > getModel() const;
 
     protected:
 
@@ -311,14 +253,14 @@ namespace NOX {
       void resetIsValidFlags();
 
       //! Apply Jacobian inverse using Thyra objects
-      NOX::Abstract::Group::ReturnType
+      NOX::Abstract::Group::ReturnType 
       applyJacobianInverseMultiVector(
-                  Teuchos::ParameterList& p,
-                  const ::Thyra::MultiVectorBase<double>& input,
-                  ::Thyra::MultiVectorBase<double>& result) const;
+			      Teuchos::ParameterList& p, 
+			      const ::Thyra::MultiVectorBase<double>& input, 
+			      ::Thyra::MultiVectorBase<double>& result) const;
 
-      ::Thyra::ESolveMeasureNormType
-      getThyraNormType(const std::string& name) const;
+      ::Thyra::ESolveMeasureNormType 
+      getThyraNormType(const string& name) const;
 
       //! Finalizes LOWS to be a valid solver for the Jacobian
       void updateLOWS() const;
@@ -327,15 +269,13 @@ namespace NOX {
 
       void unscaleResidualAndJacobian() const;
 
-      void computeScaledSolution();
-
     protected:
 
       //! Problem interface
       Teuchos::RCP< const ::Thyra::ModelEvaluator<double> > model_;
-
-      /** @name IsValid flags
-       *
+      
+      /** @name IsValid flags 
+       *  
        * True if the current solution is up-to-date with respect to the
        * currect solution vector. */
       //@{
@@ -345,63 +285,57 @@ namespace NOX {
       bool is_valid_gradient_dir_;
       mutable bool is_valid_lows_;
       //@}
-
+      
       //! Solution vector
       Teuchos::RCP<NOX::Thyra::Vector> x_vec_;
-
+      
       //! Residual vector
       Teuchos::RCP<NOX::Thyra::Vector> f_vec_;
-
+      
       //! Newton direction vector
       Teuchos::RCP<NOX::Thyra::Vector> newton_vec_;
-
+      
       //! Gradient direction vector
       Teuchos::RCP<NOX::Thyra::Vector> gradient_vec_;
-
+      
       //! Shared Jacobian operator with solve
-      Teuchos::RCP<
+      Teuchos::RCP< 
         NOX::SharedObject<
           ::Thyra::LinearOpWithSolveBase<double>,
           NOX::Thyra::Group
           >
         > shared_jacobian_;
-
-      //! Jacobian operator
-      Teuchos::RCP< ::Thyra::LinearOpBase<double> > lop_;
-
+    
       //! Thyra LOWS factory for building Jacobians
       Teuchos::RCP< const ::Thyra::LinearOpWithSolveFactoryBase<double> > lows_factory_;
+
+      //! Jacobian operator 
+      Teuchos::RCP< ::Thyra::LinearOpBase<double> > lop_;
 
       //! Source base needed to create preconditioner
       Teuchos::RCP< const ::Thyra::DefaultLinearOpSource<double> > losb_;
 
-      //! Preconditioner for Jacobian
-      Teuchos::RCP< ::Thyra::PreconditionerBase<double> > prec_;
-
       //! Preconditioner factory
       Teuchos::RCP< ::Thyra::PreconditionerFactoryBase<double> > prec_factory_;
 
+      //! Preconditioner for Jacobian
+      Teuchos::RCP< ::Thyra::PreconditionerBase<double> > prec_;
+
       //! Residual InArgs
-      mutable ::Thyra::ModelEvaluatorBase::InArgs<double> in_args_;
-
+      ::Thyra::ModelEvaluatorBase::InArgs<double> in_args_;
+      
       //! Residual OutArgs
-      mutable ::Thyra::ModelEvaluatorBase::OutArgs<double> out_args_;
+      ::Thyra::ModelEvaluatorBase::OutArgs<double> out_args_;
 
-      /** \brief Optional wieghting vector for function scaling. NOX assumes that this vector can be updated in between nonlinear iterations.
+      /** \brief Optional wieghting vector for function scaling
 
            This is pulled out of the initial guess vector
       */
       Teuchos::RCP<const ::Thyra::VectorBase<double> > weight_vec_;
-      //! Optional wieghting vector for solution (right) scaling. NOX assumes that this vector will not change during an entire nonlinear solve.
-      Teuchos::RCP<const ::Thyra::VectorBase<double> > right_weight_vec_;
 
-      //! Inverse of weight vector used to unscale function (left) scaling. NOX assumes that this vector can be updated in between nonlinear iterations.
+      //! Inverse of weight vector used to unscale problem
       mutable Teuchos::RCP< ::Thyra::VectorBase<double> > inv_weight_vec_;
-      //! Inverse of weight vector used to unscale solution (right) scaling. NOX assumes that this vector will not change during an entire nonlinear solve.
-      Teuchos::RCP< ::Thyra::VectorBase<double> > inv_right_weight_vec_;
 
-      //! Scaled solution vector scaled by the 
-      mutable Teuchos::RCP<NOX::Thyra::Vector> scaled_x_vec_;
     };
 
   } // namespace LAPACK

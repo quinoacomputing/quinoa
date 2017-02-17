@@ -42,7 +42,7 @@
 #ifndef THYRA_ROW_SUM_LINEAR_OP_BASE_HPP
 #define THYRA_ROW_SUM_LINEAR_OP_BASE_HPP
 
-#include "Thyra_LinearOpBase_decl.hpp"
+#include "Thyra_LinearOpBase.hpp"
 
 
 namespace Thyra {
@@ -53,14 +53,8 @@ namespace RowStatLinearOpBaseUtils {
 
 /** \brief Rows statistic requested. */
 enum ERowStat {
-  /** \brief Inverse absolute row sums. */
-  ROW_STAT_INV_ROW_SUM,
-  /** \brief Absolute row sums. */
-  ROW_STAT_ROW_SUM,
-  /** \brief Inverse absolute column sums. */
-  ROW_STAT_INV_COL_SUM,
-  /** \brief Absolute column sums. */
-  ROW_STAT_COL_SUM
+  /** \brief Inverse row sums. */
+  ROW_STAT_INV_ROW_SUM
 };
 
 

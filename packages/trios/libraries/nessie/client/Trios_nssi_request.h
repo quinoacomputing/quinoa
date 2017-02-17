@@ -1,45 +1,41 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
+/* ************************************************************************
+
+                   Trios: Trilinos I/O Support
+                 Copyright 2011 Sandia Corporation
+
+ Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ the U.S. Government retains certain rights in this software.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the Corporation nor the names of the
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
+
+*************************************************************************/
 /*-------------------------------------------------------------------------*/
 /**
  *   @file nssi_request.h
@@ -74,9 +70,6 @@ extern "C" {
                 /** @brief The request is complete with an error. */
                 NSSI_REQUEST_ERROR = -1,
 
-                /** @brief The request has no/null status. */
-                NSSI_REQUEST_NULL = 0,
-
                 /** @brief The client is sending the request to server. */
                 NSSI_SENDING_REQUEST = 1,
 
@@ -85,9 +78,6 @@ extern "C" {
 
                 /** @brief The client is processing the result. */
                 NSSI_PROCESSING_RESULT,
-
-                /** @brief The last wait operation timed out. */
-                NSSI_REQUEST_TIMEDOUT,
 
                 /** @brief The request is complete. */
                 NSSI_REQUEST_COMPLETE
@@ -121,14 +111,14 @@ extern "C" {
                 /** @brief The opcode of the remote function. */
                 int opcode;
 
-                /** @brief If TRUE, nssi_send_request() will mark this request complete - long args, bulk data and short result are not allowed. */
-                int8_t is_responseless;
+                /** @brief Points to the memory reserved for the result. */
+                void *result;
 
-                /** @brief If TRUE, nssi_send_request() will wait for this request to complete. */
-                int8_t is_sync;
+                /** @brief Points to the memory reserved for the bulk data transfers (NULL if not used). */
+                void *data;
 
-                /** @brief If is_sync==TRUE, the timeout for nssi_timedwait(). */
-                int8_t sync_timeout;
+                /** @brief The max size of the memory used for bulk transfers. */
+                int data_size;
 
                 /** @brief The error code of request. This value will be \ref NSSI_OK unless the
                  *          request status=\ref NSSI_REQUEST_ERROR . */
@@ -138,71 +128,37 @@ extern "C" {
                 nssi_request_status status;
 
 
-                /***********************
-                 ** Short Request
-                 ***********************/
-                /** @brief If TRUE, the app pinned the short request buffer, so do not unpin/free at cleanup. */
-                int8_t               app_pinned_short_request;
-                /** @brief Handle for the buffer where the short request will be put. */
-                NNTI_buffer_t       *short_request_hdl;
-                NNTI_buffer_t        short_request;
-                /** @brief Work request to track the short request transfer. */
-                NNTI_work_request_t  short_request_wr;
+                /* IMPLEMENTATION-SPECIFIC PORTION */
 
-                /***********************
-                 ** Long Args
-                 ***********************/
-                /** @brief If TRUE, the app pinned the long args buffer, so do not unpin/free at cleanup. */
-                int8_t               app_pinned_long_args;
-                int                  use_long_args;
-                /** @brief Points to the memory reserved for the args. */
-                void                *args;
-                /** @brief Points to the XDR function used to encode arguments. */
-                xdrproc_t            xdr_encode_args;
-                /** @brief Handle for the buffer where the long arguments reside. */
-                NNTI_buffer_t       *long_args_hdl;
-                NNTI_buffer_t        long_args;
-                /** @brief Work request to track the long arguments transfer. */
-                NNTI_work_request_t  long_args_wr;
+                /** @brief Points to the XDR function used to encode arguments. This
+                  field is implementation specific. */
+                xdrproc_t xdr_encode_args;
 
-                /***********************
-                 ** Bulk Data
-                 ***********************/
-                /** @brief If TRUE, the app pinned the bulk data buffer, so do not unpin/free at cleanup. */
-                int8_t               app_pinned_bulk_data;
-                /** @brief Points to the memory reserved for the bulk data transfers (NULL if not used). */
-                void                *data;
-                /** @brief The max size of the memory used for bulk transfers. */
-                uint32_t             data_size;
-                /** @brief Points to the XDR function used to encode data. */
-                xdrproc_t            xdr_encode_data;
-                /** @brief Handle for the buffer where the data reside. */
-                NNTI_buffer_t       *bulk_data_hdl;
-                NNTI_buffer_t        bulk_data;
-                /** @brief Work request to track the bulk data transfer. */
-                NNTI_work_request_t  bulk_data_wr;
+                /** @brief Points to the XDR function used to encode data. This
+                  field is implementation specific. */
+                xdrproc_t xdr_encode_data;
 
-                /***********************
-                 ** Short Result
-                 ***********************/
-                /** @brief If TRUE, the app pinned the short result buffer, so do not unpin/free at cleanup. */
-                int8_t               app_pinned_short_result;
-                /** @brief Points to the memory reserved for the result. */
-                void               *result;
-                /** @brief Points to the XDR function used to decode the result. */
-                xdrproc_t           xdr_decode_result;
-                /** @brief Handle for the buffer where the short result will be put. */
-                NNTI_buffer_t      *short_result_hdl;
-                NNTI_buffer_t       short_result;
-                /** @brief Work request to track the short result transfer. */
-                NNTI_work_request_t short_result_wr;
+                /** @brief Points to the XDR function used to decode the result. This
+                  field is implementation specific.*/
+                xdrproc_t xdr_decode_result;
 
-                /***********************
-                 ** Callback
-                 ***********************/
-                /** @brief A callback function used by the wait() function when a request is complete. */
+                int use_long_args;
+
+                /** @brief Handle for the buffer where the long arguments reside.  */
+                NNTI_buffer_t long_args_hdl;
+                /** @brief Handle for the buffer where the data reside.  */
+                NNTI_buffer_t data_hdl;
+                /** @brief Handle for the buffer where the short result will be put.  */
+                NNTI_buffer_t *short_result_hdl;
+                NNTI_buffer_t short_result;
+
+                /** @brief A callback function used by the wait() function when
+                 *         a request is complete.
+                 */
                 int (*callback)(struct nssi_request *);
-                /** @brief Optional arguments for the callback function. */
+
+                /** @brief Optional arguments for the callback function.
+                 */
                 void *callback_args;
 
         };

@@ -71,8 +71,6 @@ public:
   RCP<const VectorSpaceBase<Scalar> > get_x_space() const;
   /** \brief Returns null. */
   RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
-  /** \brief Returns null. */
-  Teuchos::ArrayView<const std::string> get_g_names(int j) const;
   /** \brief Throws exception. */
   RCP<const VectorSpaceBase<Scalar> > get_f_space() const;
   /** \brief Returns this->createInArgs(). */
@@ -85,8 +83,6 @@ public:
   RCP<LinearOpWithSolveBase<Scalar> > create_W() const;
   /** \brief Thorws exception. */
   RCP<LinearOpBase<Scalar> > create_W_op() const;
-  /** \brief Thorws exception. */
-  RCP<PreconditionerBase<Scalar> > create_W_prec() const;
   /** \brief Thorws exception. */
   RCP<const LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
   /** \brief Does nothing and ignores input. */
@@ -125,17 +121,6 @@ ResponseOnlyModelEvaluatorBase<Scalar>::get_p_names(int l) const
   return Teuchos::null;
 }
 
-
-template<class Scalar>
-Teuchos::ArrayView<const std::string>
-ResponseOnlyModelEvaluatorBase<Scalar>::get_g_names(int j) const
-{
-#ifdef TEUCHOS_DEBUG
-  TEUCHOS_ASSERT_IN_RANGE_UPPER_EXCLUSIVE( j, 0, this->Ng() );
-#endif
-  return Teuchos::ArrayView<const std::string>(Teuchos::null);
-}
-
 template<class Scalar>
 RCP<const VectorSpaceBase<Scalar> >
 ResponseOnlyModelEvaluatorBase<Scalar>::get_f_space() const
@@ -169,7 +154,7 @@ ResponseOnlyModelEvaluatorBase<Scalar>::create_W() const
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error
     ,"Error, if \'W\' is supported by the ModelEvaluator subclass then"
-    " this function create_W() may be overridden by the subclass to return"
+    " this function create_W() must be overridden by the subclass to return"
     " a non-null object!"
     );
   return Teuchos::null; // Should never be called!
@@ -181,23 +166,9 @@ RCP<LinearOpBase<Scalar> >
 ResponseOnlyModelEvaluatorBase<Scalar>::create_W_op() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    true, std::logic_error,
-    "Error, if \'W\' is supported by the ModelEvaluator subclass then"
-    " this function create_W_op() may be overridden by the subclass "
-    <<this->description()<<" to return a non-null object!"
-    );
-  return Teuchos::null; // Should never be called!
-}
-
-
-template<class Scalar>
-RCP<PreconditionerBase<Scalar> >
-ResponseOnlyModelEvaluatorBase<Scalar>::create_W_prec() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    true, std::logic_error,
-    "Error, if \'W\' is supported by the ModelEvaluator subclass then"
-    " this function create_W_prec() may be overridden by the subclass "
+    true, std::logic_error
+    ,"Error, if \'W\' is supported by the ModelEvaluator subclass then"
+    " this function create_W_op() must be overridden by the subclass "
     <<this->description()<<" to return a non-null object!"
     );
   return Teuchos::null; // Should never be called!
@@ -211,7 +182,7 @@ ResponseOnlyModelEvaluatorBase<Scalar>::get_W_factory() const
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error
     ,"Error, if \'W\' is supported by the ModelEvaluator subclass then"
-    " this function get_W_factory() may be overridden by the subclass "
+    " this function get_W_factory() must be overridden by the subclass "
     <<this->description()<<" to return a non-null object!"
     );
   return Teuchos::null; // Should never be called!

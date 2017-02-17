@@ -1,41 +1,28 @@
 /*@HEADER
 // ***********************************************************************
-//
+// 
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ***********************************************************************
 //@HEADER
 */
@@ -67,26 +54,25 @@ namespace Teuchos {
 
 //! Ifpack_ILU: A class for constructing and using an incomplete lower/upper (ILU) factorization of a given Epetra_RowMatrix.
 
-/*! The Ifpack_ILU class computes a "relaxed" ILU factorization with level k fill
-    of a given Epetra_RowMatrix.  The notion of relaxation is the same as described
-    in "Experimental study of ILU preconditioners for indefinite matrices" by Chow and Saad.
+/*! The Ifpack_ILU class computes a "Relaxed" ILU factorization with level k fill 
+    of a given Epetra_RowMatrix. 
 
     <P> Please refer to \ref ifp_ilu for a general description of the ILU algorithm.
 
-    <P>The complete list of supported parameters is reported in page \ref ifp_params.
+    <P>The complete list of supported parameters is reported in page \ref ifp_params. 
 
     \author Mike Heroux, Marzio Sala, SNL 9214.
 
     \date Last modified on 22-Jan-05.
-*/
+*/    
 
 class Ifpack_ILU: public Ifpack_Preconditioner {
-
+      
 public:
   // @{ Constructors and destructors.
   //! Constructor
   Ifpack_ILU(Epetra_RowMatrix* A);
-
+  
   //! Destructor
   ~Ifpack_ILU()
   {
@@ -95,10 +81,10 @@ public:
 
   // @}
   // @{ Construction methods
-
+  
   //! Initialize the preconditioner, does not touch matrix values.
   int Initialize();
-
+  
   //! Returns \c true if the preconditioner has been successfully initialized.
   bool IsInitialized() const
   {
@@ -117,7 +103,7 @@ public:
   int Compute();
 
   //! If factor is completed, this query returns true, otherwise it returns false.
-  bool IsComputed() const
+  bool IsComputed() const 
   {
     return(IsComputed_);
   }
@@ -134,9 +120,9 @@ public:
 
   //! If set true, transpose of this operator will be applied.
   /*! This flag allows the transpose of the given operator to be used implicitly.  Setting this flag
-      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface
+      affects only the Apply() and ApplyInverse() methods.  If the implementation of this interface 
       does not support transpose use, this method should return a value of -1.
-
+      
       \param
        UseTranspose_in - (In) If true, multiply by the transpose of operator, otherwise just use operator.
 
@@ -147,36 +133,36 @@ public:
 
   // @{ Mathematical functions.
   // Applies the matrix to X, returns the result in Y.
-  int Apply(const Epetra_MultiVector& X,
-               Epetra_MultiVector& Y) const
+  int Apply(const Epetra_MultiVector& X, 
+	       Epetra_MultiVector& Y) const
   {
     return(Multiply(false,X,Y));
   }
 
-  int Multiply(bool Trans, const Epetra_MultiVector& X,
-               Epetra_MultiVector& Y) const;
+  int Multiply(bool Trans, const Epetra_MultiVector& X, 
+	       Epetra_MultiVector& Y) const;
 
   //! Returns the result of a Epetra_Operator inverse applied to an Epetra_MultiVector X in Y.
   /*! In this implementation, we use several existing attributes to determine how virtual
-      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(),
+      method ApplyInverse() should call the concrete method Solve().  We pass in the UpperTriangular(), 
       the Epetra_CrsMatrix::UseTranspose(), and NoDiagonal() methods. The most notable warning is that
       if a matrix has no diagonal values we assume that there is an implicit unit diagonal that should
       be accounted for when doing a triangular solve.
 
-    \param
-           X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
+    \param 
+	   X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
-           Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
+	   Y - (Out) A Epetra_MultiVector of dimension NumVectors containing result.
 
     \return Integer error code, set to 0 if successful.
   */
   int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
   //! Computes the estimated condition number and returns the value.
-  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
+  double Condest(const Ifpack_CondestType CT = Ifpack_Cheap, 
                  const int MaxIters = 1550,
                  const double Tol = 1e-9,
-                 Epetra_RowMatrix* Matrix_in = 0);
+		 Epetra_RowMatrix* Matrix_in = 0);
 
   //! Returns the computed estimated condition number, or -1.0 if not computed.
   double Condest() const
@@ -186,13 +172,13 @@ public:
 
   // @}
   // @{ Query methods
-
+  
   //! Returns the address of the L factor associated with this factored matrix.
   const Epetra_CrsMatrix & L() const {return(*L_);};
-
+    
   //! Returns the address of the D factor associated with this factored matrix.
   const Epetra_Vector & D() const {return(*D_);};
-
+    
   //! Returns the address of the L factor associated with this factored matrix.
   const Epetra_CrsMatrix & U() const {return(*U_);};
 
@@ -205,7 +191,7 @@ public:
     strcpy(Label_,Label_in);
     return(0);
   }
-
+  
   //! Returns 0.0 because this class cannot compute Inf-norm.
   double NormInf() const {return(0.0);};
 
@@ -226,12 +212,12 @@ public:
 
   //! Returns a reference to the matrix to be preconditioned.
   const Epetra_RowMatrix& Matrix() const
-  {
+  { 
     return(*A_);
   }
 
   //! Prints on stream basic information about \c this object.
-  virtual std::ostream& Print(std::ostream& os) const;
+  virtual ostream& Print(ostream& os) const;
 
   //! Returns the number of calls to Initialize().
   virtual int NumInitialize() const
@@ -306,14 +292,14 @@ private:
   void Destroy();
 
   //! Returns the result of a Ifpack_ILU forward/back solve on a Epetra_MultiVector X in Y.
-  /*!
+  /*! 
     \param In
     Trans -If true, solve transpose problem.
-    \param
+    \param 
     X - (In) A Epetra_MultiVector of dimension NumVectors to solve for.
     \param Out
     Y - (Out) A Epetra_MultiVector of dimension NumVectorscontaining result.
-
+    
     \return Integer error code, set to 0 if successful.
   */
   int Solve(bool Trans, const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
@@ -333,52 +319,39 @@ private:
   //! Get relative threshold value
   double RelativeThreshold() const {return Rthresh_;}
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   //! Returns the number of global matrix rows.
   int NumGlobalRows() const {return(Graph().NumGlobalRows());};
-
+  
   //! Returns the number of global matrix columns.
   int NumGlobalCols() const {return(Graph().NumGlobalCols());};
-
+  
   //! Returns the number of nonzero entries in the global graph.
   int NumGlobalNonzeros() const {return(L().NumGlobalNonzeros()+U().NumGlobalNonzeros());};
-
+  
   //! Returns the number of diagonal entries found in the global input graph.
   virtual int NumGlobalBlockDiagonals() const {return(Graph().NumGlobalBlockDiagonals());};
-#endif
-
-  long long NumGlobalRows64() const {return(Graph().NumGlobalRows64());};
-
-  long long NumGlobalCols64() const {return(Graph().NumGlobalCols64());};
-
-  long long NumGlobalNonzeros64() const {return(L().NumGlobalNonzeros64()+U().NumGlobalNonzeros64());};
-
-  virtual long long NumGlobalBlockDiagonals64() const {return(Graph().NumGlobalBlockDiagonals64());};
-
+  
   //! Returns the number of local matrix rows.
   int NumMyRows() const {return(Graph().NumMyRows());};
-
+  
   //! Returns the number of local matrix columns.
   int NumMyCols() const {return(Graph().NumMyCols());};
-
+  
   //! Returns the number of nonzero entries in the local graph.
   int NumMyNonzeros() const {return(L().NumMyNonzeros()+U().NumMyNonzeros());};
-
+  
   //! Returns the number of diagonal entries found in the local input graph.
   virtual int NumMyBlockDiagonals() const {return(Graph().NumMyBlockDiagonals());};
-
+  
   //! Returns the number of nonzero diagonal values found in matrix.
   virtual int NumMyDiagonals() const {return(NumMyDiagonals_);};
-
+  
   //! Returns the index base for row and column indices for this graph.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   int IndexBase() const {return(Graph().IndexBase());};
-#endif
-  long long IndexBase64() const {return(Graph().IndexBase64());};
-
+  
   //! Returns the address of the Ifpack_IlukGraph associated with this factored matrix.
   const Ifpack_IlukGraph & Graph() const {return(*Graph_);};
-
+  
   //! Returns a reference to the matrix.
   Epetra_RowMatrix& Matrix()
   {
@@ -387,7 +360,7 @@ private:
 
   // @}
   // @{ Internal data
-
+  
   //! Pointer to the Epetra_RowMatrix to factorize
   Teuchos::RefCountPtr<Epetra_RowMatrix> A_;
   Teuchos::RefCountPtr<Ifpack_IlukGraph> Graph_;

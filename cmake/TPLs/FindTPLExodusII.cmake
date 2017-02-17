@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( ExodusII
+TRIBITS_TPL_DECLARE_LIBRARIES( ExodusII
   #REQUIRED_HEADERS exodus.h
   REQUIRED_HEADERS exodusII.h netcdf.h
   REQUIRED_LIBS_NAMES exoIIv2c netcdf

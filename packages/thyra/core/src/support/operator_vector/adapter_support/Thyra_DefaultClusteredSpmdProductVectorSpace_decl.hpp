@@ -96,11 +96,11 @@ public:
 
   /** \brief . */
   DefaultClusteredSpmdProductVectorSpace(
-    const RCP<const Teuchos::Comm<Ordinal> >          &intraClusterComm
-    ,const int                                        clusterRootRank
-    ,const RCP<const Teuchos::Comm<Ordinal> >         &interClusterComm
-    ,const int                                        numBlocks
-    ,const RCP<const VectorSpaceBase<Scalar> >        vecSpaces[]
+    const Teuchos::RCP<const Teuchos::Comm<Ordinal> >          &intraClusterComm
+    ,const int                                                       clusterRootRank
+    ,const Teuchos::RCP<const Teuchos::Comm<Ordinal> >         &interClusterComm
+    ,const int                                                       numBlocks
+    ,const Teuchos::RCP<const VectorSpaceBase<Scalar> >      vecSpaces[]
     );
 
   /** \brief Initalize.
@@ -124,23 +124,23 @@ public:
    *            for this cluster of processes.
    */
   void initialize(
-    const RCP<const Teuchos::Comm<Ordinal> >          &intraClusterComm
-    ,const int                                        clusterRootRank
-    ,const RCP<const Teuchos::Comm<Ordinal> >         &interClusterComm
-    ,const int                                        numBlocks
-    ,const RCP<const VectorSpaceBase<Scalar> >        vecSpaces[]
+    const Teuchos::RCP<const Teuchos::Comm<Ordinal> >          &intraClusterComm
+    ,const int                                                       clusterRootRank
+    ,const Teuchos::RCP<const Teuchos::Comm<Ordinal> >         &interClusterComm
+    ,const int                                                       numBlocks
+    ,const Teuchos::RCP<const VectorSpaceBase<Scalar> >      vecSpaces[]
     );
 
   /** \brief . */
-  RCP<const Teuchos::Comm<Ordinal> > intraClusterComm() const;
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> > intraClusterComm() const;
 
   /** \brief . */
   int clusterRootRank() const;
 
   /** \brief . */
-  RCP<const Teuchos::Comm<Ordinal> > interClusterComm() const;
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> > interClusterComm() const;
 
-  /** \bief The sum of the dimensions of the block vector spaces in this
+  /** \bief The some of the dimensions of the block vector spaces in this
    * cluster.
    */
   int clusterSubDim() const;
@@ -165,7 +165,7 @@ public:
   /** \brief . */
   bool isCompatible(const VectorSpaceBase<Scalar>& vecSpc) const;
   /** \brief . */
-  RCP< const VectorSpaceFactoryBase<Scalar> > smallVecSpcFcty() const;
+  Teuchos::RCP< const VectorSpaceFactoryBase<Scalar> > smallVecSpcFcty() const;
   /** \brief . */
   Scalar scalarProd( const VectorBase<Scalar>& x, const VectorBase<Scalar>& y ) const;
   /** \brief . */
@@ -179,7 +179,7 @@ public:
     const Range1D& rng, const EViewType viewType, const EStrideType strideType
     ) const;
   /** \brief . */
-  RCP< const VectorSpaceBase<Scalar> > clone() const;
+  Teuchos::RCP< const VectorSpaceBase<Scalar> > clone() const;
   //@}
 
   /** @name Protected overridden from ProductVectorSpaceBase */
@@ -188,7 +188,7 @@ public:
   /** \brief . */
   int numBlocks() const;
   /** \brief . */
-  RCP<const VectorSpaceBase<Scalar> > getBlock(const int k) const; 
+  Teuchos::RCP<const VectorSpaceBase<Scalar> > getBlock(const int k) const; 
 
   //@}
 
@@ -198,9 +198,9 @@ protected:
   //@{
 
   /** \brief . */
-  RCP<VectorBase<Scalar> > createMember() const;
+  Teuchos::RCP<VectorBase<Scalar> > createMember() const;
   /** \brief . */
-  RCP<MultiVectorBase<Scalar> > createMembers(int numMembers) const;
+  Teuchos::RCP<MultiVectorBase<Scalar> > createMembers(int numMembers) const;
 
   //@}
 
@@ -209,14 +209,14 @@ private:
   // //////////////////////////////////////
   // Private types
 
-  typedef std::vector<RCP<const VectorSpaceBase<Scalar> > >  vecSpaces_t;
+  typedef std::vector<Teuchos::RCP<const VectorSpaceBase<Scalar> > >  vecSpaces_t;
 
   // //////////////////////////////////////
   // Private data members
 
-  RCP<const Teuchos::Comm<Ordinal> >  intraClusterComm_;
-  int clusterRootRank_;
-  RCP<const Teuchos::Comm<Ordinal> >  interClusterComm_;
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> >  intraClusterComm_;
+  int                                                      clusterRootRank_;
+  Teuchos::RCP<const Teuchos::Comm<Ordinal> >  interClusterComm_;
   vecSpaces_t vecSpaces_; // size == numBlocks
   bool isEuclidean_;
   Ordinal globalDim_;     // The global dimension of all of the block vectors in
@@ -235,7 +235,7 @@ private:
 
 
 template<class Scalar>
-RCP<const Teuchos::Comm<Ordinal> >
+Teuchos::RCP<const Teuchos::Comm<Ordinal> >
 DefaultClusteredSpmdProductVectorSpace<Scalar>::intraClusterComm() const
 {
   return intraClusterComm_;
@@ -250,7 +250,7 @@ int DefaultClusteredSpmdProductVectorSpace<Scalar>::clusterRootRank() const
 
 
 template<class Scalar>
-RCP<const Teuchos::Comm<Ordinal> >
+Teuchos::RCP<const Teuchos::Comm<Ordinal> >
 DefaultClusteredSpmdProductVectorSpace<Scalar>::interClusterComm() const
 {
   return interClusterComm_;

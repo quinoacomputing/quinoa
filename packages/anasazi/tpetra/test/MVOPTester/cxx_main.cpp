@@ -7,7 +7,7 @@
 #include "AnasaziTpetraAdapter.hpp"
 #include "AnasaziBasicOutputManager.hpp"
 
-namespace { // (anonymous)
+namespace {
 
   using Teuchos::as;
   using Teuchos::RCP;
@@ -62,7 +62,7 @@ namespace { // (anonymous)
   }
 
   template<class Scalar, class O1, class O2>
-  RCP<CrsMatrix<Scalar,O1,O2,Node> > constructDiagMatrix(const RCP<const Map<O1,O2,Node> > &map)
+  RCP<CrsMatrix<Scalar,O1,O2,Node> > constructDiagMatrix(const RCP<const Map<O1,O2,Node> > &map) 
   {
     RCP<CrsMatrix<Scalar,O1,O2,Node> > op = rcp( new CrsMatrix<Scalar,O1,O2,Node>(map,1) );
     for (size_t i=0; i<map->getNodeNumElements(); ++i) {
@@ -74,7 +74,7 @@ namespace { // (anonymous)
 
   //
   // UNIT TESTS
-  //
+  // 
 
   ////
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVector, MVTestDist, O1, O2, Scalar )
@@ -203,10 +203,6 @@ namespace { // (anonymous)
 #endif
 
 
-#include "TpetraCore_ETIHelperMacros.h"
-
-  TPETRA_ETI_MANGLING_TYPEDEFS()
-
   // Uncomment this for really fast development cycles but make sure to comment
   // it back again before checking in so that we can test all the types.
   // #define FAST_DEVELOPMENT_UNIT_TEST_BUILD
@@ -217,12 +213,15 @@ namespace { // (anonymous)
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVector, OPTestDist, O1, O2, SCALAR ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVector, OPTestLocal, O1, O2, SCALAR )
 
-#define UNIT_TEST_GROUP_LO_GO( O1, O2 ) \
+#define UNIT_TEST_GROUP_ORDINAL_ORDINAL( O1, O2 ) \
         UNIT_TEST_GROUP_ORDINAL_FLOAT(O1, O2)         \
         UNIT_TEST_GROUP_ORDINAL_DOUBLE(O1, O2)        \
         UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(O1, O2) \
         UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(O1, O2)
 
-  TPETRA_INSTANTIATE_LG( UNIT_TEST_GROUP_LO_GO )
+#define UNIT_TEST_GROUP_ORDINAL( ORDINAL ) \
+    UNIT_TEST_GROUP_ORDINAL_ORDINAL( ORDINAL, ORDINAL )
 
-} // namespace (anonymous)
+  UNIT_TEST_GROUP_ORDINAL(int)
+
+}

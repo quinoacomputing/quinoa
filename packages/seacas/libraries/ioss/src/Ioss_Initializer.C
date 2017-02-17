@@ -2,14 +2,14 @@
 // Sandia Corporation. Under the terms of Contract
 // DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
 // certain rights in this software.
-//
+//         
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-//
+// 
 //     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
-//
+// 
 //     * Redistributions in binary form must reproduce the above
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
@@ -17,7 +17,7 @@
 //     * Neither the name of Sandia Corporation nor the names of its
 //       contributors may be used to endorse or promote products derived
 //       from this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,6 +33,8 @@
 #include <Ioss_Bar2.h>
 #include <Ioss_Bar3.h>
 #include <Ioss_Edge2.h>
+#include <Ioss_Edge2D2.h>
+#include <Ioss_Edge2D3.h>
 #include <Ioss_Edge3.h>
 #include <Ioss_Hex20.h>
 #include <Ioss_Hex27.h>
@@ -40,7 +42,6 @@
 #include <Ioss_Initializer.h>
 #include <Ioss_Node.h>
 #include <Ioss_Pyramid13.h>
-#include <Ioss_Pyramid14.h>
 #include <Ioss_Pyramid5.h>
 #include <Ioss_Quad4.h>
 #include <Ioss_Quad8.h>
@@ -53,25 +54,17 @@
 #include <Ioss_Sphere.h>
 #include <Ioss_Super.h>
 #include <Ioss_Tet10.h>
-#include <Ioss_Tet11.h>
-#include <Ioss_Tet14.h>
-#include <Ioss_Tet15.h>
 #include <Ioss_Tet4.h>
+#include <Ioss_Tet7.h>
 #include <Ioss_Tet8.h>
 #include <Ioss_Tri3.h>
 #include <Ioss_Tri4.h>
+#include <Ioss_Tri4a.h>
 #include <Ioss_Tri6.h>
-#include <Ioss_Tri7.h>
 #include <Ioss_TriShell3.h>
-#include <Ioss_TriShell4.h>
 #include <Ioss_TriShell6.h>
-#include <Ioss_TriShell7.h>
 #include <Ioss_Unknown.h>
 #include <Ioss_Wedge15.h>
-#include <Ioss_Wedge16.h>
-#include <Ioss_Wedge18.h>
-#include <Ioss_Wedge20.h>
-#include <Ioss_Wedge21.h>
 #include <Ioss_Wedge6.h>
 
 Ioss::Initializer::Initializer()
@@ -79,9 +72,11 @@ Ioss::Initializer::Initializer()
   // List all storage types here with a call to their factory method.
   // This is Used to get the linker to pull in all needed libraries.
   Ioss::Sphere::factory();
-
+  
   Ioss::Edge2::factory();
   Ioss::Edge3::factory();
+  Ioss::Edge2D2::factory();
+  Ioss::Edge2D3::factory();
 
   Ioss::Bar2::factory();
   Ioss::Bar3::factory();
@@ -96,8 +91,7 @@ Ioss::Initializer::Initializer()
 
   Ioss::Pyramid5::factory();
   Ioss::Pyramid13::factory();
-  Ioss::Pyramid14::factory();
-
+  
   Ioss::Quad4::factory();
   Ioss::Quad8::factory();
   Ioss::Quad9::factory();
@@ -107,31 +101,22 @@ Ioss::Initializer::Initializer()
   Ioss::Shell9::factory();
 
   Ioss::Tet4::factory();
-
+  Ioss::Tet7::factory();
   Ioss::Tet8::factory();
   Ioss::Tet10::factory();
-  Ioss::Tet11::factory();
-  Ioss::Tet14::factory();
-  Ioss::Tet15::factory();
 
   Ioss::Tri3::factory();
   Ioss::Tri4::factory();
+  Ioss::Tri4a::factory();
   Ioss::Tri6::factory();
-  Ioss::Tri7::factory();
 
   Ioss::TriShell3::factory();
-  Ioss::TriShell4::factory();
   Ioss::TriShell6::factory();
-  Ioss::TriShell7::factory();
 
   Ioss::Unknown::factory();
 
   Ioss::Wedge6::factory();
   Ioss::Wedge15::factory();
-  Ioss::Wedge16::factory();
-  Ioss::Wedge18::factory();
-  Ioss::Wedge20::factory();
-  Ioss::Wedge21::factory();
 
   Ioss::Super::factory();
 }

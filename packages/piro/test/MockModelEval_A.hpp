@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-//
+// 
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-//
+// 
 // ************************************************************************
 // @HEADER
 
@@ -51,7 +51,7 @@
 #else
 typedef int MPI_Comm;
 #include "Epetra_SerialComm.h"
-#endif
+#endif 
 
 #include "Epetra_LocalMap.h"
 #include "Epetra_Vector.h"
@@ -90,10 +90,6 @@ class MockModelEval_A
   /** \brief . */
   Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
   /** \brief . */
-  Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
-  /** \brief . */
-  Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
-  /** \brief . */
   Teuchos::RCP<Epetra_Operator> create_W() const;
   /** \brief . */
   EpetraExt::ModelEvaluator::InArgs createInArgs() const;
@@ -127,8 +123,6 @@ class MockModelEval_A
    Teuchos::RCP<Epetra_Vector> x_dot_vec;
    Teuchos::RCP<Epetra_Map> p_map;
    Teuchos::RCP<Epetra_Vector> p_init;
-   Teuchos::RCP<Epetra_Vector> p_lo;
-   Teuchos::RCP<Epetra_Vector> p_up;
    Teuchos::RCP<Epetra_Map> g_map;
    Teuchos::RCP<Epetra_Comm> Comm;
    Teuchos::RCP<Epetra_CrsGraph> jacGraph;

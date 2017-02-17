@@ -77,6 +77,7 @@ QueryObject::QueryObject( Teuchos::RCP<const Epetra_CrsGraph> graph,
 {
   myProc_ = graph->Comm().MyPID();
   base_ = rowMap_->IndexBase();
+  int rc = 0;
 
   // If graph
   if (input_type_ == graph_input_)
@@ -97,7 +98,7 @@ QueryObject::QueryObject( Teuchos::RCP<const Epetra_CrsGraph> graph,
 	int numEntries;
 	int *idx;
 
-	graph->ExtractMyRowView(i, numEntries, idx);
+	rc = graph->ExtractMyRowView(i, numEntries, idx);
 
 	for (int j=0; j<numEntries; j++){
 	  if (rowGIDs[i] == colMap_->GID(idx[j])){
@@ -210,6 +211,7 @@ QueryObject::QueryObject(Teuchos::RCP<const Epetra_CrsGraph> graph,
 {
   myProc_ = graph->Comm().MyPID();
   base_ = rowMap_->IndexBase();
+  int rc = 0;
 
   // if graph
   if (input_type_ == graph_geometric_input_ ||
@@ -231,7 +233,7 @@ QueryObject::QueryObject(Teuchos::RCP<const Epetra_CrsGraph> graph,
 	int numEntries;
 	int *idx;
 
-	graph->ExtractMyRowView(i, numEntries, idx);
+	rc = graph->ExtractMyRowView(i, numEntries, idx);
 
 	for (int j=0; j<numEntries; j++){
 	  if (rowGIDs[i] == colMap_->GID(idx[j])){

@@ -1,11 +1,46 @@
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
 
-/*--------------------------------------------------------------------*/
-/*    Copyright 2006 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+
 
 #include <fei_Reducer.hpp>
 #include <fei_MatrixGraph.hpp>
@@ -36,6 +71,7 @@ Reducer::Reducer(fei::SharedPtr<FillableMat> globalSlaveDependencyMatrix,
    csrKdd(),
    fi_(),
    fd_(),
+   csfi(),
    csvec(),
    csvec_i(),
    tmpMat1_(),
@@ -209,9 +245,11 @@ Reducer::setLocalUnreducedEqns(const std::vector<int>& localUnreducedEqns)
       <<localUnreducedEqns.size() << FEI_ENDL;
   }
 
-  if (localUnreducedEqns_ != localUnreducedEqns) {
-    localUnreducedEqns_ = localUnreducedEqns;
+  if (localUnreducedEqns_ == localUnreducedEqns) {
+    return;
   }
+
+  localUnreducedEqns_ = localUnreducedEqns;
 
   int num = localUnreducedEqns_.size();
 
@@ -263,22 +301,20 @@ Reducer::setLocalUnreducedEqns(const std::vector<int>& localUnreducedEqns)
   }
 #endif
 
-  if (!localUnreducedEqns_.empty()) {
-    unsigned first_non_slave_offset = 0;
-    while(first_non_slave_offset < localUnreducedEqns_.size() &&
-          isSlaveEqn_[first_non_slave_offset] == true) {
-      ++first_non_slave_offset;
-    }
-
-    firstLocalReducedEqn_ = localUnreducedEqns_[first_non_slave_offset]
-        - num_slaves_on_lower_procs - first_non_slave_offset;
-
-    int num_local_eqns = localUnreducedEqns_.size() - numLocalSlaves_;
-
-    lastLocalReducedEqn_ = firstLocalReducedEqn_ + num_local_eqns - 1;
-
-    localReducedEqns_.resize(num_local_eqns);
+  unsigned first_non_slave_offset = 0;
+  while(first_non_slave_offset < localUnreducedEqns_.size() &&
+        isSlaveEqn_[first_non_slave_offset] == true) {
+    ++first_non_slave_offset;
   }
+
+  firstLocalReducedEqn_ = localUnreducedEqns_[first_non_slave_offset]
+      - num_slaves_on_lower_procs - first_non_slave_offset;
+
+  int num_local_eqns = localUnreducedEqns_.size() - numLocalSlaves_;
+
+  lastLocalReducedEqn_ = firstLocalReducedEqn_ + num_local_eqns - 1;
+
+  localReducedEqns_.resize(num_local_eqns);
 
   unsigned offset = 0;
   int eqn = firstLocalReducedEqn_;
@@ -325,36 +361,36 @@ Reducer::addGraphEntries(fei::SharedPtr<fei::SparseRowGraph> matrixGraph)
     int* cols = &packedCols[rowOffsets[i]];
 
     if (slave_row) {
-      fei::CSVec* Kdd_row = Kdd_.create_or_getRow(row);
-      fei::CSVec* Kdi_row = Kdi_.create_or_getRow(row);
+      fei::FillableVec* Kdd_row = Kdd_.create_or_getRow(row);
+      fei::FillableVec* Kdi_row = Kdi_.create_or_getRow(row);
 
       for(int j=0; j<rowLength; ++j) {
         int col = cols[j];
         bool slave_col = isSlaveEqn(col);
 
         if (slave_col) {
-          add_entry(*Kdd_row, col, 0.0);
+          Kdd_row->addEntry(col, 0.0);
         }
         else {
-          add_entry(*Kdi_row, col, 0.0);
+          Kdi_row->addEntry(col, 0.0);
         }
       }
     }
     else {
       //not a slave row, so add slave columns to Kid, and non-slave
       //columns to graph.
-      fei::CSVec* Kid_row = Kid_.create_or_getRow(row);
-      fei::CSVec* Kii_row = Kii_.create_or_getRow(row);
+      fei::FillableVec* Kid_row = Kid_.create_or_getRow(row);
+      fei::FillableVec* Kii_row = Kii_.create_or_getRow(row);
 
       for(int j=0; j<rowLength; ++j) {
         int col = cols[j];
         bool slave_col = isSlaveEqn(col);
 
         if (slave_col) {
-          add_entry(*Kid_row, col, 0.0);
+          Kid_row->addEntry(col, 0.0);
         }
         else {
-          add_entry(*Kii_row, col, 0.0);
+          Kii_row->addEntry(col, 0.0);
         }
       }
     }
@@ -392,15 +428,15 @@ Reducer::addGraphIndices(int numRows, const int* rows,
     bool slave_row = isSlaveEqn(rows[i]);
 
     if (slave_row) {
-      fei::CSVec* Kdd_row = Kdd_.create_or_getRow(rows[i]);
-      fei::CSVec* Kdi_row = Kdi_.create_or_getRow(rows[i]);
+      fei::FillableVec* Kdd_row = Kdd_.create_or_getRow(rows[i]);
+      fei::FillableVec* Kdi_row = Kdi_.create_or_getRow(rows[i]);
 
       for(int j=0; j<numCols; ++j) {
         if (bool_array_[j]) {
-          add_entry(*Kdd_row, cols[j], 0.0);
+          Kdd_row->addEntry(cols[j], 0.0);
         }
         else {
-          add_entry(*Kdi_row, cols[j], 0.0);
+          Kdi_row->addEntry(cols[j], 0.0);
         }
       }
       ++mat_counter_;
@@ -408,14 +444,14 @@ Reducer::addGraphIndices(int numRows, const int* rows,
     else {
       //not a slave row, so add slave columns to Kid, and non-slave
       //columns to graph.
-      fei::CSVec* Kid_row = no_slave_cols ?
+      fei::FillableVec* Kid_row = no_slave_cols ?
         NULL : Kid_.create_or_getRow(rows[i]);
   
       unsigned num_non_slave_cols = 0;
 
       for(int j=0; j<numCols; ++j) {
         if (bool_array_[j]) {
-          add_entry(*Kid_row, cols[j], 0.0);
+          Kid_row->addEntry(cols[j], 0.0);
           ++mat_counter_;
         }
         else {
@@ -561,16 +597,17 @@ Reducer::assembleReducedMatrix(fei::Matrix& matrix)
     //form tmpVec1_ = Kid_*g_
     fei::multiply_CSRMat_CSVec(csrKid, csg_, tmpVec1_);
 
-    //subtract tmpVec1_ from fi_
-    fi_.subtract(tmpVec1_);
+    //add tmpVec1_ to fi_
+    csfi = fi_;
+    fei::add_CSVec_CSVec(tmpVec1_, csfi);
 
     //we already have tmpMat1_ = D^T*Kdd which was computed above, and we need
     //to form tmpVec1_ = D^T*Kdd*g_.
     //So we can simply form tmpVec1_ = tmpMat1_*g_.
     fei::multiply_CSRMat_CSVec(tmpMat1_, csg_, tmpVec1_);
 
-    //now subtract tmpVec1_ from the right-hand-side fi_
-    fi_.subtract(tmpVec1_);
+    //now add tmpVec1_ to the right-hand-side fi_
+    fei::add_CSVec_CSVec(tmpVec1_, csfi);
   }
 
   //accumulate tmpMat2_ = D^T*Kdd_*D into the global system matrix.
@@ -736,15 +773,15 @@ Reducer::addMatrixValues(int numRows, const int* rows,
     if (bool_array_[numCols+i]) {
       //slave row: slave columns go into Kdd, non-slave columns go
       //into Kdi.
-      fei::CSVec* Kdd_row = Kdd_.create_or_getRow(rows[i]);
-      fei::CSVec* Kdi_row = Kdi_.create_or_getRow(rows[i]);
+      fei::FillableVec* Kdd_row = Kdd_.create_or_getRow(rows[i]);
+      fei::FillableVec* Kdi_row = Kdi_.create_or_getRow(rows[i]);
 
       for(int j=0; j<numCols; ++j) {
         if (bool_array_[j]) {
-          add_entry(*Kdd_row, cols[j], myvalues[i][j]);
+          Kdd_row->addEntry(cols[j], myvalues[i][j]);
         }
         else {
-          add_entry(*Kdi_row, cols[j], myvalues[i][j]);
+          Kdi_row->addEntry(cols[j], myvalues[i][j]);
         }
       }
       ++mat_counter_;
@@ -766,12 +803,12 @@ Reducer::addMatrixValues(int numRows, const int* rows,
 
       //put non-slave columns into Kii,
       //and slave columns into Kid.
-      fei::CSVec* Kid_row = Kid_.create_or_getRow(rows[i]);
+      fei::FillableVec* Kid_row = Kid_.create_or_getRow(rows[i]);
 
       unsigned offset = 0;
       for(int j=0; j<numCols; ++j) {
         if (bool_array_[j]) {
-          add_entry(*Kid_row, cols[j], myvalues[i][j]);
+          Kid_row->addEntry(cols[j], myvalues[i][j]);
           ++mat_counter_;
         }
         else {
@@ -817,10 +854,10 @@ Reducer::addVectorValues(int numValues,
   for(int i=0; i<numValues; ++i) {
     if (isSlaveEqn(globalIndices[i])) {
       if (sum_into) {
-        if (!soln_vector) add_entry(fd_, globalIndices[i], values[i]);
+        if (!soln_vector) fd_.addEntry(globalIndices[i], values[i]);
       }
       else {
-        if (!soln_vector) put_entry(fd_, globalIndices[i], values[i]);
+        if (!soln_vector) fd_.putEntry(globalIndices[i], values[i]);
       }
       if (!soln_vector) ++rhs_vec_counter_;
     }
@@ -856,7 +893,7 @@ Reducer::assembleReducedVector(bool soln_vector,
     return;
   }
 
-  fei::CSVec& vec = fd_;
+  fei::FillableVec& vec = fd_;
 
   if (vec.size() > 0) {
     //form tmpVec1 = D^T*vec.
@@ -872,7 +909,7 @@ Reducer::assembleReducedVector(bool soln_vector,
                  &(tmpVec1_.coefs()[0]), which_vector);
   }
 
-  fei::CSVec& vec_i = fi_;
+  fei::FillableVec& vec_i = fi_;
 
   if (vec_i.size() > 0) {
     csvec_i = vec_i;
@@ -919,14 +956,13 @@ Reducer::copyOutVectorValues(int numValues,
 
   if (tmpVec1_.size() > 0) {
     fei::multiply_trans_CSRMat_CSVec(csrD_, tmpVec1_, tmpVec2_);
-    int* tmpVec2Indices = tmpVec2_.indices().empty() ? NULL : &(tmpVec2_.indices()[0]);
-    double* tmpVec2Coefs = tmpVec2_.coefs().empty() ? NULL : &(tmpVec2_.coefs()[0]);
+    int* tmpVec2Indices = &(tmpVec2_.indices()[0]);
     for(size_t i=0; i<tmpVec2_.size(); ++i) {
       reduced_indices.push_back(translateToReducedEqn(tmpVec2Indices[i]));
     }
 
-    int* reduced_indices_ptr = reduced_indices.empty() ? NULL : &reduced_indices[0];
-    feivec.copyOut(tmpVec2_.size(), reduced_indices_ptr, tmpVec2Coefs, vectorIndex);
+    feivec.copyOut(tmpVec2_.size(), &reduced_indices[0],
+                   &(tmpVec2_.coefs()[0]), vectorIndex);
 
     fei::multiply_CSRMat_CSVec(csrD_, tmpVec2_, tmpVec1_);
 
@@ -934,7 +970,7 @@ Reducer::copyOutVectorValues(int numValues,
       int* ginds = &(csg_.indices()[0]);
       double* gcoefs = &(csg_.coefs()[0]);
       for(size_t ii=0; ii<csg_.size(); ++ii) {
-        fei::add_entry(tmpVec1_, ginds[ii], gcoefs[ii]);
+        fei::add_entry(tmpVec1_, ginds[ii], -gcoefs[ii]);
       }
     }
 

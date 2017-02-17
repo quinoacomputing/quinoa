@@ -20,7 +20,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -44,10 +44,10 @@ using Thyra::ModelEvaluatorBase;
 namespace Rythmos {
 
   /*
-   * This is the canonical Sine Cosine differential equation
-   *
-   * \ddot{x} = -x
-   *
+   * This is the canonical Sine Cosine differential equation 
+   * 
+   * \ddot{x} = -x 
+   * 
    * with a few enhancements.
    * We start with the exact solution to the differential equation as:
    *
@@ -61,8 +61,8 @@ namespace Rythmos {
    *
    * With Initial conditions:
    *
-   * x0(t0=0) = gamma0 [0.0]
-   * x1(t0=0) = gamma1 [1.0]
+   * x0(t0) = gamma0 [0.0]
+   * x1(t0) = gamma1 [1.0]
    *
    * We can use gamma0 and gamma1 to solve for phi and b:
    *
@@ -75,12 +75,12 @@ namespace Rythmos {
    * p = (a, f, L)
    *
    * \dot{x}=F(x,t,p)
-   * F_0 = x1
+   * F_0 = x0
    * F_1 = (f/L)^2*(a-x0)
    *
    */
 
-class SinCosModel
+class SinCosModel 
   : public Thyra::StateFuncModelEvaluatorBase<double>,
     public Teuchos::ParameterListAcceptorDefaultBase
 {
@@ -124,10 +124,10 @@ class SinCosModel
   RCP<const Thyra::VectorSpaceBase<double> > get_g_space(int j) const;
 
   //@}
-
+  
   /** \name Public functions overridden from ParameterListAcceptor. */
   //@{
-
+  
   /** \brief . */
   void setParameterList(RCP<ParameterList> const& paramList);
 
@@ -177,7 +177,7 @@ private:
 
   // Parameters for the model:  x_0(t) = a + b*sin(f*t+phi)
   //                            x_1(t) = b*f*cos(f*t+phi)
-  double a_; // This is a model parameter
+  double a_; // This is a model parameter 
   double f_; // This is a model parameter
   double L_; // This is a model parameter
   double phi_; // This is a parameter determined from the IC
@@ -192,6 +192,6 @@ RCP<SinCosModel> sinCosModel(bool implicit);
 RCP<SinCosModel> sinCosModel();
 
 
-} // namespace Rythmos
+} // namespace Rythmos 
 
 #endif // SIN_COS_MODEL_HPP

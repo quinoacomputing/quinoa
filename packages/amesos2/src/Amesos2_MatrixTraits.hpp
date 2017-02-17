@@ -2,7 +2,7 @@
 //
 // ***********************************************************************
 //
-//           Amesos2: Templated Direct Sparse Solver Package
+//           Amesos2: Templated Direct Sparse Solver Package 
 //                  Copyright 2011 Sandia Corporation
 //
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
@@ -49,8 +49,6 @@
 
 #include <Tpetra_CrsMatrix.hpp>
 
-
-#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
 #  include <Tpetra_DefaultPlatform.hpp>
 #  include <Epetra_RowMatrix.h>
@@ -58,7 +56,6 @@
 // #  include <Epetra_MsrMatrix.h>
 #  include <Epetra_VbrMatrix.h>
 // and perhaps some others later...
-#endif
 #endif
 
 #include "Amesos2_Util.hpp"
@@ -74,14 +71,14 @@ namespace Amesos2 {
    *******************/
 
   template < typename Scalar,
-             typename LocalOrdinal,
-             typename GlobalOrdinal,
-             typename Node >
+	     typename LocalOrdinal,
+	     typename GlobalOrdinal,
+	     typename Node >
   struct MatrixTraits<
     Tpetra::RowMatrix<Scalar,
-                      LocalOrdinal,
-                      GlobalOrdinal,
-                      Node> > {
+		      LocalOrdinal,
+		      GlobalOrdinal,
+		      Node> > {
     typedef Scalar scalar_t;
     typedef LocalOrdinal local_ordinal_t;
     typedef GlobalOrdinal global_ordinal_t;
@@ -91,14 +88,16 @@ namespace Amesos2 {
   };
 
   template < typename Scalar,
-             typename LocalOrdinal,
-             typename GlobalOrdinal,
-             typename Node >
+	     typename LocalOrdinal,
+	     typename GlobalOrdinal,
+	     typename Node,
+	     typename LocalMatOps >
   struct MatrixTraits<
     Tpetra::CrsMatrix<Scalar,
-                      LocalOrdinal,
-                      GlobalOrdinal,
-                      Node> > {
+		      LocalOrdinal,
+		      GlobalOrdinal,
+		      Node,
+		      LocalMatOps> > {
     typedef Scalar scalar_t;
     typedef LocalOrdinal local_ordinal_t;
     typedef GlobalOrdinal global_ordinal_t;
@@ -107,8 +106,6 @@ namespace Amesos2 {
     typedef row_access major_access;
   };
 
-
-#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
 
   template <>
@@ -117,7 +114,7 @@ namespace Amesos2 {
     typedef int local_ordinal_t;
     typedef int global_ordinal_t;
     typedef Tpetra::DefaultPlatform::DefaultPlatformType::NodeType node_t;
-
+    
     typedef row_access major_access;
   };
 
@@ -127,7 +124,7 @@ namespace Amesos2 {
     typedef int local_ordinal_t;
     typedef int global_ordinal_t;
     typedef Tpetra::DefaultPlatform::DefaultPlatformType::NodeType node_t;
-
+    
     typedef row_access major_access;
   };
 
@@ -137,7 +134,7 @@ namespace Amesos2 {
   //   typedef int local_ordinal_t;
   //   typedef int global_ordinal_t;
   //   typedef Tpetra::DefaultPlatform::DefaultPlatformType::NodeType node_t;
-
+    
   //   typedef row_access major_access;
   // };
 
@@ -147,13 +144,12 @@ namespace Amesos2 {
     typedef int local_ordinal_t;
     typedef int global_ordinal_t;
     typedef Tpetra::DefaultPlatform::DefaultPlatformType::NodeType node_t;
-
+    
     typedef row_access major_access;
   };
 
 #endif
-#endif
 
 }
 
-#endif  // AMESOS2_MATRIXTRAITS_HPP
+#endif	// AMESOS2_MATRIXTRAITS_HPP

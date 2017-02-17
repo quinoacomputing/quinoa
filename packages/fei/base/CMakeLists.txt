@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -51,4 +52,7 @@ TRIBITS_ADD_LIBRARY(
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
   )
+
+INSTALL(FILES ${HEADERS} DESTINATION
+   ${CMAKE_INSTALL_PREFIX}/include)
 

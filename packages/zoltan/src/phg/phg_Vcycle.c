@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
@@ -247,7 +214,7 @@ int Zoltan_PHG_Partition (
   short refine = 0;
   struct phg_timer_indices *timer = Zoltan_PHG_LB_Data_timers(zz);
   int reset_geometric_matching = 0;
-  char reset_geometric_string[MAX_PARAM_STRING_LEN];
+  char reset_geometric_string[4];
 
   ZOLTAN_TRACE_ENTER(zz, yo);
 
@@ -668,9 +635,8 @@ Refine:
 				 finer->vdest, hgc->Communicator, COMM_TAG+2,
 				 &size);
 
-	if (err != ZOLTAN_OK) {
+	if (err != ZOLTAN_OK && err != ZOLTAN_WARN) {
 	  ZOLTAN_PRINT_ERROR(hgc->myProc, yo, "Zoltan_Comm_Create failed.");
-          ZOLTAN_FREE(&sendbuf);
 	  goto End;
 	}
 
@@ -756,7 +722,8 @@ End:
 double Zoltan_PHG_Compute_NetCut(
   PHGComm *hgc,
   HGraph *hg,
-  Partition part
+  Partition part,
+  int p
 )
 {
 /* Calculates the cutsize of a partition by summing the weight of all edges
@@ -776,7 +743,6 @@ double Zoltan_PHG_Compute_NetCut(
     if (hg->nEdge && 
        !(allparts = (int*) ZOLTAN_CALLOC(hgc->nProc_x*hg->nEdge,sizeof(int)))) {
       ZOLTAN_PRINT_ERROR (hgc->myProc, yo, "Memory error.");
-      ZOLTAN_FREE(&netpart);
       return ZOLTAN_MEMERR;
     }
 
@@ -786,10 +752,9 @@ double Zoltan_PHG_Compute_NetCut(
     else  {
        j = hg->hindex[i];
        netpart[i] = part[hg->hvertex[j]];
-       for (++j; j < hg->hindex[i+1]  &&  part[hg->hvertex[j]] == netpart[i]; ++j) {
-       } /* find first pin that is not in the same part */
-       if (j != hg->hindex[i+1]) /* if it is found, then this is a cut net */
-         netpart[i] = -2;
+       for (++j; j < hg->hindex[i+1]  &&  part[hg->hvertex[j]] == netpart[i]; ++j);
+         if (j != hg->hindex[i+1])
+           netpart[i] = -2;
     }
 
   if (hg->nEdge)
@@ -845,7 +810,7 @@ double Zoltan_PHG_Compute_ConCut(
     if (hg->nEdge) {
         int i, j, *cuts=NULL, *rescuts=NULL, *parts, nEdge, start;
             
-        nEdge = MIN((int)MAXMEMORYALLOC / (2*(int)sizeof(int)*p), hg->nEdge);
+        nEdge = MIN((int)MAXMEMORYALLOC / (2*sizeof(int)*p), hg->nEdge);
 
         if (!(cuts = (int*) ZOLTAN_MALLOC (p * nEdge * sizeof(int)))) {
             ZOLTAN_PRINT_ERROR(hgc->myProc, yo, "Memory error.");
@@ -882,7 +847,7 @@ double Zoltan_PHG_Compute_ConCut(
                     if (nparts>1)
                         cut +=  ((nparts-1) * (hg->ewgt ? hg->ewgt[i] : 1.0));
                     else if (nparts==0) {
-                        char msg[160];
+                        char msg[80];
                         sprintf(msg, "Vertices of hyperedge %d has not been assigned to a valid part(s) or it has no vertices!\n", i);
                         ZOLTAN_PRINT_ERROR(hgc->myProc, yo, msg);
                         *ierr = ZOLTAN_FATAL;
@@ -923,7 +888,7 @@ double Zoltan_PHG_Compute_Balance (
   char *yo = "Zoltan_PHG_Compute_Balance";
   int part_dim = (hg->VtxWeightDim ? hg->VtxWeightDim : 1);
   
-  if (!hg->comm || !hg->comm->row_comm)  {
+  if (!hg || !hg->comm || !hg->comm->row_comm)  {
     ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Unable to compute balance");
     return 1.0;
   }  

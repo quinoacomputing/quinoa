@@ -2,45 +2,31 @@
 # -*- python -*-
 
 # @HEADER
-# ***********************************************************************
+# ************************************************************************
 #
-#          PyTrilinos: Python Interfaces to Trilinos Packages
-#                 Copyright (2014) Sandia Corporation
+#                PyTrilinos: Python Interface to Trilinos
+#                   Copyright (2005) Sandia Corporation
 #
-# Under the terms of Contract DE-AC04-94AL85000 with Sandia
-# Corporation, the U.S. Government retains certain rights in this
-# software.
+# Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+# license for use of this work by or on behalf of the U.S. Government.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
 #
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+# Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 #
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Questions? Contact William F. Spotz (wfspotz@sandia.gov)
-#
-# ***********************************************************************
+# ************************************************************************
 # @HEADER
 
 #
@@ -142,7 +128,7 @@ class EpetraSerialDenseMatrixTestCase(unittest.TestCase):
     def testConstructor07(self):
         "Test Epetra.SerialDenseMatrix (2D-list) constructor"
         sdm = Epetra.SerialDenseMatrix(self.array)
-        self.assertEqual(sdm.CV(), Epetra.Copy       )
+        self.assertEqual(sdm.CV(), Epetra.View       )
         self.assertEqual(sdm.M() , len(self.array)   )
         self.assertEqual(sdm.N() , len(self.array[0]))
         self.failUnless((sdm == self.array).all())
@@ -150,7 +136,7 @@ class EpetraSerialDenseMatrixTestCase(unittest.TestCase):
     def testConstructor08(self):
         "Test Epetra.SerialDenseMatrix (2D-list,bool) constructor"
         sdm = Epetra.SerialDenseMatrix(self.array,False)
-        self.assertEqual(sdm.CV(), Epetra.Copy       )
+        self.assertEqual(sdm.CV(), Epetra.View       )
         self.assertEqual(sdm.M() , len(self.array)   )
         self.assertEqual(sdm.N() , len(self.array[0]))
         self.failUnless((sdm == self.array).all())
@@ -200,15 +186,15 @@ class EpetraSerialDenseMatrixTestCase(unittest.TestCase):
         self.assertEqual(sdm.M(), self.rows)
         self.assertEqual(sdm.N(), self.cols)
 
-    # def testShape2(self):
-    #     "Test Epetra.SerialDenseMatrix Shape method, negative rows"
-    #     sdm = Epetra.SerialDenseMatrix()
-    #     self.assertRaises(ValueError, sdm.Shape, -self.rows, self.cols)
+    def testShape2(self):
+        "Test Epetra.SerialDenseMatrix Shape method, negative rows"
+        sdm = Epetra.SerialDenseMatrix()
+        self.assertRaises(ValueError, sdm.Shape, -self.rows, self.cols)
 
-    # def testShape3(self):
-    #     "Test Epetra.SerialDenseMatrix Shape method, negative columns"
-    #     sdm = Epetra.SerialDenseMatrix()
-    #     self.assertRaises(ValueError, sdm.Shape, self.rows, -self.cols)
+    def testShape3(self):
+        "Test Epetra.SerialDenseMatrix Shape method, negative columns"
+        sdm = Epetra.SerialDenseMatrix()
+        self.assertRaises(ValueError, sdm.Shape, self.rows, -self.cols)
 
     def testReshape1(self):
         "Test Epetra.SerialDenseMatrix Reshape method to smaller"
@@ -243,15 +229,15 @@ class EpetraSerialDenseMatrixTestCase(unittest.TestCase):
                 else:
                     self.assertEqual(sdm[i,j],0.0)
 
-    # def testReshape3(self):
-    #     "Test Epetra.SerialDenseMatrix Reshape method, negative rows"
-    #     sdm = Epetra.SerialDenseMatrix()
-    #     self.assertRaises(ValueError, sdm.Reshape, -self.rows, self.cols)
+    def testReshape3(self):
+        "Test Epetra.SerialDenseMatrix Reshape method, negative rows"
+        sdm = Epetra.SerialDenseMatrix()
+        self.assertRaises(ValueError, sdm.Reshape, -self.rows, self.cols)
 
-    # def testReshape4(self):
-    #     "Test Epetra.SerialDenseMatrix Reshape method, negative columns"
-    #     sdm = Epetra.SerialDenseMatrix()
-    #     self.assertRaises(ValueError, sdm.Reshape, self.rows, -self.cols)
+    def testReshape4(self):
+        "Test Epetra.SerialDenseMatrix Reshape method, negative columns"
+        sdm = Epetra.SerialDenseMatrix()
+        self.assertRaises(ValueError, sdm.Reshape, self.rows, -self.cols)
 
     def testScale(self):
         "Test Epetra.SerialDenseMatrix Scale Method"
@@ -384,14 +370,14 @@ class EpetraSerialDenseMatrixTestCase(unittest.TestCase):
         out = out[:-2] + "]"
         self.assertEqual(str(sdv), out)
 
-    # def testInPlaceAdd(self):
-    #     "Test Epetra.SerialDenseMatrix += operator"
-    #     sdm = Epetra.SerialDenseMatrix(self.array)
-    #     self.failUnless((sdm == self.array).all())
-    #     sdm += sdm
-    #     for i in range(sdm.M()):
-    #         for j in range(sdm.N()):
-    #             self.assertEqual(sdm[i,j],2*self.array[i][j])
+    def testInPlaceAdd(self):
+        "Test Epetra.SerialDenseMatrix += operator"
+        sdm = Epetra.SerialDenseMatrix(self.array)
+        self.failUnless((sdm == self.array).all())
+        sdm += sdm
+        for i in range(sdm.M()):
+            for j in range(sdm.N()):
+                self.assertEqual(sdm[i,j],2*self.array[i][j])
 
     def testRandom(self):
         "Test Epetra.SerialDenseMatrix Random method"
@@ -591,7 +577,7 @@ class EpetraSerialDenseVectorTestCase(unittest.TestCase):
     def testConstructor2(self):
         "Test Epetra.SerialDenseVector 1D list constructor"
         sdv = Epetra.SerialDenseVector(self.list)
-        self.assertEqual(sdv.CV(), Epetra.Copy)
+        self.assertEqual(sdv.CV(), Epetra.View)
         self.assertEqual(sdv.Length(), len(self.list))
         self.failUnless((sdv == self.list).all())
 
@@ -599,8 +585,7 @@ class EpetraSerialDenseVectorTestCase(unittest.TestCase):
         "Test Epetra.SerialDenseVector 2D list constructor"
         list = [[0.0, -1, 2.17], [-3.14, 4, -5.5]]
         sdv = Epetra.SerialDenseVector(list)
-        sdv.shape = (2,3)
-        self.assertEqual(sdv.CV(), Epetra.Copy)
+        self.assertEqual(sdv.CV(), Epetra.View)
         self.assertEqual(sdv.Length(), len(list)*len(list[0]))
         self.failUnless((sdv == list).all())
 
@@ -687,10 +672,10 @@ class EpetraSerialDenseVectorTestCase(unittest.TestCase):
             self.assertEqual(sdv[i],self.list[i])
 
     def testGetItem2(self):
-        "Test Epetra.SerialDenseVector __getitem__ method"
+        "Test Epetra.SerialDenseVector __call__ method"
         sdv = Epetra.SerialDenseVector(self.list)
         for i in range(len(self.list)):
-            self.assertEqual(sdv[i],self.list[i])
+            self.assertEqual(sdv(i),self.list[i])
 
     def testSetItem(self):
         "Test Epetra.SerialDenseVector __setitem__ method"
@@ -926,9 +911,7 @@ class EpetraSerialDenseSolverTestCase(unittest.TestCase):
         self.assertEqual(result,0)
         self.assertEqual(sds.Inverted(), True)
 
-    # I have isolated this unit test as causing a Teuchos RCP-related memory
-    # leak, but I do not know why yet.
-    def notestEquilibrateScaling(self):
+    def testEquilibrateScaling(self):
         "Test Epetra.SerialDenseSolver ComputeEquilibrateScaling method"
         sds = Epetra.SerialDenseSolver()
         self.buildProblem(sds)

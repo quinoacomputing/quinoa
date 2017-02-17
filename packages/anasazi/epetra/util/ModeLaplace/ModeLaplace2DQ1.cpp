@@ -358,7 +358,7 @@ void ModeLaplace2DQ1::makeStiffness(int *elemTopo, int numEle, int *connectivity
                                     int *numNz) {
 
   // Create Epetra_Matrix for stiffness
-  K = new Epetra_CrsMatrix(Epetra_DataAccess::Copy, *Map, numNz);
+  K = new Epetra_CrsMatrix(Copy, *Map, numNz);
 
   int i;
   int localSize = Map->NumMyElements();
@@ -427,7 +427,7 @@ void ModeLaplace2DQ1::makeMass(int *elemTopo, int numEle, int *connectivity,
                                int *numNz) {
 
   // Create Epetra_Matrix for mass
-  M = new Epetra_CrsMatrix(Epetra_DataAccess::Copy, *Map, numNz);
+  M = new Epetra_CrsMatrix(Copy, *Map, numNz);
 
   int i;
   int localSize = Map->NumMyElements();
@@ -507,13 +507,13 @@ int ModeLaplace2DQ1::eigenCheck(const Epetra_MultiVector &Q, double *lambda,
   int qc = Q.NumVectors();
   int myPid = MyComm.MyPID();
 
-  std::cout.precision(2);
-  std::cout.setf(ios::scientific, ios::floatfield);
+  cout.precision(2);
+  cout.setf(ios::scientific, ios::floatfield);
 
   // Check orthonormality of eigenvectors
   double tmp = myVerify.errorOrthonormality(&Q, M);
   if (myPid == 0)
-    std::cout << " Maximum coefficient in matrix Q^T M Q - I = " << tmp << std::endl;
+    cout << " Maximum coefficient in matrix Q^T M Q - I = " << tmp << endl;
 
   // Print out norm of residuals
   myVerify.errorEigenResiduals(Q, lambda, K, M, normWeight);
@@ -579,13 +579,13 @@ int ModeLaplace2DQ1::eigenCheck(const Epetra_MultiVector &Q, double *lambda,
   }
 
   double *normL2 = vQ + (nMax+1)*localSize;
-  Epetra_MultiVector Qex(Epetra_DataAccess::View, *Map, vQ, localSize, nMax);
+  Epetra_MultiVector Qex(View, *Map, vQ, localSize, nMax);
 
   if ((myPid == 0) && (nMax > 0)) {
-    std::cout << std::endl;
-    std::cout << " --- Relative discretization errors for exact eigenvectors ---" << std::endl;
-    std::cout << std::endl;
-    std::cout << "       Cont. Values   Disc. Values     Error      H^1 norm   L^2 norm\n";
+    cout << endl;
+    cout << " --- Relative discretization errors for exact eigenvectors ---" << endl;
+    cout << endl;
+    cout << "       Cont. Values   Disc. Values     Error      H^1 norm   L^2 norm\n";
   }
 
   for (j=1; j < numY; ++j) {
@@ -601,8 +601,8 @@ int ModeLaplace2DQ1::eigenCheck(const Epetra_MultiVector &Q, double *lambda,
                                   *sin(j*(M_PI/Ly)*y[ii]) );
         }
         // Compute the L2 norm
-        Epetra_MultiVector shapeInt(Epetra_DataAccess::View, *Map, vQ + nMax*localSize, localSize, 1);
-        Epetra_MultiVector Qi(Epetra_DataAccess::View, Qex, index[pos], 1);
+        Epetra_MultiVector shapeInt(View, *Map, vQ + nMax*localSize, localSize, 1);
+        Epetra_MultiVector Qi(View, Qex, index[pos], 1);
         for (ii=0; ii<localSize; ++ii) {
           double iX = 4.0*sqrt(2.0/Lx)*sin(i*(M_PI/Lx)*x[ii])/hx*
                       pow(sin(i*(M_PI/Lx)*0.5*hx)/(i*M_PI/Lx), 2.0);
@@ -623,16 +623,16 @@ int ModeLaplace2DQ1::eigenCheck(const Epetra_MultiVector &Q, double *lambda,
       normH1+= normL2[i];
       // Print out the result
       if (myPid == 0) {
-        std::cout << " ";
-        std::cout.width(4);
-        std::cout << i+1 << ". ";
-        std::cout.setf(ios::scientific, ios::floatfield);
-        std::cout.precision(8);
-        std::cout << continuous[i] << " " << discrete[i] << "  ";
-        std::cout.precision(3);
-        std::cout << fabs(discrete[i] - continuous[i])/continuous[i] << "  ";
-        std::cout << sqrt(fabs(normH1)/(continuous[i]+1.0)) << "  ";
-        std::cout << sqrt(fabs(normL2[i])) << std::endl;
+        cout << " ";
+        cout.width(4);
+        cout << i+1 << ". ";
+        cout.setf(ios::scientific, ios::floatfield);
+        cout.precision(8);
+        cout << continuous[i] << " " << discrete[i] << "  ";
+        cout.precision(3);
+        cout << fabs(discrete[i] - continuous[i])/continuous[i] << "  ";
+        cout << sqrt(fabs(normH1)/(continuous[i]+1.0)) << "  ";
+        cout << sqrt(fabs(normL2[i])) << endl;
       }
     } // for (i = 0; i < nMax; ++i)
   } // if (myPid == 0)
@@ -660,32 +660,32 @@ void ModeLaplace2DQ1::memoryInfo() const {
 
   Epetra_RowMatrix *Mat = dynamic_cast<Epetra_RowMatrix *>(M);
   if ((myPid == 0) && (Mat)) {
-    std::cout << " Total number of nonzero entries in mass matrix      = ";
-    std::cout.width(15);
-    std::cout << Mat->NumGlobalNonzeros() << std::endl;
+    cout << " Total number of nonzero entries in mass matrix      = ";
+    cout.width(15);
+    cout << Mat->NumGlobalNonzeros() << endl;
     double memSize = Mat->NumGlobalNonzeros()*(sizeof(double) + sizeof(int));
     memSize += 2*Mat->NumGlobalRows()*sizeof(int);
-    std::cout << " Memory requested for mass matrix per processor      = (EST) ";
-    std::cout.precision(2);
-    std::cout.width(6);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << memSize/1024.0/1024.0/MyComm.NumProc() << " MB " << std::endl;
-    std::cout << std::endl;
+    cout << " Memory requested for mass matrix per processor      = (EST) ";
+    cout.precision(2);
+    cout.width(6);
+    cout.setf(ios::fixed, ios::floatfield);
+    cout << memSize/1024.0/1024.0/MyComm.NumProc() << " MB " << endl;
+    cout << endl;
   }
 
   Mat = dynamic_cast<Epetra_RowMatrix *>(K);
   if ((myPid == 0) && (Mat)) {
-    std::cout << " Total number of nonzero entries in stiffness matrix = ";
-    std::cout.width(15);
-    std::cout << Mat->NumGlobalNonzeros() << std::endl;
+    cout << " Total number of nonzero entries in stiffness matrix = ";
+    cout.width(15);
+    cout << Mat->NumGlobalNonzeros() << endl;
     double memSize = Mat->NumGlobalNonzeros()*(sizeof(double) + sizeof(int));
     memSize += 2*Mat->NumGlobalRows()*sizeof(int);
-    std::cout << " Memory requested for stiffness matrix per processor = (EST) ";
-    std::cout.precision(2);
-    std::cout.width(6);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << memSize/1024.0/1024.0/MyComm.NumProc() << " MB " << std::endl;
-    std::cout << std::endl;
+    cout << " Memory requested for stiffness matrix per processor = (EST) ";
+    cout.precision(2);
+    cout.width(6);
+    cout.setf(ios::fixed, ios::floatfield);
+    cout << memSize/1024.0/1024.0/MyComm.NumProc() << " MB " << endl;
+    cout << endl;
   }
 }
 
@@ -698,21 +698,21 @@ void ModeLaplace2DQ1::problemInfo() const {
   int myPid = MyComm.MyPID();
 
   if (myPid == 0) {
-    std::cout.precision(2);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << " --- Problem definition ---\n\n";
-    std::cout << " >> Laplace equation in 2D with homogeneous Dirichlet condition\n";
-    std::cout << " >> Domain = [0, " << Lx << "] x [0, " << Ly << "]\n";
-    std::cout << " >> Orthogonal mesh uniform per direction with Q1 elements\n";
-    std::cout << std::endl;
-    std::cout << " Global size = " << Map->NumGlobalElements() << std::endl;
-    std::cout << std::endl;
-    std::cout << " Number of elements in [0, " << Lx << "] (X-direction): " << nX << std::endl;
-    std::cout << " Number of elements in [0, " << Ly << "] (Y-direction): " << nY << std::endl;
-    std::cout << std::endl;
-    std::cout << " Number of interior nodes in the X-direction: " << nX-1 << std::endl;
-    std::cout << " Number of interior nodes in the Y-direction: " << nY-1 << std::endl;
-    std::cout << std::endl;
+    cout.precision(2);
+    cout.setf(ios::fixed, ios::floatfield);
+    cout << " --- Problem definition ---\n\n";
+    cout << " >> Laplace equation in 2D with homogeneous Dirichlet condition\n";
+    cout << " >> Domain = [0, " << Lx << "] x [0, " << Ly << "]\n";
+    cout << " >> Orthogonal mesh uniform per direction with Q1 elements\n";
+    cout << endl;
+    cout << " Global size = " << Map->NumGlobalElements() << endl;
+    cout << endl;
+    cout << " Number of elements in [0, " << Lx << "] (X-direction): " << nX << endl;
+    cout << " Number of elements in [0, " << Ly << "] (Y-direction): " << nY << endl;
+    cout << endl;
+    cout << " Number of interior nodes in the X-direction: " << nX-1 << endl;
+    cout << " Number of interior nodes in the Y-direction: " << nY-1 << endl;
+    cout << endl;
   }
 
 }

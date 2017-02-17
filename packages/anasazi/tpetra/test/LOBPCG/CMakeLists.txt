@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsAddExecutableAndTest)
 
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Triutils)
 IF (${PACKAGE_NAME}_ENABLE_Triutils)
@@ -14,9 +15,6 @@ IF (${PACKAGE_NAME}_ENABLE_Triutils)
     SOURCE_FILES mhd1280b.cua
     EXEDEPS Tpetra_LOBPCG_Complex_test
     )
-
-  # FIXME (mfh 22 Oct 2015) I don't think cxx_main_doublefloat.cpp
-  # actually ever compiled, as long as I've been here.
 
   # TRIBITS_ADD_EXECUTABLE_AND_TEST(
   #   Tpetra_LOBPCG_DoubleFloat_test

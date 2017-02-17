@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -46,16 +46,15 @@
 
 #include "Epetra_Object.h"
 
-template<typename value_type>
 class Epetra_HashTable : public Epetra_Object
 {
   struct Node
   {
-     long long Key;
-     value_type Value;
+     int Key;
+     int Value;
      Node * Ptr;
 
-     Node( const long long key = 0, const value_type value = 0, Node * ptr = 0 )
+     Node( const int key = 0, const int value = 0, Node * ptr = 0 )
      : Key(key), Value(value), Ptr(ptr) {}
 
     private:
@@ -67,14 +66,11 @@ class Epetra_HashTable : public Epetra_Object
   };
 
   Node ** Container_;
-  long long Size_;
+  int Size_;
   unsigned int Seed_;
 
-  int Func( const long long key ) {
-    int intkey = (int) ((key & 0x000000007fffffffLL) + ((key & 0x7fffffff80000000LL) >> 31));
-    return (int) ((Seed_ ^ intkey)%Size_);
-  }
-
+  int Func( const int key ) { return (Seed_ ^ key)%Size_; }
+     
  public:
 
   Epetra_HashTable( const int size, const unsigned int seed = (2654435761U) )
@@ -116,14 +112,14 @@ class Epetra_HashTable : public Epetra_Object
     delete [] Container_;
   }
 
-  void Add( const long long key, const value_type value )
+  void Add( const int key, const int value )
   {
     int v = Func(key);
     Node * n1 = Container_[v];
     Container_[v] = new Node(key,value,n1);
   }
 
-  value_type Get( const long long key )
+  int Get( const int key )
   {
     Node * n = Container_[ Func(key) ];
     while( n && (n->Key != key) ) n = n->Ptr;

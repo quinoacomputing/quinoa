@@ -1,2 +1,0 @@
-#include "Thyra_MueLuTpetraQ2Q1PreconditionerFactory_decl.hpp"
-#include "Thyra_MueLuTpetraQ2Q1PreconditionerFactory_def.hpp"

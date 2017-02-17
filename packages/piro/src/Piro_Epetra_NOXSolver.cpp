@@ -41,6 +41,7 @@
 // @HEADER
 
 #include "Piro_Epetra_NOXSolver.hpp"
+#include "Piro_ValidPiroParameters.hpp"
 #include "Piro_Epetra_MatrixFreeDecorator.hpp"
 #include "Piro_Epetra_SensitivityOperator.hpp"
 
@@ -59,11 +60,13 @@ Piro::Epetra::NOXSolver::NOXSolver(
   observer(observer_),
   utils(piroParams->sublist("NOX").sublist("Printing"))
 {
+  //piroParams->validateParameters(*Piro::getValidPiroParameters(),0);
+
   Teuchos::RCP<Teuchos::ParameterList> noxParams =
 	Teuchos::rcp(&(piroParams->sublist("NOX")),false);
   Teuchos::ParameterList& printParams = noxParams->sublist("Printing");
 
-  std::string jacobianSource = piroParams->get("Jacobian Operator", "Have Jacobian");
+  string jacobianSource = piroParams->get("Jacobian Operator", "Have Jacobian");
   bool leanMatrixFree = piroParams->get("Lean Matrix Free",false);
 
   Teuchos::ParameterList& noxstratlsParams = noxParams->
@@ -229,26 +232,6 @@ Teuchos::RCP<const Epetra_Vector> Piro::Epetra::NOXSolver::get_p_init(int l) con
   return model->get_p_init(l);
 }
 
-Teuchos::RCP<const Epetra_Vector> Piro::Epetra::NOXSolver::get_p_lower_bounds(int l) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in Piro::Epetra::NOXSolver::get_p_lower_bounds():  " <<
-                     "Invalid parameter index l = " <<
-                     l << std::endl);
-  return model->get_p_lower_bounds(l);
-}
-
-Teuchos::RCP<const Epetra_Vector> Piro::Epetra::NOXSolver::get_p_upper_bounds(int l) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in Piro::Epetra::NOXSolver::get_upper_bounds():  " <<
-                     "Invalid parameter index l = " <<
-                     l << std::endl);
-  return model->get_p_upper_bounds(l);
-}
-
 Teuchos::RCP<Epetra_Operator>
 Piro::Epetra::NOXSolver::create_DgDp_op( int j, int l ) const
 {
@@ -317,10 +300,9 @@ void Piro::Epetra::NOXSolver::evalModel(const InArgs& inArgs,
 
   // Print status
   if (status == NOX::StatusTest::Converged) 
-    //utils.out() << "Step Converged" << std::endl;
-    ;
+    utils.out() << "Step Converged" << endl;
   else {
-    utils.out() << "Nonlinear solver failed to converge!" << std::endl;
+    utils.out() << "Nonlinear solver failed to converge!" << endl;
     outArgs.setFailed();
   }
 
@@ -331,17 +313,17 @@ void Piro::Epetra::NOXSolver::evalModel(const InArgs& inArgs,
 
   // Print solution
   if (utils.isPrintType(NOX::Utils::Details)) {
-    utils.out() << std::endl << "Final Solution" << std::endl
-		<< "****************" << std::endl;
+    utils.out() << endl << "Final Solution" << endl
+		<< "****************" << endl;
     finalSolution->Print(utils.pout());
   }
 
   // Output the parameter list
   if (utils.isPrintType(NOX::Utils::Parameters)) {
-    utils.out() << std::endl << "Final Parameters" << std::endl
-		<< "****************" << std::endl;
+    utils.out() << endl << "Final Parameters" << endl
+		<< "****************" << endl;
     piroParams->print(utils.out());
-    utils.out() << std::endl;
+    utils.out() << endl;
   }
 
   // Print stats
@@ -362,14 +344,14 @@ void Piro::Epetra::NOXSolver::evalModel(const InArgs& inArgs,
 
     utils.out() << "Convergence Stats: for step  #" << stepNum << " : Newton, Krylov, Kr/Ne; LastKrylov, LastTol: " 
 	 << NewtonIters << "  " << KrylovIters << "  " 
-	 << (((double) NewtonIters!=0) ? ((double) KrylovIters / (double) NewtonIters) : 0.0) << "  " 
-         << lastSolveKrylovIters << " " <<  linsys->getAchievedTol() << std::endl;
+	 << (double) KrylovIters / (double) NewtonIters << "  " 
+         << lastSolveKrylovIters << " " <<  linsys->getAchievedTol() << endl;
 
     if (stepNum > 1)
      utils.out() << "Convergence Stats: running total: Newton, Krylov, Kr/Ne, Kr/Step: " 
            << totalNewtonIters << "  " << totalKrylovIters << "  " 
-           << (((double) totalNewtonIters!=0) ? ((double) totalKrylovIters / (double) totalNewtonIters) : 0.0)
-           << "  " << (double) totalKrylovIters / (double) stepNum << std::endl;
+           << (double) totalKrylovIters / (double) totalNewtonIters 
+           << "  " << (double) totalKrylovIters / (double) stepNum << endl;
     
   }
     
@@ -387,7 +369,7 @@ void Piro::Epetra::NOXSolver::evalModel(const InArgs& inArgs,
   std::string sensitivity_method = piroParams->get("Sensitivity Method",
 						   "Forward");
 
-  bool do_sens = false;
+  bool do_sens;
   for (int i=0; i<num_p; i++) {
     // p
     model_inargs.set_p(i, inArgs.get_p(i));

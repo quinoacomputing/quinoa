@@ -1,48 +1,3 @@
-/*
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine      kddevin@sandia.gov
- *                    Erik Boman        egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
 /**************************************************************
 * Stress test that can create a very large hypergraph to test
 * the large memory problems.
@@ -73,7 +28,6 @@
 #include <getopt.h>
 #include <stdint.h>
 #include <math.h>
-#include <inttypes.h>
 #include <sys/time.h>
 #include "zz_const.h"
 
@@ -182,20 +136,20 @@ static int get_vertex_coordinate(
 {
   *z = (double)myRank;
   if (lid < lid_quarter[1]){
-   *x = x_coord[lid];
-   *y = y_coord[lid];
+   *x = x_coord[lid];  
+   *y = y_coord[lid];  
   }
   else if (lid < lid_quarter[2]){
-   *x = x_coord[lid_quarter[2] -1 - lid];
-   *y = -y_coord[lid_quarter[2] -1 - lid];
+   *x = x_coord[lid_quarter[2] -1 - lid];  
+   *y = -y_coord[lid_quarter[2] -1 - lid];  
   }
   else if (lid < lid_quarter[3]){
    *x = -x_coord[lid - lid_quarter[2]];
    *y = -y_coord[lid - lid_quarter[2]];
   }
   else{
-   *x = -x_coord[lid_quarter[4] -1 - lid];
-   *y = y_coord[lid_quarter[4] -1 - lid];
+   *x = -x_coord[lid_quarter[4] -1 - lid];  
+   *y = y_coord[lid_quarter[4] -1 - lid];  
   }
   return 0;
 }
@@ -241,19 +195,19 @@ static void get_geometry(void *data, int num_gid, int num_lid,
     c += 3;
   }
 }
-static void get_local_hypergraph_size(void *data,
+static void get_local_hypergraph_size(void *data, 
                   int *num_lists, int *num_pins, int *format, int *ierr)
 {
-  /* Each vertex represents a "hyperedge".
+  /* Each vertex represents a "hyperedge".  
      It and its neighbors are the vertices in the hyperedge. */
 
   *ierr = ZOLTAN_OK;
   *num_lists = numMyVertices;
   *num_pins = numPins;
   *format = ZOLTAN_COMPRESSED_EDGE;
-}
+}                    
 
-static void get_local_hypergraph(void *data,
+static void get_local_hypergraph(void *data, 
          int sizeGID, int num_edges, int num_pins, int format,
          ZOLTAN_ID_PTR edgeGID, int *index, ZOLTAN_ID_PTR pinGID, int *ierr)
 {
@@ -352,7 +306,7 @@ float wgt;
       before = globalID[i] - 1;
     }
 
-    if ((int)lid==num_obj-1){
+    if (lid==num_obj-1){
       after = proc_vertex_gid(myRank, 0);
     }
     else{
@@ -628,7 +582,7 @@ int main(int argc, char *argv[])
 
   /* PHG parameters  - see the Zoltan User's Guide for many more
    *   (The "REPARTITION" approach asks Zoltan to create a partitioning that is
-   *    better but is not too far from the current partitioning, rather than partitioning
+   *    better but is not too far from the current partitioning, rather than partitioning 
    *    from scratch.  It may be faster but of lower quality that LB_APPROACH=PARTITION.)
 
   Zoltan_Set_Param(zz, "LB_APPROACH", "REPARTITION");
@@ -673,7 +627,7 @@ int main(int argc, char *argv[])
   gettimeofday(&t1, NULL);
 
   rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
-        &changes,        /* 1 if partitioning was changed, 0 otherwise */
+        &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
         &numGidEntries,  /* Number of integers used for a global ID */
         &numLidEntries,  /* Number of integers used for a local ID */
         &numImport,      /* Number of vertices to be sent to me */
@@ -731,9 +685,9 @@ int main(int argc, char *argv[])
   ** the storage allocated for the Zoltan structure.
   ******************************************************************/
 
-  Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids,
+  Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
                       &importProcs, &importToPart);
-  Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids,
+  Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
                       &exportProcs, &exportToPart);
 
   Zoltan_Destroy(&zz);
@@ -745,10 +699,10 @@ int main(int argc, char *argv[])
   if (vertex_part) free(vertex_part);
   if (vwgts) free(vwgts);
 
-  MPI_Allreduce(&localMBytes, &avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Reduce(&localMBytes, &avg, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   avg /= (double)numProcs;
-  MPI_Allreduce(&localMBytes, &max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(&localMBytes, &min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Reduce(&localMBytes, &max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&localMBytes, &min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
 
   MPI_Finalize();
 
@@ -794,7 +748,7 @@ static int create_a_graph()
 
   nvtxs = (int)(numGlobalVertices / numProcs);
 
-  if (nvtxs > 4){
+  if (nvtxs > 4){ 
     num4 = nvtxs / 4;
     nvtxs = num4 * 4;
   }
@@ -835,18 +789,8 @@ static int create_a_graph()
   if (gid_base > 0 && (numGlobalVertices/2) > gid_base){
     /* half of the vertex gids should be below gid_base, the other half at or above */
     if (myRank == 0){
-      /* mfh 18 Apr 2014: Seriously, this is how you print an int64_t.
-       * The macro PRId64 is defined in inttypes.h.  See e.g.,
-       *
-       * http://stackoverflow.com/questions/9225567/how-to-print-a-int64-t-type-in-c
-       * http://en.cppreference.com/w/cpp/types/integer
-       *
-       * Some compilers warn if you use %lld to try to print an
-       * int64_t.  long long is guaranteed to be _at_least_ 64 bits,
-       * not _exactly_ 64 bits.
-       */
-      printf("ERROR: When using higher order bits, the global number of "
-             "vertices must be < %" PRId64 "\n", (gid_base)*2);
+      printf("ERROR: When using higher order bits, the global number of vertices must be < %lld\n",
+                 (gid_base)*2);
     }
     MPI_Finalize();
     return 1;
@@ -891,17 +835,17 @@ static int create_a_graph()
     printf("Hypergraph will have %lld hyperedges, %d on each process\n", numGlobalVertices, nvtxs);
   }
 
-  if (vwgt_dim == 0)
+  if (vwgt_dim == 0) 
     vwgt_dim = 1;
 
   if (!unit_weights){
     vwgts = (float *)calloc( vwgt_dim * nvtxs, sizeof(float));
     if (!vwgts) return 1;
-
+  
     mbytes += vwgt_dim * nvtxs * sizeof(float);
-
+    
     srand(0);
-
+  
     for (i = 0; i < nvtxs; i++)  {
       if (!random_weights){ /* Unit weights if no weights were requested. */
         vwgts[i] = 1.0;

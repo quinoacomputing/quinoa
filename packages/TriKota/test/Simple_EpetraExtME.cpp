@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // 
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
@@ -36,7 +36,6 @@
 #  include "Epetra_SerialComm.h"
 #endif // HAVE_MPI
 
-#include <iostream>
 
 #ifdef HAVE_MPI
 Simple_ModelEval::Simple_ModelEval(const MPI_Comm appComm) 
@@ -137,7 +136,7 @@ void Simple_ModelEval::evalModel( const InArgs& inArgs,
 
   // Parse InArgs
   Teuchos::RCP<const Epetra_Vector> p_in = inArgs.get_p(0);
-  if (!p_in.get()) std::cout << "ERROR: Simple_ModelEval requires p as inargs" << std::endl;
+  if (!p_in.get()) cout << "ERROR: Simple_ModelEval requires p as inargs" << endl;
   int numParameters = p_in->GlobalLength();
 
   // Parse OutArgs

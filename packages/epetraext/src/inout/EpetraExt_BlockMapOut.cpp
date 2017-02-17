@@ -38,18 +38,13 @@
 //
 // ***********************************************************************
 //@HEADER
-#include "Epetra_ConfigDefs.h"
 #include "EpetraExt_BlockMapOut.h"
 #include "EpetraExt_mmio.h"
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
 #include "Epetra_Map.h"
 #include "Epetra_IntVector.h"
-#include "Epetra_LongLongVector.h"
-#include "Epetra_GIDTypeVector.h"
 #include "Epetra_IntSerialDenseVector.h"
-#include "Epetra_LongLongSerialDenseVector.h"
-#include "Epetra_GIDTypeSerialDenseVector.h"
 #include "Epetra_Import.h"
 
 using namespace EpetraExt;
@@ -59,7 +54,7 @@ int BlockMapToMatrixMarketFile( const char *filename, const Epetra_BlockMap & ma
 				 const char * mapName,
 				 const char *mapDescription, 
 				 bool writeHeader) {
-  long long M = map.NumGlobalElements64();
+  int M = map.NumGlobalElements();
   int N = 1;
   if (map.MaxElementSize()>1) N = 2; // Non-trivial block map, store element sizes in second column
 
@@ -110,9 +105,9 @@ int BlockMapToMatrixMarketFile( const char *filename, const Epetra_BlockMap & ma
       fprintf(handle, "%s", "%MinElementSize: Minimum element size:\n");
       fprintf(handle, "%% %d \n", map.MinElementSize());
       fprintf(handle, "%s", "%IndexBase: Index base of map:\n");
-      fprintf(handle, "%% %lld \n", map.IndexBase64());
+      fprintf(handle, "%% %d \n", map.IndexBase());
       fprintf(handle, "%s", "%NumGlobalElements: Total number of GIDs in map:\n");
-      fprintf(handle, "%% %lld \n", map.NumGlobalElements64());
+      fprintf(handle, "%% %d \n", map.NumGlobalElements());
       fprintf(handle, "%s", "%NumMyElements: BlockMap lengths per processor:\n");
       for ( int i=0; i< v2.MyLength(); i++) fprintf(handle, "%% %d\n", v2[i]);
       
@@ -126,38 +121,36 @@ int BlockMapToMatrixMarketFile( const char *filename, const Epetra_BlockMap & ma
   return(0);
 }
 
-template<typename int_type>
-int TBlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
+int BlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
 
   const Epetra_Comm & comm = map.Comm();
   int numProc = comm.NumProc();
   bool doSizes = !map.ConstantElementSize();
 
   if (numProc==1) {
-    int_type * myElements = 0;
-	map.MyGlobalElementsPtr(myElements);
+    int * myElements = map.MyGlobalElements();
     int * elementSizeList = 0;
     if (doSizes) elementSizeList = map.ElementSizeList();
-    return(writeBlockMap(handle, map.NumGlobalElements64(), myElements, elementSizeList, doSizes));
+    return(writeBlockMap(handle, map.NumGlobalElements(), myElements, elementSizeList, doSizes));
   }
 
   int numRows = map.NumMyElements();
   
-  Epetra_Map allGidsMap((int_type) -1, numRows, (int_type) 0,comm);
+  Epetra_Map allGidsMap(-1, numRows, 0,comm);
   
-  typename Epetra_GIDTypeVector<int_type>::impl allGids(allGidsMap);
-  for (int i=0; i<numRows; i++) allGids[i] = (int_type) map.GID64(i);
+  Epetra_IntVector allGids(allGidsMap);
+  for (int i=0; i<numRows; i++) allGids[i] = map.GID(i);
   
   Epetra_IntVector allSizes(allGidsMap);
   for (int i=0; i<numRows; i++) allSizes[i] = map.ElementSize(i);
   
   // Now construct a Map on PE 0 by strip-mining the rows of the input matrix map.
   int numChunks = numProc;
-  int stripSize = allGids.GlobalLength64()/numChunks;
-  int remainder = allGids.GlobalLength64()%numChunks;
+  int stripSize = allGids.GlobalLength()/numChunks;
+  int remainder = allGids.GlobalLength()%numChunks;
   int curStart = 0;
   int curStripSize = 0;
-  typename Epetra_GIDTypeSerialDenseVector<int_type>::impl importGidList;
+  Epetra_IntSerialDenseVector importGidList;
   Epetra_IntSerialDenseVector importSizeList;
   if (comm.MyPID()==0) {
     importGidList.Size(stripSize+1); // Set size of vector to max needed
@@ -171,10 +164,10 @@ int TBlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
       curStart += curStripSize;
     }
     // The following import map will be non-trivial only on PE 0.
-    Epetra_Map importGidMap((int_type) -1, curStripSize, importGidList.Values(), 0, comm);
+    Epetra_Map importGidMap(-1, curStripSize, importGidList.Values(), 0, comm);
     Epetra_Import gidImporter(importGidMap, allGidsMap);
     
-    typename Epetra_GIDTypeVector<int_type>::impl importGids(importGidMap);
+    Epetra_IntVector importGids(importGidMap);
     if (importGids.Import(allGids, gidImporter, Insert)) return(-1); 
     Epetra_IntVector importSizes(importGidMap);
     if (doSizes) if (importSizes.Import(allSizes, gidImporter, Insert)) return(-1); 
@@ -182,7 +175,7 @@ int TBlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
     // importGids (and importSizes, if non-trivial block map)
     // now have a list of GIDs (and sizes, respectively) for the current strip of map.
     
-    int_type * myElements = importGids.Values();
+    int * myElements = importGids.Values();
     int * elementSizeList = 0;
     if (doSizes) elementSizeList = importSizes.Values();
     // Finally we are ready to write this strip of the map to file
@@ -190,42 +183,13 @@ int TBlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
   }
   return(0);
 }
+int writeBlockMap(FILE * handle, int length, const int * v1, const int * v2, bool doSizes) {
 
-int BlockMapToHandle(FILE * handle, const Epetra_BlockMap & map) {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(map.GlobalIndicesInt()) {
-    return TBlockMapToHandle<int>(handle, map);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(map.GlobalIndicesLongLong()) {
-    return TBlockMapToHandle<long long>(handle, map);
-  }
-  else
-#endif
-    throw "EpetraExt::BlockMapToHandle: GlobalIndices type unknown";
-}
-
-int writeBlockMap(FILE * handle, long long length, const int * v1, const int * v2, bool doSizes) {
-
-  for (long long i=0; i<length; i++) {
+  for (int i=0; i<length; i++) {
     fprintf(handle, "%d", v1[i]);
     if (doSizes) fprintf(handle, " %d", v2[i]);
     fprintf(handle, "%s", "\n");
   }
   return(0);
 }
-
-int writeBlockMap(FILE * handle, long long length, const long long * v1, const int * v2, bool doSizes) {
-
-  for (long long i=0; i<length; i++) {
-    fprintf(handle, "%lld", v1[i]);
-    if (doSizes) fprintf(handle, " %d", v2[i]);
-    fprintf(handle, "%s", "\n");
-  }
-  return(0);
-}
-
 } // namespace EpetraExt
-

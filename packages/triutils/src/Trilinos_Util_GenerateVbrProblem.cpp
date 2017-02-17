@@ -40,7 +40,6 @@
 // @HEADER
 
 #include "Trilinos_Util.h"
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
 #include "Epetra_Map.h"
@@ -49,9 +48,6 @@
 #include "Epetra_IntVector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_VbrMatrix.h"
-
-// CJ TODO FIXME: Trilinos_Util_GenerateVbrProblem available only if 32 bit GIDs available.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 
 // Constructs a 2D PDE finite difference matrix using the list of x and y offsets.
 // 
@@ -132,7 +128,7 @@ void Trilinos_Util_GenerateVbrProblem(int nx, int ny, int npoints, int * xoff, i
 
 	Epetra_IntVector elementSizes(ptMap); // This vector will have the list of element sizes
 	for (i=0; i<numMyElements; i++) 
-		elementSizes[i] = sizes[ptMap.GID64(i)%nsizes]; // cycle through sizes array
+		elementSizes[i] = sizes[ptMap.GID(i)%nsizes]; // cycle through sizes array
 
 	map = new Epetra_BlockMap(-1, numMyElements, ptMap.MyGlobalElements(), elementSizes.Values(),
 														ptMap.IndexBase(), ptMap.Comm());
@@ -216,5 +212,3 @@ void Trilinos_Util_GenerateVbrProblem(int nx, int ny, int npoints, int * xoff, i
 
   return;
 }
-
-#endif

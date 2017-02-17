@@ -38,10 +38,9 @@
 #ifndef IFPACK_SUBDOMAINFILTER_H
 #define IFPACK_SUBDOMAINFILTER_H
 
+#ifdef IFPACK_SUBCOMM_CODE
+
 #include "Ifpack_ConfigDefs.h"
-
-#ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
-
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #else
@@ -226,7 +225,6 @@ public:
     IFPACK_RETURN(-1.0);
   }
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   //! Returns the number of nonzero entries in the global matrix.
   virtual int NumGlobalNonzeros() const
   {
@@ -248,31 +246,6 @@ public:
 
   //! Returns the number of global nonzero diagonal entries, based on global row/column index comparisons.
   virtual int NumGlobalDiagonals() const
-  {
-    return(NumGlobalRows_);
-  }
-#endif
-
-  //! Returns the number of nonzero entries in the global matrix.
-  virtual long long NumGlobalNonzeros64() const
-  {
-    return(NumGlobalNonzeros_);
-  }
-
-  //! Returns the number of global matrix rows.
-  virtual long long NumGlobalRows64() const
-  {
-    return(NumGlobalRows_);
-  }
-
-  //! Returns the number of global matrix columns.
-  virtual long long NumGlobalCols64() const
-  {
-    return(NumGlobalRows_);
-  }
-
-  //! Returns the number of global nonzero diagonal entries, based on global row/column index comparisons.
-  virtual long long NumGlobalDiagonals64() const
   {
     return(NumGlobalRows_);
   }
@@ -458,5 +431,5 @@ private:
   Teuchos::RCP<Epetra_Export> Exporter_;
 
 };
-#endif //ifdef HAVE_IFPACK_PARALLEL_SUBDOMAIN_SOLVERS
+#endif //ifdef IFPACK_SUBCOMM_CODE
 #endif /* IFPACK_SUBDOMAINFILTER_H */

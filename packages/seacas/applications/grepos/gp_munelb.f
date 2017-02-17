@@ -35,8 +35,7 @@ C=======================================================================
       SUBROUTINE MUNELB (NELBLK, ISTAT, NUMEL,
      &   IDELB, NUMELB, NUMLNK, NUMATR,
      &   LINK, ATRIB, LINKX, ATRIBX, IXEL, IXELB, NELBX,
-     $   ISCR, BLKTYP, SCRSTR, LLINK, LATRIB, ATNAMES,
-     *   EBNAME)
+     $   ISCR, BLKTYP, SCRSTR, LLINK, LATRIB, ATNAMES)
 C=======================================================================
 
 C   --*** MUNELB *** (GJOIN) Compress and rearrange element blocks
@@ -84,7 +83,6 @@ C   --   SCRSTR - SCRATCH - size = MXNAM
       INTEGER ISCR(*)
       CHARACTER*(MXSTLN) BLKTYP(*), SCRSTR(*)
       CHARACTER*(maxnam) ATNAMES(*)
-      CHARACTER*(maxnam) EBNAME(*)
 
       DO 100 I = 1, NUMEL
          IXEL(I) = 0
@@ -154,7 +152,6 @@ C   --   SCRSTR - SCRATCH - size = MXNAM
       CALL ORDIX  (JBLK, IXELB, NELBLK, NUMLNK, ISCR, NUMLNK)
       CALL ORDIX  (JBLK, IXELB, NELBLK, NUMATR, ISCR, NUMATR)
       CALL ORDSTR (JBLK, IXELB, NELBLK, BLKTYP, SCRSTR, BLKTYP)
-      CALL ORDSTR (JBLK, IXELB, NELBLK, EBNAME, SCRSTR, EBNAME)
       NELBLK = JBLK
       NUMEL  = JEL0
       LLINK  = JLNK-1

@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -56,7 +43,7 @@ class Epetra_RowMatrix;
   Class Ifpack_Preconditioner is a pure virtual class, and it defines
   the structure of all Ifpack preconditioners.
 
-  This class is a simple extension to Epetra_Operator. It provides
+  This class is a simple extension to Epetra_Operator. It provides 
   the following additional methods:
   - Initialize() performs all operations based on the graph
     of the matrix (without considering the numerical values);
@@ -74,7 +61,7 @@ class Epetra_RowMatrix;
 It is required that Compute() call Initialize() if IsInitialized()
 returns false. The preconditioner is applied by ApplyInverse()
 (which returns if IsComputed() is false). Every time that Initialize()
-is called, the object destroys all the previously allocated
+is called, the object destroys all the previously allocated 
 information, and re-initialize the preconditioner. Every time
 Compute() is called, the object re-computed the actual values of
 the preconditioner.
@@ -97,10 +84,10 @@ Ifpack_GMRES).
 
 While Ifpack_CG and Ifpack_GMRES construct and AztecOO solver, and
 use methods AZ_cg_condnum and AZ_gmres_condnum to evaluate an
-accurate (but very expensive) estimate of the condition number,
+accurate (but very expensive) estimate of the condition number, 
 Ifpack_Cheap computes \f$\|(P)^{-1}e\|_\infty\f$, which is
 only a very crude estimation of the actual condition number. Note that
-this estimated number can be less than 1.0.
+this estimated number can be less than 1.0. 
 However, this approach has the following advantages:
 - since finding \f$z\f$ such that \f$P z = y\f$
 is a basic kernel for applying the preconditioner, computing this
@@ -109,19 +96,19 @@ the solve kernel to compute \f$z\f$ and then
 computing \f$\|z\|_\infty\f$;
 - the only cost is one application of the preconditioner.
 
-If this estimate is very large, the application of the computed
+If this estimate is very large, the application of the computed 
 preconditioner may generate large numerical errors. Hence, the user
 may check this number, and decide to recompute the preconditioner is
-the computed estimate is larger than a given threshold. This is particularly useful in ICT and RILUK factorizations, as for
+the computed estimate is larger than a given threshold. This is particularly useful in ICT and RILUK factorizations, as for 
 ill-conditioned matrices, we often have difficulty computing usable incomplete
 factorizations.  The most common source of problems is that the factorization may encounter a small or zero pivot,
 in which case the factorization can fail, or even if the factorization
 succeeds, the factors may be so poorly conditioned that use of them in
 the iterative phase produces meaningless results.  Before we can fix
-this problem, we must be able to detect it.
+this problem, we must be able to detect it.  
 
-
-\note
+  
+\note 
   If IFPACK is configured with Teuchos support, method SetParameters()
   should be adopted. Otherwise, users can set parameters (one at-a-time),
   using methods SetParameter(), for integers and doubles.
@@ -156,14 +143,14 @@ public:
   virtual double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                          const int MaxIters = 1550,
                          const double Tol = 1e-9,
-                         Epetra_RowMatrix* Matrix = 0) = 0;
+			 Epetra_RowMatrix* Matrix = 0) = 0;
 
   //! Returns the computed condition number estimate, or -1.0 if not computed.
   virtual double Condest() const = 0;
 
   //! Applies the preconditioner to vector X, returns the result in Y.
   virtual int ApplyInverse(const Epetra_MultiVector& X,
-                           Epetra_MultiVector& Y) const = 0;
+			   Epetra_MultiVector& Y) const = 0;
 
   //! Returns a pointer to the matrix to be preconditioned.
   virtual const Epetra_RowMatrix& Matrix() const = 0;
@@ -196,11 +183,11 @@ public:
   virtual double ApplyInverseFlops() const = 0;
 
   //! Prints basic information on iostream. This function is used by operator<<.
-  virtual std::ostream& Print(std::ostream& os) const = 0;
+  virtual ostream& Print(std::ostream& os) const = 0;
 
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Ifpack_Preconditioner& obj)
+inline ostream& operator<<(ostream& os, const Ifpack_Preconditioner& obj)
 {
   return(obj.Print(os));
 }

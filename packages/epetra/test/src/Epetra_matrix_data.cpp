@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -230,16 +230,16 @@ double* matrix_data::coefs(int row, int col)
   int row_idx = Epetra_Util_binary_search(row, rows_, numrows_,
                                           insertPoint);
   if (row_idx < 0) {
-    std::cerr << "ERROR, row " << row
-         << " not found in matrix_data"<< std::endl;
+    cerr << "ERROR, row " << row
+         << " not found in matrix_data"<<endl;
     return 0;
   }
 
   int col_idx = Epetra_Util_binary_search(col, colindices_[row_idx],
                                           rowlengths_[row_idx], insertPoint);
   if (col_idx < 0) {
-    std::cerr << "ERROR, col " << col
-         << " not found in matrix_data"<< std::endl;
+    cerr << "ERROR, col " << col
+         << " not found in matrix_data"<<endl;
     return 0;
   }
 
@@ -247,7 +247,6 @@ double* matrix_data::coefs(int row, int col)
   return( &(coefs_[row_idx][col_idx*dim]) );
 }
 
-/* Not used
 void matrix_data::copy_local_data_to_matrix(Epetra_CrsMatrix& A)
 {
   const Epetra_Map& rowmap = A.RowMap();
@@ -264,95 +263,45 @@ void matrix_data::copy_local_data_to_matrix(Epetra_CrsMatrix& A)
     }
   }
 }
-*/
 
 bool matrix_data::compare_local_data(const Epetra_CrsMatrix& A)
 {
   const Epetra_Map& map = A.RowMap();
   int numMyRows = map.NumMyElements();
+  int* myRows = map.MyGlobalElements();
+
   Epetra_Util util;
 
-  if(map.GlobalIndicesInt()) {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    int* myRows_int = map.MyGlobalElements();
-    for(int i=0; i<numMyRows; ++i) {
-      int row = myRows_int[i];
-      int rowLen = A.NumGlobalEntries(row);
-      if (rowLen != rowlengths_[row]) {
-        return(false);
-      }
-
-      int* indices = new int[rowLen];
-      double* values = new double[rowLen];
-      A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
-
-      util.Sort(true, rowLen, indices, 1, &values, 0, 0, 0, 0);
-
-      bool same = true;
-      int* this_indices = colindices_[row];
-      double* this_coefs = coefs_[row];
-
-      for(int j=0; j<rowLen; ++j) {
-        if (indices[j] != this_indices[j]) {
-          same = false; break;
-        }
-        if (values[j] != this_coefs[j]) {
-          same = false; break;
-        }
-      }
-
-      delete [] indices;
-      delete [] values;
-
-      if (!same) return(false);
+  for(int i=0; i<numMyRows; ++i) {
+    int row = myRows[i];
+    int rowLen = A.NumGlobalEntries(row);
+    if (rowLen != rowlengths_[row]) {
+      return(false);
     }
 
-#else
-	throw "matrix_data::compare_local_data: global index int but no API for it.";
-#endif
-  }
-  else if(map.GlobalIndicesLongLong()) {
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    long long* myRows_LL = map.MyGlobalElements64();
-    for(int i=0; i<numMyRows; ++i) {
-      long long row = myRows_LL[i];
-      int rowLen = A.NumGlobalEntries(row);
-      if (rowLen != rowlengths_[row]) {
-        return(false);
+    int* indices = new int[rowLen];
+    double* values = new double[rowLen];
+    A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
+
+    util.Sort(true, rowLen, indices, 1, &values, 0, 0);
+
+    bool same = true;
+    int* this_indices = colindices_[row];
+    double* this_coefs = coefs_[row];
+
+    for(int j=0; j<rowLen; ++j) {
+      if (indices[j] != this_indices[j]) {
+        same = false; break;
       }
-
-      long long* indices = new long long[rowLen];
-      double* values = new double[rowLen];
-      A.ExtractGlobalRowCopy(row, rowLen, rowLen, values, indices);
-
-      util.Sort(true, rowLen, indices, 1, &values, 0, 0, 0, 0);
-
-      bool same = true;
-      int* this_indices = colindices_[row];
-      double* this_coefs = coefs_[row];
-
-      for(int j=0; j<rowLen; ++j) {
-        if (indices[j] != this_indices[j]) {
-          same = false; break;
-        }
-        if (values[j] != this_coefs[j]) {
-          same = false; break;
-        }
+      if (values[j] != this_coefs[j]) {
+        same = false; break;
       }
-
-      delete [] indices;
-      delete [] values;
-
-      if (!same) return(false);
     }
 
-#else
-	throw "matrix_data::compare_local_data: global index long long but no API for it.";
-#endif
-  }
-  else {
-	assert(false);
-	throw "matrix_data::compare_local_data: global index type of map unknown.";
+    delete [] indices;
+    delete [] values;
+
+    if (!same) return(false);
   }
 
   return(true);

@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 #include <mpi.h>
 #ifdef TIMER_CALLBACKS
@@ -78,7 +45,6 @@ extern "C" {
 #endif
 
 static int Num_Global_Parts;
-static int Obj_Weight_Dim;
 static int Num_GID = 1, Num_LID = 1;
 static int Export_Lists_Special = 0;
 static void test_drops(int, MESH_INFO_PTR, PARIO_INFO_PTR,
@@ -156,7 +122,6 @@ int setup_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
   /* Allocate space for arrays. */
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   Num_Global_Parts = nprocs;
-  Obj_Weight_Dim = 0;
   psize = (float *) malloc(nprocs*sizeof(float));
   partid = (int *) malloc(2*nprocs*sizeof(int));
   idx = partid + nprocs;
@@ -172,8 +137,11 @@ int setup_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
     if (prob->params[i].Index>=0)
       ierr = Zoltan_Set_Param_Vec(zz, prob->params[i].Name, prob->params[i].Val,
 	     prob->params[i].Index);
-    else 
+    else {
       ierr = Zoltan_Set_Param(zz, prob->params[i].Name, prob->params[i].Val);
+      if (strncasecmp(prob->params[i].Name, "NUM_GLOBAL_PART",15) == 0)
+	Num_Global_Parts = atoi(prob->params[i].Val);
+    }
     if (ierr == ZOLTAN_FATAL) {
       sprintf(errmsg,
 	      "fatal: error in Zoltan_Set_Param when setting parameter %s\n",
@@ -181,21 +149,12 @@ int setup_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
       Gen_Error(0, errmsg);
       return 0;
     }
-    if (strncasecmp(prob->params[i].Name, "NUM_GLOBAL_PART",15) == 0)
-      Num_Global_Parts = atoi(prob->params[i].Val);
-    if (strcasecmp(prob->params[i].Name, "OBJ_WEIGHT_DIM") == 0)
-      Obj_Weight_Dim = atoi(prob->params[i].Val);
     if (strcasecmp(prob->params[i].Name, "NUM_GID_ENTRIES") == 0)
       Num_GID = atoi(prob->params[i].Val);
     else if (strcasecmp(prob->params[i].Name, "NUM_LID_ENTRIES") == 0)
       Num_LID = atoi(prob->params[i].Val);
     else if (strcasecmp(prob->params[i].Name, "RETURN_LISTS") == 0)
-      Export_Lists_Special = ((strstr(prob->params[i].Val,"part") != NULL) ||
-                              (strstr(prob->params[i].Val,"Part") != NULL) ||
-                              (strstr(prob->params[i].Val,"PArt") != NULL) ||
-                              (strstr(prob->params[i].Val,"PARt") != NULL) ||
-                              (strstr(prob->params[i].Val,"PART") != NULL));
-                              /* strcasestr not supported in PGI compiler */
+      Export_Lists_Special = (strstr(prob->params[i].Val,"partition") != NULL);
   }
 
   /* Set the load-balance method */
@@ -329,29 +288,6 @@ int setup_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
     }
     /* Set part sizes using global numbers. */
     Zoltan_LB_Set_Part_Sizes(zz, 1, nparts, partid, NULL, psize);
-  }
-  else if (Test.Local_Parts == 9) {
-    /* explicitly set part sizes to be uniform parts. */
-    /* Added to test Zoltan_LB_Build_PartDist when num_global_parts < nproc,
-     * obj_weight_dim > 1 and part sizes explicitly set. (see bug 6339) */
-    /* Set part size for each part and each weight dimension */
-    float unifsize = 1. / Num_Global_Parts;
-    int wgtdim = (Obj_Weight_Dim > 0 ? Obj_Weight_Dim : 1);
-    int nentries = Num_Global_Parts * wgtdim;
-
-    safe_free((void **)(void *) &psize);
-    safe_free((void **)(void *) &partid);
-  
-    psize = (float *) malloc(nentries * sizeof(float));
-    partid = (int *) malloc(2 * nentries * sizeof(int));
-    idx = partid + nentries;
-
-    for (i = 0; i < nentries; i++) {
-      psize[i] = unifsize;
-      partid[i] = i / wgtdim;
-      idx[i] = i % wgtdim;
-    }
-    Zoltan_LB_Set_Part_Sizes(zz, 1, nentries, partid, idx, psize);
   }
 
   /* Free temporary arrays for part sizes. */
@@ -496,7 +432,7 @@ int setup_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
   }
 
   /* Hypergraph-based callbacks */
-  if ((mesh->data_type == ZOLTAN_HYPERGRAPH) && Test.Hypergraph_Callbacks) {
+  if ((mesh->data_type == HYPERGRAPH) && Test.Hypergraph_Callbacks) {
 
     if (Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_CS_FN_TYPE,
 		      (void (*)()) get_hg_size_compressed_pin_storage,
@@ -700,35 +636,6 @@ int run_zoltan(struct Zoltan_Struct *zz, int Proc, PROB_INFO_PTR prob,
     }
 #endif
 
-#undef KDDKDD_OUTPUT_PARTITION_AND_SKIP_MIGREATION_AND_END
-#ifdef KDDKDD_OUTPUT_PARTITION_AND_SKIP_MIGREATION_AND_END
-{
-/* This code dumps the part assignments to files (one per rank)
- * and then exits before performing migration.
- * This code assumes the initial distribution of the data to
- * the ranks was INITIAL_LINEAR; if it isn't, one can't infer
- * the GID associated with a part in the output.
- */
-char filename[FILENAME_MAX+24];
-FILE *fp;
-if (!Export_Lists_Special) {
-  printf("ERROR:  To output partition without migration, need "
-         "RETURN_LISTS = PART\n");
-  exit(-1);
-}
-sprintf(filename, "%s.out.%04d", pio_info->pexo_fname, Proc);
-fp = fopen(filename, "w");
-for (i = 0; i < num_exported; i++)
-  fprintf(fp, "%d\n", export_to_part[i]);
- /* fprintf(fp, "%d : %d\n", export_gids[(i+1)*Num_GID-1], export_to_part[i]); */
-fclose(fp);
-MPI_Barrier(MPI_COMM_WORLD);
-MPI_Finalize();
-exit(-1);
-}
-#endif
-
-
     /*
      * Call another routine to perform the migration
      */
@@ -774,7 +681,6 @@ exit(-1);
 	return 0;
       }
     }
-
     mytime = MPI_Wtime() - stime;
     MPI_Allreduce(&mytime, &maxtime, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     if (Proc == 0)
@@ -871,6 +777,7 @@ exit(-1);
       /* Only do ordering if this was specified in the driver input file */
       /* NOTE: This part of the code is not modified to recognize
 	       blanked vertices. */
+    int i;
       ZOLTAN_ID_PTR order = NULL;	/* Ordering vector(s) */
       ZOLTAN_ID_PTR order_gids = NULL;  /* List of all gids for ordering */
       ZOLTAN_ID_PTR order_lids = NULL;  /* List of all lids for ordering */
@@ -908,9 +815,6 @@ exit(-1);
       /* Not yet impl. */
     }
 
-    {
-    double kddstart = MPI_Wtime();
-
     if (Zoltan_Order(zz, num_gid_entries,
 	mesh->num_elems, order_gids,
 	order) == ZOLTAN_FATAL) {
@@ -919,12 +823,6 @@ exit(-1);
       safe_free((void **)(void *) &order_gids);
       safe_free((void **)(void *) &order_lids);
       return 0;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (Proc == 0)
-      printf("\nOrdering time = %f seconds\n", MPI_Wtime() - kddstart);
-
     }
 
     /* Evaluate the new ordering */
@@ -1110,7 +1008,7 @@ MESH_INFO_PTR mesh;
 
   STOP_CALLBACK_TIMER;
 
-  if ((mesh->data_type == ZOLTAN_HYPERGRAPH) && mesh->visible_nvtx) {
+  if ((mesh->data_type == HYPERGRAPH) && mesh->visible_nvtx) {
     int i, cnt = 0;
     for (i = 0; i < mesh->num_elems; i++)
       if (mesh->elements[i].globalID <= mesh->visible_nvtx) cnt++;
@@ -1151,7 +1049,7 @@ void get_elements(void *data, int num_gid_entries, int num_lid_entries,
     if (mesh->blank && mesh->blank[i]) continue;
 
     current_elem = &elem[i];
-    if ((mesh->data_type == ZOLTAN_HYPERGRAPH) && mesh->visible_nvtx &&
+    if ((mesh->data_type == HYPERGRAPH) && mesh->visible_nvtx &&
 	(current_elem->globalID > mesh->visible_nvtx)) continue;
 
     for (j = 0; j < gid; j++) global_id[idx*num_gid_entries+j]=0;
@@ -1585,14 +1483,7 @@ void get_edge_list_multi (void *data, int num_gid_entries, int num_lid_entries,
     for (i = 0; i < current_elem->adj_len; i++) {
 
       /* Skip NULL adjacencies (sides that are not adjacent to another elem). */
-      /* KDD 1/22/15  See bug 6278 and comment in dr_const.h.  
-       * This line is needed only for Exodus inputs which will not work correctly 
-       * with current definition of adj as ZOLTAN_ID_PTR, and it generates 
-       * compiler warnings.  If the Exodus interface is revived, this line 
-       * should again be included.
-       *
       if (current_elem->adj[i] == -1) continue;
-       */
 
       if (current_elem->adj_proc[i] == mesh->proc) {
 	local_elem = current_elem->adj[i];
@@ -1668,14 +1559,7 @@ void get_edge_list (void *data, int num_gid_entries, int num_lid_entries,
   for (i = 0; i < current_elem->adj_len; i++) {
 
     /* Skip NULL adjacencies (sides that are not adjacent to another elem). */
-    /* KDD 1/22/15  See bug 6278 and comment in dr_const.h.  
-     * This line is needed only for Exodus inputs which will not work correctly 
-     * with current definition of adj as ZOLTAN_ID_PTR, and it generates 
-     * compiler warnings.  If the Exodus interface is revived, this line 
-     * should again be included.
-     *
     if (current_elem->adj[i] == -1) continue;
-     */
 
     if (current_elem->adj_proc[i] == mesh->proc) {
       local_elem = current_elem->adj[i];

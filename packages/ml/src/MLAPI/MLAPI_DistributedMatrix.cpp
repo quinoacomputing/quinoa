@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 #include "ml_common.h"
 #ifdef HAVE_ML_MLAPI
@@ -19,22 +19,22 @@
 #include "Epetra_FECrsMatrix.h"
 #include <iomanip>
 
-std::ostream& MLAPI::DistributedMatrix::
-Print(std::ostream& os, const bool verbose) const
+ostream& MLAPI::DistributedMatrix::
+Print(ostream& os, const bool verbose) const
 {
   if (GetMyPID() == 0) {
 
-    os << std::endl;
-    os << "*** MLAPI::DistributedMatrix ***" << std::endl;
-    os << "Label = " << GetLabel() << std::endl;
-    os << "Number of rows    = " << GetRangeSpace().GetNumGlobalElements() << std::endl;
-    os << "Number of columns = " << GetDomainSpace().GetNumGlobalElements() << std::endl;
-    os << std::endl;
+    os << endl;
+    os << "*** MLAPI::DistributedMatrix ***" << endl;
+    os << "Label = " << GetLabel() << endl;
+    os << "Number of rows    = " << GetRangeSpace().GetNumGlobalElements() << endl;
+    os << "Number of columns = " << GetDomainSpace().GetNumGlobalElements() << endl;
+    os << endl;
     os.width(10); os << "row ID";
     os.width(10); os << "col ID";
     os.width(30); os << "value";
-    os << std::endl;
-    os << std::endl;
+    os << endl;
+    os << endl;
   }
 
   for (int iproc = 0 ; iproc < GetNumProcs() ; ++iproc) {
@@ -52,7 +52,7 @@ Print(std::ostream& os, const bool verbose) const
             os.width(10); os << GRID;
             os.width(10); os << Matrix_->RowMatrixColMap().GID(Indices[j]);
             os.width(30); os << Values[j];
-            os << std::endl;
+            os << endl;
           }
         }
       }
@@ -67,7 +67,7 @@ Print(std::ostream& os, const bool verbose) const
             os.width(10); os << GRID;
             os.width(10); os << Indices[j];
             os.width(30); os << Values[j];
-            os << std::endl;
+            os << endl;
           }
         }
       }
@@ -76,7 +76,7 @@ Print(std::ostream& os, const bool verbose) const
   }
 
   if (GetMyPID() == 0)
-    os << std::endl;
+    os << endl;
 
   Barrier();
 

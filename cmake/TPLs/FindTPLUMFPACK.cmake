@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( UMFPACK
+TRIBITS_TPL_DECLARE_LIBRARIES( UMFPACK
   REQUIRED_HEADERS umfpack.h amd.h UFconfig.h
   REQUIRED_LIBS_NAMES umfpack amd
   )

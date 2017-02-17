@@ -1,43 +1,31 @@
-// @HEADER
+/*@HEADER
 // ***********************************************************************
 // 
-//         Stratimikos: Thyra-based strategies for linear solvers
-//                Copyright (2006) Sandia Corporation
+//       Ifpack: Object-Oriented Algebraic Preconditioner Package
+//                 Copyright (2002) Sandia Corporation
 // 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 // 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov) 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
 // ***********************************************************************
-// @HEADER
+//@HEADER
+*/
 
 #include "Thyra_MLPreconditionerFactory.hpp"
 
@@ -63,7 +51,6 @@ namespace {
 enum EMLProblemType {
   ML_PROBTYPE_NONE,
   ML_PROBTYPE_SMOOTHED_AGGREGATION, 
-  ML_PROBTYPE_NONSYMMETRIC_SMOOTHED_AGGREGATION,
   ML_PROBTYPE_DOMAIN_DECOMPOSITION,
   ML_PROBTYPE_DOMAIN_DECOMPOSITION_ML,
   ML_PROBTYPE_MAXWELL
@@ -73,7 +60,6 @@ const Teuchos::Array<std::string> BaseMethodDefaults_valueNames
 = Teuchos::tuple<std::string>(
   BaseMethodDefaults_valueNames_none,
   "SA", 
-  "NSSA",
   "DD",
   "DD-ML",
   "maxwell"
@@ -89,14 +75,11 @@ TEUCHOS_STATIC_SETUP()
 }
 
 const std::string BaseMethodDefaults_name = "Base Method Defaults";
-const std::string BaseMethodDefaults_default = "SA";
+const std::string BaseMethodDefaults_default = "DD";
 Teuchos::RCP<
   Teuchos::StringToIntegralParameterEntryValidator<EMLProblemType>
   >
 BaseMethodDefaults_validator;
-
-const std::string ReuseFineLevelSmoother_name = "Reuse Fine Level Smoother";
-const bool ReuseFineLevelSmoother_default = false;
   
 const std::string MLSettings_name = "ML Settings";
 
@@ -289,12 +272,7 @@ void MLPreconditionerFactory::initializePrec(
   if(out.get() && implicit_cast<int>(verbLevel) >= implicit_cast<int>(Teuchos::VERB_LOW))
     *out << "\nComputing the preconditioner ...\n";
   timer.start(true);
-  if (startingOver) {
-    TEUCHOS_TEST_FOR_EXCEPT(0!=ml_precOp->ComputePreconditioner());
-  }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPT(0!=ml_precOp->ReComputePreconditioner(paramList_->get<bool>(ReuseFineLevelSmoother_name)));
-  }
+  TEUCHOS_TEST_FOR_EXCEPT(0!=ml_precOp->ComputePreconditioner());
   timer.stop();
   if(out.get() && implicit_cast<int>(verbLevel) >= implicit_cast<int>(Teuchos::VERB_LOW))
     OSTab(out).o() <<"=> Setup time = "<<timer.totalElapsedTime()<<" sec\n";
@@ -355,11 +333,6 @@ void MLPreconditionerFactory::setParameterList(
   TEUCHOS_TEST_FOR_EXCEPT(paramList.get()==NULL);
   paramList->validateParameters(*this->getValidParameters(),0);
   paramList_ = paramList;
-
-  // set default for reuse of fine level smoother
-  if(!paramList_->isType<bool>(ReuseFineLevelSmoother_name))
-    paramList_->set<bool>(ReuseFineLevelSmoother_name,ReuseFineLevelSmoother_default);
-
   const EMLProblemType
     defaultType = BaseMethodDefaults_validator->getIntegralValue(
       *paramList_,BaseMethodDefaults_name,BaseMethodDefaults_default
@@ -371,7 +344,7 @@ void MLPreconditionerFactory::setParameterList(
     TEUCHOS_TEST_FOR_EXCEPTION(
       0!=ML_Epetra::SetDefaults(defaultTypeStr,defaultParams)
       ,Teuchos::Exceptions::InvalidParameterValue
-      ,"Error, the ML problem type \"" << defaultTypeStr << "\' is not recognized by ML!"
+      ,"Error, the ML problem type \"" << defaultTypeStr << "\' is not recongnised by ML!"
       );
     // Note, the only way the above exception message could be generated is if
     // a default problem type was removed from ML_Epetra::SetDefaults(...).
@@ -380,7 +353,7 @@ void MLPreconditionerFactory::setParameterList(
     // words, this adapter must be maintained as ML is maintained.  An
     // alternative design would be to just pass in whatever string to this
     // function.  This would improve maintainability but it would not generate
-    // very good error messages when a bad string was passed in.  Currently,
+    // very good error messages when a bad string was passed in.  Currenly,
     // the error message attached to the exception will contain the list of
     // valid problem types.
     paramList_->sublist(MLSettings_name).setParametersNotAlreadySet(
@@ -438,7 +411,6 @@ MLPreconditionerFactory::getValidParameters() const
         tuple<std::string>(
           "Do not set any default parameters",
           "Set default parameters for a smoothed aggregation method",
-	  "Set default parameters for a nonsymmetric smoothed aggregation method",
           "Set default parameters for a domain decomposition method",
           "Set default parameters for a domain decomposition method special to ML",
           "Set default parameters for a Maxwell-type of linear operator"
@@ -446,7 +418,6 @@ MLPreconditionerFactory::getValidParameters() const
         tuple<EMLProblemType>(
           ML_PROBTYPE_NONE,
           ML_PROBTYPE_SMOOTHED_AGGREGATION,
-	  ML_PROBTYPE_NONSYMMETRIC_SMOOTHED_AGGREGATION,
           ML_PROBTYPE_DOMAIN_DECOMPOSITION,
           ML_PROBTYPE_DOMAIN_DECOMPOSITION_ML,
           ML_PROBTYPE_MAXWELL
@@ -460,9 +431,6 @@ MLPreconditionerFactory::getValidParameters() const
       "in the sublist \"" + MLSettings_name + "\"!",
       rcp_implicit_cast<const PEV>(BaseMethodDefaults_validator)
       );
-
-    pl->set(ReuseFineLevelSmoother_name,ReuseFineLevelSmoother_default,
-      "Enables/disables the reuse of the fine level smoother.");
 
 /* 2007/07/02: rabartl:  The statement below should be the correct way to
  * get the list of valid parameters but it seems to be causing problems so
@@ -490,7 +458,7 @@ MLPreconditionerFactory::getValidParameters() const
         "being validated by ML!"
         );
       //std::cout << "\nMLSettings doc before = " << pl->getEntryPtr(MLSettings_name)->docString() << "\n";
-      { // Set of valid parameters (but perhaps not acceptable values)
+      { // Set of valid parameters (but perhaps not accetable values)
         for (
           int i = 0;
           i < implicit_cast<int>(BaseMethodDefaults_valueNames.size());
@@ -504,7 +472,7 @@ MLPreconditionerFactory::getValidParameters() const
               0!=ML_Epetra::SetDefaults(defaultTypeStr,defaultParams)
               ,Teuchos::Exceptions::InvalidParameterValue
               ,"Error, the ML problem type \"" << defaultTypeStr
-              << "\' is not recognized by ML!"
+              << "\' is not recongnised by ML!"
               );
             mlSettingsPL.setParameters(defaultParams);
           }

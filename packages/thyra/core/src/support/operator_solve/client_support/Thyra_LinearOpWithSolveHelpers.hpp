@@ -64,6 +64,7 @@ void assertSolveSupports(
   const Ptr<const SolveCriteria<Scalar> > solveCriteria = Teuchos::null
   );
 
+
 /** \brief Assert that a LOWSB object supports a particular solve type.
  *
  * This function will throw an excetion with a very good error message if the
@@ -72,12 +73,13 @@ void assertSolveSupports(
  * \defgroup Thyra_deprecated_grp
  */
 template<class Scalar>
-void assertSupportsSolveMeasureType(
+THYRA_DEPRECATED void assertSupportsSolveMeasureType(
   const LinearOpWithSolveBase<Scalar> &lows,
   const EOpTransp M_trans,
   const SolveMeasureType &solveMeasureType
   );
-// 2010/08/22: rabartl: ToDo: Deprecate this bug 4915 is finished!
+// 2010/08/22: rabartl: ToDo: Remove this once bug 4915 is finished!
+
 
 } // namespace Thyra
 
@@ -108,6 +110,7 @@ void Thyra::assertSolveSupports(
 // 2010/08/22: rabartl: Bug 4915 ToDo: Move the above into the NIV function
 // solve(...).
 
+
 template<class Scalar>
 void Thyra::assertSupportsSolveMeasureType(
   const LinearOpWithSolveBase<Scalar> &lows,
@@ -127,5 +130,7 @@ void Thyra::assertSupportsSolveMeasureType(
     << "!"
     );
 }
+
+
 
 #endif // THYRA_LINEAR_OP_WITH_SOLVE_FACTORY_SUBCLASS_HELPERS_HPP

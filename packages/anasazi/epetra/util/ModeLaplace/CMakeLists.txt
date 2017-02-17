@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -64,5 +65,6 @@ TRIBITS_ADD_LIBRARY(
   ModeLaplace
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
+  DEPLIBS anasazi
   DEFINES -DANASAZIEPETRA_MODELAPLACE_LIB_EXPORTS_MODE
   )

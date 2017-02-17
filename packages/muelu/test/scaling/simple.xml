@@ -1,3 +1,0 @@
-<ParameterList name="MueLu">
-  <Parameter name="max levels" type="int" value="2"/>
-</ParameterList>

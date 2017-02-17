@@ -44,7 +44,7 @@
 
 #include "EpetraExt_ConfigDefs.h"
 #include "EpetraExt_PolynomialVectorTraits.h"
-#include "Teuchos_RCP.hpp"
+#include "Teuchos_RefCountPtr.hpp"
 #include "Teuchos_Describable.hpp"
 #include "Teuchos_Polynomial.hpp"
 #include "Teuchos_Array.hpp"
@@ -107,16 +107,11 @@ public:
     ,IN_ARG_t
     ,IN_ARG_alpha
     ,IN_ARG_beta
-    ,IN_ARG_x_dotdot
-    ,IN_ARG_x_dotdot_poly ///< Time second derivative vector Taylor polynomial
-    ,IN_ARG_x_dotdot_sg  ///< Stochastic Galerkin time second derivative vector polynomial
-    ,IN_ARG_x_dotdot_mp  ///< Multi-point time second derivative vector
-    ,IN_ARG_omega        // < Coeff of second derivative term d(x_dotdot)/dx
     ,IN_ARG_sg_basis ///< Stochastic Galerkin basis
     ,IN_ARG_sg_quadrature ///< Stochastic Galerkin quadrature
     ,IN_ARG_sg_expansion ///< Stochastic Galerkin expansion
   };
-  static const int NUM_E_IN_ARGS_MEMBERS=19;
+  static const int NUM_E_IN_ARGS_MEMBERS=14;
 
   /** \brief . */
   enum EInArgs_p_sg {
@@ -133,8 +128,8 @@ public:
   public:
 
     //! Short-hand for stochastic Galerkin vector type
-    typedef Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> sg_const_vector_t;
-
+    typedef Teuchos::RefCountPtr<const Stokhos::EpetraVectorOrthogPoly> sg_const_vector_t;
+        
     /** \brief. */
     InArgs();
     /** \brief . */
@@ -142,56 +137,44 @@ public:
     /** \brief .  */
     int Np() const;
     /** \brief. */
-    void set_x_dot( const Teuchos::RCP<const Epetra_Vector> &x_dot );
+    void set_x_dot( const Teuchos::RefCountPtr<const Epetra_Vector> &x_dot );
     /** \brief. */
-    void set_x_dotdot( const Teuchos::RCP<const Epetra_Vector> &x_dotdot );
+    Teuchos::RefCountPtr<const Epetra_Vector> get_x_dot() const;
     /** \brief. */
-    Teuchos::RCP<const Epetra_Vector> get_x_dot() const;
-    /** \brief. */
-    Teuchos::RCP<const Epetra_Vector> get_x_dotdot() const;
-    /** \brief. */
-    void set_x( const Teuchos::RCP<const Epetra_Vector> &x );
+    void set_x( const Teuchos::RefCountPtr<const Epetra_Vector> &x );
     /** \brief Set solution vector Taylor polynomial. */
-    Teuchos::RCP<const Epetra_Vector> get_x() const;
+    Teuchos::RefCountPtr<const Epetra_Vector> get_x() const;
     void set_x_poly(
-      const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_poly
+      const Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > &x_poly
       );
     /** \brief Get solution vector Taylor polynomial.  */
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > get_x_poly() const;
+    Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > get_x_poly() const;
     /** \brief Set time derivative vector Taylor polynomial.  */
     void set_x_dot_poly(
-      const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_dot_poly
-      );
-    void set_x_dotdot_poly(
-      const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_dotdot_poly
+      const Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > &x_dot_poly
       );
     /** \brief Get time derivative vector Taylor polynomial.  */
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > get_x_dot_poly() const;
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > get_x_dotdot_poly() const;
+    Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > get_x_dot_poly() const;
     /** \brief Set stochastic Galerkin solution vector polynomial.  */
     void set_x_sg(const sg_const_vector_t &x_sg);
     /** \brief Get stochastic Galerkin solution vector polynomial.  */
     sg_const_vector_t get_x_sg() const;
     /** \brief Set stochastic Galerkin time derivative vector polynomial.  */
     void set_x_dot_sg(const sg_const_vector_t &x_dot_sg);
-    void set_x_dotdot_sg(const sg_const_vector_t &x_dotdot_sg);
     /** \brief Get stochastic Galerkin time derivative vector polynomial.  */
     sg_const_vector_t get_x_dot_sg() const;
-    sg_const_vector_t get_x_dotdot_sg() const;
     /** \brief Set multi-point solution vector.  */
     void set_x_mp(const mp_const_vector_t &x_mp);
     /** \brief Get multi-point solution vector.  */
     mp_const_vector_t get_x_mp() const;
     /** \brief Set multi-point time derivative vector.  */
     void set_x_dot_mp(const mp_const_vector_t &x_dot_mp);
-    void set_x_dotdot_mp(const mp_const_vector_t &x_dotdot_mp);
     /** \brief Get multi-point time derivative vector.  */
     mp_const_vector_t get_x_dot_mp() const;
-    mp_const_vector_t get_x_dotdot_mp() const;
     /** \brief. */
-    void set_p( int l, const Teuchos::RCP<const Epetra_Vector> &p_l );
+    void set_p( int l, const Teuchos::RefCountPtr<const Epetra_Vector> &p_l );
     /** \brief. */
-    Teuchos::RCP<const Epetra_Vector> get_p(int l) const;
+    Teuchos::RefCountPtr<const Epetra_Vector> get_p(int l) const;
     /** \brief Set stochastic Galerkin vector polynomial parameter. */
     void set_p_sg( int l, const sg_const_vector_t &p_sg_l );
     /** \brief Get stochastic Galerkin vector polynomial parameter. */
@@ -207,10 +190,6 @@ public:
     /** \brief. */
     void set_alpha( double alpha );
     /** \brief. */
-    /** \brief. */
-    double get_omega() const;
-    /** \brief. */
-    void set_omega( double omega );
     double get_beta() const;
     /** \brief. */
     void set_beta( double beta );
@@ -247,30 +226,25 @@ public:
     void _setSupports( EInArgs_p_mp arg, int l, bool supports );
   private:
     // types
-    typedef Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > p_t;
+    typedef Teuchos::Array<Teuchos::RefCountPtr<const Epetra_Vector> > p_t;
     typedef Teuchos::Array<sg_const_vector_t > p_sg_t;
     typedef Teuchos::Array<mp_const_vector_t > p_mp_t;
     typedef Teuchos::Array<bool> supports_p_sg_t;
     // data
     std::string modelEvalDescription_;
-    Teuchos::RCP<const Epetra_Vector>  x_dot_;
-    Teuchos::RCP<const Epetra_Vector>  x_dotdot_;
-    Teuchos::RCP<const Epetra_Vector>  x_;
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > x_dot_poly_;
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > x_dotdot_poly_;
-    Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > x_poly_;
+    Teuchos::RefCountPtr<const Epetra_Vector>  x_dot_;
+    Teuchos::RefCountPtr<const Epetra_Vector>  x_;
+    Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > x_dot_poly_;
+    Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > x_poly_;
     sg_const_vector_t                          x_dot_sg_;
-    sg_const_vector_t                          x_dotdot_sg_;
     sg_const_vector_t                          x_sg_;
     mp_const_vector_t                          x_dot_mp_;
-    mp_const_vector_t                          x_dotdot_mp_;
     mp_const_vector_t                          x_mp_;
     p_t                                        p_;
     p_sg_t                                     p_sg_;
     p_mp_t                                     p_mp_;
     double                                     t_;
     double                                     alpha_;
-    double                                     omega_;
     double                                     beta_;
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis_;
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > sg_quad_;
@@ -294,25 +268,25 @@ public:
 
   /** \brief . */
   template<class ObjType>
-  class Evaluation : public Teuchos::RCP<ObjType> {
+  class Evaluation : public Teuchos::RefCountPtr<ObjType> {
   public:
     /** \brief . */
     Evaluation() : evalType_(EVAL_TYPE_EXACT) {}
     /** \brief . */
-    Evaluation( const Teuchos::RCP<ObjType> &obj )
-      : Teuchos::RCP<ObjType>(obj), evalType_(EVAL_TYPE_EXACT) {}
+    Evaluation( const Teuchos::RefCountPtr<ObjType> &obj )
+      : Teuchos::RefCountPtr<ObjType>(obj), evalType_(EVAL_TYPE_EXACT) {}
     /** \brief . */
-    Evaluation( const Teuchos::RCP<ObjType> &obj, EEvalType evalType )
-      : Teuchos::RCP<ObjType>(obj), evalType_(evalType) {}
+    Evaluation( const Teuchos::RefCountPtr<ObjType> &obj, EEvalType evalType )
+      : Teuchos::RefCountPtr<ObjType>(obj), evalType_(evalType) {}
     /** \brief . */
     EEvalType getType() const { return evalType_; }
     /** \brief . */
-    void reset( const Teuchos::RCP<ObjType> &obj, EEvalType evalType )
+    void reset( const Teuchos::RefCountPtr<ObjType> &obj, EEvalType evalType ) 
     { this->operator=(obj); evalType_ = evalType; }
   private:
     EEvalType                      evalType_;
   };
-
+  
   /** \brief . */
   enum EDerivativeMultiVectorOrientation {
     DERIV_MV_BY_COL           ///< .
@@ -430,7 +404,7 @@ public:
     DerivativeMultiVector() {}
     /** \brief . */
     DerivativeMultiVector(
-      const Teuchos::RCP<Epetra_MultiVector> &mv
+      const Teuchos::RefCountPtr<Epetra_MultiVector> &mv
       ,const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
       ,const Teuchos::Array<int> &paramIndexes = Teuchos::Array<int>()
       ) : mv_(mv), orientation_(orientation), paramIndexes_(paramIndexes) {}
@@ -438,7 +412,7 @@ public:
     void changeOrientation( const EDerivativeMultiVectorOrientation orientation )
       { orientation_ = orientation; };
     /** \brief . */
-    Teuchos::RCP<Epetra_MultiVector> getMultiVector() const
+    Teuchos::RefCountPtr<Epetra_MultiVector> getMultiVector() const
       { return mv_; }
     /** \brief . */
     EDerivativeMultiVectorOrientation getOrientation() const
@@ -447,7 +421,7 @@ public:
     const Teuchos::Array<int>& getParamIndexes() const
       { return paramIndexes_; }
   private:
-    Teuchos::RCP<Epetra_MultiVector> mv_;
+    Teuchos::RefCountPtr<Epetra_MultiVector> mv_;
     EDerivativeMultiVectorOrientation orientation_;
     Teuchos::Array<int> paramIndexes_;
   };
@@ -460,21 +434,21 @@ public:
     /** \brief . */
     Derivative() {}
     /** \brief . */
-    Derivative( const Teuchos::RCP<Epetra_Operator> &lo )
+    Derivative( const Teuchos::RefCountPtr<Epetra_Operator> &lo )
       : lo_(lo) {}
      /** \brief . */
     Derivative(
-      const Teuchos::RCP<Epetra_MultiVector> &mv
+      const Teuchos::RefCountPtr<Epetra_MultiVector> &mv
       ,const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
       ) : dmv_(mv,orientation) {}
    /** \brief . */
     Derivative( const DerivativeMultiVector &dmv )
       : dmv_(dmv) {}
     /** \brief . */
-    Teuchos::RCP<Epetra_Operator> getLinearOp() const
+    Teuchos::RefCountPtr<Epetra_Operator> getLinearOp() const
       { return lo_; }
     /** \brief . */
-    Teuchos::RCP<Epetra_MultiVector> getMultiVector() const
+    Teuchos::RefCountPtr<Epetra_MultiVector> getMultiVector() const
       { return dmv_.getMultiVector(); }
     /** \brief . */
     EDerivativeMultiVectorOrientation getMultiVectorOrientation() const
@@ -486,7 +460,7 @@ public:
     bool isEmpty() const
         { return !lo_.get() && !dmv_.getMultiVector().get(); }
   private:
-    Teuchos::RCP<Epetra_Operator> lo_;
+    Teuchos::RefCountPtr<Epetra_Operator> lo_;
     DerivativeMultiVector dmv_;
   };
 
@@ -518,7 +492,7 @@ public:
     SGDerivativeMultiVector() {}
     /** \brief . */
     SGDerivativeMultiVector(
-      const Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > &mv
+      const Teuchos::RefCountPtr< Stokhos::EpetraMultiVectorOrthogPoly > &mv
       ,const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
       ,const Teuchos::Array<int> &paramIndexes = Teuchos::Array<int>()
       ) : mv_(mv), orientation_(orientation), paramIndexes_(paramIndexes) {}
@@ -526,7 +500,7 @@ public:
     void changeOrientation( const EDerivativeMultiVectorOrientation orientation )
       { orientation_ = orientation; };
     /** \brief . */
-    Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > getMultiVector() const
+    Teuchos::RefCountPtr< Stokhos::EpetraMultiVectorOrthogPoly > getMultiVector() const
       { return mv_; }
     /** \brief . */
     EDerivativeMultiVectorOrientation getOrientation() const
@@ -535,7 +509,7 @@ public:
     const Teuchos::Array<int>& getParamIndexes() const
       { return paramIndexes_; }
   private:
-    Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > mv_;
+    Teuchos::RefCountPtr< Stokhos::EpetraMultiVectorOrthogPoly > mv_;
     EDerivativeMultiVectorOrientation orientation_;
     Teuchos::Array<int> paramIndexes_;
   };
@@ -548,21 +522,21 @@ public:
     /** \brief . */
     SGDerivative() {}
     /** \brief . */
-    SGDerivative( const Teuchos::RCP< Stokhos::EpetraOperatorOrthogPoly > &lo )
+    SGDerivative( const Teuchos::RefCountPtr< Stokhos::EpetraOperatorOrthogPoly > &lo )
       : lo_(lo) {}
      /** \brief . */
     SGDerivative(
-      const Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > &mv
+      const Teuchos::RefCountPtr< Stokhos::EpetraMultiVectorOrthogPoly > &mv
       ,const EDerivativeMultiVectorOrientation orientation = DERIV_MV_BY_COL
       ) : dmv_(mv,orientation) {}
    /** \brief . */
     SGDerivative( const SGDerivativeMultiVector &dmv )
       : dmv_(dmv) {}
     /** \brief . */
-    Teuchos::RCP< Stokhos::EpetraOperatorOrthogPoly > getLinearOp() const
+    Teuchos::RefCountPtr< Stokhos::EpetraOperatorOrthogPoly > getLinearOp() const
       { return lo_; }
     /** \brief . */
-    Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > getMultiVector() const
+    Teuchos::RefCountPtr< Stokhos::EpetraMultiVectorOrthogPoly > getMultiVector() const
       { return dmv_.getMultiVector(); }
     /** \brief . */
     EDerivativeMultiVectorOrientation getMultiVectorOrientation() const
@@ -574,7 +548,7 @@ public:
     bool isEmpty() const
         { return !lo_.get() && !dmv_.getMultiVector().get(); }
   private:
-    Teuchos::RCP< Stokhos::EpetraOperatorOrthogPoly > lo_;
+    Teuchos::RefCountPtr< Stokhos::EpetraOperatorOrthogPoly > lo_;
     SGDerivativeMultiVector dmv_;
   };
 
@@ -583,7 +557,7 @@ public:
    */
   class MPDerivativeMultiVector {
   public:
-
+    
     /** \brief . */
     MPDerivativeMultiVector() {}
     /** \brief . */
@@ -615,7 +589,7 @@ public:
    */
   class MPDerivative {
   public:
-
+    
     /** \brief . */
     MPDerivative() {}
     /** \brief . */
@@ -657,7 +631,7 @@ public:
     ,OUT_ARG_f_sg     ///< Stochastic Galerkin residual vector polynomial
     ,OUT_ARG_W_sg     ///< Stochastic Galerkin "W" operator polyomial
     ,OUT_ARG_f_mp     ///< Multi-point residual vector
-    ,OUT_ARG_W_mp     ///< Multi-point "W" operator
+    ,OUT_ARG_W_mp     ///< Multi-point "W" operator 
     ,OUT_ARG_WPrec   ///< Preconditioner operator (approx Jacobian)
   };
   static const int NUM_E_OUT_ARGS_MEMBERS=9;
@@ -670,11 +644,6 @@ public:
   /** \brief . */
   enum EOutArgsDgDx_dot {
     OUT_ARG_DgDx_dot   ///< .
-  };
-
-  /** \brief . */
-  enum EOutArgsDgDx_dotdot {
-    OUT_ARG_DgDx_dotdot   ///< .
   };
 
   /** \brief . */
@@ -703,11 +672,6 @@ public:
   };
 
   /** \brief . */
-  enum EOutArgsDgDx_dotdot_sg {
-    OUT_ARG_DgDx_dotdot_sg   ///< .
-  };
-
-  /** \brief . */
   enum EOutArgsDgDx_sg {
     OUT_ARG_DgDx_sg   ///< .
   };
@@ -733,11 +697,6 @@ public:
   };
 
   /** \brief . */
-  enum EOutArgsDgDx_dotdot_mp {
-    OUT_ARG_DgDx_dotdot_mp   ///< .
-  };
-
-  /** \brief . */
   enum EOutArgsDgDx_mp {
     OUT_ARG_DgDx_mp   ///< .
   };
@@ -752,10 +711,10 @@ public:
   public:
 
     //! Short-hand for stochastic Galerkin vector type
-    typedef Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_vector_t;
+    typedef Teuchos::RefCountPtr<Stokhos::EpetraVectorOrthogPoly> sg_vector_t;
 
     //! Short-hand for stochastic Galerkin operator type
-    typedef Teuchos::RCP<Stokhos::EpetraOperatorOrthogPoly > sg_operator_t;
+    typedef Teuchos::RefCountPtr<Stokhos::EpetraOperatorOrthogPoly > sg_operator_t;
 
     /** \brief. */
     OutArgs();
@@ -771,7 +730,6 @@ public:
     const DerivativeSupport& supports(EOutArgsDfDp arg, int l) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx_dot arg, int j) const;
-    const DerivativeSupport& supports(EOutArgsDgDx_dotdot arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt> and <tt>0 <= l && l < Np()</tt>.  */
@@ -782,7 +740,6 @@ public:
     const DerivativeSupport& supports(EOutArgsDfDp_sg arg, int l) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx_dot_sg arg, int j) const;
-    const DerivativeSupport& supports(EOutArgsDgDx_dotdot_sg arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx_sg arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt> and <tt>0 <= l && l < Np()</tt>.  */
@@ -793,7 +750,6 @@ public:
     bool supports(EOutArgs_g_mp arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx_dot_mp arg, int j) const;
-    const DerivativeSupport& supports(EOutArgsDgDx_dotdot_mp arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt>.  */
     const DerivativeSupport& supports(EOutArgsDgDx_mp arg, int j) const;
     /** \brief <tt>0 <= j && j < Ng()</tt> and <tt>0 <= l && l < Np()</tt>.  */
@@ -807,7 +763,7 @@ public:
     /** \brief Get stochastic Galerkin residual vector polynomial.  */
     sg_vector_t get_f_sg() const;
     /** \brief Set multi-point residual vector.  */
-    void set_f_mp( const mp_vector_t& f_mp );
+    void set_f_mp( const mp_vector_t& f_sg );
     /** \brief Get multi-point residual vector.  */
     mp_vector_t get_f_mp() const;
     /** \brief Set <tt>g(j)</tt> where <tt>0 <= j && j < this->Ng()</tt>.  */
@@ -827,11 +783,11 @@ public:
     /** <tt>0 <= j && j < this->Ng()</tt>.  */
     mp_vector_t get_g_mp(int j) const;
     /** \brief. */
-    void set_W( const Teuchos::RCP<Epetra_Operator> &W );
-    void set_WPrec( const Teuchos::RCP<Epetra_Operator> &WPrec );
+    void set_W( const Teuchos::RefCountPtr<Epetra_Operator> &W );
+    void set_WPrec( const Teuchos::RefCountPtr<Epetra_Operator> &WPrec );
     /** \brief. */
-    Teuchos::RCP<Epetra_Operator> get_W() const;
-    Teuchos::RCP<Epetra_Operator> get_WPrec() const;
+    Teuchos::RefCountPtr<Epetra_Operator> get_W() const;
+    Teuchos::RefCountPtr<Epetra_Operator> get_WPrec() const;
     /** \brief . */
     DerivativeProperties get_W_properties() const;
     DerivativeProperties get_WPrec_properties() const;
@@ -863,31 +819,22 @@ public:
     DerivativeProperties get_DfDp_mp_properties(int l) const;
     /** \brief .  */
     void set_DgDx_dot(int j, const Derivative &DgDx_dot_j);
-    void set_DgDx_dotdot(int j, const Derivative &DgDx_dotdot_j);
     /** \brief .  */
     Derivative get_DgDx_dot(int j) const;
-    Derivative get_DgDx_dotdot(int j) const;
     /** \brief . */
     DerivativeProperties get_DgDx_dot_properties(int j) const;
-    DerivativeProperties get_DgDx_dotdot_properties(int j) const;
     /** \brief .  */
     void set_DgDx_dot_sg(int j, const SGDerivative &DgDx_dot_j);
-    void set_DgDx_dotdot_sg(int j, const SGDerivative &DgDx_dotdot_j);
     /** \brief .  */
     SGDerivative get_DgDx_dot_sg(int j) const;
-    SGDerivative get_DgDx_dotdot_sg(int j) const;
     /** \brief . */
     DerivativeProperties get_DgDx_dot_sg_properties(int j) const;
-    DerivativeProperties get_DgDx_dotdot_sg_properties(int j) const;
     /** \brief .  */
     void set_DgDx_dot_mp(int j, const MPDerivative &DgDx_dot_j);
-    void set_DgDx_dotdot_mp(int j, const MPDerivative &DgDx_dotdot_j);
     /** \brief .  */
     MPDerivative get_DgDx_dot_mp(int j) const;
-    MPDerivative get_DgDx_dotdot_mp(int j) const;
     /** \brief . */
     DerivativeProperties get_DgDx_dot_mp_properties(int j) const;
-    DerivativeProperties get_DgDx_dotdot_mp_properties(int j) const;
     /** \brief .  */
     void set_DgDx(int j, const Derivative &DgDx_j);
     /** \brief .  */
@@ -926,14 +873,14 @@ public:
     DerivativeProperties get_DgDp_mp_properties(int j, int l) const;
 
     /** \brief Set residual vector Taylor polynomial.  */
-    void set_f_poly( const Teuchos::RCP<Teuchos::Polynomial<Epetra_Vector> > &f_poly );
+    void set_f_poly( const Teuchos::RefCountPtr<Teuchos::Polynomial<Epetra_Vector> > &f_poly );
     /** \brief Get residual vector Taylor polynomial.  */
-    Teuchos::RCP<Teuchos::Polynomial<Epetra_Vector> > get_f_poly() const;
-
-
+    Teuchos::RefCountPtr<Teuchos::Polynomial<Epetra_Vector> > get_f_poly() const;
+    
+    
     /** \brief Return true if the function or its derivatives are set. */
     bool funcOrDerivesAreSet(EOutArgsMembers arg) const;
-
+    
     /** \brief Set that the evaluation as a whole failed.
      *
      * Note that this function is declared as <tt>const</tt> even through it
@@ -946,7 +893,7 @@ public:
      * the state of the output objects.
      */
     bool isFailed() const;
-
+    
   protected:
     /** \brief . */
     void _setModelEvalDescription( const std::string &modelEvalDescription );
@@ -958,7 +905,6 @@ public:
     void _setSupports( EOutArgsDfDp arg, int l, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx_dot arg, int j, const DerivativeSupport& );
-    void _setSupports( EOutArgsDgDx_dotdot arg, int j, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -969,7 +915,6 @@ public:
     void _setSupports( EOutArgsDfDp_sg arg, int l, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx_dot_sg arg, int j, const DerivativeSupport& );
-    void _setSupports( EOutArgsDgDx_dotdot_sg arg, int j, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx_sg arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -981,7 +926,6 @@ public:
     void _setSupports( EOutArgsDfDp_mp arg, int l, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& );
-    void _setSupports( EOutArgsDgDx_dotdot_mp arg, int j, const DerivativeSupport& );
     /** \brief . */
     void _setSupports( EOutArgsDgDx_mp arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -993,7 +937,6 @@ public:
     void _set_DfDp_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_dot_properties( int j, const DerivativeProperties &properties );
-    void _set_DgDx_dotdot_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1002,7 +945,6 @@ public:
     void _set_DfDp_sg_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_dot_sg_properties( int j, const DerivativeProperties &properties );
-    void _set_DgDx_dotdot_sg_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_sg_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1012,7 +954,6 @@ public:
     void _set_DfDp_mp_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_dot_mp_properties( int j, const DerivativeProperties &properties );
-    void _set_DgDx_dotdot_mp_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void _set_DgDx_mp_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1034,49 +975,42 @@ public:
     bool supports_[NUM_E_OUT_ARGS_MEMBERS];
     supports_t supports_DfDp_; // Np
     supports_t supports_DgDx_dot_; // Ng
-    supports_t supports_DgDx_dotdot_; // Ng
     supports_t supports_DgDx_; // Ng
     supports_t supports_DgDp_; // Ng x Np
     supports_g_sg_t supports_g_sg_; // Ng
     supports_t supports_DfDp_sg_; // Np
     supports_t supports_DgDx_dot_sg_; // Ng
-    supports_t supports_DgDx_dotdot_sg_; // Ng
     supports_t supports_DgDx_sg_; // Ng
     supports_t supports_DgDp_sg_; // Ng x Np
     supports_g_sg_t supports_g_mp_; // Ng
     supports_t supports_DfDp_mp_; // Np_mp
     supports_t supports_DgDx_dot_mp_; // Ng_mp
-    supports_t supports_DgDx_dotdot_mp_; // Ng_mp
     supports_t supports_DgDx_mp_; // Ng_mp
     supports_t supports_DgDp_mp_; // Ng_mp x Np_mp
     Evaluation<Epetra_Vector> f_;
     g_t g_;
     g_sg_t g_sg_;
     g_mp_t g_mp_;
-    Teuchos::RCP<Epetra_Operator> W_;
-    Teuchos::RCP<Epetra_Operator> WPrec_;
+    Teuchos::RefCountPtr<Epetra_Operator> W_;
+    Teuchos::RefCountPtr<Epetra_Operator> WPrec_;
     DerivativeProperties W_properties_;
     DerivativeProperties WPrec_properties_;
     deriv_t DfDp_; // Np
     deriv_properties_t DfDp_properties_; // Np
     deriv_t DgDx_dot_; // Ng
-    deriv_t DgDx_dotdot_; // Ng
     deriv_t DgDx_; // Ng
     deriv_properties_t DgDx_dot_properties_; // Ng
-    deriv_properties_t DgDx_dotdot_properties_; // Ng
     deriv_properties_t DgDx_properties_; // Ng
     deriv_t DgDp_; // Ng x Np
     deriv_properties_t DgDp_properties_; // Ng x Np
-    Teuchos::RCP<Teuchos::Polynomial<Epetra_Vector> > f_poly_;
+    Teuchos::RefCountPtr<Teuchos::Polynomial<Epetra_Vector> > f_poly_;
     sg_vector_t f_sg_;
     sg_operator_t W_sg_;
     sg_deriv_t DfDp_sg_; // Np
     deriv_properties_t DfDp_sg_properties_; // Np
     sg_deriv_t DgDx_dot_sg_; // Ng
-    sg_deriv_t DgDx_dotdot_sg_; // Ng
     sg_deriv_t DgDx_sg_; // Ng
     deriv_properties_t DgDx_dot_sg_properties_; // Ng
-    deriv_properties_t DgDx_dotdot_sg_properties_; // Ng
     deriv_properties_t DgDx_sg_properties_; // Ng
     sg_deriv_t DgDp_sg_; // Ng x Np
     deriv_properties_t DgDp_sg_properties_; // Ng x Np
@@ -1085,10 +1019,8 @@ public:
     mp_deriv_t DfDp_mp_; // Np
     deriv_properties_t DfDp_mp_properties_; // Np
     mp_deriv_t DgDx_dot_mp_; // Ng
-    mp_deriv_t DgDx_dotdot_mp_; // Ng
     mp_deriv_t DgDx_mp_; // Ng
     deriv_properties_t DgDx_dot_mp_properties_; // Ng
-    deriv_properties_t DgDx_dotdot_mp_properties_; // Ng
     deriv_properties_t DgDx_mp_properties_; // Ng
     mp_deriv_t DgDp_mp_; // Ng x Np
     deriv_properties_t DgDp_mp_properties_; // Ng x Np
@@ -1096,19 +1028,16 @@ public:
     void assert_supports(EOutArgsMembers arg) const;
     void assert_supports(EOutArgsDfDp arg, int l) const;
     void assert_supports(EOutArgsDgDx_dot arg, int j) const;
-    void assert_supports(EOutArgsDgDx_dotdot arg, int j) const;
     void assert_supports(EOutArgsDgDx arg, int j) const;
     void assert_supports(EOutArgsDgDp arg, int j, int l) const;
     void assert_supports(EOutArgs_g_sg arg, int j) const;
     void assert_supports(EOutArgsDfDp_sg arg, int l) const;
     void assert_supports(EOutArgsDgDx_dot_sg arg, int j) const;
-    void assert_supports(EOutArgsDgDx_dotdot_sg arg, int j) const;
     void assert_supports(EOutArgsDgDx_sg arg, int j) const;
     void assert_supports(EOutArgsDgDp_sg arg, int j, int l) const;
     void assert_supports(EOutArgs_g_mp arg, int j) const;
     void assert_supports(EOutArgsDfDp_mp arg, int l) const;
     void assert_supports(EOutArgsDgDx_dot_mp arg, int j) const;
-    void assert_supports(EOutArgsDgDx_dotdot_mp arg, int j) const;
     void assert_supports(EOutArgsDgDx_mp arg, int j) const;
     void assert_supports(EOutArgsDgDp_mp arg, int j, int l) const;
     void assert_l(int l) const;
@@ -1129,13 +1058,13 @@ public:
   //@{
 
   /** \breif . */
-  virtual Teuchos::RCP<const Epetra_Map> get_x_map() const = 0;
+  virtual Teuchos::RefCountPtr<const Epetra_Map> get_x_map() const = 0;
 
   /** \breif . */
-  virtual Teuchos::RCP<const Epetra_Map> get_f_map() const = 0;
+  virtual Teuchos::RefCountPtr<const Epetra_Map> get_f_map() const = 0;
 
   /** \breif . */
-  virtual Teuchos::RCP<const Epetra_Map> get_p_map(int l) const;
+  virtual Teuchos::RefCountPtr<const Epetra_Map> get_p_map(int l) const;
 
   /** \brief Get the names of the parameters associated with parameter
    * subvector l if available.
@@ -1151,26 +1080,10 @@ public:
    * The default implementation return returnVal==Teuchos::null which means
    * by default, parameters have no names associated with them.
    */
-  virtual Teuchos::RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
+  virtual Teuchos::RefCountPtr<const Teuchos::Array<std::string> > get_p_names(int l) const;
 
   /** \breif . */
-  virtual Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
-
-  /** \brief Get the names of the response functions associated with response
-   * subvector j if available.
-   *
-   * \return Returns an RCP to a Teuchos::Array<std::string> object that
-   * contains the names of the responses.  If returnVal == Teuchos::null,
-   * then there are no names available for the response subvector g(j).  If
-   * returnVal->size() == 1, then a single name is given to the entire
-   * response subvector.  If returnVal->size() ==
-   * get_g_map(j)->GlobalNumElements(), then a name is given to every
-   * response scalar entry.
-   *
-   * The default implementation return returnVal==Teuchos::null which means
-   * by default, responses have no names associated with them.
-   */
-  virtual Teuchos::ArrayView<const std::string> get_g_names(int j) const;
+  virtual Teuchos::RefCountPtr<const Epetra_Map> get_g_map(int j) const;
 
   //@}
 
@@ -1178,16 +1091,13 @@ public:
   //@{
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_x_init() const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_x_init() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_x_dot_init() const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_x_dot_init() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_x_dotdot_init() const;
-
-  /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_p_init(int l) const;
 
   /** \brief . */
   virtual double get_t_init() const;
@@ -1204,16 +1114,16 @@ public:
   virtual double getInfBound() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_x_lower_bounds() const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_x_lower_bounds() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_x_upper_bounds() const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_x_upper_bounds() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_p_lower_bounds(int l) const;
 
   /** \brief . */
-  virtual Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
+  virtual Teuchos::RefCountPtr<const Epetra_Vector> get_p_upper_bounds(int l) const;
 
   /** \brief . */
   virtual double get_t_lower_bound() const;
@@ -1232,23 +1142,20 @@ public:
    * The default implementation returns <tt>return.get()==NULL</tt>
    * (i.e. implicit solvers are not supported by default).
    */
-  virtual Teuchos::RCP<Epetra_Operator> create_W() const;
-  virtual Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
+  virtual Teuchos::RefCountPtr<Epetra_Operator> create_W() const;
+  virtual Teuchos::RefCountPtr<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
 
   /** \brief . */
-  virtual Teuchos::RCP<Epetra_Operator> create_DfDp_op(int l) const;
+  virtual Teuchos::RefCountPtr<Epetra_Operator> create_DfDp_op(int l) const;
 
   /** \brief . */
-  virtual Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
+  virtual Teuchos::RefCountPtr<Epetra_Operator> create_DgDx_dot_op(int j) const;
 
   /** \brief . */
-  virtual Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
+  virtual Teuchos::RefCountPtr<Epetra_Operator> create_DgDx_op(int j) const;
 
   /** \brief . */
-  virtual Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;
-
-  /** \brief . */
-  virtual Teuchos::RCP<Epetra_Operator> create_DgDp_op( int j, int l ) const;
+  virtual Teuchos::RefCountPtr<Epetra_Operator> create_DgDp_op( int j, int l ) const;
 
   //@}
 
@@ -1306,7 +1213,6 @@ protected:
     void setSupports(EOutArgsDfDp arg, int l, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx_dot arg, int j, const DerivativeSupport& );
-    void setSupports(EOutArgsDgDx_dotdot arg, int j, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -1317,7 +1223,6 @@ protected:
     void setSupports(EOutArgsDfDp_sg arg, int l, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx_dot_sg arg, int j, const DerivativeSupport& );
-    void setSupports(EOutArgsDgDx_dotdot_sg arg, int j, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx_sg arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -1328,7 +1233,6 @@ protected:
     void setSupports(EOutArgsDfDp_mp arg, int l, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& );
-    void setSupports(EOutArgsDgDx_dotdot_mp arg, int j, const DerivativeSupport& );
     /** \brief . */
     void setSupports(EOutArgsDgDx_mp arg, int j, const DerivativeSupport& );
     /** \brief . */
@@ -1340,7 +1244,6 @@ protected:
     void set_DfDp_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_dot_properties( int j, const DerivativeProperties &properties );
-    void set_DgDx_dotdot_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1349,7 +1252,6 @@ protected:
     void set_DfDp_sg_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_dot_sg_properties( int j, const DerivativeProperties &properties );
-    void set_DgDx_dotdot_sg_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_sg_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1358,7 +1260,6 @@ protected:
     void set_DfDp_mp_properties( int l, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_dot_mp_properties( int j, const DerivativeProperties &properties );
-    void set_DgDx_dotdot_mp_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
     void set_DgDx_mp_properties( int j, const DerivativeProperties &properties );
     /** \brief . */
@@ -1382,7 +1283,7 @@ std::string toString( ModelEvaluator::EInArgsMembers inArg );
 std::string toString( ModelEvaluator::EOutArgsMembers outArg );
 
 /** \brief . */
-Teuchos::RCP<Epetra_Operator>
+Teuchos::RefCountPtr<Epetra_Operator>
 getLinearOp(
   const std::string &modelEvalDescription,
   const ModelEvaluator::Derivative &deriv,
@@ -1390,7 +1291,7 @@ getLinearOp(
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
+Teuchos::RefCountPtr<Epetra_MultiVector>
 getMultiVector(
   const std::string &modelEvalDescription,
   const ModelEvaluator::Derivative &deriv,
@@ -1399,21 +1300,21 @@ getMultiVector(
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_Operator>
+Teuchos::RefCountPtr<Epetra_Operator>
 get_DfDp_op(
   const int l
   ,const ModelEvaluator::OutArgs &outArgs
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
+Teuchos::RefCountPtr<Epetra_MultiVector>
 get_DfDp_mv(
   const int l
   ,const ModelEvaluator::OutArgs &outArgs
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
+Teuchos::RefCountPtr<Epetra_MultiVector>
 get_DgDx_dot_mv(
   const int j
   ,const ModelEvaluator::OutArgs &outArgs
@@ -1421,15 +1322,7 @@ get_DgDx_dot_mv(
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
-get_DgDx_dotdot_mv(
-  const int j
-  ,const ModelEvaluator::OutArgs &outArgs
-  ,const ModelEvaluator::EDerivativeMultiVectorOrientation mvOrientation
-  );
-
-/** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
+Teuchos::RefCountPtr<Epetra_MultiVector>
 get_DgDx_mv(
   const int j
   ,const ModelEvaluator::OutArgs &outArgs
@@ -1437,7 +1330,7 @@ get_DgDx_mv(
   );
 
 /** \brief . */
-Teuchos::RCP<Epetra_MultiVector>
+Teuchos::RefCountPtr<Epetra_MultiVector>
 get_DgDp_mv(
   const int j
   ,const int l
@@ -1461,135 +1354,100 @@ int ModelEvaluator::InArgs::Np() const
 { return p_.size(); }
 
 inline
-void ModelEvaluator::InArgs::set_x_dot( const Teuchos::RCP<const Epetra_Vector> &x_dot )
+void ModelEvaluator::InArgs::set_x_dot( const Teuchos::RefCountPtr<const Epetra_Vector> &x_dot )
 { assert_supports(IN_ARG_x_dot); x_dot_ = x_dot; }
 
 inline
-void ModelEvaluator::InArgs::set_x_dotdot( const Teuchos::RCP<const Epetra_Vector> &x_dotdot )
-{ assert_supports(IN_ARG_x_dotdot); x_dotdot_ = x_dotdot; }
-
-inline
-Teuchos::RCP<const Epetra_Vector> ModelEvaluator::InArgs::get_x_dot() const
+Teuchos::RefCountPtr<const Epetra_Vector> ModelEvaluator::InArgs::get_x_dot() const
 { assert_supports(IN_ARG_x_dot); return x_dot_; }
 
 inline
-Teuchos::RCP<const Epetra_Vector> ModelEvaluator::InArgs::get_x_dotdot() const
-{ assert_supports(IN_ARG_x_dotdot); return x_dotdot_; }
-
-inline
-void ModelEvaluator::InArgs::set_x( const Teuchos::RCP<const Epetra_Vector> &x )
+void ModelEvaluator::InArgs::set_x( const Teuchos::RefCountPtr<const Epetra_Vector> &x )
 { assert_supports(IN_ARG_x); x_ = x; }
 
 inline
-Teuchos::RCP<const Epetra_Vector> ModelEvaluator::InArgs::get_x() const
+Teuchos::RefCountPtr<const Epetra_Vector> ModelEvaluator::InArgs::get_x() const
 { assert_supports(IN_ARG_x); return x_; }
 
-inline
-void ModelEvaluator::InArgs::set_x_dot_poly( const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_dot_poly )
+inline 
+void ModelEvaluator::InArgs::set_x_dot_poly( const Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > &x_dot_poly )
 { assert_supports(IN_ARG_x_dot_poly); x_dot_poly_ = x_dot_poly; }
 
-inline
-void ModelEvaluator::InArgs::set_x_dotdot_poly( const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_dotdot_poly )
-{ assert_supports(IN_ARG_x_dotdot_poly); x_dotdot_poly_ = x_dotdot_poly; }
-
-inline
-Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> >
+inline 
+Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> >
 ModelEvaluator::InArgs::get_x_dot_poly() const
 { assert_supports(IN_ARG_x_dot_poly); return x_dot_poly_; }
 
-inline
-Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> >
-ModelEvaluator::InArgs::get_x_dotdot_poly() const
-{ assert_supports(IN_ARG_x_dotdot_poly); return x_dotdot_poly_; }
-
-inline
-void ModelEvaluator::InArgs::set_x_poly( const Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> > &x_poly )
+inline 
+void ModelEvaluator::InArgs::set_x_poly( const Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> > &x_poly )
 { assert_supports(IN_ARG_x_poly); x_poly_ = x_poly; }
 
-inline
-Teuchos::RCP<const Teuchos::Polynomial<Epetra_Vector> >
+inline 
+Teuchos::RefCountPtr<const Teuchos::Polynomial<Epetra_Vector> >
 ModelEvaluator::InArgs::get_x_poly() const
 { assert_supports(IN_ARG_x_poly); return x_poly_; }
 
-inline
+inline 
 void ModelEvaluator::InArgs::set_x_dot_sg( const ModelEvaluator::InArgs::sg_const_vector_t &x_dot_sg )
 { assert_supports(IN_ARG_x_dot_sg); x_dot_sg_ = x_dot_sg; }
 
-inline
-void ModelEvaluator::InArgs::set_x_dotdot_sg( const ModelEvaluator::InArgs::sg_const_vector_t &x_dotdot_sg )
-{ assert_supports(IN_ARG_x_dotdot_sg); x_dotdot_sg_ = x_dotdot_sg; }
-
-inline
+inline 
 ModelEvaluator::InArgs::sg_const_vector_t
 ModelEvaluator::InArgs::get_x_dot_sg() const
 { assert_supports(IN_ARG_x_dot_sg); return x_dot_sg_; }
 
-inline
-ModelEvaluator::InArgs::sg_const_vector_t
-ModelEvaluator::InArgs::get_x_dotdot_sg() const
-{ assert_supports(IN_ARG_x_dotdot_sg); return x_dotdot_sg_; }
-
-inline
+inline 
 void ModelEvaluator::InArgs::set_x_dot_mp( const ModelEvaluator::mp_const_vector_t &x_dot_mp )
 { assert_supports(IN_ARG_x_dot_mp); x_dot_mp_ = x_dot_mp; }
 
-inline
-void ModelEvaluator::InArgs::set_x_dotdot_mp( const ModelEvaluator::mp_const_vector_t &x_dotdot_mp )
-{ assert_supports(IN_ARG_x_dotdot_mp); x_dotdot_mp_ = x_dotdot_mp; }
-
-inline
+inline 
 ModelEvaluator::mp_const_vector_t
 ModelEvaluator::InArgs::get_x_dot_mp() const
 { assert_supports(IN_ARG_x_dot_mp); return x_dot_mp_; }
 
-inline
-ModelEvaluator::mp_const_vector_t
-ModelEvaluator::InArgs::get_x_dotdot_mp() const
-{ assert_supports(IN_ARG_x_dotdot_mp); return x_dotdot_mp_; }
-
-inline
+inline 
 void ModelEvaluator::InArgs::set_x_sg( const ModelEvaluator::InArgs::sg_const_vector_t &x_sg )
 { assert_supports(IN_ARG_x_sg); x_sg_ = x_sg; }
 
-inline
+inline 
 ModelEvaluator::InArgs::sg_const_vector_t
 ModelEvaluator::InArgs::get_x_sg() const
 { assert_supports(IN_ARG_x_sg); return x_sg_; }
 
-inline
+inline 
 void ModelEvaluator::InArgs::set_x_mp( const ModelEvaluator::mp_const_vector_t &x_mp )
 { assert_supports(IN_ARG_x_mp); x_mp_ = x_mp; }
 
-inline
+inline 
 ModelEvaluator::mp_const_vector_t
 ModelEvaluator::InArgs::get_x_mp() const
 { assert_supports(IN_ARG_x_mp); return x_mp_; }
 
 inline
-void ModelEvaluator::InArgs::set_p( int l, const Teuchos::RCP<const Epetra_Vector> &p_l )
+void ModelEvaluator::InArgs::set_p( int l, const Teuchos::RefCountPtr<const Epetra_Vector> &p_l )
 { assert_l(l); p_[l] = p_l; }
 
 inline
-Teuchos::RCP<const Epetra_Vector> ModelEvaluator::InArgs::get_p(int l) const
+Teuchos::RefCountPtr<const Epetra_Vector> ModelEvaluator::InArgs::get_p(int l) const
 { assert_l(l); return p_[l]; }
 
 inline
-void ModelEvaluator::InArgs::set_p_sg( int l,
-                                       const ModelEvaluator::InArgs::sg_const_vector_t &p_sg_l )
+void ModelEvaluator::InArgs::set_p_sg( int l, 
+				       const ModelEvaluator::InArgs::sg_const_vector_t &p_sg_l )
 { assert_supports(IN_ARG_p_sg, l); p_sg_[l] = p_sg_l; }
 
 inline
-ModelEvaluator::InArgs::sg_const_vector_t
+ModelEvaluator::InArgs::sg_const_vector_t 
 ModelEvaluator::InArgs::get_p_sg(int l) const
 { assert_supports(IN_ARG_p_sg, l); return p_sg_[l]; }
 
 inline
-void ModelEvaluator::InArgs::set_p_mp( int l,
-                                       const ModelEvaluator::mp_const_vector_t &p_mp_l )
+void ModelEvaluator::InArgs::set_p_mp( int l, 
+				       const ModelEvaluator::mp_const_vector_t &p_mp_l )
 { assert_supports(IN_ARG_p_mp, l); p_mp_[l] = p_mp_l; }
 
 inline
-ModelEvaluator::mp_const_vector_t
+ModelEvaluator::mp_const_vector_t 
 ModelEvaluator::InArgs::get_p_mp(int l) const
 { assert_supports(IN_ARG_p_mp, l); return p_mp_[l]; }
 
@@ -1608,14 +1466,6 @@ void ModelEvaluator::InArgs::set_alpha( double alpha )
 inline
 double ModelEvaluator::InArgs::get_alpha() const
 { assert_supports(IN_ARG_alpha); return alpha_; }
-
-inline
-void ModelEvaluator::InArgs::set_omega( double omega )
-{ assert_supports(IN_ARG_omega); omega_ = omega; }
-
-inline
-double ModelEvaluator::InArgs::get_omega() const
-{ assert_supports(IN_ARG_omega); return omega_; }
 
 inline
 void ModelEvaluator::InArgs::set_beta( double beta )
@@ -1684,7 +1534,7 @@ int ModelEvaluator::OutArgs::Np() const
 
 inline
 int ModelEvaluator::OutArgs::Ng() const
-{
+{ 
   return g_.size();
 }
 
@@ -1741,14 +1591,14 @@ ModelEvaluator::OutArgs::get_g_mp(int j) const
 }
 
 inline
-void ModelEvaluator::OutArgs::set_W( const Teuchos::RCP<Epetra_Operator> &W ) { W_ = W; }
+void ModelEvaluator::OutArgs::set_W( const Teuchos::RefCountPtr<Epetra_Operator> &W ) { W_ = W; }
 inline
-void ModelEvaluator::OutArgs::set_WPrec( const Teuchos::RCP<Epetra_Operator> &WPrec ) { WPrec_ = WPrec; }
+void ModelEvaluator::OutArgs::set_WPrec( const Teuchos::RefCountPtr<Epetra_Operator> &WPrec ) { WPrec_ = WPrec; }
 
 inline
-Teuchos::RCP<Epetra_Operator> ModelEvaluator::OutArgs::get_W() const { return W_; }
+Teuchos::RefCountPtr<Epetra_Operator> ModelEvaluator::OutArgs::get_W() const { return W_; }
 inline
-Teuchos::RCP<Epetra_Operator> ModelEvaluator::OutArgs::get_WPrec() const { return WPrec_; }
+Teuchos::RefCountPtr<Epetra_Operator> ModelEvaluator::OutArgs::get_WPrec() const { return WPrec_; }
 
 inline
 ModelEvaluator::DerivativeProperties ModelEvaluator::OutArgs::get_W_properties() const
@@ -1896,75 +1746,6 @@ ModelEvaluator::OutArgs::get_DgDx_dot_mp_properties(int j) const
 }
 
 inline
-void ModelEvaluator::OutArgs::set_DgDx_dotdot( int j, const Derivative &DgDx_dotdot_j )
-{
-  assert_supports(OUT_ARG_DgDx_dotdot,j);
-  DgDx_dotdot_[j] = DgDx_dotdot_j;
-}
-
-inline
-ModelEvaluator::Derivative
-ModelEvaluator::OutArgs::get_DgDx_dotdot(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot,j);
-  return DgDx_dotdot_[j];
-}
-
-inline
-ModelEvaluator::DerivativeProperties
-ModelEvaluator::OutArgs::get_DgDx_dotdot_properties(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot,j);
-  return DgDx_dotdot_properties_[j];
-}
-
-inline
-void ModelEvaluator::OutArgs::set_DgDx_dotdot_sg( int j, const SGDerivative &DgDx_dotdot_sg_j )
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_sg,j);
-  DgDx_dotdot_sg_[j] = DgDx_dotdot_sg_j;
-}
-
-inline
-ModelEvaluator::SGDerivative
-ModelEvaluator::OutArgs::get_DgDx_dotdot_sg(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_sg,j);
-  return DgDx_dotdot_sg_[j];
-}
-
-inline
-ModelEvaluator::DerivativeProperties
-ModelEvaluator::OutArgs::get_DgDx_dotdot_sg_properties(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_sg,j);
-  return DgDx_dotdot_sg_properties_[j];
-}
-
-inline
-void ModelEvaluator::OutArgs::set_DgDx_dotdot_mp( int j, const MPDerivative &DgDx_dotdot_mp_j )
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_mp,j);
-  DgDx_dotdot_mp_[j] = DgDx_dotdot_mp_j;
-}
-
-inline
-ModelEvaluator::MPDerivative
-ModelEvaluator::OutArgs::get_DgDx_dotdot_mp(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_mp,j);
-  return DgDx_dotdot_mp_[j];
-}
-
-inline
-ModelEvaluator::DerivativeProperties
-ModelEvaluator::OutArgs::get_DgDx_dotdot_mp_properties(int j) const
-{
-  assert_supports(OUT_ARG_DgDx_dotdot_mp,j);
-  return DgDx_dotdot_mp_properties_[j];
-}
-
-inline
 void ModelEvaluator::OutArgs::set_DgDx( int j, const Derivative &DgDx_j )
 {
   assert_supports(OUT_ARG_DgDx,j);
@@ -2103,11 +1884,11 @@ ModelEvaluator::OutArgs::get_DgDp_mp_properties(int j, int l) const
 }
 
 inline
-void ModelEvaluator::OutArgs::set_f_poly( const Teuchos::RCP<Teuchos::Polynomial<Epetra_Vector> > &f_poly )
+void ModelEvaluator::OutArgs::set_f_poly( const Teuchos::RefCountPtr<Teuchos::Polynomial<Epetra_Vector> > &f_poly )
 { f_poly_ = f_poly; }
 
 inline
-Teuchos::RCP<Teuchos::Polynomial<Epetra_Vector> >
+Teuchos::RefCountPtr<Teuchos::Polynomial<Epetra_Vector> >
 ModelEvaluator::OutArgs::get_f_poly() const
 { return f_poly_; }
 
@@ -2194,10 +1975,6 @@ void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dot arg, int j, con
 { this->_setSupports(arg,j,new_supports); }
 
 inline
-void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dotdot arg, int j, const DerivativeSupport& new_supports )
-{ this->_setSupports(arg,j,new_supports); }
-
-inline
 void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx arg, int j, const DerivativeSupport& new_supports )
 { this->_setSupports(arg,j,new_supports); }
 
@@ -2218,10 +1995,6 @@ void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dot_sg arg, int j, 
 { this->_setSupports(arg,j,new_supports); }
 
 inline
-void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dotdot_sg arg, int j, const DerivativeSupport& new_supports )
-{ this->_setSupports(arg,j,new_supports); }
-
-inline
 void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_sg arg, int j, const DerivativeSupport& new_supports )
 { this->_setSupports(arg,j,new_supports); }
 
@@ -2239,10 +2012,6 @@ void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDfDp_mp arg, int l, cons
 
 inline
 void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dot_mp arg, int j, const DerivativeSupport& new_supports )
-{ this->_setSupports(arg,j,new_supports); }
-
-inline
-void ModelEvaluator::OutArgsSetup::setSupports( EOutArgsDgDx_dotdot_mp arg, int j, const DerivativeSupport& new_supports )
 { this->_setSupports(arg,j,new_supports); }
 
 inline
@@ -2273,12 +2042,6 @@ void ModelEvaluator::OutArgsSetup::set_DgDx_dot_properties( int j, const Derivat
 }
 
 inline
-void ModelEvaluator::OutArgsSetup::set_DgDx_dotdot_properties( int j, const DerivativeProperties &properties )
-{
-  this->_set_DgDx_dotdot_properties(j,properties);
-}
-
-inline
 void ModelEvaluator::OutArgsSetup::set_DgDx_properties( int j, const DerivativeProperties &properties )
 {
   this->_set_DgDx_properties(j,properties);
@@ -2303,12 +2066,6 @@ void ModelEvaluator::OutArgsSetup::set_DgDx_dot_sg_properties( int j, const Deri
 }
 
 inline
-void ModelEvaluator::OutArgsSetup::set_DgDx_dotdot_sg_properties( int j, const DerivativeProperties &properties )
-{
-  this->_set_DgDx_dotdot_sg_properties(j,properties);
-}
-
-inline
 void ModelEvaluator::OutArgsSetup::set_DgDx_sg_properties( int j, const DerivativeProperties &properties )
 {
   this->_set_DgDx_sg_properties(j,properties);
@@ -2330,12 +2087,6 @@ inline
 void ModelEvaluator::OutArgsSetup::set_DgDx_dot_mp_properties( int j, const DerivativeProperties &properties )
 {
   this->_set_DgDx_dot_mp_properties(j,properties);
-}
-
-inline
-void ModelEvaluator::OutArgsSetup::set_DgDx_dotdot_mp_properties( int j, const DerivativeProperties &properties )
-{
-  this->_set_DgDx_dotdot_mp_properties(j,properties);
 }
 
 inline

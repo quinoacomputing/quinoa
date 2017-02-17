@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -389,7 +389,7 @@ namespace Anasazi {
     ScalarType ONE  = SCT::one();
 
     int xc = MVT::GetNumberVecs( X );
-    ptrdiff_t xr = MVT::GetGlobalLength( X );
+    int xr = MVT::GetVecLength( X );
     int nq = Q.length();
     std::vector<int> qcs(nq);
     // short-circuit
@@ -399,7 +399,7 @@ namespace Anasazi {
 #endif
       return;
     }
-    ptrdiff_t qr = MVT::GetGlobalLength ( *Q[0] );
+    int qr = MVT::GetVecLength ( *Q[0] );
     // if we don't have enough C, expand it with null references
     // if we have too many, resize to throw away the latter ones
     // if we have exactly as many as we have Q, this call has no effect
@@ -423,7 +423,7 @@ namespace Anasazi {
       MX = Teuchos::rcpFromRef(X);
     }
     int mxc = MVT::GetNumberVecs( *MX );
-    ptrdiff_t mxr = MVT::GetGlobalLength( *MX );
+    int mxr = MVT::GetVecLength( *MX );
 
     // check size of X and Q w.r.t. common sense
     TEUCHOS_TEST_FOR_EXCEPTION( xc<0 || xr<0 || mxc<0 || mxr<0, std::invalid_argument, 
@@ -435,10 +435,10 @@ namespace Anasazi {
     // tally up size of all Q and check/allocate C
     int baslen = 0;
     for (int i=0; i<nq; i++) {
-      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetGlobalLength( *Q[i] ) != qr, std::invalid_argument, 
+      TEUCHOS_TEST_FOR_EXCEPTION( MVT::GetVecLength( *Q[i] ) != qr, std::invalid_argument, 
                           "Anasazi::BasicOrthoManager::projectMat(): Q lengths not mutually consistent" );
       qcs[i] = MVT::GetNumberVecs( *Q[i] );
-      TEUCHOS_TEST_FOR_EXCEPTION( qr < static_cast<ptrdiff_t>(qcs[i]), std::invalid_argument, 
+      TEUCHOS_TEST_FOR_EXCEPTION( qr < qcs[i], std::invalid_argument, 
                           "Anasazi::BasicOrthoManager::projectMat(): Q has less rows than columns" );
       baslen += qcs[i];
 
@@ -513,7 +513,7 @@ namespace Anasazi {
         Teuchos::TimeMonitor lcltimer( *timerReortho_ );
 #endif
         for (int i=0; i<nq; i++) {
-          Teuchos::SerialDenseMatrix<int,ScalarType> C2(C[i]->numRows(), C[i]->numCols());
+          Teuchos::SerialDenseMatrix<int,ScalarType> C2(*C[i]);
           
           // Apply another step of classical Gram-Schmidt
           MatOrthoManager<ScalarType,MV,OP>::innerProdMat(*Q[i],X,C2,MQ[i],MX);
@@ -562,7 +562,7 @@ namespace Anasazi {
     // findBasis() requires MX
 
     int xc = MVT::GetNumberVecs(X);
-    ptrdiff_t xr = MVT::GetGlobalLength(X);
+    int xr = MVT::GetVecLength(X);
 
     // if Op==null, MX == X (via pointer)
     // Otherwise, either the user passed in MX or we will allocated and compute it
@@ -582,7 +582,7 @@ namespace Anasazi {
     }
 
     int mxc = (this->_hasOp) ? MVT::GetNumberVecs( *MX ) : xc;
-    ptrdiff_t mxr = (this->_hasOp) ? MVT::GetGlobalLength( *MX )  : xr;
+    int mxr = (this->_hasOp) ? MVT::GetVecLength( *MX )  : xr;
 
     // check size of C, B
     TEUCHOS_TEST_FOR_EXCEPTION( xc == 0 || xr == 0, std::invalid_argument, 
@@ -591,7 +591,7 @@ namespace Anasazi {
                         "Anasazi::BasicOrthoManager::normalizeMat(): Size of X not consistent with size of B" );
     TEUCHOS_TEST_FOR_EXCEPTION( xc != mxc || xr != mxr, std::invalid_argument, 
                         "Anasazi::BasicOrthoManager::normalizeMat(): Size of X not consistent with size of MX" );
-    TEUCHOS_TEST_FOR_EXCEPTION( static_cast<ptrdiff_t>(xc) > xr, std::invalid_argument, 
+    TEUCHOS_TEST_FOR_EXCEPTION( xc > xr, std::invalid_argument, 
                         "Anasazi::BasicOrthoManager::normalizeMat(): Size of X not feasible for normalization" );
 
     return findBasis(X, MX, *B, true );
@@ -621,7 +621,7 @@ namespace Anasazi {
 
     int nq = Q.length();
     int xc = MVT::GetNumberVecs( X );
-    ptrdiff_t xr = MVT::GetGlobalLength( X );
+    int xr = MVT::GetVecLength( X );
     int rank;
 
     /* if the user doesn't want to store the coefficients, 
@@ -649,11 +649,11 @@ namespace Anasazi {
     }
 
     int mxc = MVT::GetNumberVecs( *MX );
-    ptrdiff_t mxr = MVT::GetGlobalLength( *MX );
+    int mxr = MVT::GetVecLength( *MX );
 
     TEUCHOS_TEST_FOR_EXCEPTION( xc == 0 || xr == 0, std::invalid_argument, "Anasazi::BasicOrthoManager::projectAndNormalizeMat(): X must be non-empty" );
 
-    ptrdiff_t numbas = 0;
+    int numbas = 0;
     for (int i=0; i<nq; i++) {
       numbas += MVT::GetNumberVecs( *Q[i] );
     }

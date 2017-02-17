@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -54,13 +54,9 @@ public:
   /** \brief . */
   virtual const Teuchos::SerialDenseVector<int,Scalar>& b() const = 0;
   /** \brief . */
-  virtual const Teuchos::SerialDenseVector<int,Scalar>& bhat() const = 0;
-  /** \brief . */
   virtual const Teuchos::SerialDenseVector<int,Scalar>& c() const = 0;
   /** \brief . */
   virtual int order() const = 0;
-    /** \brief . */
-  virtual bool isEmbeddedMethod() const = 0;
   /** \brief . */
   virtual bool operator== (const RKButcherTableauBase<Scalar>& rkbt) const;
   /** \brief . */

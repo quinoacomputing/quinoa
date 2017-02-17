@@ -1,58 +1,26 @@
-// Copyright (c) 2013, Sandia Corporation.
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-// 
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-// 
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-// 
-//     * Neither the name of Sandia Corporation nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+/*------------------------------------------------------------------------*/
+/*                 Copyright 2010 Sandia Corporation.                     */
+/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
+/*  license for use of this work by or on behalf of the U.S. Government.  */
+/*  Export of this program may require a license from the                 */
+/*  United States Government.                                             */
+/*------------------------------------------------------------------------*/
 
 #ifndef stk_mesh_PartRepository_hpp
 #define stk_mesh_PartRepository_hpp
 
-#include <stk_mesh/base/Part.hpp>       // for Part
-#include <stk_mesh/base/Types.hpp>      // for PartVector, EntityRank
-#include <stk_util/util/string_case_compare.hpp>
-#include <string>                       // for string
-namespace stk { namespace mesh { class MetaData; } }
+#include <stk_mesh/base/Types.hpp>
+#include <stk_mesh/base/Part.hpp>
+#include <stk_mesh/baseImpl/PartImpl.hpp>
+
 
 namespace stk {
 namespace mesh {
 
+class MetaData;
 
 namespace impl {
 
-struct StringLessCase
-{
-    bool operator()(const std::string &a, const std::string &b) const
-    {
-        return stk::less_case(a, b);
-    }
-};
 
 class PartRepository {
 public:
@@ -61,12 +29,12 @@ public:
 
   Part * universal_part() const;
 
-  Part * get_part_by_name(const std::string &name) const;
-  const PartVector & get_all_parts()  const;  // returns all parts
-  const PartVector   get_mesh_parts() const; // returns the non-internal parts
+  const PartVector & get_all_parts() const;
 
-  Part * declare_part( const std::string & arg_name , EntityRank arg_rank, bool force_no_induce=false );
+  Part * declare_part( const std::string & arg_name , EntityRank arg_rank );
+  Part * declare_part( const PartVector & part_intersect );
   void declare_subset( Part & superset, Part & subset );
+  void declare_part_relation( Part & root_part, PartRelation relation, Part & target_part );
 
   template<class T>
   const T * declare_attribute_with_delete( Part & , const T *);
@@ -79,15 +47,13 @@ private:
   PartRepository();
   PartRepository(const PartRepository & );
   PartRepository & operator = ( const PartRepository & );
-
-  Part * declare_part_impl( const std::string & name, EntityRank rank, bool force_no_induce );
+  
+  Part * declare_part_impl( const std::string & name, EntityRank rank);
   void declare_subset_impl( Part & superset, Part & subset );
-  void add_part(Part* part);
 
   MetaData * m_meta_data;
   Part * m_universal_part;
   PartVector m_all_parts;
-  std::map<std::string, stk::mesh::Part*, StringLessCase> m_name_to_parts_map;
 };
 
 template<class T>
@@ -114,11 +80,10 @@ PartRepository::remove_attribute( Part & p, const T * a )
   return p.m_partImpl.remove_attribute<T>( a );
 }
 
-bool is_internal_part(const Part& part);
-std::string convert_to_internal_name(const std::string& part_name);
 
-} // namespace impl
+} // namespace impl 
 } // namespace mesh
 } // namespace stk
+
 
 #endif // stk_mesh_PartRepository_hpp

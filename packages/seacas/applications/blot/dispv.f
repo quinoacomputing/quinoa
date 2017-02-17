@@ -53,6 +53,7 @@ C   --                   list should have their values displayed on
 C   --                   the plot legend.  If >0, they should;
 C   --                   If <=0, they should not.
 C   --          LIDSP(i) identifies the ith variable in the list.
+C   --          If LIDSP(i) > 0, LIDSP(i) is the id of a history variable.
 C   --          If LIDSP(i) < 0, -LIDSP(i) is the id of a global variable.
 C   --          If LIDSP(i) = 0, TIME is to be displayed on the plot legend.
 C
@@ -69,12 +70,38 @@ C
 
       LOGICAL FFMATC
 
+      CHARACTER*(MXNAME) TNAME(4096)
+      SAVE TNAME
+      INTEGER LLIST
+      SAVE LLIST
+      LOGICAL FIRST
+      SAVE FIRST
+
+      DATA FIRST /.TRUE./
+
 C *****************************************************************
 
 C        Check that database is in the EXODUS format
 
       CALL CKEXOD (EXODUS, *140)
-      CALL DBVIX_BL ('G', 1, IXGL)
+
+      IF (FIRST) THEN
+
+C        Construct array containing names of history and global
+C        variables and TIME.
+
+         if (nvarhi+nvargl+1 .gt. 4096) then
+            call prterr('PROGRAM',
+     $           'Too many names; increase TNAME size')
+         end if
+         TNAME(1) = 'TIME'
+         CALL DBVIX ('H', 1, IXHV)
+         CALL CPYSTR (NVARHI, NAMES(IXHV), TNAME(2))
+         CALL DBVIX ('G', 1, IXGL)
+         CALL CPYSTR (NVARGL, NAMES(IXGL), TNAME(NVARHI+2))
+         LLIST = 1 + NVARHI + NVARGL
+         FIRST = .FALSE.
+      ENDIF
 
       IF (INIT) THEN
 
@@ -104,10 +131,13 @@ C              Check for OFF flag.
 C              Check for ALL parameter
 
          ELSE IF (FFMATC (IFLD, INTYP, CFIELD, 'ALL', 3)) THEN
-            LIDSP(0) = NVARGL
+            LIDSP(0) = LLIST
             LIDSP(1) = 0
+            DO 100 I = 1, NVARHI
+               LIDSP(I+1) = I
+  100       CONTINUE
             DO 110 I = 1, NVARGL
-               LIDSP(I) = -I
+               LIDSP(I+NVARHI+1) = -I
   110       CONTINUE
             CALL FFADDC ('ALL', INLINE(1))
 
@@ -121,23 +151,25 @@ C              containing all positive integers.
                IF (LIDSP(I) .EQ. 0) THEN
                   LIDSP(I) = 1
                ELSE IF (LIDSP(I) .LT. 0) THEN
-                  LIDSP(I) = 1 - LIDSP(I)
+                  LIDSP(I) = 1 + NVARHI - LIDSP(I)
                ENDIF
   120       CONTINUE
 
 C              Get list of selected variables
-           CALL RIXWRD (INLINE(1), IFLD, INTYP, CFIELD,
-     &         'display variable name', NVARGL, NAMES(IXGL),
+
+            CALL RIXWRD (INLINE(1), IFLD, INTYP, CFIELD,
+     &         'display variable name', LLIST, TNAME,
      &         LIDSP(0), LIDSP(1), *140)
 
 C              Convert the list back to the proper format.
 
             DO 130 I = 1, LIDSP(0)
-               LIDSP(I) = LIDSP(I) + 1
-               IF (LIDSP(I) .LE. 1) THEN
+               IF (LIDSP(I) .EQ. 1) THEN
+                  LIDSP(I) = 0
+               ELSE IF (LIDSP(I) .LE. (NVARHI+1)) THEN
                   LIDSP(I) = LIDSP(I) - 1
                ELSE
-                  LIDSP(I) = -(LIDSP(I) - 1)
+                  LIDSP(I) = -(LIDSP(I) - NVARHI - 1)
                ENDIF
   130       CONTINUE
 

@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
+// 
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -53,8 +53,7 @@ LOCAInterface::
 LOCAInterface( Teuchos::RCP <ProblemLOCAPrototype> & aProblem ,
     Teuchos::RCP <ContinuationManager> aContinuationManager):
   continuationManager(aContinuationManager),
-  problem(aProblem),
-  t(0.0)
+  problem(aProblem)
 {
 }
 
@@ -62,15 +61,15 @@ LOCAInterface::
 ~LOCAInterface()
 {
 }
-
+      
 bool LOCAInterface::
-computeF(const Epetra_Vector& x, Epetra_Vector& f,
-     const NOX::Epetra::Interface::Required::FillType F)
+computeF(const Epetra_Vector& x, Epetra_Vector& f, 
+	 const NOX::Epetra::Interface::Required::FillType F)
 {
   problem->ComputeF(x,f);
   return true;
 }
-
+    
 bool LOCAInterface::
 computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac)
 {
@@ -94,18 +93,18 @@ printSolution (const Epetra_Vector &x, const double conParam)
 {
 
   // Printing a Solution file ****************************************
-  if ( continuationManager->GetSolutionFileAttribute() ==
+  if ( continuationManager->GetSolutionFileAttribute() == 
       ContinuationManager::Print)
   {
     // Setting the parameters to be printed in the solution file
     problem->SetSolutionFileParameters(x);
 
-    // Getting the solution parameter list
-    Teuchos::RCP <Teuchos::ParameterList> solutionFileParams =
+    // Getting the solution parameter list 
+    Teuchos::RCP <Teuchos::ParameterList> solutionFileParams = 
       problem->GetSolutionFileParameters();
 
     // Retrieving the file name from the continuation Manager
-    std::string solutionFileName = continuationManager->GetSolutionFileName();
+    string solutionFileName = continuationManager->GetSolutionFileName();
 
     // Printing a Solution File
     problem->PrintSolutionFile(solutionFileName,x,*solutionFileParams);
@@ -116,12 +115,12 @@ printSolution (const Epetra_Vector &x, const double conParam)
   // Setting the parameters to be printed in the continuation file
   problem->SetContinuationFileParameters(x);
 
-  // Getting the continuation file parameter list
-  Teuchos::RCP <Teuchos::ParameterList> continuationFileParams =
+  // Getting the continuation file parameter list 
+  Teuchos::RCP <Teuchos::ParameterList> continuationFileParams = 
     problem->GetContinuationFileParameters();
 
   // Getting the continuation file name from the Continuation manager
-  std::string continuationFileName = continuationManager->GetContinuationFileName();
+  string continuationFileName = continuationManager->GetContinuationFileName();
 
   // Getting the step id from the continuation manager
   int stepId = continuationManager->GetStepID();
@@ -133,11 +132,11 @@ printSolution (const Epetra_Vector &x, const double conParam)
 }
 
 bool LOCAInterface::
-computeShiftedMatrix (double alpha, double beta,
+computeShiftedMatrix (double alpha, double beta, 
                            const Epetra_Vector &x, Epetra_Operator &A)
 {
 
-std::cout << " AGS HACK -- LOCAInterface::computeShiftedMatrix RETURNS JACOBIAN!!! " << std::endl;
+cout << " AGS HACK -- LOCAInterface::computeShiftedMatrix RETURNS JACOBIAN!!! " << endl;
   problem->ComputeJacF(x);
   problem->GetJacF()->Scale(alpha);
 

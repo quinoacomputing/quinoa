@@ -9,4 +9,3 @@ clean:
 	@rm -f EpetraOskiInterface.dvi
 	@rm -f EpetraOskiInterface.bbl
 	@rm -f EpetraOskiInterface.blg
-	@rm -f EpetraOskiInterface.pdf

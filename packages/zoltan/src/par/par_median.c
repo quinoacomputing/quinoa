@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *  
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    Revision: 1.6.2.1 $
+ ****************************************************************************/
 
 
 #ifdef __cplusplus
@@ -142,8 +109,6 @@ int Zoltan_RB_find_median(
   int     markactive;                /* which side of cut is active = 0/1 */
   int     rank=0;                    /* rank in partition (Tflops_Special) */
   int     loopCount=0;
-  int     moveSome = 0;              /* Flag indicating whether to move at least
-                                        some dots that are along the cut */
 
   /* MPI data types and user functions */
 
@@ -258,19 +223,9 @@ int Zoltan_RB_find_median(
         if (tmp_half < valuemin || tmp_half > valuemax)
           tmp_half = 0.5 * (valuemin + valuemax);
       }
-      else if (weight) {
-        /* Note, since zoltan provides artificial weights of 1 for non-weighted
-         * problems, this computation of tmp_half is always used.  
-         * 
-         * Some problems with many zero-weighted dots do not behave well
-         * with this computation of tmp_half.  
-         * Removing it, however, increases the number of iterations needed for
-         * many Zoltan tests.  
-         * KDD 2/2016
-         */
+      else if (weight)
         tmp_half = valuemin + (targetlo - weightlo) /
                     (weight - weightlo - weighthi) * (valuemax - valuemin);
-      }
       else
         tmp_half = 0.5 * (valuemin + valuemax);
 
@@ -340,11 +295,6 @@ int Zoltan_RB_find_median(
          MPI_Allreduce(&medme,&med,1,med_type,med_op,local_comm);
       }
 
-#undef KDD_NOISY
-#ifdef KDD_NOISY
-if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f %.20f wtlo/hi %.0f %.0f\n", loopCount, tmp_half, weightlo, weighthi, valuemin, valuemax, med.wtlo, med.wthi);
-#endif
-
       /* test median guess for convergence */
       /* move additional dots that are next to cut across it */
 
@@ -369,18 +319,12 @@ if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f 
         else {                                   /* multiple dots to move */
           breakflag = 0;
           wtok = 0.0;
-          moveSome = 0;
-          if (medme.valuehi == med.valuehi) {
-            wtok = medme.wthi;   
-            moveSome = 1;
-          }
+          if (medme.valuehi == med.valuehi) wtok = medme.wthi;   
           if (weightlo + med.wthi >= targetlo) {                /* all done */
             if (rectilinear_blocks) {
-              if (weightlo + med.wthi - targetlo > targetlo - weightlo) {
-                moveSome = 0;
+              if (weightlo + med.wthi - targetlo > targetlo - weightlo)
                 wtok = 0.0;                      /* don't move if moving group
                                                     of dots has worse balance*/
-              }
             } else {
               if (Tflops_Special)
                 Zoltan_RB_scan_double(&wtok, &wtupto, 1, local_comm, 
@@ -392,17 +336,11 @@ if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f 
             }
             breakflag = 1;
           }                                      /* wtok = most I can move */
-          wtsum = 0.0;
-          if (moveSome) 
-          for (j = 0; j < numlist;  j++)
-          {
+          for (j = 0, wtsum = 0.0; j < numlist && wtsum < wtok; j++) {
             i = dotlist[j];
             if (dots[i] == med.valuehi) { /* only move if better */
               tmp_wgt = (wgts ? wgts[i*wgtflag] : uniformWeight);
-              if (rectilinear_blocks || /* move all when rectilinear_blocks */
-                 ((tmp_wgt == 0.) || (wtsum + tmp_wgt - wtok < wtok - wtsum)))
-                 /* weight is either zero or small enough to not exceed wtok */
-              {
+              if (wtsum + tmp_wgt - wtok < wtok - wtsum) {
                 dotmark[i] = 0;
                 wtsum += tmp_wgt;  /* KDD Moved sum inside if test 1/2002 */
               }
@@ -453,18 +391,12 @@ if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f 
         else {                                   /* multiple dots to move */
           breakflag = 0;
           wtok = 0.0;
-          moveSome = 0;
-          if (medme.valuelo == med.valuelo) {
-            wtok = medme.wtlo;   
-            moveSome = 1;
-          }
+          if (medme.valuelo == med.valuelo) wtok = medme.wtlo;   
           if (weighthi + med.wtlo >= targethi) {                /* all done */
             if (rectilinear_blocks) {
-              if (weighthi + med.wtlo - targethi > targethi - weighthi) {
-                moveSome = 0;
+              if (weighthi + med.wtlo - targethi > targethi - weighthi)
                 wtok = 0.0;                      /* don't move if moving group
                                                     of dots has worse balance*/
-              }
             } else {
               if (Tflops_Special)
                 Zoltan_RB_scan_double(&wtok, &wtupto, 1, local_comm, 
@@ -476,17 +408,11 @@ if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f 
             }
             breakflag = 1;
           }                                      /* wtok = most I can move */
-          wtsum = 0.0;
-          if (moveSome) 
-          for (j = 0; j < numlist;  j++)
-          {
+          for (j = 0, wtsum = 0.0; j < numlist && wtsum < wtok; j++) {
             i = dotlist[j];
             if (dots[i] == med.valuelo) { /* only move if better */
               tmp_wgt = (wgts ? wgts[i*wgtflag] : uniformWeight);
-              if (rectilinear_blocks || /* move all when rectilinear_blocks */
-                 ((tmp_wgt == 0.) || (wtsum + tmp_wgt - wtok < wtok - wtsum)))
-                 /* weight is either zero or small enough to not exceed wtok */
-              {
+              if (wtsum + tmp_wgt - wtok < wtok - wtsum) {
                 dotmark[i] = 1;
                 wtsum += tmp_wgt; /* KDD Moved sum inside if test 1/2002 */
               }
@@ -538,9 +464,6 @@ if (proc==0) printf("%d tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f 
     weighthi = 0.;
     tmp_half = valuemax;
   }
-#ifdef KDD_NOISY
-if (proc==0) printf("FINAL tmp_half %.20f weightlo/hi %.0f %.0f valuemin/max %.20f %.20f \n", tmp_half, weightlo, weighthi, valuemin, valuemax);
-#endif
 
   /* found median */
   *valuehalf = tmp_half;

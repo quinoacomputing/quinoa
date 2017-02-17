@@ -1,45 +1,41 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
+/* ************************************************************************
+
+                   Trios: Trilinos I/O Support
+                 Copyright 2011 Sandia Corporation
+
+ Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ the U.S. Government retains certain rights in this software.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the Corporation nor the names of the
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
+
+*************************************************************************/
 
 /*
  * xfer_service_test.cpp
@@ -76,7 +72,7 @@
 #include <algorithm>
 
 // Prototypes for client and server codes
-int xfer_server_main(nssi_rpc_transport transport, int num_threads, MPI_Comm server_comm);
+int xfer_server_main(nssi_rpc_transport transport, MPI_Comm server_comm);
 int xfer_client_main (struct xfer_args &args, nssi_service &xfer_svc, MPI_Comm client_comm);
 
 
@@ -97,10 +93,9 @@ int print_args(
         out << prefix << " ------------  ARGUMENTS (server) ----------- " << std::endl;
 
     out << prefix << " \tserver-url       = " << args.server_url.c_str() << std::endl;
-    out << prefix << " \turl-file         = " << args.url_file << std::endl;
-    out << prefix << " \ttransport        = " << args.transport_name << std::endl;
 
     if (args.client_flag) {
+        out << prefix << " \ttransport        = " << args.transport_name << std::endl;
         out << prefix << " \tio-method        = " << args.io_method_name << std::endl;
         out << prefix << " \tnum-trials       = " << args.num_trials << std::endl;
         out << prefix << " \tnum-reqs         = " << args.num_reqs << std::endl;
@@ -131,8 +126,6 @@ int main(int argc, char *argv[])
     int server_index=0;
     int rank_in_server=0;
 
-    int transport_index=-1;
-
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &np);
@@ -156,44 +149,16 @@ int main(int argc, char *argv[])
             "read-encode-sync", "read-encode-async",
             "read-rdma-sync", "read-rdma-async"};
 
-    const int nssi_transport_list[] = {
-            NSSI_RPC_PTL,
-            NSSI_RPC_PTL,
-            NSSI_RPC_IB,
-            NSSI_RPC_IB,
-            NSSI_RPC_GEMINI,
-            NSSI_RPC_GEMINI,
-            NSSI_RPC_BGPDCMF,
-            NSSI_RPC_BGPDCMF,
-            NSSI_RPC_BGQPAMI,
-            NSSI_RPC_BGQPAMI,
-            NSSI_RPC_MPI};
-
-    const int num_nssi_transports = 11;
+    const int num_nssi_transports = 4;
     const int nssi_transport_vals[] = {
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10
-            };
+            NSSI_RPC_PTL,
+            NSSI_RPC_IB,
+            NSSI_RPC_GEMINI,
+            NSSI_RPC_MPI};
     const char * nssi_transport_names[] = {
-            "portals",
             "ptl",
-            "infiniband",
             "ib",
-            "gemini",
             "gni",
-            "bgpdcmf",
-            "dcmf",
-            "bgqpami",
-            "pami",
             "mpi"
     };
 
@@ -217,7 +182,6 @@ int main(int argc, char *argv[])
     args.timeout = 500;
     args.num_retries = 5;
     args.validate_flag = true;
-    args.kill_server_flag = true;
     args.block_distribution = true;
 
 
@@ -263,7 +227,6 @@ int main(int argc, char *argv[])
         parser.setOption("validate", "no-validate", &args.validate_flag, "Validate the data");
         parser.setOption("num-servers", &args.num_servers, "Number of server processes");
         parser.setOption("num-threads", &args.num_threads, "Number of threads used by each server process");
-        parser.setOption("kill-server", "no-kill-server", &args.kill_server_flag, "Kill the server at the end of the experiment");
         parser.setOption("block-distribution", "rr-distribution", &args.block_distribution,
                 "Use a block distribution scheme to assign clients to servers");
 
@@ -280,15 +243,13 @@ int main(int argc, char *argv[])
                 "\t\t\tread-rdma-async: Read data using RDMA (server puts) - asynchronous");
 
 
-        // Set an enumeration command line option for the NNTI transport
-        parser.setOption("transport", &transport_index, num_nssi_transports, nssi_transport_vals, nssi_transport_names,
+        // Set an enumeration command line option for the io_method
+        parser.setOption("transport", &args.transport, num_nssi_transports, nssi_transport_vals, nssi_transport_names,
                 "NSSI transports (not all are available on every platform): \n"
-                "\t\t\tportals|ptl    : Cray or Schutt\n"
-                "\t\t\tinfiniband|ib  : libibverbs\n"
-                "\t\t\tgemini|gni     : Cray libugni (Gemini or Aries)\n"
-                "\t\t\tbgpdcmf|dcmf   : IBM BG/P DCMF\n"
-                "\t\t\tbgqpami|pami   : IBM BG/Q PAMI\n"
-                "\t\t\tmpi            : isend/irecv implementation\n"
+                "\t\t\tportals : Cray or Schutt\n"
+                "\t\t\tinfiniband : libibverbs\n"
+                "\t\t\tgemini : Cray\n"
+                "\t\t\tmpi : isend/irecv implementation\n"
                 );
 
 
@@ -336,13 +297,6 @@ int main(int argc, char *argv[])
 
     TEUCHOS_STANDARD_CATCH_STATEMENTS(true,std::cerr,success);
 
-    log_debug(args.debug_level, "transport_index=%d", transport_index);
-    if (transport_index > -1) {
-    	args.transport     =nssi_transport_list[transport_index];
-    	args.transport_name=std::string(nssi_transport_names[transport_index]);
-    }
-	args.io_method_name=std::string(io_method_names[args.io_method]);
-
     log_debug(args.debug_level, "%d: Finished processing arguments", rank);
 
 
@@ -386,12 +340,6 @@ int main(int argc, char *argv[])
 
     log_debug(debug_level, "%d: Starting xfer-service test", rank);
 
-#ifdef TRIOS_ENABLE_COMMSPLITTER
-    if (args.transport == NSSI_RPC_MPI) {
-        MPI_Pcontrol(0);
-    }
-#endif
-
     /**
      * Since this test can be run as a server, client, or both, we need to play some fancy
      * MPI games to get the communicators working correctly.  If we're executing as both
@@ -418,19 +366,15 @@ int main(int argc, char *argv[])
         MPI_Comm_split(MPI_COMM_WORLD, color, rank, &comm);
     }
     else {
-        if (args.client_flag) {
+        if (args.client_flag)
             color=1;
-            log_debug(debug_level, "rank=%d is a client", rank);
-        }
-        else if (args.server_flag) {
+        else if (args.server_flag)
             color=0;
-            log_debug(debug_level, "rank=%d is a server", rank);
-        }
         else {
             log_error(debug_level, "Must be either a client or a server");
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
-        MPI_Comm_split(MPI_COMM_WORLD, color, rank, &comm);
+        MPI_Comm_dup(MPI_COMM_WORLD, &comm);
     }
 
     MPI_Comm_rank(comm, &splitrank);
@@ -508,8 +452,6 @@ int main(int argc, char *argv[])
     // If running as a client only, have to get the list of servers from the urlfile.
     else if (!args.server_flag && args.client_flag){
 
-        sleep(args.delay);  // give server time to get started
-
         std::vector< std::string > urlbuf;
         xfer_read_server_url_file(args.url_file.c_str(), urlbuf, comm);
         args.num_servers = urlbuf.size();
@@ -545,6 +487,9 @@ int main(int argc, char *argv[])
     xfer_debug_level = args.debug_level;
 
     // Print the arguments after they've all been set.
+    args.io_method_name = std::string(io_method_names[args.io_method]);
+    args.transport_name = std::string(nssi_transport_names[args.transport]);
+
     log_debug(debug_level, "%d: server_url=%s", rank, args.server_url.c_str());
 
     print_args(out, args, "%");
@@ -556,7 +501,7 @@ int main(int argc, char *argv[])
      *  In this example, the server is a single process.
      */
     if (color == 0) {
-        rc = xfer_server_main((nssi_rpc_transport)args.transport, args.num_threads, comm);
+        rc = xfer_server_main((nssi_rpc_transport)args.transport, comm);
         log_debug(debug_level, "Server is finished");
     }
 
@@ -580,6 +525,7 @@ int main(int argc, char *argv[])
         //if (client_rank == 0) {
         {
 
+            sleep(args.delay);  // give server time to get started
 
             // connect to remote server
             for (i=0; i < args.num_retries; i++) {
@@ -615,14 +561,9 @@ int main(int argc, char *argv[])
             MPI_Barrier(comm);
 
             // Tell one of the clients to kill the server
-            if ((args.kill_server_flag) && (rank_in_server == 0)) {
+            if (rank_in_server == 0) {
                 log_debug(debug_level, "%d: Halting xfer service", rank);
                 rc = nssi_kill(&xfer_svc, 0, 5000);
-            }
-            rc=nssi_free_service((nssi_rpc_transport)args.transport, &xfer_svc);
-            if (rc != NSSI_OK) {
-                log_error(xfer_debug_level, "could not free svc description: %s",
-                        nssi_err_str(rc));
             }
         }
 
@@ -651,9 +592,9 @@ int main(int argc, char *argv[])
     logger_fini();
 
     if(success && (rc == NSSI_OK))
-    	out << "\nEnd Result: TEST PASSED" << std::endl;
+      out << "\nEnd Result: TEST PASSED" << std::endl;
     else
-    	out << "\nEnd Result: TEST FAILED" << std::endl;
+        out << "\nEnd Result: TEST FAILED" << std::endl;
 
     return ((success && (rc==NSSI_OK)) ? 0 : 1 );
 }

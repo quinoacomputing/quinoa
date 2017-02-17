@@ -52,43 +52,23 @@
 #include <Epetra_Map.h>
 #include <Epetra_Comm.h>
 #include <Epetra_CrsMatrix.h>
-#include <Epetra_Vector.h>
 #include <Epetra_Directory.h>
 #include <Epetra_HashTable.h>
 #include <Epetra_Distributor.h>
-
-#include <Teuchos_TimeMonitor.hpp>
 
 #ifdef HAVE_VECTOR
 #include <vector>
 #endif
 
-
-
 namespace EpetraExt {
 
-//=========================================================================
-// ETI
-template<int> int import_only(const Epetra_CrsMatrix& M,
-					 const Epetra_Map& targetMap,
-					 CrsMatrixStruct& Mview,
-					 const Epetra_Import * prototypeImporter);
-
-template<long long> int import_only(const Epetra_CrsMatrix& M,
-					 const Epetra_Map& targetMap,
-					 CrsMatrixStruct& Mview,
-					 const Epetra_Import * prototypeImporter);
-
-
-//=========================================================================
 //
 //Method for internal use... sparsedot forms a dot-product between two
 //sparsely-populated 'vectors'.
 //Important assumption: assumes the indices in u_ind and v_ind are sorted.
 //
-template<typename int_type>
-double sparsedot(double* u, int_type* u_ind, int u_len,
-                 double* v, int_type* v_ind, int v_len)
+double sparsedot(double* u, int* u_ind, int u_len,
+		 double* v, int* v_ind, int v_len)
 {
   double result = 0.0;
 
@@ -96,8 +76,8 @@ double sparsedot(double* u, int_type* u_ind, int u_len,
   int u_idx = 0;
 
   while(v_idx < v_len && u_idx < u_len) {
-    int_type ui = u_ind[u_idx];
-    int_type vi = v_ind[v_idx];
+    int ui = u_ind[u_idx];
+    int vi = v_ind[v_idx];
 
     if (ui < vi) {
       ++u_idx;
@@ -113,12 +93,232 @@ double sparsedot(double* u, int_type* u_ind, int u_len,
   return(result);
 }
 
-//=========================================================================
+
+
+
+//kernel method for computing the local portion of C = A*B
+int mult_A_B(CrsMatrixStruct& Aview,
+	     CrsMatrixStruct& Bview,
+	     CrsWrapper& C)
+{
+  int C_firstCol = Bview.colMap->MinLID();
+  int C_lastCol = Bview.colMap->MaxLID();
+
+  int C_firstCol_import = 0;
+  int C_lastCol_import = -1;
+
+  int* bcols = Bview.colMap->MyGlobalElements();
+  int* bcols_import = NULL;
+  if (Bview.importColMap != NULL) {
+    C_firstCol_import = Bview.importColMap->MinLID();
+    C_lastCol_import = Bview.importColMap->MaxLID();
+
+    bcols_import = Bview.importColMap->MyGlobalElements();
+  }
+
+  int C_numCols = C_lastCol - C_firstCol + 1;
+  int C_numCols_import = C_lastCol_import - C_firstCol_import + 1;
+
+  if (C_numCols_import > C_numCols) C_numCols = C_numCols_import;
+
+  // Allocate workspace memory
+  double* dwork = new double[C_numCols];
+  int* iwork = new int[C_numCols];
+  int *c_cols=iwork;
+  double *c_vals=dwork;
+  int *c_index=new int[C_numCols];
+
+  int  i, j, k;
+  bool C_filled=C.Filled();
+
+
+  //To form C = A*B we're going to execute this expression:
+  //
+  // C(i,j) = sum_k( A(i,k)*B(k,j) )
+  //
+  //Our goal, of course, is to navigate the data in A and B once, without
+  //performing searches for column-indices, etc.
+
+
+  // Run through all the hash table lookups once and for all
+  int * Acol2Brow=new int[Aview.colMap->NumMyElements()];
+  if(Aview.colMap->SameAs(*Bview.rowMap)){
+    // Maps are the same: Use local IDs as the hash
+    for(int i=0;i<Aview.colMap->NumMyElements();i++)
+      Acol2Brow[i]=i;				
+  }
+  else {
+    // Maps are not the same:  Use the map's hash
+    for(int i=0;i<Aview.colMap->NumMyElements();i++)
+      Acol2Brow[i]=Bview.rowMap->LID(Aview.colMap->GID(i));
+  }
+  
+  // Mark indices as empty w/ -1
+  for(k=0;k<C_numCols;k++) c_index[k]=-1;
+
+  //loop over the rows of A.
+  for(i=0; i<Aview.numRows; ++i) {
+    //only navigate the local portion of Aview... (It's probable that we
+    //imported more of A than we need for A*B, because other cases like A^T*B 
+    //need the extra rows.)
+    if (Aview.remote[i]) {
+      continue;
+    }
+
+    int* Aindices_i = Aview.indices[i];
+    double* Aval_i  = Aview.values[i];
+
+    int global_row = Aview.rowMap->GID(i);
+
+    //loop across the i-th row of A and for each corresponding row
+    //in B, loop across colums and accumulate product
+    //A(i,k)*B(k,j) into our partial sum quantities C_row_i. In other words,
+    //as we stride across B(k,:) we're calculating updates for row i of the
+    //result matrix C.
+
+    /* Outline of the revised, ML-inspired algorithm
+ 
+    C_{i,j} = \sum_k A_{i,k} B_{k,j}
+
+    This algorithm uses a "middle product" formulation, with the loop ordering of 
+    i, k, j.  This means we compute a row of C at a time, but compute partial sums of 
+    each entry in row i until we finish the k loop.
+
+    This algorithm also has a few twists worth documenting.  
+
+    1) First off, we compute the Acol2Brow array above.  This array answers the question:
+
+    "Given a LCID in A, what LRID in B corresponds to it?"
+
+    Since this involves LID calls, this is a hash table lookup.  Thus we do this once for every 
+    LCID in A, rather than call LID inside the MMM loop.
+
+    2) The second major twist involves the c_index, c_cols and c_vals arrays.  The arrays c_cols 
+    and c_vals store the *local* column index and values accumulator respectively.  These 
+    arrays are allocated to a size equal to the max number of local columns in C, namely C_numcols.
+    The value c_current tells us how many non-zeros we currently have in this row.
+    
+    So how do we take a LCID and find the right accumulator?  This is where the c_index array
+    comes in.  At the start (and stop) and the i loop, c_index is filled with -1's.  Now 
+    whenever we find a LCID in the k loop, we first loop at c_index[lcid].  If this value is
+    -1 we haven't seen this entry yet.  In which case we add the appropriate stuff to c_cols
+    and c_vals and then set c_index[lcid] to the location of the accumulator (c_current before
+    we increment it).  If the value is NOT -1, this tells us the location in the c_vals/c_cols
+    arrays (namely c_index[lcid]) where our accumulator lives.
+
+    This trick works because we're working with local ids.  We can then loop from 0 to c_current
+    and reset c_index to -1's when we're done, only touching the arrays that have changed.
+    While we're at it, we can switch to the global ids so we can call [Insert|SumInto]GlobalValues.
+    Thus, the effect of this trick is to avoid passes over the index array.
+
+    3) The third major twist involves handling the remote and local components of B separately.
+    (ML doesn't need to do this, because its local ordering scheme is consistent between the local
+    and imported components of B.)  Since they have different column maps, they have inconsistent 
+    local column ids.  This means the "second twist" won't work as stated on both matrices at the 
+    same time.  While this could be handled any number of ways, I have chosen to do the two parts 
+    of B separately to make the code easier to read (and reduce the memory footprint of the MMM).
+    */
+
+    // Local matrix: Zero Current counts for matrix
+    int c_current=0;    
+
+    // Local matrix: Do the "middle product"
+    for(k=0; k<Aview.numEntriesPerRow[i]; ++k) {
+      int Ak=Acol2Brow[Aindices_i[k]];
+      double Aval = Aval_i[k];
+      // We're skipping remote entries on this pass.
+      if(Bview.remote[Ak] || Aval==0) continue;
+      
+      int* Bcol_inds = Bview.indices[Ak];
+      double* Bvals_k = Bview.values[Ak];
+
+      for(j=0; j<Bview.numEntriesPerRow[Ak]; ++j) {
+	int col=Bcol_inds[j];
+	if(c_index[col]<0){
+	  // We haven't seen this entry before; add it.  (In ML, on
+	  // the first pass, you haven't seen any of the entries
+	  // before, so they are added without the check.  Not sure
+	  // how much more efficient that would be; depends on branch
+	  // prediction.  We've favored code readability here.)
+	  c_cols[c_current]=col;	      
+	  c_vals[c_current]=Aval*Bvals_k[j];
+	  c_index[col]=c_current;
+	  c_current++;
+	}
+	else{ 
+	  // We've already seen this entry; accumulate it.
+	  c_vals[c_index[col]]+=Aval*Bvals_k[j];	    
+	}
+      }
+    }    
+    // Local matrix: Reset c_index and switch c_cols to GIDs
+    for(k=0; k<c_current; k++){
+      c_index[c_cols[k]]=-1;
+      c_cols[k]=bcols[c_cols[k]]; // Switch from local to global IDs.     
+    }
+    // Local matrix: Insert.
+    //
+    // We should check global error results after the algorithm is
+    // through.  It's probably safer just to let the algorithm run all
+    // the way through before doing this, since otherwise we have to
+    // remember to free all allocations carefully.
+    int err = C_filled ?
+      C.SumIntoGlobalValues(global_row,c_current,c_vals,c_cols)
+      :
+      C.InsertGlobalValues(global_row,c_current,c_vals,c_cols);   
+
+    // Remote matrix: Zero current counts again for matrix
+    c_current=0;    
+
+    // Remote matrix: Do the "middle product"
+    for(k=0; k<Aview.numEntriesPerRow[i]; ++k) {
+      int Ak=Acol2Brow[Aindices_i[k]];
+      double Aval = Aval_i[k];
+      // We're skipping local entries on this pass.
+      if(!Bview.remote[Ak] || Aval==0) continue;
+      
+      int* Bcol_inds = Bview.indices[Ak];
+      double* Bvals_k = Bview.values[Ak];
+
+      for(j=0; j<Bview.numEntriesPerRow[Ak]; ++j) {
+	int col=Bcol_inds[j];
+	if(c_index[col]<0){
+	  c_cols[c_current]=col;	      
+	  c_vals[c_current]=Aval*Bvals_k[j];
+	  c_index[col]=c_current;
+	  c_current++;
+	}
+	else{
+	  c_vals[c_index[col]]+=Aval*Bvals_k[j];	    
+	}
+      }
+    }    
+    // Remote matrix: Reset c_index and switch c_cols to GIDs
+    for(k=0; k<c_current; k++){
+      c_index[c_cols[k]]=-1;
+      c_cols[k]=bcols_import[c_cols[k]];      
+    }
+    // Remove matrix: Insert
+    //
+    // See above (on error handling).
+    err = C_filled ?
+      C.SumIntoGlobalValues(global_row,c_current,c_vals,c_cols)
+      :
+      C.InsertGlobalValues(global_row,c_current,c_vals,c_cols);    
+  }
+  
+
+  delete [] dwork;
+  delete [] iwork;
+  delete [] c_index;
+  delete [] Acol2Brow;
+  return(0);
+}
+
 //kernel method for computing the local portion of C = A*B^T
-template<typename int_type>
 int mult_A_Btrans(CrsMatrixStruct& Aview,
-                  CrsMatrixStruct& Bview,
-                  CrsWrapper& C)
+		  CrsMatrixStruct& Bview,
+		  CrsWrapper& C)
 {
   int i, j, k;
   int returnValue = 0;
@@ -131,26 +331,25 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
     if (Bview.numEntriesPerRow[i] > maxlen) maxlen = Bview.numEntriesPerRow[i];
   }
 
-  //std::cout << "Aview: " << std::endl;
+  //cout << "Aview: " << endl;
   //dumpCrsMatrixStruct(Aview);
 
-  //std::cout << "Bview: " << std::endl;
+  //cout << "Bview: " << endl;
   //dumpCrsMatrixStruct(Bview);
 
   int numBcols = Bview.colMap->NumMyElements();
   int numBrows = Bview.numRows;
 
   int iworklen = maxlen*2 + numBcols;
-  int_type* iwork = new int_type[iworklen];
+  int* iwork = new int[iworklen];
 
-  int_type * bcols = iwork+maxlen*2;
-  int_type* bgids = 0;
-  Bview.colMap->MyGlobalElementsPtr(bgids);
+  int* bcols = iwork+maxlen*2;
+  int* bgids = Bview.colMap->MyGlobalElements();
   double* bvals = new double[maxlen*2];
   double* avals = bvals+maxlen;
 
-  int_type max_all_b = (int_type) Bview.colMap->MaxAllGID64();
-  int_type min_all_b = (int_type) Bview.colMap->MinAllGID64();
+  int max_all_b = Bview.colMap->MaxAllGID();
+  int min_all_b = Bview.colMap->MinAllGID();
 
   //bcols will hold the GIDs from B's column-map for fast access
   //during the computations below
@@ -163,9 +362,9 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
   //each row of B, so that we can know when to skip certain rows below.
   //This will provide a large performance gain for banded matrices, and
   //a somewhat smaller gain for *most* other matrices.
-  int_type* b_firstcol = new int_type[2*numBrows];
-  int_type* b_lastcol = b_firstcol+numBrows;
-  int_type temp;
+  int* b_firstcol = new int[2*numBrows];
+  int* b_lastcol = b_firstcol+numBrows;
+  int temp;
   for(i=0; i<numBrows; ++i) {
     b_firstcol[i] = max_all_b;
     b_lastcol[i] = min_all_b;
@@ -176,7 +375,7 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
 
     if (Bview.remote[i]) {
       for(k=0; k<Blen_i; ++k) {
-        temp = (int_type) Bview.importColMap->GID64(Bindices_i[k]);
+        temp = Bview.importColMap->GID(Bindices_i[k]);
         if (temp < b_firstcol[i]) b_firstcol[i] = temp;
         if (temp > b_lastcol[i]) b_lastcol[i] = temp;
       }
@@ -192,8 +391,8 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
 
   Epetra_Util util;
 
-  int_type* Aind = iwork;
-  int_type* Bind = iwork+maxlen;
+  int* Aind = iwork;
+  int* Bind = iwork+maxlen;
 
   bool C_filled = C.Filled();
 
@@ -219,20 +418,20 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
     }
 
     for(k=0; k<A_len_i; ++k) {
-      Aind[k] = (int_type) Aview.colMap->GID64(Aindices_i[k]);
+      Aind[k] = Aview.colMap->GID(Aindices_i[k]);
       avals[k] = Aval_i[k];
     }
 
-    util.Sort<int_type>(true, A_len_i, Aind, 1, &avals, 0, NULL, 0, 0);
+    util.Sort(true, A_len_i, Aind, 1, &avals, 0, NULL);
 
-    int_type mina = Aind[0];
-    int_type maxa = Aind[A_len_i-1];
+    int mina = Aind[0];
+    int maxa = Aind[A_len_i-1];
 
     if (mina > max_all_b || maxa < min_all_b) {
       continue;
     }
 
-    int_type global_row = (int_type) Aview.rowMap->GID64(i);
+    int global_row = Aview.rowMap->GID(i);
 
     //loop over the rows of B and form results C_ij = dot(A(i,:),B(j,:))
     for(j=0; j<Bview.numRows; ++j) {
@@ -246,45 +445,44 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
         continue;
       }
 
-      int_type tmp;
-      int Blen = 0;
+      int tmp, Blen = 0;
 
       if (Bview.remote[j]) {
         for(k=0; k<B_len_j; ++k) {
-          tmp = (int_type) Bview.importColMap->GID64(Bindices_j[k]);
+	  tmp = Bview.importColMap->GID(Bindices_j[k]);
           if (tmp < mina || tmp > maxa) {
             continue;
           }
 
           bvals[Blen] = Bview.values[j][k];
           Bind[Blen++] = tmp;
-        }
+	}
       }
       else {
         for(k=0; k<B_len_j; ++k) {
-          tmp = bcols[Bindices_j[k]];
+	  tmp = bcols[Bindices_j[k]];
           if (tmp < mina || tmp > maxa) {
             continue;
           }
 
           bvals[Blen] = Bview.values[j][k];
           Bind[Blen++] = tmp;
-        }
+	}
       }
 
       if (Blen < 1) {
         continue;
       }
 
-      util.Sort<int_type>(true, Blen, Bind, 1, &bvals, 0, NULL, 0, 0);
+      util.Sort(true, Blen, Bind, 1, &bvals, 0, NULL);
 
       double C_ij = sparsedot(avals, Aind, A_len_i,
-                              bvals, Bind, Blen);
+			      bvals, Bind, Blen);
 
       if (C_ij == 0.0) {
-        continue;
+	continue;
       }
-      int_type global_col = (int_type) Bview.rowMap->GID64(j);
+      int global_col = Bview.rowMap->GID(j);
 
       int err = C_filled ?
         C.SumIntoGlobalValues(global_row, 1, &C_ij, &global_col)
@@ -292,11 +490,11 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
         C.InsertGlobalValues(global_row, 1, &C_ij, &global_col);
 
       if (err < 0) {
-        return(err);
+	return(err);
       }
       if (err > 0) {
-        if (C_filled) {
-          //C.Filled()==true, and C doesn't have all the necessary nonzero
+	if (C_filled) {
+	  //C.Filled()==true, and C doesn't have all the necessary nonzero
           //locations, or global_row or global_col is out of range (less
           //than 0 or non local).
           std::cerr << "EpetraExt::MatrixMatrix::Multiply Warning: failed "
@@ -304,8 +502,8 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
              <<"," <<global_col<<", possibly because result matrix has a "
              << "column-map that doesn't include column "<<global_col
              <<" on this proc." <<std::endl;
-          return(err);
-        }
+	  return(err);
+	}
       }
     }
   }
@@ -317,37 +515,10 @@ int mult_A_Btrans(CrsMatrixStruct& Aview,
   return(returnValue);
 }
 
-int mult_A_Btrans(CrsMatrixStruct& Aview,
-             CrsMatrixStruct& Bview,
-             CrsWrapper& C)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt() &&
-     Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt()) {
-    return mult_A_Btrans<int>(Aview, Bview, C);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong() &&
-     Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong()) {
-    return mult_A_Btrans<long long>(Aview, Bview, C);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::mult_A_Btrans: GlobalIndices type unknown");
-}
-
-//=========================================================================
 //kernel method for computing the local portion of C = A^T*B
-template<typename int_type>
 int mult_Atrans_B(CrsMatrixStruct& Aview,
-                  CrsMatrixStruct& Bview,
-                  CrsWrapper& C)
+		  CrsMatrixStruct& Bview,
+		  CrsWrapper& C)
 {
   int C_firstCol = Bview.colMap->MinLID();
   int C_lastCol = Bview.colMap->MaxLID();
@@ -366,7 +537,7 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
   if (C_numCols_import > C_numCols) C_numCols = C_numCols_import;
 
   double* C_row_i = new double[C_numCols];
-  int_type* C_colInds = new int_type[C_numCols];
+  int* C_colInds = new int[C_numCols];
 
   int i, j, k;
 
@@ -377,7 +548,7 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
 
   //To form C = A^T*B, compute a series of outer-product updates.
   //
-  // for (ith column of A^T) {
+  // for (ith column of A^T) { 
   //   C_i = outer product of A^T(:,i) and B(i,:)
   // Where C_i is the ith matrix update,
   //       A^T(:,i) is the ith column of A^T, and
@@ -388,8 +559,7 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
   //dumpCrsMatrixStruct(Bview);
   int localProc = Bview.colMap->Comm().MyPID();
 
-  int_type* Arows = 0;
-  Aview.rowMap->MyGlobalElementsPtr(Arows);
+  int* Arows = Aview.rowMap->MyGlobalElements();
 
   bool C_filled = C.Filled();
 
@@ -403,8 +573,8 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
     //where Arows[i] is the GID of A's ith row.
     int Bi = Bview.rowMap->LID(Arows[i]);
     if (Bi<0) {
-      std::cout << "mult_Atrans_B ERROR, proc "<<localProc<<" needs row "
-           <<Arows[i]<<" of matrix B, but doesn't have it."<<std::endl;
+      cout << "mult_Atrans_B ERROR, proc "<<localProc<<" needs row "
+	   <<Arows[i]<<" of matrix B, but doesn't have it."<<endl;
       return(-1);
     }
 
@@ -422,12 +592,12 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
     int Blen = Bview.numEntriesPerRow[Bi];
     if (Bview.remote[Bi]) {
       for(j=0; j<Blen; ++j) {
-        C_colInds[j] = (int_type) Bview.importColMap->GID64(Bcol_inds[j]);
+        C_colInds[j] = Bview.importColMap->GID(Bcol_inds[j]);
       }
     }
     else {
       for(j=0; j<Blen; ++j) {
-        C_colInds[j] = (int_type) Bview.colMap->GID64(Bcol_inds[j]);
+        C_colInds[j] = Bview.colMap->GID(Bcol_inds[j]);
       }
     }
 
@@ -437,12 +607,12 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
       int Aj = Aindices_i[j];
       double Aval = Aval_i[j];
 
-      int_type global_row;
+      int global_row;
       if (Aview.remote[i]) {
-        global_row = (int_type) Aview.importColMap->GID64(Aj);
+	global_row = Aview.importColMap->GID(Aj);
       }
       else {
-        global_row = (int_type) Aview.colMap->GID64(Aj);
+	global_row = Aview.colMap->GID(Aj);
       }
 
       if (!C.RowMap().MyGID(global_row)) {
@@ -480,36 +650,10 @@ int mult_Atrans_B(CrsMatrixStruct& Aview,
   return(0);
 }
 
-int mult_Atrans_B(CrsMatrixStruct& Aview,
-             CrsMatrixStruct& Bview,
-             CrsWrapper& C)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt() &&
-     Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt()) {
-    return mult_Atrans_B<int>(Aview, Bview, C);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong() &&
-     Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong()) {
-    return mult_Atrans_B<long long>(Aview, Bview, C);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::mult_Atrans_B: GlobalIndices type unknown");
-}
-
 //kernel method for computing the local portion of C = A^T*B^T
-template<typename int_type>
 int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
-                       CrsMatrixStruct& Bview,
-                       CrsWrapper& C)
+		       CrsMatrixStruct& Bview,
+		       CrsWrapper& C)
 {
   int C_firstCol = Aview.rowMap->MinLID();
   int C_lastCol = Aview.rowMap->MaxLID();
@@ -528,15 +672,15 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
   if (C_numCols_import > C_numCols) C_numCols = C_numCols_import;
 
   double* dwork = new double[C_numCols];
-  int_type* iwork = new int_type[C_numCols];
+  int* iwork = new int[C_numCols];
 
   double* C_col_j = dwork;
-  int_type* C_inds = iwork;
+  int* C_inds = iwork;
 
-  //std::cout << "Aview: " << std::endl;
+  //cout << "Aview: " << endl;
   //dumpCrsMatrixStruct(Aview);
 
-  //std::cout << "Bview: " << std::endl;
+  //cout << "Bview: " << endl;
   //dumpCrsMatrixStruct(Bview);
 
 
@@ -547,11 +691,9 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
     C_inds[j] = -1;
   }
 
-  int_type* A_col_inds = 0;
-  Aview.colMap->MyGlobalElementsPtr(A_col_inds);
-  int_type* A_col_inds_import = 0;
-  if(Aview.importColMap)
-    Aview.importColMap->MyGlobalElementsPtr(A_col_inds_import);
+  int* A_col_inds = Aview.colMap->MyGlobalElements();
+  int* A_col_inds_import = Aview.importColMap ?
+    Aview.importColMap->MyGlobalElements() : 0;
 
   const Epetra_Map* Crowmap = &(C.RowMap());
 
@@ -563,15 +705,14 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
   //performing searches for column-indices, etc. In other words, we avoid
   //column-wise operations like the plague...
 
-  int_type* Brows = 0;
-  Bview.rowMap->MyGlobalElementsPtr(Brows);
+  int* Brows = Bview.rowMap->MyGlobalElements();
 
   //loop over the rows of B
   for(j=0; j<Bview.numRows; ++j) {
     int* Bindices_j = Bview.indices[j];
     double* Bvals_j = Bview.values[j];
 
-    int_type global_col = Brows[j];
+    int global_col = Brows[j];
 
     //loop across columns in the j-th row of B and for each corresponding
     //row in A, loop across columns and accumulate product
@@ -584,18 +725,18 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
       int bk = Bindices_j[k];
       double Bval = Bvals_j[k];
 
-      int_type global_k;
+      int global_k;
       if (Bview.remote[j]) {
-        global_k = (int_type) Bview.importColMap->GID64(bk);
+	global_k = Bview.importColMap->GID(bk);
       }
       else {
-        global_k = (int_type) Bview.colMap->GID64(bk);
+	global_k = Bview.colMap->GID(bk);
       }
 
       //get the corresponding row in A
       int ak = Aview.rowMap->LID(global_k);
       if (ak<0) {
-        continue;
+	continue;
       }
 
       int* Aindices_k = Aview.indices[ak];
@@ -604,41 +745,41 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
       int C_len = 0;
 
       if (Aview.remote[ak]) {
-        for(i=0; i<Aview.numEntriesPerRow[ak]; ++i) {
-          C_col_j[C_len] = Avals_k[i]*Bval;
+	for(i=0; i<Aview.numEntriesPerRow[ak]; ++i) {
+	  C_col_j[C_len] = Avals_k[i]*Bval;
           C_inds[C_len++] = A_col_inds_import[Aindices_k[i]];
-        }
+	}
       }
       else {
-        for(i=0; i<Aview.numEntriesPerRow[ak]; ++i) {
-          C_col_j[C_len] = Avals_k[i]*Bval;
+	for(i=0; i<Aview.numEntriesPerRow[ak]; ++i) {
+	  C_col_j[C_len] = Avals_k[i]*Bval;
           C_inds[C_len++] = A_col_inds[Aindices_k[i]];
-        }
+	}
       }
 
       //Now loop across the C_col_j values and put non-zeros into C.
 
       for(i=0; i < C_len ; ++i) {
-        if (C_col_j[i] == 0.0) continue;
+	if (C_col_j[i] == 0.0) continue;
 
-        int_type global_row = C_inds[i];
-        if (!Crowmap->MyGID(global_row)) {
-          continue;
-        }
+	int global_row = C_inds[i];
+	if (!Crowmap->MyGID(global_row)) {
+	  continue;
+	}
 
-        int err = C.SumIntoGlobalValues(global_row, 1, &(C_col_j[i]), &global_col);
+	int err = C.SumIntoGlobalValues(global_row, 1, &(C_col_j[i]), &global_col);
 
-        if (err < 0) {
-          return(err);
-        }
-        else {
+	if (err < 0) {
+	  return(err);
+	}
+	else {
           if (err > 0) {
-            err = C.InsertGlobalValues(global_row, 1, &(C_col_j[i]), &global_col);
-            if (err < 0) {
+	    err = C.InsertGlobalValues(global_row, 1, &(C_col_j[i]), &global_col);
+	    if (err < 0) {
               return(err);
             }
-          }
-        }
+	  }
+	}
       }
 
     }
@@ -650,37 +791,9 @@ int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
   return(0);
 }
 
-int mult_Atrans_Btrans(CrsMatrixStruct& Aview,
-             CrsMatrixStruct& Bview,
-             CrsWrapper& C)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt() &&
-     Aview.rowMap->GlobalIndicesInt() &&
-     Aview.colMap->GlobalIndicesInt()) {
-    return mult_Atrans_Btrans<int>(Aview, Bview, C);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong() &&
-     Aview.rowMap->GlobalIndicesLongLong() &&
-     Aview.colMap->GlobalIndicesLongLong()) {
-    return mult_Atrans_Btrans<long long>(Aview, Bview, C);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::mult_Atrans_Btrans: GlobalIndices type unknown");
-}
-
-// ==============================================================
-template<typename int_type>
 int import_and_extract_views(const Epetra_CrsMatrix& M,
-                             const Epetra_Map& targetMap,
-                             CrsMatrixStruct& Mview,
-                             const Epetra_Import * prototypeImporter=0)
+			     const Epetra_Map& targetMap,
+			     CrsMatrixStruct& Mview)
 {
   //The goal of this method is to populate the 'Mview' struct with views of the
   //rows of M, including all rows that correspond to elements in 'targetMap'.
@@ -689,106 +802,49 @@ int import_and_extract_views(const Epetra_CrsMatrix& M,
   //of M, then those remotely-owned rows will be imported into
   //'Mview.importMatrix', and views of them will be included in 'Mview'.
 
-  // The prototype importer, if used, has to know who owns all of the PIDs in M's rowmap.
-  // The typical use of this is to provide A's column map when I&XV is called for B, for
-  // a C = A * B multiply.
-
-#ifdef ENABLE_MMM_TIMINGS
-  using Teuchos::TimeMonitor;
-  Teuchos::RCP<Teuchos::TimeMonitor> MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Alloc")));
-#endif
   Mview.deleteContents();
 
-  Mview.origMatrix          = &M;
   const Epetra_Map& Mrowmap = M.RowMap();
-  int numProcs              = Mrowmap.Comm().NumProc();
-  Mview.numRows             = targetMap.NumMyElements();
-  int_type* Mrows           = 0;
-  targetMap.MyGlobalElementsPtr(Mrows);
+
+  int numProcs = Mrowmap.Comm().NumProc();
+
+  Mview.numRows = targetMap.NumMyElements();
+
+  int* Mrows = targetMap.MyGlobalElements();
 
   if (Mview.numRows > 0) {
     Mview.numEntriesPerRow = new int[Mview.numRows];
     Mview.indices = new int*[Mview.numRows];
-    Mview.values  = new double*[Mview.numRows];
-    Mview.remote  = new bool[Mview.numRows];
+    Mview.values = new double*[Mview.numRows];
+    Mview.remote = new bool[Mview.numRows];
   }
 
-  Mview.origRowMap   = &(M.RowMap());
-  Mview.rowMap       = &targetMap;
-  Mview.colMap       = &(M.ColMap());
-  Mview.domainMap    = &(M.DomainMap());
-  Mview.importColMap = NULL;
-  Mview.numRemote    = 0;
+  Mview.numRemote = 0;
 
-
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Extract")));
-#endif
-
-  int *rowptr=0, *colind=0;
-  double *vals=0;
-
-  EPETRA_CHK_ERR( M.ExtractCrsDataPointers(rowptr,colind,vals) );
-
-  if(Mrowmap.SameAs(targetMap)) {
-    // Short Circuit: The Row and Target Maps are the Same
-    for(int i=0; i<Mview.numRows; ++i) {
-      Mview.numEntriesPerRow[i] = rowptr[i+1]-rowptr[i];
-      Mview.indices[i]          = colind + rowptr[i];
-      Mview.values[i]           = vals + rowptr[i];
-      Mview.remote[i]           = false;
-    }
-    return 0;
-  }
-  else if(prototypeImporter && prototypeImporter->SourceMap().SameAs(M.RowMap()) && prototypeImporter->TargetMap().SameAs(targetMap)){
-    // The prototypeImporter can tell me what is local and what is remote
-    int * PermuteToLIDs   = prototypeImporter->PermuteToLIDs();
-    int * PermuteFromLIDs = prototypeImporter->PermuteFromLIDs();
-    int * RemoteLIDs      = prototypeImporter->RemoteLIDs();
-    for(int i=0; i<prototypeImporter->NumSameIDs();i++){
-      Mview.numEntriesPerRow[i] = rowptr[i+1]-rowptr[i];
-      Mview.indices[i]          = colind + rowptr[i];
-      Mview.values[i]           = vals + rowptr[i];
-      Mview.remote[i]           = false;
-    }
-    for(int i=0; i<prototypeImporter->NumPermuteIDs();i++){
-      int to                     = PermuteToLIDs[i];
-      int from                   = PermuteFromLIDs[i];
-      Mview.numEntriesPerRow[to] = rowptr[from+1]-rowptr[from];
-      Mview.indices[to]          = colind + rowptr[from];
-      Mview.values[to]           = vals + rowptr[from];
-      Mview.remote[to]           = false;
-    }
-    for(int i=0; i<prototypeImporter->NumRemoteIDs();i++){
-      Mview.remote[RemoteLIDs[i]] = true;
+  int i;
+  for(i=0; i<Mview.numRows; ++i) {
+    int mlid = Mrowmap.LID(Mrows[i]);
+    if (mlid < 0) {
+      Mview.remote[i] = true;
       ++Mview.numRemote;
     }
-  }
-  else {
-    // Only LID can tell me who is local and who is remote
-    for(int i=0; i<Mview.numRows; ++i) {
-      int mlid = Mrowmap.LID(Mrows[i]);
-      if (mlid < 0) {
-        Mview.remote[i] = true;
-        ++Mview.numRemote;
-      }
-      else {
-        Mview.numEntriesPerRow[i] = rowptr[mlid+1]-rowptr[mlid];
-        Mview.indices[i]          = colind + rowptr[mlid];
-        Mview.values[i]           = vals + rowptr[mlid];
-        Mview.remote[i]           = false;
-      }
+    else {
+      EPETRA_CHK_ERR( M.ExtractMyRowView(mlid, Mview.numEntriesPerRow[i],
+					 Mview.values[i], Mview.indices[i]) );
+      Mview.remote[i] = false;
     }
   }
 
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Collective-0")));
-#endif
+  Mview.origRowMap = &(M.RowMap());
+  Mview.rowMap = &targetMap;
+  Mview.colMap = &(M.ColMap());
+  Mview.domainMap = &(M.DomainMap());
+  Mview.importColMap = NULL;
 
   if (numProcs < 2) {
     if (Mview.numRemote > 0) {
-      std::cerr << "EpetraExt::MatrixMatrix::Multiply ERROR, numProcs < 2 but "
-           << "attempting to import remote matrix rows."<<std::endl;
+      cerr << "EpetraExt::MatrixMatrix::Multiply ERROR, numProcs < 2 but "
+	   << "attempting to import remote matrix rows."<<endl;
       return(-1);
     }
 
@@ -805,108 +861,54 @@ int import_and_extract_views(const Epetra_CrsMatrix& M,
   Mrowmap.Comm().MaxAll(&Mview.numRemote, &globalMaxNumRemote, 1);
 
   if (globalMaxNumRemote > 0) {
-#ifdef ENABLE_MMM_TIMINGS
-    MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Import-1")));
-#endif
     //Create a map that describes the remote rows of M that we need.
 
-    int_type* MremoteRows = Mview.numRemote>0 ? new int_type[Mview.numRemote] : NULL;
+    int* MremoteRows = Mview.numRemote>0 ? new int[Mview.numRemote] : NULL;
     int offset = 0;
-    for(int i=0; i<Mview.numRows; ++i) {
+    for(i=0; i<Mview.numRows; ++i) {
       if (Mview.remote[i]) {
-        MremoteRows[offset++] = Mrows[i];
+	MremoteRows[offset++] = Mrows[i];
       }
     }
 
-  LightweightMap MremoteRowMap((int_type) -1, Mview.numRemote, MremoteRows, (int_type) Mrowmap.IndexBase64());
+    Epetra_Map MremoteRowMap(-1, Mview.numRemote, MremoteRows,
+			     Mrowmap.IndexBase(), Mrowmap.Comm());
 
-#ifdef ENABLE_MMM_TIMINGS
-    MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Import-2")));
-#endif
-    //Create an importer with target-map MremoteRowMap and
+    //Create an importer with target-map MremoteRowMap and 
     //source-map Mrowmap.
-    Epetra_Import    * importer=0;
-    RemoteOnlyImport * Rimporter=0;
-    if(prototypeImporter && prototypeImporter->SourceMap().SameAs(M.RowMap()) && prototypeImporter->TargetMap().SameAs(targetMap)) {
-      Rimporter = new RemoteOnlyImport(*prototypeImporter,MremoteRowMap);
-    }
-    else if(!prototypeImporter) {
-      Epetra_Map MremoteRowMap2((int_type) -1, Mview.numRemote, MremoteRows, (int_type) Mrowmap.IndexBase64(), Mrowmap.Comm());
-      importer=new Epetra_Import(MremoteRowMap2, Mrowmap);
-    }
-    else
-      throw std::runtime_error("prototypeImporter->SourceMap() does not match M.RowMap()!");
+    Epetra_Import importer(MremoteRowMap, Mrowmap);
 
+    //Now create a new matrix into which we can import the remote rows of M
+    //that we need.
+    Mview.importMatrix = new Epetra_CrsMatrix(Copy, MremoteRowMap, 1);
 
-#ifdef ENABLE_MMM_TIMINGS
-    MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Import-3")));
-#endif
+    EPETRA_CHK_ERR( Mview.importMatrix->Import(M, importer, Insert) );
 
-    if(Mview.importMatrix) delete Mview.importMatrix;
-    if(Rimporter) Mview.importMatrix = new LightweightCrsMatrix(M,*Rimporter);
-    else Mview.importMatrix = new LightweightCrsMatrix(M,*importer);
-
-#ifdef ENABLE_MMM_TIMINGS
-    MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM I&X Import-4")));
-#endif
+    EPETRA_CHK_ERR( Mview.importMatrix->FillComplete(M.DomainMap(), M.RangeMap()) );
 
     //Finally, use the freshly imported data to fill in the gaps in our views
-    int N;
-    if (Mview.importMatrix->use_lw) {
-      N = Mview.importMatrix->RowMapLW_->NumMyElements();
-    } else {
-      N = Mview.importMatrix->RowMapEP_->NumMyElements();
-    }
-
-    if(N > 0) {
-      rowptr = &Mview.importMatrix->rowptr_[0];
-      colind = &Mview.importMatrix->colind_[0];
-      vals   = &Mview.importMatrix->vals_[0];
-    }
-
-
-    for(int i=0; i<Mview.numRows; ++i) {
+    //of rows of M.
+    for(i=0; i<Mview.numRows; ++i) {
       if (Mview.remote[i]) {
-        int importLID = MremoteRowMap.LID(Mrows[i]);
-        Mview.numEntriesPerRow[i] = rowptr[importLID+1]-rowptr[importLID];
-        Mview.indices[i]          = colind + rowptr[importLID];
-        Mview.values[i]           = vals + rowptr[importLID];
+	int importLID = MremoteRowMap.LID(Mrows[i]);
+	EPETRA_CHK_ERR( Mview.importMatrix->ExtractMyRowView(importLID,
+						  Mview.numEntriesPerRow[i],
+						  Mview.values[i],
+						  Mview.indices[i]) );
       }
     }
 
+    Mview.importColMap = &(Mview.importMatrix->ColMap());
 
-    int_type * MyColGIDs = 0;
-    if(Mview.importMatrix->ColMap_.NumMyElements()>0) {
-      Mview.importMatrix->ColMap_.MyGlobalElementsPtr(MyColGIDs);
-    }
-    Mview.importColMap =
-      new Epetra_Map (static_cast<int_type> (-1),
-                      Mview.importMatrix->ColMap_.NumMyElements (),
-                      MyColGIDs,
-                      static_cast<int_type> (Mview.importMatrix->ColMap_.IndexBase64 ()),
-                      M.Comm ());
     delete [] MremoteRows;
-#ifdef ENABLE_MMM_TIMINGS
-    MM=Teuchos::null;
-#endif
-
-    // Cleanup
-    delete Rimporter;
-    delete importer;
   }
+
   return(0);
 }
 
-
-
-
-
-
-//=========================================================================
-template<typename int_type>
 int form_map_union(const Epetra_Map* map1,
-                   const Epetra_Map* map2,
-                   const Epetra_Map*& mapunion)
+		   const Epetra_Map* map2,
+		   const Epetra_Map*& mapunion)
 {
   //form the union of two maps
 
@@ -921,19 +923,17 @@ int form_map_union(const Epetra_Map* map1,
   }
 
   int map1_len       = map1->NumMyElements();
-  int_type* map1_elements = 0;
-  map1->MyGlobalElementsPtr(map1_elements);
+  int* map1_elements = map1->MyGlobalElements();
   int map2_len       = map2->NumMyElements();
-  int_type* map2_elements = 0;
-  map2->MyGlobalElementsPtr(map2_elements);
+  int* map2_elements = map2->MyGlobalElements();
 
-  int_type* union_elements = new int_type[map1_len+map2_len];
+  int* union_elements = new int[map1_len+map2_len];
 
   int map1_offset = 0, map2_offset = 0, union_offset = 0;
 
   while(map1_offset < map1_len && map2_offset < map2_len) {
-    int_type map1_elem = map1_elements[map1_offset];
-    int_type map2_elem = map2_elements[map2_offset];
+    int map1_elem = map1_elements[map1_offset];
+    int map2_elem = map2_elements[map2_offset];
 
     if (map1_elem < map2_elem) {
       union_elements[union_offset++] = map1_elem;
@@ -959,17 +959,15 @@ int form_map_union(const Epetra_Map* map1,
     union_elements[union_offset++] = map2_elements[i];
   }
 
-  mapunion = new Epetra_Map((int_type) -1, union_offset, union_elements,
-                            (int_type) map1->IndexBase64(), map1->Comm());
+  mapunion = new Epetra_Map(-1, union_offset, union_elements,
+			    map1->IndexBase(), map1->Comm());
 
   delete [] union_elements;
 
   return(0);
 }
 
-//=========================================================================
-template<typename int_type>
-Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
+Epetra_Map* find_rows_containing_cols(const Epetra_CrsMatrix& M,
                                       const Epetra_Map& column_map)
 {
   //The goal of this function is to find all rows in the matrix M that contain
@@ -977,14 +975,14 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
   //returned. (The returned map will then be used as the source row-map for
   //importing those rows into an overlapping distribution.)
 
-  std::pair<int_type,int_type> my_col_range = get_col_range<int_type>(column_map);
+  std::pair<int,int> my_col_range = get_col_range(column_map);
 
   const Epetra_Comm& Comm = M.RowMap().Comm();
   int num_procs = Comm.NumProc();
   int my_proc = Comm.MyPID();
   std::vector<int> send_procs;
   send_procs.reserve(num_procs-1);
-  std::vector<int_type> col_ranges;
+  std::vector<int> col_ranges;
   col_ranges.reserve(2*(num_procs-1));
   for(int p=0; p<num_procs; ++p) {
     if (p == my_proc) continue;
@@ -1005,21 +1003,21 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
   char* import_chars = NULL;
 
   char* export_chars = col_ranges.size()>0 ? reinterpret_cast<char*>(&col_ranges[0]) : NULL;
-  int err = distor->Do(export_chars, 2*sizeof(int_type), len_import_chars, import_chars);
+  int err = distor->Do(export_chars, 2*sizeof(int), len_import_chars, import_chars);
   if (err != 0) {
     std::cout << "ERROR returned from Distributor::Do."<<std::endl;
   }
-
-  int_type* IntImports = reinterpret_cast<int_type*>(import_chars);
-  int num_import_pairs = len_import_chars/(2*sizeof(int_type));
+ 
+  int* IntImports = reinterpret_cast<int*>(import_chars);
+  int num_import_pairs = len_import_chars/(2*sizeof(int));
   int offset = 0;
   std::vector<int> send_procs2;
   send_procs2.reserve(num_procs);
-  std::vector<int_type> proc_col_ranges;
-  std::pair<int_type,int_type> M_col_range = get_col_range<int_type>(M);
+  std::vector<int> proc_col_ranges;
+  std::pair<int,int> M_col_range = get_col_range(M);
   for(int i=0; i<num_import_pairs; ++i) {
-    int_type first_col = IntImports[offset++];
-    int_type last_col =  IntImports[offset++];
+    int first_col = IntImports[offset++];
+    int last_col =  IntImports[offset++];
     if (first_col <= M_col_range.second && last_col >= M_col_range.first) {
       send_procs2.push_back(send_procs[i]);
       proc_col_ranges.push_back(first_col);
@@ -1027,7 +1025,7 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
     }
   }
 
-  std::vector<int_type> send_rows;
+  std::vector<int> send_rows;
   std::vector<int> rows_per_send_proc;
   pack_outgoing_rows(M, proc_col_ranges, send_rows, rows_per_send_proc);
 
@@ -1040,12 +1038,12 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
   export_chars = send_rows.size()>0 ? reinterpret_cast<char*>(&send_rows[0]) : NULL;
   int* rows_per_send_proc_ptr = rows_per_send_proc.size()>0 ? &rows_per_send_proc[0] : NULL;
   len_import_chars = 0;
-  err = distor2->Do(export_chars, (int)sizeof(int_type), rows_per_send_proc_ptr, len_import_chars, import_chars);
+  err = distor2->Do(export_chars, (int)sizeof(int), rows_per_send_proc_ptr, len_import_chars, import_chars);
 
-  int_type* recvd_row_ints = reinterpret_cast<int_type*>(import_chars);
-  int num_recvd_rows = len_import_chars/sizeof(int_type);
+  int* recvd_row_ints = reinterpret_cast<int*>(import_chars);
+  int num_recvd_rows = len_import_chars/sizeof(int);
 
-  Epetra_Map recvd_rows((int_type) -1, num_recvd_rows, recvd_row_ints, (int_type) column_map.IndexBase64(), Comm);
+  Epetra_Map recvd_rows(-1, num_recvd_rows, recvd_row_ints, column_map.IndexBase(), Comm);
 
   delete distor;
   delete distor2;
@@ -1053,7 +1051,7 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
 
   Epetra_Map* result_map = NULL;
 
-  err = form_map_union<int_type>(&(M.RowMap()), &recvd_rows, (const Epetra_Map*&)result_map);
+  err = form_map_union(&(M.RowMap()), &recvd_rows, (const Epetra_Map*&)result_map);
   if (err != 0) {
     return(NULL);
   }
@@ -1061,41 +1059,13 @@ Epetra_Map* Tfind_rows_containing_cols(const Epetra_CrsMatrix& M,
   return(result_map);
 }
 
-Epetra_Map* find_rows_containing_cols(const Epetra_CrsMatrix& M,
-                                      const Epetra_Map& column_map)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(M.RowMatrixRowMap().GlobalIndicesInt() && column_map.GlobalIndicesInt()) {
-    return Tfind_rows_containing_cols<int>(M, column_map);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(M.RowMatrixRowMap().GlobalIndicesLongLong() && column_map.GlobalIndicesLongLong()) {
-    return Tfind_rows_containing_cols<long long>(M, column_map);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::find_rows_containing_cols: GlobalIndices type unknown");
-}
-
-//=========================================================================
-template<typename int_type>
-int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
-                           bool transposeA,
-                           const Epetra_CrsMatrix& B,
-                           bool transposeB,
-                           Epetra_CrsMatrix& C,
+int MatrixMatrix::Multiply(const Epetra_CrsMatrix& A,
+			   bool transposeA,
+			   const Epetra_CrsMatrix& B,
+			   bool transposeB,
+			   Epetra_CrsMatrix& C,
                            bool call_FillComplete_on_result)
 {
-  // DEBUG
-  //  bool NewFlag=!C.IndicesAreLocal() && !C.IndicesAreGlobal();
-#ifdef ENABLE_MMM_TIMINGS
-  using Teuchos::TimeMonitor;
-  Teuchos::RCP<TimeMonitor> MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM All Setup")));
-#endif
-  // end DEBUG
-
   //
   //This method forms the matrix-matrix product C = op(A) * op(B), where
   //op(A) == A   if transposeA is false,
@@ -1110,9 +1080,6 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
     EPETRA_CHK_ERR(-1);
   }
 
-  // Is the C matrix new?
-  bool NewFlag=!C.IndicesAreLocal() && !C.IndicesAreGlobal();
-
   //We're going to refer to the different combinations of op(A) and op(B)
   //as scenario 1 through 4.
 
@@ -1120,17 +1087,16 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   if (transposeB && !transposeA) scenario = 2;//A*B^T
   if (transposeA && !transposeB) scenario = 3;//A^T*B
   if (transposeA && transposeB)  scenario = 4;//A^T*B^T
-  if(NewFlag && call_FillComplete_on_result && transposeA && !transposeB) scenario = 5; // A^T*B, newmatrix
 
   //now check size compatibility
-  long long Aouter = transposeA ? A.NumGlobalCols64() : A.NumGlobalRows64();
-  long long Bouter = transposeB ? B.NumGlobalRows64() : B.NumGlobalCols64();
-  long long Ainner = transposeA ? A.NumGlobalRows64() : A.NumGlobalCols64();
-  long long Binner = transposeB ? B.NumGlobalCols64() : B.NumGlobalRows64();
+  int Aouter = transposeA ? A.NumGlobalCols() : A.NumGlobalRows();
+  int Bouter = transposeB ? B.NumGlobalRows() : B.NumGlobalCols();
+  int Ainner = transposeA ? A.NumGlobalRows() : A.NumGlobalCols();
+  int Binner = transposeB ? B.NumGlobalCols() : B.NumGlobalRows();
   if (Ainner != Binner) {
-    std::cerr << "MatrixMatrix::Multiply: ERROR, inner dimensions of op(A) and op(B) "
+    cerr << "MatrixMatrix::Multiply: ERROR, inner dimensions of op(A) and op(B) "
          << "must match for matrix-matrix product. op(A) is "
-         <<Aouter<<"x"<<Ainner << ", op(B) is "<<Binner<<"x"<<Bouter<<std::endl;
+         <<Aouter<<"x"<<Ainner << ", op(B) is "<<Binner<<"x"<<Bouter<<endl;
     return(-1);
   }
 
@@ -1138,10 +1104,10 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   //correct row-size. Don't check the number of columns because rectangular
   //matrices which were constructed with only one map can still end up
   //having the correct capacity and dimensions when filled.
-  if (Aouter > C.NumGlobalRows64()) {
-    std::cerr << "MatrixMatrix::Multiply: ERROR, dimensions of result C must "
-         << "match dimensions of op(A) * op(B). C has "<<C.NumGlobalRows64()
-         << " rows, should have at least "<<Aouter << std::endl;
+  if (Aouter > C.NumGlobalRows()) {
+    cerr << "MatrixMatrix::Multiply: ERROR, dimensions of result C must "
+         << "match dimensions of op(A) * op(B). C has "<<C.NumGlobalRows()
+         << " rows, should have at least "<<Aouter << endl;
     return(-1);
   }
 
@@ -1154,7 +1120,7 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   //if more than 1 processor is performing this run, depending on the scenario.
   int numProcs = A.Comm().NumProc();
 
-  //If we are to use the transpose of A and/or B, we'll need to be able to
+  //If we are to use the transpose of A and/or B, we'll need to be able to 
   //access, on the local processor, all rows that contain column-indices in
   //the domain-map.
   const Epetra_Map* domainMap_A = &(A.DomainMap());
@@ -1172,86 +1138,55 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   //Declare a couple of structs that will be used to hold views of the data
   //of A and B, to be used for fast access during the matrix-multiplication.
   CrsMatrixStruct Aview;
-  CrsMatrixStruct Atransview;
   CrsMatrixStruct Bview;
-  Teuchos::RCP<Epetra_CrsMatrix> Atrans;
 
   const Epetra_Map* targetMap_A = rowmap_A;
   const Epetra_Map* targetMap_B = rowmap_B;
 
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM All I&X")));
-#endif
   if (numProcs > 1) {
     //If op(A) = A^T, find all rows of A that contain column-indices in the
     //local portion of the domain-map. (We'll import any remote rows
     //that fit this criteria onto the local processor.)
-    if (scenario == 3 || scenario == 4) {
-      workmap1 = Tfind_rows_containing_cols<int_type>(A, *domainMap_A);
+    if (transposeA) {
+      workmap1 = find_rows_containing_cols(A, *domainMap_A);
       targetMap_A = workmap1;
     }
   }
-  if (scenario == 5) {
-    targetMap_A = &(A.ColMap());
-  }
 
   //Now import any needed remote rows and populate the Aview struct.
-  if(scenario==1 && call_FillComplete_on_result) {
-    EPETRA_CHK_ERR(import_only<int_type>(A,*targetMap_A,Aview));
-  }
-  else if (scenario == 5){
-    // Perform a local transpose of A and store that in Atransview
-    EpetraExt::RowMatrix_Transpose at(const_cast<Epetra_Map *>(targetMap_A),false);
-    Epetra_CrsMatrix * Anonconst = const_cast<Epetra_CrsMatrix *>(&A);
-    Atrans = Teuchos::rcp(at.CreateTransposeLocal(*Anonconst));
-    import_only<int_type>(*Atrans,*targetMap_A,Atransview);
-  }
-  else  {
-    EPETRA_CHK_ERR( import_and_extract_views<int_type>(A, *targetMap_A, Aview));
+  EPETRA_CHK_ERR( import_and_extract_views(A, *targetMap_A, Aview) );
+
+
+  // Make sure B's views are consistent with A even in serial for A*B (scenario 1)
+  if(scenario==1){
+    targetMap_B = &(A.ColMap());
   }
 
-
-  // NOTE:  Next up is to switch to import_only for B as well, and then modify the THREE SerialCores
-  // to add a Acol2Brow and Acol2Bimportrow array for in-algorithm lookups.
-
-
-  // Make sure B's views are consistent with A even in serial.
-  const Epetra_Map* colmap_op_A = NULL;
-  if(scenario==1 || numProcs > 1){
-    if (transposeA && scenario == 3) {
+  if (numProcs > 1) {
+    // Get the target map
+    const Epetra_Map* colmap_op_A = NULL;
+    if (transposeA) {
       colmap_op_A = targetMap_A;
     }
     else {
       colmap_op_A = &(A.ColMap());
     }
     targetMap_B = colmap_op_A;
-  }
-  if(scenario==5) targetMap_B = &(B.RowMap());
 
 
-  if (numProcs > 1) {
     //If op(B) = B^T, find all rows of B that contain column-indices in the
     //local-portion of the domain-map, or in the column-map of op(A).
     //We'll import any remote rows that fit this criteria onto the
     //local processor.
     if (transposeB) {
-      EPETRA_CHK_ERR( form_map_union<int_type>(colmap_op_A, domainMap_B, mapunion1) );
-      workmap2 = Tfind_rows_containing_cols<int_type>(B, *mapunion1);
+      EPETRA_CHK_ERR( form_map_union(colmap_op_A, domainMap_B, mapunion1) );
+      workmap2 = find_rows_containing_cols(B, *mapunion1);
       targetMap_B = workmap2;
     }
   }
 
   //Now import any needed remote rows and populate the Bview struct.
-  if((scenario==1 && call_FillComplete_on_result) || scenario==5) {
-    EPETRA_CHK_ERR(import_only<int_type>(B,*targetMap_B,Bview,A.Importer()));
-  }
-  else {
-    EPETRA_CHK_ERR( import_and_extract_views<int_type>(B, *targetMap_B, Bview) );
-  }
-
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: MMM All Multiply")));
-#endif
+  EPETRA_CHK_ERR( import_and_extract_views(B, *targetMap_B, Bview) );
 
   // Zero if filled
   if(C.Filled()) C.PutScalar(0.0);
@@ -1260,7 +1195,7 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   CrsWrapper_Epetra_CrsMatrix ecrsmat(C);
 
   switch(scenario) {
-  case 1:    EPETRA_CHK_ERR( mult_A_B(A,Aview,B,Bview,C,call_FillComplete_on_result) );
+  case 1:    EPETRA_CHK_ERR( mult_A_B(Aview, Bview, ecrsmat) );
     break;
   case 2:    EPETRA_CHK_ERR( mult_A_Btrans(Aview, Bview, ecrsmat) );
     break;
@@ -1268,12 +1203,9 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
     break;
   case 4:    EPETRA_CHK_ERR( mult_Atrans_Btrans(Aview, Bview, ecrsmat) );
     break;
-  case 5:    EPETRA_CHK_ERR( mult_AT_B_newmatrix(Atransview, Bview, C) );
-    break;
   }
 
-
-  if (scenario != 1 && call_FillComplete_on_result && scenario != 5) {
+  if (call_FillComplete_on_result) {
     //We'll call FillComplete on the C matrix before we exit, and give
     //it a domain-map and a range-map.
     //The domain-map will be the domain-map of B, unless
@@ -1302,31 +1234,7 @@ int MatrixMatrix::TMultiply(const Epetra_CrsMatrix& A,
   return(0);
 }
 
-int MatrixMatrix::Multiply(const Epetra_CrsMatrix& A,
-                           bool transposeA,
-                           const Epetra_CrsMatrix& B,
-                           bool transposeB,
-                           Epetra_CrsMatrix& C,
-                           bool call_FillComplete_on_result)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesInt() && B.RowMap().GlobalIndicesInt()) {
-        return TMultiply<int>(A, transposeA, B, transposeB, C, call_FillComplete_on_result);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesLongLong() && B.RowMap().GlobalIndicesLongLong()) {
-        return TMultiply<long long>(A, transposeA, B, transposeB, C, call_FillComplete_on_result);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::MatrixMatrix::Add: GlobalIndices type unknown");
-}
-
-//=========================================================================
-template<typename int_type>
-int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
+int MatrixMatrix::Add(const Epetra_CrsMatrix& A,
                       bool transposeA,
                       double scalarA,
                       Epetra_CrsMatrix& B,
@@ -1358,15 +1266,13 @@ int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
 
   int MaxNumEntries = EPETRA_MAX( A.MaxNumEntries(), B.MaxNumEntries() );
   int A_NumEntries, B_NumEntries;
-  int_type * A_Indices = new int_type[MaxNumEntries];
+  int * A_Indices = new int[MaxNumEntries];
   double * A_Values = new double[MaxNumEntries];
-  int* B_Indices_local;
-  int_type* B_Indices_global;
+  int* B_Indices;
   double* B_Values;
 
   int NumMyRows = B.NumMyRows();
-  int_type Row;
-  int err;
+  int Row, err;
   int ierr = 0;
 
   if( scalarA )
@@ -1374,17 +1280,17 @@ int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
     //Loop over B's rows and sum into
     for( int i = 0; i < NumMyRows; ++i )
     {
-      Row = (int_type) B.GRID64(i);
+      Row = B.GRID(i);
       EPETRA_CHK_ERR( Aprime->ExtractGlobalRowCopy( Row, MaxNumEntries, A_NumEntries, A_Values, A_Indices ) );
 
       if (scalarB != 1.0) {
         if (!B.Filled()) {
           EPETRA_CHK_ERR( B.ExtractGlobalRowView( Row, B_NumEntries,
-                                                  B_Values, B_Indices_global));
+                                                  B_Values, B_Indices));
         }
         else {
           EPETRA_CHK_ERR( B.ExtractMyRowView( i, B_NumEntries,
-                                              B_Values, B_Indices_local));
+                                              B_Values, B_Indices));
         }
 
         for(int jj=0; jj<B_NumEntries; ++jj) {
@@ -1421,28 +1327,6 @@ int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
 }
 
 int MatrixMatrix::Add(const Epetra_CrsMatrix& A,
-                      bool transposeA,
-                      double scalarA,
-                      Epetra_CrsMatrix& B,
-                      double scalarB )
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesInt() && B.RowMap().GlobalIndicesInt()) {
-        return TAdd<int>(A, transposeA, scalarA, B, scalarB);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesLongLong() && B.RowMap().GlobalIndicesLongLong()) {
-        return TAdd<long long>(A, transposeA, scalarA, B, scalarB);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::MatrixMatrix::Add: GlobalIndices type unknown");
-}
-
-template<typename int_type>
-int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
                       bool transposeA,
                       double scalarA,
                       const Epetra_CrsMatrix & B,
@@ -1495,21 +1379,21 @@ int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
   for(int k=0;k<2;k++) {
      int MaxNumEntries = Mat[k]->MaxNumEntries();
      int NumEntries;
-     int_type * Indices = new int_type[MaxNumEntries];
+     int * Indices = new int[MaxNumEntries];
      double * Values = new double[MaxNumEntries];
-
+   
      int NumMyRows = Mat[k]->NumMyRows();
-     int err;
-     int_type Row;
-
+     int Row, err;
+     int ierr = 0;
+   
      //Loop over rows and sum into C
      for( int i = 0; i < NumMyRows; ++i ) {
-        Row = (int_type) Mat[k]->GRID64(i);
+        Row = Mat[k]->GRID(i);
         EPETRA_CHK_ERR( Mat[k]->ExtractGlobalRowCopy( Row, MaxNumEntries, NumEntries, Values, Indices));
-
+   
         if( scalar[k] != 1.0 )
            for( int j = 0; j < NumEntries; ++j ) Values[j] *= scalar[k];
-
+   
         if(C->Filled()) { // Sum in values
            err = C->SumIntoGlobalValues( Row, NumEntries, Values, Indices );
            if (err < 0) ierr = err;
@@ -1528,200 +1412,6 @@ int MatrixMatrix::TAdd(const Epetra_CrsMatrix& A,
 
   return(ierr);
 }
-
-int MatrixMatrix::Add(const Epetra_CrsMatrix& A,
-                      bool transposeA,
-                      double scalarA,
-                      const Epetra_CrsMatrix & B,
-                      bool transposeB,
-                      double scalarB,
-                      Epetra_CrsMatrix * & C)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesInt() && B.RowMap().GlobalIndicesInt()) {
-        return TAdd<int>(A, transposeA, scalarA, B, transposeB, scalarB, C);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesLongLong() && B.RowMap().GlobalIndicesLongLong()) {
-        return TAdd<long long>(A, transposeA, scalarA, B, transposeB, scalarB, C);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::MatrixMatrix::Add: GlobalIndices type unknown");
-}
-
-
-
-//=========================================================================
-template<typename int_type>
-int MatrixMatrix::TJacobi(double omega,
-                          const Epetra_Vector & Dinv,
-                          const Epetra_CrsMatrix& A,
-                          const Epetra_CrsMatrix& B,
-                          Epetra_CrsMatrix& C,
-                          bool call_FillComplete_on_result)
-{
-#ifdef ENABLE_MMM_TIMINGS
-  using Teuchos::TimeMonitor;
-  Teuchos::RCP<TimeMonitor> MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: Jacobi All Setup")));
-#endif
-
-  //A and B should already be Filled.
-  if (!A.Filled() || !B.Filled()) {
-    EPETRA_CHK_ERR(-1);
-  }
-
-  //now check size compatibility
-  long long Aouter = A.NumGlobalRows64();
-  long long Bouter = B.NumGlobalCols64();
-  long long Ainner = A.NumGlobalCols64();
-  long long Binner = B.NumGlobalRows64();
-  long long Dlen   = Dinv.GlobalLength64();
-  if (Ainner != Binner) {
-    std::cerr << "MatrixMatrix::Jacobi: ERROR, inner dimensions of A and B "
-         << "must match for matrix-matrix product. A is "
-         <<Aouter<<"x"<<Ainner << ", B is "<<Binner<<"x"<<Bouter<<std::endl;
-    return(-1);
-  }
-
-  //The result matrix C must at least have a row-map that reflects the
-  //correct row-size. Don't check the number of columns because rectangular
-  //matrices which were constructed with only one map can still end up
-  //having the correct capacity and dimensions when filled.
-  if (Aouter > C.NumGlobalRows64()) {
-    std::cerr << "MatrixMatrix::Jacobi: ERROR, dimensions of result C must "
-         << "match dimensions of A * B. C has "<<C.NumGlobalRows64()
-         << " rows, should have at least "<<Aouter << std::endl;
-    return(-1);
-  }
-
-  // Check against the D matrix
-  if(Dlen != Aouter) {
-    std::cerr << "MatrixMatrix::Jacboi: ERROR, dimensions of result D must "
-              << "match dimensions of A's rows. D has "<< Dlen
-              << " rows, should have " << Aouter << std::endl;
-    return(-1);
-  }
-
-  if(!A.RowMap().SameAs(B.RowMap()) || !A.RowMap().SameAs(Dinv.Map())) {
-    std::cerr << "MatrixMatrix::Jacboi: ERROR, RowMap of A must match RowMap of B "
-              << "and Map of D."<<std::endl;
-    return(-1);
-  }
-
-  //It doesn't matter whether C is already Filled or not. If it is already
-  //Filled, it must have space allocated for the positions that will be
-  //referenced in forming C. If it doesn't have enough space,
-  //we'll error out later when trying to store result values.
-
-  //We're going to need to import remotely-owned sections of A and/or B
-  //if more than 1 processor is performing this run, depending on the scenario.
-  int numProcs = A.Comm().NumProc();
-
-  // Maps
-  const Epetra_Map* rowmap_A = &(A.RowMap());
-  const Epetra_Map* rowmap_B = &(B.RowMap());
-
-
-
-  //Declare some 'work-space' maps which may be created depending on
-  //the scenario, and which will be deleted before exiting this function.
-  const Epetra_Map* workmap1 = NULL;
-  const Epetra_Map* workmap2 = NULL;
-  const Epetra_Map* mapunion1 = NULL;
-
-  //Declare a couple of structs that will be used to hold views of the data
-  //of A and B, to be used for fast access during the matrix-multiplication.
-  CrsMatrixStruct Aview;
-  CrsMatrixStruct Bview;
-
-  const Epetra_Map* targetMap_A = rowmap_A;
-  const Epetra_Map* targetMap_B = rowmap_B;
-
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: Jacobi All I&X")));
-#endif
-
-  //Now import any needed remote rows and populate the Aview struct.
-  if(call_FillComplete_on_result) {
-    EPETRA_CHK_ERR(import_only<int_type>(A,*targetMap_A,Aview));
-  }
-  else  {
-    EPETRA_CHK_ERR( import_and_extract_views<int_type>(A, *targetMap_A, Aview));
-  }
-
-  // NOTE:  Next up is to switch to import_only for B as well, and then modify the THREE SerialCores
-  // to add a Acol2Brow and Acol2Bimportrow array for in-algorithm lookups.
-
-  // Make sure B's views are consistent with A even in serial.
-  const Epetra_Map* colmap_op_A = NULL;
-  if(numProcs > 1){
-    colmap_op_A = &(A.ColMap());
-    targetMap_B = colmap_op_A;
-  }
-
-  //Now import any needed remote rows and populate the Bview struct.
-  if(call_FillComplete_on_result) {
-    EPETRA_CHK_ERR(import_only<int_type>(B,*targetMap_B,Bview,A.Importer()));
-  }
-  else {
-    EPETRA_CHK_ERR( import_and_extract_views<int_type>(B, *targetMap_B, Bview) );
-  }
-
-#ifdef ENABLE_MMM_TIMINGS
-  MM = Teuchos::rcp(new TimeMonitor(*TimeMonitor::getNewTimer("EpetraExt: Jacobi All Multiply")));
-#endif
-
-  // Zero if filled
-  if(C.Filled()) C.PutScalar(0.0);
-
-  //Now call the appropriate method to perform the actual multiplication.
-  CrsWrapper_Epetra_CrsMatrix ecrsmat(C);
-  EPETRA_CHK_ERR( jacobi_A_B(omega,Dinv,A,Aview,B,Bview,C,call_FillComplete_on_result) );
-
-  //Finally, delete the objects that were potentially created
-  //during the course of importing remote sections of A and B.
-  delete mapunion1; mapunion1 = NULL;
-  delete workmap1; workmap1 = NULL;
-  delete workmap2; workmap2 = NULL;
-
-  return(0);
-}
-
-
-
-int MatrixMatrix::Jacobi(double omega,
-                         const Epetra_Vector & Dinv,
-                         const Epetra_CrsMatrix& A,
-                         const Epetra_CrsMatrix& B,
-                         Epetra_CrsMatrix& C,
-                         bool call_FillComplete_on_result)
-{
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesInt() && B.RowMap().GlobalIndicesInt()) {
-    return TJacobi<int>(omega, Dinv, A, B, C, call_FillComplete_on_result);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(A.RowMap().GlobalIndicesLongLong() && B.RowMap().GlobalIndicesLongLong()) {
-    return TJacobi<long long>(omega, Dinv, A, B, C, call_FillComplete_on_result);
-  }
-  else
-#endif
-    throw std::runtime_error("EpetraExt::MatrixMatrix::Jacobi: GlobalIndices type unknown");
-}
-
-
-
-
-
-
-
-
-
 
 } // namespace EpetraExt
 

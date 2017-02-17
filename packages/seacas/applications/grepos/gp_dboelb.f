@@ -37,6 +37,7 @@ C=======================================================================
 C=======================================================================
 
 C   --*** DBOELB *** (EXOLIB) Write database element blocks
+C   --   Written by Amy Gilkey - revised 10/12/87
 C   --
 C   --DBOELB writes the element block information to the database.
 C   --Some dynamic dimensioning is done.
@@ -80,13 +81,11 @@ C   --
          ISATR = IEATR + 1
          IEATR = IEATR + NUMATR(IELB) * NUMELB(IELB)
 
-         if (numelb(ielb) .gt. 0 .and. numlnk(ielb) .gt. 0) then
-           call expelc(ndb, idelb(ielb), link(islnk), ierr)
-           IF (IERR .NE. 0) THEN
-             CALL PRTERR ('FATAL',
-     *         'Error writing element block connectivity')
-           END IF
-         end if
+         call expelc(ndb, idelb(ielb), link(islnk), ierr)
+         IF (IERR .NE. 0) THEN
+           CALL PRTERR ('FATAL',
+     *       'Error writing element block connectivity')
+         END IF
 
          if (numatr(ielb) .gt. 0) then
            call expeat(ndb, idelb(ielb), atrib(isatr), ierr)

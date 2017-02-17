@@ -67,8 +67,6 @@ C   --   ATRIB - IN - the attribute array
       CHARACTER*99 STRA
       CHARACTER*99 STRB
 
-      if (numel .eq. 0 .and. nelblk .eq. 0) return
-      
 C   --Check for unique identifier
 
       DO 100 IELB = 1, NELBLK
@@ -82,18 +80,16 @@ C   --Check for unique identifier
       iatoff = 0
       do ielb = 1, nelblk
         do natr = 1, numatr(ielb)
-          if (atname(iatoff+natr)(1:1) .ne. ' ') then
-            do jatr = natr+1, numatr(ielb)
-              if (atname(iatoff+natr) .eq. atname(iatoff+jatr)) then
-                CALL INTSTR (1, 0, IDELB(IELB), STRA, LSTRA)
-                CALL PRTERR ('CMDSPEC',
-     &            'Attribute name "'//
-     *            ATNAME(iatoff+NATR)(:LENSTR(ATNAME(iatoff+NATR))) //
-     *            '" in Element block ID ' // STRA(:LSTRA)
-     *            // ' is not unique')
-              end if
-            end do
-          end if
+          do jatr = natr+1, numatr(ielb)
+            if (atname(iatoff+natr) .eq. atname(iatoff+jatr)) then
+              CALL INTSTR (1, 0, IDELB(IELB), STRA, LSTRA)
+              CALL PRTERR ('CMDSPEC',
+     &          'Attribute name "'//
+     *          ATNAME(iatoff+NATR)(:LENSTR(ATNAME(iatoff+NATR))) //
+     *          '" in Element block ID ' // STRA(:LSTRA)
+     *          // ' is not unique')
+            end if
+          end do
         end do
         iatoff = iatoff + numatr(ielb)
       end do
@@ -103,8 +99,8 @@ C   --number of elements
 
       NELB = INTADD (NELBLK, NUMELB)
       IF (NELB .NE. NUMEL) THEN
-         CALL PRTERR ('CMDSPEC',
-     *    'Sum of elements in all element blocks does not match total')
+         CALL PRTERR ('CMDSPEC', 'Sum of elements in all element blocks'
+     &      // ' does not match total')
       END IF
 
 C   --Check the connectivity for each element block

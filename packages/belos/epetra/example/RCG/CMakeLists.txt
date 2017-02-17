@@ -1,4 +1,6 @@
 
+INCLUDE(TribitsAddExecutable)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_EpetraExt)
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Triutils)
@@ -10,11 +12,10 @@ IF (${PACKAGE_NAME}_ENABLE_Triutils AND ${PACKAGE_NAME}_ENABLE_EpetraExt)
     COMM serial mpi
     )
 
-  ASSERT_DEFINED(Anasazi_SOURCE_DIR)
   TRIBITS_COPY_FILES_TO_BINARY_DIR(CopyExampleRCGFiles
-  SOURCE_DIR ${Anasazi_SOURCE_DIR}/testmatrices
-  SOURCE_FILES bcsstk14.hb 
-  EXEDEPS RCG_Epetra_Ex_File
-  )
+    SOURCE_DIR ${Belos_SOURCE_DIR}/epetra/example/RCG
+    SOURCE_FILES bcsstk14.hb
+    EXEDEPS RCG_Epetra_Ex_File
+    )
 
 ENDIF()

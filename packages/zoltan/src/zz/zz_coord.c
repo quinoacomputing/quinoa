@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *  
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 
 #ifdef __cplusplus
@@ -429,7 +396,31 @@ End:
   ZOLTAN_TRACE_EXIT(zz, yo);
   return ierr;
 }
-
+/*
+ * For debugging purposes, print out the coordinate transformation.
+ */
+void Zoltan_Print_Transformation(ZZ_Transform *tr)
+{
+  int i;
+  printf("Target_Dim: %d\n", tr->Target_Dim);
+  printf("Degenerate geometry:\n");
+  printf("  Transformation:\n");
+  for (i=0; i<3; i++){
+    printf("    %f %f %f\n", tr->Transformation[i][0],
+           tr->Transformation[i][1], tr->Transformation[i][2]);
+  }
+  printf("  Eigenvectors of inertial matrix:\n");
+  for (i=0; i<3; i++){
+    printf("    %f %f %f\n", tr->Evecs[i][0], 
+      tr->Evecs[i][1], tr->Evecs[i][2]);
+  }
+  printf("  Simple coordinate permutation (if axis-aligned):\n");
+  printf("    %d %d %d\n",
+    tr->Permutation[0], tr->Permutation[1], tr->Permutation[2]);
+  printf("  Center of mass, axis order: (%f %f %f), %d %d %d\n",
+    tr->CM[0], tr->CM[1], tr->CM[2],
+    tr->Axis_Order[0], tr->Axis_Order[1], tr->Axis_Order[2]);
+}
 /*
  * Initialize a coordinate transformation structure.
  */
@@ -448,7 +439,6 @@ void Zoltan_Initialize_Transformation(ZZ_Transform *tr)
     tr->Axis_Order[i] = 0;
   } 
 }
-
 /*
  * Decide whether the relative lengths of the edges of the oriented
  * bounding box indicate the geometry is very flat in one or two directions.
@@ -708,13 +698,13 @@ MPI_Comm local_comm;
   proclower = 0;
   local_comm = zz->Communicator;
 
-  for (j=0; j<3; j++){
-    min[j] = DBL_MAX;
-    max[j] = DBL_MIN;
-  }
-
   if (aa){
     /* special case - eigenvectors are axis aligned */
+
+    for (j=0; j<dim; j++){
+      min[j] = DBL_MAX;
+      max[j] = DBL_MIN;
+    }
 
     for (i=0, c = coords; i<num_obj; i++, c += dim){
       for (j=0; j<dim; j++){
@@ -749,7 +739,7 @@ MPI_Comm local_comm;
 
       if (j){
         if (val < min[i]) min[i] = val;
-        if (val > max[i]) max[i] = val;
+        else if (val > max[i]) max[i] = val;
       }
       else{
         min[i] = max[i] = val;

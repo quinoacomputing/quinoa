@@ -1,0 +1,269 @@
+#!/usr/bin/env python
+
+usageHelp = r"""egdist [egdist options] [OPTIONS]
+
+Run eg/git recursively over extra repos
+
+Instead of typing
+
+   $ eg [OPTIONS]
+
+type:
+
+  $ egdist [egdist options] [OPTIONS]
+
+This will distribute git options across all git repos listed, including the
+base git repo.  The options in [egdist options] are prefixed with '--dist-'
+are are pulled out before running eg/git on the underlying executable.  See
+--help to see the egdist options.
+
+If --dist-extra-repos="", then the list of extra repos will be read from the file
+.egdist.  The format of this file is to have one repo name per line as in:
+
+   Repo1
+   Repo2
+   Repo3
+   ...
+
+NOTE: If any extra repository does not exist, then it will be ignored and no
+output will be proudced.  Therefore, be careful to manually verify that the
+script recognizes the repositories that you list.  The best way to do that is
+to type 'egdist status'.
+
+NOTE: This script has no other depenenices so it can be copied and moved
+anywhere and used.
+
+TIPS:
+
+ - Use 'egdist --no-pager <command> ...' to get the full output from
+   all extra repos in one contiguous stream which can then be piped
+   to 'less' or to a file to be read with emacs or vi (may also want
+   to use --dist-no-color as well).
+
+ - 'egdist --help' will run egdist help, not eg/git help.  If you want
+   eg/git help, run raw 'eg --help'.
+
+ - By default, egdist will use 'eg' in the environment.  If it can't find 'eg'
+   in the environment, it will try to use 'eg' in the same directroy as
+   'egdist' (which is the case in the home tribits directory).  If it can't
+   find this 'eg' it will look for 'git' in the environment.  If it can't find 'git'
+   it will require that the user specify the eg/git command to run with
+   --with-eg-git=<the command>.
+
+"""
+
+import sys
+import os
+import subprocess
+import commands
+
+from optparse import OptionParser
+
+
+#
+# Helper functions
+#
+
+# Get the commandline options
+def getCommandlineOps():
+
+  #
+  # A) Define the native egdist command-line arguments
+  #
+  
+  clp = OptionParser(usage=usageHelp)
+  
+  helpArgName = "--help"
+  withEgGitArgName = "--with-eg-git"
+  extraRepoArgName = "--dist-extra-repos"
+  noColorArgName = "--dist-no-color"
+  debugArgName = "--dist-debug"
+  
+  nativeArgNames = [ helpArgName, withEgGitArgName, extraRepoArgName, noColorArgName, debugArgName ]
+
+  # Find a default eg/dist to use
+
+  # Select a version of eg or git (see above help documentation)
+
+  defaultEgGit = "eg" # Try system eg
+  if not commandExists(defaultEgGit):
+   realScriptBaseDir = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+   defaultEgGit = realScriptBaseDir+"/eg" # Try offical TriBITS eg
+  if not commandExists(defaultEgGit):
+    defaultEgGit = "git" # Try system git
+  if not commandExists(defaultEgGit):
+    defaultEgGit = "" # Give up and make the user specify
+  
+  clp.add_option(
+    withEgGitArgName, dest="egGit", type="string",
+    default=defaultEgGit,
+    help="The (path) to the eg/git executable to use for each git repo command (default='"+defaultEgGit+"')"
+    )
+  
+  clp.add_option(
+    extraRepoArgName, dest="extraRepos", type="string",
+    default="",
+    help="Coma seprated list of extra repos to forward eg commands to."
+    +"  If the list is empty, it will look for a file called .egdist to"
+    +" get the list of extra repos seprated by newlines."
+    )
+  
+  clp.add_option(
+    noColorArgName, dest="useColor", action="store_false",
+    help="If set, don't use color in the output for egdist (better for output to a file).",
+    default=True )
+  
+  clp.add_option(
+    debugArgName, dest="debug", action="store_true",
+    help="If set, then debugging info is printed.",
+    default=False )
+  
+  #
+  # B) Pull the native commandline arguments out of the commandline
+  #
+  
+  argv = sys.argv[1:]
+  nativeArgs = []
+  otherArgs = []
+  
+  for arg in argv:
+    #print "\narg = '"+arg+"'"
+    matchedNativeArg = False
+    for nativeArgName in nativeArgNames:
+      #print "\nnativeArgName ='"+nativeArgName+"'"
+      currentArgName = arg[0:len(nativeArgName)]
+      #print "currentArgName = '"+currentArgName+"'"
+      if currentArgName == nativeArgName:
+        #print "\nMatches native arg!"
+        nativeArgs.append(arg)
+        matchedNativeArg = True
+        break
+    if not matchedNativeArg:
+      #print "\nDoes *not* match native arg!"
+      otherArgs.append(arg)
+    #print "\nnativeArgs =", nativeArgs
+    #print "otherArgs =", otherArgs
+  
+  #print "\nnativeArgs =", nativeArgs
+  #print "otherArgs =", otherArgs
+  
+  (options, args) = clp.parse_args(nativeArgs)
+
+  # Check for valid usage
+
+  if len(otherArgs) == 0:
+    print txtred+"Must specify eg command. See 'eg --help' for options."+txtrst
+    sys.exit(1)
+
+  if not options.egGit:
+    print txtred+"Can't find eg or git, please set --with-eg-dist"+txtrst
+    sys.exit(2)
+  
+  if options.extraRepos:
+    extraReposFullList = options.extraRepos.split(",")
+  else:
+    egdistfile = ".egdist"
+    if os.path.exists(egdistfile):
+      extraReposFullList = open(egdistfile, 'r').read().split()
+    else:
+      extraReposFullList = []
+
+  return (options, otherArgs, extraReposFullList)
+
+
+# Get output from command
+def getCmndOutput(cmnd):
+  return commands.getstatusoutput(cmnd)[1]
+
+
+# Determine if a command exists:
+def commandExists(cmnd):
+  whichCmnd = getCmndOutput("which "+cmnd)
+  #print "whichCmnd =", whichCmnd
+  if os.path.exists(whichCmnd):
+    return True
+  return False
+
+
+# Requote commandline arguments into an array
+def requoteCmndLineArgsIntoArray(inArgs):
+  argsArray = []
+  for arg in inArgs:
+    splitArg = arg.split("=")
+    newArg = None
+    if len(splitArg) == 1:
+      newArg = arg
+    else:
+      newArg = splitArg[0]+"=\""+'='.join(splitArg[1:])+"\""
+    #print "\nnewArg =", newArg                                                                           
+    argsArray.append(newArg)
+  return argsArray
+
+
+# Get the terminal colors
+txtbld=getCmndOutput(r"tput bold")       # Bold
+txtblu=getCmndOutput(r"tput setaf 4")    # Blue
+txtred=getCmndOutput(r"tput setaf 1")    # Red
+txtrst=getCmndOutput(r"tput sgr0")       # Text reset
+
+
+# Add color to a string
+def addColorToString(useColor, strIn):
+  if useColor:
+    return txtbld+txtblu+strIn+txtrst
+  return strIn
+
+
+# Run a command and syncronize the output
+def runCmnd(options, cmnd):
+  if options.debug:
+    print "*** Running command:", cmnd
+  child = subprocess.Popen(cmnd, stdout=subprocess.PIPE).stdout
+  output = child.read()
+  sys.stdout.flush()
+  print output
+  sys.stdout.flush()
+
+
+#
+# Run the script
+#
+
+(options, otherArgs, extraReposFullList) = getCommandlineOps()
+
+# Reform the commandline arguments correctly
+#print "otherArgs =", otherArgs
+cmndLineArgsArray = requoteCmndLineArgsIntoArray(otherArgs)
+
+# Get the reference base directory
+baseDir = os.getcwd()
+
+if options.debug:
+  print "*** Using eg/git:", options.egGit
+
+egCmndArray = [ options.egGit ] + cmndLineArgsArray
+
+baseDirArray = baseDir.split("/")
+baseRepoName = baseDirArray[-1]
+
+print "" 
+print "*** Base Git Repo: "+addColorToString(options.useColor, baseRepoName)
+sys.stdout.flush()
+
+runCmnd(options, egCmndArray)
+
+for extraRepo in extraReposFullList:
+  if os.path.isdir(extraRepo):
+    print "" 
+    print "*** Git Repo: "+addColorToString(options.useColor, extraRepo)
+    sys.stdout.flush()
+    if options.debug:
+      print "*** Changing to directory "+extraRepo
+    os.chdir(extraRepo)
+    runCmnd(options, egCmndArray)
+    if options.debug:
+      print "*** Changing to directory "+baseDir
+    os.chdir(baseDir)
+
+print ""
+sys.stdout.flush()

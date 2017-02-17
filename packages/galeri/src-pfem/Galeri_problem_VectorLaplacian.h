@@ -68,7 +68,7 @@ class VectorLaplacian // FIXME????? : public Base
 {
   public:
   VectorLaplacian(const int numPDEs,
-                  const std::string& elementType,
+                  const string& elementType,
                   const int integrationDegree = Galeri::core::Workspace::MIN, 
                   const int normDegree = Galeri::core::Workspace::MAX) :
     equation_(0),

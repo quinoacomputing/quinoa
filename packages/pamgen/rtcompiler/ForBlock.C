@@ -1,9 +1,9 @@
-#include "RTC_ForBlockRTC.hh"
-#include "RTC_WhileBlockRTC.hh"
-#include "RTC_LineRTC.hh"
-#include "RTC_BlockRTC.hh"
-#include "RTC_IfElseifElseBlockRTC.hh"
-#include "RTC_commonRTC.hh"
+#include "ForBlockRTC.hh"
+#include "WhileBlockRTC.hh"
+#include "LineRTC.hh"
+#include "BlockRTC.hh"
+#include "IfElseifElseBlockRTC.hh"
+#include "commonRTC.hh"
 
 #include <string>
 #include <map>
@@ -13,18 +13,17 @@ using namespace std;
 using namespace PG_RuntimeCompiler;
 
 /*****************************************************************************/
-ForBlock::ForBlock(
-    map<string, Variable*> vars, Tokenizer& lines,
-    string& errs
-    ):
-  Block(vars),
-  _init(NULL),
-  _condition(NULL),
-  _postloop(NULL)
+ForBlock::ForBlock(map<string, Variable*> vars, Tokenizer& lines, 
+		   string& errs) : Block(vars)
+/*****************************************************************************/
 {
-  if (errs != "") return;
+  if (errs != "") return; 
 
   lines.nextToken(); //move past "for" token
+
+  _init      = NULL;
+  _condition = NULL;
+  _postloop  = NULL;
 
   _init      = new Line(lines, this, errs, false);
   if (errs != "") return;
@@ -39,7 +38,8 @@ ForBlock::ForBlock(
 }
 
 /*****************************************************************************/
-ForBlock::~ForBlock()
+ForBlock::~ForBlock() 
+/*****************************************************************************/
 {
   if (_init != NULL)
     delete _init;
@@ -50,7 +50,8 @@ ForBlock::~ForBlock()
 }
 
 /*****************************************************************************/
-Value* ForBlock::execute()
+Value* ForBlock::execute() 
+/*****************************************************************************/
 {
   //execute the initialization statement (ex: int i = 0)
   _init->execute();
@@ -58,13 +59,13 @@ Value* ForBlock::execute()
   //check the conditional statement (ex: i < 10)
   while (_condition->execute()->getValue()) {
     list<Executable*>::iterator itr = _statements.begin();
-
+    
     //execute all sub statements in the block
     while(itr != _statements.end()) {
       (*itr)->execute();
       ++itr;
     }
-
+    
     //execute the postloop statement (ex: ++i)
     _postloop->execute();
   }

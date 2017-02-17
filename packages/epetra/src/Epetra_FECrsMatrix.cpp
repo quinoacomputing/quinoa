@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,12 +35,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
-#include <Epetra_ConfigDefs.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_IntSerialDenseVector.h>
 #include <Epetra_SerialDenseMatrix.h>
@@ -52,155 +51,105 @@
 
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
-               const Epetra_Map& rowMap,
-               int* NumEntriesPerRow,
-               bool ignoreNonLocalEntries)
+				       const Epetra_Map& rowMap,
+				       int* NumEntriesPerRow,
+				       bool ignoreNonLocalEntries)
   : Epetra_CrsMatrix(CV, rowMap, NumEntriesPerRow),
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (false),
-    nonlocalMatrix_ (NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (NULL)
 {
-  myFirstRow_ = rowMap.MinMyGID64();
+  myFirstRow_ = rowMap.MinMyGID();
   myNumRows_ = rowMap.NumMyElements();
 }
 
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
-               const Epetra_Map& rowMap,
-               int NumEntriesPerRow,
-               bool ignoreNonLocalEntries)
+				       const Epetra_Map& rowMap,
+				       int NumEntriesPerRow,
+				       bool ignoreNonLocalEntries)
   : Epetra_CrsMatrix(CV, rowMap, NumEntriesPerRow),
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (false),
-    nonlocalMatrix_ (NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (NULL)
 {
-  myFirstRow_ = rowMap.MinMyGID64();
+  myFirstRow_ = rowMap.MinMyGID();
   myNumRows_ = rowMap.NumMyElements();
 }
 
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
-               const Epetra_Map& rowMap,
-               const Epetra_Map& colMap,
-               int* NumEntriesPerRow,
-               bool ignoreNonLocalEntries)
+				       const Epetra_Map& rowMap,
+				       const Epetra_Map& colMap,
+				       int* NumEntriesPerRow,
+				       bool ignoreNonLocalEntries)
   : Epetra_CrsMatrix(CV, rowMap, colMap, NumEntriesPerRow),
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (false),
-    nonlocalMatrix_ (NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (NULL)
 {
-  myFirstRow_ = rowMap.MinMyGID64();
+  myFirstRow_ = rowMap.MinMyGID();
   myNumRows_ = rowMap.NumMyElements();
 }
 
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
-               const Epetra_Map& rowMap,
-               const Epetra_Map& colMap,
-               int NumEntriesPerRow,
-               bool ignoreNonLocalEntries)
+				       const Epetra_Map& rowMap,
+				       const Epetra_Map& colMap,
+				       int NumEntriesPerRow,
+				       bool ignoreNonLocalEntries)
   : Epetra_CrsMatrix(CV, rowMap, colMap, NumEntriesPerRow),
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (false),
-    nonlocalMatrix_ (NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (NULL)
 {
-  myFirstRow_ = rowMap.MinMyGID64();
+  myFirstRow_ = rowMap.MinMyGID();
   myNumRows_ = rowMap.NumMyElements();
 }
 
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
-               const Epetra_CrsGraph& graph,
-               bool ignoreNonLocalEntries)
+				       const Epetra_CrsGraph& graph,
+				       bool ignoreNonLocalEntries)
   : Epetra_CrsMatrix(CV, graph),
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (false),
-    nonlocalMatrix_ (NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (NULL)
 {
-  myFirstRow_ = RowMap().MinMyGID64();
+  myFirstRow_ = RowMap().MinMyGID();
   myNumRows_ = RowMap().NumMyElements();
 }
-
+   
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
               const Epetra_FECrsGraph& graph,
@@ -209,49 +158,29 @@ Epetra_FECrsMatrix::Epetra_FECrsMatrix(Epetra_DataAccess CV,
     myFirstRow_(0),
     myNumRows_(0),
     ignoreNonLocalEntries_(ignoreNonLocalEntries),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    nonlocalRows_int_(),
-    nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    nonlocalRows_LL_(),
-    nonlocalCols_LL_(),
-#endif
+    nonlocalRows_(),
+    nonlocalCols_(),
     nonlocalCoefs_(),
     workData_(128),
     useNonlocalMatrix_ (graph.UseNonlocalGraph() && graph.nonlocalGraph_ != 0),
-    nonlocalMatrix_ (useNonlocalMatrix_ ?
-    		new Epetra_CrsMatrix(Copy,*graph.nonlocalGraph_) : NULL),
-    sourceMap_(NULL),
-    colMap_(NULL),
-    exporter_(NULL),
-    tempMat_(NULL)
+    nonlocalMatrix_ (useNonlocalMatrix_ ? 
+        new Epetra_CrsMatrix(Copy,*graph.nonlocalGraph_) : NULL)
 {
-  myFirstRow_ = RowMap().MinMyGID64();
+  myFirstRow_ = RowMap().MinMyGID();
   myNumRows_ = RowMap().NumMyElements();
 }
-
+   
 //----------------------------------------------------------------------------
 Epetra_FECrsMatrix::Epetra_FECrsMatrix(const Epetra_FECrsMatrix& src)
  : Epetra_CrsMatrix(src),
    myFirstRow_(0),
    myNumRows_(0),
    ignoreNonLocalEntries_(false),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   nonlocalRows_int_(),
-   nonlocalCols_int_(),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-   nonlocalRows_LL_(),
-   nonlocalCols_LL_(),
-#endif
+   nonlocalRows_(),
+   nonlocalCols_(),
    nonlocalCoefs_(),
    workData_(128),
-   nonlocalMatrix_ (NULL),
-   sourceMap_(NULL),
-   colMap_(NULL),
-   exporter_(NULL),
-    tempMat_(NULL)
+   nonlocalMatrix_ (NULL)
 {
   operator=(src);
 }
@@ -273,37 +202,17 @@ Epetra_FECrsMatrix& Epetra_FECrsMatrix::operator=(const Epetra_FECrsMatrix& src)
   myNumRows_ = src.myNumRows_;
   ignoreNonLocalEntries_ = src.ignoreNonLocalEntries_;
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if (src.RowMap().GlobalIndicesInt() && nonlocalRows_int_.size() < 1) {
+  if (nonlocalRows_.size() < 1) {
     return( *this );
   }
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if (src.RowMap().GlobalIndicesLongLong() && nonlocalRows_LL_.size() < 1) {
-    return( *this );
-  }
-#endif
 
   if (useNonlocalMatrix_ && src.nonlocalMatrix_ != 0) {
     *nonlocalMatrix_ = *src.nonlocalMatrix_;
     return( *this );
   }
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if (src.RowMap().GlobalIndicesInt()) {
-    nonlocalRows_int_ = src.nonlocalRows_int_;
-    nonlocalCols_int_ = src.nonlocalCols_int_;
-  }
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if (src.RowMap().GlobalIndicesLongLong()) {
-    nonlocalRows_LL_ = src.nonlocalRows_LL_;
-    nonlocalCols_LL_ = src.nonlocalCols_LL_;
-  }
-#endif
-
+  nonlocalRows_ = src.nonlocalRows_;
+  nonlocalCols_ = src.nonlocalCols_;
   nonlocalCoefs_= src.nonlocalCoefs_;
 
   return( *this );
@@ -318,397 +227,185 @@ Epetra_FECrsMatrix::~Epetra_FECrsMatrix()
 //----------------------------------------------------------------------------
 void Epetra_FECrsMatrix::DeleteMemory()
 {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if (RowMap().GlobalIndicesInt()) {
-    nonlocalRows_int_.clear();
-    nonlocalCols_int_.clear();
-  }
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if (RowMap().GlobalIndicesLongLong()) {
-    nonlocalRows_LL_.clear();
-    nonlocalCols_LL_.clear();
-  }
-#endif
-
+  nonlocalRows_.clear();
+  nonlocalCols_.clear();
   nonlocalCoefs_.clear();
 
   if (nonlocalMatrix_ != 0)
     delete nonlocalMatrix_;
-
-  if ( sourceMap_ )
-	delete sourceMap_;
-  if ( colMap_ )
-	delete colMap_;
-  if ( exporter_ )
-	delete exporter_;
-  if ( tempMat_ )
-	delete tempMat_;
-
 }
 
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::SumIntoGlobalValues(int numIndices, const int* indices,
-              const double* const* values,
-              int format)
+					    const double* const* values,
+					    int format)
 {
   return(InputGlobalValues(numIndices, indices,
                            numIndices, indices,
                            values, format, SUMINTO));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numIndices, const long long* indices,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, SUMINTO));
-}
-#endif
+
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::SumIntoGlobalValues(int numRows, const int* rows,
-              int numCols, const int* cols,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, SUMINTO));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numRows, const long long* rows,
-              int numCols, const long long* cols,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, SUMINTO));
-}
-#endif
-//----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numIndices, const int* indices,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, SUMINTO));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numIndices, const long long* indices,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, SUMINTO));
-}
-#endif
-//----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numRows, const int* rows,
-              int numCols, const int* cols,
-              const double* values,
-              int format)
+					    int numCols, const int* cols,
+					    const double* const* values,
+					    int format)
 {
   return(InputGlobalValues(numRows, rows,
                            numCols, cols,
                            values, format, SUMINTO));
 }
 
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int numRows, const long long* rows,
-              int numCols, const long long* cols,
-              const double* values,
-              int format)
+//----------------------------------------------------------------------------
+int Epetra_FECrsMatrix::SumIntoGlobalValues(int numIndices, const int* indices,
+					    const double* values,
+					    int format)
+{
+  return(InputGlobalValues(numIndices, indices,
+                           numIndices, indices,
+                           values, format, SUMINTO));
+}
+
+//----------------------------------------------------------------------------
+int Epetra_FECrsMatrix::SumIntoGlobalValues(int numRows, const int* rows,
+					    int numCols, const int* cols,
+					    const double* values,
+					    int format)
 {
   return(InputGlobalValues(numRows, rows,
                            numCols, cols,
                            values, format, SUMINTO));
 }
-#endif
+
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::SumIntoGlobalValues(const Epetra_IntSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
+					    const Epetra_SerialDenseMatrix& values,
+					    int format)
 {
   if (indices.Length() != values.M() || indices.Length() != values.N()) {
     return(-1);
   }
 
   return( SumIntoGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
+			      values.A(), format) );
 }
 
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(const Epetra_LongLongSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
-{
-  if (indices.Length() != values.M() || indices.Length() != values.N()) {
-    return(-1);
-  }
-
-  return( SumIntoGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(const Epetra_IntSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
+					    const Epetra_SerialDenseMatrix& values,
+					    int format)
 {
   if (indices.Length() != values.M() || indices.Length() != values.N()) {
     return(-1);
   }
 
   return( InsertGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
+			      values.A(), format) );
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::InsertGlobalValues(const Epetra_LongLongSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
-{
-  if (indices.Length() != values.M() || indices.Length() != values.N()) {
-    return(-1);
-  }
 
-  return( InsertGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::ReplaceGlobalValues(const Epetra_IntSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
+					    const Epetra_SerialDenseMatrix& values,
+					    int format)
 {
   if (indices.Length() != values.M() || indices.Length() != values.N()) {
     return(-1);
   }
 
   return( ReplaceGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
+			      values.A(), format) );
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(const Epetra_LongLongSerialDenseVector& indices,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
-{
-  if (indices.Length() != values.M() || indices.Length() != values.N()) {
-    return(-1);
-  }
 
-  return( ReplaceGlobalValues(indices.Length(), indices.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::SumIntoGlobalValues(const Epetra_IntSerialDenseVector& rows,
-              const Epetra_IntSerialDenseVector& cols,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
+					    const Epetra_IntSerialDenseVector& cols,
+					    const Epetra_SerialDenseMatrix& values,
+					    int format)
 {
   if (rows.Length() != values.M() || cols.Length() != values.N()) {
     return(-1);
   }
 
   return( SumIntoGlobalValues(rows.Length(), rows.Values(),
-            cols.Length(), cols.Values(),
-            values.A(), format) );
+			      cols.Length(), cols.Values(),
+			      values.A(), format) );
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(const Epetra_LongLongSerialDenseVector& rows,
-              const Epetra_LongLongSerialDenseVector& cols,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
-{
-  if (rows.Length() != values.M() || cols.Length() != values.N()) {
-    return(-1);
-  }
 
-  return( SumIntoGlobalValues(rows.Length(), rows.Values(),
-            cols.Length(), cols.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(const Epetra_IntSerialDenseVector& rows,
-             const Epetra_IntSerialDenseVector& cols,
-             const Epetra_SerialDenseMatrix& values,
-             int format)
+					   const Epetra_IntSerialDenseVector& cols,
+					   const Epetra_SerialDenseMatrix& values,
+					   int format)
 {
   if (rows.Length() != values.M() || cols.Length() != values.N()) {
     return(-1);
   }
 
   return( InsertGlobalValues(rows.Length(), rows.Values(),
-           cols.Length(), cols.Values(),
-            values.A(), format) );
+			     cols.Length(), cols.Values(),
+			      values.A(), format) );
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::InsertGlobalValues(const Epetra_LongLongSerialDenseVector& rows,
-             const Epetra_LongLongSerialDenseVector& cols,
-             const Epetra_SerialDenseMatrix& values,
-             int format)
-{
-  if (rows.Length() != values.M() || cols.Length() != values.N()) {
-    return(-1);
-  }
 
-  return( InsertGlobalValues(rows.Length(), rows.Values(),
-           cols.Length(), cols.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::ReplaceGlobalValues(const Epetra_IntSerialDenseVector& rows,
-              const Epetra_IntSerialDenseVector& cols,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
+					    const Epetra_IntSerialDenseVector& cols,
+					    const Epetra_SerialDenseMatrix& values,
+					    int format)
 {
   if (rows.Length() != values.M() || cols.Length() != values.N()) {
     return(-1);
   }
 
   return( ReplaceGlobalValues(rows.Length(), rows.Values(),
-            cols.Length(), cols.Values(),
-            values.A(), format) );
+			      cols.Length(), cols.Values(),
+			      values.A(), format) );
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::ReplaceGlobalValues(const Epetra_LongLongSerialDenseVector& rows,
-              const Epetra_LongLongSerialDenseVector& cols,
-              const Epetra_SerialDenseMatrix& values,
-              int format)
-{
-  if (rows.Length() != values.M() || cols.Length() != values.N()) {
-    return(-1);
-  }
-
-  return( ReplaceGlobalValues(rows.Length(), rows.Values(),
-            cols.Length(), cols.Values(),
-            values.A(), format) );
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int numIndices, const int* indices,
-            const double* const* values,
-            int format)
+				    const double* const* values,
+				    int format)
 {
   return(InputGlobalValues(numIndices, indices,
                            numIndices, indices,
                            values, format, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::InsertGlobalValues(int numIndices, const long long* indices,
-            const double* const* values,
-            int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, INSERT));
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int numRows, const int* rows,
-            int numCols, const int* cols,
-            const double* const* values,
-            int format)
+				    int numCols, const int* cols,
+				    const double* const* values,
+				    int format)
 {
   return(InputGlobalValues(numRows, rows,
                            numCols, cols,
                            values, format, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::InsertGlobalValues(int numRows, const long long* rows,
-            int numCols, const long long* cols,
-            const double* const* values,
-            int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, INSERT));
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int numIndices, const int* indices,
-              const double* values,
-              int format)
+					    const double* values,
+					    int format)
 {
   return(InputGlobalValues(numIndices, indices,
                            numIndices, indices,
                            values, format, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::InsertGlobalValues(int numIndices, const long long* indices,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, INSERT));
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int numRows, const int* rows,
-              int numCols, const int* cols,
-              const double* values,
-              int format)
+					    int numCols, const int* cols,
+					    const double* values,
+					    int format)
 {
   return(InputGlobalValues(numRows, rows,
                            numCols, cols,
                            values, format, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::InsertGlobalValues(int numRows, const long long* rows,
-              int numCols, const long long* cols,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, INSERT));
-}
-#endif
 //----------------------------------------------------------------------------
-template<typename int_type>
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int_type GlobalRow, int NumEntries,
-                                            const double* values, const int_type* Indices)
+int Epetra_FECrsMatrix::SumIntoGlobalValues(int GlobalRow, int NumEntries,
+                                            const double* values, const int* Indices)
 {
   if (Map().MyGID(GlobalRow))
     return Epetra_CrsMatrix::SumIntoGlobalValues(GlobalRow, NumEntries,
@@ -720,30 +417,7 @@ int Epetra_FECrsMatrix::SumIntoGlobalValues(int_type GlobalRow, int NumEntries,
     return InputNonlocalGlobalValues(GlobalRow, NumEntries, Indices, values, SUMINTO);
 }
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::SumIntoGlobalValues(int GlobalRow, int NumEntries,
-                                            const double* values, const int* Indices)
-{
-  if(RowMap().GlobalIndicesInt())
-  return SumIntoGlobalValues<int>(GlobalRow, NumEntries, values, Indices);
-  else
-  throw ReportError("Epetra_FECrsMatrix::SumIntoGlobalValues int version called for a matrix that is not int.", -1);
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-
-
-int Epetra_FECrsMatrix::SumIntoGlobalValues(long long GlobalRow, int NumEntries,
-                                            const double* values, const long long* Indices)
-{
-  if(RowMap().GlobalIndicesLongLong())
-  return SumIntoGlobalValues<long long>(GlobalRow, NumEntries, values, Indices);
-  else
-  throw ReportError("Epetra_FECrsMatrix::SumIntoGlobalValues long long version called for a matrix that is not long long.", -1);
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int GlobalRow, int NumEntries,
                                             const double* values, const int* Indices)
 {
@@ -751,19 +425,8 @@ int Epetra_FECrsMatrix::InsertGlobalValues(int GlobalRow, int NumEntries,
                            NumEntries, Indices, values,
                            Epetra_FECrsMatrix::ROW_MAJOR, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
 
-int Epetra_FECrsMatrix::InsertGlobalValues(long long GlobalRow, int NumEntries,
-                                            const double* values, const long long* Indices)
-{
-  return(InputGlobalValues(1, &GlobalRow,
-                           NumEntries, Indices, values,
-                           Epetra_FECrsMatrix::ROW_MAJOR, INSERT));
-}
-#endif
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::InsertGlobalValues(int GlobalRow, int NumEntries,
                                             double* values, int* Indices)
 {
@@ -771,18 +434,8 @@ int Epetra_FECrsMatrix::InsertGlobalValues(int GlobalRow, int NumEntries,
                            NumEntries, Indices, values,
                            Epetra_FECrsMatrix::ROW_MAJOR, INSERT));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::InsertGlobalValues(long long GlobalRow, int NumEntries,
-                                            double* values, long long* Indices)
-{
-  return(InputGlobalValues(1, &GlobalRow,
-                           NumEntries, Indices, values,
-                           Epetra_FECrsMatrix::ROW_MAJOR, INSERT));
-}
-#endif
+
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::ReplaceGlobalValues(int GlobalRow, int NumEntries,
                                             const double* values, const int* Indices)
 {
@@ -790,118 +443,60 @@ int Epetra_FECrsMatrix::ReplaceGlobalValues(int GlobalRow, int NumEntries,
                            NumEntries, Indices, values,
                            Epetra_FECrsMatrix::ROW_MAJOR, REPLACE));
 }
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(long long GlobalRow, int NumEntries,
-                                            const double* values, const long long* Indices)
-{
-  return(InputGlobalValues(1, &GlobalRow,
-                           NumEntries, Indices, values,
-                           Epetra_FECrsMatrix::ROW_MAJOR, REPLACE));
-}
-#endif
+
 //----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 int Epetra_FECrsMatrix::ReplaceGlobalValues(int numIndices, const int* indices,
-              const double* const* values,
-              int format)
+					    const double* const* values,
+					    int format)
 {
   return(InputGlobalValues(numIndices, indices,
                            numIndices, indices,
                            values, format, REPLACE));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numIndices, const long long* indices,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, REPLACE));
-}
-#endif
-//----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const int* rows,
-              int numCols, const int* cols,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, REPLACE));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const long long* rows,
-              int numCols, const long long* cols,
-              const double* const* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, REPLACE));
-}
-#endif
-//----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numIndices, const int* indices,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, REPLACE));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numIndices, const long long* indices,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numIndices, indices,
-                           numIndices, indices,
-                           values, format, REPLACE));
-}
-#endif
-//----------------------------------------------------------------------------
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const int* rows,
-              int numCols, const int* cols,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, REPLACE));
-}
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const long long* rows,
-              int numCols, const long long* cols,
-              const double* values,
-              int format)
-{
-  return(InputGlobalValues(numRows, rows,
-                           numCols, cols,
-                           values, format, REPLACE));
-}
-#endif
-//----------------------------------------------------------------------------
-int Epetra_FECrsMatrix::GlobalAssemble(bool callFillComplete, Epetra_CombineMode combineMode,
-                                       bool save_off_and_reuse_map_exporter)
-{
-  return( GlobalAssemble(DomainMap(), RangeMap(), callFillComplete, combineMode, save_off_and_reuse_map_exporter));
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
+int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const int* rows,
+					    int numCols, const int* cols,
+					    const double* const* values,
+					    int format)
+{
+  return(InputGlobalValues(numRows, rows,
+                           numCols, cols,
+                           values, format, REPLACE));
+}
+
+//----------------------------------------------------------------------------
+int Epetra_FECrsMatrix::ReplaceGlobalValues(int numIndices, const int* indices,
+					    const double* values,
+					    int format)
+{
+  return(InputGlobalValues(numIndices, indices,
+                           numIndices, indices,
+                           values, format, REPLACE));
+}
+
+//----------------------------------------------------------------------------
+int Epetra_FECrsMatrix::ReplaceGlobalValues(int numRows, const int* rows,
+					    int numCols, const int* cols,
+					    const double* values,
+					    int format)
+{
+  return(InputGlobalValues(numRows, rows,
+                           numCols, cols,
+                           values, format, REPLACE));
+}
+
+//----------------------------------------------------------------------------
+int Epetra_FECrsMatrix::GlobalAssemble(bool callFillComplete, Epetra_CombineMode combineMode)
+{
+  return( GlobalAssemble(DomainMap(), RangeMap(), callFillComplete, combineMode ));
+}
+
+//----------------------------------------------------------------------------
 int Epetra_FECrsMatrix::GlobalAssemble(const Epetra_Map& domain_map,
                                        const Epetra_Map& range_map,
                                        bool callFillComplete,
-                                       Epetra_CombineMode combineMode,
-                                       bool save_off_and_reuse_map_exporter)
+                                       Epetra_CombineMode combineMode)
 {
   if (Map().Comm().NumProc() < 2 || ignoreNonLocalEntries_) {
     if (callFillComplete) {
@@ -910,11 +505,9 @@ int Epetra_FECrsMatrix::GlobalAssemble(const Epetra_Map& domain_map,
     return(0);
   }
 
-  std::vector<int_type>& nonlocalRows_var = nonlocalRows<int_type>();
-  std::vector<std::vector<int_type> >& nonlocalCols_var = nonlocalCols<int_type>();
-
+  Epetra_CrsMatrix* tempMat;
   if (useNonlocalMatrix_) {
-    tempMat_ = nonlocalMatrix_;
+    tempMat = nonlocalMatrix_;
   }
   else {
     //In this method we need to gather all the non-local (overlapping) data
@@ -925,164 +518,107 @@ int Epetra_FECrsMatrix::GlobalAssemble(const Epetra_Map& domain_map,
     //First build a map that describes our nonlocal data.
     //We'll use the arbitrary distribution constructor of Map.
 
-    int_type* nlr_ptr = nonlocalRows_var.size() > 0 ? &nonlocalRows_var[0] : 0;
-    if (sourceMap_ == NULL)
-      sourceMap_ = new Epetra_Map((int_type) -1, (int) nonlocalRows_var.size(), nlr_ptr,
-            (int_type) Map().IndexBase64(), Map().Comm());
+    int* nlr_ptr = nonlocalRows_.size() > 0 ? &nonlocalRows_[0] : 0;
+    Epetra_Map* sourceMap = new Epetra_Map(-1, nonlocalRows_.size(), nlr_ptr,
+            Map().IndexBase(), Map().Comm());
 
     //If sourceMap has global size 0, then no nonlocal data exists and we can
     //skip most of this function.
-    if (sourceMap_->NumGlobalElements64() < 1) {
+    if (sourceMap->NumGlobalElements() < 1) {
       if (callFillComplete) {
         EPETRA_CHK_ERR( FillComplete(domain_map, range_map) );
       }
-      if (!save_off_and_reuse_map_exporter) {
-        delete sourceMap_;
-        sourceMap_ = NULL;
-      }
+      delete sourceMap;
       return(0);
     }
 
     //We also need to build a column-map, containing the columns in our
     //nonlocal data. To do that, create a list of all column-indices that
     //occur in our nonlocal rows.
-    bool first_time=!save_off_and_reuse_map_exporter;
-    if ( colMap_ == NULL ) {
-      first_time = true;
-      std::vector<int_type> cols;
 
-      for(size_t i=0; i<nonlocalRows_var.size(); ++i) {
-        for(size_t j=0; j<nonlocalCols_var[i].size(); ++j) {
-          int_type col = nonlocalCols_var[i][j];
-          typename std::vector<int_type>::iterator it =
-            std::lower_bound(cols.begin(), cols.end(), col);
-          if (it == cols.end() || *it != col) {
-            cols.insert(it, col);
-          }
+    std::vector<int> cols;
+
+    for(size_t i=0; i<nonlocalRows_.size(); ++i) {
+      for(size_t j=0; j<nonlocalCols_[i].size(); ++j) {
+        int col = nonlocalCols_[i][j];
+        std::vector<int>::iterator it =
+           std::lower_bound(cols.begin(), cols.end(), col);
+        if (it == cols.end() || *it != col) {
+          cols.insert(it, col);
         }
       }
-
-      int_type* cols_ptr = cols.size() > 0 ? &cols[0] : 0;
-
-      colMap_ = new Epetra_Map((int_type) -1, (int) cols.size(), cols_ptr,
-                               (int_type) Map().IndexBase64(), Map().Comm());
     }
+
+    int* cols_ptr = cols.size() > 0 ? &cols[0] : 0;
+    Epetra_Map* colMap = new Epetra_Map(-1, cols.size(), cols_ptr,
+         Map().IndexBase(), Map().Comm());
+
     //now we need to create a matrix with sourceMap and colMap, and fill it with
     //our nonlocal data so we can then export it to the correct owning processors.
 
-    std::vector<int> nonlocalRowLengths(nonlocalRows_var.size());
-    for(size_t i=0; i<nonlocalRows_var.size(); ++i) {
-      nonlocalRowLengths[i] = (int) nonlocalCols_var[i].size();
+    std::vector<int> nonlocalRowLengths(nonlocalRows_.size());
+    for(size_t i=0; i<nonlocalRows_.size(); ++i) {
+      nonlocalRowLengths[i] = nonlocalCols_[i].size();
     }
 
     int* nlRLptr = nonlocalRowLengths.size()>0 ? &nonlocalRowLengths[0] : NULL;
-    if ( first_time && tempMat_ == NULL )
-      tempMat_ = new Epetra_CrsMatrix(Copy, *sourceMap_, *colMap_, nlRLptr);
-    else
-      tempMat_->PutScalar(0.);
+    tempMat = new Epetra_CrsMatrix(Copy, *sourceMap, *colMap, nlRLptr);
 
-    for(size_t i=0; i<nonlocalRows_var.size(); ++i) {
-      if ( first_time ) {
-        EPETRA_CHK_ERR( tempMat_->InsertGlobalValues(nonlocalRows_var[i],
-                                                    (int) nonlocalCols_var[i].size(),
-                                                    &nonlocalCoefs_[i][0],
-                                                    &nonlocalCols_var[i][0]) );
-      } else {
-        EPETRA_CHK_ERR( tempMat_->SumIntoGlobalValues(nonlocalRows_var[i],
-                                                     (int) nonlocalCols_var[i].size(),
-                                                     &nonlocalCoefs_[i][0],
-                                                     &nonlocalCols_var[i][0]) );
-      }
+
+    for(size_t i=0; i<nonlocalRows_.size(); ++i) {
+      EPETRA_CHK_ERR( tempMat->InsertGlobalValues(nonlocalRows_[i],
+             nonlocalCols_[i].size(),
+             &nonlocalCoefs_[i][0],
+             &nonlocalCols_[i][0]) );
     }
 
-    if (!save_off_and_reuse_map_exporter) {
-      delete sourceMap_;
-      delete colMap_;
-      sourceMap_ = colMap_ = NULL;
-    }
-
-    //Next we need to make sure the 'indices-are-global' attribute of tempMat's
-    //graph is set to true, in case this processor doesn't end up calling the
-    //InsertGlobalValues method...
-
-    if (first_time) {
-      const Epetra_CrsGraph& graph = tempMat_->Graph();
-      Epetra_CrsGraph& nonconst_graph = const_cast<Epetra_CrsGraph&>(graph);
-      nonconst_graph.SetIndicesAreGlobal(true);
-	}
-	}
-      //Now we need to call FillComplete on our temp matrix. We need to
-      //pass a DomainMap and RangeMap, which are not the same as the RowMap
-      //and ColMap that we constructed the matrix with.
-      EPETRA_CHK_ERR(tempMat_->FillComplete(domain_map, range_map));
-
-    if (exporter_ == NULL)
-      exporter_ = new Epetra_Export(tempMat_->RowMap(), RowMap());
-
-    EPETRA_CHK_ERR(Export(*tempMat_, *exporter_, combineMode));
-
-    if(callFillComplete) {
-      EPETRA_CHK_ERR(FillComplete(domain_map, range_map));
-    }
-
-    //now reset the values in our nonlocal data
-    if (!useNonlocalMatrix_) {
-      for(size_t i=0; i<nonlocalRows_var.size(); ++i) {
-        nonlocalCols_var[i].resize(0);
-        nonlocalCoefs_[i].resize(0);
-      }
-    }
-
-  if (!save_off_and_reuse_map_exporter) {
-    delete exporter_;
-    exporter_ = NULL;
-    if (!useNonlocalMatrix_)
-      delete tempMat_;
-    tempMat_ = NULL;
+    delete sourceMap;
+    delete colMap;
   }
+
+  //Next we need to make sure the 'indices-are-global' attribute of tempMat's
+  //graph is set to true, in case this processor doesn't end up calling the
+  //InsertGlobalValues method...
+
+  const Epetra_CrsGraph& graph = tempMat->Graph();
+  Epetra_CrsGraph& nonconst_graph = const_cast<Epetra_CrsGraph&>(graph);
+  nonconst_graph.SetIndicesAreGlobal(true);
+
+  //Now we need to call FillComplete on our temp matrix. We need to
+  //pass a DomainMap and RangeMap, which are not the same as the RowMap
+  //and ColMap that we constructed the matrix with.
+  EPETRA_CHK_ERR(tempMat->FillComplete(domain_map, range_map));
+
+  Epetra_Export* exporter = new Epetra_Export(tempMat->RowMap(), RowMap());
+
+  EPETRA_CHK_ERR(Export(*tempMat, *exporter, combineMode));
+
+  if(callFillComplete) {
+    EPETRA_CHK_ERR(FillComplete(domain_map, range_map));
+  }
+
+  //now reset the values in our nonlocal data
+  if (!useNonlocalMatrix_) {
+    for(size_t i=0; i<nonlocalRows_.size(); ++i) {
+      nonlocalCols_[i].resize(0);
+      nonlocalCoefs_[i].resize(0);
+    }
+
+    delete tempMat;
+  }
+
+  delete exporter;
+
   return(0);
 }
 
-int Epetra_FECrsMatrix::GlobalAssemble(const Epetra_Map& domain_map,
-                                       const Epetra_Map& range_map,
-                                       bool callFillComplete,
-                                       Epetra_CombineMode combineMode,
-                                       bool save_off_and_reuse_map_exporter)
-{
-  if(!domain_map.GlobalIndicesTypeMatch(range_map))
-    throw ReportError("Epetra_FECrsMatrix::GlobalAssemble: cannot be called with different indices types for domainMap and rangeMap", -1);
-
-  if(!RowMap().GlobalIndicesTypeMatch(domain_map))
-    throw ReportError("Epetra_FECrsMatrix::GlobalAssemble: cannot be called with different indices types for row map and incoming rangeMap", -1);
-
-  if(RowMap().GlobalIndicesInt())
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    return GlobalAssemble<int>(domain_map, range_map, callFillComplete, combineMode, save_off_and_reuse_map_exporter);
-#else
-    throw ReportError("Epetra_FECrsMatrix::GlobalAssemble: ERROR, GlobalIndicesInt but no API for it.",-1);
-#endif
-
-  if(RowMap().GlobalIndicesLongLong())
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    return GlobalAssemble<long long>(domain_map, range_map, callFillComplete, combineMode, save_off_and_reuse_map_exporter);
-#else
-    throw ReportError("Epetra_FECrsMatrix::GlobalAssemble: ERROR, GlobalIndicesLongLong but no API for it.",-1);
-#endif
-
-  throw ReportError("Epetra_FECrsMatrix::GlobalAssemble: Internal error, unable to determine global index type of maps", -1);
-}
-
 //----------------------------------------------------------------------------
-template<typename int_type>
 int Epetra_FECrsMatrix::InputGlobalValues_RowMajor(
-            int numRows, const int_type* rows,
-            int numCols, const int_type* cols,
-            const double* values,
-            int mode)
+            int numRows, const int* rows,
+					  int numCols, const int* cols,
+					  const double* values,
+					  int mode)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InputGlobalValues_RowMajor mismatch between argument types (int/long long) and map type.", -1);
-
   int returncode = 0;
   int err = 0;
 
@@ -1094,42 +630,32 @@ int Epetra_FECrsMatrix::InputGlobalValues_RowMajor(
       switch(mode) {
         case Epetra_FECrsMatrix::SUMINTO:
           err = this->Epetra_CrsMatrix::SumIntoGlobalValues(rows[i], numCols,
-              valuesptr, (int_type*)cols);
+              valuesptr, (int*)cols);
           if (err<0) return(err);
           if (err>0) returncode = err;
           break;
         case Epetra_FECrsMatrix::REPLACE:
           err = this->Epetra_CrsMatrix::ReplaceGlobalValues(rows[i], numCols,
-              valuesptr, (int_type*)cols);
+              valuesptr, (int*)cols);
           if (err<0) return(err);
           if (err>0) returncode = err;
           break;
         case Epetra_FECrsMatrix::INSERT:
           err = this->Epetra_CrsMatrix::InsertGlobalValues(rows[i], numCols,
-              valuesptr, (int_type*)cols);
+              valuesptr, (int*)cols);
           if (err<0) return(err);
           if (err>0) returncode = err;
           break;
         default:
-          std::cerr << "Epetra_FECrsMatrix: internal error, bad input mode."<< std::endl;
+          cerr << "Epetra_FECrsMatrix: internal error, bad input mode."<<endl;
           return(-1);
       }
     }
     else {
-#ifdef EPETRA_HAVE_OMP
-#ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-    	if (! ignoreNonLocalEntries_) {
-#endif
-#endif
-          err = InputNonlocalGlobalValues(rows[i], numCols, cols,
-              valuesptr, mode);
-          if (err<0) return(err);
-          if (err>0) returncode = err;
-#ifdef EPETRA_HAVE_OMP
-#ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-    	}
-#endif
-#endif
+      err = InputNonlocalGlobalValues(rows[i], numCols, cols,
+          valuesptr, mode);
+      if (err<0) return(err);
+      if (err>0) returncode = err;
     }
   }
 
@@ -1137,18 +663,14 @@ int Epetra_FECrsMatrix::InputGlobalValues_RowMajor(
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
-int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int_type* rows,
-            int numCols, const int_type* cols,
-            const double*const* values,
-            int format, int mode)
+int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int* rows,
+					  int numCols, const int* cols,
+					  const double*const* values,
+					  int format, int mode)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InputGlobalValues mismatch between argument types (int/long long) and map type.", -1);
-
   if (format != Epetra_FECrsMatrix::ROW_MAJOR &&
       format != Epetra_FECrsMatrix::COLUMN_MAJOR) {
-    std::cerr << "Epetra_FECrsMatrix: unrecognized format specifier."<< std::endl;
+    cerr << "Epetra_FECrsMatrix: unrecognized format specifier."<<endl;
     return(-1);
   }
 
@@ -1187,15 +709,11 @@ int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int_type* rows,
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
-int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int_type* rows,
-            int numCols, const int_type* cols,
-            const double* values,
-            int format, int mode)
+int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int* rows,
+					  int numCols, const int* cols,
+					  const double* values,
+					  int format, int mode)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InputGlobalValues mismatch between argument types (int/long long) and map type.", -1);
-
   if (format == Epetra_FECrsMatrix::ROW_MAJOR) {
     return InputGlobalValues_RowMajor(numRows, rows, numCols, cols, values, mode);
   }
@@ -1218,15 +736,11 @@ int Epetra_FECrsMatrix::InputGlobalValues(int numRows, const int_type* rows,
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
-int Epetra_FECrsMatrix::InputNonlocalGlobalValues(int_type row,
-              int numCols, const int_type* cols,
-              const double* values,
-              int mode)
+int Epetra_FECrsMatrix::InputNonlocalGlobalValues(int row,
+						  int numCols, const int* cols,
+						  const double* values,
+						  int mode)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InputNonlocalGlobalValues mismatch between argument types (int/long long) and map type.", -1);
-
   // if we already have a nonlocal matrix object, this is easier...
   if (useNonlocalMatrix_) {
     int err, returncode = 0;
@@ -1234,70 +748,52 @@ int Epetra_FECrsMatrix::InputNonlocalGlobalValues(int_type row,
     switch(mode) {
     case Epetra_FECrsMatrix::SUMINTO:
       err = nonlocalMatrix_->SumIntoGlobalValues(row, numCols,
-            valuesptr, (int_type*)cols);
+            valuesptr, (int*)cols);
       if (err<0) return(err);
       if (err>0) returncode = err;
       break;
     case Epetra_FECrsMatrix::REPLACE:
       err = nonlocalMatrix_->ReplaceGlobalValues(row, numCols,
-            valuesptr, (int_type*)cols);
+            valuesptr, (int*)cols);
       if (err<0) return(err);
       if (err>0) returncode = err;
       break;
     case Epetra_FECrsMatrix::INSERT:
       err = nonlocalMatrix_->InsertGlobalValues(row, numCols,
-           valuesptr, (int_type*)cols);
+           valuesptr, (int*)cols);
       if (err<0) return(err);
       if (err>0) returncode = err;
       break;
     default:
-      std::cerr << "Epetra_FECrsMatrix: internal error, bad input mode."<< std::endl;
+      cerr << "Epetra_FECrsMatrix: internal error, bad input mode."<<endl;
       return(-1);
     }
     return (returncode);
   }
-  int ierr1 = 0, ierr2 = 0;
-#ifdef EPETRA_HAVE_OMP
-#ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-#pragma omp critical
-#endif
-#endif
-  {
-	std::vector<int_type>& nonlocalRows_var = nonlocalRows<int_type>();
 
-	//find offset of this row in our list of nonlocal rows.
-	typename std::vector<int_type>::iterator it =
-			std::lower_bound(nonlocalRows_var.begin(), nonlocalRows_var.end(), row);
+  //find offset of this row in our list of nonlocal rows.
+  std::vector<int>::iterator it =
+      std::lower_bound(nonlocalRows_.begin(), nonlocalRows_.end(), row);
 
-	int rowoffset = (int) (it - nonlocalRows_var.begin());
-	if (it == nonlocalRows_var.end() || *it != row) {
-	  ierr1 = InsertNonlocalRow(row, it);
-	}
-
-	for(int i=0; i<numCols; ++i) {
-	  ierr2 = InputNonlocalValue(rowoffset, cols[i], values[i], mode);
-	}
+  int rowoffset = it - nonlocalRows_.begin();
+  if (it == nonlocalRows_.end() || *it != row) {
+    EPETRA_CHK_ERR( InsertNonlocalRow(row, it) );
   }
-  EPETRA_CHK_ERR(ierr1);
-  EPETRA_CHK_ERR(ierr2);
+
+  for(int i=0; i<numCols; ++i) {
+    EPETRA_CHK_ERR( InputNonlocalValue(rowoffset, cols[i], values[i], mode) );
+  }
 
   return(0);
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
-int Epetra_FECrsMatrix::InsertNonlocalRow(int_type row, typename std::vector<int_type>::iterator iter)
+int Epetra_FECrsMatrix::InsertNonlocalRow(int row, std::vector<int>::iterator iter)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InsertNonlocalRow mismatch between argument types (int/long long) and map type.", -1);
-
-  std::vector<int_type>& nonlocalRows_var = nonlocalRows<int_type>();
-  std::vector<std::vector<int_type> >& nonlocalCols_var = nonlocalCols<int_type>();
-
-  int offset = (int) (iter - nonlocalRows_var.begin());
-  nonlocalRows_var.insert(iter, row);
-  typename std::vector<std::vector<int_type> >::iterator cols_iter = nonlocalCols_var.begin() + offset;
-  nonlocalCols_var.insert(cols_iter, std::vector<int_type>());
+  int offset = iter - nonlocalRows_.begin();
+  nonlocalRows_.insert(iter, row);
+  std::vector<std::vector<int> >::iterator cols_iter = nonlocalCols_.begin() + offset;
+  nonlocalCols_.insert(cols_iter, std::vector<int>());
   std::vector<std::vector<double> >::iterator coefs_iter = nonlocalCoefs_.begin() + offset;
   nonlocalCoefs_.insert(coefs_iter, std::vector<double>());
 
@@ -1305,29 +801,25 @@ int Epetra_FECrsMatrix::InsertNonlocalRow(int_type row, typename std::vector<int
 }
 
 //----------------------------------------------------------------------------
-template<typename int_type>
 int Epetra_FECrsMatrix::InputNonlocalValue(int rowoffset,
-             int_type col, double value,
-             int mode)
+					   int col, double value,
+					   int mode)
 {
-  if(!RowMap().template GlobalIndicesIsType<int_type>())
-  throw ReportError("Epetra_FECrsMatrix::InputNonlocalValue mismatch between argument types (int/long long) and map type.", -1);
-
-  std::vector<int_type>& colIndices = nonlocalCols<int_type>()[rowoffset];
+  std::vector<int>& colIndices = nonlocalCols_[rowoffset];
   std::vector<double>& coefs = nonlocalCoefs_[rowoffset];
 
-  typename std::vector<int_type>::iterator it =
+  std::vector<int>::iterator it =
      std::lower_bound(colIndices.begin(), colIndices.end(), col);
 
   if (it == colIndices.end() || *it != col) {
-    int offset = (int) (it - colIndices.begin());
+    int offset = it - colIndices.begin();
     colIndices.insert(it, col);
     std::vector<double>::iterator dit = coefs.begin()+offset;
     coefs.insert(dit, value);
     return 0;
   }
 
-  int coloffset = (int) (it - colIndices.begin());
+  int coloffset = it - colIndices.begin();
   if (mode == SUMINTO || mode == INSERT) {
     coefs[coloffset] += value;
   }

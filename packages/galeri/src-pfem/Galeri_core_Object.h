@@ -64,7 +64,7 @@ class Object
   public:
     //! @{ ctor, dtor, and operator =
     //! Constructor with specified label and ID.
-    Object(const std::string& Label = "Galeri::core::Object", const int ID = 0) 
+    Object(const string& Label = "Galeri::core::Object", const int ID = 0) 
     {
       setLabel(Label);
       setID(ID);
@@ -92,13 +92,13 @@ class Object
     //! @{ Set and Get Methods
     
     //! Sets the label associated with \c this object.
-    virtual void setLabel(const std::string& label)
+    virtual void setLabel(const string& label)
     {
       label_ = label;
     }
 
     //! Gets the label associated with \c this object.
-    virtual std::string getLabel() const
+    virtual string getLabel() const
     {
       return(label_);
     }
@@ -138,7 +138,7 @@ class Object
     
   private:
     //! Label associated to \c this object.
-    std::string label_;
+    string label_;
     //! Integer-typed ID associated to \c this object.
     int ID_;
 

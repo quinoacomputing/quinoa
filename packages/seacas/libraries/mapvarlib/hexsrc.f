@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -429,7 +429,7 @@ c
      &    A31,A32,A33,F1,F2,F3)
         DETA = A11*(A22*A33 - A23*A32) - A12*(A21*A33 - A31*A23)
      &    + A13*(A21*A32 - A31*A22)
-        IF (ABS(DETA) .LT. 1.E-25)THEN
+        IF (ABS(DETA) .LT. 1.E-15)THEN
           CALL ERROR ('SRCHH',
      &      'ZERO JACOBIAN FOUND DURING NEWTON ITERATION',
      &      'MESH-A ELEMENT',IELT,
@@ -492,7 +492,7 @@ C
      &    A31,A32,A33,F1,F2,F3)
         DETA = A11*(A22*A33 - A23*A32) - A12*(A21*A33 - A31*A23)
      &    + A13*(A21*A32 - A31*A22)
-        IF (ABS(DETA) .LT. 1.E-25)THEN
+        IF (ABS(DETA) .LT. 1.E-15)THEN
           CALL ERROR ('SRCHH',
      &      'ZERO JACOBIAN FOUND DURING NEWTON ITERATION',
      &      'MESH-A ELEMENT',IELT,

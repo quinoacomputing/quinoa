@@ -3,47 +3,32 @@
 // @HEADER
 // ***********************************************************************
 //
-//          PyTrilinos: Python Interfaces to Trilinos Packages
-//                 Copyright (2014) Sandia Corporation
+//              PyTrilinos: Python Interface to Trilinos
+//                 Copyright (2005) Sandia Corporation
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia
-// Corporation, the U.S. Government retains certain rights in this
-// software.
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
 
 %{
-// Teuchos includes
 #include "Teuchos_VerbosityLevel.hpp"
 #include "Teuchos_FancyOStream.hpp"
 #include "Teuchos_LabeledObject.hpp"
@@ -54,23 +39,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_OpaqueWrapper.hpp"
 using Teuchos::OpaqueWrapper;
-
-// PyTrilinos includes
-#include "PyTrilinos_config.h"
-#include "PyTrilinos_PythonException.hpp"
 %}
-
-// Convey the PyTrilinos configuration to SWIG
-%include "PyTrilinos_config.h"
-
-// Handle Mpi4Py, if we have it
-#ifdef HAVE_MPI4PY
-%{
-#include "mpi4py/mpi4py.h"
-%}
-%include "mpi4py/mpi4py.i"
-%mpi4py_typemap(Comm, MPI_Comm);
-#endif
 
 // Teuchos Array support
 %include "Teuchos_Array.i"
@@ -89,14 +58,12 @@ using Teuchos::OpaqueWrapper;
 ////////////////////////////////////
 // Teuchos::LabeledObject support //
 ////////////////////////////////////
-%teuchos_rcp(Teuchos::LabeledObject)
 %feature("director") Teuchos::LabeledObject;
 %include "Teuchos_LabeledObject.hpp"
 
 //////////////////////////////////
 // Teuchos::Describable support //
 //////////////////////////////////
-%teuchos_rcp(Teuchos::Describable)
 %feature("director") Teuchos::Describable;
 %include "Teuchos_Describable.hpp"
 
@@ -108,7 +75,6 @@ using Teuchos::OpaqueWrapper;
 ///////////////////////////
 // Teuchos::Comm support //
 ///////////////////////////
-%teuchos_rcp(Teuchos::Comm< int >)
 %feature("autodoc",
 "broadcast(self, int rootRank, numpy.ndarray buffer)
 
@@ -350,25 +316,24 @@ Teuchos::Comm::reduceAll;
 %ignore Teuchos::wait;
 %ignore Teuchos::waitAll;
 %include "Teuchos_Comm.hpp"
-%template(Comm_int) Teuchos::Comm<int>;
+%template(Comm_long) Teuchos::Comm<long>;
 %pythoncode
 %{
-Comm = Comm_int
+Comm = Comm_long
 %}
 
 /////////////////////////////////
 // Teuchos::SerialComm support //
 /////////////////////////////////
-%teuchos_rcp(Teuchos::SerialComm< int >)
 %ignore Teuchos::SerialComm::broadcast;
 %ignore Teuchos::SerialComm::gatherAll;
 %ignore Teuchos::SerialComm::reduceAll;
 %ignore Teuchos::SerialComm::scan;
 %include "Teuchos_DefaultSerialComm.hpp"
-%template(SerialComm_int) Teuchos::SerialComm<int>;
+%template(SerialComm_long) Teuchos::SerialComm<long>;
 %pythoncode
 %{
-SerialComm = SerialComm_int
+SerialComm = SerialComm_long
 %}
 
 //////////////////////////////////
@@ -376,15 +341,14 @@ SerialComm = SerialComm_int
 //////////////////////////////////
 %rename(reductionTypeToString) Teuchos::toString;
 %include "Teuchos_CommHelpers.hpp"
-%template(rank_int   ) Teuchos::rank<int>;
-%template(size_int   ) Teuchos::size<int>;
-%template(barrier_int) Teuchos::barrier<int>;
+%template(rank_long   ) Teuchos::rank<long>;
+%template(size_long   ) Teuchos::size<long>;
+%template(barrier_long) Teuchos::barrier<long>;
 %pythoncode
 %{
-
-rank    = rank_int
-size    = size_int
-barrier = barrier_int
+rank    = rank_long
+size    = size_long
+barrier = barrier_long
 
 def broadcast(comm, rootRank, buffer):
   """
@@ -511,33 +475,19 @@ def scan(comm, reductOp, buffer):
   }
 }
 
-// Add python code to call MPI_Init() if appropriate.  If
-// Teuchos_MPI_Init_Argv() returns True, then MPI_Init() was not
-// called before and Epetra is responsible for calling MPI_Finalize(),
-// via the atexit module.
+// Add python code to call MPI_Init() if appropriate.  If Init_Argv()
+// returns True, then MPI_Init() was not called before and Epetra is
+// responsible for calling MPI_Finalize(), via the atexit module.
 %pythoncode
 %{
-
 # Call MPI_Init if appropriate
 import sys
 calledMpiInit = Teuchos_MPI_Init_Argv(sys.argv)
 
-# Proceed according to calledMpiInit.  If calledMpiInit is true, then register a
-# call to MPI_Finalize() with the atexit module and use the default value for
-# mpiCommunicator, equivalent to MPI_COMM_WORLD.  If calledMpiInit is false, try
-# to assess what package is responsible for calling MPI_Init(), currently either
-# distarray or mpi4py, and extract the appropriate value for mpiCommunicator.
-mpiCommunicator = None
+# Arrange for MPI_Finalize to be called at exit, if appropriate
 if calledMpiInit:
     import atexit
     atexit.register(Teuchos_MPI_Finalize)
-else:
-    if sys.modules.get("distarray.localapi.mpiutils"):
-        dlm = sys.modules["distarray.localapi.mpiutils"]
-        mpiCommunicator = dlm.get_base_comm()
-    elif sys.modules.get("mpi4py.MPI"):
-        MPI = sys.modules["mpi4py.MPI"]
-        mpiCommunicator = MPI.COMM_WORLD
 %}
 
 //////////////////////////////
@@ -545,19 +495,11 @@ else:
 //////////////////////////////
 %extend Teuchos::MpiComm
 {
-#ifdef HAVE_MPI4PY
-  MpiComm(MPI_Comm mpiComm = MPI_COMM_WORLD)
+  MpiComm()
   {
-    return new Teuchos::MpiComm< Ordinal >
-      (Teuchos::opaqueWrapper(mpiComm));
+    return new Teuchos::MpiComm<Ordinal>
+      (Teuchos::opaqueWrapper((MPI_Comm)MPI_COMM_WORLD));
   }
-#else
-  MpiComm(PyObject * dummy = NULL)
-  {
-    return new Teuchos::MpiComm< Ordinal >
-      (Teuchos::opaqueWrapper(MPI_COMM_WORLD));
-  }
-#endif
 }
 %ignore Teuchos::MpiComm::MpiComm;
 %ignore Teuchos::MpiComm::getRawMpiComm;
@@ -565,12 +507,11 @@ else:
 %ignore Teuchos::MpiComm::gatherAll;
 %ignore Teuchos::MpiComm::reduceAll;
 %ignore Teuchos::MpiComm::scan;
-%teuchos_rcp(Teuchos::MpiComm< int >)
 %include "Teuchos_DefaultMpiComm.hpp"
-%template(MpiComm_int) Teuchos::MpiComm<int>;
+%template(MpiComm_long) Teuchos::MpiComm<long>;
 %pythoncode
 %{
-MpiComm = MpiComm_int
+MpiComm = MpiComm_long
 %}
 
 ///////////////////////////////////////////
@@ -578,28 +519,26 @@ MpiComm = MpiComm_int
 ///////////////////////////////////////////
 %pythoncode
 %{
-
 class DefaultComm:
     "Encapsulate the default global communicator"
-    __defaultComm = MpiComm(mpiCommunicator)
+    __defaultComm = MpiComm()
     @classmethod
     def getComm(cls):
         "Return the default global communicator"
         return cls.__defaultComm
 %}
 
-#else
-
 ////////////////////////////////////////////////////////////////////////////////
 // The following code is implemented if HAVE_MPI is not defined
 ////////////////////////////////////////////////////////////////////////////////
+
+#else
 
 /////////////////////////////////////////////
 // Teuchos.DefaultComm support without MPI //
 /////////////////////////////////////////////
 %pythoncode
 %{
-
 class DefaultComm:
     "Encapsulate the default global communicator"
     __defaultComm = SerialComm()

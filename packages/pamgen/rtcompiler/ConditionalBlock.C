@@ -1,8 +1,8 @@
-#include "RTC_BlockRTC.hh"
-#include "RTC_LineRTC.hh"
-#include "RTC_commonRTC.hh"
-#include "RTC_VariableRTC.hh"
-#include "RTC_ConditionalBlockRTC.hh"
+#include "BlockRTC.hh"
+#include "LineRTC.hh"
+#include "commonRTC.hh"
+#include "VariableRTC.hh"
+#include "ConditionalBlockRTC.hh"
 
 #include <string>
 #include <map>
@@ -12,17 +12,15 @@ using namespace PG_RuntimeCompiler;
 
 /*****************************************************************************/
 ConditionalBlock::
-  ConditionalBlock(
-      map<string, Variable*> vars,
-      Tokenizer& lines,
-      string& errs
-      ):
-    Block(vars),
-    _executed(false),
-    _condition(NULL)
+ConditionalBlock(map<string, Variable*> vars, Tokenizer& lines, string& errs) 
+  : Block(vars) 
+/*****************************************************************************/
 {
   if (errs != "") return;
 
+  _executed  = false;
+  _condition = NULL;
+  
   lines.nextToken(); //move past "if"
 
   //create the conditional statement
@@ -34,19 +32,21 @@ ConditionalBlock::
 }
 
 /*****************************************************************************/
-ConditionalBlock::~ConditionalBlock()
+ConditionalBlock::~ConditionalBlock() 
+/*****************************************************************************/
 {
   if (_condition != NULL)
     delete _condition;
 }
 
 /*****************************************************************************/
-Value* ConditionalBlock::execute()
+Value* ConditionalBlock::execute() 
+/*****************************************************************************/
 {
   //evaluate condition
   if (_condition->execute()->getValue()) {
     list<Executable*>::iterator itr = _statements.begin();
-
+      
     //execute every substatement in the block
     while(itr != _statements.end()) {
       (*itr)->execute();

@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -48,8 +49,7 @@ IF (${PACKAGE_NAME}_ENABLE_Amesos)
 ENDIF()
 
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_AztecOO)
-ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_EpetraExt)
-IF (${PACKAGE_NAME}_ENABLE_EpetraExt AND ${PACKAGE_NAME}_ENABLE_AztecOO)
+IF (${PACKAGE_NAME}_ENABLE_AztecOO)
   APPEND_SET(DEPLIBS stratimikosaztecoo)
 ENDIF()
 

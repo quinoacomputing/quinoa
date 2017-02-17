@@ -1,3 +1,5 @@
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 
 #
 #  When adding test directories if you want the test to be distributed
@@ -17,7 +19,6 @@
 # Non-zdrive tests
 #
 TRIBITS_ADD_TEST_DIRECTORIES(Large_Data)
-TRIBITS_ADD_TEST_DIRECTORIES(misc_tests)
 #
 
 IF(PERL_EXECUTABLE)
@@ -61,10 +62,6 @@ ENDIF()
 
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ch_hammond2)
   ADD_SUBDIRECTORY(ch_hammond2)
-ENDIF()
-
-IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ch_hughes)
-  ADD_SUBDIRECTORY(ch_hughes)
 ENDIF()
 
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ch_nograph)
@@ -136,7 +133,7 @@ IF (${PACKAGE_NAME}_ENABLE_CPPDRIVER)
   )
 ENDIF()
 
-IF(ZOLTAN_BUILD_ZFDRIVE)
+IF(${PROJECT_NAME}_ENABLE_Fortran AND BUILD_ZOLTAN_F90_INTERFACE)
   TRIBITS_COPY_FILES_TO_BINARY_DIR(zoltan_zfdrive_copy
     SOURCE_FILES zfdrive.exe
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/fdriver

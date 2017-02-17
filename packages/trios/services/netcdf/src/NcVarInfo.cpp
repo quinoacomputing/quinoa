@@ -1,54 +1,9 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
 /*
  * ncVar.cpp
  *
  *  Created on: Jan 22, 2009
  *      Author: raoldfi
  */
-
-#include "Trios_config.h"
-#ifdef HAVE_TRIOS_PNETCDF
 
 #include <Trios_nssi_client.h>
 #include <vector>
@@ -65,28 +20,28 @@ using namespace std;
 #if USE_NC_TYPE
 NcVarInfo::NcVarInfo(
         const int varid,
-        const char *name,
-        const nc_type xtype,
-        const int ndims,
-        const int dimids[]) :
-            _varid(varid), _name(name), _xtype(xtype), _dimids(dimids, dimids+ndims)
+        const char *nm,
+        const nc_type xt,
+        const int nd,
+        const int dids[]) :
+            varid(varid), name(nm), xtype(xt), dimids(dids, dids+nd)
 #else
 NcVarInfo::NcVarInfo(
         const int varid,
-        const char *name,
-        const int xtype,
-        const int ndims,
-        const int dimids[]) :
-            _varid(varid), _name(name), _xtype(xtype), _dimids(dimids, dimids+ndims)
+        const char *nm,
+        const int xt,
+        const int nd,
+        const int dids[]) :
+            varid(varid), name(nm), xtype(xt), dimids(dids, dids+nd)
 #endif
 { }
 
 NcVarInfo::NcVarInfo(const nc_var &var) :
-    _varid(var.varid), _name(var.name), _xtype((nc_type)var.xtype),
-    _dimids(var.dimids.dimids_val, var.dimids.dimids_val + var.dimids.dimids_len)
+    varid(var.varid), name(var.name), xtype((nc_type)var.xtype),
+    dimids(var.dimids.dimids_val, var.dimids.dimids_val + var.dimids.dimids_len)
 {
-    for (uint32_t i=0;i<var.atts.atts_len;i++) {
-        this->_atts[var.atts.atts_val[i].name] = new NcAttInfo(var.atts.atts_val[i]);
+    for (int i=0;i<var.atts.atts_len;i++) {
+        this->atts[var.atts.atts_val[i].name] = new NcAttInfo(var.atts.atts_val[i]);
     }
 }
 
@@ -106,32 +61,32 @@ int NcVarInfo::copyTo(struct nc_var &var)
 
     memset(&var, 0, sizeof(struct nc_var));
 
-    var.name  = strdup(this->_name.c_str());
-    var.varid = this->_varid;
-    var.xtype = this->_xtype;
+    var.name = strdup(this->name.c_str());
+    var.varid = this->varid;
+    var.xtype = this->xtype;
 
     /* copy attributes */
-    natts = this->_atts.size();
+    natts = this->atts.size();
     var.atts.atts_len = natts;
     log_debug(debug_level, "copy %d atts", natts);
     if (natts) {
         map<string, NcAttInfo *>::iterator att_iter;
         int i=0;
         var.atts.atts_val = (struct nc_att *)calloc(natts, sizeof(struct nc_att));
-        for (att_iter = this->_atts.begin(); att_iter != this->_atts.end(); att_iter++) {
+        for (att_iter = this->atts.begin(); att_iter != this->atts.end(); att_iter++) {
             att_iter->second->copyTo(var.atts.atts_val[i++]);
         }
     }
 
     /* copy dimids */
-    ndims = this->_dimids.size();
+    ndims = this->dimids.size();
     var.dimids.dimids_len = ndims;
     log_debug(debug_level, "copy %d dimids", ndims);
     if (ndims) {
         int i=0;
         vector<int>::iterator dim_iter;
         var.dimids.dimids_val = (int *)calloc(ndims, sizeof(int));
-        for (dim_iter = this->_dimids.begin(); dim_iter != this->_dimids.end(); dim_iter++) {
+        for (dim_iter = this->dimids.begin(); dim_iter != this->dimids.end(); dim_iter++) {
             var.dimids.dimids_val[i++] = *dim_iter;
         }
     }
@@ -144,7 +99,7 @@ int NcVarInfo::copyTo(struct nc_var &var)
 int NcVarInfo::inq_varid(int *varidp)
 {
     int rc = NC_NOERR;
-    *varidp = this->_varid;
+    *varidp = this->varid;
     return rc;
 }
 
@@ -160,17 +115,17 @@ int NcVarInfo::inq_var(char *name, int *xtypep, int *ndimsp,
 {
     int rc = NC_NOERR;
     if (name != NULL) {
-        strcpy(name, this->_name.c_str());
+        strcpy(name, this->name.c_str());
     }
 
-    *xtypep = this->_xtype;
-    *ndimsp = this->_dimids.size();
+    *xtypep = this->xtype;
+    *ndimsp = this->dimids.size();
 
     if (dimids != NULL) {
-        std::copy(this->_dimids.begin(), this->_dimids.end(), dimids);
+        std::copy(this->dimids.begin(), this->dimids.end(), dimids);
     }
 
-    *nattsp = this->_atts.size();
+    *nattsp = this->atts.size();
 
     return rc;
 }
@@ -182,7 +137,7 @@ int NcVarInfo::inq_varname(char *name)
     int rc = NC_NOERR;
 
     if (name != NULL) {
-        strcpy(name, this->_name.c_str());
+        strcpy(name, this->name.c_str());
     }
 
     return rc;
@@ -196,7 +151,7 @@ int NcVarInfo::inq_vartype(int *xtypep)
 #endif
 {
     int rc = NC_NOERR;
-    *xtypep = this->_xtype;
+    *xtypep = this->xtype;
     return rc;
 }
 
@@ -204,7 +159,7 @@ int NcVarInfo::inq_vartype(int *xtypep)
 int NcVarInfo::inq_varndims(int *ndimsp)
 {
     int rc = NC_NOERR;
-    *ndimsp = this->_dimids.size();
+    *ndimsp = this->dimids.size();
     return rc;
 }
 
@@ -213,7 +168,7 @@ int NcVarInfo::inq_vardimid(int dimids[])
 {
     int rc = NC_NOERR;
     if (dimids != NULL) {
-        std::copy(this->_dimids.begin(), this->_dimids.end(), dimids);
+        std::copy(this->dimids.begin(), this->dimids.end(), dimids);
     }
     return rc;
 }
@@ -223,7 +178,7 @@ int NcVarInfo::inq_vardimid(int dimids[])
 int NcVarInfo::inq_varnatts(int *nattsp)
 {
     int rc = NC_NOERR;
-    *nattsp = this->_atts.size();
+    *nattsp = this->atts.size();
     return rc;
 }
 
@@ -337,8 +292,8 @@ int NcVarInfo::def_att(
 {
     int rc = NC_NOERR;
 
-    if (_atts.find(name) == _atts.end()) {
-        _atts[name] = new NcAttInfo(name, xtype, len);
+    if (atts.find(name) == atts.end()) {
+        atts[name] = new NcAttInfo(name, xtype, len);
     }
     else {
         rc = NC_EEXIST;
@@ -357,9 +312,9 @@ int NcVarInfo::inq_att    (const char *name,
 {
     int rc = NC_NOERR;
 
-    if (_atts.find(name) != _atts.end()) {
-        _atts[name]->inq_atttype(xtypep);
-        _atts[name]->inq_attlen(lenp);
+    if (atts.find(name) != atts.end()) {
+        atts[name]->inq_atttype(xtypep);
+        atts[name]->inq_attlen(lenp);
     }
     else {
         rc = NC_ENOTATT;
@@ -377,8 +332,8 @@ int NcVarInfo::inq_atttype(const char *name,
 #endif
 {
     int rc = NC_NOERR;
-    if (_atts.find(name) != _atts.end()) {
-        _atts[name]->inq_atttype(xtypep);
+    if (atts.find(name) != atts.end()) {
+        atts[name]->inq_atttype(xtypep);
     }
     else {
         rc = NC_ENOTATT;
@@ -390,8 +345,8 @@ int NcVarInfo::inq_atttype(const char *name,
 int NcVarInfo::inq_attlen  (const char *name, size_t *lenp)
 {
     int rc = NC_NOERR;
-    if (_atts.find(name) != _atts.end()) {
-        _atts[name]->inq_attlen(lenp);
+    if (atts.find(name) != atts.end()) {
+        atts[name]->inq_attlen(lenp);
     }
     else {
         rc = NC_ENOTATT;
@@ -405,8 +360,8 @@ int NcVarInfo::inq_attname(int attnum, char *name)
     int rc = NC_NOERR;
     std::map<std::string, NcAttInfo *>::iterator iter;
 
-    iter=_atts.begin();
-    for (int i=0;i<attnum && iter!=_atts.end();i++) iter++;
+    iter=atts.begin();
+    for (int i=0;i<attnum && iter!=atts.end();i++) iter++;
 
     (*iter).second->inq_attname(name);
 
@@ -421,5 +376,5 @@ int NcVarInfo::inq_attid   (const char *name, int *attnump)
 }
 
 
-#endif // HAVE_TRIOS_PNETCDF
+
 

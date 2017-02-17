@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
   const ScalarType ONE  = SCT::one();
 
   if (verbose && MyPID == 0) {
-    std::cout << Anasazi::Anasazi_Version() << std::endl << std::endl;
+    cout << Anasazi::Anasazi_Version() << endl << endl;
   }
 
   //  Problem information
@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
   boolret = problem->setProblem();
   if (boolret != true) {
     if (verbose && MyPID == 0) {
-      std::cout << "Anasazi::BasicEigenproblem::SetProblem() returned with error." << std::endl
-           << "End Result: TEST FAILED" << std::endl;
+      cout << "Anasazi::BasicEigenproblem::SetProblem() returned with error." << endl
+           << "End Result: TEST FAILED" << endl;
     }
 #ifdef HAVE_MPI
     MPI_Finalize() ;
@@ -195,8 +195,8 @@ int main(int argc, char *argv[])
       MyPL.getEntryPtr("Step Size")->isUsed() == false ||
       MyPL.getEntryPtr("Convergence Tolerance")->isUsed() == false) {
     if (verbose && MyPID==0) {
-      std::cout << "Failure! Unused parameters: " << std::endl;
-      MyPL.unused(std::cout);
+      cout << "Failure! Unused parameters: " << endl;
+      MyPL.unused(cout);
     }
   }
 
@@ -235,10 +235,10 @@ int main(int argc, char *argv[])
     std::vector<MagnitudeType> resnorm(numev);
     MVT::MvNorm( *Kvecs, resnorm );
 
-    os << "Number of iterations performed in BlockKrylovSchur_test.exe: " << MySolverMgr.getNumIters() << std::endl
-       << "Direct residual norms computed in BlockKrylovSchur_test.exe" << std::endl
-       << std::setw(20) << "Eigenvalue" << std::setw(20) << "Residual" << std::endl
-       << "----------------------------------------" << std::endl;
+    os << "Number of iterations performed in BlockKrylovSchur_test.exe: " << MySolverMgr.getNumIters() << endl
+       << "Direct residual norms computed in BlockKrylovSchur_test.exe" << endl
+       << std::setw(20) << "Eigenvalue" << std::setw(20) << "Residual" << endl
+       << "----------------------------------------" << endl;
     for (int i=0; i<numev; i++) {
       if ( SCT::magnitude(evals[i].realpart) != SCT::zero() ) {
         resnorm[i] = SCT::magnitude( SCT::squareroot( resnorm[i] ) / evals[i].realpart );
@@ -246,13 +246,13 @@ int main(int argc, char *argv[])
       else {
         resnorm[i] = SCT::magnitude( SCT::squareroot( resnorm[i] ) );
       }
-      os << std::setw(20) << evals[i].realpart << std::setw(20) << resnorm[i] << std::endl;
+      os << std::setw(20) << evals[i].realpart << std::setw(20) << resnorm[i] << endl;
       if ( resnorm[i] > tol ) {
         testFailed = true;
       }
     }
     if (verbose && MyPID==0) {
-      std::cout << std::endl << os.str() << std::endl;
+      cout << endl << os.str() << endl;
     }
   }
 
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
 
   if (testFailed) {
     if (verbose && MyPID==0) {
-      std::cout << "End Result: TEST FAILED" << std::endl;
+      cout << "End Result: TEST FAILED" << endl;
     }
     return -1;
   }
@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
   // Default return value
   //
   if (verbose && MyPID==0) {
-    std::cout << "End Result: TEST PASSED" << std::endl;
+    cout << "End Result: TEST PASSED" << endl;
   }
   return 0;
 

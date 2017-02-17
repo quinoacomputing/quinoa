@@ -34,11 +34,16 @@ c=======================================================================
       PROGRAM BLOTII
 C=======================================================================
 
-C                         *** BLOT ***
+C                         *** BLOTII 1.00 ***
 
-C   --*** BLOT *** (BLOT) Post-processing plot program
+C   --*** BLOTII *** (BLOTII) Post-processing plot program
+C   --   Mofified by John Glick 1/20/89
+C   --   Written by Amy Gilkey - revised 06/01/88
+C   --   Version 1.1   17 July, 1990   Ray J. Meyers
+C   --       Version 1.11 15 Nov, 1990 - added colored spheres
+C   --       Version 1.12 04 Dec, 1990 - added sun/1 capabilities
 C   --
-C   --BLOT is a graphics program for post-processing of finite element
+C   --BLOTII is a graphics program for post-processing of finite element
 C   --analyses output in the EXODUS II database format.  BLOT combines the
 C   --plotting capabilities of DETOUR, TPLOT, and SPLOT.  It is command
 C   --driven with free-format input.  BLOT can drive any graphics device
@@ -172,7 +177,6 @@ C      --These parameters define the mesh display (see MSHLIN of /MSHOPT/)
 
       include 'light.blk'
       include 'icrnbw.blk'
-      include 'legopt.blk'
 
       include 'argparse.inc'
       
@@ -293,13 +297,11 @@ C   --Open database file
         CALL PRTERR ('FATAL', SCRATCH(:LENSTR(SCRATCH)))
         CALL PRTERR ('CMDSPEC',
      *    'Syntax is: "blot.dev [-basename basename] [-ps_option num]'//
-     *    ' [-nomap node|element|all] [-show_filename] filename"')
+     *    ' filename"')
         GOTO 170
       END IF
       EXODUS = .FALSE.
 
-      CALL INISTR (3, ' ', CAPTN(1,1))
-      CALL INISTR (3, ' ', CAPTN(1,2))
       call exinq(ndb, EXDBMXUSNM, namlen, rdum, cdum, ierr)
       call exmxnm(ndb, namlen, ierr)
 
@@ -322,35 +324,21 @@ C ... By default, map both nodes and elements
       mapnd = .true.
 
       if (narg .gt. 1) then
-        i = 1
-        do
-          CALL get_argument(i,option, lo)
-          i = i + 1
-          if (option(:lo) .eq. '--show_filename' .or.
-     *      option(:lo) .eq. '-show_filename') then
-            captn(3,1) = dbname(:lfil)
-            captn(3,2) = dbname(:lfil)
-
-          else if (option(:lo) .eq. '-hardcopy' .or.
+        do i=1, narg-1, 2
+          CALL get_argument(i+0,option, lo)
+          CALL get_argument(i+1,value,  lv)
+          if (option(:lo) .eq. '-hardcopy' .or.
      *      option(:lo) .eq. '--hardcopy' .or.
      *      option(:lo) .eq. '-basename' .or.
      *      option(:lo) .eq. '--basename') then
-            CALL get_argument(i,value,  lv)
-            i = i + 1
             basenam = value(:lv)
-
           else if (option(:lo) .eq. '-ps_option' .or.
      *        option(:lo) .eq. '--ps_option') then
-            CALL get_argument(i,value,  lv)
-            i = i + 1
             if (lv .le. 2) then
               bltans = value(:lv)
             end if
-
           else if (option(:lo) .eq. '-nomap' .or.
      *        option(:lo) .eq. '--nomap') then
-            CALL get_argument(i,value,  lv)
-            i = i + 1
             if (value(1:1) .eq. 'n' .or. value(1:1) .eq. 'N')
      *        mapnd = .false.
             if (value(1:1) .eq. 'e' .or. value(1:1) .eq. 'E')
@@ -360,7 +348,6 @@ C ... By default, map both nodes and elements
               mapel = .false.
             end if
           end if
-          if (i .gt. narg) exit
         end do
       end if
       
@@ -507,17 +494,15 @@ C     element block and a 'SHELL' element block.
         CALL PROCHS(A, IA, NELBLK, IA(KIDELB), IA(KIDSCR), IA(KNELB), 
      &    IA(KNLNKE), IA(KNATR), KLINKE, KATRIB, C(KNMLB),
      &    IA(KLPTR), ISHEX, IA(KHEXID), *170)
-
-C     Reset number of element blocks
-        NELBLK = NELBLK + ISHEX
-C     Reset number of elements
-        INEL = 0
-        do 20 I = 1, nelblk
-          INEL = INEL + IA(KNELB+I-1)
- 20     CONTINUE
-        NUMEL = INEL
-
       ENDIF
+C     Reset number of element blocks
+      NELBLK = NELBLK + ISHEX
+C     Reset number of elements
+      INEL = 0
+      do 20 I = 1, nelblk
+        INEL = INEL + IA(KNELB+I-1)
+ 20   CONTINUE
+      NUMEL = INEL
 
 C   --Scan element number map (global id)
       CALL MDRSRV ('MAPEL', KMAPEL, NUMEL)
@@ -944,13 +929,13 @@ C        Initialize line thicknesses for mesh plots
         write (*,9999)
  9999   FORMAT(/,
      *    10x,'NOTE: This version of blot uses global ids for both',
-     *    ' node and element ids by default.',/,
+     *    ' node and element ids by default.',/
      *    10x,'      To see the mapping from local to global, use',
-     *    ' the commands:',/,
+     *    ' the commands:',/
      *    10x,'          "LIST MAP" (element map), or ',
-     *    '"LIST NODEMAP" (node map)',/,
-     *    10x,'      To disable the maps and use local ids, restart',
-     *    ' blot with "-nomap node|element|all"',//,
+     *    '"LIST NODEMAP" (node map)',/
+     *    10x,'      To disable the maps and use local ids, restart'
+     *    ' blot with "-nomap node|element|all"',//
      *    10x,'      Notify gdsjaar@sandia.gov if bugs found')
         
         if (mapel .and. mapnd) then

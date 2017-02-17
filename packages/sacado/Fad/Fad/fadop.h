@@ -5,13 +5,13 @@
 //  Nicolas Di Cesare <Nicolas.Dicesare@ann.jussieu.fr>
 //  http://www.ann.jussieu.fr/~dicesare
 //
-//            CEMRACS 98 : C++ courses,
-//         templates : new C++ techniques
-//            for scientific computing
-//
+//            CEMRACS 98 : C++ courses, 
+//         templates : new C++ techniques 
+//            for scientific computing 
+// 
 //********************************************************
 //
-//  A short implementation ( not all operators and
+//  A short implementation ( not all operators and 
 //  functions are overloaded ) of 1st order Automatic
 //  Differentiation in forward mode (FAD) using
 //  EXPRESSION TEMPLATES.
@@ -32,8 +32,9 @@ public:
   typedef typename R::value_type value_type_R;
 
   typedef typename NumericalTraits<value_type_L,value_type_R>::promote value_type;
-
+  
 protected:
+  FadBinaryAdd() {}
 
   const L& left_; const R& right_;
 
@@ -46,7 +47,7 @@ public:
   const value_type dx(int i) const {return left_.dx(i) + right_.dx(i);}
   int size() const {
     int lsz = left_.size(), rsz = right_.size();
-    return std::max(lsz, rsz);
+    return max(lsz, rsz);
   }
 
   bool hasFastAccess() const { return left_.hasFastAccess() && right_.hasFastAccess();}
@@ -58,8 +59,9 @@ template <class L> class FadBinaryAdd<L, FadCst<typename L::value_type> > {
 public:
   typedef typename L::value_type value_type;
   typedef FadCst<value_type> R;
-
+  
 protected:
+  FadBinaryAdd() {}
 
   const L& left_; const  R right_;
 
@@ -83,6 +85,7 @@ public:
   typedef FadCst<value_type> L;
 
 protected:
+  FadBinaryAdd() {}
 
   const L left_; const R& right_;
 
@@ -112,9 +115,10 @@ public:
   typedef typename NumericalTraits<value_type_L,value_type_R>::promote value_type;
 
 protected:
+  FadBinaryMinus() {}
 
   const L& left_; const R& right_;
-
+  
 public:
   FadBinaryMinus(const L& left, const R& rigth) : left_(left), right_(rigth) {;}
   ~FadBinaryMinus() {;}
@@ -124,7 +128,7 @@ public:
   const value_type dx(int i) const {return left_.dx(i) - right_.dx(i);}
   int size() const {
     int lsz = left_.size(), rsz = right_.size();
-    return std::max(lsz, rsz);
+    return max(lsz, rsz);
   }
 
   bool hasFastAccess() const { return left_.hasFastAccess() && right_.hasFastAccess();}
@@ -138,6 +142,7 @@ public:
   typedef FadCst<value_type> R;
 
 protected:
+  FadBinaryMinus() {}
 
   const L& left_; const R right_;
 
@@ -161,6 +166,7 @@ public:
   typedef FadCst<value_type> L;
 
 protected:
+  FadBinaryMinus() {}
 
   const L left_; const R& right_;
 
@@ -184,8 +190,9 @@ template <class L, class R> class FadBinaryMul {
   typedef typename L::value_type value_type_L;
   typedef typename R::value_type value_type_R;
   typedef typename NumericalTraits<value_type_L,value_type_R>::promote value_type;
-
+  
  protected:
+  FadBinaryMul() {}
 
   const L& left_; const R& right_;
 
@@ -209,8 +216,9 @@ template <class L> class FadBinaryMul<L, FadCst<typename L::value_type> > {
  public:
   typedef typename L::value_type value_type;
   typedef FadCst<value_type> R;
-
+  
  protected:
+  FadBinaryMul() {}
 
   const L& left_; const R right_;
 
@@ -230,8 +238,9 @@ template <class R> class FadBinaryMul< FadCst<typename R::value_type>, R> {
  public:
   typedef typename R::value_type value_type;
   typedef FadCst<value_type> L;
-
+  
  protected:
+  FadBinaryMul() {}
 
   const L left_; const R& right_;
 
@@ -256,6 +265,7 @@ template <class L, class R> class FadBinaryDiv {
   typedef typename NumericalTraits<value_type_L,value_type_R>::promote value_type;
 
  protected:
+  FadBinaryDiv() {}
 
   const L& left_; const R& right_;
 
@@ -268,12 +278,12 @@ template <class L, class R> class FadBinaryDiv {
   const value_type dx(int i) const {return  (left_.dx(i) * right_.val() - right_.dx(i) * left_.val() ) / (right_.val() * right_.val()) ;}
   int size() const {
     int lsz = left_.size(), rsz = right_.size();
-    return std::max(lsz, rsz);
+    return max(lsz, rsz);
   }
 
   bool hasFastAccess() const { return left_.hasFastAccess() && right_.hasFastAccess();}
-  value_type fastAccessDx(int i) const { return (left_.fastAccessDx(i) * right_.val() - right_.fastAccessDx(i) * left_.val() )
-             / (right_.val() * right_.val()) ;}
+  value_type fastAccessDx(int i) const { return (left_.fastAccessDx(i) * right_.val() - right_.fastAccessDx(i) * left_.val() ) 
+					   / (right_.val() * right_.val()) ;}
 };
 
 
@@ -283,6 +293,7 @@ template <class L> class FadBinaryDiv<L, FadCst<typename L::value_type> > {
   typedef FadCst<value_type> R;
 
  protected:
+  FadBinaryDiv() {}
 
   const L& left_; const R right_;
 
@@ -306,6 +317,7 @@ template <class R> class FadBinaryDiv< FadCst<typename R::value_type>, R> {
   typedef FadCst<value_type> L;
 
  protected:
+  FadBinaryDiv() {}
 
   const L left_; const R& right_;
 
@@ -318,8 +330,8 @@ template <class R> class FadBinaryDiv< FadCst<typename R::value_type>, R> {
   int size() const { return right_.size();}
 
   bool hasFastAccess() const { return right_.hasFastAccess();}
-  value_type fastAccessDx(int i) const { return (- right_.fastAccessDx(i) * left_.val() )
-             / (right_.val() * right_.val()) ;}
+  value_type fastAccessDx(int i) const { return (- right_.fastAccessDx(i) * left_.val() ) 
+					   / (right_.val() * right_.val()) ;}
 };
 
 
@@ -330,8 +342,9 @@ public:
   typedef typename R::value_type value_type_R;
 
   typedef typename NumericalTraits<value_type_L,value_type_R>::promote value_type;
-
+  
 protected:
+  FadBinaryPow() {}
 
   const L& left_; const R& right_;
 
@@ -341,21 +354,21 @@ public:
 
 
   const value_type val() const {return std::pow( left_.val(), right_.val() );}
-  const value_type dx(int i) const
+  const value_type dx(int i) const 
     {
       return  (right_.dx(i)*std::log(left_.val())+right_.val()*left_.dx(i)/left_.val())
-  *std::pow( left_.val(), right_.val() );
+	*std::pow( left_.val(), right_.val() );
     }
   int size() const {
     int lsz = left_.size(), rsz = right_.size();
-    return std::max(lsz, rsz);
+    return max(lsz, rsz);
   }
 
   bool hasFastAccess() const { return left_.hasFastAccess() && right_.hasFastAccess();}
-  value_type fastAccessDx(int i) const
+  value_type fastAccessDx(int i) const 
     {
       return  (right_.fastAccessDx(i)*std::log(left_.val())+right_.val()*left_.fastAccessDx(i)/left_.val())
-  *std::pow( left_.val(), right_.val() );
+	*std::pow( left_.val(), right_.val() );
     }
 };
 
@@ -364,8 +377,9 @@ template <class L> class FadBinaryPow<L, FadCst<typename L::value_type> > {
 public:
   typedef typename L::value_type value_type;
   typedef FadCst<value_type> R;
-
+  
 protected:
+  FadBinaryPow() {}
 
   const L& left_; const  R right_;
 
@@ -375,17 +389,17 @@ public:
 
 
   const value_type val() const {return std::pow(left_.val(),right_.val()) ;}
-  const value_type dx(int i) const
+  const value_type dx(int i) const 
     {
       return  (right_.val()*left_.dx(i)/left_.val())*std::pow( left_.val(), right_.val() );
     }
   int size() const { return left_.size();}
 
   bool hasFastAccess() const { return left_.hasFastAccess();}
-  value_type fastAccessDx(int i) const
+  value_type fastAccessDx(int i) const 
     {
       return  (right_.val()*left_.fastAccessDx(i)/left_.val())
-  *std::pow( left_.val(), right_.val() );
+	*std::pow( left_.val(), right_.val() );
     }
 };
 
@@ -396,6 +410,7 @@ public:
   typedef FadCst<value_type> L;
 
 protected:
+  FadBinaryPow() {}
 
   const L left_; const R& right_;
 
@@ -404,17 +419,17 @@ public:
   ~FadBinaryPow() {;}
 
   const value_type val() const {return std::pow(left_.val(),right_.val());}
-  value_type dx(int i) const
+  value_type dx(int i) const 
     {
       return (right_.dx(i)*std::log(left_.val()))*std::pow( left_.val(), right_.val() );
     }
   int size() const {return right_.size();}
 
   bool hasFastAccess() const { return right_.hasFastAccess();}
-  value_type fastAccessDx(int i) const
+  value_type fastAccessDx(int i) const 
     {
       return  (right_.fastAccessDx(i)*std::log(left_.val()))
-  *std::pow( left_.val(), right_.val() );
+	*std::pow( left_.val(), right_.val() );
     }
 };
 
@@ -424,6 +439,7 @@ public:
   typedef FadCst<int> R;
 
 protected:
+  FadBinaryPow() {}
 
   const L& left_; const R right_;
 
@@ -433,14 +449,14 @@ public:
 
 
   const value_type val() const {return std::pow(left_.val(),right_.val());}
-  value_type dx(int i) const
+  value_type dx(int i) const 
     {
       return right_.val()*std::pow( left_.val(), right_.val()-1);
     }
   int size() const {return right_.size();}
 
   bool hasFastAccess() const { return right_.hasFastAccess();}
-  value_type fastAccessDx(int i) const
+  value_type fastAccessDx(int i) const 
     {
       return  right_.val() * std::pow( left_.val(), right_.val()-1 );
     }
@@ -489,6 +505,7 @@ OP (const typename E::value_type &t, const FadExpr<E> &e){        \
 template<class E>                                                 \
 inline FadExpr<TYPE<FadExpr<E>,Fad<typename E::value_type> > >    \
 OP (const FadExpr<E> &e,const Fad<typename E::value_type>& v){    \
+    typedef typename E::value_type A;                             \
     typedef TYPE<FadExpr<E>,Fad<typename E::value_type> > expr_t; \
     return FadExpr<expr_t>(expr_t (e, v ));                       \
 }                                                                 \
@@ -503,6 +520,7 @@ OP (const Fad<A> &e1,const Fad<A>& e2){                           \
 template<class E>                                                 \
 inline FadExpr<TYPE<Fad<typename E::value_type>,FadExpr<E> > >    \
 OP (const Fad<typename E::value_type> &v, const FadExpr<E> &e){   \
+    typedef typename E::value_type A;                             \
     typedef TYPE<Fad<typename E::value_type>,FadExpr<E> > expr_t; \
     return FadExpr<expr_t> (expr_t (v , e ));                     \
 }

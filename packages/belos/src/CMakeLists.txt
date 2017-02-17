@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 ######################################################################
 ## Package-specific configuration options
@@ -23,8 +24,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 # CORE
 APPEND_SET(HEADERS
-  BelosBiCGStabIter.hpp
-  BelosBiCGStabSolMgr.hpp
   BelosBlockCGIter.hpp
   BelosBlockCGSolMgr.hpp
   BelosBlockFGmresIter.hpp
@@ -34,9 +33,6 @@ APPEND_SET(HEADERS
   BelosCGIter.hpp
   BelosConfigDefs.hpp
   BelosDGKSOrthoManager.hpp
-  BelosFixedPointIter.hpp
-  BelosFixedPointIteration.hpp
-  BelosFixedPointSolMgr.hpp
   BelosGCRODRIter.hpp
   BelosGCRODRSolMgr.hpp
   BelosGmresIteration.hpp
@@ -69,8 +65,6 @@ APPEND_SET(HEADERS
   BelosPseudoBlockCGSolMgr.hpp
   BelosPseudoBlockGmresIter.hpp
   BelosPseudoBlockGmresSolMgr.hpp
-  BelosPseudoBlockStochasticCGIter.hpp
-  BelosPseudoBlockStochasticCGSolMgr.hpp
   BelosRCGIter.hpp
   BelosRCGSolMgr.hpp
   BelosSimpleOrthoManager.hpp
@@ -80,7 +74,6 @@ APPEND_SET(HEADERS
   BelosStatusTestFactory.hpp
   BelosStatusTestGeneralOutput.hpp
   BelosStatusTestGenResNorm.hpp
-  BelosStatusTestGenResSubNorm.hpp
   BelosStatusTest.hpp
   BelosStatusTestImpResNorm.hpp
   BelosStatusTestMaxIters.hpp
@@ -88,25 +81,15 @@ APPEND_SET(HEADERS
   BelosStatusTestOutput.hpp
   BelosStatusTestResNorm.hpp
   BelosStatusTestResNormOutput.hpp
-  BelosStatusTestUserOutput.hpp
-  BelosStochasticCGIteration.hpp
-  BelosStubTsqrAdapter.hpp
   BelosTFQMRIter.hpp
   BelosTFQMRSolMgr.hpp
-  BelosPseudoBlockTFQMRIter.hpp
-  BelosPseudoBlockTFQMRSolMgr.hpp
   BelosTypes.hpp
-  Belos_Details_LinearSolver.hpp
-  Belos_Details_LinearSolverFactory.hpp
-  Belos_Details_registerLinearSolverFactory.hpp
-  BelosUtils.hpp
-  )
+  ) 
 
 # UTIL
 APPEND_SET(SOURCES
   BelosTypes.cpp
   BelosVersion.cpp
-  Belos_Details_registerLinearSolverFactory.cpp
   )
 
 # COMP_H
@@ -116,18 +99,14 @@ APPEND_SET(HEADERS
   BelosBlockGmresSolMgr.hpp
   BelosPseudoBlockCGSolMgr.hpp
   BelosPseudoBlockGmresSolMgr.hpp
-  BelosPseudoBlockStochasticCGSolMgr.hpp
   BelosTFQMRSolMgr.hpp
-  BelosPseudoBlockTFQMRSolMgr.hpp
   BelosCGIter.hpp
   BelosBlockCGIter.hpp
   BelosMinresIter.hpp
   BelosBlockGmresIter.hpp
   BelosPseudoBlockCGIter.hpp
   BelosPseudoBlockGmresIter.hpp
-  BelosPseudoBlockStochasticCGIter.hpp
   BelosTFQMRIter.hpp
-  BelosPseudoBlockTFQMRIter.hpp
   )
 
 ######################################################################
@@ -150,11 +129,24 @@ ENDIF() # ${PACKAGE_NAME}_ENABLE_TSQR
 # option was set at configure time.
 #
 APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_HEADERS
+  BelosAkxFactory.hpp
+  BelosAkx.hpp
   BelosBlockGCRODRIter.hpp
   BelosBlockGCRODRSolMgr.hpp
+  BelosCaGmres.hpp
+  BelosGmresBaseFactory.hpp
+  BelosGmresBase.hpp
+  BelosGmresBaseIteration.hpp
+  BelosGmresInnerSolver.hpp
+  BelosGmresSolMgr.hpp
   BelosInnerSolveResult.hpp
   BelosInnerSolver.hpp
+  BelosMonomialOpAkx.hpp
+  BelosNewtonBasis.hpp
+  BelosNewtonOpAkx.hpp
+  BelosOpAkx.hpp
   BelosProjectedLeastSquaresSolver.hpp
+  BelosStandardGmres.hpp
 )
 
 APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES
@@ -165,7 +157,7 @@ ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Experimental)
 IF(${PACKAGE_NAME}_ENABLE_Experimental)
   #
   # Add experimental files to HEADERS and SOURCES.
-  #
+  # 
   APPEND_SET(HEADERS ${${PACKAGE_NAME}_EXPERIMENTAL_HEADERS})
   APPEND_SET(SOURCES ${${PACKAGE_NAME}_EXPERIMENTAL_SOURCES})
 ENDIF() # ${PACKAGE_NAME}_ENABLE_Experimental
@@ -182,6 +174,7 @@ IF (${PACKAGE_NAME}_ENABLE_TSQR)
     belos
     HEADERS ${HEADERS}
     SOURCES ${SOURCES}
+    DEPLIBS kokkos kokkosnodetsqr kokkosdisttsqr
     )
 ELSE ()
   TRIBITS_ADD_LIBRARY(

@@ -191,7 +191,7 @@ LinearOp SIMPLEPreconditionerFactory
    else 
       rebuildInverse(*invVelFactory_,F,invF);
 
-   // build the approximate Schur complement
+   // build the approximate Schur complement: This is inefficient! FIXME
    ModifiableLinearOp & invS = state.getModifiableOp("invS");
    if(invS==Teuchos::null)
       invS = buildInverse(*invPrsFactory_,hatS);

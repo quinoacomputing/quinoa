@@ -52,12 +52,6 @@
 
 #include "Teko_NeumannSeriesPreconditionerFactory.hpp"
 #include "Teuchos_AbstractFactoryStd.hpp"
-#include "Teko_Utilities.hpp"
-
-#ifdef HAVE_Teko_ENABLE_Ifpack2
-#include "Thyra_Ifpack2PreconditionerFactory.hpp"
-#include "Tpetra_CrsMatrix.hpp"
-#endif
 
 #include <algorithm>
 
@@ -69,34 +63,19 @@ namespace Teko {
 /** This function adds some additional preconditioners to Stratimikos.
   * These are NOT block preconditioners.
   */
-void addToStratimikosBuilder(const RCP<Stratimikos::DefaultLinearSolverBuilder> & builder)
+void addToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & builder)
 {
    typedef Thyra::PreconditionerFactoryBase<double> PrecFactory;
 
-   RCP<const Teuchos::ParameterList> parameters = builder->getValidParameters();
-
-   if(!parameters->sublist("Preconditioner Types").isSublist("Neumann Series")) {
-     RCP<const Teuchos::AbstractFactory<Thyra::PreconditionerFactoryBase<double> > > factory;
+   RCP<const Teuchos::AbstractFactory<Thyra::PreconditionerFactoryBase<double> > > factory;
      
-     factory = Teuchos::abstractFactoryStd<PrecFactory,Teko::NeumannSeriesPreconditionerFactory<double> >();
-     builder->setPreconditioningStrategyFactory(factory,"Neumann Series");
-   }
-   #ifdef HAVE_Teko_ENABLE_Ifpack2
-   {
-     typedef Thyra::PreconditionerFactoryBase<ST> Base;
-     typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST,LO,GO,NT> > Impl;
-     builder->setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-   }
-   #endif // IFPACK2
-
+   factory = Teuchos::abstractFactoryStd<PrecFactory,Teko::NeumannSeriesPreconditionerFactory<double> >();
+   builder.setPreconditioningStrategyFactory(factory,"Neumann Series");
 }
 
 InverseLibrary::InverseLibrary()
 {
    Teko_DEBUG_SCOPE("InverseLibrary::InverseLibrary", 10);
-
-   defaultBuilder_ = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder());
-   addToStratimikosBuilder(defaultBuilder_);
 
    // setup some valid Stratimikos parameters
    /////////////////////////////////////////////
@@ -110,52 +89,6 @@ InverseLibrary::InverseLibrary()
    stratValidPrecond_.push_back("ML"); 
    stratValidPrecond_.push_back("Ifpack"); 
    stratValidPrecond_.push_back("Neumann Series"); 
-   stratValidPrecond_.push_back("MueLu"); 
-   stratValidPrecond_.push_back("Ifpack2"); 
-
-   // set valid Teko preconditioner factory names
-   PreconditionerFactory::getPreconditionerFactoryNames(blockValidPrecond_);
-
-   Teko_DEBUG_MSG_BEGIN(10)
-      DEBUG_STREAM << "Loaded \"block\" preconditioners = ";
-      for(std::size_t i=0;i<blockValidPrecond_.size();i++)
-         DEBUG_STREAM << blockValidPrecond_[i] << ", ";
-      DEBUG_STREAM << std::endl;
-   Teko_DEBUG_MSG_END()
-}
-
-InverseLibrary::InverseLibrary(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & strat)
-  : defaultBuilder_(strat)
-{
-   Teko_DEBUG_SCOPE("InverseLibrary::InverseLibrary", 10);
-
-   RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList(*defaultBuilder_->getValidParameters()));
-   Teuchos::ParameterList lst(pl->sublist("Linear Solver Types"));
-   Teuchos::ParameterList pft(pl->sublist("Preconditioner Types"));
-
-   Teuchos::ParameterList::ConstIterator itr;
-
-   // set valid solve factory names
-   for(itr=lst.begin();itr!=lst.end();++itr)
-      stratValidSolver_.push_back(itr->first); 
-
-   Teko_DEBUG_MSG_BEGIN(10)
-      DEBUG_STREAM << "Loaded \"Stratimikos\" solvers = ";
-      for(std::size_t i=0;i<stratValidSolver_.size();i++)
-         DEBUG_STREAM << stratValidSolver_[i] << ", ";
-      DEBUG_STREAM << std::endl;
-   Teko_DEBUG_MSG_END()
-
-   // set valid prec factory names
-   for(itr=pft.begin();itr!=pft.end();++itr)
-      stratValidPrecond_.push_back(itr->first); 
-
-   Teko_DEBUG_MSG_BEGIN(10)
-      DEBUG_STREAM << "Loaded \"Stratimikos\" preconditioners = ";
-      for(std::size_t i=0;i<stratValidPrecond_.size();i++)
-         DEBUG_STREAM << stratValidPrecond_[i] << ", ";
-      DEBUG_STREAM << std::endl;
-   Teko_DEBUG_MSG_END()
 
    // set valid Teko preconditioner factory names
    PreconditionerFactory::getPreconditionerFactoryNames(blockValidPrecond_);
@@ -341,12 +274,12 @@ Teuchos::RCP<InverseFactory> InverseLibrary::getInverseFactory(const std::string
          }
       Teko_DEBUG_MSG_END();
 
-      // Stratimikos::DefaultLinearSolverBuilder strat;
-      // addToStratimikosBuilder(strat);
-      defaultBuilder_->setParameterList(plCopy);
+      Stratimikos::DefaultLinearSolverBuilder strat;
+      addToStratimikosBuilder(strat);
+      strat.setParameterList(plCopy);
 
       // try to build a preconditioner factory
-      RCP<Thyra::PreconditionerFactoryBase<double> > precFact = defaultBuilder_->createPreconditioningStrategy(type);
+      RCP<Thyra::PreconditionerFactoryBase<double> > precFact = strat.createPreconditioningStrategy(type);
 
       // string must map to a preconditioner
       RCP<Teko::PreconditionerInverseFactory> precInvFact 
@@ -381,12 +314,12 @@ Teuchos::RCP<InverseFactory> InverseLibrary::getInverseFactory(const std::string
          precFactory = precInvFactory->getPrecFactory();
       }
 
-      // Stratimikos::DefaultLinearSolverBuilder strat;
-      // addToStratimikosBuilder(strat);
-      defaultBuilder_->setParameterList(solveList);
+      Stratimikos::DefaultLinearSolverBuilder strat;
+      addToStratimikosBuilder(strat);
+      strat.setParameterList(solveList);
 
       // try to build a solver factory
-      RCP<Thyra::LinearOpWithSolveFactoryBase<double> > solveFact = defaultBuilder_->createLinearSolveStrategy(type);
+      RCP<Thyra::LinearOpWithSolveFactoryBase<double> > solveFact = strat.createLinearSolveStrategy(type);
       if(precFactory!=Teuchos::null)
          solveFact->setPreconditionerFactory(precFactory,precName);
 
@@ -489,89 +422,6 @@ RCP<InverseLibrary> InverseLibrary::buildFromParameterList(const Teuchos::Parame
    return invLib;
 }
 
-/** \brief Build an inverse library from a parameter list.
-  * 
-  * Build an inverse library from a parameter list. This will
-  * contain all the labeled inverses specified.
-  *
-  * \param[in] pl Parameter list to build the library from
-  * \param[in] strat Stratimikos object to use
-  *
-  * \returns A pointer to the inverse library created.
-  */
-RCP<InverseLibrary> InverseLibrary::buildFromParameterList(const Teuchos::ParameterList & pl,
-                                                           const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & strat)
-{
-   // if strat is set to null, use the defaults
-   if(strat==Teuchos::null)
-     return buildFromParameterList(pl,true);
-
-   // build from Stratimikos or allocate a new inverse library
-   RCP<InverseLibrary> invLib = InverseLibrary::buildFromStratimikos(strat);
-
-   // to convert the void* like entry
-   Teuchos::ParameterList * temp = 0;
-
-   // loop over all entries in parameter list
-   Teuchos::ParameterList::ConstIterator itr;
-   for(itr=pl.begin();itr!=pl.end();++itr) {
-      // get current entry
-      std::string label             = itr->first;
-      Teuchos::ParameterList & list = itr->second.getValue(temp);
-      
-      // add to library
-      invLib->addInverse(label,list);
-   }
-   
-   return invLib;
-}
-
-/** \brief Build an inverse library from Stratimikos
-  * 
-  * Build an inverse library from Stratimkos. The labels
-  * will just be the names in Stratimikos. Uses the 
-  * defaultBuilder with extra inverse added to it
-  *
-  * \returns A pointer to the inverse library created.
-  */
-Teuchos::RCP<InverseLibrary> InverseLibrary::buildFromStratimikos()
-{
-   RCP<InverseLibrary> invLib = rcp(new InverseLibrary());
-
-   // get default inveres in Stratimikos
-   RCP<Stratimikos::DefaultLinearSolverBuilder> strat = invLib->defaultBuilder_;
-   RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList(*strat->getValidParameters()));
-   Teuchos::ParameterList lst(pl->sublist("Linear Solver Types"));
-   Teuchos::ParameterList pft(pl->sublist("Preconditioner Types"));
-
-   Teuchos::ParameterList::ConstIterator itr;
-   Teuchos::ParameterList * temp = 0;
-
-   // loop over all entries in solver list
-   for(itr=lst.begin();itr!=lst.end();++itr) {
-      // get current entry
-      std::string label             = itr->first;
-      Teuchos::ParameterList & list = itr->second.getValue(temp);
-      list.set("Type",label);
-      
-      // add to library
-      invLib->addInverse(label,list);
-   }
-
-   // loop over all entries in preconditioner list
-   for(itr=pft.begin();itr!=pft.end();++itr) {
-      // get current entry
-      std::string label             = itr->first;
-      Teuchos::ParameterList & list = itr->second.getValue(temp);
-      list.set("Type",label);
-      
-      // add to library
-      invLib->addInverse(label,list);
-   }
-
-   return invLib;
-}
-
 /** \brief Build an inverse library from Stratimikos
   * 
   * Build an inverse library from Stratimkos. The labels
@@ -587,52 +437,6 @@ Teuchos::RCP<InverseLibrary> InverseLibrary::buildFromStratimikos(const Stratimi
 
    // get default inveres in Stratimikos
    RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList(*strat.getValidParameters()));
-   Teuchos::ParameterList lst(pl->sublist("Linear Solver Types"));
-   Teuchos::ParameterList pft(pl->sublist("Preconditioner Types"));
-
-   Teuchos::ParameterList::ConstIterator itr;
-   Teuchos::ParameterList * temp = 0;
-
-   // loop over all entries in solver list
-   for(itr=lst.begin();itr!=lst.end();++itr) {
-      // get current entry
-      std::string label             = itr->first;
-      Teuchos::ParameterList & list = itr->second.getValue(temp);
-      list.set("Type",label);
-      
-      // add to library
-      invLib->addInverse(label,list);
-   }
-
-   // loop over all entries in preconditioner list
-   for(itr=pft.begin();itr!=pft.end();++itr) {
-      // get current entry
-      std::string label             = itr->first;
-      Teuchos::ParameterList & list = itr->second.getValue(temp);
-      list.set("Type",label);
-      
-      // add to library
-      invLib->addInverse(label,list);
-   }
-
-   return invLib;
-}
-
-/** \brief Build an inverse library from Stratimikos
-  * 
-  * Build an inverse library from Stratimkos. The labels
-  * will just be the names in Stratimikos.
-  *
-  * \param[in] strat Stratimikos pointer to use
-  *
-  * \returns A pointer to the inverse library created.
-  */
-Teuchos::RCP<InverseLibrary> InverseLibrary::buildFromStratimikos(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & strat)
-{
-   RCP<InverseLibrary> invLib = rcp(new InverseLibrary(strat));
-
-   // get default inveres in Stratimikos
-   RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList(*strat->getValidParameters()));
    Teuchos::ParameterList lst(pl->sublist("Linear Solver Types"));
    Teuchos::ParameterList pft(pl->sublist("Preconditioner Types"));
 

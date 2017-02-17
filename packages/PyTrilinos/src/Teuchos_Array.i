@@ -3,41 +3,27 @@
 // @HEADER
 // ***********************************************************************
 //
-//          PyTrilinos: Python Interfaces to Trilinos Packages
-//                 Copyright (2014) Sandia Corporation
+//              PyTrilinos: Python Interface to Trilinos
+//                 Copyright (2010) Sandia Corporation
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia
-// Corporation, the U.S. Government retains certain rights in this
-// software.
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
@@ -45,12 +31,10 @@
 // Teuchos_Array.i is a SWIG interface file that provides SWIG
 // directives to handle Teuchos Array types.  These classes are not
 // wrapped, but instead typemaps are defined so that the python user
-// can use NumPy arrays or Python sequences instead.  Currently, the
-// following classes are handled:
+// can use NumPy arrays instead.  Currently, the following classes are
+// handled:
 //
 //     Teuchos::ArrayView< T >
-//     Teuchos::Array< T >
-//     Teuchos::ArrayRCP< T >
 %{
 #include "Teuchos_ArrayView.hpp"
 using Teuchos::ArrayView;
@@ -70,297 +54,46 @@ using Teuchos::ArrayView;
 // typemaps needed to handle that TYPE array.
 %define %teuchos_array_typemaps(TYPE, TYPECODE)
 
-// If an ArrayView argument has a template parameter argument that is
-// a const TYPE, then we know that the argument is input only.
-// Therefore we allow any type of sequence to be converted to a
-// PyArrayObject and then extract the resulting data pointer to
-// construct the ArrayView.  If the conversion creates a new
-// PyArrayObject, then we have to be sure to decrement its reference
-// count once the ArrayView has been used.
-
-//////////////////////////////////////
-// Teuchos::ArrayView< const TYPE > //
-//////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayView< const TYPE >)
-{
-  $1 = is_array($input) || PySequence_Check($input);
-}
-
-%typemap(in) Teuchos::ArrayView< const TYPE >
-(int is_new = 0,
- PyArrayObject * npArray = NULL)
+// If an ArrayView argument has a const TYPE, then we know that the
+// argument is input only.  Therefore we allow any type of sequence to
+// be converted to a PyArrayObject and then extract the resulting data
+// pointer to construct the ArrayView.  If the conversion creates a
+// new PyArrayObject, then we have to be sure to decrement its
+// reference count once the ArrayView has been used.
+%typemap(in) Teuchos::ArrayView< const TYPE > (int is_new = 0,
+					       PyArrayObject * npArray = NULL)
 {
   npArray = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new);
   if (!npArray) SWIG_fail;
-  $1 = Teuchos::ArrayView< const TYPE >((TYPE*) array_data(npArray),
-                                        array_size(npArray, 0),
-                                        Teuchos::RCP_DISABLE_NODE_LOOKUP);
+  $1 = Teuchos::arrayView( (TYPE*) array_data(npArray), array_size(npArray, 0));
 }
-
 %typemap(freearg) Teuchos::ArrayView< const TYPE >
 {
   if (is_new$argnum) Py_DECREF(npArray$argnum);
 }
 
-%typemap(out) Teuchos::ArrayView< const TYPE >
-{
-  npy_intp dims[1] = { $1.size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-//////////////////////////////////////////////
-// Teuchos::ArrayView< const TYPE > const & //
-//////////////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayView< const TYPE > const &)
-{
-  $1 = is_array($input) || PySequence_Check($input);
-}
-
-%typemap(in) Teuchos::ArrayView< const TYPE > const &
-(int is_new = 0,
- PyArrayObject * npArray = NULL,
- Teuchos::ArrayView< const TYPE > temp)
-{
-  npArray = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new);
-  if (!npArray) SWIG_fail;
-  temp = Teuchos::ArrayView< const TYPE >((TYPE*) array_data(npArray),
-                                          array_size(npArray, 0),
-                                          Teuchos::RCP_DISABLE_NODE_LOOKUP);
-  $1 = &temp;
-}
-
-%typemap(freearg) Teuchos::ArrayView< const TYPE > const &
-{
-  if (is_new$argnum) Py_DECREF(npArray$argnum);
-}
-
-// If an ArrayView argument has template parameter argument that is a
-// non-const TYPE, then the default behavior is to assume that the
-// array is input/output.  Therefore the input python argument must be
-// a NumPy array.
-
-////////////////////////////////
-// Teuchos::ArrayView< TYPE > //
-////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayView< TYPE >)
-{
-  $1 = is_array($input);
-}
-
+// If an ArrayView argument has a non-const TYPE, then the default
+// behavior is to assume that the array is input/output.  Therefore
+// the input python argument must be a NumPy array.
 %typemap(in) Teuchos::ArrayView< TYPE >
 {
   PyArrayObject * npArray = obj_to_array_no_conversion($input, TYPECODE);
   if (!npArray) SWIG_fail;
-  $1 = Teuchos::ArrayView< TYPE >((TYPE*) array_data(npArray),
-                                  array_size(npArray, 0),
-                                  Teuchos::RCP_DISABLE_NODE_LOOKUP);
+  $1 = Teuchos::arrayView( (TYPE*) array_data(npArray), array_size(npArray, 0));
 }
 
+// If an ArrayView is output, with either a const or non-const TYPE,
+// convert the underlying data to a NumPy array of correct type.
 %typemap(out) Teuchos::ArrayView< TYPE >
 {
   npy_intp dims[1] = { $1.size() };
   $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
   if (!$result) SWIG_fail;
 }
-
-////////////////////////////////////////
-// Teuchos::ArrayView< TYPE > const & //
-////////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayView< TYPE > const &)
-{
-  $1 = is_array($input);
-}
-
-%typemap(in) Teuchos::ArrayView< TYPE > const &
-(Teuchos::ArrayView< TYPE > temp)
-{
-  PyArrayObject * npArray = obj_to_array_no_conversion($input, TYPECODE);
-  if (!npArray) SWIG_fail;
-  temp = Teuchos::ArrayView< TYPE >((TYPE*) array_data(npArray),
-                                    array_size(npArray, 0),
-                                    Teuchos::RCP_DISABLE_NODE_LOOKUP);
-  $1 = &temp;
-}
-
-%typemap(out) Teuchos::ArrayView< TYPE > const &
-{
-  npy_intp dims[1] = { $1->size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1->getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-////////////////////////////
-// Teuchos::Array< TYPE > //
-////////////////////////////
-%typemap(out) Teuchos::Array< TYPE >
+%typemap(out) Teuchos::ArrayView< const TYPE >
 {
   npy_intp dims[1] = { $1.size() };
   $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-////////////////////////////////////
-// Teuchos::Array< TYPE > const & //
-////////////////////////////////////
-%typemap(out) Teuchos::Array< TYPE > const &
-{
-  npy_intp dims[1] = { $1->size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1->getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-//////////////////////////////////
-// Teuchos::Array< const TYPE > //
-//////////////////////////////////
-%typemap(out) Teuchos::Array< const TYPE >
-{
-  npy_intp dims[1] = { $1.size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-// If an ArrayRCP argument has a template parameter argument that is a
-// const TYPE, then we know that the argument is input only.
-// Therefore we allow any type of sequence to be converted to a
-// PyArrayObject and then extract the resulting data pointer to
-// construct the ArrayRCP.  If the conversion creates a new
-// PyArrayObject, then we have to be sure to decrement its reference
-// count once the ArrayRCP has been used.
-
-/////////////////////////////////////
-// Teuchos::ArrayRCP< const TYPE > //
-/////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayRCP< const TYPE >)
-{
-  $1 = is_array($input) || PySequence_Check($input);
-}
-
-%typemap(in) Teuchos::ArrayRCP< const TYPE >
-(int is_new = 0,
- PyArrayObject * npArray = NULL)
-{
-  npArray = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new);
-  if (!npArray) SWIG_fail;
-  $1 = Teuchos::ArrayRCP< const TYPE >((TYPE*) array_data(npArray),
-                                       0,
-                                       array_size(npArray, 0),
-                                       (bool) is_new,
-                                       Teuchos::RCP_DISABLE_NODE_LOOKUP);
-}
-
-%typemap(freearg) Teuchos::ArrayRCP< const TYPE >
-{
-  if (is_new$argnum) Py_DECREF(npArray$argnum);
-}
-
-%typemap(out) Teuchos::ArrayRCP< const TYPE >
-{
-  npy_intp dims[1] = { $1.size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-/////////////////////////////////////////////
-// Teuchos::ArrayRCP< const TYPE > const & //
-/////////////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayRCP< const TYPE > const &)
-{
-  $1 = is_array($input) || PySequence_Check($input);
-}
-
-%typemap(in) Teuchos::ArrayRCP< const TYPE > const &
-(int is_new = 0,
- PyArrayObject * npArray = NULL,
- Teuchos::ArrayRCP< const TYPE > temp)
-{
-  npArray = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new);
-  if (!npArray) SWIG_fail;
-  temp = Teuchos::ArrayRCP< const TYPE >((TYPE*) array_data(npArray),
-                                         0,
-                                         array_size(npArray, 0),
-                                         (bool) is_new,
-                                         Teuchos::RCP_DISABLE_NODE_LOOKUP);
-  $1 = &temp;
-}
-
-%typemap(freearg) Teuchos::ArrayRCP< const TYPE > const &
-{
-  if (is_new$argnum) Py_DECREF(npArray$argnum);
-}
-
-// If an ArrayRCP argument has template parameter argument that is a
-// non-const TYPE, then the default behavior is to assume that the
-// array is input/output.  Therefore the input python argument must be
-// a NumPy array.
-
-///////////////////////////////
-// Teuchos::ArrayRCP< TYPE > //
-///////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayRCP< TYPE >)
-{
-  $1 = is_array($input);
-}
-
-%typemap(in) Teuchos::ArrayRCP< TYPE >
-{
-  PyArrayObject * npArray = obj_to_array_no_conversion($input, TYPECODE);
-  if (!npArray) SWIG_fail;
-  $1 = Teuchos::ArrayRCP< TYPE >((TYPE*) array_data(npArray),
-                                 0,
-                                 array_size(npArray, 0),
-                                 false,
-                                 Teuchos::RCP_DISABLE_NODE_LOOKUP);
-}
-
-%typemap(out) Teuchos::ArrayRCP< TYPE >
-{
-  npy_intp dims[1] = { $1.size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1.getRawPtr());
-  if (!$result) SWIG_fail;
-}
-
-///////////////////////////////////////
-// Teuchos::ArrayRCP< TYPE > const & //
-///////////////////////////////////////
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-           fragment="NumPy_Macros")
-  (Teuchos::ArrayRCP< TYPE > const &)
-{
-  $1 = is_array($input);
-}
-
-%typemap(in) Teuchos::ArrayRCP< TYPE > const &
-(Teuchos::ArrayRCP< TYPE > temp)
-{
-  PyArrayObject * npArray = obj_to_array_no_conversion($input, TYPECODE);
-  if (!npArray) SWIG_fail;
-  temp = Teuchos::ArrayRCP< TYPE >((TYPE*) array_data(npArray),
-                                   0,
-                                   array_size(npArray, 0),
-                                   false,
-                                   Teuchos::RCP_DISABLE_NODE_LOOKUP);
-  $1 = &temp;
-}
-
-%typemap(out) Teuchos::ArrayRCP< TYPE > const &
-{
-  npy_intp dims[1] = { $1->size() };
-  $result = PyArray_SimpleNewFromData(1, dims, TYPECODE, (void*) $1->getRawPtr());
   if (!$result) SWIG_fail;
 }
 

@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -86,6 +87,9 @@ APPEND_SET(HEADERS
 APPEND_SET(SOURCES
   mrtr_utils.cpp
   )
+
+IF (TPL_ENABLE_MPI)
+ENDIF()
 
 #
 # C) Define the targets for package's library(s)

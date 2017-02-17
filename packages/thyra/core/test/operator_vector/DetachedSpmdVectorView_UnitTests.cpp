@@ -47,7 +47,6 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
 #include "Teuchos_DefaultComm.hpp"
-#include "Teuchos_GlobalMPISession.hpp"
 
 
 namespace {
@@ -104,7 +103,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( ConstDetachedSpmdVectorView,
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( ConstDetachedSpmdVectorView, basic, Scalar )
 {
-  const int procRank = Teuchos::GlobalMPISession::getRank();
   ECHO(const RCP<const VectorSpaceBase<Scalar> >
     vs = createSpmdVectorSpace<Scalar>(g_localDim));
   ECHO(RCP<VectorBase<Scalar> > v = createMember(vs));
@@ -112,7 +110,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( ConstDetachedSpmdVectorView, basic, Scalar )
   ECHO(ConstDetachedSpmdVectorView<Scalar> dvv(v));
   TEST_INEQUALITY(dvv.spmdSpace(), null);
   TEST_ASSERT(vs->isCompatible(*dvv.spmdSpace()));
-  TEST_EQUALITY_CONST(dvv.globalOffset(), procRank*g_localDim);
+  TEST_EQUALITY_CONST(dvv.globalOffset(), 0);
   TEST_EQUALITY(dvv.subDim(), g_localDim);
   TEST_ASSERT(!is_null(dvv.values()));
   TEST_EQUALITY(dvv.values().size(), g_localDim);
@@ -155,7 +153,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DetachedSpmdVectorView, const
 TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DetachedSpmdVectorView, basic,
   Scalar )
 {
-  const int procRank = Teuchos::GlobalMPISession::getRank();
   ECHO(const RCP<const VectorSpaceBase<Scalar> >
     vs = createSpmdVectorSpace<Scalar>(g_localDim));
   ECHO(RCP<VectorBase<Scalar> > v = createMember(vs));
@@ -163,7 +160,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DetachedSpmdVectorView, basic,
     ECHO(DetachedSpmdVectorView<Scalar> dvv(v));
     TEST_INEQUALITY(dvv.spmdSpace(), null);
     TEST_ASSERT(vs->isCompatible(*dvv.spmdSpace()));
-    TEST_EQUALITY_CONST(dvv.globalOffset(), procRank*g_localDim);
+    TEST_EQUALITY_CONST(dvv.globalOffset(), 0);
     TEST_EQUALITY(dvv.subDim(), g_localDim);
     TEST_ASSERT(!is_null(dvv.values()));
     TEST_EQUALITY(dvv.values().size(), g_localDim);

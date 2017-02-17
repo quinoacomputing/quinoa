@@ -49,7 +49,7 @@
 #include <typeinfo>
 #include <iostream>
 #include "Teuchos_RCP.hpp"
-#include "Phalanx_config.hpp"
+#include "Phalanx_ConfigDefs.hpp"
 
 namespace PHX {
 

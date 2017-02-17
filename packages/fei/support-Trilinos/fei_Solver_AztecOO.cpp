@@ -62,7 +62,6 @@
 //---------------------------------------------------------------------------
 Solver_AztecOO::Solver_AztecOO()
   : tolerance_(1.e-6), maxIters_(500), useTranspose_(false), paramlist_(NULL),
-    linProb(NULL),
     useML_(false),
 #ifdef HAVE_FEI_ML
    ml_prec_(NULL), ml_defaults_set_(false),
@@ -85,7 +84,6 @@ Solver_AztecOO::~Solver_AztecOO()
 {
   delete azoo_;
   delete paramlist_;
-  delete linProb;
 #ifdef HAVE_FEI_ML
   delete [] ml_aztec_options_;
   delete [] ml_aztec_params_;
@@ -167,6 +165,8 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
     return(-1);
   }
 
+  Epetra_LinearProblem linProb(epetra_op,x,b);
+
   //when we call azoo_->SetProblem, it will set some options. So we will
   //first take a copy of all options and params, then reset them after the
   //call to SetProblem. That way we preserve any options that have already
@@ -206,10 +206,7 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   }
 
   if (precond != NULL) {
-    Epetra_LinearProblem * newlinProb = new Epetra_LinearProblem(epetra_op,x,b);
-    azoo_->SetProblem(*newlinProb);
-    delete linProb;
-    linProb = newlinProb;
+    azoo_->SetProblem(linProb);
 
     azoo_->SetAllAztecOptions(&(azoptions[0]));
     azoo_->SetAllAztecParams(&(azparams[0]));
@@ -227,10 +224,7 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   }
 
   if (needNewPreconditioner) {
-    Epetra_LinearProblem * newlinProb = new Epetra_LinearProblem(epetra_op,x,b);
-    azoo_->SetProblem(*newlinProb);
-    delete linProb;
-    linProb = newlinProb;
+    azoo_->SetProblem(linProb);
 
     azoo_->SetAllAztecOptions(&(azoptions[0]));
     azoo_->SetAllAztecParams(&(azparams[0]));
@@ -276,7 +270,7 @@ int Solver_AztecOO::solve(fei::LinearSystem* linearSystem,
   std::string param2;
   parameterSet.getStringParamValue("FEI_OUTPUT_LEVEL", param2);
 
-  if (olevel >= 3 || param2 == "MATRIX_FILES" || param2 == "ALL") {
+  if (olevel >= 3 || param2 == "MATRIX_FILES") {
     std::string param1;
     parameterSet.getStringParamValue("debugOutput", param1);
 
@@ -333,25 +327,10 @@ int Solver_AztecOO::setup_ml_operator(AztecOO& azoo, Epetra_CrsMatrix* A)
   if (ml_prec_ != NULL) {
     delete ml_prec_; ml_prec_ = NULL;
   }
-  const bool variableDof = paramlist_->get("ML variable DOF",false);
-  if (variableDof)
-  {
-    bool * dofPresent = paramlist_->get("DOF present",(bool*)0);
-    assert(nullptr != dofPresent);
-    int nOwnedEntities = paramlist_->get("num owned entities", 0);
-    int maxDofPerEntity = paramlist_->get("max DOF per entity", 0);
-    
-    Epetra_Vector *dummy = nullptr;
-    ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_,
-                                       nOwnedEntities,maxDofPerEntity, dofPresent,
-                                       *dummy, *dummy, false,true);
-  }
-  else
-  {
-    ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_, true);
-  }
-  
+
+  ml_prec_ = new ML_Epetra::MultiLevelPreconditioner(*A, *paramlist_, true);
   azoo_->SetPrecOperator(ml_prec_);
+
 #endif
 
   return(0);

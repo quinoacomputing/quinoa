@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -104,7 +104,7 @@ if(argc > 1) {
 
   if (verbose && Comm.MyPID()==0)
     cout << Epetra_Version() << endl << endl;
-
+	
 //============================
 // other initial setup
 
@@ -121,10 +121,10 @@ if(argc > 1) {
 
 	ierr = vectorCtr(verbose, debug);
 	EPETRA_TEST_ERR(ierr, returnierr);
-
+	
 	ierr = vectorCpyCtr(verbose, debug);
 	EPETRA_TEST_ERR(ierr, returnierr);
-
+	
 	ierr = vectorAssignment(verbose, debug);
 	EPETRA_TEST_ERR(ierr, returnierr);
 
@@ -155,7 +155,7 @@ if(argc > 1) {
 #ifdef EPETRA_MPI
   MPI_Finalize();
 #endif
-
+	
   return(returnierr);
 }
 
@@ -224,7 +224,7 @@ int matrixCtr(bool verbose, bool debug) {
 			EPETRA_TEST_ERR(!(m1(i,j) == 0), ierr);
 	if(debug) printMat("m1",m1);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 	if(verbose) cout << "\nmanually setting values" << endl;
@@ -241,10 +241,10 @@ int matrixCtr(bool verbose, bool debug) {
 	}
 	delete[] m1rand;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	if(verbose) cout << "\nshaped constructor" << endl;
 	Epetra_IntSerialDenseMatrix m1a(m1arows, m1acols);
 	EPETRA_TEST_ERR(!(m1a.M() == m1arows), ierr);
@@ -253,10 +253,10 @@ int matrixCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(m1a.CV() == Copy),ierr);
 	if(debug) printMat("m1a", m1a);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	if(verbose) cout << "\nuser data constructor (view)" << endl;
 	int* m2rand = getRandArray(m2rows * m2cols);
 	if(debug) printArray(m2rand, m2rows * m2cols);
@@ -268,7 +268,7 @@ int matrixCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(m2.A() == m2rand), ierr);
 	if(debug) printMat("m2",m2);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -287,7 +287,7 @@ int matrixCtr(bool verbose, bool debug) {
 	delete[] m2rand;
 	delete[] m2randcopy;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -309,7 +309,7 @@ int matrixCtr(bool verbose, bool debug) {
 		for(int j = 0; j < m3cols; j++)
 			EPETRA_TEST_ERR(!(m3[j][i] == m3rand[j * m3rows + i]), ierr); // data should be identical to user array
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -326,10 +326,10 @@ int matrixCtr(bool verbose, bool debug) {
 		printMat("m3",m3);
 	}
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	if(verbose) cout << "\nreshaping" << endl;
 	m3.Reshape(m3Rrows, m3Rcols);
 	EPETRA_TEST_ERR(!(m3.M() == m3Rrows), ierr);
@@ -343,10 +343,10 @@ int matrixCtr(bool verbose, bool debug) {
 	delete[] m3rand;
 	delete[] m3randcopy;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	if(verbose) cout << "\nChecking pointer on zero-sized matrix" << endl;
 	int* before = m3.A();
 	if(verbose) cout << "Reshaping to (4,0)" << endl;
@@ -366,7 +366,7 @@ int matrixCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(after == 0), ierr);
 	if(debug) cout << "After = " << after << endl;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -405,7 +405,7 @@ int matrixCpyCtr(bool verbose, bool debug) {
 	if(ierr == 0)
 		if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	if(verbose) cout << "\nchecking copy constructor (copy)" << endl;
 	int* m2rand = getRandArray(m2rows * m2cols);
 	if(debug) printArray(m2rand, m2rows * m2cols);
@@ -440,7 +440,7 @@ int matrixCpyCtr(bool verbose, bool debug) {
 	if(ierr == 0)
 		if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
-
+	
 	return(returnierr);
 }
 
@@ -450,10 +450,10 @@ int matrixExceptions(bool verbose, bool debug) {
 	int returnierr = 0;
 	int ierr = 0;
 	bool caught = false;
-	Epetra_IntSerialDenseMatrix* matrix = NULL;
+	Epetra_IntSerialDenseMatrix* matrix;
 
 	if(verbose) printHeading("Testing matrix error-reporting.\nExpect error messages if EPETRA_NO_ERROR_REPORTS is not defined.");
-
+	
 	// invalid dimension to sized ctr (2 cases)
 	try {
 		caught = false;
@@ -519,7 +519,7 @@ int matrixExceptions(bool verbose, bool debug) {
 	}
 	EPETRA_TEST_ERR(!caught, returnierr);
      delete [] rand2;
-
+	
 	// null pointer to user-data ctr
 	try {
 		caught = false;
@@ -546,7 +546,7 @@ int matrixExceptions(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(ierr == -1), returnierr);
 	if(ierr == -1)
 		if(verbose) cout << "Checked OK." << endl;
-
+	
 	// invalid parameter to reshape (2 cases)
 	m1.Shape(5, 5);
 	if(verbose) cout << "\nChecking Reshape(-4, 3) - invalid rows" << endl;
@@ -618,7 +618,7 @@ int matrixExceptions(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!caught, returnierr);
 
 	// op[] too high
-	try {
+	try { 
 		caught = false;
 		if(verbose) cout << "\nChecking operator [] - col index too high";
 		ierr = m2[4][2];
@@ -645,7 +645,7 @@ int matrixExceptions(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!caught, returnierr);
      delete [] rand16;
 #endif // end of HAVE_EPETRA_ARRAY_BOUNDS_CHECK conditional
-
+	
 	// ISDM = ISDV
 	Epetra_IntSerialDenseMatrix m3;
 	Epetra_IntSerialDenseVector v1;
@@ -661,7 +661,7 @@ int matrixExceptions(bool verbose, bool debug) {
 			if(verbose) cout << "Checked OK." << endl;
 	}
 	EPETRA_TEST_ERR(!caught, returnierr);
-  if (matrix != NULL) delete matrix;
+	
 	return(returnierr);
 }
 
@@ -674,7 +674,7 @@ int matrixAssignment(bool verbose, bool debug) {
 
 	// each section is in its own block so we can reuse variable names
 	// lhs = left hand side, rhs = right hand side
-
+	
 	{
 		// copy->copy (more space needed)
 		// orig and dup should have same signature
@@ -793,7 +793,7 @@ int matrixAssignment(bool verbose, bool debug) {
 	returnierr += ierr;
 	if(ierr == 0)
 		if(verbose) cout << "Checked OK." << endl;
-	ierr = 0;
+	ierr = 0;	
 	{
 		// view->view
 		// orig and dup should have same signature
@@ -919,7 +919,7 @@ int vectorCtr(bool verbose, bool debug) {
 	}
 	if(debug) printMat("v1",v1);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 	if(verbose) cout << "\nmanually setting values" << endl;
@@ -934,7 +934,7 @@ int vectorCtr(bool verbose, bool debug) {
 	}
 	delete[] v1rand;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -944,7 +944,7 @@ int vectorCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(v1a.CV() == Copy),ierr);
 	if(debug) printMat("v1a", v1a);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -957,7 +957,7 @@ int vectorCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(v2.Values() == v2rand), ierr);
 	if(debug) printMat("v2",v2);
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -976,7 +976,7 @@ int vectorCtr(bool verbose, bool debug) {
 	delete[] v2rand;
 	delete[] v2randcopy;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -995,7 +995,7 @@ int vectorCtr(bool verbose, bool debug) {
 	for(int i = 0; i < v3size; i++)
 		EPETRA_TEST_ERR(!(v3[i] == v3rand[i]), ierr); // data should be identical to user array
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -1011,7 +1011,7 @@ int vectorCtr(bool verbose, bool debug) {
 		printMat("v3",v3);
 	}
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -1024,7 +1024,7 @@ int vectorCtr(bool verbose, bool debug) {
 	delete[] v3rand;
 	delete[] v3randcopy;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -1047,7 +1047,7 @@ int vectorCtr(bool verbose, bool debug) {
 	EPETRA_TEST_ERR(!(after == 0), ierr);
 	if(debug) cout << "After = " << after << endl;
 	returnierr += ierr;
-	if(ierr == 0)
+	if(ierr == 0) 
 		 if(verbose) cout << "Checked OK." << endl;
 	ierr = 0;
 
@@ -1130,7 +1130,7 @@ int vectorAssignment(bool verbose, bool debug) {
 
 	// each section is in its own block so we can reuse variable names
 	// lhs = left hand side, rhs = right hand side
-
+	
 	{
 		// copy->copy (more space needed)
 		// orig and dup should have same signature
@@ -1323,10 +1323,9 @@ int vectorExceptions(bool verbose, bool debug) {
 	int ierr = 0;
 	bool caught = false;
 	Epetra_IntSerialDenseVector* vector;
-	vector = NULL;
 
 	if(verbose) printHeading("Testing vector error-reporting.\nExpect error messages if EPETRA_NO_ERROR_REPORTS is not defined.");
-
+	
 	try { // invalid dimension to sized ctr
 		caught = false;
 		if(verbose) cout << "Checking Epetra_IntSerialDenseVector(-1)";
@@ -1400,7 +1399,7 @@ int vectorExceptions(bool verbose, bool debug) {
 			if(verbose) cout << "Checked OK." << endl;
 	}
 	EPETRA_TEST_ERR(!caught, returnierr);
-
+	
 	try { // op() too low
 		caught = false;
 		if(verbose) cout << "\nChecking operator () - index too low";
@@ -1426,7 +1425,7 @@ int vectorExceptions(bool verbose, bool debug) {
 			if(verbose) cout << "Checked OK." << endl;
 	}
 	EPETRA_TEST_ERR(!caught, returnierr);
-
+	
 	try { // op[] too low
 		caught = false;
 		if(verbose) cout << "\nChecking operator [] - index too low";
@@ -1443,7 +1442,7 @@ int vectorExceptions(bool verbose, bool debug) {
 #endif // end of HAVE_EPETRA_ARRAY_BOUNDS_CHECK conditional
 
 	// we don't need to check for ISDV = ISDM, as that is a compile-time error
-  if (vector != NULL) delete vector;
+	
 	return(returnierr);
 }
 
@@ -1497,7 +1496,7 @@ bool seperateData(Epetra_IntSerialDenseMatrix& a, Epetra_IntSerialDenseMatrix& b
 	int new_value = a(r,c) + 1;
 	if(b(r,c) == new_value) // there's a chance b could be independent, but
 		new_value++;          // already have new_value in (r,c).
-
+	
 	a(r,c) = new_value;
 	if(b(r,c) == new_value)
 		seperate = false;
@@ -1531,7 +1530,7 @@ int randomInt() {
 	                               // (a * seed) - (floor(a * seed / BigInt) * BigInt)
 	double randdouble = (seed / BigInt); // should be [0,1)
 	int randint = int(randdouble * maxint);
-
+	
 	return(randint);
 }
 //=========================================================================

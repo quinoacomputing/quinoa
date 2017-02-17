@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -44,310 +31,155 @@
 #define IFPACK2_DIAGONAL_DEF_HPP
 
 #include "Ifpack2_Diagonal_decl.hpp"
-#include "Tpetra_CrsMatrix.hpp"
+#include "Ifpack2_Condest.hpp"
 
 namespace Ifpack2 {
 
 template<class MatrixType>
-Diagonal<MatrixType>::Diagonal (const Teuchos::RCP<const row_matrix_type>& A) :
-  matrix_ (A),
-  initializeTime_ (0.0),
-  computeTime_ (0.0),
-  applyTime_ (0.0),
-  numInitialize_ (0),
-  numCompute_ (0),
-  numApply_ (0),
-  isInitialized_ (false),
-  isComputed_ (false)
-{}
-
-template<class MatrixType>
-Diagonal<MatrixType>::Diagonal (const Teuchos::RCP<const crs_matrix_type>& A) :
-  matrix_ (A),
-  initializeTime_ (0.0),
-  computeTime_ (0.0),
-  applyTime_ (0.0),
-  numInitialize_ (0),
-  numCompute_ (0),
-  numApply_ (0),
-  isInitialized_ (false),
-  isComputed_ (false)
-{}
-
-template<class MatrixType>
-Diagonal<MatrixType>::Diagonal (const Teuchos::RCP<const vector_type>& diag) :
-  userInverseDiag_ (diag),
-  inverseDiag_ (diag),
-  initializeTime_ (0.0),
-  computeTime_ (0.0),
-  applyTime_ (0.0),
-  numInitialize_ (0),
-  numCompute_ (0),
-  numApply_ (0),
-  isInitialized_ (false),
-  isComputed_ (false)
-{}
-
-template<class MatrixType>
-Diagonal<MatrixType>::~Diagonal ()
-{}
-
-template<class MatrixType>
-Teuchos::RCP<const typename Diagonal<MatrixType>::map_type>
-Diagonal<MatrixType>::getDomainMap () const
+Diagonal<MatrixType>::Diagonal(const Teuchos::RCP<const MatrixType>& A)
+ : isInitialized_(false),
+   isComputed_(false),
+   domainMap_(A->getDomainMap()),
+   rangeMap_(A->getRangeMap()),
+   matrix_(A),
+   inversediag_(),
+   numInitialize_(0),
+   numCompute_(0),
+   numApply_(0),
+   condEst_(-1.0)
 {
-  if (matrix_.is_null ()) {
-    if (userInverseDiag_.is_null ()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::runtime_error, "Ifpack2::Diagonal::getDomainMap: "
-        "The input matrix A is null, and you did not provide a vector of "
-        "inverse diagonal entries.  Please call setMatrix() with a nonnull "
-        "input matrix before calling this method.");
-    } else {
-      return userInverseDiag_->getMap ();
-    }
-  } else {
-    return matrix_->getDomainMap ();
-  }
 }
 
 template<class MatrixType>
-Teuchos::RCP<const typename Diagonal<MatrixType>::map_type>
-Diagonal<MatrixType>::getRangeMap () const
+Diagonal<MatrixType>::Diagonal(const Teuchos::RCP<const Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& diag)
+ : isInitialized_(false),
+   isComputed_(false),
+   domainMap_(),
+   rangeMap_(),
+   matrix_(),
+   inversediag_(diag),
+   numInitialize_(0),
+   numCompute_(0),
+   numApply_(0),
+   condEst_(-1.0)
 {
-  if (matrix_.is_null ()) {
-    if (userInverseDiag_.is_null ()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::runtime_error, "Ifpack2::Diagonal::getRangeMap: "
-        "The input matrix A is null, and you did not provide a vector of "
-        "inverse diagonal entries.  Please call setMatrix() with a nonnull "
-        "input matrix before calling this method.");
-    } else {
-      return userInverseDiag_->getMap ();
-    }
-  } else {
-    return matrix_->getRangeMap ();
-  }
 }
 
 template<class MatrixType>
-void Diagonal<MatrixType>::
-setParameters (const Teuchos::ParameterList& /*params*/)
-{}
-
-template<class MatrixType>
-void Diagonal<MatrixType>::reset ()
+Diagonal<MatrixType>::~Diagonal()
 {
-  inverseDiag_ = Teuchos::null;
-  offsets_ = offsets_type ();
-  isInitialized_ = false;
-  isComputed_ = false;
 }
 
 template<class MatrixType>
-void Diagonal<MatrixType>::
-setMatrix (const Teuchos::RCP<const row_matrix_type>& A)
+void Diagonal<MatrixType>::setParameters(const Teuchos::ParameterList& /*params*/)
 {
-  if (A.getRawPtr () != matrix_.getRawPtr ()) { // it's a different matrix
-    reset ();
-    matrix_ = A;
-  }
 }
 
 template<class MatrixType>
-void Diagonal<MatrixType>::initialize ()
+void Diagonal<MatrixType>::initialize()
 {
-  // Either the matrix to precondition must be nonnull, or the user
-  // must have provided a Vector of diagonal entries.
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    matrix_.is_null () && userInverseDiag_.is_null (), std::runtime_error,
-    "Ifpack2::Diagonal::initialize: The matrix to precondition is null, "
-    "and you did not provide a Tpetra::Vector of diagonal entries.  "
-    "Please call setMatrix() with a nonnull input before calling this method.");
-
-  // If the user did provide an input matrix, then that takes
-  // precedence over the vector of inverse diagonal entries, if they
-  // provided one earlier.  This is only possible if they created this
-  // Diagonal instance using the constructor that takes a
-  // Tpetra::Vector pointer, and then called setMatrix() with a
-  // nonnull input matrix.
-  if (! matrix_.is_null ()) {
-    // If you call initialize(), it means that you are asserting that
-    // the structure of the input sparse matrix may have changed.
-    // This means we should always recompute the diagonal offsets, if
-    // the input matrix is a Tpetra::CrsMatrix.
-    Teuchos::RCP<const crs_matrix_type> A_crs =
-      Teuchos::rcp_dynamic_cast<const crs_matrix_type> (matrix_);
-
-    if (A_crs.is_null ()) {
-      offsets_ = offsets_type (); // offsets are no longer valid
-    }
-    else {
-      const size_t lclNumRows = A_crs->getNodeNumRows ();
-      if (offsets_.dimension_0 () < lclNumRows) {
-        offsets_ = offsets_type (); // clear first to save memory
-        offsets_ = offsets_type ("offsets", lclNumRows);
-      }
-      A_crs->getCrsGraph ()->getLocalDiagOffsets (offsets_);
-    }
-  }
-
+  if (isInitialized_ == true) return;
   isInitialized_ = true;
   ++numInitialize_;
+  //nothing to do
 }
 
 template<class MatrixType>
-void Diagonal<MatrixType>::compute ()
+void Diagonal<MatrixType>::compute()
 {
-  // Either the matrix to precondition must be nonnull, or the user
-  // must have provided a Vector of diagonal entries.
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    matrix_.is_null () && userInverseDiag_.is_null (), std::runtime_error,
-    "Ifpack2::Diagonal::compute: The matrix to precondition is null, "
-    "and you did not provide a Tpetra::Vector of diagonal entries.  "
-    "Please call setMatrix() with a nonnull input before calling this method.");
+  initialize();
+  ++numCompute_;
 
-  if (! isInitialized_) {
-    initialize ();
-  }
-
-  // If the user did provide an input matrix, then that takes
-  // precedence over the vector of inverse diagonal entries, if they
-  // provided one earlier.  This is only possible if they created this
-  // Diagonal instance using the constructor that takes a
-  // Tpetra::Vector pointer, and then called setMatrix() with a
-  // nonnull input matrix.
-  if (matrix_.is_null ()) { // accept the user's diagonal
-    inverseDiag_ = userInverseDiag_;
-  }
-  else {
-    Teuchos::RCP<vector_type> tmpVec (new vector_type (matrix_->getRowMap ()));
-    Teuchos::RCP<const crs_matrix_type> A_crs =
-      Teuchos::rcp_dynamic_cast<const crs_matrix_type> (matrix_);
-    if (A_crs.is_null ()) {
-      // Get the diagonal entries from the Tpetra::RowMatrix.
-      matrix_->getLocalDiagCopy (*tmpVec);
-    }
-    else {
-      // Get the diagonal entries from the Tpetra::CrsMatrix using the
-      // precomputed offsets.
-      A_crs->getLocalDiagCopy (*tmpVec, offsets_);
-    }
-    tmpVec->reciprocal (*tmpVec); // invert the diagonal entries
-    inverseDiag_ = tmpVec;
-  }
+  if (isComputed_ == true) return;
 
   isComputed_ = true;
-  ++numCompute_;
+
+  if (matrix_ == Teuchos::null) return;
+
+  Teuchos::RCP<Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > tmp_vec = Teuchos::rcp(new Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(matrix_->getRowMap()));
+
+  matrix_->getLocalDiagCopy(*tmp_vec);
+  tmp_vec->reciprocal(*tmp_vec);
+
+  inversediag_ = tmp_vec;
 }
 
 template<class MatrixType>
-void Diagonal<MatrixType>::
-apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_type,node_type>& X,
-       Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_type,node_type>& Y,
-       Teuchos::ETransp /*mode*/,
-       scalar_type alpha,
-       scalar_type beta) const
+void Diagonal<MatrixType>::apply(const Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& X,
+             Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Y,
+             Teuchos::ETransp /*mode*/,
+                 Scalar alpha,
+                 Scalar beta) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    ! isComputed (), std::runtime_error, "Ifpack2::Diagonal::apply: You "
-    "must first call compute() before you may call apply().  Once you have "
-    "called compute(), you need not call it again unless the values in the "
-    "matrix have changed, or unless you have called setMatrix().");
+  TEUCHOS_TEST_FOR_EXCEPTION(!isComputed(), std::runtime_error,
+    "Ifpack2::Diagonal::apply() ERROR, compute() hasn't been called yet.");
 
-  // FIXME (mfh 12 Sep 2014) This assumes that row Map == range Map ==
-  // domain Map.  If the preconditioner has a matrix, we should ask
-  // the matrix whether we need to do an Import before and/or an
-  // Export after.
-
-  Y.elementWiseMultiply (alpha, *inverseDiag_, X, beta);
   ++numApply_;
+  Y.elementWiseMultiply(alpha, *inversediag_, X, beta);
+}
+
+template<class MatrixType>
+typename Teuchos::ScalarTraits<typename MatrixType::scalar_type>::magnitudeType
+Diagonal<MatrixType>::computeCondEst(
+                     CondestType CT,
+                     LocalOrdinal MaxIters,
+                     magnitudeType Tol,
+                     const Teuchos::Ptr<const Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > &matrix) {
+  if (!isComputed()) { // cannot compute right now
+    return(-1.0);
+  }
+  // NOTE: this is computing the *local* condest
+  if (condEst_ == -1.0) {
+    condEst_ = Ifpack2::Condest(*this, CT, MaxIters, Tol, matrix);
+  }
+  return(condEst_);
 }
 
 template <class MatrixType>
 int Diagonal<MatrixType>::getNumInitialize() const {
-  return numInitialize_;
+  return(numInitialize_);
 }
 
 template <class MatrixType>
 int Diagonal<MatrixType>::getNumCompute() const {
-  return numCompute_;
+  return(numCompute_);
 }
 
 template <class MatrixType>
 int Diagonal<MatrixType>::getNumApply() const {
-  return numApply_;
+  return(numApply_);
 }
 
 template <class MatrixType>
 double Diagonal<MatrixType>::getInitializeTime() const {
-  return initializeTime_;
+  return(initializeTime_);
 }
 
 template<class MatrixType>
 double Diagonal<MatrixType>::getComputeTime() const {
-  return computeTime_;
+  return(computeTime_);
 }
 
 template<class MatrixType>
 double Diagonal<MatrixType>::getApplyTime() const {
-  return applyTime_;
+  return(applyTime_);
 }
 
 template <class MatrixType>
-std::string Diagonal<MatrixType>::description () const
+std::string Diagonal<MatrixType>::description() const
 {
-  std::ostringstream out;
-
-  // Output is a valid YAML dictionary in flow style.  If you don't
-  // like everything on a single line, you should call describe()
-  // instead.
-  out << "\"Ifpack2::Diagonal\": "
-      << "{";
-  if (this->getObjectLabel () != "") {
-    out << "Label: \"" << this->getObjectLabel () << "\", ";
-  }
-  if (matrix_.is_null ()) {
-    out << "Matrix: null";
-  }
-  else {
-    out << "Matrix: not null"
-        << ", Global matrix dimensions: ["
-        << matrix_->getGlobalNumRows () << ", "
-        << matrix_->getGlobalNumCols () << "]";
-  }
-
-  out << "}";
-  return out.str ();
+  return std::string("Ifpack2::Diagonal");
 }
 
 template <class MatrixType>
-void Diagonal<MatrixType>::
-describe (Teuchos::FancyOStream &out,
-          const Teuchos::EVerbosityLevel verbLevel) const
+void Diagonal<MatrixType>::describe(Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) const
 {
-  using std::endl;
-
-  const Teuchos::EVerbosityLevel vl =
-    (verbLevel == Teuchos::VERB_DEFAULT) ? Teuchos::VERB_LOW : verbLevel;
-  if (vl != Teuchos::VERB_NONE) {
-    Teuchos::OSTab tab0 (out);
-    out << "\"Ifpack2::Diagonal\":";
-    Teuchos::OSTab tab1 (out);
-    out << "Template parameter: "
-        << Teuchos::TypeNameTraits<MatrixType>::name () << endl;
-    if (this->getObjectLabel () != "") {
-      out << "Label: \"" << this->getObjectLabel () << "\", ";
-    }
-    out << "Number of initialize calls: " << numInitialize_ << endl
-        << "Number of compute calls: " << numCompute_ << endl
-        << "Number of apply calls: " << numApply_ << endl;
+  if (verbLevel != Teuchos::VERB_NONE) {
+    out << this->description() << std::endl;
+    out << "  numApply: " << numApply_ << std::endl;
   }
 }
 
-} // namespace Ifpack2
-
-#define IFPACK2_DIAGONAL_INSTANT(S,LO,GO,N)                            \
-  template class Ifpack2::Diagonal< Tpetra::RowMatrix<S, LO, GO, N> >;
+}//namespace Ifpack2
 
 #endif

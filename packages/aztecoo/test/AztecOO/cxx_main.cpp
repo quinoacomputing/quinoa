@@ -167,50 +167,50 @@ int main(int argc, char *argv[])
   double initial_norm = resid2norm(*A, x, b);
 
   if (verbose) {
-    std::cout << "Initial 2-norm of b-A*x: "<<initial_norm<<std::endl;
+    cout << "Initial 2-norm of b-A*x: "<<initial_norm<<endl;
   }
 
   int err = test_azoo_as_precond_op(*A, x, b, verbose);
   if (err != 0) {
-    std::cout << "test_azoo_as_precond_op err, test FAILED."<<std::endl;
+    cout << "test_azoo_as_precond_op err, test FAILED."<<endl;
     return(err);
   }
 
   err = test_azoo_conv_anorm(*A, x, b, verbose);
   if (err != 0) {
-    std::cout << "test_azoo_conv_anorm err, test FAILED."<<std::endl;
+    cout << "test_azoo_conv_anorm err, test FAILED."<<endl;
     return(err);
   }
 
   if (verbose) {
-    std::cout << "testing AztecOO with AZ_conv = AZ_Anorm, and AZ_scaling = AZ_sym_diag" << std::endl;
+    cout << "testing AztecOO with AZ_conv = AZ_Anorm, and AZ_scaling = AZ_sym_diag" << endl;
   }
 
   err = test_azoo_conv_with_scaling(AZ_Anorm, AZ_sym_diag, A->Comm(), verbose);
   if (err != 0) {
-    std::cout << "test_azoo_conv_with_scaling err, test FAILED."<<std::endl;
+    cout << "test_azoo_conv_with_scaling err, test FAILED."<<endl;
     return(err);
   }
 
   if (verbose) {
-    std::cout << "testing AztecOO with AZ_conv = AZ_rhs, and AZ_scaling = AZ_sym_diag" << std::endl;
+    cout << "testing AztecOO with AZ_conv = AZ_rhs, and AZ_scaling = AZ_sym_diag" << endl;
   }
 
   err = test_azoo_conv_with_scaling(AZ_rhs, AZ_sym_diag, A->Comm(), verbose);
   if (err != 0) {
-    std::cout << "test_azoo_conv_with_scaling err, test FAILED."<<std::endl;
+    cout << "test_azoo_conv_with_scaling err, test FAILED."<<endl;
     return(err);
   }
 
   err = test_azoo_with_ilut(*A, x, b, verbose);
   if (err != 0) {
-    std::cout << "test_azoo_with_ilut err, test FAILED."<<std::endl;
+    cout << "test_azoo_with_ilut err, test FAILED."<<endl;
     return(err);
   }
 
   err = test_azoo_scaling(*A, x, b, verbose);
   if (err != 0) {
-    std::cout << "test_azoo_scaling err="<<err<<", test FAILED."<<std::endl;
+    cout << "test_azoo_scaling err="<<err<<", test FAILED."<<endl;
     return(err);
   }
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 
   err = test_AZ_iterate_AZ_pre_calc_AZ_reuse(comm, options, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<endl;
     return(err);
   }
 
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
   err = test_AZ_iterate_AZ_pre_calc_AZ_reuse(comm, options, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<endl;
     return(err);
   }
 
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 
   err = test_AZ_iterate_AZ_pre_calc_AZ_reuse(comm, options, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<endl;
     return(err);
   }
 
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 
   err = test_AZ_iterate_AZ_pre_calc_AZ_reuse(comm, options, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<endl;
     return(err);
   }
 
@@ -264,13 +264,13 @@ int main(int argc, char *argv[])
 
   err = test_AZ_iterate_AZ_pre_calc_AZ_reuse(comm, options, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_AZ_pre_calc_AZ_reuse err, test FAILED."<<endl;
     return(err);
   }
 
   err = test_AZ_iterate_then_AZ_scale_f(comm, verbose);
   if (err != 0) {
-    std::cout << "test_AZ_iterate_then_AZ_scale_f err, test FAILED."<<std::endl;
+    cout << "test_AZ_iterate_then_AZ_scale_f err, test FAILED."<<endl;
     return(err);
   }
 
@@ -278,17 +278,17 @@ int main(int argc, char *argv[])
 
   err = test_bug2554(comm, verbose);
   if (err != 0) {
-    std::cout << "test_bug2554 err, test FAILED."<<std::endl;
+    cout << "test_bug2554 err, test FAILED."<<endl;
     return(err);
   }
 
   err = test_bug2890(comm, verbose);
   if (err != 0) {
-    std::cout << "test_bug2890 err, test FAILED."<<std::endl;
+    cout << "test_bug2890 err, test FAILED."<<endl;
     return(err);
   }
 
-  std::cout << "********* Test passed **********" << std::endl;
+  cout << "********* Test passed **********" << endl;
 
 #ifdef EPETRA_MPI
   MPI_Finalize() ;
@@ -384,8 +384,8 @@ int test_azoo_as_precond_op(Epetra_CrsMatrix& A,
   azoo1->SetAztecOption(AZ_conv, AZ_none);
 
   if (verbose) {
-    std::cout << "testing recursive solve (AztecOO as"
-    << " preconditioner for another AztecOO)."<<std::endl;
+    cout << "testing recursive solve (AztecOO as"
+    << " preconditioner for another AztecOO)."<<endl;
   }
 
   int maxiters = 100;
@@ -394,8 +394,8 @@ int test_azoo_as_precond_op(Epetra_CrsMatrix& A,
 
   double resid1 = resid2norm(A, x, b);
   if (verbose) {
-    std::cout << "residual 2-norm after recursive solve: "
-        << resid1 << std::endl;
+    cout << "residual 2-norm after recursive solve: "
+        << resid1 << endl;
   }
 
   if (resid1 > 1.e-6) {
@@ -403,8 +403,8 @@ int test_azoo_as_precond_op(Epetra_CrsMatrix& A,
   }
 
   if (verbose) {
-    std::cout << "now make sure the precond AztecOO instance"
-      << " hasn't been corrupted."<<std::endl;
+    cout << "now make sure the precond AztecOO instance"
+      << " hasn't been corrupted."<<endl;
   }
 
 //  AZ_manage_memory(0, -43, 0, 0, 0);
@@ -414,7 +414,7 @@ int test_azoo_as_precond_op(Epetra_CrsMatrix& A,
 
   double resid0 = resid2norm(A, x, b);
   if (verbose) {
-    std::cout << "residual 2-norm: " << resid0 << std::endl;
+    cout << "residual 2-norm: " << resid0 << endl;
   }
   if (resid0 > 1.e-6) {
     return(-1);
@@ -443,21 +443,21 @@ int test_azoo_with_ilut(Epetra_CrsMatrix& A,
   azoo0->SetAztecOption(AZ_keep_info, 1);
 
   if (verbose) {
-    std::cout << "testing AztecOO with GMRES and ILUT, AZ_keep_info==1" << std::endl;
+    cout << "testing AztecOO with GMRES and ILUT, AZ_keep_info==1" << endl;
   }
 
   int maxiters = 100;
   double tolerance = 1.e-12;
   int err = azoo0->Iterate(maxiters, tolerance);
   if (err != 0) {
-    if (verbose) std::cout << "AztecOO::Iterate return err="<<err<<std::endl;
+    if (verbose) cout << "AztecOO::Iterate return err="<<err<<endl;
     return(err);
   }
 
   double resid = resid2norm(A, x, b);
   if (verbose) {
-    std::cout << "residual 2-norm after GMRES/ILUT solve: "
-        << resid << std::endl;
+    cout << "residual 2-norm after GMRES/ILUT solve: "
+        << resid << endl;
   }
 
   if (resid > 1.e-6) {
@@ -465,30 +465,30 @@ int test_azoo_with_ilut(Epetra_CrsMatrix& A,
   }
 
   if (verbose) {
-    std::cout << "solving with GMRES/ILUT again, AZ_pre_calc==AZ_reuse"
-        << std::endl << "(will error out if factors weren't kept from"
-         << " previous solve)"<<std::endl;
+    cout << "solving with GMRES/ILUT again, AZ_pre_calc==AZ_reuse"
+        << endl << "(will error out if factors weren't kept from"
+         << " previous solve)"<<endl;
   }
 
   azoo0->SetAztecOption(AZ_pre_calc, AZ_reuse);
   x.PutScalar(0.0);
   err = azoo0->Iterate(maxiters, tolerance);
   if (err != 0) {
-    if (verbose) std::cout << "AztecOO::Iterate return err="<<err<<std::endl;
+    if (verbose) cout << "AztecOO::Iterate return err="<<err<<endl;
     return(err);
   }
 
   double resid2 = resid2norm(A, x, b);
   if (verbose) {
-    std::cout << "after second GMRES/ILUT solve, residual 2-norm: "
-      << resid2 <<std::endl;
+    cout << "after second GMRES/ILUT solve, residual 2-norm: "
+      << resid2 <<endl;
   }
   if (resid2 > 1.e-6) {
     return(-1);
   }
 
   if (verbose) {
-    std::cout << "azoo0->SolveTime(): " << azoo0->SolveTime() << std::endl;
+    cout << "azoo0->SolveTime(): " << azoo0->SolveTime() << endl;
   }
 
   delete azoo0;
@@ -539,12 +539,6 @@ int test_azoo_conv_with_scaling(int conv_option, int scaling_option,
                                                proc_config, Amsr,
                                                external, update_index,
                                                external_index);
-  if (err != 0) {
-    if (verbose) {
-      std::cout << "create_and_transform_simple_matrix returned err="<<err<<std::endl;
-    }
-    return(err);
-  }
 
   int N_update = localN+Amsr->data_org[AZ_N_border];
   double* x_msr = new double[N_update];
@@ -558,12 +552,6 @@ int test_azoo_conv_with_scaling(int conv_option, int scaling_option,
                                            proc_config, Avbr,
                                            external2, update_index2,
                                            external_index2);
-  if (err != 0) {
-    if (verbose) {
-      std::cout << "create_and_transform_simple_matrix returned err="<<err<<std::endl;
-    }
-    return(err);
-  }
   for(int i=0; i<N_update; ++i) {
     x_msr[i] = 1.0;
     b_msr[i] = 0.0;
@@ -598,12 +586,12 @@ int test_azoo_conv_with_scaling(int conv_option, int scaling_option,
   }
 
   if (max_rhs_diff1> 1.e-12) {
-    std::cout << "AztecOO rhs not equal to Aztec msr rhs "<<max_rhs_diff1<<std::endl;
+    cout << "AztecOO rhs not equal to Aztec msr rhs "<<max_rhs_diff1<<endl;
     return(-1);
   }
 
   if (max_rhs_diff2> 1.e-12) {
-    std::cout << "AztecOO rhs not equal to Aztec vbr rhs "<<max_rhs_diff2<<std::endl;
+    cout << "AztecOO rhs not equal to Aztec vbr rhs "<<max_rhs_diff2<<endl;
     return(-1);
   }
 
@@ -640,14 +628,14 @@ int test_azoo_conv_with_scaling(int conv_option, int scaling_option,
   }
 
   if (max_diff1 > 1.e-7) {
-    std::cout << "AztecOO failed to match Aztec msr with scaling and Anorm conv."
-      << std::endl;
+    cout << "AztecOO failed to match Aztec msr with scaling and Anorm conv."
+      << endl;
     return(-1);
   }
 
   if (max_diff2 > 1.e-7) {
-    std::cout << "AztecOO failed to match Aztec vbr with scaling and Anorm conv."
-      << std::endl;
+    cout << "AztecOO failed to match Aztec vbr with scaling and Anorm conv."
+      << endl;
     return(-1);
   }
 
@@ -678,7 +666,7 @@ int test_azoo_conv_anorm(Epetra_CrsMatrix& A,
                          bool verbose)
 {
   if (verbose) {
-    std::cout << "testing AztecOO with AZ_conv = AZ_Anorm" << std::endl;
+    cout << "testing AztecOO with AZ_conv = AZ_Anorm" << endl;
   }
 
   Epetra_Vector soln_Anorm(x), soln_none(x), vec1(x), rhs(x);
@@ -721,11 +709,11 @@ int test_azoo_conv_anorm(Epetra_CrsMatrix& A,
   double ratio1 = rnrm_anorm/rnrm_rhs;
   double ratio2 = anorm/rhsnorm;
 
-  std::cout << "ratio1: " << ratio1 << ", ratio2: " << ratio2 << std::endl;
+  cout << "ratio1: " << ratio1 << ", ratio2: " << ratio2 << endl;
   if (std::abs(ratio1 - ratio2) > 1.e-1) {
     if (verbose) {
-      std::cout << "anorm: " << anorm << ", rhsnorm: " << rhsnorm
-       << "rnrm_anorm: " << rnrm_anorm << ", rnrm_rhs: " << rnrm_rhs<<std::endl;
+      cout << "anorm: " << anorm << ", rhsnorm: " << rhsnorm
+       << "rnrm_anorm: " << rnrm_anorm << ", rnrm_rhs: " << rnrm_rhs<<endl;
     }
     return(-1);
   }
@@ -779,7 +767,7 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
                                  options, bvals, xvals, NULL, scaling);
   if (err != 0) {
     if (verbose) {
-      std::cout << "AztecOO_scale_epetra returned err="<<err<<std::endl;
+      cout << "AztecOO_scale_epetra returned err="<<err<<endl;
     }
     return(err);
   }
@@ -803,7 +791,7 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
                              options, bvals, xvals, NULL, scaling);
   if (err != 0) {
     if (verbose) {
-      std::cout << "AztecOO_scale_epetra returned err="<<err<<std::endl;
+      cout << "AztecOO_scale_epetra returned err="<<err<<endl;
     }
     return(err);
   }
@@ -928,24 +916,24 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
 
   if (std::abs(norm_check1) > 1.e-6) {
     if (verbose) {
-      std::cerr << "AZ_row_sum scaling produced bad soln"
-      << std::endl;
+      cerr << "AZ_row_sum scaling produced bad soln"
+      << endl;
     }
     return(-1);
   }
 
   if (std::abs(norm_check2) > 1.e-6) {
     if (verbose) {
-      std::cerr << "AZ_sym_diag scaling produced bad soln"
-      << std::endl;
+      cerr << "AZ_sym_diag scaling produced bad soln"
+      << endl;
     }
     return(-1);
   }
 
   if (std::abs(norm_check3) > 1.e-6) {
     if (verbose) {
-      std::cerr << "AZ_Jacobi scaling produced bad soln"
-      << std::endl;
+      cerr << "AZ_Jacobi scaling produced bad soln"
+      << endl;
     }
     return(-1);
   }
@@ -956,8 +944,8 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
                              options, bvals, xvals, NULL, scaling);
   if (err == 0) {
     if (verbose) {
-      std::cerr << "AztecOO_scale_epetra failed to return err when"
-        << " asked to reuse non-existent scaling data."<<std::endl;
+      cerr << "AztecOO_scale_epetra failed to return err when"
+        << " asked to reuse non-existent scaling data."<<endl;
     }
     return(-1);
   }
@@ -968,7 +956,7 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
                              options, bvals, xvals, NULL, scaling);
   if (err != 0) {
     if (verbose) {
-      std::cerr << "AztecOO_scale_epetra returned err=="<<err<<std::endl;
+      cerr << "AztecOO_scale_epetra returned err=="<<err<<endl;
     }
     return(err);
   }
@@ -979,8 +967,8 @@ int test_azoo_scaling(Epetra_CrsMatrix& A,
                              options, bvals, xvals, NULL, scaling);
   if (err != 0) {
     if (verbose) {
-      std::cerr << "AztecOO_scale_epetra returned err=="<<err
-          <<" when asked to reuse scaling data"<<std::endl;
+      cerr << "AztecOO_scale_epetra returned err=="<<err
+          <<" when asked to reuse scaling data"<<endl;
     }
     return(err);
   }
@@ -1012,9 +1000,9 @@ int test_AZ_iterate_AZ_pre_calc_AZ_reuse(Epetra_Comm& Comm,
 {
   (void)Comm;
   if (verbose) {
-    std::cout << "testing AZ_keep_info/AZ_reuse with 'old' Aztec (solver "
+    cout << "testing AZ_keep_info/AZ_reuse with 'old' Aztec (solver "
          <<options[AZ_solver] <<", precond "<<options[AZ_precond]<<"/"
-         << options[AZ_subdomain_solve]<<")"<<std::endl;
+         << options[AZ_subdomain_solve]<<")"<<endl;
   }
 
   int* proc_config = new int[AZ_PROC_SIZE];
@@ -1080,28 +1068,28 @@ int test_AZ_iterate_AZ_pre_calc_AZ_reuse(Epetra_Comm& Comm,
 
   //First solve with the first matrix (Amsr).
   if (verbose)
-    std::cout << "solve Amsr, name: "<<Amsr->data_org[AZ_name]<<std::endl;
+    cout << "solve Amsr, name: "<<Amsr->data_org[AZ_name]<<endl;
 
   call_AZ_iterate(Amsr, Pmsr, Smsr, x, b, az_options, params, status,
                   proc_config, 1, AZ_calc, verbose);
 
   //First solve with the second matrix (Avbr).
   if (verbose)
-    std::cout << "solve Avbr, name: " <<Avbr->data_org[AZ_name]<<std::endl;
+    cout << "solve Avbr, name: " <<Avbr->data_org[AZ_name]<<endl;
 
   call_AZ_iterate(Avbr, Pvbr, Svbr, x, b, az_options, params, status,
                   proc_config, 0, AZ_calc, verbose);
 
   //Second solve with Amsr, reusing preconditioner
   if (verbose)
-    std::cout << "solve Amsr (first reuse)"<<std::endl;
+    cout << "solve Amsr (first reuse)"<<endl;
 
   call_AZ_iterate(Amsr, Pmsr, Smsr, x, b, az_options, params, status,
                   proc_config, 1, AZ_reuse, verbose);
 
   //Second solve with Avbr, not reusing preconditioner
   if (verbose)
-    std::cout << "solve Avbr (keepinfo==0), name: " <<Avbr->data_org[AZ_name]<<std::endl;
+    cout << "solve Avbr (keepinfo==0), name: " <<Avbr->data_org[AZ_name]<<endl;
 
   call_AZ_iterate(Avbr, Pvbr, Svbr, x, b, az_options, params, status,
                   proc_config, 0, AZ_calc, verbose);
@@ -1114,28 +1102,28 @@ int test_AZ_iterate_AZ_pre_calc_AZ_reuse(Epetra_Comm& Comm,
 
   //solve with Amsr again, not reusing preconditioner
   if (verbose)
-    std::cout << "solve Amsr (keepinfo==0)"<<std::endl;
+    cout << "solve Amsr (keepinfo==0)"<<endl;
 
   call_AZ_iterate(Amsr, Pmsr, Smsr, x, b, az_options, params, status,
                   proc_config, 0, AZ_calc, verbose);
 
   //Second solve with Avbr, this time with keepinfo==1
   if (verbose)
-    std::cout << "solve Avbr (keepinfo==1), name: " <<Avbr->data_org[AZ_name]<<std::endl;
+    cout << "solve Avbr (keepinfo==1), name: " <<Avbr->data_org[AZ_name]<<endl;
 
   call_AZ_iterate(Avbr, Pvbr, Svbr, x, b, az_options, params, status,
                   proc_config, 1, AZ_calc, verbose);
 
   //Second solve with Amsr, not reusing preconditioner
   if (verbose)
-    std::cout << "solve Amsr (keepinfo==0, calc)"<<std::endl;
+    cout << "solve Amsr (keepinfo==0, calc)"<<endl;
 
   call_AZ_iterate(Amsr, Pmsr, Smsr, x, b, az_options, params, status,
                   proc_config, 0, AZ_calc, verbose);
 
   //Second solve with Avbr, not reusing preconditioner
   if (verbose)
-    std::cout << "solve Avbr (keepinfo==1, reuse), name: "<<Avbr->data_org[AZ_name]<<std::endl;
+    cout << "solve Avbr (keepinfo==1, reuse), name: "<<Avbr->data_org[AZ_name]<<endl;
 
   call_AZ_iterate(Avbr, Pvbr, Svbr, x, b, az_options, params, status,
                   proc_config, 1, AZ_reuse, verbose);
@@ -1193,7 +1181,7 @@ int call_AZ_iterate(AZ_MATRIX* Amat,
   else calcstr = "AZ_reuse";
 
   if (verbose)
-    std::cout << "   solve with AZ_keep_info="<<keepstr<<", AZ_pre_calc="<<calcstr<<std::endl;
+    cout << "   solve with AZ_keep_info="<<keepstr<<", AZ_pre_calc="<<calcstr<<endl;
 
   for(int i=0; i<Amat->N_update; ++i) x[i] = 0.0;
 
@@ -1207,7 +1195,7 @@ int test_AZ_iterate_then_AZ_scale_f(Epetra_Comm& Comm, bool verbose)
 {
   (void)Comm;
   if (verbose) {
-    std::cout << "testing AZ_iterate/AZ_scale_f with 'old' Aztec"<<std::endl;
+    cout << "testing AZ_iterate/AZ_scale_f with 'old' Aztec"<<endl;
   }
 
   int* proc_config = new int[AZ_PROC_SIZE];

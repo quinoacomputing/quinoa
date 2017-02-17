@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -103,8 +103,8 @@ int Amesos_Lapack::SetParameters( Teuchos::ParameterList &ParameterList )
 //=============================================================================
 bool Amesos_Lapack::MatrixShapeOK() const 
 {
-  if (GetProblem()->GetOperator()->OperatorRangeMap().NumGlobalPoints64() !=
-      GetProblem()->GetOperator()->OperatorDomainMap().NumGlobalPoints64()) {
+  if (GetProblem()->GetOperator()->OperatorRangeMap().NumGlobalPoints() !=
+      GetProblem()->GetOperator()->OperatorDomainMap().NumGlobalPoints()) {
     return(false);
   }
   else
@@ -137,8 +137,8 @@ int Amesos_Lapack::SymbolicFactorization()
 
   MyPID_             = Comm().MyPID();
   NumProcs_          = Comm().NumProc();
-  NumGlobalRows_     = Matrix()->NumGlobalRows64();
-  NumGlobalNonzeros_ = Matrix()->NumGlobalNonzeros64();
+  NumGlobalRows_     = Matrix()->NumGlobalRows();
+  NumGlobalNonzeros_ = Matrix()->NumGlobalNonzeros();
 
 
   if (NumProcs_ == 1)
@@ -148,27 +148,14 @@ int Amesos_Lapack::SymbolicFactorization()
   {
     int NumElements = 0;
     if (MyPID_ == 0)
-      NumElements = static_cast<int>(NumGlobalRows64());
-#if !defined(EPETRA_NO_32BIT_GLOBAL_INDICES) || !defined(EPETRA_NO_64BIT_GLOBAL_INDICES)
+      NumElements = NumGlobalRows();
+
     SerialMap_ = rcp(new Epetra_Map(-1, NumElements, 0, Comm()));
-#endif
     if (SerialMap_.get() == 0)
       AMESOS_CHK_ERR(-1);
 
-    MatrixImporter_ = rcp(new Epetra_Import(SerialMap(), Matrix()->RowMatrixRowMap()));
-    if (MatrixImporter_.get() == 0)
-      AMESOS_CHK_ERR(-1);
-
-    const bool switchDomainRangeMaps = (UseTranspose_ != Matrix()->UseTranspose());
-
-    const Epetra_Map &rhsMap = switchDomainRangeMaps ? Matrix()->OperatorDomainMap() : Matrix()->OperatorRangeMap();
-    RhsExporter_ = rcp(new Epetra_Export(rhsMap, SerialMap()));
-    if (RhsExporter_.get() == 0)
-      AMESOS_CHK_ERR(-1);
-
-    const Epetra_Map &solutionMap = switchDomainRangeMaps ? Matrix()->OperatorRangeMap() : Matrix()->OperatorDomainMap();
-    SolutionImporter_ = rcp(new Epetra_Import(solutionMap, SerialMap()));
-    if (SolutionImporter_.get() == 0)
+    Importer_ = rcp(new Epetra_Import(SerialMap(), Matrix()->RowMatrixRowMap()));
+    if (Importer_.get() == 0)
       AMESOS_CHK_ERR(-1);
   }
 
@@ -190,7 +177,7 @@ int Amesos_Lapack::NumericFactorization()
 
   // Only on processor 0 define the dense matrix.
   if (MyPID_ == 0)
-    AMESOS_CHK_ERR(DenseMatrix_.Shape(static_cast<int>(NumGlobalRows64()),static_cast<int>(NumGlobalRows64())));
+    AMESOS_CHK_ERR(DenseMatrix_.Shape(NumGlobalRows(),NumGlobalRows()));
 
   AMESOS_CHK_ERR(DistributedToSerial());
   AMESOS_CHK_ERR(SerialToDense());
@@ -234,10 +221,10 @@ int Amesos_Lapack::SolveSerial(Epetra_MultiVector& X,
   
   int NumVectors = X.NumVectors();
 
-  Epetra_SerialDenseMatrix DenseX(static_cast<int>(NumGlobalRows64()),NumVectors);
-  Epetra_SerialDenseMatrix DenseB(static_cast<int>(NumGlobalRows64()),NumVectors);
+  Epetra_SerialDenseMatrix DenseX(NumGlobalRows(),NumVectors);
+  Epetra_SerialDenseMatrix DenseB(NumGlobalRows(),NumVectors);
 
-  for (int i = 0 ; i < NumGlobalRows64() ; ++i)
+  for (int i = 0 ; i < NumGlobalRows() ; ++i)
     for (int j = 0 ; j < NumVectors ; ++j)
       DenseB(i,j) = B[j][i];
 
@@ -245,7 +232,7 @@ int Amesos_Lapack::SolveSerial(Epetra_MultiVector& X,
   DenseSolver_.SolveWithTranspose(UseTranspose());
   AMESOS_CHK_ERR(DenseSolver_.Solve());
 
-  for (int i = 0 ; i < NumGlobalRows64() ; ++i)
+  for (int i = 0 ; i < NumGlobalRows() ; ++i)
     for (int j = 0 ; j < NumVectors ; ++j)
        X[j][i] = DenseX(i,j);
 
@@ -267,16 +254,16 @@ int Amesos_Lapack::SolveDistributed(Epetra_MultiVector& X,
   // with all elements on on process 0.
   Epetra_MultiVector SerialVector(SerialMap(),NumVectors);
   // import off-process data
-  AMESOS_CHK_ERR(SerialVector.Export(B,RhsExporter(),Insert));
+  AMESOS_CHK_ERR(SerialVector.Import(B,Importer(),Insert));
 
   VecRedistTime_ = AddTime("Total vector redistribution time", VecRedistTime_);
   ResetTimer();
 
   if (MyPID_ == 0) {
-    Epetra_SerialDenseMatrix DenseX(static_cast<int>(NumGlobalRows64()),NumVectors);
-    Epetra_SerialDenseMatrix DenseB(static_cast<int>(NumGlobalRows64()),NumVectors);
+    Epetra_SerialDenseMatrix DenseX(NumGlobalRows(),NumVectors);
+    Epetra_SerialDenseMatrix DenseB(NumGlobalRows(),NumVectors);
 
-    for (int i = 0 ; i < NumGlobalRows64() ; ++i)
+    for (int i = 0 ; i < NumGlobalRows() ; ++i)
       for (int j = 0 ; j < NumVectors ; ++j)
 	DenseB(i,j) = SerialVector[j][i];
 
@@ -284,7 +271,7 @@ int Amesos_Lapack::SolveDistributed(Epetra_MultiVector& X,
     DenseSolver_.SolveWithTranspose(UseTranspose());
     AMESOS_CHK_ERR(DenseSolver_.Solve());
 
-    for (int i = 0 ; i < NumGlobalRows64() ; ++i)
+    for (int i = 0 ; i < NumGlobalRows() ; ++i)
       for (int j = 0 ; j < NumVectors ; ++j)
 	SerialVector[j][i] = DenseX(i,j);
   }
@@ -292,7 +279,7 @@ int Amesos_Lapack::SolveDistributed(Epetra_MultiVector& X,
   SolveTime_ = AddTime("Total solve time", SolveTime_);
   ResetTimer();
 
-  AMESOS_CHK_ERR(X.Import(SerialVector,SolutionImporter(),Insert));
+  AMESOS_CHK_ERR(X.Export(SerialVector,Importer(),Insert));
 
   VecRedistTime_ = AddTime("Total vector redistribution time", VecRedistTime_);
   ++NumSolve_;
@@ -308,8 +295,8 @@ int Amesos_Lapack::SerialToDense()
 
   ResetTimer();
 
-  for (int i = 0 ; i < NumGlobalRows64() ; ++i)
-    for (int j = 0 ; j < NumGlobalRows64() ; ++j)
+  for (int i = 0 ; i < NumGlobalRows() ; ++i)
+    for (int j = 0 ; j < NumGlobalRows() ; ++j)
       DenseMatrix_(i,j) = 0.0;
 
   // allocate storage to extract matrix rows.
@@ -359,7 +346,7 @@ int Amesos_Lapack::DistributedToSerial()
   {
     SerialCrsMatrix_ = rcp(new Epetra_CrsMatrix(Copy,SerialMap(), 0));
     SerialMatrix_    = rcp(&SerialCrsMatrix(), false);
-    AMESOS_CHK_ERR(SerialCrsMatrix().Import(*Matrix(),MatrixImporter(),Insert));
+    AMESOS_CHK_ERR(SerialCrsMatrix().Import(*Matrix(),Importer(),Insert));
     AMESOS_CHK_ERR(SerialCrsMatrix().FillComplete());
   }
 
@@ -375,7 +362,7 @@ int Amesos_Lapack::GEEV(Epetra_Vector& Er, Epetra_Vector& Ei)
     AMESOS_CHK_ERR(SymbolicFactorization());
 
   if (MyPID_ == 0)
-    AMESOS_CHK_ERR(DenseMatrix_.Shape(static_cast<int>(NumGlobalRows64()),static_cast<int>(NumGlobalRows64())));
+    AMESOS_CHK_ERR(DenseMatrix_.Shape(NumGlobalRows(),NumGlobalRows()));
 
   AMESOS_CHK_ERR(DistributedToSerial());
   AMESOS_CHK_ERR(SerialToDense());
@@ -396,7 +383,7 @@ int Amesos_Lapack::GEEV(Epetra_Vector& Er, Epetra_Vector& Ei)
 
   if (MyPID_ == 0) 
   {
-    int n = static_cast<int>(NumGlobalRows64());
+    int n = NumGlobalRows();
     char jobvl = 'N'; /* V/N to calculate/not calculate left eigenvectors
                          of matrix H.*/
     char jobvr = 'N'; /* As above, but for right eigenvectors. */
@@ -434,8 +421,8 @@ int Amesos_Lapack::GEEV(Epetra_Vector& Er, Epetra_Vector& Ei)
   {
     // I am not really sure that exporting the results make sense... 
     // It is just to be coherent with the other parts of the code.
-    Er.Import(*LocalEr, Epetra_Import(Er.Map(), SerialMap()), Insert);
-    Ei.Import(*LocalEi, Epetra_Import(Ei.Map(), SerialMap()), Insert);
+    Er.Export(*LocalEr, Importer(), Insert);
+    Ei.Export(*LocalEi, Importer(), Insert);
   }
 
   return(0);
@@ -466,7 +453,7 @@ void Amesos_Lapack::PrintStatus() const
  
   int percentage = 0;
   if (NumGlobalRows_ != 0)
-    percentage = static_cast<int>(NumGlobalNonzeros_ / (NumGlobalRows_ * NumGlobalRows_));
+    percentage = NumGlobalNonzeros_ / (NumGlobalRows_ * NumGlobalRows_);
 
   std::cout << p << "Matrix has " << NumGlobalRows_ << " rows"
        << " and " << NumGlobalNonzeros_ << " nonzeros" << std::endl;

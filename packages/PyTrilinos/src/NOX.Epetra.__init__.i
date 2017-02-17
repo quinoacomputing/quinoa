@@ -3,41 +3,27 @@
 // @HEADER
 // ***********************************************************************
 //
-//          PyTrilinos: Python Interfaces to Trilinos Packages
-//                 Copyright (2014) Sandia Corporation
+//              PyTrilinos: Python Interface to Trilinos
+//                 Copyright (2005) Sandia Corporation
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia
-// Corporation, the U.S. Government retains certain rights in this
-// software.
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
@@ -86,11 +72,7 @@ NOX.Epetra provides the following user-level classes:
 #undef HAVE_STDINT_H
 #endif
 #include "Teuchos_RCPDecl.hpp"
-#include "Teuchos_DefaultSerialComm.hpp"
-#ifdef HAVE_MPI
-#include "Teuchos_DefaultMpiComm.hpp"
-#endif
-#include "PyTrilinos_Teuchos_Util.hpp"
+#include "PyTrilinos_Teuchos_Util.h"
 
 // Epetra includes
 #include "Epetra_BLAS.h"
@@ -98,9 +80,6 @@ NOX.Epetra provides the following user-level classes:
 #include "Epetra_CompObject.h"
 #include "Epetra_SrcDistObject.h"
 #include "Epetra_DistObject.h"
-#include "Epetra_LocalMap.h"
-#include "Epetra_Export.h"
-#include "Epetra_OffsetIndex.h"
 #include "Epetra_IntVector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_Vector.h"
@@ -108,17 +87,12 @@ NOX.Epetra provides the following user-level classes:
 #include "Epetra_Operator.h"
 #include "Epetra_InvOperator.h"
 #include "Epetra_RowMatrix.h"
-#include "Epetra_CrsMatrix.h"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVbrMatrix.h"
 #include "Epetra_CrsGraph.h"
 #include "Epetra_MapColoring.h"
 #include "Epetra_JadMatrix.h"
 #include "Epetra_SerialDenseSVD.h"
 #include "Epetra_SerialDistributor.h"
 #include "Epetra_DLLExportMacro.h"
-#include "PyTrilinos_Epetra_Util.hpp"
-#include "PyTrilinos_LinearProblem.hpp"
 
 // EpetraExt includes
 #ifdef HAVE_NOX_EPETRAEXT
@@ -143,9 +117,18 @@ NOX.Epetra provides the following user-level classes:
 #include "NOX_Epetra_LinearSystem_AztecOO.H"
 #include "NOX_Epetra_ModelEvaluatorInterface.H"
 
-// NumPy include
+// Local includes
 #define NO_IMPORT_ARRAY
-#include "numpy_include.hpp"
+#include "numpy_include.h"
+#include "Epetra_NumPyFEVector.h"
+#include "Epetra_NumPyIntSerialDenseMatrix.h"
+#include "Epetra_NumPyIntSerialDenseVector.h"
+#include "Epetra_NumPyIntVector.h"
+#include "Epetra_NumPyMultiVector.h"
+#include "Epetra_NumPySerialDenseMatrix.h"
+#include "Epetra_NumPySerialDenseVector.h"
+#include "Epetra_NumPySerialSymDenseMatrix.h"
+#include "Epetra_NumPyVector.h"
 
 // Namespace flattening
 using Teuchos::RCP;
@@ -157,71 +140,6 @@ using namespace NOX::Epetra;
 
 // Configuration
 %include "Epetra_DLLExportMacro.h"
-
-// Include NOX documentation
-%include "NOX_dox.i"
-
-// General ignore directives
-%ignore *::print(ostream &);
-%ignore *::print(std::ostream &) const;
-%ignore *::print(std::ostream &, int) const;
-%ignore *::operator=;
-%ignore *::operator<<;
-%ignore *::operator[];
-
-// SWIG library includes
-%include "stl.i"
-
-// Trilinos interface import
-%import "Teuchos.i"
-%teuchos_rcp(NOX::Abstract::Group)
-// %teuchos_rcp(NOX::Abstract::MultiVector)
-// %teuchos_rcp(NOX::Abstract::Vector)
-%teuchos_rcp(NOX::Epetra::Interface::Required)
-%teuchos_rcp(NOX::Epetra::Interface::Jacobian)
-%teuchos_rcp(NOX::Epetra::Interface::Preconditioner)
-
-// Allow import from the parent directory
-%pythoncode
-%{
-import sys, os.path as op
-parentDir = op.normpath(op.join(op.dirname(op.abspath(__file__)),".."))
-if not parentDir in sys.path: sys.path.append(parentDir)
-del sys, op
-from .. import Abstract
-%}
-
-// Include typemaps for Abstract base classes
-%ignore *::getXPtr;
-%ignore *::getFPtr;
-%ignore *::getGradientPtr;
-%ignore *::getNewtonPtr;
-%include "NOX.Abstract_typemaps.i"
-%import(module="Abstract" ) "NOX_Abstract_Group.H"
-%import(module="Abstract" ) "NOX_Abstract_PrePostOperator.H"
-%import(module="Abstract" ) "NOX_Abstract_MultiVector.H"
-%import(module="Abstract" ) "NOX_Abstract_Vector.H"
-%import(module="Interface") "NOX_Epetra_Interface_Required.H"
-%import(module="Interface") "NOX_Epetra_Interface_Jacobian.H"
-%import(module="Interface") "NOX_Epetra_Interface_Preconditioner.H"
-
-// Support for Teuchos::RCPs
-%teuchos_rcp(NOX::Epetra::Group)
-%teuchos_rcp(NOX::Epetra::FiniteDifference)
-%teuchos_rcp(NOX::Epetra::MatrixFree)
-%teuchos_rcp(NOX::Epetra::LinearSystem)
-%teuchos_rcp(NOX::Epetra::LinearSystemAztecOO)
-%teuchos_rcp(NOX::Epetra::Scaling)
-%teuchos_rcp(NOX::Epetra::VectorSpace)
-
-// Epetra import
-%import "Epetra.i"
-
-// EpetraExt import
-#ifdef HAVE_NOX_EPETRAEXT
-%ignore EpetraExt::Add;
-%include "EpetraExt.i"
-#endif
 
 // General exception handling
 %include "exception.i"
@@ -261,18 +179,202 @@ from .. import Abstract
   }
 }
 
-// Allow import from the parent directory
-%pythoncode
-%{
-import sys, os.path as op
-parentDir = op.normpath(op.join(op.dirname(op.abspath(__file__)),".."))
-if not parentDir in sys.path: sys.path.append(parentDir)
-del sys, op
-%}
+// Include NOX documentation
+%include "NOX_dox.i"
+
+// General ignore directives
+%ignore *::print(ostream &);
+%ignore *::print(std::ostream &) const;
+%ignore *::print(std::ostream &, int) const;
+%ignore *::operator=;
+%ignore *::operator<<;
+
+// SWIG library includes
+%include "stl.i"
+
+// Trilinos interface import
+%import "Teuchos.i"
+
+// Support for Teuchos::RCPs
+%teuchos_rcp(NOX::Epetra::LinearSystem)
+%teuchos_rcp(NOX::Epetra::LinearSystemAztecOO)
+%teuchos_rcp(NOX::Epetra::Scaling)
+%teuchos_rcp(NOX::Epetra::VectorSpace)
+
+//////////////
+// Typemaps //
+//////////////
+
+// Make Epetra_Vector and NOX::Epetra::Vector input arguments
+// interchangeable
+%typemap(in) NOX::Epetra::Vector &
+(void* argp=0, int res=0, Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > tempshared,
+ bool cleanup=false)
+{
+  res = SWIG_ConvertPtr($input, &argp, $descriptor, %convertptr_flags);
+  if (!SWIG_IsOK(res))
+  {
+    int newmem = 0;
+    res = SWIG_ConvertPtrAndOwn($input,
+				&argp,
+				$descriptor(Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *),
+				%convertptr_flags, &newmem);
+    if (!SWIG_IsOK(res))
+    {
+      %argument_fail(res, "$type", $symname, $argnum);
+    }
+    if (!argp)
+    {
+      %argument_nullref("$type", $symname, $argnum);
+    }
+    if (newmem & SWIG_CAST_NEW_MEMORY)
+    {
+      tempshared = *%reinterpret_cast(argp, Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *);
+      delete %reinterpret_cast(argp, Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *);
+      $1 = new NOX::Epetra::Vector(Teuchos::rcp_dynamic_cast< Epetra_Vector >(tempshared),
+				   NOX::Epetra::Vector::CreateView);
+      cleanup = true;
+    }
+    else
+    {
+      tempshared = *%reinterpret_cast(argp, Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *);
+      $1 = new NOX::Epetra::Vector(Teuchos::rcp_dynamic_cast< Epetra_Vector >(tempshared),
+				   NOX::Epetra::Vector::CreateView);
+      cleanup = true;
+    }
+  }
+  else
+  {
+    $1 = %reinterpret_cast(argp, NOX::Epetra::Vector*);
+  }
+}
+%typecheck(1190) NOX::Epetra::Vector &
+{
+  $1 = SWIG_CheckState(SWIG_ConvertPtr($input, 0, $descriptor, 0)) ? 1 : 0;
+  if (!$1)
+    $1 = SWIG_CheckState(SWIG_ConvertPtrAndOwn($input, 0,
+			       $descriptor(Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *),
+			       %convertptr_flags, 0)) ? 1 : 0;
+}
+%typemap(freearg) NOX::Epetra::Vector &
+{
+  if (cleanup$argnum) delete $1;
+}
+
+// Convert NOX::Abstract::Vector return arguments to Epetra.Vectors
+%typemap(out) NOX::Abstract::Vector &
+(NOX::Epetra::Vector* nevResult  = NULL)
+{
+  nevResult = dynamic_cast<NOX::Epetra::Vector*>($1);
+  if (nevResult == NULL)
+  {
+    // If we cannot downcast, then return the NOX::Abstract::Vector
+    $result = SWIG_NewPointerObj((void*)&$1, $descriptor, 1);
+  }
+  else
+  {
+    PyTrilinos::Epetra_NumPyVector enpvResult(View, nevResult->getEpetraVector(), 0);
+    Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *smartresult = 
+      new Teuchos::RCP< PyTrilinos::Epetra_NumPyVector >(enpvResult, bool($owner));
+    %set_output(SWIG_NewPointerObj(%as_voidptr(smartresult),
+				   $descriptor(Teuchos::RCP< PyTrilinos::Epetra_NumPyVector > *),
+				   SWIG_POINTER_OWN));
+  }
+}
+
+// Convert Epetra_Vector return arguments to Epetra.Vectors (now provided by Epetra_Base.i)
+// %typemap(out) Epetra_Vector & (PyTrilinos::Epetra_NumPyVector* enpvResult = NULL)
+// {
+//   enpvResult = new PyTrilinos::Epetra_NumPyVector(View, *$1, 0);
+//   $result = SWIG_NewPointerObj((void*)enpvResult, $descriptor(PyTrilinos::Epetra_NumPyVector*), 1);
+// }
+
+// Convert NOX::Epetra::LinearSystem objects to
+// NOX::Epetra::LinearSystemAztecOO
+%typemap(out) Teuchos::RCP< NOX::Epetra::LinearSystem >
+(NOX::Epetra::LinearSystem*        nelsPtr     = NULL,
+ NOX::Epetra::LinearSystemAztecOO* nelsaResult = NULL)
+{
+  nelsPtr = $1.get();
+  nelsaResult = dynamic_cast< NOX::Epetra::LinearSystemAztecOO*>(nelsPtr);
+  if (nelsaResult == NULL)
+  {
+    //If we cannot downcast then return the NOX::Epetra::LinearSystem
+    %set_output(SWIG_NewPointerObj(%as_voidptr(&$1),
+				   $descriptor(Teuchos::RCP< NOX::Epetra::LinearSystem > *),
+				   SWIG_POINTER_OWN));
+  }
+  else
+  {
+    Teuchos::RCP< NOX::Epetra::LinearSystemAztecOO > *smartresult =
+      new Teuchos::RCP< NOX::Epetra::LinearSystemAztecOO >(nelsaResult);
+    %set_output(SWIG_NewPointerObj(%as_voidptr(smartresult),
+				   $descriptor(Teuchos::RCP< NOX::Epetra::LinearSystemAztecOO > *),
+				   SWIG_POINTER_OWN));
+  }
+}
+
+%typemap(out) Teuchos::RCP< const NOX::Epetra::LinearSystem >
+(const NOX::Epetra::LinearSystem*        nelsPtr     = NULL,
+ const NOX::Epetra::LinearSystemAztecOO* nelsaResult = NULL)
+{
+  nelsPtr = $1.get();
+  nelsaResult = dynamic_cast< const NOX::Epetra::LinearSystemAztecOO*>(nelsPtr);
+  if (nelsaResult == NULL)
+  {
+    //If we cannot downcast then return the NOX::Epetra::LinearSystem
+    %set_output(SWIG_NewPointerObj(%as_voidptr(&$1),
+				   $descriptor(Teuchos::RCP< NOX::Epetra::LinearSystem > *),
+				   SWIG_POINTER_OWN));
+  }
+  else
+  {
+    Teuchos::RCP< const NOX::Epetra::LinearSystemAztecOO > *smartresult =
+      new Teuchos::RCP< const NOX::Epetra::LinearSystemAztecOO >(nelsaResult);
+    %set_output(SWIG_NewPointerObj(%as_voidptr(smartresult),
+				   $descriptor(Teuchos::RCP< NOX::Epetra::LinearSystemAztecOO > *),
+				   SWIG_POINTER_OWN));
+  }
+}
+
+// Epetra includes.  This is a potential source of problems.  The
+// simple thing to do is to add an "%import 'Epetra.i'" here.  If I do
+// that, strange things start to happen: other, seemingly unrelated
+// wrappers start to seg fault.  I do not have a good explanation for
+// it.  By %include-ing the following, I bypass inserting an "import
+// PyTrilinos.Epetra" into the resulting .py file (because Epetra_*.i
+// files do not have a %module directive).  This seems to provide the
+// functionality I need without causing whatever confusion is at risk
+// here.
+%include "Epetra_config.h"
+%include "Epetra_Base.i"
+%teuchos_rcp_epetra_numpy(IntSerialDenseVector)
+%teuchos_rcp_epetra_numpy(SerialDenseVector)
+%teuchos_rcp_epetra_numpy(SerialDenseMatrix)
+%include "Epetra_Comm.i"
+%include "Epetra_Maps.i"
+%include "Epetra_Dist.i"
+%teuchos_rcp_epetra_numpy(MultiVector)
+%teuchos_rcp_epetra_numpy(Vector)
+%include "Epetra_Graphs.i"
+%include "Epetra_Operators.i"
+
+// EpetraExt import
+#ifdef HAVE_NOX_EPETRAEXT
+%ignore EpetraExt::Add;
+%include "EpetraExt.i"
+#endif
+
+// NOX import
+%import "NOX.Abstract.i"
+
+// NOX::Epetra::Interface imports
+%import "NOX.Epetra.Interface.i"
 
 //////////////////////////////
 // NOX.Epetra.Group support //
 //////////////////////////////
+%teuchos_rcp(NOX::Epetra::Group)
 %rename(Group_None) NOX::Epetra::Group::None;
 %include "NOX_Epetra_Group.H"
 
@@ -286,6 +388,7 @@ del sys, op
 /////////////////////////////////////////
 // NOX.Epetra.FiniteDifference support //
 /////////////////////////////////////////
+%teuchos_rcp(NOX::Epetra::FiniteDifference)
 %include "NOX_Epetra_FiniteDifference.H"
 
 /////////////////////////////////////////////////
@@ -336,6 +439,7 @@ namespace Epetra
 ///////////////////////////////////
 // NOX.Epetra.MatrixFree support //
 ///////////////////////////////////
+%teuchos_rcp(NOX::Epetra::MatrixFree)
 %include "NOX_Epetra_MatrixFree.H"
 
 ////////////////////////////////
@@ -353,7 +457,6 @@ namespace Epetra
 // arguments that conflict with a SWIG director method argument
 #define result nox_result
 %include "NOX_Epetra_LinearSystem.H"
-#undef result
 
 ////////////////////////////////////////////
 // NOX.Epetra.LinearSystemAztecOO support //
@@ -493,10 +596,10 @@ def defaultGroup(nonlinearParameters, initGuess, reqInterface, jacInterface=None
         assert isinstance(reqInterface, Interface.Required)
     if jacInterface is not None:
         assert isinstance(jacInterface, Interface.Jacobian        )
-        assert isinstance(jacobian    , (PyTrilinos.Epetra.Operator, Epetra.Operator))
+        assert isinstance(jacobian    , (PyTrilinos.Epetra.Operator, Operator))
     if precInterface is not None:
         assert isinstance(precInterface , Interface.Preconditioner  )
-        assert isinstance(preconditioner, (PyTrilinos.Epetra.Operator, Epetra.Operator))
+        assert isinstance(preconditioner, (PyTrilinos.Epetra.Operator, Operator))
 
     # Extract parameter lists
     printParams = nonlinearParameters["Printing"     ]
@@ -660,10 +763,10 @@ def defaultSolver(initGuess, reqInterface, jacInterface=None, jacobian=None,
         assert isinstance(reqInterface, Interface.Required)
     if jacInterface is not None:
         assert isinstance(jacInterface, Interface.Jacobian        )
-        assert isinstance(jacobian    , (PyTrilinos.Epetra.Operator, Epetra.Operator))
+        assert isinstance(jacobian    , (PyTrilinos.Epetra.Operator, Operator))
     if precInterface is not None:
         assert isinstance(precInterface , Interface.Preconditioner  )
-        assert isinstance(preconditioner, (PyTrilinos.Epetra.Operator, Epetra.Operator))
+        assert isinstance(preconditioner, (PyTrilinos.Epetra.Operator, Operator))
 
     # Get the communicator
     comm = initGuess.Comm()

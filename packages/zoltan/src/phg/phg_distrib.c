@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
 extern "C" {
@@ -343,7 +310,7 @@ static int Zoltan_PHG_Redistribute_Hypergraph(
                        sizeof(int), (char *) nhg->pref_part);
         if (ncomm->myProc!=-1)  /* ncomm's first row now bcast to other rows */
             MPI_Bcast(nhg->pref_part, nVtx, MPI_INT, 0, ncomm->col_comm);
-    }
+    }    
 
     /* this comm plan is no longer needed. */
     Zoltan_Comm_Destroy(&plan);
@@ -439,8 +406,6 @@ static int Zoltan_PHG_Redistribute_Hypergraph(
     }
 
  End:
-    Zoltan_Comm_Destroy(&plan);  /* Needed if goto End on error condition */
-
     Zoltan_Multifree(__FILE__, __LINE__, 10,
                      &proclist, &sendbuf, &pins, &cnt,
                      &vno, &nno, &dist_x, &dist_y, &vsn, &nsn
@@ -471,7 +436,7 @@ int Zoltan_PHG_Redistribute(
     PHGComm *ocomm = ohg->comm;
     int     *v2Col, *n2Row, ierr=ZOLTAN_OK, i, *ranks;
     int     reqx=hgp->nProc_x_req, reqy=hgp->nProc_y_req;
-    double   frac;
+    float   frac;
     MPI_Group allgrp, newgrp;
     MPI_Comm  nmpicomm;
 
@@ -523,25 +488,22 @@ int Zoltan_PHG_Redistribute(
      * results due to differences in n2Row and v2Col, respectively.  
      * Neither answer is wrong,
      * but the linux results result in FAILED test in test_zoltan.
-     * KDDKDD 10/28/15:  Round-off error when using floats can cause v2Col 
-     * and n2Row to have invalid results, which exhibited in Comm_Do_Post. 
-     * Changing to doubles solved the problem (for now, at least).
      */
-    frac = (double) ohg->nVtx / (double) ncomm->nProc_x;
-    for (i=0; i<ohg->nVtx; ++i)
-        v2Col[i] = (int) ((double) i / frac);
-    frac = (double) ohg->nEdge / (double) ncomm->nProc_y;
+    frac = (float) ohg->nVtx / (float) ncomm->nProc_x;
+    for (i=0; i<ohg->nVtx; ++i) 
+        v2Col[i] = (int) ((float) i / frac);
+    frac = (float) ohg->nEdge / (float) ncomm->nProc_y;
     for (i=0; i<ohg->nEdge; ++i) 
-        n2Row[i] = (int) ((double) i / frac);
+        n2Row[i] = (int) ((float) i / frac);
 
     ierr |= Zoltan_PHG_Redistribute_Hypergraph(zz, hgp, ohg, lo, 
                                                v2Col, n2Row, ncomm, 
                                                nhg, vmap, vdest);
-End:
-
     Zoltan_Multifree(__FILE__, __LINE__, 2,
                      &v2Col, &n2Row);
 
+End:
+    
     return ierr;
 }
 

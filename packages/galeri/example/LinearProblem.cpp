@@ -60,10 +60,10 @@ using namespace Galeri;
 // main driver //
 // =========== //
 
-int main(int argc, char* argv[])
+int main(int argv, char* argc[])
 {
 #ifdef HAVE_MPI
-  MPI_Init(&argc, &argv);
+  MPI_Init(&argv, &argc);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
@@ -88,11 +88,7 @@ int main(int argc, char* argv[])
 
   try
   {
-#ifndef GALERI_TEST_USE_LONGLONG_GO
     Map = CreateMap("Cartesian2D", Comm, GaleriList);
-#else
-    Map = CreateMap64("Cartesian2D", Comm, GaleriList);
-#endif
     Matrix = CreateCrsMatrix("Laplace2D", Map, GaleriList);
     Epetra_Vector ExactSolution(*Map); ExactSolution.Random();
     Epetra_Vector LHS(*Map); LHS.PutScalar(0.0);

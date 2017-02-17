@@ -46,11 +46,6 @@
 #include "Thyra_LinearOpBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 
-#include "Thyra_VectorBase.hpp"
-#include "Thyra_VectorStdOps_decl.hpp"
-
-#include "RTOpPack_TOpAbs.hpp"
-#include "RTOpPack_ROpNorm1.hpp"
 
 namespace Thyra {
 
@@ -76,151 +71,67 @@ MultiVectorBase<Scalar>::clone() const
   return this->clone_mv();
 }
 
-// Overridden methods from RowStatLinearOpBase
+
+//
+// Deprecated public function
+//
+
 
 template<class Scalar>
-bool MultiVectorBase<Scalar>::
-rowStatIsSupportedImpl(const RowStatLinearOpBaseUtils::ERowStat rowStat) const
+void MultiVectorBase<Scalar>::applyOp(
+  const RTOpPack::RTOpT<Scalar> &primary_op,
+  const int num_multi_vecs,
+  const MultiVectorBase<Scalar>*const multi_vecs_in[],
+  const int num_targ_multi_vecs,
+  MultiVectorBase<Scalar>*const targ_multi_vecs_inout[],
+  RTOpPack::ReductTarget*const reduct_objs_inout[],
+  const Ordinal primary_global_offset
+  ) const
 {
-  switch (rowStat) {
-    case RowStatLinearOpBaseUtils::ROW_STAT_INV_ROW_SUM:
-    case RowStatLinearOpBaseUtils::ROW_STAT_ROW_SUM:
-    case RowStatLinearOpBaseUtils::ROW_STAT_INV_COL_SUM:
-    case RowStatLinearOpBaseUtils::ROW_STAT_COL_SUM:
-      return true;
-      break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPT(true);
+  Array<Ptr<const MultiVectorBase<Scalar> > > multi_vecs;
+  for (int k = 0; k < num_multi_vecs; ++k)
+    multi_vecs.push_back(Teuchos::ptr(multi_vecs_in[k]));
+  Array<Ptr<MultiVectorBase<Scalar> > > targ_multi_vecs;
+  for (int k = 0; k < num_targ_multi_vecs; ++k)
+    targ_multi_vecs.push_back(Teuchos::ptr(targ_multi_vecs_inout[k]));
+  Array<Ptr<RTOpPack::ReductTarget> > reduct_objs;
+  if (reduct_objs_inout) {
+    const int secondary_sub_dim = ( num_multi_vecs
+      ? multi_vecs[0]->domain() : targ_multi_vecs[0]->domain()
+      )->dim();
+    for (int k = 0; k < secondary_sub_dim; ++k)
+      reduct_objs.push_back(Teuchos::ptr(reduct_objs_inout[k]));
   }
-
-  return false; // will never be called
+  mvMultiReductApplyOpImpl(
+    primary_op,
+    multi_vecs, targ_multi_vecs,
+    reduct_objs, primary_global_offset);
 }
 
+
 template<class Scalar>
-void MultiVectorBase<Scalar>::
-getRowStatImpl(const RowStatLinearOpBaseUtils::ERowStat rowStat,
-               const Ptr<VectorBase<Scalar> > &rowStatVec) const
+void MultiVectorBase<Scalar>::applyOp(
+  const RTOpPack::RTOpT<Scalar> &primary_op,
+  const RTOpPack::RTOpT<Scalar> &secondary_op,
+  const int num_multi_vecs,
+  const MultiVectorBase<Scalar>*const multi_vecs_in[],
+  const int num_targ_multi_vecs,
+  MultiVectorBase<Scalar>*const targ_multi_vecs_inout[],
+  RTOpPack::ReductTarget* reduct_obj,
+  const Ordinal primary_global_offset
+  ) const
 {
-  switch (rowStat) {
-    case RowStatLinearOpBaseUtils::ROW_STAT_INV_ROW_SUM:
-      absRowSum(rowStatVec);
-      ::Thyra::reciprocal<Scalar>(*rowStatVec,rowStatVec.ptr());
-      break;
-    case RowStatLinearOpBaseUtils::ROW_STAT_ROW_SUM:
-      // compute absolute row sum
-      absRowSum(rowStatVec);
-      break;
-    case RowStatLinearOpBaseUtils::ROW_STAT_INV_COL_SUM:
-      absColSum(rowStatVec);
-      ::Thyra::reciprocal<Scalar>(*rowStatVec,rowStatVec.ptr());
-      break;
-    case RowStatLinearOpBaseUtils::ROW_STAT_COL_SUM:
-      // compute absolute row sum
-      absColSum(rowStatVec);
-      break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPT(true);
-  }
-}
-
-// Overridden methods from ScaledLinearOpBase
-
-template<class Scalar>
-bool MultiVectorBase<Scalar>::
-supportsScaleLeftImpl() const
-{
-  return true;
-}
- 	
-template<class Scalar>
-bool MultiVectorBase<Scalar>::
-supportsScaleRightImpl() const
-{
-  return true;
-}
- 	
-template<class Scalar>
-void MultiVectorBase<Scalar>::
-scaleLeftImpl(const VectorBase< Scalar > &row_scaling)
-{
-  // loop over each column applying the row scaling
-  for(Ordinal i=0;i<this->domain()->dim();i++)
-    ::Thyra::ele_wise_scale<Scalar>(row_scaling,this->col(i).ptr());
-}
- 	
-template<class Scalar>
-void MultiVectorBase<Scalar>::
-scaleRightImpl(const VectorBase< Scalar > &col_scaling)
-{
-  // this is probably incorrect if the domain is distrbuted
-  // but if it is on every processor its probably fine...
-
-  RTOpPack::SubVectorView<Scalar> view;
-  col_scaling.acquireDetachedView(Thyra::Range1D(),&view);
-
-  Teuchos::ArrayRCP<const Scalar> col_scaling_vec = view.values();
-
-  // check to make sure things match up
-  TEUCHOS_ASSERT(this->domain()->dim()==col_scaling_vec.size());
-
-  for(Ordinal i=0;i<this->domain()->dim();i++)
-    ::Thyra::scale<Scalar>(col_scaling_vec[i],this->col(i).ptr());
-}
-
-// helper methods
-
-template<class Scalar>
-void MultiVectorBase<Scalar>::
-absRowSum(const Teuchos::Ptr<Thyra::VectorBase<Scalar> > & output) const
-{
-  using Teuchos::RCP;
-  using Teuchos::ptrFromRef;
-  using Teuchos::tuple;
-
-  // compute absolute value of multi-vector
-  RTOpPack::TOpAbs<Scalar> abs_op;
-  RCP<MultiVectorBase<Scalar> > abs_mv = createMembers(this->range(),this->domain());
-  ::Thyra::applyOp<Scalar>( abs_op, tuple(ptrFromRef(*this)), tuple(abs_mv.ptr()), Teuchos::null );
-
-  // compute sum over all rows
-  RCP<VectorBase<Scalar> > ones = Thyra::createMember(this->domain());
-  ::Thyra::put_scalar<Scalar>(Teuchos::ScalarTraits<Scalar>::one(),ones.ptr());
-  ::Thyra::apply<Scalar>(*abs_mv,Thyra::NOTRANS,*ones,output);
-}
-
-template<class Scalar>
-void MultiVectorBase<Scalar>::
-absColSum(const Teuchos::Ptr<Thyra::VectorBase<Scalar> > & output) const
-{ 
-  using Teuchos::tuple; 
-  using Teuchos::ptrInArg; 
-  using Teuchos::null;
-  using Teuchos::Array;
-  using Teuchos::ArrayView;
-
-  RTOpPack::SubVectorView<Scalar> view;
-  output->acquireDetachedView(Thyra::Range1D(),&view);
-
-  // Thyra::norms_1<Scalar>(*this,view.values()());
-
-  ArrayView<Scalar> norms = view.values()();
-  RTOpPack::ROpNorm1<Scalar> op;
-
-  const int m = this->domain()->dim();
-  Array<RCP<RTOpPack::ReductTarget> > rcp_op_targs(m);
-  Array<Ptr<RTOpPack::ReductTarget> > op_targs(m);
-  for( int kc = 0; kc < m; ++kc ) {
-    rcp_op_targs[kc] = op.reduct_obj_create();
-    op_targs[kc] = rcp_op_targs[kc].ptr();
-  }
-  ::Thyra::applyOp<Scalar>(op, tuple(ptrInArg(*this)),
-    ArrayView<Ptr<MultiVectorBase<Scalar> > >(null),
-    op_targs );
-  for( int kc = 0; kc < m; ++kc ) {
-    norms[kc] = op(*op_targs[kc]);
-  }
-  
-  output->commitDetachedView(&view);
+  Array<Ptr<const MultiVectorBase<Scalar> > > multi_vecs;
+  for (int k = 0; k < num_multi_vecs; ++k)
+    multi_vecs.push_back(Teuchos::ptr(multi_vecs_in[k]));
+  Array<Ptr<MultiVectorBase<Scalar> > > targ_multi_vecs;
+  for (int k = 0; k < num_targ_multi_vecs; ++k)
+    targ_multi_vecs.push_back(Teuchos::ptr(targ_multi_vecs_inout[k]));
+  mvSingleReductApplyOpImpl(
+    primary_op, secondary_op,
+    multi_vecs, targ_multi_vecs,
+    Teuchos::ptr(reduct_obj),
+    primary_global_offset);
 }
 
 

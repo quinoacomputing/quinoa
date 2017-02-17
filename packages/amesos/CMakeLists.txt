@@ -1,4 +1,6 @@
 
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 
 #
 # A) Define the package
@@ -15,17 +17,6 @@ IF(${PACKAGE_NAME}_ENABLE_SuperLUDist AND NOT ${PACKAGE_NAME}_ENABLE_ParMETIS)
   MESSAGE(FATAL_ERROR "The Amesos support for the SuperLUIDist TPL requires the ParMETIS TPL.  Either disable Amesos SuperLUDist support or enable the ParMETIS TPL.")
 ENDIF()
 
-# if using MUMPS, must be parallel
-IF(${PACKAGE_NAME}_ENABLE_MUMPS)
-IF(NOT TPL_ENABLE_MPI)
-   
-   MESSAGE(WARNING "\n\n*** Amesos does not support MUMPS without MPI ** \n\n")
-   
-   SET(${PACKAGE_NAME}_ENABLE_MUMPS OFF)
-
-ENDIF()
-ENDIF()
-
 # if using parallel MUMPS, must also link in scalapack and BLACS
 
 IF(${PACKAGE_NAME}_ENABLE_MUMPS AND ${PACKAGE_NAME}_ENABLE_MPI AND NOT ${PACKAGE_NAME}_ENABLE_SCALAPACK)
@@ -35,8 +26,6 @@ ENDIF()
 IF(${PACKAGE_NAME}_ENABLE_MUMPS AND ${PACKAGE_NAME}_ENABLE_MPI AND NOT ${PACKAGE_NAME}_ENABLE_BLACS)
   MESSAGE(FATAL_ERROR "The Amesos support for parallel MUMPS requires BLACS.")
 ENDIF()
-
-
 
 ## Most of the options below are bogus.  The handling of TPLs is done
 ## through the dependencies file.  This needs to be cleaned up. I'm
@@ -58,13 +47,8 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_KLU
   "Enable KLU (Tim Davis's Files)."
   ON )
 
-TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_PARDISO
+TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_Pardiso
   HAVE_AMESOS_PARDISO
-  "Enable PARDISO functionality."
-  OFF )
-
-TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_PARDISO_MKL
-  HAVE_AMESOS_PARDISO_MKL
   "Enable PARDISO functionality."
   OFF )
 
@@ -77,7 +61,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_LAPACK
   HAVE_AMESOS_LAPACK
   "Enable LAPACK functionality."
   ON )
-  
+
 # ...
 
 #
@@ -110,6 +94,16 @@ TRIBITS_EXCLUDE_FILES(
   src/Amesos_Component.h
   src/Amesos_Merikos.h
   src/Amesos_BTF.h
+  src/SuiteSparse/CAMD/Source/amesos_camd_1.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_aat.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_control.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_defaults.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_dump.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_info.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_order.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_preprocess.c
+  src/SuiteSparse/CAMD/Source/amesos_camd_valid.c
+  src/SuiteSparse/CCOLAMD/Source/amesos_ccolamd.c
   src/SuiteSparse/CHOLMOD/Cholesky/amesos_cholmod_amd.c
   src/SuiteSparse/CHOLMOD/Cholesky/amesos_cholmod_analyze.c
   src/SuiteSparse/CHOLMOD/Cholesky/amesos_cholmod_colamd.c

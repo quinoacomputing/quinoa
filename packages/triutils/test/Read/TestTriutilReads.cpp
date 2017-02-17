@@ -74,7 +74,7 @@
 #include "Trilinos_Util_Version.h"
 #include "Epetra_Map.h"
 
-  int TestOneMatrix( std::string HBname, std::string MMname, std::string TRIname, Epetra_Comm &Comm, bool verbose ) { 
+  int TestOneMatrix( string HBname, string MMname, string TRIname, Epetra_Comm &Comm, bool verbose ) { 
 
   if ( Comm.MyPID() != 0 ) verbose = false ; 
 
@@ -96,7 +96,7 @@
   Epetra_Vector * MatrixMarketxexact = 0;
    
   int TRI_Size = TRIname.size() ; 
-  std::string LastFiveBytes = TRIname.substr( EPETRA_MAX(0,TRI_Size-5), TRI_Size );
+  string LastFiveBytes = TRIname.substr( EPETRA_MAX(0,TRI_Size-5), TRI_Size );
 
   if ( LastFiveBytes == ".TimD" ) { 
     // Call routine to read in a file with a Tim Davis header and zero-based indexing
@@ -135,17 +135,17 @@
 
 
 #if 0
-  std::cout << " HbA " ; 
-  HbA->Print( std::cout ) ; 
-  std::cout << std::endl ; 
+  cout << " HbA " ; 
+  HbA->Print( cout ) ; 
+  cout << endl ; 
 
-  std::cout << " MatrixMarketA " ; 
-  MatrixMarketA->Print( std::cout ) ; 
-  std::cout << std::endl ; 
+  cout << " MatrixMarketA " ; 
+  MatrixMarketA->Print( cout ) ; 
+  cout << endl ; 
 
-  std::cout << " TriplesA " ; 
-  TriplesA->Print( std::cout ) ; 
-  std::cout << std::endl ; 
+  cout << " TriplesA " ; 
+  TriplesA->Print( cout ) ; 
+  cout << endl ; 
 #endif
 
 
@@ -181,17 +181,17 @@
       MMerr += ( resid_Hb_Matrix_Market > 1e-11 * norm_A ) ; 
 
       if ( verbose && resid_Hb_Triples > 1e-11 * norm_A ) 
-	std::cout << " resid_Hb_Triples = " <<  resid_Hb_Triples 
-	     << " norm_A = " << norm_A << std::endl ; 
+	cout << " resid_Hb_Triples = " <<  resid_Hb_Triples 
+	     << " norm_A = " << norm_A << endl ; 
       if ( verbose && resid_Hb_Matrix_Market > 1e-11 * norm_A ) 
-	std::cout << " resid_Hb_Matrix_Market = " <<  resid_Hb_Matrix_Market 
-	     << " norm_A = " << norm_A << std::endl ; 
+	cout << " resid_Hb_Matrix_Market = " <<  resid_Hb_Matrix_Market 
+	     << " norm_A = " << norm_A << endl ; 
 
     }
 
   if ( verbose ) { 
-    if ( TripleErr ) std::cout << " Error in reading " << HBname << " or " << TRIname << std::endl ; 
-    if ( MMerr ) std::cout << " Error in reading " << HBname << " or " << MMname << std::endl ; 
+    if ( TripleErr ) cout << " Error in reading " << HBname << " or " << TRIname << endl ; 
+    if ( MMerr ) cout << " Error in reading " << HBname << " or " << MMname << endl ; 
   }
 
   delete HbA; 
@@ -227,7 +227,7 @@ int main( int argc, char *argv[] ) {
 #endif
 
   if (verbose && Comm.MyPID()==0)
-    std::cout << Triutils_Version() << std::endl << std::endl;
+    cout << Triutils_Version() << endl << endl;
 
   std::string path("./");
 

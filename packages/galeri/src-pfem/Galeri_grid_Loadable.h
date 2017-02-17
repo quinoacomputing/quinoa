@@ -133,7 +133,7 @@ class Loadable : public core::Object
     Loadable(const Epetra_Comm& comm,
              const int numGlobalElements,
              const int numMyElements,
-             const std::string& elementType,
+             const string& elementType,
              const int* myGlobalElements = 0,
              const int numElementData = 0,
              const int numVertexData = 0);

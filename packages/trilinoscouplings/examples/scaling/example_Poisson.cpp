@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -85,7 +85,6 @@
 
 // TrilinosCouplings includes
 #include "TrilinosCouplings_config.h"
-#include "TrilinosCouplings_Pamgen_Utils.hpp"
 
 // Intrepid includes
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -124,8 +123,8 @@
 
 // Pamgen includes
 #include "create_inline_mesh.h"
-#include "pamgen_im_exodusII_l.h"
-#include "pamgen_im_ne_nemesisI_l.h"
+#include "im_exodusII_l.h"
+#include "im_ne_nemesisI_l.h"
 #include "pamgen_extras.h"
 
 // AztecOO includes
@@ -146,12 +145,8 @@
 #include "Isorropia_EpetraPartitioner.hpp"
 #endif
 
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#include "Sacado.hpp"
-#else
 // Sacado includes
-#include "Sacado_No_Kokkos.hpp"
-#endif
+#include "Sacado.hpp"
 
 using namespace std;
 using namespace Intrepid;
@@ -380,7 +375,7 @@ int main(int argc, char *argv[]) {
    if(xmlSolverInFileName.length()) {
      if (MyPID == 0)
         std::cout << "\nReading parameter list from the XML file \""<<xmlSolverInFileName<<"\" ...\n\n";
-     Teuchos::updateParametersFromXmlFile(xmlSolverInFileName, Teuchos::inoutArg(inputSolverList));
+     Teuchos::updateParametersFromXmlFile(xmlSolverInFileName,&inputSolverList);
    } else if (MyPID == 0) std::cout << "Using default solver values ..." << std::endl;
 
    // Get pamgen mesh definition
@@ -423,8 +418,7 @@ int main(int argc, char *argv[]) {
 
    // Generate mesh with Pamgen
     long long maxInt = 9223372036854775807LL;
-    long long cr_result = Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
-    TrilinosCouplings::pamgen_error_check(std::cout,cr_result);
+    Create_Pamgen_Mesh(meshInput.c_str(), dim, rank, numProcs, maxInt);
 
     string msg("Poisson: ");
     if(MyPID == 0) {cout << msg << "Pamgen Setup     = " << Time.ElapsedTime() << endl; Time.ResetStartTime();}
@@ -509,6 +503,9 @@ int main(int argc, char *argv[]) {
       nodeCoord(i,1)=nodeCoordy[i];
       nodeCoord(i,2)=nodeCoordz[i];
     }
+    delete [] nodeCoordx;
+    delete [] nodeCoordy;
+    delete [] nodeCoordz;
 
     /*parallel info*/
     long long num_internal_nodes;
@@ -1072,12 +1069,6 @@ int main(int argc, char *argv[]) {
  // Run the solver
   Teuchos::ParameterList MLList = inputSolverList;
   ML_Epetra::SetDefaults("SA", MLList, 0, 0, false);
-  
-  MLList.set("x-coordinates",nodeCoordx);
-  MLList.set("y-coordinates",nodeCoordy);
-  MLList.set("z-coordinates",nodeCoordz);
-
-
   Epetra_FEVector exactNodalVals(globalMapG);
   Epetra_FEVector femCoefficients(globalMapG);
   double TotalErrorResidual = 0.0;
@@ -1129,7 +1120,7 @@ int main(int argc, char *argv[]) {
 #ifdef HAVE_MPI
   // Import solution onto current processor
   //int numNodesGlobal = globalMapG.NumGlobalElements();
-  Epetra_Map     solnMap(static_cast<int>(numNodesGlobal), static_cast<int>(numNodesGlobal), 0, Comm);
+  Epetra_Map     solnMap(numNodesGlobal, numNodesGlobal, 0, Comm);
   Epetra_Import  solnImporter(solnMap, globalMapG);
   Epetra_Vector  uCoeff(solnMap);
   uCoeff.Import(femCoefficients, solnImporter, Insert);
@@ -1326,10 +1317,6 @@ int main(int argc, char *argv[]) {
       delete [] comm_node_ids;
       delete [] comm_node_proc_ids;
    }
-
-    delete [] nodeCoordx;
-    delete [] nodeCoordy;
-    delete [] nodeCoordz;
 
    // delete mesh
    Delete_Pamgen_Mesh();

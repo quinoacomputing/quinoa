@@ -140,29 +140,26 @@ Thyra::create_VectorSpace(
   const RCP<const Epetra_Map> &epetra_map
   )
 {
-  using Teuchos::as; using Teuchos::inoutArg;
 #ifdef TEUCHOS_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(
     !epetra_map.get(), std::invalid_argument,
     "create_VectorSpace::initialize(...): Error!" );
 #endif // TEUCHOS_DEBUG
-  RCP<const Teuchos::Comm<Ordinal> > comm =
-    create_Comm(Teuchos::rcpFromRef(epetra_map->Comm())).assert_not_null();
-  Teuchos::set_extra_data(epetra_map, "epetra_map", inoutArg(comm));
+  RCP<const Teuchos::Comm<Ordinal> >
+    comm = create_Comm(Teuchos::rcp(&epetra_map->Comm(),false)).assert_not_null();
+  Teuchos::set_extra_data( epetra_map, "epetra_map", Teuchos::inOutArg(comm) );
   const Ordinal localSubDim = epetra_map->NumMyElements();
   RCP<DefaultSpmdVectorSpace<double> > vs =
     defaultSpmdVectorSpace<double>(
-      comm, localSubDim, epetra_map->NumGlobalElements64(),
-      !epetra_map->DistributedGlobal());
-  TEUCHOS_ASSERT_EQUALITY(vs->dim(), as<Ordinal>(epetra_map->NumGlobalElements64()));
-  // NOTE: the above assert just checks to make sure that the size of the
-  // Ordinal type can hold the size returned from NumGlobalElemenets64().  A
-  // 64 bit system will always have Ordinal=ptrdiff_t by default which will
-  // always be 64 bit so this should be fine.  However, if Ordinal were
-  // defined to only be 32 bit and then this exception could trigger.  Because
-  // this assert will only likely trigger in a non-debug build, we will leave
-  // the assert unguarded since it is very cheap to perform.
-  Teuchos::set_extra_data( epetra_map, "epetra_map", inoutArg(vs) );
+      comm, localSubDim, epetra_map->NumGlobalElements());
+#ifndef TEUCHOS_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    vs->dim() != epetra_map->NumGlobalElements(), std::logic_error
+    ,"create_VectorSpace(...): Error, vs->dim() = "<<vs->dim()<<" != "
+    "epetra_map->NumGlobalElements() = "<<epetra_map->NumGlobalElements()<<"!"
+    );
+#endif		
+  Teuchos::set_extra_data( epetra_map, "epetra_map", Teuchos::inOutArg(vs) );
   return vs;
 }
 
@@ -774,14 +771,17 @@ Thyra::get_Epetra_MultiVector(
 {
   using Teuchos::rcpWithEmbeddedObj;
   using Teuchos::rcpFromRef;
-  using Teuchos::ptrFromRef;
-  using Teuchos::ptr_dynamic_cast;
   using Teuchos::outArg;
   ArrayRCP<double> mvData;
   Ordinal mvLeadingDim = -1;
-  Ptr<SpmdMultiVectorBase<double> > mvSpmdMv;
-  if (nonnull(mvSpmdMv = ptr_dynamic_cast<SpmdMultiVectorBase<double> >(ptrFromRef(mv)))) {
+  SpmdMultiVectorBase<double> *mvSpmdMv = 0;
+  SpmdVectorBase<double> *mvSpmdV = 0;
+  if ((mvSpmdMv = dynamic_cast<SpmdMultiVectorBase<double>*>(&mv))) {
     mvSpmdMv->getNonconstLocalData(outArg(mvData), outArg(mvLeadingDim));
+  }
+  else if ((mvSpmdV = dynamic_cast<SpmdVectorBase<double>*>(&mv))) {
+    mvSpmdV->getNonconstLocalData(outArg(mvData));
+    mvLeadingDim = mvSpmdV->spmdSpace()->localSubDim();
   }
   if (nonnull(mvData)) {
     return rcpWithEmbeddedObj(
@@ -803,14 +803,17 @@ Thyra::get_Epetra_MultiVector(
 {
   using Teuchos::rcpWithEmbeddedObj;
   using Teuchos::rcpFromRef;
-  using Teuchos::ptrFromRef;
-  using Teuchos::ptr_dynamic_cast;
   using Teuchos::outArg;
   ArrayRCP<const double> mvData;
   Ordinal mvLeadingDim = -1;
-  Ptr<const SpmdMultiVectorBase<double> > mvSpmdMv;
-  if (nonnull(mvSpmdMv = ptr_dynamic_cast<const SpmdMultiVectorBase<double> >(ptrFromRef(mv)))) {
+  const SpmdMultiVectorBase<double> *mvSpmdMv = 0;
+  const SpmdVectorBase<double> *mvSpmdV = 0;
+  if ((mvSpmdMv = dynamic_cast<const SpmdMultiVectorBase<double>*>(&mv))) {
     mvSpmdMv->getLocalData(outArg(mvData), outArg(mvLeadingDim));
+  }
+  else if ((mvSpmdV = dynamic_cast<const SpmdVectorBase<double>*>(&mv))) {
+    mvSpmdV->getLocalData(outArg(mvData));
+    mvLeadingDim = mvSpmdV->spmdSpace()->localSubDim();
   }
   if (nonnull(mvData)) {
     return rcpWithEmbeddedObj(

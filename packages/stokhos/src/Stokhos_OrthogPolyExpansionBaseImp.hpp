@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 // 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
 // 
 // ***********************************************************************
@@ -42,8 +29,7 @@
 #include "Stokhos_DenseDirectDivisionExpansionStrategy.hpp"
 #include "Stokhos_SPDDenseDirectDivisionExpansionStrategy.hpp"
 #include "Stokhos_MeanBasedDivisionExpansionStrategy.hpp"
-#include "Stokhos_GMRESDivisionExpansionStrategy.hpp"
-#include "Stokhos_CGDivisionExpansionStrategy.hpp"
+
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Stokhos_DynamicArrayTraits.hpp"
@@ -63,37 +49,7 @@ OrthogPolyExpansionBase(
     params = Teuchos::rcp(new Teuchos::ParameterList);
 
   // Create division strategy
-  std::string name = params->get("Division Strategy","Dense Direct");
-  double tol = params->get("Division Tolerance", 1e-6);
-  int prec_iter = params->get("prec_iter", 1);
-  int max_it = params->get("max_it_div", 50);
-  std::string prec = params->get("Prec Strategy","None");
-  int PrecNum;
-  if (prec == "None")
-     PrecNum=0;
-  else if (prec == "Diag")
-     PrecNum=1;
-  else if (prec == "Jacobi")
-     PrecNum=2;
-  else if (prec == "GS")
-     PrecNum=3;
-  else if (prec == "Schur")
-     PrecNum=4;
-  else 
-     PrecNum=-1;
-  std::string linopt = params->get("Prec option", "whole");
-  int linear = 0;
-  if (linopt == "linear")
-	linear = 1; 
-
-  std::string schuropt = params->get("Schur option", "diag");
-  int diag = 0;
-  if (schuropt == "full")
-        diag = 1;
-
-  int equil = params->get("Equilibrate", 0);
-
-  
+  std::string name = params->get("Division Strategy", "Dense Direct");
   if (name == "Dense Direct")
     division_strategy = 
       Teuchos::rcp(new DenseDirectDivisionExpansionStrategy<ordinal_type,value_type,node_type>(this->basis, this->Cijk));
@@ -102,17 +58,11 @@ OrthogPolyExpansionBase(
       Teuchos::rcp(new SPDDenseDirectDivisionExpansionStrategy<ordinal_type,value_type,node_type>(this->basis, this->Cijk));
   else if (name == "Mean-Based")
     division_strategy =
-      Teuchos::rcp(new MeanBasedDivisionExpansionStrategy<ordinal_type,value_type,node_type>()); 
-  else if (name == "GMRES")
-    division_strategy =
-      Teuchos::rcp(new GMRESDivisionExpansionStrategy<ordinal_type,value_type,node_type>(this->basis, this->Cijk, prec_iter, tol, PrecNum, max_it, linear, diag, equil));
-  else if (name == "CG")
-    division_strategy =
-       Teuchos::rcp(new CGDivisionExpansionStrategy<ordinal_type,value_type,node_type>(this->basis, this->Cijk, prec_iter, tol, PrecNum, max_it, linear, diag, equil));
-
-//    TEUCHOS_TEST_FOR_EXCEPTION(
-//      true, std::logic_error,
-//      "Invalid division strategy name" << name);
+      Teuchos::rcp(new MeanBasedDivisionExpansionStrategy<ordinal_type,value_type,node_type>());
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "Invalid division strategy name" << name);
 }
 
 template <typename ordinal_type, typename value_type, typename node_type> 
@@ -133,10 +83,9 @@ unaryMinus(
   const value_type* ca = a.coeff();
 
   for (ordinal_type i=0; i<pc; i++)
-  {
     cc[i] = -ca[i];
-  }
 }
+
 template <typename ordinal_type, typename value_type, typename node_type> 
 void
 Stokhos::OrthogPolyExpansionBase<ordinal_type, value_type, node_type>::
@@ -180,11 +129,11 @@ divideEqual(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::divideEqual(const)");
 #endif
   ordinal_type pc = c.size();
-  value_type* cc=c.coeff();
-  for (ordinal_type i=0; i<pc; i++){
+  value_type* cc = c.coeff();
+  for (ordinal_type i=0; i<pc; i++)
     cc[i] /= val;
 }
-}
+
 template <typename ordinal_type, typename value_type, typename node_type> 
 void
 Stokhos::OrthogPolyExpansionBase<ordinal_type, value_type, node_type>::
@@ -644,8 +593,10 @@ fabs(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::fabs(OPA)");
 #endif
-  c.init(0.0);
-  c[0] = a.two_norm();
+  if (a[0] >= 0)
+    c = a;
+  else
+    unaryMinus(c,a);
 }
 
 template <typename ordinal_type, typename value_type, typename node_type>
@@ -657,8 +608,10 @@ abs(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::abs(OPA)");
 #endif
-  c.init(0.0);
-  c[0] = a.two_norm();
+  if (a[0] >= 0)
+    c = a;
+  else
+    unaryMinus(c,a);
 }
 
 template <typename ordinal_type, typename value_type, typename node_type>
@@ -671,7 +624,7 @@ max(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::max(OPA,OPA)");
 #endif
-  if (a.two_norm() >= b.two_norm())
+  if (a[0] >= b[0])
     c = a;
   else
     c = b;
@@ -687,7 +640,7 @@ max(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::max(const,OPA)");
 #endif
-  if (a >= b.two_norm()) {
+  if (a >= b[0]) {
     c = OrthogPolyApprox<ordinal_type, value_type, node_type>(basis);
     c[0] = a;
   }
@@ -705,7 +658,7 @@ max(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::max(OPA,const)");
 #endif
-  if (a.two_norm() >= b)
+  if (a[0] >= b)
     c = a;
   else {
     c = OrthogPolyApprox<ordinal_type, value_type, node_type>(basis);
@@ -723,7 +676,7 @@ min(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::min(OPA,OPA)");
 #endif
-  if (a.two_norm() <= b.two_norm())
+  if (a[0] <= b[0])
     c = a;
   else
     c = b;
@@ -739,7 +692,7 @@ min(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::min(const,OPA)");
 #endif
-  if (a <= b.two_norm()) {
+  if (a <= b[0]) {
     c = OrthogPolyApprox<ordinal_type, value_type, node_type>(basis);
     c[0] = a;
   }
@@ -757,7 +710,7 @@ min(Stokhos::OrthogPolyApprox<ordinal_type, value_type, node_type>& c,
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos::OrthogPolyExpansionBase::min(OPA,const)");
 #endif
-  if (a.two_norm() <= b)
+  if (a[0] <= b)
     c = a;
   else {
     c = OrthogPolyApprox<ordinal_type, value_type, node_type>(basis);

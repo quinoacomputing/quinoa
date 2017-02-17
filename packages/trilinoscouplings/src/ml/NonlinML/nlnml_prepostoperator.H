@@ -19,9 +19,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
-# Questions? Contact Jonathan Hu (jhu@sandia.gov) or Ray Tuminaro
+# Questions? Contact Jonathan Hu (jhu@sandia.gov) or Ray Tuminaro 
 # (rstumin@sandia.gov).
 #
 # ************************************************************************
@@ -66,9 +66,9 @@
 #include "Epetra_Import.h"
 
 // NOX headers
-#include "NOX_Abstract_PrePostOperator.H"
-#include "NOX_Epetra_Group.H"
-#include "NOX_Solver_Generic.H"
+#include "NOX_Abstract_PrePostOperator.H"	
+#include "NOX_Epetra_Group.H"	
+#include "NOX_Solver_Generic.H"	
 
 // own headers
 #include "nlnml_finelevelnoxinterface.H"
@@ -77,6 +77,7 @@
 // forward declarations
 class Epetra_CrsMatrix;
 
+using namespace std;
 using namespace Teuchos;
 namespace NLNML
 {
@@ -94,10 +95,10 @@ public:
   NLNML_PrePostOperator(const NLNML::NLNML_PrePostOperator& old);
 
   virtual ~NLNML_PrePostOperator();
-
+  
   void runPreSolve(const NOX::Solver::Generic& solver);
-
-  const std::string& getType() const { return type_; }
+  
+  const string& getType() const { return type_; }
 
 private:
 
@@ -105,10 +106,10 @@ private:
 
 protected:
 
-  std::string                                       type_;
+  string                                            type_;
   RefCountPtr<NLNML::NLNML_FineLevelNoxInterface>   fineinterface_;
   RefCountPtr<NLNML::NLNML_CoarseLevelNoxInterface> coarseinterface_;
-
+  
 }; // class NLNML_PREPOSTOPERATOR_H
 } // namespace NLNML
 #endif

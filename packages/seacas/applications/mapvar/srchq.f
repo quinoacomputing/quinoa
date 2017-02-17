@@ -1,5 +1,5 @@
 C Copyright (c) 2007 Sandia Corporation. Under the terms of Contract
-C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
+C DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
 C retains certain rights in this software.
 C 
 C Redistribution and use in source and binary forms, with or without
@@ -184,7 +184,6 @@ C
      *                LBLK,NDIM)
 C
           DO 140 K = 1, NLIST
-            lval = list(k)
             CALL QADSRC(
      *      NDIM,     NPTS,     NPSRF,    NFSRF,    NISR,     
      *      NRSR,     NRSS,     XYZSRF,   XYZPTS,   LINKSRF,

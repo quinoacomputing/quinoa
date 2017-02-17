@@ -2,14 +2,14 @@
 // Sandia Corporation. Under the terms of Contract
 // DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
 // certain rights in this software.
-//
+//         
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-//
+// 
 //     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
-//
+// 
 //     * Redistributions in binary form must reproduce the above
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
@@ -17,7 +17,7 @@
 //     * Neither the name of Sandia Corporation nor the names of its
 //       contributors may be used to endorse or promote products derived
 //       from this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,7 +30,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "io_info.h"
+#include <Ioss_CodeTypes.h>
+#include <Ioss_SurfaceSplit.h>
+#include <Ioss_Utils.h>
+#include <init/Ionit_Initializer.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "Ioss_CommSet.h"
+#include "Ioss_DBUsage.h"
+#include "Ioss_DatabaseIO.h"
+#include "Ioss_EdgeBlock.h"
+#include "Ioss_EdgeSet.h"
+#include "Ioss_ElementBlock.h"
+#include "Ioss_ElementSet.h"
+#include "Ioss_ElementTopology.h"
+#include "Ioss_FaceBlock.h"
+#include "Ioss_FaceSet.h"
+#include "Ioss_Field.h"
+#include "Ioss_GroupingEntity.h"
+#include "Ioss_IOFactory.h"
+#include "Ioss_NodeBlock.h"
+#include "Ioss_NodeSet.h"
+#include "Ioss_Property.h"
+#include "Ioss_Region.h"
+#include "Ioss_SideBlock.h"
+#include "Ioss_SideSet.h"
+#include "Ioss_VariableType.h"
+
+#include "info_interface.h"
+
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
+
+#ifndef NO_XDMF_SUPPORT
+#include <xdmf/Ioxf_Initializer.h>
+#endif
+
+#define OUTPUT std::cerr
 
 // ========================================================================
 
@@ -38,6 +82,9 @@ namespace {
 
   // Data space shared by most field input/output routines...
   std::vector<char> data;
+
+  void show_usage(const std::string &prog);
+  void show_step(int istep, double time);
 
   void info_nodeblock(Ioss::Region &region, const Info::Interface &interface, bool summary);
   void info_edgeblock(Ioss::Region &region, bool summary);
@@ -51,25 +98,28 @@ namespace {
 
   void info_sidesets(Ioss::Region &region, const Info::Interface &interface, bool summary);
   void info_commsets(Ioss::Region &region, bool summary);
-  void info_coordinate_frames(Ioss::Region &region, bool summary);
 
-  void info_aliases(Ioss::Region &region, Ioss::GroupingEntity *ige, bool nl_pre, bool nl_post);
+  void info_fields(Ioss::GroupingEntity *ige,
+		   Ioss::Field::RoleType role,
+		   const std::string &header);
 
-  void info_fields(Ioss::GroupingEntity *ige, Ioss::Field::RoleType role,
-                   const std::string &header);
+  void info_field_data(Ioss::GroupingEntity *ige,
+		       Ioss::Field::RoleType role,
+		       bool do_connectivity = true);
 
   void info_properties(Ioss::GroupingEntity *ige);
 
-  void file_info(const Info::Interface &interface);
-  void group_info(Info::Interface &interface);
+  void info_field_data_internal(Ioss::GroupingEntity *ige,
+				const std::string &field_name);
 
-  std::string name(Ioss::GroupingEntity *entity)
-  {
+  void file_info(const std::string& inpfile, const std::string& input_type,
+		 Info::Interface& interface);
+
+  std::string name(Ioss::GroupingEntity *entity) {
     return entity->type_string() + " '" + entity->name() + "'";
   }
 
-  int64_t id(Ioss::GroupingEntity *entity)
-  {
+  int64_t id(Ioss::GroupingEntity *entity) {
     int64_t id = -1;
     if (entity->property_exists("id")) {
       id = entity->get_property("id").get_int();
@@ -77,293 +127,360 @@ namespace {
     return id;
   }
 
-} // namespace
+
+}
 void hex_volume(Ioss::ElementBlock *block, const std::vector<double> &coordinates);
+
+// ========================================================================
+
+namespace {
+  std::string codename;
+  std::string version = "1.0";
+}
+
+int main(int argc, char *argv[])
+{
+#ifdef HAVE_MPI
+  MPI_Init(&argc, &argv);
+#endif
+  
+  Info::Interface interface;
+  interface.parse_options(argc, argv);
+  
+  std::string in_type = "exodusII";
+
+  codename = argv[0];
+  size_t ind = codename.find_last_of("/", codename.size());
+  if (ind != std::string::npos)
+    codename = codename.substr(ind+1, codename.size());
+
+  Ioss::Init::Initializer io;
+#ifndef NO_XDMF_SUPPORT
+  Ioxf::Initializer ioxf;
+#endif
+
+  OUTPUT << "Input:    '" << interface.filename()  << "', Type: " << interface.type()  << '\n';
+  OUTPUT << '\n';
+
+  file_info(interface.filename(), interface.type(), interface);
+
+  OUTPUT << "\n" << codename << " execution successful.\n";
+#ifdef HAVE_MPI
+  MPI_Finalize();
+#endif
+  return EXIT_SUCCESS;
+}
 
 namespace {
   void element_volume(Ioss::Region &region)
   {
     std::vector<double> coordinates;
-    Ioss::NodeBlock *   nb = region.get_node_blocks()[0];
+    Ioss::NodeBlock *nb = region.get_node_blocks()[0];
     nb->get_field_data("mesh_model_coordinates", coordinates);
 
     Ioss::ElementBlockContainer ebs = region.get_element_blocks();
-    for (auto eb : ebs) {
-      if (eb->get_property("topology_type").get_string() == "hex8") {
-        hex_volume(eb, coordinates);
+    Ioss::ElementBlockContainer::const_iterator i = ebs.begin();
+    while (i != ebs.end()) {
+      if ((*i)->get_property("topology_type").get_string() == "hex8") {
+	hex_volume(*i, coordinates);
       }
+      ++i;
     }
   }
 
-  int print_groups(int exoid, std::string prefix)
+  void file_info(const std::string& inpfile, const std::string& input_type, Info::Interface& interface)
   {
-#if !defined(NO_EXODUS_SUPPORT)
-    int   idum;
-    float rdum;
-    char  group_name[33];
-    // Print name of this group...
-    ex_inquire(exoid, EX_INQ_GROUP_NAME, &idum, &rdum, group_name);
-    OUTPUT << prefix << group_name << '\n';
-
-    int              num_children = ex_inquire_int(exoid, EX_INQ_NUM_CHILD_GROUPS);
-    std::vector<int> children(num_children);
-    ex_get_group_ids(exoid, nullptr, TOPTR(children));
-    prefix += '\t';
-    for (int i = 0; i < num_children; i++) {
-      print_groups(children[i], prefix);
-    }
-#endif
-    return 0;
-  }
-
-  void group_info(Info::Interface &interface)
-  {
-#if !defined(NO_EXODUS_SUPPORT)
-    // Assume exodusII...
-    std::string inpfile       = interface.filename();
-    float       vers          = 0.0;
-    int         CPU_word_size = 0;
-    int         IO_word_size  = 0;
-
-    int exoid = ex_open(inpfile.c_str(), EX_READ, &CPU_word_size, &IO_word_size, &vers);
-
-    print_groups(exoid, "");
-#endif
-  }
-
-  void file_info(const Info::Interface &interface)
-  {
-    std::string inpfile    = interface.filename();
-    std::string input_type = interface.type();
-
     //========================================================================
     // INPUT ...
     // NOTE: The "READ_RESTART" mode ensures that the node and element ids will be mapped.
     //========================================================================
-    Ioss::DatabaseIO *dbi =
-        Ioss::IOFactory::create(input_type, inpfile, Ioss::READ_RESTART, (MPI_Comm)MPI_COMM_WORLD);
+    Ioss::DatabaseIO *dbi = Ioss::IOFactory::create(input_type, inpfile, Ioss::READ_RESTART,
+						    (MPI_Comm)MPI_COMM_WORLD);
+    if (dbi == NULL || !dbi->ok(true)) {
+      std::exit(EXIT_FAILURE);
+    }
 
-    Ioss::io_info_set_db_properties(interface, dbi);
-
+    dbi->set_surface_split_type(Ioss::int_to_surface_split(interface.surface_split_scheme()));
+    dbi->set_field_separator(interface.field_suffix_separator());
+    dbi->set_node_global_id_backward_compatibility(false);
+    if (interface.ints_64_bit())
+      dbi->set_int_byte_size_api(Ioss::USE_INT64_API);
+    
     // NOTE: 'region' owns 'db' pointer at this time...
     Ioss::Region region(dbi, "region_1");
-    Ioss::io_info_file_info(interface, region);
+
+    // Get all properties of input database...
+    bool summary = true;
+    info_properties(&region);
+    info_nodeblock(region,    interface, summary);
+    info_edgeblock(region,    summary);
+    info_faceblock(region,    summary);
+    info_elementblock(region, interface, summary);
+
+    info_nodesets(region,     summary);
+    info_edgesets(region,     summary);
+    info_facesets(region,     summary);
+    info_elementsets(region,  summary);
+
+    info_sidesets(region,     interface, summary);
+    info_commsets(region,     summary);
+
+    if (region.property_exists("state_count") && region.get_property("state_count").get_int() > 0) {
+      std::pair<int, double> state_time_max = region.get_max_time();
+      std::pair<int, double> state_time_min = region.get_min_time();
+      OUTPUT << " Number of time steps on database     =" << std::setw(12)
+	     << region.get_property("state_count").get_int() << "\n"
+	     << "    Minimum time = " << state_time_min.second << " at step " << state_time_min.first << "\n"
+	     << "    Maximum time = " << state_time_max.second << " at step " << state_time_max.first << "\n\n";
+    }
+
+    if (!interface.summary()) {
+      summary = false;
+      info_properties(&region);
+      info_nodeblock(region,    interface, summary);
+      info_edgeblock(region,    summary);
+      info_faceblock(region,    summary);
+      info_elementblock(region, interface, summary);
+      
+      info_nodesets(region,     summary);
+      info_edgesets(region,     summary);
+      info_facesets(region,     summary);
+      info_elementsets(region,  summary);
+      
+      info_sidesets(region,     interface, summary);
+      info_commsets(region,     summary);
+    }
+    
+    if (interface.compute_volume()) {
+      element_volume(region);
+    }
   }
+
 
   void info_nodeblock(Ioss::Region &region, const Info::Interface &interface, bool summary)
   {
-    Ioss::NodeBlockContainer nbs             = region.get_node_blocks();
-    int64_t                  total_num_nodes = 0;
-    if (summary) {
-      int64_t degree = 0;
-      for (auto nb : nbs) {
-        int64_t num_nodes = nb->get_property("entity_count").get_int();
-        total_num_nodes += num_nodes;
-        degree = nb->get_property("component_degree").get_int();
+    Ioss::NodeBlockContainer    nbs = region.get_node_blocks();
+    Ioss::NodeBlockContainer::const_iterator i = nbs.begin();
+    while (i != nbs.end()) {
+      //      std::string name      = (*i)->name();
+      int64_t    num_nodes = (*i)->get_property("entity_count").get_int();
+      int64_t    degree    = (*i)->get_property("component_degree").get_int();
+      int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
+      if (summary) {
+	OUTPUT << " Number of spatial dimensions =" << std::setw(12) << degree << "\n";
+	OUTPUT << " Number of nodeblocks         =" << std::setw(12) << 1 << "\t";
+	OUTPUT << " Number of nodes            =" << std::setw(12) << num_nodes << "\n";
+      } else {
+	OUTPUT << '\n' << name(*i) 
+	       << std::setw(12) << num_nodes << " nodes, "
+	       << std::setw(3) << num_attrib << " attributes.\n";
+	if (interface.check_node_status()) {
+	  std::vector<char> node_status;
+	  std::vector<int64_t>  ids;
+	  (*i)->get_field_data("node_connectivity_status", node_status);
+	  (*i)->get_field_data("ids", ids);
+	  bool header = false;
+	  for (size_t j=0; j < node_status.size(); j++) {
+	    if (node_status[j] == 0) {
+	      if (!header) {
+		header = true;
+		OUTPUT << "\tUnconnected nodes: " << ids[j];
+	      } else {
+		OUTPUT << ", " << ids[j];
+	      }
+	    }
+	  }
+	  if (header)
+	    OUTPUT << "\n";
+	}
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::TRANSIENT, "\tTransient: ");
       }
-      OUTPUT << " Number of spatial dimensions =" << std::setw(12) << degree << "\n";
-      OUTPUT << " Number of nodeblocks         =" << std::setw(12) << nbs.size() << "\t";
-      OUTPUT << " Number of nodes            =" << std::setw(12) << total_num_nodes << "\n";
-    }
-    else {
-      for (auto nb : nbs) {
-        int64_t num_nodes  = nb->get_property("entity_count").get_int();
-        int64_t num_attrib = nb->get_property("attribute_count").get_int();
-        OUTPUT << '\n'
-               << name(nb) << std::setw(12) << num_nodes << " nodes, " << std::setw(3) << num_attrib
-               << " attributes.\n";
-        if (interface.check_node_status()) {
-          std::vector<char>    node_status;
-          std::vector<int64_t> ids;
-          nb->get_field_data("node_connectivity_status", node_status);
-          nb->get_field_data("ids", ids);
-          bool header = false;
-          for (size_t j = 0; j < node_status.size(); j++) {
-            if (node_status[j] == 0) {
-              if (!header) {
-                header = true;
-                OUTPUT << "\tUnconnected nodes: " << ids[j];
-              }
-              else {
-                OUTPUT << ", " << ids[j];
-              }
-            }
-          }
-          if (header) {
-            OUTPUT << "\n";
-          }
-        }
-        info_aliases(region, nb, false, true);
-        info_fields(nb, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
-        info_fields(nb, Ioss::Field::TRANSIENT, "\tTransient: ");
-      }
+      ++i;
     }
   }
 
   void info_elementblock(Ioss::Region &region, const Info::Interface &interface, bool summary)
   {
-    Ioss::ElementBlockContainer ebs            = region.get_element_blocks();
-    int64_t                     total_elements = 0;
-    for (auto eb : ebs) {
-      int64_t num_elem = eb->get_property("entity_count").get_int();
+    Ioss::ElementBlockContainer ebs = region.get_element_blocks();
+    Ioss::ElementBlockContainer::const_iterator i = ebs.begin();
+    int64_t total_elements = 0;
+    while (i != ebs.end()) {
+      int64_t    num_elem  = (*i)->get_property("entity_count").get_int();
       total_elements += num_elem;
 
       if (!summary) {
-        std::string type       = eb->get_property("topology_type").get_string();
-        int64_t     num_attrib = eb->get_property("attribute_count").get_int();
-        OUTPUT << '\n'
-               << name(eb) << " id: " << std::setw(6) << id(eb) << ", topology: " << std::setw(10)
-               << type << ", " << std::setw(12) << num_elem << " elements, " << std::setw(3)
-               << num_attrib << " attributes.";
+	std::string type      = (*i)->get_property("topology_type").get_string();
+	int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
+	OUTPUT << '\n' << name(*i)
+	       << " id: " << std::setw(6) << id(*i)
+	       << ", topology: " << std::setw(10) << type << ", "
+	       << std::setw(12) << num_elem << " elements, "
+	       << std::setw(3) << num_attrib << " attributes.";
 
-        info_aliases(region, eb, true, false);
-        info_fields(eb, Ioss::Field::ATTRIBUTE, "\n\tAttributes: ");
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\n\tAttributes: ");
 
-        if (interface.adjacencies()) {
-          std::vector<std::string> blocks;
-          eb->get_block_adjacencies(blocks);
-          OUTPUT << "\n\tAdjacent to  " << blocks.size() << " element block(s):\t";
-          for (const auto &block : blocks) {
-            OUTPUT << block << "  ";
-          }
-        }
-        info_fields(eb, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
-        OUTPUT << "\n";
-
-        if (interface.compute_bbox()) {
-          Ioss::AxisAlignedBoundingBox bbox = eb->get_bounding_box();
-          OUTPUT << "\tBounding Box: Minimum X,Y,Z = " << std::setw(12) << std::setprecision(4)
-                 << std::scientific << bbox.xmin << "\t" << bbox.ymin << "\t" << bbox.zmin << "\n"
-                 << "\t              Maximum X,Y,Z = " << std::setw(12) << std::setprecision(4)
-                 << std::scientific << bbox.xmax << "\t" << bbox.ymax << "\t" << bbox.zmax << "\n";
-        }
+	if (interface.adjacencies()) {
+	  std::vector<std::string> blocks;
+	  (*i)->get_block_adjacencies(blocks);
+	  OUTPUT << "\n\tAdjacent to  " << blocks.size() << " element block(s):\t";
+	  std::vector<std::string>::iterator b = blocks.begin();
+	  while (b != blocks.end()) {
+	    OUTPUT << *b++ << "  ";
+	  }
+	}
+	info_fields(*i, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
+	OUTPUT << "\n";
       }
+
+      ++i;
     }
     if (summary) {
       OUTPUT << " Number of element blocks     =" << std::setw(12) << ebs.size() << "\t";
       OUTPUT << " Number of elements         =" << std::setw(12) << total_elements << "\n";
     }
+
   }
 
   void info_edgeblock(Ioss::Region &region, bool summary)
   {
-    Ioss::EdgeBlockContainer ebs         = region.get_edge_blocks();
-    int64_t                  total_edges = 0;
-    for (auto eb : ebs) {
-      int64_t num_edge = eb->get_property("entity_count").get_int();
+    Ioss::EdgeBlockContainer ebs = region.get_edge_blocks();
+    Ioss::EdgeBlockContainer::const_iterator i = ebs.begin();
+    int64_t total_edges = 0;
+    while (i != ebs.end()) {
+      int64_t    num_edge  = (*i)->get_property("entity_count").get_int();
       total_edges += num_edge;
 
       if (!summary) {
-        std::string type       = eb->get_property("topology_type").get_string();
-        int64_t     num_attrib = eb->get_property("attribute_count").get_int();
-        OUTPUT << '\n'
-               << name(eb) << " id: " << std::setw(6) << id(eb) << ", topology: " << std::setw(10)
-               << type << ", " << std::setw(12) << num_edge << " edges, " << std::setw(3)
-               << num_attrib << " attributes.\n";
+	std::string type      = (*i)->get_property("topology_type").get_string();
+	int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
+	OUTPUT << '\n' << name(*i)
+	       << " id: " << std::setw(6) << id(*i)
+	       << ", topology: " << std::setw(10) << type << ", "
+	       << std::setw(12) << num_edge << " edges, "
+	       << std::setw(3) << num_attrib << " attributes.\n";
 
-        info_aliases(region, eb, false, true);
-        info_fields(eb, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
 
 #if 0
-        std::vector<std::string> blocks;
-        eb->get_block_adjacencies(blocks);
-        OUTPUT << "\tAdjacent to  " << blocks.size() << " edge block(s):\t";
-	for (auto block : blocks) {
-          OUTPUT << block << "  ";
-        }
+	std::vector<std::string> blocks;
+	(*i)->get_block_adjacencies(blocks);
+	OUTPUT << "\tAdjacent to  " << blocks.size() << " edge block(s):\t";
+	std::vector<std::string>::iterator b = blocks.begin();
+	while (b != blocks.end()) {
+	  OUTPUT << *b++ << "  ";
+	}
 #endif
-        info_fields(eb, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
-        OUTPUT << "\n";
+	info_fields(*i, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
+	OUTPUT << "\n";
       }
+
+      ++i;
     }
     if (summary) {
       OUTPUT << " Number of edge blocks        =" << std::setw(12) << ebs.size() << "\t";
       OUTPUT << " Number of edges            =" << std::setw(12) << total_edges << "\n";
     }
+
   }
 
   void info_faceblock(Ioss::Region &region, bool summary)
   {
-    Ioss::FaceBlockContainer ebs         = region.get_face_blocks();
-    int64_t                  total_faces = 0;
-    for (auto eb : ebs) {
-      int64_t num_face = eb->get_property("entity_count").get_int();
+    Ioss::FaceBlockContainer ebs = region.get_face_blocks();
+    Ioss::FaceBlockContainer::const_iterator i = ebs.begin();
+    int64_t total_faces = 0;
+    while (i != ebs.end()) {
+      int64_t    num_face  = (*i)->get_property("entity_count").get_int();
       total_faces += num_face;
 
       if (!summary) {
-        std::string type       = eb->get_property("topology_type").get_string();
-        int64_t     num_attrib = eb->get_property("attribute_count").get_int();
-        OUTPUT << '\n'
-               << name(eb) << " id: " << std::setw(6) << id(eb) << ", topology: " << std::setw(10)
-               << type << ", " << std::setw(12) << num_face << " faces, " << std::setw(3)
-               << num_attrib << " attributes.\n";
+	std::string type      = (*i)->get_property("topology_type").get_string();
+	int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
+	OUTPUT << '\n' << name(*i)
+	       << " id: " << std::setw(6) << id(*i)
+	       << ", topology: " << std::setw(10) << type << ", "
+	       << std::setw(12) << num_face << " faces, "
+	       << std::setw(3) << num_attrib << " attributes.\n";
 
-        info_aliases(region, eb, false, true);
-        info_fields(eb, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
 
 #if 0
-        std::vector<std::string> blocks;
-        eb->get_block_adjacencies(blocks);
-        OUTPUT << "\tAdjacent to  " << blocks.size() << " face block(s):\t";
-	for (auto block : blocks) {
-          OUTPUT << block << "  ";
-        }
+	std::vector<std::string> blocks;
+	(*i)->get_block_adjacencies(blocks);
+	OUTPUT << "\tAdjacent to  " << blocks.size() << " face block(s):\t";
+	std::vector<std::string>::iterator b = blocks.begin();
+	while (b != blocks.end()) {
+	  OUTPUT << *b++ << "  ";
+	}
 #endif
-        info_fields(eb, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
-        OUTPUT << "\n";
+	info_fields(*i, Ioss::Field::TRANSIENT, "\n\tTransient:  ");
+	OUTPUT << "\n";
       }
+
+      ++i;
     }
     if (summary) {
       OUTPUT << " Number of face blocks        =" << std::setw(12) << ebs.size() << "\t";
       OUTPUT << " Number of faces            =" << std::setw(12) << total_faces << "\n";
     }
+
   }
 
   void info_sidesets(Ioss::Region &region, const Info::Interface &interface, bool summary)
   {
-    Ioss::SideSetContainer fss         = region.get_sidesets();
-    int64_t                total_sides = 0;
-    for (auto fs : fss) {
+    Ioss::SideSetContainer      fss = region.get_sidesets();
+    Ioss::SideSetContainer::const_iterator i = fss.begin();
+    int64_t total_sides = 0;
+    while (i != fss.end()) {
       if (!summary) {
-        OUTPUT << '\n' << name(fs) << " id: " << std::setw(6) << id(fs) << ":";
-        info_aliases(region, fs, true, false);
-        if (interface.adjacencies()) {
-          std::vector<std::string> blocks;
-          fs->block_membership(blocks);
-          OUTPUT << "\n\tTouches " << blocks.size() << " element block(s):\t";
-          for (const auto &block : blocks) {
-            OUTPUT << block << "  ";
-          }
-          OUTPUT << "\n";
-        }
+	OUTPUT << '\n' << (*i)->type_string() << " " << std::setw(16)  << (*i)->name()
+	       << " id: " << std::setw(6)<< id(*i) << ":";
+	if (interface.adjacencies()) {
+	  std::vector<std::string> blocks;
+	  (*i)->block_membership(blocks);
+	  OUTPUT << "\n\tTouches " << blocks.size() << " element block(s):\t";
+	  std::vector<std::string>::iterator b = blocks.begin();
+	  while (b != blocks.end()) {
+	    OUTPUT << *b++ << "  ";
+	  }
+	  OUTPUT << "\n";
+	}
       }
       if (!summary) {
-        OUTPUT << "\n\tContains: \n";
+	OUTPUT << "\n\tContains: \n";
       }
-
-      Ioss::SideBlockContainer fbs = fs->get_side_blocks();
-      for (auto fb : fbs) {
-        int64_t num_side = fb->get_property("entity_count").get_int();
-        if (!summary) {
-          std::string fbtype  = fb->get_property("topology_type").get_string();
-          std::string partype = fb->get_property("parent_topology_type").get_string();
-          OUTPUT << "\t\t" << name(fb) << ", " << num_side << " " << fbtype << " sides"
-                 << ", parent topology: " << partype << "\n";
-          if (interface.adjacencies()) {
-            std::vector<std::string> blocks;
-            fb->block_membership(blocks);
-            OUTPUT << "\t\t\tTouches " << blocks.size() << " element block(s):\t";
-            for (const auto &block : blocks) {
-              OUTPUT << block << "  ";
-            }
-            OUTPUT << "\n";
-          }
-          OUTPUT << "\n";
-          info_fields(fb, Ioss::Field::ATTRIBUTE, "\t\tAttributes: ");
-          info_fields(fb, Ioss::Field::TRANSIENT, "\t\tTransient:  ");
-        }
-        total_sides += num_side;
+      
+      Ioss::SideBlockContainer fbs = (*i)->get_side_blocks();
+      Ioss::SideBlockContainer::const_iterator j = fbs.begin();
+      while (j != fbs.end()) {
+	int64_t    num_side  = (*j)->get_property("entity_count").get_int();
+	if (!summary) {
+	  std::string fbtype    = (*j)->get_property("topology_type").get_string();
+	  std::string partype   = (*j)->get_property("parent_topology_type").get_string();
+	  OUTPUT << "\t\t"
+		 << (*j)->type_string() << " " << (*j)->name()
+		 << ", "
+		 << num_side << " " << fbtype << " sides"
+		 << ", parent topology: " << partype 
+		 << "\n";
+	  if (interface.adjacencies()) {
+	    std::vector<std::string> blocks;
+	    (*j)->block_membership(blocks);
+	    OUTPUT << "\t\t\tTouches " << blocks.size() << " element block(s):\t";
+	    std::vector<std::string>::iterator b = blocks.begin();
+	    while (b != blocks.end()) {
+	      OUTPUT << *b++ << "  ";
+	    }
+	    OUTPUT << "\n";
+	  }
+	  OUTPUT << "\n";
+	  info_fields(*j, Ioss::Field::ATTRIBUTE, "\t\tAttributes: ");
+	  info_fields(*j, Ioss::Field::TRANSIENT, "\t\tTransient:  ");
+	}
+	total_sides += num_side;
+	++j;
       }
+      ++i;
     }
 
     if (summary) {
@@ -371,25 +488,25 @@ namespace {
       OUTPUT << " Number of element sides    =" << std::setw(12) << total_sides << "\n";
     }
   }
-
+  
   void info_nodesets(Ioss::Region &region, bool summary)
   {
-    Ioss::NodeSetContainer nss         = region.get_nodesets();
-    int64_t                total_nodes = 0;
-    for (auto ns : nss) {
-      int64_t count      = ns->get_property("entity_count").get_int();
-      int64_t num_attrib = ns->get_property("attribute_count").get_int();
-      int64_t num_dist   = ns->get_property("distribution_factor_count").get_int();
+    Ioss::NodeSetContainer      nss = region.get_nodesets();
+    Ioss::NodeSetContainer::const_iterator i = nss.begin();
+    int64_t total_nodes = 0;
+    while (i != nss.end()) {
+      int64_t    count     = (*i)->get_property("entity_count").get_int();
+      int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
       if (!summary) {
-        OUTPUT << '\n'
-               << name(ns) << " id: " << std::setw(6) << id(ns) << ", " << std::setw(8) << count
-               << " nodes" << std::setw(3) << num_attrib << " attributes" << std::setw(8)
-               << num_dist << " distribution factors.\n";
-        info_aliases(region, ns, false, true);
-        info_fields(ns, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
-        info_fields(ns, Ioss::Field::TRANSIENT, "\tTransient:  ");
+	OUTPUT << '\n' << (*i)->type_string() << " " << std::setw(16)  << (*i)->name()
+	       << " id: " << std::setw(6) << id(*i)   << ", "
+	       << std::setw(8) << count << " nodes" 
+	       << std::setw(3) << num_attrib << " attributes.\n";
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::TRANSIENT, "\tTransient:  ");
       }
       total_nodes += count;
+      ++i;
     }
     if (summary) {
       OUTPUT << " Number of nodal point sets   =" << std::setw(12) << nss.size() << "\t";
@@ -399,20 +516,22 @@ namespace {
 
   void info_edgesets(Ioss::Region &region, bool summary)
   {
-    Ioss::EdgeSetContainer nss         = region.get_edgesets();
-    int64_t                total_edges = 0;
-    for (auto ns : nss) {
-      int64_t count      = ns->get_property("entity_count").get_int();
-      int64_t num_attrib = ns->get_property("attribute_count").get_int();
+    Ioss::EdgeSetContainer      nss = region.get_edgesets();
+    Ioss::EdgeSetContainer::const_iterator i = nss.begin();
+    int64_t total_edges = 0;
+    while (i != nss.end()) {
+      int64_t    count     = (*i)->get_property("entity_count").get_int();
+      int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
       if (!summary) {
-        OUTPUT << '\n'
-               << name(ns) << " id: " << std::setw(6) << id(ns) << ", " << std::setw(8) << count
-               << " edges" << std::setw(3) << num_attrib << " attributes.\n";
-        info_aliases(region, ns, false, true);
-        info_fields(ns, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
-        info_fields(ns, Ioss::Field::TRANSIENT, "\tTransient:  ");
+	OUTPUT << '\n' << (*i)->type_string() << " " << std::setw(16)  << (*i)->name()
+	       << " id: " << std::setw(6) << id(*i)   << ", "
+	       << std::setw(8) << count << " edges"
+	       << std::setw(3) << num_attrib << " attributes.\n";
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::TRANSIENT, "\tTransient:  ");
       }
       total_edges += count;
+      ++i;
     }
     if (summary) {
       OUTPUT << " Number of edge sets          =" << std::setw(12) << nss.size() << "\t";
@@ -422,120 +541,84 @@ namespace {
 
   void info_facesets(Ioss::Region &region, bool summary)
   {
-    Ioss::FaceSetContainer fss         = region.get_facesets();
-    int64_t                total_faces = 0;
-    for (auto fs : fss) {
-      int64_t count      = fs->get_property("entity_count").get_int();
-      int64_t num_attrib = fs->get_property("attribute_count").get_int();
+    Ioss::FaceSetContainer      nss = region.get_facesets();
+    Ioss::FaceSetContainer::const_iterator i = nss.begin();
+    int64_t total_faces = 0;
+    while (i != nss.end()) {
+      int64_t    count     = (*i)->get_property("entity_count").get_int();
+      int64_t    num_attrib= (*i)->get_property("attribute_count").get_int();
       if (!summary) {
-        OUTPUT << '\n'
-               << name(fs) << " id: " << std::setw(6) << id(fs) << ", " << std::setw(8) << count
-               << " faces" << std::setw(3) << num_attrib << " attributes.\n";
-        info_aliases(region, fs, false, true);
-        info_fields(fs, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
-        info_fields(fs, Ioss::Field::TRANSIENT, "\tTransient:  ");
+	OUTPUT << '\n' << (*i)->type_string() << " " << std::setw(16)  << (*i)->name()
+	       << " id: " << std::setw(6) << id(*i)   << ", "
+	       << std::setw(8) << count << " faces"
+	       << std::setw(3) << num_attrib << " attributes.\n";
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::TRANSIENT, "\tTransient:  ");
       }
       total_faces += count;
+      ++i;
     }
     if (summary) {
-      OUTPUT << " Number of face sets          =" << std::setw(12) << fss.size() << "\t";
+      OUTPUT << " Number of face sets          =" << std::setw(12) << nss.size() << "\t";
       OUTPUT << " Length of face list        =" << std::setw(12) << total_faces << "\n";
     }
   }
 
   void info_elementsets(Ioss::Region &region, bool summary)
   {
-    Ioss::ElementSetContainer ess            = region.get_elementsets();
-    int64_t                   total_elements = 0;
-    for (auto es : ess) {
-      int64_t count = es->get_property("entity_count").get_int();
+    Ioss::ElementSetContainer      nss = region.get_elementsets();
+    Ioss::ElementSetContainer::const_iterator i = nss.begin();
+    int64_t total_elements = 0;
+    while (i != nss.end()) {
+      int64_t    count     = (*i)->get_property("entity_count").get_int();
       if (!summary) {
-        OUTPUT << '\n'
-               << name(es) << " id: " << std::setw(6) << id(es) << ", " << std::setw(8) << count
-               << " elements"
-               << "\n";
-        info_aliases(region, es, false, true);
-        info_fields(es, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
-        info_fields(es, Ioss::Field::TRANSIENT, "\tTransient:  ");
+	OUTPUT << '\n' << (*i)->type_string() << " " << std::setw(16)  << (*i)->name()
+	       << " id: " << std::setw(6) << id(*i)   << ", "
+	       << std::setw(8) << count << " elements" << "\n";
+	info_fields(*i, Ioss::Field::ATTRIBUTE, "\tAttributes: ");
+	info_fields(*i, Ioss::Field::TRANSIENT, "\tTransient:  ");
       }
       total_elements += count;
+      ++i;
     }
     if (summary) {
-      OUTPUT << " Number of element sets       =" << std::setw(12) << ess.size() << "\t";
+      OUTPUT << " Number of element sets       =" << std::setw(12) << nss.size() << "\t";
       OUTPUT << " Length of element list     =" << std::setw(12) << total_elements << "\n";
     }
   }
 
   void info_commsets(Ioss::Region &region, bool summary)
   {
-    // NOTE: This doesn't really do anything...
-    Ioss::CommSetContainer css = region.get_commsets();
-    for (auto cs : css) {
-      std::string type = cs->get_property("entity_type").get_string();
+    Ioss::CommSetContainer      css = region.get_commsets();
+    Ioss::CommSetContainer::const_iterator i = css.begin();
+    while (i != css.end()) {
+      std::string type      = (*i)->get_property("entity_type").get_string();
+      ++i;
     }
     OUTPUT << '\n';
   }
 
-  void info_coordinate_frames(Ioss::Region &region, bool summary)
-  {
-    Ioss::CoordinateFrameContainer cf = region.get_coordinate_frames();
-    for (const auto &frame : cf) {
-      if (!summary) {
-        const double *origin = frame.origin();
-        const double *a3pt   = frame.axis_3_point();
-        const double *p13pt  = frame.plane_1_3_point();
-
-        OUTPUT << '\n'
-               << "Coordinate Frame id: " << std::setw(6) << frame.id() << ", type tag '"
-               << frame.tag() << "'\n"
-               << "\tOrigin:          " << origin[0] << "\t" << origin[1] << "\t" << origin[2]
-               << "\n"
-               << "\tAxis 3 Point:    " << a3pt[0] << "\t" << a3pt[1] << "\t" << a3pt[2] << "\n"
-               << "\tPlane 1-3 Point: " << p13pt[0] << "\t" << p13pt[1] << "\t" << p13pt[2] << "\n";
-      }
-    }
-    if (summary) {
-      OUTPUT << " Number of coordinate frames  =" << std::setw(12) << cf.size() << "\n";
-    }
-  }
-
-  void info_aliases(Ioss::Region &region, Ioss::GroupingEntity *ige, bool nl_pre, bool nl_post)
-  {
-    std::vector<std::string> aliases;
-    if (region.get_aliases(ige->name(), aliases) > 0) {
-      if (nl_pre) {
-        OUTPUT << "\n";
-      }
-      OUTPUT << "\tAliases: ";
-      for (size_t i = 0; i < aliases.size(); i++) {
-        if (i > 0) {
-          OUTPUT << ", ";
-        }
-        OUTPUT << aliases[i];
-      }
-      if (nl_post) {
-        OUTPUT << "\n";
-      }
-    }
-  }
-
-  void info_fields(Ioss::GroupingEntity *ige, Ioss::Field::RoleType role, const std::string &header)
+  void info_fields(Ioss::GroupingEntity *ige,
+		   Ioss::Field::RoleType role,
+		   const std::string &header)
   {
     Ioss::NameList fields;
     ige->field_describe(role, &fields);
 
-    if (fields.empty()) {
+    if (fields.empty())
       return;
-    }
-
+    
     if (!header.empty()) {
       OUTPUT << header;
     }
     // Iterate through results fields and transfer to output
-    // database...
-    for (const auto &field_name : fields) {
-      const Ioss::VariableType *var_type   = ige->get_field(field_name).raw_storage();
-      int                       comp_count = var_type->component_count();
+    // database...  
+    Ioss::NameList::const_iterator IF;
+    for (IF = fields.begin(); IF != fields.end(); ++IF) {
+      std::string field_name = *IF;
+
+      const Ioss::VariableType *var_type = ige->get_field(field_name).raw_storage();
+      int comp_count = var_type->component_count();
       OUTPUT << std::setw(16) << field_name << ":" << comp_count << " ";
     }
     if (!header.empty()) {
@@ -543,108 +626,57 @@ namespace {
     }
   }
 
+  void info_field_data(Ioss::GroupingEntity *ige,
+		       Ioss::Field::RoleType role,
+		       bool do_connectivity)
+  {
+    // Iterate through the TRANSIENT-role fields of the input
+    // database and transfer to output database.
+    Ioss::NameList state_fields;
+    Ioss::NameList::const_iterator IF;
+    ige->field_describe(role, &state_fields);
+
+    for (IF = state_fields.begin(); IF != state_fields.end(); ++IF) {
+      std::string field_name = *IF;
+      // All of the 'Ioss::EntityBlock' derived classes have a
+      // 'connectivity' field, but it is only interesting on the
+      // Ioss::ElementBlock class. On the other classes, it just
+      // generates overhead...
+      if (!do_connectivity && field_name == "connectivity")
+	continue;
+
+      info_field_data_internal(ige, field_name);
+    }
+  }
+
+  void info_field_data_internal(Ioss::GroupingEntity *ige, const std::string &field_name)
+  {
+#if 0
+    size_t isize = ige->get_field(field_name).get_size();
+    ige->get_field_data(field_name, &data[0], isize);
+    OUTPUT << "Field: " << field_name << " has a data storage size of " << isize << " bytes.\n";
+#endif
+  }
+
   void info_properties(Ioss::GroupingEntity *ige)
   {
 #if 0
-    Ioss::NameList properties;
-    ige->property_describe(&properties);
+    Ioss::NameList names;
+    ige->property_describe(&names);
 
     // Iterate through properties and transfer to output database...
-    for (auto property : properties) {
-      OUTPUT << property << ", ";
+    Ioss::NameList::const_iterator I;
+    for (I = names.begin(); I != names.end(); ++I) {
+      OUTPUT << *I << ", ";
     }
 #endif
   }
 
-} // namespace
-
-namespace Ioss {
-  void io_info_file_info(const Info::Interface &interface) { file_info(interface); }
-  void io_info_group_info(Info::Interface &interface) { group_info(interface); }
-
-  void io_info_set_db_properties(const Info::Interface &interface, Ioss::DatabaseIO *dbi)
+  void show_step(int istep, double time)
   {
-    std::string inpfile = interface.filename();
-
-    if (dbi == nullptr || !dbi->ok(true)) {
-      std::exit(EXIT_FAILURE);
-    }
-
-    if (interface.use_generic_names()) {
-      dbi->set_use_generic_canonical_name(true);
-    }
-
-    dbi->set_surface_split_type(Ioss::int_to_surface_split(interface.surface_split_scheme()));
-    dbi->set_field_separator(interface.field_suffix_separator());
-    if (interface.ints_64_bit()) {
-      dbi->set_int_byte_size_api(Ioss::USE_INT64_API);
-    }
-
-    if (!interface.groupname().empty()) {
-      bool success = dbi->open_group(interface.groupname());
-      if (!success) {
-        OUTPUT << "ERROR: Unable to open group '" << interface.groupname() << "' in file '"
-               << inpfile << "\n";
-        return;
-      }
-    }
-  }
-
-  void io_info_file_info(const Info::Interface &interface, Ioss::Region &region)
-  {
-    Ioss::DatabaseIO *dbi = region.get_database();
-
-    if (dbi == nullptr || !dbi->ok(true)) {
-      std::exit(EXIT_FAILURE);
-    }
-
-    // Get all properties of input database...
-    bool summary = true;
-    info_properties(&region);
-    info_nodeblock(region, interface, summary);
-    info_edgeblock(region, summary);
-    info_faceblock(region, summary);
-    info_elementblock(region, interface, summary);
-
-    info_nodesets(region, summary);
-    info_edgesets(region, summary);
-    info_facesets(region, summary);
-    info_elementsets(region, summary);
-
-    info_sidesets(region, interface, summary);
-    info_commsets(region, summary);
-    info_coordinate_frames(region, summary);
-    if (region.property_exists("state_count") && region.get_property("state_count").get_int() > 0) {
-      std::pair<int, double> state_time_max = region.get_max_time();
-      std::pair<int, double> state_time_min = region.get_min_time();
-      OUTPUT << " Number of time steps on database     =" << std::setw(12)
-             << region.get_property("state_count").get_int() << "\n"
-             << "    Minimum time = " << state_time_min.second << " at step "
-             << state_time_min.first << "\n"
-             << "    Maximum time = " << state_time_max.second << " at step "
-             << state_time_max.first << "\n\n";
-    }
-
-    if (interface.summary() == 0) {
-      summary = false;
-      info_properties(&region);
-      info_nodeblock(region, interface, summary);
-      info_edgeblock(region, summary);
-      info_faceblock(region, summary);
-      info_elementblock(region, interface, summary);
-
-      info_nodesets(region, summary);
-      info_edgesets(region, summary);
-      info_facesets(region, summary);
-      info_elementsets(region, summary);
-
-      info_sidesets(region, interface, summary);
-      info_commsets(region, summary);
-      info_coordinate_frames(region, summary);
-    }
-
-    if (interface.compute_volume()) {
-      element_volume(region);
-    }
+    OUTPUT.setf(std::ios::scientific);
+    OUTPUT.setf(std::ios::showpoint);
+    OUTPUT << "     Time step " << std::setw(5) << istep
+	   << " at time " << std::setprecision(5) << time << '\n';
   }
 }

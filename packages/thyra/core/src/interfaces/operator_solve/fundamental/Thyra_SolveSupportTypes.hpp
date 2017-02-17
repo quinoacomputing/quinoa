@@ -377,6 +377,27 @@ std::ostream& operator<<(std::ostream &out, const SolveCriteria<Scalar> &solveCr
 }
 
 
+/** \brief Deprecated.
+ *
+ * \ingroup Thyra_Op_Solve_fundamental_interfaces_code_grp
+ */
+template <class Scalar>
+struct THYRA_DEPRECATED BlockSolveCriteria {
+  /** \brief Solve tolerance struct */
+  SolveCriteria<Scalar> solveCriteria;
+  /** \brief Number of RHS that solve tolerance applies to. */
+  int                     numRhs;
+  /** \brief . */
+  BlockSolveCriteria()
+    : solveCriteria(), numRhs(1)
+    {}
+  /** \brief . */
+  BlockSolveCriteria( const SolveCriteria<Scalar> &_solveCriteria, int _numRhs )
+    : solveCriteria(_solveCriteria), numRhs(_numRhs)
+    {}
+};
+
+
 /** \brief Exception type thrown on an catastrophic solve failure.
  *
  * \ingroup Thyra_Op_Solve_fundamental_interfaces_code_grp
@@ -472,7 +493,7 @@ std::ostream& operator<<( std::ostream& out_arg, const SolveStatus<Scalar> &solv
   if(solveStatus.extraParameters.get()) {
     *out << "\n";
     Teuchos::OSTab tab3(out);
-    solveStatus.extraParameters->print(*out, 10, true);
+    solveStatus.extraParameters->print(*out, 1000, true);
   }
   else {
     *out << " NONE\n";
@@ -592,6 +613,25 @@ void accumulateSolveStatus(
   // Set the extra parameters if none is set
   if(overallSolveStatus->extraParameters.get()==NULL)
     overallSolveStatus->extraParameters = solveStatus.extraParameters;
+}
+
+
+/** \brief Deprecated.
+ *
+ * \relates SolveStatus
+ */
+template <class Scalar>
+THYRA_DEPRECATED
+void accumulateSolveStatus(
+  const SolveCriteria<Scalar>, // ToDo: Never used, need to take this out!
+  const SolveStatus<Scalar> &solveStatus,
+  SolveStatus<Scalar> *overallSolveStatus
+  )
+{
+  accumulateSolveStatus(
+    SolveCriteria<Scalar>(),
+    solveStatus, Teuchos::ptr(overallSolveStatus)
+    );
 }
 
 
