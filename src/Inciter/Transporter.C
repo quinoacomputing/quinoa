@@ -78,7 +78,7 @@ Transporter::Transporter() :
   m_npoin( 0 ),
   m_timer(),
   m_linsysbc(),
-  m_diag( g_inputdeck.get< tag::component >().nprop(), 0.0 ),
+  m_diag( g_inputdeck.get< tag::component >().nprop() * 2, 0.0 ),
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -171,7 +171,12 @@ Transporter::Transporter() :
     tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
                        g_inputdeck.get< tag::flformat, tag::diag >(),
                        g_inputdeck.get< tag::prec, tag::diag >() );
-    dw.header( { "r", "ru", "rv", "rw", "re" } );
+    // This list is hard-coded here for CompFlow, so these are wrong for, e.g.,
+    // scalar transport. This is punt for now and should be fixed so that these
+    // column labels can be queried from the underlying PDEs, probably via a
+    // a new polymorphic function of inciter::PDE.
+    dw.header( { "r", "ru", "rv", "rw", "re",
+                 "err(r)", "err(ru)", "err(rv)", "err(rw)", "err(re)" } );
 
     // Create (empty) worker array
     m_carrier = CarrierProxy::ckNew();

@@ -5,24 +5,24 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Fri 25 Nov 2016 07:57:34 PM MST
+# \date      Wed 18 Jan 2017 10:34:27 AM MST
 #
 ################################################################################
 
 # Dockerfile for a simple dynamic build of Quinoa on Debian Linux using the
-# native (system-wide compiler and MPI wrappers).
+# native (system-wide compiler and our own MPI wrappers).
 #
 # We start from the Debian/testing Linux distribution and install all possible
 # prerequisites, then build the required but missing third-party libraries,
 # build the code and test.
 #
-# This docker image is intended to test and demonstrate one of the simplest way
-# of building Quinoa. It creates dynamically built executables which require
+# This docker image is intended to test and demonstrate a simple way of
+# building Quinoa. It creates dynamically built executables which require
 # runtime libraries. At the end we clean the clone, preparing the ground for
 # development via a docker host mount. The container still contains the full
 # operating system, compilers, and libraries. The image is intended as a
-# complete development environment using the system-wide GNU compilers and
-# OpenMPI.
+# complete development environment using the system-wide GNU compilers and a
+# manually-built OpenMPI.
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
@@ -37,13 +37,23 @@ ENV https_proxy https://proxyout.lanl.gov:8080/
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev
+RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev pegtl-dev libhdf5-dev libhdf5-openmpi-dev
+
+# Install our own OpenMPI as Zoltan2 fails with the system's openmpi (2.0.2)
+ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
+RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --prefix=/opt/openmpi && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) install
+ENV PATH /opt/openmpi/bin:$PATH
+ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
+ENV MANPATH /opt/openmpi/share/man:$MANPATH
+
+# Remove /install - no more installs after this line
+RUN rm -rf /install
 
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
 # Clean code
 RUN rm -rf /quinoa

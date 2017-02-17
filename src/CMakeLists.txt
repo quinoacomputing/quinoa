@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 17 Jan 2017 03:29:02 PM MST
+# \date      Wed 25 Jan 2017 06:31:58 AM MST
 #
 ################################################################################
 
@@ -27,6 +27,9 @@ set(MINOR_VER 1)
 
 # Set LA-CC number
 set(LACC "16015")
+
+# Sets CMAKE_INSTALL_{BIN,LIB}DIR needed for multilib support
+include(GNUInstallDirs)
 
 # Set CMAKE_BUILD_TYPE
 include(BuildType)
@@ -81,13 +84,10 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-endif()
-
-# Echo status on third-party libraries directory
-if (TPL_DIR)
-  MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
-else()
-  message(FATAL_ERROR "Third-party library dir '${TPL_DIR}' is not specified")
+  if (EXISTS ${TPL_DIR}/include)
+    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+    message(STATUS "Third-party library dir: " ${TPL_DIR})
+  endif()
 endif()
 
 # Find MPI and get its underlying compilers
@@ -97,8 +97,6 @@ get_mpi_compilers()
 # Set compilers
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
-set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
-message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -138,30 +136,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
-# Set names of executables
-set(INCITER_EXECUTABLE inciter)
-set(RNGTEST_EXECUTABLE rngtest)
-set(MESHCONV_EXECUTABLE meshconv)
-set(WALKER_EXECUTABLE walker)
-set(UNITTEST_EXECUTABLE unittest)
-set(NUMDIFF_EXECUTABLE numdiff)
-
-# Create set of all executables tested. These are the executables that do
-# "interesting things", i.e., excluding unittest but keeping rngtest as that is
-# (to be) regression tested
-set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
-                        ${RNGTEST_EXECUTABLE}
-                        ${MESHCONV_EXECUTABLE}
-                        ${WALKER_EXECUTABLE})
-
-# Create set of all executables.
-set(EXECUTABLES ${INCITER_EXECUTABLE}
-                ${RNGTEST_EXECUTABLE}
-                ${MESHCONV_EXECUTABLE}
-                ${WALKER_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE}
-                ${NUMDIFF_EXECUTABLE})
-
 # Get git revision
 include(GetGitRevisionDescription)
 git_describe(GIT_SHA1)
@@ -184,7 +158,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
-  if (libc++_FOUND)
+  if (LIBCXX_FOUND)
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
@@ -266,7 +240,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
-  if (libc++_FOUND)
+  if (LIBCXX_FOUND)
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
@@ -276,7 +250,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
   add_compiler_flag("-Wremarks") # display remarks and comments
-  add_compiler_flag("-gcc-sys")  # only define GNU macros during compileation of system headers
+  add_compiler_flag("-gcc-sys")  # only define GNU macros during compilation of system headers
 
   # Globally suppress the following Intel compiler remarks:
   #    68: integer conversion resulted in a change of sign
@@ -419,6 +393,34 @@ include(ConfigureDataLayout)
 # Include third-party libraries configuration
 include(TPLs)
 
+# Set names of executables
+set(INCITER_EXECUTABLE inciter)
+if (HAS_TESTU01)
+  set(RNGTEST_EXECUTABLE rngtest)
+  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
+  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
+endif()
+set(MESHCONV_EXECUTABLE meshconv)
+set(WALKER_EXECUTABLE walker)
+set(UNITTEST_EXECUTABLE unittest)
+set(NUMDIFF_EXECUTABLE numdiff)
+
+# Create set of all executables tested. These are the executables that do
+# "interesting things", i.e., excluding unittest but keeping rngtest as that is
+# (to be) regression tested
+set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
+                        ${RNGTEST_EXECUTABLE}
+                        ${MESHCONV_EXECUTABLE}
+                        ${WALKER_EXECUTABLE})
+
+# Create set of all executables.
+set(EXECUTABLES ${INCITER_EXECUTABLE}
+                ${RNGTEST_EXECUTABLE}
+                ${MESHCONV_EXECUTABLE}
+                ${WALKER_EXECUTABLE}
+                ${UNITTEST_EXECUTABLE}
+                ${NUMDIFF_EXECUTABLE})
+
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
@@ -476,28 +478,33 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/RNG
-                    ${QUINOA_SOURCE_DIR}/RNGTest
+                    ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
-                    ${MKL_INCLUDE_PATH}
+                    ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
-                    ${HYPRE_INCLUDE_PATH}
-                    ${PSTREAMS_INCLUDE_PATH}
-                    ${PEGTL_INCLUDE_PATH}
-                    ${RANDOM123_INCLUDE_PATH}
-                    ${RNGSSE2_INCLUDES}
-                    ${H5Part_INCLUDE_DIRS}
-                    ${LAPACKE_INCLUDE}
-                    ${TPL_DIR}/include
-                    ${TPL_DIR}/include/tut
-                    ${TPL_DIR}/charm/include
+                    ${HYPRE_INCLUDE_DIRS}
+                    ${PSTREAMS_INCLUDE_DIRS}
+                    ${PUGIXML_INCLUDE_DIRS}
+                    ${H5PART_INCLUDE_DIRS}
+                    ${TUT_INCLUDE_DIRS}
+                    ${CARTESIAN_PRODUCT_INCLUDE_DIRS}
+                    ${PEGTL_INCLUDE_DIRS}
+                    ${RANDOM123_INCLUDE_DIRS}
+                    ${TESTU01_INCLUDE_DIRS}
+                    ${RNGSSE2_INCLUDE_DIRS}
+                    ${LAPACKE_INCLUDE_DIRS}
+                    ${Zoltan2_INCLUDE_DIR}
+                    ${SEACASExodus_INCLUDE_DIRS}
+                    ${TPL_INCLUDE_DIR}
+                    ${CHARM_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
+                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
@@ -517,7 +524,9 @@ add_subdirectory(LinSys)
 add_subdirectory(IO)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)
-add_subdirectory(RNGTest)
+if (HAS_TESTU01)
+  add_subdirectory(RNGTest)
+endif()
 add_subdirectory(Statistics)
 add_subdirectory(Particles)
 

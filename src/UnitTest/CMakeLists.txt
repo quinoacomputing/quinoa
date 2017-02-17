@@ -29,8 +29,10 @@ add_dependencies("UnitTest" "unittestCharmModule")
 add_dependencies( "tutsuiteCharmModule" "linearmapCharmModule" )
 add_dependencies( "tutsuiteCharmModule" "unsmeshmapCharmModule" )
 
+set_target_properties(UnitTest PROPERTIES LIBRARY_OUTPUT_NAME quinoa_unittest)
+
 INSTALL(TARGETS UnitTest
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )

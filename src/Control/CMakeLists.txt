@@ -14,10 +14,13 @@ add_library(InciterControl
             Inciter/CmdLine/Parser.C
 )
 
+set_target_properties(InciterControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_incitercontrol)
+
 INSTALL(TARGETS InciterControl
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 #### RNGTest control ###########################################################
@@ -30,11 +33,13 @@ add_library(RNGTestControl
             RNGTest/CmdLine/Parser.C
 )
 
+set_target_properties(RNGTestControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_rngtestcontrol)
 
 INSTALL(TARGETS RNGTestControl
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 #### UnitTest control ##########################################################
@@ -46,11 +51,13 @@ add_library(UnitTestControl
             UnitTest/CmdLine/Parser.C
 )
 
+set_target_properties(UnitTestControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_unittestcontrol)
 
 INSTALL(TARGETS UnitTestControl
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 #### MeshConv control ##########################################################
@@ -61,10 +68,13 @@ add_library(MeshConvControl
             MeshConv/CmdLine/Parser.C
 )
 
+set_target_properties(MeshConvControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_meshconvcontrol)
+
 INSTALL(TARGETS MeshConvControl
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 #### Walker control ############################################################
@@ -75,9 +85,11 @@ add_library(WalkerControl
             Walker/CmdLine/Parser.C
 )
 
-INSTALL(TARGETS WalkerControl
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
-)
+set_target_properties(WalkerControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_walkercontrol)
 
+INSTALL(TARGETS WalkerControl
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)

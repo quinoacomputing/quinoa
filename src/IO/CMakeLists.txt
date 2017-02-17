@@ -9,10 +9,12 @@ add_library(IO
             H5PartWriter.C
 )
 
+set_target_properties(IO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_io)
+
 INSTALL(TARGETS IO
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 add_library(MeshIO
@@ -28,10 +30,12 @@ add_library(MeshIO
             #SiloWriter.C
 )
 
+set_target_properties(MeshIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_meshio)
+
 INSTALL(TARGETS MeshIO
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
 # Include function for adding Charm++ modules
@@ -48,8 +52,10 @@ addCharmModule( "particlewriter" "AsyncIO" )
 # including those.
 add_dependencies( "AsyncIO" "transporterCharmModule" )
 
+set_target_properties(AsyncIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_asyncio)
+
 INSTALL(TARGETS AsyncIO
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )

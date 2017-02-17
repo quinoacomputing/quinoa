@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 06 Dec 2016 02:03:27 PM MST
+  \date      Fri 10 Feb 2017 02:07:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -938,10 +938,35 @@ Carrier::diagnostics()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Optionally send latest solution to LinSysMerger for computing diagnostics
-  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u );
-  else
+  // Optionally: collect analytical solutions and send both the latest
+  // analytical and numerical solutions to LinSysMerger for computing and
+  // outputing diagnostics
+  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+
+    // Collect analytical solutions (if available) from all PDEs. Note that
+    // calling the polymorphic PDE::initialize() is assumed to evaluate the
+    // analytical solution for a PDE. For those PDE problems that have
+    // analytical solutions, this is the same as used for setting the initial
+    // conditions, since if the analytical solution is available for a problem
+    // it is (so far anyway) always initialized to its analytical solution and
+    // that is done by calling PDE::initialize(). If the analytical solution is
+    // a function of time, that is already incorporated in setting initial
+    // conditions. For those PDEs where the analytical solution is not
+    // available, initialize() returns the initial conditions (obviously), and
+    // thus the "error", defined between this "analytical" and numerical
+    // solution will be a measure of the "distance" between the initial
+    // condition and the current numerical solution. This is not necessarily
+    // useful, but simplies the logic because all PDEs can be treated as baing
+    // able to compute an error based on some "analytical" solution, which
+    // really the initial condition.
+    auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+    for (const auto& eq : g_pdes)
+      eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
+
+    // Send both numerical and analytical solutions to linsysmerger
+    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u, m_ul );
+
+  } else
     contribute(
       CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
 }

@@ -257,8 +257,9 @@ class Carrier : public CBase_Carrier {
       p | m_it;
       p | m_itf;
       p | m_t;
-      p | m_nvol;
+      p | m_dt;
       p | m_stage;
+      p | m_nvol;
       p | m_nhsol;
       p | m_nlsol;
       p | m_naec;
@@ -268,6 +269,7 @@ class Carrier : public CBase_Carrier {
       p | m_outFilename;
       p | m_transporter;
       p | m_linsysmerger;
+      p | m_particlewriter;
       p | m_fluxcorrector;
       p | m_cid;
       p | m_el;
