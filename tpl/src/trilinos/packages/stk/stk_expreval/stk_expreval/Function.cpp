@@ -1,36 +1,3 @@
-// Copyright (c) 2013, Sandia Corporation.
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-// 
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-// 
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-// 
-//     * Neither the name of Sandia Corporation nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
-
 #include <math.h>
 #include <cmath>
 #include <ctime>
@@ -44,19 +11,20 @@
 namespace stk {
 namespace expreval {
 
-  namespace bmp  = boost::math::policies;
+  namespace bmth = boost::math;
+  namespace bmp  = bmth::policies;
 
 typedef boost::math::
   weibull_distribution< double,
                        boost::math::policies::policy< bmp::overflow_error<bmp::ignore_error> > >
   weibull_dist;
 
-typedef boost::math::
+typedef bmth::
   gamma_distribution< double,
                        bmp::policy< bmp::overflow_error<bmp::ignore_error> > >
   gamma_dist;
 
-typedef boost::math::
+typedef bmth::
   normal_distribution< double,
                        bmp::policy< bmp::overflow_error<bmp::ignore_error> > >
   normal_dist;
@@ -94,7 +62,7 @@ public:
   }
 
 private:
-  Signature m_function;
+  Signature	m_function;
 };
 
 
@@ -120,7 +88,7 @@ public:
   }
 
 private:
-  Signature m_function;
+  Signature	m_function;
 };
 
 
@@ -146,7 +114,7 @@ public:
   }
 
 private:
-  Signature m_function;
+  Signature	m_function;
 };
 
 template <>
@@ -171,7 +139,7 @@ public:
   }
 
 private:
-  Signature m_function;
+  Signature	m_function;
 };
 
 template <>
@@ -196,7 +164,7 @@ public:
   }
 
 private:
-  Signature m_function;
+  Signature	m_function;
 };
 
 typedef CFunction<CExtern0> CFunction0;
@@ -205,54 +173,55 @@ typedef CFunction<CExtern2> CFunction2;
 typedef CFunction<CExtern3> CFunction3;
 typedef CFunction<CExtern4> CFunction4;
 
-namespace {
+
 extern "C" {
   /// extract signed integral value from floating-point number
-  double ipart(double x) {
+  static double ipart(double x)  {
     double y;
     std::modf(x, &y);
     return y;
   }
 
   /// Extract fractional value from floating-point number
-  double fpart(double x) {
+  static double fpart(double x)  {
     double y;
     return std::modf(x, &y);
   }
 
   /// Interface to the pseudo-random number generator function rand
   /// provided by ANSI C math library.
-  double real_rand() {
-    return static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX) + 1.0);
+  static double real_rand() {
+    return (double) std::rand() / ((double)(RAND_MAX) + 1.0);
   }
 
   /// Sets x as the "seed". Interface to the srand function provided by the
   /// ANSI C math library.
-  double real_srand(double x) {
+  static double real_srand(double x) {
     std::srand(static_cast<int>(x));
     return 0.0;
   }
 
   /// Return the current time
-  double current_time() {
-    return static_cast<double>(::time(nullptr));
+  static double current_time() {
+    return static_cast<double>(::time(NULL));
   }
 
   /// Sets the current time as the "seed" to randomize the next call to real_rand.
-  double randomize() {
-    std::srand(::time(nullptr));
+  static double randomize() {
+    std::srand(::time(NULL));
     return 0.0;
   }
 
   /// Sets x as the "seed" for the pseudo-random number generator.
-  void random_seed(double x) {
+  static double random_seed(double x) {
     int y = static_cast<int>(x);
     sRandomRangeHighValue =  y;
     sRandomRangeLowValue  = ~y;
+    return 0.0;
   }
 
   /// Non-platform specific (pseudo) random number generator.
-  double random0() {
+  static double random0() {
     sRandomRangeHighValue = (sRandomRangeHighValue<<8) + (sRandomRangeHighValue>>8);
     sRandomRangeHighValue += sRandomRangeLowValue;
     sRandomRangeLowValue += sRandomRangeHighValue;
@@ -261,64 +230,68 @@ extern "C" {
   }
 
   /// Non-platform specific (pseudo) random number generator.
-  double random1(double seed) {
+  static double random1(double seed) {
     random_seed(seed);
-    return random0();
+    sRandomRangeHighValue = (sRandomRangeHighValue<<8) + (sRandomRangeHighValue>>8);
+    sRandomRangeHighValue += sRandomRangeLowValue;
+    sRandomRangeLowValue += sRandomRangeHighValue;
+    int val = std::abs(sRandomRangeHighValue);
+    return double(val) / double(RAND_MAX);
   }
 
   /// Returns the angle (given in radians) in degrees.
-  double deg(double a)  {
+  static double deg(double a)  {
     return (180.0 / s_pi) * a;
   }
 
   /// Returns the angle (given in degrees) in radians.
-  double rad(double a)  {
+  static double rad(double a)  {
     return  (s_pi / 180.0) * a;
   }
 
   /// Returns the minimum value among its arguments
-  inline double min_2(double a, double b) {
+  static double min2(double a, double b) {
     return std::min(a, b);
   }
 
   /// Returns the minimum value among its arguments
-  inline double min_3(double a, double b, double c) {
+  static double min3(double a, double b, double c) {
     return std::min(std::min(a, b), c);
   }
 
   /// Returns the minimum value among its arguments
-  inline double min_4(double a, double b, double c, double d) {
+  static double min4(double a, double b, double c, double d) {
     return std::min(std::min(a, b), std::min(c,d));
   }
 
   /// Returns the maximum value among its arguments
-  inline double max_2(double a, double b) {
+  static double max2(double a, double b) {
     return std::max(a, b);
   }
 
   /// Returns the maximum value among its arguments
-  inline double max_3(double a, double b, double c) {
+  static double max3(double a, double b, double c) {
     return std::max(std::max(a, b), c);
   }
 
   /// Returns the maximum value among its arguments
-  double max_4(double a, double b, double c, double d) {
+  static double max4(double a, double b, double c, double d) {
     return std::max(std::max(a, b), std::max(c,d));
   }
 
   /// Convert rectangular coordinates into polar radius.
-  double recttopolr(double x, double y) {
+  static double recttopolr(double x, double y) {
     return std::sqrt((x * x) + (y * y));
   }
 
-  double cosine_ramp3(double t, double t1, double t2) {
-    if( t < t1    )
+  static double cosine_ramp3(double t, double rampStartTime, double rampEndTime) {
+    if( t < rampStartTime    )
     {
       return 0.0;
     }
-    else if( t < t2 )
+    else if( t < rampEndTime )
     {
-      return (1.0 - std::cos((t-t1)*s_pi/(t2-t1)))/2.0;
+      return (1.0 - std::cos((t-rampStartTime)*s_pi/(rampEndTime-rampStartTime)))/2.0;
     }
     else 
     {
@@ -326,43 +299,11 @@ extern "C" {
     }
   }
 
-  double haversine_pulse(double t, double t1, double t2)
-  {
-    if( t < t1 )
-    {
-      return 0.0;
-    }
-    else if( t < t2 )
-    {
-      return std::pow(std::sin(s_pi*(t-t1)/(t2-t1)),2);
-    }
-    else 
-    {
-      return 0.0;
-    }
-  }
-
-  double cycloidal_ramp(double t, double t1, double t2)
-  {
-    if( t < t1 )
-    {
-      return 0.0;
-    }
-    else if( t < t2 )
-    {
-      return (t-t1)/(t2-t1)-1/(s_two_pi)*sin(s_two_pi/(t2-t1)*(t-t1));
-    }
-    else 
-    {
-      return 1.0;
-    }
-  }
-
-  double cosine_ramp1(double t) {
+  static double cosine_ramp1(double t) {
     return cosine_ramp3(t, 0.0, 1.0);
   }
 
-  double cosine_ramp2(double t, double rampEndTime) {
+  static double cosine_ramp2(double t, double rampEndTime) {
     return cosine_ramp3(t, 0.0, rampEndTime);
   }
 
@@ -370,14 +311,14 @@ extern "C" {
   double weibull_pdf(double x, double shape, double scale)
   {
     weibull_dist weibull1(shape, scale);
-    return boost::math::pdf(weibull1, x);
+    return bmth::pdf(weibull1, x);
   }
 
   /// Normal (Gaussian) distribution probability distribution function.
   double normal_pdf(double x, double mean, double standard_deviation)
   {
     normal_dist normal1(mean, standard_deviation);
-    return boost::math::pdf(normal1, x);
+    return bmth::pdf(normal1, x);
   }
 
   /// Uniform distribution probability distribution function.
@@ -398,18 +339,21 @@ extern "C" {
   /// Gamma continuous probability distribution function.
   inline double gamma_pdf(double x, double shape, double scale)
   {
-    return boost::math::pdf(gamma_dist(shape,scale), x);
+    gamma_dist gamma1(shape, scale);
+    return bmth::pdf(gamma1, x);
   }
 
   inline double phi(double beta)
   {
-    return boost::math::pdf(normal_dist(0.,1.), beta);
+    normal_dist norm(0., 1.);
+    return bmth::pdf(norm, beta);
   }
 
   /// Returns a probability < 0.5 for negative beta and a probability > 0.5 for positive beta.
   inline double Phi(double beta)
   {
-    return boost::math::cdf(normal_dist(0.,1.), beta);
+    normal_dist norm(0., 1.);
+    return bmth::cdf(norm, beta);
   }
 
   inline double bounded_normal_pdf(double x, double mean, double std_dev, double lwr, double upr)
@@ -420,17 +364,17 @@ extern "C" {
   }
 
   /// Returns -1 or 1 depending on whether x is negative or positive.
-  double sign(double a)  {
+  static double sign(double a)  {
     return (a >= 0.0 ) ? 1.0 : -1.0;
   }
 
   /// Returns 1.0 if the input value t is greater than tstart and less than tstop.
-  double unit_step3(double t, double tstart, double tstop)  {
+  static double unit_step3(double t, double tstart, double tstop)  {
     return (t < tstart || t > tstop) ? 0.0 : 1.0;
   }
 
   /// Convert rectangular coordinates into polar angle.
-  double recttopola(double x, double y) {
+  static double recttopola(double x, double y) {
     double tmp = std::atan2(y, x);
 
     /* Convert to 0.0 to 2 * PI */
@@ -442,15 +386,14 @@ extern "C" {
   }
 
   /// Convert polar coordinates (r,theta) into x coordinate.
-  double poltorectx(double r, double theta) {
+  static double poltorectx(double r, double theta) {
     return r * std::cos(theta);
   }
 
   /// Convert polar coordinates (r,theta) into y coordinate.
-  double poltorecty(double r, double theta) {
+  static double poltorecty(double r, double theta) {
     return r * std::sin(theta);
   }
-}
 }
 
 CFunctionMap::CFunctionMap() 
@@ -478,7 +421,6 @@ CFunctionMap::CFunctionMap()
 
   (*this).insert(std::make_pair("acos",            new CFunction1(std::acos)));
   (*this).insert(std::make_pair("asin",            new CFunction1(std::asin)));
-  (*this).insert(std::make_pair("asinh",           new CFunction1(std::asinh)));
   (*this).insert(std::make_pair("atan",            new CFunction1(std::atan)));
   (*this).insert(std::make_pair("atan2",           new CFunction2(std::atan2)));
   (*this).insert(std::make_pair("ceil",            new CFunction1(std::ceil)));
@@ -497,12 +439,12 @@ CFunctionMap::CFunctionMap()
   (*this).insert(std::make_pair("fmod",            new CFunction2(std::fmod)));
   (*this).insert(std::make_pair("ipart",           new CFunction1(ipart)));
   (*this).insert(std::make_pair("fpart",           new CFunction1(fpart)));
-  (*this).insert(std::make_pair("max",             new CFunction2(max_2)));
-  (*this).insert(std::make_pair("max",             new CFunction3(max_3)));
-  (*this).insert(std::make_pair("max",             new CFunction4(max_4)));
-  (*this).insert(std::make_pair("min",             new CFunction2(min_2)));
-  (*this).insert(std::make_pair("min",             new CFunction3(min_3)));
-  (*this).insert(std::make_pair("min",             new CFunction4(min_4)));
+  (*this).insert(std::make_pair("max",             new CFunction2(max2)));
+  (*this).insert(std::make_pair("max",             new CFunction3(max3)));
+  (*this).insert(std::make_pair("max",             new CFunction4(max4)));
+  (*this).insert(std::make_pair("min",             new CFunction2(min2)));
+  (*this).insert(std::make_pair("min",             new CFunction3(min3)));
+  (*this).insert(std::make_pair("min",             new CFunction4(min4)));
   (*this).insert(std::make_pair("poltorectx",      new CFunction2(poltorectx)));
   (*this).insert(std::make_pair("poltorecty",      new CFunction2(poltorecty)));
   (*this).insert(std::make_pair("rad",             new CFunction1(rad)));
@@ -515,8 +457,6 @@ CFunctionMap::CFunctionMap()
   (*this).insert(std::make_pair("cosine_ramp",     new CFunction1(cosine_ramp1)));
   (*this).insert(std::make_pair("cosine_ramp",     new CFunction2(cosine_ramp2)));
   (*this).insert(std::make_pair("cosine_ramp",     new CFunction3(cosine_ramp3)));
-  (*this).insert(std::make_pair("haversine_pulse", new CFunction3(haversine_pulse)));
-  (*this).insert(std::make_pair("cycloidal_ramp",  new CFunction3(cycloidal_ramp)));
 
   (*this).insert(std::make_pair("sign",            new CFunction1(sign)));
   (*this).insert(std::make_pair("unit_step",       new CFunction3(unit_step3)));

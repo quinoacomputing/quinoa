@@ -1,65 +1,19 @@
-/*
-//@HEADER
-// ***********************************************************************
-//
-//       Ifpack: Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2002) Sandia Corporation
-//
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
-// ***********************************************************************
-//@HEADER
-*/
-
 #ifndef IFPACK_BLOCKPRECONDITIONER_H
 #define IFPACK_BLOCKPRECONDITIONER_H
 
 #include "Ifpack_ConfigDefs.h"
-#include "Ifpack_Preconditioner.h"
+#include "Ifpack_Preconditioner.h" 
 #include "Ifpack_Partitioner.h"
-#include "Ifpack_LinePartitioner.h"
 #include "Ifpack_LinearPartitioner.h"
 #include "Ifpack_GreedyPartitioner.h"
 #include "Ifpack_METISPartitioner.h"
 #include "Ifpack_EquationPartitioner.h"
 #include "Ifpack_UserPartitioner.h"
 #include "Ifpack_Graph_Epetra_RowMatrix.h"
-#include "Ifpack_DenseContainer.h"
-#include "Ifpack_Utils.h"
+#include "Ifpack_DenseContainer.h" 
+#include "Ifpack_Utils.h" 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
-
-#include "Epetra_Map.h"
 #include "Epetra_RowMatrix.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_Vector.h"
@@ -75,17 +29,17 @@ static const int IFPACK_SGS = 2;
 
 /*! The Ifpack_BlockRelaxation class enables the construction of
   block relaxation
-  preconditioners of an Epetra_RowMatrix. Ifpack_PointRelaxation
-  is derived from
+  preconditioners of an Epetra_RowMatrix. Ifpack_PointRelaxation 
+  is derived from 
   the Ifpack_Preconditioner class, which is derived from Epetra_Operator.
   Therefore this object can be used as preconditioner everywhere an
   ApplyInverse() method is required in the preconditioning step.
-
+ 
   The class currently support:
   - block Jacobi;
   - block Gauss-Seidel;
   - symmetric block Gauss-Seidel.
-
+  
   The idea of block relaxation method is to extend their point relaxation
   counterpart (implemented in Ifpack_PointRelaxation), by working on a
   group of equation simulteneously. Generally, larger blocks result
@@ -98,7 +52,7 @@ static const int IFPACK_SGS = 2;
   - how to apply the inverse of each diagonal block, by choosing a dense
     container or a sparse container. The implementation of
     block relaxation schemes requires the application of the
-    inverse of each diagonal block. This can be done using LAPACK (dense
+    inverse of each diagonal block. This can be done using LAPACK (dense 
     container), or any Ifpack_Preconditioner derived class (sparse
     container);
   - blocks can be defined using a linear decomposition, by a simple greedy
@@ -133,7 +87,7 @@ solver.SetPrecOperator(&Prec);
 \author Marzio Sala, SNL 9214.
 
 \date Last modified on 25-Jan-05.
-
+  
 */
 template<typename T>
 class Ifpack_BlockRelaxation : public Ifpack_Preconditioner {
@@ -142,7 +96,7 @@ public:
 
   //@{ \name Constructors/Destructors
   //! Ifpack_BlockRelaxation constructor with given Epetra_RowMatrix.
-  /*! Creates an Ifpack_Preconditioner preconditioner.
+  /*! Creates an Ifpack_Preconditioner preconditioner. 
    *
    * \param In
    * Matrix - Pointer to matrix to be preconditioned.
@@ -156,7 +110,7 @@ public:
   //@{ \name Mathematical functions.
 
   //! Applies the matrix to an Epetra_MultiVector.
-  /*!
+  /*! 
     \param In
     X - A Epetra_MultiVector of dimension NumVectors to multiply with matrix.
     \param Out
@@ -164,11 +118,11 @@ public:
 
     \return Integer error code, set to 0 if successful.
     */
-  virtual int Apply(const Epetra_MultiVector& X,
-                    Epetra_MultiVector& Y) const;
+  virtual int Apply(const Epetra_MultiVector& X, 
+		    Epetra_MultiVector& Y) const;
 
   //! Applies the block Jacobi preconditioner to X, returns the result in Y.
-  /*!
+  /*! 
     \param In
     X - A Epetra_MultiVector of dimension NumVectors to be preconditioned.
     \param Out
@@ -177,8 +131,8 @@ public:
     \return Integer error code, set to 0 if successful.
 
     */
-  virtual int ApplyInverse(const Epetra_MultiVector& X,
-                           Epetra_MultiVector& Y) const;
+  virtual int ApplyInverse(const Epetra_MultiVector& X, 
+			   Epetra_MultiVector& Y) const;
 
   //! Returns the infinity norm of the global matrix (not implemented)
   virtual double NormInf() const
@@ -197,7 +151,7 @@ public:
   }
 
   virtual const char* Label() const;
-
+ 
   //! Returns the current UseTranspose setting.
   virtual bool UseTranspose() const
   {
@@ -221,7 +175,7 @@ public:
   //@}
 
   //! Returns the number local blocks.
-  int NumLocalBlocks() const
+  int NumLocalBlocks() const 
   {
     return(NumLocalBlocks_);
   }
@@ -255,7 +209,7 @@ public:
   virtual double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                          const int MaxIters = 1550,
                          const double Tol = 1e-9,
-                         Epetra_RowMatrix* Matrix_in = 0)
+			 Epetra_RowMatrix* Matrix_in = 0)
   {
     return(-1.0);
   }
@@ -315,7 +269,7 @@ public:
     // container.
     double total = InitializeFlops_;
     for (unsigned int i = 0 ; i < Containers_.size() ; ++i)
-      if(Containers_[i]) total += Containers_[i]->InitializeFlops();
+      total += Containers_[i]->InitializeFlops();
     return(total);
 #else
     return(0.0);
@@ -327,10 +281,10 @@ public:
 #ifdef IFPACK_FLOPCOUNTERS
     if (Containers_.size() == 0)
       return(0.0);
-
+    
     double total = ComputeFlops_;
     for (unsigned int i = 0 ; i < Containers_.size() ; ++i)
-      if(Containers_[i]) total += Containers_[i]->ComputeFlops();
+      total += Containers_[i]->ComputeFlops();
     return(total);
 #else
     return(0.0);
@@ -345,7 +299,7 @@ public:
 
     double total = ApplyInverseFlops_;
     for (unsigned int i = 0 ; i < Containers_.size() ; ++i) {
-      if(Containers_[i]) total += Containers_[i]->ApplyInverseFlops();
+      total += Containers_[i]->ApplyInverseFlops();
     }
     return(total);
 #else
@@ -364,19 +318,19 @@ private:
     return(*this);
   }
 
-  virtual int ApplyInverseJacobi(const Epetra_MultiVector& X,
+  virtual int ApplyInverseJacobi(const Epetra_MultiVector& X, 
                                  Epetra_MultiVector& Y) const;
 
-  virtual int DoJacobi(const Epetra_MultiVector& X,
+  virtual int DoJacobi(const Epetra_MultiVector& X, 
                                   Epetra_MultiVector& Y) const;
 
-  virtual int ApplyInverseGS(const Epetra_MultiVector& X,
+  virtual int ApplyInverseGS(const Epetra_MultiVector& X, 
                              Epetra_MultiVector& Y) const;
 
-  virtual int DoGaussSeidel(Epetra_MultiVector& X,
+  virtual int DoGaussSeidel(Epetra_MultiVector& X, 
                             Epetra_MultiVector& Y) const;
 
-  virtual int ApplyInverseSGS(const Epetra_MultiVector& X,
+  virtual int ApplyInverseSGS(const Epetra_MultiVector& X, 
                               Epetra_MultiVector& Y) const;
 
   virtual int DoSGS(const Epetra_MultiVector& X,
@@ -427,14 +381,12 @@ private:
   //! Pointers to the matrix to be preconditioned.
   Teuchos::RefCountPtr< const Epetra_RowMatrix > Matrix_;
   mutable std::vector<Teuchos::RefCountPtr<T> > Containers_;
-  Epetra_Vector Diagonal_ ;
-
   //! Contains information about non-overlapping partitions.
   Teuchos::RefCountPtr<Ifpack_Partitioner> Partitioner_;
-  std::string PartitionerType_;
+  string PartitionerType_;
   int PrecType_;
   //! Label for \c this object
-  std::string Label_;
+  string Label_;
   //! If \c true, starting solution is the zero vector.
   bool ZeroStartingSolution_;
   Teuchos::RefCountPtr<Ifpack_Graph> Graph_;
@@ -446,7 +398,7 @@ private:
   bool IsParallel_;
   Teuchos::RefCountPtr<Epetra_Import> Importer_;
   // @}
-
+  
 }; // class Ifpack_BlockRelaxation
 
 //==============================================================================
@@ -468,7 +420,6 @@ Ifpack_BlockRelaxation(const Epetra_RowMatrix* Matrix_in) :
   DampingFactor_(1.0),
   NumLocalBlocks_(1),
   Matrix_(Teuchos::rcp(Matrix_in,false)),
-  Diagonal_( Matrix_in->Map()),
   PartitionerType_("greedy"),
   PrecType_(IFPACK_JACOBI),
   ZeroStartingSolution_(true),
@@ -498,8 +449,7 @@ template<typename T>
 int Ifpack_BlockRelaxation<T>::
 Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
-  int ierr = Matrix().Apply(X,Y);
-  IFPACK_RETURN(ierr);
+  IFPACK_RETURN(Matrix().Apply(X,Y));
 }
 
 //==============================================================================
@@ -538,40 +488,31 @@ int Ifpack_BlockRelaxation<T>::ExtractSubmatrices()
 
   Containers_.resize(NumLocalBlocks());
 
-  Diagonal_ = Epetra_Vector(Matrix_->Map());
-  Matrix_->ExtractDiagonalCopy(Diagonal_);
-
   for (int i = 0 ; i < NumLocalBlocks() ; ++i) {
 
     int rows = Partitioner_->NumRowsInPart(i);
-    // if rows == 1, then this is a singleton block, and should not be
-    // created. For now, allow creation, and just force the compute step below.
+    Containers_[i] = Teuchos::rcp( new T(rows) );
+    
+    //Ifpack_DenseContainer* DC = 0;
+    //DC = dynamic_cast<Ifpack_DenseContainer*>(Containers_[i]);
 
-    if( rows != 1 ) {
-      Containers_[i] = Teuchos::rcp( new T(rows) );
+    if (Containers_[i] == Teuchos::null)
+      IFPACK_CHK_ERR(-5);
+    
+    IFPACK_CHK_ERR(Containers_[i]->SetParameters(List_));
+    IFPACK_CHK_ERR(Containers_[i]->Initialize());
+    // flops in Initialize() will be computed on-the-fly in method InitializeFlops().
 
-      IFPACK_CHK_ERR(Containers_[i]->SetParameters(List_));
-      IFPACK_CHK_ERR(Containers_[i]->Initialize());
-      // flops in Initialize() will be computed on-the-fly in method InitializeFlops().
-
-      // set "global" ID of each partitioner row
-      for (int j = 0 ; j < rows ; ++j) {
-        int LRID = (*Partitioner_)(i,j);
-        Containers_[i]->ID(j) = LRID;
-      }
+    // set "global" ID of each partitioner row
+    for (int j = 0 ; j < rows ; ++j) {
+      int LRID = (*Partitioner_)(i,j);
+      Containers_[i]->ID(j) = LRID;
+    }
 
     IFPACK_CHK_ERR(Containers_[i]->Compute(*Matrix_));
-    }
-    // otherwise leave Containers_[i] as null
+    // flops in Compute() will be computed on-the-fly in method ComputeFlops().
+
   }
-
-#ifdef SINGLETON_DEBUG
-  int issing = 0;
-
-  for (int i = 0 ; i < NumLocalBlocks() ; ++i)
-    issing += (int) ( Partitioner_->NumRowsInPart(i) == 1);
-  printf( " %d of %d containers are singleton \n",issing,NumLocalBlocks());
-#endif
 
   return(0);
 }
@@ -588,11 +529,11 @@ int Ifpack_BlockRelaxation<T>::Compute()
 
   IsComputed_ = false;
 
-  if (Matrix().NumGlobalRows64() != Matrix().NumGlobalCols64())
+  if (Matrix().NumGlobalRows() != Matrix().NumGlobalCols())
     IFPACK_CHK_ERR(-2); // only square matrices
 
   IFPACK_CHK_ERR(ExtractSubmatrices());
-
+  
   if (IsParallel_ && PrecType_ != IFPACK_JACOBI) {
     // not needed by Jacobi (done by matvec)
     Importer_ = Teuchos::rcp( new Epetra_Import(Matrix().RowMatrixColMap(),
@@ -653,7 +594,7 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 //
 template<typename T>
 int Ifpack_BlockRelaxation<T>::
-ApplyInverseJacobi(const Epetra_MultiVector& X,
+ApplyInverseJacobi(const Epetra_MultiVector& X, 
                    Epetra_MultiVector& Y) const
 {
 
@@ -662,17 +603,16 @@ ApplyInverseJacobi(const Epetra_MultiVector& X,
 
   // do not compute the residual in this case
   if (NumSweeps_ == 1 && ZeroStartingSolution_) {
-    int ierr = DoJacobi(X,Y);
-    IFPACK_RETURN(ierr);
+    IFPACK_RETURN(DoJacobi(X,Y));
   }
 
   Epetra_MultiVector AX(Y);
 
   for (int j = 0; j < NumSweeps_ ; j++) {
     IFPACK_CHK_ERR(Apply(Y,AX));
-    ApplyInverseFlops_ += X.NumVectors() * 2 * Matrix_->NumGlobalNonzeros64();
+    ApplyInverseFlops_ += X.NumVectors() * 2 * Matrix_->NumGlobalNonzeros();
     IFPACK_CHK_ERR(AX.Update(1.0,X,-1.0));
-    ApplyInverseFlops_ += X.NumVectors() * 2 * Matrix_->NumGlobalRows64();
+    ApplyInverseFlops_ += X.NumVectors() * 2 * Matrix_->NumGlobalRows();
     IFPACK_CHK_ERR(DoJacobi(AX,Y));
     // flops counted in DoJacobi()
   }
@@ -691,92 +631,71 @@ DoJacobi(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
   if (OverlapLevel_ == 0) {
 
     for (int i = 0 ; i < NumLocalBlocks() ; ++i) {
-
-      int rows = Partitioner_->NumRowsInPart(i);
+     
       // may happen that a partition is empty
-      if (rows == 0)
+      if (Containers_[i]->NumRows() == 0) 
         continue;
 
-      if(rows != 1) {
-        int LID;
+      int LID;
 
-        // extract RHS from X
-        for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-          LID = Containers_[i]->ID(j);
-          for (int k = 0 ; k < NumVectors ; ++k) {
-            Containers_[i]->RHS(j,k) = X[k][LID];
-          }
+      // extract RHS from X
+      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+        LID = Containers_[i]->ID(j);
+        for (int k = 0 ; k < NumVectors ; ++k) {
+          Containers_[i]->RHS(j,k) = X[k][LID];
         }
-
-        // apply the inverse of each block. NOTE: flops occurred
-        // in ApplyInverse() of each block are summed up in method
-        // ApplyInverseFlops().
-
-        IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
-
-        // copy back into solution vector Y
-        for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-          LID = Containers_[i]->ID(j);
-          for (int k = 0 ; k < NumVectors ; ++k) {
-            Y[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
-          }
-        }
-      } //end if(rows !=1)
-      else {
-        // rows == 1, this is a singleton. compute directly.
-        int LRID = (*Partitioner_)(i,0);
-        double b = X[0][LRID];
-        double a = Diagonal_[LRID];
-        Y[0][LRID] += DampingFactor_* b/a;
       }
-        // NOTE: flops for ApplyInverse() of each block are summed up
-        // in method ApplyInverseFlops()
-#ifdef IFPACK_FLOPCOUNTERS
-        ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalRows();
-#endif
+
+      // apply the inverse of each block. NOTE: flops occurred
+      // in ApplyInverse() of each block are summed up in method
+      // ApplyInverseFlops().
+      IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
+
+      // copy back into solution vector Y
+      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+        LID = Containers_[i]->ID(j);
+        for (int k = 0 ; k < NumVectors ; ++k) {
+          Y[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
+        }
+      }
 
     }
+    // NOTE: flops for ApplyInverse() of each block are summed up
+    // in method ApplyInverseFlops()
+#ifdef IFPACK_FLOPCOUNTERS
+    ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalRows();
+#endif
+
   }
-  else { // overlap test
+  else {
 
     for (int i = 0 ; i < NumLocalBlocks() ; ++i) {
 
-      int rows = Partitioner_->NumRowsInPart(i);
-
       // may happen that a partition is empty
-      if (rows == 0)
+      if (Containers_[i]->NumRows() == 0) 
         continue;
-      if(rows != 1) {
-        int LID;
 
-        // extract RHS from X
-        for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-          LID = Containers_[i]->ID(j);
-          for (int k = 0 ; k < NumVectors ; ++k) {
-            Containers_[i]->RHS(j,k) = (*W_)[LID] * X[k][LID];
-          }
+      int LID;
+
+      // extract RHS from X
+      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+        LID = Containers_[i]->ID(j);
+        for (int k = 0 ; k < NumVectors ; ++k) {
+          Containers_[i]->RHS(j,k) = (*W_)[LID] * X[k][LID];
         }
-
-        // apply the inverse of each block
-        //      if(rows != 1)
-        IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
-
-        // copy back into solution vector Y
-        for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-          LID = Containers_[i]->ID(j);
-          for (int k = 0 ; k < NumVectors ; ++k) {
-            Y[k][LID] += DampingFactor_ * (*W_)[LID] * Containers_[i]->LHS(j,k);
-          }
-        }
-      } // end   if(rows != 1)
-      else {    // rows == 1, this is a singleton. compute directly.
-        int LRID = (*Partitioner_)(i,0);
-        double w = (*W_)[LRID];
-        double b = w * X[0][LRID];
-        double a = Diagonal_[LRID];
-
-        Y[0][LRID] += DampingFactor_ * w * b / a;
       }
+
+      // apply the inverse of each block
+      IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
+
+      // copy back into solution vector Y
+      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+        LID = Containers_[i]->ID(j);
+        for (int k = 0 ; k < NumVectors ; ++k) {
+          Y[k][LID] += DampingFactor_ * (*W_)[LID] * Containers_[i]->LHS(j,k);
+        }
+      }
+
     }
     // NOTE: flops for ApplyInverse() of each block are summed up
     // in method ApplyInverseFlops()
@@ -792,7 +711,7 @@ DoJacobi(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 //==============================================================================
 template<typename T>
 int Ifpack_BlockRelaxation<T>::
-ApplyInverseGS(const Epetra_MultiVector& X,
+ApplyInverseGS(const Epetra_MultiVector& X, 
                Epetra_MultiVector& Y) const
 {
 
@@ -844,10 +763,9 @@ DoGaussSeidel(Epetra_MultiVector& X, Epetra_MultiVector& Y) const
     IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
 
   for (int i = 0 ; i < NumLocalBlocks() ; ++i) {
-    int rows = Partitioner_->NumRowsInPart(i);
 
-    // may happen that a partition is empty, but if rows == 1, the container is null
-    if (rows!=1 && Containers_[i]->NumRows() == 0)
+    // may happen that a partition is empty
+    if (Containers_[i]->NumRows() == 0) 
       continue;
 
     int LID;
@@ -855,7 +773,7 @@ DoGaussSeidel(Epetra_MultiVector& X, Epetra_MultiVector& Y) const
     // update from previous block
 
     for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-      LID = (*Partitioner_)(i,j);
+      LID = Containers_[i]->ID(j);
 
       int NumEntries;
       IFPACK_CHK_ERR(Matrix().ExtractMyRowCopy(LID, Length,NumEntries,
@@ -864,59 +782,52 @@ DoGaussSeidel(Epetra_MultiVector& X, Epetra_MultiVector& Y) const
       for (int k = 0 ; k < NumEntries ; ++k) {
         int col = Indices[k];
 
-        for (int kk = 0 ; kk < NumVectors ; ++kk) {
-          X[kk][LID] -= Values[k] * y2_ptr[kk][col];
-        }
+          for (int kk = 0 ; kk < NumVectors ; ++kk) {
+            X[kk][LID] -= Values[k] * y2_ptr[kk][col];
+          }
       }
     }
 
-    if(rows != 1) {
-      // solve with this block
+    // solve with this block
 
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          Containers_[i]->RHS(j,k) = X[k][LID];
-        }
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        Containers_[i]->RHS(j,k) = X[k][LID];
       }
-
-      IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
-#ifdef IFPACK_FLOPCOUNTERS
-      ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
-#endif
-
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          double temp = DampingFactor_ * Containers_[i]->LHS(j,k);
-          y2_ptr[k][LID] +=  temp;
-        }
-      }
-    } // end if(rows != 1)
-    else {
-      int LRID = (*Partitioner_)(i,0);
-      double b =  X[0][LRID];
-      double a = Diagonal_[LRID];
-      y2_ptr[0][LRID]+= DampingFactor_* b/a;
     }
-  }
-    // operations for all getrow()'s
-    // NOTE: flops for ApplyInverse() of each block are summed up
-    // in method ApplyInverseFlops()
+
+    IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
 #ifdef IFPACK_FLOPCOUNTERS
-    ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalNonzeros();
-    ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalRows();
+    ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
 #endif
 
-    // Attention: this is delicate... Not all combinations
-    // of Y2 and Y will always work (tough for ML it should be ok)
-    if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m)
-        for (int i = 0 ; i < NumMyRows ; ++i)
-          y_ptr[m][i] = y2_ptr[m][i];
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        y2_ptr[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
+      }
+    }
 
-    return(0);
   }
+
+  // operations for all getrow()'s
+  // NOTE: flops for ApplyInverse() of each block are summed up
+  // in method ApplyInverseFlops()
+#ifdef IFPACK_FLOPCOUNTERS
+  ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalNonzeros();
+  ApplyInverseFlops_ += NumVectors * 2 * Matrix_->NumGlobalRows();
+#endif
+
+  // Attention: this is delicate... Not all combinations
+  // of Y2 and Y will always work (tough for ML it should be ok)
+  if (IsParallel_)
+    for (int m = 0 ; m < NumVectors ; ++m) 
+      for (int i = 0 ; i < NumMyRows ; ++i)
+        y_ptr[m][i] = y2_ptr[m][i];
+
+  return(0);
+}
 
 //==============================================================================
 template<typename T>
@@ -939,7 +850,7 @@ ApplyInverseSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 //==============================================================================
 template<typename T>
 int Ifpack_BlockRelaxation<T>::
-DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
+DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy, 
       Epetra_MultiVector& Y) const
 {
 
@@ -971,9 +882,9 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
     IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
 
   for (int i = 0 ; i < NumLocalBlocks() ; ++i) {
-    int rows =  Partitioner_->NumRowsInPart(i);
+
     // may happen that a partition is empty
-    if (rows !=1 && Containers_[i]->NumRows() == 0)
+    if (Containers_[i]->NumRows() == 0) 
       continue;
 
     int LID;
@@ -981,7 +892,8 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
     // update from previous block
 
     for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-      LID = (*Partitioner_)(i,j);
+      LID = Containers_[i]->ID(j);
+
       int NumEntries;
       IFPACK_CHK_ERR(Matrix().ExtractMyRowCopy(LID, Length,NumEntries,
                                                &Values[0], &Indices[0]));
@@ -997,31 +909,23 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
 
     // solve with this block
 
-    if(rows != 1) {
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          Containers_[i]->RHS(j,k) = Xcopy[k][LID];
-        }
-      }
-
-      IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
-#ifdef IFPACK_FLOPCOUNTERS
-      ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
-#endif
-
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          y2_ptr[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
-        }
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        Containers_[i]->RHS(j,k) = Xcopy[k][LID];
       }
     }
-    else {
-      int LRID = (*Partitioner_)(i,0);
-      double b =  Xcopy[0][LRID];
-      double a = Diagonal_[LRID];
-      y2_ptr[0][LRID]+= DampingFactor_* b/a;
+
+    IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
+#ifdef IFPACK_FLOPCOUNTERS
+    ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
+#endif
+
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        y2_ptr[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
+      }
     }
   }
 
@@ -1034,8 +938,8 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
   Xcopy = X;
 
   for (int i = NumLocalBlocks() - 1; i >=0 ; --i) {
-    int rows = Partitioner_->NumRowsInPart(i);
-    if (rows != 1 &&Containers_[i]->NumRows() == 0)
+
+    if (Containers_[i]->NumRows() == 0) 
       continue;
 
     int LID;
@@ -1043,7 +947,7 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
     // update from previous block
 
     for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-      LID = (*Partitioner_)(i,j);
+      LID = Containers_[i]->ID(j);
 
       int NumEntries;
       IFPACK_CHK_ERR(Matrix().ExtractMyRowCopy(LID, Length,NumEntries,
@@ -1059,31 +963,24 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
     }
 
     // solve with this block
-    if(rows != 1) {
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          Containers_[i]->RHS(j,k) = Xcopy[k][LID];
-        }
-      }
 
-      IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
-#ifdef IFPACK_FLOPCOUNTERS
-      ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
-#endif
-
-      for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
-        LID = Containers_[i]->ID(j);
-        for (int k = 0 ; k < NumVectors ; ++k) {
-          y2_ptr[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
-        }
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        Containers_[i]->RHS(j,k) = Xcopy[k][LID];
       }
     }
-    else {
-      int LRID = (*Partitioner_)(i,0);
-      double b =  Xcopy[0][LRID];
-      double a = Diagonal_[LRID];
-      y2_ptr[0][LRID]+= DampingFactor_* b/a;
+
+    IFPACK_CHK_ERR(Containers_[i]->ApplyInverse());
+#ifdef IFPACK_FLOPCOUNTERS
+    ApplyInverseFlops_ += Containers_[i]->ApplyInverseFlops();
+#endif
+
+    for (int j = 0 ; j < Partitioner_->NumRowsInPart(i) ; ++j) {
+      LID = Containers_[i]->ID(j);
+      for (int k = 0 ; k < NumVectors ; ++k) {
+        y2_ptr[k][LID] += DampingFactor_ * Containers_[i]->LHS(j,k);
+      }
     }
   }
 
@@ -1096,7 +993,7 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
   // Attention: this is delicate... Not all combinations
   // of Y2 and Y will always work (tough for ML it should be ok)
   if (IsParallel_)
-    for (int m = 0 ; m < NumVectors ; ++m)
+    for (int m = 0 ; m < NumVectors ; ++m) 
       for (int i = 0 ; i < NumMyRows ; ++i)
         y_ptr[m][i] = y2_ptr[m][i];
 
@@ -1105,11 +1002,10 @@ DoSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Xcopy,
 
 //==============================================================================
 template<typename T>
-std::ostream& Ifpack_BlockRelaxation<T>::Print(std::ostream & os) const
+ostream& Ifpack_BlockRelaxation<T>::Print(ostream & os) const
 {
-  using std::endl;
 
-  std::string PT;
+  string PT;
   if (PrecType_ == IFPACK_JACOBI)
     PT = "Jacobi";
   else if (PrecType_ == IFPACK_GS)
@@ -1123,34 +1019,34 @@ std::ostream& Ifpack_BlockRelaxation<T>::Print(std::ostream & os) const
     os << "Ifpack_BlockRelaxation, " << PT << endl;
     os << "Sweeps = " << NumSweeps_ << endl;
     os << "Damping factor = " << DampingFactor_;
-    if (ZeroStartingSolution_)
+    if (ZeroStartingSolution_) 
       os << ", using zero starting solution" << endl;
     else
       os << ", using input starting solution" << endl;
     os << "Number of local blocks = " << Partitioner_->NumLocalParts() << endl;
     //os << "Condition number estimate = " << Condest_ << endl;
-    os << "Global number of rows            = " << Matrix_->NumGlobalRows64() << endl;
+    os << "Global number of rows            = " << Matrix_->NumGlobalRows() << endl;
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize()
-       << "  " << std::setw(15) << InitializeTime()
+    os << "Initialize()    "   << std::setw(5) << NumInitialize() 
+       << "  " << std::setw(15) << InitializeTime() 
        << "  " << std::setw(15) << 1.0e-6 * InitializeFlops();
     if (InitializeTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * InitializeFlops() / InitializeTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute()
+    os << "Compute()       "   << std::setw(5) << NumCompute() 
        << "  " << std::setw(15) << ComputeTime()
        << "  " << std::setw(15) << 1.0e-6 * ComputeFlops();
-    if (ComputeTime() != 0.0)
+    if (ComputeTime() != 0.0) 
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops() / ComputeTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse()
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse() 
        << "  " << std::setw(15) << ApplyInverseTime()
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops();
-    if (ApplyInverseTime() != 0.0)
+    if (ApplyInverseTime() != 0.0) 
       os << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops() / ApplyInverseTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
@@ -1165,10 +1061,8 @@ std::ostream& Ifpack_BlockRelaxation<T>::Print(std::ostream & os) const
 template<typename T>
 int Ifpack_BlockRelaxation<T>::SetParameters(Teuchos::ParameterList& List)
 {
-  using std::cerr;
-  using std::endl;
 
-  std::string PT;
+  string PT;
   if (PrecType_ == IFPACK_JACOBI)
     PT = "Jacobi";
   else if (PrecType_ == IFPACK_GS)
@@ -1194,16 +1088,16 @@ int Ifpack_BlockRelaxation<T>::SetParameters(Teuchos::ParameterList& List)
   }
 
   NumSweeps_            = List.get("relaxation: sweeps", NumSweeps_);
-  DampingFactor_        = List.get("relaxation: damping factor",
+  DampingFactor_        = List.get("relaxation: damping factor", 
                                    DampingFactor_);
-  ZeroStartingSolution_ = List.get("relaxation: zero starting solution",
+  ZeroStartingSolution_ = List.get("relaxation: zero starting solution", 
                                    ZeroStartingSolution_);
-  PartitionerType_      = List.get("partitioner: type",
+  PartitionerType_      = List.get("partitioner: type", 
                                    PartitionerType_);
-  NumLocalBlocks_       = List.get("partitioner: local parts",
+  NumLocalBlocks_       = List.get("partitioner: local parts", 
                                    NumLocalBlocks_);
   // only Jacobi can work with overlap among local domains,
-  OverlapLevel_         = List.get("partitioner: overlap",
+  OverlapLevel_         = List.get("partitioner: overlap", 
                                    OverlapLevel_);
 
   // check parameters
@@ -1212,20 +1106,20 @@ int Ifpack_BlockRelaxation<T>::SetParameters(Teuchos::ParameterList& List)
   if (NumLocalBlocks_ < 0)
     NumLocalBlocks_ = Matrix().NumMyRows() / (-NumLocalBlocks_);
   // other checks are performed in Partitioner_
-
+  
   // copy the list as each subblock's constructor will
   // require it later
   List_ = List;
 
   // set the label
-  std::string PT2;
+  string PT2;
   if (PrecType_ == IFPACK_JACOBI)
     PT2 = "BJ";
   else if (PrecType_ == IFPACK_GS)
     PT2 = "BGS";
   else if (PrecType_ == IFPACK_SGS)
     PT2 = "BSGS";
-  Label_ = "IFPACK (" + PT2 + ", sweeps="
+  Label_ = "IFPACK (" + PT2 + ", sweeps=" 
     + Ifpack_toString(NumSweeps_) + ", damping="
     + Ifpack_toString(DampingFactor_) + ", blocks="
     + Ifpack_toString(NumLocalBlocks()) + ")";
@@ -1253,8 +1147,6 @@ int Ifpack_BlockRelaxation<T>::Initialize()
     Partitioner_ = Teuchos::rcp( new Ifpack_EquationPartitioner(&*Graph_) );
   else if (PartitionerType_ == "user")
     Partitioner_ = Teuchos::rcp( new Ifpack_UserPartitioner(&*Graph_) );
-  else if (PartitionerType_ == "line")
-    Partitioner_ = Teuchos::rcp( new Ifpack_LinePartitioner(&Matrix()) );
   else
     IFPACK_CHK_ERR(-2);
 
@@ -1279,22 +1171,6 @@ int Ifpack_BlockRelaxation<T>::Initialize()
     }
   }
   W_->Reciprocal(*W_);
-
-  // Update Label_ if line smoothing
-  if (PartitionerType_ == "line") {
-    // set the label
-    std::string PT2;
-    if (PrecType_ == IFPACK_JACOBI)
-      PT2 = "BJ";
-    else if (PrecType_ == IFPACK_GS)
-      PT2 = "BGS";
-    else if (PrecType_ == IFPACK_SGS)
-      PT2 = "BSGS";
-    Label_ = "IFPACK (" + PT2 + ", auto-line, sweeps="
-      + Ifpack_toString(NumSweeps_) + ", damping="
-      + Ifpack_toString(DampingFactor_) + ", blocks="
-      + Ifpack_toString(NumLocalBlocks()) + ")";
-  }
 
   InitializeTime_ += Time_.ElapsedTime();
   IsInitialized_ = true;

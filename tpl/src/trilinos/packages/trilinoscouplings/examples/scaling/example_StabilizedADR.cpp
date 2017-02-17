@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -71,9 +71,6 @@
 */
 
 //#define DUMP_DATA
-// TrilinosCouplings includes
-#include "TrilinosCouplings_config.h"
-#include "TrilinosCouplings_Pamgen_Utils.hpp"
 
 // Intrepid includes
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -85,12 +82,8 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Intrepid_Utils.hpp"
 
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#include "Sacado.hpp"
-#else
 // Sacado includes
-#include "Sacado_No_Kokkos.hpp"
-#endif
+#include "Sacado.hpp"
 
 // Epetra includes
 #include "Epetra_Time.h"
@@ -121,8 +114,8 @@
 
 // Pamgen includes
 #include "create_inline_mesh.h"
-#include "pamgen_im_exodusII_l.h"
-#include "pamgen_im_ne_nemesisI_l.h"
+#include "im_exodusII_l.h"
+#include "im_ne_nemesisI_l.h"
 #include "pamgen_extras.h"
 
 // AztecOO includes
@@ -1594,8 +1587,7 @@ void getPamgenMesh(FieldContainer<Scalar>    & localNodeCoordsFC,
   int128 ** comm_node_proc_ids   = NULL;
 
 
-  long long cr_result = Create_Pamgen_Mesh(meshInput.c_str(), spaceDim, procRank, numProcs, maxInt);
-  TrilinosCouplings::pamgen_error_check(std::cout,cr_result);
+  Create_Pamgen_Mesh(meshInput.c_str(), spaceDim, procRank, numProcs, maxInt);
 
   if(!Comm.MyPID() && verbose ) {
     std::cout << message << " Timing of Pamgen tasks: \n\n" ;

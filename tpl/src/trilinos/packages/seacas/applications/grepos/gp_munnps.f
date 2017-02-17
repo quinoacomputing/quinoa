@@ -34,7 +34,7 @@ C
 C=======================================================================
       SUBROUTINE MUNNPS (NUMNPS, ISTAT, LNPSNL, LNPSDF,
      &   IDNPS, NNNPS, IXNNPS, LTNNPS, FACNPS,
-     &   LTNX, FACX, IXNPS, NNX, ISCR, NAMSCR, NAME)
+     &   LTNX, FACX, IXNPS, NNX, ISCR)
 C=======================================================================
 
 C   --*** MUNNPS *** (GJOIN) Compress and rearrange nodal point sets
@@ -62,9 +62,6 @@ C   --   IXNPS - SCRATCH - size = NUMNPS
 C   --   NNX - SCRATCH - size = NUMNPS
 C   --   ISCR - SCRATCH - size = NUMNPS
 
-      include 'gp_params.blk'
-      include 'gp_namlen.blk'
-
       INTEGER ISTAT(*)
       INTEGER IDNPS(*)
       INTEGER NNNPS(*)
@@ -74,8 +71,6 @@ C   --   ISCR - SCRATCH - size = NUMNPS
       INTEGER IXNPS(*)
       INTEGER NNX(*)
       INTEGER ISCR(*)
-      CHARACTER*(MXSTLN) NAMSCR(*)
-      CHARACTER*(maxnam) NAME(*)
 
       IF (NUMNPS .LE. 0) RETURN
 
@@ -138,7 +133,6 @@ C     a large array and see if ltnnps(inno+i) is indexed....
   120 CONTINUE
 
       CALL ORDIX (JNPS, IXNPS, NUMNPS, IDNPS, ISCR, IDNPS)
-      CALL ORDSTR(JNPS, IXNPS, NUMNPS, NAME, NAMSCR, NAME)
       CALL MOVINT (JNPS, NNX, NNNPS)
       NUMNPS = JNPS
       JNN = 1
@@ -151,7 +145,6 @@ C     a large array and see if ltnnps(inno+i) is indexed....
       CALL MOVINT (LNPSNL, LTNX, LTNNPS)
       if (lnpsdf .ne. 0) then
         CALL MOVREA (LNPSNL, FACX, FACNPS)
-        lnpsdf = lnpsnl
       end if
 
       RETURN

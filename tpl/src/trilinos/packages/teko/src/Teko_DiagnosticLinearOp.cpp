@@ -57,12 +57,7 @@ namespace Teko {
   *        the diagnostics.
   */
 DiagnosticLinearOp::DiagnosticLinearOp(const Teuchos::RCP<std::ostream> & ostrm, const ModifiableLinearOp & A,const std::string & diagnosticString)
-   : outputStream_(ostrm), wrapOpA_(A), wrapOpA_lo_(A), diagString_(diagnosticString), timer_(diagnosticString)
-{
-}
-
-DiagnosticLinearOp::DiagnosticLinearOp(const Teuchos::RCP<std::ostream> & ostrm, const LinearOp & A,const std::string & diagnosticString)
-   : outputStream_(ostrm), wrapOpA_(Teuchos::null), wrapOpA_lo_(A), diagString_(diagnosticString), timer_(diagnosticString)
+   : outputStream_(ostrm), wrapOpA_(A), diagString_(diagnosticString), timer_(diagnosticString)
 {
 }
 
@@ -72,7 +67,7 @@ DiagnosticLinearOp::DiagnosticLinearOp(const Teuchos::RCP<std::ostream> & ostrm,
   */
 DiagnosticLinearOp::DiagnosticLinearOp(const Teuchos::RCP<std::ostream> & ostrm,const LinearOp & fwdOp,
                                        const ModifiableLinearOp & A,const std::string & diagnosticString)
-   : outputStream_(ostrm), wrapOpA_(A), wrapOpA_lo_(A), fwdOp_(fwdOp), diagString_(diagnosticString), timer_(diagnosticString)
+   : outputStream_(ostrm), wrapOpA_(A), fwdOp_(fwdOp), diagString_(diagnosticString), timer_(diagnosticString)
 {
 }
 
@@ -111,10 +106,10 @@ void DiagnosticLinearOp::implicitApply(const MultiVector & x, MultiVector & y,
    Teuchos::TimeMonitor monitor(timer_,false);  
 
    MultiVector z; // for temporary storage dealing with nozero beta
-   if(beta!=0.0)
+   if(beta!=0.0);
       z = deepcopy(y);
 
-   wrapOpA_lo_->apply(Thyra::NOTRANS,*x,y.ptr(),alpha,beta);
+   wrapOpA_->apply(Thyra::NOTRANS,*x,y.ptr(),alpha,beta);
 
    // print residual if there is a fwd Op
    bool printResidual = (fwdOp_!=Teuchos::null); 

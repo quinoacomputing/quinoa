@@ -1,45 +1,41 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
+/* ************************************************************************
+
+                   Trios: Trilinos I/O Support
+                 Copyright 2011 Sandia Corporation
+
+ Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+ the U.S. Government retains certain rights in this software.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the Corporation nor the names of the
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+ EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
+
+*************************************************************************/
 /*-------------------------------------------------------------------------*/
 /**
  *   @file nssi_server.h
@@ -73,6 +69,7 @@ struct nssi_request;
 /* this is only for C++ code */
 #ifdef __cplusplus
 
+/*#include "nssi_TypeManip.h"*/
 #include "Trios_nssi_TypeManip.h"
 
 /**
@@ -80,13 +77,13 @@ struct nssi_request;
  * @brief A macro for registering server callback functions.
  *
  * This macro constructs the service op structure with appropriate
- * XDR-encoding functions, then adds the opcode to the list of
+ * XDR-encoding functions, then adds the function to the list of
  * supported ops for this service.
  *
  * @param id  The opcode of the function to register.
  * @param fptr  The function pointer.
- * @param arg_type  Type for the function input arguments.
- * @param res_type  Type of the result. The stub will use nssi_send_result.
+ * @param arg_type Type for the function input arguments.
+ * @param res_type Type of the result. The stub will use nssi_send_result.
  *
  * @note We need a special version for C++ because sizeof(void)
  * is not allowed in C++.  See nssi_tests.h for
@@ -97,37 +94,6 @@ struct nssi_request;
         nssi_svc_op op; \
         op.opcode = id; \
         op.func = (nssi_rpc_proc)&fptr; \
-        op.obj = (NssiRpc *)NULL; \
-        op.sizeof_args = Nessie::SizeOf<arg_type>::value; \
-        op.decode_args = (xdrproc_t)&xdr_ ## arg_type; \
-        op.sizeof_res = Nessie::SizeOf<res_type>::value; \
-        op.encode_res = (xdrproc_t)&xdr_ ## res_type; \
-        nssi_service_add_op( NULL, &op); \
-    }
-
-/**
- * @ingroup rpc_server_api
- * @brief A macro for registering server callback function objects.
- *
- * This macro constructs the service op structure with appropriate
- * XDR-encoding functions, then adds the opcode to the list of
- * supported ops for this service.
- *
- * @param id  The opcode of the function object to register.
- * @param obj  The function object pointer.
- * @param arg_type  Type for the function input arguments.
- * @param res_type  Type of the result. The stub will use nssi_send_result.
- *
- * @note We need a special version for C++ because sizeof(void)
- * is not allowed in C++.  See nssi_tests.h for
- * the implementation of SizeOf<T>.
- */
-#define NSSI_REGISTER_SERVER_OBJ(id, func_obj, arg_type, res_type) \
-    { \
-        nssi_svc_op op; \
-        op.opcode = id; \
-        op.func = (nssi_rpc_proc)NULL; \
-        op.obj = func_obj; \
         op.sizeof_args = Nessie::SizeOf<arg_type>::value; \
         op.decode_args = (xdrproc_t)&xdr_ ## arg_type; \
         op.sizeof_res = Nessie::SizeOf<res_type>::value; \
@@ -155,7 +121,6 @@ struct nssi_request;
         nssi_svc_op op; \
         op.opcode = id; \
         op.func = (nssi_rpc_proc)&fptr; \
-        op.obj = (void *)NULL; \
         op.sizeof_args = sizeof(arg_type); \
         op.decode_args = (xdrproc_t)&xdr_ ## arg_type; \
         op.sizeof_res = sizeof(res_type); \
@@ -190,25 +155,6 @@ extern "C" {
                 const NNTI_buffer_t *);
 
 
-#ifdef __cplusplus
-        class NssiRpc {
-            public:
-                virtual int doRPC(
-                        const int            opcode,
-                        const unsigned long  request_id,
-                        const NNTI_peer_t   *caller,
-                        const void          *void_args,
-                        const NNTI_buffer_t *data_addr,
-                        const NNTI_buffer_t *res_addr) = 0;
-//                virtual void registerRPC() = 0;
-        };
-#else
-        /* In C code, we need a substitute for class NssiRpc. */
-        typedef uint8_t NssiRpc;
-#endif
-
-
-
         /**
          * @brief A structure associated with an operation made available
          * by a registered service.
@@ -222,9 +168,6 @@ extern "C" {
 
                 /** @brief Function pointer for the server-side function.  */
                 nssi_rpc_proc func;
-
-                /** @brief Function pointer for the server-side function.  */
-                NssiRpc *obj;
 
                 /** @brief Size of the arguments structure. */
                 uint32_t sizeof_args;
@@ -252,14 +195,7 @@ extern "C" {
                 struct nssi_svc_op_list *next;
         } nssi_svc_op_list;
 
-        typedef struct rpc_request {
-            nssi_service *svc;
-            NNTI_peer_t caller;
-            char *req_buf;
-            nssi_size short_req_len;
-            int id;
-            double arrival_time;
-        } nssi_svc_rpc_request;
+
 
 #if defined(__STDC__) || defined(__cplusplus)
 
@@ -374,41 +310,20 @@ extern "C" {
         extern int nssi_exit_now();
 
 
-        /**
-         * @ingroup rpc_server_api
-         * @brief Process an encoded RPC request.
-         *
-         * This function processes an encoded RPC request by decoding the
-         * header, then calling a registered callback based on the opcode
-         * sent in the header.
-         */
-        extern int nssi_process_rpc_request(
-                nssi_svc_rpc_request *req);
-
 
         /**
          * @ingroup rpc_server_api
          * @brief Start an RPC service.
          *
-         * The \b nssi_service_start implements a loop that waits for incoming
-         * RPC requests, then calls the nssi_process_rpc_request function to
-         * process those requests.
+         * The \b nssi_service_start method waits for RPC requests
+         * and executes the appropriate callback function (a registered
+         * method) when a request arrives.
+         * arrives.
          *
          * @param service  The service descriptor.
          */
         extern int nssi_service_start(
                 nssi_service *service);
-
-        /**
-         * This function is essentially the same as nssi_start, but it allows
-         * the caller to pass in a different function to process encoded requests.
-         * This is useful, for example to implement a multithreaded service. The
-         * code could call an "enqueue_rpc_request" function and have a separate
-         * thread that pops requests off the queue and processes them.
-         */
-        extern int nssi_service_start_wfn(
-                nssi_service *svc,
-                int (*process_req)(nssi_svc_rpc_request *req));
 
 
         /*

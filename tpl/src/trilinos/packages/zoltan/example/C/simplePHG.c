@@ -1,48 +1,3 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
 /**************************************************************
 *  Basic example of using Zoltan to partition a hypergraph.
 *
@@ -63,7 +18,7 @@
 
 /* Name of file containing hypergraph to be partitioned */
 
-static char *global_fname="hypergraph.txt";
+static char *fname="hypergraph.txt";
 
 /* Structure to hold distributed hypergraph */
 
@@ -138,15 +93,15 @@ int main(int argc, char *argv[])
   ** Read hypergraph from input file and distribute it 
   ******************************************************************/
 
-  fp = fopen(global_fname, "r");
+  fp = fopen(fname, "r");
   if (!fp){
-    if (myRank == 0) fprintf(stderr,"ERROR: Can not open %s\n",global_fname);
+    if (myRank == 0) fprintf(stderr,"ERROR: Can not open %s\n",fname);
     MPI_Finalize();
     exit(1);
   }
   fclose(fp);
 
-  read_input_file(myRank, numProcs, global_fname, &hg);
+  read_input_file(myRank, numProcs, fname, &hg);
 
   /******************************************************************
   ** Create a Zoltan library structure for this instance of load
@@ -257,7 +212,6 @@ int main(int argc, char *argv[])
   MPI_Finalize();
 
   if (hg.numMyVertices > 0){
-    free(parts);
     free(hg.vtxGID);
   }
   if (hg.numMyHEdges > 0){

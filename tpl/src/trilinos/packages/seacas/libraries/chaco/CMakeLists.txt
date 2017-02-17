@@ -13,17 +13,16 @@ SET(CHACO_VERSION_FULL "${CHACO_VERSION}.${CHACO_VERSION_PATCH}")
 INCLUDE_DIRECTORIES(
   "${CMAKE_CURRENT_SOURCE_DIR}/main"
   "${CMAKE_CURRENT_SOURCE_DIR}/util"
-  )
+)
 
 SET(HEADERS
   main/chaco.h
-  )
+)
 
-SET(chaco_SUBDIRS
-  assign bpmatch coarsen connect eigen graph inertial
-  input internal klspiff klvspiff main misc optimize
-  refine_map refine_part submain symmlq tinvit util
-  )
+SET( chaco_SUBDIRS
+     assign bpmatch coarsen connect eigen graph inertial
+     input internal klspiff klvspiff main misc optimize
+     refine_map refine_part submain symmlq tinvit util)
 
 #- Add sources for a target
 #
@@ -57,11 +56,9 @@ ENDFOREACH ( dir )
 
 get_property(SOURCES GLOBAL PROPERTY chaco_SRCS)
 TRIBITS_ADD_LIBRARY(
-  chaco
-  STATIC
-  HEADERS ${HEADERS}
-  SOURCES ${SOURCES}
-  IMPORTEDLIBS m
-  )
+	chaco
+	HEADERS	${HEADERS}
+	SOURCES ${SOURCES}
+)
 
 TRIBITS_SUBPACKAGE_POSTPROCESS()

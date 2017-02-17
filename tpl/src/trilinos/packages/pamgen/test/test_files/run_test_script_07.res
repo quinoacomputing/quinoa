@@ -20,12 +20,12 @@ Number of Nodes 228
 Number of Elements 114 
 Number of Element Blocks 3 
 Number of Node Sets 3 
-Number of Side Sets 5 
+Number of Side Sets 3 
 
 num node set nodes 0
 num node set dfs 0
 num side set elements 0
-num side set nodes 324
+num side set nodes 260
 num side set dfs 0
 num block properties 0
 num node set properties 0
@@ -172,24 +172,6 @@ element 70 and face 2
 element 74 and face 2
 element 78 and face 2
 element 82 and face 2
-Side set index 3 id 55 has 8 elements
-element 22 and face 2
-element 26 and face 2
-element 30 and face 2
-element 34 and face 2
-element 38 and face 2
-element 42 and face 2
-element 46 and face 2
-element 50 and face 2
-Side set index 4 id 65 has 8 elements
-element 22 and face 2
-element 26 and face 2
-element 30 and face 2
-element 34 and face 2
-element 38 and face 2
-element 42 and face 2
-element 46 and face 2
-element 50 and face 2
 num qa records 1
 
 QA Record 0
@@ -197,11 +179,11 @@ QA Record 0
 PArallel Mesh GENerator
 Num Info Records 0
 Nemesis data
-Num nodes global 920
+Num nodes global 845
 Num elems global 648
 Num elm_blks global 3
 Num node sets global 3
-Num side sets global 5
+Num side sets global 3
 Num total proc 6
 Num proc in file 1
 element block index 0 has id 1 and 264 elements
@@ -210,11 +192,9 @@ element block index 2 has id 3 and 192 elements
 global ns info for ns index 0 id 4 num_nodes = 65 num_ns_df = 0
 global ns info for ns index 1 id 10 num_nodes = 169 num_ns_df = 0
 global ns info for ns index 2 id 20 num_nodes = 169 num_ns_df = 0
-global ss info for ss index 0 id 11 num_elements = 162 num_ss_df = 0
-global ss info for ss index 1 id 21 num_elements = 162 num_ss_df = 0
+global ss info for ss index 0 id 11 num_elements = 144 num_ss_df = 0
+global ss info for ss index 1 id 21 num_elements = 144 num_ss_df = 0
 global ss info for ss index 2 id 45 num_elements = 48 num_ss_df = 0
-global ss info for ss index 3 id 55 num_elements = 48 num_ss_df = 0
-global ss info for ss index 4 id 65 num_elements = 48 num_ss_df = 0
 Loadbal params:
 num_internal_nodes 116
 num_border_nodes112

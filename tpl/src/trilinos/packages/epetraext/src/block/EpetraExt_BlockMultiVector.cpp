@@ -52,22 +52,22 @@ namespace EpetraExt {
 BlockMultiVector::BlockMultiVector(
       const Epetra_BlockMap & BaseMap,
       const Epetra_BlockMap & GlobalMap,
-      int numVecs )
-  : Epetra_MultiVector( GlobalMap, numVecs ),
+      int NumVectors )
+  : Epetra_MultiVector( GlobalMap, NumVectors ),
     BaseMap_( BaseMap ),
-    Offset_( BlockUtility::CalculateOffset64( BaseMap ) )
+    Offset_( BlockUtility::CalculateOffset( BaseMap ) )
 {
 }
 
 //=============================================================================
 // EpetraExt::BlockMultiVector Constructor
 BlockMultiVector::BlockMultiVector(
-      Epetra_DataAccess CV,
-      const Epetra_BlockMap & BaseMap,
+      Epetra_DataAccess CV, 
+      const Epetra_BlockMap & BaseMap, 
       const Epetra_MultiVector & BlockVec)
   : Epetra_MultiVector( CV, BlockVec, 0, BlockVec.NumVectors() ),
     BaseMap_( BaseMap ),
-    Offset_( BlockUtility::CalculateOffset64( BaseMap ) )
+    Offset_( BlockUtility::CalculateOffset( BaseMap ) )
 {
 }
 
@@ -86,44 +86,44 @@ BlockMultiVector::~BlockMultiVector()
 }
 
 //=========================================================================
-int BlockMultiVector::ExtractBlockValues(Epetra_MultiVector & BaseVector, long long GlobalBlockRow) const
+int BlockMultiVector::ExtractBlockValues(Epetra_MultiVector & BaseVector, int GlobalBlockRow) const
 {
-   long long IndexOffset = GlobalBlockRow * Offset_;
+   int IndexOffset = GlobalBlockRow * Offset_;
    int localIndex=0;
 
    // For each entry in the base vector, translate its global ID
    // by the IndexOffset and extract the value from this blockVector
    for (int i=0; i<BaseMap_.NumMyElements(); i++) {
-      localIndex = this->Map().LID((IndexOffset + BaseMap_.GID64(i)));
-      if (localIndex==-1) {
-             std::cout << "Error in  BlockMultiVector::GetBlock: " << i << " "
-                  << IndexOffset << " " << BaseMap_.GID64(i) << std::endl;
-             return -1;
+      localIndex = this->Map().LID((IndexOffset + BaseMap_.GID(i)));
+      if (localIndex==-1) { 
+	     cout << "Error in  BlockMultiVector::GetBlock: " << i << " " 
+		  << IndexOffset << " " << BaseMap_.GID(i) << endl;
+	     return -1;
       }
       for (int j=0; j<NumVectors(); j++)
-        BaseVector[j][i] = (*this)[j][localIndex];
+	BaseVector[j][i] = (*this)[j][localIndex]; 
    }
 
    return 0;
 }
 
 //=========================================================================
-int BlockMultiVector::LoadBlockValues(const Epetra_MultiVector & BaseVector, long long GlobalBlockRow)
+int BlockMultiVector::LoadBlockValues(const Epetra_MultiVector & BaseVector, int GlobalBlockRow) 
 {
-   long long IndexOffset = GlobalBlockRow * Offset_;
+   int IndexOffset = GlobalBlockRow * Offset_;
    int localIndex=0;
 
    // For each entry in the base vector, translate its global ID
    // by the IndexOffset and load into this blockVector
    for (int i=0; i<BaseMap_.NumMyElements(); i++) {
-      localIndex = this->Map().LID((IndexOffset + BaseMap_.GID64(i)));
-      if (localIndex==-1) {
-             std::cout << "Error in  BlockMultiVector::GetBlock: " << i << " "
-                  << IndexOffset << " " << BaseMap_.GID64(i) << std::endl;
-             return -1;
+      localIndex = this->Map().LID((IndexOffset + BaseMap_.GID(i)));
+      if (localIndex==-1) { 
+	     cout << "Error in  BlockMultiVector::GetBlock: " << i << " " 
+		  << IndexOffset << " " << BaseMap_.GID(i) << endl;
+	     return -1;
       }
       for (int j=0; j<NumVectors(); j++)
-        (*this)[j][localIndex] = BaseVector[j][i];
+	(*this)[j][localIndex] = BaseVector[j][i];
    }
 
    return 0;
@@ -131,34 +131,34 @@ int BlockMultiVector::LoadBlockValues(const Epetra_MultiVector & BaseVector, lon
 
 //=========================================================================
 Teuchos::RCP<const Epetra_MultiVector>
-BlockMultiVector::GetBlock(long long GlobalBlockRow) const
+BlockMultiVector::GetBlock(int GlobalBlockRow) const
 {
-  long long offset = GlobalBlockRow * BaseMap_.NumMyElements();
+  int offset = GlobalBlockRow * BaseMap_.NumMyElements();
   int numVecs = NumVectors();
   double **pointers = Pointers();
   double **block_pointers = new double*[numVecs];
   for (int i=0; i<numVecs; i++)
     block_pointers[i] = pointers[i]+offset;
-  Teuchos::RCP<Epetra_MultiVector> block =
+  Teuchos::RCP<Epetra_MultiVector> block = 
     Teuchos::rcp(new Epetra_MultiVector(View, BaseMap_, block_pointers,
-                                        numVecs));
+					numVecs));
   delete [] block_pointers;
   return block;
 }
 
 //=========================================================================
 Teuchos::RCP<Epetra_MultiVector>
-BlockMultiVector::GetBlock(long long GlobalBlockRow)
+BlockMultiVector::GetBlock(int GlobalBlockRow)
 {
-  long long offset = GlobalBlockRow * BaseMap_.NumMyElements();
+  int offset = GlobalBlockRow * BaseMap_.NumMyElements();
   int numVecs = NumVectors();
   double **pointers = Pointers();
   double **block_pointers = new double*[numVecs];
   for (int i=0; i<numVecs; i++)
     block_pointers[i] = pointers[i]+offset;
-  Teuchos::RCP<Epetra_MultiVector> block =
+  Teuchos::RCP<Epetra_MultiVector> block = 
     Teuchos::rcp(new Epetra_MultiVector(View, BaseMap_, block_pointers,
-                                        numVecs));
+					numVecs));
   delete [] block_pointers;
   return block;
 }

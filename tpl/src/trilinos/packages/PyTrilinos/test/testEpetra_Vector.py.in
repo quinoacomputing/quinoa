@@ -2,45 +2,31 @@
 # -*- python -*-
 
 # @HEADER
-# ***********************************************************************
+# ************************************************************************
 #
-#          PyTrilinos: Python Interfaces to Trilinos Packages
-#                 Copyright (2014) Sandia Corporation
+#                PyTrilinos: Python Interface to Trilinos
+#                   Copyright (2005) Sandia Corporation
 #
-# Under the terms of Contract DE-AC04-94AL85000 with Sandia
-# Corporation, the U.S. Government retains certain rights in this
-# software.
+# Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+# license for use of this work by or on behalf of the U.S. Government.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
 #
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+# Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 #
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Questions? Contact William F. Spotz (wfspotz@sandia.gov)
-#
-# ***********************************************************************
+# ************************************************************************
 # @HEADER
 
 #
@@ -77,7 +63,7 @@ class EpetraVectorTestCase(unittest.TestCase):
         self.comm        = Epetra.PyComm()
         self.map         = Epetra.Map(self.length*self.comm.NumProc(),0,self.comm)
         self.numPyArray1 = arange(self.length) * self.scale
-        self.numPyArray2 = array([0,-1,2.71,-3.14,4,-5,6,-7,6.28])
+        self.numPyArray2 = array([0,-1,2.17,-3.14,4,-5,6,-7,6.28])
         
     def tearDown(self):
         self.comm.Barrier()
@@ -105,12 +91,17 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor04(self):
         "Test Epetra.Vector (BlockMap,1D-small-list) constructor"
-        list = [0, 1.0, 2.71, 3.14]
-        self.assertRaises(ValueError, Epetra.Vector, self.map, list)
+        list = [0, 1.0, 2, 3.14]
+        ev = Epetra.Vector(self.map,list)
+        self.assertEquals(ev.NumVectors(),1)
+        self.assertEquals(ev.MyLength(), self.length)
+        self.assertEquals(ev.GlobalLength(), self.length*comm.NumProc())
+        for i in range(len(list)):
+            self.assertEquals(ev[i], list[i])
 
     def testConstructor05(self):
         "Test Epetra.Vector (BlockMap,1D-correct-list) constructor"
-        list = [0, 1.0, 2, 3.14, 2.71, 1.5, 1, 0.5, 0.0]
+        list = [0, 1.0, 2, 3.14, 2.17, 1.5, 1, 0.5, 0.0]
         ev = Epetra.Vector(self.map,list)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), self.length)
@@ -120,7 +111,7 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor06(self):
         "Test Epetra.Vector (BlockMap,1D-big-list) constructor"
-        list = [0, 1.0, 2, 3.14, 2.71, 1.5, 1, 0.5, 0.0, -1, -2]
+        list = [0, 1.0, 2, 3.14, 2.17, 1.5, 1, 0.5, 0.0, -1, -2]
         ev = Epetra.Vector(self.map,list)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), self.length)
@@ -131,12 +122,18 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testConstructor07(self):
         "Test Epetra.Vector (BlockMap,2D-small-list) constructor"
         list = [[0,    1.0, 2],
-                [2.71, 1.5, 1]]
-        self.assertRaises(ValueError, Epetra.Vector, self.map, list)
+                [2.17, 1.5, 1]]
+        ev = Epetra.Vector(self.map,list)
+        self.assertEquals(ev.NumVectors(),1)
+        self.assertEquals(ev.MyLength(), self.length)
+        self.assertEquals(ev.GlobalLength(), self.length*comm.NumProc())
+        for i in range(len(list)):
+            for j in range(len(list[i])):
+                self.assertEquals(ev[i*3+j], list[i][j])
 
     def testConstructor08(self):
         "Test Epetra.Vector (BlockMap,2D-big-list) constructor"
-        list = [[0  , 1.0, 2  , 3.14, 2.71, 1.5],
+        list = [[0  , 1.0, 2  , 3.14, 2.17, 1.5],
                 [1.5, 1  , 0.5, 0.0 , -1  , -2 ]]
         ev = Epetra.Vector(self.map,list)
         self.assertEquals(ev.NumVectors(),1)
@@ -151,14 +148,20 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testConstructor09(self):
         "Test Epetra.Vector (BlockMap,3D-small-list) constructor"
         list = [[[0   , 1.0], [2, 3.14]],
-                [[2.71, 1.5], [1, 0.5 ]]]
-        self.assertRaises(ValueError, Epetra.Vector, self.map, list)
+                [[2.17, 1.5], [1, 0.5 ]]]
+        ev = Epetra.Vector(self.map,list)
+        self.assertEquals(ev.NumVectors(),1)
+        self.assertEquals(ev.MyLength(), self.length)
+        self.assertEquals(ev.GlobalLength(), self.length*comm.NumProc())
+        for i in range(len(list)):
+            for j in range(len(list[i])):
+                for k in range(len(list[i][j])):
+                    self.assertEquals(ev[4*i+2*j+k], list[i][j][k])
 
     def testConstructor10(self):
         "Test Epetra.Vector (BlockMap,3D-correct-list) constructor"
-        list = [[[0  , 1.0, 2], [3.14, 2.71, 1.5 ], [1, 0.5, 0.0]]]
+        list = [[[0  , 1.0, 2], [3.14, 2.17, 1.5 ], [1, 0.5, 0.0]]]
         ev = Epetra.Vector(self.map,list)
-        ev.shape = (1,3,3)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), self.length)
         self.assertEquals(ev.GlobalLength(), self.length*comm.NumProc())
@@ -169,9 +172,9 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor11(self):
         "Test Epetra.Vector (BlockMap,3D-big-list) constructor"
-        list = [[[  0, 1.0, 2  ], [3.14, 2.71, 1.5 ], [1   , 0.5, 0.0]],
-                [[ -1,   0, 1.0], [2   , 3.14, 2.71], [1.5 , 1  , 0.5]],
-                [[0.0,  -1, 0  ], [1.0 , 2   , 3.14], [2.71, 1.5, 1  ]]]
+        list = [[[  0, 1.0, 2  ], [3.14, 2.17, 1.5 ], [1   , 0.5, 0.0]],
+                [[ -1,   0, 1.0], [2   , 3.14, 2.17], [1.5 , 1  , 0.5]],
+                [[0.0,  -1, 0  ], [1.0 , 2   , 3.14], [2.17, 1.5, 1  ]]]
         ev = Epetra.Vector(self.map,list)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), self.length)
@@ -185,7 +188,7 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor12(self):
         "Test Epetra.Vector (1D-list) constructor"
-        list = [0, 1.0, 2, 3.14, 2.71, 1.5, 1, 0.5, 0.0]
+        list = [0, 1.0, 2, 3.14, 2.17, 1.5, 1, 0.5, 0.0]
         ev = Epetra.Vector(list)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), len(list))
@@ -195,10 +198,9 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor13(self):
         "Test Epetra.Vector (2D-list) constructor"
-        list = [[0  , 1.0, 2, 3.14, 2.71, 1.5 , 1, 0.5, 0.0],
-                [0.0, 0.5, 1, 1.5 , 2.71, 3.14, 2, 1.0, 0  ]]
+        list = [[0  , 1.0, 2, 3.14, 2.17, 1.5 , 1, 0.5, 0.0],
+                [0.0, 0.5, 1, 1.5 , 2.17, 3.14, 2, 1.0, 0  ]]
         ev = Epetra.Vector(list)
-        ev.shape = (2,9)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), 2*len(list[0]))
         self.assertEquals(ev.GlobalLength(), 2*len(list[0]))
@@ -208,11 +210,10 @@ class EpetraVectorTestCase(unittest.TestCase):
 
     def testConstructor14(self):
         "Test Epetra.Vector (3D-list) constructor"
-        list = [[[0   ,1.0,2  ], [3.14,2.71,1.5 ], [1,0.5,0.0 ]],
-                [[0.0 ,0.5,1  ], [1.5 ,2.71,3.14], [2,1.0,0   ]],
-                [[3.14,2  ,1.0], [0   ,0.0 ,0.5 ], [1,1.5,2.71]]]
+        list = [[[0   ,1.0,2  ], [3.14,2.17,1.5 ], [1,0.5,0.0 ]],
+                [[0.0 ,0.5,1  ], [1.5 ,2.17,3.14], [2,1.0,0   ]],
+                [[3.14,2  ,1.0], [0   ,0.0 ,0.5 ], [1,1.5,2.17]]]
         ev = Epetra.Vector(list)
-        ev.shape = (3,3,3)
         self.assertEquals(ev.NumVectors(),1)
         self.assertEquals(ev.MyLength(), 3*3*len(list[0][0]))
         self.assertEquals(ev.GlobalLength(), 3*3*len(list[0][0]))
@@ -279,7 +280,7 @@ class EpetraVectorTestCase(unittest.TestCase):
         for i in range(len(ev1)):
             self.assertEquals(ev1[i], ev2[i])
 
-    def notestReplaceMap1(self):
+    def testReplaceMap1(self):
         "Test Epetra.Vector ReplaceMap method with good map"
         blockMap = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
         ev = Epetra.Vector(self.map)
@@ -313,8 +314,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testReplaceGlobalValue2(self):
         "Test Epetra.Vector ReplaceGlobalValue method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         gid = 1
         lid = self.map.LID(gid)
         self.assertEquals(ev[gid,1], 0.5)
@@ -343,8 +344,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testReplaceGlobalValues2(self):
         "Test Epetra.Vector ReplaceGlobalValues method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         gids = [0,2]
         lids = [self.map.LID(gid) for gid in gids]
         result = ev.ReplaceGlobalValues(2,[3.14,3.14],gids)
@@ -367,8 +368,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testReplaceMyValue2(self):
         "Test Epetra.Vector ReplaceMyValue method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 3 elements, 3 points per element
         lid = 1
         self.assertEquals(ev[lid,1], 0.5)
         result = ev.ReplaceMyValue(lid,1,0,5.0)
@@ -380,18 +381,18 @@ class EpetraVectorTestCase(unittest.TestCase):
         ev = Epetra.Vector(self.map,self.numPyArray1)
         lid = 4
         self.assertEquals(ev[lid], 0.5)
-        result = ev.ReplaceMyValues([5.0],[lid])
+        result = ev.ReplaceMyValues(5.0,lid)
         self.assertEquals(result, 0)
         self.assertEquals(ev[lid], 5.0)
 
     def testReplaceMyValues2(self):
         "Test Epetra.Vector ReplaceMyValues method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 3 elements, 3 points per element
         lid = 1
         self.assertEquals(ev[lid,1], 0.5)
-        result = ev.ReplaceMyValues(1,[5.0],[lid])
+        result = ev.ReplaceMyValues(1,5.0,lid)
         self.assertEquals(result, 0)
         self.assertEquals(ev[lid,1], 5.0)
 
@@ -411,8 +412,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testSumIntoGlobalValue2(self):
         "Test Epetra.Vector SumIntoGlobalValue method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 3 elements, 3 points per element
         gid = 1
         lid = self.map.LID(gid)
         self.assertEquals(ev[gid,1], 0.5)
@@ -441,8 +442,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testSumIntoGlobalValues2(self):
         "Test Epetra.Vector SumIntoGlobalValues method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 1 vector, 3 elements, 3 points per element
         gids = [0,2]
         lids = [self.map.LID(gid) for gid in gids]
         result = ev.SumIntoGlobalValues(2,[3.14,3.14],gids)
@@ -466,8 +467,8 @@ class EpetraVectorTestCase(unittest.TestCase):
     def testSumIntoMyValue2(self):
         "Test Epetra.Vector SumIntoMyValue method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 3 elements, 3 points per element
         lid = 1
         self.assertEquals(ev[lid,1], 0.5)
         result = ev.SumIntoMyValue(lid,1,0,0.5)
@@ -479,18 +480,18 @@ class EpetraVectorTestCase(unittest.TestCase):
         ev = Epetra.Vector(self.map,self.numPyArray1)
         lid = 4
         self.assertEquals(ev[lid], 0.5)
-        result = ev.SumIntoMyValues([5.0],[lid])
+        result = ev.SumIntoMyValues(5.0,lid)
         self.assertEquals(result, 0)
         self.assertEquals(ev[lid], 5.5)
 
     def testSumIntoMyValues2(self):
         "Test Epetra.Vector SumIntoMyValues method with blockOffset"
         map = Epetra.BlockMap(3*self.comm.NumProc(),3,0,self.comm)
+        self.numPyArray1.shape = (3,3)  # 3 elements, 3 points per element
         ev = Epetra.Vector(map,self.numPyArray1)
-        ev.shape = (3,3)  # 3 elements, 3 points per element
         lid = 1
         self.assertEquals(ev[lid,1], 0.5)
-        result = ev.SumIntoMyValues(1,[5.0],[lid])
+        result = ev.SumIntoMyValues(1,5.0,lid)
         self.assertEquals(result, 0)
         self.assertEquals(ev[lid,1], 5.5)
 
@@ -741,11 +742,6 @@ class EpetraVectorTestCase(unittest.TestCase):
         "Test Epetra.Vector __setattr__ method for 'array'"
         ev = Epetra.Vector(self.map)
         self.assertRaises(AttributeError, ev.__setattr__, "array", "junk")
-
-    def testSetDtype(self):
-        "Test Epetra.Vector __setattr__ method for 'dtype'"
-        ev = Epetra.Vector(self.map)
-        self.assertRaises(AttributeError, ev.__setattr__, "dtype", "junk")
 
 ##########################################################################
 

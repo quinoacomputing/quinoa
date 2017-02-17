@@ -157,10 +157,7 @@ class AztecDMSR_Matrix {
     {
       int localRow;
       if (!amap_->inUpdate(row,localRow)){
-        std::ostringstream oss;
-        oss << "row "<<row<<" not found";
-        std::string str = oss.str();
-        throw std::runtime_error(str.c_str());
+        throw std::runtime_error("row not found");
       }
 
       if (row == col) return localRow;

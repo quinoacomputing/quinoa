@@ -43,7 +43,7 @@
 #define THYRA_TPETRA_VECTOR_DECL_HPP
 
 
-#include "Thyra_SpmdVectorDefaultBase.hpp"
+#include "Thyra_SpmdVectorBase_decl.hpp"
 #include "Thyra_TpetraVectorSpace_decl.hpp"
 #include "Tpetra_Vector.hpp"
 #include "Teuchos_ConstNonconstObjectContainer.hpp"
@@ -57,9 +57,7 @@ namespace Thyra {
  * \ingroup Tpetra_Thyra_Op_Vec_adapters_grp
  */
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
-class TpetraVector
-  : virtual public SpmdVectorDefaultBase<Scalar>
-{
+class TpetraVector : virtual public SpmdVectorBase<Scalar> {
 public:
 
   /** @name Constructors/initializers */
@@ -90,18 +88,16 @@ public:
 
   //@}
 
-  /** @name Overridden from SpmdMultiVectorBase */
-  //@{
-  /** \brief . */
-  RCP<const SpmdVectorSpaceBase<Scalar> > spmdSpaceImpl() const;
-  //@}
-
   /** @name Overridden from SpmdVectorBase */
   //@{
+
   /** \brief . */
-  void getNonconstLocalVectorDataImpl(const Ptr<ArrayRCP<Scalar> > &localValues);
+  RCP<const SpmdVectorSpaceBase<Scalar> > spmdSpace() const;
   /** \brief . */
-  void getLocalVectorDataImpl(const Ptr<ArrayRCP<const Scalar> > &localValues) const;
+  void getNonconstLocalDataImpl(const Ptr<ArrayRCP<Scalar> > &localValues);
+  /** \brief . */
+  void getLocalDataImpl(const Ptr<ArrayRCP<const Scalar> > &localValues) const;
+
   //@}
 
 private:

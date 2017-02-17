@@ -1,45 +1,3 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
 /*
  * xfer_util.cpp
  *
@@ -55,10 +13,6 @@
 #include "xfer_client.h"
 
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <string.h>
-
 #include <string>
 #include <fstream>
 #include <cassert>
@@ -99,8 +53,7 @@ int xfer_write_server_url_file(
         if (rank == 0) {
             int i;
 
-            std::string tmp_fname = url_fname + ".tmp";
-            std::ofstream urlfile (tmp_fname.c_str());
+            std::ofstream urlfile (url_fname.c_str());
             if (urlfile.is_open()) {
                 // write the number of servers as the first line
                 urlfile << np << std::endl;
@@ -122,9 +75,9 @@ int xfer_write_server_url_file(
 
             // close the file
             urlfile.close();
-
-            rename(tmp_fname.c_str(), url_fname.c_str());
         }
+
+
     }
 
     return rc;
@@ -137,7 +90,6 @@ void xfer_read_server_url_file(const char *path, std::vector<std::string> &urlbu
 {
     log_level debug_level = xfer_debug_level;
     int rank, np;
-    struct stat sbuf;
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &np);
@@ -147,8 +99,6 @@ void xfer_read_server_url_file(const char *path, std::vector<std::string> &urlbu
 
     // Open the file and get all the server urls
     if (rank == 0) {
-
-        while (stat(path, &sbuf)) { log_debug(debug_level, "%s: %s", path, strerror(errno)); sleep(1); }
 
         // try to open the file
         std::ifstream urlFile(path);

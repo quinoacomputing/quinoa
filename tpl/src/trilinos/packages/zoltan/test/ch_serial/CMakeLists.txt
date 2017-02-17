@@ -21,6 +21,9 @@ SET(ZZDIRNAME ch_${ZZNAME})
 #### with ${ZZNAME} is an exception; the copy macro at the end of this file
 #### must be modified.)
 
+INCLUDE(TribitsAddTest)
+INCLUDE(TribitsAddAdvancedTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
 # All data files needed for tested (*.graph, *.mtx, *.mtxp, *.coords, *.hg)
 FILE(GLOB DATA_INP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${ZZNAME}.* felix.mtxp vwgt.*)
@@ -31,7 +34,7 @@ FILE(GLOB HIER_INP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} hier*.inp)
 
 # All accepted answer files needed for testing.
 IF (${PACKAGE_NAME}_ENABLE_ULONG_IDS OR ${PACKAGE_NAME}_ENABLE_ULLONG_IDS)
-  FILE(GLOB ANSWERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} answersZOLTANID64/${ZZNAME}.*)
+  FILE(GLOB ANSWERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} answers64bitids/${ZZNAME}.*)
 ELSE ()
   FILE(GLOB ANSWERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} answers/${ZZNAME}.*)
 ENDIF()

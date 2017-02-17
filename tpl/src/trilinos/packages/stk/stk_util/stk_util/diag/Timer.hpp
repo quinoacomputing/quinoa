@@ -1,56 +1,23 @@
-// Copyright (c) 2013, Sandia Corporation.
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-// 
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-// 
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-// 
-//     * Neither the name of Sandia Corporation nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+/*------------------------------------------------------------------------*/
+/*                 Copyright 2010 Sandia Corporation.                     */
+/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
+/*  license for use of this work by or on behalf of the U.S. Government.  */
+/*  Export of this program may require a license from the                 */
+/*  United States Government.                                             */
+/*------------------------------------------------------------------------*/
 
-#ifndef STK_UTIL_DIAG_Timer_hpp
-#define STK_UTIL_DIAG_Timer_hpp
+#ifndef stk_util_diag_Timer_hpp
+#define stk_util_diag_Timer_hpp
 
-#include <stddef.h>                     // for size_t
-#include <list>                         // for list
-#include <stk_util/diag/Option.hpp>     // for OptionMask, etc
-#include <stk_util/diag/TimerMetricTraits.hpp>  // for MetricTraits, etc
-#include <stk_util/environment/FormatTime.hpp>  // for TimeFormat
-#include <stk_util/parallel/Parallel.hpp>  // for ParallelMachine
-#include <string>                       // for string
-#include <vector>                       // for vector
-namespace sierra { namespace Diag { class TimerParser; } }
-namespace stk { namespace diag { class Timer; } }
-namespace stk { namespace diag { class TimerImpl; } }
-namespace stk { namespace diag { class TimerSet; } }
-namespace stk { namespace diag { class Writer; } }
+#include <iosfwd>
+#include <vector>
+#include <list>
+#include <string>
 
-
-
-
+#include <stk_util/diag/TimerMetricTraits.hpp>
+#include <stk_util/parallel/Parallel.hpp>
+#include <stk_util/util/FormatTime.hpp>
+#include <stk_util/diag/Writer_fwd.hpp>
 
 ///
 /// @addtogroup DiagTimerDetail
@@ -60,6 +27,9 @@ namespace stk { namespace diag { class Writer; } }
 namespace stk {
 namespace diag {
 
+class Timer;
+class TimerSet;
+class TimerImpl;
 
 typedef unsigned TimerMask;        ///< Timer classification mask
 
@@ -109,7 +79,7 @@ Timer createRootTimer(const std::string &name, const TimerSet &timer_set);
  * Function <b>deleteRootTimer</b> deletes a root timer and all of it's children timers.  All
  * children Timers are invalidated and can no longer be used.
  *
- * @param timer <b>Timer</b> value of the root timer to delete.
+ * @param                       a <b>Timer</b> value of the root timer to delete.
  */
 void deleteRootTimer(Timer timer);
 
@@ -122,7 +92,7 @@ void deleteRootTimer(Timer timer);
  * @param path_tail    a <code>std::string</code> const reference to the dot separated tail
  *                              to match.
  *
- * @param found_timers    a <code>std::vector<Timer></code> reference to the vector to store
+ * @param found_timer    a <code>std::vector<Timer></code> reference to the vector to store
  *                              matching timers.
  *
  * @return      a <code>std::vector<Timer></code> reference to found_timer.
@@ -290,7 +260,7 @@ public:
      * If the <b>checkpoint</b> parameter if true, the value returned is the
      * difference between the accumulated value and the checkpointed value.
      *
-     * @param arg_checkpoint  a <b>bool</b> value of true of the checkpointed
+     * @param checkpoint  a <b>bool</b> value of true of the checkpointed
      *        value is to be returned.
      *
      * @return      a <b>T</b> value of the accumulated or the
@@ -398,7 +368,8 @@ public:
     return *this;
   }
 
-  virtual ~Timer();
+  virtual ~Timer()
+  {}
 
   const TimerList &getTimerList() const;
 
@@ -544,7 +515,7 @@ public:
    * Destroys a <b>TimeBlock</b> instance.  Stops the timer if is has been started.
    *
    */
-  virtual ~TimeBlock() {
+  ~TimeBlock() {
     try {
       if (m_started)
         m_timer.stop();
@@ -676,187 +647,8 @@ inline Writer &operator<<(Writer &dout, const Timer &timer) {
 } // namespace diag
 } // namespace stk
 
-
-namespace sierra {
-namespace Diag {
-
-typedef stk::diag::Timer Timer;
-typedef stk::diag::TimerSet TimerSet;
-typedef stk::TimeFormat TimeFormat;
-typedef stk::diag::TimeBlock TimeBlock;
-typedef stk::diag::TimeBlockSynchronized TimeBlockSynchronized;
-
-/**
- * @brief Enumeration <b><unnnamed></b> defines the bit mask values for the diagnostic
- * timer's in the <b>Diag</b> namespace.
- *
- */
-enum TimerSetMask{
-  TIMER_DOMAIN		= 0x00000001,		///< Enable domain timers
-  TIMER_REGION		= 0x00000002,		///< Enable region timers
-  TIMER_PROCEDURE	= 0x00000004,		///< Enable procedure timers
-  TIMER_MECHANICS	= 0x00000008,		///< Enable mechanics timers
-  TIMER_ALGORITHM	= 0x00000010,		///< Enable algorithm timers
-  TIMER_SOLVER		= 0x00000020,		///< Enable solver timers
-  TIMER_CONTACT		= 0x00000040,		///< Enable contact timers
-  TIMER_MATERIAL	= 0x00000080,		///< Enable material timers
-  TIMER_SEARCH		= 0x00000100,		///< Enable search timers
-  TIMER_TRANSFER	= 0x00000200,		///< Enable transfer timers
-  TIMER_ADAPTIVITY	= 0x00000400,		///< Enable adaptivity
-  TIMER_RECOVERY	= 0x00000800,		///< Enable recovery
-  TIMER_PROFILE_1	= 0x00001000,		///< Enable profile 1 timers
-  TIMER_PROFILE_2	= 0x00002000,		///< Enable profile 2 timers
-  TIMER_PROFILE_3	= 0x00004000,		///< Enable profile 3 timers
-  TIMER_PROFILE_4	= 0x00008000,		///< Enable profile 4 timers
-  TIMER_APP_1		= 0x00010000,		///< Enable application defined 1
-  TIMER_APP_2		= 0x00020000,		///< Enable application defined 2
-  TIMER_APP_3		= 0x00040000,		///< Enable application defined 3
-  TIMER_APP_4		= 0x00080000,		///< Enable application defined 4
-  TIMER_ALL		= 0x000FFFFF,		///< Enable all timers
-  TIMER_NONE		= 0x00000000,		///< Enable no timers
-
-  TIMER_FORCE		= 0x00000000		///< Force timer to be active
-};
-
-
-TimerSet &sierraTimerSet();
-
-Timer &sierraTimer();
-
-void sierraTimerDestroy();
-
-
-/**
- * @brief Class <b>Timer</b> implements a diagnostic timer and timer container for the
- * collection and display of execution times.
- *
- */
-typedef sierra::OptionMask TimerMask;			///< Bit mask for enabling timer
-
-/**
- * @brief Enumeration <b><unnamed></b> defines some constants used for the
- * indented display of the diagnostic timers.
- *
- */
-enum {
-  DEFAULT_TIMER_NAME_MAX_WIDTH = 40			///< Width to truncate the name
-};
-
-/**
- * @brief Member function <b>theTimerParser</b> returns a reference to the timer
- * parser.
- *
- * @return			a <b>TimerParser</b> reference to the timer parser.
- */
-TimerParser &theTimerParser();
-
-/**
- * Function <b>setEnabledTimerMask</b> set the timer enable bit mask to
- * <b>timer_mask</b>.
- *
- * @param timer_mask		a <b>TimerMask</b> value to set the timer enable bit
- *				mask to.
- *
- */
-void setEnabledTimerMask(TimerMask timer_mask);
-
-/**
- * Function <b>getEnabledTimerMask</b> retruns the timer enable bit mask.
- *
- * @return			a <b>TimerMask</b> value of the timer enable bit
- *				mask.
- */
-TimerMask getEnabledTimerMask();
-
-void setTimeFormat(int time_format);
-
-void setTimeFormatMillis();
-
-int getTimeFormat();
-
-/**
- * @brief Member function <b>setTimerNameMaxWidth</b> sets the maximum width for names
- * displayed in the timer output table.
- *
- * @param width		a <b>size_t</b> value to set for the maximum width for
- *				names displayed in the timer output table.
- *
- */
-void setTimerNameMaxWidth(size_t width);
-
-/**
- * @brief Member function <b>getTimeNameMaxWidth</b> returns the width to use for the
- * name cell of the table display.
- *
- * @return			a <b>size_t</b> value of the width to use for the name
- *				cell of the table display.
- */
-size_t getTimerNameMaxWidth();
-
-stk::diag::MetricTraits<stk::diag::CPUTime>::Type getCPULapTime(Timer timer);
-
-stk::diag::MetricTraits<stk::diag::CPUTime>::Type getCPUAccumulatedLapTime(Timer timer);
-
-stk::diag::MetricTraits<stk::diag::CPUTime>::Type getSierraCPUTime();
-stk::diag::MetricTraits<stk::diag::CPUTime>::Type getSierraWallTime();
-
-
-/**
- * @brief Class <b>TimerParser</b> implements the bit mask parser for the timer's bit masks.
- *
- */
-class TimerParser : public OptionMaskParser
-{
-public:
-  /**
-   * Creates a new <b>TimerParser</b> instance.
-   *
-   */
-  TimerParser();
-
-  /**
-   * @brief Member function <b>parse</b> parses the mask string and generates the
-   * corresponding bit mask.
-   *
-   * @param mask_string		a <b>std::string</b> const reference to the mask string.
-   *
-   * @return			a <b>Mask</b> value of the bitmask corresponding to the
-   *				mask string.
-   */
-  Mask parse(const char *mask_string) const;
-
-  /**
-   * Member function <b>parseArg</b> parses the argument and its argument values.
-   *
-   * @param name		a <b>std::string</b> const reference to the argument
-   *				name.
-   *
-   * @param arg			a <b>std::string</b> const reference to the argument
-   *				values.
-   */
-  virtual void parseArg(const std::string &name, const std::string &arg) const;  
-
-  mutable stk::diag::MetricsMask        m_metricsSetMask;
-  mutable stk::diag::MetricsMask        m_metricsMask;
-};
-
-
-class SierraRootTimer 
-{
-  public:
-    SierraRootTimer();
-    virtual ~SierraRootTimer();
-    stk::diag::Timer & sierraTimer();
-
-  private:
-    stk::diag::Timer m_sierraTimer; 
-};
-
-} // namespace Diag
-} // namespace sierra
-
 ///
 /// @}
 ///
 
-#endif // STK_UTIL_DIAG_Timer_hpp
+#endif // stk_util_diag_Timer_hpp

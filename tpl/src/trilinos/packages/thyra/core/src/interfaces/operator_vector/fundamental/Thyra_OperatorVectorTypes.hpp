@@ -126,6 +126,12 @@ using Teuchos::TypeNameTraits;
  */
 typedef Teuchos::Ordinal Ordinal;
 
+/** \brief Deprecated: Use Ordinal instead!
+`*
+ * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
+ */
+THYRA_DEPRECATED typedef Ordinal Index;
+
 
 /** \brief Enumeration for determining how a linear operator is applied.
 `*
@@ -171,6 +177,13 @@ enum EOpTransp {
    */
   CONJTRANS
 };
+
+
+/** \brief Deprecated (use EOpTransp instead).
+ *
+ * \ingroup Thyra_Op_Vec_fundamental_interfaces_code_grp
+ */
+THYRA_DEPRECATED typedef EOpTransp ETransp;
 
 
 /** \brief Return a string name for a <tt>EOpTransp</tt> value.

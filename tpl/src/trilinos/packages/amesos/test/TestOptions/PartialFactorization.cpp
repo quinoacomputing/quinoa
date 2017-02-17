@@ -4,7 +4,7 @@
 #define OUR_CHK_ERR(a) { { int epetra_err = a; \
                       if (epetra_err != 0) { std::cerr << "Amesos ERROR " << epetra_err << ", " \
                            << __FILE__ << ", line " << __LINE__ << std::endl; \
-relresidual=1e15; return(1);}  }\
+relerror = 1.3e15; relresidual=1e15; return(1);}  }\
                    }
 
 
@@ -63,6 +63,7 @@ int PartialFactorizationOneStep( const char* AmesosClass,
    Abase->SetParameters( ParamList ) ; 
   }
 
+  double relerror = 0 ; 
   double relresidual = 0 ; 
   
   if ( Steps > 0 ) {
@@ -82,6 +83,8 @@ int PartialFactorizationOneStep( const char* AmesosClass,
       OUR_CHK_ERR( Abase->SetParameters( ParamList ) ); 
       if ( Steps > 2 ) {
 		
+	int ind[1];
+	ind[0] = 0;
 	xexact.Random();
 	xexact.PutScalar(1.0);
 	
@@ -128,6 +131,8 @@ int PartialFactorizationOneStep( const char* AmesosClass,
 		  difference.Norm2( &norm_diff ) ; 
 		  x.Norm2( &norm_one ) ; 
 		  
+		  relerror = norm_diff / norm_one ; 
+		  
 		  relresidual = norm_diff / norm_one ; 
 		  
 		  if (iam == 0 ) {
@@ -161,12 +166,28 @@ int PartialFactorization( const char* AmesosClass,
 			  Epetra_CrsMatrix *& Amat, 
 			  double Rcond ) {
 
+  double relerror = 0 ; 
+  double relresidual = 0 ; 
+
   for( int i =0 ; i < MaxNumSteps ; i ++ ) {
     std::string AC = AmesosClass ; 
-    int epetra_err = PartialFactorizationOneStep(AmesosClass, Comm, transpose, verbose, ParamList, Amat, Rcond, i);
-    if (epetra_err != 0) {
-      std::cerr << "Amesos ERROR " << epetra_err << ", " << __FILE__ << ", line " << __LINE__ << std::endl;
-      return(1);
+
+    //
+    //  I have turned this test back on because it no longer seems to fail.  Although Amesos_Dscpack
+    //  fails other aspects of TestOptions.
+    //
+    //  Amesos_Dscpack dies if SymbolicFactorization() is called twice in a row - Bug #1237 
+    //  Hence we do not test Amesos_Dscpack with 3 or more steps here.
+    //    if ( AC != "Amesos_Dscpack" || i < 3 ) { 
+    {
+      OUR_CHK_ERR( PartialFactorizationOneStep( AmesosClass,
+						   Comm, 
+						   transpose, 
+						   verbose, 
+						   ParamList, 
+						   Amat, 
+						   Rcond,
+						   i ) ) ;
     }
   }
   return(0);

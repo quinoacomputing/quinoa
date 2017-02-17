@@ -145,12 +145,10 @@ namespace {
   }
 
 
-  /*
   RCP<FancyOStream> getDefaultOStream()
   {
     return( VerboseObjectBase::getDefaultOStream() );
   }
-  */
 
   template<typename T1, typename T2>
   const RCP<Array<std::pair<T1,T2> > >

@@ -46,42 +46,32 @@
 #include "Teuchos_as.hpp"
 
 EpetraExt::MultiPointModelEvaluator::MultiPointModelEvaluator(
-    Teuchos::RCP<EpetraExt::ModelEvaluator> underlyingME_,
-    const Teuchos::RCP<EpetraExt::MultiComm> &globalComm_,
+    Teuchos::RefCountPtr<EpetraExt::ModelEvaluator> underlyingME_,
+    const Teuchos::RefCountPtr<EpetraExt::MultiComm> &globalComm_,
     const std::vector<Epetra_Vector*> initGuessVec_,
-    Teuchos::RCP<std::vector< Teuchos::RCP<Epetra_Vector> > >  q_vec_,
-    Teuchos::RCP<std::vector< Teuchos::RCP<Epetra_Vector> > >  matching_vec_
-    ) :
+    Teuchos::RefCountPtr<std::vector< Teuchos::RefCountPtr<Epetra_Vector> > >  q_vec_,
+    Teuchos::RefCountPtr<std::vector< Teuchos::RefCountPtr<Epetra_Vector> > >  matching_vec_
+    ) : 
     underlyingME(underlyingME_),
     globalComm(globalComm_),
-    q_vec(q_vec_),
     underlyingNg(0),
     timeStepsOnTimeDomain(globalComm_->NumTimeStepsOnDomain()),
     numTimeDomains(globalComm_->NumSubDomains()),
     timeDomain(globalComm_->SubDomainRank()),
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    rowStencil_int(0),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    rowStencil_LL(0),
-#endif
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    rowIndex_int(0),
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    rowIndex_LL(0),
-#endif
+    rowStencil(0),
+    rowIndex(0),
+    q_vec(q_vec_),
     matching_vec(matching_vec_)
 {
   using Teuchos::as;
   if (globalComm->MyPID()==0) {
-     std::cout  << "----------MultiPoint Partition Info------------"
+     cout  << "----------MultiPoint Partition Info------------"
            << "\n\tNumProcs              = " << globalComm->NumProc()
            << "\n\tSpatial Decomposition = " << globalComm->SubDomainComm().NumProc()
            << "\n\tNumber of Domains     = " << numTimeDomains
            << "\n\tSteps on Domain 0     = " << timeStepsOnTimeDomain
            << "\n\tTotal Number of Steps = " << globalComm->NumTimeSteps();
-    std::cout   << "\n-----------------------------------------------" << std::endl;
+    cout   << "\n-----------------------------------------------" << endl;
     }
 
    // Construct global block matrix graph from split W and stencil,
@@ -89,35 +79,15 @@ EpetraExt::MultiPointModelEvaluator::MultiPointModelEvaluator(
 
    split_W = Teuchos::rcp_dynamic_cast<Epetra_RowMatrix>(underlyingME->create_W());
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   if(split_W->RowMatrixRowMap().GlobalIndicesInt()) {
-     longlong = false;
-     rowStencil_int = new std::vector< std::vector<int> >(timeStepsOnTimeDomain);
-     rowIndex_int = new std::vector<int>;
-     for (int i=0; i < timeStepsOnTimeDomain; i++) {
-       (*rowStencil_int)[i].push_back(0);
-       (*rowIndex_int).push_back(i + globalComm->FirstTimeStepOnDomain());
-     }
-     block_W = Teuchos::rcp(new EpetraExt::BlockCrsMatrix(*split_W,
-                               *rowStencil_int, *rowIndex_int, *globalComm));
+   rowStencil = new std::vector< std::vector<int> >(timeStepsOnTimeDomain);
+   rowIndex = new std::vector<int>;
+   for (int i=0; i < timeStepsOnTimeDomain; i++) {
+     (*rowStencil)[i].push_back(0);
+     (*rowIndex).push_back(i + globalComm->FirstTimeStepOnDomain());
    }
-   else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-   if(split_W->RowMatrixRowMap().GlobalIndicesInt()) {
-     longlong = true;
-     rowStencil_LL = new std::vector< std::vector<long long> >(timeStepsOnTimeDomain);
-     rowIndex_LL = new std::vector<long long>;
-     for (int i=0; i < timeStepsOnTimeDomain; i++) {
-       (*rowStencil_LL)[i].push_back(0);
-       (*rowIndex_LL).push_back(i + globalComm->FirstTimeStepOnDomain());
-     }
-     block_W = Teuchos::rcp(new EpetraExt::BlockCrsMatrix(*split_W,
-                               *rowStencil_LL, *rowIndex_LL, *globalComm));
-   }
-   else
-#endif
-     throw "EpetraExt::MultiPointModelEvaluator::MultiPointModelEvaluator: Global indices unknown";
+
+   block_W = Teuchos::rcp(new EpetraExt::BlockCrsMatrix(*split_W,
+                               *rowStencil, *rowIndex, *globalComm));
 
    // Test for g vector
    EpetraExt::ModelEvaluator::OutArgs underlyingOutArgs = underlyingME->createOutArgs();
@@ -142,24 +112,24 @@ EpetraExt::MultiPointModelEvaluator::MultiPointModelEvaluator(
 
    // Construct global solution vector, residual vector -- local storage
    block_x = new EpetraExt::BlockVector(split_map, block_W->RowMap());
-   block_f = new EpetraExt::BlockVector(*block_x);
+   block_f = new EpetraExt::BlockVector(*block_x); 
    block_DfDp = new EpetraExt::BlockMultiVector(split_map, block_W->RowMap(), num_p0);
-    if (underlyingNg)
+    if (underlyingNg)  
    block_DgDx = new EpetraExt::BlockMultiVector(split_map, block_W->RowMap(), num_g0);
 
    // Allocate local storage of epetra vectors
    split_x = Teuchos::rcp(new Epetra_Vector(split_map));
    split_f = Teuchos::rcp(new Epetra_Vector(split_map));
    split_DfDp = Teuchos::rcp(new Epetra_MultiVector(split_map, num_p0));
-   if (underlyingNg)
+   if (underlyingNg)  
      split_DgDx = Teuchos::rcp(new Epetra_MultiVector(split_map, num_g0));
-   if (underlyingNg) {
+   if (underlyingNg) { 
      if(orientation_DgDp == DERIV_TRANS_MV_BY_ROW)
        split_DgDp = Teuchos::rcp(new Epetra_MultiVector(*(underlyingME_->get_p_map(0)), num_g0));
      else
        split_DgDp = Teuchos::rcp(new Epetra_MultiVector(*(underlyingME_->get_g_map(0)), num_p0));
-   }
-   if (underlyingNg)
+   } 
+   if (underlyingNg)  
      split_g = Teuchos::rcp(new Epetra_Vector(*(underlyingME_->get_g_map(0))));
 
    // Packaging required for getting multivectors back as Derivatives
@@ -181,21 +151,10 @@ EpetraExt::MultiPointModelEvaluator::MultiPointModelEvaluator(
 
    // Load initial guess into block solution vector
    solution_init = Teuchos::rcp(new EpetraExt::BlockVector(*block_x));
+   for (int i=0; i < timeStepsOnTimeDomain; i++)
+           solution_init->LoadBlockValues(*(initGuessVec_[i]), (*rowIndex)[i]);
 
-   if(longlong) {
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-     for (int i=0; i < timeStepsOnTimeDomain; i++)
-             solution_init->LoadBlockValues(*(initGuessVec_[i]), (*rowIndex_LL)[i]);
-#endif
-   }
-   else {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-     for (int i=0; i < timeStepsOnTimeDomain; i++)
-             solution_init->LoadBlockValues(*(initGuessVec_[i]), (*rowIndex_int)[i]);
-#endif
-   }
-
-
+ 
    //Prepare logic for matching problem
    if (Teuchos::is_null(matching_vec))  matchingProblem = false;
    else matchingProblem = true;
@@ -213,14 +172,8 @@ EpetraExt::MultiPointModelEvaluator::~MultiPointModelEvaluator()
   delete block_f;
   delete block_DfDp;
   if (underlyingNg)  delete block_DgDx;
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  delete rowStencil_int;
-  delete rowIndex_int;
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  delete rowStencil_LL;
-  delete rowIndex_LL;
-#endif
+  delete rowStencil;
+  delete rowIndex;
 
   delete derivMV_DfDp;
   delete deriv_DfDp;
@@ -232,37 +185,37 @@ EpetraExt::MultiPointModelEvaluator::~MultiPointModelEvaluator()
   }
 }
 
-Teuchos::RCP<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_x_map() const
+Teuchos::RefCountPtr<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_x_map() const
 {
   return Teuchos::rcp(&(block_W->OperatorDomainMap()), false);
 }
 
-Teuchos::RCP<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_f_map() const
+Teuchos::RefCountPtr<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_f_map() const
 {
   return get_x_map();
 }
 
-Teuchos::RCP<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_p_map(int l) const
+Teuchos::RefCountPtr<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_p_map(int l) const
 {
   return underlyingME->get_p_map(l);
 }
 
-Teuchos::RCP<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_g_map(int j) const
+Teuchos::RefCountPtr<const Epetra_Map> EpetraExt::MultiPointModelEvaluator::get_g_map(int j) const
 {
   return underlyingME->get_g_map(j);
 }
 
-Teuchos::RCP<const Epetra_Vector> EpetraExt::MultiPointModelEvaluator::get_x_init() const
+Teuchos::RefCountPtr<const Epetra_Vector> EpetraExt::MultiPointModelEvaluator::get_x_init() const
 {
   return solution_init;
 }
 
-Teuchos::RCP<const Epetra_Vector> EpetraExt::MultiPointModelEvaluator::get_p_init(int l) const
+Teuchos::RefCountPtr<const Epetra_Vector> EpetraExt::MultiPointModelEvaluator::get_p_init(int l) const
 {
   return underlyingME->get_p_init(l);
 }
 
-Teuchos::RCP<Epetra_Operator> EpetraExt::MultiPointModelEvaluator::create_W() const
+Teuchos::RefCountPtr<Epetra_Operator> EpetraExt::MultiPointModelEvaluator::create_W() const
 {
   return block_W;
 }
@@ -331,26 +284,26 @@ void EpetraExt::MultiPointModelEvaluator::evalModel( const InArgs& inArgs,
 
   //temp code for multipoint param q vec
 /*
-  Teuchos::RCP<Epetra_Vector> q =
+  Teuchos::RefCountPtr<Epetra_Vector> q =
     Teuchos::rcp(new Epetra_Vector(*(underlyingME->get_p_map(1))));
 */
 
   // Parse InArgs
-  Teuchos::RCP<const Epetra_Vector> p_in = inArgs.get_p(0);
+  Teuchos::RefCountPtr<const Epetra_Vector> p_in = inArgs.get_p(0);
   if (p_in.get()) underlyingInArgs.set_p(0, p_in);
 
-  Teuchos::RCP<const Epetra_Vector> x_in = inArgs.get_x();
+  Teuchos::RefCountPtr<const Epetra_Vector> x_in = inArgs.get_x();
   block_x->Epetra_Vector::operator=(*x_in); //copy into block vector
 
   // Parse OutArgs
-  Teuchos::RCP<Epetra_Vector> f_out = outArgs.get_f();
+  Teuchos::RefCountPtr<Epetra_Vector> f_out = outArgs.get_f();
 
-  Teuchos::RCP<Epetra_Operator> W_out = outArgs.get_W();
-  Teuchos::RCP<EpetraExt::BlockCrsMatrix> W_block =
+  Teuchos::RefCountPtr<Epetra_Operator> W_out = outArgs.get_W();
+  Teuchos::RefCountPtr<EpetraExt::BlockCrsMatrix> W_block =
      Teuchos::rcp_dynamic_cast<EpetraExt::BlockCrsMatrix>(W_out);
 
-  Teuchos::RCP<Epetra_Vector> g_out;
-  if (underlyingNg) g_out = outArgs.get_g(0);
+  Teuchos::RefCountPtr<Epetra_Vector> g_out;
+  if (underlyingNg) g_out = outArgs.get_g(0); 
   if (g_out.get()) g_out->PutScalar(0.0);
 
   EpetraExt::ModelEvaluator::Derivative DfDp_out = outArgs.get_DfDp(0);
@@ -378,16 +331,7 @@ void EpetraExt::MultiPointModelEvaluator::evalModel( const InArgs& inArgs,
     underlyingInArgs.set_p(1, (*q_vec)[i]);
 
     // Set InArgs
-    if(longlong) {
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-      block_x->ExtractBlockValues(*split_x, (*rowIndex_LL)[i]);
-#endif
-    }
-    else {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-      block_x->ExtractBlockValues(*split_x, (*rowIndex_int)[i]);
-#endif
-    }
+    block_x->ExtractBlockValues(*split_x, (*rowIndex)[i]);
     underlyingInArgs.set_x(split_x);
 
     // Set OutArgs
@@ -400,7 +344,7 @@ void EpetraExt::MultiPointModelEvaluator::evalModel( const InArgs& inArgs,
     if (!DfDp_out.isEmpty()) underlyingOutArgs.set_DfDp(0, *deriv_DfDp);
 
     if (!DgDx_out.isEmpty()) underlyingOutArgs.set_DgDx(0, *deriv_DgDx);
-
+  
     if (!DgDp_out.isEmpty()) underlyingOutArgs.set_DgDp(0, 0, *deriv_DgDp);
 
     //********Eval Model ********/
@@ -419,24 +363,11 @@ void EpetraExt::MultiPointModelEvaluator::evalModel( const InArgs& inArgs,
     }
 
     // Repackage block components into global block matrx/vector/multivector
-    if(longlong) {
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-      if (f_out.get()) block_f->LoadBlockValues(*split_f, (*rowIndex_LL)[i]);
-      if (W_out.get()) W_block->LoadBlock(*split_W, i, 0);
+    if (f_out.get()) block_f->LoadBlockValues(*split_f, (*rowIndex)[i]);
+    if (W_out.get()) W_block->LoadBlock(*split_W, i, 0);
         // note: split_DfDp points inside deriv_DfDp
-      if (!DfDp_out.isEmpty()) block_DfDp->LoadBlockValues(*split_DfDp, (*rowIndex_LL)[i]);
-      if (!DgDx_out.isEmpty()) block_DgDx->LoadBlockValues(*split_DgDx, (*rowIndex_LL)[i]);
-#endif
-    }
-    else {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-      if (f_out.get()) block_f->LoadBlockValues(*split_f, (*rowIndex_int)[i]);
-      if (W_out.get()) W_block->LoadBlock(*split_W, i, 0);
-        // note: split_DfDp points inside deriv_DfDp
-      if (!DfDp_out.isEmpty()) block_DfDp->LoadBlockValues(*split_DfDp, (*rowIndex_int)[i]);
-      if (!DgDx_out.isEmpty()) block_DgDx->LoadBlockValues(*split_DgDx, (*rowIndex_int)[i]);
-#endif
-    }
+    if (!DfDp_out.isEmpty()) block_DfDp->LoadBlockValues(*split_DfDp, (*rowIndex)[i]);
+    if (!DgDx_out.isEmpty()) block_DgDx->LoadBlockValues(*split_DgDx, (*rowIndex)[i]);
 
     // Assemble multiple steps on this domain into g and dgdp(0) vectors
     if (g_out.get()) g_out->Update(1.0, *split_g, 1.0);
@@ -448,9 +379,9 @@ void EpetraExt::MultiPointModelEvaluator::evalModel( const InArgs& inArgs,
 
   //Copy block vectors into *_out vectors of same size
   if (f_out.get()) f_out->operator=(*block_f);
-  if (!DfDp_out.isEmpty())
+  if (!DfDp_out.isEmpty()) 
     DfDp_out.getMultiVector()->operator=(*block_DfDp);
-  if (!DgDx_out.isEmpty())
+  if (!DgDx_out.isEmpty()) 
     DgDx_out.getMultiVector()->operator=(*block_DgDx);
 
   //Sum together obj fn contributions from differnt Domains (clusters).

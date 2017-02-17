@@ -49,11 +49,9 @@
 */
 
 #include "Intrepid_CubatureDirectLineGauss.hpp"
-#include "Intrepid_CubatureDirectLineGaussJacobi20.hpp"
 #include "Intrepid_CubatureDirectTriDefault.hpp"
 #include "Intrepid_CubatureDirectTetDefault.hpp"
 #include "Intrepid_CubatureTensor.hpp"
-#include "Intrepid_CubatureTensorPyr.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_RCP.hpp"
@@ -114,14 +112,6 @@ double computeRefVolume(shards::CellTopology & cellTopology, int cubDegree) {
         myCub = Teuchos::rcp(new CubatureTensor<double>(triCub,lineCub));
         }
       break;
-    case shards::Pyramid<>::key: {
-    	std::vector< Teuchos::RCP< Cubature<double> > > lineCubs(3);
-        lineCubs[0]  = Teuchos::rcp(new CubatureDirectLineGauss<double>(cubDegree));
-    	lineCubs[1]  = Teuchos::rcp(new CubatureDirectLineGauss<double>(cubDegree));
-    	lineCubs[2]  = Teuchos::rcp(new CubatureDirectLineGaussJacobi20<double>(cubDegree));
-    	myCub = Teuchos::rcp(new CubatureTensorPyr<double>(lineCubs));
-        }
-      break;
 
     default:
       TEUCHOS_TEST_FOR_EXCEPTION( ( (cellTopology.getBaseCellTopologyData()->key != shards::Line<>::key),
@@ -129,8 +119,7 @@ double computeRefVolume(shards::CellTopology & cellTopology, int cubDegree) {
                             (cellTopology.getBaseCellTopologyData()->key != shards::Tetrahedron<>::key),
                             (cellTopology.getBaseCellTopologyData()->key != shards::Quadrilateral<>::key),
                             (cellTopology.getBaseCellTopologyData()->key != shards::Hexahedron<>::key),
-                            (cellTopology.getBaseCellTopologyData()->key != shards::Wedge<>::key),
-                            (cellTopology.getBaseCellTopologyData()->key != shards::Pyramid<>::key) ),
+                            (cellTopology.getBaseCellTopologyData()->key != shards::Wedge<>::key) ),
                           std::invalid_argument,
                           ">>> ERROR (Unit Test -- Cubature -- Volume): Invalid cell type.");
   } // end switch
@@ -151,6 +140,7 @@ double computeRefVolume(shards::CellTopology & cellTopology, int cubDegree) {
 int main(int argc, char *argv[]) {
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+
   // This little trick lets us print to std::cout only if
   // a (dummy) command-line argument is provided.
   int iprint     = argc - 1;
@@ -243,7 +233,6 @@ int main(int argc, char *argv[]) {
                            TEUCHOS_TEST_FOR_EXCEPTION( (tetCub.getDimension() != 3),
                                                std::logic_error,
                                                "Check member getCellTopology!" ) );
-                                           
     /* Tensor cubature. */
     INTREPID_TEST_COMMAND( std::vector< Teuchos::RCP< Cubature<double> > > lineCubs(0);
                            CubatureTensor<double> quadCub(lineCubs) );
@@ -259,7 +248,6 @@ int main(int argc, char *argv[]) {
                            std::vector<int> atest(4);
                            tensorCub.getAccuracy(atest);
                            TEUCHOS_TEST_FOR_EXCEPTION( (a != atest), std::logic_error, "Check member getAccuracy!" ) );
-                          
     INTREPID_TEST_COMMAND( std::vector< Teuchos::RCP< Cubature<double> > > lineCubs(2);
                            lineCubs[0] = Teuchos::rcp(new CubatureDirectLineGauss<double>(15));
                            lineCubs[1] = Teuchos::rcp(new CubatureDirectLineGauss<double>(11));
@@ -280,8 +268,6 @@ int main(int argc, char *argv[]) {
                            FieldContainer<double> weights(tensorCub.getNumPoints());
                            tensorCub.getCubature(points, weights)
                          )
-                                                      
-                  
     INTREPID_TEST_COMMAND( Teuchos::RCP< CubatureDirect<double> > lineCub = Teuchos::rcp(new CubatureDirectLineGauss<double>(15));
                            Teuchos::RCP< CubatureDirect<double> > triCub = Teuchos::rcp(new CubatureDirectTriDefault<double>(12));
                            CubatureTensor<double> tensorCub(lineCub, triCub);
@@ -300,7 +286,6 @@ int main(int argc, char *argv[]) {
                            TEUCHOS_TEST_FOR_EXCEPTION( (tensorCub.getDimension() != 5) || (a != atest),
                                                std::logic_error,
                                                "Check constructor and members dimension and getAccuracy!" ) );
-
     INTREPID_TEST_COMMAND( Teuchos::RCP< CubatureDirect<double> > triCub = Teuchos::rcp(new CubatureDirectTriDefault<double>(12));
                            CubatureTensor<double> tensorCub(triCub, 5);
                            std::vector<int> a(5); a[0] = 12; a[1] = 12; a[2] = 12; a[3] = 12; a[4] = 12;
@@ -327,7 +312,7 @@ int main(int argc, char *argv[]) {
   double tol     = 100.0 * INTREPID_TOL;
 
   // list of analytic volume values, listed in the enumerated reference cell order up to CELL_HEXAPRISM
-  double volumeList[] = {0.0, 2.0, 1.0/2.0, 4.0, 1.0/6.0, 8.0, 1.0, 4.0/3.0, 32.0};
+  double volumeList[] = {0.0, 2.0, 1.0/2.0, 4.0, 1.0/6.0, 8.0, 1.0, 32.0};
 
   *outStream << "\nReference cell volumes:\n\n";
 
@@ -342,7 +327,6 @@ int main(int argc, char *argv[]) {
         *outStream << std::setw(70) << "^^^^----FAILURE!" << "\n";
       }
     }
-
     *outStream << "\n\n";
     shards::CellTopology tri(shards::getCellTopologyData< shards::Triangle<> >());
     for (int deg=0; deg<=INTREPID_CUBATURE_TRI_DEFAULT_MAX; deg++) {
@@ -354,7 +338,6 @@ int main(int argc, char *argv[]) {
         *outStream << std::setw(70) << "^^^^----FAILURE!" << "\n";
       }
     }
-
     *outStream << "\n\n";
     shards::CellTopology quad(shards::getCellTopologyData< shards::Quadrilateral<> >());
     for (int deg=0; deg<=INTREPID_CUBATURE_LINE_GAUSS_MAX; deg++) {
@@ -366,7 +349,6 @@ int main(int argc, char *argv[]) {
         *outStream << std::setw(70) << "^^^^----FAILURE!" << "\n";
       }
     }
-
     *outStream << "\n\n";
     shards::CellTopology tet(shards::getCellTopologyData< shards::Tetrahedron<> >());
     for (int deg=0; deg<=INTREPID_CUBATURE_TET_DEFAULT_MAX; deg++) {
@@ -401,17 +383,6 @@ int main(int argc, char *argv[]) {
       }
     }
     *outStream << "\n\n";
-    shards::CellTopology pyr(shards::getCellTopologyData< shards::Pyramid<> >());
-    for (int deg=0; deg<=std::min(INTREPID_CUBATURE_LINE_GAUSS_MAX,INTREPID_CUBATURE_LINE_GAUSSJACOBI20_MAX); deg++) {
-      testVol = computeRefVolume(pyr, deg);
-      *outStream << std::setw(30) << "Pyramid volume --> " << std::setw(10) << std::scientific << testVol <<
-                    std::setw(10) << "diff = " << std::setw(10) << std::scientific << std::abs(testVol - volumeList[7]) << "\n";
-      if (std::abs(testVol - volumeList[7]) > tol) {
-        errorFlag = 1;
-        *outStream << std::setw(70) << "^^^^----FAILURE!" << "\n";
-      }
-    }
-    *outStream << "\n\n";
     for (int deg=0; deg<=20; deg++) {
       Teuchos::RCP<CubatureDirectLineGauss<double> > lineCub = Teuchos::rcp(new CubatureDirectLineGauss<double>(deg));
       CubatureTensor<double> hypercubeCub(lineCub, 5);
@@ -423,8 +394,8 @@ int main(int argc, char *argv[]) {
       for (int i=0; i<numCubPoints; i++)
         testVol += cubWeights[i];
       *outStream << std::setw(30) << "5-D Hypercube volume --> " << std::setw(10) << std::scientific << testVol <<
-                    std::setw(10) << "diff = " << std::setw(10) << std::scientific << std::abs(testVol - volumeList[8]) << "\n";
-      if (std::abs(testVol - volumeList[8])/std::abs(testVol) > tol) {
+                    std::setw(10) << "diff = " << std::setw(10) << std::scientific << std::abs(testVol - volumeList[7]) << "\n";
+      if (std::abs(testVol - volumeList[7])/std::abs(testVol) > tol) {
         errorFlag = 1;
         *outStream << std::setw(70) << "^^^^----FAILURE!" << "\n";
       }

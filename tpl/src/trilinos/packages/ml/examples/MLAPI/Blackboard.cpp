@@ -1,13 +1,13 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 
 #include "ml_config.h"
 #include "ml_common.h"
 #ifdef HAVE_ML_MLAPI
 
-// This is the easiest way, since all MLAPI include files will
+// This is the easiest way, since all MLAPI include files will 
 // automatically be included. However, this also makes the compilation
 // longer, so you might want to specify the exact list of include files
 // as long as you code gets finalized.
@@ -22,7 +22,7 @@ using namespace MLAPI;
 
 int main(int argc, char *argv[])
 {
-
+  
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
 #endif
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     // local and global distribution of elements. Space's can be constructed
     // in several ways. The simplest is to specify the number of global
     // elements:
-
+    
     Space MySpace(4 * GetNumProcs());
 
     // Class MLAPI::DistributedMatrix is a simple way to define
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     // elements is somehow slower, but the matrix-vector product is as
     // efficient as those of the Epetra_FECrsmatrix class (with the only
     // overhead of an additional function call).
-
+    
     DistributedMatrix A(MySpace, MySpace);
 
     // As any processor can set any element, here we fill the entire
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
       for (int i = 0 ; i < MySpace.GetNumGlobalElements() ; ++i) {
 
-        if (i)
+        if (i) 
           A(i, i - 1) = -1.0;
         if (i + 1 != A.NumGlobalCols())
           A(i, i + 1) = -1.0;
@@ -70,24 +70,24 @@ int main(int argc, char *argv[])
       }
     }
 
-    A.FillComplete();
+    A.FillComplete(); 
 
     // To get the (row, col) value of the matrix, use method
     // value = GetElement(row, col). Note that both `row' and `col'
     // refer to global indices; however row must be a locally hosted row.
     // If (row, col) is not found, value is set to 0.0.
 
-    std::cout << A;
+    cout << A;
 
     // Here we define 3 vectors. The last, z, is empty.
-
+    
     MultiVector x(MySpace);
     MultiVector y(MySpace);
     MultiVector z;
 
     // It is easy to assign all the elements of x to a constant value,
     // or to populate with random numbers.
-
+    
     x = 1.0;
     y.Random();
 
@@ -97,32 +97,32 @@ int main(int argc, char *argv[])
       y(i) = 1.0 * i + x(i);
 
     // vectors can be manipulated in an intuitive way:
-
+    
     z = x + y;                        // addition
     double norm = sqrt(z * z);        // dot product
     double Anorm = sqrt(z * (A * z)); // dot product with a matrix (not the parenthesis)
     x = x / (x * y);                  // scale x by the dot product between x and y
 
     if (GetMyPID() == 0) {
-      std::cout << "2-norm of z = " << norm << std::endl;
-      std::cout << "A-norm of z = " << Anorm << std::endl;
+      cout << "2-norm of z = " << norm << endl;
+      cout << "A-norm of z = " << Anorm << endl;
     }
 
     // some basic operations on matrices are also supported. For example,
     // one can extract the diagonal of a matrix as a vector, then create a new
     // matrix, containing this vector on the diagonal
     // (that is, B will be a diagonal matrix so that B_{i,i} = A_{i,i})
-
+    
     Operator B = GetDiagonal(GetDiagonal(A));
 
     // verify that the diagonal of A - B is zero
-
+    
     z = GetDiagonal(B - A);
 
     // Also operators can be composed intuitively (for compatible
     // operators):
 
-    Operator C = A * B;    // multiplication, A
+    Operator C = A * B;    // multiplication, A 
     C = A + B;             // addition
     C = 1.0 * A - B * 2.0;             // subtraction
 
@@ -134,25 +134,25 @@ int main(int argc, char *argv[])
     double NormX = sqrt(x * x);
 
     if (GetMyPID() == 0)
-      std::cout << "Norm of inv(A) * A * x - x = " << NormX << std::endl;
+      cout << "Norm of inv(A) * A * x - x = " << NormX << endl;
 
     // All MLAPI objects have a Label, which can be set using
     // SetLabel(Label). Also, all objects overload the << operator:
 
-    std::cout << MySpace;
-    std::cout << x;
-    std::cout << A;
-
+    cout << MySpace;
+    cout << x;
+    cout << A;
+      
     // Function Eig() can be used to compute the eigenvalues of an Operator.
     // This function calls LAPACK, therefore the Operator should be "small".
     // ER will contain the real part of the eigenvalues;
     // EI will contain the imaginary part of the eigenvalues;
-
+    
     MultiVector ER, EI;
     Eig(A, ER, EI);
 
     for (int i = 0 ; i < ER.GetMyLength() ; ++i)
-      std::cout << "ER(" << MySpace(i) << ") = " << ER(i) << std::endl;
+      cout << "ER(" << MySpace(i) << ") = " << ER(i) << endl;
 
     // Another nice feature is that objects can be printed in a MATLAB format.
     // To that aim, simply do the following:
@@ -181,15 +181,15 @@ int main(int argc, char *argv[])
     matlab << "plot(ER, EI, 'o')\n";
 
     // Finalize the MLAPI work space before leaving the application
-
+    
     Finalize();
 
-  }
+  } 
   catch (const int e) {
-    std::cout << "Integer exception, code = " << e << std::endl;
-  }
+    cout << "Integer exception, code = " << e << endl;
+  } 
   catch (...) {
-    std::cout << "problems here..." << std::endl;
+    cout << "problems here..." << endl;
   }
 
 #ifdef HAVE_MPI

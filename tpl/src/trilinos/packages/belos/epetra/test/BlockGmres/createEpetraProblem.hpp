@@ -53,13 +53,22 @@ using Teuchos::rcp;
 
 namespace Belos {
 
-  int createEpetraProblem(
-      std::string              &filename
-      ,RCP<Epetra_Map>         *rowMap
-      ,RCP<Epetra_CrsMatrix>   *A
-      ,RCP<Epetra_MultiVector> *B
-      ,RCP<Epetra_MultiVector> *X
-      ,int                     *MyPID
-      );
+class MPIFinalize {
+public:
+  ~MPIFinalize() {
+#ifdef EPETRA_MPI 
+    MPI_Finalize();
+#endif
+  }
+};
+
+int createEpetraProblem(
+			std::string                      &filename
+			,RCP<Epetra_Map>         *rowMap
+			,RCP<Epetra_CrsMatrix>   *A
+			,RCP<Epetra_MultiVector> *B
+			,RCP<Epetra_MultiVector> *X
+			,int                             *MyPID
+			);
 
 } // namespace Belos

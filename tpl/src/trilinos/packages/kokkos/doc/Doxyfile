@@ -5,9 +5,11 @@
 #
 # Package options
 #
-PROJECT_NAME           = "Kokkos Core Kernels Package"
+PROJECT_NAME           = "Kokkos Node API and Local Linear Algebra Kernels"
 PROJECT_NUMBER         = "Version of the Day"
+
 OUTPUT_DIRECTORY       = .
+
 OUTPUT_LANGUAGE        = English
 
 EXTRACT_ALL            = NO
@@ -45,29 +47,17 @@ QUIET                  = NO
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 WARN_FORMAT            = "$file:$line: $text"
-
-#
-# INPUT: Where to find files that Doxygen should process.  ../classic
-# has a doc/ subdirectory with its own Doxyfile that points to its own
-# files.  The other Kokkos subpackages don't currently have their own
-# Doxyfile files, so we have to do it manually here.
-#
-# mfh 26 Sep 2013: I've only added those directories in the Core
-# subpackage that constitute the "public interface" of that
-# subpackage.  Please feel free to include additional subdirectories
-# of ../core if you want to generate their documentation as well.
-#
-# mfh 26 Sep 2013: I've only added the Kokkos subpackages here that I
-# think are ready for Doxygen documentation generation.  Please feel
-# free to amend this list as you see fit.
-#
-
-INPUT                  = index.doc ../classic ../core/src ../containers/src ../linalg/src
-FILE_PATTERNS          = *.hpp *.cpp *.cuh *.cu
+INPUT                  = index.doc groups.doc ../src ../LinAlg ../NodeAPI ../LinAlg/examples ../LinAlg/test/CrsMatrix ../NodeAPI/examples ../NodeTSQR ../DistTSQR
+FILE_PATTERNS          = *.hpp *.cpp *.cuh
 RECURSIVE              = NO
+EXCLUDE                = ../NodeAPI/Kokkos_CUDA_util_inline_runtime.h \
+                         ../NodeAPI/Kokkos_CUDA_util_sharedmem.cuh \
+                         ../NodeAPI/Kokkos_CUDANode.cpp ../NodeAPI/Kokkos_CUDANode.hpp ../NodeAPI/Kokoks_CUDANode.cuh
 EXCLUDE_PATTERNS       = *.x *.o *.out
-EXAMPLE_PATH           = 
-EXAMPLE_RECURSIVE       = YES
+EXAMPLE_PATH           = ../NodeAPI/examples/SimpleNodeExample.cpp \
+                         ../NodeAPI/examples/Kokkos_NodeExampleKernels.hpp \
+                         ../LinAlg/examples/DummySparseKernelDriver.cpp \
+                         ../LinAlg/test/CrsMatrix/CrsMatrix_DefaultMultiplyTests.hpp
 EXAMPLE_PATTERNS       = *.cpp *.hpp
 IMAGE_PATH             = 
 INPUT_FILTER           = 
@@ -91,15 +81,17 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_FILE_PATTERNS  = 
 PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS DOXYGEN_USE_ONLY
-INCLUDE_PATH           = ../src
+INCLUDE_PATH           = 
 EXPAND_AS_DEFINED      = 
 #
 # Links to other packages
 #
-TAGFILES               = ../../common/tag_files/teuchos.tag=../../../teuchos/doc/html ../../common/tag_files/epetra.tag=../../../epetra/doc/html \
-                         ../../common/tag_files/belos.tag=../../../belos/doc/html ../../common/tag_files/anasazi.tag=../../../anasazi/doc/html \
-                         ../../common/tag_files/kokkos.tag=../../../kokkos/doc/html 
-GENERATE_TAGFILE       = ../../common/tag_files/tpetra.tag
+TAGFILES               = ../../common/tag_files/teuchos.tag=../../../teuchos/doc/html ../../common/tag_files/tpetra.tag=../../../tpetra/doc/html \
+                         ../../common/tag_files/ifpack2.tag=../../../ifpack2/doc/html
+GENERATE_TAGFILE       = ../../common/tag_files/kokkos.tag
+
+GENERATE_HTML          = YES
+
 ALLEXTERNALS           = NO
 EXTERNAL_GROUPS        = NO
 #

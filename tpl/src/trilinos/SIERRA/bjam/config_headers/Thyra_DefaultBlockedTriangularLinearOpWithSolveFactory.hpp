@@ -1,0 +1,4 @@
+#include "Thyra_DefaultBlockedTriangularLinearOpWithSolveFactory_decl.hpp"
+#ifndef HAVE_THYRA_EXPLICIT_INSTANTIATION
+#  include "Thyra_DefaultBlockedTriangularLinearOpWithSolveFactory_def.hpp"
+#endif

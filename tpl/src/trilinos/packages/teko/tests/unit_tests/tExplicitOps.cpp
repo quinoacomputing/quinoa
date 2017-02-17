@@ -94,7 +94,7 @@ TEUCHOS_UNIT_TEST(tExplicitOps, transpose)
    int ny = 53;
 
    // create some big blocks to play with
-   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm,false); // CJ TODO FIXME: change for Epetra64
+   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm);
    FGallery.Set("nx",nx);
    FGallery.Set("ny",ny);
    Epetra_CrsMatrix & epetraF = FGallery.GetMatrixRef();
@@ -113,7 +113,7 @@ TEUCHOS_UNIT_TEST(tExplicitOps, transpose)
 
    {
       std::stringstream ss;
-      const bool result = tester.compare( *aF, *F_T, Teuchos::ptrFromRef(out) );
+      const bool result = tester.compare( *aF, *F_T, &out );
       TEST_ASSERT(result);
    }
 }

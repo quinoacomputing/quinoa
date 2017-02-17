@@ -1,42 +1,29 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //         Claps: A Collection of Domain Decomposition Preconditioners
 //                and Solvers
 //         Copyright (2006) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Clark R. Dohrmann (crdohrm@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -83,7 +70,7 @@ void Epetra_datfile(const Epetra_CrsMatrix* A, char fname[])
     A->ExtractMyRowView(i, NumEntries, Values, Indices);
     for (j=0; j<NumEntries; j++) {
       fout << A->GRID(i) << " " << A->GCID(Indices[j]) << std::setw(22) << std::setprecision(15)
-	   << Values[j] << std::endl;
+	   << Values[j] << endl;
     }
   }
   fout.close();
@@ -99,7 +86,7 @@ void spmat_datfile(int nrow, int rowbegp [], int colidxp [],
   for (i=0; i<nrow; i++) {
     for (j=rowbegp[i]; j<rowbegp[i+1]; j++) {
       fout << i << " " << colidxp[j] << std::setw(22) << std::setprecision(15)
-	   << val[j] << std::endl;
+	   << val[j] << endl;
     }
   }
   fout.close();
@@ -111,7 +98,7 @@ void Epetra_datfile(int* A, int N, char fname[])
   std::ofstream fout;
   sprintf(fname, "%s.dat", fname);
   fout.open(fname);
-  for (i=0; i<N; i++) fout << A[i] << std::endl;
+  for (i=0; i<N; i++) fout << A[i] << endl;
   fout.close();
 }
 
@@ -241,8 +228,8 @@ void tie_down_coarse(int n,
                      num_tied_down, tied_down, AA, Xvecs, ne);
   if (num_tied_down > 0) {
     if (num_tied_down != ne) {
-      std::cout << "Error: number of actual rigid body modes less than ";
-      std::cout << " num_rigid_mode specified in CLAPS block" << std::endl;
+      cout << "Error: number of actual rigid body modes less than ";
+      cout << " num_rigid_mode specified in CLAPS block" << endl;
       assert (num_tied_down == ne);
     }
   }
@@ -271,7 +258,7 @@ void tie_down_coarse(int n,
   ffout.open("coarse_mat.dat");
   for (i=0; i<n; i++) 
     for (j=rowbeg[i]; j<rowbeg[i+1]; j++)
-      ffout << i+1 << " " << colidx[j]+1 << " " << vals[j] << std::endl;
+      ffout << i+1 << " " << colidx[j]+1 << " " << vals[j] << endl;
   ffout.close();
   */
 }
@@ -311,7 +298,7 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
     for (i=0; i<n; i++) {
       for (j=rowbeg[i]; j<rowbeg[i+1]; j++) {
 	fout << i+1 << " " << colidx[j]+1 << " " << std::setw(22) <<
-	  std::setprecision(15) << vals[j] << std::endl;
+	  std::setprecision(15) << vals[j] << endl;
       }
     }
     fout.close();
@@ -370,15 +357,15 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
     if (MyPID == 1) {
       std::ofstream fout;
       fout.open("AA.m");
-      fout << "TEMP = zeros(" << q << "," << q << ");" << std::endl;
-      fout << "X    = zeros(" << q << "," << q << ");" << std::endl;
+      fout << "TEMP = zeros(" << q << "," << q << ");" << endl;
+      fout << "X    = zeros(" << q << "," << q << ");" << endl;
       fout << setiosflags(ios::scientific | ios::uppercase);
       for (i=0; i<q; i++) {
 	for (j=0; j<q; j++) {
 	  fout << "TEMP(" << i+1 << "," << j+1 << ") = " << std::setw(22) <<
-	    std::setprecision(15) <<  TEMP[i+q*j] << ";" << std::endl;
+	    std::setprecision(15) <<  TEMP[i+q*j] << ";" << endl;
 	  fout << "X(   " << i+1 << "," << j+1 << ") = " << std::setw(22) <<
-	    std::setprecision(15) <<     X[i+q*j] << ";" << std::endl;
+	    std::setprecision(15) <<     X[i+q*j] << ";" << endl;
 	}
       }
       fout.close();
@@ -399,9 +386,9 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
     sum = sqrt(1-LAMBDA[p-1]*LAMBDA[p-1]/sum);
     /*
     if (MyPID == 0) {
-      std::cout << "LAMBDA = " << std::endl;
-      for (i=0; i<q; i++) std::cout << LAMBDA[i] << std::endl;
-      std::cout << "eigenerror = " << sum << std::endl;
+      cout << "LAMBDA = " << endl;
+      for (i=0; i<q; i++) cout << LAMBDA[i] << endl;
+      cout << "eigenerror = " << sum << endl;
     }
     */
     if (sum <= sitol) break;
@@ -414,8 +401,8 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
   //
   /*
   if (MyPID == 0) {
-    std::cout << "LAMBDA = " << std::endl;
-    for (i=0; i<q; i++) std::cout << LAMBDA[i] << std::endl;
+    cout << "LAMBDA = " << endl;
+    for (i=0; i<q; i++) cout << LAMBDA[i] << endl;
   }
   */
   nextra = 0;
@@ -430,12 +417,12 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
   }
   /*  
   if (ne > 0) {
-    for (i=0; i<q; i++) std::cout << "lambda[" << i << "]= " << LAMBDA[i] << std::endl;
+    for (i=0; i<q; i++) cout << "lambda[" << i << "]= " << LAMBDA[i] << endl;
     std::ofstream ffout;
     ffout.open("coarse_vec.dat");
     for (i=0; i<n; i++) {
       for (j=0; j<ne; j++) ffout << X[i+j*n] << " ";
-      ffout << std::endl;
+      ffout << endl;
     }
     ffout.close();
   }
@@ -463,13 +450,13 @@ void subspace_iteration(int n, int rowbeg[], int colidx[],
   }
   /*
   if (MyPID == 0) {
-    std::cout << "nextra = " << nextra << std::endl;
-    std::cout << "extra constained dofs = :";
-    for (i=0; i<nextra; i++) std::cout << extra_corner[i] << " ";
-    std::cout << std::endl;
+    cout << "nextra = " << nextra << endl;
+    cout << "extra constained dofs = :";
+    for (i=0; i<nextra; i++) cout << extra_corner[i] << " ";
+    cout << endl;
     for (i=0; i<n; i++) {
-      for (j=0; j<nextra; j++) std::cout << X[j*n+i] << " ";
-      std::cout << std::endl;
+      for (j=0; j<nextra; j++) cout << X[j*n+i] << " ";
+      cout << endl;
     }
   }
   */

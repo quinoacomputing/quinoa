@@ -164,6 +164,7 @@ C   --   *      - OUT - return statement if command error; message is printed
             CALL GETINS ('line', IDUM, IDUM, IDUM, CDUM,
      &         IDUM, RDUM, CAPTN(I,ITYPE), IOSTAT,
      &         WORD, LWORD, *110)
+C           CALL GETINP (0, 0, WORD, CAPTN(I,ITYPE), IOSTAT)
             INLINE(I-ISTART+2) = CAPTN(I,ITYPE)
   100    CONTINUE
       END IF

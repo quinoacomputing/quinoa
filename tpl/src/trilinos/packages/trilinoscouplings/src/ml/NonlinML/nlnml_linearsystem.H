@@ -20,9 +20,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
-# Questions? Contact Jonathan Hu (jhu@sandia.gov) or Ray Tuminaro
+# Questions? Contact Jonathan Hu (jhu@sandia.gov) or Ray Tuminaro 
 # (rstumin@sandia.gov).
 #
 # ************************************************************************
@@ -48,6 +48,7 @@
 
 #include "nlnml_coarselevelnoxinterface.H"
 
+using namespace std;
 using namespace Teuchos;
 namespace NLNML
 {
@@ -70,19 +71,19 @@ public:
 
   virtual ~NLNML_LinearSystem() {}
 
-  bool applyJacobian(const NOX::Epetra::Vector& input,
+  bool applyJacobian(const NOX::Epetra::Vector& input, 
 	             NOX::Epetra::Vector& result) const;
-
-  bool applyJacobianTranspose(const NOX::Epetra::Vector& input,
+  
+  bool applyJacobianTranspose(const NOX::Epetra::Vector& input, 
 		              NOX::Epetra::Vector& result) const;
 
-  bool applyJacobianInverse(Teuchos::ParameterList &params,
-		            const NOX::Epetra::Vector &input,
+  bool applyJacobianInverse(Teuchos::ParameterList &params, 
+		            const NOX::Epetra::Vector &input, 
 		            NOX::Epetra::Vector &result);
 
   bool applyRightPreconditioning(bool useTranspose,
-				 Teuchos::ParameterList& params,
-				 const NOX::Epetra::Vector& input,
+				 Teuchos::ParameterList& params, 
+				 const NOX::Epetra::Vector& input, 
 				 NOX::Epetra::Vector& result) const;
 
   Teuchos::RefCountPtr<NOX::Epetra::Scaling> getScaling() { return null; }
@@ -91,22 +92,22 @@ public:
 
   bool computeJacobian(const NOX::Epetra::Vector& x);
 
-  bool createPreconditioner(const NOX::Epetra::Vector& x,
+  bool createPreconditioner(const NOX::Epetra::Vector& x, 
 			    Teuchos::ParameterList& p,
 			    bool recomputeGraph) const;
 
   // Because of reuse features I prefer to do this myself
-  bool destroyPreconditioner() const { return true; }
-
+  bool destroyPreconditioner() const { return true; } 
+  
   // To be consistent with preventing preconditioner re-use, we flag this option
   // as invalid for now.  RWH
-
-  bool recomputePreconditioner(const NOX::Epetra::Vector& x,
+    
+  bool recomputePreconditioner(const NOX::Epetra::Vector& x, 
 			Teuchos::ParameterList& linearSolverParams) const
   { return false; }
 
   // For now, we do not support reuse of the preconditioner.  This could change in th future. RWH
-  PreconditionerReusePolicyType
+  PreconditionerReusePolicyType 
   getPreconditionerPolicy(bool advanceReuseCounter)
   { return PRPT_REBUILD; }
 
@@ -115,22 +116,22 @@ public:
 
   // Always...
   bool isPreconditionerConstructed() const { return true; }
-
+  
   // Always...
-  bool hasPreconditioner() const { return true; }
-
+  bool hasPreconditioner() const { return true; } 
+  
   Teuchos::RefCountPtr<const Epetra_Operator> getJacobianOperator() const
     { return J_; }
-
+  
   Teuchos::RefCountPtr<Epetra_Operator> getJacobianOperator()
     { return J_; }
-
+  
   Teuchos::RefCountPtr<const Epetra_Operator> getGeneratedPrecOperator() const
     { return Prec_; }
-
+  
   Teuchos::RefCountPtr<Epetra_Operator> getGeneratedPrecOperator()
     { return Prec_; }
-
+  
   void setJacobianOperatorForSolve(
                 const Teuchos::RefCountPtr<const Epetra_Operator>& solveJacOp);
 

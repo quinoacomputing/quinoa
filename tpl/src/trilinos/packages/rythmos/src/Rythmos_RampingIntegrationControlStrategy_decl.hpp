@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -105,25 +105,14 @@ public:
 
 private:
 
-  bool take_variable_steps_;
-  int num_constant_steps_;
   int num_ramping_steps_;
   Scalar initial_dt_;
-  Scalar min_dt_;
   Scalar max_dt_;
   Scalar ramping_factor_;
-  int num_step_failures_;
-  int max_step_failures_;
 
   Scalar current_dt_;
 
   TimeRange<Scalar> integrationTimeDomain_;
-
-  static const std::string take_variable_steps_name_;
-  static const bool take_variable_steps_default_;
-
-  static const std::string num_constant_steps_name_;
-  static const int num_constant_steps_default_;
 
   static const std::string num_ramping_steps_name_;
   static const int num_ramping_steps_default_;
@@ -131,17 +120,11 @@ private:
   static const std::string initial_dt_name_;
   static const double initial_dt_default_;
 
-  static const std::string min_dt_name_;
-  static const double min_dt_default_;
-
   static const std::string max_dt_name_;
   static const double max_dt_default_;
 
   static const std::string ramping_factor_name_;
   static const double ramping_factor_default_;
-
-  static const std::string max_step_failures_name_;
-  static const int max_step_failures_default_;
 
 };
 
@@ -150,7 +133,7 @@ private:
  *
  * \relates RampingIntegrationControlStrategy
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<RampingIntegrationControlStrategy<Scalar> >
 rampingIntegrationControlStrategy();
 
@@ -159,7 +142,7 @@ rampingIntegrationControlStrategy();
  *
  * \relates RampingIntegrationControlStrategy
  */
-template<class Scalar>
+template<class Scalar> 
 RCP<RampingIntegrationControlStrategy<Scalar> >
 rampingIntegrationControlStrategy( const RCP<ParameterList> &paramList );
 

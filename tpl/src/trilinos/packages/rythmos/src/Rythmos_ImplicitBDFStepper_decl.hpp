@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -240,9 +240,6 @@ public:
 
   //@}
 
-  //! Returns the Thyra::SolveStatus object from the last nonlinear solve.
-  const Thyra::SolveStatus<Scalar>& getNonlinearSolveStatus() const;
-
 private:
 
   //
@@ -286,8 +283,7 @@ private:
   int nscsco_;
   bool haveInitialCondition_;
   bool isInitialized_;
-  
-  Thyra::SolveStatus<Scalar> nonlinearSolveStatus_;
+
   int newtonConvergenceStatus_;
 
   RCP<Teuchos::ParameterList> parameterList_;
@@ -315,12 +311,6 @@ private:
 
 template<class Scalar>
 RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper();
-
-template<class Scalar>
-RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper(
-  const RCP<Thyra::ModelEvaluator<Scalar> >& model,
-  const RCP<Thyra::NonlinearSolverBase<Scalar> >& solver
-  );
 
 template<class Scalar>
 RCP<ImplicitBDFStepper<Scalar> > implicitBDFStepper(

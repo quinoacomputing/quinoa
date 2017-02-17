@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -58,7 +58,7 @@ Coupling_Matlab_Interface::Coupling_Matlab_Interface(Problem_Manager &  manager_
   Matlab_Interface( *(manager_.getCompositeSolver()) ),
   problemManager(manager_)
 {
-  std::cout << "coupling matlab started\n";
+  cout << "coupling matlab started\n";
 
   commands.push_back( new CMD_problemSummary             ( engine, problemManager ) );
   commands.push_back( new CMD_showAllValid               ( engine, problemManager ) );
@@ -80,7 +80,7 @@ Coupling_Matlab_Interface::Coupling_Matlab_Interface(Problem_Manager &  manager_
 //----------------------  Commands for Coupling solver ------------------------
 //-----------------------------------------------------------------------------
 
-Coupling_Matlab_Interface::CommandBase::CommandBase( EpetraExt::EpetraExt_MatlabEngine & engine_,
+Coupling_Matlab_Interface::CommandBase::CommandBase( EpetraExt::EpetraExt_MatlabEngine & engine_, 
                           Problem_Manager & problemManager_) :
   Matlab_Interface::CommandBase( engine_, *problemManager_.getCompositeSolver() ),
   problemManager(problemManager_)
@@ -92,7 +92,7 @@ Coupling_Matlab_Interface::CommandBase::CommandBase( EpetraExt::EpetraExt_Matlab
 //----------------   Matlab Coupling Interface Commands   ---------------------
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_problemSummary::doCommand( std::string commandLine )
 {
   problemManager.outputStatus(std::cout);
@@ -101,25 +101,25 @@ Coupling_Matlab_Interface::CMD_problemSummary::doCommand( std::string commandLin
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_showAllValid::doCommand( std::string commandLine )
 {
 
-  std::cout << std::endl;
-  std::cout << "\tCoupling Group status " << std::endl;
-  std::cout << "\t--------------------- " << std::endl;
+  cout << endl;
+  cout << "\tCoupling Group status " << endl;
+  cout << "\t--------------------- " << endl;
   Matlab_Interface::CMD_showValid::showValid( groupPtr );
-  std::cout << std::endl;
+  cout << endl;
 
   for( int probId = 1; probId <= problemManager.getProblemCount(); ++probId )
   {
-    std::cout << "\tGroup status for problem \"" << problemManager.getNames()[probId] << "\"" << std::endl;
-    std::cout << "\t------------------------ " << std::endl;
+    cout << "\tGroup status for problem \"" << problemManager.getNames()[probId] << "\"" << endl;
+    cout << "\t------------------------ " << endl;
 
     const NOX::Epetra::Group * p_probGrp = &(problemManager.getSolutionGroup(probId));
 
     Matlab_Interface::CMD_showValid::showValid( p_probGrp );
-    std::cout << std::endl;
+    cout << endl;
   }
 
   return true;
@@ -127,37 +127,37 @@ Coupling_Matlab_Interface::CMD_showAllValid::doCommand( std::string commandLine 
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_compPreconditioner::doCommand( std::string commandLine )
 {
     //Epetra_Operator * dummyOp = NULL;
 
-    std::cout << "Command currently unspupported." << std::endl;
+    cout << "Command currently unspupported." << endl;
     return false;
-    //cout << "Computing coupling matrix preconditioner." << std::endl;
+    //cout << "Computing coupling matrix preconditioner." << endl;
     //return problemManager.computeJacobian( *solnPtr, *dummyOp );
 }
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_compJac::doCommand( std::string commandLine )
 {
-  commandLine.replace( commandLine.find(command), command.size(), "");
+  commandLine.replace( commandLine.find(command), command.size(), ""); 
   std::string::size_type loc = commandLine.find(" ");
   if( std::string::npos == loc )
   {
-    std::cout << "Could not get two valid arguments." << std::endl;
+    cout << "Could not get two valid arguments." << endl;
     return false;
   }
   std::string arg1 = commandLine.substr(0, loc);
-  commandLine.replace( 0, loc+1, "");
+  commandLine.replace( 0, loc+1, ""); 
   loc = commandLine.find("]");
   std::string arg2 = commandLine.substr(0, loc);
   int probId = atoi( arg1.c_str()) ,
       depID =  atoi( arg2.c_str()) ;
 
-  std::cout << "Computing Jacobian Block " << probId << "," << depID << std::endl;
+  cout << "Computing Jacobian Block " << probId << "," << depID << endl;
 
   problemManager.computeBlockJacobian( probId, depID );
 
@@ -166,25 +166,25 @@ Coupling_Matlab_Interface::CMD_compJac::doCommand( std::string commandLine )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_setXvec::doCommand( std::string commandLine )
 {
-  commandLine.replace( commandLine.find(command), command.size(), "");
+  commandLine.replace( commandLine.find(command), command.size(), ""); 
   std::string::size_type loc = commandLine.find("]");
   if( std::string::npos == loc )
   {
-    std::cout << "Could not get a valid argument." << std::endl;
+    cout << "Could not get a valid argument." << endl;
     return false;
   }
   std::string arg1 = commandLine.substr(0, loc);
   int probId = atoi( arg1.c_str()) ;
 
-  commandLine.replace( 0, loc+2, "");
+  commandLine.replace( 0, loc+2, ""); 
 
-  std::cout << "Set solution vector for Problem " << probId << " using \""
-       << commandLine << "\"" << std::endl;
+  cout << "Set solution vector for Problem " << probId << " using \"" 
+       << commandLine << "\"" << endl;
 
-  // Note we set both vectors, the one one in the problem, and the one in
+  // Note we set both vectors, the one one in the problem, and the one in 
   // the corresponding group
 
   Epetra_Vector * p_soln = problemManager.getProblem(probId).getSolution().get();
@@ -197,20 +197,20 @@ Coupling_Matlab_Interface::CMD_setXvec::doCommand( std::string commandLine )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_compRes::doCommand( std::string commandLine )
 {
-  commandLine.replace( commandLine.find(command), command.size(), "");
+  commandLine.replace( commandLine.find(command), command.size(), ""); 
   std::string::size_type loc = commandLine.find("]");
   if( std::string::npos == loc )
   {
-    std::cout << "Could not get a valid argument." << std::endl;
+    cout << "Could not get a valid argument." << endl;
     return false;
   }
   std::string arg1 = commandLine.substr(0, loc);
   int probId = atoi( arg1.c_str()) ;
 
-  std::cout << "Computing Residual for Problem " << probId << std::endl;
+  cout << "Computing Residual for Problem " << probId << endl;
 
   problemManager.computeGroupF( probId );
 
@@ -219,7 +219,7 @@ Coupling_Matlab_Interface::CMD_compRes::doCommand( std::string commandLine )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_syncAllGroupX::doCommand( std::string command )
 {
 
@@ -237,7 +237,7 @@ Coupling_Matlab_Interface::CMD_syncAllGroupX::doCommand( std::string command )
 
     delete tempSoln; tempSoln = 0;
 
-    std::cout << "Copied composite solution into problem group # " << probId << std::endl;
+    cout << "Copied composite solution into problem group # " << probId << endl;
   }
 
   return true;
@@ -245,7 +245,7 @@ Coupling_Matlab_Interface::CMD_syncAllGroupX::doCommand( std::string command )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_doXfers::doCommand( std::string command )
 {
   problemManager.syncAllProblems();
@@ -255,7 +255,7 @@ Coupling_Matlab_Interface::CMD_doXfers::doCommand( std::string command )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getAllX::doCommand( std::string command )
 {
   map<int, Teuchos::RCP<GenericEpetraProblem> >::iterator problemIter = problemManager.getProblems().begin();
@@ -274,7 +274,7 @@ Coupling_Matlab_Interface::CMD_getAllX::doCommand( std::string command )
       sval1 << probId << flush;
       std::string name = "X_" + sval1.str();
       engine.PutMultiVector( *tempVec, name.c_str() );
-      std::cout << "Stored Solution (" << probId << ") in \"" << name << "\"" << std::endl;
+      cout << "Stored Solution (" << probId << ") in \"" << name << "\"" << endl;
     }
   }
   return true;
@@ -282,18 +282,18 @@ Coupling_Matlab_Interface::CMD_getAllX::doCommand( std::string command )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getJac::doCommand( std::string commandLine )
 {
-  commandLine.replace( commandLine.find(command), command.size(), "");
+  commandLine.replace( commandLine.find(command), command.size(), ""); 
   std::string::size_type loc = commandLine.find(" ");
   if( std::string::npos == loc )
   {
-    std::cout << "Could not get two valid arguments." << std::endl;
+    cout << "Could not get two valid arguments." << endl;
     return false;
   }
   std::string arg1 = commandLine.substr(0, loc);
-  commandLine.replace( 0, loc+1, "");
+  commandLine.replace( 0, loc+1, ""); 
   loc = commandLine.find("]");
   std::string arg2 = commandLine.substr(0, loc);
   int probId = atoi( arg1.c_str()) ,
@@ -304,18 +304,18 @@ Coupling_Matlab_Interface::CMD_getJac::doCommand( std::string commandLine )
   {
     std::string name = "BJac_" + arg1 + "_" + arg2;
     engine.PutRowMatrix( *rowMatrix, name.c_str(), false );
-    std::cout << "Stored Block Jacobian (" << probId << "," << depID << ") in \""
-         << name << "\"" << std::endl;
+    cout << "Stored Block Jacobian (" << probId << "," << depID << ") in \""
+         << name << "\"" << endl;
     return true;
   }
 
-  std::cout << "Could not get a valid matrix." << std::endl;
+  cout << "Could not get a valid matrix." << endl;
   return false;
 }
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getAllJac::doCommand( std::string commandLine )
 {
   map<int, Teuchos::RCP<GenericEpetraProblem> >::iterator problemIter = problemManager.getProblems().begin();
@@ -336,15 +336,15 @@ Coupling_Matlab_Interface::CMD_getAllJac::doCommand( std::string commandLine )
       sval1 << probId << flush;
       std::string name = "BJac_" + sval1.str() + "_" + sval1.str();
       engine.PutRowMatrix( *rowMatrix, name.c_str(), false );
-      std::cout << "Stored Block Jacobian (" << probId << "," << probId << ") in \""
-           << name << "\"" << std::endl;
+      cout << "Stored Block Jacobian (" << probId << "," << probId << ") in \""
+           << name << "\"" << endl;
     }
 
     // Do off-diagoanl blocks if appropriate
-    if( problemManager.useOffBlocks() )
+    if( problemManager.useOffBlocks() ) 
     {
 #ifdef HAVE_NOX_EPETRAEXT
-      for( unsigned int k = 0; k < problem.getDependentProblems().size(); ++k)
+      for( unsigned int k = 0; k < problem.getDependentProblems().size(); ++k) 
       {
         int depId = problem.getDependentProblems()[k];
 
@@ -357,8 +357,8 @@ Coupling_Matlab_Interface::CMD_getAllJac::doCommand( std::string commandLine )
           sval2 << depId  << flush;
           std::string name = "BJac_" + sval1.str() + "_" + sval2.str();
           engine.PutRowMatrix( *rowMatrix, name.c_str(), false );
-          std::cout << "Stored Block Jacobian (" << probId << "," << depId << ") in \""
-               << name << "\"" << std::endl;
+          cout << "Stored Block Jacobian (" << probId << "," << depId << ") in \""
+               << name << "\"" << endl;
         }
       }
 #endif
@@ -369,14 +369,14 @@ Coupling_Matlab_Interface::CMD_getAllJac::doCommand( std::string commandLine )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getRes::doCommand( std::string commandLine )
 {
-  commandLine.replace( commandLine.find(command), command.size(), "");
+  commandLine.replace( commandLine.find(command), command.size(), ""); 
   std::string::size_type loc = commandLine.find("]");
   if( std::string::npos == loc )
   {
-    std::cout << "Could not get a valid argument." << std::endl;
+    cout << "Could not get a valid argument." << endl;
     return false;
   }
   std::string arg1 = commandLine.substr(0, loc);
@@ -388,14 +388,14 @@ Coupling_Matlab_Interface::CMD_getRes::doCommand( std::string commandLine )
   sval1 << probId << flush;
   std::string name = "F_" + sval1.str();
   engine.PutMultiVector( *resVec, name.c_str() );
-  std::cout << "Stored Residual (" << probId << ") in \"" << name << "\"" << std::endl;
+  cout << "Stored Residual (" << probId << ") in \"" << name << "\"" << endl;
 
   return true;
 }
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getAllRes::doCommand( std::string command )
 {
   map<int, Teuchos::RCP<GenericEpetraProblem> >::iterator problemIter = problemManager.getProblems().begin();
@@ -415,7 +415,7 @@ Coupling_Matlab_Interface::CMD_getAllRes::doCommand( std::string command )
       sval1 << probId << flush;
       std::string name = "F_" + sval1.str();
       engine.PutMultiVector( *resVec, name.c_str() );
-      std::cout << "Stored Residual (" << probId << ") in \"" << name << "\"" << std::endl;
+      cout << "Stored Residual (" << probId << ") in \"" << name << "\"" << endl;
     }
   }
   return true;
@@ -423,15 +423,15 @@ Coupling_Matlab_Interface::CMD_getAllRes::doCommand( std::string command )
 
 //-----------------------------------------------------------------------------
 
-bool
+bool 
 Coupling_Matlab_Interface::CMD_getPrecMatrix::doCommand( std::string command )
 {
 
-  std::cout << "Command currently unspupported." << std::endl;
+  cout << "Command currently unspupported." << endl;
   return false;
   //Epetra_RowMatrix & rowMatrix = *(problemManager.get_matrix());
-  //engine.PutRowMatrix( rowMatrix, "PrecMatrix", false );
-  return true;
+  //engine.PutRowMatrix( rowMatrix, "PrecMatrix", false );                                              
+  return true;                                                                                       
 
 }
 

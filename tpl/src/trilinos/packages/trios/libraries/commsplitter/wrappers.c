@@ -1,75 +1,15 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
-#include "Trios_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <string.h>
-#include <strings.h>
-#include <unistd.h>
 
 #include <zlib.h>
 
 #include <mpi.h>
 
 #include "commsplitter.h"
-
-void commsplitter_init(char *app_name);
-void commsplitter_fini(void);
-
-
-#ifdef HAVE_TRIOS_HPCTOOLKIT
-#include <hpctoolkit.h>
-#define SAMPLING_IS_ACTIVE() hpctoolkit_sampling_is_active()
-#define SAMPLING_STOP() hpctoolkit_sampling_stop()
-#define SAMPLING_START() hpctoolkit_sampling_start()
-#else
-#define SAMPLING_IS_ACTIVE() 0
-#define SAMPLING_STOP()
-#define SAMPLING_START()
-#endif
 
 
 #define COMMSPLITTER_PATH_MAX 1024
@@ -139,8 +79,7 @@ static void get_app_args_from_proc(int *argc, char **argv, int max_args)
         if (fread(buf, 1, COMMSPLITTER_PATH_MAX, f) > 0) {
             arg = buf;
             while(*arg != '\0') {
-                argv[i] = (char *)malloc(strlen(arg));
-                strcpy(argv[i], arg);
+                argv[i] = strdup(arg);
                 arg += strlen(argv[i]) + 1;
                 i++;
                 if (i==max_args) {
@@ -188,10 +127,6 @@ static int commsplitter_MPI_Init(int *argc, char ***argv)
     enabled_save = commsplitter_data.enabled;
     commsplitter_data.enabled = 0;
 
-    /* stop hpctoolkit sampling (sometimes causes faults) */
-    int sampling = SAMPLING_IS_ACTIVE();
-    if (sampling) SAMPLING_STOP();
-
     rc = PMPI_Init(argc, argv);
 
     commsplitter_data.enabled = enabled_save;
@@ -201,8 +136,6 @@ static int commsplitter_MPI_Init(int *argc, char ***argv)
     commsplitter_log("app_pathname is %s\n", commsplitter_data.app_pathname);
 
     rc=split_comm_world();
-
-    if (sampling) SAMPLING_START();
 
     return(rc);
 }
@@ -240,8 +173,6 @@ static int commsplitter_MPI_Init_thread(int *argc, char ***argv, int required, i
     enabled_save = commsplitter_data.enabled;
     commsplitter_data.enabled = 0;
 
-    int sampling = SAMPLING_IS_ACTIVE();
-    if (sampling) SAMPLING_STOP();
     rc = PMPI_Init_thread(argc, argv, required, provided);
 
     commsplitter_data.enabled = enabled_save;
@@ -251,7 +182,6 @@ static int commsplitter_MPI_Init_thread(int *argc, char ***argv, int required, i
     commsplitter_log("app_pathname is %s\n", commsplitter_data.app_pathname);
 
     rc=split_comm_world();
-    if (sampling) SAMPLING_START();
 
     return(rc);
 }
@@ -285,14 +215,10 @@ static int commsplitter_MPI_Finalize()
 {
     int rc = 0;
 
-    commsplitter_fini();
+    commsplitter_finalize();
     commsplitter_data.enabled = 0;
     commsplitter_log("calling PMPI_Finalize\n");
-
-    int sampling = SAMPLING_IS_ACTIVE();
-    if (sampling) SAMPLING_STOP();
     rc = PMPI_Finalize();
-    if (sampling) SAMPLING_START();
     commsplitter_log("returning from PMPI_Finalize\n");
 
     return(rc);

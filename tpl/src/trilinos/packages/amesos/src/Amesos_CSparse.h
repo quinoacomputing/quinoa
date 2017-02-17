@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -28,7 +28,6 @@
 
 #ifndef AMESOS_CSPARSE_H
 #define AMESOS_CSPARSE_H
-#ifdef HAVE_AMESOS_CSPARSE
 
 #include "Amesos_ConfigDefs.h"
 #include "Amesos_BaseSolver.h"
@@ -48,7 +47,9 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
+#ifdef HAVE_AMESOS_CSPARSE
 #include "cs.h"
+#endif
 
 //! Amesos_CSparse: Interface to the CSparse package.
 
@@ -193,13 +194,11 @@ private:
   int MtxConvTime_, MtxRedistTime_, VecRedistTime_;
   int SymFactTime_, NumFactTime_, SolveTime_;
 
-#ifdef HAVE_AMESOS_CSPARSE
   // Data for CSparse
   cs csMatrix;
   cs *csTranMatrix;
   css *csSymbolic;
   csn *csNumeric;
-#endif
 
   //int mtype_;
   //void* pt_[64];
@@ -211,6 +210,4 @@ private:
   //int nrhs_; // Number of RHS
 
 };  // class Amesos_CSparse  
-
-#endif
 #endif // AMESOS_CSPARSE_H

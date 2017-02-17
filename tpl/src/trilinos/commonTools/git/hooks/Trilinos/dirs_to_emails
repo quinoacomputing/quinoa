@@ -42,9 +42,7 @@ packages/galeri galeri-checkins@software.sandia.gov
 packages/globipack globipack-checkins@software.sandia.gov
 packages/capo capo-checkins@software.sandia.gov
 packages/isorropia isorropia-checkins@software.sandia.gov
-packages/zoltan2 zoltan2-checkins@software.sandia.gov
 packages/zoltan zoltan-checkins@software.sandia.gov
-packages/shylu shylu-checkins@software.sandia.gov
 packages/moertel moertel-checkins@software.sandia.gov
 packages/moocho moocho-checkins@software.sandia.gov
 packages/optipack optipack-checkins@software.sandia.gov
@@ -64,13 +62,6 @@ packages/stk stk-checkins@software.sandia.gov
 packages/trios trios-checkins@software.sandia.gov
 packages/seacas seacas-checkins@software.sandia.gov
 packages/teko teko-checkins@software.sandia.gov
-packages/meshinggenie Geofracturemeshingcodes@software.sandia.gov
-packages/muelu muelu-checkins@software.sandia.gov
-packages/xpetra xpetra-checkins@software.sandia.gov
-packages/panzer panzer-checkins@software.sandia.gov
-packages/rol rol-checkins@software.sandia.gov
-packages/domi domi-checkins@software.sandia.gov
-packages/pike pike-checkins@software.sandia.gov
 doc/Thyra thyra-checkins@software.sandia.gov
 doc/RefCountPtr teuchos-checkins@software.sandia.gov
 #cmake framework-checkins@software.sandia.gov

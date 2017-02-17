@@ -182,10 +182,9 @@ void EpetraExtDiagScaledMatProdTransformer::transform(
       epetra_BD = epetra_B;
  
    // perform multiply
-   int mm_error = MatrixMatrix::Multiply( *epetra_BD,  B_transp==CONJTRANS,
-                                          *epetra_G,   G_transp==CONJTRANS, *epetra_op);
-   TEUCHOS_TEST_FOR_EXCEPTION(mm_error!=0,std::invalid_argument,
-                              "EpetraExt::MatrixMatrix::Multiply failed returning error code " << mm_error << ".");
+   TEUCHOS_ASSERT(
+       MatrixMatrix::Multiply( *epetra_BD,  B_transp==CONJTRANS,
+                               *epetra_G,   G_transp==CONJTRANS, *epetra_op)==0);
 
    // scale the whole thing if neccessary
    if(B_scalar*G_scalar*D_scalar!=1.0)

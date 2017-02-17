@@ -1,3 +1,4 @@
-# Test has been failing for a long time (see Trilinos #441) 
-SET(STKUnit_tests_util_parallel_UnitTest_MPI_4_DISABLE  ON CACHE BOOL
-  "Set by default in Trilinos RepositoryDependenciesSetup.cmake." )
+# Trilinos must define its approach for defining email addresses for all of
+# its packages when Trilinos is built as a repository in a larger
+# meta-project.
+SET_DEFAULT(Trilinos_REPOSITORY_EMAIL_URL_ADDRESSS_BASE software.sandia.gov)

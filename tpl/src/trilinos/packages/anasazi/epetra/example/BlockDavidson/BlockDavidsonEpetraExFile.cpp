@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   if (k_filename=="") {
-    std::cout << "The matrix K must be supplied through an input file!!!" << std::endl;
+    cout << "The matrix K must be supplied through an input file!!!" << std::endl;
 #ifdef HAVE_MPI
     MPI_Finalize();
 #endif
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   if (haveM) {
     EpetraExt::readEpetraLinearSystem( m_filename, Comm, &M, &Map );
   }
-  K->Print( std::cout );
+  K->Print( cout );
   //
   //************************************
   // Start the block Davidson iteration 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
   bool boolret = MyProblem->setProblem();
   if (boolret != true) {
     if (verbose && MyPID == 0) {
-      std::cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << std::endl;
+      cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << std::endl;
     }
 #ifdef HAVE_MPI
     MPI_Finalize() ;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
   // Solve the problem to the specified tolerances or length
   Anasazi::ReturnType returnCode = MySolverMgr.solve();
   if (returnCode != Anasazi::Converged && MyPID==0 && verbose) {
-    std::cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << std::endl;
+    cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << std::endl;
   }
   
   // Get the eigenvalues and eigenvectors from the eigenproblem
@@ -192,16 +192,16 @@ int main(int argc, char *argv[]) {
     
     // Output computed eigenvalues and their direct residuals
     if (verbose && MyPID==0) {
-      std::cout.setf(std::ios_base::right, std::ios_base::adjustfield);
-      std::cout<<std::endl<< "Actual Residuals"<<std::endl;
-      std::cout<< std::setw(16) << "Real Part"
+      cout.setf(std::ios_base::right, std::ios_base::adjustfield);
+      cout<<std::endl<< "Actual Residuals"<<std::endl;
+      cout<< std::setw(16) << "Real Part"
         << std::setw(20) << "Direct Residual"<< std::endl;
-      std::cout<<"-----------------------------------------------------------"<<std::endl;
+      cout<<"-----------------------------------------------------------"<<std::endl;
       for (int i=0; i<numev; i++) {
-        std::cout<< std::setw(16) << evals[i].realpart 
+        cout<< std::setw(16) << evals[i].realpart 
           << std::setw(20) << normR[i] << std::endl;
       }  
-      std::cout<<"-----------------------------------------------------------"<<std::endl;
+      cout<<"-----------------------------------------------------------"<<std::endl;
     }
   }
   

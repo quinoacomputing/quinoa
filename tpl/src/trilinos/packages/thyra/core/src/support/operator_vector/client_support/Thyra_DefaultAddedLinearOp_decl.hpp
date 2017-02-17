@@ -215,6 +215,41 @@ public:
 
   //@}
 
+  /** \brief Deprecated. */
+  //@{
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED DefaultAddedLinearOp(
+    const int numOps,
+    const RCP<const LinearOpBase<Scalar> > Ops[]
+    );
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED DefaultAddedLinearOp(
+    const int numOps,
+    const RCP<LinearOpBase<Scalar> > Ops[]
+    );
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED void initialize(
+    const int numOps_in,
+    const RCP<LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED void initialize(
+    const int numOps_in,
+    const RCP<const LinearOpBase<Scalar> > Ops[]
+    )
+    {
+      initialize(Teuchos::arrayView(Ops, numOps_in));
+    }
+
+  //@}
+
 protected:
 
   /** @name Overridden from LinearOpBase */
@@ -240,11 +275,7 @@ private:
 
   std::vector<Teuchos::ConstNonconstObjectContainer<LinearOpBase<Scalar> > >   Ops_;
 
-  inline void assertInitialized() const;
-  inline std::string getClassName() const;
-  inline Ordinal getRangeDim() const;
-  inline Ordinal getDomainDim() const;
-
+  void assertInitialized() const;
   void validateOps();
   void setupDefaultObjectLabel();
 
@@ -253,16 +284,6 @@ private:
   DefaultAddedLinearOp& operator=(const DefaultAddedLinearOp&);
 
 };
-
-
-/** \brief Non-member constructor. */
-template<class Scalar>
-inline
-RCP<DefaultAddedLinearOp<Scalar> >
-defaultAddedLinearOp()
-{
-  return Teuchos::rcp(new DefaultAddedLinearOp<Scalar>);
-}
 
 
 /** \brief Non-member constructor. */
@@ -335,6 +356,20 @@ subtract(
   const RCP<const LinearOpBase<Scalar> > &B,
   const std::string &label = ""
   );
+
+
+// /////////////////////////////////
+// Inline members
+
+
+template<class Scalar>
+inline
+void DefaultAddedLinearOp<Scalar>::assertInitialized() const
+{
+#ifdef TEUCHOS_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPT( !( numOps() > 0 ) );
+#endif
+}
 
 
 }	// end namespace Thyra

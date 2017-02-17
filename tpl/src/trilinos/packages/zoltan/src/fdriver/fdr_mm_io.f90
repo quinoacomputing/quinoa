@@ -1,48 +1,14 @@
-!! 
-!! @HEADER
-!!
-!!!!**********************************************************************
-!!
-!!  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
-!!                  Copyright 2012 Sandia Corporation
-!!
-!! Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-!! the U.S. Government retains certain rights in this software.
-!!
-!! Redistribution and use in source and binary forms, with or without
-!! modification, are permitted provided that the following conditions are
-!! met:
-!!
-!! 1. Redistributions of source code must retain the above copyright
-!! notice, this list of conditions and the following disclaimer.
-!!
-!! 2. Redistributions in binary form must reproduce the above copyright
-!! notice, this list of conditions and the following disclaimer in the
-!! documentation and/or other materials provided with the distribution.
-!!
-!! 3. Neither the name of the Corporation nor the names of the
-!! contributors may be used to endorse or promote products derived from
-!! this software without specific prior written permission.
-!!
-!! THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-!! EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-!! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-!! PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-!! CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-!! EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-!! PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-!! PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-!! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-!! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-!! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-!!
-!! Questions? Contact Karen Devine	kddevin@sandia.gov
-!!                    Erik Boman	egboman@sandia.gov
-!!
-!!!!**********************************************************************
-!!
-!! @HEADER
- !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Zoltan Library for Parallel Applications                                   !
+! For more info, see the README file in the top-level Zoltan directory.      ! 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  CVS File Information :
+!     $RCSfile$
+!     $Author$
+!     $Date$
+!     $Revision$
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module dr_mm_io
 use zoltan
@@ -61,9 +27,9 @@ public :: read_mm_file
 
 contains
 
-!**************************************************************************
-!**************************************************************************
-!**************************************************************************
+!/****************************************************************************/
+!/****************************************************************************/
+!/****************************************************************************/
 
 ! Function to read MatrixMarket input; for now, reads only standard 
 ! MatrixMarket, not MatrixMarket+.
@@ -73,7 +39,7 @@ integer(Zoltan_INT) :: Proc, Num_Proc
 type(PROB_INFO) :: prob
 type(PARIO_INFO) :: pio_info
 
-!   Local declarations. 
+!  /* Local declarations. */
   character(len=FILENAME_MAX+8) :: mm_fname
   character(len=10) :: mm_rep
   character(len=7) :: mm_field
@@ -102,7 +68,7 @@ type(PARIO_INFO) :: pio_info
   integer :: prev_i, prev_j, temp
   logical :: sorted
 
-!**************************** BEGIN EXECUTION *****************************
+!/***************************** BEGIN EXECUTION ******************************/
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -181,7 +147,7 @@ type(PARIO_INFO) :: pio_info
       enddo
       !print *, 'Before sort (i):', mm_iidx(0), mm_iidx(1), mm_iidx(2)
       !print *, 'Before sort (j):', mm_jidx(0), mm_jidx(1), mm_jidx(2)
-      call dr_sort_index(0, mm_nnz-1, tmp, idx) ! TEST
+      call dr_sort_index(mm_nnz, tmp, idx) ! TEST
       ! Permute mm_iidx and mm_jidx
       do i = 0, mm_nnz-1
         tmp(i) = mm_iidx(idx(i))

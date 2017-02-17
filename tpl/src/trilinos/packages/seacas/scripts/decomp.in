@@ -1,56 +1,15 @@
 #!/bin/bash
-# Copyright (c) 2014, Sandia Corporation.
-# Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-# the U.S. Government retains certain rights in this software.
-# 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-# 
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-# 
-#     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-# 
-#     * Neither the name of Sandia Corporation nor the names of its
-#       contributors may be used to endorse or promote products derived
-#       from this software without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
 
 ########################################################################
 function usage {
-  if [ $OLDGETOPT -eq 1 ] ; then
-    usage_old
-  else
-    usage_new
-  fi
-}
-  
-function usage_new {
 cat <<DECOMP_USAGE_EOF
 Usage:  decomp [-h] --processors <processor count> [-n <nemslice options>]
                [--root <root directory>] [--subdir <sub directory]
                [--multikl] [--spectral] [--inertial] [--linear]
-               [--rcb] [--rcb_ignore_z] [--rib] [--hsfc] [--random] [--scattered]
+               [--rcb] [--rib] [--hsfc] [--random] [--scattered]
                [...others...] meshfile.ext
 
 Decomposition methods: [0..3] = speed ranking 0=fastest
-              (See chaco and/or zoltan documentation for more details)
  --multikl:   [3] Multilevel KL. Gives high quality partitions.
                   Slow, high memory use.
  --spectral:  [2] use eigenvectors of a matrix constructed from the 
@@ -58,7 +17,6 @@ Decomposition methods: [0..3] = speed ranking 0=fastest
  --hsfc       [?] Hilbert Space-Filling Curve (uses Zoltan)
  --rib:       [?] Recursive Inertial Bisection (uses Zoltan)
  --rcb:       [?] Recursive Coordinate Bisection (uses Zoltan)
- --rcb_ignore_z:       [?] Recursive Coordinate Bisection (uses Zoltan), ignoring the z dimension coordinates
  --inertial:  [1] (default) vertices divided into sets of equal mass by planes
                   orthogonal to the principle axis. Good, fast, medium memory
  --linear:    [0] vertices in order first n/p to proc 0, next to proc 1. 
@@ -69,90 +27,20 @@ Decomposition methods: [0..3] = speed ranking 0=fastest
                   going to whichever set is smallest.
  --brick      [-] special decomposition method; not useful for general use.
  --zpinch     [-] special decomposition method; not useful for general use.
-
- NOTE: The decomposition options can also be specified as "-l type"
-       For example "--multikl" is the same as "-l multikl"
+      (See jal.sandia.gov/SEACAS/Documentation/chaco.pdf and 
+           www.cs.sandia.gov/Zoltan/ug_html/ug.html for details)
 
 Other options:
 --help             Print this message (-h)
---input            Optional nem_slice input file (-i)
---viz_mesh         Output mesh showing processor distribution of elements. (-V)
---spheres_linear   Decompose sphere elements using linear method (matches old behavior) (-s)
 --processors #p    Specify number of processors (-p, -j)
 --root root_dir    Root directory to begin the path to on the separate disks (-R)
 --subdir sub_dir   Continuation of the path on the separate disks to the files (-S)
---64               Force creation of 64-bit integer decomposed files (-6)
 
-   help-email:  seacas-users@software.sandia.gov
-
+   help-email: seacas-users@software.sandia.gov (code, script)
+  Information: www.jal.sandia.gov/SEACAS/SEACAS.html (IRN)
+               endo.sandia.gov/SEACAS/SEACAS.html    (EON)
 DECOMP_USAGE_EOF
 exit 1
-}
-
-function usage_old {
-cat <<DECOMP_USAGE_EOF
-Usage:  decomp [-h] -p <processor count> [-n <nemslice options>]
-               [-R <root directory>] [-S <sub directory]
-               [-l multikl] [-l spectral] [-l inertial] [-l linear]
-               [-l rcb] [-l rcb_ignore_z] [-l rib] [-l hsfc] [-l random] [-l scattered]
-               [...others...] meshfile.ext
-
-Decomposition methods: [0..3] = speed ranking 0=fastest
-              (See chaco and/or zoltan documentation for more details)
- -l multikl:   [3] Multilevel KL. Gives high quality partitions.
-                  Slow, high memory use.
- -l spectral:  [2] use eigenvectors of a matrix constructed from the 
-                  graph to partition the graph.
- -l hsfc       [?] Hilbert Space-Filling Curve (uses Zoltan)
- -l rib:       [?] Recursive Inertial Bisection (uses Zoltan)
- -l rcb:       [?] Recursive Coordinate Bisection (uses Zoltan)
- -l rcb_ignore_z:       [?] Recursive Coordinate Bisection (uses Zoltan) ignoring the z dimension coordinates
- -l inertial:  [1] (default) vertices divided into sets of equal mass by planes
-                  orthogonal to the principle axis. Good, fast, medium memory
- -l linear:    [0] vertices in order first n/p to proc 0, next to proc 1. 
-                  (fast and sometimes good).
- -l random:    [0] vertices are assigned randomly to sets in a way that 
-                  preserves balance.
- -l scattered: [0] vertices are handed out in order with the next vertex 
-                  going to whichever set is smallest.
- -l brick      [-] special decomposition method; not useful for general use.
- -l zpinch     [-] special decomposition method; not useful for general use.
-
-Other options:
--h          Print this message
--i          Optional nem_slice input file
--s          Decompose sphere elements using linear method (matches old behavior)
--p #p       Specify number of processors (or -j)
--R root_dir Root directory to begin the path to on the separate disks 
--S sub_dir  Continuation of the path on the separate disks to the files
--V          Output mesh showing processor distribution of elements
--6          Force creation of 64-bit integer decomposed files
-
-   help-email: sierra-help@sandia.gov 
-
-DECOMP_USAGE_EOF
-exit 1
-}
-
-function old_getopt {
-echo ${txtred}
-cat <<DECOMP_EOF
-########################################################################
-The "getopt" executable that is available on this system is an older
-version that is not compatible with the needs of the "decomp" tool.
-If possible, you should update your getopt to a newer version and make
-sure that the new getopt is in your path.
-
-Below are some options for getting the current getopt version:
-* If on a Mac: "sudo port install getopt" or "brew install gnu-getopt"
-* Search the internet for "getopt-1.1.5" or "getopt-1.1.4"; download and build
-
-Enter "-h" for the modified options that this version supports.
-Enter "-H" for the options that the standard version supports.
-########################################################################
-
-DECOMP_EOF
-echo ${txtrst}
 }
 
 ########################################################################
@@ -162,11 +50,11 @@ function execute_loadbalance {
     decomp_method=$3
     nem_slice_flag=$4
     NEM_SLICE=$5
-    input=$6
 
-    output=$basename.$suffix_mesh.decomp.out
-    error=$basename.$suffix_mesh.decomp.err
-    nemesis=$basename.$suffix_mesh.nem
+    input=$basename.$suffix_input
+    output=$basename.decomp.out
+    error=$basename.decomp.err
+    nemesis=$basename.nem
     genesis=$basename.$suffix_mesh
 
     # Check for valid executable...
@@ -190,23 +78,22 @@ function execute_loadbalance {
     then
 	rm -f $output
     fi
+    echo "===========================================================" >  $output
+    echo "| Sandia Engineering Analysis Access procedure for: decomp " >> $output
+    echo '| $Revision: 1.57 $, $Date: 2008/05/19 12:29:22 $'           >> $output   
+    echo "===========================================================" >> $output
     
-    if [ -n "$input" -a -e "$input" ]
+    echo ${txtblu}
+    echo "Executing:"
+    echo "   $NEM_SLICE -e $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors -a $input $genesis"
+    echo "   ...see $output for nem_slice status"
+    echo ${txtrst}
+    if [ -e $input ]
     then
-	echo ${txtblu}
-	echo "Executing:"
-	echo "   $NEM_SLICE -e $spheres $do_viz $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors -a $input $genesis"
-	echo "   ...see $output for nem_slice status"
-	echo ${txtrst}
-	($NEM_SLICE -e $spheres $do_viz $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors -a $input $genesis >> $output) 
+	($NEM_SLICE -e $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors -a $input $genesis >> $output) 
 	load_rc=$?
     else
-	echo ${txtblu}
-	echo "Executing:"
-	echo "   $NEM_SLICE -e $spheres $do_viz $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors $genesis"
-	echo "   ...see $output for nem_slice status"
-	echo ${txtrst}
-	($NEM_SLICE -e $spheres $decomp_method $do_viz $nem_slice_flag -o $nemesis -m mesh=$processors $genesis >> $output)
+	($NEM_SLICE -e $decomp_method $nem_slice_flag -o $nemesis -m mesh=$processors $genesis >> $output)
 	load_rc=$?
     fi
     return $load_rc
@@ -221,12 +108,12 @@ function execute_spread {
     numproc=$4
     NEM_SPREAD=$5
 
-    output=$basename.$suffix_mesh.decomp.out
-    error=$basename.$suffix_mesh.decomp.err
-    nemesis=$basename.$suffix_mesh.nem
+    output=$basename.decomp.out
+    error=$basename.decomp.err
+    nemesis=$basename.nem
     genesis=$basename.$suffix_mesh
 
-    pexsh=$basename.$suffix_mesh.pex
+    pexsh=$basename.pex
 
     # Check for valid executable...
     if [ ! -x $NEM_SPREAD ]
@@ -257,13 +144,8 @@ function execute_spread {
     
     echo "Input FEM file                   = $genesis"                  >  $pexsh
     echo "LB file                          = $nemesis"                  >> $pexsh
-    echo "Parallel Results File Base Name  = $basename"                 >> $pexsh
     echo "File Extension for Spread Files  = .$suffix_spread"           >> $pexsh
     echo "Number of Processors             = $numproc "                 >> $pexsh
-    if [ "$debug_level" != "0" ]
-    then
-    echo "Debug                            = $debug_level"              >> $pexsh
-    fi
     echo "------------------------------------------------------------" >> $pexsh
     echo "                Parallel I/O section"                         >> $pexsh
     echo "------------------------------------------------------------" >> $pexsh
@@ -272,17 +154,14 @@ function execute_spread {
     
     echo ${txtblu}
     echo "Executing:"
-    echo "   $NEM_SPREAD $use64 $pexsh"
+    echo "   $NEM_SPREAD $pexsh"
     echo ${txtrst}
-    $NEM_SPREAD $use64 $pexsh
+    $NEM_SPREAD $pexsh
 }
 
 ########################################################################
 # initialize variables
 # Text color variables
-if test "${TERM}set" != xtermset ; then
-    export TERM=dumb
-fi
 txtund=$(tput sgr 0 1)    # Underline
 txtbld=$(tput bold)       # Bold
 txtred=$(tput setaf 1)    # Red
@@ -294,47 +173,42 @@ txtcyn=$(tput setaf 6)    # Cyan
 txtwht=$(tput setaf 7)    # White
 txtrst=$(tput sgr0)       # Text reset
 
+echo "==========================================================="
+echo "| Sandia Engineering Analysis Access procedure for: decomp "
+echo "| Version: 2011/06/10                                      "
+echo "==========================================================="
+
 
 basename=''
 processors=''
-debug_level='0'
 decomp_method="-l inertial"
 nem_slice_flag="-c"
 rootdir="`pwd`/"
 subdir="."
-spheres="-S"
-do_viz=""
-curdir=`pwd`
-use64=""
 
-ACCESS=@ACCESSDIR@
+curdir=`pwd`
+
+ACCESS=@CMAKE_INSTALL_PREFIX@
 NEM_SLICE=${ACCESS}/bin/nem_slice
 NEM_SPREAD=${ACCESS}/bin/nem_spread
 
-########################################################################
-# Test that the getopt being used will handle the long options...
-TEST=`getopt -T`
-if [ $? != 4 ] ; then
-  old_getopt
-  OLDGETOPT=1
-else
-  OLDGETOPT=0
+suffix_input='i'
+  
+JUNK=`env | grep "ALEGRA_EXE"`
+if [ -n "$JUNK" ]; then
+  suffix_input='inp'
 fi
 
 if [ $# -eq 0 ] ; then
-    usage
+  usage
 fi
 
 ########################################################################
 # decomp options:
-if [ $OLDGETOPT -eq 1 ] ; then
-   TEMP=`getopt Hh6n:i:o:p:j:r:R:S:sl:vVd: $*`
-else
-   TEMP=`getopt -o Hh6n:i:o:p:j:r:R:S:sl:vVd: -a \
-       --long input:,help,nem_slice_flag,64,processors:,rootdir:,subdir:,spheres_linear,viz_mesh,verbose,debug: \
-       --long multikl,rcb,rcb_ignore_z,rib,hsfc,spectral,inertial,linear,random,scattered,brick,zpinch \
-       -n 'decomp' -- "$@"`
-fi
+TEMP=`getopt -o hno:p:j:r:R:S: -a \
+    --long help,nem_slice_flag,processors:,rootdir:,subdir: \
+    --long multikl,rcb,rib,sfc,spectral,inertial,linear,random,scattered,brick,zpinch \
+    -n 'decomp' -- "$@"`
 
 if [ $? != 0 ] ; then usage ; exit 1 ; fi
 
@@ -344,35 +218,18 @@ while true ; do
 	case "$1" in
 	    -h|--help)
 	      usage ; shift ;;
-	    -H|--help)
-	      usage_new ; shift ;;
-	    -v|--verbose)
-	      set -x ; shift ;;
-	    -V|--viz_mesh)
-	      do_viz="-y" ; shift ;; 
-	    -d|--debug)
-	      debug_level="$2" ; shift 2 ;;
 	    -n|--nem_slice_flag)
 	      nem_slice_flag="$2" ; shift 2 ;;
-	    -i|--input)
-	      input=$2 ; shift 2 ;;
 	    -p|-j|--processors)
 	      processors=$2 ; shift 2 ;;
 	    -R|--rootdir)
 	      rootdir=$2 ; shift 2 ;;
 	    -S|--subdir)
 	      subdir=$2 ; shift 2 ;;
-	    -s|--spheres_linear) 
-	      spheres="" ; shift ;;
-	    -6|--64) 
-	      use64="-64" ; shift ;;
-	    -l)
-	      decomp_method="-l $2" ; shift 2 ;;
 
 # Decomposition Method options...
 	    --multikl)   decomp_method="-l multikl" ; shift ;;
 	    --rcb)       decomp_method="-l rcb" ; shift ;;
-	    --rcb_ignore_z)       decomp_method="-l rcb,ignore_z" ; shift ;;
 	    --rib)       decomp_method="-l rib" ; shift ;;
 	    --hsfc)      decomp_method="-l hsfc" ; shift ;;
 	    --spectral)  decomp_method="-l spectral" ; shift ;;
@@ -416,21 +273,6 @@ else
     fi
 fi    
 
-if [ -n "$input" ]
-then
-   if [ ! -e "$input" ]
-   then
-    echo ${txtred}
-	echo "ERROR:******************************************************************"
-	echo "ERROR:"
-	echo "ERROR: Input file $input does not exist."
-	echo "ERROR:"
-	echo "ERROR:******************************************************************"
-	echo ${txtrst}
-	usage
-   fi
-fi
-
 if test -z "$processors"
 then
   echo
@@ -445,17 +287,8 @@ then
   usage
 fi
 
-if [ $processors -eq 1 ]
-then
-    echo ${txtgrn}
-    echo "INFO: No decomposition needed for --processors = 1"
-    echo ${txtrst}
-    echo
-    exit 0
-fi
-
 ########################################################################
-execute_loadbalance "$basename" "$processors" "$decomp_method" "$nem_slice_flag" "$NEM_SLICE" "$input" 
+execute_loadbalance "$basename" "$processors" "$decomp_method" "$nem_slice_flag" "$NEM_SLICE"
 if [ $? -ne 0 ]
 then
     echo ${txtred}
@@ -484,24 +317,6 @@ then
     exit 1
 else
     echo "${txtgrn}...nem_spread successful execution${txtrst}"
-fi
-
-if [ ! -z $SEACAS_NO_LOGGING ]
-then
-    echo "SEACAS Audit logging disabled via SEACAS_NO_LOGGING setting"
-else
-# Echo audit information to ${ACCESS}/etc/audit.log
-# Hard-wire time until get a csh-type time output ...
-    time_used="0.000u 0.000s 0:00.00 0.0% 0+0k 0+0io 0pf+0w "
-    
-# Get name of user running code
-    userid=`echo $LOGNAME`
-    
-# Write info to audit.log file
-    if [ -w ${ACCESS}/etc/audit.log ]
-    then
-       echo "decomp ${userid} `date` ${time_used} `hostname`" >> ${ACCESS}/etc/audit.log
-    fi
 fi
 
 echo "${txtgrn}DECOMP Successful Execution${txtrst}"

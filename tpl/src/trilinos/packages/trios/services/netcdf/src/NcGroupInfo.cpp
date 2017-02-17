@@ -1,54 +1,9 @@
-/**
-//@HEADER
-// ************************************************************************
-//
-//                   Trios: Trilinos I/O Support
-//                 Copyright 2011 Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//Questions? Contact Ron A. Oldfield (raoldfi@sandia.gov)
-//
-// *************************************************************************
-//@HEADER
- */
 /*
  * ncGroup.cpp
  *
  *  Created on: Jan 22, 2009
  *      Author: raoldfi
  */
-
-#include "Trios_config.h"
-#ifdef HAVE_TRIOS_PNETCDF
 
 #include <Trios_nssi_client.h>
 #include <assert.h>
@@ -79,27 +34,27 @@ map<int, NcGroupInfo *> group_map;
 
 
 /** Create a new root group */
-NcGroupInfo::NcGroupInfo(const int ncid, const NcFileInfo &fileInfo) :
-    _ncid(ncid), _fileInfo(fileInfo), _parent(NULL), _name("/"), _unlimdimid(-1)
+NcGroupInfo::NcGroupInfo(const int ncid, const NcFileInfo &finfo) :
+    ncid(ncid), name("/"), parent(NULL), fileInfo(finfo), unlimdimid(-1)
 { }
 
 
 /** Create a new child group. */
 NcGroupInfo::NcGroupInfo(const int ncid, const char *name, NcGroupInfo &parent) :
-    _ncid(ncid), _fileInfo(parent._fileInfo), _parent(&parent), _name(name), _unlimdimid(-1)
+    ncid(ncid), name(name), parent(&parent), fileInfo(parent.fileInfo), unlimdimid(-1)
 {
 }
 
 NcGroupInfo::NcGroupInfo(const struct nc_group &group, NcGroupInfo &parent) :
-    _ncid(group.ncid), _fileInfo(parent._fileInfo), _parent(&parent)
+    ncid(group.ncid), parent(&parent), fileInfo(parent.fileInfo)
 {
     copyFrom(group);
 }
 
 
 /** Create a group class from the struct nc_group data structure. */
-NcGroupInfo::NcGroupInfo(const struct nc_group &group, const NcFileInfo &fileInfo) :
-    _ncid(group.ncid), _fileInfo(fileInfo), _parent(NULL)
+NcGroupInfo::NcGroupInfo(const struct nc_group &group, const NcFileInfo &finfo) :
+    ncid(group.ncid), parent(NULL), fileInfo(finfo)
 {
     /* fill contents of this class with info from nc_group */
     copyFrom(group);
@@ -110,29 +65,30 @@ int NcGroupInfo::copyFrom(const struct nc_group &group)
 {
     log_level debug_level = netcdf_debug_level;
 
-    uint32_t i;
+    int ndims, nvars, natts, ngrps;
+    int i;
 
-    this->_unlimdimid = group.unlimdimid;
+    this->unlimdimid = group.unlimdimid;
 
     /* copy dimensions */
     log_debug(debug_level, "copy %d dims", group.dims.dims_len);
     for (i=0; i<group.dims.dims_len; i++) {
         nc_dim *dim = &group.dims.dims_val[i];
-        this->_dims[dim->dimid] = new NcDimInfo(*dim);
+        this->dims[dim->dimid] = new NcDimInfo(*dim);
     }
 
     /* copy vars */
     log_debug(debug_level, "copy %d vars", group.vars.vars_len);
     for (i=0; i<group.vars.vars_len; i++) {
         nc_var *var = &group.vars.vars_val[i];
-        this->_vars[var->varid] = this->_varsByName[var->name] = new NcVarInfo(*var);
+        this->vars[var->varid] = this->varsByName[var->name] = new NcVarInfo(*var);
     }
 
     /* copy global attributes */
     log_debug(debug_level, "copy %d atts", group.atts.atts_len);
     for (i=0; i<group.atts.atts_len; i++) {
         nc_att *att = &group.atts.atts_val[i];
-        this->_atts[att->name] = new NcAttInfo(*att);
+        this->atts[att->name] = new NcAttInfo(*att);
     }
 
 
@@ -140,7 +96,7 @@ int NcGroupInfo::copyFrom(const struct nc_group &group)
     log_debug(debug_level, "copy %d groups", group.groups.groups_len);
     for (i=0; i<group.groups.groups_len; i++) {
         nc_group *subgrp = &group.groups.groups_val[i];
-        this->_children[subgrp->ncid] = new NcGroupInfo(*subgrp, *this);
+        this->children[subgrp->ncid] = new NcGroupInfo(*subgrp, *this);
     }
 
     return 0;
@@ -166,20 +122,20 @@ NcGroupInfo::~NcGroupInfo()
     log_level debug_level = netcdf_debug_level;
 
     /* Delete variables */
-    log_debug(debug_level, "Deleting vars (%d)", _vars.size());
-    for_each(_vars.begin(), _vars.end(), delete_object());
+    log_debug(debug_level, "Deleting vars (%d)", vars.size());
+    for_each(vars.begin(), vars.end(), delete_object());
 
     /* Delete dimensions */
-    log_debug(debug_level, "Deleting dims (%d)", _dims.size());
-    for_each(_dims.begin(), _dims.end(), delete_object());
+    log_debug(debug_level, "Deleting dims (%d)", dims.size());
+    for_each(dims.begin(), dims.end(), delete_object());
 
     /* Delete attributes */
-    log_debug(debug_level, "Deleting atts (%d)", _atts.size());
-    for_each(_atts.begin(), _atts.end(), delete_object());
+    log_debug(debug_level, "Deleting atts (%d)", atts.size());
+    for_each(atts.begin(), atts.end(), delete_object());
 
     /* Delete subgroups */
-    log_debug(debug_level, "Deleting children (%d)", _children.size());
-    for_each(_children.begin(), _children.end(), delete_object());
+    log_debug(debug_level, "Deleting children (%d)", children.size());
+    for_each(children.begin(), children.end(), delete_object());
 }
 
 /**
@@ -192,59 +148,59 @@ int NcGroupInfo::copyTo(struct nc_group &group)
 
     memset(&group, 0, sizeof(struct nc_group));
 
-    group.ncid = this->_ncid;
-    group.parent_ncid = (this->_parent)? this->_parent->_ncid: -1;
-    group.name = strdup(this->_name.c_str());
+    group.ncid = this->ncid;
+    group.parent_ncid = (this->parent)? this->parent->ncid: -1;
+    group.name = strdup(this->name.c_str());
 
 
     /* copy dimensions */
-    ndims = this->_dims.size();
+    ndims = this->dims.size();
     group.dims.dims_len = ndims;
     log_debug(debug_level, "copy %d dims", ndims);
     if (ndims) {
         std::map<int, NcDimInfo *>::iterator dim_iter;
         int i=0;
         group.dims.dims_val = (struct nc_dim *)calloc(ndims, sizeof(struct nc_dim));
-        for (dim_iter = this->_dims.begin(); dim_iter != this->_dims.end(); dim_iter++) {
+        for (dim_iter = this->dims.begin(); dim_iter != this->dims.end(); dim_iter++) {
             dim_iter->second->copyTo(group.dims.dims_val[i++]);
         }
     }
 
     /* copy vars */
-    nvars = this->_vars.size();
+    nvars = this->vars.size();
     group.vars.vars_len = nvars;
     log_debug(debug_level, "copy %d vars", nvars);
     if (nvars) {
         std::map<int, NcVarInfo *>::iterator var_iter;
         int i=0;
         group.vars.vars_val = (struct nc_var *)calloc(nvars, sizeof(struct nc_var));
-        for (var_iter = this->_vars.begin(); var_iter != this->_vars.end(); var_iter++) {
+        for (var_iter = this->vars.begin(); var_iter != this->vars.end(); var_iter++) {
             var_iter->second->copyTo(group.vars.vars_val[i++]);
         }
     }
 
     /* copy global attributes */
-    natts = this->_atts.size();
+    natts = this->atts.size();
     group.atts.atts_len = natts;
     log_debug(debug_level, "copy %d atts", natts);
     if (natts) {
         std::map<std::string, NcAttInfo *>::iterator att_iter;
         int i=0;
         group.atts.atts_val = (struct nc_att *)calloc(natts, sizeof(struct nc_att));
-        for (att_iter = this->_atts.begin(); att_iter != this->_atts.end(); att_iter++) {
+        for (att_iter = this->atts.begin(); att_iter != this->atts.end(); att_iter++) {
             att_iter->second->copyTo(group.atts.atts_val[i++]);
         }
     }
 
     /* copy subgroups */
-    ngrps = this->_children.size();
+    ngrps = this->children.size();
     group.groups.groups_len = ngrps;
     log_debug(debug_level, "copy %d subgroups", ngrps);
     if (ngrps) {
         std::map<int, NcGroupInfo *>::iterator grp_iter;
         int i=0;
         group.groups.groups_val = (struct nc_group *)calloc(ngrps, sizeof(struct nc_group));
-        for (grp_iter = this->_children.begin(); grp_iter != this->_children.end(); grp_iter++) {
+        for (grp_iter = this->children.begin(); grp_iter != this->children.end(); grp_iter++) {
             grp_iter->second->copyTo(group.groups.groups_val[i++]);
         }
     }
@@ -263,10 +219,10 @@ int NcGroupInfo::inq(
 {
     int rc = NC_NOERR;
 
-    *ndimsp      = this->_dims.size();
-    *nvarsp      = this->_vars.size();
-    *nattsp      = this->_atts.size();
-    *unlimdimidp = this->_unlimdimid;
+    *ndimsp = this->dims.size();
+    *nvarsp = this->vars.size();
+    *nattsp = this->atts.size();
+    *unlimdimidp = this->unlimdimid;
 
     return rc;
 }
@@ -277,7 +233,7 @@ int NcGroupInfo::inq(
 int NcGroupInfo::inq_unlimdimid(int *unlimdimidp)
 {
     int rc = NC_NOERR;
-    *unlimdimidp = this->_unlimdimid;
+    *unlimdimidp = this->unlimdimid;
     return rc;
 }
 
@@ -285,7 +241,7 @@ int NcGroupInfo::inq_unlimdimid(int *unlimdimidp)
 int NcGroupInfo::inq_ncid(int *grp_ncid)
 {
     int rc = NC_NOERR;
-    *grp_ncid = this->_ncid;
+    *grp_ncid = this->ncid;
     return rc;
 }
 
@@ -304,13 +260,13 @@ int NcGroupInfo::inq_grps(int *numgrps, int *ncids)
 {
     int rc = NC_NOERR;
 
-    *numgrps = _children.size();
+    *numgrps = children.size();
 
     if (ncids != NULL) {
         int count = 0;
         map<int, NcGroupInfo *>::iterator iter;
 
-        for (iter = _children.begin(); iter != _children.end(); iter++) {
+        for (iter = children.begin(); iter != children.end(); iter++) {
             ncids[count++] = iter->first;
         }
     }
@@ -323,8 +279,8 @@ int NcGroupInfo::inq_dimlen (const int dimid, size_t *lenp)
 {
     int rc = NC_NOERR;
 
-    if (_dims.find(dimid) != _dims.end()) {
-        *lenp = _dims[dimid]->_len;
+    if (dims.find(dimid) != dims.end()) {
+        *lenp = dims[dimid]->len;
     }
     else {
         rc = NC_EEXIST;
@@ -338,10 +294,10 @@ int NcGroupInfo::inq_dim (const int dimid, char *name, size_t *lenp)
 {
     int rc = NC_NOERR;
 
-    if (_dims.find(dimid) != _dims.end()) {
-        *lenp = _dims[dimid]->_len;
+    if (dims.find(dimid) != dims.end()) {
+        *lenp = dims[dimid]->len;
         if (name != NULL) {
-            strcpy(name, _dims[dimid]->_name.c_str());
+            strcpy(name, dims[dimid]->name.c_str());
         }
     }
     else {
@@ -357,12 +313,12 @@ int NcGroupInfo::inq_dimid (const char *name, int *dimid)
     int rc = NC_EBADDIM;
     std::map<int, NcDimInfo *>::iterator iter;
 
-    if (_dims.empty()) {
+    if (dims.empty()) {
         rc=NC_EBADDIM;
     } else {
-        iter = _dims.begin();
-        for (;iter != _dims.end(); iter++) {
-            if (!strcmp((*iter).second->_name.c_str(), name)) {
+        iter = dims.begin();
+        for (;iter != dims.end(); iter++) {
+            if (!strcmp((*iter).second->name.c_str(), name)) {
                 *dimid=(*iter).first;
                 rc = NC_NOERR;
                 break;
@@ -378,9 +334,9 @@ int NcGroupInfo::inq_vardimid (const int varid, int dimids[])
 {
     int rc = NC_NOERR;
 
-    if (_vars.find(varid) != _vars.end()) {
-        NcVarInfo *varInfo = _vars[varid];
-        copy(varInfo->_dimids.begin(), varInfo->_dimids.end(), dimids);
+    if (vars.find(varid) != vars.end()) {
+        NcVarInfo *varInfo = vars[varid];
+        copy(varInfo->dimids.begin(), varInfo->dimids.end(), dimids);
     }
     else {
         rc = NC_EEXIST;
@@ -395,8 +351,8 @@ int NcGroupInfo::inq_varndims (const int varid, int *ndimsp)
     int rc = NC_NOERR;
     *ndimsp = 0;
 
-    if (_vars.find(varid) != _vars.end()) {
-        *ndimsp = _vars[varid]->_dimids.size();
+    if (vars.find(varid) != vars.end()) {
+        *ndimsp = vars[varid]->dimids.size();
     }
     else {
         rc = NC_EEXIST;
@@ -425,10 +381,10 @@ int NcGroupInfo::def_var(
 {
     int rc = NC_NOERR;
 
-    if (_vars.find(varid) == _vars.end()) {
+    if (vars.find(varid) == vars.end()) {
         NcVarInfo *varInfo = new NcVarInfo(varid, name, xtype, ndims, dimids);
-        _vars[varid] = varInfo;
-        _varsByName[name] = varInfo;
+        vars[varid] = varInfo;
+        varsByName[name] = varInfo;
     }
     else {
         rc = NC_EEXIST;
@@ -447,12 +403,12 @@ int NcGroupInfo::inq_vars(int *numvars, int *varids)
     int rc = NC_NOERR;
     map<int, NcVarInfo *>::iterator iter;
 
-    *numvars = this->_vars.size();
+    *numvars = this->vars.size();
 
     if (varids != NULL) {
         int count = 0;
 
-        for (iter = _vars.begin(); iter != _vars.end(); iter++) {
+        for (iter = vars.begin(); iter != vars.end(); iter++) {
             varids[count++] = iter->first;
         }
 
@@ -483,8 +439,8 @@ int NcGroupInfo::inq_var (
 {
     int rc = NC_NOERR;
 
-    if (_vars.find(varid) != _vars.end()) {
-        rc = _vars[varid]->inq_var(name, xtypep, ndimsp, dimids, nattsp);
+    if (vars.find(varid) != vars.end()) {
+        rc = vars[varid]->inq_var(name, xtypep, ndimsp, dimids, nattsp);
     }
     else {
         rc = NC_ENOTVAR;
@@ -499,8 +455,8 @@ int NcGroupInfo::inq_varid(
 {
     int rc = NC_NOERR;
 
-    if (_varsByName.find(name) != _varsByName.end()) {
-        rc = _varsByName[name]->inq_varid(varidp);
+    if (varsByName.find(name) != varsByName.end()) {
+        rc = varsByName[name]->inq_varid(varidp);
     }
     else {
         rc = NC_ENOTVAR;
@@ -523,17 +479,17 @@ int NcGroupInfo::inq_varsize(const int varid, size_t *countp)
 
     *countp = 1;
 
-    if (_vars.find(varid) != _vars.end()) {
-        uint32_t i;
-        NcVarInfo *varinfo = _vars[varid];
+    if (vars.find(varid) != vars.end()) {
+        int i;
+        NcVarInfo *varinfo = vars[varid];
 
-        for (i=0; i<varinfo->_dimids.size(); i++) {
-            int dimid = varinfo->_dimids[i];
+        for (i=0; i<varinfo->dimids.size(); i++) {
+            int dimid = varinfo->dimids[i];
 
             /* find the dim */
-            if (_dims.find(dimid) != _dims.end()) {
-                NcDimInfo *dim = _dims[dimid];
-                *countp *= dim->_len;
+            if (dims.find(dimid) != dims.end()) {
+                NcDimInfo *dim = dims[dimid];
+                *countp *= dim->len;
             }
             else {
                 log_error(netcdf_debug_level, "Could not find dimid=%d", dimid);
@@ -564,8 +520,8 @@ int NcGroupInfo::inq_vartype(const int varid, int *xtypep)
 {
         int rc = NC_NOERR;
 
-    if (_vars.find(varid) != _vars.end()) {
-            rc = _vars[varid]->inq_vartype(xtypep);
+    if (vars.find(varid) != vars.end()) {
+            rc = vars[varid]->inq_vartype(xtypep);
     }
 
     return rc;
@@ -581,10 +537,10 @@ int NcGroupInfo::def_dim(
 {
     int rc = NC_NOERR;
 
-    if (_dims.find(dimid) == _dims.end()) {
-        _dims[dimid] = new NcDimInfo(dimid, name, len);
+    if (dims.find(dimid) == dims.end()) {
+        dims[dimid] = new NcDimInfo(dimid, name, len);
         if (len == NC_UNLIMITED) {
-            this->_unlimdimid = dimid;
+            this->unlimdimid = dimid;
         }
     }
     else {
@@ -603,12 +559,12 @@ int NcGroupInfo::inq_dims(int *numdims, int *dimids)
     int rc = NC_NOERR;
     map<int, NcDimInfo *>::iterator iter;
 
-    *numdims = this->_dims.size();
+    *numdims = this->dims.size();
 
     if (dimids != NULL) {
         int count = 0;
 
-        for (iter = _dims.begin(); iter != _dims.end(); iter++) {
+        for (iter = dims.begin(); iter != dims.end(); iter++) {
             dimids[count++] = iter->first;
         }
 
@@ -626,12 +582,12 @@ int NcGroupInfo::update_unlimdim_dimlen(size_t new_len)
 {
     int rc = NC_NOERR;
 
-    if (this->_unlimdimid == -1) {
+    if (this->unlimdimid == -1) {
         rc = NC_EBADDIM;
     } else {
-        if (_dims.find(this->_unlimdimid) != _dims.end()) {
-            if (_dims[this->_unlimdimid]->_len < new_len) {
-                _dims[this->_unlimdimid]->_len=new_len;
+        if (dims.find(this->unlimdimid) != dims.end()) {
+            if (dims[this->unlimdimid]->len < new_len) {
+                dims[this->unlimdimid]->len=new_len;
             }
         }
         else {
@@ -651,10 +607,10 @@ int NcGroupInfo::inq_name(int *namelen, char *name)
 {
     int rc = NC_NOERR;
 
-    *namelen = this->_name.size();
+    *namelen = this->name.size();
 
     if (name != NULL) {
-        strcpy(name, this->_name.c_str());
+        strcpy(name, this->name.c_str());
     }
 
     return rc;
@@ -667,8 +623,8 @@ int NcGroupInfo::inq_name(int *namelen, char *name)
 int NcGroupInfo::inq_grp_parent(int *parent_ncid)
 {
     int rc = NC_NOERR;
-    if (this->_parent) {
-        rc = this->_parent->inq_ncid(parent_ncid);
+    if (this->parent) {
+        rc = this->parent->inq_ncid(parent_ncid);
     }
     else {
         rc = NC_ENOGRP;
@@ -682,8 +638,8 @@ int NcGroupInfo::def_grp(const int new_ncid, const char *name)
 {
     int rc = NC_NOERR;
 
-    if (_children.find(new_ncid) == _children.end()) {
-        _children[new_ncid] = new NcGroupInfo(new_ncid, name, *this);
+    if (children.find(new_ncid) == children.end()) {
+        children[new_ncid] = new NcGroupInfo(new_ncid, name, *this);
     }
     else {
         rc = NC_EEXIST;
@@ -731,8 +687,8 @@ int NcGroupInfo::def_att(
 {
     int rc = NC_NOERR;
 
-    if (_atts.find(name) == _atts.end()) {
-        _atts[name] = new NcAttInfo(name, xtype, len);
+    if (atts.find(name) == atts.end()) {
+        atts[name] = new NcAttInfo(name, xtype, len);
     }
     else {
         rc = NC_EEXIST;
@@ -758,9 +714,9 @@ int NcGroupInfo::inq_att(
     int rc = NC_NOERR;
 
     if (varid == NC_GLOBAL) {
-        if (_atts.find(name) != _atts.end()) {
-            _atts[name]->inq_atttype(xtypep);
-            _atts[name]->inq_attlen(lenp);
+        if (atts.find(name) != atts.end()) {
+            atts[name]->inq_atttype(xtypep);
+            atts[name]->inq_attlen(lenp);
         }
         else {
             rc = NC_ENOTATT;
@@ -768,8 +724,8 @@ int NcGroupInfo::inq_att(
     }
 
     else {
-        if (_vars.find(varid) != _vars.end()) {
-            _vars[varid]->inq_att(name, xtypep, lenp);
+        if (vars.find(varid) != vars.end()) {
+            vars[varid]->inq_att(name, xtypep, lenp);
         }
         else {
             rc = NC_ENOTVAR;
@@ -794,8 +750,8 @@ int NcGroupInfo::inq_atttype(
     int rc = NC_NOERR;
 
     if (varid == NC_GLOBAL) {
-        if (_atts.find(name) != _atts.end()) {
-            _atts[name]->inq_atttype(xtypep);
+        if (atts.find(name) != atts.end()) {
+            atts[name]->inq_atttype(xtypep);
         }
         else {
             rc = NC_ENOTATT;
@@ -803,8 +759,8 @@ int NcGroupInfo::inq_atttype(
     }
 
     else {
-        if (_vars.find(varid) != _vars.end()) {
-            _vars[varid]->inq_atttype(name, xtypep);
+        if (vars.find(varid) != vars.end()) {
+            vars[varid]->inq_atttype(name, xtypep);
         }
         else {
             rc = NC_ENOTVAR;
@@ -822,8 +778,8 @@ int NcGroupInfo::inq_attlen(
     int rc = NC_NOERR;
 
     if (varid == NC_GLOBAL) {
-        if (_atts.find(name) != _atts.end()) {
-            _atts[name]->inq_attlen(lenp);
+        if (atts.find(name) != atts.end()) {
+            atts[name]->inq_attlen(lenp);
         }
         else {
             rc = NC_ENOTATT;
@@ -831,8 +787,8 @@ int NcGroupInfo::inq_attlen(
     }
 
     else {
-        if (_vars.find(varid) != _vars.end()) {
-            _vars[varid]->inq_attlen(name, lenp);
+        if (vars.find(varid) != vars.end()) {
+            vars[varid]->inq_attlen(name, lenp);
         }
         else {
             rc = NC_ENOTVAR;
@@ -851,15 +807,15 @@ int NcGroupInfo::inq_attname(
     if (varid == NC_GLOBAL) {
         std::map<std::string, NcAttInfo *>::iterator iter;
 
-        iter=_atts.begin();
-        for (int i=0;i<attnum && iter!=_atts.end();i++) iter++;
+        iter=atts.begin();
+        for (int i=0;i<attnum && iter!=atts.end();i++) iter++;
 
         (*iter).second->inq_attname(name);
     }
 
     else {
-        if (_vars.find(varid) != _vars.end()) {
-            _vars[varid]->inq_attname(attnum, name);
+        if (vars.find(varid) != vars.end()) {
+            vars[varid]->inq_attname(attnum, name);
         }
         else {
             rc = NC_ENOTVAR;
@@ -886,4 +842,3 @@ int NcGroupInfo::del_att (const char* name)
     return rc;
 }
 
-#endif // HAVE_TRIOS_PNETCDF

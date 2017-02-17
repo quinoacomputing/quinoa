@@ -1160,9 +1160,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
-                         HAVE_IFPACK2_EXPERIMENTAL \
-                         HAVE_IFPACK2_AMESOS2
+PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
@@ -1204,7 +1202,7 @@ TAGFILES               = ../../common/tag_files/teuchos.tag=../../../teuchos/doc
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create 
 # a tag file that is based on the input files it reads.
 
-GENERATE_TAGFILE       = ../../common/tag_files/ifpack2.tag
+GENERATE_TAGFILE       = ../../common/tag_files/tifpack.tag
 
 # If the ALLEXTERNALS tag is set to YES all external classes will be listed 
 # in the class index. If set to NO only the inherited external classes 
@@ -1424,4 +1422,3 @@ SEARCHENGINE           = YES
 # Use MathJax for nice rescaling of LaTeX output. Needs a fairly recent version of doxygen.
 #
 USE_MATHJAX            = YES
-MATHJAX_RELPATH        = https://cdn.mathjax.org/mathjax/latest

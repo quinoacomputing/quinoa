@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -29,9 +29,9 @@
 #ifndef ANASAZI_BLOCK_KRYLOV_SCHUR_SOLMGR_HPP
 #define ANASAZI_BLOCK_KRYLOV_SCHUR_SOLMGR_HPP
 
-/// \file AnasaziBlockKrylovSchurSolMgr.hpp
-/// \brief The Anasazi::BlockKrylovSchurSolMgr class provides a user
-///   interface for the block Krylov-Schur eigensolver.
+/*! \file AnasaziBlockKrylovSchurSolMgr.hpp
+ *  \brief The Anasazi::BlockKrylovSchurSolMgr provides a solver manager for the BlockKrylovSchur eigensolver.
+*/
 
 #include "AnasaziConfigDefs.hpp"
 #include "AnasaziTypes.hpp"
@@ -53,58 +53,25 @@
 #include "Teuchos_LAPACK.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+
 /** \example BlockKrylovSchur/BlockKrylovSchurEpetraEx.cpp
-    \brief Use Anasazi::BlockKrylovSchurSolMgr to solve a standard
-      (not generalized) eigenvalue problem, using Epetra data
-      structures.
+    This is an example of how to use the Anasazi::BlockKrylovSchurSolMgr solver manager, using Epetra data structures.
 */
 
-/// \example BlockKrylovSchur/BlockKrylovSchurEpetraExGenAmesos.cpp
-/// \brief Compute smallest eigenvalues of a generalized eigenvalue
-///   problem, using block Krylov-Schur with Epetra and an Amesos direct
-///   solver.
-///
-/// This example computes the eigenvalues of smallest magnitude of a
-/// generalized eigenvalue problem \f$K x = \lambda M x\f$, using
-/// Anasazi's implementation of the block Krylov-Schur method, with
-/// Epetra linear algebra and a direct solver from the Amesos package.
-///
-/// Anasazi computes the smallest-magnitude eigenvalues using a
-/// shift-and-invert strategy.  For simplicity, this example uses a
-/// shift of zero.  It illustrates the general pattern for using
-/// Anasazi for this problem:
-///
-///   1. Construct an "operator" A such that \f$Az = K^{-1} M z\f$.
-///   2. Use Anasazi to solve \f$Az = \sigma z\f$, which is a spectral
-///      transformation of the original problem \f$K x = \lambda M x\f$.
-///   3. The eigenvalues \f$\lambda\f$ of the original problem are the
-///      inverses of the eigenvalues \f$\sigma\f$ of the transformed
-///      problem.
-///
-/// In the example, the "operator A such that \f$A z = K^{-1} M z\f$"
-/// is a subclass of Epetra_Operator.  The Apply method of that
-/// operator takes the vector b, and computes \f$x = K^{-1} M b\f$.
-/// It does so first by applying the matrix M, and then by solving the
-/// linear system \f$K x = M b\f$ for x.  Trilinos implements many
-/// different ways to solve linear systems.  The example uses the
-/// sparse direct solver KLU to do so.  Trilinos' Amesos package has
-/// an interface to KLU.
+/** \example BlockKrylovSchur/BlockKrylovSchurEpetraExGenAmesos.cpp
+    This is an example of how to use the Anasazi::BlockKrylovSchurSolMgr solver manager to solve a generalized eigenvalue problem, using Epetra data stuctures and the Amesos solver package.
+*/
 
 /** \example BlockKrylovSchur/BlockKrylovSchurEpetraExGenAztecOO.cpp
-    \brief Use Anasazi::BlockKrylovSchurSolMgr to solve a generalized
-      eigenvalue problem, using Epetra data stuctures and the AztecOO
-      package of iterative linear solvers and preconditioners.
+    This is an example of how to use the Anasazi::BlockKrylovSchurSolMgr solver manager to solve a generalized eigenvalue problem, using Epetra data stuctures and the AztecOO solver package.
 */
 
 /** \example BlockKrylovSchur/BlockKrylovSchurEpetraExGenBelos.cpp
-    \brief Use Anasazi::BlockKrylovSchurSolMgr to solve a generalized
-      eigenvalue problem, using Epetra data stuctures and the Belos
-      iterative linear solver package.
+    This is an example of how to use the Anasazi::BlockKrylovSchurSolMgr solver manager to solve a generalized eigenvalue problem, using Epetra data stuctures and the Belos solver package.
 */
 
 /** \example BlockKrylovSchur/BlockKrylovSchurEpetraExSVD.cpp
-    \brief Use Anasazi::BlockKrylovSchurSolMgr to compute a singular
-      value decomposition (SVD), using Epetra data structures.
+    This is an example of how to use the Anasazi::BlockKrylovSchurSolMgr solver manager to compute an SVD, using Epetra data structures.
 */
 
 namespace Anasazi {
@@ -123,11 +90,11 @@ namespace Anasazi {
  *      If not specified via setGlobalStatusTest(), this test is a StatusTestResNorm object which tests the
  *      2-norms of the Ritz residuals relative to the Ritz values.
  *    - \c debugtest allows a user to specify additional monitoring of the iteration, encapsulated in a StatusTest object<br>
- *      If not specified via setDebugStatusTest(), \c debugtest is ignored.<br>
+ *      If not specified via setDebugStatusTest(), \c debugtest is ignored.<br> 
  *      In most cases, it should return ::Failed; if it returns ::Passed, solve() will throw an AnasaziError exception.
  *
  * Additionally, the solver manager will terminate solve() after a specified number of restarts.
- *
+ * 
  * Much of this behavior is controlled via parameters and options passed to the
  * solver manager. For more information, see BlockKrylovSchurSolMgr().
 
@@ -145,11 +112,11 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
     typedef Teuchos::ScalarTraits<ScalarType> SCT;
     typedef typename Teuchos::ScalarTraits<ScalarType>::magnitudeType MagnitudeType;
     typedef Teuchos::ScalarTraits<MagnitudeType> MT;
-
+    
   public:
 
   //! @name Constructors/Destructor
-  //@{
+  //@{ 
 
   /*! \brief Basic constructor for BlockKrylovSchurSolMgr.
    *
@@ -174,9 +141,9 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
   //! Destructor.
   virtual ~BlockKrylovSchurSolMgr() {};
   //@}
-
+  
   //! @name Accessor methods
-  //@{
+  //@{ 
 
   //! Return the eigenvalue problem.
   const Eigenproblem<ScalarType,MV,OP>& getProblem() const {
@@ -195,7 +162,7 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
     return ret;
   }
 
-  /*! \brief Return the timers for this object.
+  /*! \brief Return the timers for this object. 
    *
    * The timers are ordered as follows:
    *   - time spent in solve() routine
@@ -208,10 +175,10 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
   //@}
 
   //! @name Solver application methods
-  //@{
-
+  //@{ 
+    
   /*! \brief This method performs possibly repeated calls to the underlying eigensolver's iterate() routine
-   * until the problem has been solved (as decided by the solver manager) or the solver manager decides to
+   * until the problem has been solved (as decided by the solver manager) or the solver manager decides to 
    * quit.
    *
    * This method calls BlockKrylovSchur::iterate(), which will return either because a specially constructed status test evaluates to ::Passed
@@ -248,7 +215,7 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
   Teuchos::RCP<Eigenproblem<ScalarType,MV,OP> > _problem;
   Teuchos::RCP<SortManager<MagnitudeType> > _sort;
 
-  std::string _whch, _ortho;
+  std::string _whch, _ortho; 
   MagnitudeType _ortho_kappa;
 
   MagnitudeType _convtol;
@@ -257,24 +224,24 @@ class BlockKrylovSchurSolMgr : public SolverManager<ScalarType,MV,OP> {
   int _blockSize, _numBlocks, _stepSize, _nevBlocks, _xtra_nevBlocks;
   int _numIters;
   int _verbosity;
-  bool _inSituRestart, _dynXtraNev;
+  bool _inSituRestart;
 
   std::vector<Value<ScalarType> > _ritzValues;
 
-  int _printNum;
   Teuchos::RCP<Teuchos::Time> _timerSolve, _timerRestarting;
 
   Teuchos::RCP<StatusTest<ScalarType,MV,OP> > globalTest_;
   Teuchos::RCP<StatusTest<ScalarType,MV,OP> > debugTest_;
 
+  int _printNum;
 };
 
 
 // Constructor
 template<class ScalarType, class MV, class OP>
-BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr(
+BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr( 
         const Teuchos::RCP<Eigenproblem<ScalarType,MV,OP> > &problem,
-        Teuchos::ParameterList &pl ) :
+        Teuchos::ParameterList &pl ) : 
   _problem(problem),
   _whch("LM"),
   _ortho("SVQB"),
@@ -291,12 +258,9 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr(
   _numIters(0),
   _verbosity(Anasazi::Errors),
   _inSituRestart(false),
-  _dynXtraNev(false),
+  _timerSolve(Teuchos::TimeMonitor::getNewTimer("Anasazi: BlockKrylovSchurSolMgr::solve()")),
+  _timerRestarting(Teuchos::TimeMonitor::getNewTimer("Anasazi: BlockKrylovSchurSolMgr restarting")),
   _printNum(-1)
-#ifdef ANASAZI_TEUCHOS_TIME_MONITOR
-  ,_timerSolve(Teuchos::TimeMonitor::getNewTimer("Anasazi: BlockKrylovSchurSolMgr::solve()")),
-  _timerRestarting(Teuchos::TimeMonitor::getNewTimer("Anasazi: BlockKrylovSchurSolMgr restarting"))
-#endif
 {
   TEUCHOS_TEST_FOR_EXCEPTION(_problem == Teuchos::null,               std::invalid_argument, "Problem not given to solver manager.");
   TEUCHOS_TEST_FOR_EXCEPTION(!_problem->isProblemSet(),               std::invalid_argument, "Problem not set.");
@@ -307,7 +271,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr(
   // convergence tolerance
   _convtol = pl.get("Convergence Tolerance",MT::prec());
   _relconvtol = pl.get("Relative Convergence Tolerance",_relconvtol);
-
+  
   // maximum number of restarts
   _maxRestarts = pl.get("Maximum Restarts",_maxRestarts);
 
@@ -319,30 +283,19 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr(
   // set the number of blocks we need to save to compute the nev eigenvalues of interest.
   _xtra_nevBlocks = pl.get("Extra NEV Blocks",0);
   if (nev%_blockSize) {
-    _nevBlocks = nev/_blockSize + 1;
+    _nevBlocks = nev/_blockSize + _xtra_nevBlocks + 1;
   } else {
-    _nevBlocks = nev/_blockSize;
-  }
-
-  // determine if we should use the dynamic scheme for selecting the current number of retained eigenvalues.
-  // NOTE:  This employs a technique similar to ARPACK in that it increases the number of retained eigenvalues
-  //        by one for every converged eigenpair to accelerate convergence.
-  if (pl.isParameter("Dynamic Extra NEV")) {
-    if (Teuchos::isParameterType<bool>(pl,"Dynamic Extra NEV")) {
-      _dynXtraNev = pl.get("Dynamic Extra NEV",_dynXtraNev);
-    } else {
-      _dynXtraNev = ( Teuchos::getParameter<int>(pl,"Dynamic Extra NEV") != 0 );
-    }
+    _nevBlocks = nev/_blockSize + _xtra_nevBlocks;
   }
 
   _numBlocks = pl.get("Num Blocks",3*_nevBlocks);
   TEUCHOS_TEST_FOR_EXCEPTION(_numBlocks <= _nevBlocks, std::invalid_argument,
                      "Anasazi::BlockKrylovSchurSolMgr: \"Num Blocks\" must be strictly positive and large enough to compute the requested eigenvalues.");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(static_cast<ptrdiff_t>(_numBlocks)*_blockSize > MVT::GetGlobalLength(*_problem->getInitVec()),
+  TEUCHOS_TEST_FOR_EXCEPTION(_numBlocks*_blockSize > MVT::GetVecLength(*_problem->getInitVec()),
                      std::invalid_argument,
                      "Anasazi::BlockKrylovSchurSolMgr: Potentially impossible orthogonality requests. Reduce basis size.");
-
+  
   // step size: the default is _maxRestarts*_numBlocks, so that Ritz values are only computed every restart.
   if (_maxRestarts) {
     _stepSize = pl.get("Step Size", (_maxRestarts+1)*(_numBlocks+1));
@@ -396,7 +349,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::BlockKrylovSchurSolMgr(
 
 // solve()
 template<class ScalarType, class MV, class OP>
-ReturnType
+ReturnType 
 BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
   const int nev = _problem->getNEV();
@@ -417,12 +370,12 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
   // convergence
   Teuchos::RCP<StatusTest<ScalarType,MV,OP> > convtest;
   if (globalTest_ == Teuchos::null) {
-    convtest = Teuchos::rcp( new StatusTestResNorm<ScalarType,MV,OP>(_convtol,nev,RITZRES_2NORM,_relconvtol) );
+    convtest = Teuchos::rcp( new StatusTestResNorm<ScalarType,MV,OP>(_convtol,nev,StatusTestResNorm<ScalarType,MV,OP>::RITZRES_2NORM,_relconvtol) );
   }
   else {
     convtest = globalTest_;
   }
-  Teuchos::RCP<StatusTestWithOrdering<ScalarType,MV,OP> > ordertest
+  Teuchos::RCP<StatusTestWithOrdering<ScalarType,MV,OP> > ordertest 
     = Teuchos::rcp( new StatusTestWithOrdering<ScalarType,MV,OP>(convtest,_sort,nev) );
   // for a non-short-circuited OR test, the order doesn't matter
   Teuchos::Array<Teuchos::RCP<StatusTest<ScalarType,MV,OP> > > alltests;
@@ -443,7 +396,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Orthomanager
-  Teuchos::RCP<OrthoManager<ScalarType,MV> > ortho;
+  Teuchos::RCP<OrthoManager<ScalarType,MV> > ortho; 
   if (_ortho=="SVQB") {
     ortho = Teuchos::rcp( new SVQBOrthoManager<ScalarType,MV,OP>(_problem->getM()) );
   } else if (_ortho=="DGKS") {
@@ -456,7 +409,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(_ortho!="SVQB"&&_ortho!="DGKS",std::logic_error,"Anasazi::BlockKrylovSchurSolMgr::solve(): Invalid orthogonalization type.");
   }
-
+  
   //////////////////////////////////////////////////////////////////////////////////////
   // Parameter list
   Teuchos::ParameterList plist;
@@ -472,7 +425,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
   //////////////////////////////////////////////////////////////////////////////////////
   // BlockKrylovSchur solver
-  Teuchos::RCP<BlockKrylovSchur<ScalarType,MV,OP> > bks_solver
+  Teuchos::RCP<BlockKrylovSchur<ScalarType,MV,OP> > bks_solver 
     = Teuchos::rcp( new BlockKrylovSchur<ScalarType,MV,OP>(_problem,_sort,printer,outputtest,ortho,plist) );
   // set any auxiliary vectors defined in the problem
   Teuchos::RCP< const MV > probauxvecs = _problem->getAuxVecs();
@@ -485,11 +438,6 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
   //  ---> (_nevBlocks*_blockSize+1) + _blockSize
   // If Hermitian, this becomes _nevBlocks*_blockSize + _blockSize
   // we only need this if there is the possibility of restarting, ex situ
-
-  // Maximum allowable extra vectors that BKS can keep to accelerate convergence
-  int maxXtraBlocks = 0;
-  if ( _dynXtraNev ) maxXtraBlocks = ( ( bks_solver->getMaxSubspaceDim() - nev ) / _blockSize ) / 2;
-
   Teuchos::RCP<MV> workMV;
   if (_maxRestarts > 0) {
     if (_inSituRestart==true) {
@@ -498,10 +446,9 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
     }
     else { // inSituRestart == false
       if (_problem->isHermitian()) {
-        workMV = MVT::Clone( *_problem->getInitVec(), (_nevBlocks+maxXtraBlocks)*_blockSize + _blockSize );
+        workMV = MVT::Clone( *_problem->getInitVec(), _nevBlocks*_blockSize + _blockSize );
       } else {
-        // Increase workspace by 1 because of potential complex conjugate pairs on the Ritz vector boundary
-        workMV = MVT::Clone( *_problem->getInitVec(), (_nevBlocks+maxXtraBlocks)*_blockSize + 1 + _blockSize );
+        workMV = MVT::Clone( *_problem->getInitVec(), _nevBlocks*_blockSize+1 + _blockSize );
       }
     }
   } else {
@@ -518,21 +465,19 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
   // enter solve() iterations
   {
-#ifdef ANASAZI_TEUCHOS_TIME_MONITOR
     Teuchos::TimeMonitor slvtimer(*_timerSolve);
-#endif
-
+  
     // tell bks_solver to iterate
     while (1) {
       try {
         bks_solver->iterate();
-
+    
         ////////////////////////////////////////////////////////////////////////////////////
         //
         // check convergence first
         //
         ////////////////////////////////////////////////////////////////////////////////////
-        if ( ordertest->getStatus() == Passed ) {
+        if (ordertest->getStatus() == Passed ) {
           // we have convergence
           // ordertest->whichVecs() tells us which vectors from solver state are the ones we want
           // ordertest->howMany() will tell us how many
@@ -552,13 +497,13 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
         //         than the maximum subspace dimension.
         else if ( (bks_solver->getCurSubspaceDim() == bks_solver->getMaxSubspaceDim()) ||
                   (!_problem->isHermitian() && !_conjSplit && (bks_solver->getCurSubspaceDim()+1 == bks_solver->getMaxSubspaceDim())) ) {
-
+  
           // Update the Schur form of the projected eigenproblem, then sort it.
           if (!bks_solver->isSchurCurrent()) {
             bks_solver->computeSchurForm( true );
 
             // Check for convergence, just in case we wait for every restart to check
-            outputtest->checkStatus( &*bks_solver );
+            outputtest->checkStatus( &*bks_solver );  
           }
 
           // Don't bother to restart if we've converged or reached the maximum number of restarts
@@ -566,31 +511,12 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
             break; // break from while(1){bks_solver->iterate()}
           }
 
-          // Start restarting timer and increment counter
-#ifdef ANASAZI_TEUCHOS_TIME_MONITOR
+          // Start restarting timer and increment counter 
           Teuchos::TimeMonitor restimer(*_timerRestarting);
-#endif
           numRestarts++;
-
-          int numConv = ordertest->howMany();
-          cur_nevBlocks = _nevBlocks*_blockSize;
-
-          // Add in extra blocks for restarting if either static or dynamic boundaries are being used.
-          int moreNevBlocks = std::min( maxXtraBlocks, std::max( numConv/_blockSize, _xtra_nevBlocks) );
-          if ( _dynXtraNev )
-            cur_nevBlocks += moreNevBlocks * _blockSize;
-          else if ( _xtra_nevBlocks )
-            cur_nevBlocks += _xtra_nevBlocks * _blockSize;
-/*
-            int cur_numConv = numConv;
-            while ( (cur_nevBlocks < (_nevBlocks + maxXtraVecs)) && cur_numConv > 0 ) {
-              cur_nevBlocks++;
-              cur_numConv--;
-*/
-
+  
           printer->stream(Debug) << " Performing restart number " << numRestarts << " of " << _maxRestarts << std::endl << std::endl;
-          printer->stream(Debug) << "   - Current NEV blocks is " << cur_nevBlocks << ", the minimum is " << _nevBlocks*_blockSize << std::endl;
-
+  
           // Get the most current Ritz values before we continue.
           _ritzValues = bks_solver->getRitzValues();
 
@@ -602,22 +528,12 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
           // Determine if the storage for the nev eigenvalues of interest splits a complex conjugate pair.
           std::vector<int> ritzIndex = bks_solver->getRitzIndex();
-          if (ritzIndex[cur_nevBlocks-1]==1) {
+          if (ritzIndex[_nevBlocks*_blockSize-1]==1) {
             _conjSplit = true;
-            cur_nevBlocks++;
+            cur_nevBlocks = _nevBlocks*_blockSize+1;
           } else {
             _conjSplit = false;
-          }
-
-          // Print out a warning to the user if complex eigenvalues were found on the boundary of the restart subspace
-          // and the eigenproblem is Hermitian.  This solver is not prepared to handle this situation.
-          if (_problem->isHermitian() && _conjSplit)
-          {
-            printer->stream(Warnings)
-              << " Eigenproblem is Hermitian, complex eigenvalues have been detected, and eigenvalues of interest split a conjugate pair!!!"
-              << std::endl
-              << " Block Krylov-Schur eigensolver cannot guarantee correct behavior in this situation, please turn Hermitian flag off!!!"
-              << std::endl;
+            cur_nevBlocks = _nevBlocks*_blockSize;
           }
 
           // Update the Krylov-Schur decomposition
@@ -631,7 +547,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
           Teuchos::RCP<const MV> basistemp = MVT::CloneView( *(oldState.V), curind );
 
           // Compute the new Krylov basis: Vnew = V*Qnev
-          //
+          // 
           // this will occur ex situ in workspace allocated for this purpose (tmpMV)
           // or in situ in the solver's memory space.
           //
@@ -643,14 +559,14 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
             //
             // get non-const pointer to solver's basis so we can work in situ
             Teuchos::RCP<MV> solverbasis = Teuchos::rcp_const_cast<MV>(oldState.V);
-            Teuchos::SerialDenseMatrix<int,ScalarType> copyQnev(Teuchos::Copy, Qnev);
-            //
+            Teuchos::SerialDenseMatrix<int,ScalarType> copyQnev(Qnev);
+            // 
             // perform Householder QR of copyQnev = Q [D;0], where D is unit diag. We will want D below.
             std::vector<ScalarType> tau(cur_nevBlocks), work(cur_nevBlocks);
             int info;
             lapack.GEQRF(curDim,cur_nevBlocks,copyQnev.values(),copyQnev.stride(),&tau[0],&work[0],work.size(),&info);
             TEUCHOS_TEST_FOR_EXCEPTION(info != 0,std::logic_error,
-                               "Anasazi::BlockKrylovSchurSolMgr::solve(): error calling GEQRF during restarting.");
+                               "Anasazi::BlockDavidsonSolMgr::solve(): error calling GEQRF during restarting.");
             // we need to get the diagonal of D
             std::vector<ScalarType> d(cur_nevBlocks);
             for (int j=0; j<copyQnev.numCols(); j++) {
@@ -666,7 +582,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
               }
               printer->stream(Debug) << "||Triangular factor of Su - I||: " << R.normFrobenius() << std::endl;
             }
-            //
+            // 
             // perform implicit V*Qnev
             // this actually performs V*[Qnev Qtrunc*M] = [newV truncV], for some unitary M
             // we are interested in only the first cur_nevBlocks vectors of the result
@@ -715,8 +631,9 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
           //
           // Create storage for the new Schur matrix of the Krylov-Schur factorization
           // Copy over the current quasi-triangular factorization of oldState.H which is stored in oldState.S.
-          Teuchos::RCP<Teuchos::SerialDenseMatrix<int,ScalarType> > newH =
-            Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>(Teuchos::Copy, *(oldState.S), cur_nevBlocks+_blockSize, cur_nevBlocks) );
+          Teuchos::SerialDenseMatrix<int,ScalarType> oldS(Teuchos::View, *(oldState.S), cur_nevBlocks+_blockSize, cur_nevBlocks);
+          Teuchos::RCP<Teuchos::SerialDenseMatrix<int,ScalarType> > newH = 
+            Teuchos::rcp( new Teuchos::SerialDenseMatrix<int,ScalarType>( oldS ) );
           //
           // Get a view of the B block of the current factorization
           Teuchos::SerialDenseMatrix<int,ScalarType> oldB(Teuchos::View, *(oldState.H), _blockSize, _blockSize, curDim, curDim-_blockSize);
@@ -728,7 +645,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
           Teuchos::SerialDenseMatrix<int,ScalarType> newB(Teuchos::View, *newH,  _blockSize, cur_nevBlocks, cur_nevBlocks);
           //
           // Compute the new B block.
-          blas.GEMM( Teuchos::NO_TRANS, Teuchos::NO_TRANS, _blockSize, cur_nevBlocks, _blockSize, one,
+          blas.GEMM( Teuchos::NO_TRANS, Teuchos::NO_TRANS, _blockSize, cur_nevBlocks, _blockSize, one, 
                      oldB.values(), oldB.stride(), subQ.values(), subQ.stride(), zero, newB.values(), newB.stride() );
 
 
@@ -743,7 +660,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
           newstate.H = newH;
           newstate.curDim = cur_nevBlocks;
           bks_solver->initialize(newstate);
-
+  
         } // end of restarting
         ////////////////////////////////////////////////////////////////////////////////////
         //
@@ -756,7 +673,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
         }
       }
       catch (const AnasaziError &err) {
-        printer->stream(Errors)
+        printer->stream(Errors) 
           << "Anasazi::BlockKrylovSchurSolMgr::solve() caught unexpected exception from Anasazi::BlockKrylovSchur::iterate() at iteration " << bks_solver->getNumIters() << std::endl
           << err.what() << std::endl
           << "Anasazi::BlockKrylovSchurSolMgr::solve() returning Unconverged with no solutions." << std::endl;
@@ -772,7 +689,6 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
     _ritzValues = bks_solver->getRitzValues();
 
     sol.numVecs = ordertest->howMany();
-    printer->stream(Debug) << "ordertest->howMany() : " << sol.numVecs << std::endl;
     std::vector<int> whichVecs = ordertest->whichVecs();
 
     // Place any converged eigenpairs in the solution container.
@@ -780,29 +696,21 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
 
       // Next determine if there is a conjugate pair on the boundary and resize.
       std::vector<int> tmpIndex = bks_solver->getRitzIndex();
-      for (int i=0; i<(int)_ritzValues.size(); ++i) {
-        printer->stream(Debug) << _ritzValues[i].realpart << " + i " << _ritzValues[i].imagpart << ", Index = " << tmpIndex[i] << std::endl;
-      }
       printer->stream(Debug) << "Number of converged eigenpairs (before) = " << sol.numVecs << std::endl;
       for (int i=0; i<sol.numVecs; ++i) {
         printer->stream(Debug) << "whichVecs[" << i << "] = " << whichVecs[i] << ", tmpIndex[" << whichVecs[i] << "] = " << tmpIndex[whichVecs[i]] << std::endl;
       }
       if (tmpIndex[whichVecs[sol.numVecs-1]]==1) {
         printer->stream(Debug) << "There is a conjugate pair on the boundary, resizing sol.numVecs" << std::endl;
-        whichVecs.push_back(whichVecs[sol.numVecs-1]+1);
-        sol.numVecs++;
-        for (int i=0; i<sol.numVecs; ++i) {
-          printer->stream(Debug) << "whichVecs[" << i << "] = " << whichVecs[i] << ", tmpIndex[" << whichVecs[i] << "] = " << tmpIndex[whichVecs[i]] << std::endl;
-        }
+	sol.numVecs++;
       }
 
       bool keepMore = false;
       int numEvecs = sol.numVecs;
       printer->stream(Debug) << "Number of converged eigenpairs (after) = " << sol.numVecs << std::endl;
-      printer->stream(Debug) << "whichVecs[sol.numVecs-1] > sol.numVecs-1 : " << whichVecs[sol.numVecs-1] << " > " << sol.numVecs-1 << std::endl;
       if (whichVecs[sol.numVecs-1] > (sol.numVecs-1)) {
-        keepMore = true;
-        numEvecs = whichVecs[sol.numVecs-1]+1;  // Add 1 to fix zero-based indexing
+	keepMore = true;
+	numEvecs = whichVecs[sol.numVecs-1]+1;  // Add 1 to fix zero-based indexing
         printer->stream(Debug) << "keepMore = true; numEvecs = " << numEvecs << std::endl;
       }
 
@@ -810,44 +718,40 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
       bks_solver->setNumRitzVectors(numEvecs);
       bks_solver->computeRitzVectors();
 
-      // If the leading Ritz pairs are the converged ones, get the information
+      // If the leading Ritz pairs are the converged ones, get the information 
       // from the iteration to the solution container. Otherwise copy the necessary
       // information using 'whichVecs'.
       if (!keepMore) {
-        sol.index = bks_solver->getRitzIndex();
-        sol.Evals = bks_solver->getRitzValues();
-        sol.Evecs = MVT::CloneCopy( *(bks_solver->getRitzVectors()) );
+	sol.index = bks_solver->getRitzIndex();
+	sol.Evals = bks_solver->getRitzValues();
+	sol.Evecs = MVT::CloneCopy( *(bks_solver->getRitzVectors()) );
       }
 
       // Resize based on the number of solutions being returned and set the number of Ritz
       // vectors for the iteration to compute.
       sol.Evals.resize(sol.numVecs);
       sol.index.resize(sol.numVecs);
-
-      // If the converged Ritz pairs are not the leading ones, copy over the information directly.
+ 
+      // If the converged Ritz pairs are not the leading ones, copy over the information directly.      
       if (keepMore) {
-        std::vector<Anasazi::Value<ScalarType> > tmpEvals = bks_solver->getRitzValues();
-        for (int vec_i=0; vec_i<sol.numVecs; ++vec_i) {
-          sol.index[vec_i] = tmpIndex[whichVecs[vec_i]];
-          sol.Evals[vec_i] = tmpEvals[whichVecs[vec_i]];
-        }
-        sol.Evecs = MVT::CloneCopy( *(bks_solver->getRitzVectors()), whichVecs );
+	std::vector<Anasazi::Value<ScalarType> > tmpEvals = bks_solver->getRitzValues();
+	for (int vec_i=0; vec_i<sol.numVecs; ++vec_i) {
+	  sol.index[vec_i] = tmpIndex[whichVecs[vec_i]];
+	  sol.Evals[vec_i] = tmpEvals[whichVecs[vec_i]];
+	}
+	sol.Evecs = MVT::CloneCopy( *(bks_solver->getRitzVectors()), whichVecs );
       }
 
       // Set the solution space to be the Ritz vectors at this time.
       sol.Espace = sol.Evecs;
-    }
+    } 
   }
 
   // print final summary
   bks_solver->currentStatus(printer->stream(FinalSummary));
 
   // print timing information
-#ifdef ANASAZI_TEUCHOS_TIME_MONITOR
-  if ( printer->isVerbosity( TimingDetails ) ) {
-    Teuchos::TimeMonitor::summarize( printer->stream( TimingDetails ) );
-  }
-#endif
+  Teuchos::TimeMonitor::summarize(printer->stream(TimingDetails));
 
   _problem->setSolution(sol);
   printer->stream(Debug) << "Returning " << sol.numVecs << " eigenpairs to eigenproblem." << std::endl;
@@ -856,29 +760,29 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::solve() {
   _numIters = bks_solver->getNumIters();
 
   if (sol.numVecs < nev) {
-    return Unconverged; // return from BlockKrylovSchurSolMgr::solve()
+    return Unconverged; // return from BlockKrylovSchurSolMgr::solve() 
   }
-  return Converged; // return from BlockKrylovSchurSolMgr::solve()
+  return Converged; // return from BlockKrylovSchurSolMgr::solve() 
 }
 
 
 template <class ScalarType, class MV, class OP>
-void
+void 
 BlockKrylovSchurSolMgr<ScalarType,MV,OP>::setGlobalStatusTest(
-    const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > &global)
+    const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > &global) 
 {
   globalTest_ = global;
 }
 
 template <class ScalarType, class MV, class OP>
-const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > &
-BlockKrylovSchurSolMgr<ScalarType,MV,OP>::getGlobalStatusTest() const
+const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > & 
+BlockKrylovSchurSolMgr<ScalarType,MV,OP>::getGlobalStatusTest() const 
 {
   return globalTest_;
 }
 
 template <class ScalarType, class MV, class OP>
-void
+void 
 BlockKrylovSchurSolMgr<ScalarType,MV,OP>::setDebugStatusTest(
     const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > &debug)
 {
@@ -886,7 +790,7 @@ BlockKrylovSchurSolMgr<ScalarType,MV,OP>::setDebugStatusTest(
 }
 
 template <class ScalarType, class MV, class OP>
-const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > &
+const Teuchos::RCP< StatusTest<ScalarType,MV,OP> > & 
 BlockKrylovSchurSolMgr<ScalarType,MV,OP>::getDebugStatusTest() const
 {
   return debugTest_;

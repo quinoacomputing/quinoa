@@ -107,7 +107,6 @@ int read_matrix(const std::string& filename,
 
 int run_test(Epetra_Comm& Comm,
              const std::string& filename,
-	     bool do_FillComplete,
              bool result_mtx_to_file=false,
              bool verbose=false);
 
@@ -211,9 +210,7 @@ int main(int argc, char** argv) {
   }
 
   for(size_t i=0; i<filenames.size(); ++i) {
-    err = run_test(Comm, filenames[i], true, write_result_mtx, verbose);
-    if (err != 0) break;
-    err = run_test(Comm, filenames[i], false, write_result_mtx, verbose);
+    err = run_test(Comm, filenames[i], write_result_mtx, verbose);
     if (err != 0) break;
   }
 
@@ -408,7 +405,6 @@ int read_input_file(Epetra_Comm& Comm,
 
 int run_test(Epetra_Comm& Comm,
              const std::string& filename,
-	     bool do_FillComplete,
              bool result_mtx_to_file,
              bool verbose)
 {
@@ -418,8 +414,6 @@ int run_test(Epetra_Comm& Comm,
   char BT[3]; BT[0] = '^'; BT[1] = 'T'; BT[2] = '\0';
   std::string C_file;
   bool transA, transB;
-
-  if(!Comm.MyPID()) std::cout<<"Testing: "<<filename<<std::endl;
 
   int err = read_matrix_file_names(Comm, filename, A_file, transA,
                                    B_file, transB, C_file);
@@ -459,7 +453,7 @@ int run_test(Epetra_Comm& Comm,
   Epetra_Map* B_domain_map = NULL;
   err = create_maps(Comm, B_file, B_row_map, B_col_map, B_range_map, B_domain_map);
   if (err != 0) {
-    std::cout << "create_maps B returned err=="<<err<<std::endl;
+    std::cout << "create_maps A returned err=="<<err<<std::endl;
     return(err);
   }
 
@@ -477,23 +471,15 @@ int run_test(Epetra_Comm& Comm,
     return(-1);
   }
 
-  const Epetra_Map* rowmap    = transA ? &(A->DomainMap()) : &(A->RowMap());
-  const Epetra_Map* domainMap = transB ? &(B->RangeMap()) : &(B->DomainMap());
-  const Epetra_Map* rangeMap  = transA ? &(A->DomainMap()) : &(A->RangeMap());
-
+  const Epetra_Map* rowmap = transA ? &(A->DomainMap()) : &(A->RowMap());
 
   C = new Epetra_CrsMatrix(Copy, *rowmap, 1);
 
-  if(C->Comm().MyPID()) printf("transA = %d transB = %d\n",(int)transA,(int)transB);
-
-  err = EpetraExt::MatrixMatrix::Multiply(*A, transA, *B, transB, *C,do_FillComplete);
+  err = EpetraExt::MatrixMatrix::Multiply(*A, transA, *B, transB, *C);
   if (err != 0) {
     std::cout << "err "<<err<<" from MatrixMatrix::Multiply"<<std::endl;
     return(err);
   }
-
-  if(!do_FillComplete) C->FillComplete(*domainMap,*rangeMap);
-
 
 //  std::cout << "A: " << *A << std::endl << "B: "<<*B<<std::endl<<"C: "<<*C<<std::endl;
   if (result_mtx_to_file) {
@@ -534,59 +520,12 @@ int run_test(Epetra_Comm& Comm,
   else {
     return_code = -1;
     if (localProc == 0) {
-      std::cout << "Test Failed ("<<filename<<"), inf_norm = " << inf_norm << std::endl;
+      std::cout << "Test Failed, inf_norm = " << inf_norm << std::endl;
     }
 Comm.Barrier();
 std::cout << "C"<<std::endl;
 std::cout << *C<<std::endl;
   }
-
-  // Test Matrix Jacobi for non-transpose matrices
-  if(!transA && !transB && A->RowMap().SameAs(B->RowMap())) {
-    if(!Comm.MyPID()) std::cout<<"--Testing: Jacobi for same matrices"<<std::endl;
-    delete C; delete C_check;
-
-    double omega=1.0;
-    Epetra_Vector Dinv(B->RowMap());
-    Dinv.PutScalar(1.0);
-
-    // Jacobi version
-    C = new Epetra_CrsMatrix(Copy,B->RowMap(),0);
-    EpetraExt::MatrixMatrix::Jacobi(omega,Dinv,*A,*B,*C);
-    
-    // Multiply + Add version
-    Dinv.PutScalar(omega);
-    Epetra_CrsMatrix * AB = new Epetra_CrsMatrix(Copy,B->RowMap(),0);
-    C_check = new Epetra_CrsMatrix(Copy,B->RowMap(),0);
-    EpetraExt::MatrixMatrix::Multiply(*A,false,*B,false,*AB);
-    AB->LeftScale(Dinv);
-    EpetraExt::MatrixMatrix::Add(*AB,false,-1.0,*B,false,1.0,C_check);
-
-    // Check the difference
-    EpetraExt::MatrixMatrix::Add(*C, false, -1.0, *C_check, 1.0);    
-    C_check->FillComplete(B->DomainMap(),B->RangeMap());
-    
-    // Error check
-    inf_norm = C_check->NormInf();
-    return_code = 0;    
-    if (inf_norm < 1.e-13) {
-      if (localProc == 0 && verbose) {
-	std::cout << "Jacobi Test Passed" << std::endl;
-      }
-    }
-    else {
-      return_code = -1;
-      if (localProc == 0) {
-	std::cout << "Jacobi Test Failed ("<<filename<<"), inf_norm = " << inf_norm << std::endl;
-    }
-      Comm.Barrier();
-      std::cout << "C"<<std::endl;
-      std::cout << *C<<std::endl;
-    }
-       
-    delete AB;
-  }
-
 
   delete A;
   delete B;
@@ -717,7 +656,7 @@ int read_matrix(const std::string& filename,
                 Epetra_CrsMatrix*& mat)
 {
   (void)Comm;
-  int err = EpetraExt::MatrixMarketFileToCrsMatrix(filename.c_str(), *rowmap,
+  int err = EpetraExt::MatrixMarketFileToCrsMatrix(filename.c_str(), *rowmap, *colmap,
                                                    *rangemap, *domainmap, mat);
 
   return(err);
@@ -1023,7 +962,7 @@ int test_drumm1(Epetra_Comm& Comm)
   std::vector<int> indices;
   indices.push_back(0); indices.push_back(1);
 
-  for (int row=0; row<numGlobalElements; ++row) {
+  for (size_t row=0; row<numGlobalElements; ++row) {
     if ( A.MyGRID(row) )
       A.InsertGlobalValues(row, numGlobalElements, &(vals[row][0]), &indices[0]);
   }

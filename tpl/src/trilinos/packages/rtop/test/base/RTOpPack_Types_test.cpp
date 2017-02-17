@@ -146,6 +146,7 @@ bool testSubVectorView(
     }
   }
 
+
   {
     out << "\nCreating SubVectorView for serial ...\n";
     SubVectorView<Scalar> sv(values);
@@ -162,7 +163,7 @@ bool testSubVectorView(
   }
 
   out << "\nCreating SubVectorView ...\n";
-  const Teuchos_Ordinal globalOffset = 20;
+  const Teuchos_Index globalOffset = 20;
   SubVectorView<Scalar> sv(globalOffset, subDim, values, stride);
 
   {
@@ -320,39 +321,9 @@ bool testSubVectorView(
 
   {
     out << "\nTest change of globalOffset ...\n";
-    const Teuchos_Ordinal newGlobalOffset = globalOffset + 1;
+    const Teuchos_Index newGlobalOffset = globalOffset + 1;
     csv.setGlobalOffset(newGlobalOffset);
     TEST_EQUALITY(csv.globalOffset(),newGlobalOffset);
-  }
-
-  out << "\nCreating empty SubVectorView ...\n";
-  SubVectorView<Scalar> sv_0(globalOffset, 0, null, stride);
-
-  {
-    out << "\nTesting SubVectorView access functions ...\n";
-    TEST_EQUALITY_CONST(sv_0.globalOffset(), globalOffset);
-    TEST_EQUALITY_CONST(sv_0.subDim(), 0);
-    TEST_EQUALITY_CONST(sv_0.values(), null);
-    TEST_EQUALITY_CONST(sv_0.stride(), stride);
-#ifdef TEUCHOS_DEBUG
-    TEST_THROW(sv_0[0], std::out_of_range);
-    TEST_THROW(sv_0(0), std::out_of_range);
-#endif
-  }
-  
-  out << "\nCreating empty ConstSubVectorView ...\n";
-  SubVectorView<Scalar> csv_0(globalOffset, 0, null, stride);
-
-  {
-    out << "\nTesting ConstSubVectorView access functions ...\n";
-    TEST_EQUALITY_CONST(csv_0.globalOffset(), globalOffset);
-    TEST_EQUALITY_CONST(csv_0.subDim(), 0);
-    TEST_EQUALITY_CONST(csv_0.values(), null);
-    TEST_EQUALITY_CONST(csv_0.stride(), stride);
-#ifdef TEUCHOS_DEBUG
-    TEST_THROW(csv_0[0], std::out_of_range);
-    TEST_THROW(csv_0(0), std::out_of_range);
-#endif
   }
   
   return success;
@@ -442,8 +413,8 @@ bool testSubMultiVectorView(
   }
 
   out << "\nCreating SubMultiVectorView ...\n";
-  const Teuchos_Ordinal globalOffset = 20;
-  const Teuchos_Ordinal colOffset = 15;
+  const Teuchos_Index globalOffset = 20;
+  const Teuchos_Index colOffset = 15;
   SubMultiVectorView<Scalar>
     smv(globalOffset, subDim, colOffset, numSubCols, values, leadingDim);
 
@@ -631,41 +602,9 @@ bool testSubMultiVectorView(
 
   {
     out << "\nTest change of globalOffset ...\n";
-    const Teuchos_Ordinal newGlobalOffset = globalOffset + 1;
+    const Teuchos_Index newGlobalOffset = globalOffset + 1;
     csmv.setGlobalOffset(newGlobalOffset);
     TEST_EQUALITY(csmv.globalOffset(),newGlobalOffset);
-  }
-
-  out << "\nCreating empty SubMultiVectorView ...\n";
-  SubMultiVectorView<Scalar>
-    smv_0(globalOffset, 0, colOffset, numSubCols, null, leadingDim);
-
-  {
-    out << "\nTesting SubMultiVectorView access functions ...\n";
-    TEST_EQUALITY(smv_0.globalOffset(),globalOffset);
-    TEST_EQUALITY(smv_0.subDim(), 0);
-    TEST_EQUALITY(smv_0.values(), null);
-    TEST_EQUALITY(smv_0.colOffset(), colOffset);
-    TEST_EQUALITY(smv_0.numSubCols(), numSubCols);
-#ifdef TEUCHOS_DEBUG
-    TEST_THROW(smv_0(0,0),std::out_of_range);
-#endif
-  }
-
-  out << "\nCreating empty ConstSubMultiVectorView ...\n";
-  ConstSubMultiVectorView<Scalar>
-    csmv_0(globalOffset, 0, colOffset, numSubCols, null, leadingDim);
-
-  {
-    out << "\nTesting ConstSubMultiVectorView access functions ...\n";
-    TEST_EQUALITY(csmv_0.globalOffset(), globalOffset);
-    TEST_EQUALITY(csmv_0.subDim(), 0);
-    TEST_EQUALITY(csmv_0.values(), null);
-    TEST_EQUALITY(csmv_0.colOffset(), colOffset);
-    TEST_EQUALITY(csmv_0.numSubCols(), numSubCols);
-#ifdef TEUCHOS_DEBUG
-    TEST_THROW(csmv_0(0,0),std::out_of_range);
-#endif
   }
   
   return success;
@@ -722,15 +661,6 @@ int main( int argc, char* argv[] ) {
 		}
 
     *out << std::endl << Teuchos::Teuchos_Version() << std::endl;
-
-    {
-      bool result;
-      typedef double Scalar;
-      result = testSubVectorView<Scalar>(subDim, stride, *out);
-      if (!result) success = false;
-      result = testSubMultiVectorView<Scalar>(subDim, numCols, leadingDim, *out);
-      if (!result) success = false;
-    }
 
 #ifdef HAVE_TEUCHOS_FLOAT
     {

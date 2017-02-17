@@ -157,6 +157,7 @@ void DefaultProductVector<Scalar>::describe(
   const Teuchos::EVerbosityLevel verbLevel
   ) const
 {
+  typedef Teuchos::ScalarTraits<Scalar>  ST;
   using Teuchos::FancyOStream;
   using Teuchos::OSTab;
   using Teuchos::describe;
@@ -567,19 +568,6 @@ void DefaultProductVector<Scalar>::setSubVectorImpl(
     // it would be possible to manually set the relevant constituent
     // vectors with no temp memory allocations.
     VectorDefaultBase<Scalar>::setSubVector(sub_vec);
-  }
-}
-
-
-// Overridden protected functions from MultiVectorBase
-
-
-template <class Scalar>
-void DefaultProductVector<Scalar>::assignImpl(Scalar alpha)
-{
-  const int num_vecs = vecs_.size();
-  for(int k = 0; k < num_vecs; ++k) {
-    vecs_[k].getNonconstObj()->assign(alpha);
   }
 }
 

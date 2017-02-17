@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 // 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Eric T. Phipps (etphipp@sandia.gov).
 // 
 // ***********************************************************************
@@ -67,7 +54,7 @@ CompletePolynomialBasis(
   }
 
   // Compute basis terms
-  CPBUtils::compute_terms(basis_orders, sz, terms, num_terms);
+  compute_terms();
     
   // Compute norms
   norms.resize(sz);
@@ -147,29 +134,15 @@ norm_squared(ordinal_type i) const
 template <typename ordinal_type, typename value_type>
 Teuchos::RCP< Stokhos::Sparse3Tensor<ordinal_type, value_type> >
 Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-computeTripleProductTensor() const
+computeTripleProductTensor(ordinal_type order) const
 {
 #ifdef STOKHOS_TEUCHOS_TIME_MONITOR
   TEUCHOS_FUNC_TIME_MONITOR("Stokhos: Total Triple-Product Tensor Fill Time");
 #endif
   if (use_old_cijk_alg)
-    return computeTripleProductTensorOld(sz);
+    return computeTripleProductTensorOld(order);
   else
-    return computeTripleProductTensorNew(sz);
-}
-
-template <typename ordinal_type, typename value_type>
-Teuchos::RCP< Stokhos::Sparse3Tensor<ordinal_type, value_type> >
-Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-computeLinearTripleProductTensor() const
-{
-#ifdef STOKHOS_TEUCHOS_TIME_MONITOR
-  TEUCHOS_FUNC_TIME_MONITOR("Stokhos: Total Triple-Product Tensor Fill Time");
-#endif
-  if (use_old_cijk_alg)
-    return computeTripleProductTensorOld(d+1);
-  else
-    return computeTripleProductTensorNew(d+1);
+    return computeTripleProductTensorNew(order);
 }
 
 template <typename ordinal_type, typename value_type>
@@ -224,7 +197,7 @@ computeTripleProductTensorNew(ordinal_type order) const
   // Map the specified order limit to a limit on each dimension
   // Subtract 1 to get the term for the last order we want to include,
   // add up the orders for each term to get the total order, then add 1
-  MultiIndex<ordinal_type> term = this->term(order-1);
+  Teuchos::Array<ordinal_type> term = getTerm(order-1);
   ordinal_type k_lim = 0;
   for (ordinal_type i=0; i<d; i++)
     k_lim = k_lim + term[i];
@@ -249,7 +222,7 @@ computeTripleProductTensorNew(ordinal_type order) const
   Teuchos::Array<k_iterator> k_iterators(d, Cijk_1d[0]->k_begin());
   Teuchos::Array<kj_iterator > j_iterators(d, Cijk_1d[0]->j_begin(k_iterators[0]));
   Teuchos::Array<kji_iterator > i_iterators(d, Cijk_1d[0]->i_begin(j_iterators[0]));
-  MultiIndex<ordinal_type> terms_i(d), terms_j(d), terms_k(d);
+  Teuchos::Array<ordinal_type> terms_i(d), terms_j(d), terms_k(d);
   ordinal_type sum_i = 0;
   ordinal_type sum_j = 0;
   ordinal_type sum_k = 0;
@@ -257,9 +230,9 @@ computeTripleProductTensorNew(ordinal_type order) const
     k_iterators[dim] = Cijk_1d[dim]->k_begin();
     j_iterators[dim] = Cijk_1d[dim]->j_begin(k_iterators[dim]);
     i_iterators[dim] = Cijk_1d[dim]->i_begin(j_iterators[dim]);
-    terms_i[dim] = Stokhos::index(i_iterators[dim]);
-    terms_j[dim] = Stokhos::index(j_iterators[dim]);
-    terms_k[dim] = Stokhos::index(k_iterators[dim]);
+    terms_i[dim] = index(i_iterators[dim]);
+    terms_j[dim] = index(j_iterators[dim]);
+    terms_k[dim] = index(k_iterators[dim]);
     sum_i += terms_i[dim];
     sum_j += terms_j[dim];
     sum_k += terms_k[dim];
@@ -278,12 +251,12 @@ computeTripleProductTensorNew(ordinal_type order) const
     // Add term if it is in the basis
     if (sum_i <= p && sum_j <= p && sum_k <= p) {
       if (inc_k)
-	K = CPBUtils::compute_index(terms_k, terms, num_terms, p);
+	K = compute_index(terms_k);
       if (K < order) {
 	if (inc_i)
-	  I = CPBUtils::compute_index(terms_i, terms, num_terms, p);
+	  I = compute_index(terms_i);
 	if (inc_j)
-	  J = CPBUtils::compute_index(terms_j, terms, num_terms, p);
+	  J = compute_index(terms_j);
 	value_type c = value_type(1.0);
 	for (ordinal_type dim=0; dim<d; dim++)
 	  c *= value(i_iterators[dim]);
@@ -303,7 +276,7 @@ computeTripleProductTensorNew(ordinal_type order) const
       ++i_iterators[cdim];
       inc_i = true;
       if (i_iterators[cdim] != Cijk_1d[cdim]->i_end(j_iterators[cdim])) {
-	terms_i[cdim] = Stokhos::index(i_iterators[cdim]);
+	terms_i[cdim] = index(i_iterators[cdim]);
 	sum_i = 0;
 	for (int dim=0; dim<d; dim++)
 	  sum_i += terms_i[dim];
@@ -313,7 +286,7 @@ computeTripleProductTensorNew(ordinal_type order) const
 	++j_iterators[cdim];
 	inc_j = true;
 	if (j_iterators[cdim] != Cijk_1d[cdim]->j_end(k_iterators[cdim])) {
-	  terms_j[cdim] = Stokhos::index(j_iterators[cdim]);
+	  terms_j[cdim] = index(j_iterators[cdim]);
 	  sum_j = 0;
 	  for (int dim=0; dim<d; dim++)
 	    sum_j += terms_j[dim];
@@ -323,7 +296,7 @@ computeTripleProductTensorNew(ordinal_type order) const
 	  ++k_iterators[cdim];
 	  inc_k = true;
 	  if (k_iterators[cdim] != Cijk_1d[cdim]->k_end()) {
-	    terms_k[cdim] = Stokhos::index(k_iterators[cdim]);
+	    terms_k[cdim] = index(k_iterators[cdim]);
 	    sum_k = 0;
 	    for (int dim=0; dim<d; dim++)
 	      sum_k += terms_k[dim];
@@ -331,7 +304,7 @@ computeTripleProductTensorNew(ordinal_type order) const
 	  if (k_iterators[cdim] == Cijk_1d[cdim]->k_end() || sum_k > p) {
 	    k_iterators[cdim] = Cijk_1d[cdim]->k_begin();
 	    ++cdim;
-	    terms_k[cur_dim] = Stokhos::index(k_iterators[cur_dim]);
+	    terms_k[cur_dim] = index(k_iterators[cur_dim]);
 	    sum_k = 0;
 	    for (int dim=0; dim<d; dim++)
 	      sum_k += terms_k[dim];
@@ -340,7 +313,7 @@ computeTripleProductTensorNew(ordinal_type order) const
 	    inc = false;
 	  j_iterators[cur_dim] = 
 	    Cijk_1d[cur_dim]->j_begin(k_iterators[cur_dim]);
-	  terms_j[cur_dim] = Stokhos::index(j_iterators[cur_dim]);
+	  terms_j[cur_dim] = index(j_iterators[cur_dim]);
 	  sum_j = 0;
 	  for (int dim=0; dim<d; dim++)
 	    sum_j += terms_j[dim];
@@ -348,7 +321,7 @@ computeTripleProductTensorNew(ordinal_type order) const
 	else
 	  inc = false;
 	i_iterators[cur_dim] = Cijk_1d[cur_dim]->i_begin(j_iterators[cur_dim]);
-	terms_i[cur_dim] = Stokhos::index(i_iterators[cur_dim]);
+	terms_i[cur_dim] = index(i_iterators[cur_dim]);
 	sum_i = 0;
 	for (int dim=0; dim<d; dim++)
 	  sum_i += terms_i[dim];
@@ -391,14 +364,14 @@ computeDerivTripleProductTensor(
   for (ordinal_type k=0; k<sz; k++) {
     for (typename Cijk_type::k_iterator m_it=Cijk->k_begin(); 
 	 m_it!=Cijk->k_end(); ++m_it) {
-      m = Stokhos::index(m_it);
+      m = index(m_it);
       for (typename Cijk_type::kj_iterator j_it = Cijk->j_begin(m_it); 
 	   j_it != Cijk->j_end(m_it); ++j_it) {
-	j = Stokhos::index(j_it);
+	j = index(j_it);
 	for (typename Cijk_type::kji_iterator i_it = Cijk->i_begin(j_it);
 	     i_it != Cijk->i_end(j_it); ++i_it) {
-	  i = Stokhos::index(i_it);
-	  c = Stokhos::value(i_it);
+	  i = index(i_it);
+	  c = value(i_it);
 	  (*Dijk)(i,j,k) += (*Bij)(m,k)*c/norms[m];
 	}
       }
@@ -462,7 +435,7 @@ evaluateZero(ordinal_type i) const
 template <typename ordinal_type, typename value_type>
 void
 Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-evaluateBases(const Teuchos::ArrayView<const value_type>& point,
+evaluateBases(const Teuchos::Array<value_type>& point,
 	      Teuchos::Array<value_type>& basis_vals) const
 {
   for (ordinal_type j=0; j<d; j++)
@@ -493,9 +466,9 @@ print(std::ostream& os) const
 }
 
 template <typename ordinal_type, typename value_type>
-const Stokhos::MultiIndex<ordinal_type>&
+Teuchos::Array<ordinal_type>
 Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-term(ordinal_type i) const
+getTerm(ordinal_type i) const
 {
   return terms[i];
 }
@@ -503,9 +476,9 @@ term(ordinal_type i) const
 template <typename ordinal_type, typename value_type>
 ordinal_type
 Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-index(const Stokhos::MultiIndex<ordinal_type>& term) const
+getIndex(const Teuchos::Array<ordinal_type>& term) const
 {
-  return CPBUtils::compute_index(term, terms, num_terms, p);
+  return compute_index(term);
 }
 
 template <typename ordinal_type, typename value_type>
@@ -525,12 +498,168 @@ getCoordinateBases() const
 }
 
 template <typename ordinal_type, typename value_type>
-Stokhos::MultiIndex<ordinal_type>
+void
 Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
-getMaxOrders() const
+compute_terms()
 {
-  MultiIndex<ordinal_type> max_orders(d);
-  for (ordinal_type i=0; i<d; ++i)
-    max_orders[i] = basis_orders[i];
-  return max_orders;
+  // The approach here for ordering the terms is inductive on the total
+  // order p.  We get the terms of total order p from the terms of total
+  // order p-1 by incrementing the orders of the first dimension by 1.
+  // We then increment the orders of the second dimension by 1 for all of the
+  // terms whose first dimension order is 0.  We then repeat for the third
+  // dimension whose first and second dimension orders are 0, and so on.
+  // How this is done is most easily illustrated by an example of dimension 3:
+  //
+  // Order  terms   cnt  Order  terms   cnt
+  //   0    0 0 0          4    4 0 0  15 5 1
+  //                            3 1 0
+  //   1    1 0 0  3 2 1        3 0 1
+  //        0 1 0               2 2 0
+  //        0 0 1               2 1 1
+  //                            2 0 2
+  //   2    2 0 0  6 3 1        1 3 0
+  //        1 1 0               1 2 1
+  //        1 0 1               1 1 2
+  //        0 2 0               1 0 3
+  //        0 1 1               0 4 0
+  //        0 0 2               0 3 1
+  //                            0 2 2
+  //   3    3 0 0  10 4 1       0 1 3
+  //        2 1 0               0 0 4
+  //        2 0 1
+  //        1 2 0
+  //        1 1 1
+  //        1 0 2
+  //        0 3 0
+  //        0 2 1
+  //        0 1 2
+  //        0 0 3
+
+  // Temporary array of terms grouped in terms of same order
+  Teuchos::Array< Teuchos::Array< Teuchos::Array<ordinal_type> > > terms_order(p+1);
+
+  // Store number of terms up to each order
+  num_terms.resize(p+2, ordinal_type(0));
+
+  // Set order 0
+  terms_order[0].resize(1);
+  terms_order[0][0].resize(d, ordinal_type(0));
+  num_terms[0] = 1;
+
+  // The array "cnt" stores the number of terms we need to increment for each
+  // dimension.  
+  Teuchos::Array<ordinal_type> cnt(d), cnt_next(d), term(d);
+  for (ordinal_type j=0; j<d; j++) {
+    if (basis_orders[j] >= 1)
+      cnt[j] = 1;
+    else
+      cnt[j] = 0;
+    cnt_next[j] = 0;
+  }
+
+  sz = 1;
+  // Loop over orders
+  for (ordinal_type k=1; k<=p; k++) {
+
+    num_terms[k] = num_terms[k-1];
+
+    // Stores the index of the term we copying
+    ordinal_type prev = 0;
+
+    // Loop over dimensions
+    for (ordinal_type j=0; j<d; j++) {
+
+      // Increment orders of cnt[j] terms for dimension j
+      for (ordinal_type i=0; i<cnt[j]; i++) {
+	if (terms_order[k-1][prev+i][j] < basis_orders[j]) {
+	  term = terms_order[k-1][prev+i];
+	  ++term[j];
+	  terms_order[k].push_back(term);
+	  ++sz;
+	  num_terms[k]++;
+	  for (ordinal_type l=0; l<=j; l++)
+	    ++cnt_next[l];
+	}
+      }
+
+      // Move forward to where all orders for dimension j are 0
+      if (j < d-1)
+	prev += cnt[j] - cnt[j+1];
+
+    }
+
+    // Update the number of terms we must increment for the new order
+    for (ordinal_type j=0; j<d; j++) {
+      cnt[j] = cnt_next[j];
+      cnt_next[j] = 0;
+    }
+
+  }
+
+  num_terms[p+1] = sz;
+
+  // Copy into final terms array
+  terms.resize(sz);
+  ordinal_type i = 0;
+  for (ordinal_type k=0; k<=p; k++) {
+    ordinal_type num_k = terms_order[k].size();
+    for (ordinal_type j=0; j<num_k; j++)
+      terms[i++] = terms_order[k][j];
+  }
+
+  /*
+  std::cout << "sz = " << sz << std::endl;
+  for (ordinal_type i=0; i<sz; i++) {
+    std::cout << i << ":  ";
+    for (ordinal_type j=0; j<d; j++)
+      std::cout << terms[i][j] << " ";
+    std::cout << std::endl;
+  }
+  std::cout << "num_terms = ";
+  for (ordinal_type i=0; i<=p; i++)
+    std::cout << num_terms[i] << " ";
+  std::cout << std::endl;
+  */
+}
+
+template <typename ordinal_type, typename value_type>
+ordinal_type 
+Stokhos::CompletePolynomialBasis<ordinal_type, value_type>::
+compute_index(const Teuchos::Array<ordinal_type>& term) const
+{
+  // The approach here for computing the index is to find the order block
+  // corresponding to this term by adding up the component orders.  We then
+  // do a linear search through the terms_order array for this order
+
+  // First compute order of term
+  ordinal_type ord = 0;
+  for (ordinal_type i=0; i<d; i++)
+    ord += term[i];
+  TEUCHOS_TEST_FOR_EXCEPTION(ord < 0 || ord > p, std::logic_error,
+		     "Stokhos::CompletePolynomialBasis::compute_index(): " <<
+		     "Term has invalid order " << ord);
+
+  // Now search through terms of that order to find a match
+  ordinal_type k;
+  if (ord == 0)
+    k = 0;
+  else
+    k = num_terms[ord-1];
+  ordinal_type k_max=num_terms[ord];
+  bool found = false;
+  while (k < k_max && !found) {
+    bool found_term = true;
+    for (ordinal_type j=0; j<d; j++) {
+      found_term = found_term && (term[j] == terms[k][j]);
+      if (!found_term)
+	break;
+    }
+    found = found_term;
+    ++k;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(k >= k_max && !found, std::logic_error,
+		     "Stokhos::CompletePolynomialBasis::compute_index(): " <<
+		     "Could not find specified term.");
+
+  return k-1;
 }

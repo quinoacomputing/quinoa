@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 #ifndef MLAPI_ERROR_H
 #define MLAPI_ERROR_H
@@ -46,16 +46,16 @@ inline void StackPrint() {std::cout << "Compile with -DMLAPI_CHECK to get the fu
 #ifdef HAVE_ML_CFUNC
 // some old compilers do not have __func__
 #define ML_THROW(str,val) { \
-  std::cerr << "ERROR: In " << __PRETTY_FUNCTION__ << "()" << std::endl; \
-  std::cerr << "ERROR: File " << __FILE__ << ", line " << __LINE__ << std::endl; \
-  std::cerr << "ERROR: " << str << std::endl; \
+  std::cerr << "ERROR: In " << __PRETTY_FUNCTION__ << "()" << endl; \
+  std::cerr << "ERROR: File " << __FILE__ << ", line " << __LINE__ << endl; \
+  std::cerr << "ERROR: " << str << endl; \
   StackPrint(); \
   throw(val); \
   }
 #else
 #define ML_THROW(str,val) { \
-  std::cerr << "ERROR: File " << __FILE__ << ", line " << __LINE__ << std::endl; \
-  std::cerr << "ERROR: " << str << std::endl; \
+  std::cerr << "ERROR: File " << __FILE__ << ", line " << __LINE__ << endl; \
+  std::cerr << "ERROR: " << str << endl; \
   StackPrint(); \
   throw(val); \
   }

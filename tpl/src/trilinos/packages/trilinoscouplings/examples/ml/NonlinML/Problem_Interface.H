@@ -19,7 +19,7 @@
 //                                                                                 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA                                                                                
 // Questions? Contact Michael Gee (mwgee@sandia.gov) or Roger Pawlowski
 // (rppawlo@sandia.gov), Sandia National Laboratories.
@@ -88,7 +88,7 @@ public:
   }
   
   // get block information
-  bool getBlockInfo(int *nblocks, std::vector<int>& blocks, std::vector<int>& block_pde)
+  bool getBlockInfo(int *nblocks, vector<int>& blocks, vector<int>& block_pde)
   { *nblocks = 0; blocks.clear(); block_pde.clear(); return false; }
 
   // derived from NOX::Parameter::PrePostOperator

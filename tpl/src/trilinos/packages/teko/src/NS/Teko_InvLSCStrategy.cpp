@@ -65,11 +65,8 @@
 // Teko includes
 #include "Teko_Utilities.hpp"
 #include "NS/Teko_LSCPreconditionerFactory.hpp"
-#include "Teko_EpetraHelpers.hpp"
-#include "Teko_EpetraOperatorWrapper.hpp"
-#include "Teko_TpetraHelpers.hpp"
-
-#include "Thyra_TpetraLinearOp.hpp"
+#include "Epetra/Teko_EpetraHelpers.hpp"
+#include "Epetra/Teko_EpetraOperatorWrapper.hpp"
 
 using Teuchos::RCP;
 using Teuchos::rcp_dynamic_cast;
@@ -87,13 +84,13 @@ namespace NS {
 InvLSCStrategy::InvLSCStrategy()
    : massMatrix_(Teuchos::null), invFactoryF_(Teuchos::null), invFactoryS_(Teuchos::null), eigSolveParam_(5)
    , rowZeroingNeeded_(false), useFullLDU_(false), useMass_(false), useLumping_(false), useWScaling_(false), scaleType_(Diagonal)
-   , isSymmetric_(true), assumeStable_(false)
+   , isSymmetric_(true)
 { }
 
 InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & factory,bool rzn)
    : massMatrix_(Teuchos::null), invFactoryF_(factory), invFactoryS_(factory), eigSolveParam_(5), rowZeroingNeeded_(rzn)
    , useFullLDU_(false), useMass_(false), useLumping_(false), useWScaling_(false), scaleType_(Diagonal)
-   , isSymmetric_(true), assumeStable_(false)
+   , isSymmetric_(true)
 { }
 
 InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & invFactF,
@@ -101,13 +98,13 @@ InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & invFactF,
                                bool rzn)
    : massMatrix_(Teuchos::null), invFactoryF_(invFactF), invFactoryS_(invFactS), eigSolveParam_(5), rowZeroingNeeded_(rzn)
    , useFullLDU_(false), useMass_(false), useLumping_(false), useWScaling_(false), scaleType_(Diagonal)
-   , isSymmetric_(true), assumeStable_(false)
+   , isSymmetric_(true)
 { }
 
 InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & factory,LinearOp & mass,bool rzn)
    : massMatrix_(mass), invFactoryF_(factory), invFactoryS_(factory), eigSolveParam_(5), rowZeroingNeeded_(rzn)
    , useFullLDU_(false), useMass_(false), useLumping_(false), useWScaling_(false), scaleType_(Diagonal)
-   , isSymmetric_(true), assumeStable_(false)
+   , isSymmetric_(true)
 { }
 
 InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & invFactF,
@@ -115,7 +112,7 @@ InvLSCStrategy::InvLSCStrategy(const Teuchos::RCP<InverseFactory> & invFactF,
                                LinearOp & mass,bool rzn)
    : massMatrix_(mass), invFactoryF_(invFactF), invFactoryS_(invFactS), eigSolveParam_(5), rowZeroingNeeded_(rzn)
    , useFullLDU_(false), useMass_(false), useLumping_(false), useWScaling_(false), scaleType_(Diagonal)
-   , isSymmetric_(true), assumeStable_(false)
+   , isSymmetric_(true)
 { }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -208,7 +205,7 @@ void InvLSCStrategy::initializeState(const BlockedLinearOp & A,LSCPrecondState *
    LinearOp D = B;
    LinearOp G = isSymmetric_ ? Bt : adjoint(D);
 
-   bool isStabilized = assumeStable_ ? false : (not isZeroOp(C));
+   bool isStabilized = (not isZeroOp(C));
 
    // The logic follows like this
    //    if there is no mass matrix available --> build from F
@@ -275,35 +272,21 @@ void InvLSCStrategy::initializeState(const BlockedLinearOp & A,LSCPrecondState *
 
    // for Epetra_CrsMatrix...zero out certain rows: this ensures spectral radius is correct
    LinearOp modF = F;
-   if(!Teko::TpetraHelpers::isTpetraLinearOp(F)){ // Epetra
-     const RCP<const Epetra_Operator> epF = Thyra::get_Epetra_Operator(*F);
-     if(epF!=Teuchos::null && rowZeroingNeeded_) {
-        // try to get a CRS matrix
-        const RCP<const Epetra_CrsMatrix> crsF = rcp_dynamic_cast<const Epetra_CrsMatrix>(epF);
+   const RCP<const Epetra_Operator> epF = Thyra::get_Epetra_Operator(*F);
+   if(epF!=Teuchos::null && rowZeroingNeeded_) {
+      // try to get a CRS matrix
+      const RCP<const Epetra_CrsMatrix> crsF = rcp_dynamic_cast<const Epetra_CrsMatrix>(epF);
 
-        // if it is a CRS matrix get rows that need to be zeroed
-        if(crsF!=Teuchos::null) {
-           std::vector<int> zeroIndices;
+      // if it is a CRS matrix get rows that need to be zeroed
+      if(crsF!=Teuchos::null) {
+         std::vector<int> zeroIndices;
           
-           // get rows in need of zeroing
-           Teko::Epetra::identityRowIndices(crsF->RowMap(), *crsF,zeroIndices);
+         // get rows in need of zeroing
+         Teko::Epetra::identityRowIndices(crsF->RowMap(), *crsF,zeroIndices);
 
-           // build an operator that zeros those rows
-           modF = Thyra::epetraLinearOp(rcp(new Teko::Epetra::ZeroedOperator(zeroIndices,crsF)));
-        }
-     }
-   } else { //Tpetra
-     ST scalar = 0.0;
-     bool transp = false;
-     RCP<const Tpetra::CrsMatrix<ST,LO,GO,NT> > crsF = Teko::TpetraHelpers::getTpetraCrsMatrix(F, &scalar, &transp);
-
-     std::vector<GO> zeroIndices;
-          
-     // get rows in need of zeroing
-     Teko::TpetraHelpers::identityRowIndices(*crsF->getRowMap(), *crsF,zeroIndices);
-
-     // build an operator that zeros those rows
-      modF = Thyra::tpetraLinearOp<ST,LO,GO,NT>(Thyra::tpetraVectorSpace<ST,LO,GO,NT>(crsF->getDomainMap()),Thyra::tpetraVectorSpace<ST,LO,GO,NT>(crsF->getRangeMap()),rcp(new Teko::TpetraHelpers::ZeroedOperator(zeroIndices,crsF)));
+         // build an operator that zeros those rows
+         modF = Thyra::epetraLinearOp(rcp(new Teko::Epetra::ZeroedOperator(zeroIndices,crsF)));
+      }
    }
 
    // compute gamma
@@ -462,8 +445,6 @@ void InvLSCStrategy::initializeFromParameterList(const Teuchos::ParameterList & 
       scaleType_ = getDiagonalType(pl.get<std::string>("Scaling Type"));
       TEUCHOS_TEST_FOR_EXCEPT(scaleType_==NotDiag);
    }
-   if(pl.isParameter("Assume Stable Discretization")) 
-      assumeStable_ = pl.get<bool>("Assume Stable Discretization");
 
    Teko_DEBUG_MSG_BEGIN(5)
       DEBUG_STREAM << "LSC Inverse Strategy Parameters: " << std::endl;
@@ -474,7 +455,6 @@ void InvLSCStrategy::initializeFromParameterList(const Teuchos::ParameterList & 
       DEBUG_STREAM << "   use ldu    = " << useLDU << std::endl;
       DEBUG_STREAM << "   use mass    = " << useMass_ << std::endl;
       DEBUG_STREAM << "   use w-scaling    = " << useWScaling_ << std::endl;
-      DEBUG_STREAM << "   assume stable    = " << assumeStable_ << std::endl;
       DEBUG_STREAM << "   scale type    = " << getDiagonalName(scaleType_) << std::endl;
       DEBUG_STREAM << "LSC  Inverse Strategy Parameter list: " << std::endl;
       pl.print(DEBUG_STREAM);

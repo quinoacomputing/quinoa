@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( OVIS
+TRIBITS_TPL_DECLARE_LIBRARIES( OVIS
   REQUIRED_HEADERS ovis.h
   REQUIRED_LIBS_NAMES "ovis"
   )

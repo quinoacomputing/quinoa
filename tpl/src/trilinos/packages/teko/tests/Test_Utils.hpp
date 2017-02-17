@@ -57,10 +57,6 @@
 
 #include "Epetra_Vector.h"
 #include "Epetra_Comm.h"
-#include "Teuchos_Comm.hpp"
-
-#include "Tpetra_Vector.hpp"
-#include "Teko_Utilities.hpp"
 
 #include <iostream>
 #include <list>
@@ -70,7 +66,6 @@ namespace Test {
 
 // build a 2x2 matrix...only in serial
 const Teuchos::RCP<const Thyra::LinearOpBase<double> > build2x2(const Epetra_Comm & comm,double a,double b,double c,double d);
-const Teuchos::RCP<const Thyra::LinearOpBase<ST> > build2x2(const Teuchos::RCP<const Teuchos::Comm<int> > comm,ST a,ST b,ST c,ST d);
 
 // prints a vector, with string "s" as the name
 void Print(std::ostream & os,const std::string & s,const Teuchos::RCP<const Thyra::MultiVectorBase<double> > & v);
@@ -99,14 +94,9 @@ double Difference(const Teuchos::RCP<const Thyra::MultiVectorBase<double> > & x,
 // construct a diagonal matrix
 const Teuchos::RCP<const Thyra::LinearOpBase<double> > DiagMatrix(int cnt,double * vec,std::string label="");
 
-const Teuchos::RCP<const Thyra::LinearOpBase<ST> > DiagMatrix_tpetra(GO cnt,ST * vec,std::string label="");
-
 // 2-Vector
 const Teuchos::RCP<const Thyra::MultiVectorBase<double> > BlockVector(const Epetra_Vector & u, const Epetra_Vector & v,
         const Teuchos::RCP<const Thyra::VectorSpaceBase<double> > & vs);
-
-const Teuchos::RCP<const Thyra::MultiVectorBase<ST> > BlockVector(const Tpetra::Vector<ST,LO,GO,NT> & u, const Tpetra::Vector<ST,LO,GO,NT> & v,
-        const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > & vs);
 
 class UnitTest {
 public:
@@ -117,22 +107,15 @@ public:
 
    static void AddTest(const Teuchos::RCP<UnitTest> & ut,const std::string & name);
    static bool RunTests(int verbosity, std::ostream & stdstrm,std::ostream & failstrm);
-   static bool RunTests_tpetra(int verbosity, std::ostream & stdstrm,std::ostream & failstrm);
 
    static Teuchos::RCP<const Epetra_Comm> GetComm();
-   static Teuchos::RCP<const Teuchos::Comm<int> > GetComm_tpetra();
-   static void SetComm(const Teuchos::RCP<const Epetra_Comm > & c);
-   static void SetComm_tpetra(const Teuchos::RCP<const Teuchos::Comm<int> > & c);
-
-   static void ClearTests();
+   static void SetComm(const Teuchos::RCP<const Epetra_Comm> & c);
 
 protected:
    static std::list<std::pair<Teuchos::RCP<UnitTest>,std::string> > testList;
-   static Teuchos::RCP<const Epetra_Comm > comm;
-   static Teuchos::RCP<const Teuchos::Comm<int> > comm_tpetra;
+   static Teuchos::RCP<const Epetra_Comm> comm;
 
    static bool CheckParallelBools(bool myBool,int & failPID);
-   static bool CheckParallelBools_tpetra(bool myBool,int & failPID);
 };
 
 inline const std::string toString(bool status) { return status ? "PASSED" : "FAILED"; }
@@ -144,15 +127,6 @@ inline const std::string toString(bool status) { return status ? "PASSED" : "FAI
 #define Teko_TEST_MSG(os,level,msgp,msgf) {          \
     int failPID = -1;                              \
     status = UnitTest::CheckParallelBools(status,failPID); \
-    if(verbosity>=level && status)                 \
-       os << msgp << std::endl;                    \
-    else if(verbosity>=level && not status)        \
-       os << msgf << " ( PID = " << failPID << " )" << std::endl; \
-    }
-
-#define Teko_TEST_MSG_tpetra(os,level,msgp,msgf) {          \
-    int failPID = -1;                              \
-    status = UnitTest::CheckParallelBools_tpetra(status,failPID); \
     if(verbosity>=level && status)                 \
        os << msgp << std::endl;                    \
     else if(verbosity>=level && not status)        \

@@ -15,8 +15,6 @@
 /* Define if want to build tests */
 #cmakedefine HAVE_TESTS
 
-/* Define if want to use nemesis */
+/* Define if want to build tests */
 #cmakedefine HAVE_PAMGEN_NEMESIS
 
-/* Define if we want to use boost */
-#cmakedefine HAVE_PAMGEN_BOOST

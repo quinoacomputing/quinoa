@@ -41,15 +41,12 @@
 // ************************************************************************
 // @HEADER
 
+
 #ifndef PHX_EXAMPLE_VP_CONSTANT_HPP
 #define PHX_EXAMPLE_VP_CONSTANT_HPP
 
-#include "Phalanx_config.hpp"
-#ifdef  PHX_ENABLE_KOKKOS_AMT
-#include "Phalanx_Evaluator_TaskBase.hpp"
-#else
+#include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#endif
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
@@ -57,11 +54,7 @@
 
 template<typename EvalT, typename Traits>
 class Constant : 
-#ifdef PHX_ENABLE_KOKKOS_AMT
-  public PHX_example::TaskBase<Traits,Constant<EvalT,Traits>>,
-#else
   public PHX::EvaluatorWithBaseImpl<Traits>,
-#endif
   public PHX::EvaluatorDerived<EvalT, Traits> {
   
 public:
@@ -73,9 +66,6 @@ public:
   
   void evaluateFields(typename Traits::EvalData ud);
   
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;  
-
 private:
   
   typedef typename EvalT::ScalarT ScalarT;

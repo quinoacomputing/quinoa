@@ -10,7 +10,7 @@
  */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 
 #include "ml_common.h"
@@ -27,9 +27,9 @@
 
 using namespace Teuchos;
 
-// ============================================================================
-static void AddParameter(Teuchos::ParameterList& List,
-                         const std::string& name,
+// ============================================================================ 
+static void AddParameter(Teuchos::ParameterList& List, 
+                         const string& name, 
                          const Teuchos::ParameterEntry& entry)
 {
   if (entry.isType<int>())
@@ -44,9 +44,9 @@ static void AddParameter(Teuchos::ParameterList& List,
   {
     List.set(name, getValue<float>(entry));
   }
-  else if (entry.isType<std::string>())
+  else if (entry.isType<string>())
   {
-    List.set(name, getValue<std::string>(entry));
+    List.set(name, getValue<string>(entry));
   }
   else if (entry.isType<char>())
   {
@@ -58,27 +58,27 @@ static void AddParameter(Teuchos::ParameterList& List,
   }
 }
 
-// ============================================================================
+// ============================================================================ 
 static void AddSubList(Teuchos::ParameterList& List, Teuchos::ParameterList& ListToAdd)
 {
   if (List.name() == "ANONYMOUS") List.setName(ListToAdd.name());
   for (ParameterList::ConstIterator i = ListToAdd.begin(); i != ListToAdd.end(); ++i)
   {
     const ParameterEntry& val = ListToAdd.entry(i);
-    const std::string& name = ListToAdd.name(i);
+    const string& name = ListToAdd.name(i);
     if (val.isList()) AddSubList(List.sublist(name), ListToAdd.sublist(name));
     AddParameter(List, name, val);
   }
 }
 
-// ============================================================================
-int ML_Epetra::ReadXML(const std::string &FileName, ParameterList &List,
+// ============================================================================ 
+int ML_Epetra::ReadXML(const string &FileName, ParameterList &List,
             const Epetra_Comm &Comm)
 {
   int i = 0, j;
   FILE* ML_capture_flag;
   ML_capture_flag = fopen((char*)FileName.c_str(),"r");
-  if(ML_capture_flag)
+  if(ML_capture_flag) 
   {
     i++;
     fclose(ML_capture_flag);
@@ -92,12 +92,12 @@ int ML_Epetra::ReadXML(const std::string &FileName, ParameterList &List,
 
   if (j == 0) {
     if (OutputLevel && Comm.MyPID() == 0)
-      std::cout << "***" << std::endl
-           << "*** Unable to open XML input file '" << FileName << "'" << std::endl
-           << "***" << std::endl;
+      cout << "***" << endl
+           << "*** Unable to open XML input file '" << FileName << "'" << endl
+           << "***" << endl;
     return(0);
   }
-
+  
   Teuchos::FileInputSource fileSrc(FileName);
   Teuchos::XMLObject fileXML = fileSrc.getObject();
 
@@ -120,7 +120,7 @@ int ML_Epetra::ReadXML(const std::string &FileName, ParameterList &List,
   else
     ao = 1;
 
-  std::string xxx = ListToAdd.get("SetDefaults", "not-set");
+  string xxx = ListToAdd.get("SetDefaults", "not-set");
   if (xxx != "not-set") {
     ML_Epetra::SetDefaults(xxx, ListToAdd,0,0,false);
   }
@@ -130,16 +130,16 @@ int ML_Epetra::ReadXML(const std::string &FileName, ParameterList &List,
   if  (List.isParameter("ML output")) OutputLevel = List.get("ML output", 0);
   else if (List.isParameter("output")) OutputLevel = List.get("output", 0);
   if ( (5 < OutputLevel) && (Comm.MyPID() == 0) ) {
-    std::cout << "***" << std::endl;
-    std::cout << "***" << " Reading XML file `" << FileName << "'..." << std::endl;
+    cout << "***" << endl;
+    cout << "***" << " Reading XML file `" << FileName << "'..." << endl;
     if (ao == 0)
-      std::cout << "***" << " Reset stored list" << std::endl;
+      cout << "***" << " Reset stored list" << endl;
     else if (ao == 1)
-      std::cout << "***" << " Parameters are added to the stored list" << std::endl;
+      cout << "***" << " Parameters are added to the stored list" << endl;
     if (xxx != "not-set")
-      std::cout << "***" << " Setting default values to type `"
-           << xxx << "'" << std::endl;
-    std::cout << "***" << std::endl;
+      cout << "***" << " Setting default values to type `"
+           << xxx << "'" << endl;
+    cout << "***" << endl;
   }
 
   return(1);

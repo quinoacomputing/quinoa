@@ -94,18 +94,15 @@ C    or 'MULTIPLE_TOPOLOGIES' if not common topology.
       LOGICAL EXODUS, NONQUD, ALLONE
       LOGICAL SMOOTH, SWPSS, USRSUB, CENTRD
 
-      LOGICAL ISATRB, EXECUT, L64BIT
+      LOGICAL ISATRB, EXECUT
 
       LOGICAL RENEL, DELEL, DELNP
 
       INTEGER CMPSIZ, IOWS
-      integer goff, noff, eoff, moff, soff
 
       DIMENSION A(1)
       INTEGER IA(1)
-      LOGICAL LA(1)
       EQUIVALENCE (A(1), IA(1))
-      EQUIVALENCE (A(1), LA(1))
       CHARACTER*1 C(1)
       
 C     --A - the dynamic numeric memory base array
@@ -125,39 +122,36 @@ C     --A - the dynamic numeric memory base array
       IF (NERR .GT. 0) GOTO 40
 
 C .. Get filename from command line.  If not specified, emit error message
-      SYNTAX =
-     *  'Syntax is: "grepos [-name_length len] [-64] file_in file_out"'
+      SYNTAX = 'Syntax is: "grepos [-name_length len] file_in file_out"'
       NARG = argument_count()
       if (narg .lt. 2) then
         CALL PRTERR ('FATAL', 'Filenames not specified.')
         CALL PRTERR ('CMDSPEC', SYNTAX(:LENSTR(SYNTAX)))
         GOTO 60
+      else if (narg .gt. 4) then
+        CALL PRTERR ('FATAL', 'Too many arguments specified.')
+        CALL PRTERR ('CMDSPEC', SYNTAX(:LENSTR(SYNTAX)))
+        GOTO 60
       end if
 
-C ... Parse options...
+C ... Parse name_length option
       name_len = 0
-      l64bit = .false.
-      if (narg .gt. 2) then
-        iarg = 1
-        do
-          CALL get_argument(iarg,FILIN, LNAM)
-          if (filin(:lnam) .eq. '-name_length') then
-            CALL get_argument(iarg+1,FILIN, LNAM)
-            read (filin(:lnam), '(i10)') name_len
-            iarg = iarg + 2
-          else if (filin(:lnam) .eq. '-64') then
-            l64bit = .true.
-            iarg = iarg + 1
-          else
-            SCRATCH = 'Unrecognized command option "'//FILIN(:LNAM)//'"'
-            CALL PRTERR ('FATAL', SCRATCH(:LENSTR(SCRATCH)))
-            CALL PRTERR ('CMDSPEC', SYNTAX(:LENSTR(SYNTAX)))
-          end if
-          if (i .gt. narg-2) exit
-        end do
+      iarg = 1
+      if (narg .eq. 4) then
+        CALL get_argument(iarg,FILIN, LNAM)
+        if (filin(:lnam) .eq. '-name_length') then
+          CALL get_argument(iarg+1,FILIN, LNAM)
+          read (filin(:lnam), '(i10)') name_len
+          iarg = iarg + 2
+        else
+          SCRATCH = 'Unrecognized command option "'//FILIN(:LNAM)//'"'
+          CALL PRTERR ('FATAL', SCRATCH(:LENSTR(SCRATCH)))
+          CALL PRTERR ('CMDSPEC', SYNTAX(:LENSTR(SYNTAX)))
+          GOTO 60
+        end if
       end if
-
 C     --Open the input database and read the initial variables
+
       NDBIN = 9
       NDBOUT = 10
       
@@ -165,7 +159,7 @@ C     --Open the input database and read the initial variables
       IOWS   = 0
 
       FILIN  = ' '
-      CALL get_argument(narg-1,FILIN, LNAM)
+      CALL get_argument(iarg,FILIN, LNAM)
       NDBIN = exopen(filin(:lnam), EXREAD, CMPSIZ, IOWS, vers, IERR)
       IF (IERR .NE. 0) THEN
         SCRATCH = 'Database "'//FILIN(:LNAM)//'" does not exist.'
@@ -192,7 +186,6 @@ C     --Open the input database and read the initial variables
 
       call exinq(ndbin, EXDBMXUSNM, namlen, rdum, cdum, ierr)
       if (name_len .eq. 0) then
-        if (namlen < 32) namlen = 32
         if (namlen .gt. mxname) then
           namlen = mxname 
           maxnam = mxname
@@ -266,13 +259,18 @@ C     --Read information from the database and close file
 
       CALL DBIELB (NDBIN, '*', 1, NELBLK,
      &     IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
-     &     A(1), IA(1), KLINK, KATRIB, C(KBKTYP),
-     *     numatt, *60)
+     &     A(1), IA(1), KLINK, KATRIB, C(KBKTYP), *60)
       
       call CHKTOP(NELBLK, C(KBKTYP), COMTOP)
       call getnam(NDBIN, 1, nelblk, C(KNAMEB))
 
 C ... Attribute names...
+C ... get total attribute count...
+      numatt = 0
+      do i=1, nelblk
+        numatt = numatt + ia(knatr+i-1)
+      end do
+      
       call mcrsrv('NAMATT', KNAMATT, maxnam*NUMATT)
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
@@ -294,7 +292,7 @@ C ... Attribute names...
       call exinq(ndbin, EXQA,   nqarec, rdum, cdum, ierr)
       call exinq(ndbin, EXINFO, ninfo,  rdum, cdum, ierr)
       call mcrsrv('QAREC', kqarec, (nqarec+1) * 4 * MXSTLN)
-      call mcrsrv('INFREC', kinfo, (ninfo+2) * MXLNLN)
+      call mcrsrv('INFREC', kinfo, (ninfo+1) * MXLNLN)
       CALL MCSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
       if (nqarec .gt. 0) then
@@ -366,10 +364,6 @@ C     --Reserve memory for offsets
          CALL MDRSRV ('ZEXPL', KZEXPL, 1)
       END IF
 
-C     -- Reserve memory for node equiv (equiv node X with Y handled in command)
-      
-      call mdrsrv ('IXNP', KIXNP, NUMNP)
-
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
 
@@ -399,12 +393,6 @@ C     .. Set up status arrays for element to nodal variable conversion
 
  25   CONTINUE
 
-        goff = 0
-        noff = goff + (nvargl * maxnam)
-        eoff = noff + (nvarnp * maxnam)
-        moff = eoff + (nvarel * maxnam)
-        soff = moff + (nvarns * maxnam)
-
       CALL COMAND (NDBIN, EXECUT, 
      &     IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
      &     IA(KIDNS),  IA(KNNNS), IA(KNDNPS),IA(KIXNNS),IA(KIXDNS),
@@ -413,13 +401,11 @@ C     .. Set up status arrays for element to nodal variable conversion
      &     IA(KLTESS), IA(KLTSSS), A(KFACSS),
      &     A(KXN), A(KYN), A(KZN),
      &     A(KXEXPL), A(KYEXPL), A(KZEXPL), MODBLK,
-     &     ISATRB, A(KATRSC), IA(KIXNP), IA(KMAPNN),
+     &     ISATRB, A(KATRSC),
      &     IA(KIELBS), IA(KINPSS), IA(KIESSS),
      &     NQAREC, C(KQAREC), NINFO, c(kinfo), c(kbktyp),
      *     c(knameb), c(knamnp), c(knamss), c(knamatt),
-     &     c(knames+goff), nvargl, c(knames+noff), nvarnp,
-     &     c(knames+eoff), nvarel, c(knames+moff), nvarns,
-     *     c(knames+soff), nvarss, IA(KINOD2EL),
+     &     c(knames+nvargl*maxnam), nvarnp, IA(KINOD2EL),
      &     SWPSS, SMOOTH, USRSUB, CENTRD,
      &     NSTEPS, A(KTIMES), IA(KITIMS), A, IA, *60)
 
@@ -619,25 +605,24 @@ C     ... See if node equivalencing specified
       DELNP = .FALSE.
 
       if (equiv) then
-        if (eqtoler .ge. 0.0) then
-          call mdrsrv ('IX',   KIX,   NUMNP)
-          CALL MDSTAT (NERR, MEM)
-          IF (NERR .GT. 0) GOTO 40
+         call mdrsrv ('IXNP', KIXNP, NUMNP)
+         call mdrsrv ('IX',   KIX,   NUMNP)
+         CALL MDSTAT (NERR, MEM)
+         IF (NERR .GT. 0) GOTO 40
 
-          call matxyz(ndim, numnp, a(kxn), a(kyn), a(kzn), ia(kix),
-     &      ia(kixnp), nmatch, eqtoler)
-          CALL MDDEL('IX')
-          CALL MDSTAT (NERR, MEM)
-          IF (NERR .GT. 0) GOTO 40
-        else
-          nmatch = 0
-          do i=1, numnp
-            if (ia(kixnp+i-1) .ne. i) nmatch = nmatch+1
-          end do
-        end if
-        write (*,*) 'Equivalencing ', nmatch, ' nodes'
-        DELNP = (NMATCH .NE. 0)
-        
+         call matxyz(ndim, numnp, a(kxn), a(kyn), a(kzn), ia(kix),
+     &        ia(kixnp), nmatch, eqtoler)
+         
+         DELNP = (NMATCH .NE. 0)
+         
+         IF (.NOT. DELNP) THEN
+            CALL MDDEL ('IXNP')
+         ELSE
+C     ... Fix up IXNP array to match expected format            
+         END IF
+         CALL MDDEL('IX')
+         CALL MDSTAT (NERR, MEM)
+         IF (NERR .GT. 0) GOTO 40
       end if
 C     --"Munch" the element blocks
 
@@ -656,10 +641,6 @@ C     --location of original numelb, isevok arrays
       NUMEL1 = NUMEL
 
       
-      if (renel .or. delnp) then
-        CALL MDRSRV ('MSCR', KMSCR, MAX(NUMEL0, NUMNP0))
-      end if
-
       IF (RENEL) THEN
 C     ... Reserve space for original NUMELB and ISEVOK arrays and copy
 C     old array contents into new (Only needed if EXODUS)       
@@ -672,7 +653,7 @@ C     old array contents into new (Only needed if EXODUS)
             IF (NERR .GT. 0) GOTO 40
             CALL CPYINT (NELBLK0, IA(KNELB),  IA(KNELB0))
             CALL CPYINT (NELBLK0, IA(KIDELB), IA(KIDELB0))
-            CALL CPYINT (LIEVOK,  LA(KIEVOK), LA(KIEVOK0))
+            CALL CPYINT (LIEVOK,  IA(KIEVOK), IA(KIEVOK0))
 
 C     ... Map from new var to old for mapping variables.
             CALL MDRSRV ('MAPL', KMAPL, NUMEL0)
@@ -683,6 +664,7 @@ C     ... Map from new var to old for mapping variables.
             CALL INIMAP(NUMNP0, IA(KMAPN))
          END IF
          
+         CALL MDRSRV ('MSCR', KMSCR, MAX(NUMEL0, NUMNP0))
          CALL MDRSRV ('IXEL', KIXEL, NUMEL)
          CALL MDSTAT (NERR, MEM)
          IF (NERR .GT. 0) GOTO 40
@@ -705,15 +687,16 @@ C     ... NUMEL changed in this block (if elements deleted)
      &        IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
      &        IA(KLINK), A(KATRIB), IA(KLINKO), A(KATRO),
      &        IA(KIXEL), IA(KIXELB), IA(KJNELB), IA(KISCR),
-     &        c(kbktyp), c(knmsc), LLINK, LATRIB, c(knamatt),
-     *        c(knameb))
+     &        c(kbktyp), c(knmsc), LLINK, LATRIB, c(knamatt))
 
 C     ... Fix up the truth table if the element block count changes... 
          if (exodus .and. nvarel .gt. 0 .and. nelblk .ne. nelblk0) then
             call muntt(nelblk0, nelblk, nvarel, 
-     $           la(kievok0), la(kievok), ia(kielbs))
+     $           ia(kievok0), ia(kievok), ia(kielbs))
          end if
 
+         call munnam(nelblk0, nelblk, ia(kielbs), c(knameb))
+         
          CALL MDDEL ('LINKO')
          CALL MDDEL ('ATRIBO')
          CALL MDDEL ('IXELB')
@@ -735,12 +718,21 @@ C     --Mark if any elements are deleted
       IF (DELEL) THEN
 
 C     --Make up an index of nodes in the existing element blocks
+         if (.not. delnp) then
+            CALL MDRSRV ('IXNP', KIXNP, NUMNP)
+            CALL MDSTAT (NERR, MEM)
+            IF (NERR .GT. 0) GOTO 40
+         end if
+
          N = NUMNP
          CALL ZMFIXD (NELBLK, IA(KNELB), IA(KNLNK), IA(KLINK),
      *        N, IA(KIXNP))
 
          DELNP = (N .LT. NUMNP)
 
+         IF (.NOT. DELNP) THEN
+            CALL MDDEL ('IXNP')
+         END IF
       END IF
 
 C     --Squeeze the coordinates
@@ -835,7 +827,6 @@ C     --"Munch" the nodal point sets
          CALL MDRSRV ('ISCR',   KISCR,  NUMNPS)
          CALL MDRSRV ('IDNS0',  KIDNS0, NUMNPS0)
          CALL MDRSRV ('NNNPS0', KNNNS0, NUMNPS0)
-         CALL MCRSRV ('NAMSCR', KNMSC, MXSTLN*NUMNPS)
          CALL MDSTAT (NERR, MEM)
          IF (NERR .GT. 0) GOTO 40
 
@@ -844,15 +835,13 @@ C     --"Munch" the nodal point sets
 
          CALL MUNNPS (NUMNPS, IA(KINPSS), LNPSNL, LNPSDF,
      &        IA(KIDNS), IA(KNNNS), IA(KIXNNS), IA(KLTNNS), A(KFACNS),
-     &        IA(KLTNNO), A(KFACNO), IA(KIXNNO), IA(KNNNO), IA(KISCR),
-     *        C(KNMSC), C(KNAMNP))
+     &        IA(KLTNNO), A(KFACNO), IA(KIXNNO), IA(KNNNO), IA(KISCR))
 
          CALL MDDEL ('LTNNPO')
          CALL MDDEL ('FACNPO')
          CALL MDDEL ('IXNNPO')
          CALL MDDEL ('NNNPO')
          CALL MDDEL ('ISCR')
-         CALL MCDEL ('NAMSCR')
 
 C     --Squeeze the nodal point sets
 
@@ -860,6 +849,8 @@ C     --Squeeze the nodal point sets
             CALL ZMNPS (NUMNPS, IA(KINPSS), LNPSNL, LNPSDF,
      *       IA(KIDNS), IA(KNNNS), IA(KIXNNS), IA(KLTNNS), A(KFACNS))
          END IF
+
+         call munnam(numnps0, numnps, ia(kinpss), c(knamnp))
 
 C     ... Fix up the truth table if the nodeset count changes... 
          if (exodus .and. nvarns .gt. 0 .and. numnps .ne. numnps0) then
@@ -918,7 +909,6 @@ C     --"Munch" the element side sets
          CALL MDRSRV ('ISCR',   KISCR,  NUMESS)
          CALL MDRSRV ('IDSS0',  KIDSS0, NUMESS0)
          CALL MDRSRV ('NEESS0', KNESS0, NUMESS0)
-         CALL MCRSRV ('NAMSCR', KNMSC, MXSTLN*NUMESS)
          CALL MDSTAT (NERR, MEM)
          IF (NERR .GT. 0) GOTO 40
 
@@ -929,7 +919,7 @@ C     --"Munch" the element side sets
      &     IA(KIDSS), IA(KNESS), IA(KNDSS), IA(KIXESS), IA(KIXDSS),
      &     IA(KLTESS), IA(KLTSSS), A(KFACSS),
      &     IA(KLTESO), IA(KLTSSO), A(KFACS0), IA(KIXESO), IA(KIXDS0),
-     &     IA(KNESO), IA(KNDS0), IA(KISCR), C(KNMSC), C(KNAMSS))
+     &     IA(KNESO), IA(KNDS0), IA(KISCR))
          
 
          CALL MDDEL ('LTEESO')
@@ -940,7 +930,6 @@ C     --"Munch" the element side sets
          CALL MDDEL ('NEESO')
          CALL MDDEL ('NEDS0')
          CALL MDDEL ('ISCR')
-         CALL MCDEL ('NAMSCR')
          CALL MDSTAT (NERR, MEM)
          IF (NERR .GT. 0) GOTO 40
 
@@ -949,9 +938,10 @@ C     --Squeeze the element side sets
          IF (DELEL) THEN
             CALL ZMESS (NUMESS, ia(kiesss), LESSEL, LESSDF, 
      &       IA(KIDSS), IA(KNESS), IA(KNDSS), IA(KIXESS),
-     *       IA(KIXDSS), IA(KLTESS), IA(KLTSSS), IA(KLTSNC), A(KFACSS),
-     *       C(KNAMSS))
+     *       IA(KIXDSS), IA(KLTESS), IA(KLTSSS), IA(KLTSNC), A(KFACSS))
          END IF
+
+         call munnam(numess0, numess, ia(kiesss), c(knamss))
 
 C     ... Fix up the truth table if the sideset count changes... 
          if (exodus .and. nvarss .gt. 0 .and. numess .ne. numess0) then
@@ -992,9 +982,11 @@ C     can only map sideset variables if the sidesets are the same...
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
 
-      CALL MDDEL ('IXNP')
-      CALL MDSTAT (NERR, MEM)
-      IF (NERR .GT. 0) GOTO 40
+      IF (DELNP) THEN
+         CALL MDDEL ('IXNP')
+         CALL MDSTAT (NERR, MEM)
+         IF (NERR .GT. 0) GOTO 40
+      END IF
 
       CALL MINMAX (NUMNP, A(KXN), XMIN, XMAX)
       CALL MINMAX (NUMNP, A(KYN), YMIN, YMAX)
@@ -1008,26 +1000,16 @@ C     can only map sideset variables if the sidesets are the same...
 C     --Open the output database
       
       FILOUT = ' '
-      CALL get_argument(narg,FILOUT, LFIL)
+      CALL get_argument(iarg+1,FILOUT, LFIL)
       CMPSIZ = 0
       IOWS   = iowdsz()
-      MODE = EXCLOB
-      if (l64bit) then
-        MODE = MODE + EX_ALL_INT64_DB + EX_ALL_INT64_API
-      end if
-      ndbout = excre(filout(:lfil), MODE, CMPSIZ, IOWS, IERR)
+      ndbout = excre(filout(:lfil), EXCLOB, CMPSIZ, IOWS, IERR)
       if (ierr .lt. 0) then
          call exopts (EXVRBS, ierr1)
          call exerr('grepos', 'Error from excre', ierr)
          go to 50
       endif
       call exmxnm(ndbout, maxnam, ierr)
-
-      if (l64bit) then
-C ... Compress the output
-        call exsetopt(ndbout, EX_OPT_COMPRESSION_LEVEL, 1, ierr)
-        call exsetopt(ndbout, EX_OPT_COMPRESSION_SHUFFLE, 1, ierr)
-      end if
 
 C     --Write the QA records
       CALL DBOQA (NDBOUT, QAINFO, NQAREC, c(kqarec),
@@ -1054,22 +1036,18 @@ C     --Write the element block
 
 C     --Write the node sets
       if (numnps .gt. 0) then
-        if (lnpsdf .eq. 0) then
-          do i= 0, numnps-1
+        do 90 i= 0, numnps-1
+          if (lnpsdf .eq. 0) then
             ia(kndnps+i) = 0
             ia(kixdns+i) = 0
-          end do
-          call expcns (ndbout, ia(kidns), ia(knnns), ia(kndnps),
-     &      ia(kixnns), ia(kixdns), ia(kltnns), a(kfacns), ierr)
-        else
-C ... This strangness is due to bug in gfortran compiler 
-C     which was optimizing out the setting of ia(kidns) and ia(indnps).
-C     since they are the same as ia(knnns) and ia(kixnns), just use
-C     those values.  Bug is in gfortran-4.8 up to 5.0?          
-          call expcns (ndbout, ia(kidns), ia(knnns), ia(knnns),
-     &      ia(kixnns), ia(kixnns), ia(kltnns), a(kfacns), ierr)
-        end if
-        call putnam(NDBOUT, 2, numnps, C(KNAMNP))
+          else
+            ia(kndnps+i) = ia(knnns+i)
+            ia(kixdns+i) = ia(kixnns+i)
+          end if
+ 90     continue
+         call expcns (ndbout, ia(kidns), ia(knnns), ia(kndnps),
+     &        ia(kixnns), ia(kixdns), ia(kltnns), a(kfacns), ierr)
+         call putnam(NDBOUT, 2, numnps, C(KNAMNP))
       end if
       
 C     --Write the side sets
@@ -1131,7 +1109,7 @@ C     ... Truth Table.
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
         call dbott(ndbout, 'E', nelblk, nvarel, inod2el,
-     *    la(kievok), ia(ktmp))
+     *    ia(kievok), ia(ktmp))
         call mddel('itmp')
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
@@ -1141,7 +1119,7 @@ C     ... Truth Table.
         CALL MDRSRV ('ITMP', ktmp, NUMNPS * NVARNS)
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
-        call dbott(ndbout, 'M', numnps, nvarns, 0, la(knsvok), ia(ktmp))
+        call dbott(ndbout, 'M', numnps, nvarns, 0, ia(knsvok), ia(ktmp))
         call mddel('itmp')
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
@@ -1151,7 +1129,7 @@ C     ... Truth Table.
         CALL MDRSRV ('ITMP', ktmp, NUMESS * NVARSS)
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
-        call dbott(ndbout, 'S', numess, nvarss, 0, la(kssvok), ia(ktmp))
+        call dbott(ndbout, 'S', numess, nvarss, 0, ia(kssvok), ia(ktmp))
         call mddel('itmp')
         CALL MDSTAT (NERR, MEM)
         IF (NERR .GT. 0) GOTO 40
@@ -1162,7 +1140,7 @@ C     ... Truth Table.
         time = 0.0
         CALL DBOSTE (NDBOUT, ISTEP,
      &    NVARGL, NVARNP, NUMNP, NVAREL, 0, NELBLK,
-     &    IA(KNELB), LA(KIEVOK), IA(KIDELB),
+     &    IA(KNELB), IA(KIEVOK), IA(KIDELB),
      *    NVARNS, NUMNPS, IA(KNNNS), IA(KNSVOK), IA(KIDNS),
      *    NVARSS, NUMESS, IA(KNESS), IA(KSSVOK), IA(KIDSS),
      *    TIME, A(KVARGL), A(KVARNP), A(KCENT), A(KVARNS), A(KVARSS),
@@ -1200,22 +1178,12 @@ C           dimensioned as (NUMEL, NVAREL)
            CALL DBISTE (NDBIN, '*', istep,
      &      NVARGL,
      *      NVARNP, NUMNP0,
-     *      NVAREL, NELBLK0, IA(KNELB0), LA(KIEVOK0), IA(KIDELB0),
+     *      NVAREL, NELBLK0, IA(KNELB0), IA(KIEVOK0), IA(KIDELB0),
      *      NVARNS, NUMNPS0, IA(KNNNS0), IA(KNSVOK0), IA(KIDNS0),
      *      NVARSS, NUMESS0, IA(KNESS0), IA(KSSVOK0), IA(KIDSS0),
      &      TIME,
      *      A(KVARGL), A(KVARNP), A(KVAREL), A(KVARNS), A(KVARSS), *120)
            
-           if (istep .eq. idefst) then
-C ... The model was deformed at this step, zero out the displacements
-C     at this step (Technically, should also subtract off this steps
-C     displacements from every other step, but that isn't supported yet...
-C     Assumes that displacements are the first 'ndim' nodal variables.             
-             do i=1, ndim*numnp
-               a(kvarnp+i-1) = 0.0
-             end do
-           end if
-
            if (inod2el .gt. 0) then
              ioff = 0
              inoff = 0
@@ -1250,7 +1218,7 @@ C     number element blocks, and truth table.
 
            CALL DBOSTE (NDBOUT, ISTEP,
      &          NVARGL, NVARNP, NUMNP, NVAREL, INOD2EL, NELBLK,
-     $          IA(KNELB), LA(KIEVOK), IA(KIDELB),
+     $          IA(KNELB), IA(KIEVOK), IA(KIDELB),
      $          NVARNS, NUMNPS0, IA(KNNNS0), IA(KNSVOK0), IA(KIDNS0),
      $          NVARSS, NUMESS0, IA(KNESS0), IA(KSSVOK0), IA(KIDSS0),
      $          TIME, 
@@ -1438,3 +1406,17 @@ C   This is currently used in the sideset mirroring code
       return 
       end
 
+      subroutine munnam(nold, nnew, istat, names)
+      include 'gp_namlen.blk'
+      character*(maxnam) names(*)
+      integer istat(*)
+      
+      i1 = 0
+      do i0=1, nold
+         if (istat(i0) .eq. 0) then
+            i1 = i1 + 1
+            if (i1 .ne. i0) names(i1) = names(i0)
+         end if
+      end do
+      return
+      end

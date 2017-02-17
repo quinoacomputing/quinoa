@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 
 #ifdef __cplusplus
@@ -58,7 +25,7 @@ extern "C" {
 /*****************************************************************************/
 /*****************************************************************************/
 /*
- *  This file contains routines to set the part sizes.
+ *  This file contains routines to set the partition sizes.
  */
 /*****************************************************************************/
 /*****************************************************************************/
@@ -68,19 +35,19 @@ int Zoltan_LB_Set_Part_Sizes(ZZ *zz, int global_num,
     int len, int *part_ids, int *wgt_idx, float *part_sizes)
 {
 /*
- *  Function to set the desired part sizes. This function
+ *  Function to set the desired partition sizes. This function
  *  only sets values locally. Later, Zoltan_LB_Get_Part_Sizes
  *  collects all the information across processors.
  *
  *  Input:
  *    zz            --  The Zoltan structure to which this method
  *                      applies.
- *    global_num    --  Global part numbers? (0 for local numbers)
+ *    global_num    --  Global partition numbers? (0 for local numbers)
  *    len           --  Length of arrays wgt_idx, part_idx, part_sizes
- *    part_ids      --  Array of part ids (local or global)
+ *    part_ids      --  Array of partition ids (local or global)
  *    wgt_idx       --  Array of indices between 0 and Obj_Wgt_Dim-1
- *    part_sizes    --  Array of floats that gives the desired part 
- *                      size for each weight and each part, i.e., 
+ *    part_sizes    --  Array of floats that gives the desired partition 
+ *                      size for each weight and each partition, i.e., 
  *                      part_sizes[i] corresponds to wgt_idx[i] and part_id[i]
  *
  *  Output:
@@ -95,7 +62,7 @@ int Zoltan_LB_Set_Part_Sizes(ZZ *zz, int global_num,
 
   ZOLTAN_TRACE_ENTER(zz, yo);
 
-  /* len = -1 will nullify all part sizes set on this proc */
+  /* len = -1 will nullify all partition sizes set on this proc */
   if (len == -1){
     zz->LB.Part_Info_Len = 0;
     goto End;
@@ -126,7 +93,7 @@ int Zoltan_LB_Set_Part_Sizes(ZZ *zz, int global_num,
       goto End;
   }
 
-  /* Add new data to part info array. */
+  /* Add new data to partition info array. */
   for (i=0,j=zz->LB.Part_Info_Len; i<len; i++,j++){
     zz->LB.Part_Info[j].Size = part_sizes[i];
     zz->LB.Part_Info[j].Part_id = part_ids[i]; 
@@ -144,25 +111,27 @@ End:
   return error;
 }
 
-/***************************************************************************/
 
-int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
+
+int Zoltan_LB_Get_Part_Sizes(ZZ *zz, 
+    int num_global_parts, int part_dim, float *part_sizes)
 {
 /*
- *  Function to get the scaled part sizes.
+ *  Function to get the scaled partition sizes.
  *
  *  Input:
  *    zz            --  The Zoltan structure to which this method
  *                      applies.
- *    part_dim      --  The number of object weights per part.
+ *    num_global_parts -- Number of global partitions.
+ *                      (This usually equals lb->Num_Global_Parts)
+ *    part_dim      --  The number of object weights per partition.
  *                      (This usually equals lb->Obj_Wgt_Dim.)
  *
  *  Output:
- *    part_sizes    --  Array of floats that gives the set part 
+ *    part_sizes    --  Array of floats that gives the set partition 
  *                      sizes, scaled such that they sum to one.
  */
   int i, j, nparts, fpart;
-  int num_global_parts = zz->LB.Num_Global_Parts;
   float *temp_part_sizes=NULL, *sum=NULL;
   int error = ZOLTAN_OK;
   char msg[128];
@@ -189,22 +158,22 @@ int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
       1, MPI_INT, MPI_MAX, zz->Communicator);
 
   if (j == 0){
-    /* Uniform part sizes. */
+    /* Uniform partition sizes. */
     zz->LB.Uniform_Parts = 1;
     for (i = 0; i < num_global_parts*part_dim; i++)
       part_sizes[i] = 1.0 / (float)num_global_parts;
   }
   else {
-   /* Get the part sizes set by the user (application).
+   /* Get the partition sizes set by the user (application).
     * Each processor puts its data in a part_dim * num_global_parts
     * array. Then we gather all the data across processors.
-    * Out-of-range part size data is ignored.
+    * Out-of-range partition size data is ignored.
     */
     zz->LB.Uniform_Parts = 0;
 
     /* Pack LB.Part_Info into temp array */
     temp_part_sizes = (float *)ZOLTAN_MALLOC(num_global_parts*part_dim
-                                             *sizeof(float));
+      *sizeof(float));
     sum = (float *)ZOLTAN_MALLOC(part_dim*sizeof(float));
     if ((!temp_part_sizes) || (!sum)){
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Memory error.");
@@ -215,7 +184,7 @@ int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
       temp_part_sizes[i] = -1.0;
     }
     for (i = 0; i < zz->LB.Part_Info_Len; i++){
-      /* Only assemble part sizes for parts and weights
+      /* Only assemble partition sizes for partitions and weights
          in the requested range. */
       if (zz->LB.Part_Info[i].Idx < part_dim){
         j = zz->LB.Part_Info[i].Part_id;
@@ -224,7 +193,7 @@ int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
           j += fpart;
         }
         if (j >= num_global_parts){
-          sprintf(msg, "Part number %d is >= num_global_parts %d.",
+          sprintf(msg, "Partition number %d is >= num_global_parts %d.",
             j, num_global_parts);
           ZOLTAN_PRINT_WARN(zz->Proc, yo, msg);
           error = ZOLTAN_WARN;
@@ -251,7 +220,7 @@ int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
       }
 
       if (zz->Debug_Level >= ZOLTAN_DEBUG_ALL){
-        printf("[%1d] In %s: Part size %1d (before scaling) = ",  
+        printf("[%1d] In %s: Partition size %1d (before scaling) = ",  
             zz->Proc, yo, i);
         for (j = 0; j < part_dim; j++)
           printf("%f, ",  part_sizes[i*part_dim+j]);
@@ -269,7 +238,7 @@ int Zoltan_LB_Get_Part_Sizes(ZZ *zz, int part_dim, float *part_sizes)
       }
     }
 
-    /* Normalize part sizes */
+    /* Normalize partition sizes */
     for (i = 0; i < num_global_parts; i++)
       for (j = 0; j < part_dim; j++)
         part_sizes[i*part_dim+j] /= sum[j];

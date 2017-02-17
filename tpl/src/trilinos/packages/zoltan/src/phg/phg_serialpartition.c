@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
@@ -412,14 +379,14 @@ const int num_coarse_iter = 1 + 9/zz->Num_Proc;
       for (i = 0; i < phg->nVtx; i++)
         part[i] = spart[i];
     }
+    ZOLTAN_FREE(&spart);
+    ZOLTAN_FREE(&bestvals);
   }
   
 End:
   if (fine_timing) 
     ZOLTAN_TIMER_STOP(zz->ZTime, timer->cpart, phg->comm->Communicator);
 
-  ZOLTAN_FREE(&spart);
-  ZOLTAN_FREE(&bestvals);
   ZOLTAN_TRACE_EXIT(zz, yo);
   return ierr;
 }
@@ -701,7 +668,7 @@ static int greedy_grow_part (
 )
 {
   int i, j, vtx, edge, edgesize;
-  int *cut[2] = {NULL,NULL};
+  int *cut[2];
   double *gain = NULL;
   int vwgtdim = hg->VtxWeightDim;
   int part_dim = (hg->VtxWeightDim ? hg->VtxWeightDim : 1);
@@ -712,11 +679,7 @@ static int greedy_grow_part (
   static char *yo = "greedy_grow_part";
   int err=ZOLTAN_OK;
 
-
   /* Allocate arrays. */
-  Zoltan_Heap_Init(zz, &h[0], hg->nVtx);
-  Zoltan_Heap_Init(zz, &h[1], 0);       /* Dummy heap, not used. */
-
   if (!(gain  = (double*) ZOLTAN_CALLOC (hg->nVtx, sizeof (double)))){
     ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Insufficient memory.");
     err =  ZOLTAN_MEMERR;
@@ -780,12 +743,15 @@ static int greedy_grow_part (
   if (!hgp->UseFixedVtx) 
     gain[start_vtx] = 1e10;      /* Make start_vtx max value in heap. */
                                  /* All other values should be negative. */
+  Zoltan_Heap_Init(zz, &h[0], hg->nVtx);
+  Zoltan_Heap_Init(zz, &h[1], 0);       /* Dummy heap, not used. */
   for (i=0; i<hg->nVtx; i++){
     /* Insert all non-fixed vertices into heap. */
     if (!hgp->UseFixedVtx || (hg->fixed_part[i] < 0))
       Zoltan_Heap_Input(h, i, gain[i]);
   }
   Zoltan_Heap_Make(h);
+
 
   while (part_sum < cutoff) {
 
@@ -812,7 +778,7 @@ static int greedy_grow_part (
 
 End:
   ZOLTAN_FREE (&gain);
-  ZOLTAN_FREE (&cut[0]);
+  if (cut[0])    ZOLTAN_FREE (&cut[0]);
   Zoltan_Heap_Free (&h[0]);
   Zoltan_Heap_Free( &h[1]);
   return err;
@@ -919,7 +885,7 @@ int err = ZOLTAN_OK;
   local[0].val = bal = 0.0; /* balance */
   if (cutvals)
     local[1].val = cutvals[0];
-  else {
+  else
     local[1].val = Zoltan_PHG_Compute_ConCut(shg->comm, shg, spart, numPart,
                                              &err);
     if (err < 0) {
@@ -927,7 +893,6 @@ int err = ZOLTAN_OK;
                          "Error returned from Zoltan_PHG_Compute_ConCut");
       goto End;
     }
-  }
   local[0].rank = local[1].rank = phg_comm->myProc;
 
   /* What do we say is "best"?   For now, say lowest (ratio) cut. */
@@ -936,14 +901,13 @@ int err = ZOLTAN_OK;
 
     if (cutvals)
       cut = cutvals[i];
-    else {
+    else
       cut = Zoltan_PHG_Compute_ConCut(shg->comm, shg, 
              spart+i*(shg->nVtx), numPart, &err);
-      if (err < 0) {
-        ZOLTAN_PRINT_ERROR(zz->Proc, yo, 
-                           "Error returned from Zoltan_PHG_Compute_ConCut");
-        goto End;
-      }
+    if (err < 0) {
+      ZOLTAN_PRINT_ERROR(zz->Proc, yo, 
+                         "Error returned from Zoltan_PHG_Compute_ConCut");
+      goto End;
     }
 
     if (cut < local[1].val){

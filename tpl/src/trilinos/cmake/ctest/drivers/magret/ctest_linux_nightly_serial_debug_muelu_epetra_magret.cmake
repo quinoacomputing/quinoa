@@ -67,14 +67,31 @@ SET(CTEST_PARALLEL_LEVEL 8)
 SET(CTEST_TEST_TYPE Nightly)
 SET(CTEST_TEST_TIMEOUT 900)
 
-SET(Trilinos_PACKAGES MueLu Xpetra)
-SET(EXTRA_EXCLUDE_PACKAGES Kokkos Ifpack2 ML Tpetra Stratimikos Triutils AztecOO)
+#SET(Trilinos_PACKAGES MueLu Amesos2)
+SET(Trilinos_PACKAGES MueLu)
 
 SET(EXTRA_CONFIGURE_OPTIONS
-  "-DTPL_ENABLE_SuperLU:BOOL=ON"
-  "-DSuperLU_INCLUDE_DIRS=/usr/local/superlu/4.3/include"
-  "-DSuperLU_LIBRARY_DIRS=/usr/local/superlu/4.3/lib64"
-  "-DSuperLU_LIBRARY_NAMES=superlu_4.3"
+  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+
+  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+  "-DEpetra_ENABLE_TESTS=OFF"
+  "-DEpetra_ENABLE_EXAMPLES=OFF"
+
+  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+  "-DEpetraExt_ENABLE_TESTS=OFF"
+  "-DEpetraExt_ENABLE_EXAMPLES=OFF"
+
+  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+  "-DIfpack_ENABLE_TESTS=OFF"
+  "-DIfpack_ENABLE_EXAMPLES=OFF"
+
+  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+  "-DAmesos_ENABLE_TESTS=OFF"
+  "-DAmesos_ENABLE_EXAMPLES=OFF"
+
+  "-DTrilinos_ENABLE_Belos:BOOL=ON"
+  "-DBelos_ENABLE_TESTS=OFF"
+  "-DBelos_ENABLE_EXAMPLES=OFF"
 )
 
 #

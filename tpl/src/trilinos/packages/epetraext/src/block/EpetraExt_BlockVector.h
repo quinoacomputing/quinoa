@@ -42,7 +42,6 @@
 #ifndef EPETRAEXT_BLOCKVECTOR_H
 #define EPETRAEXT_BLOCKVECTOR_H
 
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Vector.h" 
 #include "Teuchos_RCP.hpp"
 #include <vector>
@@ -93,34 +92,23 @@ class BlockVector: public Epetra_Vector {
   //@}
   
   //! Extract a single block from a Block Vector: block row is global, not a stencil value
-  int ExtractBlockValues( Epetra_Vector & BaseVec, long long BlockRow) const;
+  int ExtractBlockValues( Epetra_Vector & BaseVec, int BlockRow) const;
 
   //! Load a single block into a Block Vector: block row is global, not a stencil value
-  int LoadBlockValues(const Epetra_Vector & BaseVec, long long BlockRow);
+  int LoadBlockValues(const Epetra_Vector & BaseVec, int BlockRow);
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   //! Load entries into BlockVector with base vector indices offset by BlockRow
   int BlockSumIntoGlobalValues(int NumIndices, double* Values,
                                int* Indices, int BlockRow);
   //! Load entries into BlockVector with base vector indices offset by BlockRow
   int BlockReplaceGlobalValues(int NumIndices, double* Values,
                                int* Indices, int BlockRow);
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  //! Load entries into BlockVector with base vector indices offset by BlockRow
-  int BlockSumIntoGlobalValues(int NumIndices, double* Values,
-                               long long* Indices, long long BlockRow);
-  //! Load entries into BlockVector with base vector indices offset by BlockRow
-  int BlockReplaceGlobalValues(int NumIndices, double* Values,
-                               long long* Indices, long long BlockRow);
-#endif
 
   //! Return Epetra_Vector for given block row
-  Teuchos::RCP<const Epetra_Vector> GetBlock(long long BlockRow) const;
+  Teuchos::RCP<const Epetra_Vector> GetBlock(int BlockRow) const;
 
   //! Return Epetra_Vector for given block row
-  Teuchos::RCP<Epetra_Vector> GetBlock(long long BlockRow);
+  Teuchos::RCP<Epetra_Vector> GetBlock(int BlockRow);
 
   //! Return base map
   const Epetra_BlockMap& GetBaseMap() const;
@@ -129,7 +117,7 @@ class BlockVector: public Epetra_Vector {
 
   Epetra_BlockMap BaseMap_;
 
-  long long Offset_;
+  int Offset_;
 
 };
 

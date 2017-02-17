@@ -723,6 +723,17 @@ protected:
 
 public:
 
+  /** \name Deprecated . */
+  //@{
+
+  /** \brief Deprecated . */
+  THYRA_DEPRECATED void scalarProds(
+    const MultiVectorBase<Scalar>& X, const MultiVectorBase<Scalar>& Y,
+    Scalar scalarProds[]
+    ) const;
+
+  //@}
+
 private:
   
   // Not defined and not to be called

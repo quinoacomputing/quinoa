@@ -49,7 +49,7 @@
 #include "Epetra_Distributor.h"
 
 //==============================================================================
-Poisson2dOperator::Poisson2dOperator(int nx, int ny, const Epetra_Comm & comm)
+Poisson2dOperator::Poisson2dOperator(int nx, int ny, const Epetra_Comm & comm) 
   : nx_(nx),
     ny_(ny),
     useTranspose_(false),
@@ -60,16 +60,16 @@ Poisson2dOperator::Poisson2dOperator(int nx, int ny, const Epetra_Comm & comm)
     importMap_(0),
     importer_(0),
     importX_(0),
-    Label_ ("") {
+    Label_(0) {
 
   Label_ = "2D Poisson Operator";
   int numProc = comm.NumProc(); // Get number of processors
   int myPID = comm.MyPID(); // My rank
   if (2*numProc > ny) { // ny must be >= 2*numProc (to avoid degenerate cases)
     ny = 2*numProc; ny_ = ny;
-    std::cout << " Increasing ny to " << ny << " to avoid degenerate distribution on " << numProc << " processors." << std::endl;
+    cout << " Increasing ny to " << ny << " to avoid degenerate distribution on " << numProc << " processors." << endl;
   }
-
+  
   int chunkSize = ny/numProc;
   int remainder = ny%numProc;
 
@@ -83,22 +83,22 @@ Poisson2dOperator::Poisson2dOperator(int nx, int ny, const Epetra_Comm & comm)
     // Build import GID list to build import map and importer
     if (myPID>0) numImports_ += nx;
     if (myPID+1<numProc) numImports_ += nx;
-
+    
     if (numImports_>0) importIDs_ = new int[numImports_];
     int * ptr = importIDs_;
     int minGID = map_->MinMyGID();
     int maxGID = map_->MaxMyGID();
-
+    
     if (myPID>0) for (int i=0; i< nx; i++) *ptr++ = minGID - nx + i;
     if (myPID+1<numProc) for (int i=0; i< nx; i++) *ptr++ = maxGID + i +1;
-
+    
     // At the end of the above step importIDs_ will have a list of global IDs that are needed
-    // to compute the matrix multiplication operation on this processor.  Now build import map
+    // to compute the matrix multiplication operation on this processor.  Now build import map 
     // and importer
-
-
+    
+    
     importMap_ = new Epetra_Map(-1, numImports_, importIDs_, 0, comm_);
-
+    
     importer_ = new Epetra_Import(*importMap_, *map_);
 
   }
@@ -150,13 +150,13 @@ int Poisson2dOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y)
       y[0] = 4.0*x[0]-x[nx]-x[1];
       y[nx-1] = 4.0*x[nx-1]-x[nx-2]-x[nx+nx-1];
       for (int ix=1; ix< nx-1; ix++)
-        y[ix] = 4.0*x[ix]-x[ix-1]-x[ix+1]-x[ix+nx];
+	y[ix] = 4.0*x[ix]-x[ix-1]-x[ix+1]-x[ix+nx];
     }
     else {
       y[0] = 4.0*x[0]-x[nx]-x[1]-importx1[0];
       y[nx-1] = 4.0*x[nx-1]-x[nx-2]-x[nx+nx-1]-importx1[nx-1];
       for (int ix=1; ix< nx-1; ix++)
-        y[ix] = 4.0*x[ix]-x[ix-1]-x[ix+1]-x[ix+nx]-importx1[ix];
+	y[ix] = 4.0*x[ix]-x[ix-1]-x[ix+1]-x[ix+nx]-importx1[ix];
     }
     if (comm_.MyPID()+1==comm_.NumProc()) {
       int curxy = nx*myny_-1;
@@ -164,8 +164,8 @@ int Poisson2dOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y)
       curxy -= (nx-1);
       y[curxy] = 4.0*x[curxy]-x[curxy-nx]-x[curxy+1];
       for (int ix=1; ix< nx-1; ix++) {
-        curxy++;
-        y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx];
+	curxy++;
+	y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx];
       }
     }
     else {
@@ -174,8 +174,8 @@ int Poisson2dOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y)
       curxy -= (nx-1);
       y[curxy] = 4.0*x[curxy]-x[curxy-nx]-x[curxy+1]-importx2[0];
       for (int ix=1; ix< nx-1; ix++) {
-        curxy++;
-        y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx]-importx2[ix];
+	curxy++;
+	y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx]-importx2[ix];
       }
     }
     for (int iy=1; iy< myny_-1; iy++) {
@@ -184,8 +184,8 @@ int Poisson2dOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y)
       curxy -= (nx-1);
       y[curxy] = 4.0*x[curxy]-x[curxy-nx]-x[curxy+1]-x[curxy+nx];
       for (int ix=1; ix< nx-1; ix++) {
-        curxy++;
-        y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx]-x[curxy+nx];
+	curxy++;
+	y[curxy] = 4.0*x[curxy]-x[curxy-1]-x[curxy+1]-x[curxy-nx]-x[curxy+nx];
       }
     }
   }

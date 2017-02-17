@@ -1,8 +1,9 @@
+INCLUDE(TribitsAddExecutableAndTest)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  FEVbrMatrix_test
+  FEVbrMatrix_test  
   SOURCES cxx_main.cpp ExecuteTestProblems.cpp
-  TESTONLYLIBS  epetratest
+  DEPLIBS  epetratest
   ARGS -v
   COMM mpi serial
   NUM_MPI_PROCS 1

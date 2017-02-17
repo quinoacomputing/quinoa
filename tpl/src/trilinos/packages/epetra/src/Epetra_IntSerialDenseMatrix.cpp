@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -75,7 +75,7 @@ Epetra_IntSerialDenseMatrix::Epetra_IntSerialDenseMatrix(int NumRows, int NumCol
 		throw ReportError("Shape returned non-zero (" + toString(errorcode) + ").", -2);
 }
 //=============================================================================
-Epetra_IntSerialDenseMatrix::Epetra_IntSerialDenseMatrix(Epetra_DataAccess CV_in, int* A_in, int lda,
+Epetra_IntSerialDenseMatrix::Epetra_IntSerialDenseMatrix(Epetra_DataAccess CV_in, int* A_in, int lda, 
 																												 int NumRows, int NumCols)
   : Epetra_Object("Epetra::IntSerialDenseMatrix"),
 		CV_(CV_in),
@@ -142,15 +142,15 @@ int Epetra_IntSerialDenseMatrix::Reshape(int NumRows, int NumCols) {
 	if(newsize > 0) {
 		// Allocate space for new matrix
 		A_tmp = new int[newsize];
-		for(int k = 0; k < newsize; k++)
+		for(int k = 0; k < newsize; k++) 
 			A_tmp[k] = 0; // Zero out values
 		int M_tmp = EPETRA_MIN(M_, NumRows);
 		int N_tmp = EPETRA_MIN(N_, NumCols);
-		if(A_ != 0)
+		if(A_ != 0) 
 			CopyMat(A_, LDA_, M_tmp, N_tmp, A_tmp, NumRows); // Copy principal submatrix of A to new A
 	}
-
-  CleanupData(); // Get rid of anything that might be already allocated
+  
+  CleanupData(); // Get rid of anything that might be already allocated  
   M_ = NumRows;
   N_ = NumCols;
   LDA_ = M_;
@@ -189,8 +189,8 @@ Epetra_IntSerialDenseMatrix::~Epetra_IntSerialDenseMatrix()
 void Epetra_IntSerialDenseMatrix::CleanupData()
 {
   if(A_Copied_)
-		delete[] A_;
-	A_ = 0;
+		delete[] A_; 
+	A_ = 0; 
 	A_Copied_ = false;
 	M_ = 0;
 	N_ = 0;
@@ -204,8 +204,8 @@ Epetra_IntSerialDenseMatrix& Epetra_IntSerialDenseMatrix::operator = (const Epet
 		return(*this); // Special case of both are views to same data.
 
 	if(std::strcmp(Label(), Source.Label()) != 0)
-		throw ReportError("operator= type mismatch (lhs = " + std::string(Label()) +
-      ", rhs = " + std::string(Source.Label()) + ").", -5);
+		throw ReportError("operator= type mismatch (lhs = " + string(Label()) + 
+											", rhs = " + string(Source.Label()) + ").", -5);
 	
 	if(Source.CV_ == View) {
 		if(CV_ == Copy) { // C->V only
@@ -295,8 +295,8 @@ int Epetra_IntSerialDenseMatrix::MakeViewOf(const Epetra_IntSerialDenseMatrix& S
 }
 
 //=============================================================================
-void Epetra_IntSerialDenseMatrix::CopyMat(int* Source, int Source_LDA, int NumRows, int NumCols,
-																					int* Target, int Target_LDA)
+void Epetra_IntSerialDenseMatrix::CopyMat(int* Source, int Source_LDA, int NumRows, int NumCols, 
+																					int* Target, int Target_LDA) 
 {
   int i, j;
   int* targetPtr = Target;
@@ -317,7 +317,7 @@ int Epetra_IntSerialDenseMatrix::OneNorm() {
 	for(int j = 0; j < N_; j++) {
 		int sum = 0;
 		ptr = A_ + j*LDA_;
-		for(int i = 0; i < M_; i++)
+		for(int i = 0; i < M_; i++) 
 			sum += std::abs(*ptr++);
 		anorm = EPETRA_MAX(anorm, sum);
 	}
@@ -328,7 +328,7 @@ int Epetra_IntSerialDenseMatrix::OneNorm() {
 int Epetra_IntSerialDenseMatrix::InfNorm() {	
 	int anorm = 0;
 	int* ptr = 0;
-	// Loop across columns in inner loop.  Most expensive memory access, but
+	// Loop across columns in inner loop.  Most expensive memory access, but 
 	// requires no extra storage.
 	for(int i = 0; i < M_; i++) {
 		int sum = 0;
@@ -343,26 +343,26 @@ int Epetra_IntSerialDenseMatrix::InfNorm() {
 }
 
 //=========================================================================
-void Epetra_IntSerialDenseMatrix::Print(std::ostream& os) const {
+void Epetra_IntSerialDenseMatrix::Print(ostream& os) const {
 	if(CV_ == Copy)
-		os << "Data access mode: Copy" << std::endl;
+		os << "Data access mode: Copy" << endl;
 	else
-		os << "Data access mode: View" << std::endl;
+		os << "Data access mode: View" << endl;
 	if(A_Copied_)
-		os << "A_Copied: yes" << std::endl;
+		os << "A_Copied: yes" << endl;
 	else
-		os << "A_Copied: no" << std::endl;
-	os << "Rows(M): " << M_ << std::endl;
-	os << "Columns(N): " << N_ << std::endl;
-	os << "LDA: " << LDA_ << std::endl;
+		os << "A_Copied: no" << endl;
+	os << "Rows(M): " << M_ << endl;
+	os << "Columns(N): " << N_ << endl;
+	os << "LDA: " << LDA_ << endl;
 	if(M_ == 0 || N_ == 0)
-		os << "(matrix is empty, no values to display)" << std::endl;
+		os << "(matrix is empty, no values to display)" << endl;
 	else
 		for(int i = 0; i < M_; i++) {
 			for(int j = 0; j < N_; j++){
 				os << (*this)(i,j) << " ";
 			}
-			os << std::endl;
+			os << endl;
 		}
 }
 

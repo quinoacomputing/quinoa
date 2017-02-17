@@ -86,7 +86,7 @@ DiagonalQuadraticResponseOnlyModelEvaluator<Scalar>::DiagonalQuadraticResponseOn
   }
 
   // Locally replicated space for g
-  g_space_ = Thyra::locallyReplicatedDefaultSpmdVectorSpace<Scalar>(comm_, 1);
+  g_space_ = Thyra::defaultSpmdVectorSpace<Scalar>(comm_, 1, 1);
 
   // Distributed space for p
   p_space_ = Thyra::defaultSpmdVectorSpace<Scalar>(comm_, localDim, -1);
@@ -245,6 +245,7 @@ Thyra::ModelEvaluatorBase::OutArgs<Scalar>
 DiagonalQuadraticResponseOnlyModelEvaluator<Scalar>::createOutArgsImpl() const
 {
   typedef Thyra::ModelEvaluatorBase MEB;
+  typedef MEB::DerivativeSupport DS;
   MEB::OutArgsSetup<Scalar> outArgs;
   outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(Np_,Ng_);
@@ -267,6 +268,7 @@ void DiagonalQuadraticResponseOnlyModelEvaluator<Scalar>::evalModelImpl(
   using Thyra::ConstDetachedSpmdVectorView;
   using Thyra::DetachedSpmdVectorView;
   typedef Thyra::ModelEvaluatorBase MEB;
+  typedef MEB::DerivativeMultiVector<Scalar> DMV;
 
   const ConstDetachedSpmdVectorView<Scalar> p(inArgs.get_p(0));
   const ConstDetachedSpmdVectorView<Scalar> ps(ps_);

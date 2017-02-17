@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( BLACS
+TRIBITS_TPL_DECLARE_LIBRARIES( BLACS
   REQUIRED_HEADERS Bdef.h
   REQUIRED_LIBS_NAMES blacs blacsF77init
   )

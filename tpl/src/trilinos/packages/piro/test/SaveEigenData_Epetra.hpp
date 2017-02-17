@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-//
+// 
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-//
+// 
 // ************************************************************************
 // @HEADER
 
@@ -58,10 +58,13 @@ class SaveEigenData_Epetra : public LOCA::SaveEigenData::AbstractStrategy {
 public:
 
   //! Constructor
-  explicit SaveEigenData_Epetra(Teuchos::ParameterList& params);
+  SaveEigenData_Epetra(Teuchos::ParameterList& locaParams);
+    
+  //! Destructor
+  virtual ~SaveEigenData_Epetra();
 
   //! Save eigenvalues/eigenvectors
-  virtual NOX::Abstract::Group::ReturnType
+  virtual NOX::Abstract::Group::ReturnType 
   save(Teuchos::RCP< std::vector<double> >& evals_r,
 	 Teuchos::RCP< std::vector<double> >& evals_i,
 	 Teuchos::RCP< NOX::Abstract::MultiVector >& evecs_r,
@@ -73,7 +76,7 @@ private:
   SaveEigenData_Epetra(const SaveEigenData_Epetra&);
 
   //! Private to prohibit copying
-  SaveEigenData_Epetra& operator=(const SaveEigenData_Epetra&);
+  SaveEigenData_Epetra& operator = (const SaveEigenData_Epetra&);
 
 protected:
 
@@ -81,5 +84,4 @@ protected:
   int nsave;
 
 }; // Class SaveEigenData_Epetra
-
-#endif /* SAVEEIGENDATA_EPETRA_H */
+#endif

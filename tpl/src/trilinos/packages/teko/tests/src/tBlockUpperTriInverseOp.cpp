@@ -55,11 +55,9 @@
 #include "Thyra_MultiVectorBase.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 #include "Thyra_VectorStdOps.hpp"
-#include "Thyra_DefaultScaledAdjointLinearOp.hpp"
 
 #include "Teko_Utilities.hpp"
 #include "Teko_BlockUpperTriInverseOp.hpp"
-#include "Test_Utils.hpp"
 
 namespace Teko {
 namespace Test {
@@ -67,7 +65,7 @@ namespace Test {
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-static const RCP<const Thyra::LinearOpBase<double> > build2x2op(const RCP<const Epetra_Map> & map,double a,double b,double c,double d)
+static const RCP<const Thyra::LinearOpBase<double> > build2x2(const RCP<const Epetra_Map> & map,double a,double b,double c,double d)
 {
    int indicies[2];
    double row0[2];
@@ -78,8 +76,8 @@ static const RCP<const Thyra::LinearOpBase<double> > build2x2op(const RCP<const 
 
    // build a CrsMatrix
    RCP<Epetra_CrsMatrix> blk  = rcp(new Epetra_CrsMatrix(Copy,*map,2));
-   row0[0] = a; row0[1] = b;
-   row1[0] = c; row1[1] = d;
+   row0[0] = a; row0[1] =  b; 
+   row1[0] = c; row1[1] = d; 
    blk->InsertGlobalValues(0,2,&row0[0],&indicies[0]);
    blk->InsertGlobalValues(1,2,&row1[0],&indicies[0]);
    blk->FillComplete();
@@ -103,27 +101,27 @@ void tBlockUpperTriInverseOp::initializeTest()
    A_->beginBlockFill(3,3);
 
    // build 0,0 matrix
-   blk = build2x2op(map,  1.0,  3.0,
+   blk = build2x2(map,  1.0,  3.0,
                         2.0, -1.0);
    A_->setBlock(0,0,blk);
 
    // build 0,1 matrix
-   blk = build2x2op(map,  2.0,  9.0,
+   blk = build2x2(map,  2.0,  9.0,
                         8.0,  3.0);
    A_->setBlock(0,1,blk);
 
    // build 1,1 matrix
-   blk = build2x2op(map,  7.0,  8.0,
+   blk = build2x2(map,  7.0,  8.0,
                        -2.0,  4.0);
    A_->setBlock(1,1,blk);
 
    // build 1,2 matrix
-   blk = build2x2op(map, -1.0,  6.0,
+   blk = build2x2(map, -1.0,  6.0,
                         2.0,  1.0);
    A_->setBlock(1,2,blk);
 
    // build 2,2 matrix
-   blk = build2x2op(map,  3.0,  9.0,
+   blk = build2x2(map,  3.0,  9.0,
                         7.0,  1.0);
    A_->setBlock(2,2,blk);
 
@@ -134,34 +132,34 @@ void tBlockUpperTriInverseOp::initializeTest()
    invA_->beginBlockFill(3,3);
 
    // build 0,0 matrix
-   blk = build2x2op(map,  0.142857142857143,   0.428571428571429,
+   blk = build2x2(map,  0.142857142857143,   0.428571428571429,
                         0.285714285714286,  -0.142857142857143);
    invA_->setBlock(0,0,blk);
    invDiag_.push_back(blk);
 
    // build 0,1 matrix
-   blk = build2x2op(map, -0.454545454545455,   0.266233766233766,
+   blk = build2x2(map, -0.454545454545455,   0.266233766233766,
                        -0.045454545454545,  -0.444805194805195);
    invA_->setBlock(0,1,blk);
 
    // build 0,2 matrix
-   blk = build2x2op(map,  0.303571428571429,  -0.271103896103896, 
+   blk = build2x2(map,  0.303571428571429,  -0.271103896103896, 
                         0.069642857142857,   0.090746753246753);
    invA_->setBlock(0,2,blk);
 
    // build 1,1 matrix
-   blk = build2x2op(map,  0.090909090909091,  -0.181818181818182,
+   blk = build2x2(map,  0.090909090909091,  -0.181818181818182,
                         0.045454545454545,   0.159090909090909);
    invA_->setBlock(1,1,blk);
    invDiag_.push_back(blk);
 
    // build 1,2 matrix
-   blk = build2x2op(map, -0.050000000000000,  0.086363636363636,
+   blk = build2x2(map, -0.050000000000000,  0.086363636363636,
                        -0.045833333333333, -0.019318181818182);
    invA_->setBlock(1,2,blk);
 
    // build 2,2 matrix
-   blk = build2x2op(map, -0.016666666666667,   0.150000000000000, 
+   blk = build2x2(map, -0.016666666666667,   0.150000000000000, 
                         0.116666666666667,  -0.050000000000000);
    invA_->setBlock(2,2,blk);
    invDiag_.push_back(blk);
@@ -185,12 +183,6 @@ int tBlockUpperTriInverseOp::runTest(int verbosity,std::ostream & stdstrm,std::o
 
    status = test_alphabeta(verbosity,failstrm);
    Teko_TEST_MSG(stdstrm,1,"   \"alphabeta\" ... PASSED","   \"alphabeta\" ... FAILED");
-   allTests &= status;
-   failcount += status ? 0 : 1;
-   totalrun++;
-
-   status = test_applyTranspose(verbosity,failstrm);
-   Teko_TEST_MSG(stdstrm,1,"   \"applyTranspose\" ... PASSED","   \"applyTranspose\" ... FAILED");
    allTests &= status;
    failcount += status ? 0 : 1;
    totalrun++;
@@ -262,30 +254,7 @@ bool tBlockUpperTriInverseOp::test_apply(int verbosity,std::ostream & os)
    tester.show_all_tests(true);
    std::stringstream ss;
    Teuchos::FancyOStream fos(Teuchos::rcpFromRef(ss),"      |||");
-   const bool result = tester.compare( *invA_, *invTri, Teuchos::ptrFromRef(fos) );
-   TEST_ASSERT(result,
-          std::endl << "   tBlockUpperTriInverseOp::test_apply "
-                    << ": Comparing implicitly generated operator to exact operator");
-     if(not result || verbosity>=10) 
-        os << ss.str(); 
-
-   return allPassed;
-}
-
-bool tBlockUpperTriInverseOp::test_applyTranspose(int verbosity,std::ostream & os)
-{
-   bool status = false;
-   bool allPassed = true;
-
-   RCP<Thyra::PhysicallyBlockedLinearOpBase<double> > U = getUpperTriBlocks(A_);
-   RCP<const Thyra::LinearOpBase<double> > invTri = Thyra::transpose(createBlockUpperTriInverseOp(U,invDiag_));
-   RCP<const Thyra::LinearOpBase<double> > invA_op = invA_;
-
-   Thyra::LinearOpTester<double> tester;
-   tester.show_all_tests(true);
-   std::stringstream ss;
-   Teuchos::FancyOStream fos(Teuchos::rcpFromRef(ss),"      |||");
-   const bool result = tester.compare( *Thyra::transpose(invA_op), *invTri, Teuchos::ptrFromRef(fos) );
+   const bool result = tester.compare( *invA_, *invTri, &fos );
    TEST_ASSERT(result,
           std::endl << "   tBlockUpperTriInverseOp::test_apply "
                     << ": Comparing implicitly generated operator to exact operator");

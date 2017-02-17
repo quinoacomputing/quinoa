@@ -1,41 +1,28 @@
 /*@HEADER
 // ***********************************************************************
-//
+// 
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ***********************************************************************
 //@HEADER
 */
@@ -153,14 +140,14 @@ int Ifpack_SPARSKIT::Compute()
   int n   = Matrix().NumMyRows();
   int nnz = Matrix().NumMyNonzeros();
 
-  std::vector<double> a(nnz);
-  std::vector<int>    ja(nnz);
-  std::vector<int>    ia(n + 1);
+  vector<double> a(nnz);
+  vector<int>    ja(nnz);
+  vector<int>    ia(n + 1);
 
   const int MaxNumEntries = Matrix().MaxNumEntries();
 
-  std::vector<double> Values(MaxNumEntries);
-  std::vector<int>    Indices(MaxNumEntries);
+  vector<double> Values(MaxNumEntries);
+  vector<int>    Indices(MaxNumEntries);
 
   int count = 0;
 
@@ -206,8 +193,8 @@ int Ifpack_SPARSKIT::Compute()
   jlu_.resize(iwk);
   ju_.resize(n + 1);
 
-  std::vector<int>    jw(n + 1);
-  std::vector<double> w(n + 1);
+  vector<int>    jw(n + 1);
+  vector<double> w(n + 1);
 
   if (Type_ == "ILUT")
   {
@@ -243,7 +230,7 @@ int Ifpack_SPARSKIT::Compute()
   }
   else if (Type_ == "ILUK")
   {
-    std::vector<int> levs(iwk);
+    vector<int> levs(iwk);
     jw.resize(3 * n);
     F77_ILUK(&n, &a[0], &ja[0], &ia[0], &lfil_, 
              &alu_[0], &jlu_[0], &ju_[0], &levs[0], &iwk, &w[0], &jw[0], &ierr);
@@ -281,7 +268,7 @@ int Ifpack_SPARSKIT::ApplyInverse(const Epetra_MultiVector& X,
   // still need to fix support for permutation
   if (Type_ == "ILUTP" || Type_ == "ILUDP")
   {
-    std::vector<double> tmp(n);
+    vector<double> tmp(n);
     for (int j = 0 ; j < n ; ++j)
       tmp[iperm_[j]] = Y[0][j];
     for (int j = 0 ; j < n ; ++j)

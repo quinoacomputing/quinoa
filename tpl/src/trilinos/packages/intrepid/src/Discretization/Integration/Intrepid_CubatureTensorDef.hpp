@@ -57,9 +57,9 @@ CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::CubatureTensor(std::vector< Teuch
 
   cubatures_ = cubatures;
 
+  std::vector<int> tmp;
   unsigned numDegrees = 0;
   for (unsigned i=0; i<numCubs; i++) {
-    std::vector<int> tmp;
     cubatures[i]->getAccuracy(tmp);
     numDegrees += tmp.size();
   }
@@ -68,7 +68,6 @@ CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::CubatureTensor(std::vector< Teuch
   int count  = 0;
   dimension_ = 0;
   for (unsigned i=0; i<numCubs; i++) {
-    std::vector<int> tmp;
     cubatures[i]->getAccuracy(tmp);
     for (unsigned j=0; j<tmp.size(); j++) {
       degree_[count] = tmp[j];
@@ -88,10 +87,9 @@ CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::CubatureTensor(Teuchos::RCP<Cubat
   cubatures_[1] = cubature2;
 
   degree_.assign(2, 0);
-  for (unsigned i=0; i<2; i++){
-      std::vector<int> d;
-      cubatures_[i]->getAccuracy(d); degree_[i] = d[0];
-  }
+  std::vector<int> d(1);
+  cubatures_[0]->getAccuracy(d); degree_[0] = d[0];
+  cubatures_[1]->getAccuracy(d); degree_[1] = d[0];
 
   dimension_ = cubatures_[0]->getDimension() + cubatures_[1]->getDimension();
 }
@@ -108,10 +106,10 @@ CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::CubatureTensor(Teuchos::RCP<Cubat
   cubatures_[2] = cubature3;
 
   degree_.assign(3, 0);
-  for (unsigned i=0; i<3; i++){
-      std::vector<int> d;
-      cubatures_[i]->getAccuracy(d); degree_[i] = d[0];
-  }
+  std::vector<int> d(1);
+  cubatures_[0]->getAccuracy(d); degree_[0] = d[0];
+  cubatures_[1]->getAccuracy(d); degree_[1] = d[0];
+  cubatures_[2]->getAccuracy(d); degree_[2] = d[0];
 
   dimension_ = cubatures_[0]->getDimension() + cubatures_[1]->getDimension() + cubatures_[2]->getDimension();
 }
@@ -125,7 +123,7 @@ CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::CubatureTensor(Teuchos::RCP<Cubat
     cubatures_[i] = cubature;
   }
 
-  std::vector<int> d;
+  std::vector<int> d(1);
   cubatures_[0]->getAccuracy(d);
   degree_.assign(n,d[0]);
 
@@ -194,14 +192,6 @@ void CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::getCubature(ArrayPoint  & cu
 
 } // end getCubature
 
-template<class Scalar, class ArrayPoint, class ArrayWeight>
-void CubatureTensor<Scalar,ArrayPoint,ArrayWeight>::getCubature(ArrayPoint& cubPoints,
-                                                                ArrayWeight& cubWeights,
-                                                                ArrayPoint& cellCoords) const
-{
-    TEUCHOS_TEST_FOR_EXCEPTION( (true), std::logic_error,
-                      ">>> ERROR (CubatureTensor): Cubature defined in reference space calling method for physical space cubature.");
-}
 
 
 template <class Scalar, class ArrayPoint, class ArrayWeight>

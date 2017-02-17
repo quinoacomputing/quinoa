@@ -55,20 +55,6 @@ using Teuchos::RCP;
 
 using Thyra::ProductMultiVectorBase;
 
-void 
-BlockImplicitLinearOp::
-implicitApply(const Thyra::EOpTransp M_trans,
-              const BlockedMultiVector & x, BlockedMultiVector & y,
-              const double alpha, const double beta) const
-{
-   TEUCHOS_TEST_FOR_EXCEPTION(M_trans!=Thyra::NOTRANS, std::runtime_error,
-     "Linear operators of inherited type BlockImplicitLinearOp "
-     "cannot handle conjugation (yet!)");
-
-   // call apply
-   implicitApply(x,y,alpha,beta);
-}
-
 bool BlockImplicitLinearOp::opSupportedImpl(const Thyra::EOpTransp M_trans) const
 {
   return (M_trans == Thyra::NOTRANS);
@@ -82,6 +68,10 @@ void BlockImplicitLinearOp::applyImpl(
   const double beta
   ) const
 {
+   TEUCHOS_TEST_FOR_EXCEPTION(M_trans!=Thyra::NOTRANS, std::runtime_error,
+     "Linear operators of inherited type BlockImplicitLinearOp "
+     "cannot handle conjugation (yet!)");
+
    // cast source vector
    RCP<const ProductMultiVectorBase<double> > src =
      rcp_dynamic_cast<const ProductMultiVectorBase<double> >(rcpFromRef(x));
@@ -92,7 +82,7 @@ void BlockImplicitLinearOp::applyImpl(
      rcp_dynamic_cast<ProductMultiVectorBase<double> >(rcpFromPtr(y));
 
    // call apply
-   implicitApply(M_trans,srcX,destY,alpha,beta);
+   implicitApply(srcX,destY,alpha,beta);
 }
  
 } // end namespace Teko

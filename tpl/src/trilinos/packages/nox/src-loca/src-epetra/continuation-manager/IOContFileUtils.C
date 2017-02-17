@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
+// 
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -49,24 +49,23 @@
 
 #include "IOContFileUtils.H"
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include "iostream"
+#include "sstream"
 
 using namespace std;
 
-bool WriteHeaderToContFile( const std::string & fileName,
+bool WriteHeaderToContFile( const string & fileName,
     const Teuchos::ParameterList & fileParams )
 {
   // The file to open
-  std::ofstream oFile(fileName.c_str());
+  ofstream oFile(fileName.c_str());
 
   // Writing the header
   oFile << "#" << setw(6) << "ID";
 
   // Looping on the parameters
   Teuchos::ParameterList::ConstIterator i;
-  for (i = fileParams.begin(); i !=fileParams.end(); ++i)
+  for (i = fileParams.begin(); i !=fileParams.end(); ++i) 
     oFile << setw(15) << fileParams.name(i);
   oFile << std::endl;
 
@@ -76,20 +75,20 @@ bool WriteHeaderToContFile( const std::string & fileName,
   return true;
 }
 
-bool UpdateContFile( const std::string & fileName,
+bool UpdateContFile( const string & fileName,
     const int & idStep,
     const Teuchos::ParameterList & fileParams )
 {
 
   // The file to open
-  std::ofstream oFile(fileName.c_str(), ios_base::app);
+  ofstream oFile(fileName.c_str(), ios_base::app);
 
   // Writing the id
   oFile << scientific << setw(7)  << idStep;
 
   // Looping on the parameters
   Teuchos::ParameterList::ConstIterator i;
-  for (i = fileParams.begin(); i !=fileParams.end(); ++i)
+  for (i = fileParams.begin(); i !=fileParams.end(); ++i) 
     oFile << scientific << setw(15) << fileParams.entry(i);
   oFile << std::endl;
 
@@ -99,21 +98,21 @@ bool UpdateContFile( const std::string & fileName,
   return true;
 }
 
-bool RestartContFile( const std::string & fileName, const int & idStep )
+bool RestartContFile( const string & fileName, const int & idStep )
 {
   // Copying the continuation in a backup file
-  std::string fileNameBak = fileName + ".bak";
-  std::string command = "cp " + fileName + " " + fileNameBak;
-  TEUCHOS_ASSERT_EQUALITY(0, system(command.c_str()));
+  string fileNameBak = fileName + ".bak";
+  string command = "cp " + fileName + " " + fileNameBak;
+  system (command.c_str());
 
   // String of the line to cut from
-  std::ostringstream os;
-  os << idStep + 1;
-  std::string lineNumber = os.str();
+  ostringstream ostream;
+  ostream << idStep + 1; 
+  string lineNumber = ostream.str();
 
   // Cutting the file
   command =  "sed '" + lineNumber + ",$ d' " + fileNameBak + " > " + fileName;
-  TEUCHOS_ASSERT_EQUALITY(0, system(command.c_str()));
+  system (command.c_str());
 
   return true;
 }
@@ -121,16 +120,18 @@ bool RestartContFile( const std::string & fileName, const int & idStep )
 bool TouchContFileParameters( Teuchos::ParameterList & fileParams )
 {
   // Either int or double type
+  int dummyInt;
+  double dummyDouble;
 
   // Looping the list
   Teuchos::ParameterList::ConstIterator i;
   for (i = fileParams.begin(); i !=fileParams.end(); ++i) {
 
     if (fileParams.isType<int>(fileParams.name(i)))
-      fileParams.get<int>(fileParams.name(i));
+      dummyInt = fileParams.get<int>(fileParams.name(i));
 
     if (fileParams.isType<double>(fileParams.name(i)))
-      fileParams.get<double>(fileParams.name(i));
+      dummyDouble = fileParams.get<double>(fileParams.name(i));
   }
 
   return true;

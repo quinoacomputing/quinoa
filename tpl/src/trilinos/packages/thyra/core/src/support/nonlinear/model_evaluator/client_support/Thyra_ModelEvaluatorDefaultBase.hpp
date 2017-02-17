@@ -1109,12 +1109,9 @@ ModelEvaluatorDefaultBase<Scalar>::determineDefaultDerivMvAdjointSupport(
   const bool implSupportsMv =
     ( derivSupportImpl.supports(MEB::DERIV_MV_BY_COL)
       || derivSupportImpl.supports(MEB::DERIV_TRANS_MV_BY_ROW) );
-  const bool implLacksMvOrientSupport =
-    ( !derivSupportImpl.supports(MEB::DERIV_MV_BY_COL)
-      || !derivSupportImpl.supports(MEB::DERIV_TRANS_MV_BY_ROW) );
   const bool bothSpacesHaveInCoreViews =
     ( fnc_space.hasInCoreView() && var_space.hasInCoreView() );
-  if ( implSupportsMv && implLacksMvOrientSupport && bothSpacesHaveInCoreViews ) {
+  if ( implSupportsMv && bothSpacesHaveInCoreViews ) {
     return DefaultDerivMvAdjointSupport(
       derivSupportImpl.supports(MEB::DERIV_MV_BY_COL)
       ? MEB::DERIV_TRANS_MV_BY_ROW

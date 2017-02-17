@@ -1,3 +1,45 @@
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
+
 
 #include <Teuchos_ConfigDefs.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
@@ -11,6 +53,51 @@
 #include <limits>
 
 namespace {
+
+TEUCHOS_UNIT_TEST(CSRMatCSVec, FillableVec_1)
+{
+  fei::FillableVec fv;
+
+  if (fv.hasEntry(0)) {
+    throw std::runtime_error("FillableVec failed 1");
+  }
+
+  bool test_passed = true;
+  try {
+    fv.getEntry(0);
+    test_passed = false;
+  }
+  catch(...) {}
+
+  if (test_passed == false) {
+    throw std::runtime_error("FillableVec failed 2");
+  }
+
+  fv.addEntry(0, 0.0);
+  fv.addEntry(1, 1.0);
+  fv.putEntry(2, 2.0);
+  fv.addEntry(2, 2.0);
+
+  test_passed = true;
+  try {
+    double coef = fv.getEntry(2);
+    const double fei_eps = std::numeric_limits<double>::epsilon();
+    if (std::abs(coef - 4.0) > fei_eps) test_passed = false;
+  }
+  catch(...) {test_passed = false;}
+
+  if (test_passed == false) {
+    throw std::runtime_error("FillableVec failed 3");
+  }
+
+  if (!fv.hasEntry(1)) {
+    throw std::runtime_error("FillableVec failed 4");
+  }
+
+  if (fv.size() != 3) {
+    throw std::runtime_error("FillableVec failed 5");
+  }
+}
 
 TEUCHOS_UNIT_TEST(CSRMatCSVec, FillableMat_1)
 {
@@ -38,7 +125,7 @@ TEUCHOS_UNIT_TEST(CSRMatCSVec, FillableMat_1)
 
   test_passed = true;
   try {
-    const fei::CSVec* row = fm.getRow(2);
+    const fei::FillableVec* row = fm.getRow(2);
     if (row->size() != 1) test_passed = false;
   }
   catch(...) {test_passed = false;}
@@ -68,13 +155,13 @@ TEUCHOS_UNIT_TEST(CSRMatCSVec, multiply_CSRMat_CSVec)
   fm.putCoef(2, 1, 2.1);
   fm.putCoef(2, 2, 2.2);
 
-  fei::CSVec x;
+  fei::FillableVec fv;
 
-  put_entry(x, 0, 1.0);
-  put_entry(x, 1, 2.0);
-  put_entry(x, 2, 3.0);
+  fv.putEntry(0, 1.0);
+  fv.putEntry(1, 2.0);
+  fv.putEntry(2, 3.0);
 
-  fei::CSVec y;
+  fei::CSVec x(fv), y;
   fei::CSRMat A(fm);
 
   fei::multiply_CSRMat_CSVec(A, x, y);
@@ -397,6 +484,28 @@ TEUCHOS_UNIT_TEST(CSRMatCSVec, csvec_add_entry)
 
 TEUCHOS_UNIT_TEST(CSRMatCSVec, constructors)
 {
+  fei::FillableVec fv;
+
+  fv.putEntry(0, 0.0);
+  fv.putEntry(1, 1.0);
+  fv.addEntry(2, 2.0);
+
+  fei::CSVec csv(fv);
+
+  std::vector<int>& inds = csv.indices();
+  std::vector<double>& coefs = csv.coefs();
+
+  if (inds.size() != fv.size()) {
+    throw std::runtime_error("CSVec ctor test failed.");
+  }
+
+  fei::FillableVec::iterator iter = fv.begin(), iter_end = fv.end();
+  unsigned i=0;
+  for(; iter != iter_end; ++iter, ++i) {
+    TEUCHOS_TEST_EQUALITY(inds[i], iter->first, out, success);
+    TEUCHOS_TEST_EQUALITY(coefs[i], iter->second, out, success);
+  }
+
   fei::FillableMat fm;
 
   fm.sumInCoef(0, 0, 0.0);

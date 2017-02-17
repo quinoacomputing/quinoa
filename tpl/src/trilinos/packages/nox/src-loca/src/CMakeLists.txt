@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -17,7 +18,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # Base headers
 APPEND_SET(HEADERS
   LOCA.H
-  )
+  ) 
 
 # Abstract
 APPEND_SET(HEADERS
@@ -90,7 +91,7 @@ APPEND_SET(HEADERS
   LOCA_MultiContinuation_NaturalConstraint.H
   LOCA_MultiContinuation_ArcLengthGroup.H
   LOCA_MultiContinuation_ArcLengthConstraint.H
-  LOCA_MultiContinuation_Factory.H
+  LOCA_MultiContinuation_Factory.H 
   )
 APPEND_SET(SOURCES
   LOCA_MultiContinuation_ExtendedVector.C

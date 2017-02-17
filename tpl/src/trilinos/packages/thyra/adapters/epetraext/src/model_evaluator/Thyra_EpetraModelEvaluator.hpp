@@ -294,8 +294,6 @@ public:
   /** \brief . */
   RCP<const VectorSpaceBase<double> > get_g_space(int j) const;
   /** \brief . */
-  Teuchos::ArrayView<const std::string> get_g_names(int j) const;
-  /** \brief . */
   ModelEvaluatorBase::InArgs<double> getNominalValues() const;
   /** \brief . */
   ModelEvaluatorBase::InArgs<double> getLowerBounds() const;
@@ -303,8 +301,6 @@ public:
   ModelEvaluatorBase::InArgs<double> getUpperBounds() const;
   /** \brief . */
   RCP<LinearOpBase<double> > create_W_op() const;
-  /** \brief Returns null currently. */
-  RCP<PreconditionerBase<double> > create_W_prec() const;
   /** \breif . */
   RCP<const LinearOpWithSolveFactoryBase<double> > get_W_factory() const;
   /** \brief . */
@@ -524,12 +520,6 @@ convert(
   const RCP<const Epetra_Map> &var_map
   );
 
-EpetraExt::ModelEvaluator::MPDerivative
-convert(
-  const ModelEvaluatorBase::MPDerivative &derivative,
-  const RCP<const Epetra_Map> &fnc_map,
-  const RCP<const Epetra_Map> &var_map
-  );
 
 } // namespace Thyra
 

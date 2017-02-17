@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -46,39 +46,7 @@ namespace Rythmos {
 enum AttemptedStepStatusFlag { PREDICT_AGAIN, CONTINUE_ANYWAY, REP_ERR_FAIL, REP_CONV_FAIL };
 
 /** \brief . */
-enum StepControlStrategyState { UNINITIALIZED, BEFORE_FIRST_STEP, MID_STEP, AFTER_CORRECTION, READY_FOR_NEXT_STEP, BEFORE_FIRST_STAGE, MID_STAGE };
-/*
- * 9/10/15- Sidafa
- * added BEFORE_FIRST_STAGE and MID_STAGE for Multi-Stage (RK) step control state
- *      - for the inter-stage control state
- */
-
-/** \brief Convert StepControlStrategyState to string. */
-inline
-const char* toString( const StepControlStrategyState stepControlStrategyState )
-{
-  switch(stepControlStrategyState) {
-    case UNINITIALIZED:
-      return "UNINITIALIZED";
-    case BEFORE_FIRST_STEP:
-      return "BEFORE_FIRST_STEP";
-    case MID_STEP:
-      return "MID_STEP";
-    case AFTER_CORRECTION:
-      return "AFTER_CORRECTION";
-    case READY_FOR_NEXT_STEP:
-      return "READY_FOR_NEXT_STEP";
-    case BEFORE_FIRST_STAGE:
-      return "BEFORE_FIRST_STAGE";
-    case MID_STAGE:
-      return "MID_STAGE";
-#ifdef HAVE_RYTHMOS_DEBUG
-    default:
-      TEUCHOS_TEST_FOR_EXCEPT("Invalid enum value!");
-#endif
-  }
-  return 0; // Should never get here!
-}
+enum StepControlStrategyState { UNINITIALIZED, BEFORE_FIRST_STEP, MID_STEP, AFTER_CORRECTION, READY_FOR_NEXT_STEP };
 
 /** \brief The member functions in the StepControlStrategyBase move you
  * between these states in the following fashion:
@@ -125,7 +93,7 @@ public:
       const StepperBase<Scalar>& stepper
       , Scalar* stepSize
       , StepSizeType* stepSizeType
-      , int* order
+      , int* order 
       ) = 0;
 
   /** \brief . */
@@ -134,7 +102,7 @@ public:
       , const RCP<const Thyra::VectorBase<Scalar> >& soln
       , const RCP<const Thyra::VectorBase<Scalar> >& ee
       , int solveStatus
-      ) = 0;
+      ) = 0; 
 
   /** \brief . */
   virtual bool acceptStep(

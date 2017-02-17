@@ -66,28 +66,27 @@ SET(BUILD_DIR_NAME MPI_OPT_DEV)
 SET(CTEST_TEST_TYPE Nightly)
 #SET(CTEST_TEST_TIMEOUT 900)
 
-#SET(EXTRA_EXCLUDE_PACKAGES Zoltan2)
+SET(EXTRA_EXCLUDE_PACKAGES Zoltan2)
 
 SET(Trilinos_ENABLE_SECONDARY_STABLE_CODE ON)
 
 SET( EXTRA_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_DATA_DIR:STRING=$ENV{TRILINOSDATADIRECTORY}"
-  "-DMPI_BASE_DIR:PATH=/home/trilinos/gcc4.7.2/openmpi-1.6.5"
+  "-DMPI_BASE_DIR:PATH=/home/trilinos"
   "-DTPL_ENABLE_Pthread:BOOL=ON"
   "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DBoost_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/boost-1.49.0"
   "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-  "-DParMETIS_LIBRARY_DIRS=/home/trilinos/tpl/gcc4.7.2/ParMETIS-4.0.3_32bit/lib"
-  "-DParMETIS_INCLUDE_DIRS=/home/trilinos/tpl/gcc4.7.2/ParMETIS-4.0.3_32bit/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=/home/trilinos/tpl/gcc4.1.2/openmpi1.4/ParMETIS_3.1"
   "-DTPL_ENABLE_Scotch:BOOL=ON"
-  "-DScotch_LIBRARY_DIRS=/home/trilinos/tpl/gcc4.7.2/scotch_6.0.3_32bit/lib"
-  "-DScotch_INCLUDE_DIRS=/home/trilinos/tpl/gcc4.7.2/scotch_6.0.3_32bit/include"
+  "-DScotch_INCLUDE_DIRS:PATH=/home/trilinos/tpl/gcc4.1.2/openmpi1.4/Scotch_5.1.7/include"
+  "-DScotch_LIBRARY_DIRS:PATH=/home/trilinos/tpl/gcc4.1.2/openmpi1.4/Scotch_5.1.7/lib "
   "-DTPL_ENABLE_HDF5:BOOL=ON"
   "-DHDF5_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/phdf5-1.8.6/include"
   "-DHDF5_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/phdf5-1.8.6/lib"
   "-DNetcdf_LIBRARY_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/lib"
   "-DNetcdf_INCLUDE_DIRS:FILEPATH=/home/trilinos/tpl/gcc4.1.2/pnetcdf_4.2/include"
-  "-DTPL_ENABLE_CppUnit:BOOL=ON"
   )
 
 #

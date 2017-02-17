@@ -1,10 +1,11 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
 #
 
-TRIBITS_CONFIGURE_FILE(Intrepid_config.h)
+TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
 #
 # B) Define the header and source files (and directories)
@@ -20,7 +21,7 @@ SET(SOURCES "")
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 APPEND_SET(HEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/Intrepid_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}_config.h
   )
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -59,91 +60,6 @@ APPEND_SET(HEADERS
   Shared/Intrepid_Utils.hpp
   )
 
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Kokkos)
-  APPEND_SET(HEADERS ${HEADERS}
-  Kokkos/Intrepid_KokkosRank.hpp
-  )
-IF (HAVE_INTREPID_KOKKOSCORE AND KOKKOS_HAVE_CUDA)
-  IF( TPL_ENABLE_MPI )
-      CUDA_INCLUDE_DIRECTORIES( ${MPI_BASE_DIR}/include )
-  ENDIF()
-
-
-  CUDA_INCLUDE_DIRECTORIES( ${CUDA_INCLUDE_DIRECTORIES} "." )
-  CUDA_INCLUDE_DIRECTORIES( ${CUDA_INCLUDE_DIRECTORIES}
-                     ${KokkosCore_INCLUDE_DIRS}
-                     ${Intrepid_INCLUDE_DIRS}
-                     ${CMAKE_CURRENT_SOURCE_DIR}/Kokkos)
-
-
-
- SET(SOURCES ${SOURCES}
-      ${OBJECTS_CUDA1}
-      ${OBJECTS_CUDA2}
-      ${OBJECTS_CUDA3}
-      )
-
-
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Kokkos)
-  APPEND_SET(HEADERS ${HEADERS}
-  Kokkos/Intrepid_KokkosRank.hpp
-  )	
-ENDIF()
-
-IF(HAVE_INTREPID_KOKKOSCORE)
-
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Kokkos)
-  APPEND_SET(HEADERS ${HEADERS}
-  Kokkos/Intrepid_KokkosRank.hpp
-  )	
-ENDIF()
-
-
-
-#
-# MiniTensor headers
-#
-IF (Intrepid_ENABLE_Boost)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Shared/MiniTensor)
-  APPEND_SET(HEADERS ${HEADERS}
-    Shared/MiniTensor/Intrepid_MiniTensor.h
-    Shared/MiniTensor/Intrepid_MiniTensor_TensorBase.h
-    Shared/MiniTensor/Intrepid_MiniTensor_TensorBase.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_TensorBase.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Definitions.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Geometry.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Geometry.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Geometry.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_LinearAlgebra.h
-    Shared/MiniTensor/Intrepid_MiniTensor_LinearAlgebra.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_LinearAlgebra.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Mechanics.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Mechanics.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Mechanics.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Matrix.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Matrix.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Matrix.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Solvers.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Solvers.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Storage.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Storage.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor3.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor3.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor3.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor4.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor4.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Tensor4.t.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Utilities.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Utilities.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Vector.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Vector.i.h
-    Shared/MiniTensor/Intrepid_MiniTensor_Vector.t.h
-  )
-ENDIF()
-
 #
 # Discretization headers
 #
@@ -159,18 +75,10 @@ APPEND_SET(HEADERS
   Discretization/Integration/Intrepid_AdaptiveSparseGridDef.hpp
   Discretization/Integration/Intrepid_AdaptiveSparseGrid.hpp
   Discretization/Integration/Intrepid_Cubature.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolumeDef.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolume.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolumeSideDef.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolumeSide.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolumeBoundaryDef.hpp
-  Discretization/Integration/Intrepid_CubatureControlVolumeBoundary.hpp
   Discretization/Integration/Intrepid_CubatureDirectDef.hpp
   Discretization/Integration/Intrepid_CubatureDirect.hpp
   Discretization/Integration/Intrepid_CubatureDirectLineGaussDef.hpp
   Discretization/Integration/Intrepid_CubatureDirectLineGauss.hpp
-  Discretization/Integration/Intrepid_CubatureDirectLineGaussJacobi20.hpp
-  Discretization/Integration/Intrepid_CubatureDirectLineGaussJacobi20Def.hpp
   Discretization/Integration/Intrepid_CubatureDirectTetDefaultDef.hpp
   Discretization/Integration/Intrepid_CubatureDirectTetDefault.hpp
   Discretization/Integration/Intrepid_CubatureDirectTriDefaultDef.hpp
@@ -186,8 +94,6 @@ APPEND_SET(HEADERS
   Discretization/Integration/Intrepid_CubatureSparseHelper.hpp
   Discretization/Integration/Intrepid_CubatureTensorDef.hpp
   Discretization/Integration/Intrepid_CubatureTensor.hpp
-  Discretization/Integration/Intrepid_CubatureTensorPyr.hpp
-  Discretization/Integration/Intrepid_CubatureTensorPyrDef.hpp
   Discretization/Integration/Intrepid_CubatureTensorSortedDef.hpp
   Discretization/Integration/Intrepid_CubatureTensorSorted.hpp
   Discretization/Integration/Intrepid_CubaturePolygonDef.hpp
@@ -198,16 +104,12 @@ APPEND_SET(HEADERS
   Discretization/Integration/Intrepid_DefaultCubatureFactory.hpp
   Discretization/FunctionSpaceTools/Intrepid_FunctionSpaceToolsDef.hpp
   Discretization/FunctionSpaceTools/Intrepid_FunctionSpaceTools.hpp
-  Discretization/FunctionSpaceTools/Intrepid_FunctionSpaceToolsInPlaceDef.hpp
-  Discretization/FunctionSpaceTools/Intrepid_FunctionSpaceToolsInPlace.hpp
   Discretization/Basis/Intrepid_BasisDef.hpp
   Discretization/Basis/Intrepid_Basis.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_C1_FEM.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_C1_FEMDef.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_C2_FEM.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_C2_FEMDef.hpp
-  Discretization/Basis/Intrepid_HGRAD_HEX_I2_FEM.hpp
-  Discretization/Basis/Intrepid_HGRAD_HEX_I2_FEMDef.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_Cn_FEM.hpp
   Discretization/Basis/Intrepid_HGRAD_HEX_Cn_FEMDef.hpp
   Discretization/Basis/Intrepid_HGRAD_LINE_C1_FEM.hpp
@@ -238,12 +140,6 @@ APPEND_SET(HEADERS
   Discretization/Basis/Intrepid_HGRAD_WEDGE_C1_FEMDef.hpp
   Discretization/Basis/Intrepid_HGRAD_WEDGE_C2_FEM.hpp
   Discretization/Basis/Intrepid_HGRAD_WEDGE_C2_FEMDef.hpp
-  Discretization/Basis/Intrepid_HGRAD_WEDGE_I2_FEM.hpp
-  Discretization/Basis/Intrepid_HGRAD_WEDGE_I2_FEMDef.hpp
-  Discretization/Basis/Intrepid_HGRAD_PYR_C1_FEM.hpp
-  Discretization/Basis/Intrepid_HGRAD_PYR_C1_FEMDef.hpp
-  Discretization/Basis/Intrepid_HGRAD_PYR_I2_FEM.hpp
-  Discretization/Basis/Intrepid_HGRAD_PYR_I2_FEMDef.hpp
   Discretization/Basis/Intrepid_HCURL_HEX_I1_FEM.hpp
   Discretization/Basis/Intrepid_HCURL_HEX_I1_FEMDef.hpp
   Discretization/Basis/Intrepid_HCURL_HEX_In_FEM.hpp
@@ -306,11 +202,6 @@ APPEND_SET(HEADERS
   Cell/Intrepid_CellTools.hpp
   Cell/Intrepid_CellToolsDef.hpp
   )
-IF(HAVE_INTREPID_KOKKOSCORE)
-  APPEND_SET(HEADERS
-    Cell/Intrepid_CellTools_Kokkos.hpp
-  )
-ENDIF()
 
 #
 # All sources

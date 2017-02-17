@@ -44,7 +44,7 @@
 
 
 #include "Thyra_DefaultSpmdVector_decl.hpp"
-#include "Thyra_SpmdVectorDefaultBase.hpp"
+#include "Thyra_SpmdVectorBase.hpp"
 #include "Thyra_SpmdVectorSpaceDefaultBase.hpp"
 
 
@@ -109,22 +109,19 @@ void DefaultSpmdVector<Scalar>::uninitialize(
 }
 
 
-// Overridden from SpmdMultiVectorBase
+// Overridden from SpmdVectorBase
 
 
 template<class Scalar>
 RCP<const SpmdVectorSpaceBase<Scalar> >
-DefaultSpmdVector<Scalar>::spmdSpaceImpl() const
+DefaultSpmdVector<Scalar>::spmdSpace() const
 {
   return spmdSpace_;
 }
 
 
-// Overridden from SpmdVectorBase
-
-
 template<class Scalar>
-void DefaultSpmdVector<Scalar>::getNonconstLocalVectorDataImpl(
+void DefaultSpmdVector<Scalar>::getNonconstLocalDataImpl(
   const Ptr<ArrayRCP<Scalar> > &localValues )
 {
   *localValues = localValues_;
@@ -132,7 +129,7 @@ void DefaultSpmdVector<Scalar>::getNonconstLocalVectorDataImpl(
 
 
 template<class Scalar>
-void DefaultSpmdVector<Scalar>::getLocalVectorDataImpl(
+void DefaultSpmdVector<Scalar>::getLocalDataImpl(
   const Ptr<ArrayRCP<const Scalar> > &localValues ) const
 {
   *localValues = localValues_;

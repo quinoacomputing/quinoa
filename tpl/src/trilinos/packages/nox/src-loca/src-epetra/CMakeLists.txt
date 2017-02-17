@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 SET(HEADERS "")
 SET(SOURCES "")
@@ -29,7 +30,6 @@ APPEND_SET(HEADERS
   LOCA_BorderedSolver_EpetraAugmented.H
   LOCA_Epetra_Factory.H
   LOCA_Epetra_ShiftInvertOperator.H
-  LOCA_Epetra_AdaptiveSolutionManager.H
   )
 
 APPEND_SET(SOURCES
@@ -47,7 +47,6 @@ APPEND_SET(SOURCES
   LOCA_BorderedSolver_EpetraAugmented.C
   LOCA_Epetra_Factory.C
   LOCA_Epetra_ShiftInvertOperator.C
-  LOCA_Epetra_AdaptiveSolutionManager.C
   )
 
 # EpetraExt stuff
@@ -59,7 +58,6 @@ IF (NOX_ENABLE_EpetraExt)
     LOCA_Epetra_AnasaziOperator_Floquet.H
     LOCA_Epetra_TransposeLinearSystem_ExplicitTranspose.H
     LOCA_Epetra_ModelEvaluatorInterface.H
-    LOCA_Epetra_AdaptiveStepper.H
     continuation-manager/ContinuationManager.H
     continuation-manager/LOCAInterface.H
     continuation-manager/ProblemNOXPrototype.H
@@ -73,7 +71,6 @@ IF (NOX_ENABLE_EpetraExt)
     LOCA_Epetra_AnasaziOperator_Floquet.C
     LOCA_Epetra_TransposeLinearSystem_ExplicitTranspose.C
     LOCA_Epetra_ModelEvaluatorInterface.C
-    LOCA_Epetra_AdaptiveStepper.C
     continuation-manager/ContinuationManager.C
     continuation-manager/LOCAInterface.C
     continuation-manager/ProblemNOXPrototype.C

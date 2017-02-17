@@ -42,14 +42,12 @@
 #ifndef _EpetraExt_LINEARPROBLEM_CRSSINGLETONFILTER_H_
 #define _EpetraExt_LINEARPROBLEM_CRSSINGLETONFILTER_H_
 
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Object.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_MapColoring.h"
 #include "Epetra_SerialDenseVector.h"
 
 #include "EpetraExt_Transform.h"
-#include "Teuchos_RCP.hpp"
 
 class Epetra_LinearProblem;
 class Epetra_Map;
@@ -158,7 +156,7 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
   int Analyze(Epetra_RowMatrix * FullMatrix);
 
   //! Returns true if singletons were detected in this matrix (must be called after Analyze() to be effective).
-  bool SingletonsDetected() const {if (!AnalysisDone_) return(false); else return(NumSingletons()>0);};
+  bool SingletonsDetected() const {if (!AnalysisDone_) return(false); else return(RowMapColors_->MaxNumColors()>1);};
   //@}
 
   //@{ \name Reduce methods.
@@ -216,13 +214,13 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
   Epetra_LinearProblem * FullProblem() const {return(FullProblem_);};
 
   //! Returns pointer to the derived reduced Epetra_LinearProblem.
-  Epetra_LinearProblem * ReducedProblem() const {return(ReducedProblem_.get());};
+  Epetra_LinearProblem * ReducedProblem() const {return(ReducedProblem_);};
 
   //! Returns pointer to Epetra_CrsMatrix from full problem.
   Epetra_RowMatrix * FullMatrix() const {return(FullMatrix_);};
 
   //! Returns pointer to Epetra_CrsMatrix from full problem.
-  Epetra_CrsMatrix * ReducedMatrix() const {return(ReducedMatrix_.get());};
+  Epetra_CrsMatrix * ReducedMatrix() const {return(ReducedMatrix_);};
 
   //! Returns pointer to Epetra_MapColoring object: color 0 rows are part of reduced system.
   Epetra_MapColoring * RowMapColors() const {return(RowMapColors_);};
@@ -259,13 +257,8 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
   int Setup(Epetra_LinearProblem * Problem);
   int InitFullMatrixAccess();
   int GetRow(int Row, int & NumIndices, int * & Indices);
-  int GetRow(int Row, int & NumIndices, double * & Values, int * & Indices);
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   int GetRowGCIDs(int Row, int & NumIndices, double * & Values, int * & GlobalIndices);
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  int GetRowGCIDs(int Row, int & NumIndices, double * & Values, long long * & GlobalIndices);
-#endif
+  int GetRow(int Row, int & NumIndices, double * & Values, int * & Indices);
   int CreatePostSolveArrays(const Epetra_IntVector & RowIDs,
 			    const Epetra_MapColoring & RowMapColors,
 			    const Epetra_IntVector & ColProfiles,
@@ -277,10 +270,10 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
 				    Epetra_Map * & RedistributeMap);
   
   Epetra_LinearProblem * FullProblem_;
-  Teuchos::RCP<Epetra_LinearProblem> ReducedProblem_;
+  Epetra_LinearProblem * ReducedProblem_;
   Epetra_RowMatrix * FullMatrix_;
   Epetra_CrsMatrix * FullCrsMatrix_;
-  Teuchos::RCP<Epetra_CrsMatrix> ReducedMatrix_;
+  Epetra_CrsMatrix * ReducedMatrix_;
   Epetra_MultiVector * ReducedRHS_;
   Epetra_MultiVector * ReducedLHS_;
   
@@ -318,10 +311,7 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
   Epetra_MultiVector * tempX_;
   Epetra_MultiVector * tempB_;
   Epetra_MultiVector * RedistributeReducedLHS_;
-  int * Indices_int_;
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  long long * Indices_LL_;
-#endif
+  int * Indices_;
   Epetra_SerialDenseVector Values_;
   
   Epetra_MapColoring * RowMapColors_;
@@ -335,17 +325,6 @@ class LinearProblem_CrsSingletonFilter : public SameTypeTransform<Epetra_LinearP
  private:
   //! Copy constructor (defined as private so it is unavailable to user).
   LinearProblem_CrsSingletonFilter(const LinearProblem_CrsSingletonFilter & Problem){};
-
-  template<typename int_type>
-  int TConstructReducedProblem(Epetra_LinearProblem * Problem);
-
-  template<typename int_type>
-  int TUpdateReducedProblem(Epetra_LinearProblem * Problem);
-
-  template<typename int_type>
-  int TConstructRedistributeExporter(Epetra_Map * SourceMap, Epetra_Map * TargetMap,
-				    Epetra_Export * & RedistributeExporter,
-				    Epetra_Map * & RedistributeMap);
 };
 
 } //namespace EpetraExt

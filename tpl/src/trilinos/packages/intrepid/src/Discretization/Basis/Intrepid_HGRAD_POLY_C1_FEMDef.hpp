@@ -9,7 +9,7 @@ namespace Intrepid{
     this -> basisCardinality_  = cellTopology.getNodeCount();
     this -> basisDegree_       = 1;
     this -> basisCellTopology_ = cellTopology;
-    this -> basisType_         = BASIS_FEM_DEFAULT;
+    this -> basisType_         = BASIS_FEM_POLYGON;
     this -> basisCoordinates_  = COORDINATES_CARTESIAN;
     this -> basisTagsAreSet_   = false;
   }

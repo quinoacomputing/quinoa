@@ -1,30 +1,10 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
@@ -248,7 +228,7 @@ int num_geom = 0;          /* number of dimensions in the geometry */
    * Bind parameters, set default values, and set user values.
    */
 
-  initpath_method = (char *)ZOLTAN_MALLOC(sizeof(char)*(MAX_PARAM_STRING_LEN));
+  initpath_method = (char *)ZOLTAN_MALLOC(sizeof(char)*(MAX_PARAM_STRING_LEN+1));
   Zoltan_Bind_Param(REFTREE_params, "REFTREE_INITPATH", (void *) initpath_method);
   strcpy(initpath_method, DEFAULT_INITPATH);
   Zoltan_Bind_Param(REFTREE_params, "REFTREE_HASH_SIZE", (void *) &hashsize);
@@ -1908,7 +1888,7 @@ static int order_quad_quad(ZZ *zz, int *vert1, int *order,
  * when refinement is done by quadrasecting quadrilaterals.
  */
 
-int i,j,k,found,ord[4]={0,0,0,0};
+int i,j,k,found,ord[4];
 ZOLTAN_ID_PTR shared;
 char *yo = "order_quad_quad";
 int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
@@ -1925,7 +1905,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -1948,7 +1927,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -1971,7 +1949,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -2005,7 +1982,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -2036,7 +2012,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -2063,7 +2038,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+3)*ngid_ent]);
     }
-    ZOLTAN_FREE(&shared);
     return(ZOLTAN_WARN);
   }
 
@@ -2103,7 +2077,7 @@ int i,j,found,ord[8],vert,count[27],lvertices[64],ecoord[8][3],vcoord[27][3];
 int nshare, nshare2, nshare4, nshare100, nshare010, share2[3];
 int element[2][2][2]={{{0,0},{0,0}},{{0,0},{0,0}}};
 int elem100,elem010,elem001,vertex[3][3][3];
-ZOLTAN_ID_PTR lvertices_gid = NULL;
+ZOLTAN_ID_PTR lvertices_gid;
 char *yo = "order_hex3d_oct";
 int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
 
@@ -2549,7 +2523,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
       ZOLTAN_SET_GID(zz,&out_vertex[i*ngid_ent],
                         &vertices[(vert1[i]+7)*ngid_ent]);
     }
-    ZOLTAN_FREE(&lvertices_gid);
     return(ZOLTAN_WARN);
   }
   }
@@ -2560,7 +2533,6 @@ int ngid_ent = zz->Num_GID;  /* number of array entries in a global ID */
   for (i=0; i<8; i++) {
     order[ord[i]] = i;
   }
-  ZOLTAN_FREE(&lvertices_gid);
 
   return(ZOLTAN_OK);
 
@@ -2950,7 +2922,7 @@ char *yo = "alloc_reftree_nodes";
                                             &ins,
                                             &outs,
                                             &float_mem,
-                                            node);
+                                            &node);
     ZOLTAN_TRACE_EXIT(zz, yo);
     return(ZOLTAN_MEMERR);
   }
@@ -3125,10 +3097,14 @@ int *num_vert;        /* number of vertices for each coarse element */
 ZOLTAN_ID_PTR vertices; /* vertices for the coarse elements */
 ZOLTAN_ID_PTR in_vertex;       /* "in" vertex for each coarse element */
 ZOLTAN_ID_PTR out_vertex;      /* "out" vertex for each coarse element */
+ZOLTAN_ID_PTR slocal_gids;/* coarse element Global IDs from user */
+ZOLTAN_ID_PTR slocal_lids;/* coarse element Local IDs from user */
 ZOLTAN_ID_PTR plocal_gids;/* previous coarse element Global IDs from user */
 ZOLTAN_ID_PTR plocal_lids;/* previous coarse element Local IDs from user */
-int iassigned;        /* 1 if the element is assigned to this proc */
-int inum_vert;        /* number of vertices for a coarse element */
+int sassigned;        /* 1 if the element is assigned to this proc */
+int snum_vert;        /* number of vertices for a coarse element */
+ZOLTAN_ID_PTR sin_vertex = ZOLTAN_MALLOC_GID(zz); /* "in" vertex for a coarse element */
+ZOLTAN_ID_PTR sout_vertex = ZOLTAN_MALLOC_GID(zz); /* "out" vertex for a coarse element */
 int in_order;         /* 1 if user is supplying order of the elements */
 int num_obj;          /* number of coarse objects known to this proc */
 int ierr;             /* error flag */
@@ -3264,24 +3240,17 @@ int nlid_ent = zz->Num_LID;  /* number of array entries in a local ID */
    * Get objects via first/next
    */
 
-    local_gids = ZOLTAN_MALLOC_GID(zz);
-    local_lids = ZOLTAN_MALLOC_LID(zz);
-    in_vertex = ZOLTAN_MALLOC_GID(zz);
-    out_vertex = ZOLTAN_MALLOC_GID(zz);
+    slocal_gids = ZOLTAN_MALLOC_GID(zz);
+    slocal_lids = ZOLTAN_MALLOC_LID(zz);
     plocal_gids = ZOLTAN_MALLOC_GID(zz);
     plocal_lids = ZOLTAN_MALLOC_LID(zz);
     vertices = ZOLTAN_MALLOC_GID_ARRAY(zz,MAXVERT);
-    if (local_gids == NULL || (nlid_ent > 0 && local_lids == NULL) || 
+    if (slocal_gids == NULL || (nlid_ent > 0 && slocal_lids == NULL) || 
         plocal_gids == NULL || (nlid_ent > 0 && plocal_lids == NULL) || 
-        in_vertex == NULL || out_vertex == NULL ||
         vertices == NULL) {
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, "Insufficient memory.");
-      Zoltan_Multifree(__FILE__, __LINE__, 7, &local_gids,
-                                              &local_lids,
-                                              &plocal_gids,
-                                              &plocal_lids,
-                                              &in_vertex,
-                                              &out_vertex,
+      Zoltan_Multifree(__FILE__, __LINE__, 3, &slocal_gids,
+                                              &slocal_lids,
                                               &vertices);
       ZOLTAN_TRACE_EXIT(zz, yo);
       return(ZOLTAN_MEMERR);
@@ -3289,59 +3258,55 @@ int nlid_ent = zz->Num_LID;  /* number of array entries in a local ID */
 
     found = zz->Get_First_Coarse_Obj(zz->Get_First_Coarse_Obj_Data,
                                      ngid_ent, nlid_ent,
-                                     local_gids, local_lids, &iassigned,
-                                     &inum_vert, vertices, &in_order,
-                                     in_vertex, out_vertex, &ierr);
+                                     slocal_gids, slocal_lids, &sassigned,
+                                     &snum_vert, vertices, &in_order,
+                                     sin_vertex, sout_vertex, &ierr);
     if (ierr) {
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, 
                      "Error returned from user function Get_First_Coarse_Obj.");
-      Zoltan_Multifree(__FILE__, __LINE__, 7, &local_gids,
-                                              &local_lids,
-                                              &plocal_gids,
-                                              &plocal_lids,
-                                              &in_vertex,
-                                              &out_vertex,
+      Zoltan_Multifree(__FILE__, __LINE__, 3, &slocal_gids,
+                                              &slocal_lids,
                                               &vertices);
       ZOLTAN_TRACE_EXIT(zz, yo);
       return(ierr);
     }
     while (found) {
-      tree_node = Zoltan_Reftree_hash_lookup(zz, hashtab,local_gids,hashsize);
+      tree_node = Zoltan_Reftree_hash_lookup(zz, hashtab,slocal_gids,hashsize);
       if (tree_node == NULL) {
         ZOLTAN_PRINT_WARN(zz->Proc, yo, "coarse grid element not"
                                     " previously seen.");
         final_ierr = ZOLTAN_WARN;
       }
       else {
-        tree_node->assigned_to_me = iassigned;
+        tree_node->assigned_to_me = sassigned;
         tree_node->known_to_me = 1;
-        ZOLTAN_SET_LID(zz, tree_node->local_id, local_lids);
+        ZOLTAN_SET_LID(zz, tree_node->local_id, slocal_lids);
         if (zz->Obj_Weight_Dim == 0)
           tree_node->weight[0] = 0.0;
         else
           zz->Get_Child_Weight(zz->Get_Child_Weight_Data, 
                              ngid_ent, nlid_ent,
-                             local_gids, local_lids, zz->Obj_Weight_Dim,
+                             slocal_gids, slocal_lids, zz->Obj_Weight_Dim,
                              tree_node->weight, &ierr);
       }
 
-      ZOLTAN_SET_GID(zz, plocal_gids, local_gids);
-      ZOLTAN_SET_LID(zz, plocal_lids, local_lids);
+      ZOLTAN_SET_GID(zz, plocal_gids, slocal_gids);
+      ZOLTAN_SET_LID(zz, plocal_lids, slocal_lids);
       found = zz->Get_Next_Coarse_Obj(zz->Get_Next_Coarse_Obj_Data,
                                       ngid_ent, nlid_ent,
                                       plocal_gids, plocal_lids,
-                                      local_gids, local_lids, &iassigned,
-                                      &inum_vert, vertices,
-                                      in_vertex, out_vertex, &ierr);
+                                      slocal_gids, slocal_lids, &sassigned,
+                                      &snum_vert, vertices,
+                                      sin_vertex, sout_vertex, &ierr);
     }
-    Zoltan_Multifree(__FILE__, __LINE__, 7, &local_gids,
-                                            &local_lids,
+    Zoltan_Multifree(__FILE__, __LINE__, 5, &slocal_gids,
+                                            &slocal_lids,
                                             &plocal_gids,
                                             &plocal_lids,
-                                            &in_vertex,
-                                            &out_vertex,
                                             &vertices);
   }
+  Zoltan_Multifree(__FILE__, __LINE__, 2, &sin_vertex,
+                                          &sout_vertex);
   ZOLTAN_TRACE_EXIT(zz, yo);
   return(final_ierr);
 }

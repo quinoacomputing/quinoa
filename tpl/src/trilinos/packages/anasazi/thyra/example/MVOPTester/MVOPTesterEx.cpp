@@ -20,7 +20,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -88,9 +88,9 @@ int main(int argc, char *argv[])
 
 #ifndef HAVE_EPETRA_THYRA
   MyOM->stream(Anasazi::Warnings) 
-    << "Please configure Anasazi with:" << std::endl
-    << "--enable-epetra-thyra" << std::endl
-    << "--enable-anasazi-thyra" << std::endl;
+    << "Please configure Anasazi with:" << endl
+    << "--enable-epetra-thyra" << endl
+    << "--enable-anasazi-thyra" << endl;
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -175,20 +175,20 @@ int main(int argc, char *argv[])
   ierr = Anasazi::TestMultiVecTraits<double,TMVB>(MyOM,thyra_ivec);
   gerr |= ierr;
   if (ierr) {
-    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter PASSED TestMultiVecTraits()" << std::endl;
+    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter PASSED TestMultiVecTraits()" << endl;
   }
   else {
-    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter FAILED TestMultiVecTraits() ***" << std::endl << std::endl;
+    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter FAILED TestMultiVecTraits() ***" << endl << endl;
   }
 
   // test the Thyra operator adapter
   ierr = Anasazi::TestOperatorTraits<double,TMVB,TLOB>(MyOM,thyra_ivec,thyra_op);
   gerr |= ierr;
   if (ierr) {
-    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter PASSED TestOperatorTraits()" << std::endl;
+    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter PASSED TestOperatorTraits()" << endl;
   }
   else {
-    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter FAILED TestOperatorTraits() ***" << std::endl << std::endl;
+    MyOM->stream(Anasazi::Warnings) << "*** ThyraAdapter FAILED TestOperatorTraits() ***" << endl << endl;
   }
 #endif
 

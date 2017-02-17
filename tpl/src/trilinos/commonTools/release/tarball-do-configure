@@ -8,18 +8,16 @@ EXTRA_ARGS=$@
 PROJECT_NAME=Trilinos
 SOURCE_DIR=../$PROJECT_NAME
 
-NETCDF_DIR=/home/trilinos/tpl/gcc4.1.2/netcdf_4.2
-BOOST_DIR=/home/trilinos/tpl/gcc4.1.2/boost_1_55_0_compiled
+NETCDF_DIR=/home/trilinos/tpl/gcc4.1.2/netcdf_4.0
+BOOST_DIR=/home/trilinos/tpl/gcc4.1.2/boost_1_46_1
+MPI4PY_DIR=/home/trilinos/tpl/gcc4.1.2/mpi4py-1.2.2
 
 #this is also needed to build pytrilinos not just configure
-export PYTHONPATH="/home/trilinos/tpl/gcc4.1.2/numpy-1.9.1/lib/python2.7/site-packages"
+export PYTHONPATH="$MPI4PY_DIR:/home/trilinos/tpl/gcc4.1.2/numpy1.4.0/lib64/python2.4/site-packages"
 
-export PATH=/home/trilinos/tpl/gcc4.1.2/swig-3.0.2/bin:/home/trilinos/tpl/gcc4.1.2/qt-4.5.2/bin:/home/trilinos/python-2.7.3/bin:$PATH
+export PATH=/home/trilinos/tpl/gcc4.1.2/swig-2.0.0/bin:/home/trilinos/tpl/gcc4.1.2/qt-4.5.2/bin:$PATH
 which cmake
 cmake --version
-
-which python
-python -V
 
 rm -fr CMakeCache.txt CMakeFiles/
 
@@ -33,9 +31,8 @@ touch $DAKOTA_DIR/src/CMakeLists.txt
 echo "add_subdirectory(src)" > $DAKOTA_DIR/CMakeLists.txt
 
 cmake \
--DTrilinos_ENABLE_CPACK_PACKAGING=ON \
 -D TPL_ENABLE_MPI=ON \
-  -D MPI_BASE_DIR:PATH=/home/trilinos/gcc4.7.2/openmpi-1.6.5 \
+  -D MPI_BASE_DIR:PATH=/home/trilinos/bin \
 -D CMAKE_VERBOSE_MAKEFILE:BOOL=TRUE \
 -D BUILD_SHARED_LIBS=ON \
  \
@@ -46,7 +43,6 @@ cmake \
 -DTrilinos_ENABLE_Belos=ON \
 -DTrilinos_ENABLE_CTrilinos=ON \
 -DTrilinos_ENABLE_Didasko=ON \
--DTrilinos_ENABLE_Domi=ON \
 -DTrilinos_ENABLE_Epetra=ON \
 -DTrilinos_ENABLE_EpetraExt=ON \
 -DTrilinos_ENABLE_FEI=ON \
@@ -56,7 +52,6 @@ cmake \
 -DTrilinos_ENABLE_Ifpack=ON \
 -DTrilinos_ENABLE_Ifpack2=ON \
 -DTrilinos_ENABLE_Intrepid=ON \
--DTrilinos_ENABLE_Intrepid2=OFF \
 -DTrilinos_ENABLE_Isorropia=ON \
 -DTrilinos_ENABLE_Kokkos=ON \
 -DTrilinos_ENABLE_Komplex=ON \
@@ -69,12 +64,9 @@ cmake \
 -DTrilinos_ENABLE_OptiPack=ON \
 -DTrilinos_ENABLE_Pamgen=ON \
 -DTrilinos_ENABLE_Phalanx=ON \
--DTrilinos_ENABLE_Pike=ON \
 -DTrilinos_ENABLE_Piro=ON \
 -DTrilinos_ENABLE_Pliris=ON \
 -DTrilinos_ENABLE_PyTrilinos=ON \
-  -DPyTrilinos_DOCSTRINGS=OFF \
--DTrilinos_ENABLE_ROL=ON \
 -DTrilinos_ENABLE_RTOp=ON \
 -DTrilinos_ENABLE_Rythmos=ON \
 -DTrilinos_ENABLE_Sacado=ON \
@@ -94,17 +86,12 @@ cmake \
 -DTrilinos_ENABLE_Trios=ON \
 -DTrilinos_ENABLE_Triutils=ON \
 -DTrilinos_ENABLE_Zoltan=ON \
--DTrilinos_ENABLE_Zoltan2=ON \
--DTrilinos_ENABLE_Xpetra=ON \
--DTrilinos_ENABLE_ShyLU=ON \
--DTrilinos_ENABLE_Gtest=ON \
  \
 -D TPL_ENABLE_MATLAB=OFF \
--D TPL_ENABLE_Matio=OFF \
--D TPL_ENABLE_GLM=OFF \
  \
 -D Netcdf_INCLUDE_DIRS=$NETCDF_DIR/include \
 -D Netcdf_LIBRARY_DIRS=$NETCDF_DIR/lib \
+-D MPI4PY_INCLUDE_DIR=$MPI4PY_DIR/mpi4py/include \
 -D Boost_INCLUDE_DIRS=$BOOST_DIR/include \
 -D BoostLib_INCLUDE_DIRS=$BOOST_DIR/include \
 -D BoostLib_LIBRARY_DIRS=$BOOST_DIR/lib \

@@ -33,8 +33,7 @@ C
 
 C=======================================================================
       SUBROUTINE ZMESS (NUMESS, LESSEL, LESSDL, 
-     &   IDESS, NEESS, NEDSS, IXEESS, IXEDSS, LTEESS, LTSSS, LTSNC,
-     *   FAC, USESDF)
+     &   IDESS, NEESS, NEDSS, IXEESS, IXEDSS, LTEESS, LTSSS, LTSNC, FAC)
 C=======================================================================
 C $Id: zmess.f,v 1.3 2002/01/28 19:44:47 gdsjaar Exp $
 
@@ -67,8 +66,7 @@ C   --   FACESS - IN/OUT - the distribution factors for all sets????????????
       INTEGER LTSSS(*)   ! LESSEL
       INTEGER LTSNC(*)   ! LESSEL
       REAL    FAC(*)     ! LESSDL
-      LOGICAL USESDF
-      
+
       IF (NUMESS .LE. 0) RETURN
 
       JESS = 0
@@ -95,12 +93,10 @@ C IDFE = index of last  df for local element N, global element NE
                LTEESS(JNE) = LTEESS(NE)
                LTSSS(JNE)  = LTSSS(NE)
                LTSNC(JNE)  = LTSNC(NE)
-               if (usesdf) then
-                 do 100 nd = idfb, idfe
-                   JDF = JDF + 1
-                   fac(JDF) = fac(ND)
- 100             continue
-               end if
+               do 100 nd = idfb, idfe
+                 JDF = JDF + 1
+                 fac(JDF) = fac(ND)
+ 100           continue
             END IF
             IDFB = IDFE + 1
   110    CONTINUE
@@ -111,17 +107,13 @@ C ... There is at least 1 element remaining in the list...
             IDESS(JESS) = IDESS(IESS) ! copy the sideset id
             NEESS(JESS) = N ! Set the elements per list count
             IXEESS(JESS) = JNELST + 1 ! set the index 
-            if (usesdf) then
-              NEDSS(JESS) = JDF - JDFLST ! set the df per list count
-              IXEDSS(JESS) = JDFLST + 1
-            end if
+            NEDSS(JESS) = JDF - JDFLST ! set the df per list count
+            IXEDSS(JESS) = JDFLST + 1
          END IF
   120 CONTINUE
+      if (idfe .ne. lessdl) stop 'ZMESS: Internal error'
       NUMESS = JESS
       LESSEL = JNE
-      if (usesdf) then
-        if (idfe .ne. lessdl) stop 'ZMESS: Internal error'
-        LESSDL = JDF
-      end if
+      LESSDL = JDF
       RETURN
       END

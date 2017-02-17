@@ -3,41 +3,27 @@
 // @HEADER
 // ***********************************************************************
 //
-//          PyTrilinos: Python Interfaces to Trilinos Packages
-//                 Copyright (2014) Sandia Corporation
+//              PyTrilinos: Python Interface to Trilinos
+//                 Copyright (2005) Sandia Corporation
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia
-// Corporation, the U.S. Government retains certain rights in this
-// software.
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
@@ -56,27 +42,9 @@
 #include "Epetra_LinearProblem.h"
 #include "Epetra_Util.h"
 
-#include "PyTrilinos_Epetra_Util.hpp"
-#include "PyTrilinos_LinearProblem.hpp"
+#include "PyTrilinos_Epetra_Util.h"
 
 %}
-
-/////////////////////////////////////////////////////////
-// Teuchos::RCP<> support for all classes in this file //
-/////////////////////////////////////////////////////////
-%teuchos_rcp(Epetra_Operator          )
-%teuchos_rcp(Epetra_InvOperator       )
-%teuchos_rcp(Epetra_RowMatrix         )
-%teuchos_rcp(Epetra_BasicRowMatrix    )
-%teuchos_rcp(Epetra_CrsMatrix         )
-%teuchos_rcp(Epetra_FECrsMatrix       )
-%teuchos_rcp(Epetra_VbrMatrix         )
-%teuchos_rcp(Epetra_FEVbrMatrix       )
-%teuchos_rcp(Epetra_JadMatrix         )
-%teuchos_rcp(Epetra_LinearProblem     )
-%teuchos_rcp(PyTrilinos::LinearProblem)
-%teuchos_rcp_epetra_argout(Epetra_CrsMatrix)
-%teuchos_rcp_epetra_argout(Epetra_VbrMatrix)
 
 ////////////////
 // Macro code //
@@ -115,20 +83,17 @@
     // Create the array of rows
     rowArray = obj_to_array_allow_conversion(Rows, NPY_INT, &newRows);
     if (rowArray == NULL) goto fail;
-    numRowEntries = (int) PyArray_MultiplyList(PyArray_DIMS(rowArray),
-                                               PyArray_NDIM(rowArray));
+    numRowEntries = (int) PyArray_MultiplyList(rowArray->dimensions,rowArray->nd);
 
     // Create the array of cols
     colArray = obj_to_array_allow_conversion(Cols, NPY_INT, &newCols);
     if (colArray == NULL) goto fail;
-    numColEntries = (int) PyArray_MultiplyList(PyArray_DIMS(colArray),
-                                               PyArray_NDIM(colArray));
+    numColEntries = (int) PyArray_MultiplyList(colArray->dimensions,colArray->nd);
 
     // Create the array of values
     valArray = obj_to_array_allow_conversion(Values, NPY_DOUBLE, &newVals);
     if (valArray == NULL) goto fail;
-    numValEntries = (int) PyArray_MultiplyList(PyArray_DIMS(valArray),
-                                               PyArray_NDIM(valArray));
+    numValEntries = (int) PyArray_MultiplyList(valArray->dimensions,valArray->nd);
 
     // Error checking
     if(numValEntries != numColEntries || numValEntries != numRowEntries ||
@@ -144,9 +109,9 @@
     // value to the matrix
     for(int i = 0 ; i < numValEntries ; ++i)
     {
-      double Value = ((double*)PyArray_DATA(valArray))[i];
-      int Row = ((int*)PyArray_DATA(rowArray))[i];
-      int Col = ((int*)PyArray_DATA(colArray))[i];
+      double Value = ((double*)valArray->data)[i];
+      int Row = ((int*)rowArray->data)[i];
+      int Col = ((int*)colArray->data)[i];
 
       result = self->methodName(Row, 1, &Value, &Col);
       if(result < 0) goto fail;
@@ -217,20 +182,17 @@
     // Create the array of rows
     rowArray = obj_to_array_allow_conversion(Rows,NPY_INT,&newRows);
     if (rowArray == NULL) goto fail;
-    numRowEntries = (int) PyArray_MultiplyList(PyArray_DIMS(rowArray),
-                                               PyArray_NDIM(rowArray));
+    numRowEntries = (int) PyArray_MultiplyList(rowArray->dimensions,rowArray->nd);
 
     // Create the array of cols
     colArray = obj_to_array_allow_conversion(Cols,NPY_INT,&newCols);
     if (colArray == NULL) goto fail;
-    numColEntries = (int) PyArray_MultiplyList(PyArray_DIMS(colArray),
-                                               PyArray_NDIM(colArray));
+    numColEntries = (int) PyArray_MultiplyList(colArray->dimensions,colArray->nd);
 
     // Create the array of values
     valArray = obj_to_array_allow_conversion(Values,NPY_DOUBLE,&newVals);
     if (valArray == NULL) goto fail;
-    numValEntries = (int) PyArray_MultiplyList(PyArray_DIMS(valArray),
-                                               PyArray_NDIM(valArray));
+    numValEntries = (int) PyArray_MultiplyList(valArray->dimensions,valArray->nd);
 
     // Error checking
     if(numValEntries != numColEntries || numValEntries != numRowEntries || 
@@ -246,9 +208,9 @@
     // value to the matrix
     for(int i = 0 ; i < numValEntries ; ++i)
     {
-      double Value = ((double*)PyArray_DATA(valArray))[i];
-      int Row = ((int*)PyArray_DATA(rowArray))[i];
-      int Col = ((int*)PyArray_DATA(colArray))[i];
+      double Value = ((double*)valArray->data)[i];
+      int Row = ((int*)rowArray->data)[i];
+      int Col = ((int*)colArray->data)[i];
 
       result = self->methodName(Row, 1, &Value, &Col);
       if(result < 0) goto fail;
@@ -271,6 +233,7 @@
 /////////////////////////////
 // Epetra_Operator support //
 /////////////////////////////
+%teuchos_rcp(Epetra_Operator)
 %feature("docstring")
 Epetra_Operator
 "
@@ -357,6 +320,7 @@ Epetra_Operator::ApplyInverse;
 //////////////////////////////////
 // Typemaps for Epetra_Operator //
 //////////////////////////////////
+#ifdef HAVE_TEUCHOS
 %typemap(out) Teuchos::RCP< Epetra_Operator >
 {
   if ($1 == Teuchos::null)
@@ -386,10 +350,17 @@ Epetra_Operator::ApplyInverse;
   $input = PyTrilinos::convertEpetraOperatorToPython(smartinput);
   delete smartinput;
 }
+#else
+%typemap(directorin) Epetra_Operator &
+{
+  $input = PyTrilinos::convertEpetraOperatorToPython(&$1_name, SWIG_POINTER_OWN);
+}
+#endif
 
 ////////////////////////////////
 // Epetra_InvOperator support //
 ////////////////////////////////
+%teuchos_rcp(Epetra_InvOperator)
 %warnfilter(473)     Epetra_InvOperator;
 %feature("director") Epetra_InvOperator;
 %rename(InvOperator) Epetra_InvOperator;
@@ -398,6 +369,7 @@ Epetra_Operator::ApplyInverse;
 //////////////////////////////
 // Epetra_RowMatrix support //
 //////////////////////////////
+%teuchos_rcp(Epetra_RowMatrix)
 %feature("autodoc",
 "NumMyRowEntries(int myRow, numpy.ndarray numEntries) -> int
 
@@ -507,6 +479,7 @@ Epetra_RowMatrix::RightScale;
 ///////////////////////////////////
 // Epetra_BasicRowMatrix support //
 ///////////////////////////////////
+%teuchos_rcp(Epetra_BasicRowMatrix)
 %warnfilter(473)        Epetra_BasicRowMatrix;
 %feature("director")    Epetra_BasicRowMatrix;
 %rename(BasicRowMatrix) Epetra_BasicRowMatrix;
@@ -536,6 +509,8 @@ Epetra_RowMatrix::RightScale;
 //////////////////////////////
 // Epetra_CrsMatrix support //
 //////////////////////////////
+%teuchos_rcp(Epetra_CrsMatrix)
+%teuchos_rcp_epetra_argout(Epetra_CrsMatrix)
 %feature("autodoc",
 "__init__(self, Epetra_DataAccess CV, Map rowMap, int numEntriesPerRow, 
     bool staticProfile=False) -> CrsMatrix
@@ -1153,20 +1128,6 @@ Epetra_CrsMatrix::__getitem__;
 %ignore Epetra_CrsMatrix::ExtractMyRowCopy;
 %ignore Epetra_CrsMatrix::ExtractMyRowView;
 %ignore Epetra_CrsMatrix::ExtractCrsDataPointers;
-// Note: the following three methods are ignored because there are
-// equivalent versions with Epetra_MultiVector arguments.  Having both
-// versions messes up my DAP typemaps, which look for a __distarray__
-// attribute and try to force an Epetra_MultiVector peg into an
-// Epetra_Vector hole.
-%ignore Epetra_CrsMatrix::Multiply(bool,
-                                   const Epetra_Vector &,
-                                   Epetra_Vector &) const;
-%ignore Epetra_CrsMatrix::Multiply1(bool,
-                                    const Epetra_Vector &,
-                                    Epetra_Vector &) const;
-%ignore Epetra_CrsMatrix::Solve(bool, bool, bool,
-                                const Epetra_Vector &,
-                                Epetra_Vector &) const;
 %include "Epetra_CrsMatrix.h"
 %clear (const int* NumEntriesPerRow, int NumRows   );
 %clear (double*    Values,           int NumValues );
@@ -1175,6 +1136,7 @@ Epetra_CrsMatrix::__getitem__;
 ////////////////////////////////
 // Epetra_FECrsMatrix support //
 ////////////////////////////////
+%teuchos_rcp(Epetra_FECrsMatrix)
 %rename(FECrsMatrix) Epetra_FECrsMatrix;
 %extend Epetra_FECrsMatrix
 {
@@ -1223,21 +1185,13 @@ Epetra_CrsMatrix::__getitem__;
     }
   }
 
-  int InsertGlobalValues(const int row,
-                         const int size, 
-                         const Epetra_SerialDenseVector & values,
-                         const Epetra_IntSerialDenseVector & entries)
+  int InsertGlobalValues(const int Row, const int Size, 
+                         const Epetra_SerialDenseVector& Values,
+                         const Epetra_IntSerialDenseVector& Entries)
   {
-    return self->InsertGlobalValues(1, &row, size, (int*)entries.Values(),
-                                    values.Values());
-  }
-
-  int InsertGlobalValues(const Epetra_IntSerialDenseVector & rows,
-                         const Epetra_IntSerialDenseVector & cols,
-                         const Epetra_SerialDenseMatrix & values,
-                         int format=Epetra_FECrsMatrix::COLUMN_MAJOR)
-  {
-    return self->InsertGlobalValues(rows, cols, values, format);
+    return self->InsertGlobalValues(1, &Row,
+                                    Size, (int*)Entries.Values(),
+                                    Values.Values());
   }
 
   int InsertGlobalValue(int i, int j, double val)
@@ -1258,6 +1212,8 @@ Epetra_CrsMatrix::__getitem__;
 //////////////////////////////
 // Epetra_VbrMatrix support //
 //////////////////////////////
+%teuchos_rcp(Epetra_VbrMatrix)
+%teuchos_rcp_epetra_argout(Epetra_VbrMatrix)
 %feature("autodoc",
 "
 __init__(self, Epetra_DataAccess CV, BlockMap rowMap, int
@@ -1381,12 +1337,14 @@ Epetra_VbrMatrix::Epetra_VbrMatrix(const Epetra_VbrMatrix&);
 ////////////////////////////////
 // Epetra_FEVbrMatrix support //
 ////////////////////////////////
+%teuchos_rcp(Epetra_FEVbrMatrix)
 %rename(FEVbrMatrix) Epetra_FEVbrMatrix;
 %include "Epetra_FEVbrMatrix.h"
 
 //////////////////////////////
 // Epetra_JadMatrix support //
 //////////////////////////////
+%teuchos_rcp(Epetra_JadMatrix)
 %ignore Epetra_JadMatrix::ExtractMyEntryView(int,double*&,int&,int&);
 %rename(JadMatrix) Epetra_JadMatrix;
 %include "Epetra_JadMatrix.h"
@@ -1394,24 +1352,8 @@ Epetra_VbrMatrix::Epetra_VbrMatrix(const Epetra_VbrMatrix&);
 //////////////////////////////////
 // Epetra_LinearProblem support //
 //////////////////////////////////
-// %rename(LinearProblem) Epetra_LinearProblem;
+%rename(LinearProblem) Epetra_LinearProblem;
 %include "Epetra_LinearProblem.h"
-%include "PyTrilinos_LinearProblem.hpp"
-%typemap(out) Epetra_LinearProblem *
-{
-  if ($1)
-  {
-    Teuchos::RCP< PyTrilinos::LinearProblem > * tempresult = new
-      Teuchos::RCP< PyTrilinos::LinearProblem >(new PyTrilinos::LinearProblem(*$1));
-    %set_output(SWIG_NewPointerObj(%as_voidptr(tempresult),
-                                   $descriptor(Teuchos::RCP< PyTrilinos::LinearProblem > *),
-                                   SWIG_POINTER_OWN));
-  }
-  else
-  {
-    %set_output(Py_BuildValue(""));
-  }
-}
 
 /////////////////////////
 // Epetra_Util support //

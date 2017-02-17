@@ -1,16 +1,57 @@
-/*--------------------------------------------------------------------*/
-/*    Copyright 2005 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
+
 
 #include <fei_CSVec.hpp>
 #include <algorithm>
-#include <sstream>
 
 namespace fei {
+
+CSVec::CSVec(const FillableVec& invec)
+ : indices_(invec.size()),
+   coefs_(invec.size())
+{
+  operator=(invec);
+}
 
 CSVec::CSVec(unsigned sz)
  : indices_(sz, 0),
@@ -31,9 +72,40 @@ CSVec::operator=(const CSVec& invec)
   return *this;
 }
 
-void add_entries(CSVec& vec, int num, const int* eqns, const double* coefs)
+CSVec&
+CSVec::operator=(const FillableVec& invec)
 {
-  for(int i=0; i<num; ++i) add_entry(vec, eqns[i], coefs[i]);
+  indices_.resize(invec.size());
+  coefs_.resize(invec.size());
+
+  FillableVec::const_iterator iter = invec.begin(), iter_end = invec.end();
+
+  unsigned i=0;
+  for(; iter != iter_end; ++iter, ++i) {
+    indices_[i] = iter->first;
+    coefs_[i] = iter->second;
+  }
+
+  return *this;
+}
+
+void add_entry(CSVec& vec, int eqn, double coef)
+{
+  std::vector<int>& v_ind = vec.indices();
+  std::vector<double>& v_coef = vec.coefs();
+
+  std::vector<int>::iterator
+    iter = std::lower_bound(v_ind.begin(), v_ind.end(), eqn);
+
+  size_t offset = iter - v_ind.begin();
+
+  if (iter == v_ind.end() || *iter != eqn) {
+    v_ind.insert(iter, eqn);
+    v_coef.insert(v_coef.begin()+offset, coef);
+  }
+  else {
+    v_coef[offset] += coef;
+  }
 }
 
 void put_entry(CSVec& vec, int eqn, double coef)
@@ -55,25 +127,6 @@ void put_entry(CSVec& vec, int eqn, double coef)
   }
 }
 
-double get_entry(const CSVec& vec, int eqn)
-{
-  const std::vector<int>& v_ind = vec.indices();
-  const std::vector<double>& v_coef = vec.coefs();
-
-  if (vec.size() == 0) {
-    throw std::runtime_error("get_entry error, CSVec is empty");
-  }
-
-  std::vector<int>::const_iterator
-    iter = std::lower_bound(v_ind.begin(), v_ind.end(), eqn);
-
-  if (iter == v_ind.end()) {
-    throw std::runtime_error("get_entry error, entry not found.");
-  }
-
-  return v_coef[iter - v_ind.begin()];
-}
-
 void remove_entry(CSVec& vec, int eqn)
 {
   std::vector<int>& v_ind = vec.indices();
@@ -83,18 +136,11 @@ void remove_entry(CSVec& vec, int eqn)
     iter = std::lower_bound(v_ind.begin(), v_ind.end(), eqn);
 
   if (iter != v_ind.end() && *iter == eqn) {
-    size_t offset = iter - v_ind.begin();
     v_ind.erase(iter);
 
+    size_t offset = iter - v_ind.begin();
     std::vector<double>::iterator coef_iter = v_coef.begin()+offset;
     v_coef.erase(coef_iter);
-  }
-}
-
-void CSVec::subtract(const CSVec& rhs)
-{
-  for(size_t i=0; i<rhs.coefs_.size(); ++i) {
-    add_entry(*this, rhs.indices_[i], -rhs.coefs_[i]);
   }
 }
 

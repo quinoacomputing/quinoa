@@ -1,3 +1,5 @@
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 INCLUDE(CombinedOption)
 
 #
@@ -9,13 +11,13 @@ TRIBITS_PACKAGE(Sacado)
 #
 # B) Set up package-specific options
 #
-TRIBITS_SET_ST_FOR_DEV_MODE(ST_FOR_DEV_PT_FOR_RELEASE)
+TRIBITS_SET_SS_FOR_DEV_MODE(SS_FOR_DEV_PS_FOR_RELEASE)
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_COMPLEX
   HAVE_SACADO_COMPLEX
   "Enable Sacado features for complex data type."
-  ${ST_FOR_DEV_PT_FOR_RELEASE}
+  ${SS_FOR_DEV_PS_FOR_RELEASE}
   )
 
 OPTION(${PACKAGE_NAME}_ENABLE_PARAMLIB
@@ -35,11 +37,6 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_UNINIT
   HAVE_SACADO_UNINIT
   "Enable use of uninit_f2c for debugging Rad"
   OFF )
-
-TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_VIEW_SPEC
-  HAVE_SACADO_VIEW_SPEC
-  "Enable Sacado specializations for Kokkos::View<...>"
-  ON )
 
 SET(Sacado_ENABLE_ADOLC_default OFF)
 IF(TPL_ENABLE_ADOLC)
@@ -74,18 +71,11 @@ int main()
   double x = 1.0;
   double y = std::acosh(x);
   return 0;
-}
+} 
   "
   )
-CHECK_CXX_SOURCE_COMPILES("${SOURCE_C99_TR1_CMATH}"
+CHECK_CXX_SOURCE_COMPILES("${SOURCE_C99_TR1_CMATH}" 
   HAS_C99_TR1_CMATH)
-
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  Sacado_ENABLE_CXX11
-  HAVE_SACADO_CXX11
-  "Enable C++11 support in Sacado."
-  "${Trilinos_ENABLE_CXX11}"
-  )
 
 #
 # C) Add the libraries, tests, and examples

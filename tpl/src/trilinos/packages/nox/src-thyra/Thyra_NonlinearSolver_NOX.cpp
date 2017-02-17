@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -57,10 +57,7 @@
 
 // ****************************************************************
 // ****************************************************************
-Thyra::NOXNonlinearSolver::NOXNonlinearSolver():
-  do_row_sum_scaling_(false),
-  when_to_update_(NOX::RowSumScaling::UpdateInvRowSumVectorAtBeginningOfSolve),
-  rebuild_solver_(true)
+Thyra::NOXNonlinearSolver::NOXNonlinearSolver()
 {
   param_list_ = Teuchos::rcp(new Teuchos::ParameterList);
   valid_param_list_ = Teuchos::rcp(new Teuchos::ParameterList);
@@ -76,15 +73,14 @@ Thyra::NOXNonlinearSolver::~NOXNonlinearSolver()
 void Thyra::NOXNonlinearSolver::
 setParameterList(Teuchos::RCP<Teuchos::ParameterList> const& p)
 {
-  //TEUCHOS_TEST_FOR_EXCEPT(Teuchos::is_null(p));
-  rebuild_solver_ = true;
+  TEUCHOS_TEST_FOR_EXCEPT(Teuchos::is_null(p));
   param_list_ = p;
   this->resetSolver();
 }
 
 // ****************************************************************
 // ****************************************************************
-Teuchos::RCP<Teuchos::ParameterList>
+Teuchos::RCP<Teuchos::ParameterList> 
 Thyra::NOXNonlinearSolver::getNonconstParameterList()
 {
   return param_list_;
@@ -121,10 +117,8 @@ Thyra::NOXNonlinearSolver::getValidParameters() const
 void Thyra::NOXNonlinearSolver::
 setModel(const Teuchos::RCP<const ModelEvaluator<double> >& model)
 {
-  //TEUCHOS_TEST_FOR_EXCEPT(model.get()==NULL);
-  rebuild_solver_ = true;
+  TEUCHOS_TEST_FOR_EXCEPT(model.get()==NULL);
   model_ = model;
-  basePoint_ = model_->createInArgs();
 }
 
 // ****************************************************************
@@ -133,15 +127,6 @@ Teuchos::RCP< const Thyra::ModelEvaluator<double> >
 Thyra::NOXNonlinearSolver::getModel() const
 {
   return model_;
-}
-
-// ****************************************************************
-// ****************************************************************
-void
-Thyra::NOXNonlinearSolver::setBasePoint(
-    const Thyra::ModelEvaluatorBase::InArgs<double> &modelInArgs)
-{
-  basePoint_ = modelInArgs;
 }
 
 // ****************************************************************
@@ -158,12 +143,11 @@ solve(VectorBase<double> *x,
 
   TEUCHOS_ASSERT(nonnull(model_));
   TEUCHOS_ASSERT(nonnull(param_list_));
-
+  
   NOX::Thyra::Vector initial_guess(Teuchos::rcp(x, false));  // View of x
 
-  if (Teuchos::is_null(solver_) || rebuild_solver_) {
+  if (Teuchos::is_null(solver_)) {
 
-    rebuild_solver_ = false;
 
     this->validateAndParseThyraGroupOptions(param_list_->sublist("Thyra Group Options"));
 
@@ -171,30 +155,19 @@ solve(VectorBase<double> *x,
 
       if (function_scaling_ == "Row Sum")
 	this->setupRowSumScalingObjects();
-      
+
       TEUCHOS_ASSERT(nonnull(scaling_vector_));
     }
     else {
       TEUCHOS_ASSERT(is_null(scaling_vector_));
     }
 
-    right_scaling_vector_ = Teuchos::null;
-    if(param_list_->isParameter("Right Scaling Vector")){
-      Teuchos::RCP<NOX::Abstract::Vector> abstract_vec = param_list_->get<RCP<NOX::Abstract::Vector> >("Right Scaling Vector");
-      right_scaling_vector_ = Teuchos::rcp_dynamic_cast<NOX::Thyra::Vector>(abstract_vec)->getThyraRCPVector();
-    }    
-
-    nox_group_ = Teuchos::rcp(new NOX::Thyra::Group(initial_guess, model_, scaling_vector_, right_scaling_vector_));
-    nox_group_->getNonconstInArgs() = this->basePoint_;
-
+    nox_group_ = Teuchos::rcp(new NOX::Thyra::Group(initial_guess, model_, scaling_vector_));
     status_test_ = this->buildStatusTests(*param_list_);
     solver_ = NOX::Solver::buildSolver(nox_group_, status_test_, param_list_);
   }
-  else {
-    nox_group_->getNonconstInArgs() = this->basePoint_;
-
+  else
     solver_->reset(initial_guess);
-  }
 
   NOX::StatusTest::StatusType solvStatus = solver_->solve();
   
@@ -202,27 +175,21 @@ solve(VectorBase<double> *x,
 
   if (solvStatus == NOX::StatusTest::Converged)
     t_status.solveStatus = SOLVE_STATUS_CONVERGED;
-  else if (solvStatus == NOX::StatusTest::Unconverged)
+  else if (solvStatus == NOX::StatusTest::Unconverged) 
     t_status.solveStatus = SOLVE_STATUS_UNCONVERGED;
-  else if (solvStatus == NOX::StatusTest::Failed)
+  else if (solvStatus == NOX::StatusTest::Failed) 
     t_status.solveStatus = SOLVE_STATUS_UNCONVERGED;
   else
     t_status.solveStatus = SOLVE_STATUS_UNCONVERGED;
 
-  if (is_null(t_status.extraParameters))
-    t_status.extraParameters = Teuchos::parameterList("NOX Solver Status");
-
-  t_status.extraParameters->set("Number of Iterations",
-                solver_->getNumIterations());
-
   // Get the solution and update
   const NOX::Abstract::Group& final_group = solver_->getSolutionGroup();
   const NOX::Abstract::Vector& final_solution = final_group.getX();
-
-  const NOX::Thyra::Vector& vec =
+  
+  const NOX::Thyra::Vector& vec = 
     dynamic_cast<const NOX::Thyra::Vector&>(final_solution);
-
-  const ::Thyra::VectorBase<double>& new_x =
+  
+  const ::Thyra::VectorBase<double>& new_x = 
     vec.getThyraVector();
 
   if (delta)
@@ -270,40 +237,6 @@ Thyra::NOXNonlinearSolver::get_W() const
 
 // ****************************************************************
 // ****************************************************************
-Teuchos::RCP< Thyra::LinearOpBase<double> >
-Thyra::NOXNonlinearSolver::get_nonconst_W_op(const bool forceUpToDate)
-{
-  if (forceUpToDate && !nox_group_->isJacobian())
-    nox_group_->computeJacobian();
-  return nox_group_->getNonconstJacobianOperator();
-}
-
-// ****************************************************************
-// ****************************************************************
-Teuchos::RCP< const Thyra::LinearOpBase<double> >
-Thyra::NOXNonlinearSolver::get_W_op() const
-{
-  return nox_group_->getJacobianOperator();
-}
-
-// ****************************************************************
-// ****************************************************************
-Teuchos::RCP<const Thyra::PreconditionerBase<double> >
-Thyra::NOXNonlinearSolver::get_prec_op() const
-{
-  return nox_group_->getPreconditioner();
-}
-
-// ****************************************************************
-// ****************************************************************
-Teuchos::RCP< Thyra::PreconditionerBase<double> >
-Thyra::NOXNonlinearSolver::get_nonconst_prec_op()
-{
-  return nox_group_->getNonconstPreconditioner();
-}
-
-// ****************************************************************
-// ****************************************************************
 Teuchos::RCP<NOX::StatusTest::Generic> Thyra::NOXNonlinearSolver::
 buildStatusTests(Teuchos::ParameterList& p)
 {
@@ -312,7 +245,7 @@ buildStatusTests(Teuchos::ParameterList& p)
   NOX::Utils utils(p.sublist("Printing"));
 
   if (p.isSublist("Status Tests")) {
-    status_test =
+    status_test = 
       NOX::StatusTest::buildStatusTests(p.sublist("Status Tests"), utils);
   }
   else { // Default status test
@@ -363,7 +296,7 @@ void Thyra::NOXNonlinearSolver::
 validateAndParseThyraGroupOptions(Teuchos::ParameterList& thyra_group_options_sublist)
 {
   using Teuchos::ParameterList;
-
+  
   ParameterList validParams;
   {
     Teuchos::setStringToIntegralParameter<int>(
@@ -381,12 +314,12 @@ validateAndParseThyraGroupOptions(Teuchos::ParameterList& thyra_group_options_su
       Teuchos::tuple<std::string>("Before Each Nonlinear Solve","Before Each Nonlinear Iteration"),
       &validParams
       );
-
+  
     validParams.set<Teuchos::RCP< ::Thyra::VectorBase<double> > >("User Defined Scaling", Teuchos::null);
   }
 
   thyra_group_options_sublist.validateParametersAndSetDefaults(validParams);
-
+  
   function_scaling_ = thyra_group_options_sublist.get<std::string>("Function Scaling");
 
   if (function_scaling_ =="Row Sum")
@@ -397,7 +330,7 @@ validateAndParseThyraGroupOptions(Teuchos::ParameterList& thyra_group_options_su
   std::string string_when_to_update = thyra_group_options_sublist.get<std::string>("Update Row Sum Scaling");
   if (string_when_to_update == "Before Each Nonlinear Solve")
     when_to_update_ = NOX::RowSumScaling::UpdateInvRowSumVectorAtBeginningOfSolve;
-  else if (string_when_to_update == "Before Each Nonlinear Iteration")
+  else if (string_when_to_update == "Before Each Nonlinear Iteration") 
     when_to_update_ = NOX::RowSumScaling::UpdateInvRowSumVectorAtBeginningOfIteration;
 
   if (function_scaling_ =="User Defined")
@@ -413,20 +346,20 @@ void Thyra::NOXNonlinearSolver::setupRowSumScalingObjects()
   using Teuchos::rcp;
 
   scaling_vector_ = ::Thyra::createMember(model_->get_f_space());
-
+  
   ::Thyra::V_S(scaling_vector_.ptr(),1.0);
 
-  RCP<NOX::Abstract::PrePostOperator> row_sum_observer =
+  RCP<NOX::Abstract::PrePostOperator> row_sum_observer = 
     rcp(new NOX::RowSumScaling(scaling_vector_, when_to_update_));
-
+  
   Teuchos::ParameterList& nox_parameters = *param_list_;
-
+  
   if (nox_parameters.sublist("Solver Options").
       isType< RCP<NOX::Abstract::PrePostOperator> >("User Defined Pre/Post Operator")) {
-
-    RCP<NOX::Abstract::PrePostOperator> user_observer =
+    
+    RCP<NOX::Abstract::PrePostOperator> user_observer = 
       nox_parameters.sublist("Solver Options").get< RCP<NOX::Abstract::PrePostOperator> >("User Defined Pre/Post Operator");
-
+    
     // NOTE: the row_sum_observer should be evalauted after any user
     // oberservers to make sure that the jacobian is accurate.  This
     // is needed, for example, if we have a model evaluator decorator
@@ -437,21 +370,18 @@ void Thyra::NOXNonlinearSolver::setupRowSumScalingObjects()
     RCP<NOX::PrePostOperatorVector> observer_vector = Teuchos::rcp(new NOX::PrePostOperatorVector);
     observer_vector->pushBack(user_observer);
     observer_vector->pushBack(row_sum_observer);
-
+    
     nox_parameters.sublist("Solver Options").set< RCP<NOX::Abstract::PrePostOperator> >("User Defined Pre/Post Operator", observer_vector);
 
   }
   else
     nox_parameters.sublist("Solver Options").set< RCP<NOX::Abstract::PrePostOperator> >("User Defined Pre/Post Operator", row_sum_observer);
-
+  
 
   // Set the weighted merit function.  Throw error if a user defined
   // merit funciton is present.
-  // ETP 5/23/16 -- Commenting this out because the parameter list may have
-  // been reused from previous solves, and so the merit function that has been
-  // set below from previous solves may still be there.
-  //TEUCHOS_ASSERT( !(nox_parameters.sublist("Solver Options").isType<RCP<NOX::MeritFunction::Generic> >("User Defined Merit Function")));
-
+  TEUCHOS_ASSERT( !(nox_parameters.sublist("Solver Options").isType<RCP<NOX::MeritFunction::Generic> >("User Defined Merit Function")));
+  
   RCP<NOX::MeritFunction::Generic> mf = rcp(new NOX::Thyra::WeightedMeritFunction(scaling_vector_));
 
   nox_parameters.sublist("Solver Options").set<RCP<NOX::MeritFunction::Generic> >("User Defined Merit Function",mf);

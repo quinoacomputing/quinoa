@@ -1,4 +1,6 @@
 
+INCLUDE(TribitsLibraryMacros)
+INCLUDE(TribitsAddExecutableAndTest)
 
 SET(HEADERS "")
 SET(SOURCES "")
@@ -10,7 +12,7 @@ APPEND_SET(HEADERS
   NOX_TestError.H
   NOX_TestUtils.H
   NOX_TestCompare.H
-  )
+  ) 
 
 APPEND_SET(SOURCES
   NOX_TestUtils.C

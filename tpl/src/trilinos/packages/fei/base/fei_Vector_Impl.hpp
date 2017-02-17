@@ -1,10 +1,45 @@
-/*--------------------------------------------------------------------*/
-/*    Copyright 2005 Sandia Corporation.                              */
-/*    Under the terms of Contract DE-AC04-94AL85000, there is a       */
-/*    non-exclusive license for use of this work by or on behalf      */
-/*    of the U.S. Government.  Export of this program may require     */
-/*    a license from the United States Government.                    */
-/*--------------------------------------------------------------------*/
+/*
+// @HEADER
+// ************************************************************************
+//             FEI: Finite Element Interface to Linear Solvers
+//                  Copyright (2005) Sandia Corporation.
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation, the
+// U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact Alan Williams (william@sandia.gov) 
+//
+// ************************************************************************
+// @HEADER
+*/
+
 
 #ifndef _fei_Vector_Impl_hpp_
 #define _fei_Vector_Impl_hpp_
@@ -12,13 +47,12 @@
 #include <fei_macros.hpp>
 #include <fei_VectorTraits.hpp>
 
-#include <fei_VectorTraits_CSVec.hpp>
+#include <fei_VectorTraits_FillableVec.hpp>
 #include <fei_VectorTraits_LinSysCore.hpp>
 #include <fei_VectorTraits_LinProbMgr.hpp>
 #include <fei_VectorTraits_FEData.hpp>
 #include <snl_fei_FEVectorTraits.hpp>
 #include <snl_fei_FEVectorTraits_FED.hpp>
-#include <fei_SharedIDs.hpp>
 #include <fei_VectorSpace.hpp>
 #include <fei_Reducer.hpp>
 #include <fei_Logger.hpp>
@@ -85,8 +119,6 @@ namespace fei {
     */
     int scatterToOverlap();
 
-    void setCommSizes();
-
     /** Move any shared data from the overlapping decomposition to the
 	underlying non-overlapping decomposition.
     */
@@ -142,13 +174,6 @@ namespace fei {
 			int idType,
 			int numIDs,
 			const int* IDs,
-			const double* data,
-			int vectorIndex=0);
-
-    int copyInFieldDataLocalIDs(int fieldID,
-			int idType,
-			int numIDs,
-			const int* localIDs,
 			const double* data,
 			int vectorIndex=0);
 
@@ -254,39 +279,6 @@ fei::Vector_Impl<T>::Vector_Impl(fei::SharedPtr<fei::VectorSpace> vecSpace,
     os << dbgprefix_<<" ctor, numLocalEqns="<<numLocalEqns
        <<", typeName: "<<typeName()<<FEI_ENDL;
   }
-
-  std::vector<int> idTypes;
-  vecSpace->getIDTypes(idTypes);
-  std::vector<int> eqns;
-  std::vector<double> zeros;
-  for(size_t i=0; i<idTypes.size(); ++i) {
-    int idType = idTypes[i];
-    fei::SharedIDs<int>& sharedIDs = vecSpace->getSharedIDs(idType);
-    const fei::SharedIDs<int>::map_type& idMap = sharedIDs.getSharedIDs();
-    fei::SharedIDs<int>::map_type::const_iterator
-      iter = idMap.begin(), iterEnd = idMap.end();
-    for(; iter!=iterEnd; ++iter) {
-      int ID = iter->first;
-      int eqn;
-      vecSpace->getGlobalIndex(idType, ID, eqn);
-      int ndof = vecSpace->getNumDegreesOfFreedom(idType, ID);
-      eqns.resize(ndof);
-      zeros.resize(ndof, 0.0);
-      for(int j=0; j<ndof; ++j) eqns[j] = eqn+j;
-      if (!isSolutionVector) {
-        sumIn(ndof, &eqns[0], &zeros[0]);
-      }
-      else {
-        copyIn(ndof, &eqns[0], &zeros[0]);
-      }
-    }
-  }
-
-  setCommSizes();
-  std::vector<CSVec*>& remoteVecs = remotelyOwned();
-  for(size_t i=0; i<remoteVecs.size(); ++i) {
-    remoteVecs[i]->clear();
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -344,18 +336,6 @@ int fei::Vector_Impl<T>::scatterToOverlap()
   }
 
   return( Vector_core::scatterToOverlap() );
-}
-
-//----------------------------------------------------------------------------
-template<typename T>
-void fei::Vector_Impl<T>::setCommSizes()
-{
-  if (output_level_ >= fei::BRIEF_LOGS && output_stream_ != NULL) {
-    FEI_OSTREAM& os = *output_stream_;
-    os << dbgprefix_<<"setCommSizes"<<FEI_ENDL;
-  }
-
-  Vector_core::setCommSizes();
 }
 
 //----------------------------------------------------------------------------
@@ -473,23 +453,6 @@ int fei::Vector_Impl<T>::copyInFieldData(int fieldID,
   }
 
   return(assembleFieldData(fieldID, idType, numIDs, IDs, data, false, vectorIndex));
-}
-
-//----------------------------------------------------------------------------
-template<typename T>
-int fei::Vector_Impl<T>::copyInFieldDataLocalIDs(int fieldID,
-					int idType,
-					int numIDs,
-					const int* localIDs,
-					const double* data,
-					int vectorIndex)
-{
-  if (output_level_ >= fei::BRIEF_LOGS && output_stream_ != NULL) {
-    FEI_OSTREAM& os = *output_stream_;
-    os << dbgprefix_<<"copyInFieldDataLocalIDs(n="<<numIDs<<")"<<FEI_ENDL;
-  }
-
-  return(assembleFieldDataLocalIDs(fieldID, idType, numIDs, localIDs, data, false, vectorIndex));
 }
 
 //----------------------------------------------------------------------------

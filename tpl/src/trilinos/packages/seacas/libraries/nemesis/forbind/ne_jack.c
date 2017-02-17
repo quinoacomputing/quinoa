@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1998 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
  * retains certain rights in this software.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -102,6 +102,11 @@ typedef int entity_id;
 #define F2C(name) name
 #endif
 #endif
+
+
+
+extern int ncopts;   /* default is (NC_FATAL | NC_VERBOSE) */
+extern int exerrval; /* global int that contains a Exodus-specific error code */
 
 /* blank fill C string to make FORTRAN string */
 static void

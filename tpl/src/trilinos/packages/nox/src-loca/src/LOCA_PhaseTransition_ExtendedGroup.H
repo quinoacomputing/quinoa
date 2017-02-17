@@ -1,15 +1,15 @@
-// $Id: NOXLOCA_Tramonto_ExtendedGroup.hpp,v 1.3 2007/03/09 20:57:47 ljfrink Exp $
-// $Source: /space/CVS-Tramonto/Tramonto/src/NOXLOCA_Tramonto_ExtendedGroup.hpp,v $
+// $Id: NOXLOCA_Tramonto_ExtendedGroup.hpp,v 1.3 2007/03/09 20:57:47 ljfrink Exp $ 
+// $Source: /space/CVS-Tramonto/Tramonto/src/NOXLOCA_Tramonto_ExtendedGroup.hpp,v $ 
 
 //@HEADER
 // ************************************************************************
-//
+// 
 //            LOCA: Library of Continuation Algorithms Package
 //                 Copyright (2005) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -37,7 +37,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -55,7 +55,7 @@
 #include "LOCA_Parameter_Vector.H"
 #include "LOCA_GlobalData.H"
 
-#include "NOX_Common.H"             // class data element (std::string)
+#include "NOX_Common.H"             // class data element (string)
 #include "LOCA_PhaseTransition_ExtendedVector.H"
 #include "LOCA_MultiContinuation_AbstractGroup.H"         // base class
 #include "LOCA_Extended_MultiAbstractGroup.H"             // base class
@@ -76,7 +76,7 @@ namespace LOCA {
   namespace PhaseTransition {
 
     //class Group : public virtual NOX::Abstract::Group {
-    class ExtendedGroup :
+    class ExtendedGroup : 
             public virtual LOCA::Extended::MultiAbstractGroup,
             public virtual LOCA::MultiContinuation::AbstractGroup {
 
@@ -109,7 +109,7 @@ namespace LOCA {
 
       void computeX(const NOX::Abstract::Group& grp, const NOX::Abstract::Vector& d, double step);
       //! See above.
-      void computeX(const LOCA::PhaseTransition::ExtendedGroup& grp,
+      void computeX(const LOCA::PhaseTransition::ExtendedGroup& grp, 
           const LOCA::PhaseTransition::ExtendedVector& d, double step);
 
       NOX::Abstract::Group::ReturnType computeF();
@@ -126,21 +126,21 @@ namespace LOCA {
        * matrix-free scenarios. */
 
       //@{
-
-      NOX::Abstract::Group::ReturnType applyJacobian(const LOCA::PhaseTransition::ExtendedVector& input,
-                             LOCA::PhaseTransition::ExtendedVector& result) const;
+  
+      NOX::Abstract::Group::ReturnType applyJacobian(const LOCA::PhaseTransition::ExtendedVector& input, 
+						     LOCA::PhaseTransition::ExtendedVector& result) const;
 
       //! See above
-      NOX::Abstract::Group::ReturnType applyJacobian(const NOX::Abstract::Vector& input,
-                             NOX::Abstract::Vector& result) const;
+      NOX::Abstract::Group::ReturnType applyJacobian(const NOX::Abstract::Vector& input, 
+						     NOX::Abstract::Vector& result) const;
 
-      NOX::Abstract::Group::ReturnType applyJacobianInverse(Teuchos::ParameterList& params,
-                        const LOCA::PhaseTransition::ExtendedVector& input,
-                                  LOCA::PhaseTransition::ExtendedVector& result) const;
+      NOX::Abstract::Group::ReturnType applyJacobianInverse(Teuchos::ParameterList& params, 
+						const LOCA::PhaseTransition::ExtendedVector& input, 
+			              		LOCA::PhaseTransition::ExtendedVector& result) const;
 
-      NOX::Abstract::Group::ReturnType applyJacobianInverse(Teuchos::ParameterList& params,
-                                const NOX::Abstract::Vector& input,
-                                NOX::Abstract::Vector& result) const;
+      NOX::Abstract::Group::ReturnType applyJacobianInverse(Teuchos::ParameterList& params, 
+							    const NOX::Abstract::Vector& input, 
+							    NOX::Abstract::Vector& result) const;
 
       //@}
 
@@ -158,7 +158,7 @@ namespace LOCA {
 
       //@}
 
-      /** @name "Get" functions
+      /** @name "Get" functions 
        *
        * Note that these function do not check whether or not the vectors
        * are valid. Must use the "Is" functions for that purpose. */
@@ -167,7 +167,7 @@ namespace LOCA {
       const NOX::Abstract::Vector& getX() const;
 
       const NOX::Abstract::Vector& getF() const;
-
+  
       double getNormF() const;
 
       const NOX::Abstract::Vector& getNewton() const;
@@ -177,14 +177,14 @@ namespace LOCA {
       Teuchos::RCP< const NOX::Abstract::Vector > getXPtr() const;
 
       Teuchos::RCP< const NOX::Abstract::Vector > getFPtr() const;
-
+  
       Teuchos::RCP< const NOX::Abstract::Vector > getNewtonPtr() const;
 
       Teuchos::RCP< const NOX::Abstract::Vector > getGradientPtr() const;
 
       //@}
 
-      virtual Teuchos::RCP<NOX::Abstract::Group>
+      virtual Teuchos::RCP<NOX::Abstract::Group> 
       clone(NOX::CopyType type = NOX::DeepCopy) const;
 
       //! Print out the group
@@ -201,8 +201,8 @@ namespace LOCA {
        //! Set parameter indexed by (integer) paramID
       void setParam(int paramID, double val);
 
-      //! Set parameter indexed by (std::string) paramID
-      void setParam(std::string paramID, double val);
+      //! Set parameter indexed by (string) paramID
+      void setParam(string paramID, double val);
 
       //! Return a const reference to the ParameterVector owned by the group.
       const LOCA::ParameterVector& getParams() const;
@@ -210,10 +210,10 @@ namespace LOCA {
       //! Return copy of parameter indexed by (integer) paramID
       double getParam(int paramID) const;
 
-      //! Return copy of parameter indexed by (std::string) paramID
-      double getParam(std::string paramID) const;
+      //! Return copy of parameter indexed by (string) paramID
+      double getParam(string paramID) const;
 
-      //! Set parameter indexed by (std::string) paramID
+      //! Set parameter indexed by (string) paramID
       void printSolution(const NOX::Abstract::Vector& solution, const double param) const;
       void printSolution(const double param) const;
 
@@ -230,11 +230,11 @@ namespace LOCA {
       getUnderlyingGroup() { return grp;};
 
      virtual void
-     setParamsMulti( const std::vector<int>& paramIDs,
+     setParamsMulti( const vector<int>& paramIDs,
                      const NOX::Abstract::MultiVector::DenseMatrix& vals);
 
       virtual NOX::Abstract::Group::ReturnType
-      computeDfDpMulti( const std::vector<int>& paramIDs,
+      computeDfDpMulti( const vector<int>& paramIDs,
                         NOX::Abstract::MultiVector& dfdp,
                                           bool isValid_F);
 
@@ -258,8 +258,8 @@ namespace LOCA {
       Teuchos::RCP<LOCA::PhaseTransition::ExtendedVector> newtonVector;
       //@}
 
-      /** @name IsValid flags
-       *
+      /** @name IsValid flags 
+       *  
        * True if the current solution is up-to-date with respect to the
        * currect xVector. */
       //@{
@@ -274,7 +274,7 @@ namespace LOCA {
 
     };
 
-  } // namespace
+  } // namespace 
 } // namespace NOX
 
 

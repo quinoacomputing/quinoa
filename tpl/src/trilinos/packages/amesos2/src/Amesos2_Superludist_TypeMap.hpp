@@ -75,26 +75,18 @@ extern "C" {
 #undef __SUPERLU_SUPERMATRIX
 #include "superlu_defs.h"
 
-#if SUPERLU_DIST_MAJOR_VERSION == 5
-  typedef superlu_dist_options_t   amesos2_superlu_dist_options_t;
-  typedef superlu_dist_mem_usage_t amesos2_superlu_dist_mem_usage_t;
-#else
-  typedef superlu_options_t        amesos2_superlu_dist_options_t;
-  typedef mem_usage_t              amesos2_superlu_dist_mem_usage_t;
-#endif
-
   namespace D {
 #include "superlu_ddefs.h"	// double-precision real definitions
   }
 
-#if defined(HAVE_TEUCHOS_COMPLEX)  && !defined(__clang__)
+#ifdef HAVE_TEUCHOS_COMPLEX
   namespace Z {
 #include "superlu_zdefs.h"     // double-precision complex definitions
   }
 #endif  // HAVE_TEUCHOS_COMPLEX
 
 } // end extern "C"
-#if defined(HAVE_TEUCHOS_COMPLEX)  && !defined(__clang__)
+#ifdef HAVE_TEUCHOS_COMPLEX
 
   // Declare and specialize a std::binary_funtion class for
   // multiplication of SLUD types
@@ -128,7 +120,7 @@ extern "C" {
   };
 #endif	// HAVE_TEUCHOS_COMPLEX
 } // end namespace SLUD
-#if defined(HAVE_TEUCHOS_COMPLEX)  && !defined(__clang__)
+#ifdef HAVE_TEUCHOS_COMPLEX
 
 
 /* ==================== Conversion ==================== */
@@ -233,7 +225,7 @@ struct TypeMap<Superludist,double>
   typedef SLUD::D::SOLVEstruct_t SOLVEstruct_t;
 };
 
-#if defined(HAVE_TEUCHOS_COMPLEX) && !defined(__clang__)
+#ifdef HAVE_TEUCHOS_COMPLEX
 template <>
 struct TypeMap<Superludist,std::complex<double> >
 {

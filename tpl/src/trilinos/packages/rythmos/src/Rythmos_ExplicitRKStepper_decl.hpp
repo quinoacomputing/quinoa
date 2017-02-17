@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -34,15 +34,11 @@
 #include "Rythmos_Types.hpp"
 #include "Thyra_ModelEvaluator.hpp"
 
-#include "Rythmos_StepControlStrategyAcceptingStepperBase.hpp"
-#include "Rythmos_StepControlStrategyBase.hpp"
-
 namespace Rythmos {
 
 /** \brief . */
 template<class Scalar>
-class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Scalar>,
-  virtual public StepControlStrategyAcceptingStepperBase<Scalar>
+class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Scalar>
 {
   public:
     typedef Teuchos::ScalarTraits<Scalar> ST;
@@ -151,25 +147,6 @@ class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Sc
     /** \brief. */
     RCP<const Teuchos::ParameterList> getValidParameters() const;
 
-
-  /** \name Overridden from StepControlStrategyAcceptingStepperBase */
-  //@{
-
-  /** \brief . */
-  void setStepControlStrategy(
-      const RCP<StepControlStrategyBase<Scalar> >& stepControlStrategy
-      );
-
-  /** \brief . */
-  RCP<StepControlStrategyBase<Scalar> > 
-    getNonconstStepControlStrategy();
-  
-  /** \brief . */
-  RCP<const StepControlStrategyBase<Scalar> >
-    getStepControlStrategy() const;
-  
-  //@}
-
   private:
 
     Teuchos::RCP<const Thyra::ModelEvaluator<Scalar> > model_;
@@ -177,7 +154,6 @@ class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Sc
     Teuchos::RCP<Thyra::VectorBase<Scalar> > solution_vector_old_;
     Array<Teuchos::RCP<Thyra::VectorBase<Scalar> > > k_vector_;
     Teuchos::RCP<Thyra::VectorBase<Scalar> > ktemp_vector_;
-    Teuchos::RCP<Thyra::VectorBase<Scalar> > solution_hat_vector_;
 
     Thyra::ModelEvaluatorBase::InArgs<Scalar> basePoint_;
 
@@ -187,12 +163,8 @@ class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Sc
     Scalar t_old_;
     Scalar dt_;
     int numSteps_;
-    Scalar LETvalue_;   // ck * e
 
     Teuchos::RCP<Teuchos::ParameterList> parameterList_;
-    RCP<Thyra::VectorBase<Scalar> > ee_; // error (Sidafa) 
-    EStepLETStatus stepLETStatus_; // Local Error Test Status (Sidafa)
-    TimeRange<Scalar> timeRange_;
 
     bool isInitialized_;
 
@@ -201,15 +173,6 @@ class ExplicitRKStepper : virtual public RKButcherTableauAcceptingStepperBase<Sc
     // Private member functions:
     void defaultInitializeAll_();
     void initialize_();
-
-  // Sidafa 9/4/15
-  int rkNewtonConvergenceStatus_;
-  RCP<Rythmos::StepControlStrategyBase<Scalar> > stepControl_;
-  bool isVariableStep_ = false;
-
-  Scalar takeVariableStep_(Scalar dt, StepSizeType flag);
-
-  Scalar takeFixedStep_(Scalar dt, StepSizeType flag);
 
 };
 

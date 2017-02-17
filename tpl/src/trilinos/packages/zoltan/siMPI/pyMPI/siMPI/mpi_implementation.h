@@ -138,7 +138,10 @@ typedef struct _MPI_COMM_IMPL {
 
 typedef struct _MPI_TYPE_DES {
   int id;
+  MPI_Aint size;
   MPI_Aint extent;
+  MPI_Aint ub;
+  MPI_Aint lb;
   int sendType;
   struct _MPI_TYPE_DES* next;
   struct _MPI_TYPE_INFO* info;

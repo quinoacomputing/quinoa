@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -35,8 +35,6 @@
 #include "Rythmos_SolverAcceptingStepperBase.hpp"
 #include "Rythmos_RKButcherTableauAcceptingStepperBase.hpp"
 #include "Rythmos_RKButcherTableauBase.hpp"
-#include "Rythmos_StepControlStrategyAcceptingStepperBase.hpp"
-#include "Rythmos_StepControlStrategyBase.hpp"
 
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_ProductVectorBase.hpp"
@@ -49,8 +47,7 @@ namespace Rythmos {
 template<class Scalar>
 class ImplicitRKStepper : 
   virtual public SolverAcceptingStepperBase<Scalar>,
-  virtual public RKButcherTableauAcceptingStepperBase<Scalar>,
-  virtual public StepControlStrategyAcceptingStepperBase<Scalar>
+  virtual public RKButcherTableauAcceptingStepperBase<Scalar>
 {
 public:
   
@@ -138,31 +135,11 @@ public:
   Thyra::ModelEvaluatorBase::InArgs<Scalar> getInitialCondition() const;
 
   /** \brief . */
-
   Scalar takeStep(Scalar dt, StepSizeType flag);
   
   /** \brief . */
   const StepStatus<Scalar> getStepStatus() const;
- 
-  /** \name Overridden from StepControlStrategyAcceptingStepperBase */
-  //@{
-
-  /** \brief . */
-  void setStepControlStrategy(
-      const RCP<StepControlStrategyBase<Scalar> >& stepControlStrategy
-      );
-
-  /** \brief . */
-  RCP<StepControlStrategyBase<Scalar> > 
-    getNonconstStepControlStrategy();
   
-  /** \brief . */
-  RCP<const StepControlStrategyBase<Scalar> >
-    getStepControlStrategy() const;
-  
-  //@}
-
- 
   //@}
 
   /** \name Overridden from InterpolationBufferBase */
@@ -229,9 +206,6 @@ public:
 
   //@}
 
-  /** \brief . */
-  bool isEmbeddedRK_ = false; // Sidafa
-
 private:
 
   // ///////////////////////
@@ -247,10 +221,6 @@ private:
   RCP<Thyra::VectorBase<Scalar> > x_;
   RCP<Thyra::VectorBase<Scalar> > x_old_;
   RCP<Thyra::VectorBase<Scalar> > x_dot_;
-  RCP<Thyra::VectorBase<Scalar> > oldSolution_; // Sidafa
-  EStepLETStatus stepLETStatus_; // Local Error Test Status (Sidafa)
-  RCP<Thyra::VectorBase<Scalar> > xhat_; // Embedded solution (Sidafa)
-  RCP<Thyra::VectorBase<Scalar> > ee_; // error (Sidafa) 
 
   TimeRange<Scalar> timeRange_;
 
@@ -258,17 +228,10 @@ private:
   RCP<const RKButcherTableauBase<Scalar> > irkButcherTableau_;
 
   bool isDirk_; // Used for Diagonal Implicit RK 
-  bool isVariableStep_ = false;
 
   int numSteps_;
-  Scalar LETvalue_;   // ck * e
 
   bool haveInitialCondition_;
-
-  // Sidafa 9/4/15
-  Thyra::SolveStatus<Scalar> nonlinearSolveStatus_;
-  int rkNewtonConvergenceStatus_;
-  RCP<Rythmos::StepControlStrategyBase<Scalar> > stepControl_;
 
   // Cache
   RCP<Thyra::ProductVectorBase<Scalar> > x_stage_bar_;
@@ -278,12 +241,6 @@ private:
 
   void defaultInitializeAll_();
   void initialize_();
-
-  Scalar takeVariableStep_(Scalar dt, StepSizeType flag);
-
-  Scalar takeFixedStep_(Scalar dt, StepSizeType flag);
-
-  
 
 };
 

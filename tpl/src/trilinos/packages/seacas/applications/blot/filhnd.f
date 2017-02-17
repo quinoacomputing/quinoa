@@ -227,7 +227,7 @@ c
 c                    set open keywords
 c
          cparm = fform
-         call upcase_bl ( cparm )
+         call upcase ( cparm )
          tform = cparm(1:1)
          if ( tform .eq. 'U' ) then
             form = 'unformatted'
@@ -241,7 +241,7 @@ c
          lform = lenstr ( form )
 
          cparm = type
-         call upcase_bl ( cparm )
+         call upcase ( cparm )
          ttype = cparm(1:1)
          if ( ttype .eq. 'O' ) then
             status = 'old'
@@ -260,7 +260,7 @@ c
 c
 c
          cparm = facces
-         call upcase_bl ( cparm )
+         call upcase ( cparm )
          tacces = cparm(1:1)
          if ( tacces .eq. 'D' ) then
             access = 'direct'

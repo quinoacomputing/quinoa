@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
   int dimids[NC_MAX_DIMS], varids[NC_MAX_VARS];
   int vardims[NC_MAX_VARS][NC_MAX_VAR_DIMS/16]; /* divided by 16 due to my memory limitation */
   int varndims[NC_MAX_VARS], varnatts[NC_MAX_VARS];
+  int isRecvar;
   params opts;
 
   int rank;
@@ -279,6 +280,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < NC_MAX_VAR_DIMS; i++)
     start[i] = 0;
   for (i = 0; i < nvars; i++) {
+    isRecvar = 0;
     varsize = 1;
     for (j = 0; j < varndims[i]; j++) {
       status = ncmpi_inq_dim(ncid1, vardims[i][j], name, shape + j);
@@ -288,6 +290,8 @@ int main(int argc, char **argv) {
         start[j] = shape[j] * rank;
       }
       varsize *= shape[j];
+      if (vardims[i][j] == unlimdimid)
+        isRecvar = 1;
     }
     switch (vartypes[i]) {
       case NC_CHAR:

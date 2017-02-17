@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -62,7 +62,6 @@
 
 int special_submap_import_test(Epetra_Comm& Comm);
 int combine_mode_test(Epetra_Comm& Comm);
-int alternate_import_constructor_test(Epetra_Comm& Comm);
 
 int main(int argc, char *argv[])
 {
@@ -105,11 +104,11 @@ int main(int argc, char *argv[])
   int NumMyEquations = 20;
   int NumGlobalEquations = NumMyEquations*NumProc+EPETRA_MIN(NumProc,3);
   if (MyPID < 3) NumMyEquations++;
-  // Construct a Source Map that puts approximately the same Number of equations on each processor in
+  // Construct a Source Map that puts approximately the same Number of equations on each processor in 
   // uniform global ordering
 
   Epetra_Map SourceMap(NumGlobalEquations, NumMyEquations, 0, Comm);
-
+  
   // Get update list and number of local equations from newly created Map
   int NumMyElements = SourceMap.NumMyElements();
   int * SourceMyGlobalElements = new int[NumMyElements];
@@ -172,7 +171,7 @@ int main(int argc, char *argv[])
   for (j=0; j < NumVectors; j++)
     for (i=0; i < NumMyElements; i++) {
       if (TargetMultiVector[j][i]!= (double) TargetMyGlobalElements[i]*(j+1))
-	cout << "TargetMultiVector["<<i<<"]["<<j<<"] = " << TargetMultiVector[j][i]
+	cout << "TargetMultiVector["<<i<<"]["<<j<<"] = " << TargetMultiVector[j][i] 
 	     <<  "  TargetMyGlobalElements[i]*(j+1) = " <<  TargetMyGlobalElements[i]*(j+1) << endl;
       forierr += !(TargetMultiVector[j][i]== (double) TargetMyGlobalElements[i]*(j+1));
     }
@@ -197,9 +196,9 @@ int main(int argc, char *argv[])
   int *ExportPIDs = Importer.ExportPIDs();
 
   for (i=0; i < NumSameIDs; i++) ExpectedTarget[i] = (double) (MyPID+1);
-  for (i=0; i < NumPermuteIDs; i++) ExpectedTarget[PermuteFromLIDs[i]] =
+  for (i=0; i < NumPermuteIDs; i++) ExpectedTarget[PermuteFromLIDs[i]] = 
 				      (double) (MyPID+1);
-  for (i=0; i < NumExportIDs; i++) ExpectedTarget[ExportLIDs[i]] +=
+  for (i=0; i < NumExportIDs; i++) ExpectedTarget[ExportLIDs[i]] += 
 				     (double) (ExportPIDs[i]+1);
 
   for (i=0; i < NumMyElements; i++) SourceVector[i] =  (double) (MyPID+1);
@@ -209,7 +208,7 @@ int main(int argc, char *argv[])
   forierr = 0;
   for (i=0; i < NumMyElements; i++) {
     if (TargetVector[i]!= ExpectedTarget[i])
-      cout <<  "     TargetVector["<<i<<"] = " << TargetVector[i]
+      cout <<  "     TargetVector["<<i<<"] = " << TargetVector[i] 
 	   <<  "   ExpectedTarget["<<i<<"] = " <<  ExpectedTarget[i] << " on PE " << MyPID << endl;
     forierr += !(TargetVector[i]== ExpectedTarget[i]);
   }
@@ -217,41 +216,7 @@ int main(int argc, char *argv[])
 
   if (verbose) cout << "Vector Export using Importer Check OK" << endl << endl;
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Now use Importer to create a reverse exporter
-  TargetVector.PutScalar(0.0);
-  Epetra_Export ReversedImport(Importer);
 
-  EPETRA_TEST_ERR(!(TargetVector.Export(SourceVector, ReversedImport, Add)==0),ierr);
-
-  forierr = 0;
-  for (i=0; i < NumMyElements; i++) {
-    if (TargetVector[i]!= ExpectedTarget[i])
-      cout <<  "     TargetVector["<<i<<"] = " << TargetVector[i]
-	   <<  "   ExpectedTarget["<<i<<"] = " <<  ExpectedTarget[i] << " on PE " << MyPID << endl;
-    forierr += !(TargetVector[i]== ExpectedTarget[i]);
-  }
-  EPETRA_TEST_ERR(forierr,ierr);
-
-  if (verbose) cout << "Vector Export using Reversed Importer Check OK" << endl << endl;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Now use Exporter to create a reverse importer
-  TargetVector.PutScalar(0.0);
-  Epetra_Import ReversedExport(ReversedImport);
-
-  EPETRA_TEST_ERR(!(TargetVector.Export(SourceVector, ReversedExport, Add)==0),ierr);
-
-  forierr = 0;
-  for (i=0; i < NumMyElements; i++) {
-    if (TargetVector[i]!= ExpectedTarget[i])
-      cout <<  "     TargetVector["<<i<<"] = " << TargetVector[i]
-	   <<  "   ExpectedTarget["<<i<<"] = " <<  ExpectedTarget[i] << " on PE " << MyPID << endl;
-    forierr += !(TargetVector[i]== ExpectedTarget[i]);
-  }
-  EPETRA_TEST_ERR(forierr,ierr);
-
-  if (verbose) cout << "Vector Export using Reversed Exporter Check OK" << endl << endl;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //  Build a tridiagonal system two ways:
@@ -263,11 +228,11 @@ int main(int argc, char *argv[])
 
 
 
-  // Construct a Standard Map that puts approximately the same number of equations on each processor in
+  // Construct a Standard Map that puts approximately the same number of equations on each processor in 
   // uniform global ordering
 
   Epetra_Map StandardMap(NumGlobalEquations, NumMyEquations, 0, Comm);
-
+  
   // Get update list and number of local equations from newly created Map
   NumMyElements = StandardMap.NumMyElements();
   int * StandardMyGlobalElements = new int[NumMyElements];
@@ -279,7 +244,7 @@ int main(int argc, char *argv[])
   Epetra_CrsGraph StandardGraph(Copy, StandardMap, 3);
   EPETRA_TEST_ERR(StandardGraph.IndicesAreGlobal(),ierr);
   EPETRA_TEST_ERR(StandardGraph.IndicesAreLocal(),ierr);
-
+  
   // Add  rows one-at-a-time
   // Need some vectors to help
   // Off diagonal Values will always be -1
@@ -287,7 +252,7 @@ int main(int argc, char *argv[])
 
   int *Indices = new int[2];
   int NumEntries;
-
+  
   forierr = 0;
   for (i=0; i<NumMyEquations; i++)
     {
@@ -327,7 +292,7 @@ int main(int argc, char *argv[])
   Epetra_CrsMatrix StandardMatrix(Copy, StandardGraph);
   EPETRA_TEST_ERR(StandardMatrix.IndicesAreGlobal(),ierr);
   EPETRA_TEST_ERR(!(StandardMatrix.IndicesAreLocal()),ierr);
-
+  
   // Add  rows one-at-a-time
   // Need some vectors to help
   // Off diagonal Values will always be -1
@@ -336,7 +301,7 @@ int main(int argc, char *argv[])
   double *Values = new double[2];
   Values[0] = -1.0; Values[1] = -1.0;
   double two = 2.0;
-
+  
   forierr = 0;
   for (i=0; i<NumMyEquations; i++)
     {
@@ -358,7 +323,7 @@ int main(int argc, char *argv[])
       }
     forierr += !(StandardMatrix.ReplaceGlobalValues(StandardMyGlobalElements[i], NumEntries, Values, Indices)==0);
     // Put in the diagonal entry
-    forierr += !(StandardMatrix.ReplaceGlobalValues(StandardMyGlobalElements[i], 1, &two, StandardMyGlobalElements+i)==0);
+    forierr += !(StandardMatrix.ReplaceGlobalValues(StandardMyGlobalElements[i], 1, &two, StandardMyGlobalElements+i)==0); 
     }
   EPETRA_TEST_ERR(forierr,ierr);
 
@@ -366,7 +331,7 @@ int main(int argc, char *argv[])
   EPETRA_TEST_ERR(!(StandardMatrix.IndicesAreLocal()),ierr);
   EPETRA_TEST_ERR(!(StandardMatrix.FillComplete()==0),ierr);
   EPETRA_TEST_ERR(!(StandardMatrix.IndicesAreLocal()),ierr);
-  //  EPETRA_TEST_ERR((StandardMatrix.StorageOptimized()),ierr);
+  EPETRA_TEST_ERR((StandardMatrix.StorageOptimized()),ierr);
   EPETRA_TEST_ERR((StandardMatrix.OptimizeStorage()),ierr);
   EPETRA_TEST_ERR(!(StandardMatrix.StorageOptimized()),ierr);
   EPETRA_TEST_ERR(StandardMatrix.UpperTriangular(),ierr);
@@ -394,7 +359,7 @@ int main(int argc, char *argv[])
   Epetra_CrsMatrix OverlapMatrix(Copy, OverlapMap, 4);
   EPETRA_TEST_ERR(OverlapMatrix.IndicesAreGlobal(),ierr);
   EPETRA_TEST_ERR(OverlapMatrix.IndicesAreLocal(),ierr);
-
+  
   // Add  matrix element one cell at a time.
   // Each cell does an incoming and outgoing flux calculation
 
@@ -415,7 +380,7 @@ int main(int argc, char *argv[])
       }
       if (i<OverlapNumMyElements-1) {
 	forierr += !(OverlapMatrix.InsertGlobalValues(node_center, 1, &pos_one, &node_center)==0);
-	if (node_right<NumGlobalEquations)
+	if (node_right<NumGlobalEquations) 
 	  forierr += !(OverlapMatrix.InsertGlobalValues(node_center, 1, &neg_one, &node_right)==0);
       }
     }
@@ -430,7 +395,7 @@ int main(int argc, char *argv[])
     int node_center = OverlapMyGlobalElements[OverlapNumMyElements-1];
     EPETRA_TEST_ERR(!(OverlapMatrix.InsertGlobalValues(node_center, 1, &pos_one, &node_center)==0),ierr);
   }
-
+    
   EPETRA_TEST_ERR(!(OverlapMatrix.FillComplete()==0),ierr);
 
   // Make a gathered matrix from OverlapMatrix.  It should be identical to StandardMatrix
@@ -462,10 +427,10 @@ int main(int argc, char *argv[])
       forierr += !(StandardNumEntries==GatheredNumEntries);
       for (j=0; j < StandardNumEntries; j++) {
 	//if (StandardIndices[j]!=GatheredIndices[j])
-	// cout << "MyPID = " << MyPID << " i = " << i << "   StandardIndices[" << j << "] = " << StandardIndices[j]
+	// cout << "MyPID = " << MyPID << " i = " << i << "   StandardIndices[" << j << "] = " << StandardIndices[j] 
 	//      << "   GatheredIndices[" << j << "] = " << GatheredIndices[j] << endl;
 	//if (StandardValues[j]!=GatheredValues[j])
-	//cout << "MyPID = " << MyPID << " i = " << i << "    StandardValues[" << j << "] = " <<  StandardValues[j]
+	//cout << "MyPID = " << MyPID << " i = " << i << "    StandardValues[" << j << "] = " <<  StandardValues[j] 
 	//     << "    GatheredValues[" << j << "] = " <<  GatheredValues[j] << endl;
 	forierr += !(StandardIndices[j]==GatheredIndices[j]);
 	forierr += !(StandardValues[j]==GatheredValues[j]);
@@ -531,8 +496,6 @@ int main(int argc, char *argv[])
     else cout << "SubMap Import/Export Check Failed" << endl << endl;
   }
 
-
-#ifdef DOESNT_WORK_IN_PARALLEL
   forierr = special_submap_import_test(Comm);
   EPETRA_TEST_ERR(forierr, ierr);
 
@@ -540,85 +503,6 @@ int main(int argc, char *argv[])
     if (forierr==0) cout << "Special SubMap Import Check OK" << endl << endl;
     else cout << "Special SubMap Import Check Failed" << endl << endl;
   }
-#endif
-
-
-  forierr =  alternate_import_constructor_test(Comm);
-  EPETRA_TEST_ERR(forierr, ierr);
-
-  if (verbose) {
-    if (forierr==0) cout << "Alternative Import Constructor Check OK" << endl << endl;
-    else cout << "Alternative Import Constructor Check Failed" << endl << endl;
-  }
-
-
-  // Now let's test Importer replacement:  Coalesce to 1 proc...
-  Epetra_CrsMatrix FunMatrix(StandardMatrix);
-  if(Comm.NumProc()!=1) {
-    forierr=0;
-    long long num_global_elements1 = FunMatrix.DomainMap().NumGlobalElements64();
-    long long num_global_elements2 = FunMatrix.DomainMap().MaxAllGID64()- FunMatrix.DomainMap().MinAllGID64()+1;
-    if(num_global_elements1 == num_global_elements2) {
-      // The original domain map is linear.  Let's have fun
-      int NumMyElements = Comm.MyPID()==0 ? num_global_elements1 : 0;
-      if(FunMatrix.DomainMap().GlobalIndicesLongLong()) {
-	Epetra_Map NewMap((long long)-1,NumMyElements,(long long)0,Comm);
-	Epetra_Import NewImport(FunMatrix.ColMap(),NewMap);
-	FunMatrix.ReplaceDomainMapAndImporter(NewMap,&NewImport);
-      }
-      else {
-	Epetra_Map NewMap(-1,NumMyElements,0,Comm);
-	Epetra_Import NewImport(FunMatrix.ColMap(),NewMap);
-	FunMatrix.ReplaceDomainMapAndImporter(NewMap,&NewImport);
-      }
-
-      // Now let's test the new importer...
-
-      // Fill a random vector on the original map
-      Epetra_Vector OriginalVec(StandardMatrix.DomainMap());
-      Epetra_Vector OriginalY(FunMatrix.RangeMap(),true);
-      OriginalVec.SetSeed(24601);
-      OriginalVec.Random();
-
-      // Move said random vector to a single proc
-      Epetra_Vector NewVec(FunMatrix.DomainMap(),true);
-      Epetra_Vector NewY(FunMatrix.RangeMap(),true);
-      Epetra_Import ImportOld2New(FunMatrix.DomainMap(),StandardMatrix.DomainMap());
-      NewVec.Import(OriginalVec,ImportOld2New,Add);
-
-      // Test the Importer Copy Constructor
-      Epetra_Vector ColVec1(FunMatrix.ColMap(),true);
-      Epetra_Import ColImport(FunMatrix.ColMap(),FunMatrix.DomainMap());
-      ColVec1.Import(NewVec,ColImport,Add);
-
-      Epetra_Vector ColVec2(FunMatrix.ColMap(),true);
-      Epetra_Import ColImport2(ColImport);
-      ColVec2.Import(NewVec,ColImport2,Add);
-
-      double norm;
-      ColVec1.Update(-1.0,ColVec2,1.0);
-      NewY.Norm2(&norm);
-      if(norm > 1e-12) forierr=-1;
-      if (verbose) {
-	if (forierr==0) cout << "Import Copy Constructor Check OK" << endl << endl;
-	else cout << "Import Copy Constructor Check Failed" << endl << endl;
-      }
-
-      // Test replaceDomainMapAndImporter
-      // Now do two multiplies and compare
-      StandardMatrix.Apply(OriginalVec,OriginalY);
-      FunMatrix.Apply(NewVec,NewY);
-      NewY.Update(-1.0,OriginalY,1.0);
-      NewY.Norm2(&norm);
-      if(norm > 1e-12) forierr=-1;
-      if (verbose) {
-	if (forierr==0) cout << "ReplaceDomainMapAndImporter Check OK" << endl << endl;
-	else cout << "ReplaceDomainMapAndImporter Check Failed" << endl << endl;
-      }
-    }
-  }
-
-
 
   // Release all objects
 
@@ -751,85 +635,3 @@ int combine_mode_test(Epetra_Comm& Comm)
   return global_result;
 }
 
-
-int test_import_gid(const char * name,Epetra_IntVector & Source, Epetra_IntVector & Target, const Epetra_Import & Import){
-  int i;
-  bool test_passed=true;
-
-  // Setup
-  for(i=0; i<Source.MyLength(); i++)
-    Source[i] = Source.Map().GID(i);
-  Target.PutValue(0);
-
-  // Import
-  Target.Import(Source,Import,Add);
-
-  // Test
-  for(i=0; i<Target.MyLength(); i++){
-    if(Target[i] != Target.Map().GID(i)) test_passed=false;
-  }
-
-  if(!test_passed){
-    printf("[%d] test_import_gid %s failed: ",Source.Map().Comm().MyPID(),name);
-    for(i=0; i<Target.MyLength(); i++)
-      printf("%2d(%2d) ",Target[i],Target.Map().GID(i));
-    printf("\n");
-    fflush(stdout);
-  }
-
-  return !test_passed;
-}
-
-
-
-int alternate_import_constructor_test(Epetra_Comm& Comm) {
-  int rv=0;
-  int nodes_per_proc=10;
-  int numprocs = Comm.NumProc();
-  int mypid    = Comm.MyPID();
-
-  // Only run if we have multiple procs & MPI
-  if(numprocs==0) return 0;
-#ifndef HAVE_MPI
-  return 0;
-#endif
-
-  // Build Map 1 - linear
-  Epetra_Map Map1(-1,nodes_per_proc,0,Comm);
-
-  // Build Map 2 - mod striped
-  std::vector<int> MyGIDs(nodes_per_proc);
-  for(int i=0; i<nodes_per_proc; i++)
-    MyGIDs[i] = (mypid*nodes_per_proc + i) % numprocs;
-  Epetra_Map Map2(-1,nodes_per_proc,&MyGIDs[0],0,Comm);
-
-  // For testing
-  Epetra_IntVector Source(Map1), Target(Map2);
-
-
-  // Build Import 1 - normal
-  Epetra_Import Import1(Map2,Map1);
-  rv = rv|| test_import_gid("Alt test: 2 map constructor",Source,Target, Import1);
-
-  // Build Import 2 - no-comm constructor
-  int Nremote=Import1.NumRemoteIDs();
-  const int * RemoteLIDs = Import1.RemoteLIDs();
-  std::vector<int> RemotePIDs(Nremote+1); // I hate you, stl vector....
-  std::vector<int> AllPIDs;
-  Epetra_Util::GetPids(Import1,AllPIDs,true);
-
-  for(int i=0; i<Nremote; i++) {
-    RemotePIDs[i]=AllPIDs[RemoteLIDs[i]];
-  }
-  Epetra_Import Import2(Import1.TargetMap(),Import1.SourceMap(),Nremote,&RemotePIDs[0],Import1.NumExportIDs(),Import1.ExportLIDs(),Import1.ExportPIDs());
-
-  rv = rv || test_import_gid("Alt test: no comm constructor",Source,Target,Import2);
-
-
-  // Build Import 3 - Remotes only
-  Epetra_Import Import3(Import1.TargetMap(),Import1.SourceMap(),Nremote,&RemotePIDs[0]);
-  rv = rv || test_import_gid("Alt test: remote only constructor",Source,Target, Import3);
-
-
-  return rv;
-}

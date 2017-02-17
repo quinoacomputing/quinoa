@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -31,7 +31,6 @@
 #include "Rythmos_Types.hpp"
 #include "Rythmos_ConvergenceTestHelpers.hpp"
 #include "../SinCos/SinCosModel.hpp"
-#include "../LogTime/LogTimeModel.hpp"
 #include "Rythmos_BackwardEulerStepper.hpp"
 #include "Rythmos_TimeStepNonlinearSolver.hpp"
 
@@ -41,13 +40,13 @@ template<class Scalar>
 class BackwardEulerStepperFactory : public virtual StepperFactoryBase<Scalar>
 {
   public:
-    BackwardEulerStepperFactory(RCP<ModelFactoryBase<Scalar> > modelFactory)
-    {
+    BackwardEulerStepperFactory(RCP<ModelFactoryBase<Scalar> > modelFactory) 
+    { 
       modelFactory_ = modelFactory;
     }
     virtual ~BackwardEulerStepperFactory() {}
-    RCP<StepperBase<Scalar> > getStepper() const
-    {
+    RCP<StepperBase<Scalar> > getStepper() const 
+    { 
       RCP<ModelEvaluator<Scalar> > model = modelFactory_->getModel();
       Thyra::ModelEvaluatorBase::InArgs<double> model_ic = model->getNominalValues();
       RCP<Rythmos::TimeStepNonlinearSolver<Scalar> >
@@ -73,7 +72,7 @@ RCP<BackwardEulerStepperFactory<Scalar> > backwardEulerStepperFactory(
   return beFactory;
 }
 
-} // namespace Rythmos
+} // namespace Rythmos 
 
 #endif // Rythmos_BACKWARD_EULER_CONVERGENCETEST_H
 

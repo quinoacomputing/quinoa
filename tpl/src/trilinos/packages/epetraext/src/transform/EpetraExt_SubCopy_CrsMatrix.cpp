@@ -45,8 +45,7 @@
 #include <Epetra_Map.h>
 #include <Epetra_Import.h>
 #include <Epetra_IntSerialDenseVector.h>
-#include <Epetra_LongLongSerialDenseVector.h>
-#include <Epetra_GIDTypeSerialDenseVector.h>
+
 #include <vector>
 
 namespace EpetraExt {
@@ -57,10 +56,9 @@ CrsMatrix_SubCopy::
   if( newObj_ ) delete newObj_;
 }
 
-template<typename int_type>
 CrsMatrix_SubCopy::NewTypeRef
 CrsMatrix_SubCopy::
-transform( OriginalTypeRef orig )
+operator()( OriginalTypeRef orig )
 {
   origObj_ = &orig;
 
@@ -72,7 +70,6 @@ transform( OriginalTypeRef orig )
   const Epetra_Map & oColMap = orig.ColMap();
 
   int oNumRows = oRowMap.NumMyElements();
-  (void) oNumRows; // Silence "unused variable" compiler warning.
   int oNumCols = oColMap.NumMyElements();
   int nNumRows = newRowMap_.NumMyElements();
   int nNumDomain = newDomainMap_.NumMyElements();
@@ -81,20 +78,18 @@ transform( OriginalTypeRef orig )
 
   // Make sure all rows in newRowMap are already on this processor
   for( int i = 0; i < nNumRows; ++i )
-    matched = matched && ( oRowMap.MyGID(newRowMap_.GID64(i)) );
-  if( !matched ) std::cerr << "EDT_CrsMatrix_SubCopy: Bad new_row_Map.  GIDs of new row map must be GIDs of the original row map on the same processor.\n";
+    matched = matched && ( oRowMap.MyGID(newRowMap_.GID(i)) );
+  if( !matched ) cerr << "EDT_CrsMatrix_SubCopy: Bad new_row_Map.  GIDs of new row map must be GIDs of the original row map on the same processor.\n";
 
   // Make sure all GIDs in the new domain map are GIDs in the old domain map
   if( !newRangeMap_.SameAs(newDomainMap_) ) {
     Epetra_IntSerialDenseVector pidList(nNumDomain);
-	int_type* newDomainMap_MyGlob = 0;
-	newDomainMap_.MyGlobalElementsPtr(newDomainMap_MyGlob);
-    oColMap.RemoteIDList(newDomainMap_.NumMyElements(), newDomainMap_MyGlob, pidList.Values(), 0);
+    oColMap.RemoteIDList(newDomainMap_.NumMyElements(), newDomainMap_.MyGlobalElements(), pidList.Values(), 0);
     for( int i = 0; i < nNumDomain; ++i )
       matched = matched && ( pidList[i]>=0 );
   }
 
-  if( !matched ) std::cout << "EDT_CrsMatrix_SubCopy: Bad newDomainMap.  One or more GIDs in new domain map are not part of original domain map.\n";
+  if( !matched ) cout << "EDT_CrsMatrix_SubCopy: Bad newDomainMap.  One or more GIDs in new domain map are not part of original domain map.\n";
   assert( matched );
 
 
@@ -102,15 +97,12 @@ transform( OriginalTypeRef orig )
   Epetra_IntSerialDenseVector pidList(oNumCols);
   Epetra_IntSerialDenseVector lidList(oNumCols);
   Epetra_IntSerialDenseVector sizeList(oNumCols);
-  int_type* oColMap_MyGlob = 0;
-  oColMap.MyGlobalElementsPtr(oColMap_MyGlob);
-  newDomainMap_.RemoteIDList(oColMap.NumMyElements(), oColMap_MyGlob, pidList.Values(), 0);
+  newDomainMap_.RemoteIDList(oColMap.NumMyElements(), oColMap.MyGlobalElements(), pidList.Values(), 0);
   int numNewCols = 0;
-  typename Epetra_GIDTypeSerialDenseVector<int_type>::impl newColMapGidList(oNumCols);
-  int_type * origColGidList = 0;
-  oColMap.MyGlobalElementsPtr(origColGidList);
+  Epetra_IntSerialDenseVector newColMapGidList(oNumCols);
+  int * origColGidList = oColMap.MyGlobalElements();
   for( int i = 0; i < oNumCols; ++i )
-    if (pidList[i] >=0)
+    if (pidList[i] >=0) 
       newColMapGidList[numNewCols++]= origColGidList[i];
   newColMap_ = Epetra_Map(-1, numNewCols, newColMapGidList.Values(), 0, oColMap.Comm());
 
@@ -128,35 +120,11 @@ transform( OriginalTypeRef orig )
 }
 
 //==============================================================================
-
-CrsMatrix_SubCopy::NewTypeRef
-CrsMatrix_SubCopy::
-operator()( OriginalTypeRef orig )
-{
-  const Epetra_Map & oRowMap = orig.RowMap();
-  const Epetra_Map & oColMap = orig.ColMap();
-
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(oRowMap.GlobalIndicesInt() && oColMap.GlobalIndicesInt()) {
-    return transform<int>(orig);
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(oRowMap.GlobalIndicesLongLong() && oColMap.GlobalIndicesLongLong()) {
-    return transform<long long>(orig);
-  }
-  else
-#endif
-    throw "CrsMatrix_SubCopy::operator(): GlobalIndices type unknown";
-}
-
-//==============================================================================
 bool CrsMatrix_SubCopy::fwd()
 {
 
   if (newObj_->Filled()) newObj_->PutScalar(0.0); // zero contents
-
+  
   newObj_->Import(*origObj_, *importer_, Add);
 
   newObj_->FillComplete();
@@ -169,7 +137,7 @@ bool CrsMatrix_SubCopy::fwd()
 bool CrsMatrix_SubCopy::rvs()
 {
   if (!newObj_->Filled()) return(false); // Must have fillCompleted
-
+  
   origObj_->Export(*newObj_, *importer_, Add);
 
   origObj_->FillComplete();

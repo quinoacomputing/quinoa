@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // 
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
@@ -37,7 +37,6 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-#include <ostream>
 
 namespace {
 
@@ -70,7 +69,7 @@ int main(int argc, char* argv[])
 
   try {
 
-    *out << "\nStarting TriKota Example!" << std::endl;
+    *out << "\nStarting TriKota Example!" << endl;
     
     // Construct driver with default file names
     TriKota::Driver dakota;

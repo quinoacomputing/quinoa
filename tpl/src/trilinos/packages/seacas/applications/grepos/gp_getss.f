@@ -72,14 +72,11 @@ C ... Get the sideset parameters
            return 1
         end if
         
-        if (nsides .gt. 0) then
-          call exgss(ndbin, idess(i), lteess(isoff), ltsess(isoff),
-     *      ierr)
-          if (ierr .gt. 0) then
-            call exopts (EXVRBS, ierr1)
-            call exerr('grepos/getss', 'Error from exgss', ierr)
-            return 1
-          end if
+        call exgss(ndbin, idess(i), lteess(isoff), ltsess(isoff), ierr)
+        if (ierr .gt. 0) then
+           call exopts (EXVRBS, ierr1)
+           call exerr('grepos/getss', 'Error from exgss', ierr)
+           return 1
         end if
         
 C ... Count number of nodes in the node list

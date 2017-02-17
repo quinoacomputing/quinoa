@@ -120,9 +120,6 @@ public:
 
   //@}
 
-  /// Returns a short description of this Solver
-  std::string description() const;
-
 private:
 
   /**
@@ -181,7 +178,7 @@ private:
    *     \c "CONJ" }.  Specifies whether to solve with the transpose system.</li>
    *   <li> \c "Equil" : { \c true | \c false }.  Specifies whether
    *     the solver to equilibrate the matrix before solving.</li>
-   *   <li> \c "IterRefine" : { \c "NO" | \c "SLU_SINGLE" | \c "SLU_DOUBLE" | \c "EXTRA"
+   *   <li> \c "IterRefine" : { \c "NO" | \c "SINGLE" | \c "DOUBLE" | \c "EXTRA"
    *     }. Specifies whether to perform iterative refinement, and in
    *     what precision to compute the residual.</li>
    *   <li> \c "SymmetricMode" : { \c true | \c false }.</li>
@@ -197,12 +194,6 @@ private:
    *     <li> \c "COLAMD" : approximate minimum degree column ordering.
    *       (default)</li>
    *     </ul>
-   *   <li> \c "ILU_Flag" : { \c false | \c true }. If true, run ILU routines.</li>
-   *   <li> \c "ILU_DropTol" : \c double value. ILUT drop tolerance.</li>
-   *   <li> \c "ILU_FillFactor" : \c double value. ILUT fill factor.</li>
-   *   <li> \c "ILU_Norm" : { \c "INF_NORM" | \c "ONE_NORM" | \c "TWO_NORM"}.</li>
-   *   <li> \c "ILU_MILU" : { \c "SILU" | \c "SMILU_1" | \c "SMILU_2" | \c "SMILU_3"}.  Type of modified ILU algorithm to use.</li>
-   *   <li> \c "ILU_FillTol" : \c double value. ILUT fill tolerance.</li>
    * </ul>
    */
   void setParameters_impl(
@@ -295,7 +286,6 @@ private:
    * factorization.
    */
   bool same_symbolic_;
-  bool ILU_Flag_;
 
 };                              // End class Superlu
 

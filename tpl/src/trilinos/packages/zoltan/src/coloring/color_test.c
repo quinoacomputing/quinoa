@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+ /*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 
 
 #ifdef __cplusplus
@@ -204,6 +171,7 @@ int Zoltan_Color_Test(
       goto End;
   }
 
+KDDKDDKDD(zz->Proc, "COLORTEST DD");
   /* Exchange global color information */
   if (vtxdist[zz->Num_Proc] && !(color = (int *) ZOLTAN_CALLOC(vtxdist[zz->Num_Proc], sizeof(int))))
       MEMORY_ERROR;
@@ -240,6 +208,8 @@ int Zoltan_Color_Test(
   Zoltan_DD_Destroy(&dd_color);
   ZOLTAN_FREE(&local_GNOs);
   ZOLTAN_FREE(&global_GNOs);
+
+KDDKDDKDD(zz->Proc, "COLORTEST CHECK");
 
   if (coloring_problem == 'P' || coloring_problem == '2') {
       if (vtxdist[zz->Num_Proc] && !(partialD2 = (int *) ZOLTAN_CALLOC(vtxdist[zz->Num_Proc], sizeof(int))))
@@ -319,6 +289,7 @@ int Zoltan_Color_Test(
       ZOLTAN_COLOR_ERROR(ZOLTAN_WARN, "Zoltan_Color_Test is only implemented for distance-1 and distance-2 coloring. Unknown coloring, skipping verification.");      
   
  End:
+KDDKDDKDD(zz->Proc, "COLORTEST DONE");
   if (ierr==ZOLTAN_FATAL)
       ierr = 2;
   MPI_Allreduce(&ierr, &ferr, 1, MPI_INT, MPI_MAX, zz->Communicator);
@@ -328,8 +299,6 @@ int Zoltan_Color_Test(
       ierr = ZOLTAN_OK;
 
   Zoltan_ZG_Free (&graph);
-  ZOLTAN_FREE(&local_GNOs);
-  ZOLTAN_FREE(&global_GNOs);
   ZOLTAN_FREE(&adjproc);
   ZOLTAN_FREE(&color);
   ZOLTAN_FREE(&requested_GNOs);

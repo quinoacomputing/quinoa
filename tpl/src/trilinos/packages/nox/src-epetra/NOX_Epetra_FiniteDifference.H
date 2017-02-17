@@ -1,12 +1,12 @@
 //@HEADER
 // ************************************************************************
-//
+// 
 //            NOX: An Object-Oriented Nonlinear Solver Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or
+// Questions? Contact Roger Pawlowski (rppawlo@sandia.gov) or 
 // Eric Phipps (etphipp@sandia.gov), Sandia National Laboratories.
 // ************************************************************************
 //  CVS Information
@@ -97,8 +97,8 @@ In addition to the forward difference derivative approximation, backward or cent
   Since this inherits from the Epetra_RowMatrix class, it can be used as the preconditioning matrix for AztecOO preconditioners.  This method is very inefficient when computing the Jacobian and is not recommended for large-scale systems but only for debugging purposes.
   */
 class FiniteDifference : public Epetra_RowMatrix,
-             public NOX::Epetra::Interface::Jacobian,
-             public NOX::Epetra::Interface::Preconditioner {
+			 public NOX::Epetra::Interface::Jacobian,
+			 public NOX::Epetra::Interface::Preconditioner {
 
  public:
 
@@ -107,38 +107,38 @@ class FiniteDifference : public Epetra_RowMatrix,
 
   //! Constructor with scalar beta.
   FiniteDifference(Teuchos::ParameterList& printingParams,
-                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i,
-           const NOX::Epetra::Vector& initialGuess,
-           double beta = 1.0e-6,
-           double alpha = 1.0e-4);
+                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i, 
+		   const NOX::Epetra::Vector& initialGuess,
+		   double beta = 1.0e-6, 
+		   double alpha = 1.0e-4);
 
   //! Constructor with vector beta.
   FiniteDifference(Teuchos::ParameterList& printingParams,
-                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i,
-           const NOX::Epetra::Vector& initialGuess,
-           const Teuchos::RCP<const Epetra_Vector>& beta,
-           double alpha = 1.0e-4);
+                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i, 
+		   const NOX::Epetra::Vector& initialGuess,
+		   const Teuchos::RCP<const Epetra_Vector>& beta, 
+		   double alpha = 1.0e-4);
 
   //! Constructor that takes a pre-constructed Epetra_CrsGraph so it does not have to determine the non-zero entries in the matrix.
   FiniteDifference(Teuchos::ParameterList& printingParams,
-                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i,
-           const NOX::Epetra::Vector& initialGuess,
-           const Teuchos::RCP<Epetra_CrsGraph>& g,
-           double beta = 1.0e-6,
-           double alpha = 1.0e-4);
+                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i, 
+		   const NOX::Epetra::Vector& initialGuess,
+		   const Teuchos::RCP<Epetra_CrsGraph>& g, 
+		   double beta = 1.0e-6,
+		   double alpha = 1.0e-4);
 
   //! Constructor with output control that takes a pre-constructed Epetra_CrsGraph so it does not have to determine the non-zero entries in the matrix.
   FiniteDifference(Teuchos::ParameterList& printingParams,
-                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i,
-           const NOX::Epetra::Vector& initialGuess,
-           const Teuchos::RCP<Epetra_CrsGraph>& g,
-           const Teuchos::RCP<const Epetra_Vector>& beta,
-           double alpha = 1.0e-4);
+                   const Teuchos::RCP<NOX::Epetra::Interface::Required>& i, 
+		   const NOX::Epetra::Vector& initialGuess,
+		   const Teuchos::RCP<Epetra_CrsGraph>& g, 
+		   const Teuchos::RCP<const Epetra_Vector>& beta,
+		   double alpha = 1.0e-4);
 
   //! Pure virtual destructor
   virtual ~FiniteDifference();
 
-  //! Returns a character std::string describing the name of the operator
+  //! Returns a character string describing the name of the operator
   virtual const char* Label () const;
 
   //! If set true, the transpose of this operator will be applied
@@ -202,28 +202,16 @@ class FiniteDifference : public Epetra_RowMatrix,
   virtual double NormOne() const;
 
   //! See Epetra_RowMatrix documentation.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   virtual int NumGlobalNonzeros() const;
-#endif
-   virtual long long NumGlobalNonzeros64() const;
+  virtual int NumGlobalNonzeros() const;
 
   //! See Epetra_RowMatrix documentation.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   virtual int NumGlobalRows() const;
-#endif
-   virtual long long NumGlobalRows64() const;
+  virtual int NumGlobalRows() const;
 
   //! See Epetra_RowMatrix documentation.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   virtual int NumGlobalCols() const;
-#endif
-   virtual long long NumGlobalCols64() const;
+  virtual int NumGlobalCols() const;
 
   //! See Epetra_RowMatrix documentation.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-   virtual int NumGlobalDiagonals() const;
-#endif
-   virtual long long NumGlobalDiagonals64() const;
+  virtual int NumGlobalDiagonals() const;
 
   //! See Epetra_RowMatrix documentation.
   virtual int NumMyNonzeros() const;
@@ -266,8 +254,8 @@ class FiniteDifference : public Epetra_RowMatrix,
 
   //! Compute an Epetra_RowMatrix to be used by Aztec preconditioners given the specified input vector, x. Returns true if computation was successful.
   virtual bool computePreconditioner(const Epetra_Vector& x,
-                     Epetra_Operator& Prec,
-                     Teuchos::ParameterList* precParams = 0);
+				     Epetra_Operator& Prec,
+				     Teuchos::ParameterList* precParams = 0);
 
   //! Set the type of perturbation method used (default is Forward)
   virtual void setDifferenceMethod( DifferenceType type );
@@ -276,7 +264,7 @@ class FiniteDifference : public Epetra_RowMatrix,
   virtual Epetra_CrsMatrix& getUnderlyingMatrix() const;
 
   //! Output the underlying matrix
-  virtual void Print(std::ostream&) const;
+  virtual void Print(ostream&) const;
 
   //! Register a NOX::Abstract::Group derived object and use the computeF() method of that group for the perturbation instead of the NOX::Epetra::Interface::Required::computeF() method.  This is required for LOCA to get the operators correct during homotopy.
   void setGroupForComputeF(NOX::Abstract::Group& group);
@@ -284,11 +272,11 @@ class FiniteDifference : public Epetra_RowMatrix,
 protected:
 
   //! Constructs an Epetra_CrsGraph and Epetra_RowMatrix for the Jacobian.  This is only called if the user does not supply an Epetra_CrsGraph.
-  Teuchos::RCP<Epetra_CrsMatrix>
+  Teuchos::RCP<Epetra_CrsMatrix> 
   createGraphAndJacobian(Interface::Required& i, const Epetra_Vector& x);
 
   bool computeF(const Epetra_Vector& input, Epetra_Vector& result,
-        NOX::Epetra::Interface::Required::FillType);
+		NOX::Epetra::Interface::Required::FillType);
 
 protected:
 
@@ -338,7 +326,7 @@ protected:
   DifferenceType diffType;
 
   //! label for the Epetra_RowMatrix
-  std::string label;
+  string label;
 
   //! Flag to enables the use of a group instead of the interface for the computeF() calls in the directional difference calculation.
   bool useGroupForComputeF;

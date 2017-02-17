@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -63,7 +63,7 @@
 #ifdef HAVE_AMESOS_PARAKLETE
 #include "Amesos_Paraklete.h"
 #endif
-#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
+#ifdef HAVE_AMESOS_MUMPS
 #include "Amesos_Mumps.h"
 #endif
 #ifdef HAVE_AMESOS_SCALAPACK
@@ -355,6 +355,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       ParamList.set( "MaxProcs", -3 );
       EPETRA_CHK_ERR( dscpack.SetParameters( ParamList ) ); 
 
+      bool factor = true; 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
 	//    set up to sovle A X[:,i] = B[:,i]
 	Epetra_Vector *passb_i = (*passb)(i) ;
@@ -362,6 +363,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( dscpack.Solve( ) ); 
+	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -381,6 +383,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       EPETRA_CHK_ERR( umfpack.SetParameters( ParamList ) ); 
       EPETRA_CHK_ERR( umfpack.SetUseTranspose( transpose ) ); 
 
+      bool factor = true; 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
 	//    set up to sovle A X[:,i] = B[:,i]
 	Epetra_Vector *passb_i = (*passb)(i) ;
@@ -388,6 +391,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( umfpack.Solve( ) ); 
+	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -407,6 +411,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       EPETRA_CHK_ERR( superlu.SetParameters( ParamList ) ); 
       EPETRA_CHK_ERR( superlu.SetUseTranspose( transpose ) ); 
 
+      bool factor = true; 
       EPETRA_CHK_ERR( superlu.SymbolicFactorization(  ) ); 
       EPETRA_CHK_ERR( superlu.NumericFactorization(  ) ); 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
@@ -416,6 +421,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( superlu.Solve( ) ); 
+	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -440,6 +446,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( superluserial.Solve( true, false, factor, 2, -1, true, transpose ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -463,6 +470,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       EPETRA_CHK_ERR( klu.SetParameters( ParamList ) ); 
       EPETRA_CHK_ERR( klu.SetUseTranspose( transpose ) ); 
 
+      bool factor = true; 
       EPETRA_CHK_ERR( klu.SymbolicFactorization(  ) ); 
       for ( int trials = 0 ; trials <= 1 ; trials++) {
 	  EPETRA_CHK_ERR( klu.NumericFactorization(  ) ); 
@@ -474,6 +482,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	    Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 
 	    EPETRA_CHK_ERR( klu.Solve( ) ); 
+	    factor = false; 
 	    if ( i == 0 ) {
 	      SparseDirectTimingVars::SS_Result.Set_First_Time(
 		      TotalTime.ElapsedTime() ); 
@@ -487,6 +496,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	    }
 	  }
       }
+
 #endif
 #ifdef HAVE_AMESOS_LAPACK
     } else if ( SparseSolver == LAPACK ) { 
@@ -494,6 +504,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       Amesos_Lapack lapack( Problem ) ; 
       EPETRA_CHK_ERR( lapack.SetUseTranspose( transpose ) ); 
 
+      bool factor = true; 
       EPETRA_CHK_ERR( lapack.SymbolicFactorization(  ) ); 
       EPETRA_CHK_ERR( lapack.NumericFactorization(  ) ); 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
@@ -503,6 +514,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( lapack.Solve( ) ); 
+	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -531,6 +543,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( taucs.Solve( ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -559,6 +572,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( pardiso.Solve( ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -587,6 +601,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( paraklete.Solve( ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -598,7 +613,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 
       }
 #endif
-#if defined(HAVE_AMESOS_MUMPS) && defined(HAVE_MPI)
+#ifdef HAVE_AMESOS_MUMPS
     } else if ( SparseSolver == MUMPS ) { 
       Teuchos::ParameterList ParamList ;
       Amesos_Mumps mumps( Problem ) ; 
@@ -615,6 +630,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( mumps.Solve( ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -636,6 +652,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 
       EPETRA_CHK_ERR( scalapack.SymbolicFactorization( ) ); 
       EPETRA_CHK_ERR( scalapack.NumericFactorization( ) ); 
+      bool factor = true; 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
 	//    set up to sovle A X[:,i] = B[:,i]
 	Epetra_Vector *passb_i = (*passb)(i) ;
@@ -643,6 +660,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( scalapack.Solve( ) ); 
+	//	factor = false; 
 	if ( i == 0 ) 
 	  SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 	else { 
@@ -665,6 +683,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
       EPETRA_CHK_ERR( superludist.NumericFactorization(  ) ); 
       SparseDirectTimingVars::SS_Result.Set_First_Time( TotalTime.ElapsedTime() ); 
 
+      bool factor = true; 
       for ( int i= 0 ; i < numsolves ; i++ ) { 
 	//    set up to sovle A X[:,i] = B[:,i]
 	Epetra_Vector *passb_i = (*passb)(i) ;
@@ -672,6 +691,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	Problem.SetLHS( dynamic_cast<Epetra_MultiVector *>(passx_i) ) ;
 	Problem.SetRHS( dynamic_cast<Epetra_MultiVector *>(passb_i) );
 	EPETRA_CHK_ERR( superludist.Solve( ) ); 
+	factor = false; 
 	if ( i < numsolves-1 ) 
 	  SparseDirectTimingVars::SS_Result.Set_Middle_Time( TotalTime.ElapsedTime() ); 
 	else

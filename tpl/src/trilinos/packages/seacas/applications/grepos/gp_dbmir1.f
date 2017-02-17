@@ -62,7 +62,7 @@ C   --
 C...8-node Hexes
         IF ((NUMLNK .EQ. 8) .AND. (NDIM .EQ. 3) .AND.
      *    TYPE(:3) .EQ. 'HEX') THEN
-          DO NE = 1, NUMELB
+          DO 10 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(4,NE)
             LINK(4,NE) = ILTMP
@@ -70,12 +70,12 @@ C...8-node Hexes
             ILTMP = LINK (6,NE)
             LINK(6,NE) = LINK(8,NE)
             LINK(8,NE) = ILTMP
-          END DO
+ 10       CONTINUE
 
 C...20-node Hexes
         ELSE IF ((NUMLNK .EQ. 20) .AND. (NDIM .EQ. 3) .AND.
      *    TYPE(:3) .EQ. 'HEX') THEN
-          DO NE = 1, NUMELB
+          DO 15 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(4,NE)
             LINK(4,NE) = ILTMP
@@ -103,67 +103,57 @@ C...20-node Hexes
             ILTMP = LINK (18,NE)
             LINK(18,NE) = LINK(19,NE)
             LINK(19,NE) = ILTMP
-          END DO
+ 15       CONTINUE
 
 C...Quads/Shells
         ELSE IF ((NUMLNK .EQ. 4) .AND.
      *      (TYPE(:4) .EQ. 'QUAD' .OR. TYPE(:5) .EQ. 'SHELL')) THEN
           if (type(:5) .eq. 'SHELL') NONQUD = .TRUE.
-          DO NE = 1, NUMELB
+          DO 20 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(4,NE)
             LINK(4,NE) = ILTMP
-          END DO
+ 20       CONTINUE
 
 C...four-node tets...
         ELSE IF ((NUMLNK .EQ. 4) .AND.
      *      (TYPE(:3) .EQ. 'TET')) THEN
           NONQUD = .TRUE.
-          DO NE = 1, NUMELB
+          DO 25 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(3,NE)
             LINK(3,NE) = ILTMP
-          END DO
+ 25       CONTINUE
 
 C...Bars         
         ELSE IF (NUMLNK .EQ. 2) THEN
           NONQUD = .TRUE.
-          DO NE = 1, NUMELB
+          DO 30 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(1,NE)
             LINK(1,NE) = ILTMP
-          END DO
+ 30       CONTINUE
 
 C...Triangles
         ELSE IF (NUMLNK .EQ. 3) THEN
           NONQUD = .TRUE.
-          DO NE = 1, NUMELB
+          DO 40 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(3,NE)
             LINK(3,NE) = ILTMP
-          END DO
+ 40       CONTINUE
 
 C...6-node Triangles
-        ELSE IF (NUMLNK .EQ. 6 .and. type(:3) .eq. 'TRI') then
+        ELSE IF (NUMLNK .EQ. 6) THEN
           NONQUD = .TRUE.
-          DO NE = 1, NUMELB
+          DO 50 NE = 1, NUMELB
             ILTMP = LINK (2,NE)
             LINK(2,NE) = LINK(3,NE)
             LINK(3,NE) = ILTMP
             ILTMP = LINK (4,NE)
             LINK(4,NE) = LINK(6,NE)
             LINK(6,NE) = ILTMP
-          END DO
-        ELSE IF (NUMLNK .EQ. 6 .and. type(:5) .eq. 'WEDGE') then
-          NONQUD = .TRUE.
-          DO NE = 1, NUMELB
-            ILTMP = LINK (2,NE)
-            LINK(2,NE) = LINK(3,NE)
-            LINK(3,NE) = ILTMP
-            ILTMP = LINK (5,NE)
-            LINK(5,NE) = LINK(6,NE)
-            LINK(6,NE) = ILTMP
-          END DO
+ 50       CONTINUE
         ELSE
           NONQUD = .TRUE.
           WRITE (STRING, 100) IELB, NUMLNK, TYPE

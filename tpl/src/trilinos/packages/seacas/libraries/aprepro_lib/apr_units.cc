@@ -1,39 +1,5 @@
-// Copyright (c) 2014, Sandia Corporation.
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-// 
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-// 
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-// 
-//     * Neither the name of Sandia Corporation nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
-
 #include <cstdio>
 #include <cstring> 
-#include <iomanip>
 #include "init_structs.h"
 #include "aprepro.h"
 #include "apr_util.h"
@@ -47,15 +13,10 @@ namespace SEAMS {
   void load_conversion(struct var_init *base, struct svar_init *label);
 
 #define DEFINE_VAR(name, val, label) do {	\
-    if ((ptr = aprepro->getsym((name))) == nullptr) \
+    if ((ptr = aprepro->getsym((name))) == NULL) \
       ptr = aprepro->putsym((name), SEAMS::Aprepro::VARIABLE, 1);	\
     ptr->value.var = (val);		\
-    if (echo) { \
-      *(aprepro->infoStream) << comment << " 1 " << \
-      std::left << std::setw(10) << name << "\t= " << \
-      std::setw(14) << std::setprecision(7) << val << \
-      "  " << label << '\n'; \
-    } \
+    if (echo) std::fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, name, val, label); \
   } while(0)
 
 namespace {
@@ -76,7 +37,7 @@ struct svar_init si_label[] =
     {"pout", "Pa"},
     {"Tout", "degK"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init si[] =
@@ -86,7 +47,7 @@ struct var_init si[] =
     {"kg"   , 1.}, 
     {"degK" , 1.},
     {"rad"  , 1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -106,7 +67,7 @@ struct svar_init cgs_label[] =
     {"pout", "dyne/cm^2"},
     {"Tout", "degK"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init cgs[] =
@@ -116,7 +77,7 @@ struct var_init cgs[] =
     {"kg"   , 1000.}, 
     {"degK" ,    1.},
     {"rad"  ,    1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -136,7 +97,7 @@ struct svar_init cgs_ev_label[] =
     {"pout", "dyne/cm^2"},
     {"Tout", "eV"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init cgs_ev[] =
@@ -146,7 +107,7 @@ struct var_init cgs_ev[] =
     {"kg"   , 1000.}, 
     {"degK" ,    1./ 11605.},
     {"rad"  ,    1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -166,7 +127,7 @@ struct svar_init shock_label[] =
     {"pout", "Mbar"},
     {"Tout", "degK"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init shock[] =
@@ -176,7 +137,7 @@ struct var_init shock[] =
     {"kg"   , 1000.}, 
     {"degK" ,    1.},
     {"rad"  ,    1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -196,7 +157,7 @@ struct svar_init swap_label[] =
     {"pout", "kbar"},
     {"Tout", "degK"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init swap[] =
@@ -206,7 +167,7 @@ struct var_init swap[] =
     {"kg"   , 10000000.}, 
     {"degK" ,        1.},
     {"rad"  ,        1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -226,7 +187,7 @@ struct svar_init ft_lbf_s_label[] =
     {"pout", "lbf/ft^2"},
     {"Tout", "degR"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init ft_lbf_s[] =
@@ -236,7 +197,7 @@ struct var_init ft_lbf_s[] =
     {"kg"   , 1/4.5359237e-1/(9.806650/.3048)}, 
     {"degK" , 1.8},
     {"rad"  , 1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 
@@ -257,7 +218,7 @@ struct svar_init ft_lbm_s_label[] =
     {"pout", "poundal/ft^2"},
     {"Tout", "degR"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init ft_lbm_s[] =
@@ -267,7 +228,7 @@ struct var_init ft_lbm_s[] =
     {"kg"   , 1/.45359237}, 
     {"degK" , 1.8},
     {"rad"  , 1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 /*-------------------------------------------------------------------------------------*/
@@ -287,7 +248,7 @@ struct svar_init in_lbf_s_label[] =
     {"pout", "psi"},
     {"Tout", "degR"},
     {"Aout", "radian"},
-    {nullptr, nullptr}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct var_init in_lbf_s[] =
@@ -297,7 +258,7 @@ struct var_init in_lbf_s[] =
     {"kg"   , 1/4.5359237e-1/(9.806650/2.54e-2)}, 
     {"degK" , 1.8},
     {"rad"  , 1.}, 
-    {nullptr, 0}				/* Last line must be 0, 0 */
+    {0, 0}				/* Last line must be 0, 0 */
   };
 
 struct unit_systems
@@ -317,7 +278,7 @@ struct unit_systems systems[] =
     {"ft-lbf-s", ft_lbf_s, ft_lbf_s_label},
     {"ft-lbm-s", ft_lbm_s, ft_lbm_s_label},
     {"in-lbf-s", in_lbf_s, in_lbf_s_label},
-    {nullptr, nullptr, nullptr}
+    {0, 0, 0}
   };
 }
 
@@ -327,22 +288,22 @@ const char *do_Units(char *type)
   SEAMS::symrec *ptr;
   SEAMS::conv_string(type);
   
-  for (i = 0; systems[i].name != nullptr; i++) {
+  for (i = 0; systems[i].name != 0; i++) {
     if (std::strcmp(type, systems[i].name) == 0) {
       break;
     }
   }
-  if (systems[i].name != nullptr) {
+  if (systems[i].name != 0) {
     /* Found a match */
-    for (j = 0; systems[i].label[j].vname != nullptr; j++) {
-      if ((ptr = aprepro->getsym(systems[i].label[j].vname)) == nullptr) {
+    for (j = 0; systems[i].label[j].vname != 0; j++) {
+      if ((ptr = aprepro->getsym(systems[i].label[j].vname)) == NULL) {
 	ptr = aprepro->putsym(systems[i].label[j].vname, SEAMS::Aprepro::STRING_VARIABLE, 1);
       }
       ptr->value.svar = systems[i].label[j].value;
     }
 
-    for (j = 0; systems[i].base[j].vname != nullptr; j++) {
-      if ((ptr = aprepro->getsym(systems[i].base[j].vname)) == nullptr) {
+    for (j = 0; systems[i].base[j].vname != 0; j++) {
+      if ((ptr = aprepro->getsym(systems[i].base[j].vname)) == NULL) {
 	ptr = aprepro->putsym(systems[i].base[j].vname, SEAMS::Aprepro::VARIABLE, 1);
       }
       ptr->value.var = systems[i].base[j].value;
@@ -383,51 +344,36 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   double foot = m * 0.3048;
   double inch = foot / 12.0;
 
-  const char* comment = aprepro->getsym("_C_")->value.svar;
-  std::string title_prefix = "\n";
-  for(size_t i = 0; i < 3; i++)
-    title_prefix += comment;
-  title_prefix += " ";
+  char comment = aprepro->getsym("_C_")->value.svar[0];
 
   if (echo) {
-    *(aprepro->infoStream)
-        << title_prefix << "Outputs\n" <<
-           comment << " " << std::setw(10) << "Time"   << ":\t" << tout << "\n" <<
-           comment << " " << std::setw(10) << "Length" << ":\t" << lout << "\n" <<
-           comment << " " << std::setw(10) << "Accel"  << ":\t" << aout << "\n" <<
-           comment << " " << std::setw(10) << "Mass"   << ":\t" << mout << "\n" <<
-           comment << " " << std::setw(10) << "Force"  << ":\t" << fout << "\n" <<
-           comment << " " << std::setw(10) << "Velocity"  << ":\t" << vout << "\n" <<
-           comment << " " << std::setw(10) << "Volume"  << ":\t" << Vout << "\n" <<
-           comment << " " << std::setw(10) << "Density"  << ":\t" << dout << "\n" <<
-           comment << " " << std::setw(10) << "Energy"  << ":\t" << eout << "\n" <<
-           comment << " " << std::setw(10) << "Power"  << ":\t" << Pout << "\n" <<
-           comment << " " << std::setw(10) << "Pressure"  << ":\t" << pout << "\n" <<
-           comment << " " << std::setw(10) << "Temp"  << ":\t" << Tout << "\n" <<
-           comment << " " << std::setw(10) << "Angular"  << ":\t" << Aout << "\n" <<
-           comment << '\n';
+    fprintf(stdout, "\n%c%c%c Outputs\n", comment, comment, comment);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Time", tout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Length", lout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Accel", aout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Mass", mout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Force", fout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Velocity", vout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Volume", Vout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Density", dout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Energy", eout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Power", Pout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Pressure", pout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Temp", Tout);
+    fprintf(stdout, "%c %10s:\t%s\n", comment, "Angular", Aout);
+    fprintf(stdout, "%c\n", comment);
   }
 
   if (echo) {
-    *(aprepro->infoStream)
-        << title_prefix << "Base Dimensions\n" <<
-           comment << " 1 " << std::left << std::setw(10) << "meter" << "\t= "
-                   << std::setw(14) << std::setprecision(7) << m << "  " << lout << "\n" <<
-
-           comment << " 1 " << std::left << std::setw(10) << "second" << "\t= "
-                   << std::setw(14) << std::setprecision(7) << sec << "  " << tout << "\n" <<
-
-           comment << " 1 " << std::left << std::setw(10) << "kg" << "\t= "
-                   << std::setw(14) << std::setprecision(7) << kg << "  " << mout << "\n" <<
-
-           comment << " 1 " << std::left << std::setw(10) << "kelvin" << "\t= "
-                   << std::setw(14) << std::setprecision(7) << degK << "  " << Tout << "\n" <<
-
-           comment << " 1 " << std::left << std::setw(10) << "radian" << "\t= "
-                   << std::setw(14) << std::setprecision(7) << rad << "  " << Aout << '\n';
+    fprintf(stdout, "\n%c%c%c Base Dimensions\n", comment, comment, comment);
+    fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, "meter",  m,    lout);
+    fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, "second", sec,  tout);
+    fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, "kg",     kg,   mout);
+    fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, "kelvin", degK, Tout);
+    fprintf(stdout, "%c 1 %-10s\t= %14.7g  %s\n", comment, "radian", rad,  Aout);
   }
 
-  if (echo) *(aprepro->infoStream) << title_prefix << "Time (T)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Time (T)\n", comment, comment, comment);
   DEFINE_VAR("second",                                        sec,         tout);
   DEFINE_VAR("usec",                                          sec / 1.0e6, tout);
   DEFINE_VAR("microsecond",                                   sec / 1.0e6, tout);
@@ -442,7 +388,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("decade",       10. * 365.25 * 24. * 60. * 60. * sec,         tout);
   DEFINE_VAR("century",     100. * 365.25 * 24. * 60. * 60. * sec,         tout);
       
-  if (echo) *(aprepro->infoStream) << title_prefix << "Length (L)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Length (L)\n", comment, comment, comment);
   DEFINE_VAR("meter",       m,         lout);
   DEFINE_VAR("metre",       m,         lout);
   DEFINE_VAR("cm",          m / 100.,  lout);
@@ -467,11 +413,11 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("inch",        inch,      lout);
   DEFINE_VAR("mil",         inch / 1000., lout);
 
-  if (echo) *(aprepro->infoStream) << title_prefix << "Acceleration (L/T^2)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Acceleration (L/T^2)\n", comment, comment, comment);
   DEFINE_VAR("ga", 9.806650 * m / (sec*sec), aout);
 
   /* Force  (ML/T^2) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Force (ML/T^2)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Force (ML/T^2)\n", comment, comment, comment);
   DEFINE_VAR("newton",              1.0    * kg*m/(sec*sec), fout);
   DEFINE_VAR("N",                   1.0    * kg*m/(sec*sec), fout);
   DEFINE_VAR("dyne",                1.0e-5 * kg*m/(sec*sec), fout);
@@ -484,7 +430,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("ounce",      4.4482216152605 * kg*m/(sec*sec)/16.0, fout);
 
   /* Mass (M) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Mass (M)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Mass (M)\n", comment, comment, comment);
   DEFINE_VAR("gram",              kg / 1000., mout);
   DEFINE_VAR("g",                 kg / 1000., mout);
   DEFINE_VAR("lbm",   453.59237 * kg / 1000., mout);
@@ -492,7 +438,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("lbfs2pin",  4.4482216152605 * kg/0.0254, mout);
   
   /* Velocity (L/T) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Velocity (L/T)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Velocity (L/T)\n", comment, comment, comment);
   DEFINE_VAR("mps",  m/sec, vout);
   DEFINE_VAR("fps",  foot / sec, vout);
   DEFINE_VAR("mph",  (foot * 5280.) / (60. * 60. * sec), vout);
@@ -501,13 +447,13 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("kps",  (1000. * m) / sec, vout);
 
   /* Volume (L^3) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Volume (L^3)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Volume (L^3)\n", comment, comment, comment);
   DEFINE_VAR("liter",              (m*m*m)/1000., Vout);
   DEFINE_VAR("gal",     3.785412 * (m*m*m)/1000., Vout);
   DEFINE_VAR("gallon",  3.785412 * (m*m*m)/1000., Vout);
 
   /* Density (M/L^3) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Density (M/L^3)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Density (M/L^3)\n", comment, comment, comment);
   DEFINE_VAR("gpcc",      (kg/1000.)/((m/100.)*(m/100.)*(m/100.)), dout);
   DEFINE_VAR("kgpm3",      kg /(m*m*m), dout);
   DEFINE_VAR("lbfs2pin4",  (4.4482216152605 * kg*m/(sec*sec))*sec*sec / (inch*inch*inch*inch), dout);
@@ -516,13 +462,13 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("slugpft3",   (453.59237 * kg / 1000. * 32.17404856) / (foot*foot*foot), dout);
 
   /* Power: (M L^2 / T^3) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Power (M L^2 / T^3)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Power (M L^2 / T^3)\n", comment, comment, comment);
   DEFINE_VAR("W",    kg*m/(sec*sec)*m/sec, Pout);
   DEFINE_VAR("watt", kg*m/(sec*sec)*m/sec, Pout);
   DEFINE_VAR("Hp",   kg*m/(sec*sec)*m/sec * 746, Pout); /* --- (electric horsepower) */
 
   /* Energy (ML^2/T^2) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Energy (M L^2 / T^2)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Energy (M L^2 / T^2)\n", comment, comment, comment);
   DEFINE_VAR("joule",  kg*m/(sec*sec)*m, eout);
   DEFINE_VAR("J",      kg*m/(sec*sec)*m, eout);
   DEFINE_VAR("ftlbf",  kg*m/(sec*sec)*m * 1.355818, eout); 
@@ -534,7 +480,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("tonTNT",  kg*m/(sec*sec)*m * 4.184e9, eout); 
 
   /* Pressure: (M/L/T^2) */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Pressure (M/L/T^2)" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Pressure (M/L/T^2)\n", comment, comment, comment);
   DEFINE_VAR("Pa",      kg*m/(sec*sec) / (m*m), pout);
   DEFINE_VAR("pascal",  kg*m/(sec*sec) / (m*m), pout);
   DEFINE_VAR("MPa",     kg*m/(sec*sec) / (m*m) * 1.0e6, pout); 
@@ -554,7 +500,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
   DEFINE_VAR("ftH2O",   kg*m/(sec*sec) / (m*m) * 249.082 * 12.0, pout); 
 
   /* Temperature: */
-  if (echo) *(aprepro->infoStream) << title_prefix << "Temperature" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Temperature\n", comment, comment, comment);
   DEFINE_VAR("kelvin",         degK, Tout); 
   DEFINE_VAR("degC",           degK, Tout); 
   DEFINE_VAR("degF",   5./9. * degK, Tout); 
@@ -564,7 +510,7 @@ void load_conversion(struct var_init *base, struct svar_init *label)
 
   /* Angular */
 #define PI  3.141592653589793238462643
-  if (echo) *(aprepro->infoStream) << title_prefix << "Angular" << '\n';
+  if (echo) fprintf(stdout, "\n%c%c%c Angular\n", comment, comment, comment);
   DEFINE_VAR("rev",    2.0 * PI * rad, Aout); 
   DEFINE_VAR("deg",    2.0 * PI * rad / 360.0, Aout); 
   DEFINE_VAR("degree", 2.0 * PI * rad / 360.0, Aout); 

@@ -1,56 +1,58 @@
 
-TRIBITS_INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 
-TRIBITS_INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  mdfield_compiletime
-  SOURCES MDField_Compiletime.cpp ${TEUCHOS_STD_UNIT_TEST_MAIN}
-  TESTONLYLIBS phalanx_test_utilities
+  field
+  SOURCES Field.cpp
+  DEPLIBS phalanx_test_utilities
+  COMM serial mpi
   NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  mdfield
+  SOURCES MDField.cpp
+  DEPLIBS phalanx_test_utilities
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
   )
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   mdfield_runtime
-  SOURCES MDField_Runtime.cpp ${TEUCHOS_STD_UNIT_TEST_MAIN}
-  TESTONLYLIBS phalanx_test_utilities
+  SOURCES MDField_Runtime.cpp
+  DEPLIBS phalanx_test_utilities
+  COMM serial mpi
   NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
   )
 
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  mdfield_utilities
-  SOURCES MDField_Utilities.cpp ${TEUCHOS_STD_UNIT_TEST_MAIN}
-  TESTONLYLIBS phalanx_test_utilities
-  NUM_MPI_PROCS 1
-  )
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  mdfield_simulated_intrepid
-  SOURCES MDField_SimulatedIntrepid.cpp ${TEUCHOS_STD_UNIT_TEST_MAIN}
-  TESTONLYLIBS phalanx_test_utilities
-  NUM_MPI_PROCS 1
-  )
-
-IF(Phalanx_ENABLE_Intrepid2 AND NOT PHX_ENABLE_INTREPID2_DYN_RANK_VIEW_REFACTOR)
+IF (NOT Phalanx_ENABLE_COMPILETIME_ARRAY_CHECK)
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    mdfield_intrepid
-    SOURCES MDField_Intrepid.cpp ${TEUCHOS_STD_UNIT_TEST_MAIN}
-    TESTONLYLIBS phalanx_test_utilities
+    mdfield_simulated_intrepid
+    SOURCES MDField_SimulatedIntrepid.cpp
+    DEPLIBS phalanx_test_utilities
+    COMM serial mpi
     NUM_MPI_PROCS 1
+    PASS_REGULAR_EXPRESSION "Test passed!"
     )
-ENDIF(Phalanx_ENABLE_Intrepid2 AND NOT PHX_ENABLE_INTREPID2_DYN_RANK_VIEW_REFACTOR)
-
+ENDIF()
 
 # Will add this test in a later commit
 
-#ASSERT_DEFINED(Phalanx_ENABLE_Intrepid2)
+#ASSERT_DEFINED(Phalanx_ENABLE_Intrepid)
 #
-#IF (Phalanx_ENABLE_Intrepid2)
+#IF (Phalanx_ENABLE_Intrepid)
 #  TRIBITS_ADD_EXECUTABLE_AND_TEST(
 #    mdfield_intrepid
 #    SOURCES MDField_Intrepid.cpp
-#    TESTONLYLIBS phalanx_test_utilities
+#    DEPLIBS phalanx_test_utilities
 #    COMM serial mpi
 #    NUM_MPI_PROCS 1
 #    PASS_REGULAR_EXPRESSION "Test passed!"
@@ -86,4 +88,4 @@ ENDIF(Phalanx_ENABLE_Intrepid2 AND NOT PHX_ENABLE_INTREPID2_DYN_RANK_VIEW_REFACT
 #  DEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/testdata"
 #)
 #
-#ENDIF(Phalanx_ENABLE_Intrepid2)
+#ENDIF(Phalanx_ENABLE_Intrepid)

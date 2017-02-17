@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 //@HEADER
 /*#############################################################################
@@ -14,10 +14,10 @@
 //#define CurlCurlAndMassAreSeparate
 
 /*
-   Sample driver for Maxwell equation AMG solver (Reitzinger/Schoeberl version)
-   in the ML package. This example reads in data from a file.  All data must be in
-   the MatrixMarket format.  (The EpetraExt documentation describes the format for
-   maps.)  This example can be compiled and used in two different ways:
+   Sample driver for Maxwell equation AMG solver in the ML package. This
+   example reads in data from a file.  All data must be in the MatrixMarket
+   format.  (The EpetraExt documentation describes the format for maps.)  This
+   example can be compiled and used in two different ways:
 
    -----------------------------------------------------------------------
    USAGE CASE 1 (default): curl,curl and mass are provided as one matrix
@@ -27,7 +27,7 @@
    In this case, invoke the example as follows:
 
       ml_read_maxwell.exe Ke T Kn [edge map] [node map]
-
+  
    where
 
       Ke is the edge FE matrix (curlcurl + mass)
@@ -45,7 +45,7 @@
    the example as follows:
 
       ml_read_maxwell.exe S M T Kn [edge map] [node map]
-
+  
    where
 
       S is the curl curl matrix
@@ -54,8 +54,8 @@
       Kn is the nodal FE matrix
       edge map (optional)
       node map (optional)
-
-   Matrices are read from file via the local function
+  
+   Matrices are read from file via the local function 
 
      int MatrixMarketFileToCrsMatrix(const char *filename,
                                   const Epetra_Map & rowMap,
@@ -101,12 +101,13 @@ int MatrixMarketFileToCrsMatrix(const char *filename,
                                 const Epetra_Map & rowMap,
                                 const Epetra_Map& rangeMap,
                                 const Epetra_Map& domainMap,
-                                Epetra_CrsMatrix *& A)
+                                Epetra_CrsMatrix * & A)
 {
-  return(EpetraExt::MatrixMarketFileToCrsMatrixHandle(filename, rowMap.Comm(), A,
+  A = new Epetra_CrsMatrix(Copy, rowMap, 0);
+  return(EpetraExt::MatrixMarketFileToCrsMatrixHandle(filename, A->Comm(), A,
                                                       &rowMap,NULL,
                                                       &rangeMap, &domainMap));
-}
+} 
 
 ML_Comm *mlcomm;
 
@@ -115,28 +116,7 @@ int main(int argc, char *argv[])
 
 #ifdef ML_MPI
   MPI_Init(&argc,&argv);
-  // This next bit of code drops a middle rank out of the calculation. This tests
-  // that the Hiptmair smoother does not hang in its apply.  Hiptmair creates
-  // two separate ML objects, one for edge and one for nodes.  By default, the ML
-  // objects use MPI_COMM_WORLD, whereas the matrix that Hiptmair is being applied to
-  // may have an MPI subcommunicator.
-  int commWorldSize;
-  MPI_Comm_size(MPI_COMM_WORLD,&commWorldSize);
-  std::vector<int> splitKey;
-  int rankToDrop = 1;
-  for (int i=0; i<commWorldSize; ++i)
-    splitKey.push_back(0);
-  splitKey[rankToDrop] = MPI_UNDEFINED; //drop the last process from subcommunicator
-  int myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-  MPI_Comm subcomm;
-  MPI_Comm_split(MPI_COMM_WORLD, splitKey[myrank], myrank, &subcomm);
-  if (myrank == rankToDrop) goto droppedRankLabel;
-#endif
-
-{ //scoping to avoid compiler error about goto jumping over initialization
-#ifdef ML_MPI
-  Epetra_MpiComm Comm(subcomm);
+  Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
 #endif
@@ -148,26 +128,26 @@ int main(int argc, char *argv[])
 #ifdef CurlCurlAndMassAreSeparate
   if (argc != 5 && argc != 7) {
     if (Comm.MyPID() == 0) {
-      std::cout << "usage: ml_maxwell.exe <S> <M> <T> <Kn> [edge map] [node map]"
-           << std::endl;
-      std::cout << "        S = edge stiffness matrix file" << std::endl;
-      std::cout << "        M = edge mass matrix file" << std::endl;
-      std::cout << "        T = discrete gradient file" << std::endl;
-      std::cout << "       Kn = auxiliary nodal FE matrix file" << std::endl;
-      std::cout << " edge map = edge distribution over processors" << std::endl;
-      std::cout << " node map = node distribution over processors" << std::endl;
-      std::cout << argc << std::endl;
+      cout << "usage: ml_maxwell.exe <S> <M> <T> <Kn> [edge map] [node map]"
+           << endl;
+      cout << "        S = edge stiffness matrix file" << endl;
+      cout << "        M = edge mass matrix file" << endl;
+      cout << "        T = discrete gradient file" << endl;
+      cout << "       Kn = auxiliary nodal FE matrix file" << endl;
+      cout << " edge map = edge distribution over processors" << endl;
+      cout << " node map = node distribution over processors" << endl;
+      cout << argc << endl;
     }
 #else //ifdef CurlCurlAndMassAreSeparate
   if (argc != 4 && argc != 6) {
     if (Comm.MyPID() == 0) {
-      std::cout << "usage: ml_maxwell.exe <A> <T> <Kn> [edge map] [node map]" <<std::endl;
-      std::cout << "        A = edge element matrix file" << std::endl;
-      std::cout << "        T = discrete gradient file" << std::endl;
-      std::cout << "       Kn = auxiliary nodal FE matrix file" << std::endl;
-      std::cout << " edge map = edge distribution over processors" << std::endl;
-      std::cout << " node map = node distribution over processors" << std::endl;
-      std::cout << argc << std::endl;
+      cout << "usage: ml_maxwell.exe <A> <T> <Kn> [edge map] [node map]" <<endl;
+      cout << "        A = edge element matrix file" << endl;
+      cout << "        T = discrete gradient file" << endl;
+      cout << "       Kn = auxiliary nodal FE matrix file" << endl;
+      cout << " edge map = edge distribution over processors" << endl;
+      cout << " node map = node distribution over processors" << endl;
+      cout << argc << endl;
     }
 #endif //ifdef CurlCurlAndMassAreSeparate
 #ifdef ML_MPI
@@ -214,9 +194,9 @@ int main(int argc, char *argv[])
     FILE *handle;
     int M,N,NZ;
 #ifdef CurlCurlAndMassAreSeparate
-     handle = fopen(argv[3],"r");
+     handle = fopen(argv[3],"r"); 
 #else
-     handle = fopen(argv[2],"r");
+     handle = fopen(argv[2],"r"); 
 #endif
     if (handle == 0) EPETRA_CHK_ERR(-1); // file not found
     // Strip off header lines (which start with "%")
@@ -227,7 +207,7 @@ int main(int argc, char *argv[])
     if(sscanf(line,"%d %d %d", &M, &N, &NZ)==0) {if (handle!=0) fclose(handle);}
     fclose(handle);
     edgeMap = new Epetra_Map(M,0,Comm);
-    nodeMap = new Epetra_Map(N,0,Comm);
+    nodeMap = new Epetra_Map(N,0,Comm); 
   }
 
   // ===================================================== //
@@ -284,9 +264,8 @@ int main(int argc, char *argv[])
   double *params  = new double[AZ_PARAMS_SIZE];
   ML_Epetra::SetDefaults("maxwell", MLList, options, params);
 
-  MLList.set("ML output", 10);
   MLList.set("aggregation: type", "Uncoupled");
-  MLList.set("coarse: max size", 15);
+  MLList.set("coarse: max size", 30);
   MLList.set("aggregation: threshold", 0.0);
   //MLList.set("negative conductivity",true);
   //MLList.set("smoother: type", "Jacobi");
@@ -333,7 +312,7 @@ int main(int argc, char *argv[])
   // double vectors.
 
   if (Comm.MyPID() == 0)
-    std::cout << "Putting in a zero initial guess and random rhs (in the range of S+M)" << std::endl;
+    cout << "Putting in a zero initial guess and random rhs (in the range of S+M)" << endl;
   Epetra_Vector x(CCplusM->DomainMap());
   x.Random();
   Epetra_Vector rhs(CCplusM->DomainMap());
@@ -342,16 +321,16 @@ int main(int argc, char *argv[])
 
   double vecnorm;
   rhs.Norm2(&vecnorm);
-  if (Comm.MyPID() == 0) std::cout << "||rhs|| = " << vecnorm << std::endl;
+  if (Comm.MyPID() == 0) cout << "||rhs|| = " << vecnorm << endl;
   x.Norm2(&vecnorm);
-  if (Comm.MyPID() == 0) std::cout << "||x|| = " << vecnorm << std::endl;
+  if (Comm.MyPID() == 0) cout << "||x|| = " << vecnorm << endl;
 
   // for AztecOO, we need an Epetra_LinearProblem
   Epetra_LinearProblem Problem(CCplusM,&x,&rhs);
   // AztecOO Linear problem
   AztecOO solver(Problem);
   // set MLPrec as precondititoning operator for AztecOO linear problem
-  //std::cout << "no ml preconditioner!!!" << std::endl;
+  //cout << "no ml preconditioner!!!" << endl;
   solver.SetPrecOperator(MLPrec);
   //solver.SetAztecOption(AZ_precond, AZ_Jacobi);
 
@@ -359,7 +338,7 @@ int main(int argc, char *argv[])
   solver.SetAztecOption(AZ_solver, AZ_cg);
   solver.SetAztecOption(AZ_output, 1);
 
-  solver.Iterate(15, 1e-3);
+  solver.Iterate(75, 1e-12);
 
   // =============== //
   // C L E A N   U P //
@@ -371,20 +350,14 @@ int main(int argc, char *argv[])
   delete Mass;
   delete T;
   delete Kn;
-  delete nodeMap;
-  delete edgeMap;
-  delete [] params;
-  delete [] options;
 
   ML_Comm_Destroy(&mlcomm);
-} //avoids compiler error about jumping over initialization
-  droppedRankLabel:
 #ifdef ML_MPI
   MPI_Finalize();
 #endif
-
+        
   return 0;
-
+        
 } //main
 
 #else
@@ -418,7 +391,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
-
+  
   return 0;
 }
 

@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -119,13 +119,13 @@ Amesos_Klu::~Amesos_Klu(void) {
 int Amesos_Klu::ExportToSerial() 
 {
 
-  if ( AddZeroToDiag_==0 && numentries_ != RowMatrixA_->NumGlobalNonzeros64()) { 
+  if ( AddZeroToDiag_==0 && numentries_ != RowMatrixA_->NumGlobalNonzeros()) { 
     std::cerr << " The number of non zero entries in the matrix has changed since the last call to SymbolicFactorization().  " ;
     AMESOS_CHK_ERR( -2 );
   }
   if (UseDataInPlace_ != 1) {
     assert ( RowMatrixA_ != 0 ) ; 
-    if (  AddZeroToDiag_==0 && numentries_ != RowMatrixA_->NumGlobalNonzeros64()) { 
+    if (  AddZeroToDiag_==0 && numentries_ != RowMatrixA_->NumGlobalNonzeros()) { 
       std::cerr << " The number of non zero entries in the matrix has changed since the last call to SymbolicFactorization().  " ;
       AMESOS_CHK_ERR( -3 );
     }
@@ -141,33 +141,15 @@ int Amesos_Klu::ExportToSerial()
       //  Add 0.0 to each diagonal entry to avoid empty diagonal entries;
       //
       double zero = 0.0;
-
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-      if(SerialMap_->GlobalIndicesInt()) {
-        for ( int i = 0 ; i < SerialMap_->NumGlobalElements(); i++ ) {
-          if ( SerialCrsMatrixA_->LRID(i) >= 0 ) 
-            SerialCrsMatrixA_->InsertGlobalValues( i, 1, &zero, &i ) ;
-        }
-      }
-      else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-      if(SerialMap_->GlobalIndicesLongLong()) {
-        for ( long long i = 0 ; i < SerialMap_->NumGlobalElements64(); i++ ) {
-          if ( SerialCrsMatrixA_->LRID(i) >= 0 ) 
-            SerialCrsMatrixA_->InsertGlobalValues( i, 1, &zero, &i ) ;
-        }
-      }
-      else
-#endif
-      throw "Amesos_Klu::ExportToSerial: ERROR, GlobalIndices type unknown.";
-
+      for ( int i = 0 ; i < SerialMap_->NumGlobalElements(); i++ ) 
+	if ( SerialCrsMatrixA_->LRID(i) >= 0 ) 
+	  SerialCrsMatrixA_->InsertGlobalValues( i, 1, &zero, &i ) ;
       SerialCrsMatrixA_->SetTracebackMode( OriginalTracebackMode ) ; 
     }
     AMESOS_CHK_ERR(SerialCrsMatrixA_->FillComplete());
     AMESOS_CHK_ERR(SerialCrsMatrixA_->OptimizeStorage());
 
-    if( ! AddZeroToDiag_ &&  numentries_ != SerialMatrix_->NumGlobalNonzeros64()) {
+    if( ! AddZeroToDiag_ &&  numentries_ != SerialMatrix_->NumGlobalNonzeros()) {
       std::cerr << " Amesos_Klu cannot handle this matrix.  " ;
       if ( Reindex_ ) {
 	std::cerr << "Unknown error" << std::endl ; 
@@ -208,23 +190,23 @@ int Amesos_Klu::CreateLocalMatrixAndExporters()
     UseTranspose()?GetProblem()->GetOperator()->OperatorDomainMap():
     GetProblem()->GetOperator()->OperatorRangeMap();
 
-  NumGlobalElements_ = RowMatrixA_->NumGlobalRows64();
-  numentries_ = RowMatrixA_->NumGlobalNonzeros64();
-  assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols64() );
+  NumGlobalElements_ = RowMatrixA_->NumGlobalRows();
+  numentries_ = RowMatrixA_->NumGlobalNonzeros();
+  assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols() );
 
   //
   //  Create a serial matrix
   //
-  assert( NumGlobalElements_ == OriginalMatrixMap.NumGlobalElements64() ) ;
+  assert( NumGlobalElements_ == OriginalMatrixMap.NumGlobalElements() ) ;
   int NumMyElements_ = 0 ;
-  if (MyPID_==0) NumMyElements_ = static_cast<int>(NumGlobalElements_);
+  if (MyPID_==0) NumMyElements_ = NumGlobalElements_;
   //
   //  UseDataInPlace_ is set to 1 (true) only if everything is perfectly
   //  normal.  Anything out of the ordinary reverts to the more expensive
   //  path. 
   //
   UseDataInPlace_ = ( OriginalMatrixMap.NumMyElements() ==
-	       OriginalMatrixMap.NumGlobalElements64() )?1:0;
+	       OriginalMatrixMap.NumGlobalElements() )?1:0;
   if ( ! OriginalRangeMap.SameAs( OriginalMatrixMap ) ) UseDataInPlace_ = 0 ; 
   if ( ! OriginalDomainMap.SameAs( OriginalMatrixMap ) ) UseDataInPlace_ = 0 ; 
   if ( AddZeroToDiag_ ) UseDataInPlace_ = 0 ; 
@@ -268,21 +250,7 @@ int Amesos_Klu::CreateLocalMatrixAndExporters()
   if (UseDataInPlace_ == 1) {
     SerialMatrix_ = StdIndexMatrix_;
   } else {
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-    if(OriginalMatrixMap.GlobalIndicesInt()) {
-      int indexBase = OriginalMatrixMap.IndexBase();
-      SerialMap_ = rcp(new Epetra_Map((int) NumGlobalElements_, NumMyElements_, indexBase, Comm()));
-    }
-    else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-    if(OriginalMatrixMap.GlobalIndicesLongLong()) {
-      long long indexBase = OriginalMatrixMap.IndexBase64();
-      SerialMap_ = rcp(new Epetra_Map((long long) NumGlobalElements_, NumMyElements_, indexBase, Comm()));
-    }
-    else
-#endif
-      throw "Amesos_Klu::CreateLocalMatrixAndExporters: Unknown Global Indices";
+    SerialMap_ = rcp(new Epetra_Map(NumGlobalElements_, NumMyElements_, 0, Comm()));
     
     if ( Problem_->GetRHS() ) 
       NumVectors_ = Problem_->GetRHS()->NumVectors() ; 
@@ -343,12 +311,12 @@ int Amesos_Klu::ConvertToKluCRS(bool firsttime)
   //
 
   if (MyPID_==0) {
-    assert( NumGlobalElements_ == SerialMatrix_->NumGlobalRows64());
-    assert( NumGlobalElements_ == SerialMatrix_->NumGlobalCols64());
+    assert( NumGlobalElements_ == SerialMatrix_->NumGlobalRows());
+    assert( NumGlobalElements_ == SerialMatrix_->NumGlobalCols());
     if ( ! AddZeroToDiag_ ) {
-      assert( numentries_ == SerialMatrix_->NumGlobalNonzeros64()) ;
+      assert( numentries_ == SerialMatrix_->NumGlobalNonzeros()) ;
     } else {
-      numentries_ = SerialMatrix_->NumGlobalNonzeros64() ;
+      numentries_ = SerialMatrix_->NumGlobalNonzeros() ;
     }
 
     Epetra_CrsMatrix *CrsMatrix = dynamic_cast<Epetra_CrsMatrix *>(SerialMatrix_);
@@ -486,8 +454,8 @@ int Amesos_Klu::PerformSymbolicFactorization()
     PrivateKluData_->common_ = rcp(new klu_common());
     amesos_klu_defaults(&*PrivateKluData_->common_) ;
     PrivateKluData_->Symbolic_ =
-      rcpWithDealloc(
-	  amesos_klu_analyze (static_cast<int>(NumGlobalElements_), &Ap[0], Ai,  &*PrivateKluData_->common_ ) 
+      rcp(
+	  amesos_klu_analyze (NumGlobalElements_, &Ap[0], Ai,  &*PrivateKluData_->common_ ) 
 	  ,deallocFunctorDeleteWithCommon<klu_symbolic>(PrivateKluData_->common_,amesos_klu_free_symbolic)
 	  ,true
 	  );
@@ -570,7 +538,7 @@ int Amesos_Klu::PerformNumericFactorization( )
       
       // factor the matrix using partial pivoting
       PrivateKluData_->Numeric_ =
-	rcpWithDealloc( amesos_klu_factor(&Ap[0], Ai, Aval,
+	rcp( amesos_klu_factor(&Ap[0], Ai, Aval,
 			       &*PrivateKluData_->Symbolic_, &*PrivateKluData_->common_),
 	     deallocFunctorDeleteWithCommon<klu_numeric>(PrivateKluData_->common_,amesos_klu_free_numeric)
 	     ,true
@@ -606,8 +574,8 @@ bool Amesos_Klu::MatrixShapeOK() const {
   // Comment by Tim:  The following code seems suspect.  The variable "OK"
   // is not set if the condition is true.
   // Does the variable "OK" default to true?
-  if ( GetProblem()->GetOperator()->OperatorRangeMap().NumGlobalPoints64() !=
-       GetProblem()->GetOperator()->OperatorDomainMap().NumGlobalPoints64() ) {
+  if ( GetProblem()->GetOperator()->OperatorRangeMap().NumGlobalPoints() !=
+       GetProblem()->GetOperator()->OperatorDomainMap().NumGlobalPoints() ) {
     OK = false;
   }
   return OK;
@@ -625,19 +593,10 @@ int Amesos_Klu::SymbolicFactorization()
   CreateTimer(Comm(), 2);
   
   ResetTimer(1);
-
-  RowMatrixA_ = Problem_->GetMatrix();
-  if (RowMatrixA_->NumGlobalRows64() == 0 || RowMatrixA_->NumGlobalCols64()
-            == 0)
-  {
-      NumSymbolicFact_++;
-      IsSymbolicFactorizationOK_ = true;
-      return 0;
-  }
-
+  
   // "overhead" time for the following method is considered here
   AMESOS_CHK_ERR( CreateLocalMatrixAndExporters() ) ;
-  assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols64() );
+  assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols() );
   
   //
   //  Perform checks in SymbolicFactorization(), but none in 
@@ -680,15 +639,6 @@ int Amesos_Klu::SymbolicFactorization()
 //=============================================================================
 int Amesos_Klu::NumericFactorization() 
 {
-  RowMatrixA_ = Problem_->GetMatrix();
-  if (RowMatrixA_->NumGlobalRows64() == 0 || RowMatrixA_->NumGlobalCols64()
-            == 0)
-  {
-      NumNumericFact_++;
-      IsNumericFactorizationOK_ = true;
-      return 0;
-  }
-
   if ( !TrustMe_ ) 
   { 
     IsNumericFactorizationOK_ = false;
@@ -700,9 +650,9 @@ int Amesos_Klu::NumericFactorization()
     Epetra_CrsMatrix *CrsMatrixA = dynamic_cast<Epetra_CrsMatrix *>(RowMatrixA_);
     if ( CrsMatrixA == 0 )   // hack to get around Bug #1502 
       AMESOS_CHK_ERR( CreateLocalMatrixAndExporters() ) ;
-    assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols64() );
+    assert( NumGlobalElements_ == RowMatrixA_->NumGlobalCols() );
     if ( AddZeroToDiag_ == 0 ) 
-      assert( numentries_ == RowMatrixA_->NumGlobalNonzeros64() );
+      assert( numentries_ == RowMatrixA_->NumGlobalNonzeros() );
 
     AMESOS_CHK_ERR( ExportToSerial() );
     
@@ -728,14 +678,6 @@ int Amesos_Klu::NumericFactorization()
 //=============================================================================
 int Amesos_Klu::Solve() 
 {
-  RowMatrixA_ = Problem_->GetMatrix();
-  if (RowMatrixA_->NumGlobalRows64() == 0 || RowMatrixA_->NumGlobalCols64()
-            == 0)
-  {
-      ++NumSolve_;
-      return 0;
-  }
-
   Epetra_MultiVector* vecX = 0 ;
   Epetra_MultiVector* vecB = 0 ;
 

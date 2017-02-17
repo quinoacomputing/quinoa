@@ -48,9 +48,6 @@
 #include "Thyra_TestingTools.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
 #include "Teuchos_DefaultComm.hpp"
-#include "Thyra_VectorSpaceTester.hpp"
-#include "Thyra_VectorStdOpsTester.hpp"
-
 
 //#define THYRA_DEFAULT_SPMD_VECTOR_SPACE_UNIT_TESTS_DUMP
 
@@ -73,7 +70,6 @@ using Teuchos::null;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::get_extra_data;
-using Teuchos::ScalarTraits;
 using Thyra::VectorSpaceBase;
 using Thyra::VectorBase;
 using Thyra::MultiVectorBase;
@@ -81,7 +77,6 @@ using Thyra::createMember;
 using Thyra::createMembers;
 using Thyra::DefaultSpmdVectorSpace;
 using Thyra::defaultSpmdVectorSpace;
-using Thyra::locallyReplicatedDefaultSpmdVectorSpace;
 using Thyra::ConstDetachedVectorView;
 using Thyra::DetachedVectorView;
 using Thyra::ConstDetachedSpmdVectorView;
@@ -148,24 +143,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, serialConstructZeroSi
 
   ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
     defaultSpmdVectorSpace<Scalar>(0));
-  TEST_EQUALITY_CONST(vs->getComm(), null);
-  TEST_EQUALITY_CONST(vs->localOffset(), as<Ordinal>(0));
-  TEST_EQUALITY_CONST(vs->localSubDim(), as<Ordinal>(0));
-  TEST_EQUALITY_CONST(vs->mapCode(), as<Ordinal>(0));
-  TEST_EQUALITY_CONST(vs->dim(), as<Ordinal>(0));
+  TEST_EQUALITY(vs->getComm(), null);
+  TEST_EQUALITY(vs->localOffset(), as<Ordinal>(0));
+  TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(0));
+  TEST_EQUALITY(vs->mapCode(), as<Ordinal>(0));
+  TEST_EQUALITY(vs->dim(), as<Ordinal>(0));
 
   ECHO(const RCP<VectorBase<Scalar> > v = createMember<Scalar>(vs));
   out << "v = " << *v;
-  
-  TEST_ASSERT(vs->isCompatible(*v->space()));
-  TEST_EQUALITY_CONST(v->space()->dim(), as<Ordinal>(0));
 
   ECHO(const RCP<MultiVectorBase<Scalar> > mv = createMembers<Scalar>(vs, 0));
   out << "mv = " << *mv;
-  
-  TEST_ASSERT(vs->isCompatible(*mv->range()));
-  TEST_EQUALITY_CONST(mv->range()->dim(), as<Ordinal>(0));
-  TEST_EQUALITY_CONST(mv->domain()->dim(), as<Ordinal>(0));
+
 }
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
@@ -199,8 +188,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, parallelConstructGlob
   TEST_EQUALITY(vs->getComm(), comm);
   TEST_EQUALITY(vs->localOffset(), as<Ordinal>(comm->getRank()*g_localDim));
   TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(g_localDim));
-  //TEST_EQUALITY_CONST(vs->isLocallyReplicated(), false);
-  TEST_EQUALITY(vs->isLocallyReplicated(), (comm->getSize()==1));
   TEST_EQUALITY(vs->dim(), as<Ordinal>(comm->getSize()*g_localDim));
 }
 
@@ -213,89 +200,54 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, locallyReplicatedPara
 {
   ECHO(const RCP<const Teuchos::Comm<Ordinal> > comm =
     Teuchos::DefaultComm<Teuchos_Ordinal>::getComm());
-  ECHO(const RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
-    locallyReplicatedDefaultSpmdVectorSpace<Scalar>(comm, g_localDim));
+  ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
+    defaultSpmdVectorSpace<Scalar>(comm, g_localDim, g_localDim));
   TEST_EQUALITY(vs->getComm(), comm);
-  TEST_EQUALITY_CONST(vs->localOffset(), as<Ordinal>(0));
+  TEST_EQUALITY(vs->localOffset(), as<Ordinal>(0));
   TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(g_localDim));
-  TEST_EQUALITY_CONST(vs->isLocallyReplicated(), true);
   TEST_EQUALITY(vs->dim(), as<Ordinal>(g_localDim));
-  ECHO(const RCP<const VectorSpaceBase<Scalar> > vs_clone =
-    vs->clone());
-  TEST_EQUALITY(vs_clone->dim(), as<Ordinal>(g_localDim));
-  TEST_ASSERT(vs->isCompatible(*vs_clone));
-  TEST_ASSERT(vs_clone->isCompatible(*vs));
 }
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
   locallyReplicatedParallelConstruct )
 
 
-TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_explicit, Scalar )
-{
-  ECHO(const RCP<const Teuchos::Comm<Ordinal> > comm =
-    Teuchos::DefaultComm<Teuchos_Ordinal>::getComm());
-  ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
-    defaultSpmdVectorSpace<Scalar>(comm, g_localDim, g_localDim, true));
-  TEST_EQUALITY(vs->getComm(), comm);
-  TEST_EQUALITY_CONST(vs->localOffset(), as<Ordinal>(0));
-  TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(g_localDim));
-  TEST_EQUALITY_CONST(vs->isLocallyReplicated(), true);
-  TEST_EQUALITY(vs->dim(), as<Ordinal>(g_localDim));
-}
-
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_explicit )
-
-
-TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_implicit, Scalar )
-{
-  ECHO(const RCP<const Teuchos::Comm<Ordinal> > comm =
-    Teuchos::DefaultComm<Teuchos_Ordinal>::getComm());
-  ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
-    defaultSpmdVectorSpace<Scalar>(comm, g_localDim, g_localDim));
-  TEST_EQUALITY(vs->getComm(), comm);
-  TEST_EQUALITY_CONST(vs->localOffset(), as<Ordinal>(0));
-  TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(g_localDim));
-  TEST_EQUALITY_CONST(vs->isLocallyReplicated(), true);
-  TEST_EQUALITY(vs->dim(), as<Ordinal>(g_localDim));
-}
-
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_implicit )
-
-
-TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_explicit_bad, Scalar )
-{
-  ECHO(const RCP<const Teuchos::Comm<Ordinal> > comm =
-    Teuchos::DefaultComm<Teuchos_Ordinal>::getComm());
-  ECHO(const Ordinal rank = comm->getRank());
-  out << "rank = " << rank << "\n";
-  ECHO(const Ordinal globalDim = g_localDim);
-  ECHO(const Ordinal localDim = (rank == 0 ? globalDim+1 : globalDim));
-  out << "globalDim = " << globalDim << "\n";
-  out << "localDim = " << localDim << "\n";
-  if (localDim != globalDim) {
-    // Throws when localDim != globalDim on a process!
-    TEST_THROW(defaultSpmdVectorSpace<Scalar>(comm, localDim, globalDim, true),
-      std::logic_error);
-  }
-  else {
-    ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
-      defaultSpmdVectorSpace<Scalar>(comm, localDim, g_localDim, true));
-  }
-  // NOTE: There should not be any hanging because no global reductions should
-  // be done when you pass in isLocallyReplicated==true!
-}
-
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
-  locallyReplicatedDefaultSpmdVectorSpace_explicit_bad )
-
-
-//#ifndef THYRA_HIDE_DEPRECATED_CODE
+//TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, parallelConstructEmptyProc,
+//  Scalar )
+//{
+//
+//  ECHO(const RCP<const Teuchos::Comm<Ordinal> > comm =
+//    Teuchos::DefaultComm<Teuchos_Ordinal>::getComm());
+//  const int procRank = comm->getRank();
+//  ECHO(RCP<const DefaultSpmdVectorSpace<Scalar> > vs =
+//    defaultSpmdVectorSpace<Scalar>(comm, procRank == 0 ? 0 : g_localDim, -1));
+//  TEST_EQUALITY(vs->getComm(), comm);
+//
+//  if (procRank == 0) {
+//    TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(0));
+//  }
+//  else {
+//    TEST_EQUALITY(vs->localSubDim(), as<Ordinal>(g_localDim));
+//  }
+//  TEST_EQUALITY(vs->dim(), as<Ordinal>((comm->getSize()-1)*g_localDim));
+//
+//  if (vs->dim()) {
+//
+//    ECHO(const RCP<VectorBase<Scalar> > v = createMember<Scalar>(vs));
+//    ECHO(V_S(v.ptr(), as<Scalar>(1.0)));
+//    out << "v = " << *v;
+//    
+//    // ToDo: Fix MultiVector to work with empty processors
+//    //ECHO(const RCP<MultiVectorBase<Scalar> > mv = createMembers<Scalar>(vs, 1));
+//    //ECHO(assign(mv.ptr(), as<Scalar>(1.0)));
+//    //out << "mv = " << *mv;
+//
+//  }
+//
+//}
+//
+//TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
+//  parallelConstructEmptyProc )
 
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, deprecatedSerialConstruct,
@@ -334,9 +286,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, deprecatedParallelCon
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT_SCALAR_TYPES( DefaultSpmdVectorSpace,
   deprecatedParallelConstruct )
-
-
-//#endif // THYRA_HIDE_DEPRECATED_CODE
 
 
 TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( DefaultSpmdVectorSpace, parallelFullExtract,

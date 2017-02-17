@@ -90,14 +90,14 @@ void tExplicitOps::initializeTest()
    int ny = 53;
 
    // create some big blocks to play with
-   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm,false); // CJ TODO FIXME: change for Epetra64
+   Trilinos_Util::CrsMatrixGallery FGallery("recirc_2d",comm);
    FGallery.Set("nx",nx);
    FGallery.Set("ny",ny);
    Epetra_CrsMatrix & epetraF = FGallery.GetMatrixRef();
    F_ = Thyra::nonconstEpetraLinearOp(rcp(new Epetra_CrsMatrix(epetraF)));
 
    // create some big blocks to play with
-   Trilinos_Util::CrsMatrixGallery GGallery("laplace_2d",comm,false); // CJ TODO FIXME: change for Epetra64
+   Trilinos_Util::CrsMatrixGallery GGallery("laplace_2d",comm);
    GGallery.Set("nx",nx);
    GGallery.Set("ny",ny);
    Epetra_CrsMatrix & epetraG = GGallery.GetMatrixRef();
@@ -176,7 +176,7 @@ bool tExplicitOps::test_mult_diagScaleMatProd(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_diagScaleMatProd "
              << ": Testing triple matrix product");
@@ -190,7 +190,7 @@ bool tExplicitOps::test_mult_diagScaleMatProd(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_diagScaleMatProd "
              << ": Testing triple matrix product");
@@ -219,7 +219,7 @@ bool tExplicitOps::test_mult_diagScaling(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_diagScaleMatProd "
              << ": Testing diagonal scaling");
@@ -233,7 +233,7 @@ bool tExplicitOps::test_mult_diagScaling(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_diagScaleMatProd "
              << ": Testing diagonal scaling");
@@ -264,7 +264,7 @@ bool tExplicitOps::test_mult_modScaleMatProd(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_modScaleMatProd "
              << ": Testing triple matrix product");
@@ -296,7 +296,7 @@ bool tExplicitOps::test_mult_modScaleMatProd(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_modScaleMatProd "
              << ": Testing triple matrix product");
@@ -325,7 +325,7 @@ bool tExplicitOps::test_add(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_add "
              << ": Testing explicit add");
@@ -356,7 +356,7 @@ bool tExplicitOps::test_add_mod(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_add_mod"
              << ": Testing explicit add");
@@ -388,7 +388,7 @@ bool tExplicitOps::test_add_mod(int verbosity,std::ostream & os)
    {
       std::stringstream ss;
       Teuchos::FancyOStream fos(rcpFromRef(ss),"      |||");
-      const bool result = tester.compare( *thyOp, *expOp, Teuchos::ptrFromRef(fos) );
+      const bool result = tester.compare( *thyOp, *expOp, &fos );
       TEST_ASSERT(result,
              std::endl << "   tExplicitOps::test_add_mod"
              << ": Testing matrix addition");

@@ -58,11 +58,13 @@
 #else
 #include "Epetra_SerialComm.h"
 #endif
+extern "C" {
 //Petsc headers.
 //Note: Petsc internally hard-codes paths to headers, relative to the PETSC home
 //      directory.  This means that --with-incdirs must contain the full path(s)
 //      to the header below plus the PETSc home directory.
 #include "src/mat/impls/aij/mpi/mpiaij.h"
+}
 
 class Epetra_Import;
 class Epetra_Export;
@@ -239,7 +241,6 @@ class Epetra_PETScAIJMatrix: public Epetra_Object, public Epetra_CompObject, pub
     */ 
     double NormOne() const;
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     //! Returns the number of nonzero entries in the global matrix.
     int NumGlobalNonzeros() const {return(NumGlobalNonzeros_);};
 
@@ -251,18 +252,6 @@ class Epetra_PETScAIJMatrix: public Epetra_Object, public Epetra_CompObject, pub
 
     //! Returns the number of global nonzero diagonal entries.
     int NumGlobalDiagonals() const{return(OperatorDomainMap().NumGlobalPoints());};
-#endif
-    //! Returns the number of nonzero entries in the global matrix.
-    long long NumGlobalNonzeros64() const {return(NumGlobalNonzeros_);};
-
-    //! Returns the number of global matrix rows.
-    long long NumGlobalRows64() const {return(OperatorRangeMap().NumGlobalPoints64());};
-
-    //! Returns the number of global matrix columns.
-    long long NumGlobalCols64() const {return(OperatorDomainMap().NumGlobalPoints64());};
-
-    //! Returns the number of global nonzero diagonal entries.
-    long long NumGlobalDiagonals64() const{return(OperatorDomainMap().NumGlobalPoints64());};
     
     //! Returns the number of nonzero entries in the calling processor's portion of the matrix.
     int NumMyNonzeros() const {return(NumMyNonzeros_);};
@@ -303,7 +292,7 @@ class Epetra_PETScAIJMatrix: public Epetra_Object, public Epetra_CompObject, pub
   //@{ 
 
   //! Print method
-  virtual void Print(std::ostream & os) const;
+  virtual void Print(ostream & os) const;
   //@}
 
   //! @name Additional methods required to support the Epetra_Operator interface
@@ -407,7 +396,7 @@ class Epetra_PETScAIJMatrix: public Epetra_Object, public Epetra_CompObject, pub
     int PetscRowStart_;
     int PetscRowEnd_;
     enum petscMatrixType {PETSC_SEQ_AIJ, PETSC_MPI_AIJ};
-    MatType  MatType_;         //really const char*
+    const MatType MatType_;         //really const char*
     mutable double NormInf_;
     mutable double NormOne_;
 

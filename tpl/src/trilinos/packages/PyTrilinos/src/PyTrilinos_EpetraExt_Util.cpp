@@ -1,55 +1,43 @@
 // @HEADER
 // ***********************************************************************
 //
-//          PyTrilinos: Python Interfaces to Trilinos Packages
-//                 Copyright (2014) Sandia Corporation
+//              PyTrilinos: Python Interface to Trilinos
+//                 Copyright (2005) Sandia Corporation
 //
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia
-// Corporation, the U.S. Government retains certain rights in this
-// software.
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact William F. Spotz (wfspotz@sandia.gov)
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Bill Spotz (wfspotz@sandia.gov)
 //
 // ***********************************************************************
 // @HEADER
 
 // Local includes
-#include "PyTrilinos_Epetra_Util.hpp"
+#include "PyTrilinos_Epetra_Util.h"
 #include "PyTrilinos_config.h"
-#include "PyTrilinos_Util.hpp"
-#include "PyTrilinos_EpetraExt_Util.hpp"
-#include "PyTrilinos_PythonException.hpp"
+#include "PyTrilinos_Util.h"
+#include "PyTrilinos_EpetraExt_Util.h"
+#include "PyTrilinos_PythonException.h"
 #include "swigpyrun.h"
 
 // Teuchos include
+#ifdef HAVE_TEUCHOS
 #include "Teuchos_Array.hpp"
+#endif
 
 // System includes
 #include <algorithm>
@@ -83,11 +71,11 @@ getEvaluationObjectAttr(PyObject * object, CONST char * name)
   // type attribute
   EpetraExt::ModelEvaluator::EEvalType type;
   CONST char * typeStr = getStringObjectAttr(value, "type");
-  if (strncmp(typeStr, "exact", 5) == 0)
+  if (typeStr == "exact")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_EXACT;
-  if (strncmp(typeStr, "approx_deriv", 12) == 0)
+  if (typeStr == "approx_deriv")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_APPROX_DERIV;
-  if (strncmp(typeStr, "very_approx_deriv", 17) == 0)
+  if (typeStr == "very_approx_deriv")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_VERY_APPROX_DERIV;
   Py_DECREF(value);
   return EpetraExt::ModelEvaluator::Evaluation<Epetra_Vector>(vector, type);
@@ -122,11 +110,11 @@ getEvaluationItemObjectAttr(PyObject * object, CONST char * name, int i)
   // type attribute
   EpetraExt::ModelEvaluator::EEvalType type;
   CONST char * typeStr = getStringObjectAttr(item, "type");
-  if (strncmp(typeStr, "exact", 5) == 0)
+  if (typeStr == "exact")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_EXACT;
-  if (strncmp(typeStr, "approx_deriv", 12) == 0)
+  if (typeStr == "approx_deriv")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_APPROX_DERIV;
-  if (strncmp(typeStr, "very_approx_deriv", 17) == 0)
+  if (typeStr == "very_approx_deriv")
     type = EpetraExt::ModelEvaluator::EVAL_TYPE_VERY_APPROX_DERIV;
   Py_DECREF(item);
   return EpetraExt::ModelEvaluator::Evaluation<Epetra_Vector>(vector, type);
@@ -225,19 +213,19 @@ getDerivativePropertiesObjectAttr(PyObject * object, CONST char * name)
   EpetraExt::ModelEvaluator::DerivativeProperties result;
   // linearity attribute
   CONST char * linearity = getStringObjectAttr(value, "linearity");
-  if (strncmp(linearity, "unknown", 7) == 0)
+  if (linearity == "unknown")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_UNKNOWN;
-  if (strncmp(linearity, "const", 5) == 0)
+  if (linearity == "const")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_CONST;
-  if (strncmp(linearity, "nonconst", 8) == 0)
+  if (linearity == "nonconst")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_NONCONST;
   // rank attribute
   CONST char * rank = getStringObjectAttr(value, "rank");
-  if (strncmp(rank, "unknown", 7) == 0)
+  if (rank == "unknown")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_UNKNOWN;
-  if (strncmp(rank, "full", 4) == 0)
+  if (rank == "full")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_FULL;
-  if (strncmp(rank, "deficient", 9) == 0)
+  if (rank == "deficient")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_DEFICIENT;
   // supportsAdjoint attribute
   result.supportsAdjoint = getBoolObjectAttr(value, "supportsAdjoint");
@@ -273,19 +261,19 @@ getDerivativePropertiesItemObjectAttr(PyObject * object, CONST char * name, int 
   EpetraExt::ModelEvaluator::DerivativeProperties result;
   // linearity attribute
   CONST char * linearity = getStringObjectAttr(item, "linearity");
-  if (strncmp(linearity, "unknown", 7) == 0)
+  if (linearity == "unknown")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_UNKNOWN;
-  if (strncmp(linearity, "const", 5) == 0)
+  if (linearity == "const")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_CONST;
-  if (strncmp(linearity, "nonconst", 8) == 0)
+  if (linearity == "nonconst")
     result.linearity = EpetraExt::ModelEvaluator::DERIV_LINEARITY_NONCONST;
   // rank attribute
   CONST char * rank = getStringObjectAttr(item, "rank");
-  if (strncmp(rank, "unknown", 7) == 0)
+  if (rank == "unknown")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_UNKNOWN;
-  if (strncmp(rank, "full", 4) == 0)
+  if (rank == "full")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_FULL;
-  if (strncmp(rank, "deficient", 9) == 0)
+  if (rank == "deficient")
     result.rank = EpetraExt::ModelEvaluator::DERIV_RANK_DEFICIENT;
   // supportsAdjoint attribute
   result.supportsAdjoint = getBoolObjectAttr(item, "supportsAdjoint");
@@ -321,9 +309,9 @@ getDerivativeMultiVectorObjectAttr(PyObject * object, CONST char * name)
   // orientation attribute
   EpetraExt::ModelEvaluator::EDerivativeMultiVectorOrientation orientation;
   CONST char * linearity = getStringObjectAttr(value, "linearity");
-  if (strncmp(linearity, "mv_by_col", 9) == 0)
+  if (linearity == "mv_by_col")
     orientation = EpetraExt::ModelEvaluator::DERIV_MV_BY_COL;
-  if (strncmp(linearity, "trans_mv_by_row", 15) == 0)
+  if (linearity == "trans_mv_by_row")
     orientation = EpetraExt::ModelEvaluator::DERIV_TRANS_MV_BY_ROW;
   // paramIndexes attribute
   PyObject * seq = PyObject_GetAttrString(value, "paramIndexes");
@@ -1158,6 +1146,8 @@ convertOutArgsFromPython(PyObject * source)
 
 ////////////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_TEUCHOS
+
 namespace PyTrilinos
 {
 
@@ -1195,3 +1185,5 @@ PyObject * convertArrayOfIntToPython(const Teuchos::Array<int> & tai)
 }
 
 }  // Namespace PyTrilinos
+
+#endif   // HAVE_TEUCHOS

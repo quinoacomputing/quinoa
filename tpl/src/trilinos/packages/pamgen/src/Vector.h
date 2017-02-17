@@ -4,7 +4,7 @@
 #include <math.h>
 #include <iostream>
 
-#include "pamgen_code_types.h"
+#include "../asrc/code_types.h"
 namespace PAMGEN_NEVADA {
 
 /*****************************************************************************/

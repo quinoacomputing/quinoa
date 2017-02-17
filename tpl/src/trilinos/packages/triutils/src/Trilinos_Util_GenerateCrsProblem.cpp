@@ -40,7 +40,6 @@
 // @HEADER
 
 #include "Trilinos_Util.h"
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Comm.h"
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
@@ -80,8 +79,6 @@
 
 // Note: Caller of this function is responsible for deleting all output objects.
 
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-
 void Trilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, int * yoff,
 				      const Epetra_Comm  &comm, 
 				      Epetra_Map *& map, 
@@ -101,60 +98,34 @@ void Trilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, i
   return;
 }
 
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-
-void Trilinos_Util_GenerateCrsProblem64(int nx, int ny, int npoints, int * xoff, int * yoff,
-				      const Epetra_Comm  &comm, 
-				      Epetra_Map *& map, 
-				      Epetra_CrsMatrix *& A, 
-				      Epetra_Vector *& x, 
-				      Epetra_Vector *& b,
-				      Epetra_Vector *&xexact, long long indexBase) {
-
-  Epetra_MultiVector * x1, * b1, * xexact1;
-	
-  Trilinos_Util_GenerateCrsProblem64(nx, ny, npoints, xoff, yoff, 1, comm, map, A, x1, b1, xexact1, indexBase);
-
-  x = dynamic_cast<Epetra_Vector *>(x1);
-  b = dynamic_cast<Epetra_Vector *>(b1);
-  xexact = dynamic_cast<Epetra_Vector *>(xexact1);
-
-  return;
-}
-
-#endif
-
-template<typename int_type>
-void TTrilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, int * yoff, int nrhs,
+void Trilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, int * yoff, int nrhs,
 				      const Epetra_Comm  &comm, 
 				      Epetra_Map *& map, 
 				      Epetra_CrsMatrix *& A, 
 				      Epetra_MultiVector *& x, 
 				      Epetra_MultiVector *& b,
-				      Epetra_MultiVector *&xexact, int_type indexBase) {
+				      Epetra_MultiVector *&xexact, int indexBase) {
 
   // Number of global equations is nx*ny.  These will be distributed in a linear fashion
-  int_type numGlobalEquations = ((int_type) nx)*((int_type) ny);
+  int numGlobalEquations = nx*ny;
   map = new Epetra_Map(numGlobalEquations, indexBase, comm); // Create map with equal distribution of equations.
   
   int numMyEquations = map->NumMyElements();
   
   A = new Epetra_CrsMatrix(Copy, *map, 0); // Construct matrix
   
-  int_type * indices = new int_type[npoints];
+  int * indices = new int[npoints];
   double * values = new double[npoints];
   
   double dnpoints = (double) npoints;
   
   for (int i=0; i<numMyEquations; i++) {
     
-    int_type rowID = (int_type) map->GID64(i);
+    int rowID = map->GID(i);
     int numIndices = 0;
     
     for (int j=0; j<npoints; j++) {
-      int_type colID = rowID + xoff[j] + ((int_type) nx)*yoff[j]; // Compute column ID based on stencil offsets
+      int colID = rowID + xoff[j] + nx*yoff[j]; // Compute column ID based on stencil offsets
       if (colID>indexBase-1 && colID<indexBase+numGlobalEquations) {
 	indices[numIndices] = colID;
 	double value = - ((double) rand())/ ((double) RAND_MAX);
@@ -190,33 +161,3 @@ void TTrilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, 
 
   return;
 }
-
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-
-void Trilinos_Util_GenerateCrsProblem(int nx, int ny, int npoints, int * xoff, int * yoff, int nrhs,
-				      const Epetra_Comm  &comm, 
-				      Epetra_Map *& map, 
-				      Epetra_CrsMatrix *& A, 
-				      Epetra_MultiVector *& x, 
-				      Epetra_MultiVector *& b,
-				      Epetra_MultiVector *&xexact, int indexBase) {
-  TTrilinos_Util_GenerateCrsProblem<int>(nx, ny, npoints, xoff, yoff, nrhs,
-	  comm, map, A, x, b, xexact, indexBase);
-}
-
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-
-void Trilinos_Util_GenerateCrsProblem64(int nx, int ny, int npoints, int * xoff, int * yoff, int nrhs,
-				      const Epetra_Comm  &comm, 
-				      Epetra_Map *& map, 
-				      Epetra_CrsMatrix *& A, 
-				      Epetra_MultiVector *& x, 
-				      Epetra_MultiVector *& b,
-				      Epetra_MultiVector *&xexact, long long indexBase) {
-  TTrilinos_Util_GenerateCrsProblem<long long>(nx, ny, npoints, xoff, yoff, nrhs,
-	  comm, map, A, x, b, xexact, indexBase);
-}
-
-#endif

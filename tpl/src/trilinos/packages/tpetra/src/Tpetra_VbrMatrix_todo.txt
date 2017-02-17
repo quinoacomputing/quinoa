@@ -1,0 +1,5 @@
+
+Still need to do the following:
+
+1. testing, profiling and optimizing on large matrices
+

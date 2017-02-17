@@ -160,6 +160,7 @@ C   --Write the data points
       WRITE (NEU, '(A)') '&'
  170  CONTINUE
       NUMCRV = NUMCRV + 1
+      call flush(neu)
       RETURN
       END
       

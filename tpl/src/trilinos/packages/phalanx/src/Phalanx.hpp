@@ -54,4 +54,7 @@
 
 #include "Phalanx_Evaluator_Factory.hpp"
 
+#include "Phalanx_Allocator_New.hpp"
+#include "Phalanx_Allocator_Contiguous.hpp"
+
 #include "Phalanx_TypeStrings.hpp"

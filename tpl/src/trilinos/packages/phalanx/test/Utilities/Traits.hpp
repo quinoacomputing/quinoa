@@ -42,24 +42,34 @@
 // @HEADER
 
 
-#ifndef PHX_MY_TRAITS_HPP
-#define PHX_MY_TRAITS_HPP
+#ifndef PHX_TRAITS_HPP
+#define PHX_TRAITS_HPP
 
+// mpl (Meta Programming Library) templates
 #include "Sacado_mpl_vector.hpp"
 #include "Sacado_mpl_find.hpp"
-#include "Phalanx_Traits.hpp"
+#include "boost/mpl/map.hpp"
+#include "boost/mpl/find.hpp"
+
+// traits Base Class
+#include "Phalanx_Traits_Base.hpp"
 
 // Include User Data Types
-#include "Phalanx_config.hpp" // for std::vector
+#include "Phalanx_ConfigDefs.hpp" // for std::vector
+#include "AlgebraicTypes.hpp"
 #include "CellData.hpp"
-#include "Sacado.hpp"
+#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Allocator_New.hpp"
+
+// Debug information
+#include "Phalanx_TypeStrings.hpp"
 
 namespace PHX {
 
   /*! \brief Traits class for testing.
     
   */
-  struct MyTraits {
+  struct MyTraits : public PHX::TraitsBase {
     
     // ******************************************************************
     // *** Scalar Types
@@ -77,6 +87,35 @@ namespace PHX {
     typedef Sacado::mpl::vector<Residual, Jacobian> EvalTypes;
 
     // ******************************************************************
+    // *** Data Types
+    // ******************************************************************
+    
+    // Create the data types for each evaluation type
+    
+    // Residual (default scalar type is RealType)
+    typedef Sacado::mpl::vector< RealType, 
+				 MyVector<RealType>,
+				 MyTensor<RealType> 
+    > ResidualDataTypes;
+  
+    // Jacobian (default scalar type is Fad<double, double>)
+    typedef Sacado::mpl::vector< FadType,
+				 MyVector<FadType>,
+				 MyTensor<FadType> 
+    > JacobianDataTypes;
+
+    // Maps the key EvalType a vector of DataTypes
+    typedef boost::mpl::map<
+      boost::mpl::pair<Residual, ResidualDataTypes>,
+      boost::mpl::pair<Jacobian, JacobianDataTypes>
+    >::type EvalToDataMap;
+
+    // ******************************************************************
+    // *** Allocator Type
+    // ******************************************************************
+    typedef PHX::NewAllocator Allocator;
+
+    // ******************************************************************
     // *** User Defined Object Passed in for Evaluation Method
     // ******************************************************************
     typedef void* SetupData;
@@ -85,19 +124,39 @@ namespace PHX {
     typedef void* PostEvalData;
 
   };
+ 
+  // ******************************************************************
+  // ******************************************************************
+  // Debug strings.  Specialize the Evaluation and Data types for the
+  // TypeString object in phalanx/src/Phalanx_TypeString.hpp.
+  // ******************************************************************
+  // ******************************************************************
 
+  // Evaluation Types
+  template<> struct TypeString<MyTraits::Residual> 
+  { static const std::string value; };
 
-}
+  template<> struct TypeString<MyTraits::Jacobian> 
+  { static const std::string value; };
 
-namespace PHX {
+  // Data Types
+  template<> struct TypeString<double> 
+  { static const std::string value; };
 
-  template<>
-  struct eval_scalar_types<PHX::MyTraits::Residual> 
-  { typedef Sacado::mpl::vector<PHX::MyTraits::RealType> type; };
+  template<> struct TypeString< MyVector<double> > 
+  { static const std::string value; };
 
-  template<>
-  struct eval_scalar_types<PHX::MyTraits::Jacobian> 
-  { typedef Sacado::mpl::vector<PHX::MyTraits::RealType,PHX::MyTraits::FadType> type; };
+  template<> struct TypeString< MyTensor<double> > 
+  { static const std::string value; };
+
+  template<> struct TypeString< Sacado::Fad::DFad<double> > 
+  { static const std::string value; };
+
+  template<> struct TypeString< MyVector<Sacado::Fad::DFad<double> > > 
+  { static const std::string value; };
+
+  template<> struct TypeString< MyTensor<Sacado::Fad::DFad<double> > > 
+  { static const std::string value; };
 
 }
 

@@ -1,49 +1,15 @@
-# @HEADER
-#
-########################################################################
-#
-#  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
-#                  Copyright 2012 Sandia Corporation
-#
-# Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-# the U.S. Government retains certain rights in this software.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-#
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the Corporation nor the names of the
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Questions? Contact Karen Devine	kddevin@sandia.gov
-#                    Erik Boman	        egboman@sandia.gov
-#
-########################################################################
-#
-# @HEADER
 # ------------------------------------------------------------------------
 # Process this file with autoconf to produce a configure script.
 # ------------------------------------------------------------------------
+
+# @HEADER
+##############################################################################
+# Zoltan Library for Parallel Applications                                   #
+# Copyright (c) 2000,2001,2002, Sandia National Laboratories.                #
+# This software is distributed under the GNU Lesser General Public License.  #
+# For more info, see the README file in the top-level Zoltan directory.      #
+##############################################################################
+# @HEADER
 
 # ------------------------------------------------------------------------
 # Initialization 
@@ -276,7 +242,7 @@ TAC_ARG_WITH_PACKAGE(scotch, [Enable Scotch support.], SCOTCH, no)
 AM_CONDITIONAL(BUILD_SCOTCH, [test "X$ac_cv_use_scotch" != "Xno"])
 TAC_ARG_WITH_3PL_SUB(scotch, libdir, [Specify where the Scotch library is located.  Ex. /path/to/library])
 if test "X$tac_with_scotch_libdir" != "Xno"; then
-  LIBS="-L${tac_with_scotch_libdir} -lptscotch  -lptscotcherr -lptscotcherrexit -lscotch -lscotcherr -lscotcherrexit ${LIBS}"
+  LIBS="-L${tac_with_scotch_libdir} -lptscotch  -lptscotcherr -lptscotcherrexit ${LIBS}"
 fi
 TAC_ARG_WITH_3PL_SUB(scotch, incdir, [Specify where the Scotch header files are located.  Ex. /path/to/headers])
 if test "X$tac_with_scotch_incdir" != "Xno"; then
@@ -444,11 +410,11 @@ AC_CONFIG_FILES([
 		example/Makefile
 		example/C/Makefile
 		example/CPP/Makefile
+		test/Large_Data/Makefile
 		siMPI/Makefile
 		siMPI/pyMPI/Makefile
 		siMPI/pyMPI/siMPI/Makefile
 		])
-#		test/Large_Data/Makefile
 #		example/lib/Makefile
 #		example/C/Makefile
 #		example/C/sparse_matrix/Makefile

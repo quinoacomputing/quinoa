@@ -73,8 +73,6 @@ SolverCore<ConcreteSolver,Matrix,Vector>::SolverCore(
   , globalNumRows_(matrixA_->getGlobalNumRows())
   , globalNumCols_(matrixA_->getGlobalNumCols())
   , globalNumNonZeros_(matrixA_->getGlobalNNZ())
-  , rowIndexBase_(matrixA_->getRowIndexBase())
-  , columnIndexBase_(matrixA_->getColumnIndexBase())
   , rank_(Teuchos::rank(*this->getComm()))
   , root_(rank_ == 0)
   , nprocs_(Teuchos::size(*this->getComm()))
@@ -368,7 +366,7 @@ SolverCore<ConcreteSolver,Matrix,Vector>::describe(
   for( size_t dec = 10; dec < globalNumRows_; dec *= 10 ) {
     ++width;
   }
-  width = std::max<size_t>(width,size_t(11)) + 2;
+  width = std::max<size_t>(width,11) + 2;
   Teuchos::OSTab tab(out);
   //    none: print nothing
   //     low: print O(1) info from node 0
@@ -423,67 +421,64 @@ SolverCore<ConcreteSolver,Matrix,Vector>::printTiming(
   std::string p = name() + " : ";
   Util::printLine(out);
 
-  if(verbLevel != Teuchos::VERB_NONE)
-    {
-      out << p << "Time to convert matrix to implementation format = "
-          << timers_.mtxConvTime_.totalElapsedTime() << " (s)"
-          << std::endl;
-      out << p << "Time to redistribute matrix = "
-          << timers_.mtxRedistTime_.totalElapsedTime() << " (s)"
-          << std::endl;
+  out << p << "Time to convert matrix to implementation format = "
+      << timers_.mtxConvTime_.totalElapsedTime() << " (s)"
+      << std::endl;
+  out << p << "Time to redistribute matrix = "
+      << timers_.mtxRedistTime_.totalElapsedTime() << " (s)"
+      << std::endl;
 
-      out << p << "Time to convert vectors to implementation format = "
-          << timers_.vecConvTime_.totalElapsedTime() << " (s)"
-          << std::endl;
-      out << p << "Time to redistribute vectors = "
-          << timers_.vecRedistTime_.totalElapsedTime() << " (s)"
-          << std::endl;
+  out << p << "Time to convert vectors to implementation format = "
+      << timers_.vecConvTime_.totalElapsedTime() << " (s)"
+      << std::endl;
+  out << p << "Time to redistribute vectors = "
+      << timers_.vecRedistTime_.totalElapsedTime() << " (s)"
+      << std::endl;
 
-      out << p << "Number of pre-orderings = "
-          << status_.getNumPreOrder()
-          << std::endl;
-      out << p << "Time for pre-ordering = "
-          << preTime << " (s), avg = "
-          << preTime / status_.getNumPreOrder() << " (s)"
-          << std::endl;
+  out << p << "Number of pre-orderings = "
+      << status_.getNumPreOrder()
+      << std::endl;
+  out << p << "Time for pre-ordering = "
+      << preTime << " (s), avg = "
+      << preTime / status_.getNumPreOrder() << " (s)"
+      << std::endl;
 
-      out << p << "Number of symbolic factorizations = "
-          << status_.getNumSymbolicFact()
-          << std::endl;
-      out << p << "Time for sym fact = "
-          << symTime << " (s), avg = "
-          << symTime / status_.getNumSymbolicFact() << " (s)"
-          << std::endl;
+  out << p << "Number of symbolic factorizations = "
+      << status_.getNumSymbolicFact()
+      << std::endl;
+  out << p << "Time for sym fact = "
+      << symTime << " (s), avg = "
+      << symTime / status_.getNumSymbolicFact() << " (s)"
+      << std::endl;
 
-      out << p << "Number of numeric factorizations = "
-          << status_.getNumNumericFact()
-          << std::endl;
-      out << p << "Time for num fact = "
-          << numTime << " (s), avg = "
-          << numTime / status_.getNumNumericFact() << " (s)"
-          << std::endl;
+  out << p << "Number of numeric factorizations = "
+      << status_.getNumNumericFact()
+      << std::endl;
+  out << p << "Time for num fact = "
+      << numTime << " (s), avg = "
+      << numTime / status_.getNumNumericFact() << " (s)"
+      << std::endl;
 
-      out << p << "Number of solve phases = "
-          << status_.getNumSolve()
-          << std::endl;
-      out << p << "Time for solve = "
-          << solTime << " (s), avg = "
-          << solTime / status_.getNumSolve() << " (s)"
-          << std::endl;
+  out << p << "Number of solve phases = "
+      << status_.getNumSolve()
+      << std::endl;
+  out << p << "Time for solve = "
+      << solTime << " (s), avg = "
+      << solTime / status_.getNumSolve() << " (s)"
+      << std::endl;
 
-      out << p << "Total time spent in Amesos2 = "
-          << totTime << " (s)"
-          << std::endl;
-      out << p << "Total time spent in the Amesos2 interface = "
-          << overhead << " (s)"
-          << std::endl;
-      out << p << "  (the above time does not include solver time)"
-          << std::endl;
-      out << p << "Amesos2 interface time / total time = "
-          << overhead / totTime
-          << std::endl;
-      Util::printLine(out);
-    }
+  out << p << "Total time spent in Amesos2 = "
+      << totTime << " (s)"
+      << std::endl;
+  out << p << "Total time spent in the Amesos2 interface = "
+      << overhead << " (s)"
+      << std::endl;
+  out << p << "  (the above time does not include solver time)"
+      << std::endl;
+  out << p << "Amesos2 interface time / total time = "
+      << overhead / totTime
+      << std::endl;
+  Util::printLine(out);
 }
 
 
@@ -491,10 +486,7 @@ template <template <class,class> class ConcreteSolver, class Matrix, class Vecto
 void
 SolverCore<ConcreteSolver,Matrix,Vector>::getTiming(
   Teuchos::ParameterList& timingParameterList) const
-{
-  Teuchos::ParameterList temp;
-  timingParameterList = temp.setName("NULL");
-}
+{}
 
 
 template <template <class,class> class ConcreteSolver, class Matrix, class Vector >

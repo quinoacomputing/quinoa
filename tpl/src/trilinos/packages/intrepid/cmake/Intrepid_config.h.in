@@ -1,7 +1,9 @@
-/* Define if want to build with amesos enabled */
+/* src/Intrepid_config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if want to build with intrepid enabled */
 #cmakedefine HAVE_INTREPID_AMESOS
 
-/* Define if want to build with amesos/umfpack enabled */
+/* Define if want to build with amesos enabled */
 #cmakedefine HAVE_INTREPID_AMESOS_UMFPACK
 
 /* Define if want to build intrepid-debug */
@@ -10,14 +12,11 @@
 /* Define if want to build intrepid-debug with inf and nan checking */
 #cmakedefine HAVE_INTREPID_DEBUG_INF_CHECK
 
-/* Define if want to build with epetra support enabled */
+/* Define if want to build with intrepid enabled */
 #cmakedefine HAVE_INTREPID_EPETRA
 
-/* Define if want to build with epetraext support enabled */
+/* Define if want to build with intrepid enabled */
 #cmakedefine HAVE_INTREPID_EPETRAEXT
 
-/* Define if want to build with sacado enabled */
+/* Define if want to build with intrepid enabled */
 #cmakedefine HAVE_INTREPID_SACADO
-
-/* *Define for Kokkos support */
-#cmakedefine HAVE_INTREPID_KOKKOSCORE

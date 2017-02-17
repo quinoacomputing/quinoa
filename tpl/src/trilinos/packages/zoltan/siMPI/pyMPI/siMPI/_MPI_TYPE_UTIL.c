@@ -30,11 +30,7 @@ int _MPI_FindType (MPI_Datatype datatype)
 {
   int index;
   _MPI_COVERAGE();
-  /* KDDKDD 11/4/14:  changed loop max from _MPI_TYPE_COUNT to
-   * _MPI_TYPE_ARRAY_SIZE; _MPI_TYPE_LIST entries are freed and 
-   * reused, so _MPI_TYPE_ARRAY_SIZE accurately gives the max 
-   * entries to search */
-  for (index = 0; index < _MPI_TYPE_ARRAY_SIZE; index++)
+  for (index = 0; index < _MPI_TYPE_COUNT; index++)
   {
   _MPI_COVERAGE();
     if (_MPI_TYPE_LIST[index].id == datatype)
@@ -87,13 +83,8 @@ void _MPI_deleteAll (_MPI_TYPE_DES* parent)
 /*==========================================================================*/
 int _MPI_Find_free (void) {
   int i;
-  int ret;
   _MPI_COVERAGE();
-  /* KDDKDD 11/4/14:  changed loop max from _MPI_TYPE_COUNT to
-   * _MPI_TYPE_ARRAY_SIZE; _MPI_TYPE_LIST entries are freed and 
-   * reused, so _MPI_TYPE_ARRAY_SIZE accurately gives the max 
-   * entries to search */
-  for (i=0; i<_MPI_TYPE_ARRAY_SIZE; i++) {
+  for (i=0; i<_MPI_TYPE_COUNT; i++) {
     _MPI_COVERAGE();
     if (_MPI_TYPE_LIST[i].id == _MPI_NOT_VALID) return i;
   }
@@ -101,12 +92,9 @@ int _MPI_Find_free (void) {
     (_MPI_TYPE_LIST,
      (_MPI_TYPE_ARRAY_SIZE+_MPI_PREALLOCATION_SIZE)*sizeof(_MPI_TYPE_DES),
      "Error in _MPI_Find_free for reallocation");
-  ret = _MPI_TYPE_ARRAY_SIZE;
   _MPI_TYPE_ARRAY_SIZE += _MPI_PREALLOCATION_SIZE;
 
-  /* KDDKDD 11/4/14:  changed return value from_MPI_TYPE_COUNT to
-   * the previous _MPI_TYPE_ARRAY_SIZE */
-  return ret;
+  return _MPI_TYPE_COUNT;
 }
 /*==========================================================================*/
 /* int _MPI_calculatePadding (MPI_Datatype firstType, MPI_Aint currentSize) */

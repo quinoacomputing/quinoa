@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -808,18 +808,8 @@ TEUCHOS_UNIT_TEST( Rythmos_ImplicitRKStepper, setDirk ) {
   Thyra::ModelEvaluatorBase::InArgs<double> ic = model->getNominalValues();
   RCP<Rythmos::TimeStepNonlinearSolver<double> >
     nonlinearSolver = Rythmos::timeStepNonlinearSolver<double>();
-  const RCP<ParameterList> paramList = Teuchos::parameterList();
-  {
-    const RCP<Teuchos::ParameterList> stratPl =
-      sublist(paramList, Stratimikos_name);
-    const RCP<Teuchos::ParameterList> modelPl =
-      sublist(paramList, DiagonalTransientModel_name);
-    stratPl->set("Linear Solver Type","Belos");
-    stratPl->set("Preconditioner Type","None");
-  }
-
   RCP<Thyra::LinearOpWithSolveFactoryBase<double> > irk_W_factory =
-    getWFactory<double>(paramList);
+    getWFactory<double>();
   {
     // create stepper with DIRK tableau
     RCP<RKButcherTableauBase<double> > rkbt = createRKBT<double>("Singly Diagonal IRK 5 Stage 4th order");

@@ -1,8 +1,8 @@
-#include "RTC_OperatorRTC.hh"
-#include "RTC_commonRTC.hh"
-#include "RTC_VariableRTC.hh"
-#include "RTC_ObjectRTC.hh"
-#include "RTC_ScalarNumberRTC.hh"
+#include "OperatorRTC.hh"
+#include "commonRTC.hh"
+#include "VariableRTC.hh"
+#include "ObjectRTC.hh"
+#include "ScalarNumberRTC.hh"
 
 #include <string>
 #include <cmath>
@@ -17,7 +17,7 @@ bool Operator::ISINIT = false;
 map<string, Operator*> Operator::OPERATORS;
 
 /*****************************************************************************/
-Operator::Operator(const string& name, bool is_Unary,
+Operator::Operator(const string& name, bool is_Unary, 
                    int precedence, bool isLeftAssoc) : Object(OperatorOT)
 /*****************************************************************************/
 {

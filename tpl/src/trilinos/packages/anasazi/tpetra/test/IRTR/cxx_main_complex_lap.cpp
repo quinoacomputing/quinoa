@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -43,12 +43,13 @@
 #include <Tpetra_CrsMatrix.hpp>
 
 using namespace Teuchos;
+using Tpetra::Platform;
 using Tpetra::Operator;
 using Tpetra::CrsMatrix;
 using Tpetra::MultiVector;
 using Tpetra::Map;
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) 
 {
   using std::cout;
   using std::endl;
@@ -56,9 +57,8 @@ int main(int argc, char *argv[])
   typedef double                              ST;
   typedef ScalarTraits<ST>                   SCT;
   typedef SCT::magnitudeType                  MT;
-  typedef MultiVector<ST>                     MV;
-  typedef MV::global_ordinal_type             GO;
-  typedef Operator<ST>                        OP;
+  typedef MultiVector<ST,int>                 MV;
+  typedef Operator<ST,int>                    OP;
   typedef Anasazi::MultiVecTraits<ST,MV>     MVT;
   typedef Anasazi::OperatorTraits<ST,MV,OP>  OPT;
   const ST ONE  = SCT::one();
@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
   int MyPID = 0;
   int NumImages = 1;
 
-  RCP<const Teuchos::Comm<int> > comm =
-    Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
+  RCP<const Platform<int> > platform = Tpetra::DefaultPlatform<int>::getPlatform();
+  RCP<const Comm<int> > comm = platform->getComm();
 
   MyPID = rank(*comm);
   NumImages = size(*comm);
@@ -108,30 +108,30 @@ int main(int argc, char *argv[])
   int dim = ROWS_PER_PROC * NumImages;
 
   // create map
-  RCP<const Map<> > map = rcp (new Map<> (dim, 0, comm));
-  RCP<CrsMatrix<ST> > K = rcp(new CrsMatrix<ST>(map,4));
+  Map<int> map(dim,0,comm);
+  RCP<CrsMatrix<ST,int> > K = rcp(new CrsMatrix<ST,int>(map,4));
   int base = MyPID*ROWS_PER_PROC;
   if (MyPID != NumImages-1) {
     for (int i=0; i<ROWS_PER_PROC; ++i) {
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i  ), tuple<ST>( 2));
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i+1), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i  ), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i+1), tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i  ),tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i+1),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i  ),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i+1),tuple<ST>( 2));
     }
   }
   else {
     for (int i=0; i<ROWS_PER_PROC-1; ++i) {
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i  ), tuple<ST>( 2));
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i+1), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i  ), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i+1), tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i  ),tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i+1),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i  ),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i+1),tuple<ST>( 2));
     }
   }
   K->fillComplete();
 
   // Create initial vectors
   RCP<MV> ivec = rcp( new MV(map,blockSize) );
-  ivec->randomize ();
+  ivec->random();
 
   // Create eigenproblem
   RCP<Anasazi::BasicEigenproblem<ST,MV,OP> > problem =

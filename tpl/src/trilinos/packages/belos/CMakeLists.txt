@@ -1,3 +1,5 @@
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 
 ######################################################################
 ## Define the package
@@ -9,49 +11,27 @@ TRIBITS_PACKAGE(Belos)
 ## Set up package-specific options
 ######################################################################
 
-TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
-
 # Kokkos includes an implementation of the Tall Skinny QR (TSQR)
-# factorization.  TSQR is used to implement an OrthoManager and a
-# MatOrthoManager (which only uses TSQR in the Euclidean-inner-product
-# case).  TSQR is enabled by default if the KokkosTSQR and Tpetra
-# packages are enabled, but users have control over
-# Tpetra_ENABLE_TSQR.  Note that the Epetra adapter for TSQR currently
-# lives in Tpetra.
-#
-# mfh 05 Sep 2012: Back in 2010, I had to put Epetra's TSQR adapter in
-# Tpetra.  This was because an external software package was linking
-# to Epetra without using Trilinos' Makefile.export mechanism to
-# consider which Trilinos libraries to use.  Making Epetra optionally
-# depend on Kokkos (to make TSQR work) changed the list of libraries,
-# and that software package wasn't doing the right thing to adjust.
-# In any case, I chose at the time to put Epetra's TSQR adapter in
-# Tpetra, since Tpetra already had an optional dependency on Epetra.
-# So, for better or worse, you won't be able to use TSQR with Epetra
-# unless you enable both Epetra and Tpetra in your Trilinos build.
-# HAVE_BELOS_TSQR will correctly reflect this: it won't be defined 
-# unless both Epetra and Tpetra are enabled in your Trilinos build.
-IF (${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_Tpetra AND Tpetra_ENABLE_TSQR)
-  GLOBAL_SET(${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT ON)
-ELSE()
-  GLOBAL_SET(${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT OFF)
-ENDIF()
+# factorization.  TSQR is used to implement orthogonalization methods.
+# TSQR is enabled by default in Belos if enabled in Kokkos.  If
+# Teuchos_ENABLE_COMPLEX is enabled, TSQR is built with complex
+# arithmetic support.
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_TSQR
   HAVE_BELOS_TSQR
-  "Enable TSQR (Tall Skinny QR factorization) as an orthogonalization method in Belos.  You must build Trilinos with both Epetra _and_ Tpetra enabled in order to use TSQR with Epetra objects."
-  "${${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT}")
+  "Enable TSQR (Tall Skinny QR factorization) support in Belos."
+  "${Kokkos_ENABLE_TSQR}" )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_TEUCHOS_TIME_MONITOR
   BELOS_TEUCHOS_TIME_MONITOR
-  "Enable Teuchos timers (via TimeMonitor) in Belos solvers."
-  ${${PROJECT_NAME}_ENABLE_TEUCHOS_TIME_MONITOR} )
+  "Build with Teuchos TimeMonitors enabled."
+  "${${PROJECT_NAME}_ENABLE_TEUCHOS_TIME_MONITOR}" )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_Tpetra_Timers
   HAVE_BELOS_TPETRA_TIMERS
-  "Add timers to Belos::MultiVecTraits for Tpetra::MultiVector operations."
+  "Add timers to Belos::MultiVecTraits for Tpetra multivectors."
   NO )
 
 #
@@ -87,7 +67,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_Experimental
   HAVE_BELOS_EXPERIMENTAL
-  "Enable experimental Belos solvers and features."
+  "Enable building and installation of experimental Belos features."
   NO )
 
 # See above discussion of "experimental" Belos headers and source
@@ -101,9 +81,10 @@ SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES "")
 ######################################################################
 
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(doc)
 
 TRIBITS_ADD_TEST_DIRECTORIES(test)
+
+TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
 
 IF (Belos_ENABLE_Epetra)
   ADD_SUBDIRECTORY(epetra)
@@ -127,10 +108,24 @@ TRIBITS_EXCLUDE_AUTOTOOLS_FILES()
 # Files and directories to exclude from the release tarball.
 #
 TRIBITS_EXCLUDE_FILES(
+  src/BelosAkxFactory.hpp
+  src/BelosAkx.hpp
+  src/BelosCaGmres.hpp
+  src/BelosGmresBaseFactory.hpp
+  src/BelosGmresBase.hpp
+  src/BelosGmresBaseIteration.hpp
+  src/BelosGmresInnerSolver.hpp
+  src/BelosGmresSolMgr.hpp
   src/BelosInnerSolveResult.hpp
   src/BelosInnerSolver.hpp
+  src/BelosMonomialOpAkx.hpp
+  src/BelosNewtonBasis.hpp
+  src/BelosNewtonOpAkx.hpp
+  src/BelosOpAkx.hpp
   src/BelosProjectedLeastSquaresSolver.hpp
+  src/BelosStandardGmres.hpp
   src/BelosInnerSolveResult.cpp
+  tpetra/test/Gmres
   test/ProjectedLeastSquaresSolver
 )
 

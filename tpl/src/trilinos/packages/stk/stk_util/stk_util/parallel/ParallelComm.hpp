@@ -1,45 +1,17 @@
-// Copyright (c) 2013, Sandia Corporation.
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-// 
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-// 
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-// 
-//     * Neither the name of Sandia Corporation nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+/*------------------------------------------------------------------------*/
+/*                 Copyright 2010 Sandia Corporation.                     */
+/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
+/*  license for use of this work by or on behalf of the U.S. Government.  */
+/*  Export of this program may require a license from the                 */
+/*  United States Government.                                             */
+/*------------------------------------------------------------------------*/
 
 #ifndef stk_util_parallel_ParallelComm_hpp
 #define stk_util_parallel_ParallelComm_hpp
 
-#include <cstddef>                      // for size_t, ptrdiff_t
-#include <vector>
-#include <stk_util/parallel/Parallel.hpp>  // for ParallelMachine
-#include <stk_util/environment/ReportHandler.hpp> // for ThrowAssertMsg
-
-namespace stk { template <unsigned int N> struct CommBufferAlign; }
+#include <cstddef>
+#include <iosfwd>
+#include <stk_util/parallel/Parallel.hpp>
 
 //------------------------------------------------------------------------
 
@@ -54,7 +26,6 @@ namespace stk {
  *  with parallel domain decomposition.
  */
 class CommAll ;
-class CommSparse;
 
 /** Pack and unpack buffers for the sparse all-to-all communication.
  */
@@ -94,15 +65,6 @@ public:
   /** Pack a value to be sent:  buf.pack<type>( value ) */
   template<typename T> CommBuffer &pack( const T & value );
 
-private:
-  /** Do not try to pack a pointer for global communication */
-  template<typename T> CommBuffer &pack( const T* value ) {
-    ThrowAssertMsg(false,"CommBuffer::pack(const T* value) not allowed. Don't pack a pointer for communication!");
-    return *this;
-  }
-
-public:
-
   /** Pack an array of values to be sent:  buf.pack<type>( ptr , num ) */
   template<typename T> CommBuffer &pack( const T * value , size_t number );
 
@@ -124,26 +86,21 @@ public:
   /** Reset the buffer to the beginning so that size() == 0 */
   void reset();
 
-  /** Reset the buffer pointers to NULL */
-  void reset_to_null();
-
   /** Size, in bytes, of the buffer.
    *  If the buffer is not yet allocated this is zero.
    */
   size_t capacity() const ;
 
-  // TODO - terribly misinforming when used on recv buffer, returns 0!
   /** Size, in bytes, of the buffer that has been processed.
    *  If the buffer is not yet allocated then this is the
    *  number of bytes that has been attempted to pack.
    */
   size_t size() const ;
-  void set_size(size_t newsize_bytes);
 
   /** Size, in bytes, of the buffer remaining to be processed.
    *  Equal to 'capacity() - size()'.  A negative result
    *  indicates either the buffer is not allocated or an
-   *  overflow has occurred.  An overflow will have thrown
+   *  overflow has occured.  An overflow will have thrown
    *  an exception.
    */
   ptrdiff_t remaining() const ;
@@ -156,7 +113,6 @@ public:
 
 private:
   friend class CommAll ;
-  friend class CommSparse ;
   friend class CommGather ;
   friend class CommBroadcast ;
 
@@ -165,6 +121,9 @@ private:
 
   void pack_overflow() const ;
   void unpack_overflow() const ;
+
+  CommBuffer( const CommBuffer & );
+  CommBuffer & operator = ( const CommBuffer & );
 
   typedef unsigned char * ucharp ;
 
@@ -179,32 +138,20 @@ class CommAll {
 public:
 
   ParallelMachine parallel()      const { return m_comm ; }
-  int             parallel_size() const { return m_size ; }
-  int             parallel_rank() const { return m_rank ; }
+  unsigned        parallel_size() const { return m_size ; }
+  unsigned        parallel_rank() const { return m_rank ; }
 
   /** Obtain the message buffer for a given processor */
-  CommBuffer & send_buffer( int p ) const
-  {
-#ifndef NDEBUG
-    if ( m_size <= p ) { rank_error("send_buffer",p); }
-#endif
-    return m_send[p] ;
-  }
+  CommBuffer & send_buffer( unsigned ) const ;
 
   /** Obtain the message buffer for a given processor */
-  CommBuffer & recv_buffer( int p ) const
-  {
-#ifndef NDEBUG
-    if ( m_size <= p ) { rank_error("recv_buffer",p); }
-#endif
-    return m_recv[p] ;
-  }
+  CommBuffer & recv_buffer( unsigned ) const ;
 
   //----------------------------------------
   /** Construct for undefined communication.
    *  No buffers are allocated.
    */
-  CommAll(bool propagate_local_error_flags=true);
+  CommAll();
 
   /** Allocate send and receive buffers based upon input sizes.
    *  If recv_size == NULL then the receive size
@@ -219,17 +166,6 @@ public:
                          const unsigned * const recv_size ,
                          const bool local_flag = false );
 
-  bool allocate_buffers( ParallelMachine comm ,
-                         const unsigned * const send_sizes,
-                         const unsigned * const recv_sizes );
-
-  /**
-   * Allocate symmetric buffers, no communication required. buf_sizes should
-   * have lenth = parallel_size(comm).
-   */
-  bool allocate_symmetric_buffers( ParallelMachine comm ,
-                                   const unsigned * const buf_sizes );
-
   //----------------------------------------
   /** Construct for a to-be-sized communication.
    *  Allocate surrogate send buffers to enable
@@ -243,7 +179,7 @@ public:
    *  3) Send buffers are identically packed; however, this
    *     packing copies data into the send buffers.
    */
-  explicit CommAll( ParallelMachine, bool propagate_local_error_flags=true );
+  explicit CommAll( ParallelMachine );
 
   /** Allocate asymmetric communication based upon
    *  sizing from the surrogate send buffer packing.
@@ -270,24 +206,20 @@ public:
 
   ~CommAll();
 
-  static bool sm_verbose;
-  static bool sm_verbose_proc0_only;
-
 private:
 
   CommAll( const CommAll & );
   CommAll & operator = ( const CommAll & );
 
-  void rank_error( const char * , int ) const ;
+  void rank_error( const char * , unsigned ) const ;
 
   bool allocate_buffers( const unsigned * const send_size ,
                          const unsigned * const recv_size ,
                          bool local_flag );
 
   ParallelMachine m_comm ;
-  bool            m_propagate_local_error_flags;
-  int             m_size ;
-  int             m_rank ;
+  unsigned        m_size ;
+  unsigned        m_rank ;
   unsigned        m_bound ;
   unsigned        m_max ;
   CommBuffer    * m_send ;
@@ -300,8 +232,8 @@ class CommBroadcast {
 public:
 
   ParallelMachine parallel()      const { return m_comm ; }
-  int             parallel_size() const { return m_size ; }
-  int             parallel_rank() const { return m_rank ; }
+  unsigned        parallel_size() const { return m_size ; }
+  unsigned        parallel_rank() const { return m_rank ; }
 
   /** Obtain the message buffer for the root_rank processor */
   CommBuffer & send_buffer();
@@ -311,7 +243,7 @@ public:
 
   //----------------------------------------
 
-  CommBroadcast( ParallelMachine , int root_rank );
+  CommBroadcast( ParallelMachine , unsigned root_rank );
 
   void communicate();
 
@@ -326,9 +258,9 @@ private:
   CommBroadcast & operator = ( const CommBroadcast & );
 
   ParallelMachine m_comm ;
-  int             m_size ;
-  int             m_rank ;
-  int             m_root_rank ;
+  unsigned        m_size ;
+  unsigned        m_rank ;
+  unsigned        m_root_rank ;
   CommBuffer      m_buffer ;
 };
 
@@ -338,31 +270,31 @@ class CommGather {
 public:
 
   ParallelMachine parallel()      const { return m_comm ; }
-  int             parallel_size() const { return m_size ; }
-  int             parallel_rank() const { return m_rank ; }
+  unsigned        parallel_size() const { return m_size ; }
+  unsigned        parallel_rank() const { return m_rank ; }
 
   ~CommGather();
 
-  CommGather( ParallelMachine , int root_rank , unsigned send_size );
+  CommGather( ParallelMachine , unsigned root_rank , unsigned send_size );
 
   CommBuffer & send_buffer() { return m_send ; }
 
   void communicate();
 
-  CommBuffer & recv_buffer( int );
+  CommBuffer & recv_buffer( unsigned );
 
-  void reset();
+  void reset(); 
 
 private:
 
   CommGather();
-  CommGather( const CommGather & );
-  CommGather & operator = ( const CommGather & );
+  CommGather( const CommBroadcast & );
+  CommGather & operator = ( const CommBroadcast & );
 
   ParallelMachine m_comm ;
-  int             m_size ;
-  int             m_rank ;
-  int             m_root_rank ;
+  unsigned        m_size ;
+  unsigned        m_rank ;
+  unsigned        m_root_rank ;
   CommBuffer      m_send ;
   CommBuffer    * m_recv ;
   int           * m_recv_count ;
@@ -377,6 +309,7 @@ private:
 
 namespace stk {
 
+template<unsigned N> struct CommBufferAlign ;
 
 template<>
 struct CommBufferAlign<1> {
@@ -461,14 +394,6 @@ CommBuffer &CommBuffer::unpack( T * value , size_t number )
   if ( m_end < m_ptr ) { unpack_overflow(); }
   return *this;
 }
-template<typename item>
-inline
-item unpack(stk::CommBuffer& buf)
-{
-    item object;
-    buf.unpack<item>(object);
-    return object;
-}
 
 template<typename T>
 inline
@@ -499,10 +424,6 @@ void CommBuffer::reset()
 { m_ptr = m_beg ; }
 
 inline
-void CommBuffer::reset_to_null()
-{ m_beg = NULL; m_ptr = NULL; m_end = NULL; }
-
-inline
 size_t CommBuffer::capacity() const
 { return m_end - m_beg ; }
 
@@ -511,16 +432,29 @@ size_t CommBuffer::size() const
 { return m_ptr - m_beg ; }
 
 inline
-void CommBuffer::set_size(size_t newsize_bytes)
-{ m_beg = NULL;  m_ptr = NULL; m_ptr += newsize_bytes ; m_end = NULL; }
-
-inline
 ptrdiff_t CommBuffer::remaining() const
 { return m_end - m_ptr ; }
 
 inline
 void * CommBuffer::buffer() const
 { return static_cast<void*>( m_beg ); }
+
+//----------------------------------------------------------------------
+// Inline implementations for the CommAll
+
+inline
+CommBuffer & CommAll::send_buffer( unsigned p ) const
+{
+  if ( m_size <= p ) { rank_error("send_buffer",p); }
+  return m_send[p] ;
+}
+
+inline
+CommBuffer & CommAll::recv_buffer( unsigned p ) const
+{
+  if ( m_size <= p ) { rank_error("recv_buffer",p); }
+  return m_recv[p] ;
+}
 
 }
 

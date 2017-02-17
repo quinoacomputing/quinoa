@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -43,360 +30,527 @@
 #ifndef IFPACK2_CHEBYSHEV_DEF_HPP
 #define IFPACK2_CHEBYSHEV_DEF_HPP
 
-#include "Ifpack2_Parameters.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Tpetra_CrsMatrix.hpp"
-#include <iostream>
-#include <sstream>
-
 
 namespace Ifpack2 {
 
+//Definitions for the Chebyshev methods:
+
+//==========================================================================
 template<class MatrixType>
-Chebyshev<MatrixType>::
-Chebyshev (const Teuchos::RCP<const row_matrix_type>& A)
-  : impl_ (A),
-    IsInitialized_ (false),
-    IsComputed_ (false),
-    NumInitialize_ (0),
-    NumCompute_ (0),
-    NumApply_ (0),
-    InitializeTime_ (0.0),
-    ComputeTime_ (0.0),
-    ApplyTime_ (0.0),
-    ComputeFlops_ (0.0),
-    ApplyFlops_ (0.0)
+Chebyshev<MatrixType>::Chebyshev(const Teuchos::RCP<const Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A)
+: A_(A),
+  Comm_(A->getRowMap()->getComm()),
+  Time_( Teuchos::rcp( new Teuchos::Time("Ifpack2::Chebyshev") ) ),
+  PolyDegree_(1),
+  EigRatio_(30.0),
+  LambdaMin_(0.0),
+  LambdaMax_(100.0),
+  MinDiagonalValue_(0.0),
+  ZeroStartingSolution_(true),
+  Condest_(-1.0),
+  IsInitialized_(false),
+  IsComputed_(false),
+  NumInitialize_(0),
+  NumCompute_(0),
+  NumApply_(0),
+  InitializeTime_(0.0),
+  ComputeTime_(0.0),
+  ApplyTime_(0.0),
+  ComputeFlops_(0.0),
+  ApplyFlops_(0.0),
+  NumMyRows_(0),
+  NumGlobalRows_(0),
+  NumGlobalNonzeros_(0)
 {
-  this->setObjectLabel ("Ifpack2::Chebyshev");
+  TEUCHOS_TEST_FOR_EXCEPTION(A_ == Teuchos::null, std::runtime_error, 
+      Teuchos::typeName(*this) << "::Chebyshev(): input matrix reference was null.");
 }
 
-
+//==========================================================================
 template<class MatrixType>
 Chebyshev<MatrixType>::~Chebyshev() {
 }
 
-
+//==========================================================================
 template<class MatrixType>
-void Chebyshev<MatrixType>::setMatrix (const Teuchos::RCP<const row_matrix_type>& A)
-{
-  if (A.getRawPtr () != impl_.getMatrix ().getRawPtr ()) {
-    IsInitialized_ = false;
-    IsComputed_ = false;
-    impl_.setMatrix (A);
+void Chebyshev<MatrixType>::setParameters(const Teuchos::ParameterList& List) {
+
+  Ifpack2::getParameter(List, "chebyshev: ratio eigenvalue", EigRatio_);
+  Ifpack2::getParameter(List, "chebyshev: min eigenvalue", LambdaMin_);
+  Ifpack2::getParameter(List, "chebyshev: max eigenvalue", LambdaMax_);
+  Ifpack2::getParameter(List, "chebyshev: degree",PolyDegree_);
+  Ifpack2::getParameter(List, "chebyshev: min diagonal value", MinDiagonalValue_);
+  Ifpack2::getParameter(List, "chebyshev: zero starting solution", ZeroStartingSolution_);
+
+  Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>* ID = 0;
+  Ifpack2::getParameter(List, "chebyshev: operator inv diagonal", ID);
+
+  if (ID != 0) {
+    InvDiagonal_ = Teuchos::rcp( new Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(*ID) );
   }
 }
 
-
+//==========================================================================
 template<class MatrixType>
-void
-Chebyshev<MatrixType>::setParameters (const Teuchos::ParameterList& List)
-{
-  // FIXME (mfh 25 Jan 2013) Casting away const is bad here.
-  impl_.setParameters (const_cast<Teuchos::ParameterList&> (List));
+const Teuchos::RCP<const Teuchos::Comm<int> > & 
+Chebyshev<MatrixType>::getComm() const{
+  return(Comm_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-Teuchos::RCP<const Teuchos::Comm<int> >
-Chebyshev<MatrixType>::getComm () const
-{
-  Teuchos::RCP<const row_matrix_type> A = impl_.getMatrix ();
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    A.is_null (), std::runtime_error, "Ifpack2::Chebyshev::getComm: The input "
-    "matrix A is null.  Please call setMatrix() with a nonnull input matrix "
-    "before calling this method.");
-  return A->getRowMap ()->getComm ();
+Teuchos::RCP<const Tpetra::RowMatrix<typename MatrixType::scalar_type,typename MatrixType::local_ordinal_type,typename MatrixType::global_ordinal_type,typename MatrixType::node_type> >
+Chebyshev<MatrixType>::getMatrix() const {
+  return(A_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-Teuchos::RCP<const typename Chebyshev<MatrixType>::row_matrix_type>
-Chebyshev<MatrixType>::
-getMatrix() const {
-  return impl_.getMatrix ();
+const Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type,typename MatrixType::global_ordinal_type,typename MatrixType::node_type> >&
+Chebyshev<MatrixType>::getDomainMap() const {
+  return A_->getDomainMap();
 }
 
-
+//==========================================================================
 template<class MatrixType>
-Teuchos::RCP<const Tpetra::CrsMatrix<typename MatrixType::scalar_type,
-                                     typename MatrixType::local_ordinal_type,
-                                     typename MatrixType::global_ordinal_type,
-                                     typename MatrixType::node_type> >
-Chebyshev<MatrixType>::
-getCrsMatrix() const {
-  typedef Tpetra::CrsMatrix<scalar_type, local_ordinal_type,
-    global_ordinal_type, node_type> crs_matrix_type;
-  return Teuchos::rcp_dynamic_cast<const crs_matrix_type> (impl_.getMatrix ());
+const Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type,typename MatrixType::global_ordinal_type,typename MatrixType::node_type> >&
+Chebyshev<MatrixType>::getRangeMap() const {
+  return A_->getRangeMap();
 }
 
-
-template<class MatrixType>
-Teuchos::RCP<const typename Chebyshev<MatrixType>::map_type>
-Chebyshev<MatrixType>::
-getDomainMap () const
-{
-  Teuchos::RCP<const row_matrix_type> A = impl_.getMatrix ();
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    A.is_null (), std::runtime_error, "Ifpack2::Chebyshev::getDomainMap: The "
-    "input matrix A is null.  Please call setMatrix() with a nonnull input "
-    "matrix before calling this method.");
-  return A->getDomainMap ();
-}
-
-
-template<class MatrixType>
-Teuchos::RCP<const typename Chebyshev<MatrixType>::map_type>
-Chebyshev<MatrixType>::
-getRangeMap () const
-{
-  Teuchos::RCP<const row_matrix_type> A = impl_.getMatrix ();
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    A.is_null (), std::runtime_error, "Ifpack2::Chebyshev::getRangeMap: The "
-    "input matrix A is null.  Please call setMatrix() with a nonnull input "
-    "matrix before calling this method.");
-  return A->getRangeMap ();
-}
-
-
+//==========================================================================
 template<class MatrixType>
 bool Chebyshev<MatrixType>::hasTransposeApply() const {
-  return impl_.hasTransposeApply ();
+  return true;
 }
 
-
+//==========================================================================
 template<class MatrixType>
 int Chebyshev<MatrixType>::getNumInitialize() const {
-  return NumInitialize_;
+  return(NumInitialize_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
 int Chebyshev<MatrixType>::getNumCompute() const {
-  return NumCompute_;
+  return(NumCompute_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
 int Chebyshev<MatrixType>::getNumApply() const {
-  return NumApply_;
+  return(NumApply_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
 double Chebyshev<MatrixType>::getInitializeTime() const {
-  return InitializeTime_;
+  return(InitializeTime_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
 double Chebyshev<MatrixType>::getComputeTime() const {
-  return ComputeTime_;
+  return(ComputeTime_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
 double Chebyshev<MatrixType>::getApplyTime() const {
-  return ApplyTime_;
+  return(ApplyTime_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-double Chebyshev<MatrixType>::getComputeFlops () const {
-  return ComputeFlops_;
+double Chebyshev<MatrixType>::getComputeFlops() const {
+  return(ComputeFlops_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-double Chebyshev<MatrixType>::getApplyFlops () const {
-  return ApplyFlops_;
+double Chebyshev<MatrixType>::getApplyFlops() const {
+  return(ApplyFlops_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-void
-Chebyshev<MatrixType>::
-apply (const Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal_type, node_type>& X,
-       Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal_type, node_type>& Y,
-       Teuchos::ETransp mode,
-       scalar_type alpha,
-       scalar_type beta) const
-{
-  const std::string timerName ("Ifpack2::Chebyshev::apply");
-  Teuchos::RCP<Teuchos::Time> timer = Teuchos::TimeMonitor::lookupCounter (timerName);
-  if (timer.is_null ()) {
-    timer = Teuchos::TimeMonitor::getNewCounter (timerName);
-  }
-
-  // Start timing here.
-  {
-    Teuchos::TimeMonitor timeMon (*timer);
-
-    // compute() calls initialize() if it hasn't already been called.
-    // Thus, we only need to check isComputed().
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      ! isComputed (), std::runtime_error,
-      "Ifpack2::Chebyshev::apply(): You must call the compute() method before "
-      "you may call apply().");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      X.getNumVectors () != Y.getNumVectors (), std::runtime_error,
-      "Ifpack2::Chebyshev::apply(): X and Y must have the same number of "
-      "columns.  X.getNumVectors() = " << X.getNumVectors() << " != "
-      << "Y.getNumVectors() = " << Y.getNumVectors() << ".");
-    applyImpl (X, Y, mode, alpha, beta);
-  }
-  ++NumApply_;
-
-  // timer->totalElapsedTime() returns the total time over all timer
-  // calls.  Thus, we use = instead of +=.
-  ApplyTime_ = timer->totalElapsedTime ();
+typename Teuchos::ScalarTraits<typename MatrixType::scalar_type>::magnitudeType
+Chebyshev<MatrixType>::getCondEst() const {
+  return(Condest_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-void
-Chebyshev<MatrixType>::
-applyMat (const Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal_type, node_type>& X,
-          Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal_type, node_type>& Y,
-          Teuchos::ETransp mode) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    X.getNumVectors () != Y.getNumVectors (), std::invalid_argument,
-    "Ifpack2::Chebyshev::applyMat: X.getNumVectors() != Y.getNumVectors().");
+typename Teuchos::ScalarTraits<typename MatrixType::scalar_type>::magnitudeType
+Chebyshev<MatrixType>::computeCondEst(
+                     CondestType CT,
+                     LocalOrdinal MaxIters, 
+                     magnitudeType Tol,
+                     const Teuchos::Ptr<const Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > &matrix) {
+  if (!isComputed()) // cannot compute right now
+    return(-1.0);
 
-  Teuchos::RCP<const row_matrix_type> A = impl_.getMatrix ();
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    A.is_null (), std::runtime_error, "Ifpack2::Chebyshev::applyMat: The input "
-    "matrix A is null.  Please call setMatrix() with a nonnull input matrix "
-    "before calling this method.");
+  // always compute it. Call Condest() with no parameters to get
+  // the previous estimate.
+  Condest_ = Ifpack2::Condest(*this, CT, MaxIters, Tol, matrix);
 
-  A->apply (X, Y, mode);
+  return(Condest_);
 }
 
-
+//==========================================================================
 template<class MatrixType>
-void Chebyshev<MatrixType>::initialize () {
-  // We create the timer, but this method doesn't do anything, so
-  // there is no need to start the timer.  The resulting total time
-  // will always be zero.
-  const std::string timerName ("Ifpack2::Chebyshev::initialize");
-  Teuchos::RCP<Teuchos::Time> timer = Teuchos::TimeMonitor::lookupCounter (timerName);
-  if (timer.is_null ()) {
-    timer = Teuchos::TimeMonitor::getNewCounter (timerName);
-  }
-  IsInitialized_ = true;
-  ++NumInitialize_;
-}
+void Chebyshev<MatrixType>::apply(
+           const Tpetra::MultiVector<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& X,
+                 Tpetra::MultiVector<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& Y,
+                Teuchos::ETransp mode,
+                 Scalar alpha,
+                 Scalar beta) const {
+  TEUCHOS_TEST_FOR_EXCEPTION(!isComputed(), std::runtime_error, 
+      "Ifpack2::Chebyshev::apply() ERROR, not yet computed.");
 
+  TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != Y.getNumVectors(), std::runtime_error,
+     "Ifpack2::Chebyshev::apply() ERROR: X.getNumVectors() != Y.getNumVectors().");
 
-template<class MatrixType>
-void Chebyshev<MatrixType>::compute ()
-{
-  const std::string timerName ("Ifpack2::Chebyshev::compute");
-  Teuchos::RCP<Teuchos::Time> timer = Teuchos::TimeMonitor::lookupCounter (timerName);
-  if (timer.is_null ()) {
-    timer = Teuchos::TimeMonitor::getNewCounter (timerName);
-  }
+  Time_->start();
 
-  // Start timing here.
-  {
-    Teuchos::TimeMonitor timeMon (*timer);
-    if (! isInitialized ()) {
-      initialize ();
+  // If X and Y are pointing to the same memory location,
+  // we need to create an auxiliary vector, Xcopy
+  Teuchos::RCP< const Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > Xcopy;
+  if (X.getLocalMV().getValues() == Y.getLocalMV().getValues())
+    Xcopy = Teuchos::rcp( new Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(X) );
+  else
+    Xcopy = Teuchos::rcp( &X, false );
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const Scalar> > xView = Xcopy->get2dView();
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Scalar> > yView = Y.get2dViewNonConst();
+  Teuchos::ArrayRCP<const Scalar> invdiag = InvDiagonal_->get1dView();
+
+  size_t nVecs = Y.getNumVectors();
+
+  //--- Do a quick solve when the matrix is identity
+  if ((LambdaMin_ == 1.0) && (LambdaMax_ == LambdaMin_)) {
+    if (nVecs == 1) {
+      Teuchos::ArrayRCP<Scalar> y = yView[0];
+      Teuchos::ArrayRCP<const Scalar> x = xView[0];
+      for (size_t i = 0; i < NumMyRows_; ++i)
+        y[i] = x[i]*invdiag[i];
     }
-    IsComputed_ = false;
-    impl_.compute ();
-  }
-  IsComputed_ = true;
-  ++NumCompute_;
+    else {
+      for (size_t i = 0; i < NumMyRows_; ++i) {
+        const Scalar& coeff = invdiag[i];
+        for (size_t k = 0; k < nVecs; ++k)
+          yView[k][i] = xView[k][i] * coeff;
+      }
+    } // if (nVec == 1)
+    return;
+  } // if ((LambdaMin_ == 1.0) && (LambdaMax_ == LambdaMin_))
 
-  // timer->totalElapsedTime() returns the total time over all timer
-  // calls.  Thus, we use = instead of +=.
-  ComputeTime_ = timer->totalElapsedTime ();
-}
+  //--- initialize coefficients
+  // Note that delta stores the inverse of ML_Cheby::delta
+  Scalar alpha_cheby = LambdaMax_ / EigRatio_;
+  Scalar beta_cheby = 1.1 * LambdaMax_;
+  Scalar delta = 2.0 / (beta_cheby - alpha_cheby);
+  Scalar theta = 0.5 * (beta_cheby + alpha_cheby);
+  Scalar s1 = theta * delta;
 
+  //--- Define vectors
+  // In ML_Cheby, V corresponds to pAux and W to dk
+  Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> V(X);
+  Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> W(X);
 
-template <class MatrixType>
-std::string Chebyshev<MatrixType>::description () const {
-  std::ostringstream out;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const Scalar> > vView = V.get2dView();
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Scalar> > wView = W.get2dViewNonConst();
 
-  // Output is a valid YAML dictionary in flow style.  If you don't
-  // like everything on a single line, you should call describe()
-  // instead.
-  out << "\"Ifpack2::Chebyshev\": {";
-  out << "Initialized: " << (isInitialized () ? "true" : "false") << ", "
-      << "Computed: " << (isComputed () ? "true" : "false") << ", ";
+  Scalar one = Teuchos::ScalarTraits<Scalar>::one();
 
-  out << impl_.description() << ", ";
+  Scalar oneOverTheta = one/theta;
 
-  if (impl_.getMatrix ().is_null ()) {
-    out << "Matrix: null";
+  // Do the smoothing when block scaling is turned OFF
+  // --- Treat the initial guess
+  if (ZeroStartingSolution_ == false) {
+    A_->apply(Y, V);
+    // compute W = invDiag * ( X - V )/ Theta
+    if (nVecs == 1) {
+      Teuchos::ArrayRCP<const Scalar> x = xView[0];
+      Teuchos::ArrayRCP<Scalar> w = wView[0];
+      Teuchos::ArrayRCP<const Scalar> v = vView[0];
+      for (size_t i = 0; i < NumMyRows_; ++i)
+        w[i] = invdiag[i] * (x[i] - v[i]) * oneOverTheta;
+    }
+    else {
+      for (size_t k = 0; k < nVecs; ++k) {
+        Teuchos::ArrayRCP<Scalar> wk = wView[k];
+        Teuchos::ArrayRCP<const Scalar> vk = vView[k];
+        for (size_t i = 0; i < NumMyRows_; ++i) {
+          Scalar coeff = invdiag[i]*oneOverTheta;
+          wk[i] = (xView[k][i] - (vk[i])) * coeff;
+        }
+      }
+    } // if (nVec == 1)
+    // Update the vector Y
+    Y.update(one, W, one);
   }
   else {
-    out << "Global matrix dimensions: ["
-        << impl_.getMatrix ()->getGlobalNumRows () << ", "
-        << impl_.getMatrix ()->getGlobalNumCols () << "]"
-        << ", Global nnz: " << impl_.getMatrix ()->getGlobalNumEntries();
-  }
+    // compute W = invDiag * X / Theta
+    if (nVecs == 1) {
+      Teuchos::ArrayRCP<const Scalar> x= xView[0];
+      Teuchos::ArrayRCP<Scalar> w = wView[0];
+      Teuchos::ArrayRCP<Scalar> y = yView[0];
+      for (size_t i = 0; i < NumMyRows_; ++i) {
+        w[i] = invdiag[i] * x[i] * oneOverTheta;
+        y[i] = w[i];
+      }
+    }
+    else {
+      for (size_t k = 0; k < nVecs; ++k) {
+        for (size_t i = 0; i < NumMyRows_; ++i) {
+          Scalar coeff = invdiag[i]*oneOverTheta;
+          wView[k][i] = xView[k][i] * coeff;
+          yView[k][i] = wView[k][i];
+        }
+      }
+    } // if (nVec == 1)
+  } // if (ZeroStartingSolution_ == false)
 
-  out << "}";
-  return out.str ();
+  //--- Apply the polynomial
+  Scalar rhok = 1.0/s1, rhokp1;
+  Scalar dtemp1, dtemp2;
+  int degreeMinusOne = PolyDegree_ - 1;
+  Scalar two = 2.0;
+  for (int deg = 0; deg < degreeMinusOne; ++deg) {
+    A_->apply(Y, V);
+    rhokp1 = one / (two *s1 - rhok);
+    dtemp1 = rhokp1 * rhok;
+    dtemp2 = two * rhokp1 * delta;
+    rhok = rhokp1;
+    // compute W = dtemp1 * W
+    W.scale(dtemp1);
+    // compute W = W + dtemp2 * invDiag * ( X - V )
+    for (size_t k = 0; k < nVecs; ++k) {
+      for (size_t i = 0; i < NumMyRows_; ++i) {
+        Scalar coeff = invdiag[i]*dtemp2;
+        wView[k][i] += (xView[k][i] - (vView[k][i])) * coeff;
+      }
+    }
+    // Update the vector Y
+    Y.update(one, W, one);
+  } // for (deg = 0; deg < degreeMinusOne; ++deg)
+
+  // Flops are updated in each of the following. 
+
+  ++NumApply_;
+  Time_->stop();
+  ApplyTime_ += Time_->totalElapsedTime();
 }
 
-
-template <class MatrixType>
-void Chebyshev<MatrixType>::
-describe (Teuchos::FancyOStream &out,
-          const Teuchos::EVerbosityLevel verbLevel) const
+//==========================================================================
+template<class MatrixType>
+void Chebyshev<MatrixType>::applyMat(
+           const Tpetra::MultiVector<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& X,
+                 Tpetra::MultiVector<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& Y,
+             Teuchos::ETransp mode) const
 {
-  const Teuchos::EVerbosityLevel vl =
-    (verbLevel == Teuchos::VERB_DEFAULT) ? Teuchos::VERB_LOW : verbLevel;
-  const int myRank = this->getComm ()->getRank ();
+  TEUCHOS_TEST_FOR_EXCEPTION(isComputed() == false, std::runtime_error,
+     "Ifpack2::Chebyshev::applyMat() ERROR: isComputed() must be true prior to calling applyMat().");
+  TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != Y.getNumVectors(), std::runtime_error,
+     "Ifpack2::Chebyshev::applyMat() ERROR: X.getNumVectors() != Y.getNumVectors().");
+  A_->apply(X, Y, mode);
+}
 
-  if (vl != Teuchos::VERB_NONE && myRank == 0) {
-    // By convention, describe() starts with a tab.
-    Teuchos::OSTab tab0 (out);
-    out << description ();
+//==========================================================================
+template<class MatrixType>
+void Chebyshev<MatrixType>::initialize() {
+  IsInitialized_ = false;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(A_ == Teuchos::null, std::runtime_error, 
+      "Ifpack2::Chebyshev::initialize ERROR: A_ == Teuchos::null");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(A_->getGlobalNumRows() != A_->getGlobalNumCols(), std::runtime_error,
+     "Ifpack2::Chebyshev::initialize ERROR: only square matrices are supported");
+
+  NumMyRows_ = A_->getNodeNumRows();
+  NumGlobalRows_ = A_->getGlobalNumRows();
+  NumGlobalNonzeros_ = A_->getGlobalNumEntries();
+
+  ++NumInitialize_;
+  Time_->stop();
+  InitializeTime_ += Time_->totalElapsedTime();
+  IsInitialized_ = true;
+}
+
+//==========================================================================
+template<class MatrixType>
+void Chebyshev<MatrixType>::compute()
+{
+  if (!isInitialized()) {
+    initialize();
   }
 
-#if 0
-  using Teuchos::Comm;
-  using Teuchos::RCP;
+  Time_->start(true);
+
+  // reset values
+  IsComputed_ = false;
+  Condest_ = -1.0;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(PolyDegree_ <= 0, std::runtime_error,
+    "Ifpack2::Chebyshev::compute() ERROR: PolyDegree_ must be at least one");
+  
+  if (InvDiagonal_ == Teuchos::null)
+  {
+    InvDiagonal_ = Teuchos::rcp( new Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(A_->getRowMap()) );
+
+    A_->getLocalDiagCopy(*InvDiagonal_);
+
+    // Inverse diagonal elements
+    // Replace zeros with 1.0
+    Teuchos::ArrayRCP<Scalar> diagvals = InvDiagonal_->get1dViewNonConst();
+    for (size_t i = 0 ; i < NumMyRows_ ; ++i) {
+      Scalar& diag = diagvals[i];
+      if (Teuchos::ScalarTraits<Scalar>::magnitude(diag) < Teuchos::ScalarTraits<Scalar>::magnitude(MinDiagonalValue_))
+        diag = MinDiagonalValue_;
+      else
+        diag = 1.0 / diag;
+    }
+  }
+  // otherwise the inverse of the diagonal has been given by the user
+
+  ComputeFlops_ += NumMyRows_;
+
+  ++NumCompute_;
+  Time_->stop();
+  ComputeTime_ += Time_->totalElapsedTime();
+  IsComputed_ = true;
+}
+
+//==========================================================================
+template<class MatrixType>
+void Chebyshev<MatrixType>::
+PowerMethod(const Tpetra::Operator<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& Operator, 
+            const Tpetra::Vector<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type>& InvPointDiagonal, 
+            const int MaximumIterations, 
+            typename MatrixType::scalar_type& lambda_max)
+{
+  // this is a simple power method
+  lambda_max = 0.0;
+  Teuchos::Array<Scalar> RQ_top(1), RQ_bottom(1);
+  Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> x(Operator.getDomainMap());
+  Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> y(Operator.getRangeMap());
+  x.randomize();
+  typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType magnitudeType;
+  Teuchos::Array<magnitudeType> norms(x.getNumVectors());
+  x.norm2(norms());
+
+  x.scale(1.0 / norms[0]);
+
+  Scalar one = Teuchos::ScalarTraits<Scalar>::one();
+  Scalar zero = Teuchos::ScalarTraits<Scalar>::zero();
+
+  for (int iter = 0; iter < MaximumIterations; ++iter)
+  {
+    Operator.apply(x, y);
+    y.elementWiseMultiply(1.0, InvPointDiagonal, y, 0.0);
+    y.dot(x, RQ_top());
+    x.dot(x, RQ_bottom());
+    lambda_max = RQ_top[0] / RQ_bottom[0];
+    y.norm2(norms());
+    TEUCHOS_TEST_FOR_EXCEPTION(norms[0] == zero, std::runtime_error, "Ifpack2::Chebyshev::PowerMethod ERROR, norm == 0");
+    x.update( one / norms[0], y, zero);
+  }
+}
+
+//==========================================================================
+template<class MatrixType>
+void Chebyshev<MatrixType>::
+CG(const Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Operator, 
+            const Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& InvPointDiagonal, 
+   const int MaximumIterations, 
+   Scalar& lambda_min, Scalar& lambda_max)
+{
+#ifdef HAVE_IFPACK2_AZTECOO
+  Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> x(Operator.getDomainMap());
+  Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> y(Operator.getRangeMap());
+  x.Random();
+  y.putScalar(0.0);
+
+  Tpetra::LinearProblem LP(const_cast<Tpetra::Operator*>(&Operator), &x, &y);
+  AztecOO solver(LP);
+  solver.SetAztecOption(AZ_solver, AZ_cg_condnum);
+  solver.SetAztecOption(AZ_output, AZ_none);
+
+  Ifpack2_DiagPreconditioner diag(Operator.OperatorDomainMap(),
+                                 Operator.OperatorRangeMap(),
+                                 InvPointDiagonal);
+  solver.SetPrecOperator(&diag);
+  solver.Iterate(MaximumIterations, 1e-10);
+
+  const double* status = solver.GetAztecStatus();
+
+  lambda_min = status[AZ_lambda_min];
+  lambda_max = status[AZ_lambda_max];
+
+  return(0);
+#else
+  throw std::runtime_error("Ifpack2::Chebyshev::CG: support for AztecOO not currently implemented.");
+#endif
+}
+
+//==========================================================================
+template <class MatrixType>
+std::string Chebyshev<MatrixType>::description() const {
+  std::ostringstream oss;
+  oss << Teuchos::Describable::description();
+  if (isInitialized()) {
+    if (isComputed()) {
+      oss << "{status = initialized, computed";
+    }
+    else {
+      oss << "{status = initialized, not computed";
+    }
+  }
+  else {
+    oss << "{status = not initialized, not computed";
+  }
+  //
+  oss << ", global rows = " << A_->getGlobalNumRows()
+      << ", global cols = " << A_->getGlobalNumCols()
+      << "}";
+  return oss.str();
+}
+
+//==========================================================================
+template <class MatrixType>
+void Chebyshev<MatrixType>::describe(Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) const {
+  using std::endl;
+  using std::setw;
   using Teuchos::VERB_DEFAULT;
   using Teuchos::VERB_NONE;
   using Teuchos::VERB_LOW;
   using Teuchos::VERB_MEDIUM;
   using Teuchos::VERB_HIGH;
   using Teuchos::VERB_EXTREME;
-  using std::endl;
-  using std::setw;
-
   Teuchos::EVerbosityLevel vl = verbLevel;
-  if (vl == VERB_DEFAULT) {
-    vl = VERB_LOW;
-  }
-  RCP<const Comm<int> > comm = A_->getRowMap ()->getComm ();
-
-  const int myImageID = comm->getRank();
+  if (vl == VERB_DEFAULT) vl = VERB_LOW;
+  const int myImageID = Comm_->getRank();
   Teuchos::OSTab tab(out);
 
-  scalar_type MinVal, MaxVal;
+  Scalar MinVal, MaxVal;
   if (IsComputed_) {
-    Teuchos::ArrayRCP<const scalar_type> DiagView = InvDiagonal_->get1dView();
-    scalar_type myMinVal = DiagView[0];
-    scalar_type myMaxVal = DiagView[0];
-    for(typename Teuchos::ArrayRCP<scalar_type>::size_type i=1; i<DiagView.size(); ++i) {
-      if (STS::magnitude(myMinVal) > STS::magnitude(DiagView[i])) myMinVal = DiagView[i];
-      if (STS::magnitude(myMaxVal) < STS::magnitude(DiagView[i])) myMaxVal = DiagView[i];
+    Teuchos::ArrayRCP<const Scalar> DiagView = InvDiagonal_->get1dView();
+    Scalar myMinVal = DiagView[0];
+    Scalar myMaxVal = DiagView[0];
+    for(typename Teuchos::ArrayRCP<Scalar>::size_type i=1; i<DiagView.size(); ++i) {
+      if (Teuchos::ScalarTraits<Scalar>::magnitude(myMinVal) > Teuchos::ScalarTraits<Scalar>::magnitude(DiagView[i])) myMinVal = DiagView[i];
+      if (Teuchos::ScalarTraits<Scalar>::magnitude(myMaxVal) < Teuchos::ScalarTraits<Scalar>::magnitude(DiagView[i])) myMaxVal = DiagView[i];
     }
-    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &myMinVal, &MinVal);
-    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &myMaxVal, &MaxVal);
+    Teuchos::reduceAll(*Comm_, Teuchos::REDUCE_MIN, 1, &myMinVal, &MinVal);
+    Teuchos::reduceAll(*Comm_, Teuchos::REDUCE_MAX, 1, &myMaxVal, &MaxVal);
   }
 
   //    none: print nothing
   //     low: print O(1) info from node 0
-  //  medium:
-  //    high:
-  // extreme:
+  //  medium: 
+  //    high: 
+  // extreme: 
   if (vl != VERB_NONE && myImageID == 0) {
     out << this->description() << endl;
     out << endl;
@@ -404,6 +558,8 @@ describe (Teuchos::FancyOStream &out,
     out << "Degree of polynomial      = " << PolyDegree_ << std::endl;
     if   (ZeroStartingSolution_) { out << "Using zero starting solution" << endl; }
     else                         { out << "Using input starting solution" << endl; }
+    if   (Condest_ == -1.0) { out << "Condition number estimate       = N/A" << endl; }
+    else                    { out << "Condition number estimate       = " << Condest_ << endl; }
     if (IsComputed_) {
       out << "Minimum value on stored inverse diagonal = " << MinVal << std::endl;
       out << "Maximum value on stored inverse diagonal = " << MaxVal << std::endl;
@@ -412,111 +568,18 @@ describe (Teuchos::FancyOStream &out,
     out << "Phase           # calls    Total Time (s)     Total MFlops      MFlops/s       " << endl;
     out << "------------    -------    ---------------    ---------------   ---------------" << endl;
     out << setw(12) << "initialize()" << setw(5) << getNumInitialize() << "    " << setw(15) << getInitializeTime() << endl;
-    out << setw(12) << "compute()" << setw(5) << getNumCompute()    << "    " << setw(15) << getComputeTime() << "    "
-        << setw(15) << getComputeFlops() << "    "
+    out << setw(12) << "compute()" << setw(5) << getNumCompute()    << "    " << setw(15) << getComputeTime() << "    " 
+        << setw(15) << getComputeFlops() << "    " 
         << setw(15) << (getComputeTime() != 0.0 ? getComputeFlops() / getComputeTime() * 1.0e-6 : 0.0) << endl;
-    out << setw(12) << "apply()" << setw(5) << getNumApply()    << "    " << setw(15) << getApplyTime() << "    "
-        << setw(15) << getApplyFlops() << "    "
+    out << setw(12) << "apply()" << setw(5) << getNumApply()    << "    " << setw(15) << getApplyTime() << "    " 
+        << setw(15) << getApplyFlops() << "    " 
         << setw(15) << (getApplyTime() != 0.0 ? getApplyFlops() / getApplyTime() * 1.0e-6 : 0.0) << endl;
     out << "===============================================================================" << std::endl;
     out << endl;
   }
-#endif // 0
 }
-
-template<class MatrixType>
-void
-Chebyshev<MatrixType>::
-applyImpl (const MV& X,
-           MV& Y,
-           Teuchos::ETransp mode,
-           scalar_type alpha,
-           scalar_type beta) const
-{
-  using Teuchos::ArrayRCP;
-  using Teuchos::as;
-  using Teuchos::RCP;
-  using Teuchos::rcp;
-  using Teuchos::rcp_const_cast;
-  using Teuchos::rcpFromRef;
-
-  const scalar_type zero = STS::zero();
-  const scalar_type one = STS::one();
-
-  // Y = beta*Y + alpha*M*X.
-
-  // If alpha == 0, then we don't need to do Chebyshev at all.
-  if (alpha == zero) {
-    if (beta == zero) { // Obey Sparse BLAS rules; avoid 0*NaN.
-      Y.putScalar (zero);
-    }
-    else {
-      Y.scale (beta);
-    }
-    return;
-  }
-
-  // If beta != 0, then we need to keep a (deep) copy of the initial
-  // value of Y, so that we can add beta*it to the Chebyshev result at
-  // the end.  Usually this method is called with beta == 0, so we
-  // don't have to worry about caching Y_org.
-  RCP<MV> Y_orig;
-  if (beta != zero) {
-    Y_orig = rcp (new MV (Y, Teuchos::Copy));
-  }
-
-  // If X and Y point to the same memory location, we need to use a
-  // (deep) copy of X (X_copy) as the input MV.  Otherwise, just let
-  // X_copy point to X.
-  //
-  // This is hopefully an uncommon use case, so we don't bother to
-  // optimize for it by caching X_copy.
-  RCP<const MV> X_copy;
-  bool copiedInput = false;
-  {
-    auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
-    auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
-    if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
-      X_copy = rcp (new MV (X, Teuchos::Copy));
-      copiedInput = true;
-    } else {
-      X_copy = rcpFromRef (X);
-    }
-  }
-
-  // If alpha != 1, fold alpha into (a deep copy of) X.
-  //
-  // This is an uncommon use case, so we don't bother to optimize for
-  // it by caching X_copy.  However, we do check whether we've already
-  // copied X above, to avoid a second copy.
-  if (alpha != one) {
-    RCP<MV> X_copy_nonConst = rcp_const_cast<MV> (X_copy);
-    if (! copiedInput) {
-      X_copy_nonConst = rcp (new MV (X, Teuchos::Copy));
-      copiedInput = true;
-    }
-    X_copy_nonConst->scale (alpha);
-    X_copy = rcp_const_cast<const MV> (X_copy_nonConst);
-  }
-
-  impl_.apply (*X_copy, Y);
-
-  if (beta != zero) {
-    Y.update (beta, *Y_orig, one); // Y = beta * Y_orig + 1 * Y
-  }
-}
-
-
-template<class MatrixType>
-typename MatrixType::scalar_type Chebyshev<MatrixType>::getLambdaMaxForApply () const {
-  return impl_.getLambdaMaxForApply ();
-}
-
-
 
 }//namespace Ifpack2
 
-#define IFPACK2_CHEBYSHEV_INSTANT(S,LO,GO,N)                            \
-  template class Ifpack2::Chebyshev< Tpetra::RowMatrix<S, LO, GO, N> >;
-
 #endif // IFPACK2_CHEBYSHEV_DEF_HPP
+

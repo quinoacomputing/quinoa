@@ -1,41 +1,28 @@
 /*@HEADER
 // ***********************************************************************
-//
+// 
 //       Ifpack: Object-Oriented Algebraic Preconditioner Package
 //                 Copyright (2002) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ***********************************************************************
 //@HEADER
 */
@@ -57,7 +44,6 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RefCountPtr.hpp"
 #include <functional>
-#include <algorithm>
 
 using namespace Teuchos;
 
@@ -106,10 +92,7 @@ void Ifpack_ILUT::Destroy()
 //==========================================================================
 int Ifpack_ILUT::SetParameters(Teuchos::ParameterList& List)
 {
-  using std::cerr;
-  using std::endl;
-
-  try
+  try 
   {
     LevelOfFill_ = List.get<double>("fact: ilut level-of-fill", LevelOfFill());
     if (LevelOfFill_ <= 0.0)
@@ -133,7 +116,7 @@ int Ifpack_ILUT::SetParameters(Teuchos::ParameterList& List)
     cerr << "Caught an exception while parsing the parameter list" << endl;
     cerr << "This typically means that a parameter was set with the" << endl;
     cerr << "wrong type (for example, int instead of double). " << endl;
-    cerr << "please check the documentation for the type required by each parameter." << endl;
+    cerr << "please check the documentation for the type required by each parameer." << endl;
     IFPACK_CHK_ERR(-1);
   }
 
@@ -151,7 +134,7 @@ int Ifpack_ILUT::Initialize()
   // check only in serial
   if (Comm().NumProc() == 1 && Matrix().NumMyRows() != Matrix().NumMyCols())
     IFPACK_CHK_ERR(-2);
-
+    
   NumMyRows_ = Matrix().NumMyRows();
 
   // nothing else to do here
@@ -163,10 +146,10 @@ int Ifpack_ILUT::Initialize()
 }
 
 //==========================================================================
-class Ifpack_AbsComp
+class Ifpack_AbsComp 
 {
  public:
-  inline bool operator()(const double& x, const double& y)
+  inline bool operator()(const double& x, const double& y) 
   {
     return(IFPACK_ABS(x) > IFPACK_ABS(y));
   }
@@ -176,16 +159,32 @@ class Ifpack_AbsComp
 // MS // completely rewritten the algorithm on 25-Jan-05, using more STL
 // MS // and in a nicer and cleaner way. Also, it is more efficient.
 // MS // WARNING: Still not fully tested!
-template<typename int_type>
-int Ifpack_ILUT::TCompute()
+int Ifpack_ILUT::Compute() 
 {
-  int Length = A_.MaxNumEntries();
-  std::vector<double> RowValuesL(Length);
-  std::vector<int>    RowIndicesU(Length);
-  std::vector<int_type> RowIndicesU_LL;
-  RowIndicesU_LL.resize(Length);
-  std::vector<double> RowValuesU(Length);
+  if (!IsInitialized()) 
+    IFPACK_CHK_ERR(Initialize());
 
+  Time_.ResetStartTime();
+  IsComputed_ = false;
+
+  NumMyRows_ = A_.NumMyRows();
+  int Length = A_.MaxNumEntries();
+  vector<int>    RowIndicesL(Length);
+  vector<double> RowValuesL(Length);
+  vector<int>    RowIndicesU(Length);
+  vector<double> RowValuesU(Length);
+  bool distributed = (Comm().NumProc() > 1)?true:false;
+
+  if (distributed)
+  {
+    SerialComm_ = rcp(new Epetra_SerialComm);
+    SerialMap_ = rcp(new Epetra_Map(NumMyRows_, 0, *SerialComm_));
+    assert (SerialComm_.get() != 0);
+    assert (SerialMap_.get() != 0);
+  }
+  else
+    SerialMap_ = rcp(const_cast<Epetra_Map*>(&A_.RowMatrixRowMap()), false);
+  
   int RowNnzU;
 
   L_ = rcp(new Epetra_CrsMatrix(Copy, *SerialMap_, 0));
@@ -198,12 +197,10 @@ int Ifpack_ILUT::TCompute()
   IFPACK_CHK_ERR(A_.ExtractMyRowCopy(0,Length,RowNnzU,
                                      &RowValuesU[0],&RowIndicesU[0]));
 
-  bool distributed = (Comm().NumProc() > 1)?true:false;
-
   if (distributed)
   {
     int count = 0;
-    for (int i = 0 ;i < RowNnzU ; ++i)
+    for (int i = 0 ;i < RowNnzU ; ++i) 
     {
       if (RowIndicesU[i] < NumMyRows_){
         RowIndicesU[count] = RowIndicesU[i];
@@ -224,35 +221,33 @@ int Ifpack_ILUT::TCompute()
       break;
     }
   }
-
-  std::copy(&(RowIndicesU[0]), &(RowIndicesU[0]) + RowNnzU, RowIndicesU_LL.begin());
+  
   IFPACK_CHK_ERR(U_->InsertGlobalValues(0,RowNnzU,&(RowValuesU[0]),
-                                        &(RowIndicesU_LL[0])));
+                                        &(RowIndicesU[0])));
    // FIXME: DOES IT WORK IN PARALLEL ??
   RowValuesU[0] = 1.0;
   RowIndicesU[0] = 0;
-  int_type RowIndicesU_0_templ = RowIndicesU[0];
   IFPACK_CHK_ERR(L_->InsertGlobalValues(0,1,&(RowValuesU[0]),
-                                        &RowIndicesU_0_templ));
+                                        &(RowIndicesU[0])));
 
   int max_keys =  (int) 10 * A_.MaxNumEntries() * LevelOfFill() ;
   Ifpack_HashTable SingleRowU(max_keys , 1);
   Ifpack_HashTable SingleRowL(max_keys , 1);
 
   int hash_size = SingleRowU.getRecommendedHashSize(max_keys) ;
-  std::vector<int> keys;      keys.reserve(hash_size * 10);
-  std::vector<double> values; values.reserve(hash_size * 10);
-  std::vector<double> AbsRow; AbsRow.reserve(hash_size * 10);
+  vector<int> keys;      keys.reserve(hash_size * 10);
+  vector<double> values; values.reserve(hash_size * 10);
+  vector<double> AbsRow; AbsRow.reserve(hash_size * 10);
 
   // =================== //
   // start factorization //
   // =================== //
-
+  
 #ifdef IFPACK_FLOPCOUNTERS
   double this_proc_flops = 0.0;
 #endif
 
-  for (int row_i = 1 ; row_i < NumMyRows_ ; ++row_i)
+  for (int row_i = 1 ; row_i < NumMyRows_ ; ++row_i) 
   {
     // get row `row_i' of the matrix, store in U pointers
     IFPACK_CHK_ERR(A_.ExtractMyRowCopy(row_i,Length,RowNnzU,
@@ -261,7 +256,7 @@ int Ifpack_ILUT::TCompute()
     if (distributed)
     {
       int count = 0;
-      for (int i = 0 ;i < RowNnzU ; ++i)
+      for (int i = 0 ;i < RowNnzU ; ++i) 
       {
         if (RowIndicesU[i] < NumMyRows_){
           RowIndicesU[count] = RowIndicesU[i];
@@ -312,10 +307,10 @@ int Ifpack_ILUT::TCompute()
 #ifdef IFPACK_FLOPCOUNTERS
     int flops = 0;
 #endif
-
+  
     for (int col_k = start_col ; col_k < row_i ; ++col_k) {
 
-      int_type* ColIndicesK;
+      int*    ColIndicesK;
       double* ColValuesK;
       int     ColNnzK;
 
@@ -323,7 +318,7 @@ int Ifpack_ILUT::TCompute()
       // This factorization is too "relaxed". Leaving it as it is, as Tifpack
       // does it correctly.
       if (IFPACK_ABS(xxx) > DropTolerance()) {
-          IFPACK_CHK_ERR(U_->ExtractGlobalRowView(col_k, ColNnzK, ColValuesK,
+          IFPACK_CHK_ERR(U_->ExtractGlobalRowView(col_k, ColNnzK, ColValuesK, 
                                                   ColIndicesK));
 
           // FIXME: can keep trace of diagonals
@@ -347,7 +342,7 @@ int Ifpack_ILUT::TCompute()
 
           for (int j = 0 ; yyy != 0.0 && j < ColNnzK ; ++j)
           {
-            int_type col_j = ColIndicesK[j];
+            int col_j = ColIndicesK[j];
 
             if (col_j < col_k) continue;
 
@@ -385,15 +380,14 @@ int Ifpack_ILUT::TCompute()
       }
 
     if (count > FillL) {
-      nth_element(AbsRow.begin(), AbsRow.begin() + FillL, AbsRow.begin() + count,
-                  std::greater<double>());
+      nth_element(AbsRow.begin(), AbsRow.begin() + FillL, AbsRow.begin() + count, 
+                  greater<double>());
       cutoff = AbsRow[FillL];
     }
 
     for (int i = 0; i < sizeL; ++i) {
       if (IFPACK_ABS(values[i]) >= cutoff) {
-        int_type key_templ = keys[i];
-        IFPACK_CHK_ERR(L_->InsertGlobalValues(row_i,1, &values[i], &key_templ));
+        IFPACK_CHK_ERR(L_->InsertGlobalValues(row_i,1, &values[i], (int*)&keys[i]));
       }
       else
         DiscardedElements += values[i];
@@ -402,8 +396,7 @@ int Ifpack_ILUT::TCompute()
     // FIXME: DOES IT WORK IN PARALLEL ???
     // add 1 to the diagonal
     double dtmp = 1.0;
-        int_type row_i_templ = row_i;
-    IFPACK_CHK_ERR(L_->InsertGlobalValues(row_i,1, &dtmp, &row_i_templ));
+    IFPACK_CHK_ERR(L_->InsertGlobalValues(row_i,1, &dtmp, &row_i));
 
     // same business with U_
     count = 0;
@@ -421,21 +414,20 @@ int Ifpack_ILUT::TCompute()
       }
 
     if (count > FillU) {
-      nth_element(AbsRow.begin(), AbsRow.begin() + FillU, AbsRow.begin() + count,
-                  std::greater<double>());
+      nth_element(AbsRow.begin(), AbsRow.begin() + FillU, AbsRow.begin() + count, 
+                  greater<double>());
       cutoff = AbsRow[FillU];
     }
 
     // sets the factors in U_
-    for (int i = 0; i < sizeU; ++i)
+    for (int i = 0; i < sizeU; ++i) 
     {
       int col = keys[i];
       double val = values[i];
 
       if (col >= row_i) {
         if (IFPACK_ABS(val) >= cutoff || row_i == col) {
-          int_type col_templ = col;
-          IFPACK_CHK_ERR(U_->InsertGlobalValues(row_i,1, &val, &col_templ));
+          IFPACK_CHK_ERR(U_->InsertGlobalValues(row_i,1, &val, &col));
         }
         else
           DiscardedElements += val;
@@ -446,7 +438,7 @@ int Ifpack_ILUT::TCompute()
     if (RelaxValue() != 0.0) {
       DiscardedElements *= RelaxValue();
       IFPACK_CHK_ERR(U_->InsertGlobalValues(row_i,1, &DiscardedElements,
-                                            &row_i_templ));
+                                            &row_i));
     }
   }
 
@@ -480,7 +472,7 @@ int Ifpack_ILUT::TCompute()
   RHS1.Norm2(&Norm);
 #endif
 
-  long long MyNonzeros = L_->NumGlobalNonzeros64() + U_->NumGlobalNonzeros64();
+  int MyNonzeros = L_->NumGlobalNonzeros() + U_->NumGlobalNonzeros();
   Comm().SumAll(&MyNonzeros, &GlobalNonzeros_, 1);
 
   IsComputed_ = true;
@@ -491,56 +483,15 @@ int Ifpack_ILUT::TCompute()
   return(0);
 
 }
-
-int Ifpack_ILUT::Compute() {
-  if (!IsInitialized())
-    IFPACK_CHK_ERR(Initialize());
-
-  Time_.ResetStartTime();
-  IsComputed_ = false;
-
-  NumMyRows_ = A_.NumMyRows();
-  bool distributed = (Comm().NumProc() > 1)?true:false;
-
-#if !defined(EPETRA_NO_32BIT_GLOBAL_INDICES) || !defined(EPETRA_NO_64BIT_GLOBAL_INDICES)
-  if (distributed)
-  {
-    SerialComm_ = rcp(new Epetra_SerialComm);
-    SerialMap_ = rcp(new Epetra_Map(NumMyRows_, 0, *SerialComm_));
-    assert (SerialComm_.get() != 0);
-    assert (SerialMap_.get() != 0);
-  }
-  else
-    SerialMap_ = rcp(const_cast<Epetra_Map*>(&A_.RowMatrixRowMap()), false);
-#endif
-
-  int ret_val = 1;
-
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
-  if(SerialMap_->GlobalIndicesInt()) {
-    ret_val = TCompute<int>();
-  }
-  else
-#endif
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-  if(SerialMap_->GlobalIndicesLongLong()) {
-    ret_val = TCompute<long long>();
-  }
-  else
-#endif
-    throw "Ifpack_ILUT::Compute: GlobalIndices type unknown";
-
-  return ret_val;
-}
-
+  
 //=============================================================================
-int Ifpack_ILUT::ApplyInverse(const Epetra_MultiVector& X,
-                             Epetra_MultiVector& Y) const
+int Ifpack_ILUT::ApplyInverse(const Epetra_MultiVector& X, 
+			     Epetra_MultiVector& Y) const
 {
   if (!IsComputed())
     IFPACK_CHK_ERR(-2); // compute preconditioner first
 
-  if (X.NumVectors() != Y.NumVectors())
+  if (X.NumVectors() != Y.NumVectors()) 
     IFPACK_CHK_ERR(-3); // Return error: X and Y not the same size
 
   Time_.ResetStartTime();
@@ -559,7 +510,7 @@ int Ifpack_ILUT::ApplyInverse(const Epetra_MultiVector& X,
 
   if (!UseTranspose_)
   {
-    // solves LU Y = X
+    // solves LU Y = X 
     IFPACK_CHK_ERR(L_->Solve(false,false,false,*Xcopy,Y));
     IFPACK_CHK_ERR(U_->Solve(true,false,false,Y,Y));
   }
@@ -581,16 +532,16 @@ int Ifpack_ILUT::ApplyInverse(const Epetra_MultiVector& X,
 }
 //=============================================================================
 // This function finds X such that LDU Y = X or U(trans) D L(trans) Y = X for multiple RHS
-int Ifpack_ILUT::Apply(const Epetra_MultiVector& X,
-                      Epetra_MultiVector& Y) const
+int Ifpack_ILUT::Apply(const Epetra_MultiVector& X, 
+		      Epetra_MultiVector& Y) const 
 {
   return(-98);
 }
 
 //=============================================================================
-double Ifpack_ILUT::Condest(const Ifpack_CondestType CT,
+double Ifpack_ILUT::Condest(const Ifpack_CondestType CT, 
                             const int MaxIters, const double Tol,
-                            Epetra_RowMatrix* Matrix_in)
+			    Epetra_RowMatrix* Matrix_in)
 {
   if (!IsComputed()) // cannot compute right now
     return(-1.0);
@@ -606,8 +557,6 @@ double Ifpack_ILUT::Condest(const Ifpack_CondestType CT,
 std::ostream&
 Ifpack_ILUT::Print(std::ostream& os) const
 {
-  using std::endl;
-
   if (!Comm().MyPID()) {
     os << endl;
     os << "================================================================================" << endl;
@@ -617,32 +566,32 @@ Ifpack_ILUT::Print(std::ostream& os) const
     os << "Relative threshold = " << RelativeThreshold() << endl;
     os << "Relax value        = " << RelaxValue() << endl;
     os << "Condition number estimate       = " << Condest() << endl;
-    os << "Global number of rows           = " << A_.NumGlobalRows64() << endl;
+    os << "Global number of rows           = " << A_.NumGlobalRows() << endl;
     if (IsComputed_) {
-      os << "Number of nonzeros in A         = " << A_.NumGlobalNonzeros64() << endl;
-      os << "Number of nonzeros in L + U     = " << NumGlobalNonzeros64()
-         << " ( = " << 100.0 * NumGlobalNonzeros64() / A_.NumGlobalNonzeros64()
+      os << "Number of nonzeros in A         = " << A_.NumGlobalNonzeros() << endl;
+      os << "Number of nonzeros in L + U     = " << NumGlobalNonzeros() 
+         << " ( = " << 100.0 * NumGlobalNonzeros() / A_.NumGlobalNonzeros() 
          << " % of A)" << endl;
-      os << "nonzeros / rows                 = "
-        << 1.0 * NumGlobalNonzeros64() / U_->NumGlobalRows64() << endl;
+      os << "nonzeros / rows                 = " 
+        << 1.0 * NumGlobalNonzeros() / U_->NumGlobalRows() << endl;
     }
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize()
-       << "  " << std::setw(15) << InitializeTime()
+    os << "Initialize()    "   << std::setw(5) << NumInitialize() 
+       << "  " << std::setw(15) << InitializeTime() 
        << "               0.0            0.0" << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute()
+    os << "Compute()       "   << std::setw(5) << NumCompute() 
        << "  " << std::setw(15) << ComputeTime()
-       << "  " << std::setw(15) << 1.0e-6 * ComputeFlops();
+       << "  " << std::setw(15) << 1.0e-6 * ComputeFlops(); 
     if (ComputeTime() != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops() / ComputeTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse()
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse() 
        << "  " << std::setw(15) << ApplyInverseTime()
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops();
-    if (ApplyInverseTime() != 0.0)
+    if (ApplyInverseTime() != 0.0) 
       os << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops() / ApplyInverseTime() << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;

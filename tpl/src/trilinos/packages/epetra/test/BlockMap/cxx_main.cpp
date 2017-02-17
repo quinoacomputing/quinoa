@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -56,8 +56,8 @@
 int main(int argc, char *argv[]) {
   bool verbose = false;
   // Check if we should print results to standard out
-  if (argc > 1)
-		if ((argv[1][0] == '-') && (argv[1][1] == 'v'))
+  if (argc > 1) 
+		if ((argv[1][0] == '-') && (argv[1][1] == 'v')) 
 			verbose = true;
 
   int i;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
   // Test exceptions
 
-  if (verbose)
+  if (verbose) 
     cout << "*******************************************************************************************" << endl
 	 << "        Testing Exceptions (Expect error messages if EPETRA_NO_ERROR_REPORTS is not defined" << endl
 	 << "*******************************************************************************************" << endl
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
   if (verbose) cerr << flush;
   if (verbose) cout << flush;
   Comm.Barrier();
-  if (verbose)
+  if (verbose) 
     cout << endl << endl
 				 << "*******************************************************************************************" << endl
 				 << "        Testing valid constructor now......................................................" << endl
@@ -210,9 +210,9 @@ int main(int argc, char *argv[]) {
 
   int * MyGlobalElements = new int[NumMyElements];
   int MaxMyGID = (Comm.MyPID()+1)*NumMyElements-1+IndexBase;
-  if (Comm.MyPID()>2)
+  if (Comm.MyPID()>2) 
 		MaxMyGID+=3;
-  for (i = 0; i<NumMyElements; i++)
+  for (i = 0; i<NumMyElements; i++) 
 		MyGlobalElements[i] = MaxMyGID-i;
 
   Map = new Epetra_BlockMap(NumGlobalElements, NumMyElements, MyGlobalElements, ElementSize,
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
   if (Comm.NumProc() > 3) {
 		if (Comm.MyPID()>2)
 			NumGlobalEquations += 3*((NumMyElements)%6+2);
-		else
+		else 
 			NumGlobalEquations -= (Comm.NumProc()-3)*((NumMyElements-1)%6+2);
 	}
   Map = new Epetra_BlockMap(NumGlobalElements, NumMyElements, MyGlobalElements, ElementSizeList,
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
   delete Map2;
 	
   int *ElementSizeList1 = new int[NumMyElements];
-  for (i=0; i<NumMyElements; i++)
+  for (i=0; i<NumMyElements; i++) 
 		ElementSizeList1[i] = i%5 + 2; // element sizes go from 2 to 6
   Map2 = new Epetra_BlockMap(NumGlobalElements,NumMyElements,MyGlobalElements,ElementSizeList1,IndexBase,Comm);
   same = Map2->SameAs(*Map);
@@ -341,7 +341,7 @@ int main(int argc, char *argv[]) {
   // test reference counting
   ierr = 0;
 
-  if (verbose)
+  if (verbose) 
     cout << endl << endl
 	 << "*******************************************************************************************" << endl
 	 << "        Testing reference counting now....................................................." << endl
@@ -395,39 +395,6 @@ int main(int argc, char *argv[]) {
   EPETRA_TEST_ERR(ierr,returnierr);
   if (verbose && (ierr == 0)) cout << "Checked OK\n\n" <<endl;
   // done with reference counting testing
-
-  // test subcommunicators
-  ierr=0;
-  if (verbose)
-    cout << endl << endl
-	 << "*******************************************************************************************" << endl
-	 << "        Testing subcommunicators now......................................................." << endl
-	 << "*******************************************************************************************" << endl << endl;
-
-  // Create a map where everything is on proc 0
-  if (MyPID != 0) {
-    Map1 = new Epetra_BlockMap(-1, 0,  1, IndexBase, Comm);
-  }
-  else {
-    Map1 = new Epetra_BlockMap(-1, NumMyElements, 1, IndexBase, Comm);
-  }
-
-  // Remove empty processes ...
-  Map2=0; Map2 = Map1->RemoveEmptyProcesses();
-  if(MyPID==0) {EPETRA_TEST_ERR(Map2 == 0,ierr);}
-  else {EPETRA_TEST_ERR(Map2 != 0,ierr);}
-
-  // Replace comm
-  const Epetra_Comm * TempComm = Map2 ? &Map2->Comm() : 0;
-  Map3=0; Map3 = Map1->ReplaceCommWithSubset(TempComm);
-  if(MyPID==0) {EPETRA_TEST_ERR(Map3 == 0,ierr);}
-  else {EPETRA_TEST_ERR(Map3 != 0,ierr);}
-
-  delete Map1;  delete Map2;  delete Map3;
-
-  EPETRA_TEST_ERR(ierr,returnierr);
-  if (verbose && (ierr == 0)) cout << "Checked OK\n\n" <<endl;
- // done with testing subcommunicators
 
 #ifdef EPETRA_MPI
   MPI_Finalize();

@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Pavel Bochev  (pbboche@sandia.gov),
 //                    Denis Ridzal  (dridzal@sandia.gov),
@@ -48,21 +48,16 @@
 
 // Pamgen includes
 #include <create_inline_mesh.h>
-#include <pamgen_im_exodusII_l.h>
-#include <pamgen_im_ne_nemesisI_l.h>
+#include <im_exodusII_l.h>
+#include <im_ne_nemesisI_l.h>
 #include <pamgen_extras.h>
 
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#include "Sacado.hpp"
-#else
 // Sacado includes
-#include <Sacado_No_Kokkos.hpp>
-#endif
+#include <Sacado.hpp>
 
 // My includes
 #include "TrilinosCouplings_TpetraIntrepidPoissonExample.hpp"
-#include "TrilinosCouplings_Pamgen_Utils.hpp"
-#include "TrilinosCouplings_IntrepidPoissonExampleHelpers.hpp"
+
 
 namespace TrilinosCouplings {
 namespace TpetraIntrepidPoissonExample {
@@ -82,6 +77,22 @@ namespace TpetraIntrepidPoissonExample {
 template<typename Scalar>
 const Scalar
 exactSolution (const Scalar& x, const Scalar& y, const Scalar& z);
+
+/** \brief  User-defined material tensor.
+
+    \param  material    [out]   3 x 3 material tensor evaluated at (x,y,z)
+    \param  x           [in]    x-coordinate of the evaluation point
+    \param  y           [in]    y-coordinate of the evaluation point
+    \param  z           [in]    z-coordinate of the evaluation point
+
+    \warning Symmetric and positive definite tensor is required for every (x,y,z).
+*/
+template<typename Scalar>
+void
+materialTensor (Scalar material[][3],
+                const Scalar& x,
+                const Scalar& y,
+                const Scalar& z);
 
 /** \brief  Computes gradient of the exact solution. Requires user-defined exact solution.
 
@@ -202,7 +213,7 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
   using Teuchos::rcp;
   using Teuchos::TimeMonitor;
   using std::endl;
-  //typedef Teuchos::ArrayView<LO>::size_type size_type; // unused
+  typedef Teuchos::ArrayView<LO>::size_type size_type;
   typedef Teuchos::ScalarTraits<ST> STS;
 
   (void) verbose;
@@ -215,13 +226,13 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
   //
   typedef Tpetra::Map<LO, GO, Node>         map_type;
   typedef Tpetra::Export<LO, GO, Node>      export_type;
-  //typedef Tpetra::Import<LO, GO, Node>      import_type; // unused
+  typedef Tpetra::Import<LO, GO, Node>      import_type;
   typedef Tpetra::CrsGraph<LO, GO, Node>    sparse_graph_type;
 
   // Number of independent variables fixed at 3
-  //typedef Sacado::Fad::SFad<ST, 3>     Fad3; // unused
+  typedef Sacado::Fad::SFad<ST, 3>     Fad3;
   typedef Intrepid::FunctionSpaceTools IntrepidFSTools;
-  //typedef Intrepid::RealSpaceTools<ST> IntrepidRSTools; // unused
+  typedef Intrepid::RealSpaceTools<ST> IntrepidRSTools;
   typedef Intrepid::CellTools<ST>      IntrepidCTools;
 
   const int numProcs = comm->getSize ();
@@ -248,7 +259,7 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
   /******************************* GENERATE MESH ************************************/
   /**********************************************************************************/
 
-  *out << "Generating mesh (tpetra)" << endl;
+  *out << "Generating mesh" << endl;
 
   int error = 0; // Number of errors in generating the mesh
 
@@ -260,8 +271,7 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   // Generate mesh with Pamgen
   long long maxInt = 9223372036854775807LL;
-  long long cr_result = Create_Pamgen_Mesh (meshInput.c_str (), dim, myRank, numProcs, maxInt);
-  TrilinosCouplings::pamgen_error_check(*out,cr_result);
+  Create_Pamgen_Mesh (meshInput.c_str (), dim, myRank, numProcs, maxInt);
 
   std::string msg ("Poisson: ");
 
@@ -530,11 +540,12 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   *out << "Building Maps" << endl;
 
+  RCP<Teuchos::Time> timerBuildGlobalMaps =
+    TimeMonitor::getNewTimer ("Build global Maps and Export");
   Array<int> ownedGIDs;
   RCP<const map_type> globalMapG;
   {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF("Build global maps", build_maps);
-
+    TimeMonitor timerBuildGlobalMapsL (*timerBuildGlobalMaps);
     // Count owned nodes
     int ownedNodes = 0;
     for (int i = 0; i < numNodes; ++i) {
@@ -588,8 +599,10 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   RCP<sparse_graph_type> overlappedGraph;
   RCP<sparse_graph_type> ownedGraph;
+  RCP<Teuchos::Time> timerBuildOverlapGraph =
+    TimeMonitor::getNewTimer ("Build graphs for overlapped and owned solutions");
   {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF("Build matrix graph: 0-Total", graph_total);
+    TimeMonitor timerBuildOverlapGraphL (*timerBuildOverlapGraph);
 
     // Construct Tpetra::CrsGraph objects.
     overlappedGraph = rcp (new sparse_graph_type (overlappedMapG, 0));
@@ -597,12 +610,13 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
     // Define desired workset size and count how many worksets
     // there are on this process's mesh block.
-    //int desiredWorksetSize = numElems; // change to desired workset size!
-    int desiredWorksetSize = 100;    // change to desired workset size!
-    int numWorksets        = (numElems+desiredWorksetSize-1)/desiredWorksetSize;
+    int desiredWorksetSize = numElems; // change to desired workset size!
+    //int desiredWorksetSize = 100;    // change to desired workset size!
+    int numWorksets        = numElems/desiredWorksetSize;
 
     for (int workset = 0; workset < numWorksets; ++workset) {
       // Compute cell numbers where the workset starts and ends
+      int worksetSize  = 0;
       int worksetBegin = (workset + 0)*desiredWorksetSize;
       int worksetEnd   = (workset + 1)*desiredWorksetSize;
 
@@ -612,13 +626,10 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
       // Now we know the actual workset size and can allocate the
       // array for the cell nodes.
-      //int worksetSize = worksetEnd - worksetBegin;
+      worksetSize = worksetEnd - worksetBegin;
 
       //"WORKSET CELL" loop: local cell ordinal is relative to numElems
       for (int cell = worksetBegin; cell < worksetEnd; ++cell) {
-        TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-          "Build matrix graph: 1-Insert global indices", graph_insert);
-
         // Compute cell ordinal relative to the current workset
         //int worksetCellOrdinal = cell - worksetBegin;
 
@@ -646,24 +657,11 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
     }// *** workset loop ***
 
     // Fill-complete overlapping distribution Graph.
-    {
-      TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-        "Build matrix graph: 2-Overlapped fill complete",
-        overlapped_fill_complete);
-      overlappedGraph->fillComplete ();
-    }
+    overlappedGraph->fillComplete ();
 
     // Export to owned distribution Graph, and fill-complete the latter.
-    {
-      TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-        "Build matrix graph: 3-Owned graph export", graph_export);
-      ownedGraph->doExport (*overlappedGraph, *exporter, Tpetra::INSERT);
-    }
-    {
-      TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-        "Build matrix graph: 4-Owned fill complete", owned_fill_complete);
-      ownedGraph->fillComplete ();
-    }
+    ownedGraph->doExport (*overlappedGraph, *exporter, Tpetra::INSERT);
+    ownedGraph->fillComplete ();
   }
 
   *out << "Constructing stiffness matrix and vectors" << endl;
@@ -701,11 +699,14 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   *out << "Setting up Dirichlet boundary conditions" << endl;
 
+  // Timer for Dirichlet BC setup
+  RCP<Teuchos::Time> timerDirichletBC =
+    TimeMonitor::getNewTimer ("Get Dirichlet boundary values: Total Time");
   int numBCNodes = 0;
   RCP<vector_type> v;
   Array<int> BCNodes;
   {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF("Dirichlet BC setup", bc_setup);
+    TimeMonitor timerDirichletBCL(*timerDirichletBC);
     for (int inode = 0; inode < numNodes; ++inode) {
       if (nodeOnBoundary(inode) && nodeIsOwned[inode]) {
         ++numBCNodes;
@@ -751,15 +752,17 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   *out << "Building discretization matrix and right hand side" << endl;
 
-  {
-  TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-    "Matrix/RHS fill:  0-Total", fill_total);
-
   // Define desired workset size and count how many worksets there are
   // on this processor's mesh block
-  //int desiredWorksetSize = numElems; // change to desired workset size!
-  int desiredWorksetSize = 100;    // change to desired workset size!
-  int numWorksets        = (numElems+desiredWorksetSize-1)/desiredWorksetSize;
+  int desiredWorksetSize = numElems; // change to desired workset size!
+  //int desiredWorksetSize = 100;    // change to desired workset size!
+  int numWorksets        = numElems/desiredWorksetSize;
+
+  // When numElems is not divisible by desiredWorksetSize, increase
+  // workset count by 1
+  if (numWorksets*desiredWorksetSize < numElems) {
+    numWorksets += 1;
+  }
 
   {
     Teuchos::OSTab tab2 (out);
@@ -768,8 +771,8 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
   }
 
   for (int workset = 0; workset < numWorksets; ++workset) {
-
     // Compute cell numbers where the workset starts and ends
+    int worksetSize  = 0;
     int worksetBegin = (workset + 0)*desiredWorksetSize;
     int worksetEnd   = (workset + 1)*desiredWorksetSize;
 
@@ -779,7 +782,7 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
     // Now we know the actual workset size and can allocate the array
     // for the cell nodes.
-    int worksetSize = worksetEnd - worksetBegin;
+    worksetSize = worksetEnd - worksetBegin;
     FieldContainer<ST> cellWorkset (worksetSize, numNodesPerElem, spaceDim);
 
     // Copy coordinates into cell workset
@@ -824,10 +827,6 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
     // matrix and the right hand side
     FieldContainer<ST> worksetStiffMatrix (worksetSize, numFieldsG, numFieldsG);
     FieldContainer<ST> worksetRHS         (worksetSize, numFieldsG);
-
-    {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-      "Matrix/RHS fill:  1-Element discretization", elem_discretization);
 
     /**********************************************************************************/
     /*                                Calculate Jacobians                             */
@@ -893,15 +892,14 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
                                     worksetHGBValuesWeighted,
                                     COMP_BLAS);
 
-    } // Element discretization timer
-
     /**********************************************************************************/
     /*                         Assemble into Global Matrix                            */
     /**********************************************************************************/
 
+    RCP<Teuchos::Time> timerAssembleGlobalMatrix =
+      TimeMonitor::getNewTimer ("Assemble overlapped global matrix and RHS");
     {
-      TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-        "Matrix/RHS fill:  2-Element assembly", elem_assembly_total);
+      TimeMonitor timerAssembleGlobalMatrixL (*timerAssembleGlobalMatrix);
 
       // "WORKSET CELL" loop: local cell ordinal is relative to numElems
       for (int cell = worksetBegin; cell < worksetEnd; ++cell) {
@@ -913,29 +911,27 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
         // relative to the cell DoF numbering.
         for (int cellRow = 0; cellRow < numFieldsG; ++cellRow) {
           int localRow  = elemToNode (cell, cellRow);
+          int globalRow = as<int> (globalNodeIds[localRow]);
           ST sourceTermContribution = worksetRHS (worksetCellOrdinal, cellRow);
+          ArrayView<ST> sourceTermContributionAV =
+            arrayView (&sourceTermContribution, 1);
 
-          {
-            // TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-            //   "Matrix/RHS fill:  2a-RHS sum into local values",
-            //   elem_rhs);
-            rhsVector->sumIntoLocalValue (localRow, sourceTermContribution);
-          }
+          rhsVector->sumIntoGlobalValue (globalRow, sourceTermContribution);
 
-          // "CELL VARIABLE" loop for the workset cell: sum entire element
-          // stiff matrix contribution in one function call
-          ArrayView<int> localColAV =
-            arrayView<int> (&elemToNode(cell,0), numFieldsG);
-          ArrayView<ST> operatorMatrixContributionAV =
-            arrayView<ST> (&worksetStiffMatrix(worksetCellOrdinal,cellRow,0),
-                           numFieldsG);
-          {
-            // TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-            //   "Matrix/RHS fill:  2b-Matrix sum into local values",
-            //   elem_matrix);
-            StiffMatrix->sumIntoLocalValues (localRow, localColAV,
-                                             operatorMatrixContributionAV);
-          }
+          // "CELL VARIABLE" loop for the workset cell: cellCol is
+          // relative to the cell DoF numbering.
+          for (int cellCol = 0; cellCol < numFieldsG; cellCol++){
+            const int localCol  = elemToNode(cell, cellCol);
+            int globalCol = as<int> (globalNodeIds[localCol]);
+            ArrayView<int> globalColAV = arrayView<int> (&globalCol, 1);
+            ST operatorMatrixContribution =
+              worksetStiffMatrix (worksetCellOrdinal, cellRow, cellCol);
+            ArrayView<ST> operatorMatrixContributionAV =
+              arrayView<ST> (&operatorMatrixContribution, 1);
+
+            StiffMatrix->sumIntoGlobalValues (globalRow, globalColAV,
+                                              operatorMatrixContributionAV);
+          }// *** cell col loop ***
         }// *** cell row loop ***
       }// *** workset cell loop **
     } // *** stop timer ***
@@ -948,24 +944,17 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   *out << "Exporting matrix and right-hand side from overlapped to owned Map" << endl;
 
-  gl_StiffMatrix->setAllToScalar (STS::zero ());
+  RCP<Teuchos::Time> timerAssembMultProc =
+    TimeMonitor::getNewTimer ("Export from overlapped to owned");
   {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-      "Matrix/RHS fill:  3-Matrix export", matrix_export);
+    TimeMonitor timerAssembMultProcL (*timerAssembMultProc);
+    gl_StiffMatrix->setAllToScalar (STS::zero ());
     gl_StiffMatrix->doExport (*StiffMatrix, *exporter, Tpetra::ADD);
-  }
-  // If target of export has static graph, no need to do
-  // setAllToScalar(0.0); export will clobber values.
-  {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-      "Matrix/RHS fill:  4-Matrix fill complete", matrix_fill_complete);
+    // If target of export has static graph, no need to do
+    // setAllToScalar(0.0); export will clobber values.
     gl_StiffMatrix->fillComplete ();
-  }
 
-  gl_rhsVector->putScalar (STS::zero ());
-  {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-      "Matrix/RHS fill:  5-RHS export", rhs_export);
+    gl_rhsVector->putScalar (STS::zero ());
     gl_rhsVector->doExport (*rhsVector, *exporter, Tpetra::ADD);
   }
 
@@ -975,9 +964,10 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
 
   *out << "Adjusting matrix and right-hand side for BCs" << endl;
 
+  RCP<Teuchos::Time> timerAdjustMatrixBC =
+    TimeMonitor::getNewTimer ("Adjust owned matrix and RHS for BCs");
   {
-    TEUCHOS_FUNC_TIME_MONITOR_DIFF(
-      "Matrix/RHS fill:  6-Dirichlet BC assembly", bc_assembly);
+    TimeMonitor timerAdjustMatrixBCL (*timerAdjustMatrixBC);
 
     // Apply owned stiffness matrix to v: rhs := A*v
     RCP<multivector_type> rhsDir =
@@ -1085,8 +1075,6 @@ makeMatrixAndRightHandSide (Teuchos::RCP<sparse_matrix_type>& A,
   // We're done modifying the owned stiffness matrix.
   gl_StiffMatrix->fillComplete ();
 
-  } // Matrix/RHS fill timing
-
   //
   // We're done with assembly, so we can delete the mesh.
   //
@@ -1122,7 +1110,7 @@ exactResidualNorm (const Teuchos::RCP<const sparse_matrix_type>& A,
   std::vector<MT> results (3);
   results[0] = R->norm2 ();
   results[1] = B->norm2 ();
-  results[2] = A->getFrobeniusNorm ();
+  results[3] = A->getFrobeniusNorm ();
   return results;
 }
 
@@ -1145,75 +1133,66 @@ exactSolution (const Scalar& x, const Scalar& y, const Scalar& z)
 }
 
 
-using ::TrilinosCouplings::IntrepidPoissonExample::getMaterialTensorOffDiagonalValue;
-
-/** \brief  User-defined material tensor.
-
-    Evaluate the tensor using operator().  Its arguments are:
-
-    \param  material    [out]   3 x 3 material tensor evaluated at (x,y,z)
-    \param  x           [in]    x-coordinate of the evaluation point
-    \param  y           [in]    y-coordinate of the evaluation point
-    \param  z           [in]    z-coordinate of the evaluation point
-
-    \warning Symmetric and positive definite tensor is required for every (x,y,z).
-*/
 template<typename Scalar>
-class MaterialTensor {
-public:
-  MaterialTensor (const double offDiagVal) :
-    offDiagVal_ (Scalar (offDiagVal))
-  {}
+void
+materialTensor (Scalar material[][3],
+                const Scalar& x,
+                const Scalar& y,
+                const Scalar& z)
+{
+  typedef Teuchos::ScalarTraits<Scalar> STS;
 
-  void
-  operator () (Scalar material[][3],
-               const Scalar& x,
-               const Scalar& y,
-               const Scalar& z) const
-  {
-    typedef Teuchos::ScalarTraits<Scalar> STS;
-
-    // We go through this trouble to make numbers, because Scalar
-    // isn't necessarily double.  It could be some automatic
-    // differentiation type.
+  const bool illConditioned = true;
+  if (illConditioned) {
     const Scalar zero = STS::zero ();
     const Scalar one = STS::one ();
+    const Scalar two = one + one;
+    const Scalar four = two + two;
+    const Scalar eight = four + four;
+    (void) four;
+    (void) eight;
 
-    // You can use the value of offDiagVal_ to control the iteration
-    // count.  The iteration counts below are for Belos' GMRES with no
-    // preconditioning, using the default problem size.
-    // setMaterialTensorOffDiagonalValue() sets the value of this
-    // parameter.
-    //
-    // Classical elasticity assumes a symmetric material tensor.  I
-    // suppose one could solve Poisson's equation with an unsymmetric
-    // material tensor, but I'm not sure what that would mean.
+    if (false) {
+      material[0][0] = one;
+      material[0][1] = one;
+      material[0][2] = zero;
 
-    // offDiagVal_ = -5/4: 209 iterations (CG breaks!)
-    // offDiagVal_ = -1/2: 47 iterations
-    // offDiagVal_ = 0: 40 iterations (CG works)
-    // offDiagVal_ = 1/2: 46 iterations
-    // offDiagVal_ = 3/4: 47 iterations
-    // offDiagVal_ = 1: 59 iterations
-    // offDiagVal_ = 5/4: 183 iterations
-    // offDiagVal_ = 3/2: 491 iterations
-    // offDiagVal_ = 2: 939 iterations (CG breaks!)
-    material[0][0] = one;
-    material[0][1] = zero;
-    material[0][2] = offDiagVal_;
+      material[1][0] = one;
+      material[1][1] = one;
+      material[1][2] = one;
 
-    material[1][0] = zero;
-    material[1][1] = one;
-    material[1][2] = zero;
+      material[2][0] = one;
+      material[2][1] = one;
+      material[2][2] = zero;
+    }
+    else {
+      material[0][0] = one;
+      material[0][1] = one - one / two;
+      material[0][2] = zero;
 
-    material[2][0] = offDiagVal_;
-    material[2][1] = zero;
-    material[2][2] = one;
+      material[1][0] = one;
+      material[1][1] = one - one / two;
+      material[1][2] = one;
+
+      material[2][0] = one;
+      material[2][1] = one - one / two;
+      material[2][2] = zero;
+    }
   }
+  else {
+    material[0][0] = STS::one();
+    material[0][1] = STS::zero();
+    material[0][2] = STS::zero();
 
-private:
-  const Scalar offDiagVal_;
-};
+    material[1][0] = STS::zero();
+    material[1][1] = STS::one();
+    material[1][2] = STS::zero();
+
+    material[2][0] = STS::zero();
+    material[2][1] = STS::zero();
+    material[2][2] = STS::one();
+  }
+}
 
 /**********************************************************************************/
 /************** AUXILIARY FUNCTIONS FROM EXACT SOLUTION ***************************/
@@ -1276,8 +1255,7 @@ sourceTerm (Scalar& x, Scalar& y, Scalar& z)
   exactSolutionGrad (grad_u, x, y, z);
 
   // Get material tensor
-  MaterialTensor<Scalar> matTens (getMaterialTensorOffDiagonalValue ());
-  matTens (material, x, y, z);
+  materialTensor<Scalar> (material, x, y, z);
 
   // Compute total flux = (A.grad u)
   for (int i = 0; i < 3; ++i) {
@@ -1311,14 +1289,13 @@ evaluateMaterialTensor (ArrayOut&      matTensorValues,
 
   scalar_type material[3][3];
 
-  MaterialTensor<scalar_type> matTens (getMaterialTensorOffDiagonalValue ());
   for (int cell = 0; cell < numWorksetCells; ++cell) {
     for (int pt = 0; pt < numPoints; ++pt) {
       scalar_type x = evaluationPoints(cell, pt, 0);
       scalar_type y = evaluationPoints(cell, pt, 1);
       scalar_type z = evaluationPoints(cell, pt, 2);
 
-      matTens (material, x, y, z);
+      materialTensor<scalar_type> (material, x, y, z);
 
       for (int row = 0; row < spaceDim; ++row) {
         for(int col = 0; col < spaceDim; ++col) {

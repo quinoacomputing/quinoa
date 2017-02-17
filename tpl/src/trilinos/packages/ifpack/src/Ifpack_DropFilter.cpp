@@ -7,33 +7,20 @@
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
 // ***********************************************************************
@@ -51,16 +38,13 @@
 
 //==============================================================================
 Ifpack_DropFilter::Ifpack_DropFilter(const Teuchos::RefCountPtr<Epetra_RowMatrix>& Matrix,
-                                     double DropTol) :
+				     double DropTol) :
   A_(Matrix),
   DropTol_(DropTol),
   MaxNumEntries_(0),
   MaxNumEntriesA_(0),
   NumNonzeros_(0)
 {
-  using std::cerr;
-  using std::endl;
-
   // use this filter only on serial matrices
   if (A_->Comm().NumProc() != 1) {
     cerr << "Ifpack_DropFilter can be used with Comm().NumProc() == 1" << endl;
@@ -68,8 +52,8 @@ Ifpack_DropFilter::Ifpack_DropFilter(const Teuchos::RefCountPtr<Epetra_RowMatrix
     cerr << "and it is not meant to be used otherwise." << endl;
     exit(EXIT_FAILURE);
   }
-
-  if ((A_->NumMyRows() != A_->NumGlobalRows64()) ||
+  
+  if ((A_->NumMyRows() != A_->NumGlobalRows()) ||
       (A_->NumMyRows() != A_->NumMyCols()))
     IFPACK_CHK_ERRV(-2);
 
@@ -80,15 +64,15 @@ Ifpack_DropFilter::Ifpack_DropFilter(const Teuchos::RefCountPtr<Epetra_RowMatrix
   Indices_.resize(MaxNumEntriesA_);
   Values_.resize(MaxNumEntriesA_);
 
-  std::vector<int>    Ind(MaxNumEntriesA_);
-  std::vector<double> Val(MaxNumEntriesA_);
+  vector<int>    Ind(MaxNumEntriesA_);
+  vector<double> Val(MaxNumEntriesA_);
 
   for (int i = 0 ; i < NumRows_ ; ++i) {
     NumEntries_[i] = MaxNumEntriesA_;
     int Nnz;
     IFPACK_CHK_ERRV(ExtractMyRowCopy(i,MaxNumEntriesA_,Nnz,
-                                     &Val[0], &Ind[0]));
-
+				     &Val[0], &Ind[0]));
+ 
     NumEntries_[i] = Nnz;
     NumNonzeros_ += Nnz;
     if (Nnz > MaxNumEntries_)
@@ -99,8 +83,8 @@ Ifpack_DropFilter::Ifpack_DropFilter(const Teuchos::RefCountPtr<Epetra_RowMatrix
 
 //==============================================================================
 int Ifpack_DropFilter::
-ExtractMyRowCopy(int MyRow, int Length, int & NumEntries,
-                 double *Values, int * Indices) const
+ExtractMyRowCopy(int MyRow, int Length, int & NumEntries, 
+		 double *Values, int * Indices) const
 {
   if (Length < NumEntries_[MyRow])
     IFPACK_CHK_ERR(-1);
@@ -108,7 +92,7 @@ ExtractMyRowCopy(int MyRow, int Length, int & NumEntries,
   int Nnz;
 
   IFPACK_CHK_ERR(A_->ExtractMyRowCopy(MyRow,MaxNumEntriesA_,Nnz,
-                                     &Values_[0],&Indices_[0]));
+				     &Values_[0],&Indices_[0]));
 
   // loop over all nonzero elements of row MyRow,
   // and drop elements below specified threshold.
@@ -121,7 +105,7 @@ ExtractMyRowCopy(int MyRow, int Length, int & NumEntries,
     // exceeding allocated space. Do not drop any diagonal entry.
     if ((Indices_[i] == MyRow) || (IFPACK_ABS(Values_[i]) >= DropTol_)) {
       if (count == Length)
-        IFPACK_CHK_ERR(-1);
+	IFPACK_CHK_ERR(-1);
       Values[count] = Values_[i];
       Indices[count] = Indices_[i];
       count++;
@@ -142,8 +126,8 @@ ExtractDiagonalCopy(Epetra_Vector & Diagonal) const
 
 //==============================================================================
 int Ifpack_DropFilter::
-Multiply(bool TransA, const Epetra_MultiVector& X,
-         Epetra_MultiVector& Y) const
+Multiply(bool TransA, const Epetra_MultiVector& X, 
+	 Epetra_MultiVector& Y) const
 {
   // NOTE: I suppose that the matrix has been localized,
   // hence all maps are trivial.
@@ -153,28 +137,28 @@ Multiply(bool TransA, const Epetra_MultiVector& X,
 
   Y.PutScalar(0.0);
 
-  std::vector<int> Indices(MaxNumEntries_);
-  std::vector<double> Values(MaxNumEntries_);
+  vector<int> Indices(MaxNumEntries_);
+  vector<double> Values(MaxNumEntries_);
 
   for (int i = 0 ; i < NumRows_ ; ++i) {
 
     int Nnz;
     ExtractMyRowCopy(i,MaxNumEntries_,Nnz,
-                     &Values[0], &Indices[0]);
+		     &Values[0], &Indices[0]);
     if (!TransA) {
       // no transpose first
       for (int j = 0 ; j < NumVectors ; ++j) {
-        for (int k = 0 ; k < Nnz ; ++k) {
-          Y[j][i] += Values[k] * X[j][Indices[k]];
-        }
+	for (int k = 0 ; k < Nnz ; ++k) {
+	  Y[j][i] += Values[k] * X[j][Indices[k]];
+	}
       }
     }
     else {
       // transpose here
       for (int j = 0 ; j < NumVectors ; ++j) {
-        for (int k = 0 ; k < Nnz ; ++k) {
-          Y[j][Indices[k]] += Values[k] * X[j][i];
-        }
+	for (int k = 0 ; k < Nnz ; ++k) {
+	  Y[j][Indices[k]] += Values[k] * X[j][i];
+	}
       }
     }
   }
@@ -184,7 +168,7 @@ Multiply(bool TransA, const Epetra_MultiVector& X,
 
 //==============================================================================
 int Ifpack_DropFilter::
-Solve(bool Upper, bool Trans, bool UnitDiagonal,
+Solve(bool Upper, bool Trans, bool UnitDiagonal, 
       const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
   IFPACK_CHK_ERR(-99);
@@ -194,8 +178,7 @@ Solve(bool Upper, bool Trans, bool UnitDiagonal,
 int Ifpack_DropFilter::
 Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
-  int ierr = Multiply(UseTranspose(),X,Y);
-  IFPACK_RETURN(ierr);
+  IFPACK_RETURN(Multiply(UseTranspose(),X,Y));
 }
 
 //==============================================================================

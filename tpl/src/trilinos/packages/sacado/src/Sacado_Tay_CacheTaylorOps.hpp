@@ -1,29 +1,31 @@
+// $Id$ 
+// $Source$ 
 // @HEADER
 // ***********************************************************************
-//
+// 
 //                           Sacado Package
 //                 Copyright (2006) Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // This library is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; either version 2.1 of the
 // License, or (at your option) any later version.
-//
+//  
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-//
+//  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
 // (etphipp@sandia.gov).
-//
+// 
 // ***********************************************************************
 // @HEADER
 
@@ -34,8 +36,8 @@
 
 #include <cmath>
 #include <valarray>
-#include <algorithm>    // for std::min and std::max
-#include <ostream>      // for std::ostream
+#include <algorithm>	// for std::min and std::max
+#include <ostream>	// for std::ostream
 
 namespace Sacado {
 
@@ -48,20 +50,18 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       UnaryPlusOp(const ExprT& expr) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        return expr.coeff(i);
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	return expr.coeff(i);
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const {
-        return expr.fastAccessCoeff(i);
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const {
+	return expr.fastAccessCoeff(i);
       }
 
     }; // class UnaryPlusOp
@@ -73,20 +73,18 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       UnaryMinusOp(const ExprT& expr) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        return -expr.coeff(i);
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	return -expr.coeff(i);
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const {
-        return -expr.fastAccessCoeff(i);
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const {
+	return -expr.fastAccessCoeff(i);
       }
 
     }; // class UnaryPlusOp
@@ -98,49 +96,47 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       ExpOp(const ExprT& expr) :
-        c(),
-        dc(-1) {}
+	c(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::exp(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*c[k-j]*expr.coeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::exp(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*c[k-j]*expr.coeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::exp(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*c[k-j]*expr.fastAccessCoeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::exp(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*c[k-j]*expr.fastAccessCoeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -157,52 +153,50 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       LogOp(const ExprT& expr) :
-        c(),
-        dc(-1)
+	c(),
+	dc(-1) 
       {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::log(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = value_type(k)*expr.coeff(k);
-            for (int j=1; j<=k-1; j++)
-              c[k] -= value_type(j)*expr.coeff(k-j)*c[j];
-            c[k] /= (value_type(k)*expr.fastAccessCoeff(0));
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::log(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = value_type(k)*expr.coeff(k);
+	    for (unsigned int j=1; j<=k-1; j++)
+	      c[k] -= value_type(j)*expr.coeff(k-j)*c[j];
+	    c[k] /= (value_type(k)*expr.fastAccessCoeff(0));
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::log(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = value_type(k)*expr.fastAccessCoeff(k);
-            for (int j=1; j<=k-1; j++)
-              c[k] -= value_type(j)*expr.fastAccessCoeff(k-j)*c[j];
-            c[k] /= (value_type(k)*expr.fastAccessCoeff(0));
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::log(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = value_type(k)*expr.fastAccessCoeff(k);
+	    for (unsigned int j=1; j<=k-1; j++)
+	      c[k] -= value_type(j)*expr.fastAccessCoeff(k-j)*c[j];
+	    c[k] /= (value_type(k)*expr.fastAccessCoeff(0));
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -219,53 +213,51 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       SqrtOp(const ExprT& expr) :
-        c(),
-        dc(-1) {}
+	c(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::sqrt(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          value_type tmp = value_type(2)*c[0];
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = expr.coeff(k);
-            for (int j=1; j<=k-1; j++)
-              c[k] -= c[j]*c[k-j];
-            c[k] /= tmp;
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::sqrt(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  value_type tmp = value_type(2)*c[0];
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = expr.coeff(k);
+	    for (unsigned int j=1; j<=k-1; j++)
+	      c[k] -= c[j]*c[k-j];
+	    c[k] /= tmp;
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::sqrt(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          value_type tmp = value_type(2)*c[0];
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = expr.fastAccessCoeff(k);
-            for (int j=1; j<=k-1; j++)
-              c[k] -= c[j]*c[k-j];
-            c[k] /= tmp;
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::sqrt(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  value_type tmp = value_type(2)*c[0];
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = expr.fastAccessCoeff(k);
+	    for (unsigned int j=1; j<=k-1; j++)
+	      c[k] -= c[j]*c[k-j];
+	    c[k] /= tmp;
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -282,59 +274,57 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       CosOp(const ExprT& expr) :
-        c(),
-        s(),
-        dc(-1) {}
+	c(),
+	s(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
-        s.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
+	s.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cos(expr.fastAccessCoeff(0));
-            s[0] = std::sin(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] -= value_type(j)*expr.coeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.coeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cos(expr.fastAccessCoeff(0));
+	    s[0] = std::sin(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] -= value_type(j)*expr.coeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.coeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cos(expr.fastAccessCoeff(0));
-            s[0] = std::sin(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] -= value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cos(expr.fastAccessCoeff(0));
+	    s[0] = std::sin(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] -= value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -352,59 +342,57 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       SinOp(const ExprT& expr) :
-        c(),
-        s(),
-        dc(-1) {}
+	c(),
+	s(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
-        s.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
+	s.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cos(expr.fastAccessCoeff(0));
-            s[0] = std::sin(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] -= value_type(j)*expr.coeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.coeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return s[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cos(expr.fastAccessCoeff(0));
+	    s[0] = std::sin(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] -= value_type(j)*expr.coeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.coeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return s[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cos(expr.fastAccessCoeff(0));
-            s[0] = std::sin(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] -= value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return s[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cos(expr.fastAccessCoeff(0));
+	    s[0] = std::sin(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] -= value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return s[i];
       }
 
     protected:
@@ -422,59 +410,57 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       CoshOp(const ExprT& expr) :
-        c(),
-        s(),
-        dc(-1) {}
+	c(),
+	s(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
-        s.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
+	s.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cosh(expr.fastAccessCoeff(0));
-            s[0] = std::sinh(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] += value_type(j)*expr.coeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.coeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cosh(expr.fastAccessCoeff(0));
+	    s[0] = std::sinh(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] += value_type(j)*expr.coeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.coeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cosh(expr.fastAccessCoeff(0));
-            s[0] = std::sinh(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] += value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cosh(expr.fastAccessCoeff(0));
+	    s[0] = std::sinh(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] += value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -492,59 +478,57 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       SinhOp(const ExprT& expr) :
-        c(),
-        s(),
-        dc(-1) {}
+	c(),
+	s(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
-        s.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
+	s.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cosh(expr.fastAccessCoeff(0));
-            s[0] = std::sinh(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] += value_type(j)*expr.coeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.coeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return s[i];
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cosh(expr.fastAccessCoeff(0));
+	    s[0] = std::sinh(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] += value_type(j)*expr.coeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.coeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return s[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::cosh(expr.fastAccessCoeff(0));
-            s[0] = std::sinh(expr.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++) {
-              c[k] += value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
-              s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
-            }
-            c[k] /= value_type(k);
-            s[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return s[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::cosh(expr.fastAccessCoeff(0));
+	    s[0] = std::sinh(expr.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++) {
+	      c[k] += value_type(j)*expr.fastAccessCoeff(j)*s[k-j];
+	      s[k] += value_type(j)*expr.fastAccessCoeff(j)*c[k-j];
+	    }
+	    c[k] /= value_type(k);
+	    s[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return s[i];
       }
 
     protected:
@@ -562,27 +546,25 @@ namespace Sacado {
     public:
 
       typedef typename ExprT::value_type value_type;
-      typedef typename ExprT::scalar_type scalar_type;
-      typedef typename ExprT::base_expr_type base_expr_type;
 
       FAbsOp(const ExprT& expr) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
-      value_type computeCoeff(int i, const ExprT& expr) const {
-        if (expr.fastAccessCoeff(0) > 0)
-          return expr.coeff(i);
-        else
-          return -expr.coeff(i);
+      value_type computeCoeff(unsigned int i, const ExprT& expr) const {
+	if (expr.fastAccessCoeff(0) > 0)
+	  return expr.coeff(i);
+	else
+	  return -expr.coeff(i);
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT& expr) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT& expr) const
       {
-        if (expr.fastAccessCoeff(0) > 0)
-          return expr.fastAccessCoeff(i);
-        else
-          return -expr.fastAccessCoeff(i);
+	if (expr.fastAccessCoeff(0) > 0)
+	  return expr.fastAccessCoeff(i);
+	else
+	  return -expr.fastAccessCoeff(i);
       }
 
     }; // class FAbsOp
@@ -591,18 +573,18 @@ namespace Sacado {
 
 } // namespace Sacado
 
-#define TAYLOR_UNARYOP_MACRO(OPNAME,OP)                                 \
-namespace Sacado {                                                      \
-  namespace Tay {                                                       \
-    template <typename T>                                               \
-    inline Expr< UnaryExpr< Expr<T>, OP > >                             \
-    OPNAME (const Expr<T>& expr)                                        \
-    {                                                                   \
-      typedef UnaryExpr< Expr<T>, OP > expr_t;                          \
-                                                                        \
-      return Expr<expr_t>(expr_t(expr));                                \
-    }                                                                   \
-  }                                                                     \
+#define TAYLOR_UNARYOP_MACRO(OPNAME,OP)					\
+namespace Sacado {							\
+  namespace Tay {							\
+    template <typename T>						\
+    inline Expr< UnaryExpr< Expr<T>, OP > >				\
+    OPNAME (const Expr<T>& expr)					\
+    {									\
+      typedef UnaryExpr< Expr<T>, OP > expr_t;				\
+      									\
+      return Expr<expr_t>(expr_t(expr));				\
+    }									\
+  }									\
 }                                                                       \
                                                                         \
 namespace std {                                                         \
@@ -632,38 +614,28 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class AdditionOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       AdditionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
-
+      void allocateCache(unsigned int d) const {}
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        return expr1.coeff(i) + expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	return expr1.coeff(i) + expr2.coeff(i);
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
       }
-
+      
     }; // class AdditionOp
 
     template <typename ExprT1>
@@ -671,30 +643,28 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       AdditionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.coeff(i) + expr2.coeff(i);
-        else
-          return expr1.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.coeff(i) + expr2.coeff(i);
+	else
+	  return expr1.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
-        else
-          return expr1.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
+	else
+	  return expr1.fastAccessCoeff(i);
       }
 
     }; // class AdditionOp
@@ -704,30 +674,28 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       AdditionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.coeff(i) + expr2.coeff(i);
-        else
-          return expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.coeff(i) + expr2.coeff(i);
+	else
+	  return expr2.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
-        else
-          return expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.fastAccessCoeff(i) + expr2.fastAccessCoeff(i);
+	else
+	  return expr2.fastAccessCoeff(i);
       }
 
     }; // class AdditionOp
@@ -737,38 +705,28 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class SubtractionOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       SubtractionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
-
+      void allocateCache(unsigned int d) const {}
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        return expr1.coeff(i) - expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	return expr1.coeff(i) - expr2.coeff(i);
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
       }
-
+      
     }; // class SubtractionOp
 
     template <typename ExprT1>
@@ -776,30 +734,28 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       SubtractionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.coeff(i) - expr2.coeff(i);
-        else
-          return expr1.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.coeff(i) - expr2.coeff(i);
+	else
+	  return expr1.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
-        else
-          return expr1.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
+	else
+	  return expr1.fastAccessCoeff(i);
       }
 
     }; // class SubtractionOp
@@ -809,30 +765,28 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       SubtractionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.coeff(i) - expr2.coeff(i);
-        else
-          return -expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.coeff(i) - expr2.coeff(i);
+	else
+	  return -expr2.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
-        else
-          return -expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return expr1.fastAccessCoeff(i) - expr2.fastAccessCoeff(i);
+	else
+	  return -expr2.fastAccessCoeff(i);
       }
 
     }; // class SubtractionOp
@@ -842,61 +796,51 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class MultiplicationOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       MultiplicationOp(const ExprT1& expr1, const ExprT2 expr2) :
-        c(),
-        dc(-1) {}
+	c(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
-
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=0; j<=k; j++)
-              c[k] += expr1.coeff(j)*expr2.coeff(k-j);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=0; j<=k; j++)
+	      c[k] += expr1.coeff(j)*expr2.coeff(k-j);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=0; j<=k; j++)
-              c[k] += expr1.fastAccessCoeff(j)*expr2.fastAccessCoeff(k-j);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=0; j<=k; j++)
+	      c[k] += expr1.fastAccessCoeff(j)*expr2.fastAccessCoeff(k-j);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
 
       mutable std::valarray<value_type> c;
       mutable int dc;
-
+      
     }; // class MultiplicationOp
 
     template <typename ExprT1>
@@ -904,24 +848,22 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       MultiplicationOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        return expr1.coeff(i)*expr2.value();
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	return expr1.coeff(i)*expr2.value();
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        return expr1.fastAccessCoeff(i)*expr2.value();
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	return expr1.fastAccessCoeff(i)*expr2.value();
       }
 
     }; // class MultiplicationOp
@@ -931,24 +873,22 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       MultiplicationOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        return expr1.value()*expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	return expr1.value()*expr2.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        return expr1.value()*expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	return expr1.value()*expr2.fastAccessCoeff(i);
       }
 
     }; // class MultiplicationOp
@@ -958,65 +898,55 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class DivisionOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       DivisionOp(const ExprT1& expr1, const ExprT2 expr2) :
-        c(),
-        dc(-1) {}
+	c(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
-
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = expr1.coeff(k);
-            for (int j=1; j<=k; j++)
-              c[k] -= expr2.coeff(j)*c[k-j];
-            c[k] /= expr2.fastAccessCoeff(0);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = expr1.coeff(k);
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] -= expr2.coeff(j)*c[k-j];
+	    c[k] /= expr2.fastAccessCoeff(0);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = expr1.coeff(k);
-            for (int j=1; j<=k; j++)
-              c[k] -= expr2.fastAccessCoeff(j)*c[k-j];
-            c[k] /= expr2.fastAccessCoeff(0);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = expr1.coeff(k);
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] -= expr2.fastAccessCoeff(j)*c[k-j];
+	    c[k] /= expr2.fastAccessCoeff(0);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
 
       mutable std::valarray<value_type> c;
       mutable int dc;
-
+      
     }; // class DivisionOp
 
     template <typename ExprT1>
@@ -1024,24 +954,22 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       DivisionOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        return expr1.coeff(i)/expr2.value();
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	return expr1.coeff(i)/expr2.value();
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        return expr1.fastAccessCoeff(i)/expr2.value();
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	return expr1.fastAccessCoeff(i)/expr2.value();
       }
 
     }; // class DivisionOp
@@ -1051,53 +979,51 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       DivisionOp(const ExprT1& expr1, const ExprT2 expr2) :
-        c(),
-        dc(-1) {}
+	c(),
+	dc(-1) {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = expr1.fastAccessCoeff(0) / expr2.fastAccessCoeff(0);
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] -= expr2.coeff(j)*c[k-j];
-            c[k] /= expr2.fastAccessCoeff(0);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = expr1.fastAccessCoeff(0) / expr2.fastAccessCoeff(0);
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] -= expr2.coeff(j)*c[k-j];
+	    c[k] /= expr2.fastAccessCoeff(0);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = expr1.fastAccessCoeff(0) / expr2.fastAccessCoeff(0);
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            c[k] = expr1.coeff(k);
-            for (int j=1; j<=k; j++)
-              c[k] -= expr2.fastAccessCoeff(j)*c[k-j];
-            c[k] /= expr2.fastAccessCoeff(0);
-          }
-          dc = i;
-        }
-        return c[i];
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = expr1.fastAccessCoeff(0) / expr2.fastAccessCoeff(0);
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    c[k] = expr1.coeff(k);
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] -= expr2.fastAccessCoeff(j)*c[k-j];
+	    c[k] /= expr2.fastAccessCoeff(0);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -1112,46 +1038,36 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class MaxOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       MaxOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
-
+      void allocateCache(unsigned int d) const {}
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.coeff(0), expr2.coeff(0));
-        else
-          return expr1.coeff(0) >= expr2.coeff(0) ? expr1.coeff(i) :
-            expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.coeff(0), expr2.coeff(0));
+	else
+	  return expr1.coeff(0) >= expr2.coeff(0) ? expr1.coeff(i) : 
+	    expr2.coeff(i);
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.fastAccessCoeff(0), expr2.fastAccessCoeff(0));
-        else
-          return expr1.fastAccessCoeff(0) >= expr2.fastAccessCoeff(0) ?
-            expr1.fastAccessoeff(i) : expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.fastAccessCoeff(0), expr2.fastAccessCoeff(0));
+	else
+	  return expr1.fastAccessCoeff(0) >= expr2.fastAccessCoeff(0) ? 
+	    expr1.fastAccessoeff(i) : expr2.fastAccessCoeff(i);
       }
-
+      
     }; // class MaxOp
 
     template <typename ExprT1>
@@ -1159,32 +1075,30 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       MaxOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.coeff(0), expr2.value());
-        else
-          return expr1.coeff(0) >= expr2.value() ? expr1.coeff(i) :
-            value_type(0);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.coeff(0), expr2.value());
+	else
+	  return expr1.coeff(0) >= expr2.value() ? expr1.coeff(i) : 
+	    value_type(0);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.fastAccessCoeff(0), expr2.value());
-        else
-          return expr1.fastAccessCoeff(0) >= expr2.value() ?
-            expr1.fastAccessCoeff(i) : value_type(0);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.fastAccessCoeff(0), expr2.value());
+	else
+	  return expr1.fastAccessCoeff(0) >= expr2.value() ? 
+	    expr1.fastAccessCoeff(i) : value_type(0);
       }
 
     }; // class MaxOp
@@ -1194,32 +1108,30 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       MaxOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.value(), expr2.coeff(0));
-        else
-          return expr1.value() >= expr2.coeff(0) ? value_type(0) :
-            expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.value(), expr2.coeff(0));
+	else
+	  return expr1.value() >= expr2.coeff(0) ? value_type(0) : 
+	    expr2.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return std::max(expr1.value(), expr2.fastAccessCoeff(0));
-        else
-          return expr1.value() >= expr2.fastAccessCoeff(0) ? value_type(0) :
-            expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::max(expr1.value(), expr2.fastAccessCoeff(0));
+	else
+	  return expr1.value() >= expr2.fastAccessCoeff(0) ? value_type(0) : 
+	    expr2.fastAccessCoeff(i);
       }
 
     }; // class MaxOp
@@ -1229,45 +1141,36 @@ namespace Sacado {
     template <typename ExprT1, typename ExprT2>
     class MinOp {
     public:
-
+      
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
-
+				       value_type_2>::type value_type;
+    
       MinOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
-
+      void allocateCache(unsigned int d) const {}
+    
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return min(expr1.coeff(0), expr2.coeff(0));
-        else
-          return expr1.coeff(0) <= expr2.coeff(0) ? expr1.coeff(i) :
-            expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return min(expr1.coeff(0), expr2.coeff(0));
+	else
+	  return expr1.coeff(0) <= expr2.coeff(0) ? expr1.coeff(i) : 
+	    expr2.coeff(i);
       }
-
+      
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return min(expr1.fastAccessCoeff(0), expr2.fastAccessCoeff(0));
-        else
-          return expr1.fastAccessCoeff(0) <= expr2.fastAccessCoeff(0) ?
-            expr1.fastAccessCoeff(i) : expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1, 
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return min(expr1.fastAccessCoeff(0), expr2.fastAccessCoeff(0));
+	else
+	  return expr1.fastAccessCoeff(0) <= expr2.fastAccessCoeff(0) ? 
+	    expr1.fastAccessCoeff(i) : expr2.fastAccessCoeff(i);
       }
-
+      
     }; // class MinOp
 
     template <typename ExprT1>
@@ -1275,32 +1178,30 @@ namespace Sacado {
     public:
 
       typedef typename ExprT1::value_type value_type;
-      typedef typename ExprT1::scalar_type scalar_type;
-      typedef typename ExprT1::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT1::value_type> ExprT2;
 
       MinOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return std::min(expr1.coeff(0), expr2.value());
-        else
-          return expr1.coeff(0) <= expr2.value() ? expr1.coeff(i) :
-            value_type(0);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::min(expr1.coeff(0), expr2.value());
+	else
+	  return expr1.coeff(0) <= expr2.value() ? expr1.coeff(i) : 
+	    value_type(0);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return std::min(expr1.fastAccessCoeff(0), expr2.value());
-        else
-          return expr1.fastAccessCoeff(0) <= expr2.value() ?
-            expr1.fastAccessCoeff(i) : value_type(0);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::min(expr1.fastAccessCoeff(0), expr2.value());
+	else
+	  return expr1.fastAccessCoeff(0) <= expr2.value() ? 
+	    expr1.fastAccessCoeff(i) : value_type(0);
       }
 
     }; // class MinOp
@@ -1310,32 +1211,30 @@ namespace Sacado {
     public:
 
       typedef typename ExprT2::value_type value_type;
-      typedef typename ExprT2::scalar_type scalar_type;
-      typedef typename ExprT2::base_expr_type base_expr_type;
       typedef ConstExpr<typename ExprT2::value_type> ExprT1;
 
       MinOp(const ExprT1& expr1, const ExprT2 expr2) {}
 
-      void allocateCache(int d) const {}
+      void allocateCache(unsigned int d) const {}
 
       value_type
-      computeCoeff(int i, const ExprT1& expr1,
-                   const ExprT2& expr2) const {
-        if (i == 0)
-          return std::min(expr1.value(), expr2.coeff(0));
-        else
-          return expr1.value() <= expr2.coeff(0) ? value_type(0) :
-            expr2.coeff(i);
+      computeCoeff(unsigned int i, const ExprT1& expr1, 
+		   const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::min(expr1.value(), expr2.coeff(0));
+	else
+	  return expr1.value() <= expr2.coeff(0) ? value_type(0) : 
+	    expr2.coeff(i);
       }
 
       value_type
-      computeFastAccessCoeff(int i, const ExprT1& expr1,
-                             const ExprT2& expr2) const {
-        if (i == 0)
-          return std::min(expr1.value(), expr2.fastAccessCoeff(0));
-        else
-          return expr1.value() <= expr2.fastAccessCoeff(0) ? value_type(0) :
-            expr2.fastAccessCoeff(i);
+      computeFastAccessCoeff(unsigned int i, const ExprT1& expr1,
+			     const ExprT2& expr2) const {
+	if (i == 0)
+	  return std::min(expr1.value(), expr2.fastAccessCoeff(0));
+	else
+	  return expr1.value() <= expr2.fastAccessCoeff(0) ? value_type(0) : 
+	    expr2.fastAccessCoeff(i);
       }
 
     }; // class MinOp
@@ -1349,62 +1248,52 @@ namespace Sacado {
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
+				       value_type_2>::type value_type;
 
       ASinQuadOp(const ExprT1& expr1, const ExprT2& expr2) :
-        c(),
-        dc(-1)
+	c(),
+	dc(-1)
       {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT1& expr1,
-                              const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::asin(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT1& expr1,
+			      const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::asin(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT1& expr1,
-                                        const ExprT2& expr2) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT1& expr1,
+					const ExprT2& expr2) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::asin(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
-                expr1.fastAccessCoeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::asin(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
+		expr1.fastAccessCoeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -1421,62 +1310,52 @@ namespace Sacado {
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
+				       value_type_2>::type value_type;
 
       ACosQuadOp(const ExprT1& expr1, const ExprT2& expr2) :
-        c(),
-        dc(-1)
+	c(),
+	dc(-1)
       {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT1& expr1,
-                              const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::acos(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT1& expr1,
+			      const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::acos(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT1& expr1,
-                                        const ExprT2& expr2) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT1& expr1,
+					const ExprT2& expr2) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::acos(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
-                expr1.fastAccessCoeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::acos(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
+		expr1.fastAccessCoeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -1493,62 +1372,52 @@ namespace Sacado {
       typedef typename ExprT1::value_type value_type_1;
       typedef typename ExprT2::value_type value_type_2;
       typedef typename Sacado::Promote<value_type_1,
-                                       value_type_2>::type value_type;
-
-      typedef typename ExprT1::scalar_type scalar_type_1;
-      typedef typename ExprT2::scalar_type scalar_type_2;
-      typedef typename Sacado::Promote<scalar_type_1,
-                                       scalar_type_2>::type scalar_type;
-
-      typedef typename ExprT1::base_expr_type base_expr_type_1;
-      typedef typename ExprT2::base_expr_type base_expr_type_2;
-      typedef typename Sacado::Promote<base_expr_type_1,
-                                       base_expr_type_2>::type base_expr_type;
+				       value_type_2>::type value_type;
 
       ATanQuadOp(const ExprT1& expr1, const ExprT2& expr2) :
-        c(),
-        dc(-1)
+	c(),
+	dc(-1)
       {}
 
-      void allocateCache(int d) const {
-        c.resize(d+1,value_type(0));
+      void allocateCache(unsigned int d) const { 
+	c.resize(d+1,value_type(0));
       }
 
-      value_type computeCoeff(int i, const ExprT1& expr1,
-                              const ExprT2& expr2) const {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::atan(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+      value_type computeCoeff(unsigned int i, const ExprT1& expr1,
+			      const ExprT2& expr2) const {
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::atan(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.coeff(k-j)*expr1.coeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
-      value_type computeFastAccessCoeff(int i,
-                                        const ExprT1& expr1,
-                                        const ExprT2& expr2) const
+      value_type computeFastAccessCoeff(unsigned int i, 
+					const ExprT1& expr1,
+					const ExprT2& expr2) const
       {
-        if (static_cast<int>(i) > dc) {
-          if (dc < 0) {
-            c[0] = std::atan(expr1.fastAccessCoeff(0));
-            dc = 0;
-          }
-          for (int k=dc+1; k<=i; k++) {
-            for (int j=1; j<=k; j++)
-              c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
-                expr1.fastAccessCoeff(j);
-            c[k] /= value_type(k);
-          }
-          dc = i;
-        }
-        return c[i];
+	if (static_cast<int>(i) > dc) {
+	  if (dc < 0) {
+	    c[0] = std::atan(expr1.fastAccessCoeff(0));
+	    dc = 0;
+	  }
+	  for (unsigned int k=dc+1; k<=i; k++) {
+	    for (unsigned int j=1; j<=k; j++)
+	      c[k] += value_type(j)*expr2.fastAccessCoeff(k-j)*
+		expr1.fastAccessCoeff(j);
+	    c[k] /= value_type(k);
+	  }
+	  dc = i;
+	}
+	return c[i];
       }
 
     protected:
@@ -1562,43 +1431,43 @@ namespace Sacado {
 
 } // namespace Sacado
 
-#define TAYLOR_BINARYOP_MACRO(OPNAME,OP)                                \
-namespace Sacado {                                                      \
-  namespace Tay {                                                       \
-    template <typename T1, typename T2>                                 \
-    inline Expr< BinaryExpr< Expr<T1>, Expr<T2>, OP > >                 \
-    OPNAME (const Expr<T1>& expr1, const Expr<T2>& expr2)               \
-    {                                                                   \
-      typedef BinaryExpr< Expr<T1>, Expr<T2>, OP > expr_t;              \
-                                                                        \
-      return Expr<expr_t>(expr_t(expr1, expr2));                        \
-    }                                                                   \
-                                                                        \
-    template <typename T>                                               \
-    inline Expr< BinaryExpr< ConstExpr<typename Expr<T>::value_type>,   \
-                             Expr<T>, OP > >                            \
-    OPNAME (const typename Expr<T>::value_type& c,                      \
-            const Expr<T>& expr)                                        \
-    {                                                                   \
-      typedef ConstExpr<typename Expr<T>::value_type> ConstT;           \
-      typedef BinaryExpr< ConstT, Expr<T>, OP > expr_t;                 \
-                                                                        \
-      return Expr<expr_t>(expr_t(ConstT(c), expr));                     \
-    }                                                                   \
-                                                                        \
-    template <typename T>                                               \
-    inline Expr< BinaryExpr< Expr<T>,                                   \
-                             ConstExpr<typename Expr<T>::value_type>,   \
-                             OP > >                                     \
-    OPNAME (const Expr<T>& expr,                                        \
-            const typename Expr<T>::value_type& c)                      \
-    {                                                                   \
-      typedef ConstExpr<typename Expr<T>::value_type> ConstT;           \
-      typedef BinaryExpr< Expr<T>, ConstT, OP > expr_t;                 \
-                                                                        \
-      return Expr<expr_t>(expr_t(expr, ConstT(c)));                     \
-    }                                                                   \
-  }                                                                     \
+#define TAYLOR_BINARYOP_MACRO(OPNAME,OP)				\
+namespace Sacado {							\
+  namespace Tay {							\
+    template <typename T1, typename T2>					\
+    inline Expr< BinaryExpr< Expr<T1>, Expr<T2>, OP > >			\
+    OPNAME (const Expr<T1>& expr1, const Expr<T2>& expr2)		\
+    {									\
+      typedef BinaryExpr< Expr<T1>, Expr<T2>, OP > expr_t;		\
+    									\
+      return Expr<expr_t>(expr_t(expr1, expr2));			\
+    }									\
+									\
+    template <typename T>						\
+    inline Expr< BinaryExpr< ConstExpr<typename Expr<T>::value_type>,	\
+			     Expr<T>, OP > >				\
+    OPNAME (const typename Expr<T>::value_type& c,			\
+	    const Expr<T>& expr)					\
+    {									\
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;		\
+      typedef BinaryExpr< ConstT, Expr<T>, OP > expr_t;			\
+									\
+      return Expr<expr_t>(expr_t(ConstT(c), expr));			\
+    }									\
+									\
+    template <typename T>						\
+    inline Expr< BinaryExpr< Expr<T>,					\
+			     ConstExpr<typename Expr<T>::value_type>,	\
+			     OP > >					\
+    OPNAME (const Expr<T>& expr,					\
+	    const typename Expr<T>::value_type& c)			\
+    {									\
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;		\
+      typedef BinaryExpr< Expr<T>, ConstT, OP > expr_t;			\
+									\
+      return Expr<expr_t>(expr_t(expr, ConstT(c)));			\
+    }									\
+  }									\
 }
 
 TAYLOR_BINARYOP_MACRO(operator+, AdditionOp)
@@ -1609,52 +1478,52 @@ TAYLOR_BINARYOP_MACRO(operator/, DivisionOp)
 #undef TAYLOR_BINARYOP_MACRO
 
   // The general definition of max/min works for Taylor variables too, except
-  // we need to add a case when the argument types are different.  This
+  // we need to add a case when the argument types are different.  This 
   // can't conflict with the general definition, so we need to use
   // Substitution Failure Is Not An Error
 #include "Sacado_mpl_disable_if.hpp"
 #include "Sacado_mpl_is_same.hpp"
 
-#define TAYLOR_SFINAE_BINARYOP_MACRO(OPNAME,OP)                         \
-namespace Sacado {                                                      \
-  namespace Tay {                                                       \
-    template <typename T1, typename T2>                                 \
+#define TAYLOR_SFINAE_BINARYOP_MACRO(OPNAME,OP)				\
+namespace Sacado {							\
+  namespace Tay {							\
+    template <typename T1, typename T2>					\
     inline                                                              \
     typename                                                            \
     mpl::disable_if< mpl::is_same<T1,T2>,                               \
                      Expr<BinaryExpr<Expr<T1>, Expr<T2>, OP> > >::type  \
-    OPNAME (const Expr<T1>& expr1, const Expr<T2>& expr2)               \
-    {                                                                   \
-      typedef BinaryExpr< Expr<T1>, Expr<T2>, OP > expr_t;              \
-                                                                        \
-      return Expr<expr_t>(expr_t(expr1, expr2));                        \
-    }                                                                   \
-                                                                        \
-    template <typename T>                                               \
-    inline Expr< BinaryExpr< ConstExpr<typename Expr<T>::value_type>,   \
-                             Expr<T>, OP > >                            \
-    OPNAME (const typename Expr<T>::value_type& c,                      \
-            const Expr<T>& expr)                                        \
-    {                                                                   \
-      typedef ConstExpr<typename Expr<T>::value_type> ConstT;           \
-      typedef BinaryExpr< ConstT, Expr<T>, OP > expr_t;                 \
-                                                                        \
-      return Expr<expr_t>(expr_t(ConstT(c), expr));                     \
-    }                                                                   \
-                                                                        \
-    template <typename T>                                               \
-    inline Expr< BinaryExpr< Expr<T>,                                   \
-                             ConstExpr<typename Expr<T>::value_type>,   \
-                             OP > >                                     \
-    OPNAME (const Expr<T>& expr,                                        \
-            const typename Expr<T>::value_type& c)                      \
-    {                                                                   \
-      typedef ConstExpr<typename Expr<T>::value_type> ConstT;           \
-      typedef BinaryExpr< Expr<T>, ConstT, OP > expr_t;                 \
-                                                                        \
-      return Expr<expr_t>(expr_t(expr, ConstT(c)));                     \
-    }                                                                   \
-  }                                                                     \
+    OPNAME (const Expr<T1>& expr1, const Expr<T2>& expr2)		\
+    {									\
+      typedef BinaryExpr< Expr<T1>, Expr<T2>, OP > expr_t;		\
+    									\
+      return Expr<expr_t>(expr_t(expr1, expr2));			\
+    }									\
+									\
+    template <typename T>						\
+    inline Expr< BinaryExpr< ConstExpr<typename Expr<T>::value_type>,	\
+			     Expr<T>, OP > >				\
+    OPNAME (const typename Expr<T>::value_type& c,			\
+	    const Expr<T>& expr)					\
+    {									\
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;		\
+      typedef BinaryExpr< ConstT, Expr<T>, OP > expr_t;			\
+									\
+      return Expr<expr_t>(expr_t(ConstT(c), expr));			\
+    }									\
+									\
+    template <typename T>						\
+    inline Expr< BinaryExpr< Expr<T>,					\
+			     ConstExpr<typename Expr<T>::value_type>,	\
+			     OP > >					\
+    OPNAME (const Expr<T>& expr,					\
+	    const typename Expr<T>::value_type& c)			\
+    {									\
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;		\
+      typedef BinaryExpr< Expr<T>, ConstT, OP > expr_t;			\
+									\
+      return Expr<expr_t>(expr_t(expr, ConstT(c)));			\
+    }									\
+  }									\
 }
 
 TAYLOR_SFINAE_BINARYOP_MACRO(max, MaxOp)
@@ -1676,7 +1545,7 @@ namespace Sacado {
     asin_quad (const Expr<T1>& expr1, const Expr<T2>& expr2)
     {
       typedef BinaryExpr< Expr<T1>, Expr<T2>, ASinQuadOp > expr_t;
-
+ 
       return Expr<expr_t>(expr_t(expr1, expr2));
     }
 
@@ -1685,7 +1554,7 @@ namespace Sacado {
     acos_quad (const Expr<T1>& expr1, const Expr<T2>& expr2)
     {
       typedef BinaryExpr< Expr<T1>, Expr<T2>, ACosQuadOp > expr_t;
-
+ 
       return Expr<expr_t>(expr_t(expr1, expr2));
     }
 
@@ -1694,7 +1563,7 @@ namespace Sacado {
     atan_quad (const Expr<T1>& expr1, const Expr<T2>& expr2)
     {
       typedef BinaryExpr< Expr<T1>, Expr<T2>, ATanQuadOp > expr_t;
-
+ 
       return Expr<expr_t>(expr_t(expr1, expr2));
     }
 
@@ -1703,7 +1572,7 @@ namespace Sacado {
       typedef UnaryExpr< ExprT1, LogOp > T3;
       typedef BinaryExpr< ExprT2, Expr<T3>, MultiplicationOp > T4;
       typedef UnaryExpr< Expr<T4>, ExpOp > T5;
-
+      
       typedef Expr<T5> expr_type;
     };
 
@@ -1712,7 +1581,7 @@ namespace Sacado {
        typedef typename ExprT2::value_type T1;
       typedef BinaryExpr< ExprT2, ConstExpr<T1>, MultiplicationOp > T4;
       typedef UnaryExpr< Expr<T4>, ExpOp > T5;
-
+      
       typedef Expr<T5> expr_type;
     };
 
@@ -1722,7 +1591,7 @@ namespace Sacado {
       typedef UnaryExpr< ExprT1, LogOp > T3;
       typedef BinaryExpr< ConstExpr<T2>, Expr<T3>, MultiplicationOp > T4;
       typedef UnaryExpr< Expr<T4>, ExpOp > T5;
-
+      
       typedef Expr<T5> expr_type;
     };
 
@@ -1738,6 +1607,8 @@ namespace Sacado {
     inline typename PowExprType< typename Expr<T>::value_type, Expr<T> >::expr_type
     pow (const typename Expr<T>::value_type& c, const Expr<T>& expr)
     {
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;
+
       // pow(x,y) = exp(y*log(x))
       return exp(expr*std::log(c));
     }
@@ -1746,6 +1617,8 @@ namespace Sacado {
     inline typename PowExprType< Expr<T>, typename Expr<T>::value_type >::expr_type
     pow (const Expr<T>& expr, const typename Expr<T>::value_type& c)
     {
+      typedef ConstExpr<typename Expr<T>::value_type> ConstT;
+
       // pow(x,y) = exp(y*log(x))
       return exp(c*log(expr));
     }
@@ -1876,33 +1749,33 @@ namespace std {
 
 //-------------------------- Relational Operators -----------------------
 
-#define TAYLOR_RELOP_MACRO(OP)                                          \
-namespace Sacado {                                                      \
-  namespace Tay {                                                       \
-    template <typename ExprT1, typename ExprT2>                         \
-    inline bool                                                         \
-    operator OP (const Expr<ExprT1>& expr1,                             \
-                 const Expr<ExprT2>& expr2)                             \
-    {                                                                   \
-      return expr1.fastAccessCoeff(0) OP expr2.fastAccessCoeff(0);      \
-    }                                                                   \
-                                                                        \
-    template <typename ExprT2>                                          \
-    inline bool                                                         \
-    operator OP (const typename Expr<ExprT2>::value_type& a,            \
-                 const Expr<ExprT2>& expr2)                             \
-    {                                                                   \
-      return a OP expr2.fastAccessCoeff(0);                             \
-    }                                                                   \
-                                                                        \
-    template <typename ExprT1>                                          \
-    inline bool                                                         \
-    operator OP (const Expr<ExprT1>& expr1,                             \
-                 const typename Expr<ExprT1>::value_type& b)            \
-    {                                                                   \
-      return expr1.fastAccessCoeff(0) OP b;                             \
-    }                                                                   \
-  }                                                                     \
+#define TAYLOR_RELOP_MACRO(OP)						\
+namespace Sacado {							\
+  namespace Tay {							\
+    template <typename ExprT1, typename ExprT2>				\
+    inline bool								\
+    operator OP (const Expr<ExprT1>& expr1,				\
+		 const Expr<ExprT2>& expr2)				\
+    {									\
+      return expr1.fastAccessCoeff(0) OP expr2.fastAccessCoeff(0);	\
+    }									\
+									\
+    template <typename ExprT2>						\
+    inline bool								\
+    operator OP (const typename Expr<ExprT2>::value_type& a,		\
+		 const Expr<ExprT2>& expr2)				\
+    {									\
+      return a OP expr2.fastAccessCoeff(0);				\
+    }									\
+									\
+    template <typename ExprT1>						\
+    inline bool								\
+    operator OP (const Expr<ExprT1>& expr1,				\
+		 const typename Expr<ExprT1>::value_type& b)		\
+    {									\
+      return expr1.fastAccessCoeff(0) OP b;				\
+    }									\
+  }									\
 }
 
 TAYLOR_RELOP_MACRO(==)
@@ -1923,7 +1796,7 @@ namespace Sacado {
   namespace Tay {
 
     template <typename ExprT>
-    inline bool operator ! (const Expr<ExprT>& expr)
+    inline bool operator ! (const Expr<ExprT>& expr) 
     {
       return ! expr.fastAccessCoeff(0);
     }
@@ -1940,8 +1813,8 @@ namespace Sacado {
     template <typename ExprT>
     bool toBool2(const Expr<ExprT>& x) {
       bool is_zero = true;
-      for (int i=0; i<=x.degree(); i++)
-        is_zero = is_zero && (x.coeff(i) == 0.0);
+      for (unsigned int i=0; i<=x.degree(); i++)
+	is_zero = is_zero && (x.coeff(i) == 0.0);
       return !is_zero;
     }
 
@@ -1949,33 +1822,33 @@ namespace Sacado {
 
 } // namespace Sacado
 
-#define TAY_BOOL_MACRO(OP)                                              \
-namespace Sacado {                                                      \
-  namespace Tay {                                                       \
-    template <typename ExprT1, typename ExprT2>                         \
-    inline bool                                                         \
-    operator OP (const Expr<ExprT1>& expr1,                             \
-                 const Expr<ExprT2>& expr2)                             \
-    {                                                                   \
-      return toBool2(expr1) OP toBool2(expr2);                          \
-    }                                                                   \
-                                                                        \
-    template <typename ExprT2>                                          \
-    inline bool                                                         \
-    operator OP (const typename Expr<ExprT2>::value_type& a,            \
-                 const Expr<ExprT2>& expr2)                             \
-    {                                                                   \
-      return a OP toBool2(expr2);                                       \
-    }                                                                   \
-                                                                        \
-    template <typename ExprT1>                                          \
-    inline bool                                                         \
-    operator OP (const Expr<ExprT1>& expr1,                             \
-                 const typename Expr<ExprT1>::value_type& b)            \
-    {                                                                   \
-      return toBool2(expr1) OP b;                                       \
-    }                                                                   \
-  }                                                                     \
+#define TAY_BOOL_MACRO(OP)						\
+namespace Sacado {							\
+  namespace Tay {							\
+    template <typename ExprT1, typename ExprT2>				\
+    inline bool								\
+    operator OP (const Expr<ExprT1>& expr1,				\
+		 const Expr<ExprT2>& expr2)				\
+    {									\
+      return toBool2(expr1) OP toBool2(expr2);				\
+    }									\
+									\
+    template <typename ExprT2>						\
+    inline bool								\
+    operator OP (const typename Expr<ExprT2>::value_type& a,		\
+		 const Expr<ExprT2>& expr2)				\
+    {									\
+      return a OP toBool2(expr2);					\
+    }									\
+									\
+    template <typename ExprT1>						\
+    inline bool								\
+    operator OP (const Expr<ExprT1>& expr1,				\
+		 const typename Expr<ExprT1>::value_type& b)		\
+    {									\
+      return toBool2(expr1) OP b;					\
+    }									\
+  }									\
 }
 
 TAY_BOOL_MACRO(&&)
@@ -1994,35 +1867,14 @@ namespace Sacado {
       os.setf(std::ios::fixed, std::ios::floatfield);
       os.width(12);
       os << "[";
-
-      for (int i=0; i<=x.degree(); i++) {
+      
+      for (unsigned int i=0; i<=x.degree(); i++) {
         os.width(12);
         os << x.coeff(i);
       }
 
       os << "]";
       return os;
-    }
-
-    //! Compute Taylor series of n-th derivative of x
-    template <typename T>
-    CacheTaylor<T> diff(const CacheTaylor<T>& x, int n = 1) {
-      const int d = x.degree();
-      if (n <= 0)
-        return x;
-      else if (n > d) {
-        Taylor<T> y(0);
-        return y;
-      }
-      CacheTaylor<T> y(d-n);
-      int c = 1;
-      for (int i=1; i<=n; ++i)
-        c *= i;
-      for (int i=n; i<=d; ++i) {
-        y.fastAccessCoeff(i-n) = x.fastAccessCoeff(i) * T(c);
-        c = (c / (i-n+1)) * (i+1);
-      }
-      return y;
     }
 
   } // namespace Tay

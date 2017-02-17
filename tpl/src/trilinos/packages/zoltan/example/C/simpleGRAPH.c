@@ -1,48 +1,3 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
 /**************************************************************
 *  Basic example of using Zoltan to partition a graph.
 ***************************************************************/
@@ -55,7 +10,7 @@
 
 /* Name of file containing graph to be partitioned */
 
-static char *global_fname="graph.txt";
+static char *fname="graph.txt";
 
 /* Structure to hold graph data 
    ZOLTAN_ID_TYPE is defined when Zoltan is compiled.  It's size can
@@ -106,7 +61,7 @@ int main(int argc, char *argv[])
   int myRank, numProcs;
   ZOLTAN_ID_PTR importGlobalGids, importLocalGids, exportGlobalGids, exportLocalGids;
   int *importProcs, *importToPart, *exportProcs, *exportToPart;
-  int *parts = NULL;
+  int *parts;
   FILE *fp;
   GRAPH_DATA myGraph;
 
@@ -130,15 +85,15 @@ int main(int argc, char *argv[])
   ** Read graph from input file and distribute it 
   ******************************************************************/
 
-  fp = fopen(global_fname, "r");
+  fp = fopen(fname, "r");
   if (!fp){
-    if (myRank == 0) fprintf(stderr,"ERROR: Can not open %s\n",global_fname);
+    if (myRank == 0) fprintf(stderr,"ERROR: Can not open %s\n",fname);
     MPI_Finalize();
     exit(1);
   }
   fclose(fp);
 
-  read_input_file(myRank, numProcs, global_fname, &myGraph);
+  read_input_file(myRank, numProcs, fname, &myGraph);
 
   /******************************************************************
   ** Create a Zoltan library structure for this instance of load
@@ -224,8 +179,6 @@ int main(int argc, char *argv[])
   }
 
   showGraphPartitions(myRank, myGraph.numMyVertices, myGraph.vertexGID, parts, numProcs);
-
-  if (parts) free(parts);
 
   /******************************************************************
   ** Free the arrays allocated by Zoltan_LB_Partition, and free
@@ -394,8 +347,6 @@ char *c = buf;
 int count=0;
 
   while (1){
-    if ( (c-buf) >= bufsize) break;
-
     while (!(isdigit(*c))){
       if ((c - buf) >= bufsize) break;
       c++;
@@ -449,6 +400,7 @@ int i, j, part, cuts, prevPart=-1;
 float imbal, localImbal, sum;
 int *partCount;
 
+  partCount = (int *)calloc(sizeof(int), nparts);
 
   memset(partAssign, 0, sizeof(int) * 25);
 
@@ -459,7 +411,6 @@ int *partCount;
   MPI_Reduce(partAssign, allPartAssign, 25, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 
   if (myProc == 0){
-    partCount = (int *)calloc(sizeof(int), nparts);
 
     cuts = 0;
 
@@ -570,7 +521,7 @@ GRAPH_DATA *send_graph;
       num = get_next_line(fp, buf, bufsize);
       if (num == 0) input_file_error(numProcs, count_tag, 1);
 
-      num = get_line_ints(buf, strlen(buf), vals);
+      num = get_line_ints(buf, bufsize, vals);
 
       if (num < 2) input_file_error(numProcs, count_tag, 1);
 

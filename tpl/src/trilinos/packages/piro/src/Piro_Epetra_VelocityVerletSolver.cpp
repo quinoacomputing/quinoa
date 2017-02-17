@@ -44,6 +44,7 @@
 
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_InvertMassMatrixDecorator.hpp"
+#include "Piro_ValidPiroParameters.hpp"
 
 #include "EpetraExt_ModelEvaluator.h"
 
@@ -55,6 +56,8 @@ Piro::Epetra::VelocityVerletSolver::VelocityVerletSolver(Teuchos::RCP<Teuchos::P
   model(model_),
   observer(observer_)
 {
+  //appParams->validateParameters(*Piro::getValidPiroParameters(),0);
+
   using Teuchos::RCP;
   using Teuchos::rcp;
 
@@ -76,7 +79,7 @@ Piro::Epetra::VelocityVerletSolver::VelocityVerletSolver(Teuchos::RCP<Teuchos::P
   vvPL->validateParameters(*getValidVelocityVerletParameters(),0);
 
   {
-    const std::string verbosity = vvPL->get("Verbosity Level", "VERB_DEFAULT");
+    const string verbosity = vvPL->get("Verbosity Level", "VERB_DEFAULT");
     solnVerbLevel = Teuchos::VERB_DEFAULT;
     if      (verbosity == "VERB_NONE")    solnVerbLevel = Teuchos::VERB_NONE;
     else if (verbosity == "VERB_LOW")     solnVerbLevel = Teuchos::VERB_LOW;
@@ -95,7 +98,7 @@ Piro::Epetra::VelocityVerletSolver::VelocityVerletSolver(Teuchos::RCP<Teuchos::P
     bool lump=vvPL->get("Lump Mass Matrix", false);
     *out << "\nB) Using InvertMassMatrix Decorator\n";
     model = Teuchos::rcp(new Piro::Epetra::InvertMassMatrixDecorator(
-             sublist(vvPL,"Stratimikos", true), origModel, true, lump, true));
+             sublist(vvPL,"Stratimikos", true), origModel, true, lump));
   }
 }
 
@@ -133,12 +136,8 @@ Teuchos::RCP<const Epetra_Map> Piro::Epetra::VelocityVerletSolver::get_g_map(int
                      "Invalid response index j = " <<
                      j << std::endl);
 
-  if (j < num_g) {
-    return model->get_g_map(j);
-  } else {
-    // j == num_g
-    return model->get_x_map();
-  }
+  if      (j < num_g) return model->get_g_map(j);
+  else if (j == num_g) return model->get_x_map();
 }
 
 Teuchos::RCP<const Epetra_Vector> Piro::Epetra::VelocityVerletSolver::get_x_init() const
@@ -201,24 +200,17 @@ void Piro::Epetra::VelocityVerletSolver::evalModel( const InArgs& inArgs,
   if (num_g > 0) g_out = outArgs.get_g(0); 
   RCP<Epetra_Vector> gx_out = outArgs.get_g(num_g); 
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-     model->get_x_init() == Teuchos::null || model->get_x_dot_init() == Teuchos::null,
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << "Error in Piro::Epetra::VelocityVerletSolver " <<
-                     "Requires x, and x_dot " << std::endl);
-
   RCP<Epetra_Vector> x = rcp(new Epetra_Vector(*model->get_x_init()));
   RCP<Epetra_Vector> v = rcp(new Epetra_Vector(*model->get_x_dot_init()));
   RCP<Epetra_Vector> a = rcp(new Epetra_Vector(*model->get_f_map()));
   a->PutScalar(0.0); 
 
-  double t = t_init;
-
-  // Observe initial condition
-  if (observer != Teuchos::null) observer->observeSolution(*x, t);
-
+  TEUCHOS_TEST_FOR_EXCEPTION(v == Teuchos::null || x == Teuchos::null, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << "Error in Piro::Epetra::VelocityVerletSolver " <<
+                     "Requires initial x and x_dot: " << std::endl);
   double vo; v->Norm2(&vo);
-  *out << "Initial Velocity = " << vo << std::endl;
+  *out << "Initial Velocity = " << vo << endl;
 
    if (Teuchos::VERB_MEDIUM <= solnVerbLevel) *out << std::endl;
 
@@ -230,6 +222,7 @@ void Piro::Epetra::VelocityVerletSolver::evalModel( const InArgs& inArgs,
    model_outargs.set_f(a);
    if (g_out != Teuchos::null) model_outargs.set_g(0, g_out);
 
+   double t = t_init;
    double ddt = 0.5 * delta_t * delta_t;
 
    // Calculate acceleration at time 0
@@ -247,9 +240,7 @@ void Piro::Epetra::VelocityVerletSolver::evalModel( const InArgs& inArgs,
 
      v->Update(0.5*delta_t, *a, 1.0);
 
-     // Observe completed time step
      if (observer != Teuchos::null) observer->observeSolution(*x, t);
-
      if (g_out != Teuchos::null) 
        g_out->Print(*out << "Responses at time step(time) = " << timeStep << "("<<t<<")");
    }

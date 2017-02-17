@@ -54,7 +54,6 @@
 #include "Teuchos_TypeNameTraits.hpp"
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_implicit_cast.hpp"
-#include "Teuchos_FancyOStream.hpp"
 
 
 namespace RTOpPack {
@@ -66,6 +65,8 @@ namespace RTOpPack {
 
 /** \brief . */
 typedef Teuchos_Ordinal Ordinal;
+/** \brief Deprecated (Use Ordinal instead) . */
+RTOP_DEPRECATED typedef Teuchos_Index Index;
 /** \brief . */
 using Teuchos::Ptr;
 /** \brief . */
@@ -82,12 +83,10 @@ using Teuchos::Range1D;
 using Teuchos::ScalarTraits;
 /** \brief . */
 using Teuchos::TypeNameTraits;
-/** \brief . */
-using Teuchos::FancyOStream;
 
-/** \brief . */
-typedef Teuchos_Ordinal index_type;
-/** \brief . */
+/** \brief Depreciated. */
+typedef Teuchos_Index index_type;
+/** \brief Depreciated. */
 typedef char  char_type;
 
 
@@ -173,6 +172,7 @@ public:
         TEUCHOS_ASSERT(values_in.lowerOffset() <= 0);
       }
       else {
+        TEUCHOS_ASSERT(stride_in == 0);
         TEUCHOS_ASSERT(subDim_in==0);
       }
 #endif
@@ -224,6 +224,24 @@ private:
       return values_.begin() + (subDim_*std::abs(Teuchos::as<int>(stride_)) - 1);
     } 
 public:
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED ConstSubVectorView(Ordinal globalOffset_in, Ordinal subDim_in,
+    const Scalar values_in[], ptrdiff_t stride_in)
+    :globalOffset_(globalOffset_in), subDim_(subDim_in),
+     values_(values_in,0,subDim_in*stride_in,false), stride_(stride_in) 
+    {}
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED void initialize(Ordinal globalOffset_in, Ordinal subDim_in,
+    const Scalar values_in[], ptrdiff_t stride_in)
+    {
+      globalOffset_=globalOffset_in; subDim_=subDim_in;
+      values_=Teuchos::arcp(values_in, 0,
+        subDim_in*std::abs(Teuchos::as<int>(stride_in)), false);
+      stride_=stride_in;
+    }
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED void set_uninitialized()
+    { uninitialize(); }
 };
 
 
@@ -280,6 +298,15 @@ public:
    * < subDim())</tt>). */
   Scalar& operator()(Ordinal i) const { return (*this)[i]; }
 public:
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED SubVectorView(Ordinal globalOffset_in, Ordinal subDim_in,
+    Scalar values_in[], ptrdiff_t stride_in)
+    :ConstSubVectorView<Scalar>(globalOffset_in, subDim_in, values_in, stride_in)
+    {}
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED void initialize(Ordinal globalOffset_in, Ordinal subDim_in,
+    Scalar values_in[], ptrdiff_t stride_in)
+    { ConstSubVectorView<Scalar>::initialize(globalOffset_in, subDim_in, values_in, stride_in); }
 };
 
 
@@ -385,6 +412,8 @@ public:
       }
       else {
         TEUCHOS_ASSERT(subDim_in == 0);
+        TEUCHOS_ASSERT(leadingDim_in == 0);
+        TEUCHOS_ASSERT(numSubCols_in == 0);
       }
 #endif
       globalOffset_=globalOffset_in;
@@ -450,6 +479,32 @@ private:
   ArrayRCP<const Scalar> values_;
   Ordinal leadingDim_;
 public:
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED ConstSubMultiVectorView(
+    Ordinal globalOffset_in, Ordinal subDim_in,
+    Ordinal colOffset_in, Ordinal numSubCols_in,
+    const Scalar values_in[], Ordinal leadingDim_in
+    )
+    :globalOffset_(globalOffset_in), subDim_(subDim_in),
+     colOffset_(colOffset_in), numSubCols_(numSubCols_in),
+     values_(values_in,0,numSubCols_in*leadingDim_in,false),
+     leadingDim_(leadingDim_in)
+    {}
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED void initialize(
+    Ordinal globalOffset_in, Ordinal subDim_in,
+    Ordinal colOffset_in, Ordinal numSubCols_in,
+    const Scalar values_in[], Ordinal leadingDim_in
+    )
+    {
+      globalOffset_=globalOffset_in; subDim_=subDim_in; colOffset_=colOffset_in;
+      numSubCols_=numSubCols_in;
+      values_=Teuchos::arcp(values_in,0,numSubCols_in*leadingDim_in,false);
+      leadingDim_=leadingDim_in;
+    }
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED void set_uninitialized()
+    { uninitialize(); }
 };
 
 
@@ -527,6 +582,25 @@ public:
         values().persistingView(j*this->leadingDim(),this->subDim()), 1);
     }
 public:
+  /** \brief Deprecated. */
+  RTOP_DEPRECATED SubMultiVectorView(
+    Ordinal globalOffset_in, Ordinal subDim_in,
+    Ordinal colOffset_in, Ordinal numSubCols_in,
+    Scalar values_in[], Ordinal leadingDim_in
+    )
+    :ConstSubMultiVectorView<Scalar>(globalOffset_in, subDim_in,
+       colOffset_in, numSubCols_in, values_in, leadingDim_in)
+    {}
+  /** \brief Deprecated. */
+ RTOP_DEPRECATED void initialize(
+   Ordinal globalOffset_in, Ordinal subDim_in,
+   Ordinal colOffset_in, Ordinal numSubCols_in,
+   Scalar values_in[], Ordinal leadingDim_in
+   )
+   {
+     ConstSubMultiVectorView<Scalar>::initialize(globalOffset_in,
+       subDim_in, colOffset_in, numSubCols_in, values_in, leadingDim_in);
+   }
 };
 
 

@@ -8,12 +8,13 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   hypre_test
-  SOURCES IFPACK_Hypre_UnitTest.cpp hypre_Helpers.cpp hypre_UnitTest.cpp
+  SOURCES IFPACK_Hypre_UnitTest.cpp hypre_UnitTest.cpp
   COMM serial mpi
   )
 
 ENDIF (${PACKAGE_NAME}_ENABLE_Galeri)
 ENDIF (${PACKAGE_NAME}_ENABLE_AztecOO)
 
+INCLUDE(TribitsAddExecutableAndTest)
 
 

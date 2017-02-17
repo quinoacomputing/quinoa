@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+/*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002,2003, Sandia National Laboratories.          *
+ * For more info, see the README file in the top-level Zoltan directory.     *   *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
+
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
 extern "C" {
@@ -235,7 +202,7 @@ int gen_geom, int gen_graph, int gen_hg)
        * weights for a given edge.
        */
       gno_val = (ZOLTAN_GNO_TYPE)nEwgts;
-      MPI_Reduce(&gno_val, &glob_ewgts, 1, zoltan_gno_mpi_type, MPI_SUM, 0, zz->Communicator);
+      MPI_Reduce(&nEwgts, &glob_ewgts, 1, zoltan_gno_mpi_type, MPI_SUM, 0, zz->Communicator);
 
       /* We assume the Edge IDs and Vertex IDs are integers and
        * are contiguous.  Figure out what the lowest ID is.
@@ -422,9 +389,8 @@ int gen_geom, int gen_graph, int gen_hg)
      *  6. character data may be upper or lower case. 
      */
 
-    sprintf(full_fname, "%s.mtxp", fname);  /* matrixmarket plus */
-
     Zoltan_Print_Sync_Start(zz->Communicator, 0); 
+    sprintf(full_fname, "%s.mtxp", fname);  /* matrixmarket plus */
     if (zz->Proc == 0)
       fp = fopen(full_fname, "w");
     else
@@ -462,6 +428,7 @@ int gen_geom, int gen_graph, int gen_hg)
     eptr = edgeIds;
     vptr = vtxIds;
 
+    fseek(fp, 0, SEEK_END);
     for (i=0; i<nEdges; i++){
       for (j=0; j<edgeSize[i]; j++){
         fprintf(fp, ZOLTAN_ID_SPEC " " ZOLTAN_ID_SPEC " 1.0 %d\n",
@@ -471,9 +438,7 @@ int gen_geom, int gen_graph, int gen_hg)
       eptr += lenGID;
     }
     fflush(fp);
-    fclose(fp);
     Zoltan_Print_Sync_End(zz->Communicator, 0); 
-    MPI_Barrier(zz->Communicator);
 
     /* Each proc prints its vertices and vertex weights. */
 
@@ -482,7 +447,7 @@ int gen_geom, int gen_graph, int gen_hg)
     vptr = global_ids;
     wptr = float_vwgt;
 
-    fp = fopen(full_fname, "a");
+    fseek(fp, 0, SEEK_END);
 
     if (zz->Proc == 0){
       fprintf(fp, 
@@ -500,9 +465,7 @@ int gen_geom, int gen_graph, int gen_hg)
       vptr += lenGID;
     }
     fflush(fp);
-    fclose(fp);
     Zoltan_Print_Sync_End(zz->Communicator, 0); 
-    MPI_Barrier(zz->Communicator);
 
     /* Each proc prints its edge weights. */
 
@@ -513,7 +476,7 @@ int gen_geom, int gen_graph, int gen_hg)
       eptr = eWgtIds;
       wptr = eWgts;
 
-      fp = fopen(full_fname, "a");
+      fseek(fp, 0, SEEK_END);
 
       if (zz->Proc == 0){
         fprintf(fp, 
@@ -532,10 +495,11 @@ int gen_geom, int gen_graph, int gen_hg)
       }
 
       fflush(fp);
-      fclose(fp);
       Zoltan_Print_Sync_End(zz->Communicator, 0); 
-      MPI_Barrier(zz->Communicator);
     }
+
+    fclose(fp);
+    MPI_Barrier(zz->Communicator);
   }
 
 End:
@@ -677,8 +641,7 @@ struct _gidht{
   struct _gidht *next;
 } *gidNode, *gidNext;
 struct _gidht **ht=NULL;
-int proc, myrank, nprocs, mask, i; 
-unsigned int ui;
+int proc, myrank, nprocs, mask, i;
 unsigned int nbits;
 ZOLTAN_ID_PTR merged_egids, idbuf;
 ZOLTAN_GNO_TYPE allEdges, numIds, nEdges;
@@ -736,7 +699,7 @@ MPI_Datatype zoltan_gno_mpi_type;
 
   mask = 1 << nbits;
 
-  for (ui=0; ui<nbits; ui++){
+  for (i=0; i<nbits; i++){
 
     mask >>= 1;
 

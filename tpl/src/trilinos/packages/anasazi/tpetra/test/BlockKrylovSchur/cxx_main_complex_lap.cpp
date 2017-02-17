@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -42,34 +42,37 @@
 #include <Tpetra_DefaultPlatform.hpp>
 #include <Tpetra_CrsMatrix.hpp>
 
+using namespace Teuchos;
+using Tpetra::Platform;
+using Tpetra::Operator;
 using Tpetra::CrsMatrix;
+using Tpetra::MultiVector;
 using Tpetra::Map;
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) 
 {
-  using Teuchos::RCP;
-  using Teuchos::rcp;
-  using Teuchos::tuple;
   using std::cout;
   using std::endl;
 
   typedef double                              ST;
-  typedef Teuchos::ScalarTraits<ST>          SCT;
+  typedef ScalarTraits<ST>                   SCT;
   typedef SCT::magnitudeType                  MT;
-  typedef Tpetra::MultiVector<ST>             MV;
-  typedef MV::global_ordinal_type             GO;
-  typedef Tpetra::Operator<ST>                OP;
+  typedef MultiVector<ST,int>                 MV;
+  typedef Operator<ST,int>                    OP;
   typedef Anasazi::MultiVecTraits<ST,MV>     MVT;
   typedef Anasazi::OperatorTraits<ST,MV,OP>  OPT;
   const ST ONE  = SCT::one();
 
-  Teuchos::GlobalMPISession mpisess (&argc,&argv,&std::cout);
+  GlobalMPISession mpisess(&argc,&argv,&std::cout);
 
-  RCP<const Teuchos::Comm<int> > comm =
-    Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
+  int MyPID = 0;
+  int NumImages = 1;
 
-  const int MyPID = comm->getRank ();
-  const int NumImages = comm->getSize ();
+  RCP<const Platform<int> > platform = Tpetra::DefaultPlatform<int>::getPlatform();
+  RCP<const Comm<int> > comm = platform->getComm();
+
+  MyPID = rank(*comm);
+  NumImages = size(*comm);
 
   bool testFailed;
   bool verbose = false;
@@ -82,7 +85,7 @@ int main(int argc, char *argv[])
   int numBlocks = 3 * NumImages;
   int maxRestarts = 50;
 
-  Teuchos::CommandLineProcessor cmdp(false,true);
+  CommandLineProcessor cmdp(false,true);
   cmdp.setOption("verbose","quiet",&verbose,"Print messages and results.");
   cmdp.setOption("debug","nodebug",&debug,"Print debugging information.");
   cmdp.setOption("insitu","exsitu",&insitu,"Perform in situ restarting.");
@@ -92,7 +95,7 @@ int main(int argc, char *argv[])
   cmdp.setOption("numBlocks",&numBlocks,"Number of blocks in Krylov basis.");
   cmdp.setOption("maxRestarts",&maxRestarts,"Number of restarts allowed.");
   cmdp.setOption("tol",&tol,"Tolerance for convergence.");
-  if (cmdp.parse(argc,argv) != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
+  if (cmdp.parse(argc,argv) != CommandLineProcessor::PARSE_SUCCESSFUL) {
     return -1;
   }
   if (debug) verbose = true;
@@ -106,44 +109,44 @@ int main(int argc, char *argv[])
   int dim = ROWS_PER_PROC * NumImages;
 
   // create map
-  RCP<const Map<> > map = rcp (new Map<> (dim,0,comm));
-  RCP<CrsMatrix<ST> > K = rcp (new CrsMatrix<ST> (map, 4));
+  Map<int> map(dim,0,comm);
+  RCP<CrsMatrix<ST,int> > K = rcp(new CrsMatrix<ST,int>(map,4));
   int base = MyPID*ROWS_PER_PROC;
   if (MyPID != NumImages-1) {
     for (int i=0; i<ROWS_PER_PROC; ++i) {
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i  ), tuple<ST>( 2));
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i+1), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i  ), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i+1), tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i  ),tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i+1),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i  ),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i+1),tuple<ST>( 2));
     }
   }
   else {
     for (int i=0; i<ROWS_PER_PROC-1; ++i) {
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i  ), tuple<ST>( 2));
-      K->insertGlobalValues(static_cast<GO>(base+i  ), tuple<GO>(base+i+1), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i  ), tuple<ST>(-1));
-      K->insertGlobalValues(static_cast<GO>(base+i+1), tuple<GO>(base+i+1), tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i  ),tuple<ST>( 2));
+      K->insertGlobalValues(base+i  ,tuple(base+i+1),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i  ),tuple<ST>(-1));
+      K->insertGlobalValues(base+i+1,tuple(base+i+1),tuple<ST>( 2));
     }
   }
   K->fillComplete();
 
   // Create initial vectors
-  RCP<MV> ivec = rcp (new MV (map,blockSize));
-  ivec->randomize ();
+  RCP<MV> ivec = rcp( new MV(map,blockSize) );
+  ivec->random();
 
   // Create eigenproblem
   RCP<Anasazi::BasicEigenproblem<ST,MV,OP> > problem =
-    rcp (new Anasazi::BasicEigenproblem<ST,MV,OP> (K, ivec));
+    rcp( new Anasazi::BasicEigenproblem<ST,MV,OP>(K,ivec) );
   //
   // Inform the eigenproblem that the operator K is symmetric
-  problem->setHermitian (true);
+  problem->setHermitian(true);
   //
   // Set the number of eigenvalues requested
-  problem->setNEV (nev);
+  problem->setNEV( nev );
   //
   // Inform the eigenproblem that you are done passing it information
-  bool boolret = problem->setProblem ();
-  if (! boolret) {
+  bool boolret = problem->setProblem();
+  if (boolret != true) {
     if (MyPID == 0) {
       cout << "Anasazi::BasicEigenproblem::SetProblem() returned with error." << endl
            << "End Result: TEST FAILED" << endl;
@@ -163,7 +166,7 @@ int main(int argc, char *argv[])
   // Eigensolver parameters
   //
   // Create parameter list to pass into the solver manager
-  Teuchos::ParameterList MyPL;
+  ParameterList MyPL;
   MyPL.set( "Verbosity", verbosity );
   MyPL.set( "Which", which );
   MyPL.set( "Block Size", blockSize );
@@ -195,8 +198,8 @@ int main(int argc, char *argv[])
 
     // Compute the direct residual
     std::vector<MT> normV( numev );
-    Teuchos::SerialDenseMatrix<int,ST> T (numev, numev);
-    for (int i = 0; i < numev; ++i) {
+    SerialDenseMatrix<int,ST> T(numev,numev);
+    for (int i=0; i<numev; i++) {
       T(i,i) = sol.Evals[i].realpart;
     }
     RCP<MV> Kvecs = MVT::Clone( *evecs, numev );

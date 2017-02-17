@@ -22,7 +22,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Mike A. Heroux (maherou@sandia.gov)
 //
@@ -163,7 +163,7 @@ Int KLU_scale           /* return TRUE if successful, FALSE otherwise */
                 W [row] = col ;
             }
             /* a = ABS (Az [p]) ;*/
-            KLU2_ABS (a, Az [p]) ;
+            ABS (a, Az [p]) ;
             if (scale == 1)
             {
                 /* accumulate the abs. row sum */

@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   bool boolret = MyProblem->setProblem();
   if (boolret != true) {
     if (verbose && MyPID == 0) {
-      std::cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << std::endl;
+      cout << "Anasazi::BasicEigenproblem::setProblem() returned with error." << endl;
     }
 #ifdef HAVE_MPI
     MPI_Finalize() ;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
   // Solve the problem to the specified tolerances or length
   Anasazi::ReturnType returnCode = MySolverMgr.solve();
   if (returnCode != Anasazi::Converged && MyPID==0 && verbose) {
-    std::cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << std::endl;
+    cout << "Anasazi::EigensolverMgr::solve() returned unconverged." << endl;
   }
   
   // Get the eigenvalues and eigenvectors from the eigenproblem
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
           MVT::MvNorm( *tempKevec, resnorm );
 
           // Compute the norms and scale by magnitude of eigenvalue
-          normR[i] = lapack.LAPY2( tempnrm[0], resnorm[0] ) /
+          normR[i] = lapack.LAPY2( tempnrm[i], resnorm[i] ) /
             lapack.LAPY2( evals[i].realpart, evals[i].imagpart );
           normR[i+1] = normR[i];
 
@@ -261,29 +261,29 @@ int main(int argc, char *argv[]) {
 
     // Output computed eigenvalues and their direct residuals
     if (verbose && MyPID==0) {
-      std::cout.setf(std::ios_base::right, std::ios_base::adjustfield);	
-      std::cout<<std::endl<< "Actual Residuals"<<std::endl;
+      cout.setf(std::ios_base::right, std::ios_base::adjustfield);	
+      cout<<endl<< "Actual Residuals"<<endl;
       if (MyProblem->isHermitian()) {
-        std::cout<< std::setw(16) << "Real Part"
-          << std::setw(20) << "Direct Residual"<< std::endl;
-        std::cout<<"-----------------------------------------------------------"<<std::endl;
+        cout<< std::setw(16) << "Real Part"
+          << std::setw(20) << "Direct Residual"<< endl;
+        cout<<"-----------------------------------------------------------"<<endl;
         for (int i=0; i<numev; i++) {
-          std::cout<< std::setw(16) << evals[i].realpart 
-            << std::setw(20) << normR[i] << std::endl;
+          cout<< std::setw(16) << evals[i].realpart 
+            << std::setw(20) << normR[i] << endl;
         }  
-        std::cout<<"-----------------------------------------------------------"<<std::endl;
+        cout<<"-----------------------------------------------------------"<<endl;
       } 
       else {
-        std::cout<< std::setw(16) << "Real Part"
+        cout<< std::setw(16) << "Real Part"
           << std::setw(16) << "Imag Part"
-          << std::setw(20) << "Direct Residual"<< std::endl;
-        std::cout<<"-----------------------------------------------------------"<<std::endl;
+          << std::setw(20) << "Direct Residual"<< endl;
+        cout<<"-----------------------------------------------------------"<<endl;
         for (int i=0; i<numev; i++) {
-          std::cout<< std::setw(16) << evals[i].realpart 
+          cout<< std::setw(16) << evals[i].realpart 
             << std::setw(16) << evals[i].imagpart 
-            << std::setw(20) << normR[i] << std::endl;
+            << std::setw(20) << normR[i] << endl;
         }  
-        std::cout<<"-----------------------------------------------------------"<<std::endl;
+        cout<<"-----------------------------------------------------------"<<endl;
       }  
     }
   }

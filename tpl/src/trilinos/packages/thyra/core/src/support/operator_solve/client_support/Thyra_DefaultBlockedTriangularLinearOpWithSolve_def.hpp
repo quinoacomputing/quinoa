@@ -394,6 +394,7 @@ template<class Scalar>
 std::string
 DefaultBlockedTriangularLinearOpWithSolve<Scalar>::description() const
 {
+  typedef Teuchos::ScalarTraits<Scalar>  ST;
   assertBlockFillIsActive(false);
   std::ostringstream oss;
   oss
@@ -452,6 +453,7 @@ void DefaultBlockedTriangularLinearOpWithSolve<Scalar>::applyImpl(
 
   using Teuchos::RCP;
   using Teuchos::dyn_cast;
+  typedef Teuchos::ScalarTraits<Scalar> ST;
   using Thyra::apply;
 
 #ifdef THYRA_DEBUG
@@ -542,6 +544,7 @@ DefaultBlockedTriangularLinearOpWithSolve<Scalar>::solveImpl(
 
   using Teuchos::RCP;
   using Teuchos::dyn_cast;
+  typedef Teuchos::ScalarTraits<Scalar> ST;
   using Thyra::solve;
 
 #ifdef THYRA_DEBUG

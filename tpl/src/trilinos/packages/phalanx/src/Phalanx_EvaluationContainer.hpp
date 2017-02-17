@@ -47,17 +47,14 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
-#include "Phalanx_KokkosDeviceTypes.hpp"
 #include "Phalanx_EvaluationContainer_Base.hpp"
 #include "Phalanx_FieldTag.hpp"
 #include "Phalanx_Evaluator.hpp"
-#include "Phalanx_any.hpp"
-#include <unordered_map>
-#include <string>
+#include "Phalanx_DataContainer_TemplateManager.hpp"
 
 namespace PHX {
 
-  /*! \brief Container that holds all data associated with an evaluation type.
+  /*! \brief Container that holds all data associated with a scalar type.
 
 
   */
@@ -76,36 +73,17 @@ namespace PHX {
     void 
     registerEvaluator(const Teuchos::RCP<PHX::Evaluator<Traits> >& p);
 
-    PHX::any getFieldData(const PHX::FieldTag& f);
-
-    //! Set the memory pointer for an unmanaged field
-    void setUnmanagedField(const PHX::FieldTag& f, 
-                           const PHX::any& a);
+    template <typename DataT> 
+    Teuchos::ArrayRCP<DataT> getFieldData(const PHX::FieldTag& f);
 
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& fm);
 
     void evaluateFields(typename Traits::EvalData d);
 
-#ifdef PHX_ENABLE_KOKKOS_AMT
-    /*! \brief Evaluate the fields using hybrid functional (asynchronous multi-tasking) and data parallelism.
-
-      @param threads_per_task The number of threads used for data parallelism within a single task.
-      @param work_size The number of work units to parallelize over.
-      @param d User defined data.
-     */
-    void evaluateFieldsTaskParallel(const int& threads_per_task,
-				    const int& work_size,
-				    typename Traits::EvalData d);
-#endif
-
     void preEvaluate(typename Traits::PreEvalData d);
 
     void postEvaluate(typename Traits::PostEvalData d);
-
-    void setKokkosExtendedDataTypeDimensions(const std::vector<PHX::index_size_type>& dims);
-
-    const std::vector<PHX::index_size_type> & getKokkosExtendedDataTypeDimensions() const;
 
     //! Return true if the postRegistrationSetupMethod has been called
     bool setupCalled() const;
@@ -114,15 +92,17 @@ namespace PHX {
 
     void print(std::ostream& os) const;
 
-    void analyzeGraph(double& speedup, double& parallelizability) const;
-
   protected:
+
+    typedef PHX::DataContainer_TemplateManager<EvalT, Traits> DCTM;
+
+    PHX::DataContainer_TemplateManager<EvalT, Traits> 
+    data_container_template_manager_;
+    
+    typename Traits::Allocator allocator_;
 
     bool post_registration_setup_called_;
 
-    std::unordered_map<std::string,PHX::any> fields_;
-
-    std::vector<PHX::index_size_type> kokkos_extended_data_type_dimensions_;
   };
   
 } 

@@ -1,2 +1,1 @@
 ADD_SUBDIRECTORY(UnitTest)
-ADD_SUBDIRECTORY(Performance)

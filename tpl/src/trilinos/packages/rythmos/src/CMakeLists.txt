@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -13,9 +14,9 @@ TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 SET(HEADERS "")
 SET(SOURCES "")
 
-TRIBITS_INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
-TRIBITS_INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 FILE(GLOB HEADERS *.hpp *.h)
 
@@ -40,31 +41,28 @@ TRIBITS_ADD_LIBRARY(
 # Add a test-only model library
 #
 
-IF (${PACKAGE_NAME}_ENABLE_TESTS OR ${PACKAGE_NAME}_ENABLE_EXAMPLES)
+IF (${PACKAGE_NAME}_ENABLE_TESTS)
   SET(HEADERS)
   SET(SOURCES)
 
-  TRIBITS_INCLUDE_DIRECTORIES(
+  INCLUDE_DIRECTORIES( 
     ${PACKAGE_SOURCE_DIR}/test/SinCos
     ${PACKAGE_SOURCE_DIR}/test/PolynomialModel
-    ${PACKAGE_SOURCE_DIR}/test/LogTime
     )
 
   APPEND_SET(HEADERS
     ${PACKAGE_SOURCE_DIR}/test/SinCos/SinCosModel.hpp
     ${PACKAGE_SOURCE_DIR}/test/PolynomialModel/PolynomialModel.hpp
-    ${PACKAGE_SOURCE_DIR}/test/LogTime/LogTimeModel.hpp
     )
 
   APPEND_SET(SOURCES
     ${PACKAGE_SOURCE_DIR}/test/SinCos/SinCosModel.cpp
     ${PACKAGE_SOURCE_DIR}/test/PolynomialModel/PolynomialModel.cpp
-    ${PACKAGE_SOURCE_DIR}/test/LogTime/LogTimeModel.cpp
     )
 
   ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Sacado)
   IF (${PACKAGE_NAME}_ENABLE_Sacado)
-    TRIBITS_INCLUDE_DIRECTORIES(
+    INCLUDE_DIRECTORIES( 
       ${PACKAGE_SOURCE_DIR}/test/VanderPol
       )
 
@@ -80,15 +78,15 @@ IF (${PACKAGE_NAME}_ENABLE_TESTS OR ${PACKAGE_NAME}_ENABLE_EXAMPLES)
   ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_EpetraExt)
   IF (${PACKAGE_NAME}_ENABLE_EpetraExt)
 
-    TRIBITS_INCLUDE_DIRECTORIES(
+    INCLUDE_DIRECTORIES( 
       REQUIRED_DURING_INSTALLATION_TESTING
       ${PACKAGE_SOURCE_DIR}/../epetraext/example/model_evaluator/DiagonalTransient
       )
-
+  
     APPEND_SET(HEADERS
       ${PACKAGE_SOURCE_DIR}/../epetraext/example/model_evaluator/DiagonalTransient/EpetraExt_DiagonalTransientModel.hpp
       )
-
+  
     APPEND_SET(SOURCES
       ${PACKAGE_SOURCE_DIR}/../epetraext/example/model_evaluator/DiagonalTransient/EpetraExt_DiagonalTransientModel.cpp
       )
@@ -97,19 +95,19 @@ IF (${PACKAGE_NAME}_ENABLE_TESTS OR ${PACKAGE_NAME}_ENABLE_EXAMPLES)
 
   ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_GAASP)
   IF (${PACKAGE_NAME}_ENABLE_GAASP)
-    TRIBITS_INCLUDE_DIRECTORIES(
+    INCLUDE_DIRECTORIES( 
       ${PACKAGE_SOURCE_DIR}/adapters/gaasp/example
       )
-
+  
     APPEND_SET(HEADERS
       ${PACKAGE_SOURCE_DIR}/adapters/gaasp/example/LorenzModel.hpp
       )
-
+  
     APPEND_SET(SOURCES
       ${PACKAGE_SOURCE_DIR}/adapters/gaasp/example/LorenzModel.cpp
       )
 
-  ENDIF()
+  ENDIF()  
 
   TRIBITS_ADD_LIBRARY(
     rythmos_test_models
@@ -119,7 +117,7 @@ IF (${PACKAGE_NAME}_ENABLE_TESTS OR ${PACKAGE_NAME}_ENABLE_EXAMPLES)
     DEPLIBS rythmos
     )
 
-ENDIF()
+ENDIF()  
 
 
 

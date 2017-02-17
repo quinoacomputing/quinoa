@@ -65,7 +65,7 @@ template<typename Traits>
 void PHX::EvaluationContainerBase<Traits>::
 requireField(const PHX::FieldTag& f) 
 { 
-  dag_manager_.requireField(f);
+  vp_manager_.requireField(f);
 }
 
 // **************************************************************************
@@ -73,7 +73,7 @@ template<typename Traits>
 void PHX::EvaluationContainerBase<Traits>::
 registerEvaluator(const Teuchos::RCP<PHX::Evaluator<Traits> >& e) 
 { 
-  dag_manager_.registerEvaluator(e);
+  vp_manager_.registerEvaluator(e);
 }
 
 // **************************************************************************
@@ -84,10 +84,10 @@ writeGraphvizFile(const std::string filename,
 		  bool writeDependentFields,
 		  bool debugRegisteredEvaluators) const 
 { 
-  dag_manager_.writeGraphvizFile(filename, 
-				 writeEvaluatedFields, 
-				 writeDependentFields, 
-				 debugRegisteredEvaluators);
+  vp_manager_.writeGraphvizFile(filename, 
+				writeEvaluatedFields, 
+				writeDependentFields, 
+				debugRegisteredEvaluators);
 }
     
 // **************************************************************************

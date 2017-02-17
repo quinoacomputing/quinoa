@@ -1,4 +1,5 @@
 
+INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -75,24 +76,15 @@ ENDIF()
 #
 
 IF (${PACKAGE_NAME}_ENABLE_MUMPS)
-   
-   IF(TPL_ENABLE_MPI)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+  SET(HEADERS ${HEADERS}
+    Amesos_Mumps.h
+    )
 
-     SET(HEADERS ${HEADERS}
-     Amesos_Mumps.h
-     )
-
-     SET(SOURCES ${SOURCES}
-     Amesos_Mumps.cpp
-     )
-  ELSE()
-
-     MESSAGE(WARNING "\n\n***Amesos with MUMPS requires MPI, MUMPS will not be available***\n\n")
-   
-   ENDIF()     
-
+  SET(SOURCES ${SOURCES}
+    Amesos_Mumps.cpp
+    )
 ENDIF()
 
 #
@@ -174,16 +166,7 @@ SET(PARAKLETE_KLU_COMMON
   SuiteSparse/AMD/Source/amesos_amd_post_tree.c
   SuiteSparse/AMD/Source/amesos_amd_preprocess.c
   SuiteSparse/AMD/Source/amesos_amd_valid.c
-  SuiteSparse/AMD/Source/amesos_amd_l1.c
-  SuiteSparse/AMD/Source/amesos_amd_l2.c
-  SuiteSparse/AMD/Source/amesos_amd_l_aat.c
-  SuiteSparse/AMD/Source/amesos_amd_l_order.c
-  SuiteSparse/AMD/Source/amesos_amd_l_postorder.c
-  SuiteSparse/AMD/Source/amesos_amd_l_post_tree.c
-  SuiteSparse/AMD/Source/amesos_amd_l_preprocess.c
-  SuiteSparse/AMD/Source/amesos_amd_l_valid.c
   SuiteSparse/COLAMD/Source/amesos_colamd.c
-  SuiteSparse/COLAMD/Source/amesos_colamd_l.c
   SuiteSparse/COLAMD/Source/amesos_colamd_global.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_common.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_complex.c
@@ -191,40 +174,9 @@ SET(PARAKLETE_KLU_COMMON
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_memory.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_sparse.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_transpose.c
-  SuiteSparse/CAMD/Source/amesos_camd_1.c
-  SuiteSparse/CAMD/Source/amesos_camd_defaults.c
-  SuiteSparse/CAMD/Source/amesos_camd_l2.c
-  SuiteSparse/CAMD/Source/amesos_camd_preprocess.c
   SuiteSparse/CAMD/Source/amesos_camd_2.c
-  SuiteSparse/CAMD/Source/amesos_camd_dump.c
-  SuiteSparse/CAMD/Source/amesos_camd_l_postorder.c
-  SuiteSparse/CAMD/Source/amesos_camd_valid.c
-  SuiteSparse/CAMD/Source/amesos_camd_aat.c
-  SuiteSparse/CAMD/Source/amesos_camd_global.c
-  SuiteSparse/CAMD/Source/amesos_camd_order.c
-  SuiteSparse/CAMD/Source/amesos_camd_control.c
-  SuiteSparse/CAMD/Source/amesos_camd_info.c
   SuiteSparse/CAMD/Source/amesos_camd_postorder.c
   )
-
-
-  IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-      IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2)
-        SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_KLU_COMMON},
-                PROPERTIES
-                COMPILE_FLAGS "-Wno-all -Wno-pedantic")
-      ENDIF()
-  ELSEIF (WIN32 AND NOT CYGWIN)
-       # No flags
-  ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
-      #No flags
-  ELSE()
-       SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_KLU_COMMON},
-                PROPERTIES
-                COMPILE_FLAGS "-Wno-all")
-  ENDIF()
-
-         
 
 #
 # KLU files
@@ -238,7 +190,6 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/BTF/Include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/CAMD/Include)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/CCOLAMD/Include)
 
   SET(HEADERS ${HEADERS}
     ${PARAKLETE_KLU_COMMON_H}
@@ -247,14 +198,13 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
     SuiteSparse/KLU/Include/amesos_klu_version.h
     SuiteSparse/BTF/Include/amesos_btf_decl.h
     SuiteSparse/BTF/Include/amesos_btf_internal.h
-    SuiteSparse/CCOLAMD/Include/amesos_ccolamd.h
-    SuiteSparse/CAMD/Include/amesos_camd.h
-    SuiteSparse/CAMD/Include/amesos_camd_internal.h
     Amesos_Klu.h
     )
 
-   SET(KLU_FILES
-   SuiteSparse/KLU/Source/amesos_klu_analyze.c
+  SET(SOURCES ${SOURCES}
+    ${PARAKLETE_KLU_COMMON}
+    Amesos_Klu.cpp
+    SuiteSparse/KLU/Source/amesos_klu_analyze.c
     SuiteSparse/KLU/Source/amesos_klu_analyze_given.c
     SuiteSparse/KLU/Source/amesos_klu_impl.c
     SuiteSparse/KLU/Source/amesos_klu_defaults.c
@@ -274,39 +224,7 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
     SuiteSparse/BTF/Source/amesos_btf_order.c
     SuiteSparse/BTF/Source/amesos_btf_maxtrans.c
     SuiteSparse/BTF/Source/amesos_btf_strongcomp.c
-    SuiteSparse/BTF/Source/amesos_btf_l_order.c
-    SuiteSparse/BTF/Source/amesos_btf_l_maxtrans.c
-    SuiteSparse/BTF/Source/amesos_btf_l_strongcomp.c
-    SuiteSparse/CCOLAMD/Source/amesos_ccolamd.c
-    SuiteSparse/CCOLAMD/Source/amesos_ccolamd_l.c
-    SuiteSparse/CCOLAMD/Source/amesos_ccolamd_global.c
     )
-    
-
-    IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-        IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2)
-        SET_SOURCE_FILES_PROPERTIES(${KLU_FILES},
-                PROPERTIES
-                COMPILE_FLAGS "-Wno-all -Wno-pedantic")
-        ENDIF()
-    ELSEIF (WIN32 AND NOT CYGWIN)
-       # No flags
-    ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
-      #No flags
-    ELSE()
-         SET_SOURCE_FILES_PROPERTIES(${KLU_FILES},
-                PROPERTIES
-                COMPILE_FLAGS "-Wno-all")
-    ENDIF()
-
-
-
-    SET(SOURCES ${SOURCES}
-    ${PARAKLETE_KLU_COMMON}
-    Amesos_Klu.cpp
-    ${KLU_FILES}
-    )
-
 ENDIF()
 
 #
@@ -321,7 +239,9 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/PARAKLETE/Include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/CAMD/Include)
 
-  SET(PARAKLETE_HEADERS
+  SET(HEADERS ${HEADERS}
+    ${PARAKLETE_KLU_COMMON_H}
+    Amesos_Paraklete.h
     SuiteSparse/PARAKLETE/Include/amesos_paraklete_decl.h
     SuiteSparse/CHOLMOD/Include/amesos_cholmod_complexity.h
     SuiteSparse/CCOLAMD/Include/amesos_ccolamd.h
@@ -336,35 +256,13 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_solve.c
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_lsolve.c
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_ltsolve.c
+    SuiteSparse/CAMD/Include/amesos_camd.h
+    SuiteSparse/CAMD/Include/amesos_camd_internal.h
     )
 
-
-   IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                   IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2)
-                              SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_HEADERS},
-                                PROPERTIES
-                                COMPILE_FLAGS "-Wno-all -Wno-pedantic")
-                            ENDIF()
-   ELSEIF (WIN32 AND NOT CYGWIN)
-       # No flags
-   ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
-      #No flags
-   ELSE()
-        SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_HEADERS},
-                                PROPERTIES
-                                COMPILE_FLAGS "-Wno-all ")
-   ENDIF()
-  
-
-
-   SET(HEADERS ${HEADERS}
-       ${PARAKLETE_KLU_COMMON_H}
-       Amesos_Paraklete.h
-       ${PARAKLETE_HEADERS}
-  )
-
-  SET(PARAKLETE_SOURCE
-        SuiteSparse/PARAKLETE/Source/amesos_paraklete_analyze.c
+  SET(SOURCES ${SOURCES}
+    ${PARAKLETE_KLU_COMMON}
+    SuiteSparse/PARAKLETE/Source/amesos_paraklete_analyze.c
     SuiteSparse/PARAKLETE/Source/amesos_paraklete_btf.c
     SuiteSparse/PARAKLETE/Source/amesos_paraklete_error.c
     SuiteSparse/PARAKLETE/Source/amesos_paraklete_factorize.c
@@ -430,32 +328,8 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
     SuiteSparse/BTF/Source/amesos_btf_l_order.c
     SuiteSparse/BTF/Source/amesos_btf_l_maxtrans.c
     SuiteSparse/BTF/Source/amesos_btf_l_strongcomp.c
- )
-
-    
-  IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2)
-     SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_SOURCE},
-                              PROPERTIES
-                              COMPILE_FLAGS "-Wno-all -Wno-pedantic")
-        ENDIF()
-  ELSEIF (WIN32 AND NOT CYGWIN)
-       # No flags
-  ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
-      #No flags
-  ELSE()
-      SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_SOURCE},
-                              PROPERTIES
-                              COMPILE_FLAGS "-Wno-all")
-  ENDIF()
-
-
-  SET(SOURCES ${SOURCES}
-      ${PARAKLETE_KLU_COMMON}
-      ${PARAKLETE_SOURCE}
-       Amesos_Paraklete.cpp
-   )
-      
+    Amesos_Paraklete.cpp
+    )
 ENDIF()
 
 #
@@ -601,11 +475,6 @@ IF (TPL_ENABLE_MPI)
     )
 
 ENDIF()
-
-
-
-
-
 
 #
 # C) Define the targets for package's library(s)

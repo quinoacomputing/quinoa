@@ -88,9 +88,6 @@ EpetraOperator::EpetraOperator( const Teuchos::RCP<LinearProblem<double,Epetra_M
   else if (solver == "BlockCG") {
     solver_ = Teuchos::rcp( new BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>( lp_, plist) );
   }
-  else if (solver == "PseudoBlockCG") {
-    solver_ = Teuchos::rcp( new PseudoBlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>( lp_, plist_ ) );
-  }
 }
 
 const Epetra_Comm& EpetraOperator::Comm() const 

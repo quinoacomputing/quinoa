@@ -1,3 +1,0 @@
-
-int check_cuda();
-

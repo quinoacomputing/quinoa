@@ -84,7 +84,7 @@ C   --   LISEV - SCRATCH - size = NVAREL (if 'V' in OPTION)
       LOGICAL ISABRT
       LOGICAL DONAM, DOVTBL, DOCONN, DOATR
       LOGICAL BLK1
-      CHARACTER*32 STRA, STRB
+      CHARACTER*20 STRA, STRB
 
       DONAM  = ((OPTION .EQ. '*') .OR. (INDEX (OPTION, 'N') .GT. 0))
       DOVTBL = ((OPTION .EQ. '*') .OR. (INDEX (OPTION, 'V') .GT. 0))
@@ -109,7 +109,7 @@ C   --   LISEV - SCRATCH - size = NVAREL (if 'V' in OPTION)
       CALL PCKSTR (1, STRA)
       LSTRA = LENSTR (STRA)
       WRITE (STRB, 10010, IOSTAT=IDUM) LENE(NELBLK), LENE(NELBLK)
-10010  FORMAT ('(', I10, '..', I10, ')')
+10010  FORMAT ('(', I8, '..', I8, ')')
       CALL PCKSTR (1, STRB)
       LSTRB = LENSTR (STRB)
 

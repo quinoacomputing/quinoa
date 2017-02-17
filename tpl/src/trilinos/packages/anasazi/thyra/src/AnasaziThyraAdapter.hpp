@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -41,11 +41,6 @@
 #include <Thyra_DetachedMultiVectorView.hpp>
 #include <Thyra_MultiVectorBase.hpp>
 #include <Thyra_MultiVectorStdOps.hpp>
-#include <Thyra_VectorStdOps.hpp>
-
-#include <Teuchos_Ptr.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ArrayView.hpp>
 
 namespace Anasazi {
   
@@ -68,9 +63,6 @@ namespace Anasazi {
   {
   private:
     typedef Thyra::MultiVectorBase<ScalarType> TMVB;
-    typedef Teuchos::ScalarTraits<ScalarType> ST;
-    typedef typename ST::magnitudeType magType;
-
   public:
 
     /** \name Creation methods */
@@ -80,9 +72,9 @@ namespace Anasazi {
       
     \return Reference-counted pointer to the new MultiVectorBase.
     */
-    static Teuchos::RCP<TMVB> Clone( const TMVB & mv, const int numvecs )
+    static Teuchos::RCP< Thyra::MultiVectorBase<ScalarType> > Clone( const  Thyra::MultiVectorBase<ScalarType> & mv, const int numvecs )
     { 
-      Teuchos::RCP<TMVB> c = Thyra::createMembers( mv.range(), numvecs ); 
+      Teuchos::RCP< Thyra::MultiVectorBase<ScalarType> > c = Thyra::createMembers( mv.range(), numvecs ); 
       return c;
     }
 
@@ -90,12 +82,12 @@ namespace Anasazi {
       
       \return Reference-counted pointer to the new MultiVectorBase.
     */
-    static Teuchos::RCP<TMVB> 
-    CloneCopy (const TMVB& mv)
+    static Teuchos::RCP<Thyra::MultiVectorBase<ScalarType> > 
+    CloneCopy (const Thyra::MultiVectorBase<ScalarType>& mv)
     { 
       const int numvecs = mv.domain()->dim();
       // create the new multivector
-      Teuchos::RCP< TMVB > cc = Thyra::createMembers (mv.range(), numvecs);
+      Teuchos::RCP<Thyra::MultiVectorBase<ScalarType> > cc = Thyra::createMembers (mv.range(), numvecs);
       // copy the data from the source multivector to the new multivector
       Thyra::assign (Teuchos::outArg (*cc), mv);
       return cc;
@@ -106,13 +98,13 @@ namespace Anasazi {
       The copied vectors from \c mv are indicated by the \c indeX.size() indices in \c index.      
       \return Reference-counted pointer to the new MultiVectorBase.
     */
-    static Teuchos::RCP< TMVB > CloneCopy( const TMVB & mv, const std::vector<int>& index )
+    static Teuchos::RCP< Thyra::MultiVectorBase< ScalarType > > CloneCopy( const  Thyra::MultiVectorBase< ScalarType > & mv, const std::vector<int>& index )
     { 
       const int numvecs = index.size();
       // create the new multivector
-      Teuchos::RCP<TMVB > cc = Thyra::createMembers (mv.range(), numvecs);
+      Teuchos::RCP<Thyra::MultiVectorBase<ScalarType> > cc = Thyra::createMembers (mv.range(), numvecs);
       // create a view to the relevant part of the source multivector
-      Teuchos::RCP<const TMVB > view = mv.subView ( Teuchos::arrayViewFromVector( index ) );
+      Teuchos::RCP<const Thyra::MultiVectorBase<ScalarType> > view = mv.subView (numvecs, &(index[0]));
       // copy the data from the relevant view to the new multivector
       Thyra::assign (Teuchos::outArg (*cc), *view);
       return cc;
@@ -136,7 +128,7 @@ namespace Anasazi {
     The index of the \c numvecs vectors shallow copied from \c mv are indicated by the indices given in \c index.
     \return Reference-counted pointer to the new MultiVectorBase.
     */      
-    static Teuchos::RCP< TMVB > CloneViewNonConst( TMVB & mv, const std::vector<int>& index )
+    static Teuchos::RCP< Thyra::MultiVectorBase< ScalarType > > CloneViewNonConst(  Thyra::MultiVectorBase< ScalarType > & mv, const std::vector<int>& index )
     {
       int numvecs = index.size();
 
@@ -158,7 +150,7 @@ namespace Anasazi {
         if (lb+i != index[i]) contig = false;
       }
 
-      Teuchos::RCP< TMVB > cc;
+      Teuchos::RCP<  Thyra::MultiVectorBase< ScalarType >  > cc;
       if (contig) {
         const Thyra::Range1D rng(lb,lb+numvecs-1);
         // create a contiguous view to the relevant part of the source multivector
@@ -166,7 +158,7 @@ namespace Anasazi {
       }
       else {
         // create an indexed view to the relevant part of the source multivector
-        cc = mv.subView( Teuchos::arrayViewFromVector( index ) );
+        cc = mv.subView( numvecs, &(index[0]) );
       }
       return cc;
     }
@@ -187,7 +179,7 @@ namespace Anasazi {
     The index of the \c numvecs vectors shallow copied from \c mv are indicated by the indices given in \c index.
     \return Reference-counted pointer to the new const MultiVectorBase.
     */      
-    static Teuchos::RCP<const TMVB > CloneView( const TMVB & mv, const std::vector<int>& index )
+    static Teuchos::RCP<const  Thyra::MultiVectorBase< ScalarType > > CloneView( const  Thyra::MultiVectorBase< ScalarType > & mv, const std::vector<int>& index )
     {
       int numvecs = index.size();
 
@@ -209,7 +201,7 @@ namespace Anasazi {
         if (lb+i != index[i]) contig = false;
       }
 
-      Teuchos::RCP< const TMVB > cc;
+      Teuchos::RCP< const  Thyra::MultiVectorBase< ScalarType >  > cc;
       if (contig) {
         const Thyra::Range1D rng(lb,lb+numvecs-1);
         // create a contiguous view to the relevant part of the source multivector
@@ -217,7 +209,7 @@ namespace Anasazi {
       }
       else {
         // create an indexed view to the relevant part of the source multivector
-        cc = mv.subView(Teuchos::arrayViewFromVector( index ) );
+        cc = mv.subView( numvecs, &(index[0]) );
       }
       return cc;
     }
@@ -239,11 +231,11 @@ namespace Anasazi {
     //@{
 
     //! Obtain the vector length of \c mv.
-    static ptrdiff_t GetGlobalLength( const TMVB & mv )
+    static int GetVecLength( const  Thyra::MultiVectorBase< ScalarType > & mv )
     { return mv.range()->dim(); }
 
     //! Obtain the number of vectors in \c mv
-    static int GetNumberVecs( const TMVB & mv )
+    static int GetNumberVecs( const  Thyra::MultiVectorBase< ScalarType > & mv )
     { return mv.domain()->dim(); }
 
     //@}
@@ -253,66 +245,65 @@ namespace Anasazi {
 
     /*! \brief Update \c mv with \f$ \alpha AB + \beta mv \f$.
      */
-    static void MvTimesMatAddMv( const ScalarType alpha, const TMVB & A, 
+    static void MvTimesMatAddMv( const ScalarType alpha, const  Thyra::MultiVectorBase< ScalarType > & A, 
 				 const Teuchos::SerialDenseMatrix<int,ScalarType>& B, 
-				 const ScalarType beta, TMVB & mv )
+				 const ScalarType beta,  Thyra::MultiVectorBase< ScalarType > & mv )
     {
       int m = B.numRows();
       int n = B.numCols();
       // Create a view of the B object!
-      Teuchos::RCP< const TMVB >
+      Teuchos::RCP< const  Thyra::MultiVectorBase< ScalarType >  >
         B_thyra = Thyra::createMembersView(
-          A.domain(),
-          RTOpPack::ConstSubMultiVectorView<ScalarType>(
-            0, m, 0, n,
-            Teuchos::arcpFromArrayView(Teuchos::arrayView(&B(0,0), B.stride()*B.numCols())), B.stride()
-            )
+          A.domain()
+          ,RTOpPack::ConstSubMultiVectorView<ScalarType>(0,m,0,n,&B(0,0),B.stride())
           );
       // perform the operation via A: mv <- alpha*A*B_thyra + beta*mv
-      A.apply(Thyra::NOTRANS,*B_thyra,Teuchos::outArg (mv),alpha,beta);
+      A.apply(Thyra::NONCONJ_ELE,*B_thyra,&mv,alpha,beta);
     }
 
     /*! \brief Replace \c mv with \f$\alpha A + \beta B\f$.
      */
-    static void MvAddMv( const ScalarType alpha, const TMVB & A, 
-                         const ScalarType beta,  const TMVB & B, TMVB & mv )
+    static void MvAddMv( const ScalarType alpha, const  Thyra::MultiVectorBase< ScalarType > & A, 
+                         const ScalarType beta,  const  Thyra::MultiVectorBase< ScalarType > & B,  Thyra::MultiVectorBase< ScalarType > & mv )
     { 
-      using Teuchos::tuple; using Teuchos::ptrInArg; using Teuchos::inoutArg;
+      ScalarType coef[2], zero = Teuchos::ScalarTraits<ScalarType>::zero();
+      const  Thyra::MultiVectorBase< ScalarType >  * in[2];
 
-      Thyra::linear_combination<ScalarType>(
-        tuple(alpha, beta)(), tuple(ptrInArg(A), ptrInArg(B))(), ST::zero(), inoutArg(mv));
+      in[0] = &A;
+      in[1] = &B;
+      coef[0] = alpha;
+      coef[1] = beta;
+
+      Thyra::linear_combination(2,coef,in,zero,&mv);
     }
 
     /*! \brief Compute a dense matrix \c B through the matrix-matrix multiply \f$ \alpha A^Tmv \f$.
     */
-    static void MvTransMv( const ScalarType alpha, const TMVB & A, const TMVB & mv, 
+    static void MvTransMv( const ScalarType alpha, const  Thyra::MultiVectorBase< ScalarType > & A, const  Thyra::MultiVectorBase< ScalarType > & mv, 
                            Teuchos::SerialDenseMatrix<int,ScalarType>& B )
     { 
       // Create a multivector to hold the result (m by n)
       int m = A.domain()->dim();
       int n = mv.domain()->dim();
       // Create a view of the B object!
-      Teuchos::RCP< TMVB >
+      Teuchos::RCP<  Thyra::MultiVectorBase< ScalarType >  >
         B_thyra = Thyra::createMembersView(
-          A.domain(),
-          RTOpPack::SubMultiVectorView<ScalarType>(
-            0, m, 0, n,
-            Teuchos::arcpFromArrayView(Teuchos::arrayView(&B(0,0), B.stride()*B.numCols())), B.stride()
-            )
+          A.domain()
+          ,RTOpPack::SubMultiVectorView<ScalarType>(0,m,0,n,&B(0,0),B.stride())
           );
-      A.apply(Thyra::CONJTRANS,mv,B_thyra.ptr(),alpha,Teuchos::ScalarTraits<ScalarType>::zero());
+      A.applyTranspose(Thyra::CONJ_ELE,mv,&*B_thyra,alpha,Teuchos::ScalarTraits<ScalarType>::zero());
     }
 
     /*! \brief Compute a vector \c b where the components are the individual dot-products of the 
         \c i-th columns of \c A and \c mv, i.e.\f$b[i] = A[i]^Tmv[i]\f$.
      */
-    static void MvDot( const TMVB & mv, const TMVB & A, std::vector<ScalarType> &b )
-    { Thyra::dots(mv,A,Teuchos::arrayViewFromVector( b )); }
+    static void MvDot( const  Thyra::MultiVectorBase< ScalarType > & mv, const  Thyra::MultiVectorBase< ScalarType > & A, std::vector<ScalarType> &b )
+    { Thyra::dots(mv,A,&(b[0])); }
 
     /*! \brief Scale each element of the vectors in \c *this with \c alpha.
      */
     static void 
-    MvScale (TMVB& mv, 
+    MvScale (Thyra::MultiVectorBase<ScalarType>& mv, 
 	     const ScalarType alpha)
     { 
       Thyra::scale (alpha, Teuchos::inOutArg (mv)); 
@@ -321,7 +312,7 @@ namespace Anasazi {
     /*! \brief Scale each element of the \c i-th vector in \c *this with \c alpha[i].
      */
     static void 
-    MvScale (TMVB& mv, 
+    MvScale (Thyra::MultiVectorBase<ScalarType>& mv, 
 	     const std::vector<ScalarType>& alpha) 
     { 
       for (unsigned int i=0; i<alpha.size(); i++) {
@@ -337,8 +328,8 @@ namespace Anasazi {
     /*! \brief Compute the 2-norm of each individual vector of \c mv.  
       Upon return, \c normvec[i] holds the value of \f$||mv_i||_2\f$, the \c i-th column of \c mv.
     */
-    static void MvNorm( const TMVB & mv, std::vector<typename Teuchos::ScalarTraits<ScalarType>::magnitudeType> &normvec )
-    { Thyra::norms_2(mv,Teuchos::arrayViewFromVector( normvec )); }
+    static void MvNorm( const  Thyra::MultiVectorBase< ScalarType > & mv, std::vector<typename Teuchos::ScalarTraits<ScalarType>::magnitudeType> &normvec )
+    { Thyra::norms_2(mv,&(normvec[0])); }
 
     //@}
 
@@ -347,7 +338,7 @@ namespace Anasazi {
 
     /*! \brief Copy the vectors in \c A to a set of vectors in \c mv indicated by the indices given in \c index.
      */
-    static void SetBlock( const TMVB & A, const std::vector<int>& index, TMVB & mv )
+    static void SetBlock( const  Thyra::MultiVectorBase< ScalarType > & A, const std::vector<int>& index,  Thyra::MultiVectorBase< ScalarType > & mv )
     { 
       // Extract the "numvecs" columns of mv indicated by the index vector.
       int numvecs = index.size();
@@ -368,9 +359,9 @@ namespace Anasazi {
         indexA.resize( numAcols );
       }
       // create a view to the relevant part of the source multivector
-      Teuchos::RCP< const TMVB > relsource = A.subView( Teuchos::arrayViewFromVector( indexA ) );
+      Teuchos::RCP< const  Thyra::MultiVectorBase< ScalarType >  > relsource = A.subView( numAcols, &(indexA[0]) );
       // create a view to the relevant part of the destination multivector
-      Teuchos::RCP< TMVB > reldest = mv.subView( Teuchos::arrayViewFromVector( index ) );
+      Teuchos::RCP<  Thyra::MultiVectorBase< ScalarType >  > reldest = mv.subView( numvecs, &(index[0]) );
       // copy the data to the destination multivector subview
       Thyra::assign (Teuchos::outArg (*reldest), *relsource);
     }
@@ -457,19 +448,19 @@ namespace Anasazi {
 
     /*! \brief Replace the vectors in \c mv with random vectors.
      */
-    static void MvRandom( TMVB & mv )
+    static void MvRandom(  Thyra::MultiVectorBase< ScalarType > & mv )
     { 
       // Thyra::randomize generates via a uniform distribution on [l,u]
       // We will use this to generate on [-1,1]
       Thyra::randomize(-Teuchos::ScalarTraits<ScalarType>::one(),
                         Teuchos::ScalarTraits<ScalarType>::one(),
-                        Teuchos::outArg (mv));
+                       &mv);
     }
 
     /*! \brief Replace each element of the vectors in \c mv with \c alpha.
      */
     static void 
-    MvInit (TMVB& mv, 
+    MvInit (Thyra::MultiVectorBase< ScalarType >& mv, 
 	    ScalarType alpha = Teuchos::ScalarTraits<ScalarType>::zero())
     { 
       Thyra::assign (Teuchos::outArg (mv), alpha); 
@@ -482,7 +473,7 @@ namespace Anasazi {
 
     /*! \brief Print the \c mv multi-vector to the \c os output stream.
      */
-    static void MvPrint( const TMVB & mv, std::ostream& os )
+    static void MvPrint( const  Thyra::MultiVectorBase< ScalarType > & mv, std::ostream& os )
     { 
        Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::getFancyOStream(Teuchos::rcp(&os,false));    
        out->setf(std::ios_base::scientific);    
@@ -493,7 +484,6 @@ namespace Anasazi {
     //@}
 
   };        
-
 
   ///////////////////////////////////////////////////////////////////////// 
   //
@@ -520,7 +510,7 @@ namespace Anasazi {
     */    
     static void Apply ( const Thyra::LinearOpBase< ScalarType >& Op, const  Thyra::MultiVectorBase< ScalarType > & x,  Thyra::MultiVectorBase< ScalarType > & y )
     { 
-      Op.apply(Thyra::NOTRANS,x,Teuchos::outArg (y), Teuchos::ScalarTraits<ScalarType>::one(),Teuchos::ScalarTraits<ScalarType>::zero());
+      Op.apply(Thyra::NONCONJ_ELE,x,&y);
     }
     
   };

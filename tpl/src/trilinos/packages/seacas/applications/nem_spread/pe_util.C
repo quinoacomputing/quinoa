@@ -2,23 +2,23 @@
  * Copyright (C) 2009 Sandia Corporation.  Under the terms of Contract
  * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
  * certain rights in this software
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
+ * 
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *
+ * 
  *     * Redistributions in binary form must reproduce the above
  *       copyright notice, this list of conditions and the following
  *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- *
+ * 
  *     * Neither the name of Sandia Corporation nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,17 +30,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * 
  */
 
-#include "ps_pario_const.h" // for Parallel_IO, PIO_Info
-#include "rf_allo.h"        // for array_alloc
-#include "rf_io_const.h"    // for Debug_Flag, MAX_FNL
-#include <cstdio>           // for sprintf, fprintf, printf, etc
-#include <cstdlib>          // for exit
-#include <cstring>          // for strcat, strcpy, strlen, etc
-#include <sstream>
-#include <string>
+#include <stdio.h>                      // for sprintf, fprintf, printf, etc
+#include <stdlib.h>                     // for exit
+#include <string.h>                     // for strcat, strcpy, strlen, etc
+#include "ps_pario_const.h"             // for Parallel_IO, PIO_Info
+#include "rf_allo.h"                    // for array_alloc
+#include "rf_io_const.h"                // for Debug_Flag, MAX_FNL
 
 /*********** R O U T I N E S   I N    T H I S  F I L E ***********************
 
@@ -53,19 +51,12 @@
           add_fname_ext()    void        gen_par_filename (pe_util.c)
 
 ******************************************************************************/
-namespace {
-  template <class T> static std::string to_string(const T &t)
-  {
-    std::ostringstream os;
-    os << t;
-    return os.str();
-  }
-}
 
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
-void gen_disk_map(struct Parallel_IO *pio_info, int proc_info[], int proc, int nproc)
+void gen_disk_map(struct Parallel_IO *pio_info, int proc_info[],
+                  int proc, int nproc)
 /*
  * This function generates a map of which processor ID writes to which
  * RAID. Note that this is for each processor in the list, not necessarily
@@ -73,35 +64,37 @@ void gen_disk_map(struct Parallel_IO *pio_info, int proc_info[], int proc, int n
  * processor has an identical list.
  */
 {
-  char yo[] = "gen_disk_map";
+  char   yo[]="gen_disk_map";
 
-  int iproc, proc_id, ctrl_id;
+  int    iproc, proc_id, ctrl_id;
   /*------------------------ EXECUTION BEGINS ------------------------------*/
 
   /* Allocate memory for the list */
-  pio_info->RDsk_List = (int **)array_alloc(__FILE__, __LINE__, 2, proc_info[0], 2, sizeof(int));
-  if (!(pio_info->RDsk_List)) {
+  pio_info->RDsk_List = (int **)array_alloc(__FILE__, __LINE__, 2,
+                                            proc_info[0], 2, sizeof(int));
+  if(!(pio_info->RDsk_List)) {
     fprintf(stderr, "%s: ERROR, insufficient memory\n", yo);
     exit(1);
   }
 
   /* Generate the list of disks to which data will be written */
-  if (pio_info->Dsk_List_Cnt <= 0) {
-    for (iproc = 0; iproc < proc_info[0]; iproc++) {
-      ctrl_id                       = (iproc % pio_info->Num_Dsk_Ctrlrs);
+  if(pio_info->Dsk_List_Cnt <= 0) {
+    for(iproc=0; iproc < proc_info[0]; iproc++) {
+      ctrl_id = (iproc % pio_info->Num_Dsk_Ctrlrs);
       pio_info->RDsk_List[iproc][0] = ctrl_id + pio_info->PDsk_Add_Fact;
     }
   }
   else {
-    for (iproc = 0; iproc < proc_info[0]; iproc++) {
-      pio_info->RDsk_List[iproc][0] = pio_info->Dsk_List[iproc % pio_info->Dsk_List_Cnt];
+    for(iproc=0; iproc < proc_info[0]; iproc++) {
+      pio_info->RDsk_List[iproc][0] = pio_info->Dsk_List[iproc%
+							 pio_info->Dsk_List_Cnt];
     }
   }
 
   /* Generate the list of processors on which info is stored */
-  for (iproc = 0; iproc < proc_info[0]; iproc++) {
+  for(iproc=0; iproc < proc_info[0]; iproc++) {
     proc_id = iproc;
-    while (proc_id >= nproc)
+    while(proc_id >= nproc)
       proc_id -= nproc;
 
     pio_info->RDsk_List[iproc][1] = proc_id;
@@ -112,7 +105,8 @@ void gen_disk_map(struct Parallel_IO *pio_info, int proc_info[], int proc, int n
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
-std::string gen_par_filename(const char *scalar_fname, int proc_for, int nprocs)
+void gen_par_filename(char *scalar_fname, char *par_fname,
+                      int proc_for, int nprocs)
 /*----------------------------------------------------------------------------
  *
  *      Author(s):     Gary Hennigan (1421)
@@ -146,11 +140,11 @@ std::string gen_par_filename(const char *scalar_fname, int proc_for, int nprocs)
 
   /*      Local variables      */
 
-  int         i1, iTemp1, ctrlID;
-  int         iMaxDigit = 0, iMyDigit = 0;
-  std::string par_filename;
+  int i1, iTemp1, ctrlID;
+  int iMaxDigit=0, iMyDigit=0;
+  char cTemp[MAX_FNL];
 
-  /************************* EXECUTION BEGINS *******************************/
+/************************* EXECUTION BEGINS *******************************/
 
   /*
    * Find out the number of digits needed to specify the processor ID.
@@ -159,66 +153,88 @@ std::string gen_par_filename(const char *scalar_fname, int proc_for, int nprocs)
    */
 
   iTemp1 = nprocs;
-  do {
+  do
+  {
     iTemp1 /= 10;
     iMaxDigit++;
-  } while (iTemp1 >= 1);
+  }
+  while(iTemp1 >= 1);
 
   iTemp1 = proc_for;
-  do {
+  do
+  {
     iTemp1 /= 10;
     iMyDigit++;
-  } while (iTemp1 >= 1);
+  }
+  while(iTemp1 >= 1);
 
   /*
    * Append the number of processors in this run to the scalar file name
    * along with a '.' (period).
    */
-  par_filename = scalar_fname + std::string(".") + to_string(nprocs) + std::string(".");
+  par_fname[0] = 0x00;
+  strcpy(par_fname, scalar_fname);
+  strcat(par_fname, ".");
+  sprintf(cTemp, "%d", nprocs);
+  strcat(par_fname, cTemp);
+  strcat(par_fname, ".");
 
   /*
    * Append the proper number of zeros to the filename.
    */
-  for (i1 = 0; i1 < iMaxDigit - iMyDigit; i1++)
-    par_filename += std::string("0");
+  for(i1=0; i1 < iMaxDigit-iMyDigit; i1++)
+    strcat(par_fname, "0");
 
   /*
    * Generate the name of the directory on which the parallel disk
    * array resides. This also directs which processor writes to what
    * disk.
    */
-  par_filename += to_string(proc_for);
+  sprintf(cTemp, "%d", proc_for);
+  strcat(par_fname, cTemp);
+  strcpy(cTemp, par_fname);
+
 
   /*
    * Finally, generate the complete file specification for the parallel
    * file used by this processor.
    */
-  if (PIO_Info.NoSubdirectory == 1) {
-    par_filename =
-        std::string(PIO_Info.Par_Dsk_Root) + std::string(PIO_Info.Par_Dsk_SubDirec) + par_filename;
-  }
-  else {
-    if (PIO_Info.Zeros) {
+  if(PIO_Info.NoSubdirectory == 1) {
+    sprintf(par_fname, "%s%s%s",
+	    PIO_Info.Par_Dsk_Root, PIO_Info.Par_Dsk_SubDirec, cTemp);
+  } else {
+    if(PIO_Info.Zeros) {
       ctrlID = PIO_Info.RDsk_List[proc_for][0];
-      if (ctrlID <= 9) {
-        par_filename = std::string(PIO_Info.Par_Dsk_Root) + "0" + to_string(ctrlID) + "/" +
-                       std::string(PIO_Info.Par_Dsk_SubDirec) + par_filename;
+      if(ctrlID <= 9) {
+	sprintf(par_fname, "%s%d%d/%s%s", PIO_Info.Par_Dsk_Root,0,
+		ctrlID, PIO_Info.Par_Dsk_SubDirec, cTemp);
       }
       else {
-        par_filename = std::string(PIO_Info.Par_Dsk_Root) + to_string(ctrlID) + "/" +
-                       std::string(PIO_Info.Par_Dsk_SubDirec) + par_filename;
+	sprintf(par_fname, "%s%d/%s%s", PIO_Info.Par_Dsk_Root,
+		ctrlID, PIO_Info.Par_Dsk_SubDirec, cTemp);
       }
-    }
+  }
     else {
-      ctrlID       = PIO_Info.RDsk_List[proc_for][0];
-      par_filename = std::string(PIO_Info.Par_Dsk_Root) + to_string(ctrlID) + "/" +
-                     std::string(PIO_Info.Par_Dsk_SubDirec) + par_filename;
+      ctrlID = PIO_Info.RDsk_List[proc_for][0];
+      sprintf(par_fname, "%s%d/%s%s", PIO_Info.Par_Dsk_Root, ctrlID,
+	      PIO_Info.Par_Dsk_SubDirec, cTemp);
     }
   }
-  if (Debug_Flag >= 4)
-    printf("Parallel file name: %s\n", par_filename.c_str());
+/* not supporting ncubed right now ------>
+  else if(strcmp(PIO_Info.Targ_Machine,"ncube") == 0) {
+    diskID = proc_for % PIO_Info.Num_Dsks_PCtrlr;
+    ctrlID = (proc_for / PIO_Info.Num_Dsks_PCtrlr) % PIO_Info.Num_Dsk_Ctrlrs;
+    sprintf(par_fname, "%s%d%d/%s%s", PIO_Info.Par_Dsk_Root,
+            ctrlID, diskID+PIO_Info.PDsk_Add_Fact, PIO_Info.Par_Dsk_SubDirec,
+            cTemp);
 
-  return par_filename;
+  }
+<-------------------*/
+
+  if(Debug_Flag >= 4)
+    printf("Parallel file name: %s\n", par_fname);
+
+  return;
 }
 
 /*****************************************************************************/
@@ -227,24 +243,41 @@ std::string gen_par_filename(const char *scalar_fname, int proc_for, int nprocs)
 
 void add_fname_ext(char *cOrigFile, const char *cExt)
 /*
- *     This function adds the extension input to the function as
+ *     This function removes the existing extension on a file name,
+ *     if it exists, and adds the extension input to the function as
  *     the variable cExt. The function overwrites the original file
- *     name. Any existing extension is retained. "test.e" becomes "test.e.new"
+ *     name.
  *
  *     Note that it is assumed enough memory is allocate for the original
  *     string to handle it's new extension.
  */
 {
-  int iExtLen = strlen(cExt);
 
-  char *cPtr = cOrigFile;
-  cPtr += strlen(cOrigFile);
+  char *cPtr;
+  int i1, iExtLen;
 
-  int i1 = 0;
-  for (; i1 < iExtLen; i1++) {
-    cPtr[i1] = cExt[i1];
+  cPtr = strrchr(cOrigFile, '.');
+
+  iExtLen = strlen(cExt);
+
+  if(cPtr != NULL)
+  {
+    for(i1=0; i1 < iExtLen; i1++)
+    {
+      cPtr[i1] = cExt[i1];
+    }
+    cPtr[i1] = '\0';
   }
-  cPtr[i1] = '\0';
+  else
+  {
+    cPtr = cOrigFile;
+    cPtr += strlen(cOrigFile);
+    for(i1=0; i1 < iExtLen; i1++)
+    {
+      cPtr[i1] = cExt[i1];
+    }
+    cPtr[i1] = '\0';
+  }
 
   return;
 }

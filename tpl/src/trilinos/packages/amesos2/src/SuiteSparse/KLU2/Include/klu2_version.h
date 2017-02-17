@@ -19,7 +19,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Mike A. Heroux (maherou@sandia.gov)
 //
@@ -46,10 +46,10 @@
 
 #define NPRINT  
 
-#define KLU2_BYTES(type,n) (sizeof (type) * (n))
-#define KLU2_CEILING(b,u)  (((b)+(u)-1) / (u))
-#define UNITS(type,n) (KLU2_CEILING (KLU2_BYTES (type,n), sizeof (Unit)))
-#define DUNITS(type,n) (ceil (KLU2_BYTES (type, (double) n) / sizeof (Unit)))
+#define BYTES(type,n) (sizeof (type) * (n))
+#define CEILING(b,u)  (((b)+(u)-1) / (u))
+#define UNITS(type,n) (CEILING (BYTES (type,n), sizeof (Unit)))
+#define DUNITS(type,n) (ceil (BYTES (type, (double) n) / sizeof (Unit)))
 
 #define GET_I_POINTER(LU, Xip, Xi, k) \
 { \
@@ -168,7 +168,6 @@ SCALAR_IS_LTZERO(x):
 
 typedef double Unit ;
 /*#define Entry double*/
-/* TODO: Need to add namespace to these methods */
 
 #define SPLIT(s)                    (1)
 #define REAL(c)                     (Teuchos::ScalarTraits<Entry>::real(c))
@@ -192,7 +191,7 @@ typedef double Unit ;
 #define RECIPROCAL(c)               { (c) = KLU_ScalarTraits<Entry>::reciprocal(c) ; }
 #define DIV_CONJ(c,a,b)             { (c) = KLU_ScalarTraits<Entry>::divideConjugate(a, b) ; }
 #define APPROX_ABS(s,a)             { (s) =  KLU_ScalarTraits<Entry>::approxABS(a) ; }
-#define KLU2_ABS(s,a)                    { (s) =  KLU_ScalarTraits<Entry>::abs(a) ; }
+#define ABS(s,a)                    { (s) =  KLU_ScalarTraits<Entry>::abs(a) ; }
 #define PRINT_ENTRY(a)              PRINT_SCALAR (a)
 #define CONJ(a,x)                   a = (Teuchos::ScalarTraits<Entry>::conjugate(x))
 

@@ -70,7 +70,7 @@ public:
             const int numGlobalElementsX, const int numGlobalElementsY,
             const int numDomainsX, const int numDomainsY,
             Galeri::grid::Loadable& domain, Galeri::grid::Loadable& boundary,
-            const std::string what);
+            const string what);
 
   static void
   getCubeWithHexs(Epetra_Comm& comm, 

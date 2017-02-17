@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 
@@ -48,7 +48,7 @@
 int main(int argc, char *argv[])
 {
 
-  std::cout << Epetra_Version() << std::endl << std::endl;
+  cout << Epetra_Version() << endl << endl;
 
   Epetra_SerialComm Comm;
 
@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
   x.Norm2(&xnorm);
   b.Norm2(&bnorm);
 
-  std::cout << "2 norm of x = " << xnorm << std::endl
-       << "2 norm of b = " << bnorm << std::endl;
+  cout << "2 norm of x = " << xnorm << endl
+       << "2 norm of b = " << bnorm << endl;
 
   return 0;
 }

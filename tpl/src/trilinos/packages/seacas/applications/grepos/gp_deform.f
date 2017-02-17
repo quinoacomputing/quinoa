@@ -39,28 +39,24 @@ C
 C ... Read the displacements from the database.
 C     Assume they are the first 'ndim' nodal variables...
       call exgnv (ndb, idefst, 1, numnp, dx, ierr)
-      if (ndim .ge. 2) then
-        call exgnv (ndb, idefst, 2, numnp, dy, ierr)
-      end if
+      call exgnv (ndb, idefst, 2, numnp, dy, ierr)
       if (ndim .eq. 3) then
         call exgnv (ndb, idefst, 3, numnp, dz, ierr)
       end if
       
 C ... Deform the variables...
-      do i=1, numnp
+      do 10 i=1, numnp
         x(i) = x(i) + dx(i)
-      end do
+ 10   continue
 
-      if (ndim .ge. 2) then
-        do i=1, numnp
-          y(i) = y(i) + dy(i)
-        end do
-      end if
+      do 20 i=1, numnp
+        y(i) = y(i) + dy(i)
+ 20   continue
 
       if (ndim .eq. 3) then
-        do i=1, numnp
+        do 30 i=1, numnp
           z(i) = z(i) + dz(i)
-        end do
+ 30     continue
       end if
 
       return

@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-//
+// 
 //    Thyra: Interfaces and Support for Abstract Numerical Algorithms
 //                 Copyright (2004) Sandia Corporation
-//
+// 
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov)
-//
+// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov) 
+// 
 // ***********************************************************************
 // @HEADER
 
@@ -99,7 +99,7 @@ public:
 
   //@}
 
-  /** \name Public functions overridden from ModelEvaluator. */
+  /** \name Public functions overridden from ModelEvaulator. */
   //@{
 
   /** \brief . */
@@ -107,17 +107,9 @@ public:
 
   //@}
 
-  /** \name Public functions overridden from ModelEvaluatorDelegatorBase. */
-  //@{
-
-  /** \brief . */
-  RCP<const LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
-
-  //@}
-
 private:
 
-  /** \name Private functions overridden from ModelEvaluatorDefaultBase. */
+  /** \name Private functions overridden from ModelEvaulatorDefaultBase. */
   //@{
 
   /** \brief . */
@@ -133,7 +125,7 @@ private:
 private:
 
   RCP<LinearOpWithSolveFactoryBase<Scalar> > W_factory_;
-
+ 
 };
 
 
@@ -208,7 +200,7 @@ std::string DefaultModelEvaluatorWithSolveFactory<Scalar>::description() const
 }
 
 
-// Overridden from ModelEvaluator.
+// Overridden from ModelEvaulator.
 
 
 template<class Scalar>
@@ -226,18 +218,7 @@ DefaultModelEvaluatorWithSolveFactory<Scalar>::create_W() const
 }
 
 
-// Overridden from ModelEvaluatorDelegatorBase.
-
-
-template<class Scalar>
-RCP<const LinearOpWithSolveFactoryBase<Scalar> >
-DefaultModelEvaluatorWithSolveFactory<Scalar>::get_W_factory() const
-{
-  return W_factory_;
-}
-
-
-// Private functions overridden from ModelEvaluatorDefaultBase.
+// Private functions overridden from ModelEvaulatorDefaultBase.
 
 
 template<class Scalar>
@@ -279,7 +260,7 @@ void DefaultModelEvaluatorWithSolveFactory<Scalar>::evalModelImpl(
   typedef Teuchos::VerboseObjectTempState<LinearOpWithSolveFactoryBase<Scalar> >
     VOTSLOWSF;
   VOTSLOWSF W_factory_outputTempState(W_factory_,out,verbLevel);
-
+ 
   // InArgs
 
   MEB::InArgs<Scalar> wrappedInArgs = thyraModel->createInArgs();
@@ -291,19 +272,13 @@ void DefaultModelEvaluatorWithSolveFactory<Scalar>::evalModelImpl(
   MEB::OutArgs<Scalar> wrappedOutArgs = thyraModel->createOutArgs();
 
   wrappedOutArgs.setArgs(outArgs,true);
-
+ 
   RCP<LinearOpWithSolveBase<Scalar> > W;
+  RCP<LinearOpBase<Scalar> > W_op;
   RCP<const LinearOpBase<Scalar> > fwdW;
+  RCP<LinearOpBase<Scalar> > nonconst_fwdW;
   if( outArgs.supports(MEB::OUT_ARG_W) && (W = outArgs.get_W()).get() ) {
-    Thyra::uninitializeOp<Scalar>(*W_factory_, W.ptr(), outArg(fwdW));
-
-    {
-      // Handle this case later if we need to!
-      const bool both_W_and_W_op_requested = nonnull(outArgs.get_W_op());
-      TEUCHOS_TEST_FOR_EXCEPT(both_W_and_W_op_requested);
-    }
-
-    RCP<LinearOpBase<Scalar> > nonconst_fwdW;
+    Thyra::uninitializeOp<Scalar>(*W_factory_,&*W,&fwdW);
     if(fwdW.get()) {
       nonconst_fwdW = rcp_const_cast<LinearOpBase<Scalar> >(fwdW);
     }
@@ -311,34 +286,43 @@ void DefaultModelEvaluatorWithSolveFactory<Scalar>::evalModelImpl(
       nonconst_fwdW = thyraModel->create_W_op();
       fwdW = nonconst_fwdW;
     }
-
+  }
+  if( outArgs.supports(MEB::OUT_ARG_W_op) && (W_op = outArgs.get_W_op()).get() ) {
+    if( W_op.get() && !nonconst_fwdW.get() )
+      nonconst_fwdW = rcp_const_cast<LinearOpBase<Scalar> >(fwdW);
+  }
+  if(nonconst_fwdW.get()) {
     wrappedOutArgs.set_W_op(nonconst_fwdW);
   }
 
   // Do the evaluation
-
+ 
   if(out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nEvaluating the output functions on model \'"
          << thyraModel->description() << "\' ...\n";
   timer.start(true);
-
+ 
   thyraModel->evalModel(wrappedInArgs,wrappedOutArgs);
-
+ 
   timer.stop();
   if(out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     OSTab(out).o() << "\nTime to evaluate underlying model = "
                    << timer.totalElapsedTime()<<" sec\n";
 
   // Postprocess arguments
-
+ 
   if(out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nPost processing the output objects ...\n";
   timer.start(true);
-
+ 
   if( W.get() ) {
-    Thyra::initializeOp<Scalar>(*W_factory_, fwdW, W.ptr());
+    Thyra::initializeOp<Scalar>(*W_factory_,fwdW,&*W);
     W->setVerbLevel(this->getVerbLevel());
     W->setOStream(this->getOStream());
+  }
+ 
+  if( W_op.get() ) {
+    TEUCHOS_TEST_FOR_EXCEPT(true); // Handle this case later if we need to!
   }
 
   timer.stop();
@@ -347,7 +331,7 @@ void DefaultModelEvaluatorWithSolveFactory<Scalar>::evalModelImpl(
                    << timer.totalElapsedTime()<<" sec\n";
 
   THYRA_MODEL_EVALUATOR_DECORATOR_EVAL_MODEL_END();
-
+ 
 }
 
 

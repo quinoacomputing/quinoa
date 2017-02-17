@@ -78,9 +78,9 @@ void AdvDiffReactOptModelCreator::setupCLP(
   clp->setOption( "support-derivatives","no-support-derivatives",&supportDerivatives_,"Support derivatives or not." );
 }
 
-Teuchos::RCP<AdvDiffReactOptModel>
+Teuchos::RefCountPtr<AdvDiffReactOptModel>
 AdvDiffReactOptModelCreator::createModel(
-  const Teuchos::RCP<const Epetra_Comm>     &comm
+  const Teuchos::RefCountPtr<const Epetra_Comm>     &comm
   ,std::ostream                                     *out
   ) const
 {

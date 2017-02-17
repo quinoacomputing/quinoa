@@ -15,28 +15,23 @@ doxygen_objdb_*.tmp
 .cproject
 
 # Trilinos extra repos
-/TriBITS/
 /preCopyrightTrilinos/
-/DrekarBase
-/DrekarResearch
+/Panzer/
+/DrekarResearch/
 /LIMEExt/
 /TerminalApplication/
+
+# CASL-related extra repos
+/CASLBOA/
+/CASLRAVE/
+/DeCARTExt/
+/Nemesis/
+/Denovo/
+/PSSDriversExt/
+/RELAP5Ext/
+/StarCCMExt/
+/Coupler/
 /DataTransferKit/
-/TeuchosWrappersExt
-/packages/CTrilinos/
-/packages/ForTrilinos/
-/packages/Sundance/
-/packages/mesquite/
-/packages/moocho/
-/packages/optika/
-/packages/xSDKTrilinos/
-
-
-# Allow github Kokkos to be cloned under Trilinos
-/kokkos/
-
-# RPI SCOREC extra repos
-/SCOREC
 
 # Ignore gtags generated files
 /GPATH
@@ -69,13 +64,6 @@ packages/epetra/src/NEW/
 packages/epetra/src/new_Epetra_CrsGraph.cpp
 packages/jpetra.tar.gz
 packages/kokkos/doc/.DS_Store
-packages/kokkos/classic/doc/html/
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.aux
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.log
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.pdf
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.toc
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.dvi
-packages/kokkos/doc/ProgrammingGuide/Kokkos_PG.ps
 CHECKINS
 XPETRA_MPI_THREADED/
 ALL_OMP_GCC/
@@ -114,30 +102,8 @@ packages/tpetra/doc/MatrixMatrixReport/tpetraDevData/*pdf
 packages/tpetra/doc/MatrixMatrixReport/allMatsData/*pdf
 packages/tpetra/doc/MatrixMatrixReport/atransData/*pdf
 
-packages/muelu/doc/UsersGuide/mueluguide.lof
-packages/muelu/doc/UsersGuide/mueluguide.lot
-packages/muelu/doc/UsersGuide/mueluguide.pdf
-
 rsync.*
 .project
 
-# Ignore files that get created by checkin-test.py to allow checkin-test.py to
-# be run in source dir.
-/TrilinosPackageDependencies.generate.out
-/TrilinosPackageDependencies.xml
-/checkin-test.out
-/commitStatusEmailBody.out
-/modifiedFiles*out
-/pullInitial*out
-/pullInitial*success
-
-
 # Repostiory list file for egdist
 .egdist
-
-# Ignore Panassas temp files
-.panfs.*
-
-# Ignore files generated from INSTALL.rst
-/INSTALL.html
-/INSTALL.pdf

@@ -53,8 +53,9 @@
 # ************************************************************************
 # @HEADER
 
+INCLUDE(TribitsTplDeclareLibraries)
 
-TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES( Netcdf
+TRIBITS_TPL_DECLARE_LIBRARIES( Netcdf
   REQUIRED_HEADERS netcdf.h
   REQUIRED_LIBS_NAMES netcdf
   )

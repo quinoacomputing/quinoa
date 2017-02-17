@@ -1,22 +1,10 @@
-#
-# Teuchos is both a package and can be configured and built as it own TriBITS
-# project!
-#
-
-
-IF (TRIBITS_PROCESSING_PACKAGE)
-
+INCLUDE(TribitsPackageMacros)
 
 #
-# Processing TriBITS package!
+# A) Define the package
 #
 
-#
-# A) Forward delcare the package so that certain options are also defined for
-# subpackages
-#
-
-TRIBITS_PACKAGE_DECL( Teuchos ENABLE_SHADOWING_WARNINGS CLEANED )
+TRIBITS_PACKAGE( Teuchos ENABLE_SHADOWING_WARNINGS CLEANED )
 
 SET(${PACKAGE_NAME}_VERSION "1.5d")
 
@@ -68,54 +56,38 @@ IF (${PACKAGE_NAME}_ENABLE_STACKTRACE)
 ELSE()
   SET(${PACKAGE_NAME}_ENABLE_DEFAULT_STACKTRACE OFF)
 ENDIF()
-
-ASSERT_DEFINED(${PACKAGE_NAME}Core_ENABLE_Boost)
-IF (${PACKAGE_NAME}Core_ENABLE_Boost)
+  
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Boost)
+IF (${PACKAGE_NAME}_ENABLE_Boost)
   INCLUDE(CheckForBoostIsPolymorphic)
-  CHECK_FOR_BOOST_IS_POLYMORPHIC(HAVE_TEUCHOSCORE_BOOST_IS_POLYMORPHIC)
+  CHECK_FOR_BOOST_IS_POLYMORPHIC(HAS_TEUCHOS_BOOST_IS_POLYMORPHIC)
 ENDIF()
 
-ASSERT_DEFINED(${PROJECT_NAME}_ENABLE_${PACKAGE_NAME}Numerics)
-IF (${PROJECT_NAME}_ENABLE_${PACKAGE_NAME}Numerics)
 
-  INCLUDE(CheckBlasFloat)
-  CHECK_BLAS_FLOAT(HAVE_TEUCHOS_BLASFLOAT)
-  IF(NOT HAVE_TEUCHOS_BLASFLOAT)
-    # try apple veclib first
-    IF(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
-      INCLUDE(CheckBlasFloatAppleVeclibBugfix)
-      CHECK_BLAS_FLOAT_APPLE_VECLIB_BUGFIX(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
-      IF(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
-        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT 1)
-      ENDIF()
-    ENDIF()
-    # if veclib failed, general purpose solution
-    IF(NOT HAVE_TEUCHOS_BLASFLOAT)
-      INCLUDE(CheckBlasFloatReturnsDouble)
-      CHECK_BLAS_FLOAT_DOUBLE_RETURN(HAVE_TEUCHOS_BLASFLOAT_DOUBLE_RETURN)
-      IF(HAVE_TEUCHOS_BLASFLOAT_DOUBLE_RETURN)
-        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT 1)
-      ENDIF()
-    ENDIF()
-  ENDIF()
-
-  IF (HAVE_TEUCHOS_BLASFLOAT)
-    INCLUDE(CheckSlapy2Problem)
-    CHECK_SLAPY2_PROBLEM(HAVE_SLAPY2_PROBLEM)
-    IF (HAVE_SLAPY2_PROBLEM) 
-      INCLUDE(CheckSlapy2ReturnsDouble)
-      CHECK_SLAPY2_RETURNS_DOUBLE(HAVE_SLAPY2_DOUBLE_RETURN)
-      IF(NOT HAVE_SLAPY2_DOUBLE_RETURN)
-        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT OFF)
-        MESSAGE(STATUS "SLAPY2 failure: setting HAVE_TEUCHOS_BLASFLOAT to OFF")
-      ENDIF()
-    ENDIF()
-  ENDIF()
-
-  INCLUDE(CheckLapackLARND)
-  CHECK_LAPACK_LARND(HAVE_TEUCHOS_LAPACKLARND)
-
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_yaml-cpp)
+IF (${PACKAGE_NAME}_ENABLE_yaml-cpp)
+  SET(HAVE_TEUCHOS_YAML_CPP ON)
 ENDIF()
+
+
+INCLUDE(CheckBlasFloat)
+CHECK_BLAS_FLOAT(HAVE_TEUCHOS_BLASFLOAT)
+
+IF (HAVE_TEUCHOS_BLASFLOAT)
+  INCLUDE(CheckSlapy2Problem)
+  CHECK_SLAPY2_PROBLEM(HAVE_SLAPY2_PROBLEM)
+  IF (HAVE_SLAPY2_PROBLEM) 
+    INCLUDE(CheckSlapy2ReturnsDouble)
+    CHECK_SLAPY2_RETURNS_DOUBLE(HAVE_SLAPY2_DOUBLE_RETURN)
+    IF(NOT HAVE_SLAPY2_DOUBLE_RETURN)
+      GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT OFF)
+      MESSAGE(STATUS "SLAPY2 failure: setting HAVE_TEUCHOS_BLASFLOAT to OFF")
+    ENDIF()
+  ENDIF()
+ENDIF()
+
+INCLUDE(CheckLapackLARND)
+CHECK_LAPACK_LARND(HAVE_TEUCHOS_LAPACKLARND)
 
 SET( ${PACKAGE_NAME}_ORDINAL_TYPE ptrdiff_t
   CACHE STRING
@@ -123,51 +95,21 @@ SET( ${PACKAGE_NAME}_ORDINAL_TYPE ptrdiff_t
 
 TRIBITS_ADD_EXPLICIT_INSTANTIATION_OPTION()
 
-TRIBITS_SET_ST_FOR_DEV_MODE(ST_FOR_DEV_PT_FOR_RELEASE)
+TRIBITS_SET_SS_FOR_DEV_MODE(SS_FOR_DEV_PS_FOR_RELEASE)
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_COMPLEX
   HAVE_TEUCHOS_COMPLEX
   "Enable Teuchos features for complex data type."
-  ${ST_FOR_DEV_PT_FOR_RELEASE}
+  ${SS_FOR_DEV_PS_FOR_RELEASE}
   )
 
-ASSERT_DEFINED(${PROJECT_NAME}_ENABLE_CXX11)
-SET(${PACKAGE_NAME}_ENABLE_LONG_LONG_INT_DEFAULT ${${PROJECT_NAME}_ENABLE_CXX11})
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_LONG_LONG_INT
   HAVE_TEUCHOS_LONG_LONG_INT
-  "Enable Teuchos features for the 'long long' data type.  This is ON by default if and only if C++11 is enabled.  Please remember that 'long long' only entered the C++ language standard with C++11, even though many compilers supported it before."
-  ${${PACKAGE_NAME}_ENABLE_LONG_LONG_INT_DEFAULT}
+  "Enable Teuchos features for long long data type."
+  OFF
   )
-
-IF(WIN32 AND NOT CYGWIN AND NOT ${PACKAGE_NAME}_ENABLE_LONG_LONG_INT)
-  # Can only provide __int64 support if it will not clash with 
-  # long long int (see Trilinos bug 5801).
-  INCLUDE(CheckFor__int64)
-  CHECK_FOR___INT64(HAVE_TEUCHOS___INT64)
-ENDIF()
-
-# Check whether the C++ compiler can compile __attribute__((constructor)).
-INCLUDE(CheckCXXAttributeConstructorCompiles)
-CHECK_CXX_ATTRIBUTE_CONSTRUCTOR_COMPILES(HAVE_TEUCHOS_CXX_ATTRIBUTE_CONSTRUCTOR)
-# Check whether the C++ compiler can compile __attribute__((weak)).
-INCLUDE(CheckCXXAttributeWeakCompiles)
-CHECK_CXX_ATTRIBUTE_WEAK_COMPILES(HAVE_TEUCHOS_CXX_ATTRIBUTE_WEAK)
-# Some compilers don't implement __attribute__((weak)), but they might
-# implement "#pragma weak" instead.  Check this.
-INCLUDE(CheckCXXPragmaWeakCompiles)
-CHECK_CXX_PRAGMA_WEAK_COMPILES(HAVE_TEUCHOS_CXX_PRAGMA_WEAK)
-# Check whether building dynamic shared libraries or static libraries.
-# If building dynamic shared libraries, define a macro.  In that case,
-# fixing Bug 6392 doesn't need any of the three things above.
-GLOBAL_SET(HAVE_TEUCHOS_DYNAMIC_LIBS OFF) # to revise below
-IF (DEFINED BUILD_SHARED_LIBS)
-  # Don't check the value unless we know that it's defined.
-  IF (BUILD_SHARED_LIBS)
-    GLOBAL_SET(HAVE_TEUCHOS_DYNAMIC_LIBS ON)
-  ENDIF ()
-ENDIF ()
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_ABC
@@ -180,31 +122,16 @@ IF (${PACKAGE_NAME}_ENABLE_COMPLEX)
 
   INCLUDE(CheckCXXComplexBlasProblem)
   CHECK_CXX_COMPLEX_BLAS_PROBLEM(HAVE_COMPLEX_BLAS_PROBLEM)
-
+  
   IF (HAVE_COMPLEX_BLAS_PROBLEM)
     INCLUDE(CheckCXXComplexBlasProblemCanBeFixed)
-    IF(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
-      CHECK_COMPLEX_BLAS_VECLIB_OKAY(HAVE_VECLIB_COMPLEX_BLAS)
-    ELSE()
-      CHECK_CXX_COMPLEX_BLAS_PROBLEM_CAN_BE_FIXED(HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM)
-    ENDIF()
+    CHECK_CXX_COMPLEX_BLAS_PROBLEM_CAN_BE_FIXED(HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM)
   ENDIF()
   GLOBAL_SET(HAVE_COMPLEX_BLAS 
-             NOT HAVE_COMPLEX_BLAS_PROBLEM OR HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM OR HAVE_VECLIB_COMPLEX_BLAS)
+             NOT HAVE_COMPLEX_BLAS_PROBLEM OR HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM
+  )
 
-ELSE() # NOT ${PACKAGE_NAME}_ENABLE_COMPLEX
-
-  # Forbid users from setting HAVE_COMPLEX_BLAS=ON, if
-  # Teuchos_ENABLE_COMPLEX is OFF.  Use two separate IF statements,
-  # because "DEFINED X AND NOT X" could be bad syntax if X is NOT
-  # defined.
-  IF (DEFINED HAVE_COMPLEX_BLAS)
-    IF (NOT HAVE_COMPLEX_BLAS)
-      MESSAGE(FATAL_ERROR "Teuchos: ${PACKAGE_NAME}_ENABLE_COMPLEX is OFF, yet you set HAVE_COMPLEX_BLAS=ON.  Please do not do this.  You normally do not need to set HAVE_COMPLEX_BLAS explicitly.  If for some reason you do, then it must have the same value as ${PACKAGE_NAME}_ENABLE_COMPLEX.")
-    ENDIF()
-  ENDIF()
-
-ENDIF() # ${PACKAGE_NAME}_ENABLE_COMPLEX
+ENDIF()
 
 #
 # C) Set up package-specific options
@@ -214,7 +141,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_FLOAT
   HAVE_TEUCHOS_FLOAT
   "Enable Teuchos features for float data type."
-  ${ST_FOR_DEV_PT_FOR_RELEASE}
+  ${SS_FOR_DEV_PS_FOR_RELEASE}
   )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
@@ -222,6 +149,12 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   HAVE_TEUCHOS_DEBUG_RCP_NODE_TRACING
   "At compile time, enable debug-mode RCP node tracing which can't be turned off."
   ${${PACKAGE_NAME}_ENABLE_DEBUG}
+  )
+
+OPTION(
+  ${PACKAGE_NAME}_ENABLE_PERFORMANCE_TESTS
+  "Override enable ${PACKAGE_NAME} performance tests."
+  ${${PROJECT_NAME}_ENABLE_PERFORMANCE_TESTS}
   )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
@@ -268,30 +201,19 @@ IF (HAVE_TEUCHOS_DOUBLE_TO_ARPREC AND HAVE_TEUCHOS_DOUBLE_TO_QD)
     SET(HAVE_TEUCHOS_DOUBLE_TO_QD OFF)
 ENDIF()
 
-TRIBITS_ADD_OPTION_AND_DEFINE(
-  ${PACKAGE_NAME}_GLOBALLY_REDUCE_UNITTEST_RESULTS
-  HAVE_TEUCHOS_GLOBALLY_REDUCE_UNITTEST_RESULTS
-  "Set the Teuchos::UnitTestRepository to globally reduce test pass/fail results across all MPI ranks."
-  OFF
-  )
-
 #
-# D) Process the subpackages for Teuchos
+# D) Add the libraries, tests, and examples
 #
 
 # For use by other packages as well as Teuchos tests
 GLOBAL_SET(TEUCHOS_STD_UNIT_TEST_MAIN
-  "${PACKAGE_SOURCE_DIR}/core/test/UnitTest/Teuchos_StandardUnitTestMain.cpp")
+  "${PACKAGE_SOURCE_DIR}/test/UnitTest/Teuchos_StandardUnitTestMain.cpp")
 
-# For use by other packages as well as Teuchos tests
-IF (${PROJECT_NAME}_ENABLE_TeuchosComm)
-  GLOBAL_SET(TEUCHOS_STD_PARALLEL_UNIT_TEST_MAIN
-    "${PACKAGE_SOURCE_DIR}/comm/test/UnitTesting/Teuchos_StandardParallelUnitTestMain.cpp")
-ENDIF()
+ADD_SUBDIRECTORY(src)
 
-TRIBITS_PROCESS_SUBPACKAGES()
+TRIBITS_ADD_TEST_DIRECTORIES(test)
 
-TRIBITS_PACKAGE_DEF()
+TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
 
 #
 # Exclude files for source package.
@@ -310,28 +232,3 @@ TRIBITS_EXCLUDE_FILES(
 #
 
 TRIBITS_PACKAGE_POSTPROCESS()
-
-
-ELSE(TRIBITS_PROCESSING_PACKAGE)
-
-
-#
-# Processing as a TriBITS project
-#
-
-# This CMakeLists.txt file is being processed as the TriBITS projects's base
-# CMakeLists.txt file!  (See comments at bottom of this file.)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11 FATAL_ERROR)
-INCLUDE("${CMAKE_CURRENT_SOURCE_DIR}/ProjectName.cmake")
-PROJECT(${PROJECT_NAME} NONE)
-SET(${PROJECT_NAME}_TRIBITS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/tribits"
-  CACHE PATH "By default assume Teuchos is in Trilinos")
-INCLUDE("${${PROJECT_NAME}_TRIBITS_DIR}/TriBITS.cmake")
-SET(TEUCHOS_STANDALONE_PACKAGE TRUE)
-SET(${PROJECT_NAME}_ENABLE_CXX11_DEFAULT ON)
-SET(${PROJECT_NAME}_ENABLE_Teuchos  ON  CACHE  BOOL
-  "Set by default in teuchos/CMakeLists.txt")
-TRIBITS_PROJECT()
-
-
-ENDIF(TRIBITS_PROCESSING_PACKAGE)

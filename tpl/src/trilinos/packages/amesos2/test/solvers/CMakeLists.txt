@@ -1,37 +1,19 @@
-
+INCLUDE(TribitsAddExecutableAndTest)
 
 TRIBITS_ADD_EXECUTABLE(
   Solver_Test
   SOURCES Solver_Test
   )
 
-
-##### KLU2 Tests #####
-
-IF (${PACKAGE_NAME}_ENABLE_KLU2)
-    TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    KLU2_UnitTests
-    SOURCES
-      KLU2_UnitTests
-      ${TEUCHOS_STD_UNIT_TEST_MAIN}
-    COMM serial mpi
-    CATEGORIES NIGHTLY
-    STANDARD_PASS_OUTPUT
-    )
-ENDIF()
-
 ##### SuperLu Tests #####
 
-
 IF (${PACKAGE_NAME}_ENABLE_SuperLU)
-
   TRIBITS_COPY_FILES_TO_BINARY_DIR(SolverTestCopySuperLUFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCE_FILES superlu_test.xml
     EXEDEPS Solver_Test
     )
 
-    
   TRIBITS_ADD_TEST(
     Solver_Test
     NAME SuperLU_Solver_Test
@@ -39,7 +21,6 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLU)
     STANDARD_PASS_OUTPUT
     COMM serial mpi
     )
-
 
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
     Superlu_UnitTests
@@ -50,7 +31,6 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLU)
     CATEGORIES NIGHTLY
     STANDARD_PASS_OUTPUT
     )
-
 ENDIF()
 
 
@@ -74,7 +54,6 @@ ENDIF()
 
 
 ##### SuperLU_DIST Tests #####
-
 
 IF (${PACKAGE_NAME}_ENABLE_SuperLUDist)
   TRIBITS_COPY_FILES_TO_BINARY_DIR(SolverTestCopySuperLUDistFiles
@@ -129,57 +108,3 @@ IF (${PACKAGE_NAME}_ENABLE_LAPACK)
     COMM serial mpi
     )
 ENDIF()
-
-
-####   BASKER Tests ####
-IF (${PACKAGE_NAME}_ENABLE_Basker)
-
-    TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    Basker_UnitTests
-    SOURCES
-      Basker_UnitTests
-      ${TEUCHOS_STD_UNIT_TEST_MAIN}
-    COMM serial mpi
-    STANDARD_PASS_OUTPUT
-    )
-    
-    ##Copy shylubasker_test.xml, but do not test
-    ##depends on not included matrices
-    TRIBITS_COPY_FILES_TO_BINARY_DIR(SolverTestCopyShyLUBaskerFiles
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-    SOURCE_FILES shylubasker_test.xml
-    EXEDEPS Solver_Test
-    )
-
-ENDIF()
-
-##### MUMPS Tests ####
-#MUMPS requires int/int type
-IF (Tpetra_INST_INT_INT)
-IF (${PACKAGE_NAME}_ENABLE_MUMPS)
-   TRIBITS_ADD_EXECUTABLE_AND_TEST(
-   MUMPS_UnitTests
-   SOURCES
-      MUMPS_UnitTests
-      ${TEUCHOS_STD_UNIT_TEST_MAIN}
-   COMM serial mpi
-   STANDARD_PASS_OUTPUT
-   )
-ENDIF()
-ENDIF()
-
-
-ASSERT_DEFINED (Trilinos_ENABLE_LINEAR_SOLVER_FACTORY_REGISTRATION)
-IF (Trilinos_ENABLE_LINEAR_SOLVER_FACTORY_REGISTRATION)
-  # SolverFactory test (doesn't make sense to run unless Trilinos is
-  # doing run-time registration of solver factories).
-  TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    SolverFactory_UnitTests
-    SOURCES
-    SolverFactory
-    ${TEUCHOS_STD_UNIT_TEST_MAIN}
-    COMM serial mpi
-    STANDARD_PASS_OUTPUT
-    )
-ENDIF ()
-

@@ -1,3 +1,4 @@
+/*
 //@HEADER
 //************************************************************************
 //
@@ -36,6 +37,7 @@
 //
 //************************************************************************
 //@HEADER
+*/
 
 /** \file test_orderer.cpp
 
@@ -58,8 +60,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 #include "Epetra_SerialComm.h"
-#include "Epetra_CrsMatrix.h"
-#include "Epetra_Map.h"
+#include "Epetra_CrsMatrix.h" 
+#include "Epetra_Map.h" 
 
 // Teuchos includes
 #include "Teuchos_GlobalMPISession.hpp"
@@ -98,7 +100,7 @@ int main(int argc, char *argv[])
     }
 
     // =================== Read input xml file =============================
-    Teuchos::updateParametersFromXmlFile(ipFileName, Teuchos::inoutArg(driverList));
+    Teuchos::updateParametersFromXmlFile(ipFileName, &driverList);
     isoList = driverList.sublist("Isorropia Input");
 
     // Get matrix market file name

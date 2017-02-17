@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -50,9 +50,9 @@ operator()( OriginalTypeRef orig )
   origObj_ = &orig;
 
   if( orig.RowMap().DistributedGlobal() )
-  { std::cout << "FAIL for Global!\n"; abort(); }
+  { cout << "FAIL for Global!\n"; abort(); }
   if( orig.IndicesAreGlobal() )
-  { std::cout << "FAIL for Global Indices!\n"; abort(); }
+  { cout << "FAIL for Global Indices!\n"; abort(); }
 
   // Extract the CCS information
   int n = orig.NumMyRows();
@@ -71,17 +71,17 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    std::cout << "-----------------------------------------\n";
-    std::cout << "CRS Format Graph\n";
-    std::cout << "-----------------------------------------\n";
+    cout << "-----------------------------------------\n";
+    cout << "CRS Format Graph\n";
+    cout << "-----------------------------------------\n";
     for( int i = 0; i < n; ++i )
       {
-	std::cout << Ap[i] << " - " << Ap[i+1] << " : ";
+	cout << Ap[i] << " - " << Ap[i+1] << " : ";
 	for( int j = Ap[i]; j<Ap[i+1]; ++j )
-	  std::cout << " " << Ai[j];
-	std::cout << std::endl;
+	  cout << " " << Ai[j];
+	cout << endl;
       }
-    std::cout << "-----------------------------------------\n";
+    cout << "-----------------------------------------\n";
   }
 
   // Transpose the graph, not the values
@@ -157,15 +157,15 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    std::cout << "-----------------------------------------\n";
-    std::cout << "BTF Output (n = " << n << ")\n";
-    std::cout << "-----------------------------------------\n";
-    std::cout << "Num Blocks: " << numBlocks_ << std::endl;
-    std::cout << "Num NNZ Diags: " << numMatch << std::endl;
-    std::cout << "RowPerm and ColPerm \n";
+    cout << "-----------------------------------------\n";
+    cout << "BTF Output (n = " << n << ")\n";
+    cout << "-----------------------------------------\n";
+    cout << "Num Blocks: " << numBlocks_ << endl;
+    cout << "Num NNZ Diags: " << numMatch << endl;
+    cout << "RowPerm and ColPerm \n";
     for( int i = 0; i<n; ++i )
-      std::cout << rowPerm_[i] << "\t" << colPerm_[i] << std::endl;
-    std::cout << "-----------------------------------------\n";
+      cout << rowPerm_[i] << "\t" << colPerm_[i] << endl;
+    cout << "-----------------------------------------\n";
   }
 
   //Generate New Domain and Range Maps
@@ -184,10 +184,10 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    std::cout << "New Row Map\n";
-    std::cout << *NewRowMap_ << std::endl;
-    std::cout << "New Col Map\n";
-    std::cout << *NewColMap_ << std::endl;
+    cout << "New Row Map\n";
+    cout << *NewRowMap_ << endl;
+    cout << "New Col Map\n";
+    cout << *NewColMap_ << endl;
   }
 
   //Generate New Graph
@@ -198,8 +198,8 @@ operator()( OriginalTypeRef orig )
 
   if (verbose_) 
   {
-    std::cout << "New CrsGraph\n";
-    std::cout << *NewGraph_ << std::endl;
+    cout << "New CrsGraph\n";
+    cout << *NewGraph_ << endl;
   }
 
   newObj_ = &*NewGraph_;

@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 #include "ml_common.h"
 #if defined(HAVE_ML_MLAPI)
@@ -22,23 +22,23 @@ namespace MLAPI {
 static ML_Comm* ML_Comm_ = 0;
 static Epetra_Comm* Epetra_Comm_ = 0;
 
-// ======================================================================
-ML_Comm* GetML_Comm()
+// ====================================================================== 
+ML_Comm* GetML_Comm() 
 {
   if (ML_Comm_ == 0) Init();
 
   return(ML_Comm_);
 }
 
-// ======================================================================
-Epetra_Comm& GetEpetra_Comm()
+// ====================================================================== 
+Epetra_Comm& GetEpetra_Comm() 
 {
   if (Epetra_Comm_ == 0) Init();
 
   return(*Epetra_Comm_);
 }
 
-// ======================================================================
+// ====================================================================== 
 void Barrier()
 {
   if (Epetra_Comm_ == 0) Init();
@@ -46,7 +46,7 @@ void Barrier()
   Epetra_Comm_->Barrier();
 }
 
-// ======================================================================
+// ====================================================================== 
 int GetMyPID()
 {
   if (Epetra_Comm_ == 0) Init();
@@ -54,7 +54,7 @@ int GetMyPID()
   return(Epetra_Comm_->MyPID());
 }
 
-// ======================================================================
+// ====================================================================== 
 int GetNumProcs()
 {
   if (Epetra_Comm_ == 0) Init();
@@ -62,23 +62,23 @@ int GetNumProcs()
   return(Epetra_Comm_->NumProc());
 }
 
-// ======================================================================
-int GetPrintLevel()
+// ====================================================================== 
+int GetPrintLevel() 
 {
   if (GetMyPID())
     return(0);
   else
     return(ML_Get_PrintLevel());
 }
-
-// ======================================================================
-void SetPrintLevel(int Level)
+  
+// ====================================================================== 
+void SetPrintLevel(int Level) 
 {
   ML_Set_PrintLevel(Level);
 }
 
-// ======================================================================
-void Init()
+// ====================================================================== 
+void Init() 
 {
   if (ML_Comm_ == 0) ML_Comm_Create(&ML_Comm_);
   if (Epetra_Comm_ == 0) {
@@ -107,7 +107,7 @@ void Init()
 
   if (j != 0)
   {
-    if (GetMyPID()  == 0) std::cout << "Host and Process Ids for tasks" << std::endl;
+    if (GetMyPID()  == 0) cout << "Host and Process Ids for tasks" << endl;
     for (i = 0; i < GetNumProcs() ; i++) {
       if (i == GetMyPID() ) {
 #if defined(TFLOP) || defined(JANUS_STLPORT) || defined(COUGAR)
@@ -134,16 +134,15 @@ void Init()
       printf("** You may now attach debugger to the processes listed above.\n");
       printf( "**\n");
       printf( "** Enter a character to continue > "); fflush(stdout);
-      if (EOF == scanf("%c",&go))
-         pr_error("Error: I/O error.\n");
+      scanf("%c",&go);
     }
   }
 
   ML_Set_PrintLevel(10);
 }
 
-// ======================================================================
-void Finalize()
+// ====================================================================== 
+void Finalize() 
 {
   if (ML_Comm_) {
     ML_Comm_Destroy(&ML_Comm_);
@@ -156,24 +155,24 @@ void Finalize()
   }
 }
 
-// ======================================================================
-std::string GetString(const int& x)
+// ====================================================================== 
+string GetString(const int& x) 
 {
   char s[100];
   sprintf(s, "%d", x);
-  return std::string(s);
+  return string(s);
 }
 
-// ======================================================================
-std::string GetString(const double& x)
+// ====================================================================== 
+string GetString(const double& x)
 {
   char s[100];
   sprintf(s, "%g", x);
-  return std::string(s);
+  return string(s);
 }
 
-// ======================================================================
-int GetMatrixType()
+// ====================================================================== 
+int GetMatrixType() 
 {
   return(ML_CSR_MATRIX);
 }

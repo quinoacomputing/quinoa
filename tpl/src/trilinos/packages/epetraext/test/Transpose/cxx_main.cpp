@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 
   if (!verbose) comm.SetTracebackMode(0); // This should shut down any error traceback reporting
 
-  if (verbose) std::cout << comm << std::endl << std::flush;
+  if (verbose) cout << comm << endl << flush;
 
   if (verbose) verbose = (comm.MyPID()==0);
 
   if (verbose)
-    std::cout << EpetraExt::EpetraExt_Version() << std::endl << std::endl;
+    cout << EpetraExt::EpetraExt_Version() << endl << endl;
 
   int nx = 128;
   int ny = comm.NumProc()*nx; // Scale y grid with number of processors
@@ -115,9 +115,9 @@ int main(int argc, char *argv[])
 
   if (nx<8)
   {
-    std::cout << *A << std::endl;
-    std::cout << "X exact = " << std::endl << *xexact << std::endl;
-    std::cout << "B       = " << std::endl << *b << std::endl;
+    cout << *A << endl;
+    cout << "X exact = " << endl << *xexact << endl;
+    cout << "B       = " << endl << *b << endl;
   }
 
   // Construct transposer 
@@ -126,14 +126,15 @@ int main(int argc, char *argv[])
   double start = timer.ElapsedTime();
 
   //bool IgnoreNonLocalCols = false;
-  EpetraExt::RowMatrix_Transpose transposer;
+  bool MakeDataContiguous = true;
+  EpetraExt::RowMatrix_Transpose transposer( MakeDataContiguous );
 
-  if (verbose) std::cout << "\nTime to construct transposer  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to construct transposer  = " << timer.ElapsedTime() - start << endl;
   
   Epetra_CrsMatrix & transA = dynamic_cast<Epetra_CrsMatrix&>(transposer(*A));
 
   start = timer.ElapsedTime();
-  if (verbose) std::cout << "\nTime to create transpose matrix  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to create transpose matrix  = " << timer.ElapsedTime() - start << endl;
  	
   // Now test output of transposer by performing matvecs
   int ierr = 0;
@@ -149,7 +150,7 @@ int main(int argc, char *argv[])
   start = timer.ElapsedTime();
   transposer.fwd();
 
-  if (verbose) std::cout << "\nTime to update transpose matrix  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to update transpose matrix  = " << timer.ElapsedTime() - start << endl;
  	
   ierr += checkResults(A, &transA, xexact, verbose);
 
@@ -159,7 +160,7 @@ int main(int argc, char *argv[])
   delete xexact;
   delete map;
 
-  if (verbose) std::cout << std::endl << "Checking transposer for VbrMatrix objects" << std::endl<< std::endl;
+  if (verbose) cout << endl << "Checking transposer for VbrMatrix objects" << endl<< endl;
 
   int nsizes = 4;
   int sizes[] = {4, 6, 5, 3};
@@ -172,16 +173,16 @@ int main(int argc, char *argv[])
 
   if (nx<8)
   {
-    std::cout << *Avbr << std::endl;
-    std::cout << "X exact = " << std::endl << *xexact << std::endl;
-    std::cout << "B       = " << std::endl << *b << std::endl;
+    cout << *Avbr << endl;
+    cout << "X exact = " << endl << *xexact << endl;
+    cout << "B       = " << endl << *b << endl;
   }
 
   start = timer.ElapsedTime();
-  EpetraExt::RowMatrix_Transpose transposer1;
+  EpetraExt::RowMatrix_Transpose transposer1( MakeDataContiguous );
 
   Epetra_CrsMatrix & transA1 = dynamic_cast<Epetra_CrsMatrix&>(transposer1(*Avbr));
-  if (verbose) std::cout << "\nTime to create transpose matrix  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to create transpose matrix  = " << timer.ElapsedTime() - start << endl;
  	
   // Now test output of transposer by performing matvecs
 ;
@@ -197,7 +198,7 @@ int main(int argc, char *argv[])
 
   start = timer.ElapsedTime();
   transposer1.fwd();
-  if (verbose) std::cout << "\nTime to update transpose matrix  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to update transpose matrix  = " << timer.ElapsedTime() - start << endl;
  	
   ierr += checkResults(Avbr, &transA1, xexact, verbose);
 
@@ -219,7 +220,7 @@ int checkResults(Epetra_RowMatrix * A, Epetra_CrsMatrix * transA,
 
   int n = A->NumGlobalRows();
 
-  if (n<100) std::cout << "A transpose = " << std::endl << *transA << std::endl;
+  if (n<100) cout << "A transpose = " << endl << *transA << endl;
 
   Epetra_Vector x1(View,A->OperatorDomainMap(), &((*xexact)[0]));
   Epetra_Vector b1(A->OperatorRangeMap());
@@ -229,30 +230,30 @@ int checkResults(Epetra_RowMatrix * A, Epetra_CrsMatrix * transA,
   Epetra_Time timer(A->Comm());
   double start = timer.ElapsedTime();
   A->Apply(x1, b1);
-  if (verbose) std::cout << "\nTime to compute b1: matvec with original matrix using transpose flag  = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to compute b1: matvec with original matrix using transpose flag  = " << timer.ElapsedTime() - start << endl;
 
-  if (n<100) std::cout << "b1 = " << std::endl << b1 << std::endl;
+  if (n<100) cout << "b1 = " << endl << b1 << endl;
   Epetra_Vector x2(View,transA->OperatorRangeMap(), &((*xexact)[0]));
   Epetra_Vector b2(transA->OperatorDomainMap());
   start = timer.ElapsedTime();
   transA->Multiply(false, x2, b2);
-  if (verbose) std::cout << "\nTime to compute b2: matvec with transpose matrix                      = " << timer.ElapsedTime() - start << std::endl;
+  if (verbose) cout << "\nTime to compute b2: matvec with transpose matrix                      = " << timer.ElapsedTime() - start << endl;
 
-  if (n<100) std::cout << "b1 = " << std::endl << b1 << std::endl;
+  if (n<100) cout << "b1 = " << endl << b1 << endl;
 
   double residual;
   Epetra_Vector resid(A->OperatorDomainMap());
 
   resid.Update(1.0, b1, -1.0, b2, 0.0);
   resid.Norm2(&residual);
-  if (verbose) std::cout << "Norm of b1 - b2 = " << residual << std::endl;
+  if (verbose) cout << "Norm of b1 - b2 = " << residual << endl;
 
   int ierr = 0;
 
   if (residual > 1.0e-10) ierr++;
 
-  if (ierr!=0 && verbose) std::cerr << "Status: Test failed" << std::endl;
-  else if (verbose) std::cerr << "Status: Test passed" << std::endl;
+  if (ierr!=0 && verbose) cerr << "Status: Test failed" << endl;
+  else if (verbose) cerr << "Status: Test passed" << endl;
 
   return(ierr);
 }

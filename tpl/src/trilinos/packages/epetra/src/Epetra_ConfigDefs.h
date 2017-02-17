@@ -1,10 +1,10 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//               Epetra: Linear Algebra Services Package
+// 
+//               Epetra: Linear Algebra Services Package 
 //                 Copyright 2011 Sandia Corporation
-//
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -50,7 +50,7 @@
 
 #include <algorithm>
 // windows defines these but the ones from algorithm
-// are not macros, so this will let them be used
+// are not macros, so this will let them be used 
 // from algorithm
 #ifdef max
 #undef max
@@ -151,31 +151,23 @@ using std::floor;
 
 #include <iomanip>
 
-//using std::string;
+using std::string;
 using std::memcpy;
 using std::strcpy;
 using std::strcmp;
 using std::strlen;
 using std::strchr;
 using std::strtok;
-/*
-For xlC 12.1, malloc and related functions are provided outside the std
-namespace, so the below three using statements cause conflicting declarations.
-*/
-#ifndef __clang__
-#if !defined __IBMCPP__ || ( __IBMCPP__ != 1210 )
 using std::realloc;
 using std::malloc;
 using std::free;
-#endif
-#endif
 
-//using std::istream;
-//using std::ostream;
-//using std::cerr;
-//using std::cout;
-//using std::endl;
-//using std::flush;
+using std::istream;
+using std::ostream;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::flush;
 
 using std::abort;
 using std::exit;
@@ -239,13 +231,13 @@ const int DefaultTracebackMode = 0;
 #include <math.h>
 #include <string>
 
-//using std::string;
-//using std::istream;
-//using std::ostream;
-//using std::cerr;
-//using std::cout;
-//using std::endl;
-//using std::flush;
+using std::string;
+using std::istream;
+using std::ostream;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::flush;
 
 #else
 
@@ -256,13 +248,13 @@ const int DefaultTracebackMode = 0;
 #include <cmath>
 #include <string>
 
-//using std::string;
-//using std::istream;
-//using std::ostream;
-//using std::cerr;
-//using std::cout;
-//using std::endl;
-//using std::flush;
+using std::string;
+using std::istream;
+using std::ostream;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::flush;
 
 #endif
 
@@ -308,7 +300,7 @@ const int DefaultTracebackMode = 1;
                               if ((epetra_err < 0 && Epetra_Object::GetTracebackMode() > 0) || \
                                   (epetra_err > 0 && Epetra_Object::GetTracebackMode() > 1)) { \
                       Epetra_Object::GetTracebackStream() << "Epetra ERROR " << epetra_err << ", " \
-                           << __FILE__ << ", line " << __LINE__ << std::endl; }\
+                           << __FILE__ << ", line " << __LINE__ << endl; }\
                       if (epetra_err != 0) return(epetra_err);  }\
                    }
 
@@ -316,14 +308,14 @@ const int DefaultTracebackMode = 1;
 
 #define EPETRA_CHK_PTR(a) { if (a == 0 && Epetra_Object::GetTracebackMode() > 0) { \
                       Epetra_Object::GetTracebackStream() << "Epetra returning zero pointer " << ", " \
-                           << __FILE__ << ", line " << __LINE__ << std::endl; } \
+                           << __FILE__ << ", line " << __LINE__ << endl; } \
                       return(a); \
                    }
 // Extension of same macro for reference, returns a default reference
 
 #define EPETRA_CHK_REF(a) { if (Epetra_Object::GetTracebackMode() > 0) {\
                       Epetra_Object::GetTracebackStream() << "Epetra returning default reference " << ", " \
-                           << __FILE__ << ", line " << __LINE__ << std::endl; } \
+                           << __FILE__ << ", line " << __LINE__ << endl; } \
                       return(a); \
                    }
 

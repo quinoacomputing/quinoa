@@ -42,8 +42,8 @@
 // @HEADER
 
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_KokkosUtilities.hpp"
+#include "Phalanx_ConfigDefs.hpp"
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_Assert.hpp"
@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
   using namespace Teuchos;
   
   Teuchos::GlobalMPISession mpi_session(&argc, &argv);
-  PHX::InitializeKokkosDevice();
   
   try {
     
@@ -140,7 +139,8 @@ int main(int argc, char *argv[])
       u[2] = 2.0;
       u[3] = 0.0;
       
-      const Kokkos::View<double***,PHX::Device> dphi = e.basisFunctionGradientsRealSpace();
+      const shards::Array<double,shards::NaturalOrder,QuadPoint,Node,Dim>& 
+	dphi = e.basisFunctionGradientsRealSpace();
       
       for (int qp=0; qp < e.numQuadraturePoints(); ++qp) {
 	
@@ -188,7 +188,8 @@ int main(int argc, char *argv[])
       }
     }
     cout << "  **Gradient interpolation passed!" << endl;
-    cout << "\nTesting mesh integration... is not supported" << endl;
+    
+    cout << "\nTesting mesh integration..." << endl;
     {
       RCP<Epetra_Comm> comm = rcp(new Epetra_SerialComm);
       MeshBuilder mb(comm, 100, 200, 3.0, 5.0, 8);
@@ -233,8 +234,7 @@ int main(int argc, char *argv[])
   }
 
   TimeMonitor::summarize();
-
-  PHX::FinalizeKokkosDevice();
+    
   return 0;
 }
 

@@ -63,12 +63,18 @@
 
 #include "EpetraExt_ModelEvaluator.h"
 
+/** \brief Epetra-based Model Evaluator subclass for Charon!
+ *
+ * This class will support a wide number of different types of abstract
+ * problem types that will allow NOX, LOCA, Rythmos, Aristos, and MOOCHO to
+ * solve different types of problems with Charon.
+ * 
+ * ToDo: Finish documentation!
+ */
+
 namespace Piro {
 namespace Epetra {
 
-/** \brief Epetra-based Model Evaluator for LOCA solves
- *  \ingroup Piro_Epetra_solver_grp
- * */
 class LOCASolver
     : public EpetraExt::ModelEvaluator
 {
@@ -97,10 +103,6 @@ class LOCASolver
   Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
   /** \brief . */
   Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
-  /** \brief . */
-  Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
-  /** \brief . */
-  Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
   /** \brief . */
 //  Teuchos::RCP<Epetra_Operator> create_W() const;
   /** \brief . */

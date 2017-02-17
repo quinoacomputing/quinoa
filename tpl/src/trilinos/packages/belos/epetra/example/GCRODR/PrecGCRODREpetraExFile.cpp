@@ -61,7 +61,6 @@
 #include "Epetra_CrsMatrix.h"
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Teuchos_StandardCatchMacros.hpp"
 
 int main(int argc, char *argv[]) {
   //
@@ -87,18 +86,14 @@ int main(int argc, char *argv[]) {
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-bool verbose = false;
-bool success = true;
-try {
-bool proc_verbose = false;
-  bool debug = false;
+  bool verbose = false, debug = false, proc_verbose = false;
   bool leftprec = true;      // left preconditioning or right.
   int frequency = -1;        // frequency of status test output.
   int numrhs = 1;            // number of right-hand sides to solve for
   int maxiters = -1;         // maximum number of iterations allowed per linear system
   int maxsubspace = 250;     // maximum number of blocks the solver can use for the subspace
   int recycle = 50;          // maximum size of recycle space
-  int maxrestarts = 15;      // maximum number of restarts allowed
+  int maxrestarts = 15;      // maximum number of restarts allowed 
   std::string filename("sherman5.hb");
   std::string ortho("IMGS");
   MT tol = 1.0e-10;          // relative residual tolerance
@@ -133,6 +128,7 @@ bool proc_verbose = false;
   proc_verbose = verbose && (MyPID==0); /* Only print on zero processor */
   X = rcp( new Epetra_MultiVector( Map, numrhs ) );
   B = rcp( new Epetra_MultiVector( Map, numrhs ) );
+  X->Seed();
   X->Random();
   OPT::Apply( *A, *X, *B );
   X->PutScalar( 0.0 );
@@ -212,18 +208,18 @@ bool proc_verbose = false;
   }
   else {
     problem->setRightPrec( belosPrec );
-  }
+  }    
   bool set = problem->setProblem();
   if (set == false) {
     if (proc_verbose)
       std::cout << std::endl << "ERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
     return -1;
   }
-
+  
   // Create an iterative solver manager.
   RCP< Belos::SolverManager<double,MV,OP> > solver
     = rcp( new Belos::GCRODRSolMgr<double,MV,OP>(problem, rcp(&belosList,false)));
-
+  
   //
   // *******************************************************************
   // *************Start the block Gmres iteration*************************
@@ -234,7 +230,7 @@ bool proc_verbose = false;
     std::cout << "Dimension of matrix: " << NumGlobalElements << std::endl;
     std::cout << "Number of right-hand sides: " << numrhs << std::endl;
     std::cout << "Number of restarts allowed: " << maxrestarts << std::endl;
-    std::cout << "Max number of Gmres iterations per restart cycle: " << maxiters << std::endl;
+    std::cout << "Max number of Gmres iterations per restart cycle: " << maxiters << std::endl; 
     std::cout << "Relative residual tolerance: " << tol << std::endl;
     std::cout << std::endl;
   }
@@ -262,21 +258,20 @@ bool proc_verbose = false;
     }
   }
 
-if (ret!=Belos::Converged || badRes) {
-  success = false;
-  if (proc_verbose)
-    std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;
-} else {
-  success = true;
-  if (proc_verbose)
-    std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
-}
-}
-TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
-
 #ifdef EPETRA_MPI
-MPI_Finalize();
+  MPI_Finalize();
 #endif
 
-return success ? EXIT_SUCCESS : EXIT_FAILURE;
+  if (ret!=Belos::Converged || badRes) {
+    if (proc_verbose)
+      std::cout << std::endl << "ERROR:  Belos did not converge!" << std::endl;
+    return -1;
+  }
+  //
+  // Default return value
+  //
+  if (proc_verbose)
+    std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
+  return 0;
+
 }

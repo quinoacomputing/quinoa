@@ -306,11 +306,7 @@ c
          call frefld ( nin, 0, prompt(:lprom), maxfld, ios,
      &      nfield, kvalue, cval2, ivalue, rvalue )
       else
-        if (nin .eq. 0) then
-          read (*, fmt=10010, iostat=ios ) line
-        else
-          read ( unit=nin, fmt=10010, iostat=ios ) line
-        end if
+         read ( unit=nin, fmt=10010, iostat=ios ) line
 10010     format ( a )
       endif
 c

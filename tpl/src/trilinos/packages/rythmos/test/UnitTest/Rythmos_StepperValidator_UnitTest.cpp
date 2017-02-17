@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -56,7 +56,7 @@ TEUCHOS_UNIT_TEST( Rythmos_StepperValidator, BackwardEuler ) {
   pl->sublist("Stepper Settings").sublist("Stepper Selection").set("Stepper Type","Backward Euler");
   ib->setParameterList(pl);
   sv->setIntegratorBuilder(ib);
-
+  
   sv->validateStepper();
   TEST_ASSERT( true );
 }
@@ -168,6 +168,6 @@ TEUCHOS_UNIT_TEST( Rythmos_StepperValidator, Theta ) {
 }
 #endif // HAVE_RYTHMOS_EXPERIMENTAL
 
-} // namespace Rythmos
+} // namespace Rythmos 
 
 

@@ -162,8 +162,6 @@ protected:
   //@{
 
   /** \brief . */
-  void assignImpl(Scalar alpha);
-  /** \brief . */
   RCP<const VectorBase<Scalar> > colImpl(Ordinal j) const;
   /** \brief . */
   RCP<VectorBase<Scalar> > nonconstColImpl(Ordinal j);
@@ -228,6 +226,38 @@ protected:
   //@}
 
 public:
+
+  /** \name Deprecated. */
+  //@{
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultProductMultiVector(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const int numMembers
+    )
+    :numBlocks_(0)
+    { initialize(productSpace_in, numMembers); }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultProductMultiVector(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const ArrayView<const RCP<MultiVectorBase<Scalar> > > &multiVecs
+    )
+    :numBlocks_(0)
+    { initialize(productSpace_in, multiVecs); }
+
+  /** \brief Deprecated. */
+  THYRA_DEPRECATED
+  DefaultProductMultiVector(
+    const RCP<const DefaultProductVectorSpace<Scalar> > &productSpace_in,
+    const ArrayView<const RCP<const MultiVectorBase<Scalar> > > &multiVecs
+    )
+    :numBlocks_(0)
+    { initialize(productSpace_in, multiVecs); }
+
+  //@}
 
 private:
 

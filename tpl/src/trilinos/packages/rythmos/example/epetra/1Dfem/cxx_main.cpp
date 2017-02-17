@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -145,10 +145,8 @@ int main(int argc, char *argv[])
     outputLevel = min(max(outputLevel,-1),4);
 
     lowsfCreator.readParameters(out.get());
-    if (extraLSParamsFile.length()) {
-      Teuchos::updateParametersFromXmlFile( "./"+extraLSParamsFile, 
-        lowsfCreator.getNonconstParameterList().ptr() );
-    }
+    if(extraLSParamsFile.length())
+      Teuchos::updateParametersFromXmlFile( "./"+extraLSParamsFile, &*lowsfCreator.getNonconstParameterList() );
     *out << "\nThe parameter list after being read in:\n";
     lowsfCreator.getParameterList()->print(*out,2,true,false);
 

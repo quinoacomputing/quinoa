@@ -19,7 +19,7 @@
 //                                                                                 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA                                                                                
 // Questions? Contact Tammy Kolda (tgkolda@sandia.gov) or Roger Pawlowski
 // (rppawlo@sandia.gov), Sandia National Laboratories.
@@ -65,8 +65,8 @@ bool Problem_Interface::computeJacobian(const Epetra_Vector& x, Epetra_Operator&
 {
   Epetra_RowMatrix* Jacobian = dynamic_cast<Epetra_RowMatrix*>(&Jac);
   if (Jacobian == NULL) {
-    std::cout << "ERROR: Problem_Interface::computeJacobian() - The supplied"
-	 << "Epetra_Operator is NOT an Epetra_RowMatrix!" << std::endl;
+    cout << "ERROR: Problem_Interface::computeJacobian() - The supplied"
+	 << "Epetra_Operator is NOT an Epetra_RowMatrix!" << endl;
     throw -1;
   }
   return problem.evaluate(MATRIX_ONLY, &x, NULL, Jacobian);

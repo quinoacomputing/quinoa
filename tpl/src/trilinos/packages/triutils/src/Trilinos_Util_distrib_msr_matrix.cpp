@@ -40,12 +40,8 @@
 // @HEADER
 
 #include "Trilinos_Util.h"
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Comm.h"
 #include "Epetra_Map.h"
-
-// CJ TODO FIXME: Trilinos_Util_distrib_msr_matrix available only if 32 bit GIDs available.
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 
 void Trilinos_Util_distrib_msr_matrix(const Epetra_Comm & Comm, int *N_global,
 	      int *n_nonzeros, int *N_update, int **update,
@@ -353,5 +349,3 @@ void Trilinos_Util_distrib_msr_matrix(const Epetra_Comm & Comm, int *N_global,
   
   /* end distrib_matrix */
 }
-
-#endif

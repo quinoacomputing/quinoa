@@ -12,7 +12,7 @@
  */
 /* ******************************************************************** */
 /* See the file COPYRIGHT for a complete copyright notice, contact      */
-/* person and disclaimer.                                               */
+/* person and disclaimer.                                               */        
 /* ******************************************************************** */
 
 #ifndef ML_IFPACK_ML_H
@@ -30,7 +30,7 @@ namespace ML_Epetra {
 
 /*!
  * \class Ifpack_ML
- *
+ * 
  * \brief Wraps an ML preconditioner as an Ifpack_Preconditioner
  *
  * \author Marzio Sala, SNL 9214
@@ -48,9 +48,9 @@ public:
     A_(A),
     MLPrec_(0)
   {};
-
+ 
   //! Destructor.
-  virtual ~Ifpack_ML()
+  virtual ~Ifpack_ML() 
   {
     if (MLPrec_)
       delete MLPrec_;
@@ -59,19 +59,19 @@ public:
   //! Sets all the parameters for the preconditioner from the list.
   virtual int SetParameters(Teuchos::ParameterList& List)
   {
-    std::string listName = List.get("ML sublist name","ML list");
+    string listName = List.get("ML sublist name","ML list");
     try{MLList_ = List.sublist(listName,true);}
     catch(...) {
       if (A_->Comm().MyPID()==0)
-        std::cout << "Did not find sublist \"" << listName
-             << "\" for ML subdomain solver.  Setting \"SA\" defaults." << std::endl;
+        cout << "Did not find sublist \"" << listName
+             << "\" for ML subdomain solver.  Setting \"SA\" defaults." << endl;
       SetDefaults("SA",MLList_);
     };
     return(0);
   }
 
   //! Initialize the preconditioner.
-  virtual int Initialize()
+  virtual int Initialize() 
   {
     return(0);
   };
@@ -106,7 +106,7 @@ public:
   virtual double Condest(const Ifpack_CondestType CT = Ifpack_Cheap,
                          const int MaxIters = 1550,
                          const double Tol = 1e-9,
-                         Epetra_RowMatrix* matrix = 0)
+                         Epetra_RowMatrix* Matrix = 0)
   {
     return(-1.0);
   }
@@ -187,18 +187,18 @@ public:
   }
 
   //! Prints basic information on iostream. This function is used by operator<<.
-  virtual std::ostream& Print(std::ostream& os) const
+  virtual ostream& Print(std::ostream& os) const
   {
     return(os);
   }
 
-  //! Sets the use of transpose (NOT SUPPORTED)
-  int SetUseTranspose(bool useTranspose)
+  //! Sets the use of transpose 9NOT SUPPORTED)
+  int SetUseTranspose(bool UseTranspose)
   {
-    if (useTranspose) {
+    if (UseTranspose == true)
       ML_CHK_ERR(-1);
-    }
-    return 0;
+
+    return(0);
   }
 
   //! Applies the matrix to a vector (NOT SUPPORTED)
@@ -226,7 +226,7 @@ public:
   }
 
   //! Returns \c true if the class furnishes an infinite norm.
-  bool HasNormInf() const
+  bool HasNormInf() const 
   {
     return(false);
   }

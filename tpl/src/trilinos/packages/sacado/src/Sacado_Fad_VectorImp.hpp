@@ -21,7 +21,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
 // (etphipp@sandia.gov).
@@ -70,7 +70,7 @@ Vector(const Sacado::Fad::Vector< OrdinalType, Sacado::Fad::DVFad<ValueType> >& 
     if (deriv_size_ > 0)
       dx_ = ds_array<ValueType>::get_and_fill(vec_size*deriv_size_);
   }
-  if (orient_ == Row) {
+  if (orient_=Row) {
     for (OrdinalType i=0; i<vec_size; i++) {
       vec_[i].setMemory(deriv_size_, x+i, dx_+i, stride_);
       vec_[i] = fv.vec_[i];

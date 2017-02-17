@@ -1,1 +1,4 @@
-ADD_SUBDIRECTORY(FieldAccessors)
+
+ADD_SUBDIRECTORY(AlgebraicTypes)
+ADD_SUBDIRECTORY(Allocators)
+ADD_SUBDIRECTORY(BracketOperator)

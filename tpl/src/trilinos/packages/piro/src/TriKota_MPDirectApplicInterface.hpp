@@ -46,8 +46,12 @@
 // Have to do this first to pull in all of Dakota's #define's
 #include "TriKota_ConfigDefs.hpp"
 
-#include "DirectApplicInterface.hpp"
-#include "ProblemDescDB.hpp"
+#include "DirectApplicInterface.H"
+#include "CommandLineHandler.H"
+#include "DakotaStrategy.H"
+#include "DakotaModel.H"
+#include "ParallelLibrary.H"
+#include "ProblemDescDB.H"
 
 #include "Piro_Epetra_StokhosMPSolver.hpp"
 #include "Stokhos_ProductEpetraVector.hpp"
@@ -55,7 +59,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Assert.hpp"
 
-//!  \brief %Piro-specific extension of the %TriKota package
+//!  TriKota namespace
 namespace TriKota {
 
 /*! \brief Adapter class that transates from a Trilinos interface to a 
@@ -89,10 +93,10 @@ protected:
   //int derived_map_if(const Dakota::String& if_name);
 
   //! evaluate the batch of jobs contained in prp_queue
-  void wait_local_evaluations(Dakota::PRPQueue& prp_queue);
+  void derived_synch(Dakota::PRPQueue& prp_queue);
 
-  void test_local_evaluations(Dakota::PRPQueue& prp_queue) { 
-    wait_local_evaluations(prp_queue); 
+  void derived_synch_nowait(Dakota::PRPQueue& prp_queue) { 
+    derived_synch(prp_queue); 
   }
 
   void check_configuration(int max_iterator_concurrency) {}

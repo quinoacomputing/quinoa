@@ -1,48 +1,15 @@
-/* 
- * @HEADER
- *
- * ***********************************************************************
- *
- *  Zoltan Toolkit for Load-balancing, Partitioning, Ordering and Coloring
- *                  Copyright 2012 Sandia Corporation
- *
- * Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
- * the U.S. Government retains certain rights in this software.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the Corporation nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Questions? Contact Karen Devine	kddevin@sandia.gov
- *                    Erik Boman	egboman@sandia.gov
- *
- * ***********************************************************************
- *
- * @HEADER
- */
+ /*****************************************************************************
+ * Zoltan Library for Parallel Applications                                  *
+ * Copyright (c) 2000,2001,2002, Sandia National Laboratories.               *
+ * For more info, see the README file in the top-level Zoltan directory.     *
+ *****************************************************************************/
+/*****************************************************************************
+ * CVS File Information :
+ *    $RCSfile$
+ *    $Author$
+ *    $Date$
+ *    $Revision$
+ ****************************************************************************/
 #ifdef __cplusplus
 /* if C++, define the rest of this header file as extern C */
 extern "C" {
@@ -382,6 +349,7 @@ int Zoltan_Color(
   times[2] = Zoltan_Time(zz->Timer);
 #endif
 
+KDDKDDKDD(zz->Proc, "Coloring Hash");
   if (nvtx && !(local_GNOs = (ZOLTAN_GNO_TYPE *) ZOLTAN_MALLOC(nvtx * sizeof(ZOLTAN_GNO_TYPE))))
       MEMORY_ERROR;
   for (i=0; i<nvtx; ++i)
@@ -411,6 +379,7 @@ int Zoltan_Color(
     }
   }
 
+KDDKDDKDD(zz->Proc, "Coloring DD");
   /* lastlno is the total number of local and d1 neighbors */
   lastlno = nvtx+hash.size;
 
@@ -452,6 +421,7 @@ int Zoltan_Color(
   times[3] = Zoltan_Time(zz->Timer);
 #endif
   /* Select Coloring algorithm and perform the coloring */
+KDDKDDKDD(zz->Proc, "Coloring D1");
   if (coloring_problem == '1')
       D1coloring(zz, coloring_problem, coloring_order, coloring_method, comm_pattern, ss, nvtx, &hash, xadj, (int *)adjncy, adjproc, color,
 		 recoloring_permutation, recoloring_type, recoloring_num_of_iterations);
@@ -461,6 +431,7 @@ int Zoltan_Color(
   times[4] = Zoltan_Time(zz->Timer);
 #endif
 
+KDDKDDKDD(zz->Proc, "Coloring Result");
    ierr = Zoltan_DD_Create (&dd_color, zz->Communicator, 
                             sizeof(ZOLTAN_GNO_TYPE)/sizeof(ZOLTAN_ID_TYPE), 0, 0, nvtx, 0);
    if (ierr != ZOLTAN_OK)
@@ -480,6 +451,7 @@ int Zoltan_Color(
    /* Free DDirectory */
    Zoltan_DD_Destroy(&dd_color);
    ZOLTAN_FREE(&my_global_ids); 
+KDDKDDKDD(zz->Proc, "Coloring Done");
 
 #ifdef _DEBUG_TIMES    
   MPI_Barrier(zz->Communicator);
@@ -512,7 +484,7 @@ int Zoltan_Color(
 /* fills the visit array with the n first vertices of xadj using the
    Largest Degree First ordering. The algorithm used to compute this
    ordering is a stable count sort. */
-static int LargestDegreeFirstOrdering(
+static void LargestDegreeFirstOrdering(
     ZZ  *zz, 
     int *visit, /*Out*/
     int *xadj,
@@ -549,11 +521,10 @@ static int LargestDegreeFirstOrdering(
     
 End:
     ZOLTAN_FREE(&cnt);
-    return ierr;
 }
 
 
-static int SmallestDegreeLastOrdering(
+static void SmallestDegreeLastOrdering(
     ZZ  *zz, 
     int *visit, /*Out*/
     int *xadj,
@@ -587,7 +558,6 @@ static int SmallestDegreeLastOrdering(
   }
 End:
   Zoltan_Bucket_Free(&bs);		
-  return ierr;
 }
 
 
@@ -1464,7 +1434,7 @@ static int ReorderGraph(
 
     /* move cut edges to the beginning of adj lists for boundary vertices */
     for (i=0; i<nvtx; ++i) {
-	int b, tmp;
+	int j, b, tmp;
 	b = xadj[i+1] - 1;
 	j = xadj[i];
 	while (b > j) {
@@ -1615,11 +1585,14 @@ static int D1ParallelColoring (
     int rreqcnt=0, sreqcnt=0, repcount;
     int ierr;
     MPI_Datatype gno_mpi_type;
+    ZOLTAN_GNO_TYPE *colored=NULL;
 
     int flag = 0; /* if set to one, will color all the vertices with color 1 */
     gno_mpi_type = Zoltan_mpi_gno_type();
 
     memset(Ssize, 0, sizeof(int) * zz->Num_Proc);
+
+    colored = newcolored[zz->Proc];
 
     /* Issue async recvs */
     for (rreqcnt = i = 0; i < plstcnt; ++i) {
@@ -2354,7 +2327,7 @@ static int Recoloring(ZZ *zz, int recoloring_permutation, int recoloring_type,
   static char *yo = "Recoloring";
   int globnumofcolor = 0;
   int numofcolor = 0; 
-  int nStart, nEnd, length, color_of_i;
+  int marksize, nStart, nEnd, length, color_of_i;
   int *howmanynodeinthatcolor = NULL; /* number of vertices in the color classes of a proc*/
   int *howmanynodeinthatcolorglobal = NULL; /* number of vertices in the color classes of all procs */
   int *sorted_color = NULL; /* sorted colors wrt to number of vertices at them */
@@ -2485,6 +2458,7 @@ static int Recoloring(ZZ *zz, int recoloring_permutation, int recoloring_type,
           /* for  synchronous coloring, recoloring is done for  each color classes separately,i.e. relevant neigs wait each other while  coloring same colored vertices*/
           if (recoloring_type == SYNCHRONOUS) {
               carrierbufsize = globmaxnvtx;
+              marksize = *nColor;
               *nColor = -1;
               for (i=1; i<globnumofcolor+1; i++) {
                   if (recoloring_permutation == REVERSE) {

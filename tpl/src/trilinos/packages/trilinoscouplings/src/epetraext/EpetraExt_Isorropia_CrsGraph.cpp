@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -46,19 +46,12 @@ operator()( OriginalTypeRef orig )
 {
   origObj_ = &orig;
 
-  if (orig.NumGlobalRows() == 0)
-  {
-    // If there is nothing to do, just create a copy of the original empty graph.
-    NewGraph_ = Teuchos::rcp( new Epetra_CrsGraph( orig ) );
+  try {
+    NewGraph_ =
+      Teuchos::rcp( Isorropia::Epetra::createBalancedCopy( orig, partitionList_) );
   }
-  else {
-    try {
-      NewGraph_ =
-        Teuchos::rcp( Isorropia::Epetra::createBalancedCopy( orig, partitionList_) );
-    }
-    catch(std::exception& e) {
-      std::cout << "Isorropia::create_balanced_copy threw exception '" << e.what() << "' on proc " << orig.Comm().MyPID() << std::endl;
-    }
+  catch(std::exception& e) {
+    std::cout << "Isorropia::create_balanced_copy threw exception '" << e.what() << "' on proc " << orig.Comm().MyPID() << std::endl;
   }
 
   // Set the raw pointer to the new graph.

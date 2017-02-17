@@ -93,11 +93,8 @@ int getopts_usage(char *progName, struct options opts[])
               sprintf(cmd, "\t\t-%s\t\t\t", opts[count].shortName);
             }
         }
-      if(cmd){
-	printf("  %s%s\n", cmd, opts[count].description);
-	free(cmd);
-	cmd = NULL;
-      }
+      printf("  %s%s\n", cmd, opts[count].description);
+      free(cmd);
     }
   return 1;
 }

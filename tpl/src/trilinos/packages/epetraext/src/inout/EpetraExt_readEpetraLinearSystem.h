@@ -42,11 +42,10 @@
 #ifndef EPETRAEXT_READ_EPETRA_LINEAR_SYSTEM_H
 #define EPETRAEXT_READ_EPETRA_LINEAR_SYSTEM_H
 
-#include "Epetra_ConfigDefs.h"
 #include "Epetra_Map.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
-#include "Teuchos_RCP.hpp"
+#include "Teuchos_RefCountPtr.hpp"
 
 namespace EpetraExt {
 
@@ -72,29 +71,15 @@ namespace EpetraExt {
  *
  * ToDo: Put this in EpetraExt after the release is finished.
  */
-#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
 void readEpetraLinearSystem(
   const std::string                               &fileName
   ,const Epetra_Comm                              &comm
-  ,Teuchos::RCP<Epetra_CrsMatrix>         *A        = NULL
-  ,Teuchos::RCP<Epetra_Map>               *map      = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *x        = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *b        = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *xExact   = NULL
+  ,Teuchos::RefCountPtr<Epetra_CrsMatrix>         *A        = NULL
+  ,Teuchos::RefCountPtr<Epetra_Map>               *map      = NULL
+  ,Teuchos::RefCountPtr<Epetra_Vector>            *x        = NULL
+  ,Teuchos::RefCountPtr<Epetra_Vector>            *b        = NULL
+  ,Teuchos::RefCountPtr<Epetra_Vector>            *xExact   = NULL
   );
-#endif
-
-#ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
-void readEpetraLinearSystem64(
-  const std::string                               &fileName
-  ,const Epetra_Comm                              &comm
-  ,Teuchos::RCP<Epetra_CrsMatrix>         *A        = NULL
-  ,Teuchos::RCP<Epetra_Map>               *map      = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *x        = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *b        = NULL
-  ,Teuchos::RCP<Epetra_Vector>            *xExact   = NULL
-  );
-#endif
 
 } // namespace EpetraExt
 

@@ -1,4 +1,6 @@
 
+INCLUDE(TribitsAddExecutableAndTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
 INCLUDE(MultilineSet)
 
 ASSERT_DEFINED(PACKAGE_SOURCE_DIR CMAKE_CURRENT_SOURCE_DIR)
@@ -8,7 +10,7 @@ FILE(GLOB SOURCES *.cpp *.C)
 TRIBITS_ADD_EXECUTABLE(
   1DfemTransient
   SOURCES ${SOURCES}
-  TESTONLYLIBS rythmos_test_models
+  DEPLIBS rythmos_test_models
   COMM serial mpi  
   )
 
@@ -101,21 +103,21 @@ IF (Stratimikos_ENABLE_AztecOO)
     ${STANDARD_TEST_CONFIG}
     )
 
-#  MULTILINE_SET(ARGS
-#    " --verbose "
-#    " --method=IRK "
-#    " --numsteps=5 "
-#    " --extra-linear-solver-params-file=Extra_AztecOO_Params.xml"
-#    " --linear-solver-params-used-file=lowsf.aztecoo.used.xml "
-#    " --echo-command-line "
-#    )
-#
-#  TRIBITS_ADD_TEST(
-#    1DfemTransient
-#    NAME 1DfemTransient_aztecoo_IRK
-#    ARGS ${ARGS}
-#    ${STANDARD_TEST_CONFIG}
-#    )
+  MULTILINE_SET(ARGS
+    " --verbose "
+    " --method=IRK "
+    " --numsteps=5 "
+    " --extra-linear-solver-params-file=Extra_AztecOO_Params.xml"
+    " --linear-solver-params-used-file=lowsf.aztecoo.used.xml "
+    " --echo-command-line "
+    )
+
+  TRIBITS_ADD_TEST(
+    1DfemTransient
+    NAME 1DfemTransient_aztecoo_IRK
+    ARGS ${ARGS}
+    ${STANDARD_TEST_CONFIG}
+    )
 
   MULTILINE_SET(ARGS
     " --verbose "

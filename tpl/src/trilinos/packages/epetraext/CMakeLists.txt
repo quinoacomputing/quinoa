@@ -1,4 +1,6 @@
 
+INCLUDE(TribitsPackageMacros)
+INCLUDE(TribitsAddOptionAndDefine)
 
 #
 # A) Define the package
@@ -81,17 +83,6 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_USING_PETSC
   HAVE_PETSC
   "Enable Epetra/PETSc adapters"
   OFF )
-
-TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_MMM_TIMINGS
-  ENABLE_MMM_TIMINGS
-  "Enable timers for matrix-matrix multiplication"
-  OFF )
-
-TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_MMM_STATISTICS
-  ENABLE_MMM_STATISTICS
-  "Enable statistics for the MMM kernels.  Warning: This involves extra communication and should only be enabled for diagnostic purposes."
-  OFF
-)
 
 #Adding a define for when the TPL HYPRE is enabled.
 #This replaces an option that was reusing an existing name.
