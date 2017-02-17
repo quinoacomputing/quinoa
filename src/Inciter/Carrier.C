@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 16 Feb 2017 10:18:34 AM MST
+  \date      Fri 17 Feb 2017 08:32:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -155,8 +155,8 @@ Carrier::vol()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  for (auto& c : m_coord) c.clear();
-  readCoords();
+  //for (auto& c : m_coord) c.clear();
+  //readCoords();
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
@@ -172,6 +172,7 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
+    Assert( J > 0, "Element Jacobian non-positive" );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }

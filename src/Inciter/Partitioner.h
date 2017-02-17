@@ -344,7 +344,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         for (auto c : chares) {           // surrounded chares
           auto& sch = m_msum[c];
           for (auto s : h.second)         // surrounding chares
-            if (s != c) sch[s].push_back( h.first );
+            if (s != c) sch[s].insert( h.first );
         }
       }
       // Associate global mesh node IDs to lower PEs we will need to receive
@@ -477,6 +477,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   in producing contiguous-row-id linear system contributions) associated
     //!   to chare IDs (outer key). This is basically the inverse of m_newid and
     //!   categorized by chares.
+    //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chcid;
     //! \brief Maps associating edges (a pair of old node IDs) to new node IDs
@@ -487,6 +488,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   contributions) associated to chare IDs (outer key) for only the nodes
     //!   newly added as a result of initial uniform refinement. This is
     //!   basically the inverse of m_newid and categorized by chares.
+    //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
       std::unordered_map< std::size_t, Edge > > m_chceid;
     //! Communication cost of linear system merging for our PE
@@ -505,7 +507,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   along the border of chares (at which the chares will need to
     //!   communicate).
     std::unordered_map< int,
-      std::unordered_map< int, std::vector< std::size_t > > > m_msum;
+      std::unordered_map< int, std::set< std::size_t > > > m_msum;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     //! \param[in] er ExodusII mesh reader
@@ -783,8 +785,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       };
       std::unordered_map< Tet, NewTets, TetHash, TetEq > newinpoel;
 
-      // add new elements (in 1:8 fashion) in place of each element
-      //decltype(m_tetinpoel) newtets;
+      // assigne 8 new elements in place of each old element (1:8)
       for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
         const auto A = m_tetinpoel[e*4+0];
         const auto B = m_tetinpoel[e*4+1];
@@ -799,28 +800,29 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         const auto CD = tk::cref_find( newnodes, {{ C,D }} );
         // construct 8 new tets
         NewTets n{{  A, AB, AC, AD,
-                     B, AB, BC, BD,
+                     B, BC, AB, BD,
                      C, AC, BC, CD,
-                     D, AD, BD, CD,
-                    BC, CD, BD, AC,
-                    AB, BD, AD, AC,
-                    AB, AC, BC, BD,
-                    AC, AD, CD, BD }};
-        //newtets.insert( end(newtets), begin(n), end(n) );
+                     D, AD, CD, BD,
+                    BC, CD, AC, BD,
+                    AB, BD, AC, AD,
+                    AB, BC, AC, BD,
+                    AC, BD, CD, AD }};
         newinpoel[ {{ A,B,C,D }} ] = n; // associate new elements to old one
       }
+
       // update connectivity in global mesh node ids associated to chares owned
-      decltype(m_node) extconn; // connectivity extended with new elements
-      for (const auto& c : m_node) {
-        auto& ch = extconn[ c.first ];
-        auto& ex = m_chceid[ c.first ];
-        for (std::size_t e=0; e<c.second.size()/4; ++e) {
+      decltype(m_node) extconn;
+      for (const auto& conn : m_node) {
+        auto& ch = extconn[ conn.first ];
+        auto& ex = m_chceid[ conn.first ];
+        for (std::size_t e=0; e<conn.second.size()/4; ++e) {
           // find the 8 new elements replacing e
           const auto& n = tk::cref_find( newinpoel,
                                          {{ m_tetinpoel[e*4+0],
                                             m_tetinpoel[e*4+1],
                                             m_tetinpoel[e*4+2],
                                             m_tetinpoel[e*4+3] }} );
+          // augment element connectivity (categorized by chares) with new cells
           ch.insert( end(ch), begin(n), end(n) );
           const auto A = n[0];
           const auto B = n[4];
@@ -838,11 +840,27 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           ex[ BC ] = {{ B,C }};
           ex[ BD ] = {{ B,D }};
           ex[ CD ] = {{ C,D }};
+          // augment nodes associated to chares surrounding our mesh chunk
+          for (auto& m : m_msum)
+            for (auto& s : m.second) {
+              bool a = false, b = false, c = false, d = false;
+              if (s.second.find( A ) != end(s.second)) a = true;
+              if (s.second.find( B ) != end(s.second)) b = true;
+              if (s.second.find( C ) != end(s.second)) c = true;
+              if (s.second.find( D ) != end(s.second)) d = true;
+              // if an edge os on the chare boundary, its newly added nodes too
+              if (a && b) s.second.insert( AB );
+              if (a && c) s.second.insert( AC );
+              if (a && d) s.second.insert( AD );
+              if (b && c) s.second.insert( BC );
+              if (b && d) s.second.insert( BD );
+              if (c && d) s.second.insert( CD );
+            }
         }
       }
+      // replace old with new connectivity (categorized by chares owned)
       m_node = std::move( extconn );
       tk::destroy( m_tetinpoel );
-      //m_tetinpoel = std::move( newtets );
     }
 
     //! Compute final result of reordering
@@ -852,7 +870,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Uniformly refine mesh
-      //refine();
+      refine();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
       //tk::destroy( m_communication );
@@ -878,11 +896,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Update old global mesh node IDs to new ones (and add newly added ones)
       // associated to chare IDs bordering the mesh chunk held by and associated
       // to chare IDs we own
-      for (auto& c : m_msum)
+      for (auto& c : m_msum) {
         for (auto& s : c.second) {
-          for (auto& p : s.second) p = tk::cref_find( m_newid, p );
-          std::sort( begin(s.second), end(s.second) );
+          decltype(s.second) n;
+          for (auto p : s.second) n.insert( tk::cref_find( m_newid, p ) );
+          s.second.insert( begin(n), end(n) );
         }
+      }
       // Update unique global node IDs of chares our PE will contribute to to
       // now contain the new IDs resulting from reordering
       tk::destroy( m_id );
@@ -907,11 +927,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //   lower indices for all PEs are communicated.
     void bounds() {
       m_upper = 0;
-      using pair_type = std::pair< const std::size_t, std::size_t >;
+      using P1 = std::pair< const std::size_t, std::size_t >;
       for (const auto& c : m_chcid) {
         auto x = std::max_element( begin(c.second), end(c.second),
-                 []( const pair_type& a, const pair_type& b )
-                 { return a.first < b.first; } );
+                 []( const P1& a, const P1& b ){ return a.first < b.first; } );
+        if (x->first > m_upper) m_upper = x->first;
+      }
+      using P2 = std::pair< const std::size_t, Edge >;
+      for (const auto& c : m_chceid) {
+        auto x = std::max_element( begin(c.second), end(c.second),
+                 []( const P2& a, const P2& b ){ return a.first < b.first; } );
         if (x->first > m_upper) m_upper = x->first;
       }
       // The bounds are the dividers (global mesh point indices) at which the
@@ -961,9 +986,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (int c=0; c<mynchare; ++c) {
         // Compute chare ID
         auto cid = CkMyPe() * chunksize + c;
-        // Create worker array element
+        // Convert chare msum from set to vector
         std::unordered_map< int, std::vector< std::size_t > > msum;
-        if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
+        if (!m_msum.empty()) {
+          const auto& ms = tk::cref_find( m_msum, cid );
+          for (const auto& m : ms) {
+            auto& v = msum[ m.first ];
+            v.insert( end(v), begin(m.second), end(m.second) );
+          }
+        }
+        // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
                                 m_particlewriter,
