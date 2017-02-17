@@ -33,6 +33,7 @@
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wconditional-uninitialized"
   #pragma clang diagnostic ignored "-Wunused-local-typedef"
+  #pragma clang diagnostic ignored "-Wundef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"

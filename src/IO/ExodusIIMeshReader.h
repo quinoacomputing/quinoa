@@ -106,8 +106,8 @@ class ExodusIIMeshReader {
     void readNode( std::size_t id, tk::real& x, tk::real& y, tk::real& z ) const
     {
       ErrChk(
-        ex_get_n_coord( m_inFile, static_cast<int64_t>(id)+1, 1, &x, &y, &z )
-          == 0,
+        ex_get_partial_coord( m_inFile, static_cast<int64_t>(id)+1, 1,
+                              &x, &y, &z ) == 0,
         "Failed to read coordinates of node " + std::to_string(id) +
         " from ExodusII file: " + m_filename );
     }
