@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Wed 25 Jan 2017 06:31:58 AM MST
+# \date      Fri 17 Feb 2017 01:59:03 PM MST
 #
 ################################################################################
 
@@ -262,6 +262,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   280: selector expression is constant
   #   304: access control not specified ("public" by default)
   #   383: value copied to temporary, reference to temporary used
+  #   327: NULL reference is not allowed
   #   411: defines no constructor for initializer_list<>
   #   444: destructor for base class is not virtual
   #   593: parameter was set but never used
@@ -278,7 +279,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3280: declaration hides member
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 68,82,111,177,186,193,280,304,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
+  add_compiler_flag("-diag-disable 68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
