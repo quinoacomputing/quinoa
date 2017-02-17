@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Fri 17 Feb 2017 12:43:59 PM MST
+# \date      Fri 17 Feb 2017 01:20:58 PM MST
 #
 ################################################################################
 
@@ -262,6 +262,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   #  5 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
     PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
-    FAIL_REGULAR_EXPRESSION "exodiff: ERROR")
+    FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different")
 
 endfunction()
