@@ -1,11 +1,16 @@
 Level 0
  Setup Smoother (MueLu::Ifpack2Smoother{type = CHEBYSHEV})
- chebyshev: ratio eigenvalue = 2
- chebyshev: min diagonal value = 2.22045e-16   [default]
- chebyshev: degree = 1   [default]
- chebyshev: eigenvalue max iterations = 10   [default]
- chebyshev: zero starting solution = 1   [default]
- chebyshev: assume matrix does not change = 0   [default]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: ratio eigenvalue = 2
+  chebyshev: boost factor = 1.1   [unused]
+  chebyshev: min diagonal value = 2.22045e-16   [default]
+  chebyshev: degree = 1   [default]
+  chebyshev: eigenvalue max iterations = 10   [default]
+  chebyshev: zero starting solution = 1   [default]
+  chebyshev: assume matrix does not change = 0   [default]
 
 Level 1
  Prolongator smoothing (MueLu::SaPFactory)
@@ -57,18 +62,21 @@ Level 1
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::Ifpack2Smoother{type = CHEBYSHEV})
- chebyshev: ratio eigenvalue = 5
- chebyshev: min diagonal value = 2.22045e-16   [default]
- chebyshev: degree = 1   [default]
- chebyshev: eigenvalue max iterations = 10   [default]
- chebyshev: zero starting solution = 1   [default]
- chebyshev: assume matrix does not change = 0   [default]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: ratio eigenvalue = 5
+  chebyshev: boost factor = 1.1   [unused]
+  chebyshev: min diagonal value = 2.22045e-16   [default]
+  chebyshev: degree = 1   [default]
+  chebyshev: eigenvalue max iterations = 10   [default]
+  chebyshev: zero starting solution = 1   [default]
+  chebyshev: assume matrix does not change = 0   [default]
 
 Level 2
  Prolongator smoothing (MueLu::SaPFactory)
@@ -120,18 +128,21 @@ Level 2
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::Ifpack2Smoother{type = CHEBYSHEV})
- chebyshev: ratio eigenvalue = 4
- chebyshev: min diagonal value = 2.22045e-16   [default]
- chebyshev: degree = 1   [default]
- chebyshev: eigenvalue max iterations = 10   [default]
- chebyshev: zero starting solution = 1   [default]
- chebyshev: assume matrix does not change = 0   [default]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: ratio eigenvalue = 4
+  chebyshev: boost factor = 1.1   [unused]
+  chebyshev: min diagonal value = 2.22045e-16   [default]
+  chebyshev: degree = 1   [default]
+  chebyshev: eigenvalue max iterations = 10   [default]
+  chebyshev: zero starting solution = 1   [default]
+  chebyshev: assume matrix does not change = 0   [default]
 
 Level 3
  Prolongator smoothing (MueLu::SaPFactory)
@@ -183,18 +194,21 @@ Level 3
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::Ifpack2Smoother{type = CHEBYSHEV})
- chebyshev: ratio eigenvalue = 2.99461
- chebyshev: min diagonal value = 2.22045e-16   [default]
- chebyshev: degree = 1   [default]
- chebyshev: eigenvalue max iterations = 10   [default]
- chebyshev: zero starting solution = 1   [default]
- chebyshev: assume matrix does not change = 0   [default]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: ratio eigenvalue = 2.99461
+  chebyshev: boost factor = 1.1   [unused]
+  chebyshev: min diagonal value = 2.22045e-16   [default]
+  chebyshev: degree = 1   [default]
+  chebyshev: eigenvalue max iterations = 10   [default]
+  chebyshev: zero starting solution = 1   [default]
+  chebyshev: assume matrix does not change = 0   [default]
 
 Level 4
  Prolongator smoothing (MueLu::SaPFactory)
@@ -246,18 +260,21 @@ Level 4
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::Ifpack2Smoother{type = CHEBYSHEV})
- chebyshev: ratio eigenvalue = 2.99194
- chebyshev: min diagonal value = 2.22045e-16   [default]
- chebyshev: degree = 1   [default]
- chebyshev: eigenvalue max iterations = 10   [default]
- chebyshev: zero starting solution = 1   [default]
- chebyshev: assume matrix does not change = 0   [default]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  chebyshev: ratio eigenvalue = 2.99194
+  chebyshev: boost factor = 1.1   [unused]
+  chebyshev: min diagonal value = 2.22045e-16   [default]
+  chebyshev: degree = 1   [default]
+  chebyshev: eigenvalue max iterations = 10   [default]
+  chebyshev: zero starting solution = 1   [default]
+  chebyshev: assume matrix does not change = 0   [default]
 
 Level 5
  Prolongator smoothing (MueLu::SaPFactory)
@@ -309,12 +326,13 @@ Level 5
 
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 0   [default]
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
  Setup Smoother (MueLu::Amesos2Smoother{type = Superlu})
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
  presmoother ->
   [empty list]
 
@@ -324,6 +342,7 @@ Level 5
 --------------------------------------------------------------------------------
 Number of levels    = 6
 Operator complexity = 1.50
+Cycle type          = V
 
 level  rows    nnz  nnz/row  c ratio  procs
   0    9999  29995     3.00               1
@@ -333,15 +352,15 @@ level  rows    nnz  nnz/row  c ratio  procs
   4     124    370     2.98     2.99      1
   5      42    124     2.95     2.95      1
 
-Smoother (level 0) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.95138, alpha: 2, lambdaMin: 0.975692}, Global matrix dimensions: [9999, 9999], Global nnz: 29995}
+Smoother (level 0) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94718, alpha: 2, lambdaMin: 0.973591, boost factor: 1.1}, Global matrix dimensions: [9999, 9999], Global nnz: 29995}
 
-Smoother (level 1) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94982, alpha: 5, lambdaMin: 0.389965}, Global matrix dimensions: [3333, 3333], Global nnz: 9997}
+Smoother (level 1) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94214, alpha: 5, lambdaMin: 0.388427, boost factor: 1.1}, Global matrix dimensions: [3333, 3333], Global nnz: 9997}
 
-Smoother (level 2) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94201, alpha: 4, lambdaMin: 0.485502}, Global matrix dimensions: [1111, 1111], Global nnz: 3331}
+Smoother (level 2) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94338, alpha: 4, lambdaMin: 0.485844, boost factor: 1.1}, Global matrix dimensions: [1111, 1111], Global nnz: 3331}
 
-Smoother (level 3) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94976, alpha: 2.99461, lambdaMin: 0.651091}, Global matrix dimensions: [371, 371], Global nnz: 1111}
+Smoother (level 3) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94616, alpha: 2.99461, lambdaMin: 0.649887, boost factor: 1.1}, Global matrix dimensions: [371, 371], Global nnz: 1111}
 
-Smoother (level 4) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.94741, alpha: 2.99194, lambdaMin: 0.650887}, Global matrix dimensions: [124, 124], Global nnz: 370}
+Smoother (level 4) both : "Ifpack2::Chebyshev": {Initialized: true, Computed: true, "Ifpack2::Details::Chebyshev":{degree: 1, lambdaMax: 1.95226, alpha: 2.99194, lambdaMin: 0.652509, boost factor: 1.1}, Global matrix dimensions: [124, 124], Global nnz: 370}
 
 Smoother (level 5) pre  : SuperLU solver interface, direct solve
 Smoother (level 5) post : no smoother

@@ -71,6 +71,8 @@ class NOXSolver
             const Teuchos::RCP<ObserverBase<Scalar> > &observer = Teuchos::null);
   //@}
 
+  void reset(){ if(Teuchos::nonnull(solver)) solver->resetSolver(); }
+
   private:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase . */
   //@{
@@ -86,6 +88,8 @@ class NOXSolver
   Teuchos::RCP<Thyra::NOXNonlinearSolver> solver;
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
+
+  Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > model; 
 };
 
 }

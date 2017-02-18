@@ -1,12 +1,12 @@
 // @HEADER
 // ************************************************************************
-// 
+//
 //        Piro: Strategy package for embedded analysis capabilitites
 //                  Copyright (2010) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 //
 // Questions? Contact Andy Salinger (agsalin@sandia.gov), Sandia
 // National Laboratories.
-// 
+//
 // ************************************************************************
 // @HEADER
 
@@ -47,25 +47,26 @@
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+#include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Piro_ObserverBase.hpp"
 
 #include "Piro_NOXSolver.hpp"
+#include "Thyra_AdaptiveSolutionManager.hpp"
 
 namespace Piro {
 
-template <typename Scalar>
+template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 class TrapezoidDecorator
-    : public Thyra::ModelEvaluatorDefaultBase<Scalar> {
+    : public Thyra::ModelEvaluatorDelegatorBase<Scalar> {
 
   public:
 
   /** \name Constructors/initializers */
   //@{
 
-  TrapezoidDecorator( 
+  TrapezoidDecorator(
                 const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model
                 );
 
@@ -78,43 +79,19 @@ class TrapezoidDecorator
   /** \brief . */
   Teuchos::RCP<const Thyra::VectorBase<Scalar> > get_x_dotdot() const;
 
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_x_space() const;
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_f_space() const;
-  /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_g_space(int j) const;
-  /** \brief . */
-  Teuchos::ArrayView<const std::string> get_g_names(int j) const;
-   /** \brief . */
-   Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> > get_p_space(int l) const;
-   /** \brief . */
-   Teuchos::RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::InArgs<Scalar> getNominalValues() const;
-   /** \brief . */
-   Teuchos::RCP< Thyra::LinearOpBase< Scalar > > create_W_op () const;
-   /** \brief . */
-   Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<Scalar> > get_W_factory() const;
-
-   Teuchos::RCP<Thyra::PreconditionerBase<Scalar> > create_W_prec() const;
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::InArgs<Scalar> createInArgs() const;
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::InArgs<Scalar> createInArgsImpl() const;
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::OutArgs<Scalar> createOutArgsImpl() const;
-
    void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<Scalar>& finalPoint, const bool wasSolved);
 
 
 
   //! Method to give info to compute xDotDot(x), so that the
-  // NOX solver can treat the time dep problem as steady 
-  void injectData(const Teuchos::RCP<Thyra::VectorBase<Scalar> >& x_, 
+  // NOX solver can treat the time dep problem as steady
+  void injectData(const Teuchos::RCP<Thyra::VectorBase<Scalar> >& x_,
                   const Teuchos::RCP<Thyra::VectorBase<Scalar> >& x_pred_a_, Scalar fdt2_,
                   const Teuchos::RCP<Thyra::VectorBase<Scalar> >& x_pred_v_, Scalar tdt_,
                   Scalar time_ );
+
+  // Resize internal arrays when mesh is adapted
+  void resize(const Teuchos::RCP<Thyra::VectorBase<Scalar> >& x_);
 
   /** \brief . */
   void evalModelImpl(
@@ -123,14 +100,7 @@ class TrapezoidDecorator
 
   private:
 
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::InArgs<Scalar> getLowerBounds() const;
-   /** \brief . */
-   Thyra::ModelEvaluatorBase::InArgs<Scalar> getUpperBounds() const;
-
-
    //These are set in the constructor and used in evalModel
-   Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > model;
    Teuchos::RCP<Thyra::DefaultModelEvaluatorWithSolveFactory<Scalar> > DMEWSF;
    Teuchos::RCP<Thyra::VectorBase<Scalar> > xDotDot;
    Teuchos::RCP<Thyra::VectorBase<Scalar> > xDot;
@@ -139,14 +109,13 @@ class TrapezoidDecorator
    Teuchos::RCP<Thyra::VectorBase<Scalar> > x_save;
    Scalar fdt2;
    Scalar tdt;
-   Scalar time; 
+   Scalar time;
 
    Teuchos::RCP<Teuchos::FancyOStream> out;
 
-
 };
 
-template <typename Scalar>
+template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 class TrapezoidRuleSolver
     : public Thyra::ResponseOnlyModelEvaluatorBase<Scalar> {
 
@@ -159,6 +128,7 @@ class TrapezoidRuleSolver
   /** \brief Takes the number of elements in the discretization . */
   TrapezoidRuleSolver(const Teuchos::RCP<Teuchos::ParameterList> &appParams,
                       const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+                      const Teuchos::RCP<Thyra::AdaptiveSolutionManager> &solMgr,
                       const Teuchos::RCP<Piro::ObserverBase<Scalar> > &observer = Teuchos::null
                       );
 
@@ -198,8 +168,9 @@ private:
 
    //These are set in the constructor and used in evalModel
    mutable Teuchos::RCP<Teuchos::ParameterList> appParams;
-   Teuchos::RCP<Piro::TrapezoidDecorator<Scalar> > model;
+   Teuchos::RCP<Piro::TrapezoidDecorator<Scalar, LocalOrdinal, GlobalOrdinal, Node> > model;
    Teuchos::RCP<Piro::ObserverBase<Scalar> > observer;
+   Teuchos::RCP<Thyra::AdaptiveSolutionManager> solMgr;
    Teuchos::RCP<Teuchos::FancyOStream> out;
    Teuchos::EVerbosityLevel solnVerbLevel;
 

@@ -59,8 +59,8 @@ IF (${PROJECT_NAME}_VERBOSE_CONFIGURE)
 ENDIF()
 
 INCLUDE(TribitsConstants)
-
-CMAKE_MINIMUM_REQUIRED(VERSION ${TRIBITS_CMAKE_MINIMUM_REQUIRED} FATAL_ERROR)
+TRIBITS_ASESRT_MINIMUM_CMAKE_VERSION()
+INCLUDE(TribitsCMakePolicies)
 
 INCLUDE(TribitsIncludeDirectories)
 INCLUDE(TribitsFindPythonInterp)
@@ -190,13 +190,6 @@ MACRO(TRIBITS_PROJECT_IMPL)
     MESSAGE("-- Skipping env setup due to"
       " ${PROJECT_NAME}_TRACE_DEPENDENCY_HANDLING_ONLY=ON")
   ENDIF()
-
-
-  #
-  # F2) The compilers are set, the environment is known to CMake.
-  #     Set installation options.
-  #
-  TRIBITS_SETUP_INSTALLATION_PATHS()
 
   #
   # G) Go get the information for all enabled TPLS

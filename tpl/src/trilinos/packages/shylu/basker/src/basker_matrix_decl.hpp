@@ -72,7 +72,8 @@ namespace BaskerNS
     void clean_col();
     BASKER_INLINE
     void convert2D(BASKER_MATRIX &M, 
-		   BASKER_BOOL alloc = BASKER_TRUE);
+		   BASKER_BOOL alloc, 
+		   Int kid);
 
     
     //just set shape, do not init
@@ -82,6 +83,11 @@ namespace BaskerNS
 
     BASKER_INLINE
     int fill();
+
+    BASKER_INLINE
+    void init_inc_lvl();
+
+
 
     //****Deprecated*******
     BASKER_INLINE
@@ -124,6 +130,7 @@ namespace BaskerNS
     Int srow, scol;
     Int erow, ecol;
     Int ncol, nrow, nnz;
+    Int mnnz; //malloc nnz
     
     INT_1DARRAY   col_ptr;
     INT_1DARRAY   row_idx;
@@ -136,9 +143,10 @@ namespace BaskerNS
     BOOL_1DARRAY union_bit;
    
    
-    #ifdef BASKER_INC_LVL
+    //#ifdef BASKER_INC_LVL
+    BASKER_BOOL   inc_lvl_flg;
     INT_1DARRAY   inc_lvl;
-    #endif
+    //#endif
 
     #ifdef BASKER_2DL
     BASKER_BOOL   w_fill;
@@ -160,6 +168,7 @@ namespace BaskerNS
     //Used for end
     INT_1DARRAY pend;
     void init_pend();
+    void clear_pend();
     
 
   };//end class BaskerMatrix

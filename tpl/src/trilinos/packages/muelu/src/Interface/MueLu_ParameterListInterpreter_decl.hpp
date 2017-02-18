@@ -63,6 +63,8 @@
 #include "MueLu_CoupledAggregationFactory_fwd.hpp"
 #include "MueLu_DirectSolver_fwd.hpp"
 #include "MueLu_EminPFactory_fwd.hpp"
+#include "MueLu_FacadeClassBase.hpp"
+#include "MueLu_FacadeClassFactory.hpp"
 #include "MueLu_FactoryFactory_fwd.hpp"
 #include "MueLu_FilteredAFactory_fwd.hpp"
 #include "MueLu_GenericRFactory_fwd.hpp"
@@ -89,6 +91,7 @@
 #include "MueLu_CoalesceDropFactory_kokkos_fwd.hpp"
 #include "MueLu_CoarseMapFactory_kokkos_fwd.hpp"
 #include "MueLu_CoordinatesTransferFactory_kokkos_fwd.hpp"
+#include "MueLu_FilteredAFactory_kokkos_fwd.hpp"
 #include "MueLu_NullspaceFactory_kokkos_fwd.hpp"
 #include "MueLu_SaPFactory_kokkos_fwd.hpp"
 #include "MueLu_TentativePFactory_kokkos_fwd.hpp"
@@ -108,6 +111,17 @@ namespace MueLu {
     //! @name Constructors/Destructors
     //@{
 
+  protected:
+    /*! @brief Empty constructor
+     *
+     *  Constructor for derived classes
+     */
+    ParameterListInterpreter() {
+      factFact_ = Teuchos::null;
+      facadeFact_ = Teuchos::rcp(new FacadeClassFactory());
+    }
+
+  public:
     /*! @brief Constructor that accepts a user-provided ParameterList.
 
         Constructor for parameter list interpreter which directly interprets Teuchos::ParameterLists
@@ -117,9 +131,10 @@ namespace MueLu {
         @param[in] paramList (Teuchos::ParameterList): ParameterList containing the MueLu parameters
         @param[in] comm  (RCP<Teuchos::Comm<int> >): Optional RCP of a Teuchos communicator  (default: Teuchos::null)
         @param[in] factFact  (RCP<FactoryFactory>): Optional parameter allowing to define user-specific factory interpreters for user-specific extensions of the XML interface. (default: Teuchos::null)
+        @param[in] facadeFact (RCP<FacadeFactory>): Optional parameter containing a FacadeFactory class. The user can register its own facade classes in the FacadeFactory and provide it to the ParameterListInterpreter. (default: Teuchos::null, means, only standard FacadeClass that come with MueLu are available)
 
      */
-    ParameterListInterpreter(Teuchos::ParameterList& paramList, Teuchos::RCP<const Teuchos::Comm<int> > comm = Teuchos::null, Teuchos::RCP<FactoryFactory> factFact = Teuchos::null);
+    ParameterListInterpreter(Teuchos::ParameterList& paramList, Teuchos::RCP<const Teuchos::Comm<int> > comm = Teuchos::null, Teuchos::RCP<FactoryFactory> factFact = Teuchos::null, Teuchos::RCP<FacadeClassFactory> facadeFact = Teuchos::null);
 
     /*! @brief Constructor that reads parameters from an XML file.
 
@@ -128,9 +143,10 @@ namespace MueLu {
         @param[in] xmlFileName (std::string): XML file to read
         @param[in] comm  (Teuchos::Comm<int>): Teuchos communicator
         @param[in] factFact  (RCP<FactoryFactory>): Optional parameter allowing to define user-specific factory interpreters for user-specific extensions of the XML interface. (default: Teuchos::null)
+        @param[in] facadeFact (RCP<FacadeFactory>): Optional parameter containing a FacadeFactory class. The user can register its own facade classes in the FacadeFactory and provide it to the ParameterListInterpreter. (default: Teuchos::null, means, only standard FacadeClass that come with MueLu are available)
 
     */
-    ParameterListInterpreter(const std::string& xmlFileName, const Teuchos::Comm<int>& comm, Teuchos::RCP<FactoryFactory> factFact = Teuchos::null);
+    ParameterListInterpreter(const std::string& xmlFileName, const Teuchos::Comm<int>& comm, Teuchos::RCP<FactoryFactory> factFact = Teuchos::null, Teuchos::RCP<FacadeClassFactory> facadeFact = Teuchos::null);
 
     //! Destructor.
     virtual ~ParameterListInterpreter() { }
@@ -199,6 +215,10 @@ namespace MueLu {
 
     //! Internal factory for factories
     Teuchos::RCP<FactoryFactory> factFact_;
+
+    //! FacadeClass factory
+    Teuchos::RCP<MueLu::FacadeClassFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node> > facadeFact_;
+
     //@}
   };
 

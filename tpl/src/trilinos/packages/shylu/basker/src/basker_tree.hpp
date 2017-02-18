@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define BASKER_DEBUG_TREE 
+//#define BASKER_DEBUG_TREE 
 
 namespace BaskerNS
 {
@@ -125,11 +125,14 @@ namespace BaskerNS
   BASKER_INLINE
   int Basker<Int,Entry,Exe_Space>::init_tree_thread()
   {
-    #ifdef BASKER_DEBUG_TREE
+    //#ifdef BASKER_DEBUG_TREE
+    if (Options.verbose == BASKER_TRUE)
+      {
     printf("----init_tree_thread()----\n");
     printf("---Starting Tree----\n");
     part_tree.info();
-    #endif
+      }
+    ///#endif
 
     //Note: Convert this to use these values everywhere
     INT_1DARRAY ttemp;
@@ -275,8 +278,8 @@ namespace BaskerNS
         Int nparents = pow(tree.nparts, l-1);
         Int pp = new_pos;
         //ttemp = lvl_task[l];
-	Int task_pos = 0;
-	Int task_offset = pow(tree.nparts, tree.nlvls-l);
+	//Int task_pos = 0; //Not used
+	//Int task_offset = pow(tree.nparts, tree.nlvls-l); //NU
         for(Int p = 0 ; p < nparents; p++)
           {
             Int parentptr = pp+nparents-p;
@@ -343,6 +346,8 @@ namespace BaskerNS
               }
           }//end over threads
       }//end over nlvls
+
+    //printf("===TEST==\n");
 
     #ifdef BASKER_DEBUG_TREE
     cout << "Schedule: " << endl; 
@@ -781,8 +786,10 @@ namespace BaskerNS
 
     //Should also do LL and LU while it
 
+    #ifdef BASKER_DEBUG_TREE
     flat.info();
     printf("nblks: %d \n", nblks);
+    #endif
 
     for(Int i=0; i < nblks; i++)
       {
@@ -795,9 +802,9 @@ namespace BaskerNS
           }
       }
    
-    //#ifdef BASKER_DEBUG_TREE
+    #ifdef BASKER_DEBUG_TREE
     printf("Make Hier View of size: %d %d \n", nblks, nnzblks);
-    //#endif    
+    #endif    
 
     //Malloc  AU and AL views, and needed space
     BASKER_ASSERT(nblks > 0, "tree nblks 99");
@@ -1007,7 +1014,7 @@ namespace BaskerNS
 
     //printf("\n\n\n----------------------------");
     //printf("CALLED FIND 2D CONVERT");
-    //printf("-----------------------------\n\n\n");
+    // printf("-----------------------------\n\n\n");
 
     //This will scan the whle matrix and find the nnz and cuts
     //In parallel the values will be copied over
@@ -1072,7 +1079,7 @@ namespace BaskerNS
 		  
 
 		    if((L_row+1 < LL_size(L_col)) &&
-		       (tree.row_tabs[r_idx+1] == ALM[L_col][L_row+1].srow))
+		       (tree.row_tabs(r_idx+1) == ALM(L_col)(L_row+1).srow))
 		      {
 			L_row++;
 			if(k==118800)
@@ -1080,7 +1087,7 @@ namespace BaskerNS
 			    //printf("k: %d j: %d L: %d %d s: %d \n", 
 			    //k, j, L_col, L_row, LL_size[L_col]);
 			  }
-			BASKER_ASSERT(L_row < LL_size[L_col], " Wrong L in A to 2d");
+			BASKER_ASSERT(L_row < LL_size(L_col), " Wrong L in A to 2d");
 			//printf("new start_col\n");
 			start_col = BASKER_TRUE;
 		      }
@@ -1088,8 +1095,8 @@ namespace BaskerNS
 		  }
 		else if(j <= k)
 		  {
-		    if((U_row+1 < LU_size[U_col]) &&
-		       (tree.row_tabs[r_idx+1] == AVM[U_col][U_row+1].srow))
+		    if((U_row+1 < LU_size(U_col)) &&
+		       (tree.row_tabs(r_idx+1) == AVM(U_col)(U_row+1).srow))
 		      {
 			U_row++;
 			//if(k==118800)
@@ -1097,7 +1104,7 @@ namespace BaskerNS
 			    //printf("k: %d j: %d U: %d %d \n",
 			    //		     k, j , U_col, U_row);
 			  }
-			BASKER_ASSERT(U_row < LU_size[U_col], " Wrong U in A to 2d");
+			  BASKER_ASSERT(U_row < LU_size(U_col), " Wrong U in A to 2d");
 			start_col = BASKER_TRUE;
 		      }
 		  }
@@ -1105,12 +1112,12 @@ namespace BaskerNS
 	      }
 
 	    //Get Matrix Ref
-	    BASKER_MATRIX &Ltemp = ALM[L_col][L_row];
-	    BASKER_MATRIX &Utemp = AVM[U_col][U_row];
+	    BASKER_MATRIX &Ltemp = ALM(L_col)(L_row);
+	    BASKER_MATRIX &Utemp = AVM(U_col)(U_row);
 	    Int bcol  = Ltemp.scol;
 	    
 	    //Debug
-	    //if(k==118800)
+	    //if(U_col>61)
 	      {
 		//printf("A2D.  L: %d %d U %d %d \n", 
 		// L_col, L_row, 
@@ -1118,13 +1125,16 @@ namespace BaskerNS
 	      }
 
 	    //diag blk
-	    if((L_row==0)&&(U_row==LU_size[U_col]-1))
+	      if((L_row==0)&&(U_row==LU_size(U_col)-1))
 	      {
 		if(start_col == BASKER_TRUE)
 		  {
-		    //printf("setting diag blk start: %d %d \n",
-		    //	   k-bcol, i);
-		    Ltemp.col_ptr[k-bcol] = i;
+		    //if(U_col>61)
+		      {
+			//printf("setting diag blk start: %d %d \n",
+			// k, i);
+		      }
+		    Ltemp.col_ptr(k-bcol) = i;
 		  }
 		Ltemp.nnz = Ltemp.nnz+1;
 	      }
@@ -1136,9 +1146,12 @@ namespace BaskerNS
 		  {
 		    if(start_col == BASKER_TRUE)
 		      {
-			//printf("setting L : %d %d \n",
-			//     k-bcol, i);
-			Ltemp.col_ptr[k-bcol] = i;
+			//if(U_col>61)
+			  {
+			    //	printf("setting L : %d %d \n",
+			    // k, i);
+			  }
+			Ltemp.col_ptr(k-bcol) = i;
 		      }
 		    Ltemp.nnz = Ltemp.nnz+1;
 		  }
@@ -1147,9 +1160,12 @@ namespace BaskerNS
 		  {
 		    if(start_col == BASKER_TRUE)
 		      {
-			//printf("setting U: %d %d \n",
-			//     k-bcol, i);
-			Utemp.col_ptr[k-bcol] = i;
+			//if(U_col>61)
+			  {
+			    //printf("setting U: %d %d \n",
+			    // k, i);
+			  }
+			Utemp.col_ptr(k-bcol) = i;
 		      }
 		    Utemp.nnz = Utemp.nnz+1;
 		  }
@@ -1343,123 +1359,103 @@ namespace BaskerNS
   BASKER_INLINE
   int Basker<Int,Entry,Exe_Space>::sfactor_copy2()
   {
-    
-
-
-
-    printf("\n====== sfactor_copy2=======\n");
-    //ALM(0)(0).info();
-
-    //A.print();
     //Reorder A;
     //Match order
     if(match_flag == BASKER_TRUE)
       {
-	//printf("Test order_mactch_array(0): %d %d \n",
-	//       order_match_array(0),
-	//      order_match_array(1));
-
-        
-        //printf("match_flag\n");
+        if(Options.verbose == BASKER_TRUE)
+          {printf("match copy\n");}
 	permute_row(A,order_match_array);
 	sort_matrix(A);
       }
     //BTF order
     if(btf_flag == BASKER_TRUE)
       {
-	//printf("Test order_btf_array(0): %d %d: \n",
-	//       order_btf_array(0),
-	//       order_btf_array(1));
-
-        //printf("btf_flag\n");
+        if(Options.verbose == BASKER_TRUE)
+          {printf("btf copy\n");}
 	permute_col(A,order_btf_array);
 	permute_row(A,order_btf_array);
 	sort_matrix(A);
+
 	permute_col(A,order_blk_amd_array);
 	permute_row(A,order_blk_amd_array);
 	sort_matrix(A);
-
-	//printMTX("A_AMD_OTHER.mtx", A);
 
 	break_into_parts2(A, btf_nblks, btf_tabs);
       }
     //ND order
     if(nd_flag == BASKER_TRUE)
       {
-
-        //printf("nd_flag \n");
+	if(Options.verbose == BASKER_TRUE)
+	  printf("nd copy \n");
 
 	if(btf_tabs_offset != 0)
 	  {
-	//printf("Test order_nd_array(0): %d %d: \n",
-	//       part_tree.permtab(0),
-	//       part_tree.permtab(1));
+	    //printf("Test order_nd_array(0): %d %d: \n",
+	    // part_tree.permtab(0),
+	    // part_tree.permtab(1));
 	
-
-	//BTF_A.print();
+            //BTF_A.print();
 	
-	sort_matrix(BTF_A);
-	//Permute the A
-	permute_row(BTF_A, part_tree.permtab);
-	permute_col(BTF_A, part_tree.permtab);
-	//Permute the B
-	if(btf_nblks > 1)
-	  {
-	    permute_row(BTF_B, part_tree.permtab);
-	  }
-	sort_matrix(BTF_A);
-	if(btf_nblks > 1)
-	  {
-	    sort_matrix(BTF_B);
-	    sort_matrix(BTF_C);
-	  }
+            sort_matrix(BTF_A);
+            //Permute the A
+            permute_row(BTF_A, part_tree.permtab);
+            permute_col(BTF_A, part_tree.permtab);
+            //Permute the B
+            if(btf_nblks > 1)
+              {
+                permute_row(BTF_B, part_tree.permtab);
+              }
+            sort_matrix(BTF_A);
+            if(btf_nblks > 1)
+              {
+                sort_matrix(BTF_B);
+                sort_matrix(BTF_C);
+              }
 	  }
       }
     //AMD
     if(amd_flag == BASKER_TRUE)
       {
-	
-        //printf("amd flag \n");
+        if(Options.verbose == BASKER_TRUE)
+          {printf("amd copy \n");}
 
 	if(btf_tabs_offset != 0)
 	  {
+	    //printf("Test order_amd_array(0): %d %d: \n",
+	    // order_csym_array(0),
+	    // order_csym_array(1));
 
-	//printf("Test order_amd_array(0): %d %d: \n",
-	//       order_csym_array(0),
-	//       order_csym_array(1));
-
-	//Permute A
-	permute_col(BTF_A, order_csym_array);
-	sort_matrix(BTF_A);
-	permute_row(BTF_A, order_csym_array);
-	sort_matrix(BTF_A);
-       
-	//Permute B
-	if(btf_nblks > 1)
-	  {
-	permute_row(BTF_B, order_csym_array);
-	sort_matrix(BTF_B);
-	  }
+            //Permute A
+            permute_col(BTF_A, order_csym_array);
+            sort_matrix(BTF_A);
+            permute_row(BTF_A, order_csym_array);
+            sort_matrix(BTF_A);
+            
+            //Permute B
+            if(btf_nblks > 1)
+              {
+                permute_row(BTF_B, order_csym_array);
+                sort_matrix(BTF_B);
+              }
 	  }
       }
-
-    
-    //printf("ALM after perms\n");
-    //ALM(0)(0).info();
-
     if(btf_tabs_offset != 0)
       {
-    //=====Move into 2D ND-Structure====/
-    //Find submatices view shapes
-    clean_2d();
-    //printf("Done with clean 2d\n");
-    //ALM(0)(0).info();
-    //matrix_to_views_2D(BTF_A);
-    //Find starting point
-    find_2D_convert(BTF_A);
-    //printf("done with 2d convert \n");
-    //ALM(0)(0).info();
-    //Fill 2D structure
+        //=====Move into 2D ND-Structure====/
+        //Find submatices view shapes
+	if(Options.verbose == BASKER_TRUE)
+          {printf("btf tabs reorder\n");}
+
+        clean_2d();
+        //printf("Done with clean 2d\n");
+        //ALM(0)(0).info();
+        //matrix_to_views_2D(BTF_A);
+        //Find starting point
+        find_2D_convert(BTF_A);
+        //printf("done with 2d convert \n");
+        //ALM(0)(0).info();
+        //Fill 2D structure
     #ifdef BASKER_KOKKOS
     kokkos_order_init_2D<Int,Entry,Exe_Space> iO(this, BASKER_FALSE);
     Kokkos::parallel_for(TeamPolicy(num_threads,1), iO);
@@ -1469,34 +1465,47 @@ namespace BaskerNS
     #endif
       }
 
-
-    /*
     if(btf_nblks > 1)
       {
-	sort_matrix(BTF_C);
-	permute_col(BTF_C, order_c_csym_array);
-	sort_matrix(BTF_C);
-	permute_row(BTF_C, order_c_csym_array);
-	sort_matrix(BTF_C);
-	
-
-	if(btf_tabs_offset != 0)
+	if(Options.verbose_matrix_out == BASKER_TRUE)
 	  {
-	    permute_col(BTF_B, order_c_csym_array);	
-	    sort_matrix(BTF_B);
+	    printMTX("C_Factor.mtx", BTF_C);
 	  }
-
       }
-    */
 
+    //If same pattern, permute using pivot, and reset
+    if((Options.same_pattern == BASKER_TRUE))
+      {
+	if(same_pattern_flag == BASKER_FALSE)
+	  {
+	    MALLOC_INT_1DARRAY(gperm_same, gn);
+	    for(Int i = 0; i < gn; i++)
+	      {
+		gperm_same(i) = gperm(i);
+		gperm(i) = BASKER_MAX_IDX;
+	      }
+	    same_pattern_flag = BASKER_TRUE;
+	  }
+      }
+    else
+      {
+	for(Int i = 0; i < gn; ++i)
+	  {
+	    gperm(i) = BASKER_MAX_IDX;
+	  }
+      }
 
-    //test
-    //printMTX("A_BTF.mtx", BTF_A);
-
+    if(factor_flag == BASKER_TRUE)
+      {
+	typedef Kokkos::TeamPolicy<Exe_Space> TeamPolicy;
+	kokkos_reset_factor<Int,Entry,Exe_Space>
+	  reset_factors(this);
+	Kokkos::parallel_for(TeamPolicy(num_threads,1),
+			     reset_factors);
+	Kokkos::fence();
+      }
     return 0;
   }//sfactor_copy2()
-
-
 
 }//end namespace basker
 

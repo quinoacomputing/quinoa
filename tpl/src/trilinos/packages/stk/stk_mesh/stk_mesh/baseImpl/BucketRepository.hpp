@@ -48,11 +48,8 @@ namespace stk { namespace mesh { namespace utest { struct SyncToPartitions; } } 
 
 namespace stk {
 namespace mesh {
-
-namespace utest {
-}
-
 namespace impl {
+
 
 class BucketRepository
 {
@@ -79,14 +76,21 @@ public:
    */
   const BucketVector & buckets( EntityRank rank ) const
   {
-    ThrowAssertMsg( rank < m_buckets.size(), "Invalid entity rank " << rank );
+    static const BucketVector emptyBucketVector;
 
-    if (m_need_sync_from_partitions[rank])
+    if( rank < m_buckets.size() )
     {
-      const_cast<BucketRepository *>(this)->sync_from_partitions(rank);
-    }
+      if (m_need_sync_from_partitions[rank])
+      {
+        const_cast<BucketRepository *>(this)->sync_from_partitions(rank);
+      }
 
-    return m_buckets[ rank ];
+      return m_buckets[ rank ];
+    }
+    else
+    {
+      return emptyBucketVector;
+    }
   }
 
   BulkData& mesh() const { return m_mesh; }
@@ -95,7 +99,8 @@ public:
   size_t total_field_data_footprint(const FieldBase &f, EntityRank rank) const;
 
   void set_needs_to_be_sorted(stk::mesh::Bucket &bucket, bool needsSorting);
-  void internal_sort_bucket_entities();
+  void internal_default_sort_bucket_entities();
+  void internal_custom_sort_bucket_entities(const EntitySorterBase& sorter);
 
   void optimize_buckets();
 
@@ -144,8 +149,9 @@ public:
 
   unsigned get_bucket_capacity() const { return m_bucket_capacity; }
 
-private:
+  void delete_bucket(Bucket * bucket);
 
+private:
   BucketRepository();
 
   Bucket *allocate_bucket(EntityRank arg_entity_rank,
@@ -155,6 +161,8 @@ private:
   void deallocate_bucket(Bucket *bucket);
 
   void sync_bucket_ids(EntityRank entity_rank);
+
+  void ensure_data_structures_sized();
 
   BulkData & m_mesh ; // Associated Bulk Data Aggregate
 

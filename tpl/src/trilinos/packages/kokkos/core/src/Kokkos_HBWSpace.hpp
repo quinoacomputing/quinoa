@@ -46,7 +46,6 @@
 
 
 #include <Kokkos_HostSpace.hpp>
-#include <impl/Kokkos_HBWAllocators.hpp>
 
 /*--------------------------------------------------------------------------*/
 #ifdef KOKKOS_HAVE_HBWSPACE
@@ -121,21 +120,6 @@ public:
   typedef Kokkos::Device<execution_space,memory_space> device_type;
 
   /*--------------------------------*/
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-  typedef Impl::HBWMallocAllocator allocator ;
-
-  /** \brief  Allocate a contiguous block of memory.
-   *
-   *  The input label is associated with the block of memory.
-   *  The block of memory is tracked via reference counting where
-   *  allocation gives it a reference count of one.
-   */
-  static Kokkos::Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-
-  /*--------------------------------*/
   /* Functions unique to the HBWSpace */
   static int in_parallel();
 
@@ -167,7 +151,7 @@ private:
 
   AllocationMechanism  m_alloc_mech ;
 
-  friend class Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::Experimental::HBWSpace , void > ;
+  friend class Kokkos::Impl::SharedAllocationRecord< Kokkos::Experimental::HBWSpace , void > ;
 };
 
 } // namespace Experimental
@@ -177,7 +161,6 @@ private:
 //----------------------------------------------------------------------------
 
 namespace Kokkos {
-namespace Experimental {
 namespace Impl {
 
 template<>
@@ -254,7 +237,6 @@ public:
 };
 
 } // namespace Impl
-} // namespace Experimental
 } // namespace Kokkos
 
 //----------------------------------------------------------------------------

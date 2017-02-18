@@ -51,6 +51,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Phalanx_KokkosViewFactoryFunctor.hpp"
 #include <sstream>
+#include <stdexcept>
 
 // *************************************************************************
 template <typename EvalT, typename Traits>
@@ -92,7 +93,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   // Figure out all evaluator dependencies
   if ( !(this->dag_manager_.sortingCalled()) )
     this->dag_manager_.sortAndOrderEvaluators();
-  
+
+
+  // Allocate memory for all fields that are needed
   const std::vector< Teuchos::RCP<PHX::FieldTag> >& var_list = 
     this->dag_manager_.getFieldTags();
 
@@ -106,7 +109,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 			       "Error: PHX::EvaluationContainer::postRegistrationSetup(): could not build a Kokkos::View for field named \"" << (*var)->name() << "\" of type \"" << (*var)->dataTypeInfo().name() << "\" for the evaluation type \"" << PHX::typeAsString<EvalT>() << "\".");
   }
 
-  // Allow fields in evaluators to grab pointers to relevant field data
+  // Bind memory to all fields in all required evaluators
+  for (const auto& field : var_list)
+    this->bindField(*field,fields_[field->identifier()]);
+
+  // Allow users to perform special setup. This used to include
+  // manually binding memory for all fields in the evaluators via
+  // setFieldData(). NOTE: users should not have to bind memory
+  // anymore in the postRegistrationSetup() as we now do it for them
+  // above.
   this->dag_manager_.postRegistrationSetup(d,fm);
 
   post_registration_setup_called_ = true;
@@ -124,6 +135,22 @@ evaluateFields(typename Traits::EvalData d)
 
   this->dag_manager_.evaluateFields(d);
 }
+
+// *************************************************************************
+#ifdef PHX_ENABLE_KOKKOS_AMT
+template <typename EvalT, typename Traits>
+void PHX::EvaluationContainer<EvalT, Traits>::
+evaluateFieldsTaskParallel(const int& work_size,
+			   typename Traits::EvalData d)
+{
+#ifdef PHX_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION( !(this->setupCalled()) , std::logic_error,
+		      "You must call post registration setup for each evaluation type before calling the evaluateFields() method for that type!");
+#endif
+
+  this->dag_manager_.evaluateFieldsTaskParallel(work_size,d);
+}
+#endif
 
 // *************************************************************************
 template <typename EvalT, typename Traits>
@@ -177,13 +204,38 @@ PHX::any
 PHX::EvaluationContainer<EvalT, Traits>::getFieldData(const PHX::FieldTag& f)
 {
   //return fields_[f.identifier()];
-  std::unordered_map<std::string,PHX::any>::iterator a= fields_.find(f.identifier());
+  auto a = fields_.find(f.identifier());
    if (a==fields_.end()){
     std::cout << " PHX::EvaluationContainer<EvalT, Traits>::getFieldData can't find an f.identifier() "<<  f.identifier() << std::endl;
    }
   return a->second;
 }
 
+// *************************************************************************
+template <typename EvalT, typename Traits>
+void PHX::EvaluationContainer<EvalT, Traits>::
+bindField(const PHX::FieldTag& f, const PHX::any& a)
+{
+  auto s = fields_.find(f.identifier());
+
+  if (s == fields_.end()) {
+    std::stringstream st;
+    st << "\n ERROR in PHX::EvaluationContainer<EvalT, Traits>::bindField():\n" 
+       << " Failed to bind field: \"" <<  f.identifier() << "\"\n" 
+       << " for evaluation type \"" << PHX::typeAsString<EvalT>() << "\".\n"
+       << " This field is not used in the Evaluation DAG.\n";
+    
+    throw std::runtime_error(st.str());
+  }
+
+  // Set the new memory
+  fields_[f.identifier()] = a;
+
+  // Loop through evalautors and rebind the field
+  auto& evaluators = this->dag_manager_.getEvaluatorsBindingField(f);
+  for (auto& e : evaluators)
+    e->bindField(f,a);
+}
 
 // *************************************************************************
 template <typename EvalT, typename Traits>

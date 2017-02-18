@@ -323,14 +323,14 @@ struct yy_buffer_state
  * future we want to put the buffer states in a more general
  * "scanner state".
  *
- * Returns the top of the stack, or NULL.
+ * Returns the top of the stack, or nullptr.
  */
 #define YY_CURRENT_BUFFER ( (yy_buffer_stack) \
                           ? (yy_buffer_stack)[(yy_buffer_stack_top)] \
-                          : NULL)
+                          : nullptr)
 
 /* Same as previous macro, but useful when we know that the buffer stack is not
- * NULL or when we need an lvalue. For internal use only.
+ * nullptr or when we need an lvalue. For internal use only.
  */
 #define YY_CURRENT_BUFFER_LVALUE (yy_buffer_stack)[(yy_buffer_stack_top)]
 
@@ -1554,9 +1554,9 @@ static int yy_flex_strlen (yyconst char * );
  */
 YY_DECL
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp, *yy_bp;
-	register int yy_act;
+	yy_state_type yy_current_state;
+	char *yy_cp, *yy_bp;
+	int yy_act;
     
 /* %% [7.0] user's declarations go here */
 #line 127 "/Users/gdsjaar/src/seacas/packages/seacas/libraries/aprepro_lib/aprepro.ll"
@@ -1615,7 +1615,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
 			if ( yy_accept[yy_current_state] )
 				{
 				(yy_last_accepting_state) = yy_current_state;
@@ -1784,7 +1784,7 @@ YY_RULE_SETUP
     } else {
       s = aprepro.getsym(yytext);
 
-      if (s == 0 || (s->type != token::SVAR && s->type != token::IMMSVAR && s->value.var == 0.)) {
+      if (s == nullptr || (s->type != token::SVAR && s->type != token::IMMSVAR && s->value.var == 0.)) {
 	BEGIN(LOOP_SKIP);
       }
       else { /* Value defined and != 0. */
@@ -2260,15 +2260,14 @@ YY_RULE_SETUP
   {
     symrec *s;
     int quoted = false;
-    std::fstream *yytmp;
     char *pt = strchr(yytext, ')');
     *pt = '\0';
     /* Check to see if surrounded by double quote */ 
-    if ((pt = strchr(yytext, '"')) != NULL) {
+    if ((pt = strchr(yytext, '"')) != nullptr) {
       yytext++;
       quoted = true;
     }
-    if ((pt = strrchr(yytext, '"')) != NULL) {
+    if ((pt = strrchr(yytext, '"')) != nullptr) {
       *pt = '\0';
       quoted = true;
     }
@@ -2276,7 +2275,7 @@ YY_RULE_SETUP
     if (quoted == false) {
       /* See if this is an aprepro variable referring to a name */
       s = aprepro.getsym(yytext);
-      if (s == 0 || (s->type != token::SVAR && s->type != token::IMMSVAR)) {
+      if (s == nullptr || (s->type != token::SVAR && s->type != token::IMMSVAR)) {
 	pt = yytext;
       } else {
 	pt = (char*)s->value.svar;
@@ -2313,7 +2312,7 @@ YY_RULE_SETUP
 {
            symrec *s;
 			     s = aprepro.getsym(yytext);
-			     if (s == 0)
+			     if (s == nullptr)
 			       s = aprepro.putsym (yytext, SEAMS::Aprepro::UNDEFINED_VARIABLE, 0);
 			     yylval->tptr = s;
 			     return((token::yytokentype)s->type);
@@ -2755,7 +2754,7 @@ yyFlexLexer::yyFlexLexer( std::istream* arg_yyin, std::ostream* arg_yyout )
 {
 	yyin = arg_yyin;
 	yyout = arg_yyout;
-	yy_c_buf_p = 0;
+	yy_c_buf_p = nullptr;
 	yy_init = 0;
 	yy_start = 0;
 	yy_flex_debug = 0;
@@ -2769,13 +2768,13 @@ yyFlexLexer::yyFlexLexer( std::istream* arg_yyin, std::ostream* arg_yyout )
 	yy_more_offset = yy_prev_more_offset = 0;
 
 	yy_start_stack_ptr = yy_start_stack_depth = 0;
-	yy_start_stack = NULL;
+	yy_start_stack = nullptr;
 
-	yy_buffer_stack = 0;
+	yy_buffer_stack = nullptr;
 	yy_buffer_stack_top = 0;
 	yy_buffer_stack_max = 0;
 
-	yy_state_buf = 0;
+	yy_state_buf = nullptr;
 
 }
 
@@ -2854,9 +2853,9 @@ void yyFlexLexer::LexerOutput( const char* buf, int size )
 int yyFlexLexer::yy_get_next_buffer()
 /* %endif */
 {
-    	register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-	register char *source = (yytext_ptr);
-	register int number_to_move, i;
+    	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+	char *source = (yytext_ptr);
+	int number_to_move, i;
 	int ret_val;
 
 	if ( (yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars) + 1] )
@@ -2925,7 +2924,7 @@ int yyFlexLexer::yy_get_next_buffer()
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = 0;
+				b->yy_ch_buf = nullptr;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -2994,8 +2993,8 @@ int yyFlexLexer::yy_get_next_buffer()
     yy_state_type yyFlexLexer::yy_get_previous_state()
 /* %endif */
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp;
+	yy_state_type yy_current_state;
+	char *yy_cp;
     
 /* %% [15.0] code to get the start state into yy_current_state goes here */
 	yy_current_state = (yy_start);
@@ -3003,7 +3002,7 @@ int yyFlexLexer::yy_get_next_buffer()
 	for ( yy_cp = (yytext_ptr) + YY_MORE_ADJ; yy_cp < (yy_c_buf_p); ++yy_cp )
 		{
 /* %% [16.0] code to find the next state goes here */
-		register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+		YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
 		if ( yy_accept[yy_current_state] )
 			{
 			(yy_last_accepting_state) = yy_current_state;
@@ -3032,11 +3031,11 @@ int yyFlexLexer::yy_get_next_buffer()
     yy_state_type yyFlexLexer::yy_try_NUL_trans( yy_state_type yy_current_state )
 /* %endif */
 {
-	register int yy_is_jam;
+	int yy_is_jam;
     /* %% [17.0] code to find the next state, and perhaps do backing up, goes here */
-	register char *yy_cp = (yy_c_buf_p);
+	char *yy_cp = (yy_c_buf_p);
 
-	register YY_CHAR yy_c = 1;
+	YY_CHAR yy_c = 1;
 	if ( yy_accept[yy_current_state] )
 		{
 		(yy_last_accepting_state) = yy_current_state;
@@ -3057,10 +3056,10 @@ int yyFlexLexer::yy_get_next_buffer()
 /* %if-c-only */
 /* %endif */
 /* %if-c++-only */
-    void yyFlexLexer::yyunput( int c, register char* yy_bp)
+    void yyFlexLexer::yyunput( int c, char* yy_bp)
 /* %endif */
 {
-	register char *yy_cp;
+	char *yy_cp;
     
     yy_cp = (yy_c_buf_p);
 
@@ -3070,10 +3069,10 @@ int yyFlexLexer::yy_get_next_buffer()
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = (yy_n_chars) + 2;
-		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
+		yy_size_t number_to_move = (yy_n_chars) + 2;
+		char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
-		register char *source =
+		char *source =
 				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
 
 		while ( source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -3296,7 +3295,7 @@ int yyFlexLexer::yy_get_next_buffer()
 		return;
 
 	if ( b == YY_CURRENT_BUFFER ) /* Not sure if we should pop here. */
-		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
+		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) nullptr;
 
 	if ( b->yy_is_our_buffer )
 		SEAMSfree((void *) b->yy_ch_buf  );
@@ -3383,7 +3382,7 @@ int yyFlexLexer::yy_get_next_buffer()
 void yyFlexLexer::yypush_buffer_state (YY_BUFFER_STATE new_buffer)
 /* %endif */
 {
-    	if (new_buffer == NULL)
+    	if (new_buffer == nullptr)
 		return;
 
 	yyensure_buffer_stack();
@@ -3423,7 +3422,7 @@ void yyFlexLexer::yypop_buffer_state (void)
 		return;
 
 	yy_delete_buffer(YY_CURRENT_BUFFER );
-	YY_CURRENT_BUFFER_LVALUE = NULL;
+	YY_CURRENT_BUFFER_LVALUE = nullptr;
 	if ((yy_buffer_stack_top) > 0)
 		--(yy_buffer_stack_top);
 
@@ -3553,7 +3552,7 @@ void yyFlexLexer::yyensure_buffer_stack(void)
 /* %if-c++-only */
 void yyFlexLexer::LexerError( yyconst char msg[] )
 {
-    	std::cerr << msg << std::endl;
+    	std::cerr << msg << '\n';
 	exit( YY_EXIT_FAILURE );
 }
 /* %endif */
@@ -3604,7 +3603,7 @@ void yyFlexLexer::LexerError( yyconst char msg[] )
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
 {
-	register int i;
+	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
 }
@@ -3613,7 +3612,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen (yyconst char * s )
 {
-	register int n;
+	int n;
 	for ( n = 0; s[n]; ++n )
 		;
 
@@ -3675,7 +3674,7 @@ namespace SEAMS {
 
   void Scanner::add_include_file(const std::string &filename, bool must_exist)
   {
-    std::fstream *yytmp = NULL;
+    std::fstream *yytmp = nullptr;
     if (must_exist)
       yytmp = aprepro.open_file(filename.c_str(), "r");
     else
@@ -3726,14 +3725,14 @@ namespace SEAMS {
 
     if (aprepro.ap_options.interactive && yyin == &std::cin &&
 	isatty(0) != 0 && isatty(1) != 0) {
-      char *line = getline_int(NULL);
+      char *line = getline_int(nullptr);
 
       if (strlen(line) == 0)
 	return 0;
 
       gl_histadd(line);
   
-      if (strlen(line) > max_size - 2) {
+      if (strlen(line) > (size_t)max_size - 2) {
 	yyerror("input line is too long");
 	return 0;
       }
@@ -3787,7 +3786,7 @@ namespace SEAMS {
         if (--aprepro.ap_file_list.top().loop_count <= 0)  {
           // On Windows, you can't remove the temp file until all the references to the
           // file object have been released, so we will delete it here.
-          delete yyin; yyin = NULL;
+          delete yyin; yyin = nullptr;
 
           if (strcmp("_string_", aprepro.ap_file_list.top().name.c_str()) != 0) {
             if (!aprepro.ap_options.debugging)
@@ -3802,7 +3801,7 @@ namespace SEAMS {
         }
         else {
           // Do not pop ap_file_list; we are rereading that file...
-          delete yyin; yyin = NULL;
+          delete yyin; yyin = nullptr;
           yyFlexLexer::yypop_buffer_state();
           yyin = aprepro.open_file(aprepro.ap_file_list.top().name, "r");
           yyFlexLexer::yypush_buffer_state (yyFlexLexer::yy_create_buffer(yyin, YY_BUF_SIZE));
@@ -3810,7 +3809,7 @@ namespace SEAMS {
         }
       }
       else {
-        delete yyin; yyin=NULL;
+        delete yyin; yyin=nullptr;
         aprepro.ap_file_list.pop();
         yyFlexLexer::yypop_buffer_state();
 
@@ -3833,7 +3832,7 @@ namespace SEAMS {
 
       // Reset the current character index.
       curr_index = 0;
-      if (yyin != NULL)
+      if (yyin != nullptr)
 	curr_index = yyin->tellg();
 
       return (0);
@@ -3877,9 +3876,9 @@ namespace SEAMS {
 
     aprepro.ap_file_list.push(SEAMS::file_rec("_string_", 0, true, -1));
   
-    std::istringstream *ins = new std::istringstream(new_string); // Declare an input string stream.
+    auto ins = new std::istringstream(new_string); // Declare an input string stream.
     yyFlexLexer::yypush_buffer_state(yyFlexLexer::yy_create_buffer(ins, new_string.size()));
-    return (NULL);
+    return (nullptr);
   }
 
   /* Push the contents of 'string' onto the stack to be reread.
@@ -3907,10 +3906,10 @@ namespace SEAMS {
       std::string new_string("}");
       new_string += string;
 
-      std::istringstream *ins = new std::istringstream(new_string); // Declare an input string stream.
+      auto ins = new std::istringstream(new_string); // Declare an input string stream.
       yyFlexLexer::yypush_buffer_state(yyFlexLexer::yy_create_buffer(ins, new_string.size()));
     }
-    return (NULL);
+    return (nullptr);
   }
 
   char *Scanner::if_handler(double x)
@@ -3931,7 +3930,7 @@ namespace SEAMS {
       if (aprepro.ap_options.debugging) 
 	std::cerr << "DEBUG IF: If level " << if_lvl << " " << if_state[if_lvl] << "\n";
     }
-    return(NULL);
+    return(nullptr);
   }
 
   char *Scanner::elseif_handler(double x)
@@ -3945,7 +3944,7 @@ namespace SEAMS {
     }
     if (aprepro.ap_options.debugging) 
       std::cerr << "DEBUG IF: elseif at level " << if_lvl << " " << if_state[if_lvl] << "\n";
-    return(NULL);
+    return(nullptr);
   }
 
   char *Scanner::switch_handler(double x)
@@ -3966,7 +3965,7 @@ namespace SEAMS {
       std::cerr << "DEBUG SWITCH: 'switch' with condition = " << switch_condition
 		<< " at line " << aprepro.ap_file_list.top().lineno << "\n";
     }
-    return(NULL);
+    return(nullptr);
   }
 
   char *Scanner::case_handler(double x)
@@ -3997,7 +3996,7 @@ namespace SEAMS {
       // Need to skip all code until end of case
       switch_skip_to_endcase = true;
     }
-    return(NULL);
+    return(nullptr);
   }
 
   void Scanner::save_history_string()
@@ -4019,7 +4018,7 @@ namespace SEAMS {
     yyin->seekg(hist_start);
 
     // Read everything up to this point again and save it.
-    char* tmp = new char[len+1];
+    auto  tmp = new char[len+1];
     yyin->read(tmp, len);
     tmp[len] = '\0';
 
@@ -4038,7 +4037,7 @@ namespace SEAMS {
 #endif
 int SEAMSFlexLexer::yylex()
 {
-    std::cerr << "in ExampleFlexLexer::yylex() !" << std::endl;
+    std::cerr << "in ExampleFlexLexer::yylex() !" << '\n';
     return 0;
 }
 

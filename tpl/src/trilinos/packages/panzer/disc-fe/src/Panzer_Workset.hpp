@@ -91,17 +91,18 @@ namespace panzer {
     * of a details vector supports things like DG based assembly.
     */
   struct Workset : public WorksetDetails {
-    Workset() : sensitivities_name("") {}
+    Workset() {}
 
-    std::size_t num_cells;
+    index_t num_cells;
     int subcell_dim; //! If workset corresponds to a sub cell, what is the dimension?
     
     double alpha;
     double beta;
     double time;
+    double step_size;
+    double stage_number;
     std::vector<double> gather_seeds; // generic gather seeds
     bool evaluate_transient_terms;
-    std::string sensitivities_name;
 
     //! other contains details about the side-sharing elements on the other side
     //! of the interface. If Teuchos::nonnull(other), then Workset contains two

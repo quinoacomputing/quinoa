@@ -47,51 +47,58 @@
 #include "Panzer_STK_SetupUtilities.hpp"
 #include "Panzer_WorksetContainer.hpp"
 #include "Panzer_Workset_Builder.hpp"
-#include "Panzer_IntegrationValues.hpp"
+#include "Panzer_IntegrationValues2.hpp"
 #include "Panzer_STK_WorksetFactory.hpp"
 #include "Panzer_CellData.hpp"
+#include "Panzer_CommonArrayFactories.hpp"
 
 #include <stk_mesh/base/Selector.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
+#include <stk_mesh/base/CreateAdjacentEntities.hpp>
 
 #include "Shards_CellTopology.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Teuchos_Assert.hpp"
 
-namespace panzer_stk_classic {
+namespace panzer_stk {
 
   void computeSidesetNodeNormals(std::unordered_map<unsigned,std::vector<double> >& normals,
-				 const Teuchos::RCP<const panzer_stk_classic::STK_Interface>& mesh,
+				 const Teuchos::RCP<const panzer_stk::STK_Interface>& mesh,
 				 const std::string& sidesetName,
 				 const std::string& elementBlockName,
 				 std::ostream* out,
 				 std::ostream* pout)
   {    
+    using panzer::Cell;
+    using panzer::NODE;
+    using panzer::Dim;
+
     using Teuchos::RCP;
+
+    panzer::MDFieldArrayFactory af("",true);
     
-    RCP<stk_classic::mesh::fem::FEMMetaData> metaData = mesh->getMetaData();
-    RCP<stk_classic::mesh::BulkData> bulkData = mesh->getBulkData();
+    RCP<stk::mesh::MetaData> metaData = mesh->getMetaData();
+    RCP<stk::mesh::BulkData> bulkData = mesh->getBulkData();
 
     // Grab all nodes for a surface including ghosted to get correct contributions to normal average    
-    stk_classic::mesh::Part * sidePart = mesh->getSideset(sidesetName);
-    stk_classic::mesh::Part * elmtPart = mesh->getElementBlockPart(elementBlockName);
-    stk_classic::mesh::Selector sideSelector = *sidePart;
-    stk_classic::mesh::Selector blockSelector = *elmtPart;
-    stk_classic::mesh::Selector mySelector = metaData->universal_part() & blockSelector & sideSelector;
-    std::vector<stk_classic::mesh::Entity*> sides;
-    stk_classic::mesh::get_selected_entities(mySelector,bulkData->buckets(metaData->side_rank()),sides);
+    stk::mesh::Part * sidePart = mesh->getSideset(sidesetName);
+    stk::mesh::Part * elmtPart = mesh->getElementBlockPart(elementBlockName);
+    stk::mesh::Selector sideSelector = *sidePart;
+    stk::mesh::Selector blockSelector = *elmtPart;
+    stk::mesh::Selector mySelector = metaData->universal_part() & blockSelector & sideSelector;
+    std::vector<stk::mesh::Entity> sides;
+    stk::mesh::get_selected_entities(mySelector,bulkData->buckets(metaData->side_rank()),sides);
 
     std::vector<std::size_t> localSideTopoIDs;
-    std::vector<stk_classic::mesh::Entity*> parentElements;
-    panzer_stk_classic::workset_utils::getUniversalSubcellElements(*mesh,elementBlockName,sides,localSideTopoIDs,parentElements);
+    std::vector<stk::mesh::Entity> parentElements;
+    panzer_stk::workset_utils::getUniversalSubcellElements(*mesh,elementBlockName,sides,localSideTopoIDs,parentElements);
 
     if (pout != NULL) {
       for (std::size_t i=0; i < localSideTopoIDs.size(); ++i) {
 	*pout << "parent element: "
-	      << " gid(" << parentElements[i]->identifier() << ")"
+	      << " gid(" << bulkData->identifier(parentElements[i]) << ")"
 	      << ", local_face(" << localSideTopoIDs[i] << ")"
 	      << std::endl;
       }
@@ -110,37 +117,41 @@ namespace panzer_stk_classic {
     Intrepid2::DefaultCubatureFactory<double> cubFactory;
     int cubDegree = 1;
 
-    std::vector<stk_classic::mesh::Entity*>::const_iterator side = sides.begin();
+    std::vector<stk::mesh::Entity>::const_iterator side = sides.begin();
     std::vector<std::size_t>::const_iterator sideID = localSideTopoIDs.begin();
-    std::vector<stk_classic::mesh::Entity*>::const_iterator parentElement = parentElements.begin();
+    std::vector<stk::mesh::Entity>::const_iterator parentElement = parentElements.begin();
     for ( ; sideID != localSideTopoIDs.end(); ++side,++sideID,++parentElement) {
     
-      std::vector<stk_classic::mesh::Entity*> elementEntities;
-      elementEntities.push_back(*parentElement);
-      Intrepid2::FieldContainer<double> vertices;
-      mesh->getElementVertices(elementEntities,elementBlockName,vertices);
+      std::vector<stk::mesh::Entity> elementEntities;
+      elementEntities.push_back(*parentElement); // notice this is size 1!
+      PHX::MDField<double,panzer::Cell,panzer::NODE,panzer::Dim> vertices 
+          = af.buildStaticArray<double,Cell,NODE,Dim>("",elementEntities.size(), parentTopology->getVertexCount(), mesh->getDimension());
+      mesh->getElementVerticesNoResize(elementEntities,elementBlockName,vertices);
       
-      panzer::CellData sideCellData(1,*sideID,parentTopology);
+      panzer::CellData sideCellData(1,*sideID,parentTopology); // this is size 1 because elementEntties is size 1!
       RCP<panzer::IntegrationRule> ir = Teuchos::rcp(new panzer::IntegrationRule(cubDegree,sideCellData));
-      panzer::IntegrationValues<double, Intrepid2::FieldContainer<double> > iv;
+
+      panzer::IntegrationValues2<double> iv("",true);
       iv.setupArrays(ir);
       iv.evaluateValues(vertices);
       
-      Intrepid2::FieldContainer<double> normal(1,ir->num_points,parentTopology->getDimension());
+      Kokkos::DynRankView<double,PHX::Device> normal("normal",1,ir->num_points,parentTopology->getDimension());
       Intrepid2::CellTools<double>::getPhysicalSideNormals(normal, iv.jac, *sideID, *(ir->topology));
 
       if (pout != NULL) {
       *pout << "element normals: "
-	    << "gid(" << (*parentElement)->identifier() << ")"
+	    << "gid(" << bulkData->identifier(*parentElement) << ")"
 	    << ", normal(" << normal(0,0,0) << "," << normal(0,0,1) << "," << normal(0,0,2) << ")"
 	    << std::endl;
       }
 
       // loop over nodes in nodes in side and add normal contribution for averaging
-      stk_classic::mesh::PairIterRelation nodeRelations = (*side)->relations(mesh->getNodeRank());
-      for (stk_classic::mesh::PairIterRelation::iterator node = nodeRelations.begin(); node != nodeRelations.end(); ++node) {
+      const size_t numNodes = bulkData->num_nodes(*side);
+      stk::mesh::Entity const* nodeRelations = bulkData->begin_nodes(*side);
+      for (size_t n=0; n<numNodes; ++n) {
+        stk::mesh::Entity node = nodeRelations[n];
 	for (unsigned dim = 0; dim < parentTopology->getDimension(); ++dim) {
-	  nodeNormals[node->entity()->identifier()].push_back(normal(0,0,dim));
+	  nodeNormals[bulkData->identifier(node)].push_back(normal(0,0,dim));
 	}
       }
 
@@ -208,8 +219,8 @@ namespace panzer_stk_classic {
     
   }
 
-  void computeSidesetNodeNormals(std::unordered_map<std::size_t,Intrepid2::FieldContainer<double> >& normals,
-				 const Teuchos::RCP<const panzer_stk_classic::STK_Interface>& mesh,
+  void computeSidesetNodeNormals(std::unordered_map<std::size_t,Kokkos::DynRankView<double,PHX::Device> >& normals,
+				 const Teuchos::RCP<const panzer_stk::STK_Interface>& mesh,
 				 const std::string& sidesetName,
 				 const std::string& elementBlockName,
 				 std::ostream* out,
@@ -221,41 +232,42 @@ namespace panzer_stk_classic {
     
     computeSidesetNodeNormals(nodeEntityIdToNormals,mesh,sidesetName,elementBlockName,out,pout);
 
-    RCP<stk_classic::mesh::fem::FEMMetaData> metaData = mesh->getMetaData();
-    RCP<stk_classic::mesh::BulkData> bulkData = mesh->getBulkData();
+    RCP<stk::mesh::MetaData> metaData = mesh->getMetaData();
+    RCP<stk::mesh::BulkData> bulkData = mesh->getBulkData();
 
     // Grab all nodes for a surface including ghosted to get correct contributions to normal average    
-    stk_classic::mesh::Part * sidePart = mesh->getSideset(sidesetName);
-    stk_classic::mesh::Part * elmtPart = mesh->getElementBlockPart(elementBlockName);
-    stk_classic::mesh::Selector sideSelector = *sidePart;
-    stk_classic::mesh::Selector blockSelector = *elmtPart;
-    stk_classic::mesh::Selector mySelector = metaData->universal_part() & blockSelector & sideSelector;
-    std::vector<stk_classic::mesh::Entity*> sides;
-    stk_classic::mesh::get_selected_entities(mySelector,bulkData->buckets(metaData->side_rank()),sides);
+    stk::mesh::Part * sidePart = mesh->getSideset(sidesetName);
+    stk::mesh::Part * elmtPart = mesh->getElementBlockPart(elementBlockName);
+    stk::mesh::Selector sideSelector = *sidePart;
+    stk::mesh::Selector blockSelector = *elmtPart;
+    stk::mesh::Selector mySelector = metaData->universal_part() & blockSelector & sideSelector;
+    std::vector<stk::mesh::Entity> sides;
+    stk::mesh::get_selected_entities(mySelector,bulkData->buckets(metaData->side_rank()),sides);
 
     RCP<const shards::CellTopology> parentTopology = mesh->getCellTopology(elementBlockName);
 
     std::vector<std::size_t> localSideTopoIDs;
-    std::vector<stk_classic::mesh::Entity*> parentElements;
-    panzer_stk_classic::workset_utils::getUniversalSubcellElements(*mesh,elementBlockName,sides,localSideTopoIDs,parentElements);
+    std::vector<stk::mesh::Entity> parentElements;
+    panzer_stk::workset_utils::getUniversalSubcellElements(*mesh,elementBlockName,sides,localSideTopoIDs,parentElements);
     
-    std::vector<stk_classic::mesh::Entity*>::const_iterator side = sides.begin();
+    std::vector<stk::mesh::Entity>::const_iterator side = sides.begin();
     std::vector<std::size_t>::const_iterator sideID = localSideTopoIDs.begin();
-    std::vector<stk_classic::mesh::Entity*>::const_iterator parentElement = parentElements.begin();
+    std::vector<stk::mesh::Entity>::const_iterator parentElement = parentElements.begin();
     for ( ; sideID != localSideTopoIDs.end(); ++side,++sideID,++parentElement) {
     
       // loop over nodes in nodes in side element
-      stk_classic::mesh::PairIterRelation nodeRelations = (*parentElement)->relations(mesh->getNodeRank());
+      const size_t numNodes = bulkData->num_nodes(*parentElement);
+      stk::mesh::Entity const* nodeRelations = bulkData->begin_nodes(*parentElement);
 
-      normals[mesh->elementLocalId(*parentElement)].resize(nodeRelations.size(),parentTopology->getDimension()); 
+      normals[mesh->elementLocalId(*parentElement)] = Kokkos::DynRankView<double,PHX::Device>("normals",numNodes,parentTopology->getDimension());
 
-      int nodeIndex = 0;
-      for (stk_classic::mesh::PairIterRelation::iterator node = nodeRelations.begin(); node != nodeRelations.end(); ++node,++nodeIndex) {
+      for (size_t nodeIndex=0; nodeIndex<numNodes; ++nodeIndex) {
+        stk::mesh::Entity node = nodeRelations[nodeIndex];
 	// if the node is on the sideset, insert, otherwise set normal
 	// to zero (it is an interior node of the parent element).
-	if (nodeEntityIdToNormals.find(node->entity()->identifier()) != nodeEntityIdToNormals.end()) { 
+	if (nodeEntityIdToNormals.find(bulkData->identifier(node)) != nodeEntityIdToNormals.end()) { 
 	  for (unsigned dim = 0; dim < parentTopology->getDimension(); ++dim) {
-	    (normals[mesh->elementLocalId(*parentElement)])(nodeIndex,dim) = (nodeEntityIdToNormals[node->entity()->identifier()])[dim];
+	    (normals[mesh->elementLocalId(*parentElement)])(nodeIndex,dim) = (nodeEntityIdToNormals[bulkData->identifier(node)])[dim];
 	  }
 	}
 	else {

@@ -123,6 +123,8 @@ IF (Intrepid_ENABLE_Boost)
     Shared/MiniTensor/Intrepid_MiniTensor_Matrix.h
     Shared/MiniTensor/Intrepid_MiniTensor_Matrix.i.h
     Shared/MiniTensor/Intrepid_MiniTensor_Matrix.t.h
+    Shared/MiniTensor/Intrepid_MiniTensor_Solvers.h
+    Shared/MiniTensor/Intrepid_MiniTensor_Solvers.t.h
     Shared/MiniTensor/Intrepid_MiniTensor_Storage.h
     Shared/MiniTensor/Intrepid_MiniTensor_Storage.i.h
     Shared/MiniTensor/Intrepid_MiniTensor_Tensor.h
@@ -161,6 +163,8 @@ APPEND_SET(HEADERS
   Discretization/Integration/Intrepid_CubatureControlVolume.hpp
   Discretization/Integration/Intrepid_CubatureControlVolumeSideDef.hpp
   Discretization/Integration/Intrepid_CubatureControlVolumeSide.hpp
+  Discretization/Integration/Intrepid_CubatureControlVolumeBoundaryDef.hpp
+  Discretization/Integration/Intrepid_CubatureControlVolumeBoundary.hpp
   Discretization/Integration/Intrepid_CubatureDirectDef.hpp
   Discretization/Integration/Intrepid_CubatureDirect.hpp
   Discretization/Integration/Intrepid_CubatureDirectLineGaussDef.hpp

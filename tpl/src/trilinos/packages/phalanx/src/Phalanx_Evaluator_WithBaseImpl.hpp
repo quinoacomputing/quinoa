@@ -46,7 +46,8 @@
 #define PHX_EVALUATOR_WITHBASEIMPL_H
 
 #include <vector>
-
+#include <functional>
+#include <unordered_map>
 #include "Phalanx_Evaluator.hpp"
 #include "Phalanx_Field.hpp"
 #include "Phalanx_MDField.hpp"
@@ -84,6 +85,18 @@ namespace PHX {
     void addEvaluatedField(const PHX::MDField<DataT,Tag0,Tag1,Tag2,Tag3,
 			   Tag4,Tag5,Tag6,Tag7>& f);
 
+
+    virtual void addContributedField(const PHX::FieldTag& ft);
+
+    template<typename DataT>
+    void addContributedField(const PHX::Field<DataT>& f);
+
+    template<typename DataT,
+	     typename Tag0, typename Tag1, typename Tag2, typename Tag3,
+	     typename Tag4, typename Tag5, typename Tag6, typename Tag7>
+    void addContributedField(const PHX::MDField<DataT,Tag0,Tag1,Tag2,Tag3,
+                             Tag4,Tag5,Tag6,Tag7>& f);
+
     virtual void addDependentField(const PHX::FieldTag& ft);
 
     // DEPRECATED: use new const version below
@@ -114,26 +127,46 @@ namespace PHX {
 				       PHX::FieldManager<Traits>& vm) = 0;
 
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
-    evaluatedFields() const;
+    evaluatedFields() const override;
 
     virtual const std::vector< Teuchos::RCP<FieldTag> >& 
-    dependentFields() const;
+    contributedFields() const override;
+
+    virtual const std::vector< Teuchos::RCP<FieldTag> >& 
+    dependentFields() const override;
 
     virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
-    virtual void preEvaluate(typename Traits::PreEvalData d);
+#ifdef PHX_ENABLE_KOKKOS_AMT
+    virtual Kokkos::Future<void,PHX::Device::execution_space>
+    createTask(Kokkos::TaskPolicy<PHX::Device::execution_space>& policy,
+	       const int& work_size,
+               const std::vector<Kokkos::Future<void,PHX::Device::execution_space>>& dependent_futures,
+	       typename Traits::EvalData d);
 
-    virtual void postEvaluate(typename Traits::PostEvalData d);
+    virtual unsigned taskSize() const;
+#endif
 
-    virtual const std::string& getName() const;
+    virtual void preEvaluate(typename Traits::PreEvalData d) override;
+
+    virtual void postEvaluate(typename Traits::PostEvalData d) override;
+
+    virtual const std::string& getName() const override;
+
+    virtual void bindField(const PHX::FieldTag& ft, const PHX::any& f) override;
 
   private:
 
     std::vector< Teuchos::RCP<FieldTag> > evaluated_;
 
+    std::vector< Teuchos::RCP<FieldTag> > contributed_;
+
     std::vector< Teuchos::RCP<FieldTag> > required_;
 
     std::string name_;
+
+    //! functors that bind memory for evaluator fields
+    std::unordered_map<std::string,std::function<void(const PHX::any& f)>> field_binders_;
   };
 
 }

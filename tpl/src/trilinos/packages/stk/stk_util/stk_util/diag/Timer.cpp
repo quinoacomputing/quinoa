@@ -65,7 +65,7 @@
 #include <stdexcept>
 #include <limits>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <stk_util/util/Writer.hpp>
 #include <stk_util/diag/Timer.hpp>
@@ -253,10 +253,6 @@ public:
   /**
    * Member function <b>shouldRecord</b> returns true if any of the specified timer
    * bit masks are set in the enable timer bit mask.
-   *
-   * @param timer_mask    a <b>TimerMask</b> value to test the enable timer
-   *        bit mask against.
-   *
    */
   bool shouldRecord() const {
     return m_timerSet.shouldRecord(m_timerMask) && s_enabledMetricsMask;
@@ -265,8 +261,7 @@ public:
   /**
    * Member function <b>getSubtimerLapCount</b> returns the subtimer lap counter.
    *
-   * @return      a <b>Counter</b> value of the subtimer lap
-   *        counter.
+   * @return      a <b>Counter</b> value of the subtimer lap counter.
    */
   double getSubtimerLapCount() const {
     return m_subtimerLapCount;
@@ -1018,9 +1013,9 @@ sierraTimerSet()
 }
 
 
-boost::shared_ptr<SierraRootTimer> sierraRootTimer()
+std::shared_ptr<SierraRootTimer> sierraRootTimer()
 {
-  static boost::shared_ptr<SierraRootTimer> s_sierraRootTimer(new SierraRootTimer());
+  static std::shared_ptr<SierraRootTimer> s_sierraRootTimer(new SierraRootTimer());
   if ( ! s_sierraRootTimer ) {
     s_sierraRootTimer.reset(new SierraRootTimer());
   }

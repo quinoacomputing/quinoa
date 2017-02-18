@@ -1570,6 +1570,10 @@ which contains:
 .. include:: ../../examples/TribitsHelloWorld/hello_world/cmake/Dependencies.cmake
    :literal:
 
+Other TriBITS macros/functions that can be called in this file include
+`TRIBITS_TPL_TENTATIVELY_ENABLE()`_ and
+`TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES()`_.
+
 .. _<packageDir>/cmake/<packageName>_config.h.in:
 
 **<packageDir>/cmake/<packageName>_config.h.in**: [Optional] The package's
@@ -1777,19 +1781,17 @@ defined before a (SE) Package's ``CMakeLists.txt`` file is processed:
   ``${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}``
 
     Set to ``ON`` if support for the optional `upstream`_ dependent TPL
-    ``${OPTIONAL_DEP_TPL_NAME}`` is enabled in package
-    ``${PACKAGE_NAME}``.  Here ``${OPTIONAL_DEP_TPL_NAME}`` corresponds
-    each to the optional upstream TPL listed in the ``LIB_OPTIONAL_TPLS`` and
-    ``TEST_OPTIONAL_TPLS`` arguments to the
-    `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_ macro.  **NOTE:** It is important
-    that the CMake code in the package ``${PACKAGE_NAME}`` key off of this
-    variable and **not** the global
+    ``${OPTIONAL_DEP_TPL_NAME}`` is enabled in package ``${PACKAGE_NAME}``.
+    Here ``${OPTIONAL_DEP_TPL_NAME}`` corresponds to each optional upstream
+    TPL listed in the ``LIB_OPTIONAL_TPLS`` and ``TEST_OPTIONAL_TPLS``
+    arguments to the `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_ macro.
+    **NOTE:** It is important that the CMake code in the package
+    ``${PACKAGE_NAME}`` key off of this variable and **not** the global
     ``TPL_ENABLE_${OPTIONAL_DEP_TPL_NAME}`` variable because
-    ``${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}`` can be
-    explicitly turned off by the user even through the package
-    ``${PACKAGE_NAME}`` and the TPL ``${OPTIONAL_DEP_TPL_NAME}`` are
-    both enabled (see `Support for optional SE package/TPL can be explicitly
-    disabled`_).
+    ``${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}`` can be explicitly
+    turned off by the user even through the package ``${PACKAGE_NAME}`` and
+    the TPL ``${OPTIONAL_DEP_TPL_NAME}`` are both enabled (see `Support for
+    optional SE package/TPL can be explicitly disabled`_).
 
   .. _${PACKAGE_NAME}_ENABLE_TESTS:
 
@@ -2256,7 +2258,9 @@ through the call to `TRIBITS_PROJECT()`_.
 |     and `${PROJECT_NAME}_BINARY_DIR`_)
 | 3.  Execute `TRIBITS_PROJECT()`_:
 |   1)  Set `PROJECT_SOURCE_DIR`_ and `PROJECT_BINARY_DIR`_
-|   2)  For each ``<optFile>`` in ${`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE`_}:
+|   2)  For each ``<optFile>`` in ${`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE`_}
+|         ${`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND`_}
+        :
 |       * ``INCLUDE(<optFile>)``
 |   3)  Set variables ``CMAKE_HOST_SYSTEM_NAME`` and ``${PROJECT_NAME}_HOSTNAME``
 |       (both of these can be overridden in the cache by the user)
@@ -3237,7 +3241,11 @@ In more detail, these rules/behaviors are:
    given the initial value ``Trilinos_ENABLE_Teuchos=""``.  For an example,
    see `Default configure with no packages enabled on input`_.  This allows
    ``PT``, and ``ST`` packages to be enabled or disabled using other logic
-   defined by TriBITS which is described below.
+   defined by TriBITS which is described below.  TriBITS defines persistent
+   cache variables for these with the default value of empty "".  Therefore,
+   if the user or other CMake code does not hard enable or disable one of
+   these variables, then on future configures it will be defined but have the
+   value of empty "".
 
 .. _EX SE packages disabled by default:
 
@@ -3249,7 +3257,8 @@ In more detail, these rules/behaviors are:
    However, the user can explicitly set
    ``${PROJECT_NAME}_ENABLE_<TRIBITS_PACKAGE>=ON`` for an ``EX`` package and
    it will be enabled (unless one of its required dependencies are not enabled
-   for some reason).
+   for some reason).  In this case, the cache variable is given the cache
+   value of ``OFF``.
 
 .. _SE package enable triggers auto-enables of upstream dependencies:
 
@@ -4301,12 +4310,12 @@ scenario as described in the section `Nested Layers of TriBITS Project
 Testing`_.
 
 The currently allowed values for the *Test Test Category* are ``BASIC``,
-``CONTINUOUS``, ``NIGHTLY``, ``WEEKLY``, and ``PERFORMANCE``.  Tests are
+``CONTINUOUS``, ``NIGHTLY``, ``HEAVY``, and ``PERFORMANCE``.  Tests are
 enabled based on their assigned test test category matching the categories set
 in the CMake cache variable `${PROJECT_NAME}_TEST_CATEGORIES`_.  The test test
-categories ``BASIC``, ``CONTINUOUS``, ``NIGHTLY``, and ``WEEKLY`` are subsets
+categories ``BASIC``, ``CONTINUOUS``, ``NIGHTLY``, and ``HEAVY`` are subsets
 of each other.  That is, a ``BASIC`` test is automatically included in the set
-of ``CONTINUOUS``, ``NIGHTLY``, and ``WEEKLY`` tests (as set using
+of ``CONTINUOUS``, ``NIGHTLY``, and ``HEAVY`` tests (as set using
 ``${PROJECT_NAME}_TEST_CATEGORIES``).
 
 The different test test categories are described below in more detail:
@@ -4317,7 +4326,7 @@ The different test test categories are described below in more detail:
   every developer that works on the project and so must be protected at all
   times and are therefore included in `Pre-Push CI Testing`_.  Tests marked as
   ``BASIC`` are enabled for the values of ``${PROJECT_NAME}_TEST_CATEGORIES``
-  of ``BASIC``, ``CONTINUOUS``, ``NIGHT``, and ``WEEKLY``.  The category
+  of ``BASIC``, ``CONTINUOUS``, ``NIGHT``, and ``HEAVY``.  The category
   ``BASIC`` is the default test test category given to all test executables
   and tests that don't specify the ``CATEGORIES`` argument.
 
@@ -4328,7 +4337,7 @@ The different test test categories are described below in more detail:
   `Post-Push CI Testing`_, `Nightly Testing`_, and other types of testing.
   Tests marked as ``CONTINUOUS`` are enabled for the values of
   ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``CONTINUOUS``, ``NIGHT``, and
-  ``WEEKLY``.  A test may be marked ``CONTINUOUS`` and not ``BASIC`` for a few
+  ``HEAVY``.  A test may be marked ``CONTINUOUS`` and not ``BASIC`` for a few
   different reasons.  For example, the code needed to run the test may take
   too long to build or the test itself may take too long to run in order to
   afford including it in `Pre-Push CI Testing`_.
@@ -4344,17 +4353,15 @@ The different test test categories are described below in more detail:
   represent "offline" so that they don't influence the daily development cycle
   for the project but instead are addressed in a "secondary feedback loop".
   Tests marked as ``NIGHTLY`` are enabled for the values of
-  ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``NIGHT``, and ``WEEKLY``.
+  ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``NIGHT``, and ``HEAVY``.
 
-.. _Test Test Category WEEKLY:
+.. _Test Test Category HEAVY:
 
-* Tests marked **WEEKLY** are usually reserved for very expensive tests that
-  are too expensive to run nightly.  ``WEEKLY`` tests may only be run once a
-  week (see `Weekly Testing`_) but may be run on shorter or longer time
-  intervals depending on circumstances (e.g. the availability of test machines
-  and free processes, just how expensive all of the tests actually are, etc.).
-  Tests marked as ``WEEKLY`` are enabled only for the value of
-  ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``WEEKLY``.
+* Tests marked **HEAVY** are usually reserved for very expensive tests that
+  are too expensive to run nightly.  ``HEAVY`` tests require more testing
+  resources and therefore may only be run on a fully optimzied build and/or
+  run less frequently.  Tests marked as ``HEAVY`` are enabled only for the
+  value of ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``HEAVY``.
 
 .. _Test Test Category PERFORMANCE:
 
@@ -4391,7 +4398,7 @@ The standard TriBITS-defined project testing processes are:
 * `Pre-Push CI Testing`_
 * `Post-Push CI Testing`_
 * `Nightly Testing`_
-* `Weekly Testing`_
+* `Heavy Testing`_
 * `Performance Testing`_
 
 .. ToDo: Discuss why we would want to create standardized test cases?  The
@@ -4508,16 +4515,16 @@ Test Test Category         ``NIGHTLY``         (`Test Test Category NIGHTLY`_)
 
 The nightly builds comprise the basic "heart beat" for the project.
 
-.. _Weekly Testing:
+.. _Heavy Testing:
 
-**Weekly Testing**
+**Heavy Testing**
 
-*Weekly Testing* builds are just an extension to the `Nightly Testing`_ builds
-that add on more expensive tests marked using the `Test Test Category
-WEEKLY`_.  For projects that define weekly tests and weekly builds, individual
-test cases can typically take 24 hours or longer to run so they can't even be
-run every day in nightly testing.  What standard weekly builds have in common
-is that they tend to select repositories, SE packages and code, and individual
+*Heavy Testing* builds are just an extension to the `Nightly Testing`_ builds
+that add on more expensive tests marked using the `Test Test Category HEAVY`_.
+For projects that define heavy tests and heavy builds, individual test cases
+may be alloed to take 24 hours or longer to run so they can't even be run
+every day in nightly testing.  What standard heavy builds have in common is
+that they tend to select repositories, SE packages and code, and individual
 tests using the following test-related classifications:
 
 =========================  ==================  ====================================
@@ -4525,14 +4532,14 @@ tests using the following test-related classifications:
 =========================  ==================  ====================================
 Repository Test Classif.   ``Nightly``         (`Repository Test Nightly`_)
 SE Package Test Group      ``PT`` & ``ST``     (`PT`_ and `ST`_)
-Test Test Category         ``WEEKLY``          (`Test Test Category WEEKLY`_)
+Test Test Category         ``HEAVY``           (`Test Test Category HEAVY`_)
 =========================  ==================  ====================================
 
 Project developer teams should strive to limit the number of test cases that
-are marked as ``WEEKLY`` since these tests will *not* get run nightly and
-developers will tend to never enable them when doing more extensive testing
-using ``--st-extra-builds`` with the `checkin-test.py`_ script in extended
-pre-push testing.
+are marked as ``HEAVY`` since these tests will typically *not* get run in very
+may builds or may not be run every day and developers will tend to never
+enable them when doing more extensive testing using ``--st-extra-builds`` with
+the `checkin-test.py`_ script in extended pre-push testing.
 
 .. _Performance Testing:
 
@@ -5044,11 +5051,11 @@ Once cloned, one needs to work with the multiple repositories to perform basic
 VC operations.  For this, TriBITS provides the tool **gitdist** which is a
 simple stand-alone Python script that distributes a git command across a set
 of git repos.  This tool is not specific to TriBITS but it is very useful for
-dealing with TriBITS projects with multiple repositories.  It only requires
-that a base git repo and a set of zero or more git repos cloned under it.
+dealing with TriBITS projects with multiple repositories.  It only requires a
+local base git repo and a set of zero or more git repos cloned under it.
 
 To use ``gitdist`` with this aggregate meta-project, one would first set up
-the file ``MetaProject/.gitdist`` (or a version controlled
+the file ``MetaProject/.gitdist`` (or a version-controlled
 ``MetaProject.gitdist.default`` file) which would contain the lines::
 
   ExtraRepo1
@@ -5064,7 +5071,7 @@ contains the lines::
 
 To use ``gitdist``, one would put ``gitdist`` into their path and also set up
 the command-line shell aliases ``gitdist-status`` and ``gitdist-mod`` (see
-`gitdist --help`_).
+`gitdist --dist-help=aliases`_).
 
 Some of the aggregate commands that one would typically run under the base
 ``MetaProject/`` directory are::
@@ -5083,7 +5090,7 @@ The script ``gitdist`` is provided under TriBITS directory::
   cmake/tribits/python_utils/gitidst   
 
 and can be installed by the `install_devtools.py`_ script (see `TriBITS
-Development Toolset`_).  See `gitdist --help`_ for more details.
+Development Toolset`_).  See `gitdist documentation`_ for more details.
 
 For projects with a standard set of extra repositories defined in the
 `<projectDir>/cmake/ExtraRepositoriesList.cmake`_ file, the
@@ -5117,7 +5124,7 @@ output, gets installed into the install directory, and get added to the source
 distributions tarball.  It also gets pushed up to CDash for all automated
 builds.  The tool `gitdist`_ can then use this file to checkout and tag
 compatible versions, difference two versions of the meta-project, etc. (see
-`gitdist --help`_ for more details on git operations).
+`gitdist documentation`_ for more details on git operations).
 
 The TriBITS approach to managing multiple VC repos described above works well
 for around 20 or 30 VC repos but is likely not a good solution for many more
@@ -5173,7 +5180,9 @@ repos (as used in the CASL VERA project).  The `checkin-test.py`_ script
 automatically handles all of the details of pulling, diffing, pushing etc. to
 all the VC repos.
 
-.. ToDo: Discuss usage of 'gitdist' and the rep clone script.
+
+
+.. ToDo: Discuss usage of 'gitdist' and the repo clone script.
 
 
 Howtos
@@ -5437,6 +5446,7 @@ specialized ``FindTPL<tplName>.cmake`` file and can't use the
 find modules cannot completely adhere to the standard behavior described in
 `Enabling support for an optional Third-Party Library (TPL)`_.
 
+
 How to add a new TriBITS Repository
 -----------------------------------
 
@@ -5529,6 +5539,20 @@ as follows:
      #  include "<upstreamPackageName>_<fileName>"
      #endif 
 
+4) **For an optional dependency, use CMake IF() statements based on
+   ${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_PACKAGE_NAME}:** When a package
+   ``PACKAGE_NAME`` has an optional dependency on an upstream package
+   ``OPTIONAL_DEP_PACKAGE_NAME`` and needs to put in optional logic in a
+   CMakeLists.txt file, then the IF() statements should use the variable
+   `${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_PACKAGE_NAME}`_ and **not** the
+   variable ``${PROJECT_NAME}_ENABLE_${OPTIONAL_DEP_PACKAGE_NAME}``.  For
+   example, to optionally enable a test that depends on the enable of the
+   optional upstream dep package, one would use::
+
+     IF (${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_PACKAGE_NAME})
+       TRIBITS_ADD_TEST( ... )
+     ENDIF()
+
   .. ToDo: Find an example to point to in TribitsExampleProject.
   
 NOTE: TriBITS will automatically add the include directories for the upstream
@@ -5595,6 +5619,20 @@ follows:
      #  include "<upstreamPackageName>_<fileName>"
      #endif 
 
+4) **For an optional dependency, use CMake IF() statements based on
+   ${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}:** When a package
+   ``PACKAGE_NAME`` has an optional dependency on TPL
+   ``OPTIONAL_DEP_TPL_NAME`` and needs to put in optional logic in a
+   CMakeLists.txt file, then the IF() statements should use the variable
+   `${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}`_ and **not** the variable
+   ``${PROJECT_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME}``.  For example, to
+   optionally enable a test that depends on the enable of the optional TPL,
+   one would use::
+
+     IF (${PACKAGE_NAME}_ENABLE_${OPTIONAL_DEP_TPL_NAME})
+       TRIBITS_ADD_TEST( ... )
+     ENDIF()
+
   .. ToDo: Find an example to point to in TribitsExampleProject.
   
 NOTE: TriBITS will automatically add the include directories for the upstream
@@ -5603,6 +5641,26 @@ the libraries for the upstream TPL to the link lines to the downstream package
 library and executable links.  See documentation in the functions
 `TRIBITS_ADD_LIBRARY()`_ and `TRIBITS_ADD_EXECUTABLE()`_, and the ``DEPLIBS``
 argument to these functions, for more details.
+
+How to tentatively enable a TPL
+-------------------------------
+
+A TriBITS package can request the tentative enable of any of its optional TPLs
+(see `How to add a new TriBITS TPL dependency`_).  This is done by calling
+`TRIBITS_TPL_TENTATIVELY_ENABLE()`_ in the SE package's
+`<packageDir>/cmake/Dependencies.cmake`_ file.  For example::
+
+  TRIBITS_PACKAGE_DEFINE_DEPENDENCIES(
+    ...
+    LIB_OPTIONAL_TPLS  SomeTpl
+    ...
+    )
+
+  TRIBITS_TPL_TENTATIVELY_ENABLE(SomeTpl)
+
+This will result is an attempt to find the components for the TPL ``SomeTpl``.
+But if that attempt fails, then the TPL will be disabled and
+``${PACKAGE_NAME}_ENABLE_SomeTpl`` will be set to ``OFF``.
 
 
 How to insert a package into an upstream repo
@@ -5685,6 +5743,100 @@ one would perform the following steps:
    Otherwise, to see notes about ignoring missing inserted/external packages,
    set the variable ``-D<Project>_WARN_ABOUT_MISSING_EXTERNAL_PACKAGES=TRUE``
    and TriBITS will print warnings about missing external packages.
+
+How to check for and tweak TriBITS "ENABLE" cache variables
+-----------------------------------------------------------
+
+TriBITS defines a number of special ``<XXX>_ENABLE_<YYY>`` variables for
+enabling/disabling various entities that allow for a default "undefined" empty
+``""`` enable status.  Examples of these special variables include:
+
+* ``${PROJECT_NAME}_ENABLE_<TRIBITS_PACKAGE>`` ((SE) packages)
+* ``TPL_ENABLE_<tplName>`` (TPLs)
+* ``<TRIBITS_PACKAGE>_ENABLE_<TRIBITS_DEP_PACKAGE_OR_TPL>`` (Optional support
+  for a (SE) package or TPL in a downstream package)
+* ``<TRIBITS_PACKAGE>_ENABLE_TESTS`` (Package tests)
+* ``<TRIBITS_PACKAGE>_ENABLE_EXAMPLES`` (Package examples)
+* ``${PROJECT_NAME}_ENABLE_TESTS`` (Tests for explicitly enabled packages)
+* ``${PROJECT_NAME}_ENABLE_EXAMPLES`` (Examples for explicitly enabled
+  packages)
+
+(see `TriBITS Dependency Handling Behaviors`_).
+
+To check for and tweak these special "ENABLE" variables, perform the
+following:
+
+1) To check to see if an ``ENABLE`` variable has been enabled or disabled
+   (either explicitly or through auto enable/disable logic), use::
+
+     IF ("${<XXX>_ENABLE_<YYY>}" STREQUAL "")
+       # Variable has not be set to 'ON' or 'OFF' yet
+       ...
+     ENDIF()
+
+   This will work correctly independent of if the cache variable has been
+   default defined or not.
+
+2) To tweak the enable/disable of one or more of these variables after user
+   input but before auto-enable/disable logic:
+
+  a) To tweak the enables/disables for a TriBITS Repository (i.e. affecting
+     all TriBITS projects) add enable/disable code to the file
+     `<repoDir>/cmake/RepositoryDependenciesSetup.cmake`_.
+
+  b) To tweak the enables/disables for a specific TriBITS Project
+     (i.e. affecting only that TriBITS project) add enable/disable code to the
+     file `<projectDir>/cmake/ProjectDependenciesSetup.cmake`_.
+
+  For example, one might default disable a package if it has not been
+  explicitly enabled (or disabled) in one of these files using logic like::
+
+    IF (NOT ${PROJECT_NAME}_ENABLE_Fortran)
+      IF ("${${PROJECT_NAME}_ENABLE_<SomeFortranPackage>}" STREQUAL "")
+        MESSAGE("-- " "NOTE: Setting ${PROJECT_NAME}_ENABLE_<SomeFortranPackage>=OFF because"
+          "${PROJECT_NAME}_ENABLE_Fortran = '${${PROJECT_NAME}_ENABLE_Fortran}'")
+        SET(${PROJECT_NAME}_ENABLE_<SomeFortranPackage> OFF)
+      ENDIF()
+    ENDIF()
+
+In order to understand the above steps for properly querying and tweaking
+these ``ENABLE`` variables, one must understand how TriBITS CMake code defines
+and interprets variables of this type.
+
+First, note that most of these particular ``ENABLE`` variables are not
+``BOOL`` cache variables but are actually ``STRING`` variables with the
+possible values of ``ON``, ``OFF`` and empty ``""`` (see the macro
+`SET_CACHE_ON_OFF_EMPTY()`_).  Therefore, just because the value of a
+``<XXX>_ENABLE_<YYY>`` variable is defined (e.g. ``IF (DEFINED
+<XXX>_ENABLE_<YYY>) ... ENDIF()``) does not mean that it has been set to
+``ON`` or ``OFF`` yet (or any non-empty values that evaluates to true or false
+in CMake).  To see if an ``ENABLE`` variable is one of these variables, look
+in the CMakeCache.txt file for the type.  If the type is ``STRING``, then it
+is most likely this type of variable with a default value of empty ``""``.
+However, if the cache type is ``BOOL`` then it is likely a standard bool
+variable that is not allowed to have a value of empty ``""``.
+
+Second, note that the value of empty ``""`` evaluates to ``FALSE`` in CMake
+``IF()`` statements.  Therefore, if one just wants to know if one of these
+variables evaluates to true, then just use ``IF (<XXX>_ENABLE_<YYY>)
+... ENDIF()``.
+
+Third, note that TriBITS will not define these cache variables until TriBITS
+processes the ``Dependencies.cmake`` files on the first configure (see `Full
+TriBITS Project Configuration`_).  On future reconfigures, these variables are
+all defined (but most will have a default value of empty ``""`` stored in the
+cache).
+
+The reason the files ``RepositoryDependenciesSetup.cmake`` and
+``ProjectDependenciesSetup.cmake`` are the best places to put in these tweaks
+is because, as shown in `Full Processing of TriBITS Project Files`_, they get
+processed after all of the user input has been read (in CMake cache variables
+set with ``-D<variable>=<value>`` and read in from
+`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE`_ files) but before TriBITS adjusts
+the SE package and TPLs enables and disables (see `Package Dependencies and
+Enable/Disable Logic`_).  Also, these files get processed in `Reduced Package
+Dependency Processing`_ as well so they get processed in all contexts where
+enable/disable logic is applied.
 
 
 Additional Topics
@@ -5893,6 +6045,22 @@ Processing of TriBITS Project Files`_.  This is executed by the TriBITS macro
 At the completion of this part of the processing, the TriBITS CMake project is
 ready to compile code.  All of the major variables set as part of this process
 are printed to the ``cmake`` stdout.
+
+
+RPATH Handling
+--------------
+
+As explained in `Setting install RPATH`_, TriBITS changes the CMake defaults
+to write in the RPATH for shared libraries and executables so that they run
+right out of the install directory without needing to set paths in the
+environment (e.g. ``LD_LIBRARY_PATH``).  However, these defaults can be
+changed by changing setting different project defaults for the variables
+`${PROJECT_NAME}_SET_INSTALL_RPATH`_ and `CMAKE_INSTALL_RPATH_USE_LINK_PATH`_.
+But most projects should likely keep these defaults in place since they make
+it so that doing builds and installations on a single machine work correctly
+by default out of the box.  For other installation/distribution use cases, the
+user is told how to manipulate CMake variables for those cases in `Setting
+install RPATH`_.
 
 
 Configure-time System Tests
@@ -6385,11 +6553,11 @@ This gives three different git repos on three different machines:
 
 Because of the independent development processes of these three teams, unless
 these development teams maintain 100% backward compatibility w.r.t. the
-interfaces and behavior of the combined software, one cannot expect at any
-time to be able to pull the code from these three different git repos and be
-able to successfully build all of the code and have all of the tests pass.
-Therefore, how does the 4th integration team expect to be able to build, test,
-and possibly extend the combined software?  In this case, the integration team
+interfaces and behavior of the combined software, one cannot at any time pull
+the code from these three different git repos and expect to be able to
+successfully build all of the code and have all of the tests pass.  Therefore,
+how does the 4th integration team expect to be able to build, test, and
+possibly extend the combined software?  In this case, the integration team
 would set up their own clones of all three git/TriBITS repos on their own
 machine such as:
 
@@ -6402,13 +6570,14 @@ machine such as:
 Once an initial collaboration effort between the integration team and the
 three other development teams is able to get a version of all three
 git/TriBITS repos to work correctly in the combined meta-project, these
-versions (assume the master branches) would be pushed to the git repos on the
-git integration server ``url4.gov``.  The state where the TriBITS packages in
-the three different git/TriBITS repos in the master branch on ``url4.gov`` all
-work together correctly constitutes the initial condition for the ACI process
-described below.  From that initial condition, the ACI processes ensures that
-updates the master branches for the git/TriBITS repos on ``url4.gov`` do not
-break any builds or tests of the integrated software.
+versions (assume the ``master`` branches) would be pushed to the git repos on
+the git integration server ``url4.gov``.  The state where the TriBITS packages
+in the three different git/TriBITS repos in the ``master`` branch on
+``url4.gov`` all work together correctly constitutes the initial condition for
+the ACI process described below.  From that initial condition, the ACI
+processes ensures that updates the ``master`` branches for the git/TriBITS
+repos on ``url4.gov`` do not break any builds or tests of the integrated
+software.
 
 In order to describe how to set up an ACI process using the
 ``checkin-test.py`` script, the following subsections will focus on the update
@@ -6432,31 +6601,15 @@ integration server url4.gov as follows (all of which become 'origin')::
 where, ``SYNC_BASE_DIR=~/sync_base_dir`` for example, which must already be
 created.
 
-An ``.gitdist`` file can be created to aid in multi-repo git commands using the
-tool `gitdist`_.  This file is located in the ``BaseProj`` directory and can be
-created as::
+Next, one defines a remote to pull changes for the ``ExtraRepo1`` from the
+main develoment repo:
 
-  $ cd $SYNC_BASE_DIR/BaseProj
-  $ echo ExtraRepo1 > .gitdist
-  $ echo ExtraRepo2 >> .gitdist
-  $ cat .gitdist
-  ExtraRepo1
-  ExtraRepo2
+  $ cd $SYNC_BASE_DIR/BaseProj/ExtraRepo1
+  $ git remote add public url2.gov:/git/ExtraRepo1
 
-Next, the remotes that define the integration pattern are created as follows::
-
-  $ cd $SYNC_BASE_DIR/BaseProj
-  $ git remote add integrate-from url4.gov:/git/BaseProj
-  $ cd ExtraRepo1
-  $ git remote add integrate-from url2.gov:/git/ExtraRepo1
-  $ cd ..
-  $ cd ExtraRepo2
-  $ git remote add integrate-from url4.gov:/git/ExtraRepo2
-  $ cd ..
-
-.. ToDo: It would be great the create a remote for only ExtraRepo1 and pass in
-.. --extra-pull-from=ExtraRepo1:integrate-from:master.  This would avoid the
-.. other dummy ' integrate-from' remotes.
+Here, one should pick a name for the remote repo for ``ExtraRepo1`` that is
+most descriptive for that particular situation.  In this case, the name
+``public`` is chosen to signify the main public development repo.
 
 This gives the remotes::
 
@@ -6464,37 +6617,33 @@ This gives the remotes::
   $ gitdist remote -v | grep -v push | grep -v "^$"
   *** Base Git Repo: BaseProj
   origin	        url4.gov:/git/BaseProj (fetch)
-  integrate-from	url4.gov:/git/BaseProj (fetch)
   *** Git Repo: ExtraRepo1
   origin	        url4.gov:/git/ExtraRepo1 (fetch)
-  integrate-from	url2.gov:/git/ExtraRepo1 (fetch)
+  public		url2.gov:/git/ExtraRepo1 (fetch)
   *** Git Repo: ExtraRepo2
   origin	        url4.gov:/git/ExtraRepo2 (fetch)
-  integrate-from	url4.gov:/git/ExtraRepo2 (fetch)
 
-The remote ``integrate-from`` is used by the ``checkin-test.py`` wrapper
-script (see below) to pull and merge in additional changes that will be tested
-and pushed to the 'origin' repos on ``url4.gov``.  In this case, the
-``BaseProj`` and ``ExtraRepo2`` repos have the remote ``integrate-from`` that
-points to the same repos as 'origin' (and will therefore not result in any
-merging) but the ``ExtraRepo1`` remote ``integrate-from`` will result in
-updates being pulled from the main development repo on ``url2.gov``, thereby
-facilitating the update of ``ExtraRepo1`` in the integrated meta-project.
+The remote ``public`` is used by the ``checkin-test.py`` wrapper script (see
+`ACI Sync Driver Script`_ below) to pull and merge in additional changes that
+will be tested and pushed to the 'origin' repos on ``url4.gov``.  In this
+case, the ``ExtraRepo1`` remote ``public`` will result in updates being pulled
+from the main development repo on ``url2.gov``, thereby facilitating the
+update of ``ExtraRepo1`` in the integrated meta-project.
 
 
 ACI Integration Build Directory Setup
 +++++++++++++++++++++++++++++++++++++
 
-After the git repos are cloned and the remotes are set up, a build base
-directory is set up as::
+After the git repos are cloned and the remotes are set up as described above,
+a build base directory is set up as::
 
   $ cd $SYNC_BASE_DIR
   $ mkdir BUILDS
   $ mkdir BUILDS/CHECKIN
 
-An ACI wrapper script for ``checkin-test.py`` is created to drive the clones.
-It is assumed that this script would be called only once a day and not
-continuously in a loop (but that is possible as well but is not documented
+An ACI wrapper script for ``checkin-test.py`` is created to drive the syncing
+process.  It is assumed that this script would be called only once a day and
+not continuously in a loop (but that is possible as well but is not documented
 here).
 
 NOTE: Other build directory structures are possible, it all depends how one
@@ -6510,8 +6659,6 @@ The sync driver script for this example should be called something like
 like::
 
   #!/bin/bash -e
- 
-  EXTRA_ARGS=$@ 
   
   # Set up the environment (i.e. PATH; needed for cron jobs)
   ...
@@ -6522,15 +6669,17 @@ like::
   cd $SYNC_BASE_DIR/BUILDS/CHECKIN
 
   $CHECKIN_TEST_WRAPPER \
-    --extra-pull-from=integrate-from:master \
+    --extra-pull-from=ExtraRepo1:public:master \
     --abort-gracefully-if-no-changes-to-push \
+    --enable-extra-packages=Package1A \
+    --send-build-case-email=only-on-failure \
     --send-email-to=base-proj-integrators@url4.gov \
     --send-email-to-on-push=base-proj-integrators@url4.gov \
     --no-append-test-results --no-rebase \
     --do-all --push \
     -j16 \
     --wipe-clean \
-    $EXTRA_ARGS
+    "$@"
 
 NOTE, in the above example ``sync_ExtraRepo1.sh`` script, the variable
 ``CHECKIN_TEST_WRAPPER`` is set to a wrapper script::
@@ -6547,19 +6696,13 @@ A description of each option passed into this invocation of the
 `checkin-test.py`_ script is given below (see `checkin-test.py --help`_ for
 more details):
 
-  ``--extra-pull-from=integrate-from:master``
+  ``--extra-pull-from=ExtraRepo1:public:master``
   
     This option instructs the ``checkin-test.py`` script to pull and merge in
-    commits that define the integration.  This same remote name and remote
-    branch name has to be the same in all git repos (todo: remove this
-    requirement).  If it is not, then this option can't be used and instead
-    the wrapper script should do the pulls up front manually before calling
-    the ``checkin-test.py`` script.  The disadvantage of doing the pulls
-    manually is that if they fail for some reason, they will not be seen by
-    the ``checkin-test.py`` script and no notification email would go out.
-    However, integrating ``master`` branches in different git repos is a very
-    common use case when good Lean/Agile CI practices are used by all of the
-    projects.
+    commits that define the integration.  One could do the pull(s) manually of
+    doing so has the disadvantage that if they fail for some reason, they will
+    not be seen by the ``checkin-test.py`` script and no notification email
+    would go out.
   
   ``--abort-gracefully-if-no-changes-to-push``
   
@@ -6578,7 +6721,47 @@ more details):
     However, for an automated ACI sync process, there is no easy way to know a
     priori if changes need to be synced so the script supports this option to
     deal with that case gracefully.
-  
+
+  ``--enable-extra-packages=Package1A``
+
+    This option should be set if one wants to ensure that all commits get
+    synced, even when these changes don't impact the build or the tests of the
+    project.  If not setting ``--enable-extra-packages=<some-package>`` , then
+    the ``checkin-test.py`` script will only decide on its own what packages
+    to test just based on what packages have changed files in the
+    ``ExtraRepo1`` repo and if no modified files map to a package, then no
+    packages will be auto-enabled and therefore no packages will be enabled at
+    all.  For example, if a top-level README file in the base ``ExtraRepo1``
+    repo gets modified that does not sit under a package directory, then the
+    automatic logic in the checkin-test.py script will not trigger a package
+    enable. In that case, no configure, build, testing, or push will take
+    place (must run at least some tests in order to assume it is safe to push)
+    and therefore the sync will not occur.  Therefore, if one wants to ensure
+    that every commit gets safely synced over on every invocation, then the
+    safest way to that is to always enable at least one or more packages by
+    specify ``--enable-extra-packages=<pkg0>,<pkg1>``.  **WARNING:** it is not
+    advisable to manually set ``--enable-packages=<package-list>`` since it
+    turns off the auto-enable logic for changed files.  This is because if
+    there are changes to other packages, then these packages will not get
+    enabled and not get tested, which could break the global build and tests.
+    Also, this is fragile if new packages are added to ``ExtraRepo1`` later
+    that are not listed in ``--enable-packages=<pkg0>,<pkg1>,...`` as they
+    will not be included in the testing.  Also, if someone makes local commits
+    in other local git repos before running the sync script again, then these
+    packages will not get enabled and tested.  Therefore, in general, don't
+    set ``--enable-packages=<pkg0>,<pkg1>,...`` in a sync script, only set
+    ``--enable-extra-packages=<pkg0>,<pkg1>,...`` to be robust and safe.
+
+  ``--send-build-case-email=only-on-failure``
+
+    This makes the checkin-test.py script skip sending email about a build
+    case (e.g. ``MPI_DEBUG``) unless it fails.  That way, if everything
+    passes, then only a final ``DID PUSH`` email will go out.  But if a build
+    case does fail (i.e. configure, build, or tests fail), then an "early
+    warning" email will still go out.  However, if one wants to never get the
+    early build-case emails, one can turn this off by setting
+    ``--send-build-case-email=never``.
+ 
   ``--send-email-to=base-proj-integrators@url4.gov``
  
     The results of the builds will be sent this email address.  If you only
@@ -6626,21 +6809,13 @@ more details):
     more about using less computer resources and testing that rebuilds work
     smoothly, remove this option.
 
-Note that the option ``--enable-packages`` is not set in the above invocation
-of the ``checkin-test.py`` script, and therefore the ``checkin-test.py``
-script will decide on its own what packages to test just based on what
-packages have changed files in the ``ExtraRepo1`` git/TriBITS extra
-repository.  This is the preferred way to go since any affected packages will
-automatically be enabled as determined by the TriBITS package dependency
-structure and therefore this driver script will require no modifications if
-the dependency structure changes over time.  However, there are cases and
-various reasons where the exact list of packages to be tested (or not tested)
-should be specified using the ``--enable-packages`` option (or the
-``--disable-packages`` option, respectively).  However, these should not be
-needed with well structured portable TriBITS repos and packages.
-
 The sync script can be created and tested locally to ensure that it works
-correctly first, before setting it as a cron job as described next.
+correctly first, before setting it as a cron job as described next.  Also, the
+sync script should be version controlled in one of the project's git repos.
+This ensures that changes to script pushed to the repos will get invoked
+automatically when they are pulled (but only on the second invocation of the
+script).  If a change to script is critical in order to do the pull, then one
+must manually pull the updated commit to the local sync repo.
 
 Note, if using this in a continuous sync server that runs many times in a day
 in a loop, you also want to set the option
@@ -7417,6 +7592,7 @@ be documented in `TribitsBuildReference`_.
 The global project-level TriBITS options for which defaults can be provided by
 a given TriBITS project are:
 
+* `${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND`_
 * `${PROJECT_NAME}_CPACK_SOURCE_GENERATOR`_
 * `${PROJECT_NAME}_DISABLE_ENABLED_FORWARD_DEP_PACKAGES`_
 * `${PROJECT_NAME}_ELEVATE_ST_TO_PT`_
@@ -7432,17 +7608,40 @@ a given TriBITS project are:
 * `${PROJECT_NAME}_GENERATE_EXPORT_FILE_DEPENDENCIES`_
 * `${PROJECT_NAME}_INSTALL_LIBRARIES_AND_HEADERS`_
 * `${PROJECT_NAME}_REQUIRES_PYTHON`_
+* `${PROJECT_NAME}_SET_INSTALL_RPATH`_
 * `${PROJECT_NAME}_SHOW_TEST_START_END_DATE_TIME`_
 * `${PROJECT_NAME}_TEST_CATEGORIES`_
 * `${PROJECT_NAME}_TPL_SYSTEM_INCLUDE_DIRS`_
 * `${PROJECT_NAME}_TRACE_ADD_TEST`_
 * `${PROJECT_NAME}_USE_GNUINSTALLDIRS`_
 * `${PROJECT_NAME}_USES_PYTHON`_
+* `CMAKE_INSTALL_RPATH_USE_LINK_PATH`_
 * `MPI_EXEC_MAX_NUMPROCS`_
 * `PythonInterp_FIND_VERSION`_
 
 
 These options are described below.
+
+.. _${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND:
+
+**${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND**
+
+  The variable ``${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND`` is used to
+  define the absolute path to a file (or a list of files) that should be
+  included after the files listed in
+  ``${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE``.  This variable can be used by
+  the TriBITS project to define, for example, a standard set of development
+  environments in the base `<projectDir>/CMakeLists.txt`_ file with::
+
+    SET(${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND_DEFAULT
+      "${CMAKE_CURRENT_LIST_DIR}/cmake/StdDevEnvs.cmake")
+
+  **before** the `TRIBITS_PROJECT()`_ command.  By including this file(s)
+  after the file(s) listed in ``${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE``, the
+  user can override the variables set in this appended file(s).  But it is
+  important that these variables best set after the users options have been
+  set but before the Package and TPL dependency analysis is done (because this
+  might enable or disable some TPLs).
 
 .. _${PROJECT_NAME}_CPACK_SOURCE_GENERATOR:
 
@@ -7691,6 +7890,22 @@ These options are described below.
   in the `<projectDir>/ProjectName.cmake`_ file (See `Python Support`_).  The
   default is implicitly ``FALSE``.
 
+
+.. _${PROJECT_NAME}_SET_INSTALL_RPATH:
+
+**${PROJECT_NAME}_SET_INSTALL_RPATH**
+
+  The cache variable ``${PROJECT_NAME}_SET_INSTALL_RPATH`` is used to define
+  the default RPATH mode for the TriBITS project (see `Setting install RPATH`_
+  for details).  The TriBITS default is to set this to ``TRUE`` but the
+  TriBITS project can be set the default to ``FALSE`` by setting::
+
+    SET(${PROJECT_NAME}_SET_INSTALL_RPATH_DEFAULT FALSE)
+
+  in the project's `<projectDir>/ProjectName.cmake`_ file (see `RPATH
+  Handling`_).
+
+
 .. _${PROJECT_NAME}_SHOW_TEST_START_END_DATE_TIME:
 
 **${PROJECT_NAME}_SHOW_TEST_START_END_DATE_TIME**
@@ -7711,6 +7926,20 @@ These options are described below.
   date/time for regular tests added with `TRIBITS_ADD_TEST()`_ (which uses a
   raw command with ``ADD_TEST()``).
 
+.. _${PROJECT_NAME}_SKIP_EXTRAREPOS_FILE:
+
+**${PROJECT_NAME}_SKIP_EXTRAREPOS_FILE**
+
+  The cache variable ``${PROJECT_NAME}_SKIP_EXTRAREPOS_FILE`` is set in the
+  `<projectDir>/ProjectName.cmake`_ file as::
+
+    SET(${PROJECT_NAME}_SKIP_EXTRAREPOS_FILE TRUE)
+
+  for projects that don't have a
+  `<projectDir>/cmake/ExtraRepositoriesList.cmake`_ file.  This variable needs
+  to be set when using the CTest driver script and does not need to be set for
+  the basic configure and build process.
+
 .. _${PROJECT_NAME}_TEST_CATEGORIES:
 .. _${PROJECT_NAME}_TEST_CATEGORIES_DEFAULT:
 
@@ -7728,7 +7957,7 @@ These options are described below.
   The justification for having the default `Test Test Category`_ be
   ``NIGHTLY`` instead of ``BASIC`` is that when someone is enabling a package
   to develop on it or install it, we want them by default to be seeing the
-  full version of the test suite (shy of the `Test Test Category WEEKLY`_
+  full version of the test suite (shy of the `Test Test Category HEAVY`_
   tests which can be very expensive) for the packages they are explicitly
   enabling.  Typically they will not be enabling forward/`downstream`_
   dependent packages so the cost of running the test suite should not be too
@@ -7826,6 +8055,19 @@ These options are described below.
   that Python is never needed, set::
 
     SET(${PROJECT_NAME}_USES_PYTHON  FALSE)
+
+.. _CMAKE_INSTALL_RPATH_USE_LINK_PATH:
+
+**CMAKE_INSTALL_RPATH_USE_LINK_PATH**
+
+  The cache variable ``CMAKE_INSTALL_RPATH_USE_LINK_PATH`` is a built-in CMake
+  variable that determines if the paths for external libraries (i.e. from
+  TPLs) is put into the installed library RPATHS (see `RPATH Handling`_).
+  TriBITS sets the default for this to ``TRUE`` but a project can change the
+  default back to ``FALSE`` by setting the following in the project's
+  `<projectDir>/ProjectName.cmake`_ file::
+
+    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH_DEFAULT FALSE)
 
 .. _MPI_EXEC_MAX_NUMPROCS:
 
@@ -8027,15 +8269,78 @@ Support`_ and `Multi-Repository Development Workflow`_.
 .. include:: clone_extra_repos-help.txt
    :literal:
 
+gitdist documentation
+---------------------
+
+The sections below show snapshots of the output from the `gitdist`_ script
+from `gitdist --help`_ and ``gitdist --dist-help=<topic>``:
+
+* `gitdist --help`_
+* `gitdist --dist-help=overview`_
+* `gitdist --dist-help=repo-selection-and-setup`_
+* `gitdist --dist-help=dist-repo-status`_
+* `gitdist --dist-help=repo-versions`_
+* `gitdist --dist-help=aliases`_
+* `gitdist --dist-help=usage-tips`_
+* `gitdist --dist-help=script-dependencies`_
+* `gitdist --dist-help=all`_
+
+For more details on the usage of ``gitdist``, see `Multi-Repository Support`_
+and `Multi-Repository Development Workflow`_.
+
 
 gitdist --help
---------------
-
-Below is a snapshot of the output from ``gitdist --help``.  For more details
-on the usage of ``gitdist``, see `Multi-Repository Support`_ and
-`Multi-Repository Development Workflow`_.
+++++++++++++++
 
 .. include:: gitdist-help.txt
+   :literal:
+
+gitdist --dist-help=overview
+++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-overview.txt
+   :literal:
+
+gitdist --dist-help=repo-selection-and-setup
+++++++++++++++++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-repo-selection-and-setup.txt
+   :literal:
+
+gitdist --dist-help=dist-repo-status
+++++++++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-dist-repo-status.txt
+   :literal:
+
+gitdist --dist-help=repo-versions
++++++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-repo-versions.txt
+   :literal:
+
+gitdist --dist-help=aliases
++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-aliases.txt
+   :literal:
+
+gitdist --dist-help=usage-tips
+++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-usage-tips.txt
+   :literal:
+
+gitdist --dist-help=script-dependencies
++++++++++++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-script-dependencies.txt
+   :literal:
+
+gitdist --dist-help=all
++++++++++++++++++++++++++++++++++++++++
+
+.. include:: gitdist-dist-help-all.txt
    :literal:
 
 
@@ -8105,6 +8410,8 @@ Below is a snapshot of the output from ``install_devtools.py --help``.
 .. _Enabling extra repositories with add-on packages: TribitsBuildReference.html#enabling-extra-repositories-with-add-on-packages
 
 .. _Getting set up to use CMake: TribitsBuildReference.html#getting-set-up-to-use-cmake
+
+.. _Setting install RPATH: TribitsBuildReference.html#setting-install-rpath
 
 .. _Dashboard Submissions: TribitsBuildReference.html#dashboard-submissions
 

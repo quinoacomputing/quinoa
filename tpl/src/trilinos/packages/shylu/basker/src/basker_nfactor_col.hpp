@@ -530,24 +530,15 @@ namespace BaskerNS
     const Int L_col = S(l)(kid);
     const Int L_row = 0;
     const Int U_col = S(lvl)(kid);
-    Int U_row = (lvl==1)?(kid%2):S(l)(kid)%LU_size(U_col);
-  
-    if((L_col > 14) &&
-       (L_col > LU_size(U_col)) &&
-       (lvl != 1))
-      {
-	//printf("modify urow, %d %d \n",
-	//     L_col, LU_size(U_col));
-	
-	Int tm = (L_col+1)/16;
-	U_row = ((L_col+1)-(tm*16))%LU_size(U_col);
 
-      }
-
+    Int my_row_leader = S(0)(find_leader(kid,lvl-1));
+    //Int my_new_row = 
+    // L_col - my_row_leader;
+    Int U_row = L_col - my_row_leader;
 
     const Int X_col = S(0)(kid);
     const Int X_row = l; //X_row = lower(L)
-    const Int col_idx_offset = 0; //we might be able to remove
+    //const Int col_idx_offset = 0; //we might be able to remove
   
     #ifdef BASKER_DEBUG_NFACTOR_COL
     if(kid >= 0)
@@ -597,7 +588,7 @@ namespace BaskerNS
 
 
     const Int brow = U.srow;
-    const Int bcol = U.scol;
+    //const Int bcol = U.scol;
 
     Int *color     = &(ws(0));
     Int *pattern   = &(color[ws_size]);
@@ -687,7 +678,7 @@ namespace BaskerNS
 	#endif
 	  {
 	    #ifdef BASKER_INC_LVL
-	    t_local_reach_selective(kid, l, l, j, &top);
+	    //t_local_reach_selective(kid, l, l, j, &top);
 	    #else
 	    //t_local_reach(kid, l, l, j, &top); //Note: comeback
 	    t_local_reach(kid,l,l,j,top);
@@ -736,8 +727,31 @@ namespace BaskerNS
      if(unnz+ucnt-1 > uunnz)
        {
 
+	 if (Options.verbose == BASKER_TRUE)
+	   {
 	 printf("kid: %d col: %d need to realloc, unnz: %d ucnt: %d uunnz: %d U_col: %d U_row: %d \n", kid, k, unnz, ucnt, uunnz, U_col, U_row);
+	   }
 	 BASKER_ASSERT(0==1, "USIZE\n");
+	 
+	  Int newsize = (unnz+U.nrow) * 1.2  ;
+	 
+	 if(Options.realloc == BASKER_FALSE)
+	   {
+	     thread_array(kid).error_type =
+	       BASKER_ERROR_NOMALLOC;
+	     return BASKER_ERROR;
+	   }
+	 else
+	   {
+	     //printf("HERE\n");
+	     thread_array(kid).error_type =
+	       BASKER_ERROR_REMALLOC;
+	     thread_array(kid).error_blk    = U_col;
+	     thread_array(kid).error_subblk = U_row;
+	     thread_array(kid).error_info   = newsize;
+	     return BASKER_ERROR;
+	   }//if/else realloc
+
        }
      //#endif
 
@@ -1156,7 +1170,7 @@ namespace BaskerNS
     const Int U_row = LU_size(U_col)-1;
     
     const Int X_col = S(0)(kid);
-    Int col_idx_offset = 0; //can we get rid of now?
+    //Int col_idx_offset = 0; //can we get rid of now?
     
 
     #ifdef BASKER_DEBUG_NFACTOR_COL
@@ -1191,7 +1205,7 @@ namespace BaskerNS
     ENTRY_1DARRAY X       = LL(X_col)(l+1).ews;
 
     const Int brow     = U.srow;
-    const Int bcol     = U.scol;
+    //const Int bcol     = U.scol;
 
     //Int lval       = L.col_ptr[k-bcol];
     const Int lval  = L.col_ptr(k);
@@ -1222,8 +1236,8 @@ namespace BaskerNS
 
     #ifdef BASKER_DEBUG_NFACTOR_COL
     printf("-------------lower_col_factor-------\n");
-    printf("JB scol: %d ecol: %d L.nnz: %d U.nnz: %d brow: %d ws_size: %d  kid: %d\n",
-	   bcol, U.scol+U.ncol, llnnz, uunnz, brow, ws_size, kid);
+    printf("JB ecol: %d L.nnz: %d U.nnz: %d brow: %d ws_size: %d  kid: %d\n",
+	   U.scol+U.ncol, llnnz, uunnz, brow, ws_size, kid);
     #endif
 
     #ifdef BASKER_DEBUG_NFACTOR_COL
@@ -1309,12 +1323,22 @@ namespace BaskerNS
        #endif
 	 {
 	   //printf("doing reach: %d \n", j);
-	   #ifdef BASKER_INC_LVL
-	   t_local_reach_selective(kid,lvl,l+1,j, &top);
-	   #else
+	   //#ifdef BASKER_INC_LVL
+	   //t_local_reach_selective(kid,lvl,l+1,j, &top);
+	   //#else
 	   //t_local_reach(kid,lvl,l+1, j, &top);
-	   t_local_reach(kid,lvl,l+1,j,top);
-	   #endif
+	   if(gperm(j+brow) != BASKER_MAX_IDX)
+	     {
+	       //printf("COL LOCAL REACH\n");
+	       t_local_reach(kid,lvl,l+1,j,top);
+	     }
+	   else
+	     {
+	       //printf("COL LOCAL SHORT\n");
+	       t_local_reach_short(kid,lvl,l+1,j,top);
+	     }
+
+	   //#endif
 	 }
      }//over each nnz in the column
    xnnz = ws_size - top;
@@ -1394,9 +1418,12 @@ namespace BaskerNS
    //if((maxindex == L.max_idx) || (pivot == 0)
    if((maxindex == BASKER_MAX_IDX) || (pivot == 0))
      {
+       if(Options.verbose == BASKER_TRUE)
+	 {
        cout << "Error: Matrix is singular, col, lvl: " << l <<endl;
        cout << "MaxIndex: " << maxindex << " pivot " 
 	    << pivot << endl;
+	 }
        return 2;
      }          
   
@@ -1409,15 +1436,51 @@ namespace BaskerNS
      {
        //Note: comeback
        newsize = lnnz * 1.1 + 2 *A.nrow + 1;
+       if (Options.verbose == BASKER_TRUE)
+	 {
        cout << "Lower Col Reallocing L oldsize: " << llnnz 
 	    << " newsize: " << newsize << endl;
+	 }
+          if(Options.realloc == BASKER_FALSE)
+	 {
+	   thread_array(kid).error_type = 
+	     BASKER_ERROR_NOMALLOC;
+	   return BASKER_ERROR;
+	 }
+       else
+	 {
+	   thread_array(kid).error_type = 
+	     BASKER_ERROR_REMALLOC;
+	   thread_array(kid).error_blk    = L_col;
+	   thread_array(kid).error_subblk = -1;
+	   thread_array(kid).error_info   = newsize;
+	   return BASKER_ERROR;
+	 }
      }
    if(unnz+ucnt > uunnz)
      {
        //Note: comeback
        newsize = uunnz*1.1 + 2*A.nrow+1;
+       if (Options.verbose == BASKER_TRUE)
+	 {
        cout << "Lower Col Reallocing U oldsize: " << uunnz 
 	    << " newsize " << newsize << endl;
+	 }
+        if(Options.realloc == BASKER_FALSE)
+	 {
+	   thread_array(kid).error_type = 
+	     BASKER_ERROR_NOMALLOC;
+	 }
+       else
+	 {
+	   thread_array(kid).error_type = 
+	     BASKER_ERROR_REMALLOC;
+	   thread_array(kid).error_blk    = U_col;
+	   thread_array(kid).error_subblk = U_row;
+	   thread_array(kid).error_info   = newsize;
+	   return BASKER_ERROR;
+	 }
+
      }
    
 

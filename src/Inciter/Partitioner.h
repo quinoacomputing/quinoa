@@ -419,7 +419,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
-    std::vector< std::size_t > m_gelemid;
+    std::vector< long > m_gelemid;
     //! Element centroid coordinates of our chunk of the mesh
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs

@@ -70,13 +70,6 @@ void reset_warning_count();
 void set_max_warning_count(unsigned int max_messages);
 
 /**
- * @brief Function <b>set_max_messages</b> sets the maximum number of warning
- * and doomed messages displayed before the message is thrown as a RuntimeError exception.
- *
- */
-unsigned get_max_warning_count();
-
-/**
  * @brief Member function <b>report_warning</b> ...
  *
  * @param message		a <b>char</b> const pointer ...
@@ -203,6 +196,13 @@ public:
     message << t;
     return *this;
   }
+
+  template <typename T1, typename T2>
+  RuntimeWarningAdHoc &operator<<(const std::pair<T1,T2> &t) {
+    message << "(" << t.first << ", " << t.second << ")";
+    return *this;
+  }
+
 
 public:
   std::ostringstream    message;                ///< Stream to receive message content

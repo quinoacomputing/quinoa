@@ -14,7 +14,7 @@
 #include <string>                       // for string
 #include <unordered_map>                // for unordered_map
 #include <unordered_set>                // for unordered_set
-#include "EntityKeyHash.hpp"            // for hash
+#include "stk_mesh/base/HashEntityAndEntityKey.hpp"            // for hash
 #include "stk_mesh/base/Types.hpp"      // for EntityIdVector, EntityId, etc
 class GameofLifeMesh;
 namespace stk { namespace mesh { class BulkData; } }
@@ -44,6 +44,8 @@ public:
     virtual void activate_these_ids(stk::mesh::EntityIdVector& elemIdsToActivate);
 
     void run_game_of_life(int numSteps);
+
+    void write_mesh();
 
     //test functions
     inline unsigned get_num_elems_on_proc() const;
@@ -115,6 +117,7 @@ private:
     virtual void deactivate_element(stk::mesh::Entity elem) = 0;
 
     void write_output_step();
+    void put_all_nodes_in_nodeset();
 };
 
 inline unsigned GameofLife::get_num_elems_on_proc() const

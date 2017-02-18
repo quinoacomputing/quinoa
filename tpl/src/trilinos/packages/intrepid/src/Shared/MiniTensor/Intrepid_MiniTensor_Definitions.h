@@ -48,13 +48,30 @@
 #include "Intrepid_ConfigDefs.hpp"
 #include "Sacado.hpp"
 
+#if defined(KOKKOS_HAVE_CUDA)
+#define MT_ERROR_EXIT(...) \
+  Kokkos::abort(#__VA_ARGS__)
+#else
+#define MT_ERROR_EXIT(...) \
+  fprintf(stderr, "ERROR in: %s\n", __PRETTY_FUNCTION__); \
+  fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n"); \
+  exit(1)
+#endif // KOKKOS_HAVE_CUDA
+
 namespace Intrepid {
 
 /// Indexing type
 using Index = unsigned int;
 
+constexpr Index
+INDEX_SIZE{32};
+
 /// High count type
-using LongCount = long unsigned int;
+using LongIndex = unsigned long int;
+
+constexpr Index
+LONG_INDEX_SIZE{64};
 
 /// Floating point type
 using Real = double;
@@ -71,7 +88,7 @@ template<typename T, Index M, Index N> class Matrix;
 
 /// Indicator for dynamic storage
 constexpr Index
-DYNAMIC = 0;
+DYNAMIC{0};
 
 /// For use with type promotion
 using Sacado::Promote;

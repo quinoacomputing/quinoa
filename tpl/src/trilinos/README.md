@@ -5,6 +5,7 @@
 [Mailing List](https://trilinos.org/mailman/listinfo/trilinos-users) |
 [Packages](http://trilinos.org/packages/)
 
+[![Stories in Ready](https://badge.waffle.io/trilinos/Trilinos.png?label=ready&title=Ready)](https://waffle.io/trilinos/Trilinos)
 [![Coverity Scan
 Build](https://scan.coverity.com/projects/1680/badge.svg)](https://scan.coverity.com/projects/1680)
 
@@ -19,6 +20,10 @@ unique design feature of Trilinos is its focus on packages.
 - [Getting Started with Trilinos](https://trilinos.org/getting-started/) 
 
 - [General Documentation](https://trilinos.org/about/documentation/)
+
+- [Quick configure, build and install hints for Trilinos](https://github.com/trilinos/Trilinos/blob/master/INSTALL.rst)
+
+- [Trilinos Configure, Build, Test, and Install Reference Guide](https://trilinos.org/docs/files/TrilinosBuildReference.html)
 
 - For help with a particular package, see the website and accompanying
   documentation for that package. Links to these can be found down the

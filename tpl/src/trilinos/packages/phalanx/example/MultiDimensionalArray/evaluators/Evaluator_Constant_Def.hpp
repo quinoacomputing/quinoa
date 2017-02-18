@@ -61,17 +61,20 @@ void Constant<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
 		      PHX::FieldManager<Traits>& vm)
 {
-  using namespace PHX;
-  this->utils.setFieldData(constant,vm);
-
-  for (PHX::index_size_type i = 0; i < constant.dimension_0(); ++i)
-    for (PHX::index_size_type j = 0; j < constant.dimension_1(); ++j)
-      constant(i,j) = value;
+  constant.deep_copy(value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Constant<EvalT, Traits>::evaluateFields(typename Traits::EvalData d)
 { }
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Constant<EvalT, Traits>::operator () (const int ) const
+{
+  // Needed for task parallel interface
+}
 
 //**********************************************************************

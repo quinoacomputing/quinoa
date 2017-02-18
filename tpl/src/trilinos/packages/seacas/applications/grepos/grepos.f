@@ -99,6 +99,7 @@ C    or 'MULTIPLE_TOPOLOGIES' if not common topology.
       LOGICAL RENEL, DELEL, DELNP
 
       INTEGER CMPSIZ, IOWS
+      integer goff, noff, eoff, moff, soff
 
       DIMENSION A(1)
       INTEGER IA(1)
@@ -223,6 +224,7 @@ C     --Reserve memory for the input information
       CALL MDRSRV ('LINK',   KLINK,  0)
 
       CALL MDRSRV ('IDELB',  KIDELB, NELBLK)
+      CALL MDRSRV ('IDELB2', KIDELB2,NELBLK)
       CALL MDRSRV ('NUMELB', KNELB,  NELBLK)
       CALL MDRSRV ('NUMLNK', KNLNK,  NELBLK)
       CALL MDRSRV ('NUMATR', KNATR,  NELBLK)
@@ -265,18 +267,19 @@ C     --Read information from the database and close file
 
       CALL DBIELB (NDBIN, '*', 1, NELBLK,
      &     IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
-     &     A(1), IA(1), KLINK, KATRIB, C(KBKTYP), *60)
+     &     A(1), IA(1), KLINK, KATRIB, C(KBKTYP),
+     *     numatt, *60)
       
       call CHKTOP(NELBLK, C(KBKTYP), COMTOP)
       call getnam(NDBIN, 1, nelblk, C(KNAMEB))
 
-C ... Attribute names...
-C ... get total attribute count...
-      numatt = 0
-      do i=1, nelblk
-        numatt = numatt + ia(knatr+i-1)
+C ... Save original element block ids in case the user changes them
+C     Needed when reading/writing element variables.
+      do i=1,nelblk
+        ia(kidelb2-1+i) = ia(kidelb-1+i)
       end do
-      
+
+C ... Attribute names...
       call mcrsrv('NAMATT', KNAMATT, maxnam*NUMATT)
       CALL MDSTAT (NERR, MEM)
       IF (NERR .GT. 0) GOTO 40
@@ -403,6 +406,12 @@ C     .. Set up status arrays for element to nodal variable conversion
 
  25   CONTINUE
 
+        goff = 0
+        noff = goff + (nvargl * maxnam)
+        eoff = noff + (nvarnp * maxnam)
+        moff = eoff + (nvarel * maxnam)
+        soff = moff + (nvarns * maxnam)
+
       CALL COMAND (NDBIN, EXECUT, 
      &     IA(KIDELB), IA(KNELB), IA(KNLNK), IA(KNATR),
      &     IA(KIDNS),  IA(KNNNS), IA(KNDNPS),IA(KIXNNS),IA(KIXDNS),
@@ -415,7 +424,9 @@ C     .. Set up status arrays for element to nodal variable conversion
      &     IA(KIELBS), IA(KINPSS), IA(KIESSS),
      &     NQAREC, C(KQAREC), NINFO, c(kinfo), c(kbktyp),
      *     c(knameb), c(knamnp), c(knamss), c(knamatt),
-     &     c(knames+nvargl*maxnam), nvarnp, IA(KINOD2EL),
+     &     c(knames+goff), nvargl, c(knames+noff), nvarnp,
+     &     c(knames+eoff), nvarel, c(knames+moff), nvarns,
+     *     c(knames+soff), nvarss, IA(KINOD2EL),
      &     SWPSS, SMOOTH, USRSUB, CENTRD,
      &     NSTEPS, A(KTIMES), IA(KITIMS), A, IA, *60)
 
@@ -643,7 +654,7 @@ C     ... Save old counts that are needed for writing timesteps
       numnp0  = numnp
       
 C     --location of original numelb, isevok arrays
-      kidelb0 = kidelb
+      kidelb0 = kidelb2
       knelb0  = knelb
       kievok0 = kievok
       
@@ -667,7 +678,7 @@ C     old array contents into new (Only needed if EXODUS)
             CALL MDSTAT (NERR, MEM)
             IF (NERR .GT. 0) GOTO 40
             CALL CPYINT (NELBLK0, IA(KNELB),  IA(KNELB0))
-            CALL CPYINT (NELBLK0, IA(KIDELB), IA(KIDELB0))
+            CALL CPYINT (NELBLK0, IA(KIDELB2), IA(KIDELB0))
             CALL CPYINT (LIEVOK,  LA(KIEVOK), LA(KIEVOK0))
 
 C     ... Map from new var to old for mapping variables.
@@ -1158,7 +1169,7 @@ C     ... Truth Table.
         time = 0.0
         CALL DBOSTE (NDBOUT, ISTEP,
      &    NVARGL, NVARNP, NUMNP, NVAREL, 0, NELBLK,
-     &    IA(KNELB), LA(KIEVOK), IA(KIDELB),
+     &    IA(KNELB), LA(KIEVOK), IA(KIDELB), 
      *    NVARNS, NUMNPS, IA(KNNNS), IA(KNSVOK), IA(KIDNS),
      *    NVARSS, NUMESS, IA(KNESS), IA(KSSVOK), IA(KIDSS),
      *    TIME, A(KVARGL), A(KVARNP), A(KCENT), A(KVARNS), A(KVARSS),

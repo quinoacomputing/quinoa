@@ -1,16 +1,20 @@
 Level 0
  Setup Smoother (MueLu::Ifpack2Smoother{type = RELAXATION})
- relaxation: type = Symmetric Gauss-Seidel
- relaxation: sweeps = 1
- relaxation: damping factor = 1
- relaxation: zero starting solution = 1   [default]
- relaxation: backward mode = 0   [default]
- relaxation: use l1 = 0   [default]
- relaxation: l1 eta = 1.5   [default]
- relaxation: min diagonal value = 0   [default]
- relaxation: fix tiny diagonal entries = 0   [default]
- relaxation: check diagonal entries = 0   [default]
- relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
+ keep smoother data = 1
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  relaxation: type = Symmetric Gauss-Seidel
+  relaxation: sweeps = 1
+  relaxation: damping factor = 1
+  relaxation: zero starting solution = 1   [default]
+  relaxation: backward mode = 0   [default]
+  relaxation: use l1 = 0   [default]
+  relaxation: l1 eta = 1.5   [default]
+  relaxation: min diagonal value = 0   [default]
+  relaxation: fix tiny diagonal entries = 0   [default]
+  relaxation: check diagonal entries = 0   [default]
+  relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
 
 Level 1
  Build (MueLu::RebalanceTransferFactory)
@@ -65,14 +69,18 @@ Level 1
    write end = -1   [default]
 
    transpose: use implicit = 1
-   Keep AP Pattern = 0   [default]
-   Keep RAP Pattern = 0   [default]
    CheckMainDiagonal = 0   [default]
    RepairMainDiagonal = 0   [default]
 
-  repartition: start level = 2   [default]
-  repartition: min rows per proc = 800   [default]
-  repartition: max imbalance = 1.2   [default]
+   Build (MueLu::RepartitionHeuristicFactory)
+   repartition: start level = 2   [default]
+   repartition: min rows per proc = 800   [default]
+   repartition: max imbalance = 1.2   [default]
+
+   Build (MueLu::Zoltan2Interface)
+   rowWeight = 0   [default]
+   ParameterList = Teuchos::RCP<Teuchos::ParameterList const>{ptr=0x27db370,node=0x27db130,strong_count=2,weak_count=0}   [unused]
+
   repartition: print partition distribution = 0   [default]
   repartition: remap parts = 1   [default]
   repartition: remap num values = 4   [default]
@@ -88,17 +96,21 @@ Level 1
  repartition: use subcommunicators = 1   [default]
 
  Setup Smoother (MueLu::Ifpack2Smoother{type = RELAXATION})
- relaxation: type = Symmetric Gauss-Seidel
- relaxation: sweeps = 1
- relaxation: damping factor = 1
- relaxation: zero starting solution = 1   [default]
- relaxation: backward mode = 0   [default]
- relaxation: use l1 = 0   [default]
- relaxation: l1 eta = 1.5   [default]
- relaxation: min diagonal value = 0   [default]
- relaxation: fix tiny diagonal entries = 0   [default]
- relaxation: check diagonal entries = 0   [default]
- relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
+ keep smoother data = 1
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  relaxation: type = Symmetric Gauss-Seidel
+  relaxation: sweeps = 1
+  relaxation: damping factor = 1
+  relaxation: zero starting solution = 1   [default]
+  relaxation: backward mode = 0   [default]
+  relaxation: use l1 = 0   [default]
+  relaxation: l1 eta = 1.5   [default]
+  relaxation: min diagonal value = 0   [default]
+  relaxation: fix tiny diagonal entries = 0   [default]
+  relaxation: check diagonal entries = 0   [default]
+  relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
 
 Level 2
  Build (MueLu::RebalanceTransferFactory)
@@ -153,14 +165,18 @@ Level 2
    write end = -1   [default]
 
    transpose: use implicit = 1
-   Keep AP Pattern = 0   [default]
-   Keep RAP Pattern = 0   [default]
    CheckMainDiagonal = 0   [default]
    RepairMainDiagonal = 0   [default]
 
-  repartition: start level = 2   [default]
-  repartition: min rows per proc = 800   [default]
-  repartition: max imbalance = 1.2   [default]
+   Build (MueLu::RepartitionHeuristicFactory)
+   repartition: start level = 2   [default]
+   repartition: min rows per proc = 800   [default]
+   repartition: max imbalance = 1.2   [default]
+
+   Build (MueLu::Zoltan2Interface)
+   rowWeight = 0   [default]
+   ParameterList = Teuchos::RCP<Teuchos::ParameterList const>{ptr=0x284bc20,node=0x27adca0,strong_count=2,weak_count=0}   [unused]
+
   repartition: print partition distribution = 0   [default]
   repartition: remap parts = 1   [default]
   repartition: remap num values = 4   [default]
@@ -181,6 +197,7 @@ Level 2
 --------------------------------------------------------------------------------
 Number of levels    = 3
 Operator complexity = 1.45
+Cycle type          = V
 
 level  rows    nnz  nnz/row  c ratio  procs
   0    9999  29995     3.00               4
@@ -195,18 +212,22 @@ Smoother (level 2) pre  : SuperLU solver interface, direct solve
 Smoother (level 2) post : no smoother
 
 Level 0
- Setup Smoother (MueLu::Ifpack2Smoother{type = RELAXATION})
- relaxation: type = Symmetric Gauss-Seidel
- relaxation: sweeps = 1
- relaxation: damping factor = 1
- relaxation: zero starting solution = 1   [default]
- relaxation: backward mode = 0   [default]
- relaxation: use l1 = 0   [default]
- relaxation: l1 eta = 1.5   [default]
- relaxation: min diagonal value = 0   [default]
- relaxation: fix tiny diagonal entries = 0   [default]
- relaxation: check diagonal entries = 0   [default]
- relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
+ Setup Smoother ("Ifpack2::Relaxation": {Initialized: true, Computed: true, Type: Symmetric Gauss-Seidel, sweeps: 1, damping factor: 1, Global matrix dimensions: [9999, 9999], Global nnz: 29995})
+ keep smoother data = 1
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  relaxation: type = Symmetric Gauss-Seidel
+  relaxation: sweeps = 1
+  relaxation: damping factor = 1
+  relaxation: zero starting solution = 1   [default]
+  relaxation: backward mode = 0   [default]
+  relaxation: use l1 = 0   [default]
+  relaxation: l1 eta = 1.5   [default]
+  relaxation: min diagonal value = 0   [default]
+  relaxation: fix tiny diagonal entries = 0   [default]
+  relaxation: check diagonal entries = 0   [default]
+  relaxation: local smoothing indices = Teuchos::ArrayRCP<int>{ptr=0,lowerOffset=0,upperOffset=-1,size=0,node=0,strong_count=0,weak_count=0}   [default]
 
 Level 1
 Level 2
@@ -216,6 +237,7 @@ Level 2
 --------------------------------------------------------------------------------
 Number of levels    = 3
 Operator complexity = 1.45
+Cycle type          = V
 
 level  rows    nnz  nnz/row  c ratio  procs
   0    9999  29995     3.00               4

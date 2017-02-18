@@ -141,10 +141,10 @@ template<class S, class LO, class GO, class N> class BlockCrsMatrix;
 /// It doesn't make sense for BlockMultiVector to implement
 /// MultiVector, because the desired fill interfaces of the two
 /// classes are different.
-template<class Scalar = Details::DefaultTypes::scalar_type,
-         class LO = Details::DefaultTypes::local_ordinal_type,
-         class GO = Details::DefaultTypes::global_ordinal_type,
-         class Node = Details::DefaultTypes::node_type>
+template<class Scalar = ::Tpetra::Details::DefaultTypes::scalar_type,
+         class LO = ::Tpetra::Details::DefaultTypes::local_ordinal_type,
+         class GO = ::Tpetra::Details::DefaultTypes::global_ordinal_type,
+         class Node = ::Tpetra::Details::DefaultTypes::node_type>
 class BlockMultiVector :
     public Tpetra::DistObject<Scalar, LO, GO, Node>
 {
@@ -177,6 +177,9 @@ public:
   typedef LO local_ordinal_type;
   //! The type of global indices.
   typedef GO global_ordinal_type;
+  //! The Kokkos Device type.
+  typedef typename Node::device_type device_type;
+
   //! The Kokkos Node type.
   typedef Node node_type;
 
@@ -195,14 +198,22 @@ public:
   /// little_vec_type or const_little_vec_type.  This gives us a
   /// porting strategy to move from "classic" Tpetra to the Kokkos
   /// refactor version.
-  typedef LittleVector<impl_scalar_type, LO> little_vec_type;
+  typedef Kokkos::View<impl_scalar_type*,
+                       Kokkos::LayoutRight,
+                       device_type,
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          little_vec_type;
 
   /// \brief "Const block view" of all degrees of freedom at a mesh point,
   ///   for a single column of the MultiVector.
   ///
   /// This is just like little_vec_type, except that you can't modify
   /// its entries.
-  typedef LittleVector<const impl_scalar_type, LO> const_little_vec_type;
+  typedef Kokkos::View<const impl_scalar_type*,
+                       Kokkos::LayoutRight,
+                       device_type,
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          const_little_vec_type;
 
   //@}
   //! \name Constructors
@@ -326,7 +337,7 @@ public:
   ///
   /// This is how you can give a BlockMultiVector to Trilinos' solvers
   /// and preconditioners.
-  mv_type getMultiVectorView ();
+  mv_type getMultiVectorView () const;
 
   //@}
   //! \name Coarse-grained operations
@@ -337,6 +348,125 @@ public:
 
   //! Multiply all entries in place by the given value \c val.
   void scale (const Scalar& val);
+
+  /// \brief Update: <tt>this = beta*this + alpha*X</tt>.
+  ///
+  /// Update this BlockMultiVector with scaled values of X.  If beta
+  /// is zero, overwrite \c *this unconditionally, even if it contains
+  /// NaN entries.  It is legal for the input X to alias this
+  /// MultiVector.
+  void
+  update (const Scalar& alpha,
+          const BlockMultiVector<Scalar, LO, GO, Node>& X,
+          const Scalar& beta);
+
+  /// \brief <tt>*this := alpha * D * X</tt>, where D is a block
+  ///   diagonal matrix.
+  ///
+  /// Compute <tt>*this := alpha * D * X</tt>, where D is a block
+  /// diagonal matrix, stored as a 3-D Kokkos::View.  This method is
+  /// the block analog of Tpetra::MultiVector::elementWiseMultiply,
+  /// and is likewise useful for implementing (block) Jacobi.
+  ///
+  /// \param alpha [in] Coefficient by which to scale the result.  We
+  ///   treat alpha = 0 as a special case, following the BLAS rules.
+  ///   That is, if alpha = 0, this method does \c this->putScalar(0).
+  /// \param D [in] Block diagonal, as a 3-D Kokkos::View.  The
+  ///   leftmost index indicates which block, the middle index the row
+  ///   within a block, and the rightmost index the column within a
+  ///   block.
+  /// \param pivots [in] Pivots (from LU factorization of the blocks)
+  /// \param X [in] Input Block(Multi)Vector; may alias \c *this.
+  ///
+  /// D is really the inverse of some BlockCrsMatrix's block diagonal.
+  /// You may compute the inverse of each block however you like.  One
+  /// way is to use GETRF, then GETRI.
+  void
+  blockWiseMultiply (const Scalar& alpha,
+                     const Kokkos::View<const impl_scalar_type***,
+                       device_type, Kokkos::MemoryUnmanaged>& D,
+                     const BlockMultiVector<Scalar, LO, GO, Node>& X);
+
+  /// \brief Block Jacobi update \f$Y = \beta * Y + \alpha D (X - Z)\f$.
+  ///
+  /// This method computes the block Jacobi update
+  /// \f$Y = \beta * Y + \alpha D (X - Z)\f$, where Y is
+  /// <tt>*this<\tt>, D the (explicitly stored) inverse block
+  /// diagonal of a BlockCrsMatrix A, and \f$Z = A*Y\f$.
+  /// The method may use Z as scratch space.
+  ///
+  /// Folks who optimize sparse matrix-vector multiply kernels tend
+  /// not to write special-purpose kernels like this one.  Thus, this
+  /// kernel consolidates all the other code that block Jacobi needs,
+  /// while exploiting the existing sparse matrix-vector multiply
+  /// kernel in BlockCrsMatrix.  That consolidation minimizes
+  /// thread-parallel kernel launch overhead.
+  ///
+  /// \param alpha [in] Coefficient of the "block scaled" term.  We
+  ///   treat alpha = 0 as a special case, following the BLAS rules.
+  ///   That is, if alpha = 0, this method does Y = beta * Y.
+  /// \param D [in] Block diagonal, as a 3-D Kokkos::View.  The
+  ///   leftmost index indicates which block, the middle index the row
+  ///   within a block, and the rightmost index the column within a
+  ///   block.
+  /// \param X [in] The first of two block (multi)vectors whose
+  ///   difference is "block scaled"
+  /// \param Z [in/out] On input: The second of two block
+  ///   (multi)vectors whose difference is "block scaled."  This
+  ///   method may use Z as scratch space.
+  /// \param beta [in] Coefficient of Y.  We treat beta = 0 as a
+  ///   special case, following the BLAS rules.  That is, if beta = 0,
+  ///   the initial contents of Y are ignored.
+  void
+  blockJacobiUpdate (const Scalar& alpha,
+                     const Kokkos::View<const impl_scalar_type***,
+                       device_type, Kokkos::MemoryUnmanaged>& D,
+                     const BlockMultiVector<Scalar, LO, GO, Node>& X,
+                     BlockMultiVector<Scalar, LO, GO, Node>& Z,
+                     const Scalar& beta);
+
+  //@}
+  //! \name Implementation of "dual view semantics"
+  //@{
+
+  /// \brief Update data to the given target memory space, only if
+  ///   data in the "other" space have been marked as modified.
+  ///
+  /// If \c TargetMemorySpace is the same as this object's memory
+  /// space, then copy data from host to device.  Otherwise, copy data
+  /// from device to host.  In either case, only copy if the source of
+  /// the copy has been modified.
+  ///
+  /// This is a one-way synchronization only.  If the target of the
+  /// copy has been modified, this operation will discard those
+  /// modifications.  It will also reset both device and host modified
+  /// flags.
+  ///
+  /// \note This method doesn't know on its own whether you modified
+  ///   the data in either memory space.  You must manually mark the
+  ///   MultiVector as modified in the space in which you modified
+  ///   it, by calling the modify() method with the appropriate
+  ///   template parameter.
+  template<class TargetMemorySpace>
+  void sync () {
+    mv_.template sync<typename TargetMemorySpace::memory_space> ();
+  }
+
+  //! Whether this object needs synchronization to the given memory space.
+  template<class TargetMemorySpace>
+  bool need_sync () const {
+    return mv_.template need_sync<typename TargetMemorySpace::memory_space> ();
+  }
+
+  /// \brief Mark data as modified on the given memory space.
+  ///
+  /// If <tt>TargetDeviceType::memory_space</tt> is the same as this
+  /// object's memory space, then mark the device's data as modified.
+  /// Otherwise, mark the host's data as modified.
+  template<class TargetMemorySpace>
+  void modify () {
+    mv_.template modify<typename TargetMemorySpace::memory_space> ();
+  }
 
   //@}
   //! \name Fine-grained data access
@@ -421,28 +551,27 @@ public:
   ///   is invalid on the calling process.
   bool getGlobalRowView (const GO globalRowIndex, const LO colIndex, Scalar*& vals) const;
 
-  /// \brief Get a view of the degrees of freedom at the given mesh point.
+  /// \brief Get a host view of the degrees of freedom at the given
+  ///   mesh point.
   ///
   /// \warning This method's interface may change or disappear at any
   ///   time.  Please do not rely on it in your code yet.
   ///
-  /// The preferred way to refer to little_vec_type is to get it from
-  /// BlockMultiVector's typedef.  This is because different
-  /// specializations of BlockMultiVector reserve the right to use
-  /// different types to implement little_vec_type.  This gives us a
-  /// porting strategy to move from "classic" Tpetra to the Kokkos
-  /// refactor version.
-  little_vec_type
+  /// Prefer using \c auto to let the compiler compute the return
+  /// type.  This gives us the freedom to change this type in the
+  /// future.  If you insist not to use \c auto, then please use the
+  /// \c little_vec_type typedef to deduce the correct return type;
+  /// don't try to hard-code the return type yourself.
+  typename little_vec_type::HostMirror
   getLocalBlock (const LO localRowIndex, const LO colIndex) const;
   //@}
 
 protected:
-  /// \brief \name Implementation of DistObject (or DistObjectKA).
+  /// \brief \name Implementation of Tpetra::DistObject.
   ///
-  /// The methods here implement Tpetra::DistObject or
-  /// Tpetra::DistObjectKA, depending on a configure-time option.
-  /// They let BlockMultiVector participate in Import and Export
-  /// operations.  Users don't have to worry about these methods.
+  /// The methods here implement Tpetra::DistObject.  They let
+  /// BlockMultiVector participate in Import and Export operations.
+  /// Users don't have to worry about these methods.
   //@{
 
   virtual bool checkSizes (const Tpetra::SrcDistObject& source);

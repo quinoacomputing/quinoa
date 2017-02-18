@@ -73,19 +73,21 @@ namespace Stokhos {
   //! Get mean values matrix for mean-based preconditioning
   /*! Specialization for Sacado::UQ::PCE
    */
-  template <class Storage, class Layout, class Memory, class Device>
+  template <class Storage, class ... P>
   class GetMeanValsFunc< Kokkos::View< Sacado::UQ::PCE<Storage>*,
-                                       Layout, Memory, Device > > {
+                                       P... > > {
   public:
     typedef Sacado::UQ::PCE<Storage> Scalar;
-    typedef Kokkos::View< Scalar*, Layout, Memory, Device > ViewType;
+    typedef Kokkos::View< Scalar*, P... > ViewType;
     typedef ViewType MeanViewType;
     typedef typename ViewType::execution_space execution_space;
     typedef typename ViewType::size_type size_type;
 
     GetMeanValsFunc(const ViewType& vals_) : vals(vals_) {
       const size_type nnz = vals.dimension_0();
-      mean_vals = ViewType("mean-values", vals.cijk(), nnz, 1);
+      typename Scalar::cijk_type mean_cijk =
+        Stokhos::create_mean_based_product_tensor<execution_space, typename Storage::ordinal_type, typename Storage::value_type>();
+      mean_vals = Kokkos::make_view<ViewType>("mean-values", mean_cijk, nnz, 1);
       Kokkos::parallel_for( nnz, *this );
     }
 
@@ -104,18 +106,18 @@ namespace Stokhos {
   //! Get mean values matrix for mean-based preconditioning
   /*! Specialization for Sacado::MP::Vector
    */
-  template <class Storage, class Layout, class Memory, class Device>
+  template <class Storage, class ... P>
   class GetMeanValsFunc< Kokkos::View< Sacado::MP::Vector<Storage>*,
-                                       Layout, Memory, Device > > {
+                                       P... > > {
   public:
     typedef Sacado::MP::Vector<Storage> Scalar;
-    typedef Kokkos::View< Scalar*, Layout, Memory, Device > ViewType;
+    typedef Kokkos::View< Scalar*, P... > ViewType;
     typedef ViewType MeanViewType;
     typedef typename ViewType::execution_space execution_space;
     typedef typename ViewType::size_type size_type;
 
     GetMeanValsFunc(const ViewType& vals_) :
-      vals(vals_), vec_size(vals.sacado_size())
+      vals(vals_), vec_size(Kokkos::dimension_scalar(vals))
     {
       const size_type nnz = vals.dimension_0();
       mean_vals = ViewType("mean-values", nnz, 1);

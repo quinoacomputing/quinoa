@@ -64,7 +64,8 @@
 #include "stk_mesh/base/Types.hpp"      // for PartVector, EntityRank
 #include "stk_topology/topology.hpp"    // for topology, etc
 
-
+#include "SidesetTranslator.hpp"
+#include "StkIoUtils.hpp"
 
 
 namespace {
@@ -133,6 +134,11 @@ namespace stk {
 	    << ". Must be READ_RESTART or READ_MODEL";
         throw std::runtime_error( msg.str() );
       }
+
+      ThrowErrorMsgIf(m_region->mesh_type() != Ioss::MeshType::UNSTRUCTURED,
+		      "Mesh type is '" << m_region->mesh_type_string() << "' which is not supported. "
+		      "Only 'Unstructured' mesh is currently supported.");
+
       m_database.release(); // The m_region will delete the m_database pointer.
     }
 
@@ -146,6 +152,10 @@ namespace stk {
         // The Ioss::Region takes control of the m_input_database pointer, so we need to make sure the
         // RCP doesn't retain ownership...
         m_region = Teuchos::rcp(new Ioss::Region(m_database.release().get(), "input_model"));
+
+	ThrowErrorMsgIf(m_region->mesh_type() != Ioss::MeshType::UNSTRUCTURED,
+			"Mesh type is '" << m_region->mesh_type_string() << "' which is not supported. "
+			"Only 'Unstructured' mesh is currently supported.");
       }
     }
 
@@ -487,7 +497,7 @@ namespace stk {
             std::sort(discoveredMissingFields.begin(), discoveredMissingFields.end(),
                       [](const stk::io::MeshField &a, const stk::io::MeshField &b) {
                             return (a.db_name() < b.db_name())
-                                    || ((a.db_name() == b.db_name()) && (a.field()->name() == b.field()->name())); });
+                                    || ((a.db_name() == b.db_name()) && (a.field()->name() < b.field()->name())); });
             missingFields->insert(missingFields->end(), discoveredMissingFields.begin(), discoveredMissingFields.end());
         }
     }
@@ -553,8 +563,17 @@ namespace stk {
 		      << "' has no transient data.");
 
       std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
+      double time_read = -1.0;
       while (I != m_fields.end()) {
-	(*I).restore_field_data(bulk, sti, ignore_missing_fields);
+	// NOTE: If the fields being restored have different settings, the time
+	// value can be different for each field and this will return the value
+	// of the last field.  For example, if one field is CLOSEST, one is SPECFIED,
+	// and one is TIME_INTERPOLATION, then the time value to return is
+	// ambiguous.  Also an issue if some of the fields are inactive.
+	double time_t = (*I).restore_field_data(bulk, sti, ignore_missing_fields);
+	if ((*I).is_active()) {
+	  time_read = time_t > time_read ? time_t : time_read;
+	}
 	++I;
       }
 
@@ -565,7 +584,7 @@ namespace stk {
       if (current_step != static_cast<int>(step))
 	region->begin_state(step);
 
-      return region->get_state_time(step);
+      return time_read;
     }
 
   }

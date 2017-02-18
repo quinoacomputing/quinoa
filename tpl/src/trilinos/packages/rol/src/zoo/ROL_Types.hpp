@@ -56,20 +56,34 @@
 #endif
 
 #include <algorithm>
+#include <complex>
 #include <string>
+#include <sstream>
 #include <limits>
 #include <Teuchos_getConst.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ScalarTraits.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <ROL_Vector.hpp>
+#include <ROL_config.h>
 
 /** \def    ROL_NUM_CHECKDERIV_STEPS
     \brief  Number of steps for derivative checks.
  */
 #define ROL_NUM_CHECKDERIV_STEPS 13
 
+
+
 namespace ROL {
+
+template<class T>
+std::string NumberToString( T Number )
+{
+  std::ostringstream ss;
+  ss << Number;
+  return ss.str();
+}
+
 
   /** \brief  State for algorithm class.  Will be used for restarts.
    */
@@ -108,29 +122,48 @@ namespace ROL {
     Teuchos::RCP<Vector<Real> > gradientVec;
     Teuchos::RCP<Vector<Real> > descentVec;
     Teuchos::RCP<Vector<Real> > constraintVec;
+    int nfval;
+    int ngrad;
     Real searchSize; // line search parameter (alpha) or trust-region radius (delta)
-    StepState(void) : gradientVec(Teuchos::null), descentVec(Teuchos::null), constraintVec(Teuchos::null),
+    StepState(void) : gradientVec(Teuchos::null),
+                      descentVec(Teuchos::null),
+                      constraintVec(Teuchos::null),
+                      nfval(0),
+                      ngrad(0),
                       searchSize(0) {}
   };  
       
   /** \brief  Platform-dependent machine epsilon. 
    */
-  static const double ROL_EPSILON   = std::abs(Teuchos::ScalarTraits<double>::eps());
+  template<class Real>
+  inline Real ROL_EPSILON(void) { return std::abs(Teuchos::ScalarTraits<Real>::eps()); }
+  //static const Real ROL_EPSILON<Real>() = std::abs(Teuchos::ScalarTraits<Real>::eps());
     
   /** \brief  Tolerance for various equality tests.
    */
-  static const double ROL_THRESHOLD = 10.0 * ROL_EPSILON;
+  template<class Real>
+  inline Real ROL_THRESHOLD(void) { return 10.0 * ROL_EPSILON<Real>(); }
+  //static const Real ROL_THRESHOLD = 10.0 * ROL_EPSILON<Real>()<Real>;
 
   /** \brief  Platform-dependent maximum double.
    */ 
-  static const double ROL_OVERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmax());
+  template<class Real>
+  inline Real ROL_OVERFLOW(void) { return std::abs(Teuchos::ScalarTraits<Real>::rmax()); }
+  //static const double ROL_OVERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmax());
 
-  static const double ROL_INF  = 0.1*ROL_OVERFLOW;
-  static const double ROL_NINF = -ROL_INF;
+  template<class Real>
+  inline Real ROL_INF(void) { return 0.1*ROL_OVERFLOW<Real>(); }
+  //static const double ROL_INF<Real>()  = 0.1*ROL_OVERFLOW;
+
+  template<class Real>
+  inline Real ROL_NINF(void) { return -ROL_INF<Real>(); }
+  //static const double ROL_NINF<Real>() = -ROL_INF<Real>();
 
   /** \brief  Platform-dependent minimum double.
    */ 
-  static const double ROL_UNDERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmin());
+  template<class Real>
+  inline Real ROL_UNDERFLOW(void) { return std::abs(Teuchos::ScalarTraits<Real>::rmin()); }
+  //static const double ROL_UNDERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmin());
 
   struct removeSpecialCharacters {
     bool operator()(char c) {
@@ -543,6 +576,7 @@ namespace ROL {
     NONLINEARCG_DAI_YUAN,
     NONLINEARCG_HAGER_ZHANG,
     NONLINEARCG_OREN_LUENBERGER,
+    NONLINEARCG_USERDEFINED,
     NONLINEARCG_LAST
   };
 
@@ -558,6 +592,7 @@ namespace ROL {
       case NONLINEARCG_DAI_YUAN:              retString = "Dai-Yuan";                    break;
       case NONLINEARCG_HAGER_ZHANG:           retString = "Hager-Zhang";                 break;
       case NONLINEARCG_OREN_LUENBERGER:       retString = "Oren-Luenberger";             break;
+      case NONLINEARCG_USERDEFINED:           retString = "User Defined";                break;
       case NONLINEARCG_LAST:                  retString = "Last Type (Dummy)";           break;
       default:                                retString = "INVALID ENonlinearCG";
     }
@@ -578,7 +613,8 @@ namespace ROL {
             (s == NONLINEARCG_LIU_STOREY)        ||
             (s == NONLINEARCG_DAI_YUAN)          ||
             (s == NONLINEARCG_HAGER_ZHANG)       ||
-            (s == NONLINEARCG_OREN_LUENBERGER)      
+            (s == NONLINEARCG_OREN_LUENBERGER)   ||
+            (s == NONLINEARCG_USERDEFINED)
           );
   }
 
@@ -643,7 +679,7 @@ namespace ROL {
       case LINESEARCH_BISECTION:            retString = "Bisection";               break;
       case LINESEARCH_GOLDENSECTION:        retString = "Golden Section";          break;
       case LINESEARCH_CUBICINTERP:          retString = "Cubic Interpolation";     break;
-      case LINESEARCH_BRENTS:               retString = "Brents";                  break;
+      case LINESEARCH_BRENTS:               retString = "Brent's";                 break;
       case LINESEARCH_USERDEFINED:          retString = "User Defined";            break;
       case LINESEARCH_LAST:                 retString = "Last Type (Dummy)";       break;
       default:                              retString = "INVALID ELineSearch";
@@ -775,77 +811,45 @@ namespace ROL {
     return CURVATURECONDITION_WOLFE;
   }
 
-  /** \enum   ROL::ETrustRegion
-      \brief  Enumeration of trust-region solver types.
+  /** \enum  ROL::ECGFlag 
+      \brief Enumation of flags used by conjugate gradient methods.
 
-      \arg    CAUCHYPOINT     describe
-      \arg    TRUNCATEDCG     describe
-      \arg    DOGLEG          describe
-      \arg    DOUBLEDOGLEG    describe
-   */
-  enum ETrustRegion{
-    TRUSTREGION_CAUCHYPOINT = 0,
-    TRUSTREGION_TRUNCATEDCG,
-    TRUSTREGION_DOGLEG,
-    TRUSTREGION_DOUBLEDOGLEG,
-    TRUSTREGION_LAST
+    \arg CG_FLAG_SUCCESS     Residual Tolerance Met
+    \arg CG_FLAG_ITEREXCEED  Iteration Limit Exceeded
+    \arg CG_FLAG_NEGCURVE    Negative Curvature Detected
+    \arh CG_FLAG_TRRADEX     Trust-Region Radius Exceeded
+
+  */
+  enum ECGFlag {
+    CG_FLAG_SUCCESS = 0,
+    CG_FLAG_ITEREXCEED,
+    CG_FLAG_NEGCURVE,
+    CG_FLAG_TRRADEX,
+    CG_FLAG_UNDEFINED 
   };
 
-  inline std::string ETrustRegionToString(ETrustRegion tr) {
+
+  inline std::string ECGFlagToString(ECGFlag cgf) {
     std::string retString;
-    switch(tr) {
-      case TRUSTREGION_CAUCHYPOINT:   retString = "Cauchy Point";        break;
-      case TRUSTREGION_TRUNCATEDCG:   retString = "Truncated CG";        break;
-      case TRUSTREGION_DOGLEG:        retString = "Dogleg";              break;
-      case TRUSTREGION_DOUBLEDOGLEG:  retString = "Double Dogleg";       break;
-      case TRUSTREGION_LAST:          retString = "Last Type (Dummy)";   break;
-      default:                        retString = "INVALID ETrustRegion";
+    switch(cgf) {
+      case CG_FLAG_SUCCESS:
+        retString = "Residual tolerance met";
+        break;
+      case CG_FLAG_ITEREXCEED:
+        retString = "Iteration limit exceeded";
+        break;
+      case CG_FLAG_NEGCURVE:
+        retString = "Negative curvature detected";
+        break;
+      case CG_FLAG_TRRADEX:   
+        retString = "Trust-Region radius exceeded";
+        break;
+      default:
+        retString = "INVALID ECGFlag";  
     }
     return retString;
   }
-  
-  /** \brief  Verifies validity of a TrustRegion enum.
-    
-      \param  tr  [in]  - enum of the TrustRegion
-      \return 1 if the argument is a valid TrustRegion; 0 otherwise.
-    */
-  inline int isValidTrustRegion(ETrustRegion ls){
-    return( (ls == TRUSTREGION_CAUCHYPOINT)  ||
-            (ls == TRUSTREGION_TRUNCATEDCG)  ||
-            (ls == TRUSTREGION_DOGLEG)       ||
-            (ls == TRUSTREGION_DOUBLEDOGLEG)
-          );
-  }
 
-  inline ETrustRegion & operator++(ETrustRegion &type) {
-    return type = static_cast<ETrustRegion>(type+1);
-  }
-
-  inline ETrustRegion operator++(ETrustRegion &type, int) {
-    ETrustRegion oldval = type;
-    ++type;
-    return oldval;
-  }
-
-  inline ETrustRegion & operator--(ETrustRegion &type) {
-    return type = static_cast<ETrustRegion>(type-1);
-  }
-
-  inline ETrustRegion operator--(ETrustRegion &type, int) {
-    ETrustRegion oldval = type;
-    --type;
-    return oldval;
-  }
-
-  inline ETrustRegion StringToETrustRegion(std::string s) {
-    s = removeStringFormat(s);
-    for ( ETrustRegion tr = TRUSTREGION_CAUCHYPOINT; tr < TRUSTREGION_LAST; tr++ ) {
-      if ( !s.compare(removeStringFormat(ETrustRegionToString(tr))) ) {
-        return tr;
-      }
-    }
-    return TRUSTREGION_CAUCHYPOINT;
-  }
 
   /** \enum   ROL::ETestObjectives
       \brief  Enumeration of test objective functions.
@@ -1107,6 +1111,54 @@ namespace ROL {
   }
 
 
+// Generic conversion from Element type to Real type
+template<class Real, class Element>
+struct TypeCaster {
+  static Real ElementToReal( const Element &val ) {
+    return Real(0);
+  }
+};
+
+// Partially specialize for complex<Real>
+template<class Real>
+struct TypeCaster<Real, std::complex<Real> > {
+  static Real ElementToReal( const std::complex<Real> &val ) {
+    return val.real();
+  } 
+};
+
+// Fully specialize for double,float
+template<>
+struct TypeCaster<double,float> {
+  static double ElementToReal( const float &val ) {
+    return static_cast<double>(val);
+  }
+};
+
+// Cast from Element type to Real type
+template<class Element, class Real>
+Real rol_cast(const Element &val) {
+  return TypeCaster<Real,Element>::ElementToReal(val);
+}
+
+
+
+
+
+
+namespace Exception {
+
+class NotImplemented : public Teuchos::ExceptionBase {
+public:
+  NotImplemented( const std::string& what_arg ) :
+    Teuchos::ExceptionBase(what_arg) {}
+
+
+}; // class NotImplemented
+ 
+
+} // namespace Exception
+
 
 } // namespace ROL
 
@@ -1291,6 +1343,11 @@ namespace ROL {
  *  @ingroup extensions_group
  *  \brief ROL's stochastic optimization capability.
  */
+
+/** @defgroup risk_group Risk Measures
+ *  @ingroup stochastic_group
+ * \brief ROL's risk measure implementations.
+*/ 
 
 /** @defgroup examples_group Examples
  *  \brief ROL's examples

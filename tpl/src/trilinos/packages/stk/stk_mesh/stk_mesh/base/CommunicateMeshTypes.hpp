@@ -41,6 +41,7 @@
 namespace stk {
 
 template<>
+inline
 CommBuffer & CommBuffer::pack<stk::mesh::PartVector>( const stk::mesh::PartVector & parts )
 {
   unsigned num_parts = parts.size();
@@ -53,12 +54,13 @@ CommBuffer & CommBuffer::pack<stk::mesh::PartVector>( const stk::mesh::PartVecto
   }
 
   pack(num_parts);
-  pack(&part_ordinals[0], num_parts);
+  pack(part_ordinals.data(), num_parts);
 
   return *this;
 }
 
 template<>
+inline
 CommBuffer & CommBuffer::pack<stk::mesh::Selector>( const stk::mesh::Selector & selector )
 {
   assert(selector.is_all_unions());
@@ -71,6 +73,7 @@ CommBuffer & CommBuffer::pack<stk::mesh::Selector>( const stk::mesh::Selector & 
 }
 
 template<>
+inline
 CommBuffer & CommBuffer::unpack< std::pair<const stk::mesh::MetaData *, stk::mesh::PartVector *> >
 ( std::pair<const stk::mesh::MetaData *, stk::mesh::PartVector *> & pair )
 {
@@ -80,7 +83,7 @@ CommBuffer & CommBuffer::unpack< std::pair<const stk::mesh::MetaData *, stk::mes
   unsigned num_parts;
   unpack(num_parts);
   std::vector<unsigned> part_ordinals(num_parts);
-  unpack(&part_ordinals[0], num_parts);
+  unpack(part_ordinals.data(), num_parts);
 
   for(std::vector<unsigned>::const_iterator it = part_ordinals.begin(); it != part_ordinals.end(); ++it)
   {
@@ -91,6 +94,7 @@ CommBuffer & CommBuffer::unpack< std::pair<const stk::mesh::MetaData *, stk::mes
 }
 
 template<>
+inline
 CommBuffer & CommBuffer::unpack< std::pair<const stk::mesh::MetaData *, stk::mesh::Selector *> >
 ( std::pair<const stk::mesh::MetaData *, stk::mesh::Selector *> & pair )
 {

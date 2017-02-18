@@ -50,7 +50,6 @@
 #include "PanzerAdaptersSTK_config.hpp"
 #include "Panzer_IntrepidFieldPattern.hpp"
 #include "Panzer_GeometricAggFieldPattern.hpp"
-#include "Panzer_DOFManagerFEI.hpp"
 #include "Panzer_STK_SquareQuadMeshFactory.hpp"
 #include "Panzer_STKConnManager.hpp"
 
@@ -66,16 +65,16 @@
    #include "Epetra_SerialComm.h"
 #endif
 
-typedef Intrepid2::FieldContainer<double> FieldContainer;
+typedef Kokkos::DynRankView<double,PHX::Device> FieldContainer;
 
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::rcpFromRef;
 using Teuchos::rcp_dynamic_cast;
 
-namespace panzer_stk_classic {
+namespace panzer_stk {
 
-Teuchos::RCP<panzer::ConnManager<int,int> > buildQuadMesh(stk_classic::ParallelMachine comm,int xelmts,int yelmts,int xblocks,int yblocks)
+Teuchos::RCP<panzer::ConnManager<int,int> > buildQuadMesh(stk::ParallelMachine comm,int xelmts,int yelmts,int xblocks,int yblocks)
 {
    Teuchos::ParameterList pl;
    pl.set<int>("X Elements",xelmts);
@@ -83,11 +82,11 @@ Teuchos::RCP<panzer::ConnManager<int,int> > buildQuadMesh(stk_classic::ParallelM
    pl.set<int>("X Blocks",xblocks);
    pl.set<int>("Y Blocks",yblocks);
 
-   panzer_stk_classic::SquareQuadMeshFactory meshFact;
+   panzer_stk::SquareQuadMeshFactory meshFact;
    meshFact.setParameterList(Teuchos::rcpFromRef(pl));
    
-   Teuchos::RCP<panzer_stk_classic::STK_Interface> mesh = meshFact.buildMesh(comm);
-   return Teuchos::rcp(new panzer_stk_classic::STKConnManager<int>(mesh));
+   Teuchos::RCP<panzer_stk::STK_Interface> mesh = meshFact.buildMesh(comm);
+   return Teuchos::rcp(new panzer_stk::STKConnManager<int>(mesh));
 }
 
 template <typename Intrepid2Type>
@@ -102,17 +101,16 @@ RCP<const panzer::Intrepid2FieldPattern> buildFieldPattern()
 // quad tests
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -205,22 +203,20 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad)
          TEST_ASSERT(gids[ux_offsets[i]]<gids[uy_offsets[i]]); 
       }
    }
-   PHX::FinalizeKokkosDevice();
 }
 
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, field_order)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -298,23 +294,21 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, field_order)
          TEST_ASSERT(gids[p_offsets[i]]<gids[ux_offsets[i]]); 
       }
    }
-   PHX::FinalizeKokkosDevice();
 }
 
 // quad tests
-TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, shared_owned_indices)
+TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, ghosted_owned_indices)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -332,15 +326,15 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, shared_owned_indices)
    // test UniqueGlobalIndexer
    RCP<panzer::UniqueGlobalIndexer<int,int> > glbNum = dofManager;
 
-   std::vector<int> owned, ownedAndShared;
+   std::vector<int> owned, ownedAndGhosted;
    glbNum->getOwnedIndices(owned);
-   glbNum->getOwnedAndSharedIndices(ownedAndShared);
+   glbNum->getOwnedAndGhostedIndices(ownedAndGhosted);
 
    if(myRank==0 && numProcs==2) {
       TEST_EQUALITY(owned.size(),6);
-      TEST_EQUALITY(ownedAndShared.size(),6);
+      TEST_EQUALITY(ownedAndGhosted.size(),6);
       bool ownedCorrect = true;
-      bool ownedAndSharedCorrect = true;
+      bool ownedAndGhostedCorrect = true;
 
       std::sort(owned.begin(),owned.end());
       for(std::size_t i=0;i<owned.size();i++) {
@@ -348,17 +342,17 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, shared_owned_indices)
       }
       TEST_ASSERT(ownedCorrect);
 
-      std::sort(ownedAndShared.begin(),ownedAndShared.end());
-      for(std::size_t i=0;i<ownedAndShared.size();i++) {
-         ownedAndSharedCorrect &= (ownedAndShared[i] == (int) i);
+      std::sort(ownedAndGhosted.begin(),ownedAndGhosted.end());
+      for(std::size_t i=0;i<ownedAndGhosted.size();i++) {
+         ownedAndGhostedCorrect &= (ownedAndGhosted[i] == (int) i);
       }
-      TEST_ASSERT(ownedAndSharedCorrect);
+      TEST_ASSERT(ownedAndGhostedCorrect);
    }
    else if(myRank==1 && numProcs==2) {
       TEST_EQUALITY(owned.size(),3);
-      TEST_EQUALITY(ownedAndShared.size(),6);
+      TEST_EQUALITY(ownedAndGhosted.size(),6);
       bool ownedCorrect = true;
-      bool ownedAndSharedCorrect = true;
+      bool ownedAndGhostedCorrect = true;
 
       std::sort(owned.begin(),owned.end());
       for(std::size_t i=0;i<owned.size();i++) {
@@ -366,35 +360,33 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, shared_owned_indices)
       }
       TEST_ASSERT(ownedCorrect);
 
-      std::sort(ownedAndShared.begin(),ownedAndShared.end());
-      ownedAndSharedCorrect &= (ownedAndShared[0] == 1);
-      ownedAndSharedCorrect &= (ownedAndShared[1] == 3);
-      ownedAndSharedCorrect &= (ownedAndShared[2] == 5);
+      std::sort(ownedAndGhosted.begin(),ownedAndGhosted.end());
+      ownedAndGhostedCorrect &= (ownedAndGhosted[0] == 1);
+      ownedAndGhostedCorrect &= (ownedAndGhosted[1] == 3);
+      ownedAndGhostedCorrect &= (ownedAndGhosted[2] == 5);
       for(std::size_t i=0;i<3;i++) {
-         ownedAndSharedCorrect &= (ownedAndShared[i+3] == (int) i+6);
+         ownedAndGhostedCorrect &= (ownedAndGhosted[i+3] == (int) i+6);
       }
-      TEST_ASSERT(ownedAndSharedCorrect);
+      TEST_ASSERT(ownedAndGhostedCorrect);
    }
    else 
       TEUCHOS_ASSERT(false);
 
-   PHX::FinalizeKokkosDevice();
 }
 
 // quad tests
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, multiple_dof_managers)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -455,31 +447,29 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, multiple_dof_managers)
    else
       TEUCHOS_ASSERT(false);
 
-   PHX::FinalizeKokkosDevice();
 }
 
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager,getDofCoords)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
    // build DOF manager
    RCP<panzer::ConnManager<int,int> > connManager = buildQuadMesh(Comm,2,2,2,1);
-   RCP<const panzer_stk_classic::STKConnManager<int> > stkManager = rcp_dynamic_cast<panzer_stk_classic::STKConnManager<int> >(connManager);
-   RCP<panzer_stk_classic::STK_Interface> meshDB = stkManager->getSTKInterface();
+   RCP<const panzer_stk::STKConnManager<int> > stkManager = rcp_dynamic_cast<panzer_stk::STKConnManager<int> >(connManager);
+   RCP<panzer_stk::STK_Interface> meshDB = stkManager->getSTKInterface();
    meshDB->print(out);
 
    // grab elements from mesh
-   std::vector<stk_classic::mesh::Entity*> block00, block01;
+   std::vector<stk::mesh::Entity> block00, block01;
    meshDB->getMyElements("eblock-0_0",block00);
    meshDB->getMyElements("eblock-1_0",block01);
   
@@ -509,28 +499,26 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager,getDofCoords)
       TEST_EQUALITY(localIds_01[i],meshDB->elementLocalId(block01[i]));
 
    // for(std::size_t c=0;c<block00.size();c++) {
-   //    stk_classic::mesh::Entity * element = block00[c];
+   //    stk::mesh::Entity element = block00[c];
    //    for(int i=0;i<4;i++) {
    //    }
    // }
 
-   PHX::FinalizeKokkosDevice();
 }
 
 // quad tests
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -645,23 +633,21 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations)
          TEST_EQUALITY(orientation[i+4],standardO[i]);
    }
 
-   PHX::FinalizeKokkosDevice();
 }
 
 // quad tests
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations2)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
-   int myRank = stk_classic::parallel_machine_rank(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
+   int myRank = stk::parallel_machine_rank(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -725,22 +711,20 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations2)
          TEST_EQUALITY(orientation[i],standardO[i]);
    }
    
-   PHX::FinalizeKokkosDevice();
 }
 
 // quad tests
 TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations_fail)
 {
-   PHX::InitializeKokkosDevice();
 
    // build global (or serial communicator)
    #ifdef HAVE_MPI
-      stk_classic::ParallelMachine Comm = MPI_COMM_WORLD;
+      stk::ParallelMachine Comm = MPI_COMM_WORLD;
    #else
-      stk_classic::ParallelMachine Comm = WHAT_TO_DO_COMM;
+      stk::ParallelMachine Comm = WHAT_TO_DO_COMM;
    #endif
 
-   int numProcs = stk_classic::parallel_machine_size(Comm);
+   int numProcs = stk::parallel_machine_size(Comm);
 
    TEUCHOS_ASSERT(numProcs==2);
 
@@ -762,7 +746,6 @@ TEUCHOS_UNIT_TEST(tSquareQuadMeshDOFManager, buildTest_quad_edge_orientations_fa
 
    TEST_THROW(dofManager->buildGlobalUnknowns(patternI1),std::logic_error);
 
-   PHX::FinalizeKokkosDevice();
 }
 
 }

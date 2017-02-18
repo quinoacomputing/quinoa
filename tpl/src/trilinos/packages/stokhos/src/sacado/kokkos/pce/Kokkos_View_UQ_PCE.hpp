@@ -62,6 +62,6 @@ namespace Kokkos {
 
 }
 
-#include "Kokkos_View_UQ_PCE_Contiguous.hpp"
+#include "KokkosExp_View_UQ_PCE_Contiguous.hpp"
 
 #endif /* #ifndef KOKKOS_VIEW_UQ_PCE_HPP */

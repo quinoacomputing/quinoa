@@ -85,9 +85,6 @@ void MeshCoordinateTest::Run(const ParameterList &params,
     
     problem.solve();
     
-    if (comm->getRank()  == 0)
-        problem.printMetrics(cout);
-    
     this->success = true;
     
 }

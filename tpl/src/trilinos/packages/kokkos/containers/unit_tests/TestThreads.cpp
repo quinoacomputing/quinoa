@@ -61,7 +61,10 @@
 
 #include <TestVector.hpp>
 #include <TestDualView.hpp>
-#include <TestSegmentedView.hpp>
+#include <TestDynamicView.hpp>
+
+#include <Kokkos_DynRankView.hpp>
+#include <TestDynViewAPI.hpp>
 
 namespace Test {
 
@@ -91,6 +94,10 @@ protected:
     Kokkos::Threads::finalize();
   }
 };
+
+TEST_F( threads , dyn_view_api) {
+  TestDynViewAPI< double , Kokkos::Threads >();
+}
 
 TEST_F( threads , staticcrsgraph )
 {
@@ -137,12 +144,6 @@ TEST_F( threads , staticcrsgraph )
       test_dualview_combinations<int,Kokkos::Threads>(size);                     \
   }
 
-#define THREADS_SEGMENTEDVIEW_TEST( size )                             \
-  TEST_F( threads, segmentedview_##size##x) {       \
-      test_segmented_view<double,Kokkos::Threads>(size);                     \
-  }
-
-
 THREADS_INSERT_TEST(far, 100000, 90000, 100, 500, false)
 THREADS_FAILED_INSERT_TEST( 10000, 1000 )
 THREADS_DEEP_COPY( 10000, 1 )
@@ -150,7 +151,6 @@ THREADS_DEEP_COPY( 10000, 1 )
 THREADS_VECTOR_COMBINE_TEST( 10 )
 THREADS_VECTOR_COMBINE_TEST( 3057 )
 THREADS_DUALVIEW_COMBINE_TEST( 10 )
-THREADS_SEGMENTEDVIEW_TEST( 10000 )
 
 
 #undef THREADS_INSERT_TEST
@@ -159,7 +159,18 @@ THREADS_SEGMENTEDVIEW_TEST( 10000 )
 #undef THREADS_DEEP_COPY
 #undef THREADS_VECTOR_COMBINE_TEST
 #undef THREADS_DUALVIEW_COMBINE_TEST
-#undef THREADS_SEGMENTEDVIEW_TEST
+
+
+
+TEST_F( threads , dynamic_view )
+{
+  typedef TestDynamicView< double , Kokkos::Threads >
+    TestDynView ;
+
+  for ( int i = 0 ; i < 10 ; ++i ) {
+    TestDynView::run( 100000 + 100 * i );
+  }
+}
 
 } // namespace Test
 

@@ -99,9 +99,8 @@
 #include "MueLu_SimpleSmoother.hpp"
 #include "MueLu_SchurComplementFactory.hpp"
 #include "MueLu_Utilities.hpp"
-
-//TODO is it really needed?
-#include "MueLu_HierarchyHelpers.hpp"
+#include "MueLu_TopSmootherFactory.hpp"
+#include "MueLu_HierarchyUtils.hpp"
 
 #include <Epetra_LinearProblem.h>
 #include <AztecOO.h>
@@ -116,13 +115,13 @@
 
 
 int main(int argc, char *argv[]) {
-#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_SERIAL)
+#if defined(HAVE_MUELU_EPETRA)
   typedef double Scalar;
   typedef int LocalOrdinal;
   typedef int GlobalOrdinal;
   typedef LocalOrdinal LO;
   typedef GlobalOrdinal GO;
-  typedef Kokkos::Compat::KokkosSerialWrapperNode Node;
+  typedef Xpetra::EpetraNode Node;
 #include "MueLu_UseShortNames.hpp"
 
   using Teuchos::RCP;
@@ -143,10 +142,6 @@ int main(int argc, char *argv[]) {
     // Timing
     Teuchos::Time myTime("global");
     Teuchos::TimeMonitor MM(myTime);
-
-#ifndef HAVE_XPETRA_INT_LONG_LONG
-    *out << "Warning: scaling test was not compiled with long long int support" << std::endl;
-#endif
 
     // read in input parameters
 
@@ -180,7 +175,6 @@ int main(int argc, char *argv[]) {
     }
 
     int globalNumDofs = 1500;  // used for the maps
-    //int nDofsPerNode = 3;      // used for generating the fine level null-space
 
     // build strided maps
     // striding information: 2 velocity dofs and 1 pressure dof = 3 dofs per node
@@ -254,10 +248,10 @@ int main(int argc, char *argv[]) {
     /////////////////////////////////////// build blocked transfer operator
     // using the map extractor
     Teuchos::RCP<Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node> > bOp = Teuchos::rcp(new Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node>(map_extractor,map_extractor,10));
-    bOp->setMatrix(0,0,xA11);
-    bOp->setMatrix(0,1,xA12);
-    bOp->setMatrix(1,0,xA21);
-    bOp->setMatrix(1,1,xA22);
+    bOp->setMatrix(0,0,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA11)));
+    bOp->setMatrix(0,1,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA12)));
+    bOp->setMatrix(1,0,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA21)));
+    bOp->setMatrix(1,1,Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node>(xA22)));
 
     bOp->fillComplete();
     //////////////////////////////////////////////////////// finest Level

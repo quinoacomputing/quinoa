@@ -55,10 +55,6 @@ namespace mesh {
 //----------------------------------------------------------------------
 
 /** \brief  Local count selected entities of each type.
- *
- * \param selector
- * \param mesh
- * \param count
  */
 void count_entities( const Selector & selector ,
                      const BulkData & mesh ,
@@ -81,9 +77,7 @@ void get_selected_entities( const Selector & selector ,
                             const BucketVector & input_buckets ,
                             std::vector< Entity> & entities );
 
-
-
-
+unsigned get_num_entities(const stk::mesh::BulkData &bulk);
 
 /** \} */
 

@@ -63,6 +63,14 @@ namespace Kokkos {
 namespace Example {
 namespace FENL {
 
+inline
+double maximum( const Teuchos::Comm<int>& comm , double local )
+{
+  double global = 0 ;
+  Teuchos::reduceAll( comm , Teuchos::REDUCE_MAX , 1 , & local , & global );
+  return global ;
+}
+
 // Struct storing performance statistics
 struct Perf {
   size_t uq_count ;
@@ -90,6 +98,8 @@ struct Perf {
   double response_mean ;
   double response_std_dev ;
 
+  std::vector<size_t> ensemble_cg_iter_count;
+
   Perf() : uq_count(1) ,
            global_elem_count(0) ,
            global_node_count(0) ,
@@ -113,7 +123,8 @@ struct Perf {
            newton_residual(0) ,
            error_max(0) ,
            response_mean(0) ,
-           response_std_dev(0) {}
+           response_std_dev(0),
+           ensemble_cg_iter_count() {}
 
   void increment(const Perf& p, const bool accumulate_solve_times) {
     global_elem_count     = p.global_elem_count;
@@ -134,6 +145,11 @@ struct Perf {
     newton_residual      += p.newton_residual ;
     error_max            += p.error_max;
 
+    const int n = p.ensemble_cg_iter_count.size();
+    ensemble_cg_iter_count.resize(n);
+    for (int i=0; i<n; ++i)
+      ensemble_cg_iter_count[i] += p.ensemble_cg_iter_count[i];
+
     if (accumulate_solve_times) {
       mat_vec_time       += p.mat_vec_time;
       cg_iter_time       += p.cg_iter_time;
@@ -148,6 +164,42 @@ struct Perf {
       prec_apply_time     = p.prec_apply_time;
       cg_total_time       = p.cg_total_time;
     }
+  }
+
+  void min(const Perf& p) {
+    map_ratio           = std::min( map_ratio , p. map_ratio );
+    fill_node_set       = std::min( fill_node_set , p.fill_node_set );
+    scan_node_count     = std::min( scan_node_count , p.scan_node_count );
+    fill_graph_entries  = std::min( fill_graph_entries , p.fill_graph_entries );
+    sort_graph_entries  = std::min( sort_graph_entries , p.sort_graph_entries );
+    fill_element_graph  = std::min( fill_element_graph , p.fill_element_graph );
+    create_sparse_matrix= std::min( create_sparse_matrix , p.create_sparse_matrix );
+    import_time         = std::min( import_time , p.import_time );
+    fill_time           = std::min( fill_time , p.fill_time );
+    bc_time             = std::min( bc_time , p.bc_time );
+    mat_vec_time        = std::min( mat_vec_time , p.mat_vec_time );
+    cg_iter_time        = std::min( cg_iter_time , p.cg_iter_time );
+    prec_setup_time     = std::min( prec_setup_time , p.prec_setup_time );
+    prec_apply_time     = std::min( prec_apply_time , p.prec_apply_time );
+    cg_total_time       = std::min( cg_total_time , p.cg_total_time );
+  }
+
+  void reduceMax(const Teuchos::Comm<int>& comm) {
+    map_ratio            = maximum( comm , map_ratio);
+    fill_node_set        = maximum( comm , fill_node_set);
+    scan_node_count      = maximum( comm , scan_node_count);
+    fill_graph_entries   = maximum( comm , fill_graph_entries);
+    sort_graph_entries   = maximum( comm , sort_graph_entries);
+    fill_element_graph   = maximum( comm , fill_element_graph);
+    create_sparse_matrix = maximum( comm , create_sparse_matrix);
+    import_time          = maximum( comm , import_time );
+    fill_time            = maximum( comm , fill_time );
+    bc_time              = maximum( comm , bc_time );
+    mat_vec_time         = maximum( comm , mat_vec_time );
+    cg_iter_time         = maximum( comm , cg_iter_time  );
+    prec_setup_time      = maximum( comm , prec_setup_time );
+    prec_apply_time      = maximum( comm , prec_apply_time );
+    cg_total_time        = maximum( comm , cg_total_time );
   }
 };
 
@@ -348,6 +400,14 @@ namespace Kokkos {
 namespace Example {
 namespace FENL {
 
+template <typename T>
+struct EnsembleTraits {
+  static const int size = 1;
+  typedef T value_type;
+  static const value_type& coeff(const T& x, int i) { return x; }
+  static value_type& coeff(T& x, int i) { return x; }
+};
+
 // Exponential KL from Stokhos
 template < typename Scalar, typename MeshScalar, typename Device >
 class ExponentialKLCoefficient {
@@ -373,6 +433,10 @@ public:
   const MeshScalar m_variance;    // Variance of random field
   const MeshScalar m_corr_len;    // Correlation length of random field
   const size_type m_num_rv;       // Number of random variables
+  const bool m_use_exp;           // Take exponential of random field
+  const MeshScalar m_exp_shift;   // Shift of exponential of random field
+  const MeshScalar m_exp_scale;   // Scale of exponential of random field
+  const bool m_use_disc_exp_scale; // Use discontinuous exponential scale
   RandomVariableView m_rv;        // KL random variables
 
 public:
@@ -381,11 +445,19 @@ public:
     const MeshScalar mean ,
     const MeshScalar variance ,
     const MeshScalar correlation_length ,
-    const size_type num_rv ) :
+    const size_type num_rv,
+    const bool use_exp,
+    const MeshScalar exp_shift,
+    const MeshScalar exp_scale,
+    const bool use_disc_exp_scale) :
     m_mean( mean ),
     m_variance( variance ),
     m_corr_len( correlation_length ),
     m_num_rv( num_rv ),
+    m_use_exp( use_exp ),
+    m_exp_shift( exp_shift ),
+    m_exp_scale( exp_scale ),
+    m_use_disc_exp_scale( use_disc_exp_scale ),
     m_rv( "KL Random Variables", m_num_rv )
   {
     Teuchos::ParameterList solverParams;
@@ -408,6 +480,10 @@ public:
     m_variance( rhs.m_variance ) ,
     m_corr_len( rhs.m_corr_len ) ,
     m_num_rv( rhs.m_num_rv ) ,
+    m_use_exp( rhs.m_use_exp ) ,
+    m_exp_shift( rhs.m_exp_shift ) ,
+    m_exp_scale( rhs.m_exp_scale ) ,
+    m_use_disc_exp_scale( rhs.m_use_disc_exp_scale ),
     m_rv( rhs.m_rv ) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -424,6 +500,29 @@ public:
       local_rv_view_traits::create_local_view(m_rv, ensemble_rank);
 
     local_scalar_type val = m_rf.evaluate(point, local_rv);
+
+    if (m_use_exp) {
+      local_scalar_type exp_scale = m_exp_scale;
+      if (m_use_disc_exp_scale) {
+        MeshScalar D = std::sqrt(3.0);
+        local_scalar_type r = 0.0;
+        for (size_type i=0; i<m_num_rv; ++i)
+          r += local_rv(i)*local_rv(i);
+        r = std::sqrt(r);
+        typedef EnsembleTraits<local_scalar_type> ET;
+        const int ensemble_size = ET::size;
+        for (int j=0; j<ensemble_size; ++j) {
+          typename ET::value_type rj = ET::coeff(r,j);
+          if (rj < D/4.0)
+            ET::coeff(exp_scale,j) = 1.0;
+          else if (rj >= D/4.0 && rj < D/2.0)
+            ET::coeff(exp_scale,j) = 100.0;
+          else
+            ET::coeff(exp_scale,j) = 10.0;
+        }
+      }
+      val = m_exp_shift + exp_scale * std::exp(val);
+    }
 
     return val;
   }

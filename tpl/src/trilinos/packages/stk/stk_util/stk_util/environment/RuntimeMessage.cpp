@@ -44,8 +44,34 @@
 #include <string>                       // for string, char_traits, etc
 #include <utility>                      // for pair, operator==
 #include <vector>                       // for vector, etc
-#include "boost/unordered/detail/buckets.hpp"  // for iterator, etc
-#include "boost/unordered/unordered_map.hpp"
+#include <unordered_map>
+
+namespace stk {
+typedef std::pair<MessageId, std::string> MessageKey;
+}
+
+namespace std {
+
+template<>
+struct hash<stk::MessageKey>
+{
+    const size_t operator()(const stk::MessageKey& msgkey) const
+    {
+        return hash_messagekey(msgkey);
+    }
+    const size_t operator()(const stk::MessageKey& msgkey1, const stk::MessageKey& msgkey2) const
+    {
+        return hash_messagekey(msgkey1)^hash_messagekey(msgkey2);
+    }
+
+private:
+    const size_t hash_messagekey(const stk::MessageKey& msgkey) const
+    {
+        return hash<stk::MessageId>()(msgkey.first + hash<std::string>()(msgkey.second));
+    }
+};
+
+}
 
 namespace stk {
 
@@ -64,9 +90,7 @@ void bootstrap()
 
 stk::Bootstrap x(bootstrap);
 
-typedef std::pair<MessageId, std::string> MessageKey;
-
-typedef boost::unordered_map<MessageKey, Throttle> MessageIdMap;
+typedef std::unordered_map<MessageKey, Throttle> MessageIdMap;
 
 MessageIdMap s_messageIdMap;
 
@@ -128,7 +152,7 @@ struct MessageTypeInfo
   std::string           m_name;
 };
 
-typedef boost::unordered_map<unsigned, MessageTypeInfo> MessageTypeInfoMap;
+typedef std::unordered_map<unsigned, MessageTypeInfo> MessageTypeInfoMap;
 
 MessageTypeInfoMap s_messageTypeInfo;
 
@@ -137,10 +161,10 @@ get_message_type_info(
   unsigned              type)
 {
   MessageTypeInfoMap::iterator it = s_messageTypeInfo.find(type & MSG_TYPE_MASK);
-  if (it != s_messageTypeInfo.end())
+  if (it != s_messageTypeInfo.end()) {
     return (*it).second;
-  else
-    return s_messageTypeInfo[type & MSG_TYPE_MASK];
+  }
+  return s_messageTypeInfo[type & MSG_TYPE_MASK];
 }
 
 
@@ -157,15 +181,16 @@ count_message(
   const char *          message, 
   const Throttle &      throttle)
 {
-  std::pair<MessageIdMap::iterator, bool> res = s_messageIdMap.insert(MessageIdMap::value_type(MessageIdMap::key_type(message_id, message), throttle));
+  std::pair<MessageIdMap::iterator, bool> res = s_messageIdMap.insert(MessageIdMap::value_type(MessageIdMap::key_type(message_id, std::string(message)), throttle));
   size_t count = ++(*res.first).second.m_count;
 
-  if (count < (*res.first).second.m_cutoff)
+  if (count < (*res.first).second.m_cutoff) {
     return MSG_DISPLAY;
-  else if (count == (*res.first).second.m_cutoff)
+  } else if (count == (*res.first).second.m_cutoff) {
     return MSG_CUTOFF;
-  else
+  } else {
     return MSG_CUTOFF_EXCEEDED;
+  }
 }
 
 Marshal &operator<<(Marshal &mout, const DeferredMessage &s)  {
@@ -249,10 +274,9 @@ report_message(
   unsigned              message_type, 
   const MessageCode &   message_code)
 {
-  if (message_type & MSG_DEFERRED)
+  if (message_type & MSG_DEFERRED) {
     report(message, message_type);
-  
-  else { 
+  } else { 
     unsigned count = increment_message_count(message_type);
     unsigned max_count = get_max_message_count(message_type); 
   
@@ -276,7 +300,9 @@ report_message(
       }
     
       else if (cutoff == MSG_DISPLAY)
+      {
         report(message, message_type);
+      }
     }
   }
 }
@@ -286,9 +312,11 @@ void
 reset_throttle_group(
   int                   throttle_group)
 {
-  for (MessageIdMap::iterator it = s_messageIdMap.begin(); it != s_messageIdMap.end(); ++it)
-    if ((*it).second.m_group == throttle_group)
+  for (auto it = s_messageIdMap.begin(); it != s_messageIdMap.end(); ++it) {
+    if ((*it).second.m_group == throttle_group) {
       (*it).second.m_count = 0;
+    }
+  }
 }
 
 
@@ -309,8 +337,9 @@ add_deferred_message(
   std::pair<MessageIdMap::iterator, bool> res = s_deferredMessageIdMap.insert(MessageIdMap::value_type(MessageIdMap::key_type(message_id, header), Throttle(throttle_cutoff, throttle_group)));
   size_t count = ++(*res.first).second.m_count;
 
-  if (count <= throttle_cutoff)
+  if (count <= throttle_cutoff) {
     s_deferredMessageVector.push_back(DeferredMessage(message_type, message_id, throttle_cutoff, throttle_group, header, aggegrate));
+  }
 }
 
 
@@ -325,8 +354,10 @@ report_deferred_messages(
   int p_size = stk::parallel_machine_size(comm);
   int p_rank = stk::parallel_machine_rank(comm);
 
-  for (DeferredMessageVector::iterator it = s_deferredMessageVector.begin(); it != s_deferredMessageVector.end(); ++it)
+  for (auto it = s_deferredMessageVector.begin(); it != s_deferredMessageVector.end(); ++it)
+  {
     (*it).m_rank = p_rank;
+  }
   
   Marshal mout;
   mout << s_deferredMessageVector;
@@ -337,11 +368,10 @@ report_deferred_messages(
   std::string send_string(mout.stream.str());
   int send_count = send_string.size();
   std::vector<int> recv_count(p_size, 0);
-  int * const recv_count_ptr = &recv_count[0] ;
+  int * const recv_count_ptr = recv_count.data() ;
 
-  int result = MPI_Gather(&send_count, 1, MPI_INT,
-                          recv_count_ptr, 1, MPI_INT,
-                          p_root, comm);
+  int result = MPI_Gather(&send_count, 1, MPI_INT, recv_count_ptr, 1, MPI_INT, p_root, comm);
+
   if (MPI_SUCCESS != result) {
     std::ostringstream message ;
     message << "stk::report_deferred_messages FAILED: MPI_Gather = " << result ;
@@ -361,8 +391,8 @@ report_deferred_messages(
 
   {
     const char * const send_ptr = send_string.data();
-    char * const recv_ptr = recv_size ? & buffer[0] : NULL ;
-    int * const recv_displ_ptr = & recv_displ[0] ;
+    char * const recv_ptr = recv_size ? buffer.data() : nullptr ;
+    int * const recv_displ_ptr = recv_displ.data() ;
 
     result = MPI_Gatherv(const_cast<char*>(send_ptr), send_count, MPI_CHAR,
                          recv_ptr, recv_count_ptr, recv_displ_ptr, MPI_CHAR,
@@ -372,7 +402,6 @@ report_deferred_messages(
       message << "stk::report_deferred_messages FAILED: MPI_Gatherv = " << result ;
       throw std::runtime_error(message.str());
     }
-
 
     if (p_rank == p_root) {
       for (int i = 0; i < p_size; ++i) {
@@ -445,7 +474,7 @@ aggregate_messages(
 
   std::vector<int> recv_count(p_size, 0);
 
-  int * const recv_count_ptr = & recv_count[0] ;
+  int * const recv_count_ptr = recv_count.data() ;
 
   result = MPI_Gather(& send_count, 1, MPI_INT,
                       recv_count_ptr, 1, MPI_INT,
@@ -470,8 +499,8 @@ aggregate_messages(
 
   {
     const char * const send_ptr = message.c_str();
-    char * const recv_ptr = recv_size ? & buffer[0] : NULL ;
-    int * const recv_displ_ptr = & recv_displ[0] ;
+    char * const recv_ptr = recv_size ? buffer.data() : nullptr ;
+    int * const recv_displ_ptr = recv_displ.data() ;
 
     result = MPI_Gatherv(const_cast<char*>(send_ptr), send_count, MPI_CHAR,
                          recv_ptr, recv_count_ptr, recv_displ_ptr, MPI_CHAR,
@@ -496,9 +525,9 @@ aggregate_messages(
       }
     }
     os.flush();
-  }
-  else
+  } else {
     os << message;
+  }
 #endif
 }
 
@@ -508,10 +537,7 @@ operator<<(
   std::ostream &        os,
   const MessageType &   message_type) 
 {
-//   if (message_type & MSG_SYMMETRIC)
-//     os << "parallel ";
   os << get_message_type_info(message_type).m_name;
-
   return os;
 }
 

@@ -92,7 +92,6 @@ public:
   typedef typename InputTraits<User>::part_t   part_t;
   typedef typename InputTraits<User>::node_t   node_t;
   typedef Xpetra::CrsGraph<lno_t, gno_t, node_t> xgraph_t;
-  typedef GraphAdapter<User,UserCoord> base_adapter_t;
   typedef User user_t;
   typedef UserCoord userCoord_t;
 #endif
@@ -289,8 +288,12 @@ template <typename User, typename UserCoord>
 {
   typedef StridedData<lno_t,scalar_t> input_t;
 
-  graph_ = rcp_const_cast<const xgraph_t>(
+  try {
+    graph_ = rcp_const_cast<const xgraph_t>(
            XpetraTraits<User>::convertToXpetra(rcp_const_cast<User>(ingraph)));
+  }
+  Z2_FORWARD_EXCEPTIONS
+
   comm_ = graph_->getComm();
   size_t nvtx = graph_->getNodeNumRows();
   size_t nedges = graph_->getNodeNumEntries();

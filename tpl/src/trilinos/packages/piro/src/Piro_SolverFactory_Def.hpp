@@ -44,17 +44,28 @@
 
 #ifdef HAVE_PIRO_NOX
 #include "Piro_NOXSolver.hpp"
+#include "Thyra_AdaptiveSolutionManager.hpp"
 #include "Piro_LOCASolver.hpp"
+#include "Piro_LOCAAdaptiveSolver.hpp"
 #include "Piro_VelocityVerletSolver.hpp"
 #include "Piro_TrapezoidRuleSolver.hpp"
 #endif /* HAVE_PIRO_NOX */
 
-#ifdef HAVE_PIRO_RYTHMOS
-// This "define" turns on the extended template interface in RythmosSolver. This should be cleaned up at some
-// point.
+
+// This "define" turns on the extended template interface in RythmosSolver and TempusSolver.
+// This should be cleaned up at some.
+#if defined(HAVE_PIRO_RYTHMOS) || defined(HAVE_PIRO_TEMPUS) 
 #define ALBANY_BUILD
+#endif
+
+#ifdef HAVE_PIRO_RYTHMOS
+// point.
 #include "Piro_RythmosSolver.hpp"
 #endif /* HAVE_PIRO_RYTHMOS */
+
+#ifdef HAVE_PIRO_TEMPUS
+#include "Piro_TempusSolver.hpp"  
+#endif /*HAVE_PIRO_TEMPUS */
 
 #include "Teuchos_TestForException.hpp"
 
@@ -62,6 +73,61 @@
 #include <stdexcept>
 
 namespace Piro {
+
+template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::createSolver(
+    const Teuchos::RCP<Teuchos::ParameterList> &piroParams,
+    const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
+    const Teuchos::RCP<Thyra::AdaptiveSolutionManager> &solMgr,
+    const Teuchos::RCP<Piro::ObserverBase<Scalar> > &observer)
+{
+  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > result;
+
+  const std::string &solverType = piroParams->get("Solver Type", "NOX");
+
+#ifdef HAVE_PIRO_NOX
+  if (solverType == "NOX") {
+    result = Teuchos::rcp(new NOXSolver<Scalar>(piroParams, model, observer));
+  } else
+  if (solverType == "Velocity Verlet") {
+    result = Teuchos::rcp(new VelocityVerletSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+         piroParams, model, solMgr, observer));
+  } else
+  if (solverType == "Trapezoid Rule") {
+    result = Teuchos::rcp(new TrapezoidRuleSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+        piroParams, model, solMgr, observer));
+  } else
+  if (solverType == "LOCA") {
+    if(Teuchos::nonnull(solMgr))
+      result = observedLocaSolver(piroParams, model, solMgr, observer);
+    else
+      result = observedLocaSolver(piroParams, model, observer);
+  } else
+#endif /* HAVE_PIRO_NOX */
+#ifdef HAVE_PIRO_RYTHMOS
+  if (solverType == "Rythmos") {
+    result = rythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(piroParams, model, observer);
+  } else
+#endif /* HAVE_PIRO_RYTHMOS */
+#ifdef HAVE_PIRO_TEMPUS
+  if (solverType == "Tempus") {
+    result = tempusSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(piroParams, model, observer);
+  } else
+#endif /* HAVE_PIRO_TEMPUS */
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::runtime_error,
+        "Error: Unknown Piro Solver Type: " << solverType);
+  }
+
+  return result;
+}
+
+/*
+The below is DEPRECATED!
+Please do not use
+*/
 
 template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::createSolver(
@@ -78,10 +144,12 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::crea
     result = Teuchos::rcp(new NOXSolver<Scalar>(piroParams, model, observer));
   } else
   if (solverType == "Velocity Verlet") {
-    result = Teuchos::rcp(new VelocityVerletSolver<Scalar>(piroParams, model, observer));
+    result = Teuchos::rcp(new VelocityVerletSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+         piroParams, model, Teuchos::null, observer));
   } else
   if (solverType == "Trapezoid Rule") {
-    result = Teuchos::rcp(new TrapezoidRuleSolver<Scalar>(piroParams, model, observer));
+    result = Teuchos::rcp(new TrapezoidRuleSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+        piroParams, model, Teuchos::null, observer));
   } else
   if (solverType == "LOCA") {
     result = observedLocaSolver(piroParams, model, observer);
@@ -92,6 +160,11 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::crea
     result = rythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(piroParams, model, observer);
   } else
 #endif /* HAVE_PIRO_RYTHMOS */
+#ifdef HAVE_PIRO_TEMPUS
+  if (solverType == "Tempus") {
+    result = tempusSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(piroParams, model, observer);
+  } else
+#endif /* HAVE_PIRO_TEMPUS */
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

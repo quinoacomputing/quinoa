@@ -17,6 +17,19 @@ IF (NOT ${PACKAGE_NAME}_ENABLE_Epetra AND NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
   MESSAGE(FATAL_ERROR "Neither Epetra nor Tpetra are enabled.  MueLu requires at least one of them to be enabled.")
 ENDIF()
 
+ASSERT_DEFINED(Xpetra_INT_LONG_LONG)
+ASSERT_DEFINED(Xpetra_ENABLE_Experimental)
+ASSERT_DEFINED(Xpetra_ENABLE_Kokkos_Refactor)
+if (${PACKAGE_NAME}_ENABLE_Tpetra)
+  ASSERT_DEFINED(Tpetra_INST_DOUBLE)
+  ASSERT_DEFINED(Tpetra_INST_INT_INT)
+  ASSERT_DEFINED(Tpetra_INST_INT_LONG)
+  ASSERT_DEFINED(Tpetra_INST_INT_LONG_LONG)
+  ASSERT_DEFINED(Tpetra_INST_COMPLEX_DOUBLE)
+  ASSERT_DEFINED(Tpetra_INST_FLOAT)
+  ASSERT_DEFINED(Teuchos_ENABLE_COMPLEX)
+ENDIF()
+
 # JJH: pulled this logic from Tpetra.  Comments below about CUDA are from Tpetra developers.
 # This is redundant, since MueLu also requires Kokkos, and Kokkos requires C++11.
 # "I left a special case for CUDA because I'm not sure whether TriBITS
@@ -74,6 +87,30 @@ IF (${PACKAGE_NAME}_ENABLE_Experimental)
   MESSAGE(STATUS "Enabling MueLu experimental code")
 ENDIF()
 
+# Enable additive variant
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_ADDITIVE_VARIANT
+  HAVE_${PACKAGE_NAME_UC}_ADDITIVE_VARIANT
+  "Enable Additive Variant."
+  NO)
+
+# cmake option to enable building of MueLu Tutorial
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_Tutorial
+  ""
+  "Enable MueLu tutorial."
+  YES)
+
+# Split ETI cpp files
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_SPLIT_ETI_CPP_FILES
+  HAVE_${PACKAGE_NAME_UC}_SPLIT_ETI_CPP_FILES
+  "Split ETI cpp files into extra files for each enabled configuration (not recommended)."
+  NO)
+IF (${PACKAGE_NAME}_ENABLE_SPLIT_ETI_CPP_FILES)
+  MESSAGE(STATUS "Split MueLu ETI files: this may slow down the compilation process.")
+ENDIF()
+
 # Enable broken tests
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_BROKEN_TESTS
@@ -119,9 +156,17 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   "Enable MueLu code refactored to use Kokkos."
   NO)
 
+IF (${PACKAGE_NAME}_ENABLE_Kokkos_Refactor AND NOT Xpetra_ENABLE_Kokkos_Refactor)
+  MESSAGE(FATAL_ERROR "Kokkos Refactor in MueLu requires one to also enable Kokkos Refactor in Xpetra (-DXpetra_ENABLE_Kokkos_Refactor:BOOL=ON).")
+ENDIF()
+
 # Define HAVE_MUELU_STRATIMIKOS if Stratimikos package is enabled
 ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Stratimikos)
 GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_STRATIMIKOS ${${PACKAGE_NAME}_ENABLE_Stratimikos})
+
+# Define HAVE_MUELU_TEKO if Teko package is enabled
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Teko)
+GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_TEKO ${${PACKAGE_NAME}_ENABLE_Teko})
 
 # Explicit instantiation options:
 # - MueLu_ENABLE_EXPLICIT_INSTANTIATION

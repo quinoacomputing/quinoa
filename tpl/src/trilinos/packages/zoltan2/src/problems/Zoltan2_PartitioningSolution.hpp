@@ -118,7 +118,7 @@ public:
  */
 
   PartitioningSolution( const RCP<const Environment> &env,
-    RCP<const Comm<int> > &comm,
+    const RCP<const Comm<int> > &comm,
     int nUserWeights, 
     const RCP<Algorithm<Adapter> > &algorithm = Teuchos::null);
 
@@ -152,7 +152,7 @@ public:
  */
 
   PartitioningSolution(const RCP<const Environment> &env,
-    RCP<const Comm<int> > &comm,
+    const RCP<const Comm<int> > &comm,
     int nUserWeights, ArrayView<ArrayRCP<part_t> > reqPartIds,
     ArrayView<ArrayRCP<scalar_t> > reqPartSizes,
     const RCP<Algorithm<Adapter> > &algorithm = Teuchos::null);
@@ -519,7 +519,7 @@ private:
 
 
   RCP<const Environment> env_;             // has application communicator
-  RCP<const Comm<int> > comm_;             // the problem communicator
+  const RCP<const Comm<int> > comm_;       // the problem communicator
 
   //part box boundaries as a result of geometric partitioning algorithm.
   RCP < std::vector <Zoltan2::coordinateModelPartBox <scalar_t, part_t> > > partBoxes;
@@ -630,7 +630,7 @@ private:
 template <typename Adapter>
   PartitioningSolution<Adapter>::PartitioningSolution(
     const RCP<const Environment> &env,
-    RCP<const Comm<int> > &comm,
+    const RCP<const Comm<int> > &comm,
     int nUserWeights,
     const RCP<Algorithm<Adapter> > &algorithm)
     : env_(env), comm_(comm),
@@ -663,7 +663,7 @@ template <typename Adapter>
 template <typename Adapter>
   PartitioningSolution<Adapter>::PartitioningSolution(
     const RCP<const Environment> &env,
-    RCP<const Comm<int> > &comm,
+    const RCP<const Comm<int> > &comm,
     int nUserWeights,
     ArrayView<ArrayRCP<part_t> > reqPartIds,
     ArrayView<ArrayRCP<scalar_t> > reqPartSizes,
@@ -695,24 +695,21 @@ template <typename Adapter>
   const ParameterList &pl = env_->getParameters();
   size_t haveGlobalNumParts=0, haveLocalNumParts=0;
   int numLocal=0, numGlobal=0;
-  double val;
 
   const Teuchos::ParameterEntry *pe = pl.getEntryPtr("num_global_parts");
 
   if (pe){
-    val = pe->getValue<double>(&val);  // TODO: KDD Skip this double get
-    haveGlobalNumParts = 1;            // TODO: KDD Should be unnecessary once
-    numGlobal = static_cast<int>(val); // TODO: KDD paramlist handles long long.
-    nGlobalParts_ = part_t(numGlobal); // TODO: KDD  also do below.
+    haveGlobalNumParts = 1;
+    nGlobalParts_ = part_t(pe->getValue(&nGlobalParts_));
+    numGlobal = nGlobalParts_;
   }
 
   pe = pl.getEntryPtr("num_local_parts");
 
   if (pe){
-    val = pe->getValue<double>(&val);
     haveLocalNumParts = 1;
-    numLocal = static_cast<int>(val);
-    nLocalParts_ = part_t(numLocal);
+    nLocalParts_ = part_t(pe->getValue(&nLocalParts_));
+    numLocal = nLocalParts_;
   }
 
   try{
@@ -1260,82 +1257,84 @@ template <typename Adapter>
     env_->localMemoryAssertion(__FILE__, __LINE__, len, procs);
     procs_ = arcp<int>(procs, 0, len);
 
-    part_t *parts = partList.getRawPtr();
-
-    if (procDist_.size() > 0){    // parts are not split across procs
-
-      int procId;
-      for (size_t i=0; i < len; i++){
-        partToProcsMap(parts[i], procs[i], procId);
-      }
-    }
-    else{  // harder - we need to split the parts across multiple procs
-
-      lno_t *partCounter = new lno_t [nGlobalPartsSolution_];
-      env_->localMemoryAssertion(__FILE__, __LINE__, nGlobalPartsSolution_,
-        partCounter);
-
-      int numProcs = comm_->getSize();
-
-      //MD NOTE: there was no initialization for partCounter.
-      //I added the line below, correct me if I am wrong.
-      memset(partCounter, 0, sizeof(lno_t) * nGlobalPartsSolution_);
-
-      for (typename ArrayRCP<part_t>::size_type i=0; i < partList.size(); i++)
-        partCounter[parts[i]]++;
-
-      lno_t *procCounter = new lno_t [numProcs];
-      env_->localMemoryAssertion(__FILE__, __LINE__, numProcs, procCounter);
-
-      int proc1;
-      int proc2 = partDist_[0];
-
-      for (part_t part=1; part < nGlobalParts_; part++){
-        proc1 = proc2;
-        proc2 = partDist_[part+1];
-        int numprocs = proc2 - proc1;
-
-        double dNum = partCounter[part];
-        double dProcs = numprocs;
-
-        //cout << "dNum:" << dNum << " dProcs:" << dProcs << endl;
-        double each = floor(dNum/dProcs);
-        double extra = fmod(dNum,dProcs);
-
-        for (int proc=proc1, i=0; proc<proc2; proc++, i++){
-          if (i < extra)
-            procCounter[proc] = lno_t(each) + 1;
-          else
-            procCounter[proc] = lno_t(each);
+    if (len > 0) {
+      part_t *parts = partList.getRawPtr();
+  
+      if (procDist_.size() > 0){    // parts are not split across procs
+  
+        int procId;
+        for (size_t i=0; i < len; i++){
+          partToProcsMap(parts[i], procs[i], procId);
         }
       }
-
-      delete [] partCounter;
-
-      for (typename ArrayRCP<part_t>::size_type i=0; i < partList.size(); i++){
-        if (partList[i] >= nGlobalParts_){
-          // Solution has more parts that targeted.  These
-          // objects just remain on this process.
-          procs[i] = comm_->getRank();
-          continue;
-        }
-        part_t partNum = parts[i];
-        proc1 = partDist_[partNum];
-        proc2 = partDist_[partNum + 1];
-
-        int proc;
-        for (proc=proc1; proc < proc2; proc++){
-          if (procCounter[proc] > 0){
-            procs[i] = proc;
-            procCounter[proc]--;
-            break;
+      else{  // harder - we need to split the parts across multiple procs
+  
+        lno_t *partCounter = new lno_t [nGlobalPartsSolution_];
+        env_->localMemoryAssertion(__FILE__, __LINE__, nGlobalPartsSolution_,
+          partCounter);
+  
+        int numProcs = comm_->getSize();
+  
+        //MD NOTE: there was no initialization for partCounter.
+        //I added the line below, correct me if I am wrong.
+        memset(partCounter, 0, sizeof(lno_t) * nGlobalPartsSolution_);
+  
+        for (typename ArrayRCP<part_t>::size_type i=0; i < partList.size(); i++)
+          partCounter[parts[i]]++;
+  
+        lno_t *procCounter = new lno_t [numProcs];
+        env_->localMemoryAssertion(__FILE__, __LINE__, numProcs, procCounter);
+  
+        int proc1;
+        int proc2 = partDist_[0];
+  
+        for (part_t part=1; part < nGlobalParts_; part++){
+          proc1 = proc2;
+          proc2 = partDist_[part+1];
+          int numprocs = proc2 - proc1;
+  
+          double dNum = partCounter[part];
+          double dProcs = numprocs;
+  
+          //cout << "dNum:" << dNum << " dProcs:" << dProcs << endl;
+          double each = floor(dNum/dProcs);
+          double extra = fmod(dNum,dProcs);
+  
+          for (int proc=proc1, i=0; proc<proc2; proc++, i++){
+            if (i < extra)
+              procCounter[proc] = lno_t(each) + 1;
+            else
+              procCounter[proc] = lno_t(each);
           }
         }
-        env_->localBugAssertion(__FILE__, __LINE__, "part to proc",
-          proc < proc2, COMPLEX_ASSERTION);
+  
+        delete [] partCounter;
+  
+        for (typename ArrayRCP<part_t>::size_type i=0; i < partList.size(); i++){
+          if (partList[i] >= nGlobalParts_){
+            // Solution has more parts that targeted.  These
+            // objects just remain on this process.
+            procs[i] = comm_->getRank();
+            continue;
+          }
+          part_t partNum = parts[i];
+          proc1 = partDist_[partNum];
+          proc2 = partDist_[partNum + 1];
+  
+          int proc;
+          for (proc=proc1; proc < proc2; proc++){
+            if (procCounter[proc] > 0){
+              procs[i] = proc;
+              procCounter[proc]--;
+              break;
+            }
+          }
+          env_->localBugAssertion(__FILE__, __LINE__, "part to proc",
+            proc < proc2, COMPLEX_ASSERTION);
+        }
+  
+        delete [] procCounter;
       }
-
-      delete [] procCounter;
     }
   }
 

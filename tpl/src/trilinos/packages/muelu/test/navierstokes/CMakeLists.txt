@@ -146,6 +146,7 @@ IF (${PACKAGE_NAME}_ENABLE_Epetra AND
         COMM mpi
         )
 
+      # TODO: fix CloneRepartitionInterface
       TRIBITS_ADD_TEST(
         Navier2DBlocked_rebalancing2
         NAME "Navier2DBlockedReuseAggs"

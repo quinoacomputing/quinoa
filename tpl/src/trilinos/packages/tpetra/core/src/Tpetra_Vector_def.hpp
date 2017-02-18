@@ -51,7 +51,9 @@
 /// "Tpetra_Vector_decl.hpp".
 
 #include "Tpetra_MultiVector.hpp"
+#include "Tpetra_Details_gathervPrint.hpp"
 #include "KokkosCompat_View.hpp"
+#include "Kokkos_Blas1_MV.hpp"
 
 namespace Tpetra {
 
@@ -200,31 +202,63 @@ namespace Tpetra {
   Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>::
   normWeighted (const Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>& weights) const
   {
-    mag_type norm;
-    this->normWeighted (weights, Teuchos::arrayView (&norm, 1));
-    return norm;
+    using Kokkos::ALL;
+    using Kokkos::subview;
+    using Teuchos::Comm;
+    using Teuchos::RCP;
+    using Teuchos::reduceAll;
+    using Teuchos::REDUCE_SUM;
+    typedef Kokkos::Details::ArithTraits<impl_scalar_type> ATS;
+    typedef Kokkos::Details::ArithTraits<mag_type> ATM;
+    typedef Kokkos::View<mag_type, device_type> norm_view_type; // just one
+    const char tfecfFuncName[] = "normWeighted: ";
+
+#ifdef HAVE_TPETRA_DEBUG
+    TEUCHOS_TEST_FOR_EXCEPTION_CLASS_FUNC(
+      ! this->getMap ()->isCompatible (*weights.getMap ()), std::runtime_error,
+      "Vectors do not have compatible Maps:" << std::endl
+      << "this->getMap(): " << std::endl << *this->getMap()
+      << "weights.getMap(): " << std::endl << *weights.getMap() << std::endl);
+#else
+    const size_t lclNumRows = this->getLocalLength ();
+    TEUCHOS_TEST_FOR_EXCEPTION_CLASS_FUNC(
+      lclNumRows != weights.getLocalLength (), std::runtime_error,
+      "Vectors do not have the same local length.");
+#endif // HAVE_TPETRA_DEBUG
+
+    norm_view_type lclNrm ("lclNrm"); // local norm
+    mag_type gblNrm = ATM::zero (); // return value
+
+    auto X_lcl = this->template getLocalView<device_type> ();
+    auto W_lcl = this->template getLocalView<device_type> ();
+    KokkosBlas::nrm2w_squared (lclNrm,
+                               subview (X_lcl, ALL (), 0),
+                               subview (W_lcl, ALL (), 0));
+    const mag_type OneOverN =
+      ATM::one () / static_cast<mag_type> (this->getGlobalLength ());
+    RCP<const Comm<int> > comm = this->getMap ().is_null () ?
+      Teuchos::null : this->getMap ()->getComm ();
+
+    if (! comm.is_null () && this->isDistributed ()) {
+      // Assume that MPI can access device memory.
+      reduceAll<int, mag_type> (*comm, REDUCE_SUM, 1, lclNrm.ptr_on_device (),
+                                &gblNrm);
+      gblNrm = ATM::sqrt (gblNrm * OneOverN);
+    }
+    else {
+      auto lclNrm_h = Kokkos::create_mirror_view (lclNrm);
+      Kokkos::deep_copy (lclNrm_h, lclNrm);
+      gblNrm = ATM::sqrt (ATS::magnitude (lclNrm_h()) * OneOverN);
+    }
+
+    return gblNrm;
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, const bool classic>
   std::string Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>::
   description () const
   {
-    using Teuchos::TypeNameTraits;
-
-    std::ostringstream out;
-    out << "\"Tpetra::Vector\": {";
-    out << "Template parameters: {Scalar: " << TypeNameTraits<Scalar>::name ()
-        << ", LocalOrdinal: " << TypeNameTraits<LocalOrdinal>::name ()
-        << ", GlobalOrdinal: " << TypeNameTraits<GlobalOrdinal>::name ()
-        << ", Node" << Node::name ()
-        << "}, ";
-    if (this->getObjectLabel () != "") {
-      out << "Label: \"" << this->getObjectLabel () << "\", ";
-    }
-    out << "Global length: " << this->getGlobalLength ();
-    out << "}";
-
-    return out.str ();
+    return this->descriptionImpl ("Tpetra::Vector");
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, const bool classic>
@@ -232,68 +266,7 @@ namespace Tpetra {
   describe (Teuchos::FancyOStream& out,
             const Teuchos::EVerbosityLevel verbLevel) const
   {
-    using std::endl;
-    using std::setw;
-    using Teuchos::VERB_DEFAULT;
-    using Teuchos::VERB_NONE;
-    using Teuchos::VERB_LOW;
-    using Teuchos::VERB_MEDIUM;
-    using Teuchos::VERB_HIGH;
-    using Teuchos::VERB_EXTREME;
-
-    const Teuchos::EVerbosityLevel vl =
-      (verbLevel == VERB_DEFAULT) ? VERB_LOW : verbLevel;
-    const Teuchos::Comm<int>& comm = * (this->getMap ()->getComm ());
-    const int myImageID = comm.getRank ();
-    const int numImages = comm.getSize ();
-
-    size_t width = 1;
-    for (size_t dec=10; dec<this->getGlobalLength(); dec *= 10) {
-      ++width;
-    }
-    Teuchos::OSTab tab(out);
-    if (vl != VERB_NONE) {
-      // VERB_LOW and higher prints description()
-      if (myImageID == 0) out << this->description() << std::endl;
-      for (int imageCtr = 0; imageCtr < numImages; ++imageCtr) {
-        if (myImageID == imageCtr) {
-          if (vl != VERB_LOW) {
-            // VERB_MEDIUM and higher prints getLocalLength()
-            out << "Process " << setw(width) << myImageID << ":" << endl;
-            Teuchos::OSTab tab1 (out);
-            const size_t lclNumRows = this->getLocalLength ();
-
-            out << "Local length: " << lclNumRows << endl;
-            if (vl != VERB_MEDIUM) {
-              // VERB_HIGH and higher prints isConstantStride() and stride()
-              if (vl == VERB_EXTREME && lclNumRows > 0) {
-                // VERB_EXTREME prints values
-                dual_view_type X_lcl = this->getDualView ();
-
-                // We have to be able to access the data on host in
-                // order to print it.
-                //
-                // FIXME (mfh 06 Mar 2015) For now, just sync to host.
-                // At some point, we might like to check whether the
-                // host execution space can access device memory, so
-                // that we can avoid the sync.
-                typedef typename dual_view_type::t_host::execution_space HES;
-                X_lcl.template sync<HES> ();
-                typename dual_view_type::t_host X_host = X_lcl.h_view;
-                for (size_t i = 0; i < lclNumRows; ++i) {
-                  out << setw(width) << this->getMap ()->getGlobalElement (i)
-                      << ": " << X_host(i,0) << endl;
-                }
-              }
-            }
-            else {
-              out << endl;
-            }
-          }
-        }
-        comm.barrier ();
-      }
-    }
+    this->describeImpl (out, "Tpetra::Vector", verbLevel);
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, const bool classic>

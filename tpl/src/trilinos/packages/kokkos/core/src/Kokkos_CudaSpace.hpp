@@ -54,10 +54,7 @@
 
 #include <Kokkos_HostSpace.hpp>
 
-#include <impl/Kokkos_AllocationTracker.hpp>
-
 #include <Cuda/Kokkos_Cuda_abort.hpp>
-#include <Cuda/Kokkos_Cuda_BasicAllocators.hpp>
 
 /*--------------------------------------------------------------------------*/
 
@@ -77,35 +74,10 @@ public:
 
   /*--------------------------------*/
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-  typedef Impl::CudaMallocAllocator allocator;
-
-  /** \brief  Allocate a contiguous block of memory.
-   *
-   *  The input label is associated with the block of memory.
-   *  The block of memory is tracked via reference counting where
-   *  allocation gives it a reference count of one.
-   */
-  static Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-  /*--------------------------------*/
-  /** \brief  Cuda specific function to attached texture object to an allocation.
-   *          Output the texture object, base pointer, and offset from the input pointer.
-   */
-#if defined( __CUDACC__ )
-  static void texture_object_attach(  Impl::AllocationTracker const & tracker
-                                    , unsigned type_size
-                                    , ::cudaChannelFormatDesc const & desc
-                                   );
-#endif
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-
-  /*--------------------------------*/
-
   CudaSpace();
+  CudaSpace( CudaSpace && rhs ) = default ;
   CudaSpace( const CudaSpace & rhs ) = default ;
+  CudaSpace & operator = ( CudaSpace && rhs ) = default ;
   CudaSpace & operator = ( const CudaSpace & rhs ) = default ;
   ~CudaSpace() = default ;
 
@@ -125,7 +97,7 @@ private:
 
   int  m_device ; ///< Which Cuda device
 
-  // friend class Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::CudaSpace , void > ;
+  // friend class Kokkos::Impl::SharedAllocationRecord< Kokkos::CudaSpace , void > ;
 };
 
 namespace Impl {
@@ -135,7 +107,7 @@ namespace Impl {
 /// where the hash value is derived from the address of the
 /// object for which an atomic operation is performed.
 /// This function initializes the locks to zero (unset).
-void init_lock_array_cuda_space();
+void init_lock_arrays_cuda_space();
 
 /// \brief Retrieve the pointer to the lock array for arbitrary size atomics.
 ///
@@ -144,7 +116,23 @@ void init_lock_array_cuda_space();
 /// object for which an atomic operation is performed.
 /// This function retrieves the lock array pointer.
 /// If the array is not yet allocated it will do so.
-int* lock_array_cuda_space_ptr(bool deallocate = false);
+int* atomic_lock_array_cuda_space_ptr(bool deallocate = false);
+
+/// \brief Retrieve the pointer to the scratch array for team and thread private global memory.
+///
+/// Team and Thread private scratch allocations in
+/// global memory are aquired via locks.
+/// This function retrieves the lock array pointer.
+/// If the array is not yet allocated it will do so.
+int* scratch_lock_array_cuda_space_ptr(bool deallocate = false);
+
+/// \brief Retrieve the pointer to the scratch array for unique identifiers.
+///
+/// Unique identifiers in the range 0-Cuda::concurrency
+/// are provided via locks.
+/// This function retrieves the lock array pointer.
+/// If the array is not yet allocated it will do so.
+int* threadid_lock_array_cuda_space_ptr(bool deallocate = false);
 }
 } // namespace Kokkos
 
@@ -170,35 +158,10 @@ public:
 
   /*--------------------------------*/
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-  typedef Impl::CudaUVMAllocator allocator;
-
-  /** \brief  Allocate a contiguous block of memory.
-   *
-   *  The input label is associated with the block of memory.
-   *  The block of memory is tracked via reference counting where
-   *  allocation gives it a reference count of one.
-   */
-  static Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-
-  /** \brief  Cuda specific function to attached texture object to an allocation.
-   *          Output the texture object, base pointer, and offset from the input pointer.
-   */
-#if defined( __CUDACC__ )
-  static void texture_object_attach(  Impl::AllocationTracker const & tracker
-                                    , unsigned type_size
-                                    , ::cudaChannelFormatDesc const & desc
-                                   );
-#endif
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-
-  /*--------------------------------*/
-
   CudaUVMSpace();
+  CudaUVMSpace( CudaUVMSpace && rhs ) = default ;
   CudaUVMSpace( const CudaUVMSpace & rhs ) = default ;
+  CudaUVMSpace & operator = ( CudaUVMSpace && rhs ) = default ;
   CudaUVMSpace & operator = ( const CudaUVMSpace & rhs ) = default ;
   ~CudaUVMSpace() = default ;
 
@@ -212,7 +175,6 @@ public:
   /*--------------------------------*/
 
 private:
-
   int  m_device ; ///< Which Cuda device
 };
 
@@ -238,24 +200,10 @@ public:
 
   /*--------------------------------*/
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-  typedef Impl::CudaHostAllocator allocator ;
-
-  /** \brief  Allocate a contiguous block of memory.
-   *
-   *  The input label is associated with the block of memory.
-   *  The block of memory is tracked via reference counting where
-   *  allocation gives it a reference count of one.
-   */
-  static Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-
-  /*--------------------------------*/
-
   CudaHostPinnedSpace();
+  CudaHostPinnedSpace( CudaHostPinnedSpace && rhs ) = default ;
   CudaHostPinnedSpace( const CudaHostPinnedSpace & rhs ) = default ;
+  CudaHostPinnedSpace & operator = ( CudaHostPinnedSpace && rhs ) = default ;
   CudaHostPinnedSpace & operator = ( const CudaHostPinnedSpace & rhs ) = default ;
   ~CudaHostPinnedSpace() = default ;
 
@@ -270,6 +218,117 @@ public:
 };
 
 } // namespace Kokkos
+
+/*--------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------*/
+
+namespace Kokkos {
+namespace Impl {
+
+static_assert( Kokkos::Impl::MemorySpaceAccess< Kokkos::CudaSpace , Kokkos::CudaSpace >::assignable , "" );
+static_assert( Kokkos::Impl::MemorySpaceAccess< Kokkos::CudaUVMSpace , Kokkos::CudaUVMSpace >::assignable , "" );
+static_assert( Kokkos::Impl::MemorySpaceAccess< Kokkos::CudaHostPinnedSpace , Kokkos::CudaHostPinnedSpace >::assignable , "" );
+
+template<>
+struct MemorySpaceAccess< Kokkos::HostSpace , Kokkos::CudaSpace > {
+  enum { assignable = false };
+  enum { accessible = false };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::HostSpace , Kokkos::CudaUVMSpace > {
+  // HostSpace::execution_space != CudaUVMSpace::execution_space
+  enum { assignable = false };
+  enum { accessible = true };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::HostSpace , Kokkos::CudaHostPinnedSpace > {
+  // HostSpace::execution_space == CudaHostPinnedSpace::execution_space
+  enum { assignable = true };
+  enum { accessible = true };
+  enum { deepcopy   = true };
+};
+
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaSpace , Kokkos::HostSpace > {
+  enum { assignable = false };
+  enum { accessible = false };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaSpace , Kokkos::CudaUVMSpace > {
+  enum { assignable = true };
+  enum { accessible = true };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaSpace , Kokkos::CudaHostPinnedSpace > {
+  // CudaSpace::execution_space != CudaHostPinnedSpace::execution_space
+  enum { assignable = false };
+  enum { accessible = true }; // CudaSpace::execution_space
+  enum { deepcopy   = true };
+};
+
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaUVMSpace , Kokkos::HostSpace > {
+  // CudaUVMSpace::execution_space == Cuda
+  // Cuda cannot access HostSpace
+  enum { assignable = false };
+  enum { accessible = false };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaUVMSpace , Kokkos::CudaSpace > {
+  // CudaUVMSpace::execution_space == CudaSpace::execution_space
+  // Can access CudaUVMSpace from Host but cannot access CudaSpace from Host
+  enum { assignable = false };
+
+  // CudaUVMSpace::execution_space can access CudaSpace
+  enum { accessible = true };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaUVMSpace , Kokkos::CudaHostPinnedSpace > {
+  // CudaUVMSpace::execution_space != CudaHostPinnedSpace::execution_space
+  enum { assignable = false };
+  enum { accessible = true }; // CudaUVMSpace::execution_space
+  enum { deepcopy   = true };
+};
+
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaHostPinnedSpace , Kokkos::HostSpace > {
+  // Can access CudaHostPinnedSpace from Cuda
+  // Cannot access HostSpace from Cuda
+  enum { assignable = false }; // Cannot access from Cuda
+  enum { accessible = false }; // CudaHostPinnedSpace::execution_space
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaHostPinnedSpace , Kokkos::CudaSpace > {
+  enum { assignable = false }; // Cannot access from Host
+  enum { accessible = false };
+  enum { deepcopy   = true };
+};
+
+template<>
+struct MemorySpaceAccess< Kokkos::CudaHostPinnedSpace , Kokkos::CudaUVMSpace > {
+  enum { assignable = false }; // different execution_space
+  enum { accessible = true };  // same accessibility
+  enum { deepcopy   = true };
+};
+
+}} // namespace Kokkos::Impl
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -604,7 +663,6 @@ struct VerifyExecutionCanAccessMemorySpace< Kokkos::HostSpace , Kokkos::CudaHost
 //----------------------------------------------------------------------------
 
 namespace Kokkos {
-namespace Experimental {
 namespace Impl {
 
 template<>
@@ -842,7 +900,6 @@ public:
 };
 
 } // namespace Impl
-} // namespace Experimental
 } // namespace Kokkos
 
 //----------------------------------------------------------------------------

@@ -129,9 +129,11 @@ SET( Trilinos_TPLS_FINDMODS_CLASSIFICATIONS
   Scotch          "cmake/TPLs/"    SS
   OVIS            "cmake/TPLs/"    SS
   gpcd            "cmake/TPLs/"    SS
+  CGNS            "cmake/TPLs/"    SS
   METIS           "cmake/TPLs/"    TS
   ParMETIS        "cmake/TPLs/"    SS
   PuLP            "cmake/TPLs/"    EX
+  TopoManager     "cmake/TPLs/"    EX
   LibTopoMap      "cmake/TPLs/"    SS
   PaToH           "cmake/TPLs/"    SS
   CppUnit         "cmake/TPLs/"    SS
@@ -196,9 +198,18 @@ SET( Trilinos_TPLS_FINDMODS_CLASSIFICATIONS
   quadmath        "cmake/TPLs/"    EX
   CAMAL           "cmake/TPLs/"    SS
   RTlib           "cmake/TPLs/"    SS
+  DLlib           "cmake/TPLs/"    SS
   AmgX            "cmake/TPLs/"    EX
   CGAL            "cmake/TPLs/"    EX
+  CGALCore        "cmake/TPLs/"    EX
   VTune           "cmake/TPLs/"    SS
+  TASMANIAN       "cmake/TPLs/"    EX
+  ArrayFireCPU    "cmake/TPLs/"    EX
+  SimMesh         "SCOREC/cmake/TPLs/"    EX
+  SimModel        "SCOREC/cmake/TPLs/"    EX
+  SimParasolid    "SCOREC/cmake/TPLs/"    EX
+  SimAcis         "SCOREC/cmake/TPLs/"    EX
+  SimField        "SCOREC/cmake/TPLs/"    EX
   )
 
 # NOTES:

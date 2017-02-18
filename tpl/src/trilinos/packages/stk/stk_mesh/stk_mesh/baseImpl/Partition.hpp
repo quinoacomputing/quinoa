@@ -41,6 +41,8 @@
 #include <string>                       // for string
 #include <vector>                       // for vector, etc
 #include "stk_mesh/base/Bucket.hpp"     // for Bucket
+#include <stk_mesh/base/EntityLess.hpp>
+
 namespace stk { namespace mesh { class BulkData; } }
 namespace stk { namespace mesh { class FieldBase; } }
 namespace stk { namespace mesh { struct Entity; } }
@@ -67,7 +69,7 @@ public:
   /// including the parts it corresponds to.
   const std::vector<PartOrdinal> &get_legacy_partition_id() const { return m_extPartitionKey; }
 
-  const unsigned * key() const { return &m_extPartitionKey[0]; }
+  const unsigned * key() const { return m_extPartitionKey.data(); }
 
   /// Add an entity to this partition.  The entity must not be a member
   /// of another partition.
@@ -84,7 +86,8 @@ public:
 
   /// Sort the entities in this partition by EntityKey without changing
   /// the number or sizes of buckets.
-  void sort(bool force = false);
+  void default_sort_if_needed();
+  void sort(const EntitySorterBase& sorter);
 
   void set_flag_needs_to_be_sorted(bool flag) { m_updated_since_sort = flag; }
 
@@ -128,6 +131,8 @@ public:
   // Output including Entities.
   std::ostream &dumpit(std::ostream &os) const;
   std::string dumpit() const;
+
+  void delete_bucket(Bucket * bucket);
 
 private:
   BulkData& m_mesh;

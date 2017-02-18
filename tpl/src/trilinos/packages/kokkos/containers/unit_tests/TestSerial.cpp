@@ -58,10 +58,13 @@
 #include <TestStaticCrsGraph.hpp>
 #include <TestVector.hpp>
 #include <TestDualView.hpp>
-#include <TestSegmentedView.hpp>
+#include <TestDynamicView.hpp>
 #include <TestComplex.hpp>
 
 #include <iomanip>
+
+#include <Kokkos_DynRankView.hpp>
+#include <TestDynViewAPI.hpp>
 
 namespace Test {
 
@@ -77,6 +80,9 @@ protected:
   }
 };
 
+TEST_F( serial, dyn_view_api) {
+  TestDynViewAPI< double , Kokkos::Serial >();
+}
 
 TEST_F( serial , staticcrsgraph )
 {
@@ -128,11 +134,6 @@ TEST_F( serial, bitset )
     test_dualview_combinations<int,Kokkos::Serial>(size);               \
   }
 
-#define SERIAL_SEGMENTEDVIEW_TEST( size )                               \
-  TEST_F( serial, segmentedview_##size##x) {                            \
-    test_segmented_view<double,Kokkos::Serial>(size);                   \
-  }
-
 SERIAL_INSERT_TEST(close, 100000, 90000, 100, 500, true)
 SERIAL_INSERT_TEST(far, 100000, 90000, 100, 500, false)
 SERIAL_FAILED_INSERT_TEST( 10000, 1000 )
@@ -141,7 +142,6 @@ SERIAL_DEEP_COPY( 10000, 1 )
 SERIAL_VECTOR_COMBINE_TEST( 10 )
 SERIAL_VECTOR_COMBINE_TEST( 3057 )
 SERIAL_DUALVIEW_COMBINE_TEST( 10 )
-SERIAL_SEGMENTEDVIEW_TEST( 10000 )
 
 #undef SERIAL_INSERT_TEST
 #undef SERIAL_FAILED_INSERT_TEST
@@ -149,9 +149,18 @@ SERIAL_SEGMENTEDVIEW_TEST( 10000 )
 #undef SERIAL_DEEP_COPY
 #undef SERIAL_VECTOR_COMBINE_TEST
 #undef SERIAL_DUALVIEW_COMBINE_TEST
-#undef SERIAL_SEGMENTEDVIEW_TEST
 
-} // namespace test
+TEST_F( serial , dynamic_view )
+{
+  typedef TestDynamicView< double , Kokkos::Serial >
+    TestDynView ;
+
+  for ( int i = 0 ; i < 10 ; ++i ) {
+    TestDynView::run( 100000 + 100 * i );
+  }
+}
+
+} // namespace Test
 
 #endif // KOKKOS_HAVE_SERIAL
 

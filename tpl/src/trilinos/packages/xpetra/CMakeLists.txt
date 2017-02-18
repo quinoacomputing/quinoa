@@ -91,62 +91,37 @@ ENDIF()
 ASSERT_DEFINED (Teuchos_ENABLE_LONG_LONG_INT)
 IF (NOT Teuchos_ENABLE_LONG_LONG_INT)
   # If Teuchos doesn't have support for long long, we won't get anywhere.
-  SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
+  GLOBAL_SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
 ELSE ()
   # Teuchos supports long long.  How about Epetra or Tpetra?
   IF (${PACKAGE_NAME}_ENABLE_Tpetra)
     # Does Tpetra provide LocalOrdinal = int and GlobalOrdinal = long long?
     ASSERT_DEFINED(Tpetra_INST_INT_LONG_LONG)
-    SET (${PACKAGE_NAME}_INT_LONG_LONG ${Tpetra_INST_INT_LONG_LONG})
+    GLOBAL_SET (${PACKAGE_NAME}_INT_LONG_LONG ${Tpetra_INST_INT_LONG_LONG})
   ELSE () # Tpetra NOT enabled
     IF (${PACKAGE_NAME}_ENABLE_Epetra)
       # Does Epetra provide LocalOrdinal = int and GlobalOrdinal = long long?
       IF (${PACKAGE_NAME}_Epetra_NO_64BIT_GLOBAL_INDICES)
-        SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
+        GLOBAL_SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
       ELSE ()
-        SET (${PACKAGE_NAME}_INT_LONG_LONG ON)
+        GLOBAL_SET (${PACKAGE_NAME}_INT_LONG_LONG ON)
       ENDIF ()
     ELSE () # Neither Epetra nor Tpetra are enabled
-      SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
+      GLOBAL_SET (${PACKAGE_NAME}_INT_LONG_LONG OFF)
     ENDIF ()
   ENDIF ()
 ENDIF ()
 
-##################################
-
-#
-# Decide whether it makes sense to enable LocalOrdinal = int and
-# GlobalOrdinal = int.
-#
 IF (${PACKAGE_NAME}_ENABLE_Epetra)
-  # if Epetra is enabled we need basic GO=int support!
-  SET (${PACKAGE_NAME}_INT_INT ON)
-ELSE () # check whether Tpetra is enabled and needs GO=int support
-  IF (${PACKAGE_NAME}_ENABLE_Tpetra)
-    ASSERT_DEFINED(Tpetra_INST_INT_INT)
-    SET (${PACKAGE_NAME}_INT_INT ${Tpetra_INST_INT_INT})
-  ELSE () # Neither Epetra nor Tpetra are enabled or need GO=int support
-    SET (${PACKAGE_NAME}_INT_INT OFF)
-  ENDIF ()
-ENDIF ()
-
-# If Tpetra is enabled, determine which Nodes are used
-IF (${PACKAGE_NAME}_ENABLE_Tpetra)
-  GLOBAL_SET (HAVE_XPETRA_SERIAL  ${Tpetra_INST_SERIAL})
-  GLOBAL_SET (HAVE_XPETRA_PTHREAD ${Tpetra_INST_PTHREAD})
-  GLOBAL_SET (HAVE_XPETRA_OPENMP  ${Tpetra_INST_OPENMP})
-  GLOBAL_SET (HAVE_XPETRA_CUDA    ${Tpetra_INST_CUDA})
+  IF(NOT ${${PACKAGE_NAME}_Epetra_NO_32BIT_GLOBAL_INDICES})
+    MESSAGE("-- Xpetra support for 32 bit Epetra enabled.")
+    MESSAGE("--    ${PACKAGE_NAME}_Epetra_NO_32BIT_GLOBAL_INDICES=" ${${PACKAGE_NAME}_Epetra_NO_32BIT_GLOBAL_INDICES})
+  ENDIF()
+  IF(NOT ${${PACKAGE_NAME}_Epetra_NO_64BIT_GLOBAL_INDICES})
+    MESSAGE("-- Xpetra support for 64 bit Epetra enabled.")
+    MESSAGE("--    ${PACKAGE_NAME}_Epetra_NO_64BIT_GLOBAL_INDICES=" ${${PACKAGE_NAME}_Epetra_NO_64BIT_GLOBAL_INDICES})
+  ENDIF()
 ENDIF()
-IF (${PACKAGE_NAME}_ENABLE_Epetra)
-  # If Epetra is active, enable Serial node
-  GLOBAL_SET (HAVE_XPETRA_SERIAL  ON)
-ENDIF ()
-
-  MESSAGE(STATUS "HAVE_XPETRA_SERIAL       : ${HAVE_XPETRA_SERIAL}")
-  MESSAGE(STATUS "HAVE_XPETRA_PTHREAD      : ${HAVE_XPETRA_PTHREAD}")
-  MESSAGE(STATUS "HAVE_XPETRA_OPENMP       : ${HAVE_XPETRA_OPENMP}")
-  MESSAGE(STATUS "HAVE_XPETRA_CUDA         : ${HAVE_XPETRA_CUDA}")
-
 
 ##################################
 
@@ -169,9 +144,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(sup)
 
-IF(${PACKAGE_NAME}_ENABLE_BROKEN_TESTS)
-    TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
-ENDIF()
+TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
 TRIBITS_ADD_TEST_DIRECTORIES(test)
 
 #

@@ -40,6 +40,7 @@
 #include <stk_mesh/base/BulkData.hpp>   // for BulkData, etc
 #include <stk_mesh/baseImpl/Partition.hpp>  // for Partition, lower_bound
 #include <stk_mesh/baseImpl/ForEachEntityLoopAbstractions.hpp>
+#include <stk_mesh/baseImpl/MeshImplUtils.hpp>
 #include "stk_mesh/base/BucketConnectivity.hpp"  // for BucketConnectivity
 #include "stk_mesh/base/FieldBase.hpp"  // for FieldBase
 #include "stk_mesh/base/MetaData.hpp"   // for MetaData
@@ -50,6 +51,8 @@
 namespace stk {
 namespace mesh {
 namespace impl {
+
+
 
 BucketRepository::BucketRepository(BulkData & mesh,
                                    unsigned entity_rank_count,
@@ -118,19 +121,22 @@ void BucketRepository::set_needs_to_be_sorted(stk::mesh::Bucket &bucket, bool ne
     bucket.getPartition()->set_flag_needs_to_be_sorted(needsSorting);
 }
 
-void BucketRepository::internal_sort_bucket_entities()
+void BucketRepository::internal_default_sort_bucket_entities()
 {
-  for (std::vector<std::vector<Partition *> >::const_iterator
-         i = m_partitions.begin() ; i != m_partitions.end() ; ++i  )
-  {
-    const std::vector<Partition *> & pset = *i ;
-    for ( std::vector<Partition*>::const_iterator
-            ip = pset.begin() ; ip != pset.end() ; ++ip )
-    {
-      (*ip)->sort();
-    }
-  }
+    for(std::vector<Partition*>& partitionVector : m_partitions)
+        for(Partition* partition : partitionVector)
+            partition->default_sort_if_needed();
 }
+
+void BucketRepository::internal_custom_sort_bucket_entities(const EntitySorterBase& sorter)
+{
+    for(std::vector<Partition*>& partitionVector : m_partitions)
+        for(Partition* partition : partitionVector)
+            partition->sort(sorter);
+}
+
+
+
 
 void BucketRepository::optimize_buckets()
 {
@@ -172,6 +178,19 @@ void BucketRepository::remove_entity(const MeshIndex &meshIndex)
     partition->remove(entity);
 }
 
+void BucketRepository::ensure_data_structures_sized()
+{
+    if(m_buckets.empty())
+    {
+        size_t entity_rank_count = m_mesh.mesh_meta_data().entity_rank_count();
+        ThrowRequireMsg( entity_rank_count > 0,
+                        "MetaData doesn't have any entity-ranks! Did you forget to initialize MetaData before creating BulkData?");
+        m_buckets.resize(entity_rank_count);
+        m_partitions.resize(entity_rank_count);
+        m_need_sync_from_partitions.resize(entity_rank_count, false);
+    }
+}
+
 ////
 //// Note that we need to construct a key vector that the particular
 //// format so we can use the lower_bound(..) function to lookup the
@@ -189,14 +208,7 @@ Partition *BucketRepository::get_or_create_partition(
   ThrowRequireMsg(MetaData::get(m_mesh).check_rank(arg_entity_rank),
                   "Entity rank " << arg_entity_rank << " is invalid");
 
-  if (m_buckets.empty()) {
-    size_t entity_rank_count = m_mesh.mesh_meta_data().entity_rank_count();
-    ThrowRequireMsg( entity_rank_count > 0,
-                   "MetaData doesn't have any entity-ranks! Did you forget to initialize MetaData before creating BulkData?");
-    m_buckets.resize(entity_rank_count);
-    m_partitions.resize(entity_rank_count);
-    m_need_sync_from_partitions.resize(entity_rank_count, false);
-  }
+  ensure_data_structures_sized();
 
   std::vector<Partition *> & partitions = m_partitions[ arg_entity_rank ];
 
@@ -219,9 +231,9 @@ Partition *BucketRepository::get_or_create_partition(
 
   // If the partition is found, the iterator will be right after it, thanks to the
   // trickiness above.
-  const std::vector<Partition *>::iterator ik = lower_bound( partitions , &key[0] );
+  const std::vector<Partition *>::iterator ik = lower_bound( partitions , key.data() );
   const bool partition_exists =
-    (ik != partitions.begin()) && raw_part_equal( ik[-1]->key() , &key[0] );
+    (ik != partitions.begin()) && raw_part_equal( ik[-1]->key() , key.data() );
 
   if (partition_exists)
   {
@@ -241,76 +253,72 @@ Partition *BucketRepository::get_or_create_partition(
 
 void BucketRepository::internal_modification_end()
 {
-  sync_from_partitions();
+    sync_from_partitions();
 
-  // What needs to be done depends on the connectivity map.
-  for (EntityRank from_rank = stk::topology::NODE_RANK;
-        from_rank < m_connectivity_map.m_map.size();
-        ++from_rank)
-  {
-    const BucketVector &buckets = m_buckets[from_rank];
-    unsigned num_buckets = buckets.size();
-    for (unsigned j = 0; j < num_buckets; ++j)
+    // What needs to be done depends on the connectivity map.
+    for(EntityRank from_rank = stk::topology::NODE_RANK; from_rank < m_connectivity_map.m_map.size(); ++from_rank)
     {
-      ThrowAssert(buckets[j] != NULL);
-      Bucket &bucket = *buckets[j];
-
-      // Update the hop-saving connectivity data on this bucket.
-      //
-      for (EntityRank to_rank = stk::topology::NODE_RANK;
-          to_rank < m_connectivity_map.m_map[from_rank].size();
-          ++to_rank)
-      {
-        switch (m_connectivity_map.m_map[from_rank][to_rank])
+        const BucketVector &buckets = this->buckets(from_rank);
+        unsigned num_buckets = buckets.size();
+        for(unsigned j = 0; j < num_buckets; ++j)
         {
-        case FIXED_CONNECTIVITY:
-          switch (to_rank)
-          {
-          case stk::topology::NODE_RANK:
-            bucket.m_fixed_node_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::EDGE_RANK:
-            bucket.m_fixed_edge_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::FACE_RANK:
-            bucket.m_fixed_face_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::ELEMENT_RANK:
-            bucket.m_fixed_element_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          default:
-            break;
-          }
-          break;
-        case DYNAMIC_CONNECTIVITY:
-          switch (to_rank)
-          {
-          case stk::topology::NODE_RANK:
-            bucket.m_dynamic_node_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::EDGE_RANK:
-            bucket.m_dynamic_edge_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::FACE_RANK:
-            bucket.m_dynamic_face_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::ELEMENT_RANK:
-            bucket.m_dynamic_element_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          case stk::topology::INVALID_RANK:
-            break;
-          default:
-            bucket.m_dynamic_other_connectivity.end_modification(&bucket.m_mesh);
-            break;
-          }
-          break;
-        case INVALID_CONNECTIVITY_TYPE:
-        default:
-          break;
+            ThrowAssert(buckets[j] != NULL);
+            Bucket &bucket = *buckets[j];
+
+            // Update the hop-saving connectivity data on this bucket.
+            //
+            for(EntityRank to_rank = stk::topology::NODE_RANK; to_rank < m_connectivity_map.m_map[from_rank].size(); ++to_rank)
+            {
+                switch(m_connectivity_map.m_map[from_rank][to_rank])
+                {
+                    case FIXED_CONNECTIVITY:
+                        switch(to_rank)
+                        {
+                            case stk::topology::NODE_RANK:
+                                bucket.m_fixed_node_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::EDGE_RANK:
+                                bucket.m_fixed_edge_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::FACE_RANK:
+                                bucket.m_fixed_face_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::ELEMENT_RANK:
+                                bucket.m_fixed_element_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case DYNAMIC_CONNECTIVITY:
+                        switch(to_rank)
+                        {
+                            case stk::topology::NODE_RANK:
+                                bucket.m_dynamic_node_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::EDGE_RANK:
+                                bucket.m_dynamic_edge_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::FACE_RANK:
+                                bucket.m_dynamic_face_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::ELEMENT_RANK:
+                                bucket.m_dynamic_element_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                            case stk::topology::INVALID_RANK:
+                                break;
+                            default:
+                                bucket.m_dynamic_other_connectivity.end_modification(&bucket.m_mesh);
+                                break;
+                        }
+                        break;
+                    case INVALID_CONNECTIVITY_TYPE:
+                    default:
+                        break;
+                }
+            }
         }
-      }
     }
-  }
 }
 
 void BucketRepository::sync_from_partitions()
@@ -469,6 +477,11 @@ std::vector<Partition *> BucketRepository::get_partitions(EntityRank rank) const
     retval.push_back(bf_vec[i]);
   }
   return retval;
+}
+
+void BucketRepository::delete_bucket(Bucket * bucket)
+{
+    bucket->getPartition()->delete_bucket(bucket);
 }
 
 } // namespace impl

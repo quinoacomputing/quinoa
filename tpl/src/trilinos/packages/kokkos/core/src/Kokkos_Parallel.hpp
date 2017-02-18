@@ -52,12 +52,11 @@
 #include <Kokkos_View.hpp>
 #include <Kokkos_ExecPolicy.hpp>
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
 #include <impl/Kokkos_Profiling_Interface.hpp>
 #include <typeinfo>
 #endif
 
-#include <impl/Kokkos_AllocationTracker.hpp>
 #include <impl/Kokkos_Tags.hpp>
 #include <impl/Kokkos_Traits.hpp>
 #include <impl/Kokkos_FunctorAdapter.hpp>
@@ -82,8 +81,8 @@ namespace Impl {
  */
 template< class Functor
         , class Policy
-        , class EnableFunctor = void
-        , class EnablePolicy  = void
+        , class EnableFunctor
+        , class EnablePolicy
         >
 struct FunctorPolicyExecutionSpace {
   typedef Kokkos::DefaultExecutionSpace execution_space ;
@@ -139,30 +138,6 @@ struct FunctorPolicyExecutionSpace
   typedef typename Functor::execution_space execution_space ;
 };
 
-//----------------------------------------------------------------------------
-/// \class ParallelFor
-/// \brief Implementation of the ParallelFor operator that has a
-///   partial specialization for the device.
-///
-/// This is an implementation detail of parallel_for.  Users should
-/// skip this and go directly to the nonmember function parallel_for.
-template< class FunctorType , class ExecPolicy > class ParallelFor ;
-
-/// \class ParallelReduce
-/// \brief Implementation detail of parallel_reduce.
-///
-/// This is an implementation detail of parallel_reduce.  Users should
-/// skip this and go directly to the nonmember function parallel_reduce.
-template< class FunctorType , class ExecPolicy > class ParallelReduce ;
-
-/// \class ParallelScan
-/// \brief Implementation detail of parallel_scan.
-///
-/// This is an implementation detail of parallel_scan.  Users should
-/// skip this and go directly to the documentation of the nonmember
-/// template function Kokkos::parallel_scan.
-template< class FunctorType , class ExecPolicy > class ParallelScan ;
-
 } // namespace Impl
 } // namespace Kokkos
 
@@ -200,10 +175,10 @@ void parallel_for( const ExecPolicy  & policy
                  , typename Impl::enable_if< ! Impl::is_integral< ExecPolicy >::value >::type * = 0
                  )
 {
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
     uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-     	Kokkos::Experimental::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+     	Kokkos::Profiling::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -213,9 +188,9 @@ void parallel_for( const ExecPolicy  & policy
    
    closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-        Kokkos::Experimental::endParallelFor(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+        Kokkos::Profiling::endParallelFor(kpID);
      }
 #endif
 }
@@ -232,10 +207,10 @@ void parallel_for( const size_t        work_count
       execution_space ;
   typedef RangePolicy< execution_space > policy ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+  	Kokkos::Profiling::beginParallelFor("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -245,9 +220,9 @@ void parallel_for( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelFor(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelFor(kpID);
      }
 #endif
 }
@@ -272,405 +247,9 @@ void parallel_for( const std::string & str
   (void) str;
 }
 
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-
-/** \brief  Parallel reduction
- *
- * Example of a parallel_reduce functor for a POD (plain old data) value type:
- * \code
- *  class FunctorType { // For POD value type
- *  public:
- *    typedef    ...     execution_space ;
- *    typedef <podType>  value_type ;
- *    void operator()( <intType> iwork , <podType> & update ) const ;
- *    void init( <podType> & update ) const ;
- *    void join( volatile       <podType> & update ,
- *               volatile const <podType> & input ) const ;
- *
- *    typedef true_type has_final ;
- *    void final( <podType> & update ) const ;
- *  };
- * \endcode
- *
- * Example of a parallel_reduce functor for an array of POD (plain old data) values:
- * \code
- *  class FunctorType { // For array of POD value
- *  public:
- *    typedef    ...     execution_space ;
- *    typedef <podType>  value_type[] ;
- *    void operator()( <intType> , <podType> update[] ) const ;
- *    void init( <podType> update[] ) const ;
- *    void join( volatile       <podType> update[] ,
- *               volatile const <podType> input[] ) const ;
- *
- *    typedef true_type has_final ;
- *    void final( <podType> update[] ) const ;
- *  };
- * \endcode
- */
-template< class ExecPolicy , class FunctorType >
-inline
-void parallel_reduce( const ExecPolicy  & policy
-                    , const FunctorType & functor
-                    , const std::string& str = ""
-                    , typename Impl::enable_if< ! Impl::is_integral< ExecPolicy >::value >::type * = 0
-                    )
-{
-  // typedef typename
-  //   Impl::FunctorPolicyExecutionSpace< FunctorType , ExecPolicy >::execution_space
-  //     execution_space ;
-
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType , typename ExecPolicy::work_tag >  ValueTraits ;
-
-  typedef typename Kokkos::Impl::if_c< (ValueTraits::StaticValueSize != 0)
-                                     , typename ValueTraits::value_type
-                                     , typename ValueTraits::pointer_type
-                                     >::type value_type ;
-
-  Kokkos::View< value_type
-              , HostSpace
-              , Kokkos::MemoryUnmanaged
-              >
-    result_view ;
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-
-    Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-    Impl::ParallelReduce< FunctorType , ExecPolicy > closure( functor , policy , result_view );
-    Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-    closure.execute();
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
 }
 
-// integral range policy
-template< class FunctorType >
-inline
-void parallel_reduce( const size_t        work_count
-                    , const FunctorType & functor
-                    , const std::string& str = ""
-                    )
-{
-  typedef typename
-    Impl::FunctorPolicyExecutionSpace< FunctorType , void >::execution_space
-      execution_space ;
-
-  typedef RangePolicy< execution_space > policy ;
-
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType , void >  ValueTraits ;
-
-  typedef typename Kokkos::Impl::if_c< (ValueTraits::StaticValueSize != 0)
-                                     , typename ValueTraits::value_type
-                                     , typename ValueTraits::pointer_type
-                                     >::type value_type ;
-
-  Kokkos::View< value_type
-              , HostSpace
-              , Kokkos::MemoryUnmanaged
-              >
-    result_view ;
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-  	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-    
-  Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-  Impl::ParallelReduce< FunctorType , policy > closure( functor , policy(0,work_count) , result_view );
-  Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-  closure.execute();
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
-
-}
-
-// general policy and view ouput
-template< class ExecPolicy , class FunctorType , class ViewType >
-inline
-void parallel_reduce( const ExecPolicy  & policy
-                    , const FunctorType & functor
-                    , const ViewType    & result_view
-                    , const std::string& str = ""
-                    , typename Impl::enable_if<
-                      ( Kokkos::is_view<ViewType>::value && ! Impl::is_integral< ExecPolicy >::value
-#ifdef KOKKOS_HAVE_CUDA
-                        && ! Impl::is_same<typename ExecPolicy::execution_space,Kokkos::Cuda>::value
-#endif
-                      )>::type * = 0 )
-{
-    
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-    
-  Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-  Impl::ParallelReduce< FunctorType, ExecPolicy > closure( functor , policy , result_view );
-  Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-  closure.execute();
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
-
-}
-
-// general policy and pod or array of pod output
-template< class ExecPolicy , class FunctorType >
-void parallel_reduce( const ExecPolicy  & policy
-                    , const FunctorType & functor
-#ifdef KOKKOS_HAVE_CUDA
-                    , typename Impl::enable_if<
-                      ( ! Impl::is_integral< ExecPolicy >::value &&
-                        ! Impl::is_same<typename ExecPolicy::execution_space,Kokkos::Cuda>::value )
-                      , typename Kokkos::Impl::FunctorValueTraits< FunctorType , typename ExecPolicy::work_tag >::reference_type>::type result_ref
-                      , const std::string& str = ""
-                      , typename Impl::enable_if<! Impl::is_same<typename ExecPolicy::execution_space,Kokkos::Cuda>::value >::type* = 0
-                      )
-#else
-                      , typename Impl::enable_if<
-                        ( ! Impl::is_integral< ExecPolicy >::value)
-                        , typename Kokkos::Impl::FunctorValueTraits< FunctorType , typename ExecPolicy::work_tag >::reference_type
-                        >::type result_ref
-                      , const std::string& str = ""
-                        )
-#endif
-{
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType , typename ExecPolicy::work_tag >  ValueTraits ;
-  typedef Kokkos::Impl::FunctorValueOps<    FunctorType , typename ExecPolicy::work_tag >  ValueOps ;
-
-  // Wrap the result output request in a view to inform the implementation
-  // of the type and memory space.
-
-  typedef typename Kokkos::Impl::if_c< (ValueTraits::StaticValueSize != 0)
-                                     , typename ValueTraits::value_type
-                                     , typename ValueTraits::pointer_type
-                                     >::type value_type ;
-
-  Kokkos::View< value_type
-              , HostSpace
-              , Kokkos::MemoryUnmanaged
-              >
-    result_view( ValueOps::pointer( result_ref )
-               , ValueTraits::value_count( functor )
-               );
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-    
-  Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-  Impl::ParallelReduce< FunctorType, ExecPolicy > closure( functor , policy , result_view );
-  Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-  closure.execute();
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
-
-}
-
-// integral range policy and view ouput
-template< class FunctorType , class ViewType >
-inline
-void parallel_reduce( const size_t        work_count
-                    , const FunctorType & functor
-                    , const ViewType    & result_view
-                    , const std::string& str = ""
-                    , typename Impl::enable_if<( Kokkos::is_view<ViewType>::value
-#ifdef KOKKOS_HAVE_CUDA
-                        && ! Impl::is_same<
-                          typename Impl::FunctorPolicyExecutionSpace< FunctorType , void >::execution_space,
-                          Kokkos::Cuda>::value
-#endif
-                        )>::type * = 0 )
-{
-  typedef typename
-    Impl::FunctorPolicyExecutionSpace< FunctorType , void >::execution_space
-      execution_space ;
-
-  typedef RangePolicy< execution_space > ExecPolicy ;
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-
-  Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-  Impl::ParallelReduce< FunctorType, ExecPolicy > closure( functor , ExecPolicy(0,work_count) , result_view );
-  Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-  closure.execute();
-    
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
-
-}
-
-// integral range policy and pod or array of pod output
-template< class FunctorType >
-inline
-void parallel_reduce( const size_t        work_count
-                    , const FunctorType & functor
-                    , typename Kokkos::Impl::FunctorValueTraits<
-                         typename Impl::if_c<Impl::is_execution_policy<FunctorType>::value ||
-                                             Impl::is_integral<FunctorType>::value,
-                            void,FunctorType>::type
-                         , void >::reference_type result
-                    , const std::string& str = ""
-                    , typename Impl::enable_if< true
-#ifdef KOKKOS_HAVE_CUDA
-                              && ! Impl::is_same<
-                             typename Impl::FunctorPolicyExecutionSpace< FunctorType , void >::execution_space,
-                             Kokkos::Cuda>::value
-#endif
-                     >::type * = 0 )
-{
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType , void >  ValueTraits ;
-  typedef Kokkos::Impl::FunctorValueOps<    FunctorType , void >  ValueOps ;
-
-  typedef typename
-    Kokkos::Impl::FunctorPolicyExecutionSpace< FunctorType , void >::execution_space
-      execution_space ;
-
-  typedef Kokkos::RangePolicy< execution_space > policy ;
-
-  // Wrap the result output request in a view to inform the implementation
-  // of the type and memory space.
-
-  typedef typename Kokkos::Impl::if_c< (ValueTraits::StaticValueSize != 0)
-                                     , typename ValueTraits::value_type
-                                     , typename ValueTraits::pointer_type
-                                     >::type value_type ;
-
-  Kokkos::View< value_type
-              , HostSpace
-              , Kokkos::MemoryUnmanaged
-              >
-    result_view( ValueOps::pointer( result )
-               , ValueTraits::value_count( functor )
-               );
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-  uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelReduce("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
-     }
-#endif
-
-  Kokkos::Impl::shared_allocation_tracking_claim_and_disable();
-  Impl::ParallelReduce< FunctorType , policy > closure( functor , policy(0,work_count) , result_view );
-  Kokkos::Impl::shared_allocation_tracking_release_and_enable();
-
-  closure.execute();
-
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelReduce(kpID);
-     }
-#endif
-
-}
-#ifndef KOKKOS_HAVE_CUDA
-template< class ExecPolicy , class FunctorType , class ResultType >
-inline
-void parallel_reduce( const std::string & str
-                    , const ExecPolicy  & policy
-                    , const FunctorType & functor
-                    , ResultType * result)
-{
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG Start parallel_reduce kernel: " << str << std::endl;
-  #endif
-
-  parallel_reduce(policy,functor,result,str);
-
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG End   parallel_reduce kernel: " << str << std::endl;
-  #endif
-  (void) str;
-}
-
-template< class ExecPolicy , class FunctorType , class ResultType >
-inline
-void parallel_reduce( const std::string & str
-                    , const ExecPolicy  & policy
-                    , const FunctorType & functor
-                    , ResultType & result)
-{
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG Start parallel_reduce kernel: " << str << std::endl;
-  #endif
-
-  parallel_reduce(policy,functor,result,str);
-
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG End   parallel_reduce kernel: " << str << std::endl;
-  #endif
-  (void) str;
-}
-
-template< class ExecPolicy , class FunctorType >
-inline
-void parallel_reduce( const std::string & str
-                    , const ExecPolicy  & policy
-                    , const FunctorType & functor)
-{
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG Start parallel_reduce kernel: " << str << std::endl;
-  #endif
-
-  parallel_reduce(policy,functor,str);
-
-  #if KOKKOS_ENABLE_DEBUG_PRINT_KERNEL_NAMES
-  Kokkos::fence();
-  std::cout << "KOKKOS_DEBUG End   parallel_reduce kernel: " << str << std::endl;
-  #endif
-  (void) str;
-}
-#endif
-
-} // namespace Kokkos
-
+#include <Kokkos_Parallel_Reduce.hpp>
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
@@ -838,10 +417,10 @@ void parallel_scan( const ExecutionPolicy & policy
                   , typename Impl::enable_if< ! Impl::is_integral< ExecutionPolicy >::value >::type * = 0
                   )
 {
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
 
@@ -851,9 +430,9 @@ void parallel_scan( const ExecutionPolicy & policy
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelScan(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelScan(kpID);
      }
 #endif
 
@@ -871,10 +450,10 @@ void parallel_scan( const size_t        work_count
 
   typedef Kokkos::RangePolicy< execution_space > policy ;
 
-#ifdef KOKKOSP_ENABLE_PROFILING
+#if (KOKKOS_ENABLE_PROFILING)
   uint64_t kpID = 0;
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::beginParallelScan("" == str ? typeid(FunctorType).name() : str, 0, &kpID);
      }
 #endif
     
@@ -884,9 +463,9 @@ void parallel_scan( const size_t        work_count
 
   closure.execute();
 
-#ifdef KOKKOSP_ENABLE_PROFILING
-     if(Kokkos::Experimental::profileLibraryLoaded()) {
-	Kokkos::Experimental::endParallelScan(kpID);
+#if (KOKKOS_ENABLE_PROFILING)
+     if(Kokkos::Profiling::profileLibraryLoaded()) {
+	Kokkos::Profiling::endParallelScan(kpID);
      }
 #endif
 
@@ -923,7 +502,7 @@ namespace Impl {
 template< class FunctorType , class Enable = void >
 struct FunctorTeamShmemSize
 {
-  static inline size_t value( const FunctorType & , int ) { return 0 ; }
+  KOKKOS_INLINE_FUNCTION static size_t value( const FunctorType & , int ) { return 0 ; }
 };
 
 template< class FunctorType >

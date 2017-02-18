@@ -62,7 +62,7 @@ struct SharedAllocDestroy {
 
   void destroy_shared_allocation()
     {
-      Kokkos::atomic_fetch_add( count , 1 );
+      Kokkos::atomic_increment( count );
     }
 
 };
@@ -72,11 +72,11 @@ void test_shared_alloc()
 {
 #if defined( KOKKOS_ACTIVE_EXECUTION_MEMORY_SPACE_HOST )
 
-  typedef const Kokkos::Experimental::Impl::SharedAllocationHeader   Header ;
-  typedef Kokkos::Experimental::Impl::SharedAllocationTracker  Tracker ;
-  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< void , void >                       RecordBase ;
-  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< MemorySpace , void >                RecordMemS ;
-  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< MemorySpace , SharedAllocDestroy >  RecordFull ;
+  typedef const Kokkos::Impl::SharedAllocationHeader   Header ;
+  typedef Kokkos::Impl::SharedAllocationTracker  Tracker ;
+  typedef Kokkos::Impl::SharedAllocationRecord< void , void >                       RecordBase ;
+  typedef Kokkos::Impl::SharedAllocationRecord< MemorySpace , void >                RecordMemS ;
+  typedef Kokkos::Impl::SharedAllocationRecord< MemorySpace , SharedAllocDestroy >  RecordFull ;
 
   static_assert( sizeof(Tracker) == sizeof(int*), "SharedAllocationTracker has wrong size!" );
 
@@ -95,6 +95,7 @@ void test_shared_alloc()
   
   //----------------------------------------
   {
+  // Since always executed on host space, leave [=]
     Kokkos::parallel_for( range , [=]( size_t i ){
       char name[64] ;
       sprintf(name,"test_%.2d",int(i));

@@ -56,7 +56,6 @@
 #include <algorithm>
 
 #include <Kokkos_HBWSpace.hpp>
-#include <impl/Kokkos_BasicAllocators.hpp>
 #include <impl/Kokkos_Error.hpp>
 #include <Kokkos_Atomic.hpp>
 #ifdef KOKKOS_HAVE_HBWSPACE
@@ -123,23 +122,6 @@ int HBWSpace::in_parallel()
 
 } // namespace Experiemtal
 } // namespace Kokkos
-
-/*--------------------------------------------------------------------------*/
-
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-namespace Kokkos {
-namespace Experimental {
-
-Kokkos::Impl::AllocationTracker HBWSpace::allocate_and_track( const std::string & label, const size_t size )
-{
-  return Kokkos::Impl::AllocationTracker( allocator(), size, label );
-}
-
-} // namespace Experimental
-} // namespace Kokkos
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
 /*--------------------------------------------------------------------------*/
 
@@ -244,7 +226,6 @@ void HBWSpace::deallocate( void * const arg_alloc_ptr , const size_t arg_alloc_s
 //----------------------------------------------------------------------------
 
 namespace Kokkos {
-namespace Experimental {
 namespace Impl {
 
 SharedAllocationRecord< void , void >
@@ -343,7 +324,7 @@ SharedAllocationRecord< Kokkos::Experimental::HBWSpace , void >::get_record( voi
   RecordHost                   * const record = head ? static_cast< RecordHost * >( head->m_record ) : (RecordHost *) 0 ;
 
   if ( ! alloc_ptr || record->m_alloc_ptr != head ) {
-    Kokkos::Impl::throw_runtime_exception( std::string("Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::Experimental::HBWSpace , void >::get_record ERROR" ) );
+    Kokkos::Impl::throw_runtime_exception( std::string("Kokkos::Impl::SharedAllocationRecord< Kokkos::Experimental::HBWSpace , void >::get_record ERROR" ) );
   }
 
   return record ;
@@ -357,7 +338,6 @@ print_records( std::ostream & s , const Kokkos::Experimental::HBWSpace & space ,
 }
 
 } // namespace Impl
-} // namespace Experimental
 } // namespace Kokkos
 
 /*--------------------------------------------------------------------------*/

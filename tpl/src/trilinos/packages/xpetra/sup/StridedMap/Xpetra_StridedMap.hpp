@@ -94,7 +94,7 @@ namespace Xpetra {
   */
   template <class LocalOrdinal = Map<>::local_ordinal_type,
             class GlobalOrdinal = typename Map<LocalOrdinal>::global_ordinal_type,
-            class Node = typename Map<LocalOrdinal, GlobalOrdinal>::node_type>
+            class Node = typename Map<LocalOrdinal,GlobalOrdinal>::node_type>
   class StridedMap : public virtual Map<LocalOrdinal, GlobalOrdinal, Node> {
   public:
     typedef LocalOrdinal local_ordinal_type;
@@ -255,7 +255,7 @@ namespace Xpetra {
       if (numGlobalElements != Teuchos::OrdinalTraits<global_size_t>::invalid()) {
         TEUCHOS_TEST_FOR_EXCEPTION(numGlobalElements % blkSize != 0, Exceptions::RuntimeError,
                                    "StridedMap::StridedMap: stridingInfo not valid: getFixedBlockSize is not an integer multiple of numGlobalElements.");
-#ifdef HAVE_TPETRA_DEBUG
+#ifdef HAVE_XPETRA_DEBUG
         // We have to do this check ourselves, as we don't necessarily construct the full Tpetra map
         global_size_t sumLocalElements;
         Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, Teuchos::as<global_size_t>(numLocalElements), Teuchos::outArg(sumLocalElements));
@@ -348,7 +348,7 @@ namespace Xpetra {
       if (numGlobalElements != Teuchos::OrdinalTraits<global_size_t>::invalid()) {
         TEUCHOS_TEST_FOR_EXCEPTION(numGlobalElements % blkSize != 0, Exceptions::RuntimeError,
                                    "StridedMap::StridedMap: stridingInfo not valid: getFixedBlockSize is not an integer multiple of numGlobalElements.");
-#ifdef HAVE_TPETRA_DEBUG
+#ifdef HAVE_XPETRA_DEBUG
         // We have to do this check ourselves, as we don't necessarily construct the full Tpetra map
         global_size_t sumLocalElements, numLocalElements = elementList.size();
         Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, numLocalElements, Teuchos::outArg(sumLocalElements));
@@ -545,7 +545,11 @@ namespace Xpetra {
             const GlobalOrdinal gid = dofGids[i+j];
             const GlobalOrdinal r   = (gid - Teuchos::as<GlobalOrdinal>(j) - goStridedOffset - offset_ - indexBase_) /
                                       Teuchos::as<GlobalOrdinal>(getFixedBlockSize()) - goZeroOffset - cnt;
-            if (r != Teuchos::OrdinalTraits<GlobalOrdinal>::zero() ) {
+            // TAW 1/18/2016: We cannot use Teuchos::OrdinalTraits<GlobalOrdinal>::zero() ) here,
+            //                If, e.g., GO=long long is disabled, OrdinalTraits<long long> is not available.
+            //                But we instantiate stubs on GO=long long which might contain StridedMaps.
+            //                These lead to compilation errors, then.
+            if (r != 0 ) {
               std::cout << "goZeroOffset   : " <<  goZeroOffset << std::endl
                         << "dofGids[0]     : " <<  dofGids[0] << std::endl
                         << "stridedOffset  : " <<  nStridedOffset << std::endl

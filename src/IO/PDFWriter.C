@@ -906,12 +906,15 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   // Write element block information
-  ErrChk( ex_put_elem_block( outFile,
-                             1,
-                             "QUADRANGLES",
-                             static_cast<int64_t>(nelem),
-                             4,
-                             0 ) == 0,
+  ErrChk( ex_put_block( outFile,
+                        EX_ELEM_BLOCK,
+                        1,
+                        "QUADRANGLES",
+                        static_cast<int64_t>(nelem),
+                        4,
+                        0,
+                        0,
+                        0 ) == 0,
           "Failed to write QUDARANGLE element block to file: " + m_filename );
   // Write element connectivity
   for (std::size_t i=0; i<nelem; ++i) {
@@ -920,24 +923,24 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
                    static_cast< int >( i+ye+2 ),
                    static_cast< int >( i+ye+nbix+3 ),
                    static_cast< int >( i+ye+nbix+2 ) };
-    ErrChk(
-      ex_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+    ErrChk( ex_put_partial_conn( outFile, EX_ELEM_BLOCK, 1,
+              static_cast<int64_t>(i+1), 1, con, nullptr, nullptr ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
   }
 
   // Output PDF function values in element or node centers
-  char c = 'e';
+  ex_entity_type c = EX_ELEM_BLOCK;
   if (centering == ctr::PDFCenteringType::NODE) {
     ++nbix; ++nbiy;
-    c = 'n';
+    c = EX_NODE_BLOCK;
   }
 
   // Write PDF function values metadata
-  ErrChk( ex_put_var_param( outFile, &c, 1 ) == 0,
+  ErrChk( ex_put_variable_param( outFile, c, 1 ) == 0,
             "Failed to write results metadata to file: " + m_filename );
   char* probname[] = { const_cast< char* >(
                        (name + '(' + vars[0] + ',' + vars[1] + ')').c_str() ) };
-  ErrChk( ex_put_var_names( outFile, &c, 1, probname ) == 0,
+  ErrChk( ex_put_variable_names( outFile, c, 1, probname ) == 0,
             "Failed to write results metadata to file: " + m_filename );
 
   // If no user-specified sample space extents, output pdf map directly
@@ -1033,12 +1036,15 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   // Write element block information
-  ErrChk( ex_put_elem_block( outFile,
-                             1,
-                             "HEXAHEDRA",
-                             static_cast<int64_t>(nelem),
-                             8,
-                             0 ) == 0,
+  ErrChk( ex_put_block( outFile,
+                        EX_ELEM_BLOCK,
+                        1,
+                        "HEXAHEDRA",
+                        static_cast<int64_t>(nelem),
+                        8,
+                        0,
+                        0,
+                        0 ) == 0,
           "Failed to write HEXAHEDRA element block to file: " + m_filename );
   // Write element connectivity
   const auto n = nbix*nbiy;
@@ -1054,23 +1060,24 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
                    static_cast< int >( i+ye+p+nbix+3 ),
                    static_cast< int >( i+ye+p+nbix+2 ) };
     ErrChk(
-      ex_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+      ex_put_partial_conn( outFile, EX_ELEM_BLOCK, 1,
+        static_cast<int64_t>(i+1), 1, con, nullptr, nullptr ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
   }
 
   // Output PDF function values in element or node centers
-  char c = 'e';
+  ex_entity_type c = EX_ELEM_BLOCK;
   if (centering == ctr::PDFCenteringType::NODE) {
     ++nbix; ++nbiy; ++nbiz;
-    c = 'n';
+    c = EX_NODE_BLOCK;
   }
 
   // Write PDF function values metadata
-  ErrChk( ex_put_var_param( outFile, &c, 1 ) == 0,
+  ErrChk( ex_put_variable_param( outFile, c, 1 ) == 0,
             "Failed to write results metadata to file: " + m_filename );
   char* probname[] = { const_cast< char* >( (name + '(' + vars[0] + ',' +
                          vars[1] + ',' + vars[2] + ')').c_str() ) };
-  ErrChk( ex_put_var_names( outFile, &c, 1, probname ) == 0,
+  ErrChk( ex_put_variable_names( outFile, c, 1, probname ) == 0,
             "Failed to write results metadata to file: " + m_filename );
 
   // If no user-specified sample space extents, output pdf map directly
@@ -1153,20 +1160,23 @@ PDFWriter::writeExVar( int exoFile,
 // *****************************************************************************
 {
   if (centering == ctr::PDFCenteringType::NODE)
-    ErrChk( ex_put_nodal_var( exoFile,
-                              1,
-                              1,
-                              static_cast<int64_t>(probability.size()),
-                              probability.data() ) == 0,
+    ErrChk( ex_put_var( exoFile,
+                        1,
+                        EX_NODE_BLOCK,
+                        1,
+                        1,
+                        static_cast<int64_t>(probability.size()),
+                        probability.data() ) == 0,
             "Failed to write node-centered bivariate PDF to file: " +
             m_filename );
   else
-    ErrChk( ex_put_elem_var( exoFile,
-                             1,
-                             1,
-                             1,
-                             static_cast<int64_t>(probability.size()),
-                             probability.data() ) == 0,
+    ErrChk( ex_put_var( exoFile,
+                        1,
+                        EX_ELEM_BLOCK,
+                        1,
+                        1,
+                        static_cast<int64_t>(probability.size()),
+                        probability.data() ) == 0,
             "Failed to write elem-centered bivariate PDF to file: " +
             m_filename );
 }

@@ -80,6 +80,7 @@ APPEND_SET(HEADERS
   BelosStatusTestFactory.hpp
   BelosStatusTestGeneralOutput.hpp
   BelosStatusTestGenResNorm.hpp
+  BelosStatusTestGenResSubNorm.hpp
   BelosStatusTest.hpp
   BelosStatusTestImpResNorm.hpp
   BelosStatusTestMaxIters.hpp
@@ -87,6 +88,7 @@ APPEND_SET(HEADERS
   BelosStatusTestOutput.hpp
   BelosStatusTestResNorm.hpp
   BelosStatusTestResNormOutput.hpp
+  BelosStatusTestUserOutput.hpp
   BelosStochasticCGIteration.hpp
   BelosStubTsqrAdapter.hpp
   BelosTFQMRIter.hpp
@@ -97,6 +99,7 @@ APPEND_SET(HEADERS
   Belos_Details_LinearSolver.hpp
   Belos_Details_LinearSolverFactory.hpp
   Belos_Details_registerLinearSolverFactory.hpp
+  BelosUtils.hpp
   )
 
 # UTIL

@@ -4,7 +4,7 @@
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/fixtures/QuadFixture.hpp>
 #include <stk_io/IossBridge.hpp>
-#include <unit_tests/BulkDataTester.hpp>
+#include <stk_unit_test_utils/BulkDataTester.hpp>
 #include "FaceCreatorFixture.hpp"
 #include <stk_mesh/baseImpl/elementGraph/ElemElemGraph.hpp>
 
@@ -56,8 +56,8 @@ void convert_quad_fixture_to_my_bulk_data_flavor(unsigned numX, unsigned numY, s
 
     std::ostringstream os;
     const std::string file_temp("testadfasdasdfas.exo");
-    stk::unit_test_util::write_mesh_using_stk_io(file_temp, fixture.m_bulk_data, bulkData.parallel());
-    stk::unit_test_util::fill_mesh_using_stk_io(file_temp, bulkData, bulkData.parallel());
+    stk::io::write_mesh(file_temp, fixture.m_bulk_data);
+    stk::io::fill_mesh(file_temp, bulkData);
 
     ThrowRequireMsg(fixture.m_bulk_data.parallel_size()<10, "Testing assumption violated.");
     os << file_temp << "." << fixture.m_bulk_data.parallel_size() << "." << fixture.m_bulk_data.parallel_rank();
@@ -72,9 +72,10 @@ protected:
 
     void setup_2x1_2d_mesh(stk::mesh::BulkData::AutomaticAuraOption aura_option)
     {
-        set_bulk(new stk::mesh::unit_test::BulkDataElemGraphFaceSharingTester(get_meta(), get_comm(), aura_option));
+        set_bulk(new stk::mesh::BulkData(get_meta(), get_comm(), aura_option));
         unsigned numX = 2, numY = 1;
         convert_quad_fixture_to_my_bulk_data_flavor(numX, numY, get_bulk());
+        get_bulk().initialize_face_adjacent_element_graph();
     }
 
     virtual stk::mesh::EntityVector get_nodes_of_face_for_this_proc()

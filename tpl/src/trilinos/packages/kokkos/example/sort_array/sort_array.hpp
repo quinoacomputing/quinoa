@@ -105,7 +105,7 @@ void sort_array( const size_t array_length /* length of spans of array to sort *
 #if defined( KOKKOS_HAVE_CUDA )
 
   typedef typename
-    Kokkos::Impl::if_c< Kokkos::Impl::is_same< Device , Kokkos::Cuda >::value
+    Kokkos::Impl::if_c< std::is_same< Device , Kokkos::Cuda >::value
                       , Kokkos::View<int*,Kokkos::Cuda::array_layout,Kokkos::CudaHostPinnedSpace>
                       , typename device_array_type::HostMirror
                       >::type  host_array_type ;
@@ -116,7 +116,7 @@ void sort_array( const size_t array_length /* length of spans of array to sort *
 
 #endif
 
-  Kokkos::Impl::Timer timer;
+  Kokkos::Timer timer;
 
   const device_array_type  work_array("work_array" , array_length );
   const host_array_type    host_array("host_array" , total_length );

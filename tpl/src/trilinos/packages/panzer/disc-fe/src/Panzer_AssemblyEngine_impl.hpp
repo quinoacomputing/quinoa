@@ -176,7 +176,8 @@ evaluateVolume(const panzer::AssemblyEngineInArgs& in)
   panzer::Traits::PreEvalData ped;
   ped.gedc.addDataObject("Solution Gather Container",in.ghostedContainer_);
   ped.gedc.addDataObject("Residual Scatter Container",in.ghostedContainer_);
-  ped.sensitivities_name = in.sensitivities_name;
+  ped.first_sensitivities_name  = in.first_sensitivities_name;
+  ped.second_sensitivities_name = in.second_sensitivities_name;
   in.fillGlobalEvaluationDataContainer(ped.gedc);
 
   // Loop over volume field managers
@@ -194,11 +195,19 @@ evaluateVolume(const panzer::AssemblyEngineInArgs& in)
       workset.alpha = in.alpha;
       workset.beta = in.beta;
       workset.time = in.time;
+      workset.step_size = in.step_size;
+      workset.stage_number = in.stage_number;
       workset.gather_seeds = in.gather_seeds;
       workset.evaluate_transient_terms = in.evaluate_transient_terms;
 
+
       fm->template evaluateFields<EvalT>(workset);
     }
+
+    // double s = 0.;
+    // double p = 0.;
+    // fm->template analyzeGraph<EvalT>(s,p);
+    // std::cout << "Analyze Graph: " << PHX::typeAsString<EvalT>() << ",b=" << block << ", s=" << s << ", p=" << p << std::endl; 
 
     fm->template postEvaluate<EvalT>(NULL);
   }
@@ -303,7 +312,8 @@ evaluateBCs(const panzer::BCType bc_type,
   ped.gedc.addDataObject("Dirichlet Counter",preEval_loc);
   ped.gedc.addDataObject("Solution Gather Container",in.ghostedContainer_);
   ped.gedc.addDataObject("Residual Scatter Container",in.ghostedContainer_);
-  ped.sensitivities_name = in.sensitivities_name;
+  ped.first_sensitivities_name  = in.first_sensitivities_name;
+  ped.second_sensitivities_name = in.second_sensitivities_name;
   in.fillGlobalEvaluationDataContainer(ped.gedc);
 
   // this helps work around issues when constructing a mass

@@ -47,6 +47,27 @@
 
 namespace Intrepid {
 
+//
+//swap function
+//
+template<typename T>
+void
+swap(T & a, T & b);
+
+//
+// max function
+//
+template<typename T>
+T
+max(const T & a,const  T & b);
+
+//
+// max function
+//
+template<typename T>
+T
+min(const T & a,const  T & b);
+
 ///
 /// Sign function
 ///
@@ -82,6 +103,14 @@ typename Sacado::ScalarType<T>::type
 machine_epsilon();
 
 ///
+/// Number of digits for integer types.
+///
+
+template<typename T>
+Index
+num_digits();
+
+///
 /// The circle constant
 ///
 template<typename T>
@@ -109,6 +138,25 @@ random_uniform();
 template<typename T>
 typename Sacado::ScalarType<T>::type
 random_normal();
+
+///
+/// Fill all levels of AD to specified constant.
+///
+using Kokkos::Impl::enable_if;
+using Kokkos::Impl::is_same;
+using Sacado::ScalarType;
+
+template<typename T>
+void
+fill_AD(
+    typename enable_if<is_same<T, typename ScalarType<T>::type>::value, T>::type & x,
+    typename ScalarType<T>::type const c);
+
+template<typename T>
+void
+fill_AD(
+    typename enable_if<!is_same<T, typename ScalarType<T>::type>::value, T>::type & x,
+    typename ScalarType<T>::type const c);
 
 ///
 /// Compute a non-negative integer power by binary manipulation.
@@ -158,63 +206,6 @@ levi_civita(Index const i, Index const j, Index const k);
 template<typename T>
 T
 levi_civita(Index const i, Index const j, Index const k, Index const l);
-
-///
-/// Duet type. Holder of two objects of the same type.
-/// Useful as return type for functions that need to return two objects.
-///
-template<typename T>
-struct Duet
-{
-  T first;
-  T second;
-};
-
-///
-/// Triplet type. Holder of three objects of the same type.
-/// Useful as return type for functions that need to return three objects.
-///
-template<typename T>
-struct Triplet
-{
-  T first;
-  T second;
-  T third;
-};
-
-///
-/// Create a Duet structure.
-///
-template<typename T>
-inline
-Duet<T>
-make_duet(T const & a, T const & b);
-
-///
-/// Create a Triplet structure.
-///
-template<typename T>
-inline
-Triplet<T>
-make_triplet(T const & a, T const & b, T const & c);
-
-///
-/// Tie function template to hold values of functions
-/// that return a Duet.
-///
-template<typename T>
-inline
-Duet<T>
-tie(T & a, T& b);
-
-///
-/// Tie function template to hold values of functions
-/// that return a Duet.
-///
-template<typename T>
-inline
-Triplet<T>
-tie(T & a, T & b, T & c);
 
 } // namespace Intrepid
 

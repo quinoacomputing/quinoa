@@ -62,11 +62,11 @@
 
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 
-#ifdef HAVE_TEKO 
+#ifdef PANZER_HAVE_TEKO 
 #include "Teko_RequestHandler.hpp"
 #endif
 
-namespace panzer_stk_classic {
+namespace panzer_stk {
 
 
 Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> >
@@ -76,7 +76,7 @@ buildLOWSFactory(bool blockedAssembly,
                  int spatialDim,
                  const Teuchos::RCP<const Teuchos::MpiComm<int> > & mpi_comm,
                  const Teuchos::RCP<Teuchos::ParameterList> & strat_params,
-                 #ifdef HAVE_TEKO 
+                 #ifdef PANZER_HAVE_TEKO 
                  const Teuchos::RCP<Teko::RequestHandler> & req_handler=Teuchos::null,
                  #endif 
                  bool writeCoordinates=false,
@@ -89,11 +89,11 @@ template <typename GO>
 Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > 
 buildLOWSFactory(bool blockedAssembly,
                  const Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> & globalIndexer,
-                 const Teuchos::RCP<panzer_stk_classic::STKConnManager<GO> > & stkConn_manager,
+                 const Teuchos::RCP<panzer_stk::STKConnManager<GO> > & stkConn_manager,
                  int spatialDim,
                  const Teuchos::RCP<const Teuchos::MpiComm<int> > & mpi_comm,
                  const Teuchos::RCP<Teuchos::ParameterList> & strat_params,
-                 #ifdef HAVE_TEKO 
+                 #ifdef PANZER_HAVE_TEKO 
                  const Teuchos::RCP<Teko::RequestHandler> & req_handler,
                  #endif 
                  bool writeCoordinates=false,

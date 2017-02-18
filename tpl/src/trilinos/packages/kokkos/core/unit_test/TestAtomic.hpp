@@ -84,10 +84,9 @@ struct SuperScalar {
   }
 
   KOKKOS_INLINE_FUNCTION
-  volatile SuperScalar& operator = (const SuperScalar& src) volatile  {
+  void operator = (const SuperScalar& src) volatile  {
     for(int i=0; i<N; i++)
       val[i] = src.val[i];
-    return *this;
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -208,6 +207,10 @@ T AddLoopSerial(int loop) {
   return val;
 }
 
+//------------------------------------------------------
+//--------------atomic_compare_exchange-----------------
+//------------------------------------------------------
+
 template<class T,class DEVICE_TYPE>
 struct CASFunctor{
   typedef DEVICE_TYPE execution_space;
@@ -270,6 +273,10 @@ T CASLoopSerial(int loop) {
   return val;
 }
 
+//----------------------------------------------
+//--------------atomic_exchange-----------------
+//----------------------------------------------
+
 template<class T,class DEVICE_TYPE>
 struct ExchFunctor{
   typedef DEVICE_TYPE execution_space;
@@ -312,7 +319,7 @@ T ExchLoop(int loop) {
 }
 
 template<class T>
-T ExchLoopSerial(int loop) {
+T ExchLoopSerial(typename std::conditional<!std::is_same<T,Kokkos::complex<double> >::value,int,void>::type loop) {
   T* data = new T[1];
   T* data2 = new T[1];
   data[0] = 0;
@@ -321,6 +328,25 @@ T ExchLoopSerial(int loop) {
 	T old = *data;
 	*data=(T) i;
 	*data2+=old;
+  }
+
+  T val = *data2 + *data;
+  delete [] data;
+  delete [] data2;
+  return val;
+}
+
+template<class T>
+T ExchLoopSerial(typename std::conditional<std::is_same<T,Kokkos::complex<double> >::value,int,void>::type loop) {
+  T* data = new T[1];
+  T* data2 = new T[1];
+  data[0] = 0;
+  data2[0] = 0;
+  for(int i=0;i<loop;i++) {
+  T old = *data;
+  data->real() = (static_cast<double>(i));
+  data->imag() = 0;
+  *data2+=old;
   }
 
   T val = *data2 + *data;

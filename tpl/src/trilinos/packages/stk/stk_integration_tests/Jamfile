@@ -61,7 +61,16 @@ alias install-targets
 # SECTION 3: End-user install
 #
 explicit install-user-env ;
-alias install-user-env ;
+alias install-user-env : install-user-jamfile ;
+
+# This rule copies build-system related files for this product to the install-root.
+explicit install-user-jamfile ;
+install install-user-jamfile
+  : [ glob $(stk_integration_tests-root)/Jamfile ]
+  : <location>$(install-root)/stk/stk_integration_tests
+    <install-source-root>$(stk_integration_tests-root)
+  ;
+
 
 explicit install-exe-targets ;
 alias install-exe-targets : ;
@@ -76,11 +85,18 @@ local xml-files =
 exe stk_mesh_integration_tests
   :
     $(stk_integration_tests-root)/stk_mesh/IntegrationTestMain.cpp
-    [ glob $(stk_integration_tests-root)/stk_mesh/*.cpp $(stk_integration_tests-root)/stk_mesh_doc/*.cpp $(stk_integration_tests-root)/stk_mesh/face_creation/skin_mesh/*.cpp ]
+    [ glob 
+        $(stk_integration_tests-root)/stk_mesh/*.cpp 
+        $(stk_integration_tests-root)/stk_mesh_doc/*.cpp 
+        $(stk_integration_tests-root)/stk_mesh/face_creation/skin_mesh/*.cpp  
+        $(stk_integration_tests-root)/stk_mesh/face_creation/user_created/*.cpp
+        $(stk_integration_tests-root)/stk_mesh/face_creation/user_support/*.cpp
+    ]
     /sierra/stk_mesh//stk_mesh_base
     /sierra/stk_mesh//stk_mesh_fixtures
     /sierra/stk_io//stk_io
     /sierra/stk_unit_test_utils//stk_unit_test_utils
+    /sierra/stk_balance//stk_balance_lib
     /tpl/trilinos//teuchos
     /tpl/gtest//gtest
     /mpi//mpi

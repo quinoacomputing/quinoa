@@ -45,17 +45,17 @@
 #include "Panzer_STK_SetupLOWSFactory.hpp"
 #include "Panzer_STK_SetupLOWSFactory_impl.hpp"
 
-namespace panzer_stk_classic {
+namespace panzer_stk {
 
   template
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> >
   buildLOWSFactory<int>(bool blockedAssembly,
                    const Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> & globalIndexer,
-                   const Teuchos::RCP<panzer_stk_classic::STKConnManager<int> > & stkConn_manager,
+                   const Teuchos::RCP<panzer_stk::STKConnManager<int> > & stkConn_manager,
                    int spatialDim,
                    const Teuchos::RCP<const Teuchos::MpiComm<int> > & mpi_comm,
                    const Teuchos::RCP<Teuchos::ParameterList> & strat_params,
-                   #ifdef HAVE_TEKO
+                   #ifdef PANZER_HAVE_TEKO
                    const Teuchos::RCP<Teko::RequestHandler> & reqHandler,
                    #endif
                    bool writeCoordinates,
@@ -67,11 +67,11 @@ namespace panzer_stk_classic {
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> >
   buildLOWSFactory<panzer::Ordinal64>(bool blockedAssembly,
                    const Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> & globalIndexer,
-                   const Teuchos::RCP<panzer_stk_classic::STKConnManager<panzer::Ordinal64> > & stkConn_manager,
+                   const Teuchos::RCP<panzer_stk::STKConnManager<panzer::Ordinal64> > & stkConn_manager,
                    int spatialDim,
                    const Teuchos::RCP<const Teuchos::MpiComm<int> > & mpi_comm,
                    const Teuchos::RCP<Teuchos::ParameterList> & strat_params,
-                   #ifdef HAVE_TEKO
+                   #ifdef PANZER_HAVE_TEKO
                    const Teuchos::RCP<Teko::RequestHandler> & reqHandler,
                    #endif
                    bool writeCoordinates,
@@ -86,24 +86,24 @@ namespace panzer_stk_classic {
                    int spatialDim,
                    const Teuchos::RCP<const Teuchos::MpiComm<int> > & mpi_comm,
                    const Teuchos::RCP<Teuchos::ParameterList> & strat_params,
-                   #ifdef HAVE_TEKO
+                   #ifdef PANZER_HAVE_TEKO
                    const Teuchos::RCP<Teko::RequestHandler> & reqHandler,
                    #endif
                    bool writeCoordinates,
                    bool writeTopo
                    )
   {
-    #ifdef HAVE_TEKO
+    #ifdef PANZER_HAVE_TEKO
     Teuchos::RCP<Teko::RequestHandler> reqHandler_local = reqHandler;
     if(reqHandler_local==Teuchos::null)
       reqHandler_local = Teuchos::rcp(new Teko::RequestHandler);
     #endif
 
 #ifndef PANZER_ORDINAL64_IS_INT
-    Teuchos::RCP<panzer_stk_classic::STKConnManager<panzer::Ordinal64> > long_conn = Teuchos::rcp_dynamic_cast<panzer_stk_classic::STKConnManager<panzer::Ordinal64> >(conn_manager);
+    Teuchos::RCP<panzer_stk::STKConnManager<panzer::Ordinal64> > long_conn = Teuchos::rcp_dynamic_cast<panzer_stk::STKConnManager<panzer::Ordinal64> >(conn_manager);
     if(long_conn!=Teuchos::null)
       return buildLOWSFactory(blockedAssembly,globalIndexer,long_conn,spatialDim,mpi_comm,strat_params,
-                              #ifdef HAVE_TEKO
+                              #ifdef PANZER_HAVE_TEKO
                               reqHandler_local,
                               #endif
                               writeCoordinates,
@@ -111,10 +111,10 @@ namespace panzer_stk_classic {
                               );
 #endif
 
-    Teuchos::RCP<panzer_stk_classic::STKConnManager<int> > int_conn = Teuchos::rcp_dynamic_cast<panzer_stk_classic::STKConnManager<int> >(conn_manager);
+    Teuchos::RCP<panzer_stk::STKConnManager<int> > int_conn = Teuchos::rcp_dynamic_cast<panzer_stk::STKConnManager<int> >(conn_manager);
     if(int_conn!=Teuchos::null)
       return buildLOWSFactory(blockedAssembly,globalIndexer,int_conn,spatialDim,mpi_comm,strat_params,
-                              #ifdef HAVE_TEKO
+                              #ifdef PANZER_HAVE_TEKO
                               reqHandler_local,
                               #endif
                               writeCoordinates,
