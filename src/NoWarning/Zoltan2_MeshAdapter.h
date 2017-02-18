@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:40:07 PM MDT
+  \date      Fri 17 Feb 2017 05:58:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -45,6 +45,7 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #pragma GCC diagnostic ignored "-Wshadow"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 239 )
