@@ -165,19 +165,24 @@ const
 
   // Write element block information
   ErrChk(
-    ex_put_elem_block( m_outFile,
-                       elclass,
-                       eltype.c_str(),
-                       static_cast< int64_t >( inpoel.size() ) / nnpe,
-                       nnpe,
-                       0 ) == 0,
+    ex_put_block( m_outFile,            // exo file handle
+                  EX_ELEM_BLOCK,        // block type: elem block
+                  elclass,              // element class id
+                  eltype.c_str(),       // element block description
+                  static_cast< int64_t >( inpoel.size() ) / nnpe, // nof cells
+                  nnpe, // number of nodes per element
+                  6,    // number of edges per element
+                  4,    // number of faces per element
+                  0     // number of attributes per element
+                ) == 0,
     "Failed to write " + eltype + " element block to ExodusII file: " +
     m_filename );
 
   // Write element connectivity with 1-based node ids
   std::vector< int > inp;
   for (auto p : inpoel) inp.push_back( static_cast< int >( p+1 ) );
-  ErrChk( ex_put_elem_conn( m_outFile, elclass, inp.data() ) == 0,
+  ErrChk( ex_put_conn( m_outFile, EX_ELEM_BLOCK, elclass, inp.data(),
+                       nullptr, nullptr ) == 0,
           "Failed to write " + eltype + " element connectivity to ExodusII "
           "file: " + m_filename );
 }
@@ -214,7 +219,8 @@ const
   #endif
 
   ErrChk(
-    ex_put_var_param( m_outFile, "n", static_cast< int >( nv.size() ) ) == 0,
+    ex_put_variable_param( m_outFile, EX_NODE_BLOCK,
+                           static_cast< int >( nv.size() ) ) == 0,
     "Failed to write nodal output variable parameters to ExodusII file: " +
     m_filename );
 
@@ -222,10 +228,10 @@ const
   std::size_t i = 0;
   for (const auto& n : nv) names[ i++ ] = const_cast< char* >( n.c_str() );
 
-  ErrChk( ex_put_var_names( m_outFile,
-                            "n",
-                            static_cast< int >( nv.size() ),
-                            names ) == 0,
+  ErrChk( ex_put_variable_names( m_outFile,
+                                 EX_NODE_BLOCK,
+                                 static_cast< int >( nv.size() ),
+                                 names ) == 0,
           "Failed to write nodal output variable names to ExodusII file: " +
           m_filename );
 
@@ -255,7 +261,8 @@ const
   #endif
 
   ErrChk(
-    ex_put_var_param( m_outFile, "e", static_cast< int >( ev.size() ) ) == 0,
+    ex_put_variable_param( m_outFile, EX_ELEM_BLOCK,
+                           static_cast< int >( ev.size() ) ) == 0,
     "Failed to write element output variable parameters to ExodusII file: " +
     m_filename );
 
@@ -263,10 +270,10 @@ const
   std::size_t i = 0;
   for (const auto& n : ev) names[ i++ ] = const_cast< char* >( n.c_str() );
 
-  ErrChk( ex_put_var_names( m_outFile,
-                            "e",
-                            static_cast< int >( ev.size() ),
-                            names ) == 0,
+  ErrChk( ex_put_variable_names( m_outFile,
+                                 EX_ELEM_BLOCK,
+                                 static_cast< int >( ev.size() ),
+                                 names ) == 0,
           "Failed to write element output variable names to ExodusII file: " +
           m_filename );
 
@@ -289,11 +296,13 @@ ExodusIIMeshWriter::writeNodeScalar( uint64_t it,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  ErrChk( ex_put_nodal_var( m_outFile,
-                            static_cast< int >( it ),
-                            varid,
-                            static_cast< int64_t >( var.size() ),
-                            var.data() ) == 0,
+  ErrChk( ex_put_var( m_outFile,
+                      static_cast< int >( it ),
+                      EX_NODE_BLOCK,
+                      varid,
+                      1,
+                      static_cast< int64_t >( var.size() ),
+                      var.data() ) == 0,
           "Failed to write node scalar to ExodusII file: " + m_filename );
 }
 
@@ -309,11 +318,12 @@ ExodusIIMeshWriter::writeElemScalar( uint64_t it,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  ErrChk( ex_put_elem_var( m_outFile,
-                           static_cast< int >( it ),
-                           varid,
-                           1,
-                           static_cast< int64_t >( var.size() ),
-                           var.data() ) == 0,
+  ErrChk( ex_put_var( m_outFile,
+                      static_cast< int >( it ),
+                      EX_ELEM_BLOCK,
+                      varid,
+                      1,
+                      static_cast< int64_t >( var.size() ),
+                      var.data() ) == 0,
           "Failed to write elem scalar to ExodusII file: " + m_filename );
 }
