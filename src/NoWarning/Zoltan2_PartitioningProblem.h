@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:38:52 PM MDT
+  \date      Fri 17 Feb 2017 05:59:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
@@ -43,6 +43,7 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
 #include <Zoltan2_PartitioningProblem.hpp>
