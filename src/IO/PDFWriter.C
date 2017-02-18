@@ -938,8 +938,9 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
   // Write PDF function values metadata
   ErrChk( ex_put_variable_param( outFile, c, 1 ) == 0,
             "Failed to write results metadata to file: " + m_filename );
-  char* probname[] = { const_cast< char* >(
-                       (name + '(' + vars[0] + ',' + vars[1] + ')').c_str() ) };
+  char* probname[1];
+  std::string pdfname( name + '(' + vars[0] + ',' + vars[1] + ')' );
+  probname[0] = const_cast< char* >( pdfname.c_str() );
   ErrChk( ex_put_variable_names( outFile, c, 1, probname ) == 0,
             "Failed to write results metadata to file: " + m_filename );
 
@@ -1075,8 +1076,10 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
   // Write PDF function values metadata
   ErrChk( ex_put_variable_param( outFile, c, 1 ) == 0,
             "Failed to write results metadata to file: " + m_filename );
-  char* probname[] = { const_cast< char* >( (name + '(' + vars[0] + ',' +
-                         vars[1] + ',' + vars[2] + ')').c_str() ) };
+  char* probname[1];
+  std::string pdfname( name + '(' + vars[0] + ',' +
+                         vars[1] + ',' + vars[2] + ')' );
+  probname[0] = const_cast< char* >( pdfname.c_str() );
   ErrChk( ex_put_variable_names( outFile, c, 1, probname ) == 0,
             "Failed to write results metadata to file: " + m_filename );
 
