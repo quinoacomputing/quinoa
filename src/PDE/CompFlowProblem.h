@@ -518,7 +518,7 @@ class CompFlowProblemNLEnergyGrowth {
                tk::real dt,
                tk::real,
                const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 4 >, 4 >&,
+               const std::array< std::array< tk::real, 4 >, 4 >& mass,
                const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
                std::array< std::array< tk::real, 4 >, 5 >&,
@@ -601,7 +601,6 @@ class CompFlowProblemNLEnergyGrowth {
                 std::sin(bz*M_PI*z[N[3]]) }} }};
 
       // density source
-      // NOTE: need to pass physical time from Carrier::rhs()
       std::array< tk::real, 4 >
         Sr{{ -a*std::exp(-a*t)*gx[0],
              -a*std::exp(-a*t)*gx[1],
@@ -631,51 +630,51 @@ class CompFlowProblemNLEnergyGrowth {
       std::array< std::array< tk::real, 4 >, 3 >
         Sm{{ {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[0][0] + 
-                std::pow(-3*ce*3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[0][1] + 
-                std::pow(-3*ce*3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[0][2] + 
-                std::pow(-3*ce*3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[0][3] + 
-                std::pow(-3*ce*3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][3] }},
              {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[1][0] + 
-                std::pow(-3*ce*3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[1][1] + 
-                std::pow(-3*ce*3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[1][2] + 
-                std::pow(-3*ce*3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[1][3] + 
-                std::pow(-3*ce*3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][3] }},
              {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[2][0] + 
-                std::pow(-3*ce*3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[2][1] + 
-                std::pow(-3*ce*3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[2][2] + 
-                std::pow(-3*ce*3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[2][3] + 
-                std::pow(-3*ce*3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][3] }} }};
 
       // add momentum and energy source at element nodes
