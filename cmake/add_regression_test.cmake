@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Fri 25 Nov 2016 07:21:00 PM MST
+# \date      Fri 17 Feb 2017 01:20:58 PM MST
 #
 ################################################################################
 
@@ -82,8 +82,8 @@
 # be tested. If empty, no binary diff is performed. Default: "". Note that the
 # number of baseline filenames must equal the number of result files.
 #
-# BIN_DIFF_PROG_CONF exodiff.cfg - Binary diff program configuration file.
-# Default: "".
+# BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ... - Binary diff program
+# configuration file(s). Default: "".
 #
 # POSTPROCESS_PROG exec - Optional postprocess executable to run after test
 # run. Default: "".
@@ -100,10 +100,10 @@
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
-                   BIN_DIFF_PROG_CONF POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
+                   POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
-                     TEXT_DIFF_PROG_ARGS)
+                     TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -192,6 +192,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()
 
+  if(ARG_BIN_DIFF_PROG_CONF)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
+  endif()
+
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
   if (ARG_ARGS)
@@ -256,6 +262,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   #  5 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
     PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
-    FAIL_REGULAR_EXPRESSION "exodiff: ERROR")
+    FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different")
 
 endfunction()
