@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
+//
 //                        Kokkos v. 2.0
 //              Copyright (2014) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-// 
+//
 // ************************************************************************
 //@HEADER
 */
@@ -60,14 +60,15 @@ namespace Impl {
 
 //----------------------------------------------------------------------------
 
-template< class FunctorType , class Arg0 , class Arg1 , class Arg2 >
+template< class FunctorType , class ... Traits >
 class ParallelFor< FunctorType
-                 , Kokkos::RangePolicy< Arg0 , Arg1 , Arg2 , Kokkos::Qthread >
+                 , Kokkos::RangePolicy< Traits ... >
+                 , Kokkos::Qthread
                  >
 {
 private:
 
-  typedef Kokkos::RangePolicy< Arg0 , Arg1 , Arg2 , Kokkos::Qthread >  Policy ;
+  typedef Kokkos::RangePolicy< Traits ... >  Policy ;
 
   typedef typename Policy::work_tag     WorkTag ;
   typedef typename Policy::member_type  Member ;
@@ -129,28 +130,36 @@ public:
 
 //----------------------------------------------------------------------------
 
-template< class FunctorType , class Arg0 , class Arg1 , class Arg2 >
+template< class FunctorType , class ReducerType , class ... Traits >
 class ParallelReduce< FunctorType
-                    , Kokkos::RangePolicy< Arg0, Arg1, Arg2, Kokkos::Qthread >
+                    , Kokkos::RangePolicy< Traits ... >
+                    , ReducerType
+                    , Kokkos::Qthread
                     >
 {
 private:
 
-  typedef Kokkos::RangePolicy< Arg0 , Arg1 , Arg2 , Kokkos::Qthread >  Policy ;
+  typedef Kokkos::RangePolicy< Traits ... >  Policy ;
 
   typedef typename Policy::work_tag     WorkTag ;
-  typedef typename Policy::member_type  Member ;
   typedef typename Policy::WorkRange    WorkRange ;
+  typedef typename Policy::member_type  Member ;
 
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType, WorkTag > ValueTraits ;
-  typedef Kokkos::Impl::FunctorValueInit<   FunctorType, WorkTag > ValueInit ;
+  typedef Kokkos::Impl::if_c< std::is_same<InvalidType, ReducerType>::value, FunctorType, ReducerType > ReducerConditional;
+  typedef typename ReducerConditional::type ReducerTypeFwd;
+
+  // Static Assert WorkTag void if ReducerType not InvalidType
+
+  typedef Kokkos::Impl::FunctorValueTraits< ReducerTypeFwd, WorkTag > ValueTraits ;
+  typedef Kokkos::Impl::FunctorValueInit<   ReducerTypeFwd, WorkTag > ValueInit ;
 
   typedef typename ValueTraits::pointer_type    pointer_type ;
   typedef typename ValueTraits::reference_type  reference_type ;
 
-  const FunctorType  m_functor ;
-  const Policy       m_policy ;
-  const pointer_type m_result_ptr ;
+  const FunctorType   m_functor ;
+  const Policy        m_policy ;
+  const ReducerType   m_reducer ;
+  const pointer_type  m_result_ptr ;
 
   template< class TagType >
   inline static
@@ -185,9 +194,10 @@ private:
 
     ParallelReduce::template exec_range< WorkTag >(
       self.m_functor, range.begin(), range.end(),
-      ValueInit::init( self.m_functor , exec.exec_all_reduce_value() ) );
+      ValueInit::init( ReducerConditional::select(self.m_functor , self.m_reducer)
+                     , exec.exec_all_reduce_value() ) );
 
-    exec.template exec_all_reduce<FunctorType, WorkTag >( self.m_functor );
+    exec.template exec_all_reduce< FunctorType, ReducerType, WorkTag >( self.m_functor, self.m_reducer );
   }
 
 public:
@@ -195,37 +205,52 @@ public:
   inline
   void execute() const
     {
-      QthreadExec::resize_worker_scratch( ValueTraits::value_size( m_functor ) , 0 );
+      QthreadExec::resize_worker_scratch( ValueTraits::value_size( ReducerConditional::select(m_functor , m_reducer) ) , 0 );
       Impl::QthreadExec::exec_all( Qthread::instance() , & ParallelReduce::exec , this );
 
       const pointer_type data = (pointer_type) QthreadExec::exec_all_reduce_result();
 
-      Kokkos::Impl::FunctorFinal< FunctorType , typename Policy::work_tag >::final( m_functor , data );
+      Kokkos::Impl::FunctorFinal< ReducerTypeFwd , WorkTag >::final( ReducerConditional::select(m_functor , m_reducer) , data );
 
       if ( m_result_ptr ) {
-        const unsigned n = ValueTraits::value_count( m_functor );
+        const unsigned n = ValueTraits::value_count( ReducerConditional::select(m_functor , m_reducer) );
         for ( unsigned i = 0 ; i < n ; ++i ) { m_result_ptr[i] = data[i]; }
       }
     }
 
-  template< class HostViewType >
+  template< class ViewType >
   ParallelReduce( const FunctorType  & arg_functor
                 , const Policy       & arg_policy
-                , const HostViewType & arg_result_view )
+                , const ViewType & arg_result_view
+                , typename std::enable_if<Kokkos::is_view< ViewType >::value &&
+                                          !Kokkos::is_reducer_type< ReducerType >::value
+                                          , void*>::type = NULL)
     : m_functor( arg_functor )
-    , m_policy(  arg_policy )
-    , m_result_ptr( arg_result_view.ptr_on_device() )
+    , m_policy( arg_policy )
+    , m_reducer( InvalidType() )
+    , m_result_ptr( arg_result_view.data() )
+    { }
+
+  ParallelReduce( const FunctorType & arg_functor
+                , Policy       arg_policy
+                , const ReducerType& reducer )
+    : m_functor( arg_functor )
+    , m_policy( arg_policy )
+    , m_reducer( reducer )
+    , m_result_ptr( reducer.result_view().data() )
     { }
 };
 
 //----------------------------------------------------------------------------
 
-template< class FunctorType , class Arg0 , class Arg1 >
-class ParallelFor< FunctorType , TeamPolicy< Arg0 , Arg1 , Kokkos::Qthread > >
+template< class FunctorType , class ... Properties >
+class ParallelFor< FunctorType
+                 , TeamPolicy< Properties ... >
+                 , Kokkos::Qthread >
 {
 private:
 
-  typedef TeamPolicy< Arg0 , Arg1 , Kokkos::Qthread >  Policy ;
+  typedef Kokkos::Impl::TeamPolicyInternal< Kokkos::Qthread , Properties ... > Policy ;
   typedef typename Policy::member_type  Member ;
   typedef typename Policy::work_tag     WorkTag ;
 
@@ -287,24 +312,32 @@ public:
 
 //----------------------------------------------------------------------------
 
-template< class FunctorType , class Arg0 , class Arg1 >
-class ParallelReduce< FunctorType , TeamPolicy< Arg0 , Arg1 , Kokkos::Qthread > >
+template< class FunctorType , class ReducerType , class ... Properties >
+class ParallelReduce< FunctorType
+                    , TeamPolicy< Properties... >
+                    , ReducerType
+                    , Kokkos::Qthread
+                    >
 {
 private:
 
-  typedef TeamPolicy< Arg0 , Arg1 , Kokkos::Qthread >  Policy ;
+  typedef Kokkos::Impl::TeamPolicyInternal< Kokkos::Qthread , Properties ... > Policy ;
 
   typedef typename Policy::work_tag     WorkTag ;
   typedef typename Policy::member_type  Member ;
 
-  typedef Kokkos::Impl::FunctorValueTraits< FunctorType, WorkTag > ValueTraits ;
-  typedef Kokkos::Impl::FunctorValueInit<   FunctorType, WorkTag > ValueInit ;
+  typedef Kokkos::Impl::if_c< std::is_same<InvalidType,ReducerType>::value, FunctorType, ReducerType> ReducerConditional;
+  typedef typename ReducerConditional::type ReducerTypeFwd;
+
+  typedef Kokkos::Impl::FunctorValueTraits< ReducerTypeFwd , WorkTag >  ValueTraits ;
+  typedef Kokkos::Impl::FunctorValueInit<   ReducerTypeFwd , WorkTag >  ValueInit ;
 
   typedef typename ValueTraits::pointer_type    pointer_type ;
   typedef typename ValueTraits::reference_type  reference_type ;
 
   const FunctorType  m_functor ;
   const Policy       m_policy ;
+  const ReducerType  m_reducer ;
   const pointer_type m_result_ptr ;
 
   template< class TagType >
@@ -339,9 +372,10 @@ private:
     ParallelReduce::template exec_team< WorkTag >
       ( self.m_functor
       , Member( exec , self.m_policy )
-      , ValueInit::init( self.m_functor , exec.exec_all_reduce_value() ) );
+      , ValueInit::init( ReducerConditional::select( self.m_functor , self.m_reducer )
+                       , exec.exec_all_reduce_value() ) );
 
-    exec.template exec_all_reduce< FunctorType , WorkTag >( self.m_functor );
+    exec.template exec_all_reduce< FunctorType, ReducerType, WorkTag >( self.m_functor, self.m_reducer );
   }
 
 public:
@@ -350,46 +384,61 @@ public:
   void execute() const
     {
       QthreadExec::resize_worker_scratch
-        ( /* reduction   memory */ ValueTraits::value_size( m_functor )
+        ( /* reduction   memory */ ValueTraits::value_size( ReducerConditional::select(m_functor , m_reducer) )
         , /* team shared memory */ FunctorTeamShmemSize< FunctorType >::value( m_functor , m_policy.team_size() ) );
 
       Impl::QthreadExec::exec_all( Qthread::instance() , & ParallelReduce::exec , this );
 
       const pointer_type data = (pointer_type) QthreadExec::exec_all_reduce_result();
 
-      Kokkos::Impl::FunctorFinal< FunctorType , typename Policy::work_tag >::final( m_functor , data );
+      Kokkos::Impl::FunctorFinal< ReducerTypeFwd , WorkTag >::final( ReducerConditional::select(m_functor , m_reducer), data );
 
       if ( m_result_ptr ) {
-        const unsigned n = ValueTraits::value_count( m_functor );
+        const unsigned n = ValueTraits::value_count( ReducerConditional::select(m_functor , m_reducer) );
         for ( unsigned i = 0 ; i < n ; ++i ) { m_result_ptr[i] = data[i]; }
       }
     }
 
   template< class ViewType >
-  ParallelReduce( const FunctorType & arg_functor ,
-                  const Policy      & arg_policy ,
-                  const ViewType    & arg_result )
+  ParallelReduce( const FunctorType & arg_functor
+                , const Policy      & arg_policy
+                , const ViewType    & arg_result
+                , typename std::enable_if<Kokkos::is_view< ViewType >::value &&
+                                          !Kokkos::is_reducer_type< ReducerType >::value
+                                          , void*>::type = NULL)
     : m_functor( arg_functor )
-    , m_policy(  arg_policy )
+    , m_policy( arg_policy )
+    , m_reducer( InvalidType() )
     , m_result_ptr( arg_result.ptr_on_device() )
     { }
+
+  inline
+  ParallelReduce( const FunctorType & arg_functor
+                , Policy       arg_policy
+                , const ReducerType& reducer )
+  : m_functor( arg_functor )
+  , m_policy( arg_policy )
+  , m_reducer( reducer )
+  , m_result_ptr( reducer.result_view().data() )
+  { }
 };
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-template< class FunctorType , class Arg0 , class Arg1 , class Arg2 >
+template< class FunctorType , class ... Traits >
 class ParallelScan< FunctorType
-                  , Kokkos::RangePolicy< Arg0 , Arg1 , Arg2 , Kokkos::Qthread >
+                  , Kokkos::RangePolicy< Traits ... >
+                  , Kokkos::Qthread
                   >
 {
 private:
 
-  typedef Kokkos::RangePolicy< Arg0 , Arg1 , Arg2 , Kokkos::Qthread >  Policy ;
+  typedef Kokkos::RangePolicy< Traits ... >  Policy ;
 
   typedef typename Policy::work_tag     WorkTag ;
-  typedef typename Policy::member_type  Member ;
   typedef typename Policy::WorkRange    WorkRange ;
+  typedef typename Policy::member_type  Member ;
 
   typedef Kokkos::Impl::FunctorValueTraits< FunctorType, WorkTag > ValueTraits ;
   typedef Kokkos::Impl::FunctorValueInit<   FunctorType, WorkTag > ValueInit ;
@@ -462,6 +511,7 @@ public:
 };
 
 } // namespace Impl
+
 } // namespace Kokkos
 
 //----------------------------------------------------------------------------
@@ -469,25 +519,23 @@ public:
 
 namespace Kokkos {
 
-template<typename iType>
+template< typename iType >
 KOKKOS_INLINE_FUNCTION
-Impl::TeamThreadRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember>
-TeamThreadRange(const Impl::QthreadTeamPolicyMember& thread, const iType& count)
+Impl::TeamThreadRangeBoundariesStruct< iType, Impl::QthreadTeamPolicyMember >
+TeamThreadRange( const Impl::QthreadTeamPolicyMember& thread, const iType& count )
 {
-  return Impl::TeamThreadRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember>(thread,count);
+  return Impl::TeamThreadRangeBoundariesStruct< iType, Impl::QthreadTeamPolicyMember >( thread, count );
 }
 
-template<typename iType>
+template< typename iType1, typename iType2 >
 KOKKOS_INLINE_FUNCTION
-Impl::TeamThreadRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember>
-TeamThreadRange( const Impl::QthreadTeamPolicyMember& thread
-               , const iType & begin
-               , const iType & end
-               )
+Impl::TeamThreadRangeBoundariesStruct< typename std::common_type< iType1, iType2 >::type,
+                                       Impl::QthreadTeamPolicyMember >
+TeamThreadRange( const Impl::QthreadTeamPolicyMember& thread, const iType1 & begin, const iType2 & end )
 {
-  return Impl::TeamThreadRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember>(thread,begin,end);
+  typedef typename std::common_type< iType1, iType2 >::type iType;
+  return Impl::TeamThreadRangeBoundariesStruct< iType, Impl::QthreadTeamPolicyMember >( thread, iType(begin), iType(end) );
 }
-
 
 template<typename iType>
 KOKKOS_INLINE_FUNCTION
@@ -495,7 +543,6 @@ Impl::ThreadVectorRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember >
   ThreadVectorRange(const Impl::QthreadTeamPolicyMember& thread, const iType& count) {
   return Impl::ThreadVectorRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember >(thread,count);
 }
-
 
 KOKKOS_INLINE_FUNCTION
 Impl::ThreadSingleStruct<Impl::QthreadTeamPolicyMember> PerTeam(const Impl::QthreadTeamPolicyMember& thread) {
@@ -507,14 +554,10 @@ Impl::VectorSingleStruct<Impl::QthreadTeamPolicyMember> PerThread(const Impl::Qt
   return Impl::VectorSingleStruct<Impl::QthreadTeamPolicyMember>(thread);
 }
 
-} // namespace Kokkos
-
-namespace Kokkos {
-
-  /** \brief  Inter-thread parallel_for. Executes lambda(iType i) for each i=0..N-1.
-   *
-   * The range i=0..N-1 is mapped to all threads of the the calling thread team.
-   * This functionality requires C++11 support.*/
+/** \brief  Inter-thread parallel_for. Executes lambda(iType i) for each i=0..N-1.
+ *
+ * The range i=0..N-1 is mapped to all threads of the the calling thread team.
+ * This functionality requires C++11 support.*/
 template<typename iType, class Lambda>
 KOKKOS_INLINE_FUNCTION
 void parallel_for(const Impl::TeamThreadRangeBoundariesStruct<iType,Impl::QthreadTeamPolicyMember>& loop_boundaries, const Lambda& lambda) {
@@ -569,9 +612,6 @@ void parallel_reduce(const Impl::TeamThreadRangeBoundariesStruct<iType,Impl::Qth
 
 #endif /* #if defined( KOKKOS_HAVE_CXX11 ) */
 
-} // namespace Kokkos
-
-namespace Kokkos {
 /** \brief  Intra-thread vector parallel_for. Executes lambda(iType i) for each i=0..N-1.
  *
  * The range i=0..N-1 is mapped to all vector lanes of the the calling thread.
@@ -658,10 +698,6 @@ void parallel_scan(const Impl::ThreadVectorRangeBoundariesStruct<iType,Impl::Qth
   }
 }
 
-} // namespace Kokkos
-
-namespace Kokkos {
-
 template<class FunctorType>
 KOKKOS_INLINE_FUNCTION
 void single(const Impl::VectorSingleStruct<Impl::QthreadTeamPolicyMember>& single_struct, const FunctorType& lambda) {
@@ -691,6 +727,4 @@ void single(const Impl::ThreadSingleStruct<Impl::QthreadTeamPolicyMember>& singl
 
 } // namespace Kokkos
 
-
 #endif /* #define KOKKOS_QTHREAD_PARALLEL_HPP */
-

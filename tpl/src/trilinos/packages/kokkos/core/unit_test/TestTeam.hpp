@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
+//
 //                        Kokkos v. 2.0
 //              Copyright (2014) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-// 
+//
 // ************************************************************************
 //@HEADER
 */
@@ -53,17 +53,17 @@
 namespace Test {
 namespace {
 
-template< class ExecSpace >
+template< class ExecSpace, class ScheduleType >
 struct TestTeamPolicy {
 
-  typedef typename Kokkos::TeamPolicy< ExecSpace >::member_type team_member ;
+  typedef typename Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::member_type team_member ;
   typedef Kokkos::View<int**,ExecSpace> view_type ;
 
   view_type m_flags ;
 
   TestTeamPolicy( const size_t league_size )
     : m_flags( Kokkos::ViewAllocateWithoutInitializing("flags")
-             , Kokkos::TeamPolicy< ExecSpace >::team_size_max( *this )
+             , Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::team_size_max( *this )
              , league_size )
     {}
 
@@ -89,14 +89,44 @@ struct TestTeamPolicy {
       }
     }
 
+  // included for test_small_league_size
+  TestTeamPolicy()
+    : m_flags()
+  {}
+
+  // included for test_small_league_size
+  struct NoOpTag {} ;
+  KOKKOS_INLINE_FUNCTION
+  void operator()( const NoOpTag & , const team_member & member ) const
+    {}
+
+
+  static void test_small_league_size() {
+
+    int bs = 8; // batch size (number of elements per batch)
+    int ns = 16; // total number of "problems" to process
+
+    // calculate total scratch memory space size
+    const int level = 0;
+    int mem_size = 960;
+    const int num_teams = ns/bs;
+    const Kokkos::TeamPolicy< ExecSpace, NoOpTag > policy(num_teams, Kokkos::AUTO());
+
+    Kokkos::parallel_for ( policy.set_scratch_size(level, Kokkos::PerTeam(mem_size), Kokkos::PerThread(0))
+                         , TestTeamPolicy()
+                         );
+  }
+
   static void test_for( const size_t league_size )
     {
       TestTeamPolicy functor( league_size );
 
-      const int team_size = Kokkos::TeamPolicy< ExecSpace >::team_size_max( functor );
+      const int team_size = Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::team_size_max( functor );
 
-      Kokkos::parallel_for( Kokkos::TeamPolicy< ExecSpace >( league_size , team_size ) , functor );
-      Kokkos::parallel_for( Kokkos::TeamPolicy< ExecSpace , VerifyInitTag >( league_size , team_size ) , functor );
+      Kokkos::parallel_for( Kokkos::TeamPolicy< ScheduleType,  ExecSpace >( league_size , team_size ) , functor );
+      Kokkos::parallel_for( Kokkos::TeamPolicy< ScheduleType,  ExecSpace , VerifyInitTag >( league_size , team_size ) , functor );
+
+      test_small_league_size();
     }
 
   struct ReduceTag {};
@@ -119,15 +149,15 @@ struct TestTeamPolicy {
     {
       TestTeamPolicy functor( league_size );
 
-      const int team_size = Kokkos::TeamPolicy< ExecSpace >::team_size_max( functor );
+      const int team_size = Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::team_size_max( functor );
       const long N = team_size * league_size ;
 
       long total = 0 ;
 
-      Kokkos::parallel_reduce( Kokkos::TeamPolicy< ExecSpace >( league_size , team_size ) , functor , total );
+      Kokkos::parallel_reduce( Kokkos::TeamPolicy< ScheduleType,  ExecSpace >( league_size , team_size ) , functor , total );
       ASSERT_EQ( size_t((N-1)*(N))/2 , size_t(total) );
 
-      Kokkos::parallel_reduce( Kokkos::TeamPolicy< ExecSpace , ReduceTag >( league_size , team_size ) , functor , total );
+      Kokkos::parallel_reduce( Kokkos::TeamPolicy< ScheduleType,  ExecSpace , ReduceTag >( league_size , team_size ) , functor , total );
       ASSERT_EQ( (size_t(N)*size_t(N+1))/2 , size_t(total) );
     }
 };
@@ -139,12 +169,12 @@ struct TestTeamPolicy {
 
 namespace Test {
 
-template< typename ScalarType , class DeviceType >
+template< typename ScalarType , class DeviceType, class ScheduleType >
 class ReduceTeamFunctor
 {
 public:
   typedef DeviceType execution_space ;
-  typedef Kokkos::TeamPolicy< execution_space >  policy_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space >  policy_type ;
   typedef typename execution_space::size_type        size_type ;
 
   struct value_type {
@@ -197,12 +227,12 @@ public:
 
 namespace {
 
-template< typename ScalarType , class DeviceType >
+template< typename ScalarType , class DeviceType, class ScheduleType >
 class TestReduceTeam
 {
 public:
   typedef DeviceType    execution_space ;
-  typedef Kokkos::TeamPolicy< execution_space >  policy_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space >  policy_type ;
   typedef typename execution_space::size_type    size_type ;
 
   //------------------------------------
@@ -214,7 +244,7 @@ public:
 
   void run_test( const size_type & nwork )
   {
-    typedef Test::ReduceTeamFunctor< ScalarType , execution_space > functor_type ;
+    typedef Test::ReduceTeamFunctor< ScalarType , execution_space , ScheduleType> functor_type ;
     typedef typename functor_type::value_type value_type ;
     typedef Kokkos::View< value_type, Kokkos::HostSpace, Kokkos::MemoryUnmanaged > result_type ;
 
@@ -254,12 +284,12 @@ public:
 
 namespace Test {
 
-template< class DeviceType >
+template< class DeviceType, class ScheduleType >
 class ScanTeamFunctor
 {
 public:
   typedef DeviceType  execution_space ;
-  typedef Kokkos::TeamPolicy< execution_space >  policy_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space >  policy_type ;
 
   typedef long int    value_type ;
   Kokkos::View< value_type , execution_space > accum ;
@@ -326,15 +356,15 @@ public:
   }
 };
 
-template< class DeviceType >
+template< class DeviceType, class ScheduleType >
 class TestScanTeam
 {
 public:
   typedef DeviceType  execution_space ;
   typedef long int    value_type ;
 
-  typedef Kokkos::TeamPolicy< execution_space > policy_type ;
-  typedef Test::ScanTeamFunctor<DeviceType> functor_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space > policy_type ;
+  typedef Test::ScanTeamFunctor<DeviceType, ScheduleType> functor_type ;
 
   //------------------------------------
 
@@ -346,9 +376,14 @@ public:
   void run_test( const size_t nteam )
   {
     typedef Kokkos::View< long int , Kokkos::HostSpace , Kokkos::MemoryUnmanaged >  result_type ;
-
     const unsigned REPEAT = 100000 ;
-    const unsigned Repeat = ( REPEAT + nteam - 1 ) / nteam ;
+    unsigned Repeat;
+    if ( nteam == 0 )
+    {
+      Repeat = 1;
+    } else {
+      Repeat = ( REPEAT + nteam - 1 ) / nteam ; //error here
+    }
 
     functor_type functor ;
 
@@ -378,12 +413,12 @@ public:
 
 namespace Test {
 
-template< class ExecSpace >
+template< class ExecSpace, class ScheduleType >
 struct SharedTeamFunctor {
 
   typedef ExecSpace  execution_space ;
   typedef int        value_type ;
-  typedef Kokkos::TeamPolicy< execution_space >  policy_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space >  policy_type ;
 
   enum { SHARED_COUNT = 1000 };
 
@@ -394,7 +429,7 @@ struct SharedTeamFunctor {
 
   // Tell how much shared memory will be required by this functor:
   inline
-  unsigned team_shmem_size( int /* team_size */ ) const
+  unsigned team_shmem_size( int team_size ) const
   {
     return shared_int_array_type::shmem_size( SHARED_COUNT ) +
            shared_int_array_type::shmem_size( SHARED_COUNT );
@@ -438,7 +473,7 @@ struct SharedTeamFunctor {
 
 namespace {
 
-template< class ExecSpace >
+template< class ExecSpace, class ScheduleType >
 struct TestSharedTeam {
 
   TestSharedTeam()
@@ -446,12 +481,12 @@ struct TestSharedTeam {
 
   void run()
   {
-    typedef Test::SharedTeamFunctor<ExecSpace> Functor ;
+    typedef Test::SharedTeamFunctor<ExecSpace, ScheduleType> Functor ;
     typedef Kokkos::View< typename Functor::value_type , Kokkos::HostSpace , Kokkos::MemoryUnmanaged >  result_type ;
 
-    const size_t team_size = Kokkos::TeamPolicy< ExecSpace >::team_size_max( Functor() );
+    const size_t team_size = Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::team_size_max( Functor() );
 
-    Kokkos::TeamPolicy< ExecSpace > team_exec( 8192 / team_size , team_size );
+    Kokkos::TeamPolicy< ScheduleType,  ExecSpace > team_exec( 8192 / team_size , team_size );
 
     typename Functor::value_type error_count = 0 ;
 
@@ -460,10 +495,12 @@ struct TestSharedTeam {
     ASSERT_EQ( error_count , 0 );
   }
 };
+}
+
+namespace Test {
 
 #if defined (KOKKOS_HAVE_CXX11_DISPATCH_LAMBDA)
-
-template< class ExecSpace >
+template< class MemorySpace, class ExecSpace, class ScheduleType >
 struct TestLambdaSharedTeam {
 
   TestLambdaSharedTeam()
@@ -471,8 +508,10 @@ struct TestLambdaSharedTeam {
 
   void run()
   {
-    typedef Test::SharedTeamFunctor<ExecSpace> Functor ;
-    typedef Kokkos::View< typename Functor::value_type , Kokkos::HostSpace , Kokkos::MemoryUnmanaged >  result_type ;
+    typedef Test::SharedTeamFunctor<ExecSpace, ScheduleType> Functor ;
+    //typedef Kokkos::View< typename Functor::value_type , Kokkos::HostSpace , Kokkos::MemoryUnmanaged >  result_type ;
+    typedef Kokkos::View< typename Functor::value_type , MemorySpace, Kokkos::MemoryUnmanaged >  result_type ;
+
     typedef typename ExecSpace::scratch_memory_space shmem_space ;
 
     // tbd: MemoryUnmanaged should be the default for shared memory space
@@ -484,13 +523,13 @@ struct TestLambdaSharedTeam {
     if(std::is_same<ExecSpace,Kokkos::Cuda>::value)
       team_size = 128;
 #endif
-    Kokkos::TeamPolicy< ExecSpace > team_exec( 8192 / team_size , team_size ,
-        Kokkos::Experimental::TeamScratchRequest<shmem_space>(SHARED_COUNT*2*sizeof(int)));
+    Kokkos::TeamPolicy< ScheduleType,  ExecSpace > team_exec( 8192 / team_size , team_size);
+    team_exec = team_exec.set_scratch_size(0,Kokkos::PerTeam(SHARED_COUNT*2*sizeof(int)));
 
     typename Functor::value_type error_count = 0 ;
 
     Kokkos::parallel_reduce( team_exec , KOKKOS_LAMBDA
-        ( const typename Kokkos::TeamPolicy< ExecSpace >::member_type & ind , int & update ) {
+        ( const typename Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::member_type & ind , int & update ) {
 
       const shared_int_array_type shared_A( ind.team_shmem() , SHARED_COUNT );
       const shared_int_array_type shared_B( ind.team_shmem() , SHARED_COUNT );
@@ -524,8 +563,361 @@ struct TestLambdaSharedTeam {
     ASSERT_EQ( error_count , 0 );
   }
 };
-
 #endif
+}
+
+namespace Test {
+
+template< class ExecSpace, class ScheduleType >
+struct ScratchTeamFunctor {
+
+  typedef ExecSpace  execution_space ;
+  typedef int        value_type ;
+  typedef Kokkos::TeamPolicy< ScheduleType,  execution_space >  policy_type ;
+
+  enum { SHARED_TEAM_COUNT = 100 };
+  enum { SHARED_THREAD_COUNT = 10 };
+
+  typedef typename ExecSpace::scratch_memory_space shmem_space ;
+
+  // tbd: MemoryUnmanaged should be the default for shared memory space
+  typedef Kokkos::View<size_t*,shmem_space,Kokkos::MemoryUnmanaged> shared_int_array_type ;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()( const typename policy_type::member_type & ind , value_type & update ) const
+  {
+    const shared_int_array_type scratch_ptr( ind.team_scratch(1) , 3*ind.team_size() );
+    const shared_int_array_type scratch_A( ind.team_scratch(1) , SHARED_TEAM_COUNT );
+    const shared_int_array_type scratch_B( ind.thread_scratch(1) , SHARED_THREAD_COUNT );
+
+    if ((scratch_ptr.ptr_on_device () == NULL ) ||
+        (scratch_A.  ptr_on_device () == NULL && SHARED_TEAM_COUNT > 0) ||
+        (scratch_B.  ptr_on_device () == NULL && SHARED_THREAD_COUNT > 0)) {
+      printf ("Failed to allocate shared memory of size %lu\n",
+              static_cast<unsigned long> (SHARED_TEAM_COUNT));
+      ++update; // failure to allocate is an error
+    }
+    else {
+      Kokkos::parallel_for(Kokkos::TeamThreadRange(ind,0,(int)SHARED_TEAM_COUNT),[&] (const int &i) {
+        scratch_A[i] = i + ind.league_rank();
+      });
+      for(int i=0; i<SHARED_THREAD_COUNT; i++)
+        scratch_B[i] = 10000*ind.league_rank() + 100*ind.team_rank() + i;
+
+      scratch_ptr[ind.team_rank()] = (size_t) scratch_A.ptr_on_device();
+      scratch_ptr[ind.team_rank() + ind.team_size()] = (size_t) scratch_B.ptr_on_device();
+
+      ind.team_barrier();
+
+      for( int i = 0; i<SHARED_TEAM_COUNT; i++) {
+        if(scratch_A[i] != size_t(i + ind.league_rank()))
+          ++update;
+      }
+      for( int i = 0; i < ind.team_size(); i++) {
+        if(scratch_ptr[0]!=scratch_ptr[i]) ++update;
+      }
+      if(scratch_ptr[1+ind.team_size()] - scratch_ptr[0 + ind.team_size()] <
+         SHARED_THREAD_COUNT*sizeof(size_t))
+        ++update;
+      for( int i = 1; i < ind.team_size(); i++) {
+        if((scratch_ptr[i+ind.team_size()] - scratch_ptr[i-1+ind.team_size()]) !=
+           (scratch_ptr[1+ind.team_size()] - scratch_ptr[0 + ind.team_size()])) ++update;
+
+      }
+    }
+  }
+};
+
+}
+
+namespace {
+
+template< class ExecSpace, class ScheduleType >
+struct TestScratchTeam {
+
+  TestScratchTeam()
+  { run(); }
+
+  void run()
+  {
+    typedef Test::ScratchTeamFunctor<ExecSpace, ScheduleType> Functor ;
+    typedef Kokkos::View< typename Functor::value_type , Kokkos::HostSpace , Kokkos::MemoryUnmanaged >  result_type ;
+
+    const size_t team_size = Kokkos::TeamPolicy< ScheduleType,  ExecSpace >::team_size_max( Functor() );
+
+    Kokkos::TeamPolicy< ScheduleType,  ExecSpace > team_exec( 8192 / team_size , team_size );
+
+    typename Functor::value_type error_count = 0 ;
+
+    int team_scratch_size   = Functor::shared_int_array_type::shmem_size(Functor::SHARED_TEAM_COUNT) +
+                              Functor::shared_int_array_type::shmem_size(3*team_size);
+    int thread_scratch_size = Functor::shared_int_array_type::shmem_size(Functor::SHARED_THREAD_COUNT);
+    Kokkos::parallel_reduce( team_exec.set_scratch_size(0,Kokkos::PerTeam(team_scratch_size),
+                                                          Kokkos::PerThread(thread_scratch_size)) ,
+                             Functor() , result_type( & error_count ) );
+
+    ASSERT_EQ( error_count , 0 );
+  }
+};
+}
+
+namespace Test {
+template< class ExecSpace>
+KOKKOS_INLINE_FUNCTION
+int test_team_mulit_level_scratch_loop_body(const typename Kokkos::TeamPolicy<ExecSpace>::member_type& team) {
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_team1(team.team_scratch(0),128);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_thread1(team.thread_scratch(0),16);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_team2(team.team_scratch(0),128);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_thread2(team.thread_scratch(0),16);
+
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_team1(team.team_scratch(1),128000);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_thread1(team.thread_scratch(1),16000);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_team2(team.team_scratch(1),128000);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_thread2(team.thread_scratch(1),16000);
+
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_team3(team.team_scratch(0),128);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> a_thread3(team.thread_scratch(0),16);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_team3(team.team_scratch(1),128000);
+  Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>> b_thread3(team.thread_scratch(1),16000);
+
+  // The explicit types for 0 and 128 are here to test TeamThreadRange accepting different
+  // types for begin and end.
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team,int(0),unsigned(128)), [&] (const int& i)
+  {
+    a_team1(i) = 1000000 + i;
+    a_team2(i) = 2000000 + i;
+    a_team3(i) = 3000000 + i;
+  });
+  team.team_barrier();
+  Kokkos::parallel_for(Kokkos::ThreadVectorRange(team,16), [&] (const int& i)
+  {
+    a_thread1(i) = 1000000 + 100000*team.team_rank() + 16-i;
+    a_thread2(i) = 2000000 + 100000*team.team_rank() + 16-i;
+    a_thread3(i) = 3000000 + 100000*team.team_rank() + 16-i;
+  });
+
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team,0,128000), [&] (const int& i)
+  {
+    b_team1(i) = 1000000 + i;
+    b_team2(i) = 2000000 + i;
+    b_team3(i) = 3000000 + i;
+  });
+  team.team_barrier();
+  Kokkos::parallel_for(Kokkos::ThreadVectorRange(team,16000), [&] (const int& i)
+  {
+    b_thread1(i) = 1000000 + 100000*team.team_rank() + 16-i;
+    b_thread2(i) = 2000000 + 100000*team.team_rank() + 16-i;
+    b_thread3(i) = 3000000 + 100000*team.team_rank() + 16-i;
+  });
+
+  team.team_barrier();
+  int error = 0;
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team,0,128), [&] (const int& i)
+  {
+    if(a_team1(i) != 1000000 + i) error++;
+    if(a_team2(i) != 2000000 + i) error++;
+    if(a_team3(i) != 3000000 + i) error++;
+  });
+  team.team_barrier();
+  Kokkos::parallel_for(Kokkos::ThreadVectorRange(team,16), [&] (const int& i)
+  {
+    if(a_thread1(i) != 1000000 + 100000*team.team_rank() + 16-i) error++;
+    if(a_thread2(i) != 2000000 + 100000*team.team_rank() + 16-i) error++;
+    if(a_thread3(i) != 3000000 + 100000*team.team_rank() + 16-i) error++;
+  });
+
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team,0,128000), [&] (const int& i)
+  {
+    if(b_team1(i) != 1000000 + i) error++;
+    if(b_team2(i) != 2000000 + i) error++;
+    if(b_team3(i) != 3000000 + i) error++;
+  });
+  team.team_barrier();
+  Kokkos::parallel_for(Kokkos::ThreadVectorRange(team,16000), [&] (const int& i)
+  {
+    if(b_thread1(i) != 1000000 + 100000*team.team_rank() + 16-i) error++;
+    if(b_thread2(i) != 2000000 + 100000*team.team_rank() + 16-i) error++;
+    if( b_thread3(i) != 3000000 + 100000*team.team_rank() + 16-i) error++;
+  });
+
+  return error;
+}
+
+struct TagReduce {};
+struct TagFor {};
+
+template< class ExecSpace, class ScheduleType >
+struct ClassNoShmemSizeFunction {
+  Kokkos::View<int,ExecSpace,Kokkos::MemoryTraits<Kokkos::Atomic> > errors;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const TagFor&, const typename Kokkos::TeamPolicy<ExecSpace,ScheduleType>::member_type& team) const {
+    int error = test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+    errors() += error;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const TagReduce&, const typename Kokkos::TeamPolicy<ExecSpace,ScheduleType>::member_type& team, int& error) const {
+    error += test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+  }
+
+  void run() {
+    Kokkos::View<int,ExecSpace> d_errors = Kokkos::View<int,ExecSpace>("Errors");
+    errors = d_errors;
+
+    const int per_team0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128);
+    const int per_thread0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16);
+
+    const int per_team1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128000);
+    const int per_thread1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16000);
+    {
+    Kokkos::TeamPolicy<TagFor,ExecSpace,ScheduleType> policy(10,8,16);
+    Kokkos::parallel_for(policy.set_scratch_size(0,Kokkos::PerTeam(per_team0),Kokkos::PerThread(per_thread0)).set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+      *this);
+    Kokkos::fence();
+    typename Kokkos::View<int,ExecSpace>::HostMirror h_errors = Kokkos::create_mirror_view(d_errors);
+    Kokkos::deep_copy(h_errors,d_errors);
+    ASSERT_EQ(h_errors(),0);
+    }
+
+    {
+    int error = 0;
+    Kokkos::TeamPolicy<TagReduce,ExecSpace,ScheduleType> policy(10,8,16);
+    Kokkos::parallel_reduce(policy.set_scratch_size(0,Kokkos::PerTeam(per_team0),Kokkos::PerThread(per_thread0)).set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+      *this,error);
+    Kokkos::fence();
+    ASSERT_EQ(error,0);
+    }
+  };
+};
+
+template< class ExecSpace, class ScheduleType >
+struct ClassWithShmemSizeFunction {
+  Kokkos::View<int,ExecSpace,Kokkos::MemoryTraits<Kokkos::Atomic> > errors;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const TagFor&, const typename Kokkos::TeamPolicy<ExecSpace,ScheduleType>::member_type& team) const {
+    int error = test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+    errors() += error;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const TagReduce&, const typename Kokkos::TeamPolicy<ExecSpace,ScheduleType>::member_type& team, int& error) const {
+    error += test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+  }
+
+  void run() {
+    Kokkos::View<int,ExecSpace> d_errors = Kokkos::View<int,ExecSpace>("Errors");
+    errors = d_errors;
+
+    const int per_team1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128000);
+    const int per_thread1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16000);
+    {
+    Kokkos::TeamPolicy<TagFor,ExecSpace,ScheduleType> policy(10,8,16);
+    Kokkos::parallel_for(policy.set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+      *this);
+    Kokkos::fence();
+    typename Kokkos::View<int,ExecSpace>::HostMirror h_errors= Kokkos::create_mirror_view(d_errors);
+    Kokkos::deep_copy(h_errors,d_errors);
+    ASSERT_EQ(h_errors(),0);
+    }
+
+    {
+    int error = 0;
+    Kokkos::TeamPolicy<TagReduce,ExecSpace,ScheduleType> policy(10,8,16);
+    Kokkos::parallel_reduce(policy.set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+      *this,error);
+    Kokkos::fence();
+    ASSERT_EQ(error,0);
+    }
+  };
+
+  unsigned team_shmem_size(int team_size) const {
+    const int per_team0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128);
+    const int per_thread0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16);
+    return per_team0 + team_size * per_thread0;
+  }
+};
+
+template< class ExecSpace, class ScheduleType >
+void test_team_mulit_level_scratch_test_lambda() {
+#ifdef KOKKOS_HAVE_CXX11_DISPATCH_LAMBDA
+  Kokkos::View<int,ExecSpace,Kokkos::MemoryTraits<Kokkos::Atomic> > errors;
+  Kokkos::View<int,ExecSpace> d_errors("Errors");
+  errors = d_errors;
+
+  const int per_team0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128);
+  const int per_thread0 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16);
+
+  const int per_team1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(128000);
+  const int per_thread1 = 3*Kokkos::View<double*,ExecSpace,Kokkos::MemoryTraits<Kokkos::Unmanaged>>::shmem_size(16000);
+
+  Kokkos::TeamPolicy<ExecSpace,ScheduleType> policy(10,8,16);
+  Kokkos::parallel_for(policy.set_scratch_size(0,Kokkos::PerTeam(per_team0),Kokkos::PerThread(per_thread0)).set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+    KOKKOS_LAMBDA(const typename Kokkos::TeamPolicy<ExecSpace>::member_type& team) {
+    int error = test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+    errors() += error;
+  });
+  Kokkos::fence();
+  typename Kokkos::View<int,ExecSpace>::HostMirror h_errors= Kokkos::create_mirror_view(errors);
+  Kokkos::deep_copy(h_errors,d_errors);
+  ASSERT_EQ(h_errors(),0);
+
+  int error = 0;
+  Kokkos::parallel_reduce(policy.set_scratch_size(0,Kokkos::PerTeam(per_team0),Kokkos::PerThread(per_thread0)).set_scratch_size(1,Kokkos::PerTeam(per_team1),Kokkos::PerThread(per_thread1)),
+    KOKKOS_LAMBDA(const typename Kokkos::TeamPolicy<ExecSpace>::member_type& team, int& count) {
+      count += test_team_mulit_level_scratch_loop_body<ExecSpace>(team);
+  },error);
+  ASSERT_EQ(error,0);
+  Kokkos::fence();
+#endif
+}
+
+
+}
+
+namespace {
+template< class ExecSpace, class ScheduleType >
+struct TestMultiLevelScratchTeam {
+
+  TestMultiLevelScratchTeam()
+  { run(); }
+
+  void run()
+  {
+#ifdef KOKKOS_HAVE_CXX11_DISPATCH_LAMBDA
+    Test::test_team_mulit_level_scratch_test_lambda<ExecSpace, ScheduleType>();
+#endif
+    Test::ClassNoShmemSizeFunction<ExecSpace, ScheduleType> c1;
+    c1.run();
+
+    Test::ClassWithShmemSizeFunction<ExecSpace, ScheduleType> c2;
+    c2.run();
+
+  }
+};
+}
+
+namespace Test {
+
+template< class ExecSpace >
+struct TestShmemSize {
+
+  TestShmemSize() { run(); }
+
+  void run()
+  {
+    typedef Kokkos::View< long***, ExecSpace > view_type;
+
+    size_t d1 = 5;
+    size_t d2 = 6;
+    size_t d3 = 7;
+
+    size_t size = view_type::shmem_size( d1, d2, d3 );
+
+    ASSERT_EQ( size, d1 * d2 * d3 * sizeof(long) );
+  }
+};
 }
 
 /*--------------------------------------------------------------------------*/

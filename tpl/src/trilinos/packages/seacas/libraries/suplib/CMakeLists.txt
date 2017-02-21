@@ -1,4 +1,3 @@
-INCLUDE(TribitsLibraryMacros)
 
 TRIBITS_SUBPACKAGE(Suplib)
 INCLUDE(FortranSettings)
@@ -104,15 +103,7 @@ SET(SOURCES
   numeqi.f
   pltone.f
   wheneq.f
-  add_to_log.c
   addlog.c
-  getline.c
-  GetLongOpt.C
-  adler.C
-  smart_assert.C
-  timer.C
-  to_string.C
-  SL_tokenize.C
   )
 
 TRIBITS_ADD_LIBRARY(

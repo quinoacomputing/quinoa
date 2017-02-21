@@ -77,24 +77,6 @@ namespace Kokkos {
 namespace Example {
 namespace FENL {
 
-inline
-double maximum( const Teuchos::RCP<const Teuchos::Comm<int> >& comm , double local )
-{
-  double global = 0 ;
-  Teuchos::reduceAll( *comm , Teuchos::REDUCE_MAX , 1 , & local , & global );
-  return global ;
-}
-
-} /* namespace FENL */
-} /* namespace Example */
-} /* namespace Kokkos */
-
-//----------------------------------------------------------------------------
-
-namespace Kokkos {
-namespace Example {
-namespace FENL {
-
 /* Builds a map from LIDs to GIDs suitable for Tpetra */
 template < class Map, class Fixture >
 class BuildLocalToGlobalMap {
@@ -131,11 +113,12 @@ namespace Kokkos {
 namespace Example {
 namespace FENL {
 
-template < class Scalar, class Device , BoxElemPart::ElemOrder ElemOrder, class CoeffFunctionType >
+template < class Scalar, class Device , BoxElemPart::ElemOrder ElemOrder >
 class Problem {
 public:
 
-
+  typedef Scalar ScalarType;
+  typedef Device DeviceType;
   typedef BoxElemFixture< Device , ElemOrder >  FixtureType ;
 
   typedef typename Kokkos::Details::ArithTraits<Scalar>::mag_type  Magnitude;
@@ -168,7 +151,6 @@ public:
     typename GlobalVectorType::global_ordinal_type,
     typename GlobalVectorType::node_type
     > import_type;
-
 
 private:
 
@@ -237,12 +219,13 @@ public:
 
   Scalar             response ;
   Perf               perf ;
+  bool               print_flag ;
 
   Problem( const rcpCommType & use_comm
          , const rcpNodeType & use_node
          , const int use_nodes[]
          , const double grid_bubble[]
-         , const bool print_flag
+         , const bool use_print
          )
     : comm( use_comm )
     , node( use_node )
@@ -273,19 +256,21 @@ public:
     , response()
     , perf()
     {
-      if ( maximum(comm, ( fixture.ok() ? 0 : 1 ) ) ) {
+      if ( maximum(*comm, ( fixture.ok() ? 0 : 1 ) ) ) {
         throw std::runtime_error(std::string("Problem fixture setup failed"));
       }
+
+      print_flag = use_print && Kokkos::Impl::VerifyExecutionCanAccessMemorySpace< Kokkos::HostSpace::execution_space , typename Device::memory_space >::value ;
 
       perf.global_elem_count  = fixture.elem_count_global();
       perf.global_node_count  = fixture.node_count_global();
 
-      perf.map_ratio          = maximum(comm, graph_times.ratio);
-      perf.fill_node_set      = maximum(comm, graph_times.fill_node_set);
-      perf.scan_node_count    = maximum(comm, graph_times.scan_node_count);
-      perf.fill_graph_entries = maximum(comm, graph_times.fill_graph_entries);
-      perf.sort_graph_entries = maximum(comm, graph_times.sort_graph_entries);
-      perf.fill_element_graph = maximum(comm, graph_times.fill_element_graph);
+      perf.map_ratio          = graph_times.ratio;
+      perf.fill_node_set      = graph_times.fill_node_set;
+      perf.scan_node_count    = graph_times.scan_node_count;
+      perf.fill_graph_entries = graph_times.fill_graph_entries;
+      perf.sort_graph_entries = graph_times.sort_graph_entries;
+      perf.fill_element_graph = graph_times.fill_element_graph;
 
       if ( print_flag ) {
         std::cout << "ElemNode {" << std::endl ;
@@ -334,7 +319,9 @@ public:
 
   //----------------------------------------
 
+  template < class CoeffFunctionType >
   void solve( const CoeffFunctionType & coeff_function
+            , const bool isotropic
             , const double coeff_source
             , const double coeff_advection
             , const double    bc_lower_value
@@ -348,18 +335,12 @@ public:
             , const bool   use_belos
             , const bool   use_muelu
             , const bool   use_mean_based
-            , const bool   print_flag
             , const Teuchos::RCP<Teuchos::ParameterList>& fenlParams
             )
     {
-      typedef ElementComputation< FixtureType , LocalMatrixType , CoeffFunctionType >
-        ElementComputationType ;
-
-      typedef DirichletComputation< FixtureType , LocalMatrixType >
-        DirichletComputationType ;
-
-      typedef ResponseComputation< FixtureType , LocalVectorType >
-        ResponseComputationType ;
+      typedef ElementComputation< FixtureType , LocalMatrixType , CoeffFunctionType > ElementComputationType ;
+      typedef DirichletComputation< FixtureType , LocalMatrixType > DirichletComputationType ;
+      typedef ResponseComputation< FixtureType , LocalVectorType > ResponseComputationType ;
 
       Kokkos::Impl::Timer wall_clock ;
 
@@ -388,7 +369,7 @@ public:
                                          dev_config_bc );
 
       // Create element computation functor
-      const ElementComputationType elemcomp( fixture , coeff_function ,
+      const ElementComputationType elemcomp( fixture , coeff_function , isotropic ,
                                              coeff_source , coeff_advection ,
                                              nodal_solution ,
                                              elem_graph ,
@@ -416,16 +397,24 @@ public:
       //   Teuchos::fancyOStream(rcp(&std::cout,false));
       // out->setShowProcRank(true);
 
+
       for ( perf.newton_iter_count = 0 ;
             perf.newton_iter_count < newton_iteration_limit ;
             ++perf.newton_iter_count ) {
 
         //--------------------------------
 
+        Device::fence();
         wall_clock.reset();
         g_nodal_solution.doImport (g_nodal_solution_no_overlap, import, Tpetra::REPLACE);
+
+        // Take minimum import time across newton steps -- resolves strange
+        // timings on titan where time after first solve is much larger
         Device::fence();
-        perf.import_time = maximum( comm , wall_clock.seconds() );
+        if (perf.newton_iter_count == 0)
+          perf.import_time = wall_clock.seconds();
+        else
+          perf.import_time = std::min( perf.import_time, wall_clock.seconds() );
 
         // if (itrial == 0 && perf.newton_iter_count == 0)
         //   g_nodal_solution_no_overlap.describe(*out, Teuchos::VERB_EXTREME);
@@ -433,6 +422,7 @@ public:
         //--------------------------------
         // Element contributions to residual and jacobian
 
+        Device::fence();
         wall_clock.reset();
 
         Kokkos::deep_copy( nodal_residual , 0.0 );
@@ -441,17 +431,24 @@ public:
         elemcomp.apply();
 
         Device::fence();
-        perf.fill_time = maximum( comm , wall_clock.seconds() );
+        if (perf.newton_iter_count == 0)
+          perf.fill_time = wall_clock.seconds();
+        else
+          perf.fill_time = std::min( perf.fill_time, wall_clock.seconds() );
 
         //--------------------------------
         // Apply boundary conditions
 
+        Device::fence();
         wall_clock.reset();
 
         dirichlet.apply();
 
         Device::fence();
-        perf.bc_time = maximum( comm , wall_clock.seconds() );
+        if (perf.newton_iter_count == 0)
+          perf.bc_time = wall_clock.seconds();
+        else
+          perf.bc_time = std::min( perf.bc_time, wall_clock.seconds() );
 
         //--------------------------------
         // Evaluate convergence
@@ -505,6 +502,10 @@ public:
           perf.cg_total_time   += cgsolve.total_time ;
         }
         perf.cg_iter_count   += cgsolve.iteration ;
+        const int ne = cgsolve.ensemble_its.size();
+        perf.ensemble_cg_iter_count.resize(ne);
+        for (int i=0; i<ne; ++i)
+          perf.ensemble_cg_iter_count[i] += cgsolve.ensemble_its[i];
 
         // Update solution vector
 
@@ -557,6 +558,7 @@ public:
           }
           std::cout << "}" << std::endl ;
         }
+        //break;
       }
 
       // Evaluate response function -- currently 2-norm of solution vector
@@ -566,6 +568,89 @@ public:
     }
 };
 
+template < class Scalar, class Device , BoxElemPart::ElemOrder ElemOrder,
+           class CoeffFunctionType >
+Perf fenl(
+  Problem< Scalar, Device , ElemOrder >& problem,
+  const Teuchos::RCP<Teuchos::ParameterList>& fenlParams,
+  const int use_print ,
+  const int use_trials ,
+  const int use_atomic ,
+  const int use_belos ,
+  const int use_muelu ,
+  const int use_mean_based ,
+  const CoeffFunctionType& coeff_function ,
+  const bool isotropic,
+  const double coeff_source ,
+  const double coeff_advection ,
+  const double bc_lower_value ,
+  const double bc_upper_value ,
+  Scalar& response,
+  const QuadratureData<Device>& qd = QuadratureData<Device>() )
+{
+  typedef typename Kokkos::Details::ArithTraits<Scalar>::mag_type  Magnitude;
+
+  const unsigned  newton_iteration_limit =
+    fenlParams->get("Max Nonlinear Iterations", 10) ;
+  const Magnitude newton_iteration_tolerance =
+    fenlParams->get("Nonlinear Solver Tolerance", 1e-7) ;
+  const unsigned  cg_iteration_limit =
+    fenlParams->get("Max Linear Iterations", 2000) ;
+  const Magnitude cg_iteration_tolerance =
+    fenlParams->get("Linear Solver Tolerance", 1e-7) ;
+
+  //------------------------------------
+
+  Kokkos::Impl::Timer wall_clock ;
+
+  Perf perf_stats = Perf() ;
+
+  // Since the perf struc inside Problem is reused each time solve() is called
+  // zero out some stats that we don't want to accumulate
+  problem.perf.mat_vec_time = 0;
+  problem.perf.cg_iter_time = 0;
+  problem.perf.prec_setup_time = 0;
+  problem.perf.prec_apply_time  = 0;
+  problem.perf.cg_total_time = 0;
+  problem.perf.cg_iter_count = 0;
+  problem.perf.ensemble_cg_iter_count.clear();
+  problem.perf.import_time = 0;
+  problem.perf.fill_time = 0;
+  problem.perf.bc_time = 0;
+
+  for ( int itrial = 0 ; itrial < use_trials ; ++itrial ) {
+
+    problem.solve( coeff_function
+                 , isotropic
+                 , coeff_source
+                 , coeff_advection
+                 , bc_lower_value
+                 , bc_upper_value
+                 , newton_iteration_limit
+                 , newton_iteration_tolerance
+                 , cg_iteration_limit
+                 , cg_iteration_tolerance
+                 , qd
+                 , use_atomic
+                 , use_belos
+                 , use_muelu
+                 , use_mean_based
+                 , fenlParams
+                 );
+
+    problem.perf.reduceMax(*problem.comm);
+
+    if ( 0 == itrial ) {
+      response   = problem.response ;
+      perf_stats = problem.perf ;
+    }
+    else {
+      perf_stats.min(problem.perf);
+    }
+  }
+
+  return perf_stats ;
+}
 
 template < class Scalar, class Device , BoxElemPart::ElemOrder ElemOrder,
            class CoeffFunctionType >
@@ -581,6 +666,7 @@ Perf fenl(
   const int use_mean_based ,
   const int use_nodes[] ,
   const CoeffFunctionType& coeff_function ,
+  const bool isotropic,
   const double coeff_source ,
   const double coeff_advection ,
   const double bc_lower_value ,
@@ -588,96 +674,40 @@ Perf fenl(
   Scalar& response,
   const QuadratureData<Device>& qd = QuadratureData<Device>() )
 {
-  typedef typename Kokkos::Details::ArithTraits<Scalar>::mag_type  Magnitude;
 
-  typedef Problem< Scalar, Device , ElemOrder, CoeffFunctionType > ProblemType ;
+  typedef Problem< Scalar, Device , ElemOrder > ProblemType ;
 
-  const int print_flag = use_print && Kokkos::Impl::VerifyExecutionCanAccessMemorySpace< Kokkos::HostSpace::execution_space , typename Device::memory_space >::value ;
-
+  //------------------------------------
   // Read in any params from xml file
   Teuchos::RCP<Teuchos::ParameterList> fenlParams = Teuchos::parameterList();
   Teuchos::updateParametersFromXmlFileAndBroadcast(
     fenl_xml_file, fenlParams.ptr(), *comm);
 
-  const double geom_bubble[3] = { 1.0 , 1.0 , 1.0 };
-
-  const unsigned  newton_iteration_limit =
-    fenlParams->get("Max Nonlinear Iterations", 10) ;
-  const Magnitude newton_iteration_tolerance =
-    fenlParams->get("Nonlinear Solver Tolerance", 1e-7) ;
-  const unsigned  cg_iteration_limit =
-    fenlParams->get("Max Linear Iterations", 2000) ;
-  const Magnitude cg_iteration_tolerance =
-    fenlParams->get("Linear Solver Tolerance", 1e-7) ;
-
   //------------------------------------
   // Problem setup:
 
-  ProblemType problem( comm , node , use_nodes , geom_bubble , print_flag );
+  const double geom_bubble[3] = { 1.0 , 1.0 , 1.0 };
+  ProblemType problem( comm , node , use_nodes , geom_bubble , use_print );
 
   //------------------------------------
+  // Solve
 
-  Kokkos::Impl::Timer wall_clock ;
-
-  Perf perf_stats = Perf() ;
-
-  for ( int itrial = 0 ; itrial < use_trials ; ++itrial ) {
-
-    problem.solve( coeff_function
-                 , coeff_source
-                 , coeff_advection
-                 , bc_lower_value
-                 , bc_upper_value
-                 , newton_iteration_limit
-                 , newton_iteration_tolerance
-                 , cg_iteration_limit
-                 , cg_iteration_tolerance
-                 , qd
-                 , use_atomic
-                 , use_belos
-                 , use_muelu
-                 , use_mean_based
-                 , print_flag
-                 , fenlParams
-                 );
-
-    if ( 0 == itrial ) {
-      response   = problem.response ;
-      perf_stats = problem.perf ;
-    }
-    else {
-      perf_stats.fill_node_set =
-        std::min( perf_stats.fill_node_set , problem.perf.fill_node_set );
-      perf_stats.scan_node_count =
-        std::min( perf_stats.scan_node_count , problem.perf.scan_node_count );
-      perf_stats.fill_graph_entries =
-        std::min( perf_stats.fill_graph_entries , problem.perf.fill_graph_entries );
-      perf_stats.sort_graph_entries =
-        std::min( perf_stats.sort_graph_entries , problem.perf.sort_graph_entries );
-      perf_stats.fill_element_graph =
-        std::min( perf_stats.fill_element_graph , problem.perf.fill_element_graph );
-      perf_stats.create_sparse_matrix =
-        std::min( perf_stats.create_sparse_matrix , problem.perf.create_sparse_matrix );
-       perf_stats.import_time =
-        std::min( perf_stats.import_time , problem.perf.import_time );
-      perf_stats.fill_time =
-        std::min( perf_stats.fill_time , problem.perf.fill_time );
-      perf_stats.bc_time =
-        std::min( perf_stats.bc_time , problem.perf.bc_time );
-      perf_stats.mat_vec_time =
-        std::min( perf_stats.mat_vec_time , problem.perf.mat_vec_time );
-      perf_stats.cg_iter_time =
-        std::min( perf_stats.cg_iter_time , problem.perf.cg_iter_time );
-      perf_stats.prec_setup_time =
-        std::min( perf_stats.prec_setup_time , problem.perf.prec_setup_time );
-      perf_stats.prec_apply_time =
-        std::min( perf_stats.prec_apply_time , problem.perf.prec_apply_time );
-      perf_stats.cg_total_time =
-        std::min( perf_stats.cg_total_time , problem.perf.cg_total_time );
-    }
-  }
-
-  return perf_stats ;
+  return fenl( problem,
+               fenlParams,
+               use_print,
+               use_trials,
+               use_atomic,
+               use_belos,
+               use_muelu,
+               use_mean_based,
+               coeff_function,
+               isotropic,
+               coeff_source,
+               coeff_advection,
+               bc_lower_value,
+               bc_upper_value,
+               response,
+               qd );
 }
 
 } /* namespace FENL */

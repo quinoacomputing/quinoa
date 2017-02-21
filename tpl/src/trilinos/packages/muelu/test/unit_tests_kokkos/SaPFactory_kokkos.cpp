@@ -117,7 +117,8 @@ namespace MueLuTests {
     // construct the data to compare
     SC omega = dampingFactor / lambdaMax;
     RCP<Vector> invDiag = Utilities_kokkos::GetMatrixDiagonalInverse(*A);
-    RCP<Matrix> Ptest   = Xpetra::IteratorOps<SC,LO,GO,NO>::Jacobi(omega, *invDiag, *A, *Ptent, Teuchos::null, out, "label");
+    RCP<ParameterList> APparams = rcp(new ParameterList);
+    RCP<Matrix> Ptest   = Xpetra::IteratorOps<SC,LO,GO,NO>::Jacobi(omega, *invDiag, *A, *Ptent, Teuchos::null, out, "label", APparams);
 
     // compare matrices by multiplying them by a random vector
     RCP<MultiVector> X = MultiVectorFactory::Build(A->getDomainMap(), 1);
@@ -172,7 +173,7 @@ namespace MueLuTests {
         // generate problem
         LO maxLevels = 3;
         LO its       = 10;
-        LO nEle      = 63;
+        GO nEle      = 63;
         const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
         Teuchos::ParameterList matrixParameters;
         matrixParameters.set("nx", nEle);

@@ -192,7 +192,7 @@ Perf fenl(
 
   //------------------------------------
 
-  const int print_flag = use_print && Kokkos::Impl::is_same< Kokkos::HostSpace , typename Space::memory_space >::value ;
+  const int print_flag = use_print && std::is_same< Kokkos::HostSpace , typename Space::memory_space >::value ;
 
   int comm_rank ;
   int comm_size ;
@@ -312,7 +312,7 @@ Perf fenl(
 
   //------------------------------------
 
-  Kokkos::Impl::Timer wall_clock ;
+  Kokkos::Timer wall_clock ;
 
   Perf perf_stats = Perf() ;
 

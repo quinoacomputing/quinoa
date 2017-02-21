@@ -58,7 +58,10 @@
 #include <TestStaticCrsGraph.hpp>
 #include <TestVector.hpp>
 #include <TestDualView.hpp>
-#include <TestSegmentedView.hpp>
+#include <TestDynamicView.hpp>
+
+#include <Kokkos_DynRankView.hpp>
+#include <TestDynViewAPI.hpp>
 
 //----------------------------------------------------------------------------
 
@@ -81,6 +84,10 @@ protected:
     Kokkos::HostSpace::execution_space::finalize();
   }
 };
+
+TEST_F( cuda , dyn_view_api) {
+  TestDynViewAPI< double , Kokkos::Cuda >();
+}
 
 TEST_F( cuda , staticcrsgraph )
 {
@@ -123,11 +130,6 @@ void cuda_test_vector_combinations(unsigned int size)
 void cuda_test_dualview_combinations(unsigned int size)
 {
   test_dualview_combinations<int,Kokkos::Cuda>(size);
-}
-
-void cuda_test_segmented_view(unsigned int size)
-{
-  test_segmented_view<double,Kokkos::Cuda>(size);
 }
 
 void cuda_test_bitset()
@@ -176,11 +178,6 @@ void cuda_test_bitset()
       cuda_test_dualview_combinations(size);                     \
   }
 
-#define CUDA_SEGMENTEDVIEW_TEST( size )                             \
-  TEST_F( cuda, segmentedview_##size##x) {       \
-      cuda_test_segmented_view(size);                     \
-  }
-
 CUDA_DUALVIEW_COMBINE_TEST( 10 )
 CUDA_VECTOR_COMBINE_TEST( 10 )
 CUDA_VECTOR_COMBINE_TEST( 3057 )
@@ -190,7 +187,6 @@ CUDA_INSERT_TEST(close,               100000, 90000, 100, 500)
 CUDA_INSERT_TEST(far,                 100000, 90000, 100, 500)
 CUDA_DEEP_COPY( 10000, 1 )
 CUDA_FAILED_INSERT_TEST( 10000, 1000 )
-CUDA_SEGMENTEDVIEW_TEST( 200 )
 
 
 #undef CUDA_INSERT_TEST
@@ -199,7 +195,19 @@ CUDA_SEGMENTEDVIEW_TEST( 200 )
 #undef CUDA_DEEP_COPY
 #undef CUDA_VECTOR_COMBINE_TEST
 #undef CUDA_DUALVIEW_COMBINE_TEST
-#undef CUDA_SEGMENTEDVIEW_TEST
+
+
+TEST_F( cuda , dynamic_view )
+{
+  typedef TestDynamicView< double , Kokkos::CudaUVMSpace >
+    TestDynView ;
+
+  for ( int i = 0 ; i < 10 ; ++i ) {
+    TestDynView::run( 100000 + 100 * i );
+  }
+}
+
+
 }
 
 #endif  /* #ifdef KOKKOS_HAVE_CUDA */

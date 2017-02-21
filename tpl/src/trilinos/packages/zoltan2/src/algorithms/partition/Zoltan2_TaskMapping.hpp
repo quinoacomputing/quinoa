@@ -4,21 +4,27 @@
 #include <fstream>
 #include <ctime>
 #include <vector>
+
 #include "Zoltan2_AlgMultiJagged.hpp"
 #include "Teuchos_ArrayViewDecl.hpp"
 #include "Zoltan2_PartitionMapping.hpp"
 #include "Zoltan2_MachineRepresentation.hpp"
 #include "Teuchos_ReductionOp.hpp"
-#include "Zoltan2_XpetraMultiVectorAdapter.hpp"
+
+#include "Zoltan2_MappingSolution.hpp"
+
+#include "Zoltan2_GraphModel.hpp"
+#include <zoltan_dd.h>
+#include <Zoltan2_TPLTraits.hpp>
 
 #include "Teuchos_Comm.hpp"
 #ifdef HAVE_ZOLTAN2_MPI
-#  include "Teuchos_DefaultMpiComm.hpp"
-#else
-#  include "Teuchos_DefaultSerialComm.hpp"
+#include "Teuchos_DefaultMpiComm.hpp"
 #endif // HAVE_ZOLTAN2_MPI
+#include <Teuchos_DefaultSerialComm.hpp>
 
 //#define gnuPlot
+#include "Zoltan2_XpetraMultiVectorAdapter.hpp"
 
 namespace Teuchos{
 
@@ -131,7 +137,8 @@ void getSolutionCenterCoordinates(
     const Environment *envConst,
     const Teuchos::Comm<int> *comm,
     const Zoltan2::CoordinateModel<typename Adapter::base_adapter_t> *coords,
-    const Zoltan2::PartitioningSolution<Adapter> *soln_,
+    //const Zoltan2::PartitioningSolution<Adapter> *soln_,
+    const part_t *parts,
     int coordDim,
     part_t ntasks,
     scalar_t **partCenters){
@@ -170,7 +177,7 @@ void getSolutionCenterCoordinates(
   }
 
   //get parts with parallel gnos.
-  const part_t *parts = soln_->getPartListView();
+  //const part_t *parts = soln_->getPartListView();
   /*
     for (lno_t i=0; i < numLocalCoords; i++){
   cout << "me:" << comm->getRank() << " gno:" << soln_gnos[i] << " tmp.part :" << parts[i]<< endl;
@@ -178,53 +185,24 @@ void getSolutionCenterCoordinates(
    */
 
 
-  envConst->timerStart(MACRO_TIMERS, "Mapping - Hashing Creation");
-  //hash vector
-  std::vector< std::vector <GNO_LNO_PAIR<gno_t, part_t> > > hash(numLocalCoords);
-
-  //insert each point in solution to hash.
-  for (lno_t i=0; i < numLocalCoords; i++){
-    GNO_LNO_PAIR<gno_t, part_t> tmp;
-    tmp.gno = gnos[i];
-    tmp.part = parts[i];
-    //cout << "gno:" << tmp.gno << " tmp.part :" << tmp.part << endl;
-    //count the local number of points in each part.
-    ++point_counts[tmp.part];
-    lno_t hash_index = tmp.gno % numLocalCoords;
-    hash[hash_index].push_back(tmp);
-  }
-
-  envConst->timerStop(MACRO_TIMERS, "Mapping - Hashing Creation");
-  //get global number of points in each part.
-  reduceAll<int, gno_t>(*comm, Teuchos::REDUCE_SUM,
-      ntasks, point_counts, global_point_counts
-  );
+  envConst->timerStart(MACRO_TIMERS, "Mapping - Center Calculation");
 
 
-
-  envConst->timerStart(MACRO_TIMERS, "Mapping - Hashing Search");
-  //add up all coordinates in each part.
   for (lno_t i=0; i < numLocalCoords; i++){
     gno_t g = gnos[i];
-    lno_t hash_index = g % numLocalCoords;
-    lno_t hash_size = hash[hash_index].size();
-    part_t p = -1;
-    for (lno_t j =0; j < hash_size; ++j){
-      if (hash[hash_index][j].gno == g){
-        p = hash[hash_index][j].part;
-        break;
-      }
-    }
-    if(p == -1) {
-      std::cerr << "ERROR AT HASHING FOR GNO:"<< g << " LNO:" << i << std::endl;
-    }
-    //add uo all coordinates in each part.
+    part_t p = parts[i];
+    //add up all coordinates in each part.
     for(int j = 0; j < coordDim; ++j){
       scalar_t c = multiJagged_coordinates[j][i];
       partCenters[j][p] += c;
     }
+    ++point_counts[p];
   }
-  envConst->timerStop(MACRO_TIMERS, "Mapping - Hashing Search");
+
+  //get global number of points in each part.
+  reduceAll<int, gno_t>(*comm, Teuchos::REDUCE_SUM,
+      ntasks, point_counts, global_point_counts
+  );
 
   for(int j = 0; j < coordDim; ++j){
     for (part_t i=0; i < ntasks; ++i){
@@ -242,12 +220,307 @@ void getSolutionCenterCoordinates(
     partCenters[j] = tmpCoords;
     tmpCoords = tmp;
   }
+  envConst->timerStop(MACRO_TIMERS, "Mapping - Center Calculation");
 
   freeArray<gno_t> (point_counts);
   freeArray<gno_t> (global_point_counts);
 
   freeArray<scalar_t> (tmpCoords);
   freeArray<scalar_t *>(multiJagged_coordinates);
+}
+
+//returns the coarsend part graph.
+template <typename Adapter, typename scalar_t, typename part_t>
+void getCoarsenedPartGraph(
+    const Environment *envConst,
+    const Teuchos::Comm<int> *comm,
+    const Zoltan2::GraphModel<typename Adapter::base_adapter_t> *graph,
+    //const Zoltan2::PartitioningSolution<Adapter> *soln_,
+    part_t np,
+    const part_t *parts,
+    ArrayRCP<part_t> &g_part_xadj,
+    ArrayRCP<part_t> &g_part_adj,
+    ArrayRCP<scalar_t> &g_part_ew
+    ){
+
+  typedef typename Adapter::lno_t t_lno_t;
+  typedef typename Adapter::gno_t t_gno_t;
+  typedef typename Adapter::scalar_t t_scalar_t;
+  typedef typename Zoltan2::GraphModel<typename Adapter::base_adapter_t>::input_t t_input_t;
+
+  //int numRanks = comm->getSize();
+  //int myRank = comm->getRank();
+
+  //get parts with parallel gnos.
+  /*
+  const part_t *parts = soln_->getPartListView();
+
+  part_t np = soln_->getActualGlobalNumberOfParts();
+  if (part_t (soln_->getTargetGlobalNumberOfParts()) > np){
+    np = soln_->getTargetGlobalNumberOfParts();
+  }
+  */
+
+
+  t_lno_t localNumVertices = graph->getLocalNumVertices();
+  t_gno_t globalNumVertices = graph->getGlobalNumVertices();
+  t_lno_t localNumEdges = graph->getLocalNumEdges();
+
+  //get the vertex global ids, and weights
+  ArrayView<const t_gno_t> Ids;
+  ArrayView<t_input_t> v_wghts;
+  graph->getVertexList(Ids, v_wghts);
+
+  //get the edge ids, and weights
+  ArrayView<const t_gno_t> edgeIds;
+  ArrayView<const t_lno_t> offsets;
+  ArrayView<t_input_t> e_wgts;
+  graph->getEdgeList(edgeIds, offsets, e_wgts);
+
+
+  std::vector <t_scalar_t> edge_weights;
+  int numWeightPerEdge = graph->getNumWeightsPerEdge();
+
+  if (numWeightPerEdge > 0){
+    edge_weights =  std::vector <t_scalar_t> (localNumEdges);
+    for (t_lno_t i = 0; i < localNumEdges; ++i){
+      edge_weights[i] = e_wgts[0][i];
+    }
+  }
+
+  //create a zoltan dictionary to get the parts of the vertices
+  //at the other end of edges
+  std::vector <part_t> e_parts (localNumEdges);
+#ifdef HAVE_ZOLTAN2_MPI
+  if (comm->getSize() > 1)
+  {
+    Zoltan_DD_Struct *dd = NULL;
+
+    MPI_Comm mpicomm = Teuchos::getRawMpiComm(*comm);
+    int size_gnot = Zoltan2::TPL_Traits<ZOLTAN_ID_PTR, t_gno_t>::NUM_ID;
+
+    int debug_level = 0;
+    Zoltan_DD_Create(&dd, mpicomm,
+        size_gnot, 0,
+        sizeof(part_t), localNumVertices, debug_level);
+
+    ZOLTAN_ID_PTR ddnotneeded = NULL;  // Local IDs not needed
+    Zoltan_DD_Update(
+        dd,
+        (ZOLTAN_ID_PTR) Ids.getRawPtr(),
+        ddnotneeded,
+        (char *) parts,
+        NULL,
+        int(localNumVertices));
+
+    Zoltan_DD_Find(
+        dd,
+        (ZOLTAN_ID_PTR) edgeIds.getRawPtr(),
+        ddnotneeded,
+        (char *)&(e_parts[0]),
+        NULL,
+        localNumEdges,
+        NULL
+        );
+    Zoltan_DD_Destroy(&dd);
+  } else
+#endif
+  {
+
+    /*
+    std::cout << "localNumVertices:" << localNumVertices
+              << " np:" << np
+              << " globalNumVertices:" << globalNumVertices
+              << " localNumEdges:" << localNumEdges << std::endl;
+              */
+
+    for (t_lno_t i = 0; i < localNumEdges; ++i){
+      t_gno_t ei = edgeIds[i];
+      part_t p = parts[ei];
+      e_parts[i] = p;
+    }
+
+    //get the vertices in each part in my part.
+    std::vector <t_lno_t> part_begins(np, -1);
+    std::vector <t_lno_t> part_nexts(localNumVertices, -1);
+
+    //cluster vertices according to their parts.
+    //create local part graph.
+    for (t_lno_t i = 0; i < localNumVertices; ++i){
+      part_t ap = parts[i];
+      part_nexts[i] = part_begins[ap];
+      part_begins[ap] = i;
+    }
+
+
+    g_part_xadj = ArrayRCP<part_t> (np + 1);
+    g_part_adj = ArrayRCP<part_t> (localNumEdges);
+    g_part_ew = ArrayRCP<t_scalar_t> (localNumEdges);
+    part_t nindex = 0;
+    g_part_xadj[0] = 0;
+    std::vector <part_t> part_neighbors (np);
+    std::vector <t_scalar_t> part_neighbor_weights(np, 0);
+    std::vector <t_scalar_t> part_neighbor_weights_ordered(np);
+
+    //coarsen for all vertices in my part in order with parts.
+    for (t_lno_t i = 0; i < np; ++i){
+      part_t num_neighbor_parts = 0;
+      t_lno_t v = part_begins[i];
+      //get part i, and first vertex in this part v.
+      while (v != -1){
+        //now get the neightbors of v.
+        for (t_lno_t j = offsets[v]; j < offsets[v+1]; ++j){
+          //get the part of the second vertex.
+          part_t ep = e_parts[j];
+
+          t_scalar_t ew = 1;
+          if (numWeightPerEdge > 0){
+            ew = edge_weights[j];
+          }
+          //std::cout << "part:" << i << " v:" << v << " part2:" << ep  << " v2:" << edgeIds[j] << " w:" << ew << std::endl;
+          //add it to my local part neighbors for part i.
+          if (part_neighbor_weights[ep] < 0.00001){
+            part_neighbors[num_neighbor_parts++] = ep;
+          }
+          part_neighbor_weights[ep] += ew;
+        }
+        v = part_nexts[v];
+      }
+
+
+      //now get the part list.
+      for (t_lno_t j = 0; j < num_neighbor_parts; ++j){
+        part_t neighbor_part = part_neighbors[j];
+        g_part_adj[nindex] = neighbor_part;
+        g_part_ew[nindex++] = part_neighbor_weights[neighbor_part];
+        part_neighbor_weights[neighbor_part] = 0;
+      }
+      g_part_xadj[i + 1] = nindex;
+    }
+    return;
+  }
+
+  RCP<const Teuchos::Comm<int> > tcomm = rcpFromRef(*comm);
+  typedef Tpetra::Map<>::node_type t_node_t;
+  typedef Tpetra::Map<part_t, part_t, t_node_t> map_t;
+  Teuchos::RCP<const map_t> map = Teuchos::rcp (new map_t (np, 0, tcomm));
+  typedef Tpetra::CrsMatrix<t_scalar_t, part_t, part_t, t_node_t> tcrsMatrix_t;
+  Teuchos::RCP<tcrsMatrix_t> tMatrix(new tcrsMatrix_t (map, 0));
+
+
+
+  envConst->timerStart(MACRO_TIMERS, "GRAPHCREATE Coarsen");
+  {
+    //get the vertices in each part in my part.
+    std::vector <t_lno_t> part_begins(np, -1);
+    std::vector <t_lno_t> part_nexts(localNumVertices, -1);
+
+    //cluster vertices according to their parts.
+    //create local part graph.
+    for (t_lno_t i = 0; i < localNumVertices; ++i){
+      part_t ap = parts[i];
+      part_nexts[i] = part_begins[ap];
+      part_begins[ap] = i;
+    }
+
+    std::vector <part_t> part_neighbors (np);
+    std::vector <t_scalar_t> part_neighbor_weights(np, 0);
+    std::vector <t_scalar_t> part_neighbor_weights_ordered(np);
+
+    //coarsen for all vertices in my part in order with parts.
+    for (t_lno_t i = 0; i < np; ++i){
+      part_t num_neighbor_parts = 0;
+      t_lno_t v = part_begins[i];
+      //get part i, and first vertex in this part v.
+      while (v != -1){
+        //now get the neightbors of v.
+        for (t_lno_t j = offsets[v]; j < offsets[v+1]; ++j){
+          //get the part of the second vertex.
+          part_t ep = e_parts[j];
+
+          t_scalar_t ew = 1;
+          if (numWeightPerEdge > 0){
+            ew = edge_weights[j];
+          }
+          //add it to my local part neighbors for part i.
+          if (part_neighbor_weights[ep] < 0.00001){
+            part_neighbors[num_neighbor_parts++] = ep;
+          }
+          part_neighbor_weights[ep] += ew;
+        }
+        v = part_nexts[v];
+      }
+
+      //now get the part list.
+      for (t_lno_t j = 0; j < num_neighbor_parts; ++j){
+        part_t neighbor_part = part_neighbors[j];
+        part_neighbor_weights_ordered[j] = part_neighbor_weights[neighbor_part];
+        part_neighbor_weights[neighbor_part] = 0;
+      }
+
+      //insert it to tpetra crsmatrix.
+      if (num_neighbor_parts > 0){
+        Teuchos::ArrayView<const part_t> destinations(
+            &(part_neighbors[0]), num_neighbor_parts);
+        Teuchos::ArrayView<const t_scalar_t>
+        vals(&(part_neighbor_weights_ordered[0]), num_neighbor_parts);
+        tMatrix->insertGlobalValues (i,destinations, vals);
+      }
+    }
+  }
+  envConst->timerStop(MACRO_TIMERS, "GRAPHCREATE Coarsen");
+  envConst->timerStart(MACRO_TIMERS, "GRAPHCREATE fillComplete");
+  tMatrix->fillComplete ();
+  envConst->timerStop(MACRO_TIMERS, "GRAPHCREATE fillComplete");
+
+
+  std::vector <part_t> part_indices(np);
+
+  for (part_t i = 0; i < np; ++i) part_indices[i] = i;
+
+  Teuchos::ArrayView<const part_t>
+    global_ids( &(part_indices[0]), np);
+
+  //create a map where all processors own all rows.
+  //so that we do a gatherAll for crsMatrix.
+  Teuchos::RCP<const map_t> gatherRowMap(new map_t (
+      Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid(), global_ids, 0, tcomm));
+
+  envConst->timerStart(MACRO_TIMERS, "GRAPHCREATE Import");
+  //create the importer for gatherAll
+  Teuchos::RCP<tcrsMatrix_t> A_gather =
+      Teuchos::rcp (new tcrsMatrix_t (gatherRowMap, 0));
+  typedef Tpetra::Import<typename map_t::local_ordinal_type,
+                         typename map_t::global_ordinal_type,
+                         typename map_t::node_type> import_type;
+  import_type import (map, gatherRowMap);
+  A_gather->doImport (*tMatrix, import, Tpetra::INSERT);
+  A_gather->fillComplete ();
+  envConst->timerStop(MACRO_TIMERS, "GRAPHCREATE Import");
+
+  //create the output part arrays.
+  //all processors owns whole copy.
+  g_part_xadj = ArrayRCP<part_t> (np + 1);
+  g_part_adj = ArrayRCP<part_t> (A_gather->getNodeNumEntries ());
+  g_part_ew = ArrayRCP<t_scalar_t> (A_gather->getNodeNumEntries ());
+
+  part_t *taskidx = g_part_xadj.getRawPtr();
+  part_t *taskadj = g_part_adj.getRawPtr();
+  t_scalar_t *taskadjwgt = g_part_ew.getRawPtr();
+
+  taskidx[0] = 0;
+
+  envConst->timerStart(MACRO_TIMERS, "GRAPHCREATE Import Copy");
+  for (part_t i = 0; i < np; i++) {
+    part_t length = A_gather->getNumEntriesInLocalRow(i);  // Use Global to get same
+    size_t nentries;
+    taskidx[i+1] = taskidx[i] + length;
+    //get the indices
+    Teuchos::ArrayView<part_t> Indices(taskadj + taskidx[i], length);
+    Teuchos::ArrayView<t_scalar_t> Values(taskadjwgt + taskidx[i], length);
+    A_gather->getLocalRowCopy(i, Indices, Values, nentries);
+  }
+  envConst->timerStop(MACRO_TIMERS, "GRAPHCREATE Import Copy");
 }
 
 
@@ -633,15 +906,22 @@ public:
         part_t neighborTask = task_communication_adj[task2];
         //cout << "neighborTask :" << neighborTask  << endl;
         int neighborProc = task_to_proc[neighborTask];
-        double distance = getProcDistance(assigned_proc, neighborProc);
-        //cout << "assigned_proc:" << assigned_proc << " neighborProc:" << neighborProc << " d:" << distance << endl;
 
+        double distance = getProcDistance(assigned_proc, neighborProc);
 
         if (task_communication_edge_weight == NULL){
           totalCost += distance ;
         }
         else {
           totalCost += distance * task_communication_edge_weight[task2];
+
+          /*
+          std::cout <<  "\ttask:" << task << " assigned_proc:" << assigned_proc <<
+                        "task2:" << task << " neighborProc:" << neighborProc <<
+                        " d:" << distance << " task_communication_edge_weight[task2]:" << task_communication_edge_weight[task2] <<
+                        " wh:" << distance * task_communication_edge_weight[task2] <<
+                        std::endl;
+          */
         }
       }
     }
@@ -683,6 +963,10 @@ public:
   int partArraySize;
   part_t *partNoArray;
 
+  int *machine_extent;
+  bool *machine_extent_wrap_around;
+  const MachineRepresentation<pcoord_t,part_t> *machine;
+
   //public:
   CoordinateCommunicationModel():
     CommunicationModel<part_t, pcoord_t>(),
@@ -691,7 +975,10 @@ public:
     task_coord_dim(0),
     task_coords(0),
     partArraySize(-1),
-    partNoArray(NULL){}
+    partNoArray(NULL),
+    machine_extent(NULL),
+    machine_extent_wrap_around(NULL),
+    machine(NULL){}
 
   virtual ~CoordinateCommunicationModel(){}
 
@@ -709,13 +996,19 @@ public:
       int tcoord_dim_,
       tcoord_t **tcoords_,
       part_t no_procs_,
-      part_t no_tasks_
+      part_t no_tasks_,
+      int *machine_extent_,
+      bool *machine_extent_wrap_around_,
+      const MachineRepresentation<pcoord_t,part_t> *machine_ = NULL
   ):
     CommunicationModel<part_t, pcoord_t>(no_procs_, no_tasks_),
     proc_coord_dim(pcoord_dim_), proc_coords(pcoords_),
     task_coord_dim(tcoord_dim_), task_coords(tcoords_),
-    partArraySize(std::min(tcoord_dim_, pcoord_dim_)),
-    partNoArray(NULL){
+    partArraySize(-1),
+    partNoArray(NULL),
+    machine_extent(machine_extent_),
+    machine_extent_wrap_around(machine_extent_wrap_around_),
+    machine(machine_){
   }
 
 
@@ -780,10 +1073,22 @@ public:
   }
 
   virtual double getProcDistance(int procId1, int procId2) const{
-    double distance = 0;
-    for (int i = 0 ; i < this->proc_coord_dim; ++i){
-      distance += ZOLTAN2_ABS(proc_coords[i][procId1] - proc_coords[i][procId2]);
+    pcoord_t distance = 0;
+    if (machine == NULL){
+      for (int i = 0 ; i < this->proc_coord_dim; ++i){
+        double d = ZOLTAN2_ABS(proc_coords[i][procId1] - proc_coords[i][procId2]);
+        if (machine_extent_wrap_around && machine_extent_wrap_around[i]){
+          if (machine_extent[i] - d < d){
+            d = machine_extent[i] - d;
+          }
+        }
+        distance += d;
+      }
     }
+    else {
+      this->machine->getHopCount(procId1, procId2, distance);
+    }
+
     return distance;
   }
 
@@ -861,14 +1166,28 @@ public:
     //obtain the number of parts that should be divided.
     part_t num_parts = MINOF(this->no_procs, this->no_tasks);
     //obtain the min coordinate dim.
-    part_t minCoordDim = MINOF(this->task_coord_dim, this->proc_coord_dim);
+    //No more want to do min coord dim. If machine dimension > task_dim,
+    //we end up with a long line.
+    //part_t minCoordDim = MINOF(this->task_coord_dim, this->proc_coord_dim);
 
     int recursion_depth = partArraySize;
-    if(partArraySize < minCoordDim) recursion_depth = minCoordDim;
+    //if(partArraySize < minCoordDim) recursion_depth = minCoordDim;
+    if (partArraySize == -1)
+      recursion_depth = log(float(this->no_procs)) / log(2.0) + 1;
+
 
     int taskPerm = z2Fact<int>(this->task_coord_dim); //get the number of different permutations for task dimension ordering
     int procPerm = z2Fact<int>(this->proc_coord_dim); //get the number of different permutations for proc dimension ordering
+
     int permutations =  taskPerm * procPerm; //total number of permutations
+    //now add the ones, where we divide the processors with longest dimension,
+    //but task with order.
+    permutations +=  taskPerm;
+    //and divide tasks with longest dimension, and processors with order.
+    permutations += procPerm; //total number of permutations
+    //and both with longest dimension.
+    permutations += 1;
+    //add one also that partitions based the longest dimension.
 
     //holds the pointers to proc_adjList
     part_t *proc_xadj = allocMemory<part_t> (num_parts+1);
@@ -888,9 +1207,56 @@ public:
     }
 
     int myPermutation = myRank % permutations; //the index of the permutation
+    bool task_partition_along_longest_dim = false;
+    bool proc_partition_along_longest_dim = false;
 
-    int myProcPerm=  myPermutation % procPerm; // the index of the proc permutation
-    int myTaskPerm  = myPermutation / procPerm; // the index of the task permutation
+
+    int myProcPerm = 0;
+    int myTaskPerm = 0;
+
+    if (myPermutation == 0){
+      task_partition_along_longest_dim = true;
+      proc_partition_along_longest_dim = true;
+    }
+    else {
+      --myPermutation;
+      if (myPermutation < taskPerm){
+        proc_partition_along_longest_dim = true;
+        myTaskPerm  = myPermutation; // the index of the task permutation
+      }
+      else{
+        myPermutation -= taskPerm;
+        if (myPermutation < procPerm){
+          task_partition_along_longest_dim = true;
+          myProcPerm  = myPermutation; // the index of the task permutation
+        }
+        else {
+          myPermutation -= procPerm;
+          myProcPerm = myPermutation % procPerm; // the index of the proc permutation
+          myTaskPerm = myPermutation / procPerm; // the index of the task permutation
+        }
+      }
+    }
+
+
+
+
+    /*
+    if (task_partition_along_longest_dim && proc_partition_along_longest_dim){
+      std::cout <<"me:" << myRank << " task:longest proc:longest" << " numPerms:" << permutations << std::endl;
+    }
+    else if (proc_partition_along_longest_dim){
+      std::cout <<"me:" << myRank << " task:" <<  myTaskPerm << " proc:longest" << " numPerms:" << permutations << std::endl;
+    }
+    else if (task_partition_along_longest_dim){
+      std::cout <<"me:" << myRank << " task: longest" << " proc:" <<  myProcPerm  << " numPerms:" << permutations << std::endl;
+    }
+    else {
+      std::cout <<"me:" << myRank << " task:" <<  myTaskPerm << " proc:" <<  myProcPerm  << " numPerms:" << permutations << std::endl;
+    }
+    */
+
+
 
     int *permutation = allocMemory<int> ((this->proc_coord_dim > this->task_coord_dim)
         ? this->proc_coord_dim : this->task_coord_dim);
@@ -905,6 +1271,8 @@ public:
     }
 
 
+    //if (partNoArray == NULL) std::cout << "partNoArray is null" << std::endl;
+    //std::cout << "recursion_depth:" << recursion_depth << " partArraySize:" << partArraySize << std::endl;
     //do the partitioning and renumber the parts.
     env->timerStart(MACRO_TIMERS, "Mapping - Proc Partitioning");
 
@@ -914,12 +1282,14 @@ public:
         this->no_procs,
         used_num_procs,
         num_parts,
-        minCoordDim,
+        this->proc_coord_dim,
+        //minCoordDim,
         pcoords,//this->proc_coords,
         proc_adjList,
         proc_xadj,
         recursion_depth,
-        partNoArray
+        partNoArray,
+        proc_partition_along_longest_dim
         //,"proc_partitioning"
     );
     env->timerStop(MACRO_TIMERS, "Mapping - Proc Partitioning");
@@ -947,12 +1317,14 @@ public:
         this->no_tasks,
         this->no_tasks,
         num_parts,
-        minCoordDim,
+        this->task_coord_dim,
+        //minCoordDim,
         tcoords, //this->task_coords,
         task_adjList,
         task_xadj,
         recursion_depth,
-        partNoArray
+        partNoArray,
+        task_partition_along_longest_dim
         //,"task_partitioning"
     );
     env->timerStop(MACRO_TIMERS, "Mapping - Task Partitioning");
@@ -1025,6 +1397,7 @@ protected:
 
   typedef typename Adapter::scalar_t pcoord_t;
   typedef typename Adapter::scalar_t tcoord_t;
+  typedef typename Adapter::scalar_t scalar_t;
 
 #endif
 
@@ -1036,8 +1409,9 @@ protected:
   CoordinateCommunicationModel<pcoord_t,tcoord_t,part_t> *proc_task_comm;
   part_t nprocs;
   part_t ntasks;
-  ArrayRCP<part_t>task_communication_xadj;
-  ArrayRCP<part_t>task_communication_adj;
+  ArrayRCP<part_t> task_communication_xadj;
+  ArrayRCP<part_t> task_communication_adj;
+  ArrayRCP<scalar_t> task_communication_edge_weight;
 
 
   /*! \brief doMapping function, calls getMapping function of communicationModel object.
@@ -1047,7 +1421,7 @@ protected:
     if(this->proc_task_comm){
       this->proc_task_comm->getMapping(
           myRank,
-          Teuchos::RCP<const Environment>(this->env, false),
+          this->env,
           this->proc_to_task_xadj, //  = allocMemory<part_t> (this->no_procs+1); //holds the pointer to the task array
           this->proc_to_task_adj, // = allocMemory<part_t>(this->no_tasks); //holds the indices of tasks wrt to proc_to_task_xadj array.
           this->task_to_proc //allocMemory<part_t>(this->no_procs); //holds the processors mapped to tasks.);
@@ -1069,6 +1443,8 @@ protected:
     int taskPerm = z2Fact<int>(procDim); //get the number of different permutations for task dimension ordering
     int procPerm = z2Fact<int>(taskDim); //get the number of different permutations for proc dimension ordering
     int idealGroupSize =  taskPerm * procPerm; //total number of permutations
+
+    idealGroupSize += taskPerm + procPerm + 1; //for the one that does longest dimension partitioning.
 
     int myRank = this->comm->getRank();
     int commSize = this->comm->getSize();
@@ -1111,7 +1487,7 @@ protected:
     RCP<Comm<int> > subComm = this->create_subCommunicator();
     //calculate cost.
     double myCost = this->proc_task_comm->getCommunicationCostMetric();
-    //cout << "me:" << this->comm->getRank() << " myCost:" << myCost << endl;
+    //std::cout << "me:" << this->comm->getRank() << " myCost:" << myCost << std::endl;
     double localCost[2], globalCost[2];
 
     localCost[0] = myCost;
@@ -1124,6 +1500,14 @@ protected:
 
     int sender = int(globalCost[1]);
 
+    if ( this->comm->getRank() == 0){
+      std::cout << "me:" << localCost[1] <<
+            " localcost:" << localCost[0]<<
+            " bestcost:" << globalCost[0] <<
+            " Sender:" << sender <<
+            " procDim" << proc_task_comm->proc_coord_dim <<
+            " taskDim:" << proc_task_comm->task_coord_dim << std::endl;
+    }
     //cout << "me:" << localCost[1] << " localcost:" << localCost[0]<< " bestcost:" << globalCost[0] << endl;
     //cout << "me:" << localCost[1] << " proc:" << globalCost[1] << endl;
     broadcast (*subComm, sender, this->ntasks, this->task_to_proc.getRawPtr());
@@ -1141,7 +1525,7 @@ protected:
     std::string ss = "";
     for(part_t i = 0; i < this->nprocs; ++i){
 
-      std::string procFile = toString<int>(i) + "_mapping.txt";
+      std::string procFile = Teuchos::toString<int>(i) + "_mapping.txt";
       if (i == 0){
         gnuPlotCode << "plot \"" << procFile << "\"\n";
       }
@@ -1155,19 +1539,19 @@ protected:
       for(int j = 0; j <  mindim; ++j){
         if (j == mindim - 1){
           inpFile << proc_task_comm->proc_coords[j][i];
-          gnuPlotArrow += toString<float>(proc_task_comm->proc_coords[j][i]);
+          gnuPlotArrow += Teuchos::toString<float>(proc_task_comm->proc_coords[j][i]);
 
         }
         else {
           inpFile << proc_task_comm->proc_coords[j][i] << " ";
-          gnuPlotArrow += toString<float>(proc_task_comm->proc_coords[j][i]) +",";
+          gnuPlotArrow += Teuchos::toString<float>(proc_task_comm->proc_coords[j][i]) +",";
         }
       }
       gnuPlotArrow += " to ";
 
 
       inpFile << std::endl;
-      ArrayView<part_t> a = this->getAssignedTaksForProc(i);
+      ArrayView<part_t> a = this->getAssignedTasksForProc(i);
       for(int k = 0; k <  a.size(); ++k){
         int j = a[k];
         //cout << "i:" << i << " j:"
@@ -1177,11 +1561,11 @@ protected:
 
             //cout << "z:" << z << " j:" <<  j << " " << proc_task_comm->task_coords[z][j] << endl;
             inpFile << proc_task_comm->task_coords[z][j];
-            gnuPlotArrow2 += toString<float>(proc_task_comm->task_coords[z][j]);
+            gnuPlotArrow2 += Teuchos::toString<float>(proc_task_comm->task_coords[z][j]);
           }
           else{
             inpFile << proc_task_comm->task_coords[z][j] << " ";
-            gnuPlotArrow2 += toString<float>(proc_task_comm->task_coords[z][j]) +",";
+            gnuPlotArrow2 += Teuchos::toString<float>(proc_task_comm->task_coords[z][j]) +",";
           }
         }
         ss += gnuPlotArrow2 + "\n";
@@ -1200,7 +1584,7 @@ protected:
   //write mapping to gnuPlot code to visualize.
   void writeMapping2(int myRank){
 
-    std::string rankStr = toString<int>(myRank);
+    std::string rankStr = Teuchos::toString<int>(myRank);
     std::string gnuPlots = "gnuPlot", extentionS = ".plot";
     std::string outF = gnuPlots + rankStr+ extentionS;
     std::ofstream gnuPlotCode ( outF.c_str(), std::ofstream::out);
@@ -1213,7 +1597,7 @@ protected:
     for(part_t i = 0; i < this->nprocs; ++i){
 
       //inpFile << std::endl;
-      ArrayView<part_t> a = this->getAssignedTaksForProc(i);
+      ArrayView<part_t> a = this->getAssignedTasksForProc(i);
       if (a.size() == 0){
         continue;
       }
@@ -1224,14 +1608,14 @@ protected:
       for(int j = 0; j <  mindim; ++j){
         if (j == mindim - 1){
           //inpFile << proc_task_comm->proc_coords[j][i];
-          gnuPlotArrow += toString<float>(tmpproc_task_comm->proc_coords[j][i]);
-          procs += toString<float>(tmpproc_task_comm->proc_coords[j][i]);
+          gnuPlotArrow += Teuchos::toString<float>(tmpproc_task_comm->proc_coords[j][i]);
+          procs += Teuchos::toString<float>(tmpproc_task_comm->proc_coords[j][i]);
 
         }
         else {
           //inpFile << proc_task_comm->proc_coords[j][i] << " ";
-          gnuPlotArrow += toString<float>(tmpproc_task_comm->proc_coords[j][i]) +",";
-          procs += toString<float>(tmpproc_task_comm->proc_coords[j][i])+ " ";
+          gnuPlotArrow += Teuchos::toString<float>(tmpproc_task_comm->proc_coords[j][i]) +",";
+          procs += Teuchos::toString<float>(tmpproc_task_comm->proc_coords[j][i])+ " ";
         }
       }
       procs += "\n";
@@ -1248,13 +1632,13 @@ protected:
 
             //cout << "z:" << z << " j:" <<  j << " " << proc_task_comm->task_coords[z][j] << endl;
             //inpFile << proc_task_comm->task_coords[z][j];
-            gnuPlotArrow2 += toString<float>(tmpproc_task_comm->task_coords[z][j]);
-            parts += toString<float>(tmpproc_task_comm->task_coords[z][j]);
+            gnuPlotArrow2 += Teuchos::toString<float>(tmpproc_task_comm->task_coords[z][j]);
+            parts += Teuchos::toString<float>(tmpproc_task_comm->task_coords[z][j]);
           }
           else{
             //inpFile << proc_task_comm->task_coords[z][j] << " ";
-            gnuPlotArrow2 += toString<float>(tmpproc_task_comm->task_coords[z][j]) +",";
-            parts += toString<float>(tmpproc_task_comm->task_coords[z][j]) + " ";
+            gnuPlotArrow2 += Teuchos::toString<float>(tmpproc_task_comm->task_coords[z][j]) +",";
+            parts += Teuchos::toString<float>(tmpproc_task_comm->task_coords[z][j]) + " ";
           }
         }
         parts += "\n";
@@ -1310,7 +1694,7 @@ protected:
     std::string file = "gggnuPlot";
     std::string exten = ".plot";
     std::ofstream mm("2d.txt");
-    file += toString<int>(comm_->getRank()) + exten;
+    file += Teuchos::toString<int>(comm_->getRank()) + exten;
     std::ofstream ff(file.c_str());
     //ff.seekg (0, ff.end);
     std::vector <Zoltan2::coordinateModelPartBox <tcoord_t, part_t> > outPartBoxes = ((Zoltan2::PartitioningSolution<Adapter> *)soln_)->getPartBoxesView();
@@ -1338,15 +1722,15 @@ protected:
         //cout << "i:" << i << " n:" << n << endl;
         std::string arrowline = "set arrow from ";
         for (int j = 0; j < coordDim - 1; ++j){
-          arrowline += toString<tcoord_t>(partCenters[j][n]) + ",";
+          arrowline += Teuchos::toString<tcoord_t>(partCenters[j][n]) + ",";
         }
-        arrowline += toString<tcoord_t>(partCenters[coordDim -1][n]) + " to ";
+        arrowline += Teuchos::toString<tcoord_t>(partCenters[coordDim -1][n]) + " to ";
 
 
         for (int j = 0; j < coordDim - 1; ++j){
-          arrowline += toString<tcoord_t>(partCenters[j][i]) + ",";
+          arrowline += Teuchos::toString<tcoord_t>(partCenters[j][i]) + ",";
         }
-        arrowline += toString<tcoord_t>(partCenters[coordDim -1][i]) + " as 5\n";
+        arrowline += Teuchos::toString<tcoord_t>(partCenters[coordDim -1][i]) + " as 5\n";
 
         //cout << "arrow:" << arrowline << endl;
         ff << arrowline;
@@ -1363,6 +1747,21 @@ public:
   void getProcTask(part_t* &proc_to_task_xadj_, part_t* &proc_to_task_adj_){
     proc_to_task_xadj_ = this->proc_to_task_xadj.getRawPtr();
     proc_to_task_adj_ = this->proc_to_task_adj.getRawPtr();
+  }
+
+  void map(RCP<MappingSolution<Adapter> > &mappingsoln) {
+
+    // Mapping was already computed in the constructor; we need to store it
+    // in the solution.
+
+    mappingsoln->setMap_PartsForRank(this->proc_to_task_xadj,
+                                     this->proc_to_task_adj);
+
+    // KDDKDD TODO:  Algorithm is also creating task_to_proc, which maybe 
+    // KDDKDD is not needed once we use MappingSolution to answer queries 
+    // KDDKDD instead of this algorithm.  
+    // KDDKDD Ask Mehmet:  what is the most efficient way to get the answer
+    // KDDKDD out of CoordinateTaskMapper and into the MappingSolution?
   }
 
 
@@ -1387,55 +1786,148 @@ public:
    *  \param envConst_ is the environment object.
    */
   CoordinateTaskMapper(
-      const Teuchos::Comm<int> *comm_,
-      const MachineRepresentation<pcoord_t> *machine_,
-      const Zoltan2::Model<typename Adapter::base_adapter_t> *model_,
-      const Zoltan2::PartitioningSolution<Adapter> *soln_,
-      const Environment *envConst):
-        PartitionMapping<Adapter> (comm_, machine_, model_, soln_, envConst),
+      const Teuchos::RCP <const Teuchos::Comm<int> > comm_,
+      const Teuchos::RCP <const MachineRepresentation<pcoord_t,part_t> > machine_,
+      const Teuchos::RCP <const Adapter> input_adapter_,
+      const Teuchos::RCP <const Zoltan2::PartitioningSolution<Adapter> > soln_,
+      const Teuchos::RCP <const Environment> envConst):
+        PartitionMapping<Adapter> (comm_, machine_, input_adapter_, soln_, envConst),
         proc_to_task_xadj(0),
         proc_to_task_adj(0),
         task_to_proc(0),
         isOwnerofModel(true),
         proc_task_comm(0),
         task_communication_xadj(0),
-        task_communication_adj(0){
+        task_communication_adj(0),
+        task_communication_edge_weight(0){
+    using namespace Teuchos;
+    typedef typename Adapter::base_adapter_t ctm_base_adapter_t;
 
-    pcoord_t *task_communication_edge_weight_ = NULL;
+    RCP<Zoltan2::GraphModel<ctm_base_adapter_t> > graph_model_;
+    RCP<Zoltan2::CoordinateModel<ctm_base_adapter_t> > coordinateModel_ ;
+
+    RCP<const Teuchos::Comm<int> > rcp_comm = comm_;
+    RCP<const Environment> envConst_ = envConst;
+
+    RCP<const ctm_base_adapter_t> baseInputAdapter_ (
+        rcp(dynamic_cast<const ctm_base_adapter_t *>(input_adapter_.getRawPtr()), false));
+
+    modelFlag_t coordFlags_, graphFlags_;
+
+    //create coordinate model
+    //since this is coordinate task mapper,
+    //the adapter has to have the coordinates
+    coordinateModel_ = rcp(new CoordinateModel<ctm_base_adapter_t>(
+          baseInputAdapter_, envConst_, rcp_comm, coordFlags_));
+
+    //if the adapter has also graph model, we will use graph model
+    //to calculate the cost mapping.
+    BaseAdapterType inputType_ = input_adapter_->adapterType();
+    if (inputType_ == MatrixAdapterType || 
+        inputType_ == GraphAdapterType || 
+        inputType_ == MeshAdapterType)
+    {
+      graph_model_ = rcp(new GraphModel<ctm_base_adapter_t>(
+          baseInputAdapter_, envConst_, rcp_comm,
+            graphFlags_));
+    }
+
+    if (!machine_->hasMachineCoordinates()) {
+      throw std::runtime_error("Existing machine does not provide coordinates "
+                               "for coordinate task mapping");
+    }
+
     //if mapping type is 0 then it is coordinate mapping
-    int procDim = machine_->getProcDim();
-    this->nprocs = machine_->getNumProcs();
-    //get processor coordinates.
-    pcoord_t **procCoordinates = machine_->getProcCoords();
+    int procDim = machine_->getMachineDim();
+    this->nprocs = machine_->getNumRanks();
 
-    int coordDim = ((Zoltan2::CoordinateModel<typename Adapter::base_adapter_t> *)model_)->getCoordinateDim();
+    //get processor coordinates.
+    pcoord_t **procCoordinates = NULL;
+    if (!machine_->getAllMachineCoordinatesView(procCoordinates)) {
+      throw std::runtime_error("Existing machine does not implement "
+                               "getAllMachineCoordinatesView");
+    }
+
+    //get the machine extent.
+    //if we have machine extent,
+    //if the machine has wrap-around links, we would like to shift the coordinates,
+    //so that the largest hap would be the wrap-around.
+    std::vector <int> machine_extent_vec (procDim);
+    //std::vector <bool> machine_extent_wrap_around_vec(procDim, 0);
+    int *machine_extent = &(machine_extent_vec[0]);
+    bool *machine_extent_wrap_around = new bool[procDim];
+    machine_->getMachineExtentWrapArounds(machine_extent_wrap_around);
+
+
+
+    // KDDKDD ASK MEHMET:  SHOULD WE GET AND USE machine_dimension HERE IF IT
+    // KDDKDD ASK MEHMET:  IS PROVIDED BY THE MACHINE REPRESENTATION?
+    // KDDKDD ASK MEHMET:  IF NOT HERE, THEN WHERE?
+    // MD: Yes, I ADDED BELOW:
+    if (machine_->getMachineExtent(machine_extent)) {
+      procCoordinates =
+          this->shiftMachineCoordinates (
+              procDim,
+              machine_extent,
+              machine_extent_wrap_around,
+              this->nprocs,
+              procCoordinates);
+    }
+
+
+    //get the tasks information, such as coordinate dimension,
+    //number of parts.
+    int coordDim = coordinateModel_->getCoordinateDim();
+
+
     this->ntasks = soln_->getActualGlobalNumberOfParts();
     if (part_t (soln_->getTargetGlobalNumberOfParts()) > this->ntasks){
       this->ntasks = soln_->getTargetGlobalNumberOfParts();
     }
-    //cout << "actual: " << this->ntasks << endl;
+    this->solution_parts = soln_->getPartListView();
 
-    //alloc memory for part centers.
+    //we need to calculate the center of parts.
     tcoord_t **partCenters = NULL;
     partCenters = allocMemory<tcoord_t *>(coordDim);
     for (int i = 0; i < coordDim; ++i){
       partCenters[i] = allocMemory<tcoord_t>(this->ntasks);
     }
 
+    typedef typename Adapter::scalar_t t_scalar_t;
+
 
     envConst->timerStart(MACRO_TIMERS, "Mapping - Solution Center");
+
     //get centers for the parts.
-    getSolutionCenterCoordinates<Adapter, typename Adapter::scalar_t,part_t>(
-        envConst,
-        comm_,
-        ((Zoltan2::CoordinateModel<typename Adapter::base_adapter_t> *)model_),
-        this->soln,
+    getSolutionCenterCoordinates<Adapter, t_scalar_t,part_t>(
+        envConst.getRawPtr(),
+        comm_.getRawPtr(),
+        coordinateModel_.getRawPtr(),
+        this->solution_parts,
+        //soln_->getPartListView();
+        //this->soln.getRawPtr(),
         coordDim,
         ntasks,
         partCenters);
 
     envConst->timerStop(MACRO_TIMERS, "Mapping - Solution Center");
 
+
+    //create the part graph
+    if (graph_model_.getRawPtr() != NULL){
+      getCoarsenedPartGraph<Adapter, t_scalar_t, part_t> (
+          envConst.getRawPtr(),
+          comm_.getRawPtr(),
+          graph_model_.getRawPtr(),
+          this->ntasks,
+          this->solution_parts,
+          //soln_->getPartListView(),
+          //this->soln.getRawPtr(),
+          task_communication_xadj,
+          task_communication_adj,
+          task_communication_edge_weight
+      );
+    }
 
     //create coordinate communication model.
     this->proc_task_comm =
@@ -1445,8 +1937,10 @@ public:
             coordDim,
             partCenters,
             this->nprocs,
-            this->ntasks
-        );
+            this->ntasks,
+            machine_extent,
+            machine_extent_wrap_around,
+            machine_.getRawPtr());
 
     int myRank = comm_->getRank();
 
@@ -1457,8 +1951,10 @@ public:
 
 
     envConst->timerStart(MACRO_TIMERS, "Mapping - Communication Graph");
-    soln_->getCommunicationGraph(task_communication_xadj,
+
+    /*soln_->getCommunicationGraph(task_communication_xadj,
                task_communication_adj);
+     */
 
     envConst->timerStop(MACRO_TIMERS, "Mapping - Communication Graph");
   #ifdef gnuPlot
@@ -1478,23 +1974,50 @@ public:
   #endif
 
     envConst->timerStart(MACRO_TIMERS, "Mapping - Communication Cost");
-    this->proc_task_comm->calculateCommunicationCost(
-        task_to_proc.getRawPtr(),
-        task_communication_xadj.getRawPtr(),
-        task_communication_adj.getRawPtr(),
-        task_communication_edge_weight_
-    );
 
+    if (task_communication_xadj.getRawPtr() && task_communication_adj.getRawPtr()){
+      this->proc_task_comm->calculateCommunicationCost(
+          task_to_proc.getRawPtr(),
+          task_communication_xadj.getRawPtr(),
+          task_communication_adj.getRawPtr(),
+          task_communication_edge_weight.getRawPtr()
+      );
+    }
+
+    //std::cout << "me: " << comm_->getRank() << " cost:" << this->proc_task_comm->getCommunicationCostMetric() << std::endl;
 
     envConst->timerStop(MACRO_TIMERS, "Mapping - Communication Cost");
 
-    //processors are divided into groups of size numProc! * numTasks!
+    //processors are divided into groups of size procDim! * coordDim!
     //each processor in the group obtains a mapping with a different rotation
     //and best one is broadcasted all processors.
     this->getBestMapping();
+
+    /*
+    {
+      if (task_communication_xadj.getRawPtr() && task_communication_adj.getRawPtr())
+        this->proc_task_comm->calculateCommunicationCost(
+            task_to_proc.getRawPtr(),
+            task_communication_xadj.getRawPtr(),
+            task_communication_adj.getRawPtr(),
+            task_communication_edge_weight.getRawPtr()
+        );
+      std::cout << "me: " << comm_->getRank() << " cost:" << this->proc_task_comm->getCommunicationCostMetric() << std::endl;
+    }
+    */
+
+
   #ifdef gnuPlot
     this->writeMapping2(comm_->getRank());
   #endif
+
+    delete []machine_extent_wrap_around;
+    if (machine_->getMachineExtent(machine_extent)){
+      for (int i = 0; i < procDim; ++i){
+        delete [] procCoordinates[i];
+      }
+      delete [] procCoordinates;
+    }
 
     for (int i = 0; i < coordDim; ++i){
       freeArray<tcoord_t>(partCenters[i]);
@@ -1503,6 +2026,267 @@ public:
 
   }
 
+
+  /*! \brief Constructor. Instead of Solution we have two parameters, numparts
+   * When this constructor is called, in order to calculate the communication metric,
+   * the task adjacency graph is created based on the coordinate model input and partitioning of it.
+   * if the communication graph is already calculated, use the other constructors.
+   *  \param comm_ is the communication object.
+   *  \param machine_ is the machineRepresentation object. Stores the coordinates of machines.
+   *  \param model_ is the input adapter.
+   *  \param soln_ is the solution object. Holds the assignment of points.
+   *  \param envConst_ is the environment object.
+   */
+  CoordinateTaskMapper(
+      const Teuchos::RCP <const Teuchos::Comm<int> > comm_,
+      const Teuchos::RCP <const MachineRepresentation<pcoord_t,part_t> > machine_,
+      const Teuchos::RCP <const Adapter> input_adapter_,
+      const part_t num_parts_,
+      const part_t *result_parts,
+      const Teuchos::RCP <const Environment> envConst,
+      bool is_input_adapter_distributed = true):
+        PartitionMapping<Adapter> (comm_, machine_, input_adapter_, num_parts_, result_parts, envConst),
+        proc_to_task_xadj(0),
+        proc_to_task_adj(0),
+        task_to_proc(0),
+        isOwnerofModel(true),
+        proc_task_comm(0),
+        task_communication_xadj(0),
+        task_communication_adj(0),
+        task_communication_edge_weight(0){
+    using namespace Teuchos;
+    typedef typename Adapter::base_adapter_t ctm_base_adapter_t;
+
+    RCP<Zoltan2::GraphModel<ctm_base_adapter_t> > graph_model_;
+    RCP<Zoltan2::CoordinateModel<ctm_base_adapter_t> > coordinateModel_ ;
+
+    RCP<const Teuchos::Comm<int> > rcp_comm = comm_;
+    RCP<const Teuchos::Comm<int> > ia_comm = rcp_comm;
+    if (!is_input_adapter_distributed){
+      ia_comm =  Teuchos::createSerialComm<int>();
+    }
+    RCP<const Environment> envConst_ = envConst;
+
+    RCP<const ctm_base_adapter_t> baseInputAdapter_ (
+        rcp(dynamic_cast<const ctm_base_adapter_t *>(input_adapter_.getRawPtr()), false));
+
+    modelFlag_t coordFlags_, graphFlags_;
+
+    //create coordinate model
+    //since this is coordinate task mapper,
+    //the adapter has to have the coordinates
+    coordinateModel_ = rcp(new CoordinateModel<ctm_base_adapter_t>(
+          baseInputAdapter_, envConst_, ia_comm, coordFlags_));
+
+    //if the adapter has also graph model, we will use graph model
+    //to calculate the cost mapping.
+    BaseAdapterType inputType_ = input_adapter_->adapterType();
+    if (inputType_ == MatrixAdapterType ||
+        inputType_ == GraphAdapterType ||
+        inputType_ == MeshAdapterType)
+    {
+      graph_model_ = rcp(new GraphModel<ctm_base_adapter_t>(
+          baseInputAdapter_, envConst_, ia_comm,
+            graphFlags_));
+    }
+
+    if (!machine_->hasMachineCoordinates()) {
+      throw std::runtime_error("Existing machine does not provide coordinates "
+                               "for coordinate task mapping");
+    }
+
+    //if mapping type is 0 then it is coordinate mapping
+    int procDim = machine_->getMachineDim();
+    this->nprocs = machine_->getNumRanks();
+
+    //get processor coordinates.
+    pcoord_t **procCoordinates = NULL;
+    if (!machine_->getAllMachineCoordinatesView(procCoordinates)) {
+      throw std::runtime_error("Existing machine does not implement "
+                               "getAllMachineCoordinatesView");
+    }
+
+    //get the machine extent.
+    //if we have machine extent,
+    //if the machine has wrap-around links, we would like to shift the coordinates,
+    //so that the largest hap would be the wrap-around.
+    std::vector <int> machine_extent_vec (procDim);
+    //std::vector <bool> machine_extent_wrap_around_vec(procDim, 0);
+    int *machine_extent = &(machine_extent_vec[0]);
+    bool *machine_extent_wrap_around = new bool[procDim];
+    machine_->getMachineExtentWrapArounds(machine_extent_wrap_around);
+
+
+
+    // KDDKDD ASK MEHMET:  SHOULD WE GET AND USE machine_dimension HERE IF IT
+    // KDDKDD ASK MEHMET:  IS PROVIDED BY THE MACHINE REPRESENTATION?
+    // KDDKDD ASK MEHMET:  IF NOT HERE, THEN WHERE?
+    // MD: Yes, I ADDED BELOW:
+    if (machine_->getMachineExtent(machine_extent)) {
+      procCoordinates =
+          this->shiftMachineCoordinates (
+              procDim,
+              machine_extent,
+              machine_extent_wrap_around,
+              this->nprocs,
+              procCoordinates);
+    }
+
+
+    //get the tasks information, such as coordinate dimension,
+    //number of parts.
+    int coordDim = coordinateModel_->getCoordinateDim();
+
+
+    this->ntasks = num_parts_;
+    this->solution_parts = result_parts;
+
+    //we need to calculate the center of parts.
+    tcoord_t **partCenters = NULL;
+    partCenters = allocMemory<tcoord_t *>(coordDim);
+    for (int i = 0; i < coordDim; ++i){
+      partCenters[i] = allocMemory<tcoord_t>(this->ntasks);
+    }
+
+    typedef typename Adapter::scalar_t t_scalar_t;
+
+
+    envConst->timerStart(MACRO_TIMERS, "Mapping - Solution Center");
+
+    //get centers for the parts.
+    getSolutionCenterCoordinates<Adapter, t_scalar_t,part_t>(
+        envConst.getRawPtr(),
+        ia_comm.getRawPtr(),
+        coordinateModel_.getRawPtr(),
+        this->solution_parts,
+        //soln_->getPartListView();
+        //this->soln.getRawPtr(),
+        coordDim,
+        ntasks,
+        partCenters);
+
+    envConst->timerStop(MACRO_TIMERS, "Mapping - Solution Center");
+
+    envConst->timerStart(MACRO_TIMERS, "GRAPHCREATE");
+    //create the part graph
+    if (graph_model_.getRawPtr() != NULL){
+      getCoarsenedPartGraph<Adapter, t_scalar_t, part_t> (
+          envConst.getRawPtr(),
+          ia_comm.getRawPtr(),
+          graph_model_.getRawPtr(),
+          this->ntasks,
+          this->solution_parts,
+          //soln_->getPartListView(),
+          //this->soln.getRawPtr(),
+          task_communication_xadj,
+          task_communication_adj,
+          task_communication_edge_weight
+      );
+    }
+    envConst->timerStop(MACRO_TIMERS, "GRAPHCREATE");
+
+
+    envConst->timerStart(MACRO_TIMERS, "CoordinateCommunicationModel Create");
+    //create coordinate communication model.
+    this->proc_task_comm =
+        new Zoltan2::CoordinateCommunicationModel<pcoord_t,tcoord_t,part_t>(
+            procDim,
+            procCoordinates,
+            coordDim,
+            partCenters,
+            this->nprocs,
+            this->ntasks,
+            machine_extent,
+            machine_extent_wrap_around,
+            machine_.getRawPtr());
+
+    envConst->timerStop(MACRO_TIMERS, "CoordinateCommunicationModel Create");
+
+    int myRank = comm_->getRank();
+
+
+    envConst->timerStart(MACRO_TIMERS, "Mapping - Processor Task map");
+    this->doMapping(myRank);
+    envConst->timerStop(MACRO_TIMERS, "Mapping - Processor Task map");
+
+
+    envConst->timerStart(MACRO_TIMERS, "Mapping - Communication Graph");
+
+    /*soln_->getCommunicationGraph(task_communication_xadj,
+               task_communication_adj);
+     */
+
+    envConst->timerStop(MACRO_TIMERS, "Mapping - Communication Graph");
+  #ifdef gnuPlot
+    if (comm_->getRank() == 0){
+
+      part_t taskCommCount = task_communication_xadj.size();
+      std::cout << " TotalComm:" << task_communication_xadj[taskCommCount] << std::endl;
+      part_t maxN = task_communication_xadj[0];
+      for (part_t i = 1; i <= taskCommCount; ++i){
+        part_t nc = task_communication_xadj[i] - task_communication_xadj[i-1];
+        if (maxN < nc) maxN = nc;
+      }
+      std::cout << " maxNeighbor:" << maxN << std::endl;
+    }
+
+    this->writeGnuPlot(comm_, soln_, coordDim, partCenters);
+  #endif
+
+    envConst->timerStart(MACRO_TIMERS, "Mapping - Communication Cost");
+
+    if (task_communication_xadj.getRawPtr() && task_communication_adj.getRawPtr()){
+      this->proc_task_comm->calculateCommunicationCost(
+          task_to_proc.getRawPtr(),
+          task_communication_xadj.getRawPtr(),
+          task_communication_adj.getRawPtr(),
+          task_communication_edge_weight.getRawPtr()
+      );
+    }
+
+    //std::cout << "me: " << comm_->getRank() << " cost:" << this->proc_task_comm->getCommunicationCostMetric() << std::endl;
+
+    envConst->timerStop(MACRO_TIMERS, "Mapping - Communication Cost");
+
+    //processors are divided into groups of size procDim! * coordDim!
+    //each processor in the group obtains a mapping with a different rotation
+    //and best one is broadcasted all processors.
+    this->getBestMapping();
+
+    /*
+
+    {
+      if (task_communication_xadj.getRawPtr() && task_communication_adj.getRawPtr())
+        this->proc_task_comm->calculateCommunicationCost(
+            task_to_proc.getRawPtr(),
+            task_communication_xadj.getRawPtr(),
+            task_communication_adj.getRawPtr(),
+            task_communication_edge_weight.getRawPtr()
+        );
+      std::cout << "me: " << comm_->getRank() << " cost:" << this->proc_task_comm->getCommunicationCostMetric() << std::endl;
+    }
+    */
+
+
+
+  #ifdef gnuPlot
+    this->writeMapping2(comm_->getRank());
+  #endif
+
+    delete []machine_extent_wrap_around;
+    if (machine_->getMachineExtent(machine_extent)){
+      for (int i = 0; i < procDim; ++i){
+        delete [] procCoordinates[i];
+      }
+      delete [] procCoordinates;
+    }
+
+    for (int i = 0; i < coordDim; ++i){
+      freeArray<tcoord_t>(partCenters[i]);
+    }
+    freeArray<tcoord_t *>(partCenters);
+
+  }
 
   /*! \brief Constructor
    * The mapping constructor which will also perform the mapping operation.
@@ -1566,7 +2350,9 @@ public:
       int recursion_depth,
       part_t *part_no_array,
       const part_t *machine_dimensions
-  ):  PartitionMapping<Adapter>(problemComm, NULL, NULL, NULL, env_const_),
+  ):  PartitionMapping<Adapter>(
+      Teuchos::rcpFromRef<const Teuchos::Comm<int> >(*problemComm),
+      Teuchos::rcpFromRef<const Environment> (*env_const_)),
       proc_to_task_xadj(0),
       proc_to_task_adj(0),
       task_to_proc(0),
@@ -1577,11 +2363,15 @@ public:
 
     //if mapping type is 0 then it is coordinate mapping
     pcoord_t ** virtual_machine_coordinates  = machine_coords;
+    bool *wrap_arounds = new bool [proc_dim];
+    for (int i = 0; i < proc_dim; ++i) wrap_arounds[i] = true;
+
     if (machine_dimensions){
       virtual_machine_coordinates =
           this->shiftMachineCoordinates (
               proc_dim,
               machine_dimensions,
+              wrap_arounds,
               num_processors,
               machine_coords);
     }
@@ -1602,7 +2392,7 @@ public:
             coordDim,
             partCenters,
             this->nprocs,
-            this->ntasks
+            this->ntasks, NULL, NULL
         );
     this->proc_task_comm->setPartArraySize(recursion_depth);
     this->proc_task_comm->setPartArray(part_no_array);
@@ -1638,6 +2428,7 @@ public:
 */
 
     }
+    delete [] wrap_arounds;
 
     if (machine_dimensions){
       for (int i = 0; i < proc_dim; ++i){
@@ -1652,9 +2443,11 @@ public:
   }
 
 
+  /*
   double getCommunicationCostMetric(){
     return this->proc_task_comm->getCommCost();
   }
+  */
 
   /*! \brief Returns the number of parts to be assigned to this process.
    */
@@ -1673,6 +2466,7 @@ public:
   pcoord_t **shiftMachineCoordinates(
       int machine_dim,
       const part_t *machine_dimensions,
+      bool *machine_extent_wrap_around,
       part_t numProcs,
       pcoord_t **mCoords){
     pcoord_t **result_machine_coords = NULL;
@@ -1742,7 +2536,7 @@ public:
 
       for(part_t j = 0; j < numProcs; ++j){
 
-        if (coords[j] < shiftBorderCoordinate){
+        if (machine_extent_wrap_around[i] && coords[j] < shiftBorderCoordinate){
           result_machine_coords[i][j] = coords[j] + numMachinesAlongDim;
 
         }
@@ -1765,7 +2559,7 @@ public:
    *  \param numProcs (output), the number of processor the part is assigned to.
    *  \param procs (output), the list of processors assigned to given part..
    */
-  virtual void getProcsForPart(part_t taskId, part_t &numProcs, part_t *procs) const{
+  virtual void getProcsForPart(part_t taskId, part_t &numProcs, part_t *&procs) const{
     numProcs = 1;
     procs = this->task_to_proc.getRawPtr() + taskId;
   }
@@ -1781,7 +2575,7 @@ public:
    *  \param numParts (output), the number of parts the processor is assigned to.
    *  \param parts (output), the list of parts assigned to given processor..
    */
-  virtual void getPartsForProc(int procId, part_t &numParts, part_t *parts) const{
+  virtual void getPartsForProc(int procId, part_t &numParts, part_t *&parts) const{
 
     part_t task_begin = this->proc_to_task_xadj[procId];
     part_t taskend = this->proc_to_task_xadj[procId+1];
@@ -1789,7 +2583,7 @@ public:
     numParts = taskend - task_begin;
   }
 
-  ArrayView<part_t> getAssignedTaksForProc(part_t procId){
+  ArrayView<part_t> getAssignedTasksForProc(part_t procId){
     part_t task_begin = this->proc_to_task_xadj[procId];
     part_t taskend = this->proc_to_task_xadj[procId+1];
 

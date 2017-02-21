@@ -48,6 +48,7 @@
 #include "Panzer_IntegrationRule.hpp"
 #include "Panzer_BasisIRLayout.hpp"
 #include "Panzer_Workset_Utilities.hpp"
+#include "Kokkos_ViewFactory.hpp"
 
 namespace panzer {
 
@@ -114,7 +115,7 @@ PHX_POST_REGISTRATION_SETUP(Integrator_DivBasisTimesScalar,sd,fm)
 
   basis_index = panzer::getBasisIndex(basis_name, (*sd.worksets_)[0], this->wda);
 
-  tmp = Intrepid2::FieldContainer<ScalarT>(scalar.dimension(0), num_qp); 
+  tmp = Kokkos::createDynRankView(residual.get_static_view(),"tmp",scalar.dimension(0), num_qp); 
 }
 
 //**********************************************************************
@@ -123,7 +124,7 @@ PHX_EVALUATE_FIELDS(Integrator_DivBasisTimesScalar,workset)
   // zero the reisdual
   residual.deep_copy(ScalarT(0.0));
   
-  for (std::size_t cell = 0; cell < workset.num_cells; ++cell) {
+  for (index_t cell = 0; cell < workset.num_cells; ++cell) {
     for (std::size_t qp = 0; qp < num_qp; ++qp) {
       ScalarT tmpVar = 1.0;
       for (typename std::vector<PHX::MDField<ScalarT,Cell,IP> >::iterator field = field_multipliers.begin();
@@ -136,10 +137,10 @@ PHX_EVALUATE_FIELDS(Integrator_DivBasisTimesScalar,workset)
   }
   
   {
-    // const Intrepid2::FieldContainer<double> & weighted_div_basis = (this->wda(workset).bases[basis_index])->weighted_div_basis;
+    // const Kokkos::DynRankView<double,PHX::Device> & weighted_div_basis = (this->wda(workset).bases[basis_index])->weighted_div_basis;
     const BasisValues2<double> & bv = *this->wda(workset).bases[basis_index];
 
-    for (std::size_t cell = 0; cell < workset.num_cells; ++cell)
+    for (index_t cell = 0; cell < workset.num_cells; ++cell)
       for (std::size_t basis = 0; basis < num_nodes; ++basis) {
         for (std::size_t qp = 0; qp < num_qp; ++qp)
           residual(cell,basis) += tmp(cell,qp)*bv.weighted_div_basis(cell,basis,qp);
@@ -150,7 +151,7 @@ PHX_EVALUATE_FIELDS(Integrator_DivBasisTimesScalar,workset)
      Intrepid2::FunctionSpaceTools::
        integrate<ScalarT>(residual, tmp, 
                        this->wda(workset).bases[basis_index]->weighted_div_basis, 
-		       Intrepid2::COMP_BLAS);
+		       Intrepid2::COMP_CPP);
   }
 */
 }

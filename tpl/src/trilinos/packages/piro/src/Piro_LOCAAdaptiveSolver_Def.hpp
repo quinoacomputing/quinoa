@@ -47,6 +47,8 @@
 
 #include "Piro_ObserverToLOCASaveDataStrategyAdapter.hpp"
 
+#include "Piro_MatrixFreeDecorator.hpp"
+
 #include "Thyra_DetachedVectorView.hpp"
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 
@@ -82,7 +84,7 @@ template <typename Scalar>
 Piro::LOCAAdaptiveSolver<Scalar>::LOCAAdaptiveSolver(
     const Teuchos::RCP<Teuchos::ParameterList> &piroParams,
     const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
-    const Teuchos::RCP<LOCA::Thyra::AdaptiveSolutionManager> &solMgr,
+    const Teuchos::RCP<Thyra::AdaptiveSolutionManager> &solMgr,
     const Teuchos::RCP<LOCA::Thyra::SaveDataStrategy> &saveDataStrategy) :
   SteadyStateSolver<Scalar>(model, model->Np() > 0), // Only one parameter supported
   piroParams_(piroParams),
@@ -90,6 +92,7 @@ Piro::LOCAAdaptiveSolver<Scalar>::LOCAAdaptiveSolver(
   globalData_(LOCA::createGlobalData(piroParams)),
   paramVector_(),
   solMgr_(solMgr),
+  model_(model), 
   locaStatusTests_(),
   noxStatusTests_(),
   stepper_()
@@ -100,8 +103,18 @@ Piro::LOCAAdaptiveSolver<Scalar>::LOCAAdaptiveSolver(
   for (Teuchos_Ordinal k = 0; k < p_entry_count; ++k) {
     (void) paramVector_.addParameter(paramName(k));
   }
+  
+  std::string jacobianSource = piroParams->get("Jacobian Operator", "Have Jacobian");
+  if (jacobianSource == "Matrix-Free") {
+    if (piroParams->isParameter("Matrix-Free Perturbation")) {
+      model_ = Teuchos::rcp(new Piro::MatrixFreeDecorator<Scalar>(model,
+                           piroParams->get<double>("Matrix-Free Perturbation")));
+    }
+    else model_ = Teuchos::rcp(new Piro::MatrixFreeDecorator<Scalar>(model));
+  }
 
-  solMgr_->initialize(model, saveDataStrategy_, globalData_, Teuchos::rcpFromRef(paramVector_), l);
+  solMgr_->initialize(Teuchos::rcp(new Thyra::LOCAAdaptiveState(model_, saveDataStrategy_, globalData_, 
+            Teuchos::rcpFromRef(paramVector_), l)));
 
   // TODO: Create non-trivial stopping criterion for the stepper
   locaStatusTests_ = Teuchos::null;
@@ -145,7 +158,9 @@ Piro::LOCAAdaptiveSolver<Scalar>::evalModelImpl(
       paramVector_[k] = p_init_values[k];
     }
 
-    solMgr_->getSolutionGroup()->setParams(paramVector_);
+//    solMgr_->getSolutionGroup()->setParams(paramVector_);
+    Teuchos::rcp_dynamic_cast< ::Thyra::LOCAAdaptiveState >(solMgr_->getState())
+                 ->getSolutionGroup()->setParams(paramVector_);
   }
 
   LOCA::Abstract::Iterator::IteratorStatus status;
@@ -194,11 +209,14 @@ Piro::LOCAAdaptiveSolver<Scalar>::evalModelImpl(
   if(Teuchos::nonnull(x_outargs)){ // g has been allocated, calculate the sizes of g and the solution
 
     x_args_dim = x_outargs->space()->dim();
-    f_sol_dim = solMgr_->getSolutionGroup()->getX().length();
+//    f_sol_dim = solMgr_->getSolutionGroup()->getX().length();
+    f_sol_dim = Teuchos::rcp_dynamic_cast< ::Thyra::LOCAAdaptiveState >(solMgr_->getState())
+          ->getSolutionGroup()->getX().length();
+
 
   }
 
-  if(Teuchos::is_null(x_outargs) || (x_args_dim < f_sol_dim)){ // g is not large enough to store the solution
+  if(Teuchos::is_null(x_outargs) || (x_args_dim != f_sol_dim)){ // g is not the right size
 
       x_final = Thyra::createMember(this->get_g_space(this->num_g()));
 
@@ -212,11 +230,14 @@ Piro::LOCAAdaptiveSolver<Scalar>::evalModelImpl(
   {
     // Deep copy final solution from LOCA group
     NOX::Thyra::Vector finalSolution(x_final);
-    finalSolution = solMgr_->getSolutionGroup()->getX();
+//    finalSolution = solMgr_->getSolutionGroup()->getX();
+    finalSolution = Teuchos::rcp_dynamic_cast< ::Thyra::LOCAAdaptiveState >(solMgr_->getState())
+                      ->getSolutionGroup()->getX();
+
   }
 
   // If the arrays need resizing
-  if(x_args_dim < f_sol_dim){
+  if(x_args_dim != f_sol_dim){
 
     const int parameterCount = this->Np();
 
@@ -262,7 +283,7 @@ Teuchos::RCP<Piro::LOCAAdaptiveSolver<Scalar> >
 Piro::observedLocaSolver(
     const Teuchos::RCP<Teuchos::ParameterList> &appParams,
     const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
-    const Teuchos::RCP<LOCA::Thyra::AdaptiveSolutionManager> &solMgr,
+    const Teuchos::RCP<Thyra::AdaptiveSolutionManager> &solMgr,
     const Teuchos::RCP<Piro::ObserverBase<Scalar> > &observer)
 {
   const Teuchos::RCP<LOCA::Thyra::SaveDataStrategy> saveDataStrategy =

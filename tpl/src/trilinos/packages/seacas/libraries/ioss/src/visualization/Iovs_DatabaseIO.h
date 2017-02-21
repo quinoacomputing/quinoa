@@ -29,6 +29,8 @@
 
 class ParaViewCatalystSierraAdaptorBase;
 
+/** \brief A namespace for the visualization database format.
+ */
 namespace Iovs {
 
   typedef std::set<std::pair<int64_t, int64_t> > EntityIdSet;
@@ -71,6 +73,9 @@ namespace Iovs {
     bool   end_state(Ioss::Region *region, int state, double time);
 
     void read_meta_data ();
+
+    static int parseCatalystFile(const std::string& filepath,
+                                 std::string& json_result);
 
   private:
     // For the time being, treat vis as write only. Consider glue pipelines.
@@ -127,7 +132,12 @@ namespace Iovs {
                void *data, size_t data_size) const {return 0;}
 
     void write_meta_data();
-    void load_plugin_library();
+    static void load_plugin_library(const std::string& plugin_name,
+                                    const std::string& plugin_library_name);
+
+    static std::string create_output_file_path(const std::string& input_deck_name,
+                                               const Ioss::PropertyManager &properties);
+    static bool plugin_library_exists(const std::string& plugin_name);
 
     int64_t handle_node_ids(void* ids, int64_t num_to_get);
     int64_t handle_element_ids(const Ioss::ElementBlock *eb, void* ids, size_t num_to_get);
@@ -144,14 +154,17 @@ namespace Iovs {
     bool doLogging; // True if logging field input/output
 
     std::string databaseTitle;
-    std::string paraview_script_filename;
+    static std::string paraview_script_filename;
+    std::string catalyst_block_file_name;
     std::string paraview_json_parse;
     std::string sierra_input_deck_name;
     std::string catalyst_output_directory;
+    std::string paraview_script_extra_filename;
     int enableLogging;
     int debugLevel;
     int underscoreVectors;
     int applyDisplacements;
+    int useCppPipe;
     int createSideSets;
     int createNodeSets;
     int spatialDimension;

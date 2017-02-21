@@ -1,18 +1,23 @@
 Level 0
  Setup Smoother (MueLu::IfpackSmoother{type = point relaxation stand-alone})
- relaxation: type = symmetric Gauss-Seidel   [unused]
- relaxation: sweeps = 1   [unused]
- relaxation: damping factor = 1   [unused]
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ smoother ->
+  relaxation: type = symmetric Gauss-Seidel   [unused]
+  relaxation: sweeps = 1   [unused]
+  relaxation: damping factor = 1   [unused]
 
 Level 1
  Computing Ac (MueLu::RAPFactory)
  transpose: use implicit = 1
- Keep AP Pattern = 0   [default]
- Keep RAP Pattern = 0   [default]
  CheckMainDiagonal = 0   [default]
  RepairMainDiagonal = 0   [default]
 
- Setup Smoother (MueLu::AmesosSmoother{type = Klu})
+ Setup Smoother (MueLu::AmesosSmoother{type = Superlu})
+ keep smoother data = 0   [default]
+ PreSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
+ PostSmoother data = Teuchos::RCP<MueLu::SmootherPrototype<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > >{ptr=0,node=0,strong_count=0,weak_count=0}   [default]
  presmoother ->
   [empty list]
 
@@ -22,6 +27,7 @@ Level 1
 --------------------------------------------------------------------------------
 Number of levels    = 2
 Operator complexity = 1.30
+Cycle type          = V
 
 level   rows    nnz  nnz/row  c ratio  procs
   0    10000  49600     4.96               1
@@ -29,6 +35,6 @@ level   rows    nnz  nnz/row  c ratio  procs
 
 Smoother (level 0) both : MueLu::IfpackSmoother{type = point relaxation stand-alone}
 
-Smoother (level 1) pre  : MueLu::AmesosSmoother{type = Klu}
+Smoother (level 1) pre  : MueLu::AmesosSmoother{type = Superlu}
 Smoother (level 1) post : no smoother
 

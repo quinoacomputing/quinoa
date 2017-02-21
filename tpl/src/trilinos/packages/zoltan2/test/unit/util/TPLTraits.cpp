@@ -45,11 +45,11 @@
 
 
 // Unit test for Zoltan2_TPLTraits.hpp
-// Passes various zgno_t types to ASSIGN_TPL_T.
+// Passes various zgno_t types to ASSIGN.
 // Some combinations should work without error; 
-// for these, this test FAILS if ASSIGN_TPL_T throws an error.
+// for these, this test FAILS if ASSIGN throws an error.
 // Some combinations should throw an error; 
-// for these, this test says it is GOOD if ASSIGN_TPL_T throws an error.
+// for these, this test says it is GOOD if ASSIGN throws an error.
 
 #include <Teuchos_GlobalMPISession.hpp>   
 #include <Teuchos_RCP.hpp>
@@ -72,31 +72,13 @@ extern "C"{
 
 #ifdef HAVE_ZOLTAN2_PARMETIS
 
-#ifndef HAVE_ZOLTAN2_MPI
-// ParMETIS requires compilation with MPI.  
-// If MPI is not available, make compilation fail.
-#error "TPL ParMETIS requires compilation with MPI.  Configure with -DTPL_ENABLE_MPI:BOOL=ON or -DZoltan2_ENABLE_ParMETIS:BOOL=OFF"
-  
-#else
-
 extern "C"{
 #include "parmetis.h"
 }
 
-#if (PARMETIS_MAJOR_VERSION < 4)
-// Zoltan2 requires ParMETIS v4.x.  
-// Make compilation fail for earlier versions of ParMETIS.
-#error "Specified version of ParMETIS is not compatible with Zoltan2; upgrade to ParMETIS v4 or later, or build Zoltan2 without ParMETIS."
-  
-#else
-
-// MPI and ParMETIS version requirements are met.  Proceed.
 #define PARMETIS_IS_OK 1
 
-#endif  // ParMETIS version check
 #endif  // HAVE_ZOLTAN2_MPI
-#endif  // HAVE_ZOLTAN2_PARMETIS
-
 
 
 #define PRINTMSG(s) \
@@ -116,7 +98,7 @@ int main(int argc, char *argv[])
   int intIdx;
   try {
     int zgno = 123;
-    Zoltan2::TPL_Traits<int,int>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,int>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: int to int");
@@ -125,7 +107,7 @@ int main(int argc, char *argv[])
 
   try {
     unsigned int zgno = 123;
-    Zoltan2::TPL_Traits<int,unsigned int>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,unsigned int>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: unsigned int to int");
@@ -134,7 +116,7 @@ int main(int argc, char *argv[])
 
   try {
     long zgno = 123;
-    Zoltan2::TPL_Traits<int,long>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,long>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: long to int");
@@ -143,7 +125,7 @@ int main(int argc, char *argv[])
  
   try {
     size_t zgno = 123;
-    Zoltan2::TPL_Traits<int,size_t>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,size_t>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: size_t to int");
@@ -153,7 +135,7 @@ int main(int argc, char *argv[])
   // Assignments that should not work
   try {
     long long zgno = (long long)1 << 40;
-    Zoltan2::TPL_Traits<int,long long>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,long long>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("GOOD: big long long to int throws exception");
@@ -161,7 +143,7 @@ int main(int argc, char *argv[])
 
   try {
     size_t zgno = (size_t)1 << 40;
-    Zoltan2::TPL_Traits<int,size_t>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,size_t>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("GOOD: big size_t to int throws exception");
@@ -169,7 +151,7 @@ int main(int argc, char *argv[])
 
   try {
     unsigned zgno = (1 << 31) + 1;
-    Zoltan2::TPL_Traits<int,unsigned>::ASSIGN_TPL_T(intIdx, zgno);
+    Zoltan2::TPL_Traits<int,unsigned>::ASSIGN(intIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("GOOD: huge unsigned to int throws exception");
@@ -183,7 +165,7 @@ int main(int argc, char *argv[])
   size_t sizetIdx;
   try {
     long long zgno = (long long)1 << 40;
-    Zoltan2::TPL_Traits<size_t,long long>::ASSIGN_TPL_T(sizetIdx, zgno);
+    Zoltan2::TPL_Traits<size_t,long long>::ASSIGN(sizetIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: big long long to size_t");
@@ -192,7 +174,7 @@ int main(int argc, char *argv[])
  
   try {
     size_t zgno = (size_t)1 << 40;
-    Zoltan2::TPL_Traits<size_t,size_t>::ASSIGN_TPL_T(sizetIdx, zgno);
+    Zoltan2::TPL_Traits<size_t,size_t>::ASSIGN(sizetIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: big size_t to size_t");
@@ -207,7 +189,7 @@ int main(int argc, char *argv[])
   int64_t int64Idx;
   try {
     long long zgno = (long long)1 << 40;
-    Zoltan2::TPL_Traits<int64_t,long long>::ASSIGN_TPL_T(int64Idx, zgno);
+    Zoltan2::TPL_Traits<int64_t,long long>::ASSIGN(int64Idx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: big long long to int64_t");
@@ -216,7 +198,7 @@ int main(int argc, char *argv[])
  
   try {
     size_t zgno = (size_t)1 << 40;
-    Zoltan2::TPL_Traits<int64_t,size_t>::ASSIGN_TPL_T(int64Idx, zgno);
+    Zoltan2::TPL_Traits<int64_t,size_t>::ASSIGN(int64Idx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: big size_t to int64_t");
@@ -226,7 +208,7 @@ int main(int argc, char *argv[])
   // Assignments that should not work
   try {
     size_t zgno = ((size_t)1 << 63) + 1 ;
-    Zoltan2::TPL_Traits<int64_t,size_t>::ASSIGN_TPL_T(int64Idx, zgno);
+    Zoltan2::TPL_Traits<int64_t,size_t>::ASSIGN(int64Idx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("GOOD: huge size_t to int64_t threw exception");
@@ -242,7 +224,7 @@ int main(int argc, char *argv[])
   // (since the zgno value fits in an integer)
   try {
     int zgno = 123;
-    Zoltan2::TPL_Traits<SCOTCH_Num,int>::ASSIGN_TPL_T(scotchIdx, zgno);
+    Zoltan2::TPL_Traits<SCOTCH_Num,int>::ASSIGN(scotchIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: int to SCOTCH_Num");
@@ -251,7 +233,7 @@ int main(int argc, char *argv[])
 
   try {
     unsigned int zgno = 123;
-    Zoltan2::TPL_Traits<SCOTCH_Num,unsigned int>::ASSIGN_TPL_T(scotchIdx, zgno);
+    Zoltan2::TPL_Traits<SCOTCH_Num,unsigned int>::ASSIGN(scotchIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: unsigned int to SCOTCH_Num");
@@ -260,7 +242,7 @@ int main(int argc, char *argv[])
 
   try {
     long zgno = 123;
-    Zoltan2::TPL_Traits<SCOTCH_Num,long>::ASSIGN_TPL_T(scotchIdx, zgno);
+    Zoltan2::TPL_Traits<SCOTCH_Num,long>::ASSIGN(scotchIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: long to SCOTCH_Num");
@@ -269,7 +251,7 @@ int main(int argc, char *argv[])
  
   try {
     size_t zgno = 123;
-    Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN_TPL_T(scotchIdx, zgno);
+    Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN(scotchIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: size_t to SCOTCH_Num");
@@ -280,7 +262,7 @@ int main(int argc, char *argv[])
 
     try {
       long long zgno = (long long)1 << 40;
-      Zoltan2::TPL_Traits<SCOTCH_Num,long long>::ASSIGN_TPL_T(scotchIdx, zgno);
+      Zoltan2::TPL_Traits<SCOTCH_Num,long long>::ASSIGN(scotchIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("FAIL: big unsigned int to SCOTCH_Num");
@@ -289,7 +271,7 @@ int main(int argc, char *argv[])
 
     try {
       size_t zgno = (size_t)1 << 40;
-      Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN_TPL_T(scotchIdx, zgno);
+      Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN(scotchIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("FAIL: big size_t to SCOTCH_Num");
@@ -301,7 +283,7 @@ int main(int argc, char *argv[])
   if (sizeof(SCOTCH_Num) == 4) {
     try {
       long long zgno = (long long)1 << 40;
-      Zoltan2::TPL_Traits<SCOTCH_Num,long long>::ASSIGN_TPL_T(scotchIdx, zgno);
+      Zoltan2::TPL_Traits<SCOTCH_Num,long long>::ASSIGN(scotchIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("GOOD: big long long to 4-byte SCOTCH_Num throws exception");
@@ -309,7 +291,7 @@ int main(int argc, char *argv[])
 
     try {
       size_t zgno = (size_t)1 << 40;
-      Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN_TPL_T(scotchIdx, zgno);
+      Zoltan2::TPL_Traits<SCOTCH_Num,size_t>::ASSIGN(scotchIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("GOOD: big size_t to 4-byte SCOTCH_Num throws exception");
@@ -328,7 +310,7 @@ int main(int argc, char *argv[])
   // (since the zgno value fits in an integer)
   try {
     int zgno = 123;
-    Zoltan2::TPL_Traits<idx_t,int>::ASSIGN_TPL_T(parmetisIdx, zgno);
+    Zoltan2::TPL_Traits<idx_t,int>::ASSIGN(parmetisIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: int to ParMETIS' idx_t");
@@ -337,7 +319,7 @@ int main(int argc, char *argv[])
 
   try {
     unsigned int zgno = 123;
-    Zoltan2::TPL_Traits<idx_t,unsigned int>::ASSIGN_TPL_T(parmetisIdx, zgno);
+    Zoltan2::TPL_Traits<idx_t,unsigned int>::ASSIGN(parmetisIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: unsigned int to ParMETIS' idx_t");
@@ -346,7 +328,7 @@ int main(int argc, char *argv[])
 
   try {
     long zgno = 123;
-    Zoltan2::TPL_Traits<idx_t,long>::ASSIGN_TPL_T(parmetisIdx, zgno);
+    Zoltan2::TPL_Traits<idx_t,long>::ASSIGN(parmetisIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: long to ParMETIS' idx_t");
@@ -355,7 +337,7 @@ int main(int argc, char *argv[])
  
   try {
     size_t zgno = 123;
-    Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN_TPL_T(parmetisIdx, zgno);
+    Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN(parmetisIdx, zgno);
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: size_t to ParMETIS' idx_t");
@@ -366,7 +348,7 @@ int main(int argc, char *argv[])
 
     try {
       long long zgno = (long long)1 << 40;
-      Zoltan2::TPL_Traits<idx_t,long long>::ASSIGN_TPL_T(parmetisIdx, zgno);
+      Zoltan2::TPL_Traits<idx_t,long long>::ASSIGN(parmetisIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("FAIL: big unsigned int to ParMETIS' idx_t");
@@ -375,7 +357,7 @@ int main(int argc, char *argv[])
 
     try {
       size_t zgno = (size_t)1 << 40;
-      Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN_TPL_T(parmetisIdx, zgno);
+      Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN(parmetisIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("FAIL: big size_t to ParMETIS' idx_t");
@@ -387,7 +369,7 @@ int main(int argc, char *argv[])
   if (sizeof(idx_t) == 4) {
     try {
       long long zgno = (long long)1 << 40;
-      Zoltan2::TPL_Traits<idx_t,long long>::ASSIGN_TPL_T(parmetisIdx, zgno);
+      Zoltan2::TPL_Traits<idx_t,long long>::ASSIGN(parmetisIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("GOOD: big long long to 4-byte ParMETIS' idx_t throws exception");
@@ -395,7 +377,7 @@ int main(int argc, char *argv[])
 
     try {
       size_t zgno = (size_t)1 << 40;
-      Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN_TPL_T(parmetisIdx, zgno);
+      Zoltan2::TPL_Traits<idx_t,size_t>::ASSIGN(parmetisIdx, zgno);
     }
     catch (std::exception &e) {
       PRINTMSG("GOOD: big size_t to 4-byte ParMETIS' idx_t throws exception");
@@ -419,7 +401,7 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
     if (zoltanGID[0] != ZOLTAN_ID_TYPE(zgno) || zoltanGID[1] != 0 || 
         zoltanGID[2] != 0 || zoltanGID[3] != 0) {
       PRINTMSG("FAIL: char to ZOLTAN_ID_PTR");
@@ -427,7 +409,7 @@ int main(int argc, char *argv[])
     }
 
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to char");
       ierr++;
@@ -445,7 +427,7 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
     if (zoltanGID[0] != ZOLTAN_ID_TYPE(zgno) || zoltanGID[1] != 0 || 
         zoltanGID[2] != 0 || zoltanGID[3] != 0) {
       PRINTMSG("FAIL: short to ZOLTAN_ID_PTR");
@@ -453,7 +435,7 @@ int main(int argc, char *argv[])
     }
 
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to short");
       ierr++;
@@ -471,7 +453,7 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
     if (zoltanGID[0] != ZOLTAN_ID_TYPE(zgno) || zoltanGID[1] != 0 || 
         zoltanGID[2] != 0 || zoltanGID[3] != 0) {
       PRINTMSG("FAIL: int to ZOLTAN_ID_PTR");
@@ -479,7 +461,7 @@ int main(int argc, char *argv[])
     }
 
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to int");
       ierr++;
@@ -497,7 +479,7 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
     if (zoltanGID[0] != zgno || zoltanGID[1] != 0 || 
         zoltanGID[2] != 0 || zoltanGID[3] != 0) {
       PRINTMSG("FAIL: unsigned int to ZOLTAN_ID_PTR");
@@ -505,7 +487,7 @@ int main(int argc, char *argv[])
     }
 
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to unsigned int");
       ierr++;
@@ -523,15 +505,30 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
-    if (zoltanGID[0] != 17 || zoltanGID[1] != 4 || 
-        zoltanGID[2] != 0 || zoltanGID[3] != 0) {
-      PRINTMSG("FAIL: long long to ZOLTAN_ID_PTR");
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
+    if (sizeof(ZOLTAN_ID_TYPE) == sizeof(unsigned int)) {
+      if (zoltanGID[0] != 17 || zoltanGID[1] != 4 || 
+          zoltanGID[2] != 0 || zoltanGID[3] != 0) {
+        PRINTMSG("FAIL: long long to ZOLTAN_ID_PTR");
+        ierr++;
+      }
+    }
+    else if (sizeof(ZOLTAN_ID_TYPE) == sizeof(unsigned long long)) {
+      if (test_t(zoltanGID[0]) != zgno || zoltanGID[1] != 0 ||
+          zoltanGID[2] != 0 || zoltanGID[3] != 0) {
+        PRINTMSG("FAIL: long long to ZOLTAN_ID_PTR");
+        ierr++;
+      }
+    }
+    else {
+      // should never get here 
+      PRINTMSG("FAIL: unknown sizeof(ZOLTAN_ID_TYPE)");
       ierr++;
     }
 
+
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       std::cout << "back " << back << " != zgno " << zgno << std::endl;
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to long long");
@@ -550,15 +547,31 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
-    if (zoltanGID[0] != 25 || zoltanGID[1] != 16 || 
-        zoltanGID[2] != 0 || zoltanGID[3] != 0) {
-      PRINTMSG("FAIL: unsigned long long to ZOLTAN_ID_PTR");
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
+    if (sizeof(ZOLTAN_ID_TYPE) == sizeof(unsigned int)) {
+      if (zoltanGID[0] != 25 || zoltanGID[1] != 16 || 
+          zoltanGID[2] != 0 || zoltanGID[3] != 0) {
+        PRINTMSG("FAIL: unsigned long long to ZOLTAN_ID_PTR");
+        ierr++;
+      }
+    }
+    else if (sizeof(ZOLTAN_ID_TYPE) == sizeof(unsigned long long)) {
+      if (zoltanGID[0] != zgno || zoltanGID[1] != 0 ||
+          zoltanGID[2] != 0 || zoltanGID[3] != 0) {
+        PRINTMSG("FAIL: long long to ZOLTAN_ID_PTR");
+        ierr++;
+      }
+    }
+    else {
+      // should never get here 
+      PRINTMSG("FAIL: unknown sizeof(ZOLTAN_ID_TYPE)");
       ierr++;
     }
 
+
+
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       std::cout << "back " << back << " != zgno " << zgno << std::endl;
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to unsigned long long");
@@ -578,7 +591,7 @@ int main(int argc, char *argv[])
       ierr++;
     }
 
-    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN_TPL_T(zoltanGID, zgno);
+    Zoltan2::TPL_Traits<ZOLTAN_ID_PTR,test_t>::ASSIGN(zoltanGID, zgno);
     for (int i = 0; i < num_gid; i++)
       if (zoltanGID[i] != std::numeric_limits<ZOLTAN_ID_TYPE>::max()) {
         PRINTMSG("FAIL: size_t to ZOLTAN_ID_PTR");
@@ -591,7 +604,7 @@ int main(int argc, char *argv[])
       }
 
     test_t back;
-    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(back, zoltanGID);
+    Zoltan2::TPL_Traits<test_t,ZOLTAN_ID_PTR>::ASSIGN(back, zoltanGID);
     if (back != zgno) {
       std::cout << "back " << back << " != zgno " << zgno << std::endl;
       PRINTMSG("FAIL: ZOLTAN_ID_PTR to size_t");

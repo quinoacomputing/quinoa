@@ -96,17 +96,7 @@ namespace MueLu {
     maxLocalIndex_ = domainMap_->getMaxLocalIndex();
 
     MaxNumRowEntriesFunctor<LO,typename local_graph_type::row_map_type> maxNumRowEntriesFunctor(graph_.row_map);
-    Kokkos::parallel_reduce("LWGraph:LWGraph:maxnonzeros", graph_.numRows(), maxNumRowEntriesFunctor, maxNumRowEntries_);
-  }
-
-  template<class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  typename LWGraph_kokkos<LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::row_type
-  LWGraph_kokkos<LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::
-  getNeighborVertices(LocalOrdinal i) const {
-    auto rowPointers = graph_.row_map;
-    auto colIndices  = graph_.entries;
-
-    return Kokkos::subview(colIndices, std::pair<size_t,size_t>(rowPointers(i), rowPointers(i+1)));
+    Kokkos::parallel_reduce("MueLu:LWGraph:LWGraph:maxnonzeros", graph_.numRows(), maxNumRowEntriesFunctor, maxNumRowEntries_);
   }
 
 }

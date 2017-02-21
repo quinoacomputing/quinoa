@@ -46,13 +46,23 @@
 #define PHX_EXAMPLE_VP_DENSITY_HPP
 
 #include "Phalanx_config.hpp"
+#ifdef  PHX_ENABLE_KOKKOS_AMT
+#include "Phalanx_Evaluator_TaskBase.hpp"
+#else
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#endif
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+//struct DensityTag {};
+
 template<typename EvalT, typename Traits>
-class Density : 
+class Density :
+#ifdef PHX_ENABLE_KOKKOS_AMT
+  public PHX::TaskBase<Traits,Density<EvalT,Traits>>,
+#else
   public PHX::EvaluatorWithBaseImpl<Traits>,
+#endif 
   public PHX::EvaluatorDerived<EvalT, Traits> {
   
 public:
@@ -65,8 +75,14 @@ public:
   void evaluateFields(typename Traits::EvalData ud);
 
   KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;  
+    void operator () (const int i) const;  
 
+  // KOKKOS_INLINE_FUNCTION
+  //   void operator () (const DensityTag, const int i) const;  
+
+  // KOKKOS_INLINE_FUNCTION
+  //   void operator () (const DensityTag, typename Kokkos::TeamPolicy<>::member_type & team) const;  
+  
 private:
   
   typedef typename EvalT::ScalarT ScalarT;

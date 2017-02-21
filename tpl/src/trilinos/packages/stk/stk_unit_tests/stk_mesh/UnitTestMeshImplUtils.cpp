@@ -46,7 +46,7 @@
 #include "stk_mesh/baseImpl/MeshImplUtils.hpp"
 #include "stk_io/StkMeshIoBroker.hpp"
 #include <stk_unit_test_utils/getOption.h>
-#include "BulkDataTester.hpp"
+#include <stk_unit_test_utils/BulkDataTester.hpp>
 
 using stk::mesh::MetaData;
 using stk::mesh::BulkData;
@@ -68,137 +68,6 @@ using stk::mesh::impl::OnlyVisitOnce;
 using stk::mesh::impl::OnlyVisitGhostsOnce;
 using stk::mesh::impl::OnlyVisitLocallyOwnedOnce;
 using stk::mesh::impl::OnlyVisitSharedOnce;
-
-TEST ( MeshImplUtils, find_elements_these_nodes_have_in_common )
-{
-  stk::ParallelMachine communicator = MPI_COMM_WORLD;
-  int numProcs = stk::parallel_machine_size(communicator);
-  if (numProcs > 2) {
-    return;
-  }
-
-  const unsigned spatialDim = 3;
-  stk::mesh::MetaData meta(spatialDim);
-  stk::mesh::BulkData bulk(meta, communicator);
-
-  setup2Block2HexMesh(bulk);
-
-  const unsigned numNodesPerEdge = 2;
-
-  //edge 2-6 is connected to elements 1 and 2
-  stk::mesh::EntityId edge_2_6_nodeIds[] = {2, 6};
-  stk::mesh::Entity edge_2_6_nodes[numNodesPerEdge];
-  edge_2_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[0]);
-  edge_2_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[1]);
-
-  //edge 5-6 is only connected to element 1
-  stk::mesh::EntityId edge_5_6_nodeIds[] = {5, 6};
-  stk::mesh::Entity edge_5_6_nodes[numNodesPerEdge];
-  edge_5_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[0]);
-  edge_5_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[1]);
-
-  std::vector<stk::mesh::Entity> elements;
-
-  stk::mesh::impl::find_elements_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_2_6_nodes, elements);
-
-  size_t expected_num_elements = 2;
-  EXPECT_EQ(expected_num_elements, elements.size());
-
-  stk::mesh::impl::find_elements_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_5_6_nodes, elements);
-
-  expected_num_elements = 1;
-  EXPECT_EQ(expected_num_elements, elements.size());
-}
-
-TEST ( MeshImplUtils, find_faces_these_nodes_have_in_common )
-{
-  stk::ParallelMachine communicator = MPI_COMM_WORLD;
-  int numProcs = stk::parallel_machine_size(communicator);
-  if (numProcs > 2) {
-    return;
-  }
-
-  const unsigned spatialDim = 3;
-  stk::mesh::MetaData meta(spatialDim);
-  stk::mesh::BulkData bulk(meta, communicator);
-
-  setup2Block2HexMesh(bulk);
-  stk::mesh::create_faces(bulk);
-
-  const unsigned numNodesPerEdge = 2;
-
-  //edge 2-6 is connected to elements 1 and 2
-  stk::mesh::EntityId edge_2_6_nodeIds[] = {2, 6};
-  stk::mesh::Entity edge_2_6_nodes[numNodesPerEdge];
-  edge_2_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[0]);
-  edge_2_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[1]);
-
-  //edge 5-6 is only connected to element 1
-  stk::mesh::EntityId edge_5_6_nodeIds[] = {5, 6};
-  stk::mesh::Entity edge_5_6_nodes[numNodesPerEdge];
-  edge_5_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[0]);
-  edge_5_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[1]);
-
-  std::vector<stk::mesh::Entity> faces;
-
-  stk::mesh::impl::find_faces_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_2_6_nodes, faces);
-
-  size_t expected_num_faces = 3;
-  EXPECT_EQ(expected_num_faces, faces.size());
-
-  stk::mesh::impl::find_faces_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_5_6_nodes, faces);
-
-  expected_num_faces = 2;
-  EXPECT_EQ(expected_num_faces, faces.size());
-}
-
-TEST ( MeshImplUtils, find_locally_owned_elements_these_nodes_have_in_common )
-{
-  stk::ParallelMachine communicator = MPI_COMM_WORLD;
-  int numProcs = stk::parallel_machine_size(communicator);
-  if (numProcs > 2) {
-    return;
-  }
-
-  const unsigned spatialDim = 3;
-  stk::mesh::MetaData meta(spatialDim);
-  stk::mesh::BulkData bulk(meta, communicator);
-
-  setup2Block2HexMesh(bulk);
-
-  const unsigned numNodesPerEdge = 2;
-
-  //edge 2-6 is connected to elements 1 and 2
-  stk::mesh::EntityId edge_2_6_nodeIds[] = {2, 6};
-  stk::mesh::Entity edge_2_6_nodes[numNodesPerEdge];
-  edge_2_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[0]);
-  edge_2_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_2_6_nodeIds[1]);
-
-  //edge 5-6 is only connected to element 1
-  stk::mesh::EntityId edge_5_6_nodeIds[] = {5, 6};
-  stk::mesh::Entity edge_5_6_nodes[numNodesPerEdge];
-  edge_5_6_nodes[0] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[0]);
-  edge_5_6_nodes[1] = bulk.get_entity(stk::topology::NODE_RANK, edge_5_6_nodeIds[1]);
-
-  std::vector<stk::mesh::Entity> elements;
-
-  stk::mesh::impl::find_locally_owned_elements_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_2_6_nodes, elements);
-
-  size_t expected_num_elements = 1;
-  if (numProcs == 1) {
-    expected_num_elements = 2;
-  }
-  EXPECT_EQ(expected_num_elements, elements.size());
-
-  stk::mesh::impl::find_locally_owned_elements_these_nodes_have_in_common(bulk, numNodesPerEdge, edge_5_6_nodes, elements);
-
-  expected_num_elements = 0;
-  if (bulk.parallel_rank() == 0) {
-    //edge_5_6 is connected to element 1, which is locally-owned on proc 0
-    expected_num_elements = 1;
-  }
-  EXPECT_EQ(expected_num_elements, elements.size());
-}
 
 TEST ( MeshImplUtils, find_element_edge_ordinal_and_equivalent_nodes )
 {
@@ -260,7 +129,7 @@ public:
         m_mesh = new stk::mesh::BulkData(*m_meta,communicator);
         std::ostringstream oss;
         oss << "generated:" << num_x << "x" << num_y << "x" << m_mesh->parallel_size() << "|sideset:xXyYzZ";
-        std::string exodusFileName = unitTestUtils::getOption("-i", oss.str());
+        std::string exodusFileName = stk::unit_test_util::get_option("-i", oss.str());
         stk::io::StkMeshIoBroker exodus_file_reader(communicator);
         exodus_file_reader.set_bulk_data(*m_mesh);
         exodus_file_reader.add_mesh_database(exodusFileName, stk::io::READ_MESH);
@@ -889,7 +758,7 @@ TEST(MeshImplUtils, comm_mesh_very_parallel_consistency_nominal)
     unsigned spatialDim = 2;
     stk::mesh::MetaData meta(spatialDim);
     stk::mesh::Part& block_1 = meta.declare_part_with_topology("block_1", stk::topology::QUAD_4_2D);
-    stk::mesh::unit_test::BulkDataTester mesh(meta, communicator);
+    stk::unit_test_util::BulkDataTester mesh(meta, communicator);
     if (mesh.parallel_size() >= 1) {
         mesh.modification_begin();
         Entity node1, node2, node3, node4;
@@ -954,69 +823,6 @@ TEST(MeshImplUtils, check_no_shared_elements_or_higher_nominal)
         mesh.modification_end();
         //nominal test of this only, since this is enforced in many places, impossible to create shared elements
         EXPECT_EQ(0, stk::mesh::impl::check_no_shared_elements_or_higher(mesh));
-    }
-}
-
-TEST(MeshImplUtils, do_these_nodes_have_any_shell_elements_in_common_no_nodes)
-{
-    const int spatialDim = 3;
-    stk::mesh::MetaData meta(spatialDim);
-    stk::mesh::BulkData mesh(meta,MPI_COMM_WORLD);
-    EXPECT_FALSE(stk::mesh::impl::do_these_nodes_have_any_shell_elements_in_common(mesh, 0, NULL));
-}
-
-TEST(MeshImplUtils, do_these_nodes_have_any_shell_elements_in_common_hexshell)
-{
-    const int spatialDim = 3;
-    stk::mesh::MetaData meta(spatialDim);
-    stk::mesh::BulkData mesh(meta,MPI_COMM_WORLD);
-    if (mesh.parallel_size() == 1) {
-        stk::io::StkMeshIoBroker exodus_file_reader(MPI_COMM_WORLD);
-        exodus_file_reader.set_bulk_data(mesh);
-        exodus_file_reader.add_mesh_database("generated:1x1x1|shell:X", stk::io::READ_MESH);
-        exodus_file_reader.create_input_mesh();
-        exodus_file_reader.populate_bulk_data();
-        {
-            stk::mesh::Entity shell = (*mesh.buckets(stk::topology::ELEMENT_RANK)[1])[0];
-            ASSERT_TRUE(mesh.bucket(shell).topology().is_shell());
-            stk::mesh::EntityVector nodes(4);
-            for (unsigned i=0 ; i<4 ; ++i) {
-                nodes[i] = mesh.begin_nodes(shell)[i];
-            }
-            EXPECT_TRUE(stk::mesh::impl::do_these_nodes_have_any_shell_elements_in_common(mesh,4,&nodes[0]));
-        }
-        {
-            stk::mesh::Entity hex = (*mesh.buckets(stk::topology::ELEMENT_RANK)[0])[0];
-            ASSERT_FALSE(mesh.bucket(hex).topology().is_shell());
-            stk::mesh::EntityVector nodes(8);
-            for (unsigned i=0 ; i<8 ; ++i) {
-                nodes[i] = mesh.begin_nodes(hex)[i];
-            }
-            EXPECT_FALSE(stk::mesh::impl::do_these_nodes_have_any_shell_elements_in_common(mesh,8,&nodes[0]));
-        }
-
-    }
-}
-
-TEST(MeshImplUtils, do_these_nodes_have_any_shell_elements_in_common_hexshellwrap)
-{
-    const int spatialDim = 3;
-    stk::mesh::MetaData meta(spatialDim);
-    stk::mesh::BulkData mesh(meta,MPI_COMM_WORLD);
-    if (mesh.parallel_size() == 1) {
-        stk::io::StkMeshIoBroker exodus_file_reader(MPI_COMM_WORLD);
-        exodus_file_reader.set_bulk_data(mesh);
-        exodus_file_reader.add_mesh_database("generated:1x1x1|shell:xXyY", stk::io::READ_MESH);
-        exodus_file_reader.create_input_mesh();
-        exodus_file_reader.populate_bulk_data();
-        stk::mesh::Entity hex = (*mesh.buckets(stk::topology::ELEMENT_RANK)[0])[0];
-        ASSERT_FALSE(mesh.bucket(hex).topology().is_shell());
-        stk::mesh::EntityVector nodes(4);
-        for (unsigned i=0 ; i<4 ; ++i) {
-            nodes[i] = mesh.begin_nodes(hex)[i];
-        }
-        EXPECT_FALSE(stk::mesh::impl::do_these_nodes_have_any_shell_elements_in_common(mesh,4,&nodes[0]));
-
     }
 }
 

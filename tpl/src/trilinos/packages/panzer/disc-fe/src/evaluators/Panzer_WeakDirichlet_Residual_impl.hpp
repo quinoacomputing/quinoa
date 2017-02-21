@@ -116,7 +116,7 @@ PHX_POST_REGISTRATION_SETUP(WeakDirichletResidual,sd,fm)
 //**********************************************************************
 PHX_EVALUATE_FIELDS(WeakDirichletResidual,workset)
 { 
-  for (std::size_t cell = 0; cell < workset.num_cells; ++cell) {
+  for (index_t cell = 0; cell < workset.num_cells; ++cell) {
     for (std::size_t ip = 0; ip < num_ip; ++ip) {
       normal_dot_flux_plus_pen(cell,ip) = ScalarT(0.0);
       for (std::size_t dim = 0; dim < num_dim; ++dim) {
@@ -130,7 +130,7 @@ PHX_EVALUATE_FIELDS(WeakDirichletResidual,workset)
     Intrepid2::FunctionSpaceTools::
       integrate<ScalarT>(residual, normal_dot_flux_plus_pen, 
 			 (this->wda(workset).bases[basis_index])->weighted_basis_scalar, 
-			 Intrepid2::COMP_BLAS);
+			 Intrepid2::COMP_CPP);
   
 }
 

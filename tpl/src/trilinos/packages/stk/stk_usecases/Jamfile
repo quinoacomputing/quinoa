@@ -68,7 +68,17 @@ alias install-targets
 # SECTION 3: End-user install
 #
 explicit install-user-env ;
-alias install-user-env ;
+alias install-user-env : install-user-jamfile ;
+                         
+
+# This rule copies build-system related files for this product to the install-root.
+explicit install-user-jamfile ;
+install install-user-jamfile
+  : [ glob $(stk_usecases-root)/Jamfile ]
+  : <location>$(install-root)/stk/stk_usecases
+    <install-source-root>$(stk_usecases-root)
+  ;
+
 
 explicit install-exe-targets ;
 alias install-exe-targets : ;
@@ -131,7 +141,6 @@ exe stk_usecases_app
     /sierra/seacas//ioss
     /sierra/seacas//ioinit
     /sierra/framework//etet
-    /sierra/geometry_toolkit//geometry_toolkit
     /tpl/trilinos//shards
     /tpl/boost-program-options//boost_program_options
   : <tag>@sierra-exec-tag

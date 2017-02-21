@@ -10,27 +10,22 @@ EXAMPLE_HEADERS = $(wildcard $(SRC_DIR)/../common/*.hpp ${SRC_DIR}/../fixture/*.
 default: build_all
 	echo "End Build"
 
-include $(KOKKOS_PATH)/Makefile.kokkos
-
-# KOKKOS_INTERNAL_USE_CUDA is not exported to installed Makefile.kokkos
-# use KOKKOS_DEVICE here
 ifneq (,$(findstring Cuda,$(KOKKOS_DEVICES)))
-	CXX = nvcc_wrapper
-	CXXFLAGS ?= -O3
-	LINK = $(CXX)
-	LDFLAGS ?= -lpthread
+  CXX = $(KOKKOS_PATH)/bin/nvcc_wrapper
 else
-	CXX ?= g++
-	CXXFLAGS ?= -O3
-	LINK ?= $(CXX)
-	LDFLAGS ?= -lpthread
+  CXX = g++
 endif
+
+CXXFLAGS = -O3
+LINK ?= $(CXX)
+LDFLAGS ?=
+
+include $(KOKKOS_PATH)/Makefile.kokkos
 
 KOKKOS_CXXFLAGS +=	\
 	-I${SRC_DIR}/../common	\
 	-I${SRC_DIR}/../fixture	\
 	-I${SRC_DIR}
-
 
 EXE_EXAMPLE_FENL = KokkosExample_Fenl
 OBJ_EXAMPLE_FENL = BoxElemPart.o main.o fenl.o
@@ -44,14 +39,12 @@ $(EXE_EXAMPLE_FENL) : $(OBJ_EXAMPLE_FENL) $(KOKKOS_LINK_DEPENDS)
 
 build_all : $(TARGETS)
 
-
 test : build_all
 
-clean:
-	rm -f *.o $(EXE_EXAMPLE_FENL) KokkosCore_config.*
+clean: kokkos-clean
+	rm -f *.o $(TARGETS)
 
 # Compilation rules
 
 %.o:%.cpp $(KOKKOS_CPP_DEPENDS) $(EXAMPLE_HEADERS)
 	$(CXX) $(KOKKOS_CPPFLAGS) $(KOKKOS_CXXFLAGS) $(CXXFLAGS) $(EXTRA_INC) -c $<
-

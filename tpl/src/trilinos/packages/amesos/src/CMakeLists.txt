@@ -75,15 +75,24 @@ ENDIF()
 #
 
 IF (${PACKAGE_NAME}_ENABLE_MUMPS)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+   
+   IF(TPL_ENABLE_MPI)
 
-  SET(HEADERS ${HEADERS}
-    Amesos_Mumps.h
-    )
+     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-  SET(SOURCES ${SOURCES}
-    Amesos_Mumps.cpp
-    )
+     SET(HEADERS ${HEADERS}
+     Amesos_Mumps.h
+     )
+
+     SET(SOURCES ${SOURCES}
+     Amesos_Mumps.cpp
+     )
+  ELSE()
+
+     MESSAGE(WARNING "\n\n***Amesos with MUMPS requires MPI, MUMPS will not be available***\n\n")
+   
+   ENDIF()     
+
 ENDIF()
 
 #
@@ -182,7 +191,19 @@ SET(PARAKLETE_KLU_COMMON
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_memory.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_sparse.c
   SuiteSparse/CHOLMOD/Core/amesos_cholmod_transpose.c
+  SuiteSparse/CAMD/Source/amesos_camd_1.c
+  SuiteSparse/CAMD/Source/amesos_camd_defaults.c
+  SuiteSparse/CAMD/Source/amesos_camd_l2.c
+  SuiteSparse/CAMD/Source/amesos_camd_preprocess.c
   SuiteSparse/CAMD/Source/amesos_camd_2.c
+  SuiteSparse/CAMD/Source/amesos_camd_dump.c
+  SuiteSparse/CAMD/Source/amesos_camd_l_postorder.c
+  SuiteSparse/CAMD/Source/amesos_camd_valid.c
+  SuiteSparse/CAMD/Source/amesos_camd_aat.c
+  SuiteSparse/CAMD/Source/amesos_camd_global.c
+  SuiteSparse/CAMD/Source/amesos_camd_order.c
+  SuiteSparse/CAMD/Source/amesos_camd_control.c
+  SuiteSparse/CAMD/Source/amesos_camd_info.c
   SuiteSparse/CAMD/Source/amesos_camd_postorder.c
   )
 
@@ -227,6 +248,8 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
     SuiteSparse/BTF/Include/amesos_btf_decl.h
     SuiteSparse/BTF/Include/amesos_btf_internal.h
     SuiteSparse/CCOLAMD/Include/amesos_ccolamd.h
+    SuiteSparse/CAMD/Include/amesos_camd.h
+    SuiteSparse/CAMD/Include/amesos_camd_internal.h
     Amesos_Klu.h
     )
 
@@ -313,8 +336,6 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_solve.c
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_lsolve.c
     SuiteSparse/CHOLMOD/Cholesky/amesos_t_cholmod_ltsolve.c
-    SuiteSparse/CAMD/Include/amesos_camd.h
-    SuiteSparse/CAMD/Include/amesos_camd_internal.h
     )
 
 

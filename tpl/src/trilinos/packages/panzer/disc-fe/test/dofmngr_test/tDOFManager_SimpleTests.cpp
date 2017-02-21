@@ -53,7 +53,6 @@
 #include "Phalanx_KokkosUtilities.hpp"
 
 #include "PanzerDiscFE_config.hpp"
-#include "Panzer_DOFManagerFEI.hpp"
 
 // include some intrepid basis functions
 // 2D basis 
@@ -76,7 +75,6 @@ namespace panzer {
 #ifdef PANZER_HAVE_FEI
 TEUCHOS_UNIT_TEST(tDOFManager_SimpleTests,validFieldOrder)
 {
-   PHX::KokkosDeviceSession session;
 
    DOFManagerFEI<int,int> dofManager; 
 

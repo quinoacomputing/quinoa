@@ -1,5 +1,3 @@
-INCLUDE(TribitsSubPackageMacros)
-INCLUDE(TribitsLibraryMacros)
 
 TRIBITS_SUBPACKAGE(Chaco)
 
@@ -58,6 +56,7 @@ ENDFOREACH ( dir )
 get_property(SOURCES GLOBAL PROPERTY chaco_SRCS)
 TRIBITS_ADD_LIBRARY(
   chaco
+  STATIC
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
   IMPORTEDLIBS m

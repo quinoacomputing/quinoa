@@ -201,7 +201,6 @@ IF(Ifpack2_ENABLE_EXPLICIT_INSTANTIATION)
     Chebyshev
     BandedContainer
     DenseContainer
-    TriDiContainer
     Diagonal
     DiagonalFilter
     DropFilter
@@ -209,8 +208,9 @@ IF(Ifpack2_ENABLE_EXPLICIT_INSTANTIATION)
     Hiptmair
     IdentitySolver
     ILUT
-    Krylov
+    LinePartitioner
     LocalFilter
+    LocalSparseTriangularSolver
     OverlappingRowMatrix
     Relaxation
     ReorderFilter
@@ -218,7 +218,7 @@ IF(Ifpack2_ENABLE_EXPLICIT_INSTANTIATION)
     SingletonFilter
     SparseContainer
     SparsityFilter
-    LinePartitioner
+    TriDiContainer
     Details::Chebyshev
     Details::DenseSolver
     Details::Factory
@@ -231,6 +231,9 @@ IF(Ifpack2_ENABLE_EXPLICIT_INSTANTIATION)
     APPEND_GLOBAL_SET(IFPACK2_ETI_CLASSES
       Details::Amesos2Wrapper
       )
+  ENDIF()
+  IF(Ifpack2_ENABLE_DEPRECATED_CODE)
+    APPEND_GLOBAL_SET(IFPACK2_ETI_CLASSES Krylov)
   ENDIF()
 
   # Set the list of Ifpack2 classes templated on <LO, GO, Node> for

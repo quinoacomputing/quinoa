@@ -85,6 +85,7 @@
 #include <Teuchos_DefaultComm.hpp>
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_CommHelpers.hpp>
+#include <Teuchos_toString.hpp>
 
 namespace Zoltan2{
 
@@ -117,6 +118,14 @@ using Teuchos::gatherAll;
 typedef size_t global_size_t;
 
 }
+
+// Workarounds for Purify; it doesn't like the standard string operations
+#ifdef HAVE_ZOLTAN2_PURIFY
+#define strcmp Zoltan_strcmp
+#define strncmp Zoltan_strncmp
+#define strcasecmp Zoltan_strcasecmp
+#define strncasecmp Zoltan_strncasecmp
+#endif
 
 // For debugging
 #define HELLO

@@ -66,12 +66,11 @@ void NonlinearSource<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
 		      PHX::FieldManager<Traits>& vm)
 {
-  // The utilities hide template arguments.  We could directly get the
-  // data pointers from the field manager.  This is demonstrated below.
-  //this->utils.setFieldData(source,vm);
-  //this->utils.setFieldData(density,vm);
-  //this->utils.setFieldData(temp,vm);
-  vm.template getFieldData<ScalarT,EvalT>(source);
+  // NOTE: We no longer need manually call setFieldData(). It happens
+  // automatically. We set them here to make sure backwards
+  // compatiblity still works. We demonstrate both valid calling
+  // pathways.
+  this->utils.setFieldData(source,vm);
   vm.template getFieldData<ScalarT,EvalT>(density);
   vm.template getFieldData<ScalarT,EvalT>(temp);
 
@@ -82,7 +81,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void NonlinearSource<EvalT, Traits>::operator () (const int i) const
 {
-  for (PHX::index_size_type ip = 0; ip < Teuchos::as<PHX::index_size_type>(density.dimension_1()); ++ip)
+  for (PHX::index_size_type ip = 0; ip < static_cast<PHX::index_size_type>(density.dimension_1()); ++ip)
     source(i,ip) =  density(i,ip) * temp(i,ip) * temp(i,ip);
 }
 

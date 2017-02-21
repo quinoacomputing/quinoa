@@ -88,12 +88,12 @@ namespace impl
     {
     public:
       OutputFile(const std::string &filename, MPI_Comm communicator, DatabasePurpose db_type,
-		 Ioss::PropertyManager& property_manager, const Ioss::Region *input_region)
+		 Ioss::PropertyManager& property_manager, const Ioss::Region *input_region, char const* type = "exodus")
         : m_current_output_step(-1), m_use_nodeset_for_part_nodes_fields(false),
           m_mesh_defined(false), m_fields_defined(false), m_non_any_global_variables_defined(false),
 	  m_db_purpose(db_type), m_input_region(input_region), m_subset_selector(NULL)
       {
-	setup_output_file(filename, communicator, property_manager);
+	setup_output_file(filename, communicator, property_manager, type);
       }
 
       OutputFile(Teuchos::RCP<Ioss::Region> ioss_output_region, MPI_Comm communicator,
@@ -114,6 +114,7 @@ namespace impl
       }
 
       void write_output_mesh(const stk::mesh::BulkData& bulk_data);
+      void flush_output() const;
       void add_field(stk::mesh::FieldBase &field, const std::string &alternate_name);
 
       void add_global(const std::string &variableName, const boost::any &value, stk::util::ParameterType::Type type);
@@ -143,7 +144,8 @@ namespace impl
     private:
       void define_output_fields(const stk::mesh::BulkData& bulk_data);
       void setup_output_file(const std::string &filename, MPI_Comm communicator,
-			     Ioss::PropertyManager &property_manager);
+			     Ioss::PropertyManager &property_manager,
+                             char const* type = "exodus");
 
       int m_current_output_step;
       bool m_use_nodeset_for_part_nodes_fields;
@@ -188,6 +190,7 @@ namespace impl
       void add_global_ref(const std::string &variableName, const boost::any *value,
 			  stk::util::ParameterType::Type type);
       void process_output(int step, double time);
+      void flush_output() const;
 
     private:
       std::vector<GlobalAnyVariable> m_fields;
@@ -208,7 +211,7 @@ namespace impl
 		      const stk::mesh::ConnectivityMap *connectivity_map = NULL);
       StkMeshIoBroker();
 
-      ~StkMeshIoBroker();
+      virtual ~StkMeshIoBroker();
 
       // Add the specified 'property' to the default property
       // manager for this StkMeshIoBroker object.  The property
@@ -279,10 +282,13 @@ namespace impl
 
       enum SideSetFaceCreationBehavior {
           STK_IO_SIDESET_FACE_CREATION_CLASSIC = 42,
-          STK_IO_SIDESET_FACE_CREATION_CURRENT = 73
+          STK_IO_SIDESET_FACE_CREATION_CURRENT = 73,
+          STK_IO_SIDE_CREATION_USING_GRAPH_TEST = 99
       };
+
       void set_sideset_face_creation_behavior(SideSetFaceCreationBehavior behavior)
       {
+          ThrowRequireWithSierraHelpMsg(behavior!=STK_IO_SIDE_CREATION_USING_GRAPH_TEST);
           m_sideset_face_creation_behavior = behavior;
       }
 
@@ -398,7 +404,7 @@ namespace impl
       // 'populate_field_data()' method declared below.
       // Note that the above-declared 'populate_bulk_data()' method
       // calls both of these methods.
-      void populate_mesh(bool delay_field_data_allocation = true);
+      virtual void populate_mesh(bool delay_field_data_allocation = true);
 
       // Read/generate the field-data for the mesh, including
       // coordinates, attributes and distribution factors.
@@ -429,13 +435,22 @@ namespace impl
 				       std::vector<stk::io::MeshField> *missing=NULL);
 
       // For all transient input fields defined, read the data at the
-      // specified database time 'time' and populate the stk
-      // data structures with those values.  The database time closest
-      // to the specified time will be used with no interpolation (yet).
+      // specified database time 'time' and populate the stk data
+      // structures with those values.  
+      //
+      // If the MeshField specifies "CLOSEST" option, then the
+      // database time closestto the specified time will be used; if
+      // the MeshField specifies "LINEAR_INTERPOLATION" option, then
+      // the field values will be interpolated based on the two
+      // surrounding times on the database; if the time is less than
+      // the minimum time on the database or greater than the maximum
+      // time, then the field values at those extremes will be
+      // returned (no extrapolation).
+      // 
       // If 'missing' is non-NULL, then any fields that are not found
-      // on the input database will be put on the vector.  If 'missing'
-      // is NULL, then an exception will be thrown if any fields are
-      // not found.
+      // on the input database will be put on the vector.  If
+      // 'missing' is NULL, then an exception will be thrown if any
+      // fields are not found.
       double read_defined_input_fields(double time,
 				       std::vector<stk::io::MeshField> *missing=NULL);
 
@@ -490,11 +505,15 @@ namespace impl
       //    the newest state of a multi-state field.
       // Other behavioral differences may be added in the future 
       //    (e.g., dealing with adaptivity...)
-      size_t create_output_mesh(const std::string &filename,
-				DatabasePurpose purpose);
+      // \param[in] type The format of the mesh that will be output.
+      // Valid types are "exodus", "catalyst".
       size_t create_output_mesh(const std::string &filename,
 				DatabasePurpose purpose,
-				Ioss::PropertyManager &properties);
+                                char const* type = "exodus");
+      size_t create_output_mesh(const std::string &filename,
+				DatabasePurpose purpose,
+				Ioss::PropertyManager &properties,
+                                char const* type = "exodus");
 
       void write_output_mesh(size_t output_file_index);
 
@@ -532,6 +551,11 @@ namespace impl
       // the step added by "begin_output_step".  End step with a call
       // to "end_output_step"
       int write_defined_output_fields(size_t output_file_index);
+
+      // Force all output databases to "flush" their data to disk (if possible)
+      // Typically called by the application during a planned or unplanned
+      // termination.
+      void flush_output() const; 
 
       // Add a transient step to the mesh database at time 'time' and
       // output the data for all defined fields to the database.
@@ -611,12 +635,25 @@ namespace impl
       void use_nodeset_for_part_nodes_fields(size_t output_index,
 					     bool true_false);
 
+      void set_option_to_not_collapse_sequenced_fields();
+      int get_num_time_steps();
+      double get_max_time();
+
       //-END
+    protected:
+      void set_sideset_face_creation_behavior_for_testing(SideSetFaceCreationBehavior behavior)
+      {
+          m_sideset_face_creation_behavior = behavior;
+      }
+
+    protected:
+      void create_bulk_data();
+      void validate_input_file_index(size_t input_file_index) const;
+      void stk_mesh_resolve_node_sharing() { bulk_data().resolve_node_sharing(); }
+      void stk_mesh_modification_end_after_node_sharing_resolution() { bulk_data().modification_end_after_node_sharing_resolution(); }
     private:
       void create_ioss_region();
-      void create_bulk_data();
       void validate_output_file_index(size_t output_file_index) const;
-      void validate_input_file_index(size_t input_file_index) const;
 
       // Returns 4 or 8 based on several hueristics to determine
       // the integer size required for an output database.
@@ -652,14 +689,14 @@ namespace impl
 
       std::vector<Teuchos::RCP<impl::OutputFile> > m_output_files;
       std::vector<Teuchos::RCP<impl::Heartbeat> > m_heartbeat;
+    protected:
       std::vector<Teuchos::RCP<InputFile> > m_input_files;
-
+    private:
       StkMeshIoBroker(const StkMeshIoBroker&); // Do not implement
       StkMeshIoBroker& operator=(const StkMeshIoBroker&); // Do not implement
+    protected:
       size_t m_active_mesh_index;
-
       SideSetFaceCreationBehavior m_sideset_face_creation_behavior;
-
     };
 
     inline Teuchos::RCP<Ioss::Region> StkMeshIoBroker::get_output_io_region(size_t output_file_index) {

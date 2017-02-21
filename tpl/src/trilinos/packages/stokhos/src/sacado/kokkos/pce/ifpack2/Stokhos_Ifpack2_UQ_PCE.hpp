@@ -58,12 +58,12 @@ template <typename XV, class SizeType>
 struct V_ReciprocalThresholdSelfFunctor;
 
 // Mean-based implementation of ReciprocalThreshold
-template <typename T, typename L, typename D, typename M, class SizeType>
+template <typename S, typename ... P, class SizeType>
 struct V_ReciprocalThresholdSelfFunctor<
-  Kokkos::View< T,L,D,M,Kokkos::Impl::ViewPCEContiguous >,
+  Kokkos::View< Sacado::UQ::PCE<S>*,P... >,
   SizeType >
 {
-  typedef Kokkos::View< T,L,D,M,Kokkos::Impl::ViewPCEContiguous > XVector;
+  typedef Kokkos::View< Sacado::UQ::PCE<S>*,P... > XVector;
   typedef typename XVector::array_type array_type;
 
   typedef typename array_type::execution_space   execution_space;
@@ -83,7 +83,7 @@ struct V_ReciprocalThresholdSelfFunctor<
     m_x(x),
     m_min_val(min_val.fastAccessCoeff(0)),
     m_min_val_mag(KAT::abs(m_min_val)),
-    m_n_pce(x.sacado_size()) {}
+    m_n_pce(Kokkos::dimension_scalar(x)) {}
   //--------------------------------------------------------------------------
 
   KOKKOS_INLINE_FUNCTION
@@ -101,10 +101,10 @@ struct V_ReciprocalThresholdSelfFunctor<
 template<class XV, class SizeType>
 struct LocalReciprocalThreshold;
 
-template<class T, class L, class D, class M, class SizeType>
+template<class S, class ...P, class SizeType>
 struct LocalReciprocalThreshold<
-  Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>, SizeType > {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> XV;
+  Kokkos::View< Sacado::UQ::PCE<S>*,P... >, SizeType > {
+  typedef Kokkos::View< Sacado::UQ::PCE<S>*,P... > XV;
 
   static void
   compute (const XV& X,
@@ -115,8 +115,8 @@ struct LocalReciprocalThreshold<
         "LocalReciprocalThreshold not implemented for non-constant minVal");
     }
 
-    if (X.sacado_size() == 1) {
-      typedef typename XV::flat_array_type Flat_XV;
+    if (Kokkos::dimension_scalar(X) == 1) {
+      typedef typename Kokkos::FlatArrayType<XV>::type Flat_XV;
       Flat_XV flat_X = X;
       LocalReciprocalThreshold< Flat_XV, SizeType>::compute( flat_X,
                                                              minVal.coeff(0) );

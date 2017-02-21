@@ -128,7 +128,7 @@ namespace MueLu {
   void IfpackSmoother<Node>::Setup(Level &currentLevel) {
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
     if (SmootherPrototype::IsSetup() == true)
-      this->GetOStream(Warnings0) << "MueLu::IfpackSmoother::Setup(): Setup() has already been called";
+      this->GetOStream(Warnings0) << "MueLu::IfpackSmoother::Setup(): Setup() has already been called" << std::endl;
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
@@ -253,7 +253,7 @@ namespace MueLu {
       TEUCHOS_TEST_FOR_EXCEPTION(lambdaMax == -1.0, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Setup(): no maximum eigenvalue estimate");
     }
 
-    this->GetOStream(Statistics0) << description() << std::endl;
+    this->GetOStream(Statistics1) << description() << std::endl;
   }
 
   template <class Node>

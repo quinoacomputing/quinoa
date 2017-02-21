@@ -49,6 +49,22 @@ namespace Kokkos {
 namespace Impl {
 
 template<class Scalar1, class Scalar2>
+struct MaxOper {
+  KOKKOS_FORCEINLINE_FUNCTION
+  static Scalar1 apply(const Scalar1& val1, const Scalar2& val2) {
+    return (val1 > val2 ? val1 : val2);
+  }
+};
+
+template<class Scalar1, class Scalar2>
+struct MinOper {
+  KOKKOS_FORCEINLINE_FUNCTION
+  static Scalar1 apply(const Scalar1& val1, const Scalar2& val2) {
+    return (val1 < val2 ? val1 : val2);
+  }
+};
+
+template<class Scalar1, class Scalar2>
 struct AddOper {
   KOKKOS_FORCEINLINE_FUNCTION
   static Scalar1 apply(const Scalar1& val1, const Scalar2& val2) {
@@ -222,13 +238,20 @@ T atomic_fetch_oper( const Oper& op, volatile T * const dest ,
   return return_val;
 #else
   // This is a way to (hopefully) avoid dead lock in a warp
-  bool done = false;
-  while (! done ) {
-    if( Impl::lock_address_cuda_space( (void*) dest ) ) {
-      T return_val = *dest;
-      *dest = Oper::apply(return_val, val);;
-      Impl::unlock_address_cuda_space( (void*) dest );
+  T return_val;
+  int done = 0;
+  unsigned int active = __ballot(1);
+  unsigned int done_active = 0;
+  while (active!=done_active) {
+    if(!done) {
+      if( Impl::lock_address_cuda_space( (void*) dest ) ) {
+        return_val = *dest;
+        *dest = Oper::apply(return_val, val);;
+        Impl::unlock_address_cuda_space( (void*) dest );
+        done=1;
+      }
     }
+    done_active = __ballot(done);
   }
   return return_val;
 #endif
@@ -253,14 +276,21 @@ T atomic_oper_fetch( const Oper& op, volatile T * const dest ,
   Impl::unlock_address_host_space( (void*) dest );
   return return_val;
 #else
+  T return_val;
   // This is a way to (hopefully) avoid dead lock in a warp
-  bool done = false;
-  while (! done ) {
-    if( Impl::lock_address_cuda_space( (void*) dest ) ) {
-      T return_val = Oper::apply(*dest, val);
-      *dest = return_val;
-      Impl::unlock_address_cuda_space( (void*) dest );
+  int done = 0;
+  unsigned int active = __ballot(1);
+  unsigned int done_active = 0;
+  while (active!=done_active) {
+    if(!done) {
+      if( Impl::lock_address_cuda_space( (void*) dest ) ) {
+        return_val = Oper::apply(*dest, val);
+        *dest = return_val;
+        Impl::unlock_address_cuda_space( (void*) dest );
+        done=1;
+      }
     }
+    done_active = __ballot(done);
   }
   return return_val;
 #endif
@@ -272,6 +302,18 @@ T atomic_oper_fetch( const Oper& op, volatile T * const dest ,
 namespace Kokkos {
 
 // Fetch_Oper atomics: return value before operation
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_fetch_max(volatile T * const dest, const T val) {
+  return Impl::atomic_fetch_oper(Impl::MaxOper<T,const T>(),dest,val);
+}
+
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_fetch_min(volatile T * const dest, const T val) {
+  return Impl::atomic_fetch_oper(Impl::MinOper<T,const T>(),dest,val);
+}
+
 template < typename T >
 KOKKOS_INLINE_FUNCTION
 T atomic_fetch_mul(volatile T * const dest, const T val) {
@@ -322,6 +364,18 @@ T atomic_fetch_rshift(volatile T * const dest, const unsigned int val) {
 
 
 // Oper Fetch atomics: return value after operation
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_max_fetch(volatile T * const dest, const T val) {
+  return Impl::atomic_oper_fetch(Impl::MaxOper<T,const T>(),dest,val);
+}
+
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_min_fetch(volatile T * const dest, const T val) {
+  return Impl::atomic_oper_fetch(Impl::MinOper<T,const T>(),dest,val);
+}
+
 template < typename T >
 KOKKOS_INLINE_FUNCTION
 T atomic_mul_fetch(volatile T * const dest, const T val) {

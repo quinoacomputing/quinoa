@@ -50,15 +50,12 @@
 #include <typeinfo>
 
 #include <Kokkos_Core_fwd.hpp>
+#include <Kokkos_Concepts.hpp>
 #include <Kokkos_MemoryTraits.hpp>
 
 #include <impl/Kokkos_Traits.hpp>
 #include <impl/Kokkos_Error.hpp>
-
-#include <impl/Kokkos_AllocationTracker.hpp>
-#include <impl/Kokkos_BasicAllocators.hpp>
-
-#include <impl/KokkosExp_SharedAlloc.hpp>
+#include <impl/Kokkos_SharedAlloc.hpp>
 
 /*--------------------------------------------------------------------------*/
 
@@ -129,25 +126,6 @@ public:
   typedef Kokkos::Device<execution_space,memory_space> device_type;
 
   /*--------------------------------*/
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-#if defined( KOKKOS_USE_PAGE_ALIGNED_HOST_MEMORY )
-  typedef Impl::PageAlignedAllocator allocator ;
-#else
-  typedef Impl::AlignedAllocator allocator ;
-#endif
-
-  /** \brief  Allocate a contiguous block of memory.
-   *
-   *  The input label is associated with the block of memory.
-   *  The block of memory is tracked via reference counting where
-   *  allocation gives it a reference count of one.
-   */
-  static Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-
-  /*--------------------------------*/
   /* Functions unique to the HostSpace */
   static int in_parallel();
 
@@ -157,7 +135,9 @@ public:
 
   /**\brief  Default memory space instance */
   HostSpace();
+  HostSpace( HostSpace && rhs ) = default ;
   HostSpace( const HostSpace & rhs ) = default ;
+  HostSpace & operator = ( HostSpace && ) = default ;
   HostSpace & operator = ( const HostSpace & ) = default ;
   ~HostSpace() = default ;
 
@@ -179,7 +159,7 @@ private:
 
   AllocationMechanism  m_alloc_mech ;
 
-  friend class Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::HostSpace , void > ;
+  friend class Kokkos::Impl::SharedAllocationRecord< Kokkos::HostSpace , void > ;
 };
 
 } // namespace Kokkos
@@ -188,7 +168,47 @@ private:
 //----------------------------------------------------------------------------
 
 namespace Kokkos {
-namespace Experimental {
+namespace Impl {
+
+static_assert( Kokkos::Impl::MemorySpaceAccess< Kokkos::HostSpace , Kokkos::HostSpace >::assignable , "" );
+
+
+template< typename S >
+struct HostMirror {
+private:
+
+  // If input execution space can access HostSpace then keep it.
+  // Example: Kokkos::OpenMP can access, Kokkos::Cuda cannot
+  enum { keep_exe = Kokkos::Impl::MemorySpaceAccess
+    < typename S::execution_space::memory_space , Kokkos::HostSpace >
+      ::accessible };
+
+  // If HostSpace can access memory space then keep it.
+  // Example:  Cannot access Kokkos::CudaSpace, can access Kokkos::CudaUVMSpace
+  enum { keep_mem = Kokkos::Impl::MemorySpaceAccess
+    < Kokkos::HostSpace , typename S::memory_space >::accessible };
+
+public:
+
+  typedef typename std::conditional
+    < keep_exe && keep_mem /* Can keep whole space */
+    , S
+    , typename std::conditional
+        < keep_mem /* Can keep memory space, use default Host execution space */
+        , Kokkos::Device< Kokkos::HostSpace::execution_space
+                        , typename S::memory_space >
+        , Kokkos::HostSpace
+        >::type
+    >::type  Space ;
+};
+
+} // namespace Impl
+} // namespace Kokkos
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+namespace Kokkos {
 namespace Impl {
 
 template<>
@@ -265,7 +285,6 @@ public:
 };
 
 } // namespace Impl
-} // namespace Experimental
 } // namespace Kokkos
 
 //----------------------------------------------------------------------------

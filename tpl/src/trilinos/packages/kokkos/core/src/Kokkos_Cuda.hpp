@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
+//
 //                        Kokkos v. 2.0
 //              Copyright (2014) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-// 
+//
 // ************************************************************************
 //@HEADER
 */
@@ -56,10 +56,13 @@
 #include <Kokkos_CudaSpace.hpp>
 
 #include <Kokkos_Parallel.hpp>
+#include <Kokkos_TaskScheduler.hpp>
 #include <Kokkos_Layout.hpp>
 #include <Kokkos_ScratchSpace.hpp>
 #include <Kokkos_MemoryTraits.hpp>
 #include <impl/Kokkos_Tags.hpp>
+
+#include <KokkosExp_MDRangePolicy.hpp>
 
 /*--------------------------------------------------------------------------*/
 
@@ -108,7 +111,7 @@ public:
   //! This execution space's preferred array layout.
   typedef LayoutLeft            array_layout ;
 
-  //! 
+  //!
   typedef ScratchMemorySpace< Cuda >  scratch_memory_space ;
 
   //@}
@@ -160,6 +163,9 @@ public:
   //! Has been initialized
   static int is_initialized();
 
+  /** \brief  Return the maximum amount of concurrency.  */
+  static int concurrency();
+
   //! Print configuration information to the given output stream.
   static void print_configuration( std::ostream & , const bool detail = false );
 
@@ -171,10 +177,10 @@ public:
   Cuda();
   explicit Cuda( const int instance_id );
 
-  Cuda( const Cuda & ) = default ;
   Cuda( Cuda && ) = default ;
-  Cuda & operator = ( const Cuda & ) = default ;
+  Cuda( const Cuda & ) = default ;
   Cuda & operator = ( Cuda && ) = default ;
+  Cuda & operator = ( const Cuda & ) = default ;
 
   //--------------------------------------------------------------------------
   //! \name Device-specific functions
@@ -253,11 +259,8 @@ struct VerifyExecutionCanAccessMemorySpace
 
 #include <Cuda/Kokkos_CudaExec.hpp>
 #include <Cuda/Kokkos_Cuda_View.hpp>
-
-#include <KokkosExp_View.hpp>
-#include <Cuda/KokkosExp_Cuda_View.hpp>
-
 #include <Cuda/Kokkos_Cuda_Parallel.hpp>
+#include <Cuda/Kokkos_Cuda_Task.hpp>
 
 //----------------------------------------------------------------------------
 

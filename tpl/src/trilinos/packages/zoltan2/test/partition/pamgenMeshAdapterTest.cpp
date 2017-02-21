@@ -55,7 +55,6 @@
 /**************************************************************/
 
 #include <Zoltan2_PamgenMeshAdapter.hpp>
-#include <Zoltan2_Environment.hpp>
 #include <Zoltan2_PartitioningProblem.hpp>
 #include <Zoltan2_ColoringProblem.hpp>
 
@@ -73,6 +72,7 @@
 using namespace std;
 using Teuchos::ParameterList;
 using Teuchos::RCP;
+using Teuchos::ArrayRCP;
 
 /*********************************************************/
 /*                     Typedefs                          */
@@ -189,9 +189,12 @@ int main(int narg, char *arg[]) {
   if (me == 0) cout << "Creating mesh adapter ... \n\n";
 
   typedef Zoltan2::PamgenMeshAdapter<tMVector_t> inputAdapter_t;
+  typedef Zoltan2::EvaluatePartition<inputAdapter_t> quality_t;
+  typedef inputAdapter_t::part_t part_t;
+  typedef inputAdapter_t::base_adapter_t base_adapter_t;
 
-  inputAdapter_t ia(*CommT, "region");
-  ia.print(me);
+  inputAdapter_t *ia = new inputAdapter_t(*CommT, "region");
+  ia->print(me);
 
   // Set parameters for partitioning
   if (me == 0) cout << "Creating parameter list ... \n\n";
@@ -206,7 +209,7 @@ int main(int narg, char *arg[]) {
     params.set("imbalance_tolerance", 1.1);
     params.set("num_global_parts", nParts);
     params.set("algorithm", "multijagged");
-    params.set("rectilinear", "yes");
+    params.set("rectilinear", true); // bool parameter
   }
   else if (action == "scotch") {
     do_partitioning = true;
@@ -215,7 +218,6 @@ int main(int narg, char *arg[]) {
     params.set("num_global_parts", nParts);
     params.set("partitioning_approach", "partition");
     params.set("algorithm", "scotch");
-    params.set("compute_metrics","yes");
   }
   else if (action == "zoltan_rcb") {
     do_partitioning = true;
@@ -266,7 +268,6 @@ int main(int narg, char *arg[]) {
     params.set("num_global_parts", nParts);
     Teuchos::ParameterList &zparams = params.sublist("zoltan_parameters",false);
     zparams.set("LB_METHOD","HYPERGRAPH");
-    params.set("compute_metrics","yes");
 
   }
 
@@ -281,24 +282,26 @@ int main(int narg, char *arg[]) {
   if (do_partitioning) {
     if (me == 0) cout << "Creating partitioning problem ... \n\n";
 
-    Zoltan2::PartitioningProblem<inputAdapter_t> problem(&ia, &params, CommT);
+    Zoltan2::PartitioningProblem<inputAdapter_t> problem(ia, &params, CommT);
 
     // call the partitioner
     if (me == 0) cout << "Calling the partitioner ... \n\n";
 
     problem.solve();
 
-    if (me) {
-      problem.printMetrics(cout);
+    // create metric object
 
-      if (action == "scotch")
-        problem.printGraphMetrics(cout);
+    RCP<quality_t> metricObject = 
+      rcp(new quality_t(ia, &params, CommT, &problem.getSolution()));
+
+    if (!me) {
+      metricObject->printMetrics(cout);
     }
   }
   else {
     if (me == 0) cout << "Creating coloring problem ... \n\n";
 
-    Zoltan2::ColoringProblem<inputAdapter_t> problem(&ia, &params);
+    Zoltan2::ColoringProblem<inputAdapter_t> problem(ia, &params);
 
     // call the partitioner
     if (me == 0) cout << "Calling the coloring algorithm ... \n\n";

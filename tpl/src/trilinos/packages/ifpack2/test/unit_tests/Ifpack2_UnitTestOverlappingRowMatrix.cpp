@@ -41,32 +41,6 @@
 //@HEADER
 */
 
-// ***********************************************************************
-//
-//      Ifpack2: Tempated Object-Oriented Algebraic Preconditioner Package
-//                 Copyright (2004) Sandia Corporation
-//
-// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
-// license for use of this work by or on behalf of the U.S. Government.
-//
-// This library is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; either version 2.1 of the
-// License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-// USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
-//
-// ***********************************************************************
-
 
 /*! \file Ifpack2_UnitTestRelaxation.cpp
 
@@ -260,6 +234,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2OverlappingRowMatrix, Test0, Scalar, LO
 
   TEST_EQUALITY( NumGlobalRowsB, NumGlobalRowsC );
   TEST_EQUALITY( NumGlobalNonzerosB, NumGlobalNonzerosC );
+
+  // Test fix to github issue #558. Check that all four maps report the same
+  // number of local elements. This means that LocalFilter can filter based on
+  // getDomainMap () and getRangeMap (), as desired, and see the overlap
+  // pattern.
+  {
+    const auto n = B->getRowMap ()->getNodeNumElements ();
+    TEST_EQUALITY( B->getColMap ()->getNodeNumElements (), n );
+    TEST_EQUALITY( B->getRangeMap ()->getNodeNumElements (), n );
+    TEST_EQUALITY( B->getDomainMap ()->getNodeNumElements (), n );
+  }
 
   try {
     C->apply (X, Z);

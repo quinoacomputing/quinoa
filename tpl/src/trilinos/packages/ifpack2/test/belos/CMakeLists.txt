@@ -54,6 +54,8 @@ TRIBITS_COPY_FILES_TO_BINARY_DIR(Ifpack2BelosCopyFiles
   test_RILUK_tfqmr_small_sym_mm.xml
   test_bordered_DIAG_small.xml 
   small_sym_sing.mtx consist_rhs.vec small_null.vec
+  test_SGS_wathen_mm.xml
+  test_MTSGS_wathen_mm.xml
 
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
   DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
@@ -318,6 +320,7 @@ TRIBITS_ADD_TEST(
 #   NUM_MPI_PROCS 1
 #   STANDARD_PASS_OUTPUT
 # )
+
 
 TRIBITS_ADD_TEST(
   tif_belos Ifpack2BelosCopyFiles

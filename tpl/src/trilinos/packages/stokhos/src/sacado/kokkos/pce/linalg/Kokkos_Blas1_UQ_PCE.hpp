@@ -53,50 +53,55 @@
 
 namespace KokkosBlas {
 
-template <typename XT, typename XL, typename XD, typename XM,
-          typename YT, typename YL, typename YD, typename YM>
-typename Kokkos::Details::InnerProductSpaceTraits< typename Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type >::dot_type
-dot(const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-    const Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >& y)
+template <typename XD, typename ... XP,
+          typename YD, typename ... YP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<YD,YP...> >::value,
+  typename Kokkos::Details::InnerProductSpaceTraits<
+    typename Kokkos::View<XD,XP...>::non_const_value_type >::dot_type
+  >::type
+dot(const Kokkos::View<XD,XP...>& x,
+    const Kokkos::View<YD,YP...>& y)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< YT,YL,YD,YM,S > YVector;
+  typedef Kokkos::View<XD,XP...> XVector;
+  typedef Kokkos::View<YD,YP...> YVector;
 
-  typename XVector::flat_array_type x_flat = x;
-  typename YVector::flat_array_type y_flat = y;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<YVector>::type y_flat = y;
 
   return dot( x_flat, y_flat );
 }
 
 template <typename RV,
-          typename XT, typename XL, typename XD, typename XM,
-          typename YT, typename YL, typename YD, typename YM>
-void
+          typename XD, typename ... XP,
+          typename YD, typename ... YP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<YD,YP...> >::value >::type
 dot(const RV& r,
-    const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-    const Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >& y)
+    const Kokkos::View<XD,XP...>& x,
+    const Kokkos::View<YD,YP...>& y)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< YT,YL,YD,YM,S > YVector;
+  typedef Kokkos::View<XD,XP...> XVector;
+  typedef Kokkos::View<YD,YP...> YVector;
 
-  typename XVector::flat_array_type x_flat = x;
-  typename YVector::flat_array_type y_flat = y;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<YVector>::type y_flat = y;
 
   dot( r, x_flat, y_flat );
 }
 
-template <typename XT, typename XL, typename XD, typename XM>
-void
-fill(const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-     const typename Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type& val) {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
+template <typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
+fill(const Kokkos::View<XD,XP...>& x,
+     const typename Kokkos::View<XD,XP...>::non_const_value_type& val) {
+  typedef Kokkos::View<XD,XP...> XVector;
 
   // Use the existing fill() implementation if we can
   if (Sacado::is_constant(val)) {
-     typename XVector::flat_array_type x_flat = x;
+     typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
      fill( x_flat, val.coeff(0) );
   }
   else {
@@ -105,70 +110,71 @@ fill(const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
 }
 
 template <typename RV,
-          typename XT, typename XL, typename XD, typename XM>
-void
+          typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
 nrm2_squared(
   const RV& r,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x)
+  const Kokkos::View<XD,XP...>& x)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
+  typedef Kokkos::View<XD,XP...> XVector;
 
-  typename XVector::flat_array_type x_flat = x;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
 
   nrm2_squared( r, x_flat );
 }
 
 template <typename RV,
-          typename XT, typename XL, typename XD, typename XM>
-void
+          typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
 nrm1(
   const RV& r,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x)
+  const Kokkos::View<XD,XP...>& x)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
+  typedef Kokkos::View<XD,XP...> XVector;
 
-  typename XVector::flat_array_type x_flat = x;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
 
   nrm1( r, x_flat );
 }
 
 template <typename RV,
-          typename XT, typename XL, typename XD, typename XM>
-void
+          typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
 nrmInf(
   const RV& r,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x)
+  const Kokkos::View<XD,XP...>& x)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
+  typedef Kokkos::View<XD,XP...> XVector;
 
-  typename XVector::flat_array_type x_flat = x;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
 
   nrmInf( r, x_flat );
 }
 
 template <typename AV,
-          typename XT, typename XL, typename XD, typename XM,
+          typename XD, typename ... XP,
           typename BV,
-          typename YT, typename YL, typename YD, typename YM>
-void
+          typename YD, typename ... YP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<YD,YP...> >::value >::type
 axpby(const AV& a,
-      const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
+      const Kokkos::View<XD,XP...>& x,
       const BV& b,
-      const Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >& y)
+      const Kokkos::View<YD,YP...>& y)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< YT,YL,YD,YM,S > YVector;
+  typedef Kokkos::View<XD,XP...> XVector;
+  typedef Kokkos::View<YD,YP...> YVector;
 
   if (!Sacado::is_constant(a) || !Sacado::is_constant(b)) {
     Kokkos::Impl::raise_error("axpby not implemented for non-constant a or b");
   }
 
-  typename XVector::flat_array_type x_flat = x;
-  typename YVector::flat_array_type y_flat = y;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<YVector>::type y_flat = y;
   auto aa = Sacado::Value<AV>::eval(a);
   auto bb = Sacado::Value<BV>::eval(b);
   axpby( aa, x_flat, bb, y_flat );
@@ -176,23 +182,24 @@ axpby(const AV& a,
 
 // Currently not handling scal() when AV is a view
 
-template <typename RT, typename RL, typename RD, typename RM,
-          typename XT, typename XL, typename XD, typename XM>
-void
-scal(const Kokkos::View< RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous >& r,
-     const typename Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type& a,
-     const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x)
+template <typename RD, typename ... RP,
+          typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<RD,RP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
+scal(const Kokkos::View<RD,RP...>& r,
+     const typename Kokkos::View<XD,XP...>::non_const_value_type& a,
+     const Kokkos::View<XD,XP...>& x)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< RT,RL,RD,RM,S > RVector;
+  typedef Kokkos::View<RD,RP...> RVector;
+  typedef Kokkos::View<XD,XP...> XVector;
 
   if (!Sacado::is_constant(a)) {
     Kokkos::Impl::raise_error("scal not implemented for non-constant a");
   }
 
-  typename XVector::flat_array_type x_flat = x;
-  typename RVector::flat_array_type r_flat = r;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<RVector>::type r_flat = r;
   scal( r_flat, a.coeff(0), x_flat );
 }
 
@@ -201,42 +208,47 @@ scal(const Kokkos::View< RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous >& r,
 
 // We have a special verision of update for scalar alpha/beta/gamma since it
 // is used in TrilinosCouplings CG solve (even though Tpetra doesn't).
-template <typename XT, typename XL, typename XD, typename XM,
-          typename YT, typename YL, typename YD, typename YM,
-          typename ZT, typename ZL, typename ZD, typename ZM>
-void
+template <typename XD, typename ... XP,
+          typename YD, typename ... YP,
+          typename ZD, typename ... ZP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<YD,YP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<ZD,ZP...> >::value >::type
 update(
-  const typename Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >::intrinsic_scalar_type& alpha,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-  const typename Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >::intrinsic_scalar_type& beta,
-  const Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >& y,
-  const typename Kokkos::View< ZT,ZL,ZD,ZM,Kokkos::Impl::ViewPCEContiguous >::intrinsic_scalar_type& gamma,
-  const Kokkos::View< ZT,ZL,ZD,ZM,Kokkos::Impl::ViewPCEContiguous >& z)
+  const typename Kokkos::View<XD,XP...>::array_type::non_const_value_type& alpha,
+  const Kokkos::View<XD,XP...>& x,
+  const typename Kokkos::View<YD,YP...>::array_type::non_const_value_type& beta,
+  const Kokkos::View<YD,YP...>& y,
+  const typename Kokkos::View<ZD,ZP...>::array_type::non_const_value_type& gamma,
+  const Kokkos::View<ZD,ZP...>& z)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< YT,YL,YD,YM,S > YVector;
-  typedef Kokkos::View< ZT,ZL,ZD,ZM,S > ZVector;
+  typedef Kokkos::View<XD,XP...> XVector;
+  typedef Kokkos::View<YD,YP...> YVector;
+  typedef Kokkos::View<ZD,ZP...> ZVector;
 
-  typename XVector::flat_array_type x_flat = x;
-  typename YVector::flat_array_type y_flat = y;
-  typename ZVector::flat_array_type z_flat = z;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<YVector>::type y_flat = y;
+  typename Kokkos::FlatArrayType<ZVector>::type z_flat = z;
 
   update( alpha, x_flat, beta, y_flat, gamma, z_flat);
 
 }
 
-template <typename XT, typename XL, typename XD, typename XM,
-          typename YT, typename YL, typename YD, typename YM,
-          typename ZT, typename ZL, typename ZD, typename ZM>
-void
+template <typename XD, typename ... XP,
+          typename YD, typename ... YP,
+          typename ZD, typename ... ZP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<YD,YP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<ZD,ZP...> >::value >::type
 update(
-  const typename Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type& alpha,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-  const typename Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type& beta,
-  const Kokkos::View< YT,YL,YD,YM,Kokkos::Impl::ViewPCEContiguous >& y,
-  const typename Kokkos::View< ZT,ZL,ZD,ZM,Kokkos::Impl::ViewPCEContiguous >::non_const_value_type& gamma,
-  const Kokkos::View< ZT,ZL,ZD,ZM,Kokkos::Impl::ViewPCEContiguous >& z)
+  const typename Kokkos::View<XD,XP...>::non_const_value_type& alpha,
+  const Kokkos::View<XD,XP...>& x,
+  const typename Kokkos::View<YD,YP...>::non_const_value_type& beta,
+  const Kokkos::View<YD,YP...>& y,
+  const typename Kokkos::View<ZD,ZP...>::non_const_value_type& gamma,
+  const Kokkos::View<ZD,ZP...>& z)
 {
   if (!Sacado::is_constant(alpha) || !Sacado::is_constant(beta) ||
       !Sacado::is_constant(gamma)) {
@@ -250,19 +262,19 @@ update(
 // Mean-based implementation of reciprocal()
 namespace Impl {
 
-template<class RT, class RL, class RD, class RM,
-         class XT, class XL, class XD, class XM,
+template<class RS, class ... RP,
+         class XS, class ... XP,
          class SizeType>
 struct MV_Reciprocal_Functor<
-  Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<RS>**,RP...>,
+  Kokkos::View<const Sacado::UQ::PCE<XS>**,XP...>,
   SizeType>
 {
-  typedef Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous> RMV;
-  typedef Kokkos::View<XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous> XMV;
+  typedef Kokkos::View<Sacado::UQ::PCE<RS>**,RP...> RMV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<XS>**,XP...> XMV;
   typedef typename RMV::execution_space execution_space;
   typedef SizeType                            size_type;
-  typedef Kokkos::Details::ArithTraits<typename XMV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<XMV>::type> ATS;
 
   const size_type numCols;
   RMV R_;
@@ -285,16 +297,16 @@ struct MV_Reciprocal_Functor<
   }
 };
 
-template<class RT, class RL, class RD, class RM,
+template<class RS, class ... RP,
          class SizeType>
 struct MV_ReciprocalSelf_Functor<
-  Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<RS>**,RP...>,
   SizeType>
 {
-  typedef Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous> RMV;
+  typedef Kokkos::View<Sacado::UQ::PCE<RS>**,RP...> RMV;
   typedef typename RMV::execution_space execution_space;
   typedef SizeType                            size_type;
-  typedef Kokkos::Details::ArithTraits<typename RMV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<RMV>::type> ATS;
 
   const size_type numCols;
   RMV R_;
@@ -316,19 +328,19 @@ struct MV_ReciprocalSelf_Functor<
   }
 };
 
-template<class RT, class RL, class RD, class RM,
-         class XT, class XL, class XD, class XM,
+template<class RS, class ... RP,
+         class XS, class ... XP,
          class SizeType>
 struct V_Reciprocal_Functor<
-  Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<RS>*,RP...>,
+  Kokkos::View<const Sacado::UQ::PCE<XS>*,XP...>,
   SizeType>
 {
-  typedef Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous> RV;
-  typedef Kokkos::View<XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous> XV;
+  typedef Kokkos::View<Sacado::UQ::PCE<RS>*,RP...> RV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<XS>*,XP...> XV;
   typedef typename RV::execution_space execution_space;
   typedef SizeType                            size_type;
-  typedef Kokkos::Details::ArithTraits<typename XV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<XV>::type> ATS;
 
   RV R_;
   XV X_;
@@ -344,16 +356,16 @@ struct V_Reciprocal_Functor<
   }
 };
 
-template<class RT, class RL, class RD, class RM,
+template<class RS, class ... RP,
          class SizeType>
 struct V_ReciprocalSelf_Functor<
-  Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<RS>*,RP...>,
   SizeType>
 {
-  typedef Kokkos::View<RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous> RV;
+  typedef Kokkos::View<Sacado::UQ::PCE<RS>*,RP...> RV;
   typedef typename RV::execution_space execution_space;
   typedef SizeType                            size_type;
-  typedef Kokkos::Details::ArithTraits<typename RV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<RV>::type> ATS;
 
   RV R_;
 
@@ -370,67 +382,70 @@ struct V_ReciprocalSelf_Functor<
 
 } // namespace Impl
 
-template <typename RT, typename RL, typename RD, typename RM,
-          typename XT, typename XL, typename XD, typename XM>
-void
+template <typename RD, typename ... RP,
+          typename XD, typename ... XP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<RD,RP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value >::type
 sum(
-  const Kokkos::View< RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous >& r,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x)
+  const Kokkos::View<RD,RP...>& r,
+  const Kokkos::View<XD,XP...>& x)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< RT,RL,RD,RM,S > RVector;
+  typedef Kokkos::View<RD,RP...> RVector;
+  typedef Kokkos::View<XD,XP...> XVector;
 
-  typename XVector::flat_array_type x_flat = x;
-  typename RVector::flat_array_type r_flat = r;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<RVector>::type r_flat = r;
   sum( r_flat, x_flat );
 }
 
-template <typename RT, typename RL, typename RD, typename RM,
-          typename XT, typename XL, typename XD, typename XM,
-          typename WT, typename WL, typename WD, typename WM>
-void
+template <typename RD, typename ... RP,
+          typename XD, typename ... XP,
+          typename WD, typename ... WP>
+typename std::enable_if<
+  Kokkos::is_view_uq_pce< Kokkos::View<RD,RP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<XD,XP...> >::value &&
+  Kokkos::is_view_uq_pce< Kokkos::View<WD,WP...> >::value >::type
 nrm2w_squared(
-  const Kokkos::View< RT,RL,RD,RM,Kokkos::Impl::ViewPCEContiguous >& r,
-  const Kokkos::View< XT,XL,XD,XM,Kokkos::Impl::ViewPCEContiguous >& x,
-  const Kokkos::View< WT,WL,WD,WM,Kokkos::Impl::ViewPCEContiguous >& w)
+  const Kokkos::View<RD,RP...>& r,
+  const Kokkos::View<XD,XP...>& x,
+  const Kokkos::View<WD,WP...>& w)
 {
-  typedef Kokkos::Impl::ViewPCEContiguous S;
-  typedef Kokkos::View< XT,XL,XD,XM,S > XVector;
-  typedef Kokkos::View< RT,RL,RD,RM,S > RVector;
-  typedef Kokkos::View< WT,WL,WD,WM,S > WVector;
+  typedef Kokkos::View<RD,RP...> RVector;
+  typedef Kokkos::View<XD,XP...> XVector;
+  typedef Kokkos::View<WD,WP...> WVector;
 
-  typename XVector::flat_array_type x_flat = x;
-  typename RVector::flat_array_type r_flat = r;
-  typename WVector::flat_array_type w_flat = w;
+  typename Kokkos::FlatArrayType<XVector>::type x_flat = x;
+  typename Kokkos::FlatArrayType<RVector>::type r_flat = r;
+  typename Kokkos::FlatArrayType<WVector>::type w_flat = w;
   nrm2w_squared( r_flat, x_flat, w_flat );
 }
 
 // Mean-based implementation of mult()
 namespace Impl {
 
-template<class CT, class CL, class CD, class CM,
-         class AT, class AL, class AD, class AM,
-         class BT, class BL, class BD, class BM,
+template<class CS, class ... CP,
+         class AS, class ... AP,
+         class BS, class ... BP,
          int scalar_ab, int scalar_c, class SizeType>
 struct MV_MultFunctor<
-  Kokkos::View<CT,CL,CD,CM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<AT,AL,AD,AM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<BT,BL,BD,BM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<CS>**,CP...>,
+  Kokkos::View<const Sacado::UQ::PCE<AS>*,AP...>,
+  Kokkos::View<const Sacado::UQ::PCE<BS>**,BP...>,
   scalar_ab, scalar_c, SizeType>
 {
-  typedef Kokkos::View<CT,CL,CD,CM,Kokkos::Impl::ViewPCEContiguous> CMV;
-  typedef Kokkos::View<AT,AL,AD,AM,Kokkos::Impl::ViewPCEContiguous> AV;
-  typedef Kokkos::View<BT,BL,BD,BM,Kokkos::Impl::ViewPCEContiguous> BMV;
+  typedef Kokkos::View<Sacado::UQ::PCE<CS>**,CP...> CMV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<AS>*,AP...> AV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<BS>**,BP...> BMV;
   typedef typename CMV::execution_space execution_space;
   typedef SizeType size_type;
-  typedef Kokkos::Details::ArithTraits<typename CMV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<CMV>::type> ATS;
 
   const size_type m_n;
   const size_type m_pce;
-  const typename CMV::intrinsic_scalar_type m_c;
+  const typename Kokkos::IntrinsicScalarType<CMV>::type m_c;
   CMV m_C;
-  const typename AV::intrinsic_scalar_type m_ab;
+  const typename Kokkos::IntrinsicScalarType<AV>::type m_ab;
   AV m_A;
   BMV m_B;
 
@@ -440,7 +455,7 @@ struct MV_MultFunctor<
                   const AV& A,
                   const BMV& B) :
     m_n (C.dimension_1 ()),
-    m_pce (C.sacado_size()),
+    m_pce (dimension_scalar(C)),
     m_c (c.coeff(0)), m_C (C), m_ab (ab.coeff(0)), m_A (A), m_B (B)
   {
     if (!Sacado::is_constant(c) || !Sacado::is_constant(ab)) {
@@ -462,7 +477,7 @@ struct MV_MultFunctor<
         }
       }
       else { // ab != 0, c == 0
-        typename AV::intrinsic_scalar_type Ai = m_A(i).fastAccessCoeff(0);
+        typename Kokkos::IntrinsicScalarType<AV>::type Ai = m_A(i).fastAccessCoeff(0);
         for (size_type j = 0; j < m_n; ++j) {
 #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
 #pragma ivdep
@@ -483,7 +498,7 @@ struct MV_MultFunctor<
         }
       }
       else { // m_ab != 0, and m_c != 0
-        typename AV::intrinsic_scalar_type Ai = m_A(i).fastAccessCoeff(0);
+        typename Kokkos::IntrinsicScalarType<AV>::type Ai = m_A(i).fastAccessCoeff(0);
         for (size_type j = 0; j < m_n; ++j) {
 #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
 #pragma ivdep
@@ -497,27 +512,27 @@ struct MV_MultFunctor<
   }
 };
 
-template<class CT, class CL, class CD, class CM,
-         class AT, class AL, class AD, class AM,
-         class BT, class BL, class BD, class BM,
+template<class CS, class ... CP,
+         class AS, class ... AP,
+         class BS, class ... BP,
          int scalar_ab, int scalar_c, class SizeType>
 struct V_MultFunctor<
-  Kokkos::View<CT,CL,CD,CM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<AT,AL,AD,AM,Kokkos::Impl::ViewPCEContiguous>,
-  Kokkos::View<BT,BL,BD,BM,Kokkos::Impl::ViewPCEContiguous>,
+  Kokkos::View<Sacado::UQ::PCE<CS>*,CP...>,
+  Kokkos::View<const Sacado::UQ::PCE<AS>*,AP...>,
+  Kokkos::View<const Sacado::UQ::PCE<BS>*,BP...>,
   scalar_ab, scalar_c, SizeType>
 {
-  typedef Kokkos::View<CT,CL,CD,CM,Kokkos::Impl::ViewPCEContiguous> CV;
-  typedef Kokkos::View<AT,AL,AD,AM,Kokkos::Impl::ViewPCEContiguous> AV;
-  typedef Kokkos::View<BT,BL,BD,BM,Kokkos::Impl::ViewPCEContiguous> BV;
+  typedef Kokkos::View<Sacado::UQ::PCE<CS>*,CP...> CV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<AS>*,AP...> AV;
+  typedef Kokkos::View<const Sacado::UQ::PCE<BS>*,BP...> BV;
   typedef typename CV::execution_space execution_space;
   typedef SizeType size_type;
-  typedef Kokkos::Details::ArithTraits<typename CV::intrinsic_scalar_type> ATS;
+  typedef Kokkos::Details::ArithTraits<typename Kokkos::IntrinsicScalarType<CV>::type> ATS;
 
   const size_type m_pce;
-  const typename CV::intrinsic_scalar_type m_c;
+  const typename Kokkos::IntrinsicScalarType<CV>::type m_c;
   CV m_C;
-  const typename AV::intrinsic_scalar_type m_ab;
+  const typename Kokkos::IntrinsicScalarType<AV>::type m_ab;
   AV m_A;
   BV m_B;
 
@@ -526,7 +541,7 @@ struct V_MultFunctor<
                  typename AV::const_value_type& ab,
                  const AV& A,
                  const BV& B) :
-    m_pce (C.sacado_size()),
+    m_pce (dimension_scalar(C)),
     m_c (c.coeff(0)), m_C (C), m_ab (ab.coeff(0)), m_A (A), m_B (B)
   {
     if (!Sacado::is_constant(c) || !Sacado::is_constant(ab)) {
@@ -546,7 +561,7 @@ struct V_MultFunctor<
           m_C(i).fastAccessCoeff(l) = ATS::zero ();
       }
       else { // ab != 0, c == 0
-        typename AV::intrinsic_scalar_type Ai = m_A(i).fastAccessCoeff(0);
+        typename Kokkos::IntrinsicScalarType<AV>::type Ai = m_A(i).fastAccessCoeff(0);
 #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
 #pragma ivdep
 #endif
@@ -562,7 +577,7 @@ struct V_MultFunctor<
           m_C(i).fastAccessCoeff(l) = m_c * m_C(i).fastAccessCoeff(l);
       }
       else { // m_ab != 0, and m_c != 0
-        typename AV::intrinsic_scalar_type Ai = m_A(i).fastAccessCoeff(0);
+        typename Kokkos::IntrinsicScalarType<AV>::type Ai = m_A(i).fastAccessCoeff(0);
 #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
 #pragma ivdep
 #endif

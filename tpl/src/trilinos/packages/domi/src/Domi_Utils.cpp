@@ -81,8 +81,8 @@ regularizeCommDims(int numProcs,
     TEUCHOS_TEST_FOR_EXCEPTION(
       (block != numProcs),
       InvalidArgument,
-      "Product of axis processor sizes does not "
-      "equal total number of processors");
+      "Product of axis processor sizes (" << block << ") does not "
+      "equal total number of processors (" << numProcs << ")");
   }
   // For underspecified processor partitions, give the remainder to
   // the first unspecified axis and set all the rest to 1
@@ -121,12 +121,12 @@ computeCommIndexes(int rank,
 ////////////////////////////////////////////////////////////////////////
 
 Teuchos::Array< int >
-computePeriodic(int numDims,
-                const Teuchos::ArrayView< const int > & periodic)
+createArrayOfInts(int numDims,
+                  const Teuchos::ArrayView< const int > & source)
 {
   Teuchos::Array< int > result(numDims, 0);
-  for (int axis = 0; axis < numDims && axis < periodic.size(); ++axis)
-    result[axis] = periodic[axis];
+  for (int axis = 0; axis < numDims && axis < source.size(); ++axis)
+    result[axis] = source[axis];
   return result;
 }
 

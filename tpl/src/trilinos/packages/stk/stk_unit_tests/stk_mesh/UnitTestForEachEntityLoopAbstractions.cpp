@@ -14,7 +14,7 @@
 #include "stk_io/StkMeshIoBroker.hpp"
 #include <stk_unit_test_utils/getOption.h>
 #include <stk_unit_test_utils/ioUtils.hpp>
-#include "BulkDataTester.hpp"
+#include <stk_unit_test_utils/BulkDataTester.hpp>
 
 
 namespace
@@ -30,7 +30,7 @@ TEST(ForEntityFunctionInMeshImplUtils, test_counting_nodes_using_raw_bucket_loop
         stk::mesh::BulkData bulkData(metaData, communicator);
 
         std::string generatedMeshSpec = "generated:1x1x4";
-        stk::unit_test_util::fill_mesh_using_stk_io(generatedMeshSpec, bulkData, communicator);
+        stk::io::fill_mesh(generatedMeshSpec, bulkData);
 
         {
             unsigned numNodes = 0;

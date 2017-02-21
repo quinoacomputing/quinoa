@@ -46,7 +46,7 @@
 #if defined(HAVE_STOKHOS_TEUCHOSKOKKOSCOMM)
 
 #include "Sacado_UQ_PCE.hpp"
-#include "Kokkos_View_UQ_PCE_Contiguous.hpp"
+#include "Kokkos_View_UQ_PCE.hpp"
 #include "Kokkos_TeuchosCommAdapters.hpp"
 
 //----------------------------------------------------------------------------
@@ -56,81 +56,81 @@
 namespace Teuchos {
 
 //! Variant of send() that takes a tag (and restores the correct order of arguments).
-template<typename Ordinal, typename T, typename L, typename D, typename M>
-void
-send (const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>& sendBuffer,
+template<typename Ordinal, typename D, typename ... P>
+typename std::enable_if<Kokkos::is_view_uq_pce< Kokkos::View<D,P...> >::value>::type
+send (const Kokkos::View<D,P...>& sendBuffer,
       const Ordinal count,
       const int destRank,
       const int tag,
       const Comm<Ordinal>& comm)
 {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> view_type;
-  typedef typename view_type::flat_array_type flat_array_type;
+  typedef Kokkos::View<D,P...> view_type;
+  typedef typename Kokkos::FlatArrayType<view_type>::type flat_array_type;
 
   flat_array_type array = sendBuffer;
-  Ordinal array_count = count * sendBuffer.sacado_size();
+  Ordinal array_count = count * Kokkos::dimension_scalar(sendBuffer);
   send(array, array_count, destRank, tag, comm);
 }
 
 //! Variant of ssend() that takes a tag (and restores the correct order of arguments).
-template<typename Ordinal, typename T, typename L, typename D, typename M>
-void
-ssend (const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>& sendBuffer,
+template<typename Ordinal, typename D, typename ... P>
+typename std::enable_if<Kokkos::is_view_uq_pce< Kokkos::View<D,P...> >::value>::type
+ssend (const Kokkos::View<D,P...>& sendBuffer,
        const Ordinal count,
        const int destRank,
        const int tag,
        const Comm<Ordinal>& comm)
 {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> view_type;
-  typedef typename view_type::flat_array_type flat_array_type;
+  typedef Kokkos::View<D,P...> view_type;
+  typedef typename Kokkos::FlatArrayType<view_type>::type flat_array_type;
 
   flat_array_type array = sendBuffer;
-  Ordinal array_count = count * sendBuffer.sacado_size();
+  Ordinal array_count = count * Kokkos::dimension_scalar(sendBuffer);
   ssend(array, array_count, destRank, tag, comm);
 }
 
 //! Variant of readySend() that accepts a message tag.
-template<typename Ordinal, typename T, typename L, typename D, typename M>
-void
-readySend (const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>& sendBuffer,
+template<typename Ordinal, typename D, typename ... P>
+typename std::enable_if<Kokkos::is_view_uq_pce< Kokkos::View<D,P...> >::value>::type
+readySend (const Kokkos::View<D,P...>& sendBuffer,
            const Ordinal count,
            const int destRank,
            const int tag,
            const Comm<Ordinal>& comm)
 {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> view_type;
-  typedef typename view_type::flat_array_type flat_array_type;
+  typedef Kokkos::View<D,P...> view_type;
+  typedef typename Kokkos::FlatArrayType<view_type>::type flat_array_type;
 
   flat_array_type array = sendBuffer;
-  Ordinal array_count = count * sendBuffer.sacado_size();
+  Ordinal array_count = count * Kokkos::dimension_scalar(sendBuffer);
   readySend(array, array_count, destRank, tag, comm);
 }
 
 //! Variant of isend() that takes a tag (and restores the correct order of arguments).
-template<typename Ordinal, typename T, typename L, typename D, typename M>
-RCP<CommRequest<Ordinal> >
-isend (const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>& sendBuffer,
+template<typename Ordinal, typename D, typename ... P>
+typename std::enable_if<Kokkos::is_view_uq_pce< Kokkos::View<D,P...> >::value, RCP<CommRequest<Ordinal> > >::type
+isend (const Kokkos::View<D,P...>& sendBuffer,
        const int destRank,
        const int tag,
        const Comm<Ordinal>& comm)
 {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> view_type;
-  typedef typename view_type::flat_array_type flat_array_type;
+  typedef Kokkos::View<D,P...> view_type;
+  typedef typename Kokkos::FlatArrayType<view_type>::type flat_array_type;
 
   flat_array_type array = sendBuffer;
   return isend(array, destRank, tag, comm);
 }
 
 //! Variant of ireceive that takes a tag argument (and restores the correct order of arguments).
-template<typename Ordinal, typename T, typename L, typename D, typename M>
-RCP<CommRequest<Ordinal> >
-ireceive (const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous>& recvBuffer,
+template<typename Ordinal, typename D, typename ... P>
+typename std::enable_if<Kokkos::is_view_uq_pce< Kokkos::View<D,P...> >::value, RCP<CommRequest<Ordinal> > >::type
+ireceive (const Kokkos::View<D,P...>& recvBuffer,
           const int sourceRank,
           const int tag,
           const Comm<Ordinal>& comm)
 {
-  typedef Kokkos::View<T,L,D,M,Kokkos::Impl::ViewPCEContiguous> view_type;
-  typedef typename view_type::flat_array_type flat_array_type;
+  typedef Kokkos::View<D,P...> view_type;
+  typedef typename Kokkos::FlatArrayType<view_type>::type flat_array_type;
 
   flat_array_type array = recvBuffer;
   return ireceive(array, sourceRank, tag, comm);

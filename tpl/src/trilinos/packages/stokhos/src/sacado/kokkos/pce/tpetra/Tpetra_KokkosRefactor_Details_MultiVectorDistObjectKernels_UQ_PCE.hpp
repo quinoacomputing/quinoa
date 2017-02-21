@@ -62,17 +62,16 @@ namespace Details {
   // Functors for implementing packAndPrepare and unpackAndCombine
   // through parallel_for
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename IdxView>
   struct PackArraySingleColumn<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>*,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...>,
     IdxView >
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>*,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -96,7 +95,7 @@ namespace Details {
 
     KOKKOS_INLINE_FUNCTION
     void operator()( const size_type k, const size_type tidx ) const {
-      for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+      for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
         dst(k).fastAccessCoeff(i) = src(idx(k), col).fastAccessCoeff(i);
     }
 
@@ -114,17 +113,16 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename IdxView>
   struct PackArrayMultiColumn<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>*,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...>,
     IdxView >
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>*,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -154,7 +152,7 @@ namespace Details {
       const typename IdxView::value_type localRow = idx(k);
       const size_t offset = k*numCols;
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           dst(offset + j).fastAccessCoeff(i) =
             src(localRow, j).fastAccessCoeff(i);
     }
@@ -173,19 +171,18 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename IdxView,
             typename ColView>
   struct PackArrayMultiColumnVariableStride<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>*,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...>,
     IdxView,
     ColView>
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>*,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -217,7 +214,7 @@ namespace Details {
       const typename IdxView::value_type localRow = idx(k);
       const size_t offset = k*numCols;
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           dst(offset + j).fastAccessCoeff(i) =
             src(localRow, col(j)).fastAccessCoeff(i);
     }
@@ -238,18 +235,17 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename IdxView, typename Op>
   struct UnpackArrayMultiColumn<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>**,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>*,SP...>,
     IdxView,
     Op >
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>**,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>*,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -281,7 +277,7 @@ namespace Details {
       const typename IdxView::value_type localRow = idx(k);
       const size_t offset = k*numCols;
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           op( dst(localRow,j).fastAccessCoeff(i),
               src(offset+j).fastAccessCoeff(i) );
     }
@@ -301,19 +297,18 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename IdxView, typename ColView, typename Op>
   struct UnpackArrayMultiColumnVariableStride<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>**,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>*,SP...>,
     IdxView,
     ColView,
     Op>
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>**,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>*,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -347,7 +342,7 @@ namespace Details {
       const typename IdxView::value_type localRow = idx(k);
       const size_t offset = k*numCols;
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           op( dst(localRow,col(j)).fastAccessCoeff(i),
               src(offset+j).fastAccessCoeff(i) );
     }
@@ -369,18 +364,17 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename DstIdxView, typename SrcIdxView>
   struct PermuteArrayMultiColumn<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>**,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...>,
     DstIdxView,
     SrcIdxView>
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>**,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -413,7 +407,7 @@ namespace Details {
       const typename DstIdxView::value_type toRow = dst_idx(k);
       const typename SrcIdxView::value_type fromRow = src_idx(k);
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           dst(toRow, j).fastAccessCoeff(i) =
             src(fromRow, j).fastAccessCoeff(i);
     }
@@ -434,19 +428,18 @@ namespace Details {
     }
   };
 
-  template <typename DT, typename DL, typename DD, typename DM,
-            typename ST, typename SL, typename SD, typename SM,
+  template <typename DS, typename ... DP,
+            typename SS, typename ... SP,
             typename DstIdxView, typename SrcIdxView,
             typename DstColView, typename SrcColView>
   struct PermuteArrayMultiColumnVariableStride<
-    Kokkos::View<DT,DL,DD,DM,Kokkos::Impl::ViewPCEContiguous>,
-    Kokkos::View<ST,SL,SD,SM,Kokkos::Impl::ViewPCEContiguous>,
+    Kokkos::View<Sacado::UQ::PCE<DS>**,DP...>,
+    Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...>,
     DstIdxView, SrcIdxView,
     DstColView, SrcColView >
   {
-    typedef Kokkos::Impl::ViewPCEContiguous Spec;
-    typedef Kokkos::View<DT,DL,DD,DM,Spec> DstView;
-    typedef Kokkos::View<ST,SL,SD,SM,Spec> SrcView;
+    typedef Kokkos::View<Sacado::UQ::PCE<DS>**,DP...> DstView;
+    typedef Kokkos::View<const Sacado::UQ::PCE<SS>**,SP...> SrcView;
     typedef typename DstView::execution_space execution_space;
     typedef typename execution_space::size_type size_type;
 
@@ -484,7 +477,7 @@ namespace Details {
       const typename DstIdxView::value_type toRow = dst_idx(k);
       const typename SrcIdxView::value_type fromRow = src_idx(k);
       for (size_t j = 0; j < numCols; ++j)
-        for (size_type i=tidx; i<dst.sacado_size(); i+=BlockSize)
+        for (size_type i=tidx; i<Kokkos::dimension_scalar(dst); i+=BlockSize)
           dst(toRow, dst_col(j)).fastAccessCoeff(i) =
             src(fromRow, src_col(j)).fastAccessCoeff(i);
     }

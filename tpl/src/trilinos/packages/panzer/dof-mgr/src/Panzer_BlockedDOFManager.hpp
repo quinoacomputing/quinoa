@@ -54,7 +54,6 @@
 #include "Panzer_FieldAggPattern.hpp"
 #include "Panzer_ConnManager.hpp"
 #include "Panzer_UniqueGlobalIndexer.hpp"
-#include "Panzer_DOFManagerFEI.hpp"
 #include "Panzer_DOFManager.hpp"
 #include "Panzer_NodeType.hpp"
 #include "Panzer_HashUtils.hpp"
@@ -182,10 +181,9 @@ public:
      */
    virtual void getOwnedIndices(std::vector<GlobalOrdinal> & indices) const; // ?
 
-   /** Get set of indices owned and shared by this processor.
-     * This can be thought of as the ``ghosted'' indices.
+   /** Get the set of owned and ghosted indices for this processor.
      */
-   virtual void getOwnedAndSharedIndices(std::vector<GlobalOrdinal> & indices) const; // ?
+   virtual void getOwnedAndGhostedIndices(std::vector<GlobalOrdinal> & indices) const; // ?
 
    /** Get a yes/no on ownership for each index in a vector
      */
@@ -425,6 +423,20 @@ public:
    void enableTieBreak(bool useTieBreak) 
    { useTieBreak_ = useTieBreak; }
 
+   /** \brief How any GIDs are associate with a particular element block
+     *
+     * This is a per-element count. If you have a quad element with two
+     * piecewise bi-linear fields this method returns 8.
+     */
+   virtual int getElementBlockGIDCount(const std::string & blockId) const;
+
+   /** \brief How any GIDs are associate with a particular element block.
+     *
+     * This is a per-element count. If you have a quad element with two
+     * piecewise bi-linear fields this method returns 8.
+     */
+   virtual int getElementBlockGIDCount(const std::size_t & blockIndex) const;
+
 protected:
    
    /** Build a new indexer. The concrete type is specified internally by this object (FEI version standard)
@@ -447,20 +459,6 @@ protected:
    /** Do appropriate casting below and call getElementBlockGIDCount for a particular indexer. (handles FEI versus standard DOFManager)
      */
    int getElementBlockGIDCount(const Teuchos::RCP<UniqueGlobalIndexer<LocalOrdinalT,GlobalOrdinalT> > & indexer,const std::size_t & blockIndex) const;
-
-   /** \brief How any GIDs are associate with a particular element block
-     *
-     * This is a per-element count. If you have a quad element with two
-     * piecewise bi-linear fields this method returns 8.
-     */
-   virtual int getElementBlockGIDCount(const std::string & blockId) const;
-
-   /** \brief How any GIDs are associate with a particular element block.
-     *
-     * This is a per-element count. If you have a quad element with two
-     * piecewise bi-linear fields this method returns 8.
-     */
-   virtual int getElementBlockGIDCount(const std::size_t & blockIndex) const;
 
    /** Do appropriate casting below and call printFieldInformation for a particular indexer. (handles FEI versus standard DOFManager)
      */

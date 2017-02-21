@@ -10,6 +10,7 @@ ADD_SUBDIRECTORIES(
   CrsMatrix
   Directory
   Distributor
+  Environment
   HashTable
   ImportExport
   ImportExport2
@@ -19,6 +20,7 @@ ADD_SUBDIRECTORIES(
   Merge
   MultiVector
   MultiVectorFiller
+  Node
   PerformanceCGSolve
   Platform
   Utils

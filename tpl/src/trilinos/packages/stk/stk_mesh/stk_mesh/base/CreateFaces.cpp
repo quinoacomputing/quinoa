@@ -49,6 +49,7 @@
 #include "stk_mesh/base/EntityKey.hpp"  // for EntityKey
 #include "stk_mesh/base/Part.hpp"       // for Part
 #include <stk_mesh/base/GetEntities.hpp>
+#include <stk_mesh/base/SkinBoundary.hpp>
 #include <stk_mesh/baseImpl/MeshImplUtils.hpp>
 
 #include "stk_topology/apply_functor.tcc"  // for topology::apply_functor
@@ -56,7 +57,6 @@
 #include "stk_topology/topology.tcc"    // for topology::num_nodes
 #include "stk_topology/topology_type.tcc"  // for topology::topology_type
 
-#include <stk_util/parallel/ParallelComm.hpp>  // for CommBuffer, CommAll
 #include "stk_util/util/NamedPair.hpp"  // for EntityCommInfo::operator=, etc
 #include <stk_mesh/base/CreateEdges.hpp>
 
@@ -78,9 +78,9 @@ struct shared_face_type
   EntityKey                 global_key;
 
   shared_face_type(stk::topology my_topology) :
-    topology(my_topology.value())
+    topology(my_topology.value()),
+    nodes(my_topology.num_nodes())
   {
-    nodes.resize(my_topology.num_nodes());
   }
 
   shared_face_type(const shared_face_type & a) :
@@ -171,7 +171,7 @@ struct create_face_impl
                       PartVector add_parts;
                       add_parts.push_back( & mesh.mesh_meta_data().get_cell_topology_root_part( get_cell_topology( faceTopology)));
 
-                      face = mesh.declare_entity( stk::topology::FACE_RANK, face_id, add_parts);
+                      face = mesh.declare_solo_side(face_id, add_parts);
                       m_face_map[permuted_face_nodes] = face;
 
                       const int num_face_nodes = faceTopology.num_nodes();
@@ -218,6 +218,35 @@ struct create_face_impl
 
 } //namespace
 
+namespace experimental {
+void create_faces( BulkData & mesh )
+{
+    stk::mesh::create_all_sides(mesh, mesh.mesh_meta_data().universal_part(), stk::mesh::PartVector(), false);
+}
+
+void create_faces( BulkData & mesh, const Selector & element_selector )
+{
+    stk::mesh::create_all_sides(mesh, element_selector, stk::mesh::PartVector(), false);
+}
+
+void create_faces( BulkData & mesh, const Selector & element_selector, Part *part_to_insert_new_faces)
+{
+    stk::mesh::PartVector parts = {part_to_insert_new_faces};
+    stk::mesh::create_all_sides(mesh, element_selector, parts, false);
+}
+
+void create_faces( BulkData & mesh, bool connect_faces_to_edges)
+{
+    stk::mesh::create_all_sides(mesh, mesh.mesh_meta_data().universal_part(), stk::mesh::PartVector(), connect_faces_to_edges);
+}
+
+void create_faces( BulkData & mesh, const Selector & element_selector, bool connect_faces_to_edges)
+{
+    stk::mesh::create_all_sides(mesh, element_selector, stk::mesh::PartVector(), connect_faces_to_edges);
+}
+}
+
+
 void internal_create_faces( BulkData & mesh, const Selector & element_selector, bool connect_faces_to_edges, FaceCreationBehavior faceCreationBehavior);
 
 void create_faces( BulkData & mesh )
@@ -239,6 +268,7 @@ void create_faces( BulkData & mesh, const Selector & element_selector, bool conn
 {
     internal_create_faces(mesh, element_selector, connect_faces_to_edges, FaceCreationBehavior::CREATE_FACES_FACE_CREATION_CLASSIC);
 }
+
 
 void internal_create_faces( BulkData & mesh, const Selector & element_selector, bool connect_faces_to_edges, FaceCreationBehavior faceCreationBehavior)
 {

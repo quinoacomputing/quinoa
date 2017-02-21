@@ -165,7 +165,15 @@ struct FastMeshIndex
   unsigned bucket_ord;
 };
 
-typedef std::vector<std::vector<FastMeshIndex> > VolatileFastSharedCommMapOneRank;
+NAMED_PAIR(BucketInfo, unsigned, bucket_id, unsigned, num_entities_this_bucket)
+
+struct BucketIndices
+{
+  std::vector<BucketInfo> bucket_info;
+  std::vector<unsigned> ords;
+};
+
+typedef std::vector<BucketIndices> VolatileFastSharedCommMapOneRank;
 typedef stk::topology::rank_t EntityRank ;
 
 typedef std::map<std::pair<EntityRank, Selector>, std::pair<size_t, size_t> > SelectorCountMap;
@@ -173,14 +181,11 @@ typedef std::map<std::pair<EntityRank, Selector>, BucketVector> SelectorBucketMa
 typedef std::vector<VolatileFastSharedCommMapOneRank> VolatileFastSharedCommMap;
 
 typedef std::map<EntityKey,std::set<int> > EntityToDependentProcessorsMap;
-typedef std::map<EntityKey,int> NewOwnerMap;
 
 typedef unsigned Ordinal;
 static const Ordinal InvalidOrdinal = static_cast<Ordinal>(-1); // std::numeric_limits<PartOrdinal>::max();
 
-//typedef Ordinal EntityRank ;
 typedef Ordinal PartOrdinal;
-typedef Ordinal FieldOrdinal;
 typedef Ordinal RelationIdentifier;
 typedef Ordinal FieldArrayRank;
 
@@ -189,10 +194,6 @@ static const EntityId InvalidEntityId = std::numeric_limits<stk::mesh::EntityId>
 
 typedef std::vector<EntityId> EntityIdVector;
 
-// Base Entity Rank
-// Note:  This BaseEntityRank can be considered the leaf of a tree and it
-// represents the furthest out you can go in downward relations.
-static const EntityRank BaseEntityRank = stk::topology::BEGIN_RANK;
 static const EntityRank InvalidEntityRank = stk::topology::INVALID_RANK;
 static const PartOrdinal InvalidPartOrdinal = InvalidOrdinal;
 static const RelationIdentifier InvalidRelationIdentifier = InvalidOrdinal;
@@ -212,7 +213,6 @@ struct RelationType
   {
     USES      = 0 ,
     USED_BY   = 1 ,
-    EMBEDDED  = 0x00ff , // 4
     CONTACT   = 0x00ff , // 5
     AUXILIARY = 0x00ff ,
     INVALID   = 10
@@ -235,6 +235,11 @@ typedef std::pair<Entity , int> EntityProc ;
 typedef std::vector<EntityProc>     EntityProcVec ;
 
 typedef std::pair<EntityKey, int> EntityKeyProc;
+
+typedef std::pair<EntityId, int> EntityIdProc;
+typedef std::vector<EntityIdProc> EntityIdProcVec;
+
+typedef std::map<EntityId, int> EntityIdProcMap;
 
 /** \brief  Spans of a vector of entity-processor pairs are common.
  *
@@ -316,14 +321,28 @@ inline std::ostream & operator<<(std::ostream &out, ConnectivityType type)
   return out;
 }
 
-#define EXTRACT_BUCKET_ID(idx) ((idx) >> NUM_BUCKET_ORDINAL_BITS)
-
-#define EXTRACT_BUCKET_ORDINAL(idx) ((idx) & BUCKET_ORDINAL_MASK)
-
-enum ConnectivityOrdinal
+#define STK_16BIT_CONNECTIVITY_ORDINAL
+#ifdef STK_16BIT_CONNECTIVITY_ORDINAL
+enum ConnectivityOrdinal : uint16_t
+{
+  INVALID_CONNECTIVITY_ORDINAL = 65535
+};
+#else
+enum ConnectivityOrdinal : uint32_t
 {
   INVALID_CONNECTIVITY_ORDINAL = ~0U
 };
+#endif
+
+inline std::ostream & operator<<(std::ostream &out, ConnectivityOrdinal ordinal)
+{
+#ifdef STK_16BIT_CONNECTIVITY_ORDINAL
+  out << static_cast<uint16_t>(ordinal); 
+#else
+  out << static_cast<uint32_t>(ordinal);
+#endif
+  return out;
+}
 
 inline
 ConnectivityOrdinal& operator++(ConnectivityOrdinal& ord)
@@ -377,6 +396,13 @@ enum Permutation
 #    define STK_DEPRECATED_MSG(MSG)
 #  endif
 #endif
+
+class EntitySorterBase
+{
+public:
+    virtual ~EntitySorterBase() {}
+    virtual void sort(stk::mesh::BulkData &bulk, stk::mesh::EntityVector& entityVector) const = 0;
+};
 
 
 

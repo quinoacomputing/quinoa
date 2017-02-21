@@ -61,10 +61,16 @@ namespace BaskerNS
     int Symbolic(Int nrow, Int ncol, Int nnz, Int *col_ptr,
 		 Int *row_idx, Entry *val);
     BASKER_INLINE
+    int Symbolic(Int nrow, Int ncol, Int nnz, 
+		 size_t *col_ptr,
+		 Int *row_idx, Entry *val);
+    BASKER_INLINE
     int Factor(Int option);
     BASKER_INLINE
     int Factor(Int nrow, Int ncol, Int nnz, Int *col_ptr,
 		 Int *row_idx, Entry *val);
+    BASKER_INLINE
+    int Factor_Inc(Int option);
     BASKER_INLINE
     int Solve(Entry *b, Entry *x);
     BASKER_INLINE
@@ -78,19 +84,19 @@ namespace BaskerNS
     BASKER_INLINE
     int SetThreads(Int nthreads);
     BASKER_INLINE
-    int GetLnnz(Int *Lnnz);
+    int GetLnnz(Int &Lnnz);
     BASKER_INLINE
-    int GetUnnz(Int *Unnz);
+    int GetUnnz(Int &Unnz);
     BASKER_INLINE
-    int GetL(Int *n, Int *nnz,
+    int GetL(Int &n, Int &nnz,
               Int **col_ptr, Int **row_idx,
               Entry **val);
     BASKER_INLINE
-    int GetU(Int *n, Int *nnz,
+    int GetU(Int &n, Int &nnz,
               Int **col_ptr, Int **row_idx,
               Entry **val);
     BASKER_INLINE
-    int GetP(Int **p);
+    int GetPerm(Int **lp, Int **rp);
 
     BASKER_INLINE
     void PrintTime();
@@ -140,10 +146,18 @@ namespace BaskerNS
 			const Int team_leader,
 			const TeamMember &thread);
 
+    void t_nfactor_sep2_inc_lvl(const Int kid, const Int lvl, 
+			const Int team_leader,
+			const TeamMember &thread);
 
 
     //BASKER_INLINE
     //int t_init_solve_rhs(Int kid, Entry *x , Entry *b);
+
+    BASKER_INLINE
+    void t_reset_BTF_factor(Int kid);
+    void t_reset_ND_factor(Int kid);
+
 
     BASKER_INLINE
     void t_init_factor(Int kid);
@@ -228,11 +242,17 @@ namespace BaskerNS
     BASKER_INLINE
     int btf_order2();
     BASKER_INLINE
+    void order_incomplete();
+    BASKER_INLINE
     int partition(int option);
     BASKER_INLINE
     int match_ordering(int option);
     BASKER_INLINE
     int scotch_partition(BASKER_MATRIX &M);
+    BASKER_INLINE
+    int permute_inv(INT_1DARRAY,
+		    INT_1DARRAY,
+		    Int);
     BASKER_INLINE
     int permute_inv(ENTRY_1DARRAY,
 		    INT_1DARRAY,
@@ -452,6 +472,35 @@ namespace BaskerNS
     BASKER_INLINE
     int factor_inc_lvl(Int Option);
 
+    /*basker_sfactor_inc.hpp*/
+    BASKER_INLINE
+    int sfactor_inc();
+    BASKER_INLINE
+    void sfactor_nd_estimate();
+    BASKER_INLINE
+    void sfactor_nd_dom_estimate(BASKER_MATRIX &M,
+				 BASKER_MATRIX &LM,
+				 BASKER_MATRIX &UM);
+    BASKER_INLINE
+    void sfactor_nd_lower_estimate(BASKER_MATRIX &M,
+				   BASKER_MATRIX &ML);
+    BASKER_INLINE
+    void sfactor_nd_upper_estimate(BASKER_MATRIX &M,
+				   BASKER_MATRIX &UM);
+    BASKER_INLINE
+    void sfactor_nd_sep_upper_estimate(BASKER_MATRIX &M,
+				       BASKER_MATRIX &UM);
+
+    BASKER_INLINE
+    void sfactor_nd_sep_lower_estimate(BASKER_MATRIX &M,
+				       BASKER_MATRIX &LM);
+
+    BASKER_INLINE
+    void sfactor_nd_sep_estimate(BASKER_MATRIX &M,
+				 BASKER_MATRIX &ML,
+				 BASKER_MATRIX &MU);
+
+
 
     /*basker_nfactor.hpp*/
     BASKER_INLINE
@@ -465,6 +514,8 @@ namespace BaskerNS
 		      Int l, Int sl, Int t);
     BASKER_INLINE
     int nfactor_domain_error(INT_1DARRAY);
+    BASKER_INLINE
+    int nfactor_sep_error(INT_1DARRAY);
     BASKER_INLINE
     int nfactor_diag_error(INT_1DARRAY );
     
@@ -481,6 +532,16 @@ namespace BaskerNS
     inline
     void t_local_reach(const Int, const Int, const Int,
 		       Int, Int &);
+    
+    inline 
+    void t_local_reach_short_inc_rlvl
+    (const Int,const Int, const Int,
+			     const Int, Int&);
+    inline
+    void t_local_reach_inc_rlvl
+    (const Int, const Int, const Int,
+		       Int, Int &);
+
     inline
     int t_local_reach_old(Int,Int,Int,Int,Int*);
     BASKER_INLINE
@@ -495,10 +556,18 @@ namespace BaskerNS
     int t_back_solve_old(Int,Int,Int,Int,Int,Int);
     BASKER_INLINE
     int t_back_solve_inc_lvl(Int,Int,Int,Int,Int,Int);
+    BASKER_INLINE
+    int t_back_solve_inc_rlvl(Int,Int,Int,Int,Int,Int,Entry&);
     
 
     BASKER_INLINE
     int t_upper_col_factor(Int kid, Int team_leader,
+			   Int lvl, Int l, 
+			   Int k, 
+			   BASKER_BOOL);
+
+     BASKER_INLINE
+    int t_upper_col_factor_inc_lvl(Int kid, Int team_leader,
 			   Int lvl, Int l, 
 			   Int k, 
 			   BASKER_BOOL);
@@ -533,6 +602,12 @@ namespace BaskerNS
     int t_lower_col_factor(Int kid, Int team_leader,
 			   Int lvl, Int l, Int k, 
 			   Entry &opivot);
+
+     BASKER_INLINE
+    int t_lower_col_factor_inc_lvl(Int kid, Int team_leader,
+			   Int lvl, Int l, Int k, 
+			   Entry &opivot);
+   
     
     BASKER_INLINE
     int t_lower_col_factor_old(Int kid, Int team_leader,
@@ -569,8 +644,29 @@ namespace BaskerNS
 			 Int X_col, Int X_row,
 			 Int k , Entry pivot);
 
+     BASKER_INLINE
+    int t_dense_move_offdiag_L_inc_lvl(Int kid, 
+			 Int blkcol, Int blkrow,
+			 Int X_col, Int X_row,
+			 Int k , Entry pivot);
+
+
+      BASKER_INLINE
+    int t_dense_move_offdiag_L_inc_lvl_old(Int kid, 
+			 Int blkcol, Int blkrow,
+			 Int X_col, Int X_row,
+			 Int k , Entry pivot);
+
+
+
     BASKER_INLINE
     int t_move_offdiag_L(Int kid, 
+			 Int blkcol, Int blkrow,
+			 Int X_col, Int X_row,
+			 Int k , Entry pivot);
+
+    BASKER_INLINE
+    int t_move_offdiag_L_inc_lvl(Int kid, 
 			 Int blkcol, Int blkrow,
 			 Int X_col, Int X_row,
 			 Int k , Entry pivot);
@@ -588,6 +684,88 @@ namespace BaskerNS
 			     INT_1DARRAY x_indx,
 			     Int x_size, Int x_offset,
 			     BASKER_BOOL A_option);
+
+    BASKER_INLINE
+    int t_dense_back_solve_offdiag_inc_lvl(Int kid,
+			     Int blkcol, Int blkrow,
+			     Int X_col, Int X_row,
+			     Int k, Int &view_offset,
+			     ENTRY_1DARRAY x,
+			     INT_1DARRAY x_indx,
+			     INT_1DARRAY x_fill,
+			     Int x_size, Int x_offset,
+			     BASKER_BOOL A_option);
+
+    
+    BASKER_INLINE
+    void t_same_pattern_back_solve_offdiag_inc_lvl(Int kid,
+				      Int blkcol, Int blkrow,
+				      Int X_col, Int X_row,
+				      Int UP_col, Int UP_row,
+				      Int LP_col, Int LP_row,
+				      Int k, Int &view_offset,
+				      ENTRY_1DARRAY x,
+			     INT_1DARRAY x_indx,
+			     INT_1DARRAY x_fill,
+			     Int x_size, Int x_offset,
+			     BASKER_BOOL A_option);
+
+
+    BASKER_INLINE
+    int t_dense_back_solve_offdiag_inc_lvl_old(Int kid,
+			     Int blkcol, Int blkrow,
+			     Int X_col, Int X_row,
+			     Int k, Int &view_offset,
+			     ENTRY_1DARRAY x,
+			     INT_1DARRAY x_indx,
+			     INT_1DARRAY x_fill,
+			     Int x_size, Int x_offset,
+			     BASKER_BOOL A_option);
+    
+    BASKER_INLINE
+    void t_dom_lower_col_offdiag_find_fill(const Int kid, const Int pbrow,
+                                           const Int blkcol, const Int blkrow,
+                                           const Int X_col, const Int X_row,
+                                           const Int k,
+                                           INT_1DARRAY x_idx,
+                                           const Int x_size,
+                                           const Int x_offset,
+                                           const BASKER_BOOL A_option);
+
+
+    BASKER_INLINE
+    int t_lower_col_offdiag_find_fill(Int kid,
+				      Int blkcol, Int blkrow,
+				      Int X_col, Int X_row,
+				      Int k,
+				      ENTRY_1DARRAY x,
+				      INT_1DARRAY x_idx,
+				      INT_1DARRAY x_fill,
+				      Int x_size, Int x_offset);
+
+    
+    BASKER_INLINE
+    int t_lower_col_offdiag_find_fill_rlvl(Int kid,
+				      Int blkcol, Int blkrow,
+				      Int X_col, Int X_row,
+				      Int k,
+				      ENTRY_1DARRAY x,
+				      INT_1DARRAY x_idx,
+				      INT_1DARRAY x_fill,
+				      Int x_size, Int x_offset);
+
+
+    BASKER_INLINE
+    void t_populate_col_fill(const Int kid,
+			     const Int blkcol, const Int blkrow,
+			     const Int X_col, const Int X_row,
+			     const Int k, 
+			     const BASKER_BOOL lower );
+
+    BASKER_INLINE
+    void t_reduce_col_fill(const Int kid, const Int lvl,
+			   const Int sl, const Int l,
+			   const Int k, const BASKER_BOOL lower);
 
     BASKER_INLINE
     int t_back_solve_offdiag(Int kid,
@@ -608,7 +786,7 @@ namespace BaskerNS
 			     Int x_size, Int x_offset,
 			     BASKER_BOOL A_option);
     BASKER_INLINE
-    int t_back_solve_offdiag_inc_lvl(Int kid,
+    int t_back_solve_offdiag_inc_lvl(Int kid, Int pbrow,
 			     Int blkcol, Int blkrow,
 			     Int X_col, Int X_row,
 			     Int k, Int &view_offset,
@@ -616,6 +794,28 @@ namespace BaskerNS
 			     INT_1DARRAY x_indx,
 			     Int x_size, Int x_offset,
 			     BASKER_BOOL A_option);
+     BASKER_INLINE
+     void t_back_solve_offdiag_same_pattern_inc_lvl(Int kid,
+						  Int pbrow,
+			     Int blkcol, Int blkrow,
+			     Int X_col, Int X_row,
+			     Int k, Int &view_offset,
+			     ENTRY_1DARRAY x,
+			     INT_1DARRAY x_indx,
+			     Int x_size, Int x_offset,
+			     BASKER_BOOL A_option);
+   
+     BASKER_INLINE
+    int t_back_solve_offdiag_inc_lvl_old(Int kid, Int pbrow,
+			     Int blkcol, Int blkrow,
+			     Int X_col, Int X_row,
+			     Int k, Int &view_offset,
+			     ENTRY_1DARRAY x,
+			     INT_1DARRAY x_indx,
+			     Int x_size, Int x_offset,
+			     BASKER_BOOL A_option);
+
+
 
     BASKER_INLINE
     int t_dense_blk_col_copy_atomic(Int kid,
@@ -644,6 +844,15 @@ namespace BaskerNS
 		      const Int k,
 		      const Int k_offset,
 		      const BASKER_BOOL lower);
+
+    
+    void t_add_extend_inc_lvl(const TeamMember &thread,
+		      const Int kid, 
+		      const Int lvl, const Int l,
+		      const Int k,
+		      const Int k_offset,
+		      const BASKER_BOOL lower);
+
     
     void t_upper_col_factor_offdiag2(const Int kid,
 				     const Int lvl, 
@@ -651,7 +860,42 @@ namespace BaskerNS
 				     const Int l,
 				     const Int k, 
 				     const BASKER_BOOL lower);
+
+    void t_upper_col_ffactor_offdiag2_inc_lvl(const Int kid,
+				     const Int lvl, 
+				     const Int sl,
+				     const Int l,
+				     const Int k, 
+				     const BASKER_BOOL lower);
+
+
+
+     void t_upper_col_factor_offdiag2_same_pattern_inc_lvl(const Int kid,
+				     const Int lvl, 
+				     const Int sl,
+				     const Int l,
+				     const Int k, 
+				     const BASKER_BOOL lower);
+
+
+     void t_upper_col_factor_offdiag2_inc_lvl(const Int kid,
+				     const Int lvl, 
+				     const Int sl,
+				     const Int l,
+				     const Int k, 
+				     const BASKER_BOOL lower);
+
+    int t_lower_col_diag_find_fill(Int kid, 
+				   Int blkcol, Int blkrow,
+				   Int X_col, Int X_row,
+				   Int k,
+				   ENTRY_1DARRAY x,
+				   INT_1DARRAY x_idx,
+				   INT_1DARRAY x_fill,
+				   Int x_size, Int x_offset);
    
+
+
     void t_dense_blk_col_copy_atomic2(const Int kid, 
 				      const Int team_leader,
 				      const Int lvl,
@@ -660,10 +904,39 @@ namespace BaskerNS
 				      const Int k, 
 				      const BASKER_BOOL lower);
 
+    void t_dense_blk_col_copy_atomic2_inc_lvl(const Int kid, 
+				      const Int team_leader,
+				      const Int lvl,
+				      const Int sl,
+				      const Int l,
+				      const Int k, 
+				      const BASKER_BOOL lower);
+
+    void t_same_pattern_col_copy_inc_lvl(const Int kid,
+				     const Int lvl,
+				     const Int sl,
+				     const Int l,
+				     const Int k, 
+				     const BASKER_BOOL lower);
+
+
     void t_dense_copy_update_matrix2(const Int kid,
 				    const Int team_leader,
 				    const Int lvl, const Int l,
 				    const Int k);
+
+    
+    void t_dense_copy_update_matrix2_inc_lvl(const Int kid,
+				    const Int team_leader,
+				    const Int lvl, const Int l,
+				    const Int k);
+
+    void t_same_pattern_update_matrix_inc_lvl(const Int kid,
+					      const Int team_leader,
+					      const Int lvl,
+					      const Int l, 
+					      const Int k);
+
 
     void t_lower_col_factor_offdiag2(const Int kid,
 				     const Int lvl,
@@ -671,11 +944,30 @@ namespace BaskerNS
 				     const Int k,
 				     Entry pivot);
 
+    void t_lower_col_factor_offdiag2_inc_lvl(const Int kid,
+				     const Int lvl,
+				     const Int l,
+				     const Int k,
+				     Entry pivot);
+    void t_lower_col_factor_offdiag2_cleanup_inc_lvl(const Int kid,
+				     const Int lvl,
+				     const Int l,
+				     const Int k);
+    
+
+    
+    void t_add_orig_fill(const Int kid, const Int lvl,
+			 const Int l, const Int k, 
+			 const BASKER_BOOL lower);
+
+
     
 
     BASKER_INLINE
     Int find_leader(Int kid, Int l);
-    
+    BASKER_INLINE
+    Int find_leader_inc_lvl(Int kid, Int l);
+
 
 
 
@@ -686,8 +978,15 @@ namespace BaskerNS
     int t_single_nfactor(Int kid, Int c);
     BASKER_INLINE
     int t_blk_nfactor(Int kid, Int c);
+    BASKER_FINLINE
+    void t_local_reach_short_btf(const Int, const Int, Int &);
     BASKER_INLINE
-    int t_local_reach(Int,BASKER_MATRIX&,Int,Int,Int,Int*);
+    int t_local_reach_btf(Int, BASKER_MATRIX&,Int,Int,Int,Int&);
+    void t_prune_btf(const Int, 
+		     const BASKER_MATRIX &, const BASKER_MATRIX&,
+		     const Int, const Int);
+    BASKER_INLINE
+    int t_local_reach_old(Int,BASKER_MATRIX&,Int,Int,Int,Int*);
     BASKER_INLINE
     int t_back_solve(Int,BASKER_MATRIX&,
 		     Int,Int,Int,Int,Int);
@@ -705,6 +1004,15 @@ namespace BaskerNS
 			  const Int k, 
 			  const Int l);
 			  
+    inline
+    void t_basker_barrier_inc_lvl(const TeamMember &thread,
+			  const Int my_kid,
+			  const Int leader_kid, 
+			  const Int size,
+			  const Int function_n,
+			  const Int k, 
+			  const Int l);
+
 
 
     BASKER_INLINE
@@ -748,6 +1056,8 @@ namespace BaskerNS
     int printL();
     int printL2D();
     int printU();
+    int printLMTX();
+    int printUMTX();
     void printMTX(std::string fname,
 		  BASKER_MATRIX &M);
     void printMTX(std::string fname,
@@ -759,11 +1069,11 @@ namespace BaskerNS
     int printSOL();
     void printTree();
     BASKER_INLINE
-    int get_L(Int *n, Int *nnz,
+    int get_L(Int &n, Int &nnz,
               Int **col_ptr, Int **row_idx,
               Entry **val);
     BASKER_INLINE
-    int get_U(Int *n, Int *nnz,
+    int get_U(Int &n, Int &nnz,
               Int **col_ptr, Int **row_idx,
               Entry **val);
     BASKER_INLINE
@@ -777,7 +1087,8 @@ namespace BaskerNS
     void printVec(std::string, INT_1DARRAY, Int);
     BASKER_INLINE
     void printVec(std::string, ENTRY_1DARRAY, Int);
-
+    void get_total_perm(INT_1DARRAY, INT_1DARRAY);
+    
 
     //inline
     //Int t_get_kid(const TeamMember &thread);
@@ -791,6 +1102,14 @@ namespace BaskerNS
     BASKER_INLINE
     void matrix_transpose(BASKER_MATRIX_VIEW &, 
 			 BASKER_MATRIX &);
+    BASKER_INLINE
+    void matrix_transpose(const Int sm_, const Int m_,
+			  const Int sn_, const Int n_,
+			  const Int nnz_,
+			  Int *col_ptr,
+			  Int *row_idx,
+			  Entry *val,
+			  BASKER_MATRIX &AT);
    
     /*basker_solve_rhs.hpp*/
     BASKER_INLINE
@@ -813,6 +1132,8 @@ namespace BaskerNS
     int spmv(BASKER_MATRIX &, ENTRY_1DARRAY, ENTRY_1DARRAY);
     BASKER_INLINE
     int neg_spmv(BASKER_MATRIX &, ENTRY_1DARRAY, ENTRY_1DARRAY);
+    BASKER_INLINE
+    int neg_spmv_perm(BASKER_MATRIX &, ENTRY_1DARRAY, ENTRY_1DARRAY);
     BASKER_INLINE
     int lower_tri_solve(BASKER_MATRIX &, 
 			ENTRY_1DARRAY, ENTRY_1DARRAY);
@@ -889,6 +1210,7 @@ namespace BaskerNS
     //Made 2d Inorder to beable to use ref in Kokkos
     INT_1DARRAY gperm; 
     INT_1DARRAY gpermi;
+    INT_1DARRAY gperm_same;
 
     //RHS and solutions (These are not used anymore)
     ENTRY_2DARRAY rhs;
@@ -915,6 +1237,7 @@ namespace BaskerNS
     BASKER_BOOL btf_flag;
     BASKER_BOOL nd_flag;
     BASKER_BOOL amd_flag;
+    BASKER_BOOL same_pattern_flag;
 
    
     Int num_threads;
@@ -929,11 +1252,11 @@ namespace BaskerNS
 
 
     /*Incomplete Factorization Arrays*/
-    #ifdef BASKER_INC_LVL
+    //#ifdef BASKER_INC_LVL
     INT_1DARRAY INC_LVL_TEMP;
     INT_1DARRAY INC_LVL_ARRAY_CNT;
     INT_1DARRAY INC_LVL_ARRAY;
-    #endif
+    //#endif
 
 
     //ordering perms
