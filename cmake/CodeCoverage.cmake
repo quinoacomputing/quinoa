@@ -56,6 +56,10 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
   ENDIF()
 
+  IF(NOT SED)
+    MESSAGE(FATAL_ERROR "sed not found! Aborting...")
+  ENDIF()
+
   # Set shortcut for output: path/target
   set(OUTPUT ${path}/${targetname})
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${path})
@@ -63,17 +67,17 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
     # Cleanup lcov
-    COMMAND ${LCOV} --directory . --zerocounters
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --directory . --zerocounters
     # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
     # Run test suite
     COMMAND ${testrunner} ${ARG_TESTRUNNER_ARGS}
     # Capture lcov counters
-    COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV}  --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
     # Combine trace files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info '*/c++/*' '*/include/*' '*/STDIN' '*/openmpi/*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -84,9 +88,9 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Generate HTML report
     COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
@@ -156,6 +160,10 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
   ENDIF()
 
+  IF(NOT SED)
+    MESSAGE(FATAL_ERROR "sed not found! Aborting...")
+  ENDIF()
+
   # Set shorcut for output: path/target
   set(OUTPUT ${path}/${targetname})
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${path})
@@ -163,18 +171,18 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
     # Cleanup lcov
-    COMMAND ${LCOV} --directory . --zerocounters
+    COMMAND ${LCOV}  --gcov-tool ${GCOV} --directory . --zerocounters
     # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
+    COMMAND ${LCOV}  --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
     # Run all test suites
     COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
     COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
     # Capture lcov counters
-    COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
+    COMMAND ${LCOV}  --gcov-tool ${GCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
     # Combine trace files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
+    COMMAND ${LCOV}  --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV}  --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -185,9 +193,9 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Generate HTML report
     COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
-    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
+    COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs ${SED} -i 's/Quinoa_v\\\(.*\\\)-\\\(.*\\\)-g\\\(.*\\\)<\\/td>/<a href="https:\\/\\/github.com\\/quinoacomputing\\/quinoa\\/commit\\/\\3">Quinoa_v\\1-\\2-g\\3<\\/a><\\/td>/g'
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT}.base.info ${OUTPUT}.test.info ${OUTPUT}.total.info ${OUTPUT}.filtered.info
     # Set work directory for target
