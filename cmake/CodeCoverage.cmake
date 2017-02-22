@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Sun 15 Jan 2017 09:26:09 PM MST
+# \date      Wed 22 Feb 2017 07:39:09 AM MST
 #
 ################################################################################
 
@@ -77,7 +77,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info '*/c++/*' '*/include/*' '*/STDIN' '*/openmpi/*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -171,18 +171,18 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
     # Cleanup lcov
-    COMMAND ${LCOV}  --gcov-tool ${GCOV} --directory . --zerocounters
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --directory . --zerocounters
     # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV}  --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --initial --directory . --output-file ${OUTPUT}.base.info
     # Run all test suites
     COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
     COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
     # Capture lcov counters
-    COMMAND ${LCOV}  --gcov-tool ${GCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${OUTPUT}.test.info
     # Combine trace files
-    COMMAND ${LCOV}  --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV}  --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
