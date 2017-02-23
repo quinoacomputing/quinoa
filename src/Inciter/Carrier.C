@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 08:32:52 AM MST
+  \date      Thu 23 Feb 2017 07:11:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -65,7 +65,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
                           std::vector< std::size_t > >& msum,
-                  const std::unordered_map< std::size_t, std::size_t >& cid,
+                  const std::unordered_map< std::size_t, std::size_t >& nodemap,
                   const std::array< std::vector< tk::real >, 3 >& coord,
                   int ncarr ) :
   __dep(),
@@ -86,7 +86,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
-  m_cid( cid ),
+  m_nodemap( nodemap ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( coord ),
   m_fluxcorrector( m_inpoel.size() ),
@@ -118,8 +118,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
-//!   in producing contiguous-row-id linear system contributions)
+//! \param[in] nodemap Map associating old node IDs (as in file) to new node IDs
+//!   (as in producing contiguous-row-id linear system contributions)
 //! \param[in] ncarr Total number of Carrier chares
 //! \author J. Bakosi
 // *****************************************************************************
@@ -260,16 +260,20 @@ Carrier::bc()
   // Access all side sets from LinSysMerger
   auto& side = m_linsysmerger.ckLocalBranch()->side();
 
-  // Invert m_cid, a map associating old node IDs (as in file) to new node IDs
-  // (as in producing contiguous-row-id linear system contributions), so we can
-  // search more efficiently for old node IDs.
-  decltype(m_cid) rcid;
-  for (const auto& i : m_cid) rcid[ i.second ] = i.first;
+  // Invert m_nodemap, a map associating old node IDs (as in file) to new node
+  // IDs (as in producing contiguous-row-id linear system contributions), so we
+  // can search more efficiently for old node IDs.
+  decltype(m_nodemap) revnodemap;
+  for (const auto& i : m_nodemap) revnodemap[ i.second ] = i.first;
 
   // lambda to find out if we own the old (as in file) global node id
-  auto own = [ &rcid ]( std::size_t id ) -> std::pair< bool, std::size_t > {
-    auto it = rcid.find( id );
-    if (it != end(rcid)) return { true, it->second }; else return { false, 0 };
+  auto own = [ &revnodemap ]( std::size_t id ) -> std::pair< bool, std::size_t >
+  {
+    auto it = revnodemap.find( id );
+    if (it != end(revnodemap))
+      return { true, it->second };
+    else
+      return { false, 0 };
   };
 
   // lambda to query the Dirichlet BCs on a side set for all components of all
@@ -297,7 +301,7 @@ Carrier::bc()
   // linear system contributions. See also Partitioner.h.
   auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
   -> bool {
-    for (auto n : s) if (tk::cref_find(this->m_cid,id) == n) return true;
+    for (auto n : s) if (tk::cref_find(this->m_nodemap,id) == n) return true;
     return false;
   };
 
@@ -500,7 +504,7 @@ Carrier::readCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  for (auto p : m_gid) er.readNode( tk::cref_find(m_cid,p), x, y, z );
+  for (auto p : m_gid) er.readNode( tk::cref_find(m_nodemap,p), x, y, z );
 }
 
 void

@@ -156,7 +156,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_communication(),
       m_id(),
       m_newid(),
-      m_chcid(),
+      m_chnodemap(),
       m_cost( 0.0 ),
       m_ch(),
       m_msum()
@@ -479,7 +479,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   categorized by chares.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
-      std::unordered_map< std::size_t, std::size_t > > m_chcid;
+      std::unordered_map< std::size_t, std::size_t > > m_chnodemap;
     //! \brief Maps associating edges (a pair of old node IDs) to new node IDs
     //!   categorized by chares for only the nodes newly added as a result of
     //!   initial uniform refinement.
@@ -490,7 +490,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   basically the inverse of m_newid and categorized by chares.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
-      std::unordered_map< std::size_t, Edge > > m_chceid;
+      std::unordered_map< std::size_t, Edge > > m_chedgenodemap;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old global mesh node IDs
@@ -814,7 +814,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       decltype(m_node) extconn;
       for (const auto& conn : m_node) {
         auto& ch = extconn[ conn.first ];
-        auto& ex = m_chceid[ conn.first ];
+        auto& ex = m_chedgenodemap[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
           // find the 8 new elements replacing e
           const auto& n = tk::cref_find( newinpoel,
@@ -880,7 +880,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // m_newid and categorized by chares. Note that m_node at this point still
       // contains the old global node IDs the chares contribute to.
       for (const auto& c : m_node) {
-        auto& old = m_chcid[ c.first ];
+        auto& old = m_chnodemap[ c.first ];
         for (auto p : c.second) {
           auto n = m_newid.find(p);
           if (n != end(m_newid)) old[ n->second ] = p;
@@ -928,13 +928,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void bounds() {
       m_upper = 0;
       using P1 = std::pair< const std::size_t, std::size_t >;
-      for (const auto& c : m_chcid) {
+      for (const auto& c : m_chnodemap) {
         auto x = std::max_element( begin(c.second), end(c.second),
                  []( const P1& a, const P1& b ){ return a.first < b.first; } );
         if (x->first > m_upper) m_upper = x->first;
       }
       using P2 = std::pair< const std::size_t, Edge >;
-      for (const auto& c : m_chceid) {
+      for (const auto& c : m_chedgenodemap) {
         auto x = std::max_element( begin(c.second), end(c.second),
                  []( const P2& a, const P2& b ){ return a.first < b.first; } );
         if (x->first > m_upper) m_upper = x->first;
@@ -1001,7 +1001,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 m_particlewriter,
                                 tk::cref_find( m_node, cid ),
                                 msum,
-                                tk::cref_find( m_chcid, cid ),
+                                tk::cref_find( m_chnodemap, cid ),
                                 m_coord,
                                 m_nchare,
                                 CkMyPe() );
@@ -1012,7 +1012,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       tk::destroy( m_node );
       // Free maps associating old node IDs to new node IDs categorized by
       // chares as it is no longer needed after creating the workers.
-      tk::destroy( m_chcid );
+      tk::destroy( m_chnodemap );
       // Free storage of map associating a set of chare IDs to old global mesh
       // node IDs as it is no longer needed after creating the workers.
       tk::destroy( m_ch );
