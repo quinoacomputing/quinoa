@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/carrier.ci
   \author    J. Bakosi
-  \date      Mon 31 Oct 2016 07:16:39 AM MDT
+  \date      Thu 23 Feb 2017 08:24:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
@@ -31,7 +31,9 @@ module carrier {
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< int,
                          std::vector< std::size_t > >& msum,
-                 const std::unordered_map< std::size_t, std::size_t >& cid,
+                 const std::unordered_map< std::size_t, std::size_t >& nodemap,
+                 const std::unordered_map< std::size_t,
+                                           tk::UnsMesh::Edge >& edgenodemap,
                  const tk::UnsMesh::Coords& coord,
                  int ncarr );
       initnode void registerReducers();

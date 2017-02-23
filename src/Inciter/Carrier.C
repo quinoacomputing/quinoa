@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 23 Feb 2017 07:11:04 AM MST
+  \date      Thu 23 Feb 2017 02:52:30 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -66,6 +66,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::unordered_map< int,
                           std::vector< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& nodemap,
+                  const std::unordered_map< std::size_t,
+                                            tk::UnsMesh::Edge >& edgenodemap,
                   const std::array< std::vector< tk::real >, 3 >& coord,
                   int ncarr ) :
   __dep(),
@@ -87,6 +89,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
   m_nodemap( nodemap ),
+  m_edgenodemap( edgenodemap ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( coord ),
   m_fluxcorrector( m_inpoel.size() ),
@@ -120,6 +123,10 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   mesh chunk we operate on
 //! \param[in] nodemap Map associating old node IDs (as in file) to new node IDs
 //!   (as in producing contiguous-row-id linear system contributions)
+//! \param[in] edgenodemap Map associating edges (a pair of old node IDs ('old'
+//!   as in file) to new node IDs ('new' as in producing contiguous-row-id
+//!   linear system contributions). These 'new' node IDs are the ones newly
+//!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
 //! \author J. Bakosi
 // *****************************************************************************
@@ -266,6 +273,16 @@ Carrier::bc()
   decltype(m_nodemap) revnodemap;
   for (const auto& i : m_nodemap) revnodemap[ i.second ] = i.first;
 
+  // Invert m_edgenodemap, a map associating edges (a pair of old node IDs (as
+  // in file) to newly added node IDs during initial uniform refinement (as in
+  // producing contiguous-row-id linear system contributions), so we can search
+  // more efficiently for edges consisting of old node IDs.
+  std::unordered_map< tk::UnsMesh::Edge,
+                      std::size_t,
+                      tk::UnsMesh::EdgeHash,
+                      tk::UnsMesh::EdgeEq > revedgenodemap;
+  for (const auto& i : m_edgenodemap) revedgenodemap[ i.second ] = i.first;
+
   // lambda to find out if we own the old (as in file) global node id
   auto own = [ &revnodemap ]( std::size_t id ) -> std::pair< bool, std::size_t >
   {
@@ -274,6 +291,20 @@ Carrier::bc()
       return { true, it->second };
     else
       return { false, 0 };
+  };
+
+  // lambda to collect all edge-nodes whose both edge-end-points are in the node
+  // set given
+  auto edgebc = [ &revedgenodemap ]
+                ( const std::unordered_set< std::size_t >& bcnodes )
+              -> std::vector< std::pair< bool, std::size_t > >
+  {
+    std::vector< std::pair< bool, std::size_t > > en;
+    for (const auto& ed : revedgenodemap)
+      if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
+           bcnodes.find( ed.first[1] ) != end(bcnodes) )
+        en.push_back( { true, ed.second } );
+    return en;
   };
 
   // lambda to query the Dirichlet BCs on a side set for all components of all
@@ -311,17 +342,27 @@ Carrier::bc()
   std::unordered_map< std::size_t,
                       std::vector< std::pair< bool, tk::real > > > dirbc;
 
+  // lambda to associate BC values and whether they are set (for all PDE
+  // components) to a node
+  auto assign = [&dirbc]( const std::vector< std::pair< bool, tk::real > >& b,
+                          std::size_t n )
+  {
+    auto& v = dirbc[ n ];
+    v.resize( b.size() );
+    for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
+  };
+
   // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
   // data structure in which this information is stored associates a vector of
   // pairs of bool and BC value to new global mesh node IDs. 'New' as in
   // producing contiguous-row-id linear system contributions, see also
   // Partitioner.h. The bool indicates whether the BC value is set at the given
   // node by the user. The size of the vectors is the number of PDEs integrated
-  // times the number of scalar components in all PDEs. The vector is associated
-  // to global node IDs at which the boundary condition will be set. If a node
-  // gets boundary conditions from multiple side sets, true values (the fact
-  // that a BC is set) overwrite existing false ones, i.e., the union of the
-  // boundary conditions will be applied at the node.
+  // for all scalar components in all PDEs. The vector is associated to global
+  // node IDs at which the boundary condition will be set. If a node gets
+  // boundary conditions from multiple side sets, true values (the fact that a
+  // BC is set) overwrite existing false ones, i.e., the union of the boundary
+  // conditions will be applied at the node.
   for (const auto& s : side) {
     // get BC values for side set
     auto b = bcval( s.first );
@@ -332,14 +373,17 @@ Carrier::bc()
                             { return p.first; } );
     // for all node IDs we contribute to in the side set associate BC values and
     // whether they are set for a component (for all PDE components)
+    std::unordered_set< std::size_t > bcnodes;
     for (auto o : s.second) {
       auto n = own(o);
       if (n.first && inset(n.second,s.second) && ubc) {
-        auto& v = dirbc[ n.second ];
-        v.resize( b.size() );
-        for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
+        assign( b, n.second );          // assign BC values to nodes
+        bcnodes.insert( n.second );     // store BC nodes
       }
     }
+    // associate BC values and whether they are set (for all PDE components) for
+    // all edge-nodes at whose both edge-end-points BCs are set
+    for (const auto& n : edgebc(bcnodes)) if (n.first) assign( b, n.second );
   }
 
   // send progress report to host

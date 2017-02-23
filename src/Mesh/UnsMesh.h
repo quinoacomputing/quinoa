@@ -27,6 +27,25 @@ class UnsMesh {
   public:
     using Coords = std::array< std::vector< tk::real >, 3 >;
 
+    // Key type for an edge: IDs of two end-points
+    using Edge = std::array< std::size_t, 2 >;
+
+    // Hash functor for Edge
+    struct EdgeHash {
+      std::size_t operator()( const Edge& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] );
+      }
+    };
+
+    // Key-equal function for Edge
+    struct EdgeEq {
+      bool operator()( const Edge& left, const Edge& right ) const {
+        return (left[0] == right[0] && left[1] == right[1]) ||
+               (left[0] == right[1] && left[1] == right[0]);
+      }
+    };
+
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Mon 06 Feb 2017 11:55:50 AM MST
+  \date      Thu 23 Feb 2017 03:19:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -74,6 +74,7 @@
 #include "Options/PartitioningAlgorithm.h"
 #include "LinSysMerger.h"
 #include "DerivedData.h"
+#include "UnsMesh.h"
 
 namespace inciter {
 
@@ -392,23 +393,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
   private:
-    // Key type for an edge
-    using Edge = std::array< std::size_t, 2 >;
-    // Hash functor for Edge
-    struct EdgeHash {
-      std::size_t operator()( const Edge& key ) const {
-        return std::hash< std::size_t >()( key[0] ) ^
-               std::hash< std::size_t >()( key[1] );
-      }
-    };
-    // Key-equal function for Edge
-    struct EdgeEq {
-      bool operator()( const Edge& left, const Edge& right ) const {
-        return (left[0] == right[0] && left[1] == right[1]) ||
-               (left[0] == right[1] && left[1] == right[0]);
-      }
-    };
-
     //! Host proxy
     HostProxy m_host;
     //! Worker proxy
@@ -490,7 +474,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   basically the inverse of m_newid and categorized by chares.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
-      std::unordered_map< std::size_t, Edge > > m_chedgenodemap;
+      std::unordered_map< std::size_t, tk::UnsMesh::Edge > > m_chedgenodemap;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old global mesh node IDs
@@ -728,10 +712,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
     void refine() {
-//       // Update old with new node IDs in element connectivity
-//       for (auto& p : m_tetinpoel) p = tk::cref_find(m_newid,p);
-
-      std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq > newnodes;
+      std::unordered_map< tk::UnsMesh::Edge,
+                          std::size_t,
+                          tk::UnsMesh::EdgeHash,
+                          tk::UnsMesh::EdgeEq > newnodes;
 
       // Lambda to add a new node to an edge
       auto addnode = [ this, &newnodes ]
@@ -746,21 +730,22 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         newnodes[ {{ p,q }} ] = id++;   // assiciate new node id to edge
       };
 
-      // generate data structure storing unique edges surrounding points
-      auto edsup = tk::genEdsup( m_tetinpoel, 4, tk::genEsup(m_tetinpoel,4) );
+      // generate data structure storing unique nodes connected to nodes
+      std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
+      auto esup = tk::genEsup( m_tetinpoel, 4 );
       auto nnode = m_coord[0].size();
       auto id = nnode;
-
+      for (std::size_t p=0; p<nnode; ++p)
+        for (std::size_t i=esup.second[p]+1; i<=esup.second[p+1]; ++i )
+          for (std::size_t n=0; n<4; ++n) {
+            auto q = m_tetinpoel[ esup.first[i] * 4 + n ];
+            if (p < q) star[p].insert( q );
+            if (p > q) star[q].insert( p );
+          }
       // add new node to all unique edges
-      //std::cout << "\n";
-      for (std::size_t p=0; p<nnode; ++p) {
-        //std::cout << p+1 << ": ";
-        for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i) {
-          //std::cout << edsup.first[i]+1 << ' ';
-          addnode( p, edsup.first[i], id );
-        }
-        //std::cout << "\n";
-      }
+      for (const auto& s : star)
+        for (auto q : s.second)
+          addnode( s.first, q, id );
 
       // Key type for a tetrahedron (element connectivity)
       using Tet = std::array< std::size_t, 4 >;
@@ -791,7 +776,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         const auto B = m_tetinpoel[e*4+1];
         const auto C = m_tetinpoel[e*4+2];
         const auto D = m_tetinpoel[e*4+3];
-        // find new node IDs assigned to all edges of element e
         const auto AB = tk::cref_find( newnodes, {{ A,B }} );
         const auto AC = tk::cref_find( newnodes, {{ A,C }} );
         const auto AD = tk::cref_find( newnodes, {{ A,D }} );
@@ -831,7 +815,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           const auto AB = n[1];
           const auto AC = n[2];
           const auto AD = n[3];
-          const auto BC = n[6];
+          const auto BC = n[5];
           const auto BD = n[7];
           const auto CD = n[11];
           ex[ AB ] = {{ A,B }};
@@ -933,7 +917,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                  []( const P1& a, const P1& b ){ return a.first < b.first; } );
         if (x->first > m_upper) m_upper = x->first;
       }
-      using P2 = std::pair< const std::size_t, Edge >;
+      using P2 = std::pair< const std::size_t, tk::UnsMesh::Edge >;
       for (const auto& c : m_chedgenodemap) {
         auto x = std::max_element( begin(c.second), end(c.second),
                  []( const P2& a, const P2& b ){ return a.first < b.first; } );
@@ -995,6 +979,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             v.insert( end(v), begin(m.second), end(m.second) );
           }
         }
+        typename decltype(m_chedgenodemap)::mapped_type edgenodemap;
+        if (!m_chedgenodemap.empty())
+          edgenodemap = tk::cref_find( m_chedgenodemap, cid );
         // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
@@ -1002,6 +989,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 tk::cref_find( m_node, cid ),
                                 msum,
                                 tk::cref_find( m_chnodemap, cid ),
+                                edgenodemap,
                                 m_coord,
                                 m_nchare,
                                 CkMyPe() );
