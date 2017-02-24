@@ -65,6 +65,7 @@ The release container executables are configured for a single computer. To run o
 2. [Francisco Gonzalez](https://github.com/franjgonzalez)
 3. [Brandon Rogers](https://github.com/brog2610)
 4. [Christoph Junghans](https://github.com/junghans)
+5. [Robert Pavel](https://github.com/rspavel)
 
 ## Resources
 
