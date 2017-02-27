@@ -27,8 +27,10 @@ WORKDIR /home/quinoa/quinoa
 RUN mkdir build
 
 WORKDIR build
-RUN cmake ${COVERAGE:+-DCODE_COVERAGE=ON} ../src
+RUN ccache -z
+RUN cmake ${COVERAGE:+-DCODE_COVERAGE=ON} -DLCOV=/bin/true -DGENHTML=/bin/true ../src
 RUN make VERBOSE=1 -j2
+RUN ccache -s
 RUN ../script/run_tests.sh
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \

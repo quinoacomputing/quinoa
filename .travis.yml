@@ -11,6 +11,7 @@ env:
     - DISTRO=gentoo COVERAGE=ON
 
 script:
+  - rm -rf tpl
   - cp -vr docker ${HOME}/docker
   - sed -i "1s/gentoo/${DISTRO}/" ${HOME}/docker/Dockerfile
   - cd ../../
@@ -40,3 +41,4 @@ cache:
 
 compiler:
   - gcc
+  - clang
