@@ -31,7 +31,7 @@ RUN ccache -z
 RUN cmake ${COVERAGE:+-DCODE_COVERAGE=ON} -DLCOV=/bin/true -DGENHTML=/bin/true ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
-RUN ../script/run_tests.sh
+RUN ctest -R walker:Dirichlet_pe1
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
