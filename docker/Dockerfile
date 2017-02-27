@@ -3,6 +3,7 @@ FROM quinoacomputing/buildenv:gentoo
 ARG COVERAGE
 ARG CC
 ARG CXX
+ENV OMPI_CXX=${CXX}
 ARG CXXFLAGS
 
 #for coverage
