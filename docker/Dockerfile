@@ -28,7 +28,7 @@ RUN mkdir build
 
 WORKDIR build
 RUN ccache -z
-RUN cmake ${COVERAGE:+-DCODE_COVERAGE=ON} -DLCOV=/bin/true -DGENHTML=/bin/true ../src
+RUN cmake ${COVERAGE:+-DLCOV=/bin/true} -DGENHTML=/bin/true ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
 RUN ctest -R walker:Dirichlet_pe1
