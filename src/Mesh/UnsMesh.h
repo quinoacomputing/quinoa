@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Tue 14 Feb 2017 08:36:00 AM MST
+  \date      Fri 24 Feb 2017 03:17:45 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -15,6 +15,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <unordered_map>
 
 #include "Types.h"
 #include "ContainerUtil.h"
@@ -27,10 +28,10 @@ class UnsMesh {
   public:
     using Coords = std::array< std::vector< tk::real >, 3 >;
 
-    // Key type for an edge: IDs of two end-points
+    //! Key type for an edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
 
-    // Hash functor for Edge
+    //! Hash functor for Edge
     struct EdgeHash {
       std::size_t operator()( const Edge& key ) const {
         return std::hash< std::size_t >()( key[0] ) ^
@@ -38,13 +39,19 @@ class UnsMesh {
       }
     };
 
-    // Key-equal function for Edge
+    //! Key-equal function for Edge
     struct EdgeEq {
       bool operator()( const Edge& left, const Edge& right ) const {
         return (left[0] == right[0] && left[1] == right[1]) ||
                (left[0] == right[1] && left[1] == right[0]);
       }
     };
+
+    //! Map associating IDs of mesh nodes to edges during edge refinement
+    using EdgeNodes = std::unordered_map< tk::UnsMesh::Edge,
+                                          std::size_t,
+                                          tk::UnsMesh::EdgeHash,
+                                          tk::UnsMesh::EdgeEq >;
 
     /** @name Constructors */
     ///@{

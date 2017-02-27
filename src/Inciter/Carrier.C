@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 23 Feb 2017 02:52:30 PM MST
+  \date      Mon 27 Feb 2017 01:08:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -66,9 +66,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::unordered_map< int,
                           std::vector< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& nodemap,
-                  const std::unordered_map< std::size_t,
-                                            tk::UnsMesh::Edge >& edgenodemap,
-                  const std::array< std::vector< tk::real >, 3 >& coord,
+                  const tk::UnsMesh::EdgeNodes& edgenodemap,
                   int ncarr ) :
   __dep(),
   m_it( 0 ),
@@ -91,7 +89,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_nodemap( nodemap ),
   m_edgenodemap( edgenodemap ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_coord( coord ),
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -123,9 +120,9 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   mesh chunk we operate on
 //! \param[in] nodemap Map associating old node IDs (as in file) to new node IDs
 //!   (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodemap Map associating edges (a pair of old node IDs ('old'
-//!   as in file) to new node IDs ('new' as in producing contiguous-row-id
-//!   linear system contributions). These 'new' node IDs are the ones newly
+//! \param[in] edgenodemap Map associating new node IDs ('new' as in producing
+//!   contiguous-row-id linear system contributions) to edges (a pair of old
+//!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
 //! \author J. Bakosi
@@ -162,8 +159,7 @@ Carrier::vol()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  //for (auto& c : m_coord) c.clear();
-  //readCoords();
+  readCoords();
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
@@ -273,16 +269,6 @@ Carrier::bc()
   decltype(m_nodemap) revnodemap;
   for (const auto& i : m_nodemap) revnodemap[ i.second ] = i.first;
 
-  // Invert m_edgenodemap, a map associating edges (a pair of old node IDs (as
-  // in file) to newly added node IDs during initial uniform refinement (as in
-  // producing contiguous-row-id linear system contributions), so we can search
-  // more efficiently for edges consisting of old node IDs.
-  std::unordered_map< tk::UnsMesh::Edge,
-                      std::size_t,
-                      tk::UnsMesh::EdgeHash,
-                      tk::UnsMesh::EdgeEq > revedgenodemap;
-  for (const auto& i : m_edgenodemap) revedgenodemap[ i.second ] = i.first;
-
   // lambda to find out if we own the old (as in file) global node id
   auto own = [ &revnodemap ]( std::size_t id ) -> std::pair< bool, std::size_t >
   {
@@ -295,12 +281,11 @@ Carrier::bc()
 
   // lambda to collect all edge-nodes whose both edge-end-points are in the node
   // set given
-  auto edgebc = [ &revedgenodemap ]
-                ( const std::unordered_set< std::size_t >& bcnodes )
+  auto edgebc = [ this ]( const std::unordered_set< std::size_t >& bcnodes )
               -> std::vector< std::pair< bool, std::size_t > >
   {
     std::vector< std::pair< bool, std::size_t > > en;
-    for (const auto& ed : revedgenodemap)
+    for (const auto& ed : m_edgenodemap)
       if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
            bcnodes.find( ed.first[1] ) != end(bcnodes) )
         en.push_back( { true, ed.second } );

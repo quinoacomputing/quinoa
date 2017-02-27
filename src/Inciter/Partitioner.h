@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Thu 23 Feb 2017 03:19:26 PM MST
+  \date      Fri 24 Feb 2017 03:21:06 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -158,9 +158,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_id(),
       m_newid(),
       m_chnodemap(),
+      m_chedgenodemap(),
+      m_reqedgenodes(),
+      m_recedgenodes(),
       m_cost( 0.0 ),
       m_ch(),
-      m_msum()
+      m_msum(),
+      m_edgenodes()
     {
       tk::ExodusIIMeshReader
         er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -225,8 +229,19 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void request( int p, const std::unordered_set< std::size_t >& id ) {
       // Queue up requesting PE and node IDs
       m_req.push_back( { p, id } );
-      // Trigger SDAG wait, signaling that node IDs have been requested from us
+      // Trigger SDAG wait signaling that node IDs have been requested from us
       nodes_requested_complete();
+    }
+
+    //! Request node IDs we added to edges during uniform initial refinement
+    //! \param[in] p PE request coming from and to which we send new IDs to
+    //! \param[in] e List of edges (given by a pair of global node IDs) to which
+    //!   nodes have been added
+    void requestEdgeNodes( int p, const std::vector< tk::UnsMesh::Edge >& e ) {
+      // Queue up requesting PE and edge list
+      m_reqed.push_back( { p, e } );
+      // Trigger SDAG wait signaling that edge-nodes have been requested
+      edgenodes_requested_complete();
     }
 
     //! Receive new (reordered) global node IDs
@@ -240,8 +255,23 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       if (m_newid.size() == m_id.size()) reordered();
     }
 
+    //! Receive new edge-nodes added during initial uniform mesh refinement
+    //! \param[in] id Map associating node IDs to edges
+    //! \param[in] frompe PE call coming from
+    void newedgenodes( int frompe, const tk::UnsMesh::EdgeNodes& id ) {
+      // Verify number of new edge-node IDs received
+      Assert( tk::cref_find( m_reqedgenodes, frompe ).size() == id.size(),
+              "Number of new edge-node IDs received mismatch" );
+      // Store new node IDs associated to edges
+      for (const auto& p : id) m_recedgenodes[ frompe ].push_back( p.first );
+      // If we have received new IDs for all our edge-nodes that we do not set
+      // new IDs for, continue
+      if (m_reqedgenodes == m_recedgenodes) refined();
+    }
+
     //! Receive mesh node IDs associated to chares we own
     //! \param[in] n Mesh node indices associated to chare IDs
+    //! \param[in] frompe PE call coming from
     void add( int frompe,
               const std::unordered_map< int, std::vector< std::size_t > >& n )
     {
@@ -345,7 +375,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         for (auto c : chares) {           // surrounded chares
           auto& sch = m_msum[c];
           for (auto s : h.second)         // surrounding chares
-            if (s != c) sch[s].insert( h.first );
+            if (s != c) sch[s].push_back( h.first );
         }
       }
       // Associate global mesh node IDs to lower PEs we will need to receive
@@ -405,6 +435,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
     std::vector< std::pair< int, std::unordered_set< std::size_t > > > m_req;
+    //! Queue of requested edge-node IDs from PEs
+    std::vector< std::pair< int, std::vector< tk::UnsMesh::Edge > > > m_reqed;
     //! Starting global mesh node ID for node reordering
     std::size_t m_start;
     //! \brief Counter for number of offsets
@@ -447,8 +479,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   indices to fellow PE IDs from which we will receive new node IDs
     //!   during reordering. Only data that will be received from PEs with a
     //!   lower index are stored.
-    std::unordered_map< int,
-                        std::unordered_set< std::size_t > > m_communication;
+    std::unordered_map< int, std::unordered_set<std::size_t> > m_communication;
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::set< std::size_t > m_id;
@@ -464,17 +495,17 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chnodemap;
-    //! \brief Maps associating edges (a pair of old node IDs) to new node IDs
+    //! \brief Maps associating new node IDs to edges (a pair of old node IDs)
     //!   categorized by chares for only the nodes newly added as a result of
     //!   initial uniform refinement.
-    //! \details Maps associating edges (a pair of old node IDs, as in file) to
-    //!   new node IDs (as in producing contiguous-row-id linear system
-    //!   contributions) associated to chare IDs (outer key) for only the nodes
-    //!   newly added as a result of initial uniform refinement. This is
-    //!   basically the inverse of m_newid and categorized by chares.
+    //! \details Maps associating new node IDs (as in producing
+    //!   contiguous-row-id linear system contributions) to edges (a pair of old
+    //!   node IDs, as in file) associated to chare IDs (outer key) for only
+    //!   the nodes newly added as a result of initial uniform refinement.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
-    std::unordered_map< int,
-      std::unordered_map< std::size_t, tk::UnsMesh::Edge > > m_chedgenodemap;
+    std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodemap;
+    std::map< int, std::vector< tk::UnsMesh::Edge > > m_reqedgenodes;
+    std::map< int, std::vector< tk::UnsMesh::Edge > > m_recedgenodes;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old global mesh node IDs
@@ -491,7 +522,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   along the border of chares (at which the chares will need to
     //!   communicate).
     std::unordered_map< int,
-      std::unordered_map< int, std::set< std::size_t > > > m_msum;
+      std::unordered_map< int, std::vector< std::size_t > > > m_msum;
+    //! \brief IDs of newly added nodes associated to edges during initial
+    //!   uniform mesh refinement
+    tk::UnsMesh::EdgeNodes m_edgenodes;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     //! \param[in] er ExodusII mesh reader
@@ -648,10 +682,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
     //! Reorder global mesh node IDs
     void reorder() {
-      // Activate SDAG waits for completing the reordering of our node IDs and
-      // for having requests arrive from other PEs for some of our node IDs; and
-      // for computing/receiving lower and upper bounds of global node IDs our
-      // PE operates on after reordering
+      // Activate SDAG waits for having requests arrive from other PEs for some
+      // of our node IDs; and for computing/receiving lower and upper bounds of
+      // global node IDs our PE operates on after reordering
       wait4prep();
       wait4bounds();
       // In serial signal to the runtime system that we have participated in
@@ -676,7 +709,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // i.e., reorder, by constructing a map associating new to old IDs. We
       // also count up the reordered nodes.
       for (auto p : m_id) if (own(p)) m_newid[ p ] = m_start++;
-      // Trigger SDAG wait, indicating that reordering own node IDs are complete
+      // Trigger SDAG wait indicating that reordering own node IDs are complete
       reorderowned_complete();
       // If we have reordered all our nodes, compute and send result to host
       if (m_newid.size() == m_id.size()) reordered();
@@ -711,25 +744,51 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       reorderowned_complete();
     }
 
-    void refine() {
-      std::unordered_map< tk::UnsMesh::Edge,
-                          std::size_t,
-                          tk::UnsMesh::EdgeHash,
-                          tk::UnsMesh::EdgeEq > newnodes;
+    //! Associate new node IDs to edges and return them to the requestor(s)
+    void prepareEdgeNodes() {
 
+std::cout << CkMyPe() << " edegenodes: ";
+for (const auto& e : m_edgenodes) std::cout << e.first[0] << '-' << e.first[1] << ' ';
+std::cout << '\n';
+std::cout << CkMyPe() << " reqed: ";
+for (const auto& r : m_reqed) {
+  std::cout << r.first << ':';
+  for (auto p : r.second) std::cout << p[0] << '-' << p[1] << ' ';
+}
+std::cout << '\n';
+
+      for (const auto& r : m_reqed) {
+        tk::UnsMesh::EdgeNodes n;
+        //for (const auto& p : r.second) n[ p ] = tk::cref_find( m_edgenodes, p );
+        for (const auto& p : r.second) {
+          auto it = m_edgenodes.find(p);
+          if (it==end(m_edgenodes)) std::cout << CkMyPe() << ": " << p[0] << '-' << p[1] << " not found\n";
+        }
+        Group::thisProxy[ r.first ].newedgenodes( CkMyPe(), n );
+        tk::destroy( n );
+      }
+      tk::destroy(m_reqed); // Clear queue of requests just fulfilled
+      // Re-enable SDAG wait for preparing new edge-node requests
+      wait4edgenodes();
+      // Re-enable trigger signaling that refinement of our mesh is complete
+      refineowned_complete();
+    }
+
+    void refine() {
+      // Activate SDAG wait for having requests arrive from other PEs for some
+      // of our newly added node IDs
+      wait4edgenodes();
       // Lambda to add a new node to an edge
-      auto addnode = [ this, &newnodes ]
-                     ( std::size_t p, std::size_t q, std::size_t& id )
-      {
+      auto addnode = [ this ]( std::size_t p, std::size_t q, std::size_t& id ) {
         auto& x = m_coord[0];
         auto& y = m_coord[1];
         auto& z = m_coord[2];
         x.push_back( (x[p]+x[q])/2.0 ); // add new node coordinates
         y.push_back( (y[p]+y[q])/2.0 );
         z.push_back( (z[p]+z[q])/2.0 );
-        newnodes[ {{ p,q }} ] = id++;   // assiciate new node id to edge
+        m_edgenodes[ {{ p,q }} ] = id++;// associate new node id to edge
+std::cout << CkMyPe() << " add: " << p << '-' << q << '\n';
       };
-
       // generate data structure storing unique nodes connected to nodes
       std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
       auto esup = tk::genEsup( m_tetinpoel, 4 );
@@ -746,7 +805,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (const auto& s : star)
         for (auto q : s.second)
           addnode( s.first, q, id );
-
+      // Trigger SDAG wait indicating that refinement of our mesh is complete
+      refineowned_complete();
       // Key type for a tetrahedron (element connectivity)
       using Tet = std::array< std::size_t, 4 >;
       using NewTets = std::array< std::size_t, 32 >;
@@ -769,19 +829,20 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         }
       };
       std::unordered_map< Tet, NewTets, TetHash, TetEq > newinpoel;
-
       // assigne 8 new elements in place of each old element (1:8)
+std::cout << CkMyPe() << " inpoel: ";
       for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
         const auto A = m_tetinpoel[e*4+0];
         const auto B = m_tetinpoel[e*4+1];
         const auto C = m_tetinpoel[e*4+2];
         const auto D = m_tetinpoel[e*4+3];
-        const auto AB = tk::cref_find( newnodes, {{ A,B }} );
-        const auto AC = tk::cref_find( newnodes, {{ A,C }} );
-        const auto AD = tk::cref_find( newnodes, {{ A,D }} );
-        const auto BC = tk::cref_find( newnodes, {{ B,C }} );
-        const auto BD = tk::cref_find( newnodes, {{ B,D }} );
-        const auto CD = tk::cref_find( newnodes, {{ C,D }} );
+std::cout << A << ',' << B << ',' << C << ',' << D << ' ';
+        const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
+        const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
+        const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
+        const auto BC = tk::cref_find( m_edgenodes, {{ B,C }} );
+        const auto BD = tk::cref_find( m_edgenodes, {{ B,D }} );
+        const auto CD = tk::cref_find( m_edgenodes, {{ C,D }} );
         // construct 8 new tets
         NewTets n{{  A, AB, AC, AD,
                      B, BC, AB, BD,
@@ -793,11 +854,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                     AC, BD, CD, AD }};
         newinpoel[ {{ A,B,C,D }} ] = n; // associate new elements to old one
       }
-
+std::cout << '\n';
       // update connectivity in global mesh node ids associated to chares owned
-      decltype(m_node) extconn;
+      decltype(m_node) newconn;
       for (const auto& conn : m_node) {
-        auto& ch = extconn[ conn.first ];
+        auto& ch = newconn[ conn.first ];
         auto& ex = m_chedgenodemap[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
           // find the 8 new elements replacing e
@@ -818,33 +879,53 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           const auto BC = n[5];
           const auto BD = n[7];
           const auto CD = n[11];
-          ex[ AB ] = {{ A,B }};
-          ex[ AC ] = {{ A,C }};
-          ex[ AD ] = {{ A,D }};
-          ex[ BC ] = {{ B,C }};
-          ex[ BD ] = {{ B,D }};
-          ex[ CD ] = {{ C,D }};
-          // augment nodes associated to chares surrounding our mesh chunk
-          for (auto& m : m_msum)
-            for (auto& s : m.second) {
-              bool a = false, b = false, c = false, d = false;
-              if (s.second.find( A ) != end(s.second)) a = true;
-              if (s.second.find( B ) != end(s.second)) b = true;
-              if (s.second.find( C ) != end(s.second)) c = true;
-              if (s.second.find( D ) != end(s.second)) d = true;
-              // if an edge os on the chare boundary, its newly added nodes too
-              if (a && b) s.second.insert( AB );
-              if (a && c) s.second.insert( AC );
-              if (a && d) s.second.insert( AD );
-              if (b && c) s.second.insert( BC );
-              if (b && d) s.second.insert( BD );
-              if (c && d) s.second.insert( CD );
-            }
+          ex[ {{A,B}} ] = AB;
+          ex[ {{A,C}} ] = AC;
+          ex[ {{A,D}} ] = AD;
+          ex[ {{B,C}} ] = BC;
+          ex[ {{B,D}} ] = BD;
+          ex[ {{C,D}} ] = CD;
+//           // augment nodes associated to chares surrounding our mesh chunk
+//           for (auto& m : m_msum)
+//             for (auto& s : m.second) {
+//               bool a = false, b = false, c = false, d = false;
+//               if (s.second.find( A ) != end(s.second)) a = true;
+//               if (s.second.find( B ) != end(s.second)) b = true;
+//               if (s.second.find( C ) != end(s.second)) c = true;
+//               if (s.second.find( D ) != end(s.second)) d = true;
+//               // if an edge os on the chare boundary, its newly added nodes too
+//               if (a && b) s.second.insert( AB );
+//               if (a && c) s.second.insert( AC );
+//               if (a && d) s.second.insert( AD );
+//               if (b && c) s.second.insert( BC );
+//               if (b && d) s.second.insert( BD );
+//               if (c && d) s.second.insert( CD );
+//             }
         }
       }
       // replace old with new connectivity (categorized by chares owned)
-      m_node = std::move( extconn );
+      m_node = std::move( newconn );
       tk::destroy( m_tetinpoel );
+    }
+
+    void updateEdgeNodes() {
+      // lambda to find out if both edge-endpoints are assigned by a fellow PE
+      auto need = [ this ]( const tk::UnsMesh::Edge& ed ) -> int {
+        for (const auto& c : m_communication)
+          if ( c.second.find(ed[0]) != end(c.second) &&
+               c.second.find(ed[1]) != end(c.second) )
+            return c.first;     // return PE that owns the edge
+        return -1;
+      };
+      // Collect edges whose new node is assigned by other PEs
+      for (const auto& c : m_chedgenodemap)
+        for (const auto& n : c.second) {
+          auto p = need( n.first );
+          if (p != -1) m_reqedgenodes[p].push_back( n.first );
+        }
+      // Request edge-nodes for which we do not assign IDs
+      for (const auto& p : m_reqedgenodes)
+        Group::thisProxy[ p.first ].requestEdgeNodes( CkMyPe(), p.second );
     }
 
     //! Compute final result of reordering
@@ -854,10 +935,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Uniformly refine mesh
-      refine();
+      //refine();
+      // Update IDs of newly added nodes during uniform refinement across PEs
+      //if (CkNumPes() == 1) refined(); else updateEdgeNodes();
+      refined();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
       //tk::destroy( m_communication );
+    }
+
+    void refined() {
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
       // associated to chare IDs (outer key). This is basically the inverse of
@@ -880,13 +967,18 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Update old global mesh node IDs to new ones (and add newly added ones)
       // associated to chare IDs bordering the mesh chunk held by and associated
       // to chare IDs we own
-      for (auto& c : m_msum) {
+//       for (auto& c : m_msum) {
+//         for (auto& s : c.second) {
+//           decltype(s.second) n;
+//           for (auto p : s.second) n.insert( tk::cref_find( m_newid, p ) );
+//           s.second.insert( begin(n), end(n) );
+//         }
+//       }
+      for (auto& c : m_msum)
         for (auto& s : c.second) {
-          decltype(s.second) n;
-          for (auto p : s.second) n.insert( tk::cref_find( m_newid, p ) );
-          s.second.insert( begin(n), end(n) );
+          for (auto& p : s.second) p = tk::cref_find( m_newid, p );
+          std::sort( begin(s.second), end(s.second) );
         }
-      }
       // Update unique global node IDs of chares our PE will contribute to to
       // now contain the new IDs resulting from reordering
       tk::destroy( m_id );
@@ -914,14 +1006,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       using P1 = std::pair< const std::size_t, std::size_t >;
       for (const auto& c : m_chnodemap) {
         auto x = std::max_element( begin(c.second), end(c.second),
-                 []( const P1& a, const P1& b ){ return a.first < b.first; } );
+                 [](const P1& a, const P1& b){ return a.first < b.first; } );
         if (x->first > m_upper) m_upper = x->first;
       }
-      using P2 = std::pair< const std::size_t, tk::UnsMesh::Edge >;
+      using P2 = std::pair< const tk::UnsMesh::Edge, std::size_t >;
       for (const auto& c : m_chedgenodemap) {
         auto x = std::max_element( begin(c.second), end(c.second),
-                 []( const P2& a, const P2& b ){ return a.first < b.first; } );
-        if (x->first > m_upper) m_upper = x->first;
+                 [](const P2& a, const P2& b){ return a.second < b.second; } );
+        if (x->second > m_upper) m_upper = x->second;
       }
       // The bounds are the dividers (global mesh point indices) at which the
       // linear system assembly is divided among PEs. However, Hypre and thus
@@ -973,11 +1065,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // Convert chare msum from set to vector
         std::unordered_map< int, std::vector< std::size_t > > msum;
         if (!m_msum.empty()) {
-          const auto& ms = tk::cref_find( m_msum, cid );
-          for (const auto& m : ms) {
-            auto& v = msum[ m.first ];
-            v.insert( end(v), begin(m.second), end(m.second) );
-          }
+msum = tk::cref_find( m_msum, cid );
+//           const auto& ms = tk::cref_find( m_msum, cid );
+//           for (const auto& m : ms) {
+//             auto& v = msum[ m.first ];
+//             v.insert( end(v), begin(m.second), end(m.second) );
+//           }
         }
         typename decltype(m_chedgenodemap)::mapped_type edgenodemap;
         if (!m_chedgenodemap.empty())
@@ -990,7 +1083,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 msum,
                                 tk::cref_find( m_chnodemap, cid ),
                                 edgenodemap,
-                                m_coord,
                                 m_nchare,
                                 CkMyPe() );
       }
