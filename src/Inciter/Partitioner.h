@@ -779,23 +779,10 @@ std::cout << '\n';
       // Activate SDAG wait for having requests arrive from other PEs for some
       // of our newly added node IDs
       wait4edgenodes();
-      // Lambda to add a new node to an edge
-      auto addnode = [ this ]( std::size_t p, std::size_t q, std::size_t& id ) {
-        auto& x = m_coord[0];
-        auto& y = m_coord[1];
-        auto& z = m_coord[2];
-        x[id] = (x[p]+x[q])/2.0;        // add new node coordinates
-        y[id] = (y[p]+y[q])/2.0;
-        z[id] = (z[p]+z[q])/2.0;
-        //if (p > q) std::swap( p, q );
-        m_edgenodes[ {{p,q}} ] = id++;  // associate new node id to edge
-//std::cout << CkMyPe() << " add: " << p << '-' << q << '\n';
-      };
       // generate data structure storing unique nodes connected to nodes
       std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
       auto esup = tk::genEsup( m_tetinpoel, 4 );
       auto nnode = m_coord[0].size();
-      auto id = nnode;
       for (std::size_t p=0; p<nnode; ++p)
         for (std::size_t i=esup.second[p]+1; i<=esup.second[p+1]; ++i )
           for (std::size_t n=0; n<4; ++n) {
@@ -803,16 +790,11 @@ std::cout << '\n';
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
           }
-      // count up old + new nodes to be added
-      std::size_t nn = nnode;
-      for (const auto& s : star) nn += s.second.size();
-      m_coord[0].resize( nn );
-      m_coord[1].resize( nn );
-      m_coord[2].resize( nn );
-      // add new node to all unique edges
+
+      // associate new nodes to all unique edges
       for (const auto& s : star)
         for (auto q : s.second)
-          addnode( s.first, q, id );
+          m_edgenodes[ {{ s.first, q }} ] = nnode++;
       // Trigger SDAG wait indicating that refinement of our mesh is complete
       refineowned_complete();
       tk::UnsMesh::Tet18 tet18;
