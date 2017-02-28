@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 24 Feb 2017 03:21:06 PM MST
+  \date      Tue 28 Feb 2017 11:04:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -491,7 +491,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details Maps associating old node IDs (as in file) to new node IDs (as
     //!   in producing contiguous-row-id linear system contributions) associated
     //!   to chare IDs (outer key). This is basically the inverse of m_newid and
-    //!   categorized by chares.
+    //!   categorized by chares. Note that this does not contain the nodes newly
+    //!   added during initial uniform mesh refinement.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chnodemap;
@@ -783,11 +784,12 @@ std::cout << '\n';
         auto& x = m_coord[0];
         auto& y = m_coord[1];
         auto& z = m_coord[2];
-        x.push_back( (x[p]+x[q])/2.0 ); // add new node coordinates
-        y.push_back( (y[p]+y[q])/2.0 );
-        z.push_back( (z[p]+z[q])/2.0 );
-        m_edgenodes[ {{ p,q }} ] = id++;// associate new node id to edge
-std::cout << CkMyPe() << " add: " << p << '-' << q << '\n';
+        x[id] = (x[p]+x[q])/2.0;        // add new node coordinates
+        y[id] = (y[p]+y[q])/2.0;
+        z[id] = (z[p]+z[q])/2.0;
+        //if (p > q) std::swap( p, q );
+        m_edgenodes[ {{p,q}} ] = id++;  // associate new node id to edge
+//std::cout << CkMyPe() << " add: " << p << '-' << q << '\n';
       };
       // generate data structure storing unique nodes connected to nodes
       std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
@@ -801,42 +803,27 @@ std::cout << CkMyPe() << " add: " << p << '-' << q << '\n';
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
           }
+      // count up old + new nodes to be added
+      std::size_t nn = nnode;
+      for (const auto& s : star) nn += s.second.size();
+      m_coord[0].resize( nn );
+      m_coord[1].resize( nn );
+      m_coord[2].resize( nn );
       // add new node to all unique edges
       for (const auto& s : star)
         for (auto q : s.second)
           addnode( s.first, q, id );
       // Trigger SDAG wait indicating that refinement of our mesh is complete
       refineowned_complete();
-      // Key type for a tetrahedron (element connectivity)
-      using Tet = std::array< std::size_t, 4 >;
-      using NewTets = std::array< std::size_t, 32 >;
-      // Hash functor for Tet
-      struct TetHash {
-        std::size_t operator()( const Tet& key ) const {
-          return std::hash< std::size_t >()( key[0] ) ^
-                 std::hash< std::size_t >()( key[1] ) ^
-                 std::hash< std::size_t >()( key[2] ) ^
-                 std::hash< std::size_t >()( key[3] );
-        }
-      };
-      // Key equal function for Tet
-      struct TetEq {
-        bool operator()( const Tet& l, const Tet& r ) const {
-          return (l[0]==r[0] || l[0]==r[1] || l[0]==r[2] || l[0]==r[3]) &&
-                 (l[1]==r[0] || l[1]==r[1] || l[1]==r[2] || l[1]==r[3]) &&
-                 (l[2]==r[0] || l[2]==r[1] || l[2]==r[2] || l[2]==r[3]) &&
-                 (l[3]==r[0] || l[3]==r[1] || l[3]==r[2] || l[3]==r[3]);
-        }
-      };
-      std::unordered_map< Tet, NewTets, TetHash, TetEq > newinpoel;
+      tk::UnsMesh::Tet18 tet18;
       // assigne 8 new elements in place of each old element (1:8)
-std::cout << CkMyPe() << " inpoel: ";
+//std::cout << CkMyPe() << " inpoel: ";
       for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
         const auto A = m_tetinpoel[e*4+0];
         const auto B = m_tetinpoel[e*4+1];
         const auto C = m_tetinpoel[e*4+2];
         const auto D = m_tetinpoel[e*4+3];
-std::cout << A << ',' << B << ',' << C << ',' << D << ' ';
+//std::cout << A << ',' << B << ',' << C << ',' << D << ' ';
         const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
         const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
         const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
@@ -844,25 +831,25 @@ std::cout << A << ',' << B << ',' << C << ',' << D << ' ';
         const auto BD = tk::cref_find( m_edgenodes, {{ B,D }} );
         const auto CD = tk::cref_find( m_edgenodes, {{ C,D }} );
         // construct 8 new tets
-        NewTets n{{  A, AB, AC, AD,
-                     B, BC, AB, BD,
-                     C, AC, BC, CD,
-                     D, AD, CD, BD,
-                    BC, CD, AC, BD,
-                    AB, BD, AC, AD,
-                    AB, BC, AC, BD,
-                    AC, BD, CD, AD }};
-        newinpoel[ {{ A,B,C,D }} ] = n; // associate new elements to old one
+        tk::UnsMesh::Child18 n{{  A, AB, AC, AD,
+                                  B, BC, AB, BD,
+                                  C, AC, BC, CD,
+                                  D, AD, CD, BD,
+                                 BC, CD, AC, BD,
+                                 AB, BD, AC, AD,
+                                 AB, BC, AC, BD,
+                                 AC, BD, CD, AD }};
+        tet18[ {{ A,B,C,D }} ] = n; // associate new elements to old one
       }
-std::cout << '\n';
+//std::cout << '\n';
       // update connectivity in global mesh node ids associated to chares owned
       decltype(m_node) newconn;
       for (const auto& conn : m_node) {
         auto& ch = newconn[ conn.first ];
-        auto& ex = m_chedgenodemap[ conn.first ];
+        auto& en = m_chedgenodemap[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
           // find the 8 new elements replacing e
-          const auto& n = tk::cref_find( newinpoel,
+          const auto& n = tk::cref_find( tet18,
                                          {{ m_tetinpoel[e*4+0],
                                             m_tetinpoel[e*4+1],
                                             m_tetinpoel[e*4+2],
@@ -879,12 +866,12 @@ std::cout << '\n';
           const auto BC = n[5];
           const auto BD = n[7];
           const auto CD = n[11];
-          ex[ {{A,B}} ] = AB;
-          ex[ {{A,C}} ] = AC;
-          ex[ {{A,D}} ] = AD;
-          ex[ {{B,C}} ] = BC;
-          ex[ {{B,D}} ] = BD;
-          ex[ {{C,D}} ] = CD;
+          en[ {{A,B}} ] = AB;
+          en[ {{A,C}} ] = AC;
+          en[ {{A,D}} ] = AD;
+          en[ {{B,C}} ] = BC;
+          en[ {{B,D}} ] = BD;
+          en[ {{C,D}} ] = CD;
 //           // augment nodes associated to chares surrounding our mesh chunk
 //           for (auto& m : m_msum)
 //             for (auto& s : m.second) {
@@ -935,10 +922,10 @@ std::cout << '\n';
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Uniformly refine mesh
-      //refine();
+      refine();
       // Update IDs of newly added nodes during uniform refinement across PEs
-      //if (CkNumPes() == 1) refined(); else updateEdgeNodes();
-      refined();
+      if (CkNumPes() == 1) refined(); else updateEdgeNodes();
+      //refined();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
       //tk::destroy( m_communication );

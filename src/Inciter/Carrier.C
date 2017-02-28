@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 27 Feb 2017 01:08:26 PM MST
+  \date      Tue 28 Feb 2017 12:58:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -160,6 +160,28 @@ Carrier::vol()
 {
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
+
+  // Lambda to add a new node to an edge
+  auto addnode = [ this ]( std::size_t p, std::size_t q, std::size_t id ) {
+    auto& x = m_coord[0];
+    auto& y = m_coord[1];
+    auto& z = m_coord[2];
+    x[id] = (x[p]+x[q])/2.0;    // add new node coordinates
+    y[id] = (y[p]+y[q])/2.0;
+    z[id] = (z[p]+z[q])/2.0;
+    //if (p > q) std::swap( p, q );
+//std::cout << "Carrier: " << thisIndex << " add: " << p << '-' << q << '\n';
+  };
+
+  // resize coordinate array to accommodate edge-nodes added during initial
+  // uniform refinement
+  std::size_t nn = m_coord[0].size() + m_edgenodemap.size();
+  m_coord[0].resize( nn );
+  m_coord[1].resize( nn );
+  m_coord[2].resize( nn );
+
+  for (const auto& ed : m_edgenodemap)
+    addnode( ed.first[0], ed.first[1], ed.second );
 
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
@@ -533,7 +555,10 @@ Carrier::readCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  for (auto p : m_gid) er.readNode( tk::cref_find(m_nodemap,p), x, y, z );
+  for (auto p : m_gid) {
+    auto n = m_nodemap.find(p);
+    if (n != end(m_nodemap)) er.readNode( n->second, x, y, z );
+  }
 }
 
 void

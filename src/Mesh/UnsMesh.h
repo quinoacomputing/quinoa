@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 24 Feb 2017 03:17:45 PM MST
+  \date      Tue 28 Feb 2017 12:49:15 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -28,30 +28,52 @@ class UnsMesh {
   public:
     using Coords = std::array< std::vector< tk::real >, 3 >;
 
-    //! Key type for an edge: IDs of two end-points
+    //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
-
-    //! Hash functor for Edge
+    //! Hash functor for Edge (node end-point order does not matter)
     struct EdgeHash {
       std::size_t operator()( const Edge& key ) const {
         return std::hash< std::size_t >()( key[0] ) ^
                std::hash< std::size_t >()( key[1] );
       }
     };
-
-    //! Key-equal function for Edge
+    //! Key-equal function for Edge (node end-point order does not matter)
     struct EdgeEq {
       bool operator()( const Edge& left, const Edge& right ) const {
         return (left[0] == right[0] && left[1] == right[1]) ||
                (left[0] == right[1] && left[1] == right[0]);
       }
     };
-
     //! Map associating IDs of mesh nodes to edges during edge refinement
     using EdgeNodes = std::unordered_map< tk::UnsMesh::Edge,
                                           std::size_t,
                                           tk::UnsMesh::EdgeHash,
                                           tk::UnsMesh::EdgeEq >;
+
+    //! Tetrahedron (element connectivity)
+    using Tet = std::array< std::size_t, 4 >;
+    //! 1:8-refined child tetrahedra (element connectivity) 
+    using Child18 = std::array< std::size_t, 32 >;
+    // Hash functor for Tet (node order does not matter)
+    struct TetHash {
+      std::size_t operator()( const Tet& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] ) ^
+               std::hash< std::size_t >()( key[2] ) ^
+               std::hash< std::size_t >()( key[3] );
+      }
+    };
+    // Key equal function for Tet (node order does not matter)
+    struct TetEq {
+      bool operator()( const Tet& l, const Tet& r ) const {
+        return (l[0]==r[0] || l[0]==r[1] || l[0]==r[2] || l[0]==r[3]) &&
+               (l[1]==r[0] || l[1]==r[1] || l[1]==r[2] || l[1]==r[3]) &&
+               (l[2]==r[0] || l[2]==r[1] || l[2]==r[2] || l[2]==r[3]) &&
+               (l[3]==r[0] || l[3]==r[1] || l[3]==r[2] || l[3]==r[3]);
+      }
+    };
+    //! Map associating 1:8-refined child tetrahedra (Child18) to a parent Tet
+    using Tet18 = std::unordered_map< Tet, Child18, TetHash, TetEq >;
 
     /** @name Constructors */
     ///@{
