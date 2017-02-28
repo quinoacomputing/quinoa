@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 03:49:54 PM MST
+  \date      Tue 28 Feb 2017 03:58:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -404,6 +404,10 @@ class Carrier : public CBase_Carrier {
 
     //! Read coordinates of mesh nodes given
     void readCoords();
+
+    //! \brief Add coordinates of mesh nodes newly generated to edge-mid points
+    //!    during initial refinement
+    void addEdgeNodeCoords();
 
     //! Compute left-hand side of transport equations
     void lhs();
