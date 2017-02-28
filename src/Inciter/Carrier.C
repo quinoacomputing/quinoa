@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 12:58:50 PM MST
+  \date      Tue 28 Feb 2017 03:49:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -87,7 +87,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
   m_nodemap( nodemap ),
-  m_edgenodemap( edgenodemap ),
+  m_edgenodes( edgenodemap ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
@@ -175,12 +175,12 @@ Carrier::vol()
 
   // resize coordinate array to accommodate edge-nodes added during initial
   // uniform refinement
-  std::size_t nn = m_coord[0].size() + m_edgenodemap.size();
+  std::size_t nn = m_coord[0].size() + m_edgenodes.size();
   m_coord[0].resize( nn );
   m_coord[1].resize( nn );
   m_coord[2].resize( nn );
 
-  for (const auto& ed : m_edgenodemap)
+  for (const auto& ed : m_edgenodes)
     addnode( ed.first[0], ed.first[1], ed.second );
 
   const auto& x = m_coord[0];
@@ -307,7 +307,7 @@ Carrier::bc()
               -> std::vector< std::pair< bool, std::size_t > >
   {
     std::vector< std::pair< bool, std::size_t > > en;
-    for (const auto& ed : m_edgenodemap)
+    for (const auto& ed : m_edgenodes)
       if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
            bcnodes.find( ed.first[1] ) != end(bcnodes) )
         en.push_back( { true, ed.second } );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Mon 27 Feb 2017 12:26:05 PM MST
+  \date      Tue 28 Feb 2017 03:49:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -273,7 +273,7 @@ class Carrier : public CBase_Carrier {
       p | m_particlewriter;
       p | m_fluxcorrector;
       p | m_nodemap;
-      p | m_edgenodemap;
+      p | m_edgenodes;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -353,7 +353,7 @@ class Carrier : public CBase_Carrier {
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.
-    tk::UnsMesh::EdgeNodes m_edgenodemap;
+    tk::UnsMesh::EdgeNodes m_edgenodes;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of

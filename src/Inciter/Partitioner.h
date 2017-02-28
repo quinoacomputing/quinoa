@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 11:04:45 AM MST
+  \date      Tue 28 Feb 2017 03:49:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -158,7 +158,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_id(),
       m_newid(),
       m_chnodemap(),
-      m_chedgenodemap(),
+      m_chedgenodes(),
       m_reqedgenodes(),
       m_recedgenodes(),
       m_cost( 0.0 ),
@@ -504,7 +504,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   node IDs, as in file) associated to chare IDs (outer key) for only
     //!   the nodes newly added as a result of initial uniform refinement.
     //! \note Used for looking up boundary conditions, see, e.g., Carrier::bc()
-    std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodemap;
+    std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodes;
     std::map< int, std::vector< tk::UnsMesh::Edge > > m_reqedgenodes;
     std::map< int, std::vector< tk::UnsMesh::Edge > > m_recedgenodes;
     //! Communication cost of linear system merging for our PE
@@ -828,7 +828,7 @@ std::cout << '\n';
       decltype(m_node) newconn;
       for (const auto& conn : m_node) {
         auto& ch = newconn[ conn.first ];
-        auto& en = m_chedgenodemap[ conn.first ];
+        auto& en = m_chedgenodes[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
           // find the 8 new elements replacing e
           const auto& n = tk::cref_find( tet18,
@@ -887,7 +887,7 @@ std::cout << '\n';
         return -1;
       };
       // Collect edges whose new node is assigned by other PEs
-      for (const auto& c : m_chedgenodemap)
+      for (const auto& c : m_chedgenodes)
         for (const auto& n : c.second) {
           auto p = need( n.first );
           if (p != -1) m_reqedgenodes[p].push_back( n.first );
@@ -979,7 +979,7 @@ std::cout << '\n';
         if (x->first > m_upper) m_upper = x->first;
       }
       using P2 = std::pair< const tk::UnsMesh::Edge, std::size_t >;
-      for (const auto& c : m_chedgenodemap) {
+      for (const auto& c : m_chedgenodes) {
         auto x = std::max_element( begin(c.second), end(c.second),
                  [](const P2& a, const P2& b){ return a.second < b.second; } );
         if (x->second > m_upper) m_upper = x->second;
@@ -1041,9 +1041,8 @@ msum = tk::cref_find( m_msum, cid );
 //             v.insert( end(v), begin(m.second), end(m.second) );
 //           }
         }
-        typename decltype(m_chedgenodemap)::mapped_type edgenodemap;
-        if (!m_chedgenodemap.empty())
-          edgenodemap = tk::cref_find( m_chedgenodemap, cid );
+        typename decltype(m_chedgenodes)::mapped_type en;
+        if (!m_chedgenodes.empty()) en = tk::cref_find( m_chedgenodes, cid );
         // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
@@ -1051,7 +1050,7 @@ msum = tk::cref_find( m_msum, cid );
                                 tk::cref_find( m_node, cid ),
                                 msum,
                                 tk::cref_find( m_chnodemap, cid ),
-                                edgenodemap,
+                                en,
                                 m_nchare,
                                 CkMyPe() );
       }
