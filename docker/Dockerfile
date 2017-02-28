@@ -1,4 +1,4 @@
-FROM quinoacomputing/buildenv:gentoo 
+FROM quinoacomputing/buildenv:gentoo
 
 ARG COVERAGE
 ARG CC
@@ -11,7 +11,7 @@ ENV CI true
 ENV TRAVIS true
 ARG TRAVIS_BRANCH
 ARG TRAVIS_JOB_NUMBER
-ARG TRAVIS_PULL_REQUEST 
+ARG TRAVIS_PULL_REQUEST
 ARG TRAVIS_JOB_ID
 ARG TRAVIS_TAG
 ARG TRAVIS_REPO_SLUG
@@ -29,7 +29,11 @@ RUN mkdir build
 
 WORKDIR build
 RUN ccache -z
-RUN cmake ${COVERAGE:+-DLCOV=/bin/true} -DGENHTML=/bin/true ../src
+RUN cmake \
+    ${COVERAGE:+-DLCOV=/bin/true} \
+    -DGENHTML=/bin/true \
+    -DRUNNER_ARGS="" \
+    ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
 RUN ctest -V -R walker:Dirichlet_pe1
