@@ -28,7 +28,7 @@ script:
                 -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} ${HOME}/docker/ &&
     rm -rf ${HOME}/.ccache &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash) &&
-    docker cp ${CON}:/home/flecsi/.ccache ${HOME}/
+    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/
 
 after_success:
   - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
