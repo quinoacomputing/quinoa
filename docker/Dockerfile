@@ -36,7 +36,7 @@ RUN cmake \
     ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
-RUN ctest -V -R walker:Dirichlet_pe1
+RUN ../script/run_tests.sh
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
