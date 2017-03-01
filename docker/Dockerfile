@@ -36,7 +36,7 @@ RUN cmake \
     ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
-RUN ctest -E "walker:SkewNormalPDF_pe8"
+RUN ctest -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
