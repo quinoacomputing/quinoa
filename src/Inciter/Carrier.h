@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 03:58:54 PM MST
+  \date      Wed 01 Mar 2017 08:50:19 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -150,7 +150,7 @@ class Carrier : public CBase_Carrier {
                const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
                const std::unordered_map< int,
-                       std::vector< std::size_t > >& msum,
+                       std::unordered_set< std::size_t > >& msum,
                const std::unordered_map< std::size_t, std::size_t >& nodemap,
                const tk::UnsMesh::EdgeNodes& edgenodemap,
                int ncarr );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 03:59:26 PM MST
+  \date      Wed 01 Mar 2017 09:10:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -64,7 +64,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const ParticleWriterProxy& pw,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
-                          std::vector< std::size_t > >& msum,
+                          std::unordered_set< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& nodemap,
                   const tk::UnsMesh::EdgeNodes& edgenodemap,
                   int ncarr ) :
@@ -102,13 +102,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_msum( msum ),
   m_vol( m_gid.size(), 0.0 ),
   m_bid(),
   m_pc(),
   m_qc(),
-  m_ac(),
-                                                        // 0 = no particles
+  m_ac(),                                               // 0 = no particles
   m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
 // *****************************************************************************
 //  Constructor
@@ -130,6 +128,12 @@ Carrier::Carrier( const TransporterProxy& transporter,
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
+
+  // Convert neighbor nodes to vectors from sets
+  for (const auto& n : msum) {
+    auto& v = m_msum[ n.first ];
+    v.insert( end(v), begin(n.second), end(n.second) );
+  }
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
@@ -191,7 +195,9 @@ Carrier::vol()
   else
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
-      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
+      for (auto i : n.second) {
+// if (m_lid.find(i)==end(m_lid)) std::cout << thisIndex << " not found: " << i << '\n';
+v.push_back( m_vol[ tk::cref_find(m_lid,i) ] ); }
       thisProxy[ n.first ].comvol( n.second, v );
     }
 }

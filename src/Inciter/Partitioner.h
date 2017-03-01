@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 03:49:11 PM MST
+  \date      Wed 01 Mar 2017 08:50:33 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -375,7 +375,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         for (auto c : chares) {           // surrounded chares
           auto& sch = m_msum[c];
           for (auto s : h.second)         // surrounding chares
-            if (s != c) sch[s].push_back( h.first );
+            if (s != c) sch[ s ].insert( h.first );
         }
       }
       // Associate global mesh node IDs to lower PEs we will need to receive
@@ -523,7 +523,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   along the border of chares (at which the chares will need to
     //!   communicate).
     std::unordered_map< int,
-      std::unordered_map< int, std::vector< std::size_t > > > m_msum;
+      std::unordered_map< int, std::unordered_set< std::size_t > > > m_msum;
     //! \brief IDs of newly added nodes associated to edges during initial
     //!   uniform mesh refinement
     tk::UnsMesh::EdgeNodes m_edgenodes;
@@ -854,22 +854,22 @@ std::cout << '\n';
           en[ {{B,C}} ] = BC;
           en[ {{B,D}} ] = BD;
           en[ {{C,D}} ] = CD;
-//           // augment nodes associated to chares surrounding our mesh chunk
-//           for (auto& m : m_msum)
-//             for (auto& s : m.second) {
-//               bool a = false, b = false, c = false, d = false;
-//               if (s.second.find( A ) != end(s.second)) a = true;
-//               if (s.second.find( B ) != end(s.second)) b = true;
-//               if (s.second.find( C ) != end(s.second)) c = true;
-//               if (s.second.find( D ) != end(s.second)) d = true;
-//               // if an edge os on the chare boundary, its newly added nodes too
-//               if (a && b) s.second.insert( AB );
-//               if (a && c) s.second.insert( AC );
-//               if (a && d) s.second.insert( AD );
-//               if (b && c) s.second.insert( BC );
-//               if (b && d) s.second.insert( BD );
-//               if (c && d) s.second.insert( CD );
-//             }
+          // augment nodes associated to chares surrounding our mesh chunk
+          for (auto& m : m_msum)
+            for (auto& s : m.second) {
+              bool a = false, b = false, c = false, d = false;
+              if (s.second.find( A ) != end(s.second)) a = true;
+              if (s.second.find( B ) != end(s.second)) b = true;
+              if (s.second.find( C ) != end(s.second)) c = true;
+              if (s.second.find( D ) != end(s.second)) d = true;
+              // if an edge os on the chare boundary, its newly added nodes too
+              if (a && b) s.second.insert( AB );
+              if (a && c) s.second.insert( AC );
+              if (a && d) s.second.insert( AD );
+              if (b && c) s.second.insert( BC );
+              if (b && d) s.second.insert( BD );
+              if (c && d) s.second.insert( CD );
+            }
         }
       }
       // replace old with new connectivity (categorized by chares owned)
@@ -904,10 +904,10 @@ std::cout << '\n';
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
       // Uniformly refine mesh
-      refine();
+      //refine();
       // Update IDs of newly added nodes during uniform refinement across PEs
-      if (CkNumPes() == 1) refined(); else updateEdgeNodes();
-      //refined();
+      //if (CkNumPes() == 1) refined(); else updateEdgeNodes();
+      refined();
       // Free storage of communication map used for distributed mesh node
       // reordering as it is no longer needed after reordering.
       //tk::destroy( m_communication );
@@ -933,21 +933,28 @@ std::cout << '\n';
           const auto& n = m_newid.find(p);
           if (n != end(m_newid)) p = n->second;
         }
+// std::cout << CkMyPe() << " inpoel: ";
+// for (const auto& c : m_node) for (auto i : c.second) std::cout << i << ' ';
+// std::cout << '\n';
       // Update old global mesh node IDs to new ones (and add newly added ones)
       // associated to chare IDs bordering the mesh chunk held by and associated
       // to chare IDs we own
-//       for (auto& c : m_msum) {
-//         for (auto& s : c.second) {
-//           decltype(s.second) n;
-//           for (auto p : s.second) n.insert( tk::cref_find( m_newid, p ) );
-//           s.second.insert( begin(n), end(n) );
-//         }
-//       }
-      for (auto& c : m_msum)
+      for (auto& c : m_msum) {
         for (auto& s : c.second) {
-          for (auto& p : s.second) p = tk::cref_find( m_newid, p );
-          std::sort( begin(s.second), end(s.second) );
+          decltype(s.second) n;
+          for (auto p : s.second) n.insert( tk::cref_find( m_newid, p ) );
+          s.second = std::move( n );
         }
+      }
+// std::cout << CkMyPe() << " msum: ";
+// for (const auto& c : m_msum) {
+//   std::cout << c.first << "> ";
+//   for (auto n : c.second) {
+//     std::cout << n.first << ": ";
+//     for (auto i : n.second) std::cout << i << ' ';
+//   }
+// }
+// std::cout << '\n';
       // Update unique global node IDs of chares our PE will contribute to to
       // now contain the new IDs resulting from reordering
       tk::destroy( m_id );
@@ -1031,18 +1038,12 @@ std::cout << '\n';
       for (int c=0; c<mynchare; ++c) {
         // Compute chare ID
         auto cid = CkMyPe() * chunksize + c;
-        // Convert chare msum from set to vector
-        std::unordered_map< int, std::vector< std::size_t > > msum;
-        if (!m_msum.empty()) {
-msum = tk::cref_find( m_msum, cid );
-//           const auto& ms = tk::cref_find( m_msum, cid );
-//           for (const auto& m : ms) {
-//             auto& v = msum[ m.first ];
-//             v.insert( end(v), begin(m.second), end(m.second) );
-//           }
-        }
-        typename decltype(m_chedgenodes)::mapped_type en;
-        if (!m_chedgenodes.empty()) en = tk::cref_find( m_chedgenodes, cid );
+        // Guard those searches that operate on empty containers in serial
+        typename decltype(m_msum)::mapped_type msum;
+        if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
+        typename decltype(m_chedgenodes)::mapped_type edgenodes;
+        if (!m_chedgenodes.empty())
+          edgenodes = tk::cref_find( m_chedgenodes, cid );
         // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
@@ -1050,7 +1051,7 @@ msum = tk::cref_find( m_msum, cid );
                                 tk::cref_find( m_node, cid ),
                                 msum,
                                 tk::cref_find( m_chnodemap, cid ),
-                                en,
+                                edgenodes,
                                 m_nchare,
                                 CkMyPe() );
       }
