@@ -33,10 +33,12 @@ RUN cmake \
     ${COVERAGE:+-DLCOV=/bin/true} \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="" \
+    -DCMAKE_BUILD_TYPE=Release \
     ../src
 RUN make VERBOSE=1 -j2
 RUN ccache -s
-RUN ctest -E "_pe[45678]"
+RUN ./charmrun +p2 Main/unittest -v
+RUN ctest -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
