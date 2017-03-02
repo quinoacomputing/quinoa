@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Detect prerequesites for code coverage analysis
-# \date      Mon 27 Feb 2017 07:54:50 AM MST
+# \date      Thu 02 Mar 2017 10:30:26 AM MST
 #
 ################################################################################
 
@@ -27,8 +27,7 @@ if ( GCOV AND
      GENHTML AND
      SED AND
      ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
-       CMAKE_CXX_COMPILER_ID STREQUAL "GNU" ) AND
-     CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
+       CMAKE_CXX_COMPILER_ID STREQUAL "GNU" ) )
 
   message(STATUS "Code coverage analysis enabled: compiler:${CMAKE_CXX_COMPILER_ID}, build:${CMAKE_BUILD_TYPE}, gcov:${GCOV}, lcov:${LCOV}, genhtml:${GENHTML}, sed:${SED}")
 
