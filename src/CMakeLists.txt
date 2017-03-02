@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 17 Feb 2017 01:59:03 PM MST
+# \date      Mon 27 Feb 2017 07:22:24 AM MST
 #
 ################################################################################
 
@@ -380,8 +380,8 @@ include(DetectCodeCoverage)
 
 # Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -O0 --coverage -fprofile-arcs -ftest-coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
 # Echo compiler flags
