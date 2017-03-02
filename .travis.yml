@@ -13,7 +13,7 @@ env:
 script:
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
-  - sed -i "1s/gentoo/${DISTRO}/" ${HOME}/docker/Dockerfile
+  - sed -i "1s/gentoo/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
