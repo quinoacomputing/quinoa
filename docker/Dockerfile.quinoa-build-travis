@@ -30,7 +30,8 @@ RUN mkdir build
 WORKDIR build
 RUN ccache -z
 RUN cmake \
-    ${COVERAGE:+-DLCOV=/bin/true} \
+    ${COVERAGE:+-DCOVERAGE=ON} \
+    -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="" \
     -DCMAKE_BUILD_TYPE=Release \
