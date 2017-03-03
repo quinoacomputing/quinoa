@@ -10,6 +10,11 @@ env:
     - DISTRO=gentoo DOCKERHUB=true
     - DISTRO=gentoo COVERAGE=ON
 
+matrix:
+  allow_failures:
+    - compiler: clang #takes too long
+      env: DISTRO=gentoo COVERAGE=ON 
+
 script:
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
