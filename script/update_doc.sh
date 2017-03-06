@@ -4,7 +4,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Sun 15 Jan 2017 07:59:57 PM MST
+# \date      Mon 06 Mar 2017 10:52:29 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script clones the github repository, builds the third-party
@@ -57,19 +57,19 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   cd ${BUILDDIR}
 
   # Generate unit test coverage report, move it to ${WORKDIR}, and clean
-  cmake ../src
+  cmake -DCOVERAGE=on ../src
   make -sj$CPUS unittest_coverage
   mv doc/html/unittest_coverage ${WORKDIR}
   rm * -rf
 
   # Generate regression test coverage report, move it to ${WORKDIR}, and clean
-  cmake ../src
+  cmake -DCOVERAGE=on ../src
   make -sj$CPUS regression_coverage
   mv doc/html/regression_coverage ${WORKDIR}
   rm * -rf
 
   # Generate full test coverage report, move it to ${WORKDIR}, and clean
-  cmake ../src
+  cmake -DCOVERAGE=on ../src
   make -sj$CPUS test_coverage
   mv doc/html/test_coverage ${WORKDIR}
   rm * -rf
