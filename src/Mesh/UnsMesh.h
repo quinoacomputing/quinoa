@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Tue 28 Feb 2017 12:49:15 PM MST
+  \date      Tue 07 Mar 2017 08:40:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -15,6 +15,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "Types.h"
@@ -44,11 +45,19 @@ class UnsMesh {
                (left[0] == right[1] && left[1] == right[0]);
       }
     };
-    //! Map associating IDs of mesh nodes to edges during edge refinement
+    //! Map associating IDs of mesh nodes to edges
     using EdgeNodes = std::unordered_map< tk::UnsMesh::Edge,
                                           std::size_t,
                                           tk::UnsMesh::EdgeHash,
                                           tk::UnsMesh::EdgeEq >;
+    using EdgeNodeCoords = std::unordered_map< tk::UnsMesh::Edge,
+                                               std::array< tk::real, 3 >,
+                                               tk::UnsMesh::EdgeHash,
+                                               tk::UnsMesh::EdgeEq >;
+    //! Unique set of edges
+    using Edges = std::unordered_set< tk::UnsMesh::Edge,
+                                      tk::UnsMesh::EdgeHash,
+                                      tk::UnsMesh::EdgeEq >;
 
     //! Tetrahedron (element connectivity)
     using Tet = std::array< std::size_t, 4 >;

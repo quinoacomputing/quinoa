@@ -113,6 +113,11 @@ class Transporter : public CBase_Transporter {
     //!   for computing the communication maps required for node ID reordering
     void flattened() { m_partitioner.gather(); }
 
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished their initial uniform mesh refinement and they are ready
+    //!   for communicating their newly added shared edge-node IDs
+    void refined() { m_partitioner.edges(); }
+
     //! \brief Reduction target estimating the average communication cost of
     //!   merging the linear system
     void aveCost( tk::real c );

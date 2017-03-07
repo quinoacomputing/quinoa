@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Wed 01 Mar 2017 09:10:18 AM MST
+  \date      Tue 07 Mar 2017 09:09:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -129,6 +129,10 @@ Carrier::Carrier( const TransporterProxy& transporter,
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
+// std::cout << thisIndex << " nodemap (n:o): ";
+// for (const auto& n : m_nodemap) std::cout << n.first << ':' << n.second << ' ';
+// std::cout << '\n';
+
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
     auto& v = m_msum[ n.first ];
@@ -183,7 +187,11 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-    Assert( J > 0, "Element Jacobian non-positive" );
+if (J<0) { std::cout << '\n' << CkMyPe() << " J negative: " << m_gid[N[0]] << ',' << m_gid[N[1]] << ',' << m_gid[N[2]] << ',' << m_gid[N[3]] << ", coords: " <<
+x[N[0]] << ", " << x[N[1]] << ", " << x[N[2]] << ", " << x[N[3]] << ", " <<
+y[N[0]] << ", " << y[N[1]] << ", " << y[N[2]] << ", " << y[N[3]] << ", " <<
+z[N[0]] << ", " << z[N[1]] << ", " << z[N[2]] << ", " << z[N[3]]; }
+    //Assert( J > 0, "Element Jacobian non-positive" );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
@@ -567,16 +575,37 @@ Carrier::addEdgeNodeCoords()
     z[id] = (z[p]+z[q])/2.0;
   };
 
+// std::cout << CkMyPe() << ", lid: ";
+// for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
+// std::cout << '\n';
+// for (const auto& e : m_edgenodes) {
+// auto it = m_lid.find( e.second );
+// if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node " << e.second << '\n';
+// }
+
   // resize coordinate array to accommodate edge-nodes added during initial
   // uniform refinement
-  std::size_t nn = m_coord[0].size() + m_edgenodes.size();
+  std::size_t nn = m_coord[0].size();
+  if (!m_edgenodes.empty()) {
+    using P = decltype(m_edgenodes)::value_type;
+    auto x = std::max_element( begin(m_edgenodes), end(m_edgenodes),
+               [ this ](const P& a, const P& b)
+               { return tk::cref_find( m_lid, a.second ) <
+                          tk::cref_find( m_lid, b.second ); } );
+    nn += tk::cref_find( m_lid, x->second ) + 1;
+  }
   m_coord[0].resize( nn );
   m_coord[1].resize( nn );
   m_coord[2].resize( nn );
 
   // add new nodes
-  for (const auto& ed : m_edgenodes)
-    addnode( ed.first[0], ed.first[1], ed.second );
+  for (const auto& ed : m_edgenodes) {
+    Assert( ed.second < nn, "Carrier chare " + std::to_string(thisIndex) +
+                            " indexing out of bounds: " +
+                            std::to_string(ed.second) + " must be lower than " +
+                            std::to_string(nn) );
+    addnode( ed.first[0], ed.first[1], tk::cref_find( m_lid, ed.second ) );
+  }
 }
 
 void

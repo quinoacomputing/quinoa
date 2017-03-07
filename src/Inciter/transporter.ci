@@ -21,6 +21,7 @@ module transporter {
       entry [reductiontarget] void partition();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
+      entry [reductiontarget] void refined();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void rowcomplete();
       entry [reductiontarget] void volcomplete();

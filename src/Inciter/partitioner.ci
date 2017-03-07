@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Mon 27 Feb 2017 10:12:01 AM MST
+  \date      Tue 07 Mar 2017 08:46:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -42,15 +42,15 @@ module partitioner {
       entry void request( int pe, const std::unordered_set< std::size_t >& id );
       entry void neworder(
                    const std::unordered_map< std::size_t, std::size_t >& id );
-      entry void newedgenodes( int frompe, const tk::UnsMesh::EdgeNodes& id );
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
       entry void query( int pe, const std::set< std::size_t >& id );
       entry void mask( int pe, const std::unordered_map< std::size_t,
                                        std::vector< int > >& ch );
-      entry void requestEdgeNodes( int pe,
-                                   const std::vector< tk::UnsMesh::Edge >& e );
+      entry void edges();
+      entry void sharededges( int pe, const tk::UnsMesh::EdgeNodes& sh,
+                              const tk::UnsMesh::EdgeNodeCoords& shc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -148,11 +148,6 @@ module partitioner {
         serial "prepare" { prepare(); }
       };
 
-      entry void wait4edgenodes() {
-        when refineowned_complete(), edgenodes_requested_complete()
-        serial "prepareedgenodes" { prepareEdgeNodes(); }
-      };
-
       entry void wait4bounds() {
         when lower_complete(), upper_complete(), participated_complete()
         serial "create" { create(); }
@@ -160,8 +155,6 @@ module partitioner {
 
       entry void reorderowned_complete();
       entry void nodes_requested_complete();
-      entry void refineowned_complete();
-      entry void edgenodes_requested_complete();
       entry void lower_complete();
       entry void upper_complete();
       entry void participated_complete();

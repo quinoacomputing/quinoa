@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 10 Feb 2017 06:25:07 PM MST
+  \date      Tue 07 Mar 2017 08:59:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -344,6 +344,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \param[in] lower Lower index of the global rows on my PE
     //! \param[in] upper Upper index of the global rows on my PE
     void bounds( int p, std::size_t lower, std::size_t upper ) {
+      Assert( lower < upper, "Lower bound must be lower than the upper bound: "
+              "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
+              ") sent by PE " + std::to_string(p) );
       // Store our bounds
       if (p == CkMyPe()) {
         m_lower = lower;
@@ -351,6 +354,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       }
       // Store inverse of PE-division map stored on all PE
       m_div[ {lower,upper} ] = p;
+//std::cout << CkMyPe() << '(' << p << ") linsys:bounds: " << lower << "..." << upper << '\n';
       // If we have all PEs' bounds, signal the runtime system to continue
       if (m_div.size() == static_cast<std::size_t>(CkNumPes())) {
         // Create my PE's lhs matrix distributed across all PEs
@@ -360,6 +364,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
         // Create linear solver
         m_solver.create();
+//std::cout << '\n' << CkMyPe() << " linsys:bounds done: " << m_lower << ',' << m_upper;
         // Signal back to host that setup of workers can start
         signal2host_setup( m_host );
       }
