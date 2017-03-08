@@ -4,10 +4,10 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Mon 06 Mar 2017 10:52:29 AM MST
+# \date      Wed 08 Mar 2017 07:10:20 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
-# \details   This script clones the github repository, builds the third-party
+# \details   This script assumes a new clone in /tmp/q, builds the third-party
 #   libraries and the code in DEBUG, generates the documentation, and uploads to
 #   github.
 # 
@@ -28,8 +28,6 @@ cleanup()
 }
 
 # Clone from github
-cd ${WORKDIR}
-git clone git@github.com:quinoacomputing/quinoa.git
 cd ${WORKDIR}/quinoa
 
 # Get git commit sha1 for latest code commit and for the commit which doc was
