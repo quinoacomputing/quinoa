@@ -9,6 +9,7 @@ env:
   matrix:
     - DISTRO=gentoo DOCKERHUB=true
     - DISTRO=gentoo COVERAGE=ON
+    - DISTRO=gentoo WERROR=ON
 
 matrix:
   allow_failures:
