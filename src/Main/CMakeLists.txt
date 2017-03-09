@@ -183,9 +183,3 @@ target_link_libraries(${WALKER_EXECUTABLE}
 
 # Add custom dependencies for Walker's main Charm++ module
 addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
-
-### NumDiff executable #########################################################
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tool/src/ndiff
-                 ${CMAKE_BINARY_DIR}/regression/ndiff)
-
-message(STATUS "Executable '${NUMDIFF_EXECUTABLE}' configured")

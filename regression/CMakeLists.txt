@@ -4,7 +4,6 @@
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 # Set paths required for running tests
-set(NDIFF_EXECUTABLE ${CMAKE_BINARY_DIR}/regression/ndiff/numdiff)
 set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
 # Find gmsh executable

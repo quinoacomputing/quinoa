@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Mon 27 Feb 2017 07:22:24 AM MST
+# \date      Sun 05 Mar 2017 09:00:19 PM MST
 #
 ################################################################################
 
@@ -405,7 +405,6 @@ endif()
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
-set(NUMDIFF_EXECUTABLE numdiff)
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
@@ -420,8 +419,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${RNGTEST_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
                 ${WALKER_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE}
-                ${NUMDIFF_EXECUTABLE})
+                ${UNITTEST_EXECUTABLE})
 
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code

@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Fri 17 Feb 2017 01:20:58 PM MST
+# \date      Sun 05 Mar 2017 09:03:21 PM MST
 #
 ################################################################################
 
@@ -128,7 +128,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   string(REPLACE ";" " " ARG_LABELS "${ARG_LABELS}")
 
   # Set textual diff tool
-  set(TEXT_DIFF_PROG ${NDIFF_EXECUTABLE})
+  set(TEXT_DIFF_PROG ${NUMDIFF_EXECUTABLE})
   if (ARG_TEXT_DIFF_PROG)
     set(TEXT_DIFF_PROG ${ARG_TEXT_DIFF_PROG})
   endif()
