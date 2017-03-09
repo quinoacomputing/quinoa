@@ -4,7 +4,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Wed 08 Mar 2017 07:10:20 AM MST
+# \date      Thu 09 Mar 2017 07:05:49 AM MST
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script assumes a new clone in /tmp/q, builds the third-party
@@ -18,7 +18,6 @@ trap cleanup INT TERM EXIT
 
 # Set work directory
 WORKDIR=/tmp/q
-rm -rf ${WORKDIR} && mkdir ${WORKDIR}
 
 # Remove work directory
 cleanup()
