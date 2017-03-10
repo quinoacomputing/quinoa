@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Sun 05 Mar 2017 09:00:19 PM MST
+# \date      Fri 10 Mar 2017 07:12:19 AM MST
 #
 ################################################################################
 
@@ -565,8 +565,7 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                            DEPENDS ${NONTEST_EXECUTABLES}
-                                    ${NUMDIFF_EXECUTABLE})
+                            DEPENDS ${NONTEST_EXECUTABLES})
 endif()
 
 # Setup code coverage for all individual coverage targets included
@@ -574,6 +573,5 @@ if(CODE_COVERAGE)
   setup_target_for_all_coverage(all doc/html test_coverage
                                 ${RUNNER} ${RUNNER_NCPUS_ARG}
                                 DEPENDS ${NONTEST_EXECUTABLES}
-                                        ${UNITTEST_EXECUTABLE}
-                                        ${NUMDIFF_EXECUTABLE})
+                                        ${UNITTEST_EXECUTABLE})
 endif()
