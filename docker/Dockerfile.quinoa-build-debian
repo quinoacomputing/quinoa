@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Wed 18 Jan 2017 10:34:27 AM MST
+# \date      Fri 10 Mar 2017 09:53:44 AM MST
 #
 ################################################################################
 
@@ -54,6 +54,6 @@ RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
 # Clean code
 RUN rm -rf /quinoa
