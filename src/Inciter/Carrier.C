@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 07 Mar 2017 09:09:48 AM MST
+  \date      Fri 10 Mar 2017 10:07:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -548,12 +548,15 @@ Carrier::readCoords()
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
+  auto nnode = er.readHeader();
+
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
   for (auto p : m_gid) {
     auto n = m_nodemap.find(p);
-    if (n != end(m_nodemap)) er.readNode( n->second, x, y, z );
+    if (n != end(m_nodemap) && n->second < nnode)
+      er.readNode( n->second, x, y, z );
   }
 }
 
@@ -575,13 +578,13 @@ Carrier::addEdgeNodeCoords()
     z[id] = (z[p]+z[q])/2.0;
   };
 
-// std::cout << CkMyPe() << ", lid: ";
-// for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
-// std::cout << '\n';
-// for (const auto& e : m_edgenodes) {
-// auto it = m_lid.find( e.second );
-// if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node " << e.second << '\n';
-// }
+std::cout << CkMyPe() << ", lid: ";
+for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
+std::cout << '\n';
+for (const auto& e : m_edgenodes) {
+auto it = m_lid.find( e.second );
+if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node " << e.second << '\n';
+}
 
   // resize coordinate array to accommodate edge-nodes added during initial
   // uniform refinement
@@ -592,11 +595,12 @@ Carrier::addEdgeNodeCoords()
                [ this ](const P& a, const P& b)
                { return tk::cref_find( m_lid, a.second ) <
                           tk::cref_find( m_lid, b.second ); } );
-    nn += tk::cref_find( m_lid, x->second ) + 1;
+    nn = tk::cref_find( m_lid, x->second ) + 1;
+//std::cout << "nn: " << m_coord[0].size() << ", " << nn << '\n';
+    m_coord[0].resize( nn );
+    m_coord[1].resize( nn );
+    m_coord[2].resize( nn );
   }
-  m_coord[0].resize( nn );
-  m_coord[1].resize( nn );
-  m_coord[2].resize( nn );
 
   // add new nodes
   for (const auto& ed : m_edgenodes) {

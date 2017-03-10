@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Tue 07 Mar 2017 08:46:49 AM MST
+  \date      Thu 09 Mar 2017 11:29:38 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -39,15 +39,21 @@ module partitioner {
       entry void recv();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
-      entry void request( int pe, const std::unordered_set< std::size_t >& id );
+      entry void request( int pe, const std::unordered_set< std::size_t >& nd );
+      entry void request( int pe, const tk::UnsMesh::Edges& ed );
       entry void neworder(
-                   const std::unordered_map< std::size_t, std::size_t >& id );
+                   const std::unordered_map< std::size_t, std::size_t >& nd );
+      entry void neworder( const tk::UnsMesh::EdgeNodes& ed );
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe, const std::set< std::size_t >& id );
-      entry void mask( int pe, const std::unordered_map< std::size_t,
-                                       std::vector< int > >& ch );
+      entry void query( int pe,
+                        const std::set< std::size_t >& id,
+                        const tk::UnsMesh::EdgeNodes& ed );
+      entry void mask( int pe,
+                       const std::unordered_map< std::size_t,
+                                                 std::vector< int > >& cn,
+                       tk::UnsMesh::EdgeNodes& ce );
       entry void edges();
       entry void sharededges( int pe, const tk::UnsMesh::EdgeNodes& sh,
                               const tk::UnsMesh::EdgeNodeCoords& shc );
@@ -148,6 +154,11 @@ module partitioner {
         serial "prepare" { prepare(); }
       };
 
+      entry void wait4reorder() {
+        when nodesreorder_complete(), edgesreorder_complete()
+        serial "reorder" { reordered(); }
+      };
+
       entry void wait4bounds() {
         when lower_complete(), upper_complete(), participated_complete()
         serial "create" { create(); }
@@ -155,6 +166,8 @@ module partitioner {
 
       entry void reorderowned_complete();
       entry void nodes_requested_complete();
+      entry void nodesreorder_complete();
+      entry void edgesreorder_complete();
       entry void lower_complete();
       entry void upper_complete();
       entry void participated_complete();
