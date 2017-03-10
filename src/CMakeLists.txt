@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 10 Mar 2017 07:12:19 AM MST
+# \date      Fri 10 Mar 2017 08:07:18 AM MST
 #
 ################################################################################
 
@@ -177,10 +177,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
-
-  # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
-  # -O2 and segfaults with -O3)
-  set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds." FORCE)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
