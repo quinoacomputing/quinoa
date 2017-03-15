@@ -556,10 +556,10 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         auto ts = hydrotimescale( t, hts[c] );  // eps/k
         auto pe = hydroproduction( t, hp[c] );  // P/eps = (dk/dt+eps)/eps
 
-        //tk::real a = r[c]/(1.0+r[c]*yt);
+        tk::real a = r[c]/(1.0+r[c]*yt);
         //tk::real n = 1.0;
-        //tk::real bnm = a*a*yt*(1.0-yt);
-        //tk::real theta = 1.0 - ds/bnm;
+        tk::real bnm = a*a*yt*(1.0-yt);
+        tk::real theta = 1.0 - ds/bnm;
         //tk::real A = 0.15;
 
         //tk::real mix = 1.0;
@@ -571,7 +571,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real mix = (1.0+r[c]*yt);//* std::pow(theta,0.5);
         // latest: tk::real mix = 1.0+r[c]*yt;
 
-        //tk::real f = 1.0;
+        tk::real f = 1.0;
         //tk::real f = 1.0 / (1.0+r[c]);
         //tk::real f = std::pow(theta,0.5);
         //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
@@ -581,7 +581,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real f = std::pow(theta,0.5) / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
         // latest: tk::real f = 1.0 / (1.0+r[c]) / std::pow( 1.0 + std::pow(pe-1.0,2.0), 0.5 );
         //tk::real f = std::pow( 1.0 + S[c]*sqrt(d2/d/d)*std::pow(pe-1.0,2.0), -0.5 );
-        tk::real f = std::pow( 1.0 + std::pow(pe-1.0,2.0), -0.5 );
+        //tk::real f = std::pow( 1.0 + std::pow(pe-1.0,2.0), -0.5 );
 
         if (m_it == 0) m_s.push_back( f );
 
@@ -598,7 +598,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * ts;
         // latest: k[c] = kprime[c] * ds * f * mix * ts;
 
-        k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * ds * f;;
+        k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * ds/bnm;
         //tk::real ebnm = r[c]*r[c]/(1.0+r[c])*yt*(1.0-yt);
         //tk::real G0 = (1.0 + 3.0*r[c] - 2.0*(2.0+r[c])*r[c]*yt)
         //               / (1.0+r[c]*yt) / (1.0+r[c]*yt) * ebnm;
@@ -606,7 +606,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //b[c] = ( 2.0*bprime[c]/(1.0+1.0+ebnm)/m_s[c]
         //         -2.0*kprime[c]*G0/(1.0+1.0+ebnm) ) *
         //         (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
-        b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
+        b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f * std::pow(theta,S[c]);
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
