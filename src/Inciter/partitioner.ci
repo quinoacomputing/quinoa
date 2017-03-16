@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Thu 09 Mar 2017 11:29:38 AM MST
+  \date      Thu 16 Mar 2017 03:17:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -53,7 +53,7 @@ module partitioner {
       entry void mask( int pe,
                        const std::unordered_map< std::size_t,
                                                  std::vector< int > >& cn,
-                       tk::UnsMesh::EdgeNodes& ce );
+                       tk::UnsMesh::EdgeChares& ce );
       entry void edges();
       entry void sharededges( int pe, const tk::UnsMesh::EdgeNodes& sh,
                               const tk::UnsMesh::EdgeNodeCoords& shc );
@@ -156,7 +156,7 @@ module partitioner {
 
       entry void wait4reorder() {
         when nodesreorder_complete(), edgesreorder_complete()
-        serial "reorder" { reordered(); }
+        serial "reordered" { reordered(); }
       };
 
       entry void wait4bounds() {

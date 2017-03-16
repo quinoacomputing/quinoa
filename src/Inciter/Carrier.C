@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 10 Mar 2017 10:07:18 AM MST
+  \date      Thu 16 Mar 2017 01:44:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -66,7 +66,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::unordered_map< int,
                           std::unordered_set< std::size_t > >& msum,
                   const std::unordered_map< std::size_t, std::size_t >& nodemap,
-                  const tk::UnsMesh::EdgeNodes& edgenodemap,
+                  const tk::UnsMesh::EdgeNodes& edgenodes,
                   int ncarr ) :
   __dep(),
   m_it( 0 ),
@@ -87,7 +87,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
   m_nodemap( nodemap ),
-  m_edgenodes( edgenodemap ),
+  m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
@@ -191,7 +191,24 @@ if (J<0) { std::cout << '\n' << CkMyPe() << " J negative: " << m_gid[N[0]] << ',
 x[N[0]] << ", " << x[N[1]] << ", " << x[N[2]] << ", " << x[N[3]] << ", " <<
 y[N[0]] << ", " << y[N[1]] << ", " << y[N[2]] << ", " << y[N[3]] << ", " <<
 z[N[0]] << ", " << z[N[1]] << ", " << z[N[2]] << ", " << z[N[3]]; }
-    //Assert( J > 0, "Element Jacobian non-positive" );
+    Assert( J > 0, "Element Jacobian non-positive: PE:" +
+                   std::to_string(CkMyPe()) + ", node IDs: " +
+                   std::to_string(m_gid[N[0]]) + ',' +
+                   std::to_string(m_gid[N[1]]) + ',' +
+                   std::to_string(m_gid[N[2]]) + ',' +
+                   std::to_string(m_gid[N[3]]) + ", coords: (" +
+                   std::to_string(x[N[0]]) + ", " +
+                   std::to_string(y[N[0]]) + ", " +
+                   std::to_string(z[N[0]]) + "), (" +
+                   std::to_string(x[N[1]]) + ", " +
+                   std::to_string(y[N[1]]) + ", " +
+                   std::to_string(z[N[1]]) + "), (" +
+                   std::to_string(x[N[2]]) + ", " +
+                   std::to_string(y[N[2]]) + ", " +
+                   std::to_string(z[N[2]]) + "), (" +
+                   std::to_string(x[N[3]]) + ", " +
+                   std::to_string(y[N[3]]) + ", " +
+                   std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
@@ -204,7 +221,7 @@ z[N[0]] << ", " << z[N[1]] << ", " << z[N[2]] << ", " << z[N[3]]; }
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
       for (auto i : n.second) {
-// if (m_lid.find(i)==end(m_lid)) std::cout << thisIndex << " not found: " << i << '\n';
+if (m_lid.find(i)==end(m_lid)) std::cout << thisIndex << " not found: " << i << '\n';
 v.push_back( m_vol[ tk::cref_find(m_lid,i) ] ); }
       thisProxy[ n.first ].comvol( n.second, v );
     }
@@ -224,6 +241,7 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
   Assert( V.size() == gid.size(), "Size mismatch" );
 
   for (std::size_t i=0; i<gid.size(); ++i) {
+if (m_lid.find(gid[i])==end(m_lid)) std::cout << thisIndex << " not finding node " << gid[i] << '\n';
     auto lid = tk::cref_find( m_lid, gid[i] );
     Assert( lid < m_vol.size(), "Indexing out of bounds" );
     m_vol[ lid ] += V[i];
@@ -553,10 +571,16 @@ Carrier::readCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
+
+  auto nn = m_lid.size();
+  x.resize( nn );
+  y.resize( nn );
+  z.resize( nn );
+
   for (auto p : m_gid) {
     auto n = m_nodemap.find(p);
     if (n != end(m_nodemap) && n->second < nnode)
-      er.readNode( n->second, x, y, z );
+      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
   }
 }
 
@@ -568,48 +592,73 @@ Carrier::addEdgeNodeCoords()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Lambda to add a new node to an edge
-  auto addnode = [ this ]( std::size_t p, std::size_t q, std::size_t id ) {
-    auto& x = m_coord[0];
-    auto& y = m_coord[1];
-    auto& z = m_coord[2];
-    x[id] = (x[p]+x[q])/2.0;    // add new node coordinates
-    y[id] = (y[p]+y[q])/2.0;
-    z[id] = (z[p]+z[q])/2.0;
+  if (m_edgenodes.empty()) return;
+
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
+  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
+
+  auto addnode = [ this, &x, &y, &z ]
+                 ( const decltype(m_edgenodes)::value_type& e )
+  {
+    auto p = tk::cref_find( m_lid, e.first[0] );
+    auto q = tk::cref_find( m_lid, e.first[1] );
+    auto i = tk::cref_find( m_lid, e.second );
+    Assert( p < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(p)
+                          + " must be lower than " + std::to_string(x.size()) );
+    Assert( q < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(q)
+                          + " must be lower than " + std::to_string(x.size()) );
+    Assert( i < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(i)
+                          + " must be lower than " + std::to_string(x.size()) );
+//     Assert( p < n && q < n,
+//             "Edge end-points must not contain other edge end-points: " +
+//             std::to_string(p) + " and " + std::to_string(q) + " must both be "
+//             "lower than " + std::to_string(n) + ", edge-end-point local ids: " +
+//             std::to_string(p) + '-' + std::to_string(q) + ", global ids: " +
+//             std::to_string(e.first[0]) + '-' + std::to_string(e.first[1]) );
+    x[i] = (x[p]+x[q])/2.0;     // add new edge-node coordinates
+    y[i] = (y[p]+y[q])/2.0;
+    z[i] = (z[p]+z[q])/2.0;
   };
 
-std::cout << CkMyPe() << ", lid: ";
-for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
-std::cout << '\n';
+// std::cout << CkMyPe() << ", lid: ";
+// for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
+// std::cout << '\n';
+
 for (const auto& e : m_edgenodes) {
-auto it = m_lid.find( e.second );
-if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node " << e.second << '\n';
+  auto it = m_lid.find( e.first[0] );
+  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for edge-end "
+                                << e.first[0] << '\n';
+  it = m_lid.find( e.first[1] );
+  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for edge-end "
+                                << e.first[1] << '\n';
+  it = m_lid.find( e.second );
+  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node "
+                                << e.second << '\n';
 }
 
   // resize coordinate array to accommodate edge-nodes added during initial
   // uniform refinement
-  std::size_t nn = m_coord[0].size();
-  if (!m_edgenodes.empty()) {
-    using P = decltype(m_edgenodes)::value_type;
-    auto x = std::max_element( begin(m_edgenodes), end(m_edgenodes),
-               [ this ](const P& a, const P& b)
-               { return tk::cref_find( m_lid, a.second ) <
-                          tk::cref_find( m_lid, b.second ); } );
-    nn = tk::cref_find( m_lid, x->second ) + 1;
+  //auto nn = m_coord[0].size() + m_edgenodes.size();
+
+//   using P = decltype(m_edgenodes)::value_type;
+//   auto x = std::max_element( begin(m_edgenodes), end(m_edgenodes),
+//              [ this ](const P& a, const P& b)
+//              { return tk::cref_find( m_lid, a.second ) <
+//                         tk::cref_find( m_lid, b.second ); } );
+//   nn = tk::cref_find( m_lid, x->second ) + 1;
 //std::cout << "nn: " << m_coord[0].size() << ", " << nn << '\n';
-    m_coord[0].resize( nn );
-    m_coord[1].resize( nn );
-    m_coord[2].resize( nn );
-  }
+
+//   m_coord[0].resize( nn );
+//   m_coord[1].resize( nn );
+//   m_coord[2].resize( nn );
 
   // add new nodes
-  for (const auto& ed : m_edgenodes) {
-    Assert( ed.second < nn, "Carrier chare " + std::to_string(thisIndex) +
-                            " indexing out of bounds: " +
-                            std::to_string(ed.second) + " must be lower than " +
-                            std::to_string(nn) );
-    addnode( ed.first[0], ed.first[1], tk::cref_find( m_lid, ed.second ) );
-  }
+  for (const auto& e : m_edgenodes) addnode( e );
 }
 
 void

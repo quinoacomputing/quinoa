@@ -68,7 +68,6 @@
 #include <numeric>
 
 #include "ExodusIIMeshReader.h"
-#include "ExodusIIMeshWriter.h" // NOT NEEDED!
 #include "ContainerUtil.h"
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -398,6 +397,12 @@ IGNORE(shc);
           m_cn[p].push_back( c.first );
       // Make chare IDs (associated to old global mesh node IDs) unique
       for (auto& c : m_cn) tk::unique( c.second );
+      // Collect chare IDs we own associated to edges
+      for (const auto& c : m_chedgenodes)
+        for (const auto& e : c.second)
+          m_ce[ e.first ].push_back( c.first );
+      // Make chare IDs (associated to edges) unique
+      for (auto& c : m_ce) tk::unique( c.second );
       // Flatten node IDs of elements our chares operate on
       for (const auto& c : m_node)
         for (auto i : c.second)
@@ -458,17 +463,21 @@ IGNORE(shc);
           chares.insert( end(chares), begin(c), end(c) );
         }
       }
-      tk::UnsMesh::EdgeNodes ce;
+      tk::UnsMesh::EdgeChares ce;
       for (const auto& j : ed) {
-        const auto it = m_edgenodes.find( j.first );
-        if (it != end(m_edgenodes)) ce[ j.first ] = it->second;
+        const auto it = m_ed.find( j.first );
+        if (it != end(m_ed)) {
+          const auto& c = tk::cref_find( m_ce, j.first );
+          auto& chares = ce[ j.first ];
+          chares.insert( end(chares), begin(c), end(c) );
+        }
       }
       Group::thisProxy[ p ].mask( CkMyPe(), cn, ce );
     }
 
     //! Receive mask of to-be-received global mesh node IDs
     //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
-    //! \param[in] ch Vector containing the set of potentially multiple chare
+    //! \param[in] cn Vector containing the set of potentially multiple chare
     //!   IDs that we own (i.e., contribute to) for all of our node IDs.
     //! \details Note that every PE will call this function, since query() was
     //!   called in a broadcast fashion and query() answers to every PE once.
@@ -476,15 +485,25 @@ IGNORE(shc);
     //!   have to receive results from. Thus the incoming results are only
     //!   interesting from PEs with lower IDs than ours.
     void mask( int p,
-               const std::unordered_map< std::size_t, std::vector< int > >& ch,
-               const tk::UnsMesh::EdgeNodes& ce )
+               const std::unordered_map< std::size_t, std::vector< int > >& cn,
+               const tk::UnsMesh::EdgeChares& ce )
     {
       // Store the old global mesh node IDs associated to chare IDs bordering
       // the mesh chunk held by and associated to chare IDs we own
-      for (const auto& h : ch) {
+      for (const auto& h : cn) {
         const auto& chares = tk::ref_find( m_cn, h.first );
         for (auto c : chares) {           // surrounded chares
           auto& sch = m_msum[c];
+          for (auto s : h.second)         // surrounding chares
+            if (s != c) sch[ s ].insert( h.first );
+        }
+      }
+      // Store the edges associated to chare IDs bordering the mesh chunk held
+      // by and associated to chare IDs we own
+      for (const auto& h : ce) {
+        const auto& chares = tk::ref_find( m_ce, h.first );
+        for (auto c : chares) {           // surrounded chares
+          auto& sch = m_msumed[c];
           for (auto s : h.second)         // surrounding chares
             if (s != c) sch[ s ].insert( h.first );
         }
@@ -498,17 +517,22 @@ IGNORE(shc);
       // keeping only the lowest PEs a node ID is associated with.)
       if (p < CkMyPe()) {
         auto& id = m_ncomm[ p ];
-        for (const auto& h : ch) id.insert( h.first );
+        for (const auto& h : cn) id.insert( h.first );
+        auto& ed = m_ecomm[ p ];
         for (const auto& h : ce) {
           Assert( m_edgenodes.find(h.first) != end(m_edgenodes),
                   std::to_string(CkMyPe()) + " received and edge from PE " +
                   std::to_string(p) + " it does not have" );
-          m_ecomm[ p ].insert( h.first );
+          ed.insert( h.first );
         }
       }
       if (++m_nquery == static_cast<std::size_t>(CkNumPes())) {
         // Make sure we have received all we need
         Assert( m_ncomm.size() == static_cast<std::size_t>(CkMyPe()),
+                "Communication map size on PE " +
+                std::to_string(CkMyPe()) + " must equal " +
+                std::to_string(CkMyPe()) );
+        Assert( m_ecomm.size() == static_cast<std::size_t>(CkMyPe()),
                 "Communication map size on PE " +
                 std::to_string(CkMyPe()) + " must equal " +
                 std::to_string(CkMyPe()) );
@@ -678,7 +702,7 @@ IGNORE(shc);
     //! \details This map, on each PE, associates the list of global mesh edges
     //!   indices to fellow PE IDs from which we will receive new nodes IDs
     //!   associated to edges during reordering.
-    std::unordered_map< int, tk::UnsMesh::Edges > m_ecomm;
+    std::map< int, tk::UnsMesh::Edges > m_ecomm;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map, on each PE, associates the list of global mesh point
     //!   indices to fellow PE IDs from which we will receive new node IDs
@@ -725,8 +749,12 @@ IGNORE(shc);
     tk::real m_cost;
     //! \brief Map associating a set of chare IDs to old global mesh node IDs
     //! \details Note that a single global mesh ID can be associated to multiple
-    //!  chare IDs as multiple chares can contribute to a single mesh node.
+    //!   chare IDs as multiple chares can contribute to a single mesh node.
     std::unordered_map< std::size_t, std::vector< int > > m_cn;
+    //! \brief Map associating a set of chare IDs to edges
+    //! \details Note that a single edge can be associated to multiple edges
+    //!   chare IDs as multiple chares can contribute to a single edge.
+    tk::UnsMesh::EdgeChares m_ce;
     //! \brief Global mesh node IDs associated to chare IDs bordering the mesh
     //!   chunk held by and associated to chare IDs we own
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
@@ -737,6 +765,8 @@ IGNORE(shc);
     //!   communicate).
     std::unordered_map< int,
       std::unordered_map< int, std::unordered_set< std::size_t > > > m_msum;
+    std::unordered_map< int,
+      std::unordered_map< int, tk::UnsMesh::Edges > > m_msumed;
     //! Lower-PE-assigned associated to own-generated edge-node IDs
     //! \details Used for communicating and matching edge-nodes generated during
     //!   initial uniform mesh refinement
@@ -944,6 +974,18 @@ IGNORE(shc);
       // node IDs to edges. We also count up the reordered edge-nodes, which
       // also serves as the new node id.
       for (const auto& e : m_ed) if (ownedge(e)) m_newed[ e ] = m_start++;
+
+// std::cout << CkMyPe() << " ec: ";
+// for (const auto& e : m_ecommunication) {
+//   std::cout << e.first << "> ";
+//   for (const auto& h : e.second) std::cout << h[0] << '-' << h[1] << ' ';
+// }
+// std::cout << '\n';
+// 
+// std::cout << CkMyPe() << ": ";
+// for (const auto& e : m_newed) std::cout << e.first[0] << '-' << e.first[1] << ' ';
+// std::cout << '\n';
+
       // Trigger SDAG wait indicating that reordering own node IDs are complete
       reorderowned_complete();
       // If all our nodes have new IDs assigned, signal that to the runtime
@@ -975,7 +1017,7 @@ IGNORE(shc);
         Group::thisProxy[ r.first ].neworder( n );
         tk::destroy( n );
       }
-      tk::destroy(m_req); // Clear queue of requests just fulfilled
+      tk::destroy( m_req ); // Clear queue of requests just fulfilled
       // Find and return new node IDs associated to edges to sender
       for (const auto& r : m_reqed) {
         tk::UnsMesh::EdgeNodes n;
@@ -983,8 +1025,8 @@ IGNORE(shc);
         Group::thisProxy[ r.first ].neworder( n );
         tk::destroy( n );
       }
-      tk::destroy(m_reqed); // Clear queue of requests just fulfilled
-      wait4prep();        // Re-enable SDAG wait for preparing new node requests
+      tk::destroy( m_reqed ); // Clear queue of requests just fulfilled
+      wait4prep();      // Re-enable SDAG wait for preparing new node requests
       // Re-enable trigger signaling that reordering of owned node IDs are
       // complete right away
       reorderowned_complete();
@@ -996,13 +1038,18 @@ IGNORE(shc);
         for (auto i : c.second)
           m_tetinpoel.push_back( i );
       // generate data structure storing unique nodes connected to nodes
-      std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
-      auto esup = tk::genEsup( m_tetinpoel, 4 );
       auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
-      auto nnode = *minmax.second + 1;
-      for (std::size_t p=0; p<nnode; ++p)
-        for (std::size_t i=esup.second[p]+1; i<=esup.second[p+1]; ++i ) {
+      std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
+      for (auto& i : m_tetinpoel) i -= ext[0];
+      auto esup = tk::genEsup( m_tetinpoel, 4 );
+      for (auto& i : m_tetinpoel) i += ext[0];
+//for (auto i : m_tetinpoel) if (i==44) std::cout << CkMyPe() << ":44\n";
+      auto nnode = ext[1] - ext[0] + 1;
+      std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
+      for (std::size_t j=0; j<nnode; ++j)
+        for (std::size_t i=esup.second[j]+1; i<=esup.second[j+1]; ++i ) {
           for (std::size_t n=0; n<4; ++n) {
+            auto p = ext[0] + j;
             auto q = m_tetinpoel[ esup.first[i] * 4 + n ];
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
@@ -1011,9 +1058,9 @@ IGNORE(shc);
 
       // associate new nodes to all unique edges
 // std::cout << CkMyPe() << " addnode: ";
-      auto& x = m_coord[0];
-      auto& y = m_coord[1];
-      auto& z = m_coord[2];
+//       auto& x = m_coord[1];
+//       auto& y = m_coord[2];
+//       auto& z = m_coord[3];
       nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
                                         tag::input >() ).readHeader();
       for (const auto& s : star)
@@ -1021,9 +1068,9 @@ IGNORE(shc);
 //std::cout << '\n' << CkMyPe() << " add: " << s.first << '-' << q << "\t:" << nnode;
 // std::array< std::size_t, 2 > p{{ s.first, q }};
 // std::cout << s.first << '-' << q << ", coords: (" << m_coord[0][p[0]] << ',' << m_coord[1][p[0]] << ',' << m_coord[2][p[0]] << ")-(" << m_coord[0][p[1]] << ',' << m_coord[1][p[1]] << ',' << m_coord[2][p[1]] << ") ";
-          x.push_back( (x[s.first]+x[q])/2.0 );
-          y.push_back( (y[s.first]+y[q])/2.0 );
-          z.push_back( (z[s.first]+z[q])/2.0 );
+//           x.push_back( (x[s.first]+x[q])/2.0 );
+//           y.push_back( (y[s.first]+y[q])/2.0 );
+//           z.push_back( (z[s.first]+z[q])/2.0 );
           m_edgenodes[ {{ s.first, q }} ] = nnode++;
 }
 // std::cout << '\n';
@@ -1035,7 +1082,18 @@ IGNORE(shc);
         const auto B = m_tetinpoel[e*4+1];
         const auto C = m_tetinpoel[e*4+2];
         const auto D = m_tetinpoel[e*4+3];
-//std::cout << A << ',' << B << ',' << C << ',' << D << ' ';
+// auto it = m_edgenodes.find({{A,B}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << A << '-' << B << " not found\n";
+//      it = m_edgenodes.find({{A,C}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << A << '-' << C << " not found\n";
+//      it = m_edgenodes.find({{A,D}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << A << '-' << D << " not found\n";
+//      it = m_edgenodes.find({{B,C}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << B << '-' << C << " not found\n";
+//      it = m_edgenodes.find({{B,D}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << B << '-' << D << " not found\n";
+//      it = m_edgenodes.find({{C,D}}); if (it==end(m_edgenodes))
+//  std::cout << CkMyPe() << ": ref edge " << C << '-' << D << " not found\n";
         const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
         const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
         const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
@@ -1083,22 +1141,22 @@ IGNORE(shc);
           en[ {{B,C}} ] = BC;
           en[ {{B,D}} ] = BD;
           en[ {{C,D}} ] = CD;
-          // augment nodes associated to chares surrounding our mesh chunk
-          for (auto& m : m_msum)
-            for (auto& s : m.second) {
-              bool a = false, b = false, c = false, d = false;
-              if (s.second.find( A ) != end(s.second)) a = true;
-              if (s.second.find( B ) != end(s.second)) b = true;
-              if (s.second.find( C ) != end(s.second)) c = true;
-              if (s.second.find( D ) != end(s.second)) d = true;
-              // if an edge os on the chare boundary, its newly added nodes too
-              if (a && b) s.second.insert( AB );
-              if (a && c) s.second.insert( AC );
-              if (a && d) s.second.insert( AD );
-              if (b && c) s.second.insert( BC );
-              if (b && d) s.second.insert( BD );
-              if (c && d) s.second.insert( CD );
-            }
+//           // augment nodes associated to chares surrounding our mesh chunk
+//           for (auto& m : m_msum)
+//             for (auto& s : m.second) {
+//               bool a = false, b = false, c = false, d = false;
+//               if (s.second.find( A ) != end(s.second)) a = true;
+//               if (s.second.find( B ) != end(s.second)) b = true;
+//               if (s.second.find( C ) != end(s.second)) c = true;
+//               if (s.second.find( D ) != end(s.second)) d = true;
+//               // if an edge is on the chare boundary, its newly added nodes too
+//               if (a && b) s.second.insert( AB );
+//               if (a && c) s.second.insert( AC );
+//               if (a && d) s.second.insert( AD );
+//               if (b && c) s.second.insert( BC );
+//               if (b && d) s.second.insert( BD );
+//               if (c && d) s.second.insert( CD );
+//             }
         }
       }
     }
@@ -1118,14 +1176,14 @@ IGNORE(shc);
       // m_newnd and categorized by chares. Note that m_node at this point still
       // contains the old global node IDs the chares contribute to.
       for (const auto& c : m_node) {
-        auto& old = m_chnodemap[ c.first ];
+        auto& nodes = m_chnodemap[ c.first ];
         for (auto p : c.second) {
           auto n = m_newnd.find(p);
-          if (n != end(m_newnd)) old[ n->second ] = p;
+          if (n != end(m_newnd)) nodes[ n->second ] = p;
         }
       }
 
-      // Update edgenodes
+      // Update node IDs associated to edges, i.e., the map values
       for (auto& c : m_chedgenodes)
         for (auto& e : c.second)
            e.second = tk::ref_find( m_newed, e.first );
@@ -1137,52 +1195,145 @@ IGNORE(shc);
 //           if (n != end(m_newnd)) p.second = n->second;
 //         }
 
-      // Augment connectivity with newly added edge-nodes
-      decltype(m_node) newconn;
-      for (const auto& c : m_node) {
-        auto& n = newconn[ c.first ];
-        auto& en = tk::cref_find( m_chedgenodes, c.first );
-        for (std::size_t e=0; e<c.second.size()/4; ++e) {
-          const auto A = c.second[e*4+0];
-          const auto B = c.second[e*4+1];
-          const auto C = c.second[e*4+2];
-          const auto D = c.second[e*4+3];
-          const auto AB = tk::cref_find( en, {{ A,B }} );
-          const auto AC = tk::cref_find( en, {{ A,C }} );
-          const auto AD = tk::cref_find( en, {{ A,D }} );
-          const auto BC = tk::cref_find( en, {{ B,C }} );
-          const auto BD = tk::cref_find( en, {{ B,D }} );
-          const auto CD = tk::cref_find( en, {{ C,D }} );
-          std::vector< std::size_t > newelems{{  A, AB, AC, AD,
-                                                 B, BC, AB, BD,
-                                                 C, AC, BC, CD,
-                                                 D, AD, CD, BD,
-                                                BC, CD, AC, BD,
-                                                AB, BD, AC, AD,
-                                                AB, BC, AC, BD,
-                                                AC, BD, CD, AD }};
-          n.insert( end(n), begin(newelems), end(newelems) );
-        }
-      }
-      m_node = std::move( newconn );
+      if (!m_chedgenodes.empty()) {
 
-      // Update our chare ID maps to now contain the new global node IDs
-      // instead of the old ones
-      for (auto& c : m_node)
-        for (auto& p : c.second) {
-          auto n = m_newnd.find(p);
-          if (n != end(m_newnd)) p = n->second;
+// std::cout << CkMyPe() << " chedgenodes: ";
+// for (const auto& c : m_chedgenodes) {
+//   std::cout << c.first << "> ";
+//   for (const auto& n : c.second)
+//     std::cout << n.first[0] << '-' << n.first[1] << ':' << n.second << ' ';
+// }
+// std::cout << '\n';
+
+        // Update chare connectivities with new nodes and newly added edge-nodes
+        decltype(m_node) newconn;
+        for (const auto& conn : m_node) {
+          auto& n = newconn[ conn.first ];
+          const auto& edgenodes = tk::cref_find( m_chedgenodes, conn.first );
+          for (std::size_t e=0; e<conn.second.size()/4; ++e) {
+            auto A = conn.second[e*4+0];
+            auto B = conn.second[e*4+1];
+            auto C = conn.second[e*4+2];
+            auto D = conn.second[e*4+3];
+// auto it = m_newnd.find(A); if (it==end(m_newnd)) std::cout << A << " not found\n";
+//      it = m_newnd.find(B); if (it==end(m_newnd)) std::cout << B << " not found\n";
+//      it = m_newnd.find(C); if (it==end(m_newnd)) std::cout << C << " not found\n";
+//      it = m_newnd.find(D); if (it==end(m_newnd)) std::cout << D << " not found\n";
+// auto it = edgenodes.find({{A,B}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << A << '-' << B << " not found\n";
+//      it = edgenodes.find({{A,C}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << A << '-' << C << " not found\n";
+//      it = edgenodes.find({{A,D}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << A << '-' << D << " not found\n";
+//      it = edgenodes.find({{B,C}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << B << '-' << C << " not found\n";
+//      it = edgenodes.find({{B,D}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << B << '-' << D << " not found\n";
+//      it = edgenodes.find({{C,D}}); if (it==end(edgenodes))
+//  std::cout << CkMyPe() << ": edge " << C << '-' << D << " not found\n";
+            const auto nA = tk::cref_find( m_newnd, A );
+            const auto nB = tk::cref_find( m_newnd, B );
+            const auto nC = tk::cref_find( m_newnd, C );
+            const auto nD = tk::cref_find( m_newnd, D );
+            const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
+            const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
+            const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
+            const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
+            const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
+            const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
+            // update connectivity of our mesh chunk
+            std::vector< std::size_t > newelems{{ nA, AB, AC, AD,
+                                                  nB, BC, AB, BD,
+                                                  nC, AC, BC, CD,
+                                                  nD, AD, CD, BD,
+                                                  BC, CD, AC, BD,
+                                                  AB, BD, AC, AD,
+                                                  AB, BC, AC, BD,
+                                                  AC, BD, CD, AD }};
+            n.insert( end(n), begin(newelems), end(newelems) );
+          }
         }
+        m_node = std::move( newconn );
+
+        // Update nodes associated to chares surrounding our mesh chunk with new
+        // nodes
+        decltype(m_msum) newmsum;
+        for (const auto& c : m_msum) {
+          auto& m = newmsum[ c.first ];
+          for (const auto& e : c.second) {
+            auto& s = m[ e.first ];
+            for (auto n : e.second)
+              s.insert( tk::cref_find( m_newnd, n ) );
+          }
+        }
+        m_msum = std::move( newmsum );
+
+        // Add newly added edge-nodes to nodes associated to chares surrounding
+        // our mesh chunk
+        for (const auto& c : m_msumed) {
+          auto& sur = tk::cref_find( m_msum, c.first );
+          const auto& edgenodes = tk::cref_find( m_chedgenodes, c.first );
+          for (const auto& e : c.second) {
+            auto& s = tk::ref_find( sur, e.first );
+            for (const auto& ed : e.second)
+              s.insert( tk::cref_find( edgenodes, ed ) );
+          }
+        }
+
+        // Update node IDs of edges, i.e., the map keys
+        for (auto& c : m_chedgenodes) {
+          tk::UnsMesh::EdgeNodes edgenodes;
+          for (auto& e : c.second)
+             edgenodes[ {{ tk::ref_find( m_newnd, e.first[0] ),
+                           tk::ref_find( m_newnd, e.first[1] ) }} ] = e.second;
+          c.second = std::move( edgenodes );
+        }
+
+      } else {
+
+        // Update our chare ID maps to now contain the new global node IDs
+        // instead of the old ones
+        for (auto& c : m_node)
+          for (auto& p : c.second) {
+            auto n = m_newnd.find(p);
+            if (n != end(m_newnd)) p = n->second;
+          }
+
+        // Update old global mesh node IDs to new ones (and add newly added ones)
+        // associated to chare IDs bordering the mesh chunk held by and associated
+        // to chare IDs we own
+        for (auto& c : m_msum)
+          for (auto& s : c.second) {
+            decltype(s.second) n;
+            for (auto p : s.second) {
+              auto it = m_newnd.find(p);
+              if (it != end(m_newnd)) n.insert( it->second );
+            }
+            s.second = std::move( n );
+          }
+
+      }
 
 //       tk::destroy( m_tetinpoel );
 //       for (const auto& c : m_node)
 //         for (auto i : c.second)
 //           m_tetinpoel.push_back( i );
 
+// std::cout << CkMyPe() << " msum: ";
+// for (const auto& c : m_msum) {
+//   std::cout << c.first << ">";
+//   for (const auto& s : c.second) {
+//     std::cout << s.first << ": ";
+//     std::set< std::size_t > o( s.second.cbegin(), s.second.cend() );
+//     for (auto p : o) std::cout << p << ' ';
+//   }
+// }
+// std::cout << '\n';
+
 // std::cout << '\n' << CkMyPe() << " tetinpoel: ";
 // for (auto c : m_tetinpoel) std::cout << c << ' ';
 // std::cout << '\n';
-// 
+
 // std::cout << CkMyPe() << " node     : ";
 // for (const auto& c : m_node) for (auto i : c.second) std::cout << i << ' ';
 // std::cout << '\n';
@@ -1190,19 +1341,6 @@ IGNORE(shc);
 // std::cout << '\n' << CkMyPe() << " newid, (o:n): ";
 // for (const auto& c : m_newnd) std::cout << c.first << ':' << c.second << ' ';
 // std::cout << '\n';
-
-      // Update old global mesh node IDs to new ones (and add newly added ones)
-      // associated to chare IDs bordering the mesh chunk held by and associated
-      // to chare IDs we own
-      for (auto& c : m_msum)
-        for (auto& s : c.second) {
-          decltype(s.second) n;
-          for (auto p : s.second) {
-            auto it = m_newnd.find(p);
-            if (it != end(m_newnd)) n.insert( it->second );
-          }
-          s.second = std::move( n );
-        }
 
       // Update unique global node IDs of chares our PE will contribute to to
       // now contain the new IDs resulting from reordering
@@ -1216,7 +1354,7 @@ IGNORE(shc);
 //         nc[2][ n.second ] = m_coord[2][ n.first ];
 //       }
 //       m_coord = std::move( nc );
-// 
+
 // tk::ExodusIIMeshWriter rw( "reordered_mesh." + std::to_string(CkMyPe()), tk::ExoWriter::CREATE );
 // rw.writeMesh( tk::UnsMesh( m_tetinpoel, m_coord ) );
 
@@ -1226,7 +1364,7 @@ IGNORE(shc);
 // std::size_t j = 1;
 // for (const auto& c : m_node) for (auto i : c.second) std::cout << '[' << CkMyPe() << 'b' << ']' << i << '(' << j++ << ')' << ' ';
 // std::cout << '\n';
-
+// 
 // tk::ExodusIIMeshWriter fw( "refined_mesh." + std::to_string(CkMyPe()), tk::ExoWriter::CREATE );
 // fw.writeMesh( tk::UnsMesh( tk::cref_find(m_node,CkMyPe()), m_coord ) );
 
@@ -1262,17 +1400,18 @@ IGNORE(shc);
     //   lower indices for all PEs are communicated.
     void bounds() {
 
-// std::cout << '\n';
-// std::cout << CkMyPe() << " chnodemap: ";
+// std::cout << CkMyPe() << " chnodemap (n:o): ";
 // for (const auto& c : m_chnodemap) {
 //   std::cout << c.first << "> ";
-//   for (const auto& n : c.second) std::cout << n.first << ' ';
+//   for (const auto& n : c.second) std::cout << n.first << ':' << n.second << ' ';
 // }
 // std::cout << '\n';
+// 
 // std::cout << CkMyPe() << " chedgenodes: ";
 // for (const auto& c : m_chedgenodes) {
 //   std::cout << c.first << "> ";
-//   for (const auto& n : c.second) std::cout << n.second << ' ';
+//   for (const auto& n : c.second)
+//     std::cout << n.first[0] << '-' << n.first[1] << ':' << n.second << ' ';
 // }
 // std::cout << '\n';
 

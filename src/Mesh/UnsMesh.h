@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Tue 07 Mar 2017 08:40:02 AM MST
+  \date      Mon 13 Mar 2017 02:26:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -54,6 +54,10 @@ class UnsMesh {
                                                std::array< tk::real, 3 >,
                                                tk::UnsMesh::EdgeHash,
                                                tk::UnsMesh::EdgeEq >;
+    using EdgeChares = std::unordered_map< tk::UnsMesh::Edge,
+                                           std::vector< int >,
+                                           tk::UnsMesh::EdgeHash,
+                                           tk::UnsMesh::EdgeEq >;
     //! Unique set of edges
     using Edges = std::unordered_set< tk::UnsMesh::Edge,
                                       tk::UnsMesh::EdgeHash,
