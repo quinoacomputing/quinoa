@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 16 Mar 2017 01:44:39 PM MDT
+  \date      Fri 17 Mar 2017 09:54:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -599,6 +599,7 @@ Carrier::addEdgeNodeCoords()
   auto& z = m_coord[2];
   Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
 
+  // Lambda to add coordinates for a single new node on an edge
   auto addnode = [ this, &x, &y, &z ]
                  ( const decltype(m_edgenodes)::value_type& e )
   {
@@ -614,48 +615,10 @@ Carrier::addEdgeNodeCoords()
     Assert( i < x.size(), "Carrier chare " + std::to_string(thisIndex) +
                           " indexing out of bounds: " + std::to_string(i)
                           + " must be lower than " + std::to_string(x.size()) );
-//     Assert( p < n && q < n,
-//             "Edge end-points must not contain other edge end-points: " +
-//             std::to_string(p) + " and " + std::to_string(q) + " must both be "
-//             "lower than " + std::to_string(n) + ", edge-end-point local ids: " +
-//             std::to_string(p) + '-' + std::to_string(q) + ", global ids: " +
-//             std::to_string(e.first[0]) + '-' + std::to_string(e.first[1]) );
-    x[i] = (x[p]+x[q])/2.0;     // add new edge-node coordinates
+    x[i] = (x[p]+x[q])/2.0;
     y[i] = (y[p]+y[q])/2.0;
     z[i] = (z[p]+z[q])/2.0;
   };
-
-// std::cout << CkMyPe() << ", lid: ";
-// for (const auto& i : m_lid) std::cout << i.first << ':' << i.second << ' ';
-// std::cout << '\n';
-
-for (const auto& e : m_edgenodes) {
-  auto it = m_lid.find( e.first[0] );
-  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for edge-end "
-                                << e.first[0] << '\n';
-  it = m_lid.find( e.first[1] );
-  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for edge-end "
-                                << e.first[1] << '\n';
-  it = m_lid.find( e.second );
-  if (it==end(m_lid)) std::cout << CkMyPe() << " lid not found for node "
-                                << e.second << '\n';
-}
-
-  // resize coordinate array to accommodate edge-nodes added during initial
-  // uniform refinement
-  //auto nn = m_coord[0].size() + m_edgenodes.size();
-
-//   using P = decltype(m_edgenodes)::value_type;
-//   auto x = std::max_element( begin(m_edgenodes), end(m_edgenodes),
-//              [ this ](const P& a, const P& b)
-//              { return tk::cref_find( m_lid, a.second ) <
-//                         tk::cref_find( m_lid, b.second ); } );
-//   nn = tk::cref_find( m_lid, x->second ) + 1;
-//std::cout << "nn: " << m_coord[0].size() << ", " << nn << '\n';
-
-//   m_coord[0].resize( nn );
-//   m_coord[1].resize( nn );
-//   m_coord[2].resize( nn );
 
   // add new nodes
   for (const auto& e : m_edgenodes) addnode( e );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Thu 16 Mar 2017 03:17:31 PM MDT
+  \date      Fri 17 Mar 2017 10:02:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -54,9 +54,6 @@ module partitioner {
                        const std::unordered_map< std::size_t,
                                                  std::vector< int > >& cn,
                        tk::UnsMesh::EdgeChares& ce );
-      entry void edges();
-      entry void sharededges( int pe, const tk::UnsMesh::EdgeNodes& sh,
-                              const tk::UnsMesh::EdgeNodeCoords& shc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

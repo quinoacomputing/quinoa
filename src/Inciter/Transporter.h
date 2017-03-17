@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 02:24:18 PM MST
+  \date      Fri 17 Mar 2017 10:02:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -112,11 +112,6 @@ class Transporter : public CBase_Transporter {
     //!   have finished flattening its global mesh node IDs and they are ready
     //!   for computing the communication maps required for node ID reordering
     void flattened() { m_partitioner.gather(); }
-
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished their initial uniform mesh refinement and they are ready
-    //!   for communicating their newly added shared edge-node IDs
-    void refined() { m_partitioner.edges(); }
 
     //! \brief Reduction target estimating the average communication cost of
     //!   merging the linear system
