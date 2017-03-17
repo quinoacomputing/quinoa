@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 09:54:38 AM MDT
+  \date      Fri 17 Mar 2017 11:31:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -65,7 +65,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
                           std::unordered_set< std::size_t > >& msum,
-                  const std::unordered_map< std::size_t, std::size_t >& nodemap,
+                  const std::unordered_map< std::size_t, std::size_t >&
+                          filenodes,
                   const tk::UnsMesh::EdgeNodes& edgenodes,
                   int ncarr ) :
   __dep(),
@@ -86,7 +87,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
-  m_nodemap( nodemap ),
+  m_filenodes( filenodes ),
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_fluxcorrector( m_inpoel.size() ),
@@ -116,8 +117,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] nodemap Map associating old node IDs (as in file) to new node IDs
-//!   (as in producing contiguous-row-id linear system contributions)
+//! \param[in] filenodes Map associating old node IDs (as in file) to new node
+//!   IDs (as in producing contiguous-row-id linear system contributions)
 //! \param[in] edgenodemap Map associating new node IDs ('new' as in producing
 //!   contiguous-row-id linear system contributions) to edges (a pair of old
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
@@ -128,10 +129,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
-
-// std::cout << thisIndex << " nodemap (n:o): ";
-// for (const auto& n : m_nodemap) std::cout << n.first << ':' << n.second << ' ';
-// std::cout << '\n';
 
   // Convert neighbor nodes to vectors from sets
   for (const auto& n : msum) {
@@ -299,17 +296,17 @@ Carrier::bc()
   // Access all side sets from LinSysMerger
   auto& side = m_linsysmerger.ckLocalBranch()->side();
 
-  // Invert m_nodemap, a map associating old node IDs (as in file) to new node
-  // IDs (as in producing contiguous-row-id linear system contributions), so we
-  // can search more efficiently for old node IDs.
-  decltype(m_nodemap) revnodemap;
-  for (const auto& i : m_nodemap) revnodemap[ i.second ] = i.first;
+  // Invert file-node map, a map associating old node IDs (as in file) to new
+  // node IDs (as in producing contiguous-row-id linear system contributions),
+  // so we can search more efficiently for old node IDs.
+  decltype(m_filenodes) linnodes;
+  for (const auto& i : m_filenodes) linnodes[ i.second ] = i.first;
 
   // lambda to find out if we own the old (as in file) global node id
-  auto own = [ &revnodemap ]( std::size_t id ) -> std::pair< bool, std::size_t >
+  auto own = [ &linnodes ]( std::size_t id ) -> std::pair< bool, std::size_t >
   {
-    auto it = revnodemap.find( id );
-    if (it != end(revnodemap))
+    auto it = linnodes.find( id );
+    if (it != end(linnodes))
       return { true, it->second };
     else
       return { false, 0 };
@@ -353,7 +350,7 @@ Carrier::bc()
   // linear system contributions. See also Partitioner.h.
   auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
   -> bool {
-    for (auto n : s) if (tk::cref_find(this->m_nodemap,id) == n) return true;
+    for (auto n : s) if (tk::cref_find(this->m_filenodes,id) == n) return true;
     return false;
   };
 
@@ -578,8 +575,8 @@ Carrier::readCoords()
   z.resize( nn );
 
   for (auto p : m_gid) {
-    auto n = m_nodemap.find(p);
-    if (n != end(m_nodemap) && n->second < nnode)
+    auto n = m_filenodes.find(p);
+    if (n != end(m_filenodes) && n->second < nnode)
       er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
   }
 }

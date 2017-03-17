@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 10 Mar 2017 10:13:43 AM MST
+  \date      Fri 17 Mar 2017 11:29:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -151,7 +151,7 @@ class Carrier : public CBase_Carrier {
                const std::vector< std::size_t >& conn,
                const std::unordered_map< int,
                        std::unordered_set< std::size_t > >& msum,
-               const std::unordered_map< std::size_t, std::size_t >& nodemap,
+               const std::unordered_map< std::size_t, std::size_t >& filenodes,
                const tk::UnsMesh::EdgeNodes& edgenodes,
                int ncarr );
 
@@ -272,7 +272,7 @@ class Carrier : public CBase_Carrier {
       p | m_linsysmerger;
       p | m_particlewriter;
       p | m_fluxcorrector;
-      p | m_nodemap;
+      p | m_filenodes;
       p | m_edgenodes;
       p | m_el;
       if (p.isUnpacking()) {
@@ -349,7 +349,7 @@ class Carrier : public CBase_Carrier {
     ParticleWriterProxy m_particlewriter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
-    std::unordered_map< std::size_t, std::size_t > m_nodemap;
+    std::unordered_map< std::size_t, std::size_t > m_filenodes;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.
