@@ -545,8 +545,8 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
 
-        //tk::real m = lookup( mean(depvar,c), moments );            // <Y>
-        //tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
+        tk::real m = lookup( mean(depvar,c), moments );            // <Y>
+        tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
@@ -559,7 +559,9 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real a = r[c]/(1.0+r[c]*yt);
         //tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
-        tk::real theta = 1.0 - ds/bnm;
+        tk::real vnm = m*(1.0-m);
+        tk::real thetab = 1.0 - ds/bnm;
+        tk::real thetay = 1.0 - v/vnm;
         //tk::real A = 0.15;
 
         //tk::real mix = 1.0;
@@ -599,6 +601,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         // latest: k[c] = kprime[c] * ds * f * mix * ts;
 
         k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * ds;
+        //k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * v;
         //tk::real ebnm = r[c]*r[c]/(1.0+r[c])*yt*(1.0-yt);
         //tk::real G0 = (1.0 + 3.0*r[c] - 2.0*(2.0+r[c])*r[c]*yt)
         //               / (1.0+r[c]*yt) / (1.0+r[c]*yt) * ebnm;
@@ -608,7 +611,8 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //         (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
         //b[c] = bprime[c] * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f * std::pow(theta,S[c])
         if (m_it == 0) m_s.push_back( S[c] );
-        b[c] = (2.0*theta + bprime[c]*std::pow(ds/bnm,m_s[c])) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
+        b[c] = (2.0*thetab + bprime[c]*std::pow(ds/bnm,m_s[c])) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
+        //b[c] = (2.0*thetay + bprime[c]*std::pow(v/vnm,m_s[c])) * (1.0+r[c]*yt)/(1.0+r[c]) * ts * f;
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
