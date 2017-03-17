@@ -1043,7 +1043,6 @@ IGNORE(shc);
       for (auto& i : m_tetinpoel) i -= ext[0];
       auto esup = tk::genEsup( m_tetinpoel, 4 );
       for (auto& i : m_tetinpoel) i += ext[0];
-//for (auto i : m_tetinpoel) if (i==44) std::cout << CkMyPe() << ":44\n";
       auto nnode = ext[1] - ext[0] + 1;
       std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
       for (std::size_t j=0; j<nnode; ++j)
@@ -1056,85 +1055,91 @@ IGNORE(shc);
           }
         }
 
+// std::cout << CkMyPe() << " node refine: ";
+// for (const auto& c : m_node) {
+//   std::cout << c.first << "> ";
+//   for (auto i : c.second) std::cout << i << ' ';
+// }
+// std::cout << '\n';
+
       // associate new nodes to all unique edges
 // std::cout << CkMyPe() << " addnode: ";
 //       auto& x = m_coord[1];
 //       auto& y = m_coord[2];
 //       auto& z = m_coord[3];
+
       nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
                                         tag::input >() ).readHeader();
       for (const auto& s : star)
-        for (auto q : s.second) {
-//std::cout << '\n' << CkMyPe() << " add: " << s.first << '-' << q << "\t:" << nnode;
-// std::array< std::size_t, 2 > p{{ s.first, q }};
-// std::cout << s.first << '-' << q << ", coords: (" << m_coord[0][p[0]] << ',' << m_coord[1][p[0]] << ',' << m_coord[2][p[0]] << ")-(" << m_coord[0][p[1]] << ',' << m_coord[1][p[1]] << ',' << m_coord[2][p[1]] << ") ";
-//           x.push_back( (x[s.first]+x[q])/2.0 );
-//           y.push_back( (y[s.first]+y[q])/2.0 );
-//           z.push_back( (z[s.first]+z[q])/2.0 );
+        for (auto q : s.second)
           m_edgenodes[ {{ s.first, q }} ] = nnode++;
-}
+
 // std::cout << '\n';
-      tk::UnsMesh::Tet18 tet18;
-      // assigne 8 new elements in place of each old element (1:8)
-//std::cout << CkMyPe() << " inpoel: ";
-      for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
-        const auto A = m_tetinpoel[e*4+0];
-        const auto B = m_tetinpoel[e*4+1];
-        const auto C = m_tetinpoel[e*4+2];
-        const auto D = m_tetinpoel[e*4+3];
-// auto it = m_edgenodes.find({{A,B}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << A << '-' << B << " not found\n";
-//      it = m_edgenodes.find({{A,C}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << A << '-' << C << " not found\n";
-//      it = m_edgenodes.find({{A,D}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << A << '-' << D << " not found\n";
-//      it = m_edgenodes.find({{B,C}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << B << '-' << C << " not found\n";
-//      it = m_edgenodes.find({{B,D}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << B << '-' << D << " not found\n";
-//      it = m_edgenodes.find({{C,D}}); if (it==end(m_edgenodes))
-//  std::cout << CkMyPe() << ": ref edge " << C << '-' << D << " not found\n";
-        const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
-        const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
-        const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
-        const auto BC = tk::cref_find( m_edgenodes, {{ B,C }} );
-        const auto BD = tk::cref_find( m_edgenodes, {{ B,D }} );
-        const auto CD = tk::cref_find( m_edgenodes, {{ C,D }} );
-        // construct 8 new tets
-        tk::UnsMesh::Child18 n{{  A, AB, AC, AD,
-                                  B, BC, AB, BD,
-                                  C, AC, BC, CD,
-                                  D, AD, CD, BD,
-                                 BC, CD, AC, BD,
-                                 AB, BD, AC, AD,
-                                 AB, BC, AC, BD,
-                                 AC, BD, CD, AD }};
-        tet18[ {{ A,B,C,D }} ] = n; // associate new elements to old one
-      }
+//       tk::UnsMesh::Tet18 tet18;
+//       // assigne 8 new elements in place of each old element (1:8)
+// //std::cout << CkMyPe() << " inpoel: ";
+//       for (std::size_t e=0; e<m_tetinpoel.size()/4; ++e) {
+//         const auto A = m_tetinpoel[e*4+0];
+//         const auto B = m_tetinpoel[e*4+1];
+//         const auto C = m_tetinpoel[e*4+2];
+//         const auto D = m_tetinpoel[e*4+3];
+// // auto it = m_edgenodes.find({{A,B}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << A << '-' << B << " not found\n";
+// //      it = m_edgenodes.find({{A,C}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << A << '-' << C << " not found\n";
+// //      it = m_edgenodes.find({{A,D}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << A << '-' << D << " not found\n";
+// //      it = m_edgenodes.find({{B,C}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << B << '-' << C << " not found\n";
+// //      it = m_edgenodes.find({{B,D}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << B << '-' << D << " not found\n";
+// //      it = m_edgenodes.find({{C,D}}); if (it==end(m_edgenodes))
+// //  std::cout << CkMyPe() << ": ref edge " << C << '-' << D << " not found\n";
+//         const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
+//         const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
+//         const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
+//         const auto BC = tk::cref_find( m_edgenodes, {{ B,C }} );
+//         const auto BD = tk::cref_find( m_edgenodes, {{ B,D }} );
+//         const auto CD = tk::cref_find( m_edgenodes, {{ C,D }} );
+//         // construct 8 new tets
+//         tk::UnsMesh::Child18 n{{  A, AB, AC, AD,
+//                                   B, BC, AB, BD,
+//                                   C, AC, BC, CD,
+//                                   D, AD, CD, BD,
+//                                  BC, CD, AC, BD,
+//                                  AB, BD, AC, AD,
+//                                  AB, BC, AC, BD,
+//                                  AC, BD, CD, AD }};
+//         tet18[ {{ A,B,C,D }} ] = n; // associate new elements to old one
+//       }
 //std::cout << '\n';
       // update connectivity in global mesh node ids associated to chares owned
       for (const auto& conn : m_node) {
         //auto& ch = m_newconn[ conn.first ];
         auto& en = m_chedgenodes[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
-          // find the 8 new elements replacing e
-          const auto& n = tk::cref_find( tet18,
-                                         {{ m_tetinpoel[e*4+0],
-                                            m_tetinpoel[e*4+1],
-                                            m_tetinpoel[e*4+2],
-                                            m_tetinpoel[e*4+3] }} );
-          // augment element connectivity (categorized by chares) with new cells
-          //ch.insert( end(ch), begin(n), end(n) );
-          const auto A = n[0];
-          const auto B = n[4];
-          const auto C = n[8];
-          const auto D = n[12];
-          const auto AB = n[1];
-          const auto AC = n[2];
-          const auto AD = n[3];
-          const auto BC = n[5];
-          const auto BD = n[7];
-          const auto CD = n[11];
+          const auto A = conn.second[e*4+0];
+          const auto B = conn.second[e*4+1];
+          const auto C = conn.second[e*4+2];
+          const auto D = conn.second[e*4+3];
+auto it = m_edgenodes.find({{A,B}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << A << '-' << B << " not found\n";
+     it = m_edgenodes.find({{A,C}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << A << '-' << C << " not found\n";
+     it = m_edgenodes.find({{A,D}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << A << '-' << D << " not found\n";
+     it = m_edgenodes.find({{B,C}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << B << '-' << C << " not found\n";
+     it = m_edgenodes.find({{B,D}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << B << '-' << D << " not found\n";
+     it = m_edgenodes.find({{C,D}}); if (it==end(m_edgenodes))
+ std::cout << CkMyPe() << ": ref edge " << C << '-' << D << " not found\n";
+          const auto AB = tk::cref_find( m_edgenodes, {{ A,B }} );
+          const auto AC = tk::cref_find( m_edgenodes, {{ A,C }} );
+          const auto AD = tk::cref_find( m_edgenodes, {{ A,D }} );
+          const auto BC = tk::cref_find( m_edgenodes, {{ B,C }} );
+          const auto BD = tk::cref_find( m_edgenodes, {{ B,D }} );
+          const auto CD = tk::cref_find( m_edgenodes, {{ C,D }} );
           en[ {{A,B}} ] = AB;
           en[ {{A,C}} ] = AC;
           en[ {{A,D}} ] = AD;
@@ -1187,6 +1192,17 @@ IGNORE(shc);
       for (auto& c : m_chedgenodes)
         for (auto& e : c.second)
            e.second = tk::ref_find( m_newed, e.first );
+// 
+// std::cout << CkMyPe() << " newed: ";
+// for (const auto& c : m_newed)
+//   std::cout << c.first[0] << '-' << c.first[1] << ':' << c.second << ' ';
+// std::cout << '\n';
+
+//       for (auto& c : m_edgenodes) {
+//          auto it = m_newed.find( c.first );
+//          if (it==end(m_newed)) std::cout << " edge not found: " << c.first[0] << '-' << c.first[1] << '\n';
+//          c.second = tk::ref_find( m_newed, c.first );
+//       }
 
 //       // Update m_chedgenodes
 //       for (auto& c : m_chedgenodes)
@@ -1205,6 +1221,19 @@ IGNORE(shc);
 // }
 // std::cout << '\n';
 
+// std::cout << CkMyPe() << " node reordered: ";
+// for (const auto& c : m_node) {
+//   std::cout << c.first << "> ";
+//   for (auto i : c.second) std::cout << i << ' ';
+// }
+// std::cout << '\n';
+
+// std::cout << CkMyPe() << " edgenodes: ";
+// for (const auto& c : m_edgenodes)
+//   std::cout << c.first[0] << '-' << c.first[1] << ':' << c.second << ' ';
+// std::cout << '\n';
+
+
         // Update chare connectivities with new nodes and newly added edge-nodes
         decltype(m_node) newconn;
         for (const auto& conn : m_node) {
@@ -1219,18 +1248,18 @@ IGNORE(shc);
 //      it = m_newnd.find(B); if (it==end(m_newnd)) std::cout << B << " not found\n";
 //      it = m_newnd.find(C); if (it==end(m_newnd)) std::cout << C << " not found\n";
 //      it = m_newnd.find(D); if (it==end(m_newnd)) std::cout << D << " not found\n";
-// auto it = edgenodes.find({{A,B}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << A << '-' << B << " not found\n";
-//      it = edgenodes.find({{A,C}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << A << '-' << C << " not found\n";
-//      it = edgenodes.find({{A,D}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << A << '-' << D << " not found\n";
-//      it = edgenodes.find({{B,C}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << B << '-' << C << " not found\n";
-//      it = edgenodes.find({{B,D}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << B << '-' << D << " not found\n";
-//      it = edgenodes.find({{C,D}}); if (it==end(edgenodes))
-//  std::cout << CkMyPe() << ": edge " << C << '-' << D << " not found\n";
+auto it = edgenodes.find({{A,B}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << A << '-' << B << " not found\n";
+     it = edgenodes.find({{A,C}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << A << '-' << C << " not found\n";
+     it = edgenodes.find({{A,D}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << A << '-' << D << " not found\n";
+     it = edgenodes.find({{B,C}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << B << '-' << C << " not found\n";
+     it = edgenodes.find({{B,D}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << B << '-' << D << " not found\n";
+     it = edgenodes.find({{C,D}}); if (it==end(edgenodes))
+ std::cout << CkMyPe() << ": edge " << C << '-' << D << " not found\n";
             const auto nA = tk::cref_find( m_newnd, A );
             const auto nB = tk::cref_find( m_newnd, B );
             const auto nC = tk::cref_find( m_newnd, C );
