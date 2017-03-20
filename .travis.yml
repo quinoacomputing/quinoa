@@ -5,6 +5,9 @@ sudo: required
 services:
 - docker
 
+git:
+  submodules: false
+
 env:
   matrix:
     - DISTRO=gentoo DOCKERHUB=true
