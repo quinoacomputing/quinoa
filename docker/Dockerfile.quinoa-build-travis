@@ -1,7 +1,6 @@
 FROM quinoacomputing/buildenv:gentoo
 
 ARG COVERAGE
-ARG SONARQUBE
 ARG CC
 ARG CXX
 ENV OMPI_CXX=${CXX}
@@ -17,9 +16,6 @@ ARG TRAVIS_JOB_ID
 ARG TRAVIS_TAG
 ARG TRAVIS_REPO_SLUG
 ARG TRAVIS_COMMIT
-
-# for static analysis
-RUN if ${SONARQUBE}; then export SONAR_BUILD_WRAPPER="build-wrapper-linux-x86-64 --out-dir bw-output"; export SONAR_SCANNER="sonar-scanner"; fi
 
 RUN rm -rf /home/quinoa/.ccache
 COPY quinoa /home/quinoa/quinoa
@@ -40,11 +36,10 @@ RUN cmake \
     -DRUNNER_ARGS="" \
     -DCMAKE_BUILD_TYPE=Release \
     ../src
-RUN ${SONAR_BUILD_WRAPPER} make VERBOSE=1 -j2
+RUN make VERBOSE=1 -j2
 RUN ccache -s
 RUN ./charmrun +p2 Main/unittest -v
 RUN ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
-RUN ${SONAR_SCANNER}
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
