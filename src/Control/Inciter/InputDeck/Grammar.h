@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 10 Jan 2017 09:00:29 AM MST
+  \date      Mon 20 Mar 2017 08:51:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -34,7 +34,8 @@ namespace deck {
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
                             ctr::InputDeck::keywords2,
-                            ctr::InputDeck::keywords3 >;
+                            ctr::InputDeck::keywords3,
+                            ctr::InputDeck::keywords4 >;
 
   // Inciter's InputDeck state
 
@@ -389,6 +390,19 @@ namespace deck {
   struct equations :
          pegtl::sor< transport, compflow > {};
 
+  //! adaptive mesh refinement (AMR) amr...end block
+  struct amr :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::amr >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::process<
+                             use< kw::amr_initial >,
+                             tk::grm::store_inciter_option<
+                               tk::ctr::InitialAMR,
+                               tag::selected,
+                               tag::initialamr >,
+                             pegtl::alpha > > > {};
+
   //! plotvar ... end block
   struct plotvar :
          pegtl::if_must<
@@ -406,6 +420,7 @@ namespace deck {
                            use< kw::end >,
                            discretization_parameters,
                            equations,
+                           amr,
                            partitioning,
                            plotvar,
                            tk::grm::diagnostics<

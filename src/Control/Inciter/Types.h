@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 10:55:56 AM MST
+  \date      Mon 20 Mar 2017 08:54:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -19,6 +19,7 @@
 #include "Types.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
+#include "Inciter/Options/InitialAMR.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
 #include "PUPUtil.h"
@@ -29,7 +30,8 @@ namespace ctr {
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
-  tag::partitioner,  tk::ctr::PartitioningAlgorithmType //!< Mesh partitioner
+  tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
+  tag::initialamr,   tk::ctr::InitialAMRType            //!< Initial AMR type
 >;
 
 //! Discretization parameters storage

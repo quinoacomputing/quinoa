@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 10 Mar 2017 09:57:38 AM MST
+  \date      Mon 20 Mar 2017 10:14:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -354,7 +354,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       }
       // Store inverse of PE-division map stored on all PE
       m_div[ {lower,upper} ] = p;
-//std::cout << CkMyPe() << '(' << p << ") linsys:bounds: " << lower << "..." << upper << '\n';
       // If we have all PEs' bounds, signal the runtime system to continue
       if (m_div.size() == static_cast<std::size_t>(CkNumPes())) {
         // Create my PE's lhs matrix distributed across all PEs
@@ -364,7 +363,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
         // Create linear solver
         m_solver.create();
-//std::cout << '\n' << CkMyPe() << " linsys:bounds done: " << m_lower << ',' << m_upper;
         // Signal back to host that setup of workers can start
         signal2host_setup( m_host );
       }

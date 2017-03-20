@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 03 Mar 2017 06:37:25 PM MST
+  \date      Mon 20 Mar 2017 10:08:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -294,9 +294,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   result of the flattening is thus a simpler data structure that is no
     //!   longer categorized by (or associated to) chares.
     void flatten() {
-
-      refine();
-
+      // Optionally refine mesh if requested
+      const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
+      if (ir == tk::ctr::InitialAMRType::UNIFORM) refine();
       // Make sure we are not fed garbage
       Assert( m_chinpoel.size() ==
                 static_cast< std::size_t >( chareDistribution()[1] ),
@@ -891,16 +891,19 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
           }
-
+      // Starting node ID (on all PEs) while assigning new edge-nodes
       nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
                                         tag::input >() ).readHeader();
-
+      // Add new edge-nodes
       tk::UnsMesh::EdgeNodes edgenodes;
       for (const auto& s : star)
         for (auto q : s.second)
           edgenodes[ {{ s.first, q }} ] = nnode++;
-
-      // Generate ...
+      // Generate maps associating new node IDs (as in producing
+      // contiguous-row-id linear system contributions)to edges (a pair of old
+      // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
+      // by chares. Note that the new edge-node IDs assigned here will be
+      // overwritten with globally unique node IDs after reordering.
       for (const auto& conn : m_chinpoel) {
         auto& en = m_chedgenodes[ conn.first ];
         for (std::size_t e=0; e<conn.second.size()/4; ++e) {
