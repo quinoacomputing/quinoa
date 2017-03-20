@@ -16,7 +16,7 @@ script:
   - cp -vr docker ${HOME}/docker
   - sed -i "1s/gentoo/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
-  - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
+  - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
   - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
