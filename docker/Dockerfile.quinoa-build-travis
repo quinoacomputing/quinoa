@@ -52,3 +52,17 @@ USER root
 RUN make install
 USER quinoa
 WORKDIR /home/quinoa
+
+
+##################### AUGMENT to run this optionally
+## Build and generate sonarqube data
+#RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror -DTPL_DIR=/home/quinoa/tpl ../src && build-wrapper-linux-x86-64 --out-dir bw-output make VERBOSE=1 -j$((`cat /proc/cpuinfo | grep MHz | wc -l`))
+#
+#ADD sonar-project.properties quinoa/build/
+##USER root
+##RUN chown quinoa quinoa/build/sonar-project.properties
+##USER quinoa
+#
+## Upload sonarqube data
+#RUN cd quinoa/build && sonar-scanner
+#####################
