@@ -506,7 +506,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
       const std::vector< tk::Table >& hts,
-      const std::vector< tk::Table >& hp,
+      const std::vector< tk::Table >& /*hp*/,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -545,8 +545,8 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
 
-        tk::real m = lookup( mean(depvar,c), moments );            // <Y>
-        tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
+        //tk::real m = lookup( mean(depvar,c), moments );            // <Y>
+        //tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
@@ -559,7 +559,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real a = r[c]/(1.0+r[c]*yt);
         //tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
-        tk::real vnm = m*(1.0-m);
+        //tk::real vnm = m*(1.0-m);
         tk::real thetab = 1.0 - ds/bnm;
         tk::real thetay = 1.0 - v/vnm;
         //tk::real A = 0.15;
