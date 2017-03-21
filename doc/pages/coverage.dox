@@ -1,9 +1,9 @@
 /*!
-  \page      coverage Code coverage reports
+  \page      coverage Code coverage and static analysis reports
 
 In Quinoa code correctness is verified and quantified using
 [multiple levels](\ref correct) of testing. Here are various code coverage
-analysis reports for the current HEAD.
+analysis reports for the current master branch.
 
 - <a href="unittest_coverage/index.html"
 target="_blank">Unit test coverage report</a>
@@ -14,9 +14,12 @@ target="_blank">Regression test coverage report</a>
 - <a href="test_coverage/index.html"
 target="_blank">Full test coverage report</a>
 
+- <a href="cppcheck/index.html"
+target="_blank">Cppchekc static analysis report</a>
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 11 Aug 2015 11:59:46 AM MDT
+<em>Page last updated:</em> Tue 21 Mar 2017 12:00:40 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
