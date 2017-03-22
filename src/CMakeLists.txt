@@ -146,10 +146,6 @@ macro (add_compiler_flag flag)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
 endmacro (add_compiler_flag)
 
-# Disallow undefined symbols in object files. Undefined symbols in shared
-# libraries are still allowed.
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
-
 # Macro to add C compiler flags
 macro (add_c_compiler_flag flag)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
@@ -427,6 +423,18 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
   "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
 )
+
+# Disallow undefined symbols in shared libraries. Shared libraries must be
+# linked against all libraries that they use symbols from in the same way that
+# binaries are. Since this option enforces symbol resolution at build time, a
+# missing library reference will be caught early as a fatal build error.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
+
+# Link shared libraries with the charmc wrapper
+#STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+#       "${CHARM_COMPILER}"
+#       CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
+#message("S: ${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)

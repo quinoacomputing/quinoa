@@ -17,6 +17,15 @@ add_library(Base
 #            Msg.C
 )
 
+target_link_libraries(Base
+                      c++)
+#                      ${CHARM_CONV_CPLUS_LIBRARY}
+#                      ${CHARM_CONV_UTIL_LIBRARY}
+#                      ${CHARM_CONV_CORE_LIBRARY}
+#                      ${MPI_CXX_LIBRARIES})
+
+#message("m: ${CHARM_CONV_CPLUS_LIBRARY}")
+
 #addCharmModule( "msg" "Base" )
 
 set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)
