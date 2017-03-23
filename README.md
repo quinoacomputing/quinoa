@@ -1,16 +1,16 @@
 ## What is Quinoa?
 
-<img src="https://quinoacomputing.github.io/quinoa/quinoa.svg" align="right" width="25%" background=transparent>
+<img src="https://quinoacomputing.github.io/quinoa.svg" align="right" width="25%" background=transparent>
 Quinoa is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
 
 ## Organization
 
 Currently, Quinoa consists of the following tools:
-  - [<B>inciter</B>](http://quinoacomputing.github.io/quinoa/inciter_doc.html) - Partial differential equations solver on 3D unstructured grids
-  - [<B>walker</B>](http://quinoacomputing.github.io/quinoa/walker_doc.html) - Random walker for stochastic differential equations
-  - [<B>rngtest</B>](http://quinoacomputing.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
-  - [<B>unittest</B>](http://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
-  - [<B>meshconv</B>](http://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
+  - [<B>inciter</B>](http://quinoacomputing.github.io/inciter_doc.html) - Partial differential equations solver on 3D unstructured grids
+  - [<B>walker</B>](http://quinoacomputing.github.io/walker_doc.html) - Random walker for stochastic differential equations
+  - [<B>rngtest</B>](http://quinoacomputing.github.io/rngtest_doc.html) - Random number generator test suite
+  - [<B>unittest</B>](http://quinoacomputing.github.io/unittest_doc.html) - Unit test suite
+  - [<B>meshconv</B>](http://quinoacomputing.github.io/meshconv_doc.html) - Mesh file converter
 
 ## Build
 
@@ -51,4 +51,4 @@ Currently, Quinoa consists of the following tools:
 
 ## Resources
 
-[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/quinoa/index.html) - [manifesto](http://quinoacomputing.github.io/quinoa/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing) - [travis](https://travis-ci.org/quinoacomputing/quinoa) - [codecov](https://codecov.io/gh/quinoacomputing/quinoa/commits) - [gcov](http://quinoacomputing.github.io/quinoa/coverage.html) - [cppcheck](http://quinoacomputing.github.io/quinoa/cppcheck/index.html) - [doxygen](http://quinoacomputing.github.io/quinoa) - [sonarqube](https://sonarqube.com/dashboard?id=quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)
+[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/index.html) - [manifesto](http://quinoacomputing.github.io/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing) - [travis](https://travis-ci.org/quinoacomputing/quinoa) - [codecov](https://codecov.io/gh/quinoacomputing/quinoa/commits) - [gcov](http://quinoacomputing.github.io/coverage.html) - [cppcheck](http://quinoacomputing.github.io/cppcheck/index.html) - [doxygen](http://quinoacomputing.github.io) - [sonarqube](https://sonarqube.com/dashboard?id=quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)
