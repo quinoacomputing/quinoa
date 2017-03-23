@@ -352,6 +352,10 @@ endif()
 if (DEFINED ENV{NERSC_HOST})
   SET(RUNNER "srun")
   SET(RUNNER_NCPUS_ARG "-n")
+elseif(ARCH MATCHES "ppc64")
+  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
+  SET(RUNNER_NCPUS_ARG "--np")
+  SET(RUNNER_ARGS "")
 else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
   SET(RUNNER_NCPUS_ARG "+p")
@@ -360,7 +364,8 @@ message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 
 # Set default parallel/serial job runner extra arguments
-if (NOT DEFINED RUNNER_ARGS AND
+if (NOT ARCH MATCHES "ppc64" AND
+    NOT DEFINED RUNNER_ARGS AND
     NOT DEFINED ENV{CRAY_PRGENVPGI} AND
     NOT DEFINED ENV{CRAY_PRGENVGNU} AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND

@@ -17,9 +17,11 @@
   #pragma clang diagnostic ignored "-Wmissing-prototypes"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "../Main/walker.def.h"

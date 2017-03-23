@@ -58,13 +58,16 @@ if(NOT BUILD_SHARED_LIBS)
   find_library(GFORTRAN_LIBRARY NAMES libgfortran.a
                HINTS ${LAPACKE_ROOT}/lib
                      /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${GCC_MAJOR}
+                     $ENV{LAPACKE_ROOT}
                      $ENV{LAPACKE_ROOT}/lib
                PATH_SUFFIXES lapack lapacke)
-  find_library(QUADMATH_LIBRARY NAMES libquadmath.a
-               HINTS ${LAPACKE_ROOT}/lib
-                     /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${GCC_MAJOR}
-                     $ENV{LAPACKE_ROOT}/lib
-               PATH_SUFFIXES lapack lapacke)
+  if(NOT ARCH MATCHES "ppc64")
+    find_library(QUADMATH_LIBRARY NAMES libquadmath.a
+                 HINTS ${LAPACKE_ROOT}/lib
+                       /usr/lib/gcc/${CMAKE_LIBRARY_ARCHITECTURE}/${GCC_MAJOR}
+                       $ENV{LAPACKE_ROOT}/lib
+                 PATH_SUFFIXES lapack lapacke)
+  endif()
 else()
   find_library(LAPACKE_LIBRARY NAMES lapacke reflapacke
                HINTS ${LAPACKE_ROOT}/lib

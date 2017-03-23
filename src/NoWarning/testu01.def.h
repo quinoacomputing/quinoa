@@ -7,8 +7,10 @@
   \brief     Include testu01.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_testu01_def_h
-#define nowarning_testu01_def_h
+
+// Note the absence of include guards. This is because the Charm++ definition
+// file included below may need to be included multiple times in a single
+// translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -33,5 +35,3 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#endif // nowarning_testu01_def_h

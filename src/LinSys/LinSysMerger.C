@@ -58,6 +58,7 @@ template class tk::LinSysMerger< inciter::CProxy_Transporter,
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wreorder"
+  #pragma clang diagnostic ignored "-Wundef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wswitch-default"

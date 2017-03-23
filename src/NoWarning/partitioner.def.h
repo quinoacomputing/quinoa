@@ -8,8 +8,11 @@
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_partitioner_def_h
-#define nowarning_partitioner_def_h
+
+// Note the absence of include guards. This is because the Charm++ definition
+// file included below may need to be included multiple times in a single
+// translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
+// each inclusion will generate different code.
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -19,6 +22,7 @@
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wundef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
@@ -34,5 +38,3 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#endif // nowarning_partitioner_def_h

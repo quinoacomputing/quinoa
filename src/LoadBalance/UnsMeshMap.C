@@ -190,7 +190,7 @@ UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
   for (int e=0; e<nelem; ++e)
     if (m_pe[ static_cast<std::size_t>(e) ] ==
         static_cast<std::size_t>(CkMyPe()))
-      mgr->insertInitial( e, CkCopyMsg(&msg) );
+      mgr->insertInitial( CkArrayIndex(e), CkCopyMsg(&msg) );
 
   mgr->doneInserting();
   CkFreeMsg( msg );

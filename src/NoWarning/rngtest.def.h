@@ -15,12 +15,18 @@
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wmissing-prototypes"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "../Main/rngtest.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_rngtest_def_h

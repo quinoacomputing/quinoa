@@ -31,6 +31,7 @@ endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
+  set(LAPACKE_ROOT ${TPL_DIR}) # prefer ours
   find_package(LAPACKE REQUIRED)
 endif()
 
@@ -71,7 +72,9 @@ find_package(Random123 REQUIRED)
 
 #### RNGSSE2 library
 set(RNGSSE2_ROOT ${TPL_DIR}) # prefer ours
-find_package(RNGSSE2)
+if(ARCH MATCHES "x86")
+  find_package(RNGSSE2)
+endif()
 if(RNGSSE2_FOUND)
   set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
@@ -103,7 +106,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 #### Zlib (only for static link)
-if(NOT BUILD_SHARED_LIBS)
+if(NOT BUILD_SHARED_LIBS AND NOT ARCH MATCHES "ppc64")
   find_package(ZLIB REQUIRED)
 endif()
 
