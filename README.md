@@ -12,24 +12,6 @@ Currently, Quinoa consists of the following tools:
   - [<B>unittest</B>](http://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
   - [<B>meshconv</B>](http://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
 
-## Try
-
-The quickest way to try Quinoa is to run the already built executables inside the [release](https://hub.docker.com/r/quinoacomputing/quinoa/) [docker](https://www.docker.com) container.
-
-#### 1. Run the container on your local machine
-
-```
-docker run -ti quinoacomputing/quinoa:alpine
-```
-
-#### 2. Run executables inside the container, e.g.,
-
-```
-charmrun +p4 /usr/local/bin/unittest -v
-```
-
-The release container executables are configured for a single computer. To run on clusters of networked compute nodes you should build from source:
-
 ## Build
 
 #### 1. Install prerequisites
@@ -51,7 +33,7 @@ The release container executables are configured for a single computer. To run o
 #### 2. Clone, build third-party libraries, build & test
 
    ```
-   git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
+   git clone --recursive https://github.com/quinoacomputing/quinoa.git; cd quinoa
    mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
    mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
    ```
