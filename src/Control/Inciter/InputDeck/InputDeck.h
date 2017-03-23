@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 02:12:41 PM MST
+  \date      Mon 20 Mar 2017 09:58:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -111,6 +111,9 @@ class InputDeck :
                                        kw::cfl,
                                        kw::mj,
                                        kw::depvar >;
+    using keywords4 = boost::mpl::set< kw::amr,
+                                       kw::amr_initial,
+                                       kw::amr_uniform >;
                                      
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -129,6 +132,8 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
+      // Default AMR settings
+      set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
@@ -140,6 +145,7 @@ class InputDeck :
       boost::mpl::for_each< keywords1 >( ctrinfoFill );
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
+      boost::mpl::for_each< keywords4 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

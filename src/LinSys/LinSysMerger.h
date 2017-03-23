@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 10 Feb 2017 06:25:07 PM MST
+  \date      Mon 20 Mar 2017 10:14:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -344,6 +344,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \param[in] lower Lower index of the global rows on my PE
     //! \param[in] upper Upper index of the global rows on my PE
     void bounds( int p, std::size_t lower, std::size_t upper ) {
+      Assert( lower < upper, "Lower bound must be lower than the upper bound: "
+              "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
+              ") sent by PE " + std::to_string(p) );
       // Store our bounds
       if (p == CkMyPe()) {
         m_lower = lower;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 12:51:38 PM MDT
+  \date      Fri 17 Mar 2017 12:14:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -15,6 +15,7 @@ module partitioner {
   include "unordered_set";
   include "unordered_map";
   include "Types.h";
+  include "UnsMesh.h";
 
   namespace inciter {
 
@@ -38,15 +39,21 @@ module partitioner {
       entry void recv();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
-      entry void request( int pe, const std::unordered_set< std::size_t >& id );
+      entry void request( int pe, const std::unordered_set< std::size_t >& nd );
+      entry void request( int pe, const tk::UnsMesh::Edges& ed );
       entry void neworder(
-                   const std::unordered_map< std::size_t, std::size_t >& id );
+                   const std::unordered_map< std::size_t, std::size_t >& nd );
+      entry void neworder( const tk::UnsMesh::EdgeNodes& ed );
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
       entry void gather();
-      entry void query( int pe, const std::set< std::size_t >& id );
-      entry void mask( int pe, const std::unordered_map< std::size_t,
-                                       std::vector< int > >& ch );
+      entry void query( int pe,
+                        const std::set< std::size_t >& nodes,
+                        const tk::UnsMesh::Edges& edges );
+      entry void mask( int pe,
+                       const std::unordered_map< std::size_t,
+                                                 std::vector< int > >& cn,
+                       tk::UnsMesh::EdgeChares& ce );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -85,18 +92,18 @@ module partitioner {
       // queried. On another path, every PE immediately sends out requests to
       // fellow PEs for nodes that they cannot reorder by themselves. However,
       // those can only be sent back when the PE they are requested from has
-      // finished reordering them, so we wait until Own is satisfied on that PE.
-      // Req is triggered when a PE has received a request. Only when Own and
-      // Req are both satisfied do we need to prepare a set of new node IDs for
-      // a requestor, hence the above logic in the SDAG. Since there can be
-      // multiple requests arriving before any (or some or all) of them can be
-      // satisfied, the requests are queued into a vector and when the runtime
-      // system calls prepare(), we fullfill all requests, clear the queue, and
-      // automatically re-enable the trigger for Own, i.e., wait only for Req,
-      // i.e., new requests.
+      // finished reordering (i.e., assigning new IDs to) them, so we wait until
+      // Own is satisfied on that PE. Req is triggered when a PE has received a
+      // request. Only when Own and Req are both satisfied do we need to prepare
+      // a set of new node IDs for a requestor, hence the above logic in the
+      // SDAG. Since there can be multiple requests arriving before any (or some
+      // or all) of them can be satisfied, the requests are queued into a vector
+      // and when the runtime system calls prepare(), we fullfill all requests,
+      // clear the queue, and automatically re-enable the trigger for Own, i.e.,
+      // wait only for Req, i.e., new requests.
       //
-      // The second part of the graph, only happend after reordering is done,
-      // after the mesh reordering has been completed and started by a call to
+      // The second part of the graph, only happens after reordering is done,
+      // after the mesh reordering has been completed, and started by a call to
       // bounds() inside reordered(). Ord is a partial synchronization point,
       // because it happens at different times on different PEs.
 
@@ -104,7 +111,7 @@ module partitioner {
       // once that is done the lower bounds are communicated among the fellow
       // Partitioner branches, since the lower bound of PE n is the upper bound
       // of PE n-1. Only when both upper and lower bounds have been stored on a
-      // PE, can Worker chare array elements be inserted, done in create().
+      // PE, can worker chare array elements be inserted, done in create().
       // Initiation of estimating the average and standard deviation of the
       // communication cost of merging the linear system is done in the
       // beginning of create(), which starts two reductions, which must be done
@@ -114,8 +121,8 @@ module partitioner {
       //
       // While the tasks carried out as described in the previous paragraph lead
       // to correct results, there is an additional trigger, _participated_,
-      // that needs to be enabled before create() is called. The role of
-      // participated_complete() is to make sure that all PEs participate in the
+      // denoted by Par, that needs to be enabled before create() is called. The
+      // role of Par is to make sure that all PEs participate in the
       // distribution of new (reordered) mesh node IDs during reordering. In
       // particular, since PE 0 has nothing to receive from others, if this
       // trigger is not in place, PE 0 goes ahead of every other PE and calls
@@ -123,7 +130,7 @@ module partitioner {
       // This is undesired at this point since PE 0 will surely need to answer
       // to requests from other PEs with new node IDs, which can only be done
       // (if the participated trigger is not in place) when the Workers have
-      // been created. This introduces unnecessarly delays and load imbalance
+      // been created. This introduces unnecessary delays and load imbalance
       // during reordering. Thus requiring participated_complete() in addition
       // to lower and upper, delays creating of Workers. As a result, PE 0 is
       // ready for requests from other PEs for new node IDs earlier than without
@@ -138,10 +145,23 @@ module partitioner {
       // Pre always happens before Ord, and Cre on the same PE, they happen at
       // different times on different PEs, so these are not considered global
       // synchronization points.
+      //
+      // Note that the above logic changes very little if initial uniform mesh
+      // refinement is performed. That happens in flatten(), which is always
+      // after the the initial mesh partitioning but before global distributed
+      // mesh node reordering. When nodes are to be sent during reordering,
+      // edge-nodes are also sent and while edge-nodes are stored in different
+      // data structures, the logic remains the same as used for the
+      // communication of nodes.
 
       entry void wait4prep() {
         when reorderowned_complete(), nodes_requested_complete()
         serial "prepare" { prepare(); }
+      };
+
+      entry void wait4reorder() {
+        when nodesreorder_complete(), edgesreorder_complete()
+        serial "reordered" { reordered(); }
       };
 
       entry void wait4bounds() {
@@ -151,6 +171,8 @@ module partitioner {
 
       entry void reorderowned_complete();
       entry void nodes_requested_complete();
+      entry void nodesreorder_complete();
+      entry void edgesreorder_complete();
       entry void lower_complete();
       entry void upper_complete();
       entry void participated_complete();
