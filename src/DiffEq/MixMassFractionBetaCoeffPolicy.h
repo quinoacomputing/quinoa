@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 19 Dec 2016 11:54:29 AM MST
+  \date      Tue 21 Mar 2017 07:05:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -554,14 +554,14 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real yt = ry/d;
 
         auto ts = hydrotimescale( t, hts[c] );  // eps/k
-        auto pe = hydroproduction( t, hp[c] );  // P/eps = (dk/dt+eps)/eps
+        //auto pe = hydroproduction( t, hp[c] );  // P/eps = (dk/dt+eps)/eps
 
         tk::real a = r[c]/(1.0+r[c]*yt);
         //tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
         //tk::real vnm = m*(1.0-m);
         tk::real thetab = 1.0 - ds/bnm;
-        tk::real thetay = 1.0 - v/vnm;
+        //tk::real thetay = 1.0 - v/vnm;
         //tk::real A = 0.15;
 
         //tk::real mix = 1.0;
