@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 11:31:49 AM MDT
+  \date      Thu 23 Mar 2017 07:09:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -184,10 +184,6 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-if (J<0) { std::cout << '\n' << CkMyPe() << " J negative: " << m_gid[N[0]] << ',' << m_gid[N[1]] << ',' << m_gid[N[2]] << ',' << m_gid[N[3]] << ", coords: " <<
-x[N[0]] << ", " << x[N[1]] << ", " << x[N[2]] << ", " << x[N[3]] << ", " <<
-y[N[0]] << ", " << y[N[1]] << ", " << y[N[2]] << ", " << y[N[3]] << ", " <<
-z[N[0]] << ", " << z[N[1]] << ", " << z[N[2]] << ", " << z[N[3]]; }
     Assert( J > 0, "Element Jacobian non-positive: PE:" +
                    std::to_string(CkMyPe()) + ", node IDs: " +
                    std::to_string(m_gid[N[0]]) + ',' +
@@ -217,9 +213,7 @@ z[N[0]] << ", " << z[N[1]] << ", " << z[N[2]] << ", " << z[N[3]]; }
   else
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
-      for (auto i : n.second) {
-if (m_lid.find(i)==end(m_lid)) std::cout << thisIndex << " not found: " << i << '\n';
-v.push_back( m_vol[ tk::cref_find(m_lid,i) ] ); }
+      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comvol( n.second, v );
     }
 }
@@ -238,7 +232,6 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
   Assert( V.size() == gid.size(), "Size mismatch" );
 
   for (std::size_t i=0; i<gid.size(); ++i) {
-if (m_lid.find(gid[i])==end(m_lid)) std::cout << thisIndex << " not finding node " << gid[i] << '\n';
     auto lid = tk::cref_find( m_lid, gid[i] );
     Assert( lid < m_vol.size(), "Indexing out of bounds" );
     m_vol[ lid ] += V[i];
