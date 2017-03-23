@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 21 Mar 2017 10:23:51 AM MDT
+# \date      Thu 23 Mar 2017 02:02:00 PM MDT
 #
 ################################################################################
 
@@ -138,7 +138,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
 include(GetGitRevisionDescription)
-git_describe(GIT_SHA1)
+git_describe(GIT_SHA1 --tags)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
