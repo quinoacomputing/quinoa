@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 10 Mar 2017 08:07:18 AM MST
+# \date      Tue 21 Mar 2017 10:23:51 AM MDT
 #
 ################################################################################
 
@@ -534,6 +534,9 @@ if (NOT BUILD_SHARED_LIBS)
     set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
   endforeach()
 endif()
+
+# Optionally enable cppcheck static analysis
+include(CppCheck)
 
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()

@@ -4,12 +4,12 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Thu 09 Mar 2017 07:05:49 AM MST
+# \date      Tue 21 Mar 2017 11:31:33 AM MDT
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script assumes a new clone in /tmp/q, builds the third-party
-#   libraries and the code in DEBUG, generates the documentation, and uploads to
-#   github.
+#   libraries and the code in DEBUG, generates API documentation using doxygen,
+#   performs static analysis using cppcheck, and uploads the results to github.
 # 
 ################################################################################
 
@@ -71,6 +71,12 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   mv doc/html/test_coverage ${WORKDIR}
   rm * -rf
 
+  # Generate cppcheck static analysis report and move it to ${WORKDIR}
+  cmake ../src
+  make cppcheck
+  mv doc/cppcheck ${WORKDIR}
+  rm * -rf
+
   # Start out in empty build-dir with a fresh clone of the gh-pages branch
   git clone git@github.com:quinoacomputing/quinoa.git --branch gh-pages --single-branch doc/html
   cd doc/html
@@ -84,6 +90,7 @@ if [ $CODE_SHA != $DOC_SHA ]; then
   mv ${WORKDIR}/unittest_coverage .
   mv ${WORKDIR}/regression_coverage .
   mv ${WORKDIR}/test_coverage .
+  mv ${WORKDIR}/cppcheck .
   touch .nojekyll
   cp ../../../doc/images/* .
   git add .
