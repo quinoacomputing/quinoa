@@ -1,6 +1,8 @@
 FROM quinoacomputing/buildenv:gentoo
 
 ARG COVERAGE
+ARG SONARQUBE
+ARG SONARQUBE_TOKEN
 ARG CC
 ARG CXX
 ENV OMPI_CXX=${CXX}
@@ -20,8 +22,9 @@ ARG TRAVIS_COMMIT
 RUN rm -rf /home/quinoa/.ccache
 COPY quinoa /home/quinoa/quinoa
 COPY ccache/ /home/quinoa/.ccache
+COPY sonar/ /home/quinoa/.sonar
 USER root
-RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.ccache
+RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.ccache /home/quinoa/.sonar
 USER quinoa
 
 WORKDIR /home/quinoa/quinoa
@@ -36,7 +39,7 @@ RUN cmake \
     -DRUNNER_ARGS="" \
     -DCMAKE_BUILD_TYPE=Release \
     ../src
-RUN make VERBOSE=1 -j2
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
 RUN ccache -s
 RUN ./charmrun +p2 Main/unittest -v
 RUN ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
@@ -47,22 +50,27 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
   else \
     $HOME/.local/bin/codecov; \
   fi; \
+else \
+  if [ ${TRAVIS_BRANCH} == sonarqube ] && [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
+    sonar-scanner \
+      -Dsonar.projectKey=quinoa \
+      -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
+      -Dsonar.projectVersion=$TRAVIS_COMMIT
+      -Dsonar.links.homepage=http://quinoacomputing.org
+      -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa
+      -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa
+      -Dsonar.links.issue=https://github.com/quinoacomputing/quinoa/issues
+      -Dsonar.sources=src \
+      -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
+      -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
+      -Dsonar.cfamily.build-wrapper-output=build/bw-output \
+      -Dsonar.host.url=https://sonarqube.com \
+      -Dsonar.organization=qunoacomputing \
+      -Dsonar.login=${SONARQUBE_TOKEN}; \
+  fi; \
 fi && cd -
+ENV SONARQUBE_TOKEN ""
 USER root
 RUN make install
 USER quinoa
 WORKDIR /home/quinoa
-
-
-##################### AUGMENT to run this optionally
-## Build and generate sonarqube data
-#RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror -DTPL_DIR=/home/quinoa/tpl ../src && build-wrapper-linux-x86-64 --out-dir bw-output make VERBOSE=1 -j$((`cat /proc/cpuinfo | grep MHz | wc -l`))
-#
-#ADD sonar-project.properties quinoa/build/
-##USER root
-##RUN chown quinoa quinoa/build/sonar-project.properties
-##USER quinoa
-#
-## Upload sonarqube data
-#RUN cd quinoa/build && sonar-scanner
-#####################

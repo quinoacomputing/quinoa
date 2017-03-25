@@ -13,7 +13,7 @@ env:
 #    - DISTRO=gentoo DOCKERHUB=true
 #    - DISTRO=gentoo COVERAGE=ON
 #    - DISTRO=gentoo WERROR=ON
-    - DISTRO=ubuntu-sonarqube-scanner SONARQUBE=ON
+    - DISTRO=alpine SONARQUBE=ON
 
 script:
   - rm -rf tpl
@@ -22,11 +22,12 @@ script:
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
+  - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
                 --build-arg COVERAGE=${COVERAGE}
-                --build-arg SONARQUBE=${SONARQUBE}
                 --build-arg CC=${CC} --build-arg CXX=${CXX}
+                --build-arg SONARQUBE=${SONARQUBE} --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN}
                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
@@ -34,7 +35,8 @@ script:
                 -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
     rm -rf ${HOME}/.ccache &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash) &&
-    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/
+    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/ &&
+    docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
 
 after_success:
   - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
@@ -43,7 +45,9 @@ after_success:
     fi
 
 cache:
-  - ccache
+  ccache: true
+  directories:
+    - $HOME/.sonar
 
 compiler:
   - gcc
@@ -53,8 +57,3 @@ notifications:
   email:
     recipients:
       secure: ec1yseV2bUIqzDHZjqgBGhMsTNQSFdwWQ17cmoeaIV2CazQYufSeeLiYqAV6uTvas0lkEY1Bwcdw1NOvZQm4tPEsw+JKujhwFX6aQQMluEh+lAWUxVRRAow1B5hndX+tULnOSV0ArhgEqLxsgrwB64aeea5MBkHhalBaC4MLf77r5+94COerB//BVVNR2zYhR6CVXFdZv8+/PlYyzlKd5i6YwEhJZNlwZtQEunxbF9NoCGNMtwexPf4aFiJ6JAZmiky8QSGapMzAevbiykZOb3TDBdoA2duh4lpWk5FczQ+AhY2ZvD3mIzskFikZYELog+T78QPF07sZ5gJ0uiWmf+IptaYaKi8imgjJwVSLnCzqdMotxqAqPStBYYS3lM5bdd70wX6kshuO+llUBwvXZBL6MZ3Cp/PA4I/8+8XgMjW+B1o5IBjpsv5A9fZL88VbcOevCJ/Y1iAFQrxuxceGLptT1Z/cCLlzV2hXdvGY0YThl4EuCx8WCEWeoXrgySkEtQTdK7kuU+Owg0Lu/lf4uk6PJQWUyYwHMaZYk9Bn4jqNb1OL5bZZYXXxzaG9eJ61O5fG/jtoZSCtGXKLSKXajpPWHCbaaIOTDYvF3afKecU6VGlQbUr3phJuDBhtoJ+7AoamVFNjXx6oXZojVtvGruPKS0crmIJtvDEBApAl5CU=
-
-addons:
-  sonarqube:
-    token:
-      secure: cLJHfwJBArgiQ6BbJWbS6Xb0pVV+ldhJGw2kcc526ouO1X0ve84YXj9vPCg+Won9T7lyvUBoaHQqt0o6hjoJUx1cnlQmMVNkkKJ7kUFAwshwvmOrg7eqfeitG8srsZfrU7C0+h0ZJIQiFE80VpGm+lygbChfyeRkGwb3punWNUCmt7nNG9JPCEUhUXGDcErnGRaWkbuyrYnrlIO4l0Q+Am+CJNGbHpOsZeHFoi+lToeenzuWNxKZBhQ0dW6bzWDuGxeWe76+2odb65eJx+lQlHl36LNqknA8F/jspDEtJj3S/pt7BBqS3UhalR+fgSRhXf434efbvMSG8DlJPNyGTALAiwGZxSAsnkhbP8WQMIT8pfNjL1hpKeFRaYybBQOrrGVKVp8mHsAT6bAhDwVbvrgNZxdM68zj68WVv4si6SmauMix3Zgnuh6+zPLre0l6aootuXq/PyAUMBHAQWodeEPiLf4HrpC7MicrrNN/vLQrymS53KaW7qsWrSf0Y2Wg/52io4UeJVI48dizcovbMfjsCkKrSlhVHVoV47ByZT+Ghm3jNjxtaL8IzkCa8W6ffZNGDkKkSE/RGGM9V2G04qqBYQroQtjMvLpf9HAHER6+zIzzGb4ZMPhXT+1lArLSTug6udlAE/mvgT5U/WijM871evuNxho92cehiOd9W/U=
