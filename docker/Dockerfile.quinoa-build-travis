@@ -53,25 +53,24 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
   else \
     $HOME/.local/bin/codecov; \
   fi; \
-else \
-  if [ ${TRAVIS_BRANCH} == sonarqube ] && [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
-    sonar-scanner \
-      -Dsonar.projectKey=quinoa \
-      -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
-      -Dsonar.projectVersion=$TRAVIS_COMMIT \
-      -Dsonar.links.homepage=http://quinoacomputing.org \
-      -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
-      -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
-      -Dsonar.links.issue=https://github.com/quinoacomputing/quinoa/issues \
-      -Dsonar.sources=src \
-      -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
-      -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
-      -Dsonar.cfamily.build-wrapper-output=build/bw-output \
-      -Dsonar.host.url=https://sonarqube.com \
-      -Dsonar.organization=qunoacomputing \
-      -Dsonar.login=${SONARQUBE_TOKEN}; \
-  fi; \
-fi && cd -
+fi
+RUN cd .. && if [ ${TRAVIS_BRANCH} == sonarqube ] && [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
+  sonar-scanner \
+    -Dsonar.projectKey=quinoa \
+    -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
+    -Dsonar.projectVersion=$TRAVIS_COMMIT \
+    -Dsonar.links.homepage=http://quinoacomputing.org \
+    -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
+    -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
+    -Dsonar.links.issue=https://github.com/quinoacomputing/quinoa/issues \
+    -Dsonar.sources=src \
+    -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
+    -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
+    -Dsonar.cfamily.build-wrapper-output=build/bw-output \
+    -Dsonar.host.url=https://sonarqube.com \
+    -Dsonar.organization=quinoacomputing \
+    -Dsonar.login=${SONARQUBE_TOKEN}; \
+fi; \
 ENV SONARQUBE_TOKEN ""
 USER root
 RUN make install
