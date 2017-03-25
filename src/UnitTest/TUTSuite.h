@@ -65,6 +65,14 @@ class TUTSuite : public CBase_TUTSuite {
       , { "Base/Timer", 1 }
     };
 
+    // Tests that must be run on PE 0
+    // \details Some Charm++ tests must be run on PE 0 because they create
+    // Charm++ chare arrays whose ckNew() must be called on PE 0.
+    const std::unordered_set< std::string > m_fromPE0 {
+        { "LoadBalance/LinearMap"}
+      , { "LoadBalance/UnsMeshMap" }
+    };
+
     //! Fire up all tests in a test group
     void spawngrp( const std::string& g );
 };

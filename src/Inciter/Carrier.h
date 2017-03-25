@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 13 Dec 2016 09:58:02 AM MST
+  \date      Fri 17 Mar 2017 11:29:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -150,8 +150,9 @@ class Carrier : public CBase_Carrier {
                const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
                const std::unordered_map< int,
-                       std::vector< std::size_t > >& msum,
-               const std::unordered_map< std::size_t, std::size_t >& cid,
+                       std::unordered_set< std::size_t > >& msum,
+               const std::unordered_map< std::size_t, std::size_t >& filenodes,
+               const tk::UnsMesh::EdgeNodes& edgenodes,
                int ncarr );
 
     //! Migrate constructor
@@ -271,7 +272,8 @@ class Carrier : public CBase_Carrier {
       p | m_linsysmerger;
       p | m_particlewriter;
       p | m_fluxcorrector;
-      p | m_cid;
+      p | m_filenodes;
+      p | m_edgenodes;
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );
@@ -347,7 +349,11 @@ class Carrier : public CBase_Carrier {
     ParticleWriterProxy m_particlewriter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
-    std::unordered_map< std::size_t, std::size_t > m_cid;
+    std::unordered_map< std::size_t, std::size_t > m_filenodes;
+    //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
+    //!   for only the nodes newly added as a result of initial uniform
+    //!   refinement.
+    tk::UnsMesh::EdgeNodes m_edgenodes;
     //! \brief Elements of the mesh chunk we operate on
     //! \details Initialized by the constructor. The first vector is the element
     //!   connectivity (local IDs), the second vector is the global node IDs of
@@ -398,6 +404,10 @@ class Carrier : public CBase_Carrier {
 
     //! Read coordinates of mesh nodes given
     void readCoords();
+
+    //! \brief Add coordinates of mesh nodes newly generated to edge-mid points
+    //!    during initial refinement
+    void addEdgeNodeCoords();
 
     //! Compute left-hand side of transport equations
     void lhs();

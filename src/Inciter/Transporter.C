@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 06 Dec 2016 10:33:48 AM MST
+  \date      Mon 20 Mar 2017 10:41:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -259,7 +259,8 @@ Transporter::load( uint64_t nelem )
   m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
-  m_print.section( "Load distribution" );
+  m_print.section( "Load distribution (before optional initial mesh "
+                   "refinement)" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Load (number of tetrahedra)", nelem );
@@ -268,12 +269,22 @@ Transporter::load( uint64_t nelem )
                 std::to_string( m_nchare ) + " (" +
                 std::to_string( m_nchare-1 ) + "*" +
                 std::to_string( chunksize ) + "+" +
-                std::to_string( chunksize+remainder ) + ")" );
+                std::to_string( chunksize+remainder ) + ')' );
 
   // Print out mesh partitioning configuration
   m_print.section( "Initial mesh partitioning" );
   m_print.Item< tk::ctr::PartitioningAlgorithm,
                 tag::selected, tag::partitioner >();
+
+  // Print out mesh refinement configuration and new mesh statistics
+  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
+  if (ir == tk::ctr::InitialAMRType::UNIFORM) {
+    m_print.section( "Mesh refinement" );
+    m_print.Item< tk::ctr::InitialAMR, tag::selected, tag::initialamr >();
+    m_print.item( "Number of tetrahedra",
+      std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+  }
+
   m_print.endsubsection();
 }
 

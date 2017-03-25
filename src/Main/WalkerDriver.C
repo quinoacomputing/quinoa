@@ -48,7 +48,7 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
 
-  // Instantiate Distributor chare which drives the time-integration of
+  // Instantiate Distributor chare on PE 0 which drives the time-integration of
   // differential equations via several integrator chares. We only support a
   // single type of Distributor class at this point, so no factory
   // instantiation, simply fire up a Charm++ chare Distributor, which fires up
@@ -56,5 +56,5 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   // individual integrators so they can call back to Distributor. Since this
   // is called inside the main chare constructor, the Charm++ runtime system
   // distributes the handle along with all other global-scope data.
-  g_DistributorProxy = CProxy_Distributor::ckNew( cmdline );
+  g_DistributorProxy = CProxy_Distributor::ckNew( cmdline, 0 );
 }

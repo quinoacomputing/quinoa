@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:28:33 PM MDT
+  \date      Fri 17 Mar 2017 10:27:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -15,6 +15,8 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "Types.h"
 #include "ContainerUtil.h"
@@ -25,6 +27,38 @@ namespace tk {
 class UnsMesh {
 
   public:
+    using Coords = std::array< std::vector< tk::real >, 3 >;
+
+    //! Edge: IDs of two end-points
+    using Edge = std::array< std::size_t, 2 >;
+    //! Hash functor for Edge (node end-point order does not matter)
+    struct EdgeHash {
+      std::size_t operator()( const Edge& key ) const {
+        return std::hash< std::size_t >()( key[0] ) ^
+               std::hash< std::size_t >()( key[1] );
+      }
+    };
+    //! Key-equal function for Edge (node end-point order does not matter)
+    struct EdgeEq {
+      bool operator()( const Edge& left, const Edge& right ) const {
+        return (left[0] == right[0] && left[1] == right[1]) ||
+               (left[0] == right[1] && left[1] == right[0]);
+      }
+    };
+    //! Map associating IDs of mesh nodes to edges
+    using EdgeNodes = std::unordered_map< tk::UnsMesh::Edge,
+                                          std::size_t,
+                                          tk::UnsMesh::EdgeHash,
+                                          tk::UnsMesh::EdgeEq >;
+    using EdgeChares = std::unordered_map< tk::UnsMesh::Edge,
+                                           std::vector< int >,
+                                           tk::UnsMesh::EdgeHash,
+                                           tk::UnsMesh::EdgeEq >;
+    //! Unique set of edges
+    using Edges = std::unordered_set< tk::UnsMesh::Edge,
+                                      tk::UnsMesh::EdgeHash,
+                                      tk::UnsMesh::EdgeEq >;
+
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything

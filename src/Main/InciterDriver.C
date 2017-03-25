@@ -54,7 +54,7 @@ InciterDriver::execute() const
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Instantiate Transporter chare which drives the time-integration of a PDE
-  // via several Carrier chares.
-  CProxy_Transporter::ckNew();
+  // Instantiate Transporter chare on PE 0 which drives the time-integration of
+  // a PDE via several Carrier chares.
+  CProxy_Transporter::ckNew( 0 );
 }

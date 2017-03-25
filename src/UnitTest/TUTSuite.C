@@ -115,8 +115,13 @@ TUTSuite::spawngrp( const std::string& g )
   if (it != m_migrations.end()) m_nmigr += it->second;
 
   // Asynchronously fire up all tests in test group
-  for (int t=1; t<=g_maxTestsInGroup; ++t)
-    CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
+  for (int t=1; t<=g_maxTestsInGroup; ++t) {
+    auto i = m_fromPE0.find( g );
+    if (i != end(m_fromPE0))
+      CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t, 0 );
+    else
+      CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
+  }
 }
 
 void

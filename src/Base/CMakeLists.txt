@@ -14,10 +14,7 @@ add_library(Base
             Writer.C
             VectorReducer.C
             Table.C
-#            Msg.C
 )
-
-#addCharmModule( "msg" "Base" )
 
 set_target_properties(Base PROPERTIES LIBRARY_OUTPUT_NAME quinoa_base)
 

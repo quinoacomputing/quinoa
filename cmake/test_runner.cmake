@@ -107,7 +107,8 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
       list(GET TEXT_RESULT ${b} result)
-      set(text_diff_command ${RUNNER} ${RUNNER_ARGS} ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
+      set(text_diff_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
+                            ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
                             ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
@@ -142,8 +143,8 @@ else() # Test command ran successfully, attempt to do diffs
     foreach(baseline IN LISTS BIN_BASELINE)
       list(GET BIN_RESULT ${b} result)
       list(GET BIN_DIFF_PROG_CONF ${b} conf)
-      set(bin_diff_command ${RUNNER} ${RUNNER_ARGS} ${BIN_DIFF_PROG}
-                           ${BIN_DIFF_PROG_ARGS}
+      set(bin_diff_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
+                           ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")

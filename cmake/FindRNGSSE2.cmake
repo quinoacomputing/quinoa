@@ -54,16 +54,16 @@ FIND_PATH(RNGSSE2_INCLUDE_MRG32K3A NAMES mrg32k3a.h HINTS ${RNGSSE2_ROOT}/includ
                                                   $ENV{RNGSSE2_ROOT}/include)
 
 set(RNGSSE2_INCLUDE_DIRS ${RNGSSE2_INCLUDE_GM19}
-                     ${RNGSSE2_INCLUDE_GM29}
-                     ${RNGSSE2_INCLUDE_GM31}
-                     ${RNGSSE2_INCLUDE_GM55}
-                     ${RNGSSE2_INCLUDE_GM61}
-                     ${RNGSSE2_INCLUDE_GQ58X1}
-                     ${RNGSSE2_INCLUDE_GQ58X3}
-                     ${RNGSSE2_INCLUDE_GQ58X4}
-                     ${RNGSSE2_INCLUDE_MT19937}
-                     ${RNGSSE2_INCLUDE_LFSR113}
-                     ${RNGSSE2_INCLUDE_MRG32K3A})
+                         ${RNGSSE2_INCLUDE_GM29}
+                         ${RNGSSE2_INCLUDE_GM31}
+                         ${RNGSSE2_INCLUDE_GM55}
+                         ${RNGSSE2_INCLUDE_GM61}
+                         ${RNGSSE2_INCLUDE_GQ58X1}
+                         ${RNGSSE2_INCLUDE_GQ58X3}
+                         ${RNGSSE2_INCLUDE_GQ58X4}
+                         ${RNGSSE2_INCLUDE_MT19937}
+                         ${RNGSSE2_INCLUDE_LFSR113}
+                         ${RNGSSE2_INCLUDE_MRG32K3A})
 
 list(REMOVE_DUPLICATES RNGSSE2_INCLUDE_DIRS)
 

@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 10 Mar 2017 08:07:18 AM MST
+# \date      Thu 23 Mar 2017 02:02:00 PM MDT
 #
 ################################################################################
 
@@ -138,7 +138,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
 include(GetGitRevisionDescription)
-git_describe(GIT_SHA1)
+git_describe(GIT_SHA1 --tags)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
@@ -352,6 +352,10 @@ endif()
 if (DEFINED ENV{NERSC_HOST})
   SET(RUNNER "srun")
   SET(RUNNER_NCPUS_ARG "-n")
+elseif(ARCH MATCHES "ppc64")
+  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
+  SET(RUNNER_NCPUS_ARG "--np")
+  SET(RUNNER_ARGS "")
 else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
   SET(RUNNER_NCPUS_ARG "+p")
@@ -360,7 +364,8 @@ message(STATUS "Parallel/serial job runner: ${RUNNER}")
 message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 
 # Set default parallel/serial job runner extra arguments
-if (NOT DEFINED RUNNER_ARGS AND
+if (NOT ARCH MATCHES "ppc64" AND
+    NOT DEFINED RUNNER_ARGS AND
     NOT DEFINED ENV{CRAY_PRGENVPGI} AND
     NOT DEFINED ENV{CRAY_PRGENVGNU} AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
@@ -534,6 +539,9 @@ if (NOT BUILD_SHARED_LIBS)
     set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
   endforeach()
 endif()
+
+# Optionally enable cppcheck static analysis
+include(CppCheck)
 
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
