@@ -44,7 +44,7 @@ RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 
 RUN ccache -s
 RUN if [ -z ${SONARQUBE} ]; then ./charmrun +p2 Main/unittest -v; fi
 RUN if [ -z ${SONARQUBE} ]; then \
-  ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)" \
+  ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"; \
 fi
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
