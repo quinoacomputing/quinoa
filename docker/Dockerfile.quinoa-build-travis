@@ -70,7 +70,7 @@ RUN cd .. && if [ ${TRAVIS_BRANCH} == sonarqube ] && [ ${TRAVIS_PULL_REQUEST} ==
     -Dsonar.host.url=https://sonarqube.com \
     -Dsonar.organization=quinoacomputing \
     -Dsonar.login=${SONARQUBE_TOKEN}; \
-fi; \
+fi
 ENV SONARQUBE_TOKEN ""
 USER root
 RUN make install
