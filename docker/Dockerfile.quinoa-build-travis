@@ -34,6 +34,7 @@ WORKDIR build
 RUN ccache -z
 RUN cmake \
     ${COVERAGE:+-DCOVERAGE=ON} \
+    ${SONARQUBE:+-DTPL_DIR=/home/quinoa/tpl} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="" \
