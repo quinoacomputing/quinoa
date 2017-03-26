@@ -10,9 +10,9 @@ git:
 
 env:
   matrix:
-#    - DISTRO=gentoo DOCKERHUB=true
-#    - DISTRO=gentoo COVERAGE=ON
-#    - DISTRO=gentoo WERROR=ON
+    - DISTRO=gentoo DOCKERHUB=true
+    - DISTRO=gentoo COVERAGE=ON
+    - DISTRO=gentoo WERROR=ON
     - DISTRO=alpine SONARQUBE=ON
 
 script:
@@ -52,6 +52,11 @@ cache:
 compiler:
   - gcc
   - clang
+
+matrix:
+  exclude:
+  - env: DISTRO=alpine SONARQUBE=ON
+    compiler: clang
 
 notifications:
   email:

@@ -42,10 +42,8 @@ RUN cmake \
     ../src
 RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
 RUN ccache -s
-RUN if [ -z ${SONARQUBE} ]; then ./charmrun +p2 Main/unittest -v; fi
-RUN if [ -z ${SONARQUBE} ]; then \
-  ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"; \
-fi
+RUN ./charmrun +p2 Main/unittest -v
+RUN ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
 RUN make install DESTDIR=${PWD}
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
@@ -54,11 +52,11 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     $HOME/.local/bin/codecov; \
   fi; \
 fi
-RUN cd .. && if [ ${TRAVIS_BRANCH} == sonarqube ] && [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
+RUN cd .. && if [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
   sonar-scanner \
     -Dsonar.projectKey=quinoa \
     -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
-    -Dsonar.projectVersion=$TRAVIS_COMMIT \
+    -Dsonar.projectVersion=${TRAVIS_COMMIT} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
     -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
     -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
