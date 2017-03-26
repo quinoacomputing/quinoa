@@ -3,6 +3,7 @@ FROM quinoacomputing/buildenv:gentoo
 ARG COVERAGE
 ARG SONARQUBE
 ARG SONARQUBE_TOKEN
+ARG SONARQUBE_GITHUB_TOKEN
 ARG CC
 ARG CXX
 ENV OMPI_CXX=${CXX}
@@ -53,7 +54,7 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     $HOME/.local/bin/codecov; \
   fi; \
 fi
-RUN cd .. && if [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
+RUN cd .. && if [ ${SONARQUBE} ]; then \
   sonar-scanner \
     -Dsonar.projectKey=quinoa \
     -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
@@ -68,9 +69,14 @@ RUN cd .. && if [ ${TRAVIS_PULL_REQUEST} == false ] && [ ${SONARQUBE} ]; then \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
     -Dsonar.host.url=https://sonarqube.com \
     -Dsonar.organization=quinoacomputing \
-    -Dsonar.login=${SONARQUBE_TOKEN}; \
+    -Dsonar.login=${SONARQUBE_TOKEN} \
+    ${TRAVIS_PULL_REQUEST:+-Dsonar.analysis.mode=preview} \
+    ${TRAVIS_PULL_REQUEST:+-Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST} \
+    ${TRAVIS_PULL_REQUEST:+-Dsonar.github.repository=$TRAVIS_REPO_SLUG} \
+    ${TRAVIS_PULL_REQUEST:+-Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN}; \
 fi
 ENV SONARQUBE_TOKEN ""
+ENV SONARQUBE_GITHUB_TOKEN ""
 USER root
 RUN make install
 USER quinoa
