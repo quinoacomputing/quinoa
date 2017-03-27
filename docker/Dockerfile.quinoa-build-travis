@@ -58,7 +58,7 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
   sonar-scanner \
     -Dsonar.projectKey=quinoa \
     -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
-    -Dsonar.projectVersion=${TRAVIS_COMMIT} \
+    -Dsonar.projectVersion=${TRAVIS_BRANCH}/${TRAVIS_COMMIT} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
     -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
     -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
@@ -69,10 +69,10 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
     -Dsonar.host.url=https://sonarqube.com \
     -Dsonar.organization=quinoacomputing \
-    $([ $TRAVIS_PULL_REQUEST == true ] && echo "-Dsonar.analysis.mode=preview") \
-    $([ $TRAVIS_PULL_REQUEST == true ] && echo "-Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST") \
-    $([ $TRAVIS_PULL_REQUEST == true ] && echo "-Dsonar.github.repository=$TRAVIS_REPO_SLUG") \
-    $([ $TRAVIS_PULL_REQUEST == true ] && echo "-Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN") \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.analysis.mode=preview") \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST") \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.repository=$TRAVIS_REPO_SLUG") \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN") \
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 ENV SONARQUBE_TOKEN ""
