@@ -58,7 +58,8 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
   sonar-scanner \
     -Dsonar.projectKey=quinoa \
     -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics" \
-    -Dsonar.projectVersion=${TRAVIS_BRANCH}/${TRAVIS_COMMIT} \
+    -Dsonar.projectVersion=${TRAVIS_COMMIT} \
+    -Dsonar.branch=${TRAVIS_BRANCH} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
     -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
     -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
