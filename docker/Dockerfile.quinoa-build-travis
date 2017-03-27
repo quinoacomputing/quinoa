@@ -69,10 +69,11 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
     -Dsonar.host.url=https://sonarqube.com \
     -Dsonar.organization=quinoacomputing \
-    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.analysis.mode=preview") \
-    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST") \
-    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.repository=$TRAVIS_REPO_SLUG") \
-    $([ $TRAVIS_PULL_REQUEST != false ] && echo "-Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN") \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo \
+      "-Dsonar.analysis.mode=preview \
+       -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
+       -Dsonar.github.repository=$TRAVIS_REPO_SLUG \
+       -Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN \ ")
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
 ENV SONARQUBE_TOKEN ""
