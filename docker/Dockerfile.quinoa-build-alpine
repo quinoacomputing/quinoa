@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Fri 10 Mar 2017 11:56:32 AM MST
+# \date      Tue 28 Mar 2017 07:45:18 AM MDT
 #
 ################################################################################
 
@@ -26,11 +26,6 @@
 # All prerequisites for building the container are downloaded from the internet.
 
 FROM alpine:edge
-MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
-
-# From behind LANL firewall
-ENV http_proxy http://proxyout.lanl.gov:8080/
-ENV https_proxy https://proxyout.lanl.gov:8080/
 
 # Install system-wide prerequisites
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
@@ -38,7 +33,7 @@ RUN apk update && apk add bash m4 file git cmake gfortran gcc g++ make perl grep
 
 # Install OpenMPI
 ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
-RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) install
+RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 ENV MANPATH /opt/openmpi/share/man:$MANPATH
@@ -50,12 +45,20 @@ RUN rm -rf /install
 # https://lists.cs.illinois.edu/lists/arc/charm/2016-05/msg00013.html
 RUN ln -s /usr/bin/cpp /lib/cpp
 
+# Setup user
+RUN addgroup quinoa
+RUN adduser -S quinoa quinoa
+RUN chown -R quinoa:quinoa /home/quinoa
+USER quinoa
+WORKDIR /home/quinoa
+CMD ["/bin/sh"]
+
 # Clone quinoa
-RUN git clone https://github.com/quinoacomputing/quinoa.git
+RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
-# Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
+# Build
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
@@ -75,12 +78,7 @@ RUN cd quinoa/build && \
       echo "Non-static executable: walker"; exit 1; \
     fi
 
-# Install executables
-RUN cd quinoa/build/Main && cp charmrun unittest inciter rngtest meshconv walker /usr/local/bin && sed -i 's/^args=""/args="--allow-run-as-root"/g' /usr/local/bin/charmrun
-
-# Set workdir and default interactive shell
-WORKDIR /home/quinoa
-CMD ["/bin/sh"]
-
-# Clean up (keep libexecinfo needed by mpirun)
-RUN apk del m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline bash && apk add libexecinfo && rm -rf /var/cache/apk/* && rm -rf /quinoa
+# Clean container
+USER root
+RUN apk del m4 file git gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline && apk add libexecinfo && rm -rf /var/cache/apk/*
+USER quinoa
