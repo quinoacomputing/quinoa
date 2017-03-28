@@ -52,14 +52,16 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     $HOME/.local/bin/codecov --gcov-exec "llvm-cov gcov"; \
   else \
     $HOME/.local/bin/codecov; \
+    cd build && find . -type f -name '*.gcno'  -exec gcov -pb  {} + && \
+    find . -type f -name '*.gcov' | grep -v '#quinoa#src' | tr "\n" "\0" | xargs -0 rm;
   fi; \
 fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
   sonar-scanner \
     -Dsonar.projectKey=quinoa \
-    -Dsonar.projectName="Quinoa: Adaptive computational fluid dynamics, branch:" \
+    -Dsonar.projectName=${TRAVIS_REPO_SLUG} \
     -Dsonar.projectVersion=${TRAVIS_COMMIT} \
-    -Dsonar.branch=${TRAVIS_BRANCH} \
+    -Dsonar.branch=:${TRAVIS_BRANCH} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
     -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
     -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
@@ -68,6 +70,7 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
     -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
+    -Dsonar.cfamily.gcov.reportsPath=build \
     -Dsonar.host.url=https://sonarqube.com \
     -Dsonar.organization=quinoacomputing \
     $([ $TRAVIS_PULL_REQUEST != false ] && echo \

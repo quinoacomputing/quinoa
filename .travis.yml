@@ -13,7 +13,7 @@ env:
     - DISTRO=gentoo DOCKERHUB=true
     - DISTRO=gentoo COVERAGE=ON
     - DISTRO=gentoo WERROR=ON
-    - DISTRO=alpine SONARQUBE=ON RUNNER_ARGS="-mca plm isolated"
+    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
 
 script:
   - rm -rf tpl
@@ -56,7 +56,7 @@ compiler:
 
 matrix:
   exclude:
-  - env: DISTRO=alpine SONARQUBE=ON RUNNER_ARGS="-mca plm isolated"
+  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
     compiler: clang
 
 notifications:
