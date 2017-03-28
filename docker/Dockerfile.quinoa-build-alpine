@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Tue 28 Mar 2017 07:45:18 AM MDT
+# \date      Tue 28 Mar 2017 09:40:42 AM MDT
 #
 ################################################################################
 
@@ -51,7 +51,6 @@ RUN adduser -S quinoa quinoa
 RUN chown -R quinoa:quinoa /home/quinoa
 USER quinoa
 WORKDIR /home/quinoa
-CMD ["/bin/sh"]
 
 # Clone quinoa
 RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
@@ -78,7 +77,10 @@ RUN cd quinoa/build && \
       echo "Non-static executable: walker"; exit 1; \
     fi
 
-# Clean container
+# Clean container, but keep stuff so the user can still run the executables
 USER root
-RUN apk del m4 file git gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline && apk add libexecinfo && rm -rf /var/cache/apk/*
+RUN cd quinoa/build && make install
+RUN apk del bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline && apk add libexecinfo && rm -rf /var/cache/apk/*
 USER quinoa
+RUN cd quinoa && rm -rf LICENSE README.md build cmake doc docker script tpl
+RUN charmrun -j$(grep -c processor /proc/cpuinfo) unittest && inciter -h && rngtest -h && meshconv -h && walker -h

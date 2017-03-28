@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Configure Charm++ executable targets
-# \date      Mon 23 Jan 2017 03:52:53 PM MST
+# \date      Tue 28 Mar 2017 09:23:33 AM MDT
 #
 ################################################################################
 
@@ -40,7 +40,7 @@ function(config_executable target)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "-static")
   endif()
 
-  INSTALL(TARGETS ${taget}
+  INSTALL(TARGETS ${target}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
