@@ -61,7 +61,7 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.projectKey=quinoa \
     -Dsonar.projectName=${TRAVIS_REPO_SLUG} \
     -Dsonar.projectVersion=${TRAVIS_COMMIT} \
-    -Dsonar.branch=:${TRAVIS_BRANCH} \
+    -Dsonar.branch=/${TRAVIS_BRANCH} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
     -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
     -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
