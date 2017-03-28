@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Configure Charm++ executable targets
-# \date      Tue 28 Mar 2017 09:23:33 AM MDT
+# \date      Tue 28 Mar 2017 12:39:14 PM MDT
 #
 ################################################################################
 
@@ -51,6 +51,13 @@ function(config_executable target)
                                "${CMAKE_BINARY_DIR}/Main/charmrun"
                                "${CMAKE_BINARY_DIR}/charmrun")
   endif()
+
+  # Add charmrun to install dir
+  install(FILES ${CMAKE_BINARY_DIR}/charmrun
+          PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                      GROUP_READ GROUP_EXECUTE
+                      WORLD_READ WORLD_EXECUTE
+          DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   message(STATUS "Executable '${target}' configured")
 
