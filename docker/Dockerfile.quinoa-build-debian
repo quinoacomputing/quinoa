@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Wed 22 Mar 2017 09:09:33 PM MDT
+# \date      Tue 28 Mar 2017 08:22:03 AM MDT
 #
 ################################################################################
 
@@ -27,22 +27,22 @@
 # image can be publicly distributed.
 
 FROM debian:testing
-MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
-
-# From behind LANL firewall
-ENV http_proxy http://proxyout.lanl.gov:8080/
-ENV https_proxy https://proxyout.lanl.gov:8080/
 
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
 RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev pegtl-dev libhdf5-dev libhdf5-openmpi-dev
 
+# Setup user
+RUN adduser --gecos "" --disabled-password quinoa
+WORKDIR /home/quinoa
+USER quinoa
+WORKDIR /home/quinoa
+CMD ["/bin/sh"]
+
 # Clone quinoa
-RUN git clone https://github.com/quinoacomputing/quinoa.git
+RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`))
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`)) --allow-run-as-root
-# Clean code
-RUN rm -rf /quinoa
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh
