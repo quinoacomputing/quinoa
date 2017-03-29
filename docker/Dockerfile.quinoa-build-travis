@@ -52,9 +52,9 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     $HOME/.local/bin/codecov --gcov-exec "llvm-cov gcov"; \
   else \
     $HOME/.local/bin/codecov; \
-    cd build && find . -type f -name '*.gcno'  -exec gcov -pb  {} + && \
+    cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
     find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
-    find . -type f -name '*.gcov' | grep 'def.h\|UnitTest#tests' | tr "\n" "\0" | xargs -0 rm; \
+    find . -type f -name '*def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
   fi; \
 fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
