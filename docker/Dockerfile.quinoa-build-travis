@@ -58,8 +58,8 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
 fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
   sonar-scanner \
-    -Dsonar.projectKey=quinoa \
-    -Dsonar.projectName=${TRAVIS_REPO_SLUG} \
+    -Dsonar.projectKey=${TRAVIS_REPO_SLUG#*/} \
+    -Dsonar.projectName=${TRAVIS_REPO_SLUG#*/} \
     -Dsonar.projectVersion=${TRAVIS_COMMIT} \
     -Dsonar.branch=/${TRAVIS_BRANCH} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
@@ -72,7 +72,7 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
     -Dsonar.cfamily.gcov.reportsPath=build \
     -Dsonar.host.url=https://sonarqube.com \
-    -Dsonar.organization=quinoacomputing \
+    -Dsonar.organization=${TRAVIS_REPO_SLUG%%/*} \
     $([ $TRAVIS_PULL_REQUEST != false ] && echo \
       "-Dsonar.analysis.mode=preview \
        -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
