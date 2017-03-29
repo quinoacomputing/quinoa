@@ -64,9 +64,9 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.projectVersion=${TRAVIS_COMMIT} \
     -Dsonar.branch=/${TRAVIS_BRANCH} \
     -Dsonar.links.homepage=http://quinoacomputing.org \
-    -Dsonar.links.ci=https://travis-ci.org/quinoacomputing/quinoa \
-    -Dsonar.links.scm=https://github.com/quinoacomputing/quinoa \
-    -Dsonar.links.issue=https://github.com/quinoacomputing/quinoa/issues \
+    -Dsonar.links.ci=https://travis-ci.org/${TRAVIS_REPO_SLUG} \
+    -Dsonar.links.scm=https://github.com/${TRAVIS_REPO_SLUG} \
+    -Dsonar.links.issue=https://github.com/${TRAVIS_REPO_SLUG}/issues \
     -Dsonar.sources=src \
     -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
     -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
