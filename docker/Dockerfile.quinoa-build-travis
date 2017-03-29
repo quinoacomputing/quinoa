@@ -53,7 +53,8 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
   else \
     $HOME/.local/bin/codecov; \
     cd build && find . -type f -name '*.gcno'  -exec gcov -pb  {} + && \
-    find . -type f -name '*.gcov' | grep -v '#quinoa#src' | grep 'def.h\|UnitTest#tests' | tr "\n" "\0" | xargs -0 rm; \
+    find . -type f -name '*.gcov' | grep -v '#quinoa#src' | tr "\n" "\0" | xargs -0 rm && \
+    find . -type f -name '*.gcov' | grep 'def.h\|UnitTest#tests' | tr "\n" "\0" | xargs -0 rm; \
   fi; \
 fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
