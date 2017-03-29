@@ -81,8 +81,6 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
        -Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN") \
     -Dsonar.login=${SONARQUBE_TOKEN}; \
 fi
-ENV SONARQUBE_TOKEN ""
-ENV SONARQUBE_GITHUB_TOKEN ""
 USER root
 RUN make install
 USER quinoa
