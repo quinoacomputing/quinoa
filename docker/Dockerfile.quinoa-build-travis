@@ -54,7 +54,7 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     $HOME/.local/bin/codecov; \
     cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
     find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
-    find . -type f -name '*def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
+    find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
   fi; \
 fi
 RUN cd .. && if [ ${SONARQUBE} ]; then \
