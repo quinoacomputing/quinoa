@@ -15,7 +15,7 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
 add_regression_test(cfl ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_cfl.q unitsquare_01_3.6k.exo
-                               exodiff_looseflor.cfg
+                               exodiff_loosefloor.cfg
                                slot_cyl_cfl_pe4_u0.0.std.exo.0
                                slot_cyl_cfl_pe4_u0.0.std.exo.1
                                slot_cyl_cfl_pe4_u0.0.std.exo.2
