@@ -13,6 +13,7 @@ env:
     - DISTRO=gentoo DOCKERHUB=true
     - DISTRO=gentoo COVERAGE=ON
     - DISTRO=gentoo WERROR=ON
+    - DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
 
 script:
   - rm -rf tpl
@@ -21,10 +22,13 @@ script:
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
+  - cp -r $HOME/.sonar ${HOME}/docker/sonar
   - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
                 --build-arg COVERAGE=${COVERAGE}
                 --build-arg CC=${CC} --build-arg CXX=${CXX}
+                --build-arg RUNNER_ARGS="${RUNNER_ARGS}"
+                --build-arg SONARQUBE=${SONARQUBE} --build-arg SONARQUBE_TOKEN=${SONARQUBE_TOKEN} --build-arg SONARQUBE_GITHUB_TOKEN=${SONARQUBE_GITHUB_TOKEN}
                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
@@ -32,7 +36,8 @@ script:
                 -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} -f ${HOME}/docker/Dockerfile.quinoa-build-travis ${HOME}/docker/ &&
     rm -rf ${HOME}/.ccache &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash) &&
-    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/
+    docker cp ${CON}:/home/quinoa/.ccache ${HOME}/ &&
+    docker cp ${CON}:/home/quinoa/.sonar ${HOME}/
 
 after_success:
   - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master ]]; then
@@ -41,11 +46,18 @@ after_success:
     fi
 
 cache:
-  - ccache
+  ccache: true
+  directories:
+    - $HOME/.sonar
 
 compiler:
   - gcc
   - clang
+
+matrix:
+  exclude:
+  - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
+    compiler: clang
 
 notifications:
   email:
