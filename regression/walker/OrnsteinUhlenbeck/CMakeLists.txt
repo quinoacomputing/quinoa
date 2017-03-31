@@ -123,7 +123,7 @@ add_regression_test(OrnsteinUhlenbeckPDF ${WALKER_EXECUTABLE}
                     NUMPES 8
                     INPUTFILES ou_pdf.q pdf_f1.txt.std ou_pdf.ndiff.cfg
                     ARGS -c ou_pdf.q -v
-                    LABELS verification stringent
+                    LABELS verification
                     TEXT_BASELINE pdf_f1.txt.std
                     TEXT_RESULT pdf_f1.txt
                     TEXT_DIFF_PROG_CONF ou_pdf.ndiff.cfg)
@@ -134,7 +134,7 @@ add_regression_test(OrnsteinUhlenbeckPDF_exo ${WALKER_EXECUTABLE}
                                pdf_f3c.exo.std exodiff_f2.cfg exodiff_f3o.cfg
                                exodiff_f3c.cfg
                     ARGS -c ou_pdf_exo.q -v
-                    LABELS verification stringent
+                    LABELS verification
                     BIN_BASELINE pdf_f2.exo.std pdf_f3o.exo.std pdf_f3c.exo
                     BIN_RESULT pdf_f2.exo pdf_f3o.exo pdf_f3c.exo
                     BIN_DIFF_PROG_CONF exodiff_f2.cfg exodiff_f3o.cfg
