@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Fri 31 Mar 2017 01:23:39 PM MDT
+# \date      Fri 31 Mar 2017 02:45:45 PM MDT
 #
 ################################################################################
 
@@ -165,7 +165,8 @@ else() # Test command ran successfully, attempt to do diffs
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
-      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
+      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
+                      ERROR_QUIET)
       # Check return value from binary diff command
       if(ERROR)
         message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")
