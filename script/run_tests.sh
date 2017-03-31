@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Wed 23 Nov 2016 11:34:02 AM MST
+# \date      Fri 31 Mar 2017 09:15:42 AM MDT
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -53,5 +53,5 @@ fi
 # Run unit test suite
 ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v
 
-# Run regression test suite (skip stringent tests that would run very long)
-ctest -j$NUMPES --output-on-failure -LE stringent
+# Run regression test suite (skip 'extreme' tests that would run very long)
+ctest -j$NUMPES --output-on-failure -LE extreme

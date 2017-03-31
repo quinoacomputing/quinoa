@@ -5,9 +5,9 @@
 
 add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_3.6k.exo
+                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg slot_cyl_pe1_u0.0.std.exo
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_3.6k.exo -v
+                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_pe1_u0.0.std.exo
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_ARGS -m
@@ -17,13 +17,13 @@ add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
 
 add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_3.6k.exo
+                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
                                slot_cyl_pe4_u0.0.std.exo.0
                                slot_cyl_pe4_u0.0.std.exo.1
                                slot_cyl_pe4_u0.0.std.exo.2
                                slot_cyl_pe4_u0.0.std.exo.3
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_3.6k.exo -v
+                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
                                  slot_cyl_pe4_u0.0.std.exo.1
                                  slot_cyl_pe4_u0.0.std.exo.2
@@ -39,7 +39,7 @@ add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
 
 add_regression_test(initial_uniform_amr_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_amr.q unitsquare_01_3.6k.exo
+                    INPUTFILES slot_cyl_amr.q unitsquare_01_955.exo
                                exodiff.cfg
                                slot_cyl_pe4_u0.5.std.exo.0
                                slot_cyl_pe4_u0.5.std.exo.1
@@ -49,7 +49,7 @@ add_regression_test(initial_uniform_amr_u0.5 ${INCITER_EXECUTABLE}
                                slot_cyl_pe4_u0.5.std.exo.5
                                slot_cyl_pe4_u0.5.std.exo.6
                                slot_cyl_pe4_u0.5.std.exo.7
-                    ARGS -c slot_cyl_amr.q -i unitsquare_01_3.6k.exo -v -u 0.5
+                    ARGS -c slot_cyl_amr.q -i unitsquare_01_955.exo -v -u 0.5
                     BIN_BASELINE slot_cyl_pe4_u0.5.std.exo.0
                                  slot_cyl_pe4_u0.5.std.exo.1
                                  slot_cyl_pe4_u0.5.std.exo.2

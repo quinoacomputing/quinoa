@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Thu 30 Mar 2017 10:53:26 PM MDT
+# \date      Fri 31 Mar 2017 11:22:35 AM MDT
 #
 ################################################################################
 
@@ -107,7 +107,10 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
       list(GET TEXT_RESULT ${b} result)
-      set(text_diff_command ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS}
+      if (RUNNER_REQUIRED)
+        set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
+      endif()
+      set(text_diff_command ${runner_prefix}
                             ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
                             ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
@@ -154,7 +157,10 @@ else() # Test command ran successfully, attempt to do diffs
       else()
         list(GET BIN_DIFF_PROG_CONF ${b} conf)
       endif()
-      set(bin_diff_command ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS}
+      if (RUNNER_REQUIRED)
+        set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
+      endif()
+      set(bin_diff_command ${runner_prefix}
                            ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
