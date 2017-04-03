@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 31 Mar 2017 11:23:39 AM MDT
+# \date      Mon 03 Apr 2017 09:11:51 AM MDT
 #
 ################################################################################
 
@@ -565,7 +565,8 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(unit doc/html unittest_coverage
                             ${RUNNER}
                             TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
+                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -575,8 +576,13 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                            TESTRUNNER_ARGS
+                            -j${PROCESSOR_COUNT}
+                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
+  if (REGRESSION_COVERAGE_ARGS)
+    message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")
+  endif()
 endif()
 
 # Setup code coverage for all individual coverage targets included
