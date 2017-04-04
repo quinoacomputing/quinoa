@@ -47,11 +47,15 @@ RUN ccache -s
 RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v
 RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
 RUN make install DESTDIR=${PWD}
+RUN make doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
+  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
+  wget -O codecov.sh https://codecov.io/bash; \
+  bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
   if [ ${CC} = clang ]; then \
-    $HOME/.local/bin/codecov --gcov-exec "llvm-cov gcov"; \
+    $HOME/.local/bin/codecov -F ${CC} --gcov-exec "llvm-cov gcov"; \
   else \
-    $HOME/.local/bin/codecov; \
+    $HOME/.local/bin/codecov -F ${CC}; \
     cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
     find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
     find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
