@@ -2,14 +2,13 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Zalesak's slotted cylinder with initial uniform refinement"
+title "Initial uniform mesh refinement"
 
 inciter
 
-  nstep 5     # Max number of time steps
+  nstep 1     # Max number of time steps
   cfl   0.8   # CFL coefficient
   ttyi 1      # TTY output interval
-  ctau 1.0    # FCT mass diffusivity
 
   amr
     initial uniform

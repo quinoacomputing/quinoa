@@ -35,7 +35,7 @@ add_regression_test(initial_uniform_amr ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
-# Parallel, virtualization = 0.7
+# Parallel, virtualization = 0.5
 
 add_regression_test(initial_uniform_amr_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
