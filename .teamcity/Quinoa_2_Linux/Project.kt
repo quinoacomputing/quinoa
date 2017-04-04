@@ -42,5 +42,5 @@ object Project : Project({
     }
 
     // Generate TeamCity builds
-    builds.forEach{ buildType( QuinoaKotlin_Linux_Build(it) ) }
+    builds.forEach{ buildType( Quinoa_2_Linux_Build(it) ) }
 })
