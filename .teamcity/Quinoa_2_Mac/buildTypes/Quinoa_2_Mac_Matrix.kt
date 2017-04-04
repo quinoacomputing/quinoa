@@ -15,6 +15,11 @@ object Quinoa_2_Mac_Matrix : Template({
 
     }
 
+    val stepPrefix = """
+      [ %compiler% == clang ] && port select clang mp-clang-3.8 && port select mpi openmpi-clang38-fortran
+      [ %compiler% == gnu ] && port select gcc mp-gcc5 && port select mpi openmpi-gcc5-fortran
+    """.trimIndent()
+
     steps {
         script {
             name = "Verify commit"
@@ -25,6 +30,7 @@ object Quinoa_2_Mac_Matrix : Template({
             name = "Build code"
             id = "RUNNER_21"
             scriptContent = """
+                ${stepPrefix}
                 rm -rf build && mkdir build && cd build
                 cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=%buildtype% -DCMAKE_CXX_FLAGS=-Werror -DTPL_DIR=/Volumes/Storage/jbakosi/code/quinoa-tpl/install/%compiler%-x86_64 ../src
                 make -j%teamcity.agent.hardware.cpuCount%
@@ -34,7 +40,10 @@ object Quinoa_2_Mac_Matrix : Template({
             name = "Run tests"
             id = "RUNNER_22"
             workingDir = "build"
-            scriptContent = "../script/run_tests.sh"
+            scriptContent = """
+                ${stepPrefix}
+                ../script/run_tests.sh
+            """.trimIndent()
         }
     }
 
