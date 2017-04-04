@@ -3,7 +3,7 @@ package Quinoa_2_Linux.buildTypes
 import Quinoa_2_Linux.buildParams.*
 import jetbrains.buildServer.configs.kotlin.v10.*
 
-object Quinoa_2_Linux_Build( bp: BuildParams ) : BuildType({
+class Quinoa_2_Linux_Build( bp: BuildParams ) : BuildType({
 
     template(Quinoa_2_Linux.buildTypes.Quinoa_2_Linux_Matrix)
 
