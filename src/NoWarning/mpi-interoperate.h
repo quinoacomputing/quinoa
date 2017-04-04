@@ -35,6 +35,7 @@
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
+  #pragma clang diagnostic ignored "-Wcomma"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
