@@ -1,6 +1,6 @@
 package Quinoa_2_Linux.buildTypes
 
-import Quinoa_2_inux.buildParams.*
+import Quinoa_2_Linux.buildParams.*
 import jetbrains.buildServer.configs.kotlin.v10.*
 
 object Quinoa_2_Linux_Build( bp: BuildParams ) : BuildType({
