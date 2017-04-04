@@ -17,17 +17,9 @@ object Project : Project({
 
     // Generate matrix with all possible combinations of build parameters,
     // defined in package buildParams.
-    Compiler.values().forEach{ c ->
-      StdLibC.values().forEach{ l ->
-        MathLib.values().forEach{ m ->
-          CmakeBuildType.values().forEach{ b ->
-            for( r in listOf( true, false ) ) {
-              for( t in listOf( true, false ) ) {
-                allBuilds.add( BuildParams(b,c,m,l,r,t) )
-              }
-            }
-          }
-        }
+    CmakeBuildType.values().forEach{ b ->
+      Compiler.values().forEach{ c ->
+         allBuilds.add( BuildParams(b,c) )
       }
     }
 
