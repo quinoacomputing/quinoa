@@ -29,6 +29,7 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
                                out.1
                                out.2
                                out.3
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
 # Virtualization = 0.7
