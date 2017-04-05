@@ -16,7 +16,7 @@ The images in this repository are configured for a single computer, and thus int
    ```
    2. Run executables inside the container, e.g.,
    ```
-   charmrun +p4 /usr/local/bin/unittest -v
+   charmrun +p4 inciter
    ```
 
 #### [:debian](https://hub.docker.com/r/quinoacomputing/quinoa/tags/)

@@ -83,7 +83,7 @@ LinearMap::populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
 
   for (int e=0; e<nelem; ++e)
     if (e >= lower && e < upper)
-      mgr->insertInitial( e, CkCopyMsg(&msg) );
+      mgr->insertInitial( CkArrayIndex(e), CkCopyMsg(&msg) );
 
   mgr->doneInserting();
   CkFreeMsg( msg );

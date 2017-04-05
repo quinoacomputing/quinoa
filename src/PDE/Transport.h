@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Tue 01 Nov 2016 08:46:04 AM MDT
+  \date      Fri 17 Feb 2017 08:32:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
@@ -131,6 +131,7 @@ class Transport {
                                   ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
                                   da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
         const auto J = tk::triple( ba, ca, da ) / 120.0;
+        Assert( J > 0, "Element Jacobian non-positive" );
 
         for (ncomp_t c=0; c<m_ncomp; ++c) {
           const auto r = lhsd.cptr( c, m_offset );
@@ -197,6 +198,7 @@ class Transport {
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto J = tk::triple( ba, ca, da );
+        Assert( J > 0, "Element Jacobian non-positive" );
 
         // construct tetrahedron element-level matrices
 

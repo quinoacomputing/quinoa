@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find NumDiff
-# \date      Sun 05 Mar 2017 09:14:31 PM MST
+# \date      Mon 27 Mar 2017 08:26:37 AM MDT
 #
 ################################################################################
 
@@ -23,7 +23,10 @@ if(NUMDIFF_EXECUTABLE)
   set (NUMDIFF_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PROGRAM(NUMDIFF_EXECUTABLE NAMES numdiff PATH_SUFFIXES bin)
+FIND_PROGRAM(NUMDIFF_EXECUTABLE NAMES numdiff
+                                PATHS ${NUMDIFF_ROOT}/bin
+                                      $ENV{NUMDIFF_ROOT}/bin
+                                PATH_SUFFIXES bin)
 
 # Handle the QUIETLY and REQUIRED arguments and set NUMDIFF_FOUND to TRUE if
 # all listed variables are TRUE.

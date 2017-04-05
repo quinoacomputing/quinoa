@@ -44,8 +44,12 @@ if(BUILD_SHARED_LIBS)
 else()
   find_library(LIBCXX_LIBRARIES NAMES libc++.a HINTS ${LIBCXX_ROOT}/lib
                                                      $ENV{LIBCXX_ROOT}/lib)
-  find_library(LIBCXXABI_LIBRARIES NAMES libc++abi.a HINTS ${LIBCXX_ROOT}/lib
-                                                     $ENV{LIBCXX_ROOT}/lib)
+  if(ARCH MATCHES "ppc64")
+    set(LIBCXXABI_LIBRARIES " ")
+  else()
+    find_library(LIBCXXABI_LIBRARIES NAMES libc++abi.a HINTS ${LIBCXX_ROOT}/lib
+                                                       $ENV{LIBCXX_ROOT}/lib)
+  endif()
 endif()
 
 set(LIBCXX_INCLUDE_DIRS ${LIBCXX_INCLUDE_DIR})

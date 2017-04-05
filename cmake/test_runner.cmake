@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Fri 17 Feb 2017 12:47:01 PM MST
+# \date      Fri 31 Mar 2017 02:45:45 PM MDT
 #
 ################################################################################
 
@@ -107,7 +107,11 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
       list(GET TEXT_RESULT ${b} result)
-      set(text_diff_command ${RUNNER} ${RUNNER_ARGS} ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
+      if (RUNNER_REQUIRED)
+        set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
+      endif()
+      set(text_diff_command ${runner_prefix}
+                            ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
                             ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
@@ -137,17 +141,32 @@ else() # Test command ran successfully, attempt to do diffs
               "Number of baselines and number of results must be equal.")
     endif()
 
+    # If there is only one bin diff program conf, use that for all, if multiple,
+    # use one of each
+    list(LENGTH BIN_DIFF_PROG_CONF nconf)
+    if (NOT nconf EQUAL nresult AND NOT nconf EQUAL 1)
+      message(FATAL_ERROR "Number of bin-diff-prog conf files (${nconf}) should either be 1 or it must equal the number of results (${nresult}).")
+    endif()
+
     # Do binary diff(s) multiple times diffing matching baseline and result
     math(EXPR b "0")
-    foreach(baseline IN LISTS BIN_BASELINE)
+    foreach(baseline ${BIN_BASELINE})
       list(GET BIN_RESULT ${b} result)
-      list(GET BIN_DIFF_PROG_CONF ${b} conf)
-      set(bin_diff_command ${RUNNER} ${RUNNER_ARGS} ${BIN_DIFF_PROG}
-                           ${BIN_DIFF_PROG_ARGS}
+      if (nconf EQUAL 1)
+        list(GET BIN_DIFF_PROG_CONF 0 conf)
+      else()
+        list(GET BIN_DIFF_PROG_CONF ${b} conf)
+      endif()
+      if (RUNNER_REQUIRED)
+        set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
+      endif()
+      set(bin_diff_command ${runner_prefix}
+                           ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS}
                            -f ${conf} ${baseline} ${result})
       string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
       message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
-      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
+      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
+                      ERROR_QUIET)
       # Check return value from binary diff command
       if(ERROR)
         message(FATAL_ERROR "Binary diff returned error code: '${bin_diff_command_string}' returned error code: ${ERROR}")

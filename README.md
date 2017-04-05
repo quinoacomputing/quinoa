@@ -1,34 +1,16 @@
 ## What is Quinoa?
 
-<img src="https://quinoacomputing.github.io/quinoa/quinoa.svg" align="right" width="25%" background=transparent>
+<img src="https://quinoacomputing.github.io/quinoa.svg" align="right" width="25%" background=transparent>
 Quinoa is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
 
 ## Organization
 
 Currently, Quinoa consists of the following tools:
-  - [<B>inciter</B>](http://quinoacomputing.github.io/quinoa/inciter_doc.html) - Partial differential equations solver on 3D unstructured grids
-  - [<B>walker</B>](http://quinoacomputing.github.io/quinoa/walker_doc.html) - Random walker for stochastic differential equations
-  - [<B>rngtest</B>](http://quinoacomputing.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
-  - [<B>unittest</B>](http://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
-  - [<B>meshconv</B>](http://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
-
-## Try
-
-The quickest way to try Quinoa is to run the already built executables inside the [release](https://hub.docker.com/r/quinoacomputing/quinoa/) [docker](https://www.docker.com) container.
-
-#### 1. Run the container on your local machine
-
-```
-docker run -ti quinoacomputing/quinoa:alpine
-```
-
-#### 2. Run executables inside the container, e.g.,
-
-```
-charmrun +p4 /usr/local/bin/unittest -v
-```
-
-The release container executables are configured for a single computer. To run on clusters of networked compute nodes you should build from source:
+  - [<B>inciter</B>](http://quinoacomputing.github.io/inciter_doc.html) - Partial differential equations solver on 3D unstructured grids
+  - [<B>walker</B>](http://quinoacomputing.github.io/walker_doc.html) - Random walker for stochastic differential equations
+  - [<B>rngtest</B>](http://quinoacomputing.github.io/rngtest_doc.html) - Random number generator test suite
+  - [<B>unittest</B>](http://quinoacomputing.github.io/unittest_doc.html) - Unit test suite
+  - [<B>meshconv</B>](http://quinoacomputing.github.io/meshconv_doc.html) - Mesh file converter
 
 ## Build
 
@@ -51,7 +33,7 @@ The release container executables are configured for a single computer. To run o
 #### 2. Clone, build third-party libraries, build & test
 
    ```
-   git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
+   git clone --recursive https://github.com/quinoacomputing/quinoa.git; cd quinoa
    mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
    mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
    ```
@@ -69,4 +51,4 @@ The release container executables are configured for a single computer. To run o
 
 ## Resources
 
-[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/quinoa/index.html) - [manifesto](http://quinoacomputing.github.io/quinoa/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing/quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)
+[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/index.html) - [manifesto](http://quinoacomputing.github.io/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing) - [travis](https://travis-ci.org/quinoacomputing/quinoa) - [codecov](https://codecov.io/gh/quinoacomputing/quinoa/commits) - [gcov](http://quinoacomputing.github.io/coverage.html) - [cppcheck](http://quinoacomputing.github.io/cppcheck/index.html) - [doxygen](http://quinoacomputing.github.io) - [sonarqube](https://sonarqube.com/dashboard?id=quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)

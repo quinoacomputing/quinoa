@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Wed 18 Jan 2017 04:17:48 PM MST
+# \date      Wed 05 Apr 2017 02:36:26 PM MDT
 #
 ################################################################################
 
@@ -138,7 +138,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
 include(GetGitRevisionDescription)
-git_describe(GIT_SHA1)
+git_describe(GIT_SHA1 --tags)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
@@ -344,32 +344,44 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
 endif()
 
-# Set runner executable path. This is used when generating code coverage and
+# Set runner configuration. This is used when generating code coverage and
 # running regression tests using ctest. Note that ninja puts chamrun to <build>
 # while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
-# Main/CMakeLists.txt.
+# cmake/ConfigExecutable.cmake.
+SET(RUNNER_REQUIRED false) # if true all executables must be prefixed by runner
 if (DEFINED ENV{NERSC_HOST})
   SET(RUNNER "srun")
   SET(RUNNER_NCPUS_ARG "-n")
+  SET(RUNNER_REQUIRED true)
+elseif(ARCH MATCHES "ppc64")
+  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
+  SET(RUNNER_NCPUS_ARG "--np")
+  SET(RUNNER_ARGS "")
+  SET(RUNNER_REQUIRED true)
 else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
   SET(RUNNER_NCPUS_ARG "+p")
 endif()
-message(STATUS "Parallel/serial job runner: ${RUNNER}")
-message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 
 # Set default parallel/serial job runner extra arguments
-if (NOT DEFINED RUNNER_ARGS AND
+if (NOT ARCH MATCHES "ppc64" AND
+    NOT DEFINED RUNNER_ARGS AND
     NOT DEFINED ENV{CRAY_PRGENVPGI} AND
     NOT DEFINED ENV{CRAY_PRGENVGNU} AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
     NOT DEFINED ENV{CRAY_PRGENVINTEL})
 
+  SET(RUNNER_REQUIRED true)
   set(RUNNER_ARGS "--bind-to none --map-by node"
       CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
 
 endif()
+
+# Echo runner configuration
+message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
+message(STATUS "Parallel/serial job runner: ${RUNNER}")
+message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
@@ -547,6 +559,9 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
+# Optionally enable cppcheck static analysis
+include(CppCheck)
+
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
 
@@ -562,7 +577,8 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(unit doc/html unittest_coverage
                             ${RUNNER}
                             TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
+                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -572,8 +588,13 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                            TESTRUNNER_ARGS
+                            -j${PROCESSOR_COUNT}
+                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
+  if (REGRESSION_COVERAGE_ARGS)
+    message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")
+  endif()
 endif()
 
 # Setup code coverage for all individual coverage targets included

@@ -28,12 +28,26 @@ if(RANDOM123_INCLUDE_DIRS)
   set (RANDOM123_FIND_QUIETLY TRUE)
 endif()
 
-find_path(RANDOM123_INCLUDE_DIR NAMES philox.h
-                                HINTS ${RANDOM123_ROOT}/include
-                                      $ENV{RANDOM123_ROOT}
-                                PATH_SUFFIXES Random123)
+find_path(RANDOM123_INCLUDE_PHILOX NAMES philox.h
+                                   HINTS ${RANDOM123_ROOT}/include
+                                         $ENV{RANDOM123_ROOT}
+                                   PATH_SUFFIXES Random123)
 
-set(RANDOM123_INCLUDE_DIRS ${RANDOM123_INCLUDE_DIR})
+find_path(RANDOM123_INCLUDE_THREEFRY NAMES threefry.h
+                                     HINTS ${RANDOM123_ROOT}/include
+                                           $ENV{RANDOM123_ROOT}
+                                     PATH_SUFFIXES Random123)
+
+find_path(RANDOM123_INCLUDE_UNIFORM NAMES uniform.hpp
+                                    HINTS ${RANDOM123_ROOT}/include
+                                          $ENV{RANDOM123_ROOT}
+                                    PATH_SUFFIXES Random123)
+
+set(RANDOM123_INCLUDE_DIRS ${RANDOM123_INCLUDE_PHILOX}
+                           ${RANDOM123_INCLUDE_THREEFRY}
+                           ${RANDOM123_INCLUDE_UNIFORM})
+
+list(REMOVE_DUPLICATES RANDOM123_INCLUDE_DIRS)
 
 # Handle the QUIETLY and REQUIRED arguments and set RANDOM123_FOUND to TRUE if
 # all listed variables are TRUE.

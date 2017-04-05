@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Wed 23 Nov 2016 11:34:02 AM MST
+# \date      Fri 31 Mar 2017 09:15:42 AM MDT
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -26,33 +26,32 @@
 
 # If an argument is given, use that as the number of CPUs, if not grab them all
 if [ "$#" -ge 1 ]; then
-  CPUS=$1
+  NUMPES=$1
 else
   # Query number of CPUs
   case "$OSTYPE" in
-    darwin*)  CPUS=`sysctl -n hw.ncpu`;;
-    linux*)   CPUS=`cat /proc/cpuinfo | grep MHz | wc -l`;;
+    darwin*)  NUMPES=`sysctl -n hw.ncpu`;;
+    linux*)   NUMPES=`cat /proc/cpuinfo | grep MHz | wc -l`;;
   esac
 fi
-echo "Will use $CPUS CPUs"
 
 if [ "$#" -eq 2 ]; then
-  RUNNER_ARG=$2
-  echo "Will pass '$RUNNER_ARG' to runner"
+  RUNNER_ARGS=$2
+  echo "Will pass '$RUNNER_ARGS' to runner"
 else
-  RUNNER_ARG=''
+  RUNNER_ARGS=''
 fi
 
 # Configure parallel job runner
 if [ ! -z ${NERSC_HOST:-} ]; then
   RUNNER=srun
-  NCPUS_ARG=-n
+  RUNNER_NCPUS_ARG=-n
 else
   RUNNER=./charmrun
-  NCPUS_ARG=+p
+  RUNNER_NCPUS_ARG=+p
 fi
 # Run unit test suite
-${RUNNER} ${NCPUS_ARG} $CPUS $RUNNER_ARG $PWD/Main/unittest -v
+${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS} $PWD/Main/unittest -v
 
-# Run regression test suite (skip stringent tests that would run very long)
-ctest -j$CPUS -LE stringent
+# Run regression test suite (skip 'extreme' tests that would run very long)
+ctest -j$NUMPES --output-on-failure -LE extreme

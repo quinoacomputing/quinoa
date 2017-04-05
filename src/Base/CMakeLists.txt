@@ -14,7 +14,6 @@ add_library(Base
             Writer.C
             VectorReducer.C
             Table.C
-#            Msg.C
 )
 
 target_link_libraries(Base

@@ -186,9 +186,10 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
   } else {
 
     int ntags = static_cast< int >( tg[0].size() );
+    int nel = static_cast< int >( n );
     // elm-type num-of-elm-follow number-of-tags
     m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
+    m_outFile.write( reinterpret_cast<char*>(&nel), sizeof(int) );
     m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
     for (std::size_t i=0; i<n; i++) {
       int I = static_cast< int >( i );

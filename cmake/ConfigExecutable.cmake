@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Configure Charm++ executable targets
-# \date      Mon 23 Jan 2017 03:52:53 PM MST
+# \date      Tue 28 Mar 2017 01:46:10 PM MDT
 #
 ################################################################################
 
@@ -40,10 +40,12 @@ function(config_executable target)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "-static")
   endif()
 
-  INSTALL(TARGETS ${taget}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+  if (NOT "${target}" MATCHES "unittest")
+    INSTALL(TARGETS ${target}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+  endif()
 
   if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
     add_custom_command(TARGET ${target} POST_BUILD
@@ -51,6 +53,13 @@ function(config_executable target)
                                "${CMAKE_BINARY_DIR}/Main/charmrun"
                                "${CMAKE_BINARY_DIR}/charmrun")
   endif()
+
+  # Add charmrun to install dir
+  install(FILES ${CMAKE_BINARY_DIR}/charmrun
+          PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                      GROUP_READ GROUP_EXECUTE
+                      WORLD_READ WORLD_EXECUTE
+          DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   message(STATUS "Executable '${target}' configured")
 

@@ -39,4 +39,4 @@ template class inciter::Partitioner<
   #pragma clang diagnostic pop
 #endif
 
-#include "partitioner.def.h"
+#include "NoWarning/partitioner.def.h"
