@@ -13,6 +13,7 @@ object Project : Project({
     extId = "Quinoa_2"
     parentId = "_Root"
     name = "Quinoa"
+    description = "Adaptive computational fluid dynamics"
 
     vcsRoot(Quinoa_2_GitGithubComQuinoacomputingQuinoaGitRefsHeadsMaster)
 
