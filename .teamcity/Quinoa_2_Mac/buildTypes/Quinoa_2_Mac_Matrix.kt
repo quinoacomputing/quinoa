@@ -51,4 +51,12 @@ object Quinoa_2_Mac_Matrix : Template({
         equals("teamcity.agent.jvm.os.name", "Mac OS X", "RQ_21")
         contains("teamcity.agent.name", "euler", "RQ_22")
     }
+
+    triggers {
+        vcs {
+            id = "vcsTrigger"
+            perCheckinTriggering = true
+            groupCheckinsByCommitter = true
+        }
+    }
 })
