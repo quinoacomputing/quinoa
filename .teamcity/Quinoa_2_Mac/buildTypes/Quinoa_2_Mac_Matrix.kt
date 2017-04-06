@@ -4,6 +4,9 @@ import jetbrains.buildServer.configs.kotlin.v10.*
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.ScriptBuildStep
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.ScriptBuildStep.*
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.script
+import jetbrains.buildServer.configs.kotlin.v10.triggers.VcsTrigger
+import jetbrains.buildServer.configs.kotlin.v10.triggers.VcsTrigger.*
+import jetbrains.buildServer.configs.kotlin.v10.triggers.vcs
 
 object Quinoa_2_Mac_Matrix : Template({
     uuid = "75d7a7e0-9c7c-4bc4-9cbb-3d1d8e58febd"
