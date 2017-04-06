@@ -1,6 +1,6 @@
 /*!
   \page      rngtest_doc RNGTest: Random number generator test suite
-  <img src="https://quinoacomputing.github.io/quinoa/rngtest.svg" align="right" width="40%" background=transparent>
+  <img src="https://quinoacomputing.github.io/rngtest.svg" align="right" width="40%" background=transparent>
 
 RNGTest is a fully asynchronous distributed-memory-parallel test harness to
 subject random number generators to stringent statistical tests enabling
@@ -172,8 +172,8 @@ Charm++ design
 --------------
 
 Before porting to Charm++ RNGTest used OpenMP for concurrency. The last commit
-before porting to Charm++ is [49f86e6](https://github.com/quinoacomputing/quinoa/commit/49f86e6edfda64d4725ef2d87210f2db95d696aa)
-and the commit where the Charm++ port is fully functional is [ab31f57](https://github.com/quinoacomputing/quinoa/commit/ab31f576656907d73c3a38db72864482759c668f).
+before porting to Charm++ is [bfcab8f5](https://github.com/quinoacomputing/quinoa/commit/bfcab8f5)
+and the commit where the Charm++ port is fully functional is [c504a51b](https://github.com/quinoacomputing/quinoa/commit/c504a51b).
 Note that during Charm++ port of rngtest target quinoa does not fully build.
 
 The discussion below details only _some_ of the details encountered during the
@@ -204,7 +204,7 @@ of the following challenges have been identified _before_ porting to Charm++.
   value-semantics, the "derived" class \a rngtest::TestU01 chare does not need
   Charm++'s machinery facilitating runtime polymorphism using the PUP::able
   framework. Though in the final design Charm++'s runtime polymorphism is not
-  used, a working example is in commit [af25060](https://github.com/quinoacomputing/quinoa/commit/af25060366b259119ec01b6edeb44b09c7e6c2b5).
+  used, a working example is in commit [56bdcf73](https://github.com/quinoacomputing/quinoa/commit/56bdcf73).
 
 - Conveniently holding references to Base is hardly an option with Charm++
   objects that should be migratable. Making Base migratable is not a viable
@@ -290,7 +290,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 13 Jan 2017 12:07:17 PM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:43:25 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

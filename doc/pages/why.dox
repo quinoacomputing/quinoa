@@ -2,7 +2,7 @@
   \page      why Goals
   \tableofcontents
 
-<img src="https://quinoacomputing.github.io/quinoa/kattekrab-Mainframe.svg" align="right" width="20%" background=transparent>
+<img src="https://quinoacomputing.github.io/kattekrab-Mainframe.svg" align="right" width="20%" background=transparent>
 \section exascale Designed for the exascale era
 Our target machines are the largest distributed clusters in the world with
 millions of compute cores. Due to unprecedented hardware complexity and features
@@ -36,7 +36,7 @@ been actively developed since the 1990s, and is used by several large production
 codes. Read a one-page summary on the strengths of Charm++ at
 http://charm.cs.uiuc.edu/why.
 
-<img src="https://quinoacomputing.github.io/quinoa/Boton-correcto.svg" align="right" width="20%" background=transparent>
+<img src="https://quinoacomputing.github.io/Boton-correcto.svg" align="right" width="20%" background=transparent>
 \section correct Verified and proven to be correct
 Nothing is more important than code that works as advertised with no surprises.
 We strive for writing testable code as well as writing tests that cover the code
@@ -60,7 +60,7 @@ testing:
    test](https://en.wikipedia.org/wiki/Fuzz_testing) suite helps prepare against invalid,
    unexpected, or random inputs with code coverage analysis
 
-<img src="https://quinoacomputing.github.io/quinoa/Triangle.svg" align="right" width="20%" background=transparent>
+<img src="https://quinoacomputing.github.io/Triangle.svg" align="right" width="20%" background=transparent>
 \section optimized Optimized for performance, power, and reliability
 Power consumption is a primary concern in the exascale era. Application
 performance must be measured within power constraints on increasingly complex
@@ -88,7 +88,7 @@ Resiliency is provided by the runtime system transparent to the application and
 can save millions of cycles since jobs have to be restarted less frequently due
 to hardware failure.
 
-<img src="https://quinoacomputing.github.io/quinoa/techie-arsitek.svg" align="right" width="20%" background=transparent>
+<img src="https://quinoacomputing.github.io/techie-arsitek.svg" align="right" width="20%" background=transparent>
 \section outsource Advanced computer science outsourced to experts
 Hardware complexity is increasing. Simultaneously satisfying all the different
 requirements enumerated here inevitably increases software complexity.
@@ -108,7 +108,7 @@ outsourced to those who make a career out them. Quinoa uses a number of
 [third-party libraries](licenses.html) and application developers closely
 collaborate with the subject-matter experts.
 
-<img src="https://quinoacomputing.github.io/quinoa/celticknot1.svg" align="right" width="15%" background=transparent>
+<img src="https://quinoacomputing.github.io/celticknot1.svg" align="right" width="15%" background=transparent>
 \section language Using a language that can cope with complexity
 The ultimate measure of the value of a computer language is how it balances
 runtime performance and code complexity. A good language can do a lot for a
@@ -139,7 +139,7 @@ provides the flexibility we need. We use the latest C++14 language standard with
 multiple compilers. This reduces code complexity and improves productivity as
 well as runtime performance.
 
-<img src="https://quinoacomputing.github.io/quinoa/nicubunu-Tools.svg" align="right" width="15%" background=transparent>
+<img src="https://quinoacomputing.github.io/nicubunu-Tools.svg" align="right" width="15%" background=transparent>
 \section productivity Highly-valued programmer productivity
 Due to software complexity the most expensive resource in implementing and
 maintaining computing capability is the developer's time. In a successful
@@ -154,7 +154,7 @@ engineering tools. We believe developers must be skilled not only in their
 expertise, e.g., physics, differential equations, numerical methods, but in
 their tools of trade as well, e.g., the latest software development techniques.
 
-<img src="https://quinoacomputing.github.io/quinoa/handshake.svg" align="right" width="20%" background=transparent>
+<img src="https://quinoacomputing.github.io/handshake.svg" align="right" width="20%" background=transparent>
 \section friendly User and developer friendly
 User experience is [the most important design goal](http://resources.idgenterprise.com/original/AST-0053933_seven_qualities_of_wildly_desirable_software.pdf) of
 desirable software. However, this does not require a graphical user interface.
@@ -171,7 +171,7 @@ command-line arguments. New keywords, reflecting new features, are made
 impossible to add without proper in-code documentation. Simulation result
 output is highly customizable.
 
-<img src="https://quinoacomputing.github.io/quinoa/document.svg" align="right" width="15%" background=transparent>
+<img src="https://quinoacomputing.github.io/document.svg" align="right" width="15%" background=transparent>
 \section documented Well documented
 Undocumented code is considered legacy code and a major impediment to progress
 and productivity.
@@ -193,7 +193,7 @@ indexable, and looks great on any device, including
 [figures](walker_example_ou.html#walker_example_ou_pdf) and
 [math](_generalized_dirichlet_8h.html#details).
 
-<img src="https://quinoacomputing.github.io/quinoa/Happy-Penguin.svg" align="right" width="15%" background=transparent>
+<img src="https://quinoacomputing.github.io/Happy-Penguin.svg" align="right" width="15%" background=transparent>
 \section fun Fun to work on
 We believe all the above are equally important in order to make this project fun
 to work on. None of the above can be an afterthought: they must all be
@@ -201,7 +201,7 @@ simultaneously considered at all times and from the outset.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 11 Dec 2016 12:25:48 PM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:40:31 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
