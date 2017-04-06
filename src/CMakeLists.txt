@@ -98,6 +98,11 @@ get_mpi_compilers()
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
 
+# If we have met the mandatory MPI dependency, add a definition
+if(${MPI_CXX_FOUND})
+  add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
+endif(${MPI_CXX_FOUND})
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
