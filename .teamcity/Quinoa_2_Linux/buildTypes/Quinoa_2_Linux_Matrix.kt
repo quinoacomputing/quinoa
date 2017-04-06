@@ -67,6 +67,7 @@ object Quinoa_2_Linux_Matrix : Template({
         vcs {
             id = "vcsTrigger"
             triggerRules = """
+                +:.
                 -:comment=[ci skip]:**
                 -:comment=[skip ci]:**
             """.trimIndent()
