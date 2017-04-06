@@ -58,6 +58,10 @@ object Quinoa_2_Mac_Matrix : Template({
     triggers {
         vcs {
             id = "vcsTrigger"
+            triggerRules = """
+                -:comment=[ci skip]:**
+                -:comment=[skip ci]:**
+            """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
         }
