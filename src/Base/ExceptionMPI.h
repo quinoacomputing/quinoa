@@ -47,6 +47,7 @@ namespace tk {
 //!    executed on multiple MPI ranks. Within asynchrounous Charm++ chares, the
 //!    simpler ErrChk macro suffices.
 //! \author J. Bakosi
+#ifdef QUINOA_CONFIG_MPI_ENABLED
 #define ErrChkMPI(expr, ...) \
 { \
   int err = (expr) ? 0 : 1; \
@@ -54,6 +55,13 @@ namespace tk {
   MPI_Allreduce( &err, &globalerr, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); \
   if ( globalerr ) Throw( __VA_ARGS__); \
 }
+#else
+#define ErrChkMPI(expr, ...)\
+{\
+  int QUINOA_ErrChkMPI_err = (expr) ? 0 : 1; \
+  if ( QUINOA_ErrChkMPI_err ) Throw( __VA_ARGS__); \
+}
+#endif
 
 } // tk::
 
