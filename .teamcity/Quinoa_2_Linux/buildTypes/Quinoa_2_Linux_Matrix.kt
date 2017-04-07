@@ -68,8 +68,8 @@ object Quinoa_2_Linux_Matrix : Template({
             id = "vcsTrigger"
             triggerRules = """
                 +:.
-                -:comment=[ci skip]:**
-                -:comment=[skip ci]:**
+                -:comment=\[ci skip\]:**
+                -:comment=\[skip ci\]:**
             """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
