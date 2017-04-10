@@ -869,9 +869,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void refine() {
       // Concatenate mesh connectivities of our chares
       tk::destroy( m_tetinpoel );
+      std::size_t nn = 0;
+      for (const auto& c : m_chinpoel) nn += c.second.size();
+      m_tetinpoel.resize( nn );
+      nn = 0;
       for (const auto& c : m_chinpoel)
         for (auto i : c.second)
-          m_tetinpoel.push_back( i );
+          m_tetinpoel[ nn++ ] = i;
       // Generate unique edges (nodes connected to nodes)
       auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
       std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
@@ -888,6 +892,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
           }
+      tk::destroy( m_tetinpoel );
       // Starting node ID (on all PEs) while assigning new edge-nodes
       nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
                                         tag::input >() ).readHeader();
