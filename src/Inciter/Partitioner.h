@@ -1166,6 +1166,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Free maps associating old node IDs to new node IDs categorized by
       // chares as it is no longer needed after creating the workers.
       tk::destroy( m_chfilenodes );
+      // Free map storing new node IDs associated to edges categorized by chares
+      // owned as no linger needed after creating workers.
+      tk::destroy( m_chedgenodes );
       // Free storage of map associating a set of chare IDs to old global mesh
       // node IDs as it is no longer needed after creating the workers.
       tk::destroy( m_nodechares );
