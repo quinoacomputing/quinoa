@@ -18,12 +18,12 @@ to the tools.
 
 \subsection pegtl_license 2. The Parsing Expression Grammar Template Library
   - Required
-  - Web: https://code.google.com/p/pegtl/wiki/PEGTL0
+  - Web: https://github.com/taocpp/PEGTL
   - License: \subpage PEGTL_license
 
 \subsection tut_license 3. C++ Template Unit Test Framework
   - Required
-  - Web: http://tut-framework.sourceforge.net
+  - Web: http://mrzechonek.github.io/tut-framework
   - License: \subpage TUT_license
 
 \subsection boost_license 4. Boost C++ libraries
@@ -51,9 +51,9 @@ to the tools.
   - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
   - License: \subpage NetCDF_license
 
-\subsection exodusii_license 9. ExodusII for storing data for finite element analyses
+\subsection exodusii_license 9. SEACAS for storing data for finite element analyses
   - Required
-  - Web: http://sourceforge.net/projects/exodusii
+  - Web: https://github.com/trilinos/Trilinos/tree/master/packages/seacas
   - License: \subpage ExodusII_license
 
 \subsection zoltan_license 10. Zoltan for static load balancing
@@ -63,7 +63,7 @@ to the tools.
 
 \subsection hypre_license 11. Hypre for linear solvers and preconditioners
   - Required
-  - Web: http://computation.llnl.gov/project/linear_solvers/software.php
+  - Web: https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods
   - License: \subpage Hypre_license
 
 \subsection rngsselib_license 12. RNGSSELIB for random number generation
@@ -134,7 +134,7 @@ to the tools.
 \section compiler_web Compilers
 
 \subsection clang_web 1. Clang C++ compiler
-  - Web: http://clang.llvm.org
+  - Web: http://llvm.org
 
 \subsection gcc_web 2. GNU C++ compiler
   - Web: https://gcc.gnu.org
@@ -151,7 +151,7 @@ to the tools.
   - Web: http://www.cmake.org
 
 \subsection ninja_web 3. Ninja for building
-  - Web: https://martine.github.io/ninja
+  - Web: https://ninja-build.org
 
 \subsection gold_web 4. Gold for linking
   - Web: http://www.gnu.org/software/binutils
@@ -170,7 +170,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 13 Jan 2017 12:06:30 PM MST
+<em>Page last updated:</em> Mon 10 Apr 2017 07:55:54 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
