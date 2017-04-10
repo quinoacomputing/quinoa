@@ -468,6 +468,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // mesh node IDs as it is no longer needed once the final communication
         // map is generated.
         tk::destroy( m_ncomm );
+        // Free storage of temporary communication map used to receive global
+        // mesh edge-node IDs as it is no longer needed once the final
+        // communication map is generated.
+        tk::destroy( m_ecomm );
         // Count up total number of nodes and (nodes associated to edges) we
         // will need receive during reordering
         std::size_t nrecv = 0, erecv = 0;
