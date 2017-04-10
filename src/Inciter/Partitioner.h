@@ -1023,6 +1023,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
               s.insert( tk::cref_find( edgenodes, ed ) );
           }
         }
+        tk::destroy( m_msumed );
 
         // Update node IDs of edges, i.e., the map keys
         for (auto& c : m_chedgenodes) {
