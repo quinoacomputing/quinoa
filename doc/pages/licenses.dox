@@ -51,10 +51,10 @@ to the tools.
   - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
   - License: \subpage NetCDF_license
 
-\subsection exodusii_license 9. SEACAS for storing data for finite element analyses
+\subsection seacas_license 9. SEACAS for storing data for finite element analyses
   - Required
   - Web: https://github.com/trilinos/Trilinos/tree/master/packages/seacas
-  - License: \subpage ExodusII_license
+  - License: \subpage SEACAS_license
 
 \subsection zoltan_license 10. Zoltan for static load balancing
   - Required
@@ -170,7 +170,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 10 Apr 2017 07:55:54 AM MDT
+<em>Page last updated:</em> Mon 10 Apr 2017 11:22:13 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
