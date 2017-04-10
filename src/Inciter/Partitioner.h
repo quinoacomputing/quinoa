@@ -939,10 +939,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   PEs have been reordered (and we contribute to) and we are ready (on
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
-      // Free memory used communication maps used to store nodes and edge-nodes
-      // and associated PEs during reordering.
+      // Free memory used by communication maps used to store nodes and
+      // edge-nodes and associated PEs during reordering.
       tk::destroy( m_ncommunication );
       tk::destroy( m_ecommunication );
+      // Free memory used by maps associating a list of chare IDs to old (as in
+      // file) global mesh node IDs and to edges as no longer needed.
+      tk::destroy( m_nodechares );
+      tk::destroy( m_edgechares );
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
       // associated to chare IDs (outer key).
