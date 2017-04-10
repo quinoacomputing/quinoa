@@ -146,7 +146,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_start( 0 ),
       m_noffset( 0 ),
       m_nquery( 0 ),
-      m_coord(),
       m_tetinpoel(),
       m_gelemid(),
       m_centroid(),
@@ -513,8 +512,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nquery;
-    //! Tetrtahedron element coordinates of our chunk of the mesh
-    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -653,10 +650,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
       auto ext = tk::extents( gid );
-      m_coord = er.readNodes( ext );
-      const auto& x = std::get< 0 >( m_coord );
-      const auto& y = std::get< 1 >( m_coord );
-      const auto& z = std::get< 2 >( m_coord );
+      auto coord = er.readNodes( ext );
+      const auto& x = std::get< 0 >( coord );
+      const auto& y = std::get< 1 >( coord );
+      const auto& z = std::get< 2 >( coord );
       // Make room for element centroid coordinates
       auto& cx = m_centroid[0];
       auto& cy = m_centroid[1];
