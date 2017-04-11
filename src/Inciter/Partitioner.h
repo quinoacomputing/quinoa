@@ -146,7 +146,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_start( 0 ),
       m_noffset( 0 ),
       m_nquery( 0 ),
-      m_coord(),
       m_tetinpoel(),
       m_gelemid(),
       m_centroid(),
@@ -469,6 +468,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // mesh node IDs as it is no longer needed once the final communication
         // map is generated.
         tk::destroy( m_ncomm );
+        // Free storage of temporary communication map used to receive global
+        // mesh edge-node IDs as it is no longer needed once the final
+        // communication map is generated.
+        tk::destroy( m_ecomm );
         // Count up total number of nodes and (nodes associated to edges) we
         // will need receive during reordering
         std::size_t nrecv = 0, erecv = 0;
@@ -513,8 +516,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nquery;
-    //! Tetrtahedron element coordinates of our chunk of the mesh
-    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -653,10 +654,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
       auto ext = tk::extents( gid );
-      m_coord = er.readNodes( ext );
-      const auto& x = std::get< 0 >( m_coord );
-      const auto& y = std::get< 1 >( m_coord );
-      const auto& z = std::get< 2 >( m_coord );
+      auto coord = er.readNodes( ext );
+      const auto& x = std::get< 0 >( coord );
+      const auto& y = std::get< 1 >( coord );
+      const auto& z = std::get< 2 >( coord );
       // Make room for element centroid coordinates
       auto& cx = m_centroid[0];
       auto& cy = m_centroid[1];
@@ -872,9 +873,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void refine() {
       // Concatenate mesh connectivities of our chares
       tk::destroy( m_tetinpoel );
+      std::size_t nn = 0;
+      for (const auto& c : m_chinpoel) nn += c.second.size();
+      m_tetinpoel.resize( nn );
+      nn = 0;
       for (const auto& c : m_chinpoel)
         for (auto i : c.second)
-          m_tetinpoel.push_back( i );
+          m_tetinpoel[ nn++ ] = i;
       // Generate unique edges (nodes connected to nodes)
       auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
       std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
@@ -891,6 +896,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
             if (p < q) star[p].insert( q );
             if (p > q) star[q].insert( p );
           }
+      tk::destroy( m_tetinpoel );
       // Starting node ID (on all PEs) while assigning new edge-nodes
       nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
                                         tag::input >() ).readHeader();
@@ -933,6 +939,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   PEs have been reordered (and we contribute to) and we are ready (on
     //!   this PE) to compute our final result of the reordering.
     void reordered() {
+      // Free memory used by communication maps used to store nodes and
+      // edge-nodes and associated PEs during reordering.
+      tk::destroy( m_ncommunication );
+      tk::destroy( m_ecommunication );
+      // Free memory used by maps associating a list of chare IDs to old (as in
+      // file) global mesh node IDs and to edges as no longer needed.
+      tk::destroy( m_nodechares );
+      tk::destroy( m_edgechares );
       // Construct maps associating old node IDs (as in file) to new node IDs
       // (as in producing contiguous-row-id linear system contributions)
       // associated to chare IDs (outer key).
@@ -1009,6 +1023,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
               s.insert( tk::cref_find( edgenodes, ed ) );
           }
         }
+        tk::destroy( m_msumed );
 
         // Update node IDs of edges, i.e., the map keys
         for (auto& c : m_chedgenodes) {
@@ -1144,12 +1159,21 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 CkMyPe() );
       }
       m_worker.doneInserting();
+      // Free storage for unique global mesh nodes chares on our PE will
+      // contribute to in a linear system as no longer needed.
+      tk::destroy( m_nodeset );
+      // Free storage for unique global mesh edges whose nodes chares on our
+      // PE will contribute to in a linear system as no longer needed.
+      tk::destroy( m_edgeset );
       // Free storage of global mesh node ids associated to chares owned as it
       // is no longer needed after creating the workers.
       tk::destroy( m_chinpoel );
       // Free maps associating old node IDs to new node IDs categorized by
       // chares as it is no longer needed after creating the workers.
       tk::destroy( m_chfilenodes );
+      // Free map storing new node IDs associated to edges categorized by chares
+      // owned as no linger needed after creating workers.
+      tk::destroy( m_chedgenodes );
       // Free storage of map associating a set of chare IDs to old global mesh
       // node IDs as it is no longer needed after creating the workers.
       tk::destroy( m_nodechares );
