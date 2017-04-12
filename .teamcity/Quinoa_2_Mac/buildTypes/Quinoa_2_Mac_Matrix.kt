@@ -63,6 +63,7 @@ object Quinoa_2_Mac_Matrix : Template({
                 -:comment=\[ci skip\]:**
                 -:comment=\[skip ci\]:**
             """.trimIndent()
+            branchFilter = "+:<default>"
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
         }
