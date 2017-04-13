@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Mon 03 Apr 2017 09:11:51 AM MDT
+# \date      Wed 05 Apr 2017 02:36:26 PM MDT
 #
 ################################################################################
 
@@ -440,6 +440,18 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
   "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
 )
+
+# Disallow undefined symbols in shared libraries. Shared libraries must be
+# linked against all libraries that they use symbols from in the same way that
+# binaries are. Since this option enforces symbol resolution at build time, a
+# missing library reference will be caught early as a fatal build error.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
+
+# Link shared libraries with the charmc wrapper
+#STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+#       "${CHARM_COMPILER}"
+#       CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
+#message("S: ${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)

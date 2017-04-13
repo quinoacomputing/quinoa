@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the C-interface to LAPACK as well as LAPACK/BLAS
-# \date      Fri 20 Jan 2017 12:31:47 PM MST
+# \date      Wed 22 Mar 2017 01:01:40 PM MDT
 #
 ################################################################################
 
