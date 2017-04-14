@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Mon 03 Apr 2017 09:11:51 AM MDT
+# \date      Thu 13 Apr 2017 04:58:49 PM MDT
 #
 ################################################################################
 
@@ -377,7 +377,6 @@ if (NOT ARCH MATCHES "ppc64" AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
     NOT DEFINED ENV{CRAY_PRGENVINTEL})
 
-  SET(RUNNER_REQUIRED true)
   set(RUNNER_ARGS "--bind-to none --map-by node"
       CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
 
