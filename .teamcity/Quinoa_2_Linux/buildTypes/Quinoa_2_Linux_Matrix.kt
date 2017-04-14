@@ -22,8 +22,8 @@ object Quinoa_2_Linux_Matrix : Template({
       . ${'$'}SPACK_ROOT/share/spack/setup-env.sh
       [ %compiler% == clang ] && module load clang/latest openmpi/1.10.2/clang/latest
       [ %compiler% == gnu ] && module load openmpi-2.0.1-gcc-4.8.5-jv7w2de
-      [ %compiler% == intel ] && module load intel/latest openmpi/1.10.2/intel/latest
-      [ %mathlib% == mkl ] && module load mkl/latest
+      [ %compiler% == intel ] && module load intel/2018 openmpi/1.10.2/intel/2018
+      [ %mathlib% == mkl ] && module load mkl/2018
       [ %mathlib% == lapack ] && module load netlib-lapack-3.6.1-gcc-4.8.5-snwxnfw
       [ %rngsse2% == true ] && module load rngsse2
       [ %testu01% == true ] && module load testu01

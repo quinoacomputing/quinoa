@@ -1,7 +1,7 @@
 package Quinoa_2_Linux.buildParams
 
 enum class CmakeBuildType { Debug, Release }
-enum class Compiler { clang, gnu }
+enum class Compiler { clang, gnu, intel }
 enum class MathLib { mkl, lapack }
 enum class StdLibC { libc, libstdc }
 
