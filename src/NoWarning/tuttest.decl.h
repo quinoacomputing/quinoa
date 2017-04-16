@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/tuttest.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:38:31 PM MDT
+  \date      Sat 15 Apr 2017 11:46:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tuttest.decl.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_tuttest_decl_h
 #define nowarning_tuttest_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

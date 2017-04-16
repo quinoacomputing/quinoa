@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/testu01.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:11:56 AM MDT
+  \date      Sat 15 Apr 2017 11:44:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include testu01.def.h with turning off specific compiler warnings
 */
@@ -11,6 +11,8 @@
 // Note the absence of include guards. This is because the Charm++ definition
 // file included below may need to be included multiple times in a single
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

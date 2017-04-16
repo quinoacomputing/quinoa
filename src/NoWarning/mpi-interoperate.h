@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/mpi-interoperate.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:44:11 PM MDT
+  \date      Sat 15 Apr 2017 11:41:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mpi-interoperate.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_mpi_interoperate_h
 #define nowarning_mpi_interoperate_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

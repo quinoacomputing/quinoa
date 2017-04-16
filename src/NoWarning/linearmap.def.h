@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/linearmap.def.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 12:59:45 PM MDT
+  \date      Sat 15 Apr 2017 11:39:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include linearmap.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_linearmap_def_h
 #define nowarning_linearmap_def_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

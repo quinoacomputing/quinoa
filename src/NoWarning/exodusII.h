@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/exodusII.h
   \author    J. Bakosi
-  \date      Wed 16 Nov 2016 10:18:04 PM MST
+  \date      Sat 15 Apr 2017 11:38:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include exodusII.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_exodusII_h
 #define nowarning_exodusII_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

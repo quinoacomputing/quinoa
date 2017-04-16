@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/cartesian_product.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:38:59 PM MDT
+  \date      Sat 15 Apr 2017 11:36:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include cartesian_product.h with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_cartesian_product_h
 #define nowarning_cartesian_product_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

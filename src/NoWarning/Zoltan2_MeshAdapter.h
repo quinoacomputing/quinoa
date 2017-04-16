@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 05:58:54 PM MST
+  \date      Sat 15 Apr 2017 11:35:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_Zoltan2_MeshAdapter_h
 #define nowarning_Zoltan2_MeshAdapter_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

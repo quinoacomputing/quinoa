@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 05:59:50 PM MST
+  \date      Sat 15 Apr 2017 11:36:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_Zoltan2_PartitioningProblem_h
 #define nowarning_Zoltan2_PartitioningProblem_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

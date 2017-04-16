@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/particlewriter.decl.h
   \author    F.J. Gonzalez
-  \date      Fri 30 Sep 2016 12:39:25 PM MDT
+  \date      Sat 15 Apr 2017 11:41:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.decl.h with turning off specific compiler
              warnings.
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_particlewriter_decl_h
 #define nowarning_particlewriter_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

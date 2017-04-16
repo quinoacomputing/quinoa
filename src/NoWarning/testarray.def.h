@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/testarray.def.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:38:03 AM MDT
+  \date      Sat 15 Apr 2017 11:43:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include testarray.def.h with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_testarray_def_h
 #define nowarning_testarray_def_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

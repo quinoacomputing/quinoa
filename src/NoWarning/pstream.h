@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/pstream.h
   \author    J. Bakosi
-  \date      Thu 01 Dec 2016 03:33:59 PM MST
+  \date      Sat 15 Apr 2017 11:42:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pstreams/pstream.h with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_pstream_h
 #define nowarning_pstream_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

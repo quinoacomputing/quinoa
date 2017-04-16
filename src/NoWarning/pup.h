@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/pup.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:44:25 PM MDT
+  \date      Sat 15 Apr 2017 11:33:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pup.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_pup_h
 #define nowarning_pup_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
