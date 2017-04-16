@@ -36,6 +36,13 @@ gettimeofday(&END_TIME, (struct timezone*)0); \
 total_usecs = (END_TIME.tv_sec-START_TIME.tv_sec) * 1000000 + (END_TIME.tv_usec-START_TIME.tv_usec); \
 printf("Total time was %d uSec.\n", total_usecs);
 
+//! Macro to detect strictly gcc.
+//! \details __GNUC__ and __GNUG__ were intended to indicate the GNU compilers.
+//! However, they're also defined by Clang/LLVM and Intel compilers to indicate
+//! compatibility. This macro can be used to detect strictly gcc and not clang
+//! or icc.
+#define STRICT_GNUC ((STRICT_GNUC || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER)))
+
 } // tk::
 
 #endif // Macro_h

@@ -30,7 +30,7 @@ namespace PUP {
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wuninitialized"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wuninitialized"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -55,7 +55,7 @@ inline void pup( PUP::er& p, E& e ) {
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif
 

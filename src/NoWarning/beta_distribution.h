@@ -16,7 +16,7 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
@@ -25,7 +25,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif
 

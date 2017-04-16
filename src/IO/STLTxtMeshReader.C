@@ -60,7 +60,7 @@ STLTxtMeshReader::readFacets( const bool store,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  #if defined(__GNUC__)
+  #if STRICT_GNUC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Winline"
   #endif
@@ -69,7 +69,7 @@ STLTxtMeshReader::readFacets( const bool store,
   STLKeyword solid("solid"), facet("facet"), normal("normal"), outer("outer"),
              loop("loop"), vertex("vertex"), endloop("endloop"),
              endfacet("endfacet");
-  #if defined(__GNUC__)
+  #if STRICT_GNUC
     #pragma GCC diagnostic pop
   #endif
 

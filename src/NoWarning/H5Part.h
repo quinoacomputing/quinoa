@@ -18,10 +18,13 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wextra-semi"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wlong-long"
   #pragma GCC diagnostic ignored "-Wcast-qual"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 2282 )
 #endif
 
 #define PARALLEL_IO
@@ -30,8 +33,10 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_H5Part_h

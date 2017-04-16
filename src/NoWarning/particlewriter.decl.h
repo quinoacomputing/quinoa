@@ -39,7 +39,7 @@
   #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
   #pragma clang diagnostic ignored "-Wzero-length-array"
   #pragma clang diagnostic ignored "-Wcomma"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
@@ -62,7 +62,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

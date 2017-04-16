@@ -21,22 +21,17 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wmacro-redefined"
   #pragma clang diagnostic ignored "-Wextra-semi"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( push )
-  #pragma warning( disable: 7 )
 #endif
 
 #include <HYPRE_parcsr_ls.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( pop )
 #endif
 
 #endif // nowarning_HYPRE_parcsr_ls_h

@@ -23,7 +23,7 @@ extern std::string g_executable;
 
 namespace tut {
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -163,7 +163,7 @@ void LoadDistributor_object::test< 7 >() {
   #endif
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif
 
