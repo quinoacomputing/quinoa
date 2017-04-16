@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/optional.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:43:50 PM MDT
+  \date      Sat 15 Apr 2017 11:41:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/optional.hpp with turning off specific
              compiler warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_optional_h
 #define nowarning_optional_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

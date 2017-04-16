@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/unsmeshmap.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:38:22 PM MDT
+  \date      Sat 15 Apr 2017 11:47:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include unsmeshmap.decl.h with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_unsmeshmap_decl_h
 #define nowarning_unsmeshmap_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

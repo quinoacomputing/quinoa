@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/format.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:39:46 PM MDT
+  \date      Sat 15 Apr 2017 11:38:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/format.hpp with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_format_h
 #define nowarning_format_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

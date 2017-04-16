@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/tut_result.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:29:17 AM MDT
+  \date      Sat 15 Apr 2017 11:45:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut_result.hpp with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_tut_result_h
 #define nowarning_tut_result_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

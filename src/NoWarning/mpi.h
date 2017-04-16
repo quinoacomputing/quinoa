@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/mpi.h
   \author    J. Bakosi
-  \date      Wed 16 Nov 2016 10:20:37 PM MST
+  \date      Sat 15 Apr 2017 11:41:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mpi.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_mpi_h
 #define nowarning_mpi_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

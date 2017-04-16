@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/set.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 07:00:51 AM MDT
+  \date      Sat 15 Apr 2017 11:43:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/mpl/set.hpp with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_set_h
 #define nowarning_set_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/collector.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:59:56 AM MDT
+  \date      Sat 15 Apr 2017 11:37:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include collector.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_collector_def_h
 #define nowarning_collector_def_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

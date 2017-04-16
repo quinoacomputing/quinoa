@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/pegtl.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 08:38:54 AM MST
+  \date      Sat 15 Apr 2017 11:42:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pegtl/pegtl.hh with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_pegtl_h
 #define nowarning_pegtl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

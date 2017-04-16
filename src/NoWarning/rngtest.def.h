@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/rngtest.def.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 06:58:06 AM MDT
+  \date      Sat 15 Apr 2017 11:43:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include rngtest.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_rngtest_def_h
 #define nowarning_rngtest_def_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

@@ -2,13 +2,15 @@
 /*!
   \file      src/NoWarning/tutsuite.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:40:51 PM MDT
+  \date      Sat 15 Apr 2017 11:46:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tutsuite.decl.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_tutsuite_decl_h
 #define nowarning_tutsuite_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/philox.h
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 10:53:05 AM MST
+  \date      Sat 15 Apr 2017 11:42:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Random123/philox.h with turning off specific compiler
              warnings
@@ -10,6 +10,8 @@
 // *****************************************************************************
 #ifndef nowarning_philox_h
 #define nowarning_philox_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
