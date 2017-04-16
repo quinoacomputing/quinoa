@@ -14,7 +14,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wdeprecated"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
 #elif defined(__INTEL_COMPILER)
@@ -26,7 +26,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

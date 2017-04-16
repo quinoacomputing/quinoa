@@ -59,7 +59,7 @@ template class tk::LinSysMerger< inciter::CProxy_Transporter,
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wundef"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wswitch-default"
 #endif
@@ -68,6 +68,6 @@ template class tk::LinSysMerger< inciter::CProxy_Transporter,
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif

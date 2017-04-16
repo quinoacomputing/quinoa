@@ -69,12 +69,12 @@ class HypreVector {
     //! Hypre vector accessor
     HYPRE_ParVector get() const {
       HYPRE_ParVector v;
-      #if defined(__GNUC__)
+      #if STRICT_GNUC
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
       #endif
       HYPRE_IJVectorGetObject( m_v, reinterpret_cast<void**>(&v) );
-      #if defined(__GNUC__)
+      #if STRICT_GNUC
         #pragma GCC diagnostic pop
       #endif
       return v;

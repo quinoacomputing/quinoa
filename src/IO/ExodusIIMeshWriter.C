@@ -213,7 +213,7 @@ const
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wvla"
     #pragma clang diagnostic ignored "-Wvla-extension"
-  #elif defined(__GNUC__)
+  #elif STRICT_GNUC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
   #endif
@@ -237,7 +237,7 @@ const
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif defined(__GNUC__)
+  #elif STRICT_GNUC
     #pragma GCC diagnostic pop
   #endif
 }
@@ -255,7 +255,7 @@ const
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wvla"
     #pragma clang diagnostic ignored "-Wvla-extension"
-  #elif defined(__GNUC__)
+  #elif STRICT_GNUC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
   #endif
@@ -279,7 +279,7 @@ const
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif defined(__GNUC__)
+  #elif STRICT_GNUC
     #pragma GCC diagnostic pop
   #endif
 }

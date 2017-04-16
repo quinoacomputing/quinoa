@@ -12,7 +12,7 @@
 #define nowarning_factory_h
 
 #if defined(__clang__)
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
@@ -20,7 +20,7 @@
 #include <boost/functional/factory.hpp>
 
 #if defined(__clang__)
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif
 

@@ -32,7 +32,7 @@ static Random123_group Random123( "RNG/Random123" );
 
 //! Test definitions for group
 
-#if defined(__GNUC__)
+#if STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -61,7 +61,7 @@ void Random123_object::test< 1 >() {
   #endif
 }
 
-#if defined(__GNUC__)
+#if STRICT_GNUC
   #pragma GCC diagnostic pop
 #endif
 

@@ -68,12 +68,12 @@ class HypreMatrix {
     //! Hypre matrix accessor
     HYPRE_ParCSRMatrix get() const {
       HYPRE_ParCSRMatrix m;
-      #if defined(__GNUC__)
+      #if STRICT_GNUC
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
       #endif
       HYPRE_IJMatrixGetObject( m_A, reinterpret_cast<void**>(&m) );
-      #if defined(__GNUC__)
+      #if STRICT_GNUC
         #pragma GCC diagnostic pop
       #endif
       return m;

@@ -15,7 +15,7 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wundef"
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #elif defined(__INTEL_COMPILER)
@@ -27,7 +27,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif STRICT_GNUC
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )
