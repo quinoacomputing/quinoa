@@ -12,6 +12,8 @@
 #define HypreMatrix_h
 
 #include <HYPRE.h>
+
+#include "Macro.h"
 #include "NoWarning/HYPRE_parcsr_ls.h"
 
 namespace tk {
@@ -68,12 +70,12 @@ class HypreMatrix {
     //! Hypre matrix accessor
     HYPRE_ParCSRMatrix get() const {
       HYPRE_ParCSRMatrix m;
-      #if STRICT_GNUC
+      #if defined(STRICT_GNUC)
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
       #endif
       HYPRE_IJMatrixGetObject( m_A, reinterpret_cast<void**>(&m) );
-      #if STRICT_GNUC
+      #if defined(STRICT_GNUC)
         #pragma GCC diagnostic pop
       #endif
       return m;

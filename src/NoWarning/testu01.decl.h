@@ -16,7 +16,7 @@
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wold-style-cast"
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
@@ -25,7 +25,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

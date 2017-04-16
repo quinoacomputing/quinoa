@@ -41,7 +41,9 @@ printf("Total time was %d uSec.\n", total_usecs);
 //! However, they're also defined by Clang/LLVM and Intel compilers to indicate
 //! compatibility. This macro can be used to detect strictly gcc and not clang
 //! or icc.
-#define STRICT_GNUC ((STRICT_GNUC || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER)))
+#if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
+  #define STRICT_GNUC
+#endif
 
 } // tk::
 

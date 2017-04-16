@@ -19,7 +19,7 @@
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wunused-parameter"
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
@@ -31,6 +31,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif

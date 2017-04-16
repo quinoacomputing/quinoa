@@ -17,7 +17,7 @@
 
 namespace tut {
 
-#if STRICT_GNUC
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -336,7 +336,7 @@ void MKLRNG_object::test< 23 >() {
 //   RNG_common::test_move_assignment( r );
 // }
 
-#if STRICT_GNUC
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

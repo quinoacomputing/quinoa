@@ -18,7 +18,7 @@
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wunused-parameter"
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -28,7 +28,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 
