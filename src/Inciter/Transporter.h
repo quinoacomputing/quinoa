@@ -71,7 +71,7 @@ class Transporter : public CBase_Transporter {
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
       #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    #elif STRICT_GNUC
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wunused-parameter"
       #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -84,7 +84,7 @@ class Transporter : public CBase_Transporter {
     Transporter_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
-    #elif STRICT_GNUC
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic pop
     #elif defined(__INTEL_COMPILER)
       #pragma warning( pop )

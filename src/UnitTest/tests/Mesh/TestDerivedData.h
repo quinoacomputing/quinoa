@@ -120,7 +120,7 @@
 
 namespace tut {
 
-#if STRICT_GNUC
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -2598,7 +2598,7 @@ void DerivedData_object::test< 61 >() {
   }
 }
 
-#if STRICT_GNUC
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

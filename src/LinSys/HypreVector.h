@@ -14,6 +14,8 @@
 #include <HYPRE.h>
 #include <HYPRE_parcsr_ls.h>
 
+#include "Macro.h"
+
 namespace tk {
 namespace hypre {
 
@@ -69,12 +71,12 @@ class HypreVector {
     //! Hypre vector accessor
     HYPRE_ParVector get() const {
       HYPRE_ParVector v;
-      #if STRICT_GNUC
+      #if defined(STRICT_GNUC)
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
       #endif
       HYPRE_IJVectorGetObject( m_v, reinterpret_cast<void**>(&v) );
-      #if STRICT_GNUC
+      #if defined(STRICT_GNUC)
         #pragma GCC diagnostic pop
       #endif
       return v;

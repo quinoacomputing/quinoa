@@ -297,7 +297,7 @@ namespace grm {
   #if defined(__clang__)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-local-typedef"
-  #elif STRICT_GNUC
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #endif
@@ -322,7 +322,7 @@ namespace grm {
   };
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif STRICT_GNUC
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic pop
   #endif
 

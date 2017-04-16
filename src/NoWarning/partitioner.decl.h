@@ -12,7 +12,7 @@
 #define nowarning_partitioner_decl_h
 
 #if defined(__clang__)
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -21,7 +21,7 @@
 #include "../Inciter/partitioner.decl.h"
 
 #if defined(__clang__)
-#elif STRICT_GNUC
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 
