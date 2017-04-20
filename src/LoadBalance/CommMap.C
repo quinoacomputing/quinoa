@@ -2,7 +2,6 @@
 /*!
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:14:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.

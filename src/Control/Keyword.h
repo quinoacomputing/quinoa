@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 04:31:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments

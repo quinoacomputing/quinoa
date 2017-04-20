@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLUniformMethod.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:09:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Options/MKLUniformMethod
   \details   Unit tests for Control/Options/MKLUniformMethod

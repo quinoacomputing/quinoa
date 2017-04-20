@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 11:38:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     String parser base class declaration
   \details   String parser base class declaration. String parser base serves as

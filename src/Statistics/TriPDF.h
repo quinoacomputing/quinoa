@@ -2,7 +2,6 @@
 /*!
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:59:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate

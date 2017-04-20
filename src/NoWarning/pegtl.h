@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/pegtl.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:42:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pegtl/pegtl.hh with turning off specific compiler warnings
 */

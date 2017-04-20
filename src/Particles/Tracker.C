@@ -2,7 +2,6 @@
 /*!
   \file      src/Particles/Tracker.C
   \author    J. Bakosi
-  \date      Thu 06 Oct 2016 08:18:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on

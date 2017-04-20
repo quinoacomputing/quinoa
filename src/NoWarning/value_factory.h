@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/value_factory.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:47:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/functional/value_factory.hpp with turning off
              specific compiler warnings

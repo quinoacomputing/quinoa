@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/tut_result.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:45:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut_result.hpp with turning off specific compiler
              warnings

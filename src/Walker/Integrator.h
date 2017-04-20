@@ -2,7 +2,6 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 09:38:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially

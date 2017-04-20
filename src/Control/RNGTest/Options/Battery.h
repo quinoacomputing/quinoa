@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 12:00:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite batteries options
   \details   Random number generator test suite batteries options

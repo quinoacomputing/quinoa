@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/unsmeshmap.def.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:47:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include unsmeshmap.def.h with turning off specific compiler
              warnings

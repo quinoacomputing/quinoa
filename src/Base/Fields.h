@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Fields.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:07:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Fields used to store data associated to mesh entities.
   \details   Fields used to store data associated to mesh entities, e.g., nodes,

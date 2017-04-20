@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 10:55:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for UnitTest's parsers
   \details   Types for UnitTest's parsers. This file defines the components of

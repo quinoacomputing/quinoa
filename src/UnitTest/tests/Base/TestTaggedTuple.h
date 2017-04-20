@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:29:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h

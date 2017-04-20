@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Types.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 12:21:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Toolkit-level type definitions
   \details   Toolkit-level type definitions

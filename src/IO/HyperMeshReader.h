@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/HyperMeshReader.h
   \author    J. Bakosi
-  \date      Fri 20 May 2016 08:10:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hyper mesh reader class declaration
   \details   Hyper mesh reader class declaration. Only supports tetrahedra.

@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 12:21:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.

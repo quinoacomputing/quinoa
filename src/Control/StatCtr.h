@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 09:12:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and

@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Fri 06 Jan 2017 01:43:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGSSE-related grammar
   \details   This file defines RNGSSE2 library related grammar, (re-)used by

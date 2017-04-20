@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Progress.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 09:53:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Simple progress indicator
   \details   Simple progress indicator.

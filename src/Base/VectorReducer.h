@@ -2,7 +2,6 @@
 /*!
   \file      src/Statistics/VectorReducer.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 12:39:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.

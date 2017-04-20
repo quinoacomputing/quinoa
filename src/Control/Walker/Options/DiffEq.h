@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:59:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker

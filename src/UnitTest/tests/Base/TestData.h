@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestData.h
   \author    J. Bakosi
-  \date      Wed 05 Oct 2016 08:12:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Data.h
   \details   Unit tests for Base/Data.h

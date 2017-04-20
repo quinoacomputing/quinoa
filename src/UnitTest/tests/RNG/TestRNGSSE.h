@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNGSSE.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:16:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/RNGSSE.h
   \details   Unit tests for RNG/RNGSSE.h

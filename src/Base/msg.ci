@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/msg.ci
   \author    J. Bakosi
-  \date      Wed 10 Dec 2014 01:43:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for custom message types
   \details   Charm++ module interface file for custom message types.

@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Data.h
   \author    J. Bakosi
-  \date      Wed 05 Oct 2016 06:39:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
