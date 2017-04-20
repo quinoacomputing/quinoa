@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 01 Dec 2016 11:16:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports

@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPUPUtil.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:49:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h

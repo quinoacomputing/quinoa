@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:57:00 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF output file type options
   \details   PDF output file type options

@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 01:50:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.

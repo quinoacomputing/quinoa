@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 12:56:03 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations

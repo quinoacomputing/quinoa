@@ -2,7 +2,6 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:17:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration.

@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:16:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Silo writer declaration.
   \details   Silo writer declaration. This class currently only supports writing

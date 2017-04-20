@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 11:29:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a

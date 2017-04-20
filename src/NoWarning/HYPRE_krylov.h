@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/HYPRE_krylov.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:35:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include HYPRE_krylov.h with turning off specific compiler
              warnings

@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:44:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG

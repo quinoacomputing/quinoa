@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 08:23:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can

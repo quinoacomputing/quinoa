@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/walker.ci
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 09:54:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for walker
   \details   Charm++ module interface file for random walker, walker.

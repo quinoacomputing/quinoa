@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Wed 23 Nov 2016 07:42:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's printer
   \details   UnitTest's printer

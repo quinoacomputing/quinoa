@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/inciter.decl.h
   \author    J. Bakosi
-  \date      Sat 15 Apr 2017 11:38:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include inciter.decl.h with turning off specific compiler
              warnings

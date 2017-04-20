@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:55:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter

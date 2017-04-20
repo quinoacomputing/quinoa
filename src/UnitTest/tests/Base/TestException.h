@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestException.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:30:10 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h

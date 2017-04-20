@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
-  \date      Fri 21 Oct 2016 01:24:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h

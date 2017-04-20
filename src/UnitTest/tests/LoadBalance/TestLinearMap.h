@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLinearMap.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:07:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for LoadBalance/LinearMap
   \details   Unit tests for LoadBalance/LinearMap

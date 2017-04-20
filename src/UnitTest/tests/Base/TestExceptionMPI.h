@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestExceptionMPI.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:19:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/TestExceptionMPI.h
   \details   Unit tests for Base/TestExceptionMPI.h

@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/HelpFactory.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:36:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of

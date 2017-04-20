@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFlip_map.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 10:23:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Flip_map.h
   \details   Unit tests for Base/Flip_map.h

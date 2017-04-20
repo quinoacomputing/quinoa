@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Control/TestSystemComponents.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:04:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/SystemComponents
   \details   Unit tests for Control/SystemComponents

@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:24:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Driver base class declaration
   \details   Driver base class declaration. This class used as a base for

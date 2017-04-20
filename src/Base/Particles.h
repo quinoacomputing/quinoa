@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Particles.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:07:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Particles used to store particle data.
   \details   Particles used to store data at particles as a specialization of

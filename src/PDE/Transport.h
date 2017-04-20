@@ -2,7 +2,6 @@
 /*!
   \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 08:32:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation

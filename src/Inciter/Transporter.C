@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 28 Mar 2017 09:11:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.

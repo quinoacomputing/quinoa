@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Inciter/Options/InitialAMR.h
   \author    J. Bakosi
-  \date      Mon 20 Mar 2017 10:33:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Initial (before t=0) adaptive mesh refinement options
   \details   Initial (before t=0) adaptive mesh refinement options

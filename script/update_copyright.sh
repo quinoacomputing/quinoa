@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Switch copyright year in all files in relevant directories
-# \date      Fri 06 May 2016 06:46:22 AM MDT
 #
 ################################################################################
 

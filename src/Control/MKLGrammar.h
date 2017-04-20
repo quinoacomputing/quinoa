@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Thu 05 Jan 2017 04:01:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,

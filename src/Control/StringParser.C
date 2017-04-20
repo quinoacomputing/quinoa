@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:11:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as

@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 08:33:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack

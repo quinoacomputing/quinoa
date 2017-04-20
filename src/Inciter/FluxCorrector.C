@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 08:33:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
