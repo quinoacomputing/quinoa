@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 13 Apr 2017 04:58:49 PM MDT
+# \date      Thu 20 Apr 2017 07:25:40 AM MDT
 #
 ################################################################################
 
@@ -286,12 +286,12 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
-  # No limit on inlining. This avoids some compiler warnings, but significiantly
-  # increases the build time.
+  # No limit on inlining. This can increase the build time.
   if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel
-    add_compiler_flag("-no-inline-max-size")
-    add_compiler_flag("-no-inline-max-total-size")
-    add_compiler_flag("-no-inline-max-per-routine")
+    #add_compiler_flag("-no-inline-max-size")
+    #add_compiler_flag("-no-inline-max-total-size")
+    #add_compiler_flag("-no-inline-max-per-routine")
+    add_compiler_flag("-diag-disable 11074,11076")
   endif()
 
   # Linker flags for intel
