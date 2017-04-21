@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:57:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text floating-point output options
   \details   Text floating-point output options

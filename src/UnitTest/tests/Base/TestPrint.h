@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPrint.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:39:47 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h

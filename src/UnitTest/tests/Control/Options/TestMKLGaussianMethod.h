@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:09:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod

@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Fri 13 Jan 2017 10:39:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains

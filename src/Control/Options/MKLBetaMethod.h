@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/MKLBetaMethod.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:56:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL Beta RNG method options
   \details   Intel MKL Beta RNG method options

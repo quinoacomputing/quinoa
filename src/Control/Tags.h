@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Mon 20 Mar 2017 08:52:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.

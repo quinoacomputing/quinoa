@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 11 May 2016 07:46:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Common initialization routines for main() functions for multiple
      exectuables

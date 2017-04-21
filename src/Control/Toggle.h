@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:09:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Toggle is the base for an Option, doing generic searches
   \details   Toggle is the base for an Option, doing generic searches.

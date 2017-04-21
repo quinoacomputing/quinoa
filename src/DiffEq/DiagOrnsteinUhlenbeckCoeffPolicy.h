@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 05:58:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the diagonal

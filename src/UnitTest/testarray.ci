@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tesstarray.ci
   \author    J. Bakosi
-  \date      Sat 16 May 2015 06:57:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for testing arrays
   \details   Charm++ module interface file for testing arrays.

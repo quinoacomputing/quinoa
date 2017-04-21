@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/ProcessException.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:34:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Process an exception definition
   \details   This file contains the definition of processing an exception.

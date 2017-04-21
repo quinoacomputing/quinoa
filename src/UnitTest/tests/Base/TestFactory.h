@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:37:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h

@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Make_list.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:57:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Convert a variadic template argument pack to boost::mpl::list
   \details   Convert a variadic template argument pack to boost::mpl::list. For

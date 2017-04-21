@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Inciter/Options/Problem.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:56:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter

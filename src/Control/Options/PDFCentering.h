@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/PDFCentering.h
   \author    J. Bakosi
-  \date      Sun 04 Dec 2016 11:56:53 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF output file centering type options
   \details   PDF output file centering type options

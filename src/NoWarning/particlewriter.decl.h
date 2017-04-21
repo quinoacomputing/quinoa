@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/particlewriter.decl.h
   \author    F.J. Gonzalez
-  \date      Sat 15 Apr 2017 11:41:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.decl.h with turning off specific compiler
              warnings.

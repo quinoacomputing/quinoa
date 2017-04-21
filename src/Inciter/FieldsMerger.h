@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/FieldsMerger.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 08:30:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging mesh node indices across PEs
   \details   Custom Charm++ reducer for merging mesh node indices across PEs.

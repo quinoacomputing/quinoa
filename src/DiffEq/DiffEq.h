@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:24:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class

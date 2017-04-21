@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Walker/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:56:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line
   \details   Walker's command line

@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Tue 08 Nov 2016 08:08:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the

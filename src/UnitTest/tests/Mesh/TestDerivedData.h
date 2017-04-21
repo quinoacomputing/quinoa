@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 03:11:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple

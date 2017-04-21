@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestReader.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:02:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader

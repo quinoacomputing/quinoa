@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/QuinoaConfig.h
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 03:48:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See

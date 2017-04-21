@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Tue 10 Jan 2017 09:00:07 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar

@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/TestArray.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:06:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Simple test Charm++ array for testing arrays
   \details   Simple test Charm++ array for testing arrays.

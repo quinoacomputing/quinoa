@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu 05 Jan 2017 04:01:08 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition

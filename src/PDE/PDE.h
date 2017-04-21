@@ -2,7 +2,6 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 31 Oct 2016 03:24:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.

@@ -2,7 +2,6 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Tue 22 Nov 2016 08:47:28 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor

@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:28:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker

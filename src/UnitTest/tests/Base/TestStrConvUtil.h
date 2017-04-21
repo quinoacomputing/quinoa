@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestStrConvUtil.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:02:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h

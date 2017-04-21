@@ -2,7 +2,6 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Wed 21 Dec 2016 12:30:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
