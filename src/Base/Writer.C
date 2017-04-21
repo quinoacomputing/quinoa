@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Writer.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:04:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class

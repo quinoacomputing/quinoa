@@ -2,7 +2,6 @@
 /*!
   \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:39:31 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interfacing the TestU01 random number generator test suite
   \details   Interfacing the TestU01 random number generator test suite.

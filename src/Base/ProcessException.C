@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:54:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.

@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Mon 20 Mar 2017 10:08:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -103,7 +102,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-parameter"
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -116,7 +115,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
   Partitioner_SDAG_CODE
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic pop
   #elif defined(__INTEL_COMPILER)
     #pragma warning( pop )

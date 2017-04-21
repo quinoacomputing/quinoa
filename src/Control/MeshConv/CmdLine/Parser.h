@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:50:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line parser
   \details   This file declares the command-line argument parser for the mesh

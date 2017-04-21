@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/inciter.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:40:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include inciter.decl.h with turning off specific compiler
              warnings
@@ -10,6 +9,8 @@
 // *****************************************************************************
 #ifndef nowarning_inciter_decl_h
 #define nowarning_inciter_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -39,7 +40,7 @@
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
@@ -61,7 +62,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

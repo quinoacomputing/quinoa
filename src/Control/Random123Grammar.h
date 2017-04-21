@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Random123Grammar.h
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 12:19:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random123-related grammar
   \details   This file defines Random1232 library related grammar, (re-)used by

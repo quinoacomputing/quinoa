@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:23:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can

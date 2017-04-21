@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:58:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's command line
   \details   This file defines the heterogeneous stack that is used for storing

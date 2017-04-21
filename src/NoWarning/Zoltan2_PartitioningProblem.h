@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 05:59:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
@@ -10,6 +9,8 @@
 // *****************************************************************************
 #ifndef nowarning_Zoltan2_PartitioningProblem_h
 #define nowarning_Zoltan2_PartitioningProblem_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -34,7 +35,7 @@
   #pragma clang diagnostic ignored "-Wconditional-uninitialized"
   #pragma clang diagnostic ignored "-Wunused-local-typedef"
   #pragma clang diagnostic ignored "-Wundef"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -50,7 +51,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

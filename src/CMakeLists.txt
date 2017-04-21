@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Thu 13 Apr 2017 04:58:49 PM MDT
 #
 ################################################################################
 
@@ -252,9 +251,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
   add_compiler_flag("-Wremarks") # display remarks and comments
-  add_compiler_flag("-gcc-sys")  # only define GNU macros during compilation of system headers
 
   # Globally suppress the following Intel compiler remarks:
+  #     7: unrecognized token
   #    68: integer conversion resulted in a change of sign
   #    82: storage class is not first
   #   111: statement is unreachable
@@ -281,17 +280,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3280: declaration hides member
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
-  # No limit on inlining. This avoids some compiler warnings, but significiantly
-  # increases the build time.
+  # No limit on inlining. This can increase the build time.
   if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel
-    add_compiler_flag("-no-inline-max-size")
-    add_compiler_flag("-no-inline-max-total-size")
-    add_compiler_flag("-no-inline-max-per-routine")
+    #add_compiler_flag("-no-inline-max-size")
+    #add_compiler_flag("-no-inline-max-total-size")
+    #add_compiler_flag("-no-inline-max-per-routine")
+    add_compiler_flag("-diag-disable 11074,11076")
   endif()
 
   # Linker flags for intel

@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/IO/TestMesh.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:12:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO

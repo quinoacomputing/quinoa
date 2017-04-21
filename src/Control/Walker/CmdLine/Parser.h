@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 11:59:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line parser
   \details   Walker's command line parser

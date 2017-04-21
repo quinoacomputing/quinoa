@@ -2,13 +2,14 @@
 /*!
   \file      src/NoWarning/walker.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:41:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include walker.decl.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_walker_decl_h
 #define nowarning_walker_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -38,7 +39,7 @@
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wredundant-decls"
@@ -60,7 +61,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

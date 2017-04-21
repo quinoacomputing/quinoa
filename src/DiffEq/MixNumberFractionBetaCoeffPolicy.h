@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/MixNumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:01:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix

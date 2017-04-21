@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestMake_list.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 10:23:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Make_list.h
   \details   Unit tests for Base/Make_list.h

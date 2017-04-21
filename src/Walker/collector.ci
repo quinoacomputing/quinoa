@@ -2,7 +2,6 @@
 /*!
   \file      src/Walker/collector.ci
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 07:43:22 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators

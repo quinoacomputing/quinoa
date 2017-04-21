@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/WrightFisherCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:36:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Wright-Fisher coefficients policies
   \details   This file defines coefficients policy classes for the Wright-Fisher

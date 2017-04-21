@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/TUTUtil.h
   \author    J. Bakosi
-  \date      Fri 21 Oct 2016 10:31:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Utilities for unit testing with the Template Unit Test library
   \details   Utilities for unit testing with the Template Unit Test library.

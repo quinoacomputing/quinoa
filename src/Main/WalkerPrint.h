@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 10:16:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.

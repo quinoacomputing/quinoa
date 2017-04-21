@@ -2,13 +2,14 @@
 /*!
   \file      src/NoWarning/charm++.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:42:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include charm++.h with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_charmpp_h
 #define nowarning_charmpp_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -36,7 +37,7 @@
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wredundant-decls"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -59,7 +60,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

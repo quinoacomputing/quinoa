@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/partitioner.def.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:43:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include partitioner.def.h with turning off specific compiler
              warnings
@@ -14,6 +13,8 @@
 // translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
 // each inclusion will generate different code.
 
+#include "Macro.h"
+
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wextra-semi"
@@ -23,7 +24,7 @@
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wundef"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
@@ -35,6 +36,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif

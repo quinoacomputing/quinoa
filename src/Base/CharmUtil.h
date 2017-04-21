@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 11:27:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ utilities
   \details   Charm++ utilities

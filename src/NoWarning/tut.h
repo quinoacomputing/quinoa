@@ -2,13 +2,14 @@
 /*!
   \file      src/NoWarning/tut.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:50:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut.hpp with turning off specific compiler warnings
 */
 // *****************************************************************************
 #ifndef nowarning_tut_h
 #define nowarning_tut_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -21,7 +22,7 @@
   #pragma clang diagnostic ignored "-Wunused-function"
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wsign-compare"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -34,7 +35,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

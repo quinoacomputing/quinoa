@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:23:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help

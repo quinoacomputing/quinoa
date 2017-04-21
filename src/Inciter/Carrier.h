@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 11:29:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -124,7 +123,7 @@ class Carrier : public CBase_Carrier {
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
-    #elif defined(__GNUC__)
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wunused-parameter"
       #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -137,7 +136,7 @@ class Carrier : public CBase_Carrier {
     Carrier_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
-    #elif defined(__GNUC__)
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic pop
     #elif defined(__INTEL_COMPILER)
       #pragma warning( pop )

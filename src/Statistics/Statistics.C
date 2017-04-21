@@ -2,7 +2,6 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:03:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to

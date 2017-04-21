@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/HashMapReducer.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 08:23:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::unordered_maps across PEs
   \details   Custom Charm++ reducer for merging std::unordered_maps across PEs.

@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:20:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic

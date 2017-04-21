@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestHas.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:24:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Has.h
   \details   Unit tests for Base/Has.h

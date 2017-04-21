@@ -2,7 +2,6 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 07:55:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 statistical test
   \details   TestU01 statistical test

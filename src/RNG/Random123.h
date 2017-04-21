@@ -2,7 +2,6 @@
 /*!
   \file      src/RNG/Random123.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 02:04:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to Random123 random number generators
   \details   Interface to Random123 random number generators

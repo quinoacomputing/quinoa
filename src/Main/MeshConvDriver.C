@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:09:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh converter driver
   \details   Mesh converter driver.

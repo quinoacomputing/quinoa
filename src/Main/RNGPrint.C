@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Thu 12 Jan 2017 12:45:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.

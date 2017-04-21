@@ -2,7 +2,6 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 01:00:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators

@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 02:13:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scales from DNS for the homogeneous
     Rayleigh-Taylor instability.

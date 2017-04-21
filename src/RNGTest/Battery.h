@@ -2,7 +2,6 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:26:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness

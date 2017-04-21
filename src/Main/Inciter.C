@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:38:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.

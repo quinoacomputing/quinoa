@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 10:17:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.

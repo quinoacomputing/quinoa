@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 10:02:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -71,7 +70,7 @@ class Transporter : public CBase_Transporter {
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
       #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    #elif defined(__GNUC__)
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wunused-parameter"
       #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -84,7 +83,7 @@ class Transporter : public CBase_Transporter {
     Transporter_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
-    #elif defined(__GNUC__)
+    #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic pop
     #elif defined(__INTEL_COMPILER)
       #pragma warning( pop )

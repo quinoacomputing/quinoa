@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/particlewriter.def.h
   \author    F.J. Gonzalez
-  \date      Fri 30 Sep 2016 12:42:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.def.h with turning off specific compiler
              warnings.
@@ -23,7 +22,7 @@
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wundef"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
@@ -35,6 +34,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif

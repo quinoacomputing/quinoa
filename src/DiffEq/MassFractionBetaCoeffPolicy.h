@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/MassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:01:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the

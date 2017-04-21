@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Endian.h
   \author    J. Bakosi
-  \date      Tue 21 Mar 2017 08:53:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Swap endianness
   \details   Swap endianness. Thanks to http://stackoverflow.com/a/4956493 and
@@ -13,6 +12,8 @@
 #define Endian_h
 
 #include <climits>
+
+#include "Macro.h"
 
 namespace tk {
 
@@ -39,7 +40,7 @@ T swap_endian( T u ) {
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wold-style-cast"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
@@ -55,7 +56,7 @@ double swap_endian( double u ) {
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi, D. Frey
-  \date      Tue 10 Jan 2017 09:00:07 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
@@ -297,7 +296,7 @@ namespace grm {
   #if defined(__clang__)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-local-typedef"
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #endif
@@ -322,7 +321,7 @@ namespace grm {
   };
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic pop
   #endif
 

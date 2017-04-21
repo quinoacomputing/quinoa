@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/integrator.decl.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:39:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include integrator.decl.h with turning off specific compiler
              warnings
@@ -10,6 +9,8 @@
 // *****************************************************************************
 #ifndef nowarning_integrator_decl_h
 #define nowarning_integrator_decl_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -38,7 +39,7 @@
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -63,7 +64,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

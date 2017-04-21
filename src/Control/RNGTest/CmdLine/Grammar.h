@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 01:23:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing

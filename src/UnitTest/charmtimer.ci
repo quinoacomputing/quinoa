@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/charmtimer.ci
   \author    J. Bakosi
-  \date      Sun 17 May 2015 03:04:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for migration testing of tk::Timer
   \details   Charm++ module interface file for migration testing of tk::Timer
