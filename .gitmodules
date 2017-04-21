@@ -1,3 +1,3 @@
 [submodule "tpl"]
 	path = tpl
-	url = https://github.com/quinoacomputing/quinoa-tpl.git
+	url = ../../quinoacomputing/quinoa-tpl.git
