@@ -23,7 +23,7 @@ if(NUMDIFF_EXECUTABLE)
   set (NUMDIFF_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PROGRAM(NUMDIFF_EXECUTABLE NAMES numdiff
+FIND_PROGRAM(NUMDIFF_EXECUTABLE NAMES maddiff mad-numdiff numdiff
                                 PATHS ${NUMDIFF_ROOT}/bin
                                       $ENV{NUMDIFF_ROOT}/bin
                                 PATH_SUFFIXES bin)
