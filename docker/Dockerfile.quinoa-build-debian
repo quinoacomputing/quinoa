@@ -27,6 +27,8 @@
 
 FROM debian:testing
 
+ARG COMMIT
+
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
@@ -41,6 +43,8 @@ CMD ["/bin/sh"]
 
 # Clone quinoa
 RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
+# Checkout commit to be tested
+RUN cd quinoa && git checkout $COMMIT
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build & test

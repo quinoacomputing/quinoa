@@ -42,9 +42,8 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
+                      ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
 )
 
@@ -84,9 +83,8 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
+                      ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
 )
 
@@ -139,9 +137,8 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
+                      ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
 )
 
@@ -175,9 +172,8 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${RNGSSE2_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_C_LIBRARIES}
-                      ${ZLIB_LIBRARIES}         # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
+                      ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
 )
 

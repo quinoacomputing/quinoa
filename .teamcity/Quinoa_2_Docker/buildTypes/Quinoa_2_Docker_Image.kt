@@ -25,7 +25,7 @@ object Quinoa_2_Docker_Image : Template({
             name = "Build image"
             id = "RUNNER_24"
             workingDir = "%workdir%"
-            scriptContent = "docker build --build-arg http_proxy=http://proxyout.lanl.gov:8080/ --build-arg https_proxy=https://proxyout.lanl.gov:8080/ --no-cache=true --rm=true -t %organization%/%repository%-build:%tag% -f %dockerfile% ."
+            scriptContent = "docker build --build-arg http_proxy=http://proxyout.lanl.gov:8080/ --build-arg https_proxy=https://proxyout.lanl.gov:8080/ --build-arg COMMIT=%build.vcs.number% --no-cache=true --rm=true -t %organization%/%repository%-build:%tag% -f %dockerfile% ."
         }
         script {
             name = "Squash image"

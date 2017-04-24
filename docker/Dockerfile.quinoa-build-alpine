@@ -26,6 +26,8 @@
 
 FROM alpine:edge
 
+ARG COMMIT
+
 # Install system-wide prerequisites
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
 RUN apk update && apk add bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev
@@ -54,6 +56,8 @@ CMD ["/bin/sh"]
 
 # Clone quinoa
 RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
+# Checkout commit to be tested
+RUN cd quinoa && git checkout $COMMIT
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build
