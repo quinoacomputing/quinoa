@@ -32,7 +32,7 @@ ARG COMMIT
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev pegtl-dev libhdf5-dev libhdf5-openmpi-dev
+RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev zlib1g-dev pegtl-dev libhdf5-dev libhdf5-openmpi-dev
 
 # Setup user
 RUN adduser --gecos "" --disabled-password quinoa
