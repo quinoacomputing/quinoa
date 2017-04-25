@@ -37,7 +37,7 @@ endif()
 
 #### Boost
 set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
-find_package(Boost REQUIRED)
+find_package(Boost 1.56.0 REQUIRED)
 if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
