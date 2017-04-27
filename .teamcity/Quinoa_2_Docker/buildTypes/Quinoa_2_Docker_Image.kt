@@ -57,7 +57,10 @@ object Quinoa_2_Docker_Image : Template({
                 -:comment=\[ci skip\]:**
                 -:comment=\[skip ci\]:**
             """.trimIndent()
-            branchFilter = "+:<default>"
+            branchFilter = """
+                +:<default>
+                +:dev
+            """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
         }

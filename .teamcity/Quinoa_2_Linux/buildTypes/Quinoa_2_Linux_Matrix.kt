@@ -72,7 +72,10 @@ object Quinoa_2_Linux_Matrix : Template({
                 -:comment=\[ci skip\]:**
                 -:comment=\[skip ci\]:**
             """.trimIndent()
-            branchFilter = "+:<default>"
+            branchFilter = """
+                +:<default>
+                +:dev
+            """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
         }
