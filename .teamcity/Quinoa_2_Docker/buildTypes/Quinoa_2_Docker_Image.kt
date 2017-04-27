@@ -59,7 +59,6 @@ object Quinoa_2_Docker_Image : Template({
             """.trimIndent()
             branchFilter = """
                 +:<default>
-                +:dev
             """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
