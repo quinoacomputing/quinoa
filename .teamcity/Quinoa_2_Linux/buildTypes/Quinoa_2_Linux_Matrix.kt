@@ -74,7 +74,7 @@ object Quinoa_2_Linux_Matrix : Template({
             """.trimIndent()
             branchFilter = """
                 +:<default>
-                +:dev
+                +:develop
             """.trimIndent()
             perCheckinTriggering = true
             groupCheckinsByCommitter = true
