@@ -139,13 +139,12 @@ class CompFlowProblemUserDefined {
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] t Physical time
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     output( tk::ctr::ncomp_type e,
             tk::ctr::ncomp_type offset,
-            tk::real t,
+            tk::real,
             const std::array< std::vector< tk::real >, 3 >&,
             const tk::Fields& U )
     {
@@ -241,7 +240,6 @@ class CompFlowProblemVorticalFlow {
     }
 
     //! Add source term to rhs for vortical flow manufactured solution
-    //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -256,7 +254,7 @@ class CompFlowProblemVorticalFlow {
     //! \param[in,out] u Solution at element nodes at recent time step stage
     //! \param[in,out] R Right-hand side vector contributing to
     static void
-    sourceRhs( tk::real t,
+    sourceRhs( tk::real,
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real mult,
@@ -372,14 +370,13 @@ class CompFlowProblemVorticalFlow {
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     output( tk::ctr::ncomp_type e,
             tk::ctr::ncomp_type offset,
-            tk::real t,
+            tk::real,
             const std::array< std::vector< tk::real >, 3 >& coord,
             const tk::Fields& U )
     {
@@ -573,7 +570,7 @@ class CompFlowProblemNLEnergyGrowth {
           std::cos(bz*M_PI*z[N[3]]) }};
 
       // derivative of spatial component of energy field
-      std::array< std::array< tk::real, 4 >, 3 > 
+      std::array< std::array< tk::real, 4 >, 3 >
         dh{{ {{ -bx*M_PI*std::sin(bx*M_PI*x[N[0]])*std::cos(by*M_PI*y[N[0]])*
                 std::cos(bz*M_PI*z[N[0]]),
                 -bx*M_PI*std::sin(bx*M_PI*x[N[1]])*std::cos(by*M_PI*y[N[1]])*
@@ -628,51 +625,51 @@ class CompFlowProblemNLEnergyGrowth {
       // momentum source
       std::array< std::array< tk::real, 4 >, 3 >
         Sm{{ {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[0][0] + 
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[0][0] +
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[0][1] + 
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[0][1] +
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[0][2] + 
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[0][2] +
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[0][3] + 
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[0][3] +
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[0][3] }},
              {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[1][0] + 
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[1][0] +
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[1][1] + 
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[1][1] +
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[1][2] + 
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[1][2] +
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[1][3] + 
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[1][3] +
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[1][3] }},
              {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[2][0] + 
+                std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[2][0] +
                 std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][0],
                 2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[2][1] + 
+                std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[2][1] +
                 std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][1],
                 2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[2][2] + 
+                std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[2][2] +
                 std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][2],
                 2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[2][3] + 
+                std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[2][3] +
                 std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                 std::exp(-a*t)*dg[2][3] }} }};
 
