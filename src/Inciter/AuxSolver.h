@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/AuxSolver.h
   \author    J. Bakosi
-  \date      Thu 27 Oct 2016 10:20:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Auxiliary solvers used in tk::LinSysMerger by inciter.
   \details   This file defines policy classes for tk::LinSysMerger's auxiliary

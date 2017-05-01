@@ -2,7 +2,6 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 10 Feb 2017 06:25:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -227,7 +226,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -240,7 +239,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
   LinSysMerger_SDAG_CODE
   #if defined(__clang__)
     #pragma clang diagnostic pop
-  #elif defined(__GNUC__)
+  #elif defined(STRICT_GNUC)
     #pragma GCC diagnostic pop
   #elif defined(__INTEL_COMPILER)
     #pragma warning( pop )
@@ -344,6 +343,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \param[in] lower Lower index of the global rows on my PE
     //! \param[in] upper Upper index of the global rows on my PE
     void bounds( int p, std::size_t lower, std::size_t upper ) {
+      Assert( lower < upper, "Lower bound must be lower than the upper bound: "
+              "(" + std::to_string(lower) + "..." +  std::to_string(upper) +
+              ") sent by PE " + std::to_string(p) );
       // Store our bounds
       if (p == CkMyPe()) {
         m_lower = lower;
@@ -1266,7 +1268,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wreorder"
   #pragma clang diagnostic ignored "-Wunused-variable"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
@@ -1281,7 +1283,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

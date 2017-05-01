@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 13 Feb 2017 01:51:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -64,8 +63,10 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const ParticleWriterProxy& pw,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
-                          std::vector< std::size_t > >& msum,
-                  const std::unordered_map< std::size_t, std::size_t >& cid,
+                          std::unordered_set< std::size_t > >& msum,
+                  const std::unordered_map< std::size_t, std::size_t >&
+                          filenodes,
+                  const tk::UnsMesh::EdgeNodes& edgenodes,
                   int ncarr ) :
   __dep(),
   m_it( 0 ),
@@ -85,9 +86,9 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
-  m_cid( cid ),
+  m_filenodes( filenodes ),
+  m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_coord(),
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -101,13 +102,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_msum( msum ),
   m_vol( m_gid.size(), 0.0 ),
   m_bid(),
   m_pc(),
   m_qc(),
-  m_ac(),
-                                                        // 0 = no particles
+  m_ac(),                                               // 0 = no particles
   m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
 // *****************************************************************************
 //  Constructor
@@ -117,14 +116,24 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
-//! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
-//!   in producing contiguous-row-id linear system contributions)
+//! \param[in] filenodes Map associating old node IDs (as in file) to new node
+//!   IDs (as in producing contiguous-row-id linear system contributions)
+//! \param[in] edgenodemap Map associating new node IDs ('new' as in producing
+//!   contiguous-row-id linear system contributions) to edges (a pair of old
+//!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
+//!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
 //! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
+
+  // Convert neighbor nodes to vectors from sets
+  for (const auto& n : msum) {
+    auto& v = m_msum[ n.first ];
+    v.insert( end(v), begin(n.second), end(n.second) );
+  }
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
@@ -156,6 +165,10 @@ Carrier::vol()
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
 
+  // Add coordinates of mesh nodes newly generated to edge-mid points during
+  // initial refinement
+  addEdgeNodeCoords();
+
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -170,6 +183,24 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
+    Assert( J > 0, "Element Jacobian non-positive: PE:" +
+                   std::to_string(CkMyPe()) + ", node IDs: " +
+                   std::to_string(m_gid[N[0]]) + ',' +
+                   std::to_string(m_gid[N[1]]) + ',' +
+                   std::to_string(m_gid[N[2]]) + ',' +
+                   std::to_string(m_gid[N[3]]) + ", coords: (" +
+                   std::to_string(x[N[0]]) + ", " +
+                   std::to_string(y[N[0]]) + ", " +
+                   std::to_string(z[N[0]]) + "), (" +
+                   std::to_string(x[N[1]]) + ", " +
+                   std::to_string(y[N[1]]) + ", " +
+                   std::to_string(z[N[1]]) + "), (" +
+                   std::to_string(x[N[2]]) + ", " +
+                   std::to_string(y[N[2]]) + ", " +
+                   std::to_string(z[N[2]]) + "), (" +
+                   std::to_string(x[N[3]]) + ", " +
+                   std::to_string(y[N[3]]) + ", " +
+                   std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
@@ -219,14 +250,14 @@ Carrier::setup()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Output chare mesh to file
+  writeMesh();
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Send node IDs from element side sets matched to BC set IDs
   bc();
   // Generate particles
   m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
-  // Output chare mesh to file
-  writeMesh();
   // Output fields metadata to output file
   writeMeta();
 }
@@ -257,16 +288,33 @@ Carrier::bc()
   // Access all side sets from LinSysMerger
   auto& side = m_linsysmerger.ckLocalBranch()->side();
 
-  // Invert m_cid, a map associating old node IDs (as in file) to new node IDs
-  // (as in producing contiguous-row-id linear system contributions), so we can
-  // search more efficiently for old node IDs.
-  decltype(m_cid) rcid;
-  for (const auto& i : m_cid) rcid[ i.second ] = i.first;
+  // Invert file-node map, a map associating old node IDs (as in file) to new
+  // node IDs (as in producing contiguous-row-id linear system contributions),
+  // so we can search more efficiently for old node IDs.
+  decltype(m_filenodes) linnodes;
+  for (const auto& i : m_filenodes) linnodes[ i.second ] = i.first;
 
   // lambda to find out if we own the old (as in file) global node id
-  auto own = [ &rcid ]( std::size_t id ) -> std::pair< bool, std::size_t > {
-    auto it = rcid.find( id );
-    if (it != end(rcid)) return { true, it->second }; else return { false, 0 };
+  auto own = [ &linnodes ]( std::size_t id ) -> std::pair< bool, std::size_t >
+  {
+    auto it = linnodes.find( id );
+    if (it != end(linnodes))
+      return { true, it->second };
+    else
+      return { false, 0 };
+  };
+
+  // lambda to collect all edge-nodes whose both edge-end-points are in the node
+  // set given
+  auto edgebc = [ this ]( const std::unordered_set< std::size_t >& bcnodes )
+              -> std::vector< std::pair< bool, std::size_t > >
+  {
+    std::vector< std::pair< bool, std::size_t > > en;
+    for (const auto& ed : m_edgenodes)
+      if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
+           bcnodes.find( ed.first[1] ) != end(bcnodes) )
+        en.push_back( { true, ed.second } );
+    return en;
   };
 
   // lambda to query the Dirichlet BCs on a side set for all components of all
@@ -294,7 +342,7 @@ Carrier::bc()
   // linear system contributions. See also Partitioner.h.
   auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
   -> bool {
-    for (auto n : s) if (tk::cref_find(this->m_cid,id) == n) return true;
+    for (auto n : s) if (tk::cref_find(this->m_filenodes,id) == n) return true;
     return false;
   };
 
@@ -304,17 +352,27 @@ Carrier::bc()
   std::unordered_map< std::size_t,
                       std::vector< std::pair< bool, tk::real > > > dirbc;
 
+  // lambda to associate BC values and whether they are set (for all PDE
+  // components) to a node
+  auto assign = [&dirbc]( const std::vector< std::pair< bool, tk::real > >& b,
+                          std::size_t n )
+  {
+    auto& v = dirbc[ n ];
+    v.resize( b.size() );
+    for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
+  };
+
   // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
   // data structure in which this information is stored associates a vector of
   // pairs of bool and BC value to new global mesh node IDs. 'New' as in
   // producing contiguous-row-id linear system contributions, see also
   // Partitioner.h. The bool indicates whether the BC value is set at the given
   // node by the user. The size of the vectors is the number of PDEs integrated
-  // times the number of scalar components in all PDEs. The vector is associated
-  // to global node IDs at which the boundary condition will be set. If a node
-  // gets boundary conditions from multiple side sets, true values (the fact
-  // that a BC is set) overwrite existing false ones, i.e., the union of the
-  // boundary conditions will be applied at the node.
+  // for all scalar components in all PDEs. The vector is associated to global
+  // node IDs at which the boundary condition will be set. If a node gets
+  // boundary conditions from multiple side sets, true values (the fact that a
+  // BC is set) overwrite existing false ones, i.e., the union of the boundary
+  // conditions will be applied at the node.
   for (const auto& s : side) {
     // get BC values for side set
     auto b = bcval( s.first );
@@ -325,14 +383,17 @@ Carrier::bc()
                             { return p.first; } );
     // for all node IDs we contribute to in the side set associate BC values and
     // whether they are set for a component (for all PDE components)
+    std::unordered_set< std::size_t > bcnodes;
     for (auto o : s.second) {
       auto n = own(o);
       if (n.first && inset(n.second,s.second) && ubc) {
-        auto& v = dirbc[ n.second ];
-        v.resize( b.size() );
-        for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
+        assign( b, n.second );          // assign BC values to nodes
+        bcnodes.insert( n.second );     // store BC nodes
       }
     }
+    // associate BC values and whether they are set (for all PDE components) for
+    // all edge-nodes at whose both edge-end-points BCs are set
+    for (const auto& n : edgebc(bcnodes)) if (n.first) assign( b, n.second );
   }
 
   // send progress report to host
@@ -495,10 +556,62 @@ Carrier::readCoords()
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
+  auto nnode = er.readHeader();
+
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  for (auto p : m_gid) er.readNode( tk::cref_find(m_cid,p), x, y, z );
+
+  auto nn = m_lid.size();
+  x.resize( nn );
+  y.resize( nn );
+  z.resize( nn );
+
+  for (auto p : m_gid) {
+    auto n = m_filenodes.find(p);
+    if (n != end(m_filenodes) && n->second < nnode)
+      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
+  }
+}
+
+void
+Carrier::addEdgeNodeCoords()
+// *****************************************************************************
+//  Add coordinates of mesh nodes newly generated to edge-mid points during
+//  initial refinement
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  if (m_edgenodes.empty()) return;
+
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
+  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
+
+  // Lambda to add coordinates for a single new node on an edge
+  auto addnode = [ this, &x, &y, &z ]
+                 ( const decltype(m_edgenodes)::value_type& e )
+  {
+    auto p = tk::cref_find( m_lid, e.first[0] );
+    auto q = tk::cref_find( m_lid, e.first[1] );
+    auto i = tk::cref_find( m_lid, e.second );
+    Assert( p < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(p)
+                          + " must be lower than " + std::to_string(x.size()) );
+    Assert( q < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(q)
+                          + " must be lower than " + std::to_string(x.size()) );
+    Assert( i < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+                          " indexing out of bounds: " + std::to_string(i)
+                          + " must be lower than " + std::to_string(x.size()) );
+    x[i] = (x[p]+x[q])/2.0;
+    y[i] = (y[p]+y[q])/2.0;
+    z[i] = (z[p]+z[q])/2.0;
+  };
+
+  // add new nodes
+  for (const auto& e : m_edgenodes) addnode( e );
 }
 
 void

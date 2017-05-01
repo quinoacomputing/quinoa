@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/IO/TestExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 24 Oct 2016 07:47:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for the ExodusII unstructured-mesh reader
   \details   Unit tests for the ExodusII unstructured-mesh reader

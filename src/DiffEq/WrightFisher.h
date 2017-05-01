@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 06 Jan 2017 12:54:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -135,7 +134,7 @@ class WrightFisher {
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wvla"
         #pragma clang diagnostic ignored "-Wvla-extension"
-      #elif defined(__GNUC__)
+      #elif defined(STRICT_GNUC)
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wvla"
       #endif
@@ -248,7 +247,7 @@ class WrightFisher {
 
       #if defined(__clang__)
         #pragma clang diagnostic pop
-      #elif defined(__GNUC__)
+      #elif defined(STRICT_GNUC)
         #pragma GCC diagnostic pop
       #endif
     }

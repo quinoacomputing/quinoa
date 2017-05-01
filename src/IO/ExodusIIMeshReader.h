@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:33:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -55,20 +54,21 @@ class ExodusIIMeshReader {
     void readGraph( UnsMesh& mesh );
 
     //! Read coordinates of a single mesh node from ExodusII file
-    //! \param[in] id Node id whose coordinates to read
+    //! \param[in] fid Node id in file whose coordinates to read
+    //! \param[in] mid Node id in memory to which to put new cordinates
     //! \param[in,out] x Vector of x coordinates to push to
     //! \param[in,out] y Vector of y coordinates to push to
     //! \param[in,out] z Vector of z coordinates to push to
-    void readNode( std::size_t id,
+    void readNode( std::size_t fid,
+                   std::size_t mid,
                    std::vector< tk::real >& x,
                    std::vector< tk::real >& y,
                    std::vector< tk::real >& z ) const
     {
-      tk::real px, py, pz; 
-      readNode( id, px, py, pz ); 
-      x.push_back( px );
-      y.push_back( py );
-      z.push_back( pz );
+      Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
+      Assert( mid < x.size() && mid < y.size() && mid < z.size(),
+              "Indexing out of bounds" );
+      readNode( fid, x[mid], y[mid], z[mid] );
     }
 
     //! Read coordinates of a single mesh node from ExodusII file

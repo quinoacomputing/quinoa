@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/migrated.ci
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:25:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for migrated test chare Migrated
   \details   Charm++ module interface file for migrated test chare Migrated

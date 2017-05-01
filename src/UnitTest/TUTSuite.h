@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 08:23:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -63,6 +62,14 @@ class TUTSuite : public CBase_TUTSuite {
         { "Base/Factory", 2 }
       , { "Base/PUPUtil", 11 }
       , { "Base/Timer", 1 }
+    };
+
+    // Tests that must be run on PE 0
+    // \details Some Charm++ tests must be run on PE 0 because they create
+    // Charm++ chare arrays whose ckNew() must be called on PE 0.
+    const std::unordered_set< std::string > m_fromPE0 {
+        { "LoadBalance/LinearMap"}
+      , { "LoadBalance/UnsMeshMap" }
     };
 
     //! Fire up all tests in a test group

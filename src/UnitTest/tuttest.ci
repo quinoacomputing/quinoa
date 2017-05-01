@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tuttest.ci
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 01:02:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Template Unit Test unit tests
   \details   Charm++ module interface file for Template Unit Test unit tests

@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestWriter.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 08:03:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer

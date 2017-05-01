@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:13:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic

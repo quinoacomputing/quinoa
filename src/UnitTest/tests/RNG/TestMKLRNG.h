@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestMKLRNG.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 03:11:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/MKLRNG.h
   \details   Unit tests for RNG/MKLRNG.h
@@ -17,7 +16,7 @@
 
 namespace tut {
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -336,7 +335,7 @@ void MKLRNG_object::test< 23 >() {
 //   RNG_common::test_move_assignment( r );
 // }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

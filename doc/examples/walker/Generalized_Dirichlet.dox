@@ -222,8 +222,8 @@ This is case 2 in the paper referenced above. Left -- time evolution of the
 means and the means of the invariant distribution, right -- time evolution of
 the components of the covariance matrix and those of the invariant.
 
-<img src="https://quinoacomputing.github.io/quinoa/gendir_mean.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/quinoa/gendir_cov.svg" align="right" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/gendir_mean.svg" align="left" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/gendir_cov.svg" align="right" width="50%" background=transparent>
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
@@ -233,7 +233,7 @@ plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 07:59:39 AM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:46:07 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

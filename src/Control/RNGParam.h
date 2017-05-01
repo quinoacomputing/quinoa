@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 01:22:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.

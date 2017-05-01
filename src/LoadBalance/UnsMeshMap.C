@@ -2,7 +2,6 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:43:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -190,7 +189,7 @@ UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
   for (int e=0; e<nelem; ++e)
     if (m_pe[ static_cast<std::size_t>(e) ] ==
         static_cast<std::size_t>(CkMyPe()))
-      mgr->insertInitial( e, CkCopyMsg(&msg) );
+      mgr->insertInitial( CkArrayIndex(e), CkCopyMsg(&msg) );
 
   mgr->doneInserting();
   CkFreeMsg( msg );

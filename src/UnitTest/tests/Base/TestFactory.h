@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.h
   \author    J. Bakosi
-  \date      Fri 30 Sep 2016 12:37:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -27,7 +26,7 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 namespace tut {
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -531,7 +530,7 @@ void Factory_object::test< 14 >() {
     fail( "cannot find key in factory" );
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

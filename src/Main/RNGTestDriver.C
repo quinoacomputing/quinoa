@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:25:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -66,12 +65,13 @@ RNGTestDriver::execute() const
   // Note that TestU01Suite constructors take the BatteryType (enum class)
   // value as their argument, which happens to be the same as the key in the
   // factory - hence the double-specification of the battery type below.
+  // Record all into a factory passing the last 0 means instantiate on PE 0.
   tk::recordCharmModel< Battery, TestU01Suite >
-                      ( bf, BatteryType::SMALLCRUSH, BatteryType::SMALLCRUSH );
+                    ( bf, BatteryType::SMALLCRUSH, BatteryType::SMALLCRUSH, 0 );
   tk::recordCharmModel< Battery, TestU01Suite >
-                      ( bf, BatteryType::CRUSH, BatteryType::CRUSH );
+                    ( bf, BatteryType::CRUSH, BatteryType::CRUSH, 0 );
   tk::recordCharmModel< Battery, TestU01Suite >
-                      ( bf, BatteryType::BIGCRUSH, BatteryType::BIGCRUSH );
+                    ( bf, BatteryType::BIGCRUSH, BatteryType::BIGCRUSH, 0 );
   m_print.list< ctr::Battery >( "Registered batteries", bf );
   m_print.endpart();
 

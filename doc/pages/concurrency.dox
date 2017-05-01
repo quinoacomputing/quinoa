@@ -185,7 +185,7 @@ one-to-one communication required by a geometric concurrency strategy:
     position + 3 velocity components), and as many as 100s (single-material flow
     + chemistry with approximately 90 species).
 
-<img src="https://quinoacomputing.github.io/quinoa/all2allcost.svg" align="right" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/all2allcost.svg" align="right" width="50%" background=transparent>
 
 2. __Particle-array-slices, all-to-all:__
    Using an all-to-all decomposition (i.e., only on the particle properties are
@@ -210,7 +210,7 @@ one-to-one communication required by a geometric concurrency strategy:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 07:58:03 AM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:44:23 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

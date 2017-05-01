@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Sun 29 Jan 2017 07:37:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -45,6 +44,7 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
 //! \param[in] map Map associating values to keys
 //! \param[in] key Key to search for
 //! \return A constant reference to the value associated to the key in map
+//! \note If key is not found an exception is thrown.
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -61,6 +61,7 @@ auto ref_find( const Container& map, const typename Container::key_type& key )
 //! \param[in] map Map associating values to keys
 //! \param[in] key Key to search for
 //! \return A reference to the value associated to the key in map
+//! \note If key is not found an exception is thrown.
 //! \author J. Bakosi
 // *****************************************************************************
 {

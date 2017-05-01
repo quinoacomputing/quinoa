@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 10 Mar 2017 08:07:18 AM MST
 #
 ################################################################################
 
@@ -98,6 +97,11 @@ get_mpi_compilers()
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
 
+# If we have met the mandatory MPI dependency, add a definition
+if(${MPI_CXX_FOUND})
+  add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
+endif(${MPI_CXX_FOUND})
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -138,7 +142,7 @@ message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
 include(GetGitRevisionDescription)
-git_describe(GIT_SHA1)
+git_describe(GIT_SHA1 --tags)
 message(STATUS "git sha1: ${GIT_SHA1}")
 
 # Macro to add C++ compiler flags
@@ -247,9 +251,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
   add_compiler_flag("-Wremarks") # display remarks and comments
-  add_compiler_flag("-gcc-sys")  # only define GNU macros during compilation of system headers
 
   # Globally suppress the following Intel compiler remarks:
+  #     7: unrecognized token
   #    68: integer conversion resulted in a change of sign
   #    82: storage class is not first
   #   111: statement is unreachable
@@ -276,17 +280,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3280: declaration hides member
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
-  # No limit on inlining. This avoids some compiler warnings, but significiantly
-  # increases the build time.
+  # No limit on inlining. This can increase the build time.
   if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel
-    add_compiler_flag("-no-inline-max-size")
-    add_compiler_flag("-no-inline-max-total-size")
-    add_compiler_flag("-no-inline-max-per-routine")
+    #add_compiler_flag("-no-inline-max-size")
+    #add_compiler_flag("-no-inline-max-total-size")
+    #add_compiler_flag("-no-inline-max-per-routine")
+    add_compiler_flag("-diag-disable 11074,11076")
   endif()
 
   # Linker flags for intel
@@ -344,23 +348,29 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
 endif()
 
-# Set runner executable path. This is used when generating code coverage and
+# Set runner configuration. This is used when generating code coverage and
 # running regression tests using ctest. Note that ninja puts chamrun to <build>
 # while make puts it into <build>/Main, but after any executable target we copy
 # <build>/Main/charmrun to <build> for non-ninja builds. See also
-# Main/CMakeLists.txt.
+# cmake/ConfigExecutable.cmake.
+SET(RUNNER_REQUIRED false) # if true all executables must be prefixed by runner
 if (DEFINED ENV{NERSC_HOST})
   SET(RUNNER "srun")
   SET(RUNNER_NCPUS_ARG "-n")
+  SET(RUNNER_REQUIRED true)
+elseif(ARCH MATCHES "ppc64")
+  find_program(RUNNER ${CMAKE_CURRENT_SOURCE_DIR}/../script/cobalt-runjob.sh)
+  SET(RUNNER_NCPUS_ARG "--np")
+  SET(RUNNER_ARGS "")
+  SET(RUNNER_REQUIRED true)
 else()
   SET(RUNNER "${CMAKE_BINARY_DIR}/charmrun")
   SET(RUNNER_NCPUS_ARG "+p")
 endif()
-message(STATUS "Parallel/serial job runner: ${RUNNER}")
-message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 
 # Set default parallel/serial job runner extra arguments
-if (NOT DEFINED RUNNER_ARGS AND
+if (NOT ARCH MATCHES "ppc64" AND
+    NOT DEFINED RUNNER_ARGS AND
     NOT DEFINED ENV{CRAY_PRGENVPGI} AND
     NOT DEFINED ENV{CRAY_PRGENVGNU} AND
     NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
@@ -370,6 +380,11 @@ if (NOT DEFINED RUNNER_ARGS AND
       CACHE STRING "Arguments to pass to the parallel/serial job runner, e.g., mpirun.")
 
 endif()
+
+# Echo runner configuration
+message(STATUS "Parallel/serial job runner required: ${RUNNER_REQUIRED}")
+message(STATUS "Parallel/serial job runner: ${RUNNER}")
+message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 
 # Attempt to find tools required for code coverage analysis
@@ -535,6 +550,9 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
+# Optionally enable cppcheck static analysis
+include(CppCheck)
+
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
 
@@ -550,7 +568,8 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(unit doc/html unittest_coverage
                             ${RUNNER}
                             TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
+                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -560,8 +579,13 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                            TESTRUNNER_ARGS
+                            -j${PROCESSOR_COUNT}
+                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
+  if (REGRESSION_COVERAGE_ARGS)
+    message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")
+  endif()
 endif()
 
 # Setup code coverage for all individual coverage targets included

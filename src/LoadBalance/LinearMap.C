@@ -2,7 +2,6 @@
 /*!
   \file      src/LoadBalance/LinearMap.C
   \author    J. Bakosi
-  \date      Mon 02 May 2016 12:58:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -83,7 +82,7 @@ LinearMap::populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
 
   for (int e=0; e<nelem; ++e)
     if (e >= lower && e < upper)
-      mgr->insertInitial( e, CkCopyMsg(&msg) );
+      mgr->insertInitial( CkArrayIndex(e), CkCopyMsg(&msg) );
 
   mgr->doneInserting();
   CkFreeMsg( msg );

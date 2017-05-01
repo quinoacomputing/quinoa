@@ -2,14 +2,16 @@
 /*!
   \file      src/NoWarning/particlewriter.def.h
   \author    F.J. Gonzalez
-  \date      Fri 30 Sep 2016 12:42:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.def.h with turning off specific compiler
              warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_particlewriter_def_h
-#define nowarning_particlewriter_def_h
+
+// Note the absence of include guards. This is because the Charm++ definition
+// file included below may need to be included multiple times in a single
+// translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
+// each inclusion will generate different code.
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -19,7 +21,8 @@
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wreorder"
-#elif defined(__GNUC__)
+  #pragma clang diagnostic ignored "-Wundef"
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
@@ -31,8 +34,6 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
-
-#endif // nowarning_particlewriter_def_h

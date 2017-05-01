@@ -2,7 +2,6 @@
 /*!
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:31:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests.

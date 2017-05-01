@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Walker/Options/HydroProductions.h
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 06:54:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hydrodynamics production divided by dissipation rate options
   \details   Hydrodynamics production divided by dissipation rate options

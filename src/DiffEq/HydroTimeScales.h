@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Thu 15 Dec 2016 02:13:39 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scales from DNS for the homogeneous
     Rayleigh-Taylor instability.
@@ -1424,8 +1423,8 @@ const tk::Table invhts_eq_A05L {
 //!    increasing order.
 const tk::Table invhts_eq_A075H {
   // time, eps/k
-  { 0, 24.5191 },
-  { 0.2, 7.04529 },
+//  { 0, 24.5191 },
+//  { 0.2, 7.04529 },
   { 0.4, 3.02251 },
   { 0.6, 2.71333 },
   { 0.8, 2.58582 },
@@ -1596,8 +1595,8 @@ const tk::Table invhts_eq_A075H {
 //!    increasing order.
 const tk::Table invhts_eq_A075S {
   // time, eps/k
-  { 0, 16.77 },
-  { 0.2, 2.41675 },
+//  { 0, 16.77 },
+//  { 0.2, 2.41675 },
   { 0.6, 1.53571 },
   { 0.8, 1.47184 },
   { 1, 1.4917 },
@@ -1773,8 +1772,8 @@ const tk::Table invhts_eq_A075S {
 //!    increasing order.
 const tk::Table invhts_eq_A075L {
   // time, eps/k
-  { 0, 10.1006 },
-  { 1, 0.670196 },
+//  { 0, 10.1006 },
+//  { 1, 0.670196 },
   { 1.2, 0.671048 },
   { 1.4, 0.705357 },
   { 1.6, 0.768256 },

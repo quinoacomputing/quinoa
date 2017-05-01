@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/UnitTestDriver.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:29:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit test driver
   \details   Unit test driver.

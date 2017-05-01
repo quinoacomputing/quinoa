@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Sun 05 Mar 2017 09:03:21 PM MST
+# \date      Fri 31 Mar 2017 08:10:00 AM MDT
 #
 ################################################################################
 
@@ -120,11 +120,10 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Add labels to test
   set(TEST_LABELS ${executable})        # ${executable} is always a label
   if (ARG_LABELS)
-    list(APPEND TEST_LABELS LABELS ${ARG_LABELS})
+    list(APPEND TEST_LABELS ${ARG_LABELS})
   endif()
-  list(APPEND test_properties LABELS ${TEST_LABELS})
   # prepare test labels to pass as cmake script arguments
-  list(APPEND ARG_LABELS ${executable})
+  set(ARG_LABELS LABELS ${TEST_LABELS})
   string(REPLACE ";" " " ARG_LABELS "${ARG_LABELS}")
 
   # Set textual diff tool
@@ -204,7 +203,6 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
   endif()
-  #message(STATUS ${msg})
 
   # Set and create test run directory
   set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
@@ -263,5 +261,11 @@ function(ADD_REGRESSION_TEST test_name executable)
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
     PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
     FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different")
+
+  # Set labels cmake test property. The LABELS built-in cmake property is not
+  # passed as part of test_properties above in set_test_properties as
+  # TEST_LABELS is a cmake list and passing in lists of lists does not work as
+  # expected.
+  set_property(TEST ${test_name} PROPERTY LABELS ${TEST_LABELS})
 
 endfunction()

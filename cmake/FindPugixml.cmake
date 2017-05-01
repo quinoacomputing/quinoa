@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the pugixml library
-# \date      Fri 20 Jan 2017 01:21:05 PM MST
 #
 ################################################################################
 
@@ -37,8 +36,9 @@ if(NOT BUILD_SHARED_LIBS)
  find_library(PUGIXML_LIBRARY NAMES libpugixml.a HINTS ${PUGIXML_ROOT}/lib
                                                  $ENV{PUGIXML_ROOT}/lib64)
 else()
- find_library(PUGIXML_LIBRARY NAMES pugixml HINTS ${PUGIXML_ROOT}/lib
-                                                  $ENV{PUGIXML_ROOT}/lib64)
+ find_library(PUGIXML_LIBRARY NAMES pugixml HINTS ${PUGIXML_ROOT}
+                                                  $ENV{PUGIXML_ROOT}
+                                            PATH_SUFFIXES lib lib64)
 endif()
 
 set(PUGIXML_INCLUDE_DIRS ${PUGIXML_INCLUDE_DIR})

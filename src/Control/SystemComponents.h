@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/SystemComponents.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:54:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,

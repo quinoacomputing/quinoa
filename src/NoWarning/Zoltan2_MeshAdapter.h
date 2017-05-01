@@ -2,7 +2,6 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Fri 17 Feb 2017 05:58:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -10,6 +9,8 @@
 // *****************************************************************************
 #ifndef nowarning_Zoltan2_MeshAdapter_h
 #define nowarning_Zoltan2_MeshAdapter_h
+
+#include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -36,7 +37,7 @@
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wundefined-var-template"
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wredundant-decls"
   #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -55,7 +56,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
+#elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )

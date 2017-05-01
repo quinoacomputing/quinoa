@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 07 Feb 2017 09:15:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -3567,6 +3566,45 @@ struct partitioning_info {
   }
 };
 using partitioning = keyword< partitioning_info, pegtl_string_t("partitioning") >;
+
+struct amr_uniform_info {
+  static std::string name() { return "uniform"; }
+  static std::string shortDescription() { return
+    "Select uniform initial mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select uniform initial mesh refinement.)"; }
+};
+using amr_uniform = keyword< amr_uniform_info, pegtl_string_t("uniform") >;
+
+struct amr_initial_info {
+  static std::string name() { return "initial refinement"; }
+  static std::string shortDescription() { return
+    "Configure initial mesh refinement (before t=0)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the type of initial mesh refinement that
+    happens before t = 0. At this time, only uniform initial mehs refinement is
+    supported.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + amr_uniform::string() + '\'';
+    }
+  };
+};
+using amr_initial = keyword< amr_initial_info, pegtl_string_t("initial") >;
+
+struct amr_info {
+  static std::string name() { return "AMR"; }
+  static std::string shortDescription() { return
+    "Start configuration block configuring adaptive mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the amr ... end block, used to
+    configure adaptive mesh refinement. Keywords allowed
+    in this block: )" + std::string("\'")
+    + amr_initial::string() + "\'.";
+  }
+};
+using amr = keyword< amr_info, pegtl_string_t("amr") >;
 
 
 

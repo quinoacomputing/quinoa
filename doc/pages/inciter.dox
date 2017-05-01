@@ -1,6 +1,6 @@
 /*!
   \page      inciter_doc Inciter: Partial differential equations solver on 3D unstructured grids
-  <img src="https://quinoacomputing.github.io/quinoa/inciter.svg" align="right" width="40%" background=transparent>
+  <img src="https://quinoacomputing.github.io/inciter.svg" align="right" width="40%" background=transparent>
 
 Inciter is a fully asynchronous distributed-memory-parallel finite element field
 solver for partial differential equations using 3D unstructured grids. It is
@@ -36,8 +36,8 @@ Equations solved
 ----------------
 
 \htmlonly
-<a href="https://quinoacomputing.github.io/quinoa/inciter_scaling.png">
-<img src="https://quinoacomputing.github.io/quinoa/inciter_scaling.png" align="right" width="30%" background=transparent>
+<a href="https://quinoacomputing.github.io/inciter_scaling.png">
+<img src="https://quinoacomputing.github.io/inciter_scaling.png" align="right" width="30%" background=transparent>
 </a>
 \endhtmlonly
 
@@ -56,7 +56,7 @@ during setup (left side) as well as during the 10 two-stage time-steps.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 08:16:19 AM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:44:07 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

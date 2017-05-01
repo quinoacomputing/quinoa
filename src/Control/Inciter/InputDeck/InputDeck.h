@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 09 Jan 2017 02:12:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -117,8 +116,11 @@ class InputDeck :
                                        kw::pde_betaz,
                                        kw::pde_ce,
                                        kw::pde_kappa,
-                                       kw::pde_r0 >;
-                                     
+                                       kw::pde_r0,
+                                       kw::amr,
+                                       kw::amr_initial,
+                                       kw::amr_uniform >;
+
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
@@ -136,6 +138,8 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
+      // Default AMR settings
+      set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals

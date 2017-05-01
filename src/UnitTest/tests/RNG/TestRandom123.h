@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRandom123.h
   \author    J. Bakosi
-  \date      Wed 11 Jan 2017 04:25:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/Random123.h
   \details   Unit tests for RNG/Random123.h
@@ -32,7 +31,7 @@ static Random123_group Random123( "RNG/Random123" );
 
 //! Test definitions for group
 
-#if defined(__GNUC__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -61,7 +60,7 @@ void Random123_object::test< 1 >() {
   #endif
 }
 
-#if defined(__GNUC__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Walker/Options/HydroTimeScales.h
   \author    J. Bakosi
-  \date      Thu 22 Dec 2016 06:53:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scale options
   \details   Inverse hydrodynamics time scale options

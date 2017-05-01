@@ -2,13 +2,13 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:21:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
 */
 // *****************************************************************************
 
+#include "Macro.h"
 #include "STLMesh.h"
 #include "STLTxtMeshReader.h"
 
@@ -60,7 +60,7 @@ STLTxtMeshReader::readFacets( const bool store,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  #if defined(__GNUC__)
+  #ifdef STRICT_GNUC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Winline"
   #endif
@@ -69,7 +69,7 @@ STLTxtMeshReader::readFacets( const bool store,
   STLKeyword solid("solid"), facet("facet"), normal("normal"), outer("outer"),
              loop("loop"), vertex("vertex"), endloop("endloop"),
              endfacet("endfacet");
-  #if defined(__GNUC__)
+  #ifdef STRICT_GNUC
     #pragma GCC diagnostic pop
   #endif
 

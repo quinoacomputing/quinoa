@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Escaper.h
   \author    J. Bakosi
-  \date      Fri 16 Dec 2016 10:13:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     String escaper pulled over from PEGTL v0.32
   \details   String escaper pulled over from PEGTL v0.32 used to extract an

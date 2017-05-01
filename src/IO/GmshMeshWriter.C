@@ -2,7 +2,6 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 01 Dec 2016 11:16:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -186,9 +185,10 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
   } else {
 
     int ntags = static_cast< int >( tg[0].size() );
+    int nel = static_cast< int >( n );
     // elm-type num-of-elm-follow number-of-tags
     m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
+    m_outFile.write( reinterpret_cast<char*>(&nel), sizeof(int) );
     m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
     for (std::size_t i=0; i<n; i++) {
       int I = static_cast< int >( i );

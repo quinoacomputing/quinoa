@@ -2,7 +2,6 @@
 /*!
   \file      src/Base/Has.h
   \author    J. Bakosi
-  \date      Sun 21 Aug 2016 02:26:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     "Has-a" utilities for detecting class internals
   \details   "Has-a" utilities for detecting class internals

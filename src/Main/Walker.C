@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Fri 13 Jan 2017 10:42:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition

@@ -2,7 +2,6 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichletCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:00:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   This file defines coefficients policy classes for the generalized

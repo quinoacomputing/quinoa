@@ -1,10 +1,14 @@
 FROM quinoacomputing/buildenv:gentoo
 
 ARG COVERAGE
+ARG SONARQUBE
+ARG SONARQUBE_TOKEN
+ARG SONARQUBE_GITHUB_TOKEN
 ARG CC
 ARG CXX
 ENV OMPI_CXX=${CXX}
 ARG CXXFLAGS
+ARG RUNNER_ARGS
 
 #for coverage
 ENV CI true
@@ -20,8 +24,9 @@ ARG TRAVIS_COMMIT
 RUN rm -rf /home/quinoa/.ccache
 COPY quinoa /home/quinoa/quinoa
 COPY ccache/ /home/quinoa/.ccache
+COPY sonar/ /home/quinoa/.sonar
 USER root
-RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.ccache
+RUN chown -R quinoa:quinoa /home/quinoa/quinoa /home/quinoa/.ccache /home/quinoa/.sonar
 USER quinoa
 
 WORKDIR /home/quinoa/quinoa
@@ -31,23 +36,55 @@ WORKDIR build
 RUN ccache -z
 RUN cmake \
     ${COVERAGE:+-DCOVERAGE=ON} \
+    ${SONARQUBE:+-DTPL_DIR=/home/quinoa/tpl} \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
-    -DRUNNER_ARGS="" \
+    -DRUNNER_ARGS="${RUNNER_ARGS}" \
     -DCMAKE_BUILD_TYPE=Release \
     ../src
-RUN make VERBOSE=1 -j2
+RUN ${SONARQUBE:+build-wrapper-linux-x86-64 --out-dir bw-output} make VERBOSE=1 -j2
 RUN ccache -s
-RUN ./charmrun +p2 Main/unittest -v
-RUN ctest -j2 -E "(walker:SkewNormalPDF_pe8|walker:DiagOrnsteinUhlenbeckPDF_pe8)"
+RUN ./charmrun +p2 "${RUNNER_ARGS}" Main/unittest -v
+RUN ctest --output-on-failure -j2 -LE "(stringent|extreme)"
 RUN make install DESTDIR=${PWD}
+RUN make doc
 RUN cd .. && if [ ${COVERAGE} ]; then \
+  python -m coverxygen --xml-dir build/doc/xml/ --src-dir . --output doxygen.coverage.info; \
+  wget -O codecov.sh https://codecov.io/bash; \
+  bash codecov.sh -X gcov -f doxygen.coverage.info -F doxygen; \
   if [ ${CC} = clang ]; then \
-    $HOME/.local/bin/codecov --gcov-exec "llvm-cov gcov"; \
+    $HOME/.local/bin/codecov -F ${CC} --gcov-exec "llvm-cov gcov"; \
   else \
-    $HOME/.local/bin/codecov; \
+    $HOME/.local/bin/codecov -F ${CC}; \
+    cd build && find . -type f -name '*.gcno' -exec gcov -pb  {} + && \
+    find . -type f -name '*.gcov' -not -name '*#quinoa#src*' -delete && \
+    find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
   fi; \
-fi && cd -
+fi
+RUN cd .. && if [ ${SONARQUBE} ]; then \
+  sonar-scanner \
+    -Dsonar.projectKey=${TRAVIS_REPO_SLUG#*/} \
+    -Dsonar.projectName=${TRAVIS_REPO_SLUG#*/} \
+    -Dsonar.projectVersion=${TRAVIS_COMMIT} \
+    -Dsonar.branch=/${TRAVIS_BRANCH} \
+    -Dsonar.links.homepage=http://quinoacomputing.org \
+    -Dsonar.links.ci=https://travis-ci.org/${TRAVIS_REPO_SLUG} \
+    -Dsonar.links.scm=https://github.com/${TRAVIS_REPO_SLUG} \
+    -Dsonar.links.issue=https://github.com/${TRAVIS_REPO_SLUG}/issues \
+    -Dsonar.sources=src \
+    -Dsonar.inclusions=**/*.C,**/*.c,**/*.h \
+    -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
+    -Dsonar.cfamily.build-wrapper-output=build/bw-output \
+    -Dsonar.cfamily.gcov.reportsPath=build \
+    -Dsonar.host.url=https://sonarqube.com \
+    -Dsonar.organization=${TRAVIS_REPO_SLUG%%/*} \
+    $([ $TRAVIS_PULL_REQUEST != false ] && echo \
+      "-Dsonar.analysis.mode=preview \
+       -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
+       -Dsonar.github.repository=$TRAVIS_REPO_SLUG \
+       -Dsonar.github.oauth=$SONARQUBE_GITHUB_TOKEN") \
+    -Dsonar.login=${SONARQUBE_TOKEN}; \
+fi
 USER root
 RUN make install
 USER quinoa

@@ -2,7 +2,6 @@
 /*!
   \file      src/Walker/integrator.ci
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:57:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Integrator
   \details   Charm++ module interface file for Integrator

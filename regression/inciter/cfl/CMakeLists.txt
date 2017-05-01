@@ -14,12 +14,13 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
 
 add_regression_test(cfl ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_cfl.q unitsquare_01_3.6k.exo exodiff.cfg
+                    INPUTFILES slot_cyl_cfl.q unitcube_01_31k.exo
+                               exodiff.cfg
                                slot_cyl_cfl_pe4_u0.0.std.exo.0
                                slot_cyl_cfl_pe4_u0.0.std.exo.1
                                slot_cyl_cfl_pe4_u0.0.std.exo.2
                                slot_cyl_cfl_pe4_u0.0.std.exo.3
-                    ARGS -c slot_cyl_cfl.q -i unitsquare_01_3.6k.exo -v
+                    ARGS -c slot_cyl_cfl.q -i unitcube_01_31k.exo -v
                     BIN_BASELINE slot_cyl_cfl_pe4_u0.0.std.exo.0
                                  slot_cyl_cfl_pe4_u0.0.std.exo.1
                                  slot_cyl_cfl_pe4_u0.0.std.exo.2

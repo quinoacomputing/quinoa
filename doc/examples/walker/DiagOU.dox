@@ -240,8 +240,8 @@ Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the variances and those of the invariant as well as
 the zero correlation between the two independent equations integrated.
 
-<img src="https://quinoacomputing.github.io/quinoa/diagou_means.svg" align="left" width="50%" background=transparent>
-<img src="https://quinoacomputing.github.io/quinoa/diagou_sec.svg" align="right" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/diagou_means.svg" align="left" width="50%" background=transparent>
+<img src="https://quinoacomputing.github.io/diagou_sec.svg" align="right" width="50%" background=transparent>
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
@@ -295,11 +295,11 @@ Example visualization of the estimated bivariate PDF with contour lines at the
 final time step using the command in the above input file.
 
 \image html diagou_pdf.svg
-<img src="https://quinoacomputing.github.io/quinoa/diagou_pdf.svg" align="center" width="75%" background=transparent>
+<img src="https://quinoacomputing.github.io/diagou_pdf.svg" align="center" width="75%" background=transparent>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 08:01:21 AM MST
+<em>Page last updated:</em> Thu 06 Apr 2017 10:47:27 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

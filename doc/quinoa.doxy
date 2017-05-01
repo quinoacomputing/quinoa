@@ -806,7 +806,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PStreams_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/HDF5_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/NetCDF_license.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/ExodusII_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/SEACAS_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Zoltan_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Hypre_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/RNGSSELIB_license.dox \
@@ -1928,7 +1928,7 @@ MAN_LINKS              = NO
 # captures the structure of the code including all documentation.
 # The default value is: NO.
 
-GENERATE_XML           = NO
+GENERATE_XML           = YES
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of

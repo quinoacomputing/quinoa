@@ -2,7 +2,6 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Fri 13 Jan 2017 10:39:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -102,6 +101,8 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/RNG/TestRandom123.h"
 
 #include "tests/LoadBalance/TestLoadDistributor.h"
+// Disabled due to API change.
+// See https://lists.cs.illinois.edu/lists/arc/charm/2017-01/msg00018.html.
 #include "tests/LoadBalance/TestLinearMap.h"
 #include "tests/LoadBalance/TestUnsMeshMap.h"
 

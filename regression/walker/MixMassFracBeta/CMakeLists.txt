@@ -36,12 +36,3 @@ add_regression_test(MixMassFracBeta_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF mixmassfracbeta.ndiff.cfg)
-
-add_regression_test(MixMassFracBeta_u0.9 ${WALKER_EXECUTABLE}
-                    NUMPES 8
-                    INPUTFILES mixmassfracbeta.q stat.txt.std
-                               mixmassfracbeta.ndiff.cfg
-                    ARGS -c mixmassfracbeta.q -v -u 0.9
-                    TEXT_BASELINE stat.txt.std
-                    TEXT_RESULT stat.txt
-                    TEXT_DIFF_PROG_CONF mixmassfracbeta.ndiff.cfg)

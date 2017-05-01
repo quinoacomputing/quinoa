@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/Options/PartitioningAlgorithm.h
   \author    J. Bakosi
-  \date      Tue 31 Jan 2017 08:58:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh partitioning algorithm options
   \details   Mesh partitioning algorithm options

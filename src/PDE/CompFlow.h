@@ -2,7 +2,6 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Tue 06 Dec 2016 09:04:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -120,6 +119,7 @@ class CompFlow {
                                   ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
                                   da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
         const auto J = tk::triple( ba, ca, da ) / 120.0;
+        Assert( J > 0, "Element Jacobian non-positive" );
 
         for (ncomp_t c=0; c<5; ++c) {
           const auto r = lhsd.cptr( c, m_offset );
@@ -188,6 +188,7 @@ class CompFlow {
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
 
         // consistent mass, nnode*nnode [4][4]
         std::array< std::array< tk::real, 4 >, 4 > mass;

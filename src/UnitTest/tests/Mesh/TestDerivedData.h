@@ -2,7 +2,6 @@
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 03:11:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -120,7 +119,7 @@
 
 namespace tut {
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
@@ -2598,7 +2597,7 @@ void DerivedData_object::test< 61 >() {
   }
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
 

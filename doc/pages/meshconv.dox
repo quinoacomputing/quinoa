@@ -1,13 +1,13 @@
 /*!
   \page      meshconv_doc MeshConv: Mesh file converter
-  <img src="https://quinoacomputing.github.io/quinoa/meshconv.svg" align="right" width="40%" background=transparent>
+  <img src="https://quinoacomputing.github.io/meshconv.svg" align="right" width="40%" background=transparent>
 
 Meshconv is a mesh file converter. It can be used to convert 3D tetrahedron
 meshes from and to either of the following formats:
 
   - Gmsh, http://www.geuz.org/gmsh
   - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
-  - ExodusII, http://sourceforge.net/projects/exodusii
+  - ExodusII, https://github.com/trilinos/Trilinos/tree/master/packages/seacas
   - HyperMesh, http://www.altairhyperworks.com/product/HyperMesh
 
 Similar to the rest of Quinoa, meshconv also uses the Charm++ runtime system,
@@ -31,7 +31,7 @@ meshconv Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Nov 2016 07:53:12 AM MST
+<em>Page last updated:</em> Mon 10 Apr 2017 11:21:19 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

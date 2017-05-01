@@ -2,7 +2,6 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 10:39:09 AM MST
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File parser base class declaration
   \details   File parser base class declaration. File parser base serves as a

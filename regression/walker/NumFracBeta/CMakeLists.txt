@@ -32,11 +32,3 @@ add_regression_test(NumFracBeta_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF numfracbeta.ndiff.cfg)
-
-add_regression_test(NumFracBeta_u0.9 ${WALKER_EXECUTABLE}
-                    NUMPES 8
-                    INPUTFILES numfracbeta.q stat.txt.std numfracbeta.ndiff.cfg
-                    ARGS -c numfracbeta.q -v -u 0.9
-                    TEXT_BASELINE stat.txt.std
-                    TEXT_RESULT stat.txt
-                    TEXT_DIFF_PROG_CONF numfracbeta.ndiff.cfg)
