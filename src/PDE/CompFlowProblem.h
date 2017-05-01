@@ -473,7 +473,7 @@ class CompFlowProblemNLEnergyGrowth {
         g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
       const auto& r0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
-      
+
       // set initial and boundary conditions
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -493,7 +493,7 @@ class CompFlowProblemNLEnergyGrowth {
         ru = 0.0;
         rv = 0.0;
         rw = 0.0;
-        re = std::pow(-3*ce,-1/3); 
+        re = std::pow(-3*ce,-1/3);
       }
     }
 
@@ -819,7 +819,7 @@ class CompFlowProblemNLEnergyGrowth {
 
 //! List of all CompFlow problem policies
 using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
-                                           , CompFlowProblemVorticalFlow 
+                                           , CompFlowProblemVorticalFlow
                                            , CompFlowProblemNLEnergyGrowth >;
 
 } // inciter::

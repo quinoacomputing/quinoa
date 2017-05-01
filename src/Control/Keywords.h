@@ -2938,13 +2938,13 @@ struct nl_energy_growth_info {
   static std::string shortDescription() { return
     "Select the nonlinear energy growth test problem ";}
   static std::string longDescription() { return
-    R"(This keyword is used to select the nonlinear energy growth test problem. 
+    R"(This keyword is used to select the nonlinear energy growth test problem.
     The purpose of this test problem is to test nonlinear, time dependent energy
-    growth and the subsequent development of pressure gradients due to coupling 
-    between the internal energy and the equation of state. Example: "problem 
-    nl_energy_growth". For more details, see Waltz, et. al, "Manufactured 
-    solutions for the three-dimensional Euler equations with relevance to 
-    Inertial Confinement Fusion", Journal of Computational Physics 267 (2014) 
+    growth and the subsequent development of pressure gradients due to coupling
+    between the internal energy and the equation of state. Example: "problem
+    nl_energy_growth". For more details, see Waltz, et. al, "Manufactured
+    solutions for the three-dimensional Euler equations with relevance to
+    Inertial Confinement Fusion", Journal of Computational Physics 267 (2014)
     196-209.)"; }
   struct expect {
     static std::string description() { return "string"; }
