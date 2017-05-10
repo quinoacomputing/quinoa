@@ -22,6 +22,7 @@ module transporter {
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void vol( tk::real v );
       entry [reductiontarget] void volcomplete();
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
@@ -92,10 +93,16 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
+      entry void wait4vol() {
+        when nodevol_complete(), meshvol_complete() serial "vol" {
+          m_carrier.setup(); } };
+
       entry void wait4eval() {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
+      entry void nodevol_complete();
+      entry void meshvol_complete();
       entry void out_complete();
       entry void diag_complete();
     }

@@ -52,7 +52,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   solution is obtained from consistent mass Taylor-Galerkin discretization
 //!   and the low order solution is lumped mass Taylor-Galerkin + diffusion.
 //!   Note that AEC is not directly computed as dUh - dUl (although that could
-//!   also be done), but as AEC =  M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh),
+//!   also be done), but as AEC = M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh),
 //!   where
 //!    * M_ce is the element's consistent mass matrix,
 //!    * M_Le is the element's lumped mass matrix,
@@ -123,11 +123,11 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     // diffusion: M_L * dUl = r + c_tau * (M_c - M_L) Un, where M_L is the
     // lumped mass matrix, c_tau is the mass diffusion coefficient (c_tau = 1.0
     // guarantees a monotonic solution). See also the details in the function
-    // header for the notaion. Based on the above, the AEC, in general, is
+    // header for the notation. Based on the above, the AEC, in general, is
     // computed as AEC = M_L^{-1} (M_Le - M_ce) (ctau * Un + dUh), which can be
     // obtained by subtracting the low order system from the high order system.
     // Note that the solution update is U^{n+1} = Un + dUl + lim(dUh - dUl),
-    // where the last terms is the limited AEC. (Think of 'lim' as the limit
+    // where the last term is the limited AEC. (Think of 'lim' as the limit
     // coefficient between 0 and 1.)
     for (std::size_t j=0; j<4; ++j)
       for (ncomp_t c=0; c<ncomp; ++c)
@@ -329,8 +329,8 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
     for (ncomp_t c=0; c<ncomp; ++c) d[c] = D.cptr( c, 0 );
 
     // scatter-add mass diffusion element contributions to rhs nodes
-    for (std::size_t j=0; j<4; ++j)
-      for (ncomp_t c=0; c<ncomp; ++c)
+    for (ncomp_t c=0; c<ncomp; ++c)
+      for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k)
           D.var(d[c],N[j]) -= ctau * m[j][k] * un[c][k];
   }
@@ -441,7 +441,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       std::array< tk::real, 4 > R;
       for (std::size_t j=0; j<4; ++j)
         R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
-      C(e,c,0) = *std::min_element( begin(R), end(R) );
+      C(e,c,0) = 0.99;//*std::min_element( begin(R), end(R) );
       Assert( C(e,c,0) > -std::numeric_limits< tk::real >::epsilon() &&
               C(e,c,0) < 1.0+std::numeric_limits< tk::real >::epsilon(),
               "0 <= AEC <= 1.0 failed" );
@@ -458,9 +458,9 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
     for (ncomp_t c=0; c<ncomp; ++c) a[c] = A.cptr( c, 0 );
 
     // Scatter-add limited antidiffusive element contributions to nodes. At
-    // nodes where Dirichlet boundary conditions are set, we ignore the limit
-    // coefficient. This yields no increment for those nodes. See the detailed
-    // discussion when computing the AECs.
+    // nodes where Dirichlet boundary conditions are set, the AECs are set to
+    // zero so thelimit coefficient has no effect. This yields no increment for
+    // those nodes. See the detailed discussion when computing the AECs.
     for (std::size_t j=0; j<4; ++j)
       for (ncomp_t c=0; c<ncomp; ++c)
         A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);

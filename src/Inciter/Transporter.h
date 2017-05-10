@@ -167,6 +167,9 @@ class Transporter : public CBase_Transporter {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! Reduction target summing total mesh volume
+    void vol( tk::real v );
+
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
     void volcomplete();
@@ -239,6 +242,8 @@ class Transporter : public CBase_Transporter {
     PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
+    //! Total mesh volume
+    tk::real m_vol;
     //! Total number of mesh nodes
     std::size_t m_npoin;
     //! Timer tags
