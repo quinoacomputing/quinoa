@@ -205,6 +205,12 @@ Carrier::vol()
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
 
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_vol) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
     contribute(
@@ -1077,8 +1083,15 @@ Carrier::diagnostics()
     for (const auto& eq : g_pdes)
       eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
 
+    // weigh solutions by mesh volume at nodes
+    for (std::size_t p=0; p<m_u.nunk(); ++p)
+      for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
+        m_ul(p,c,0) = m_vol[p] * m_ul(p,c,0);
+        m_ulf(p,c,0) = m_vol[p] * m_u(p,c,0);
+      }
+
     // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u, m_ul );
+    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_ulf, m_ul );
 
   } else
     contribute(

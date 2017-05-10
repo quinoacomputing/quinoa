@@ -230,7 +230,7 @@ class CompFlowProblemVorticalFlow {
         auto& ru = unk(i,1,offset); // rho * u
         auto& rv = unk(i,2,offset); // rho * v
         auto& rw = unk(i,3,offset); // rho * w
-        auto& re = unk(i,4,offset); // rho * e
+        auto& re = unk(i,4,offset); // rho * e, e:total=kinetic+internal energy
         r = 1.0;
         ru = a*x[i] - b*y[i];
         rv = b*x[i] + a*y[i];
@@ -299,7 +299,11 @@ class CompFlowProblemVorticalFlow {
              {{ b*ru[0] + a*rv[0],
                 b*ru[1] + a*rv[1],
                 b*ru[2] + a*rv[2],
-                b*ru[3] + a*rv[3] }} }};
+                b*ru[3] + a*rv[3] }},
+             {{ 4.0*a*a*z[N[0]],
+                4.0*a*a*z[N[1]],
+                4.0*a*a*z[N[2]],
+                4.0*a*a*z[N[3]] }} }};
 
       // compute energy source
       std::array< tk::real, 4 > Se{{
@@ -310,16 +314,16 @@ class CompFlowProblemVorticalFlow {
 
       // add momentum and energy source at element nodes
       tk::real c = mult * dt;
-      for (std::size_t j=0; j<4; ++j)
-        for (std::size_t k=0; k<4; ++k) {
+      for (std::size_t alpha=0; alpha<4; ++alpha)
+        for (std::size_t beta=0; beta<4; ++beta) {
           // source contribution to mass rhs
           for (std::size_t i=0; i<3; ++i)
-            R.var(r[0],N[j]) += c * J/24.0 * grad[k][i] * u[i+1][k];
+            R.var(r[0],N[alpha]) += c * J/24.0 * grad[beta][i] * u[i+1][beta];
           // source contribution to momentum rhs
-          for (std::size_t l=0; l<2; ++l)
-            R.var(r[l+1],N[j]) += c * mass[j][k] * Sm[l][k];
-          // source contribution to enerhy rhs
-          R.var(r[4],N[j]) += c * mass[j][k] * Se[k];
+          for (std::size_t i=0; i<3; ++i)
+            R.var(r[i+1],N[alpha]) += c * mass[alpha][beta] * Sm[i][beta];
+          // source contribution to energy rhs
+          R.var(r[4],N[alpha]) += c * mass[alpha][beta] * Se[beta];
         }
     }
 
