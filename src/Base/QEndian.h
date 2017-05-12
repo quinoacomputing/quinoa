@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/Endian.h
+  \file      src/Base/QEndian.h
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Swap endianness
@@ -8,8 +8,8 @@
              http://stackoverflow.com/a/3522853.
 */
 // *****************************************************************************
-#ifndef Endian_h
-#define Endian_h
+#ifndef QEndian_h
+#define QEndian_h
 
 #include <climits>
 
@@ -62,4 +62,4 @@ double swap_endian( double u ) {
 
 } // ::tk
 
-#endif // Endian_h
+#endif // QEndian_h
