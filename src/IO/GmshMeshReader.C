@@ -19,7 +19,7 @@
 #include <vector>
 #include <iostream>     // NOT NEEDED
 
-#include "Endian.h"
+#include "QEndian.h"
 #include "UnsMesh.h"
 #include "GmshMeshReader.h"
 #include "Reorder.h"
