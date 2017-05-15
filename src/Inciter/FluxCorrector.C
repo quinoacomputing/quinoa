@@ -441,7 +441,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       std::array< tk::real, 4 > R;
       for (std::size_t j=0; j<4; ++j)
         R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
-      C(e,c,0) = 0.99;//*std::min_element( begin(R), end(R) );
+      C(e,c,0) = *std::min_element( begin(R), end(R) );
       Assert( C(e,c,0) > -std::numeric_limits< tk::real >::epsilon() &&
               C(e,c,0) < 1.0+std::numeric_limits< tk::real >::epsilon(),
               "0 <= AEC <= 1.0 failed" );

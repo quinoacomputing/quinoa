@@ -1148,7 +1148,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
 
     //! Compute diagnostics (residuals) and contribute them back to host
-    //! \details Diagnostics: L1 norm for all components
+    //! \details Diagnostics: L2 norm for all components.
+    //! \see For info, see e.g., inciter::Carrier::diagnostics().
     void diagnostics() {
       Assert( diagcomplete(),
               "Values of distributed solution vector (for diagnostics) on PE " +
@@ -1158,10 +1159,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         Assert( s.second.size() == 2, "Size of diagnostics vector must be 2" );
         // Compute L1 norm of the numerical solution
         for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += std::abs( s.second[0][c] );
+          diag[c] += s.second[0][c] * s.second[0][c];
         // Compute L1 norm of the numerical - analytical solution
         for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[m_ncomp+c] += std::abs( s.second[0][c] - s.second[1][c] );
+          diag[m_ncomp+c] += (s.second[0][c] - s.second[1][c]) *
+                             (s.second[0][c] - s.second[1][c]);
       }
       // Contribute to diagnostics across all PEs
       signal2host_diag( m_host, diag );

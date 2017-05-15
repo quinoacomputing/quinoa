@@ -42,7 +42,6 @@ class TransportPhysicsAdvection {
                   tk::ctr::ncomp_type,
                   tk::real,
                   tk::real,
-                  tk::real,
                   const std::array< std::size_t, 4 >&,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
@@ -70,8 +69,6 @@ class TransportPhysicsAdvDiff {
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this PDE
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] dt Size of time step
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
@@ -82,7 +79,6 @@ class TransportPhysicsAdvDiff {
     static void
     diffusionRhs( tk::ctr::ncomp_type e,
                   tk::ctr::ncomp_type ncomp,
-                  tk::real mult,
                   tk::real dt,
                   tk::real J,
                   const std::array< std::size_t, 4 >& N,
@@ -96,7 +92,7 @@ class TransportPhysicsAdvDiff {
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // add diffusion contribution to right hand side
       for (ncomp_t c=0; c<ncomp; ++c) {
-        tk::real a = mult * dt * diff[c] * J;
+        tk::real a = dt * diff[c] * J;
         for (std::size_t i=0; i<4; ++i)
           for (std::size_t j=0; j<4; ++j)
             for (std::size_t k=0; k<3; ++k)

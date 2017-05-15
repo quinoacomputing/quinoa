@@ -219,7 +219,7 @@ class TransportProblemSlotCyl {
           // hump
           r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
           if (r<1.0)
-              unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
+            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
           // cylinder
           r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
           const std::array< tk::real, 2 > r1{{ v1x, v1y }},

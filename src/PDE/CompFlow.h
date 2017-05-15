@@ -150,8 +150,6 @@ class CompFlow {
 
     //! Compute right hand side
     //! \param[in] t Physical time
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
@@ -159,7 +157,6 @@ class CompFlow {
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real t,
-              tk::real mult,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -181,13 +178,6 @@ class CompFlow {
 
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
-//       const auto& p0 =
-//         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[0];
-//       const auto& a =
-//         g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[0];
-//       const auto& b =
-//         g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[0];
 
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
@@ -229,21 +219,9 @@ class CompFlow {
           p[i] = (g-1.0)*(u[4][i] - (u[1][i]*u[1][i] +
                                      u[2][i]*u[2][i] +
                                      u[3][i]*u[3][i])/2.0/u[0][i]);
-          //p[i] = p0 - 2.0*a*a*z[N[i]]*z[N[i]];
-
-//       std::array< std::array< tk::real, 4 >, 3 >
-//         ru{{ {{ a*x[N[0]] - b*y[N[0]],
-//                 a*x[N[1]] - b*y[N[1]],
-//                 a*x[N[2]] - b*y[N[2]],
-//                 a*x[N[3]] - b*y[N[3]] }},
-//              {{ b*x[N[0]] + a*y[N[0]],
-//                 b*x[N[1]] + a*y[N[1]],
-//                 b*x[N[2]] + a*y[N[2]],
-//                 b*x[N[3]] + a*y[N[3]] }},
-//              {{ 0, 0, 0, 0 }} }};
 
         // scatter-add mass, momentum, and energy contributions to rhs
-        tk::real c = mult * deltat * J/24.0;
+        tk::real c = deltat * J/24.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t alpha=0; alpha<4; ++alpha)
             for (std::size_t beta=0; beta<4; ++beta) {
@@ -253,7 +231,6 @@ class CompFlow {
               for (std::size_t k=0; k<3; ++k)
                 R.var(r[k+1],N[alpha]) -=
                   c * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
-                  //c * grad[beta][j] * ru[k][beta]*ru[j][beta];
               // pressure gradient contribution to momentum rhs
               R.var(r[j+1],N[alpha]) -= c * grad[beta][j] * p[beta];
               // advection and pressure gradient contribution to energy rhs
@@ -261,25 +238,13 @@ class CompFlow {
                 (u[4][beta] + p[beta]) * u[j+1][beta]/u[0][beta];
             }
 
-        //std::cout << e << ": now: " << R(0,1,0) << ", " << R(0,2,0) << ", " << R(0,3,0) << '\n';
-
-//         // add viscous stress contribution to momentum and energy rhs
-//         Physics::viscousRhs( mult, deltat, J, N, grad, u, r, R );
-//         // add heat conduction contribution to energy rhs
-//         Physics::conductRhs( mult, deltat, J, N, grad, u, r, R );
+        // add viscous stress contribution to momentum and energy rhs
+        Physics::viscousRhs( deltat, J, N, grad, u, r, R );
+        // add heat conduction contribution to energy rhs
+        Physics::conductRhs( deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( t, coord, 0, mult, deltat, J, N, mass, grad,
-                            r, u, R );
+        Problem::sourceRhs( t, coord, 0, deltat, J, N, mass, grad, r, u, R );
       }
-
-//       for (std::size_t i=0; i<x.size(); ++i) {
-//         std::array< tk::real, 3 > an{{ x[i], y[i], 0 }};
-// 
-//         for (std::size_t j=0; j<3; ++j)
-//          if (std::abs(R(i,j+1,0)-an[j]) > 1.0e-8)
-//            std::cout << i << ": " << j << ": "
-//                      << R(i,j+1,0) << " != " << an[j] << "\n";
-//       }
     }
 
     //! Compute the minimum time step size
@@ -387,6 +352,7 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
+            const std::vector< tk::real >&,
             const tk::Fields& U ) const
     { return Problem::output( 0, m_offset, t, coord, U ); }
 

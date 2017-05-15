@@ -44,8 +44,6 @@ class CompFlowPhysicsNavierStokes {
 
   public:
     //! Add viscous stress contribution to momentum and energy rhs
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] dt Size of time step
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
@@ -54,8 +52,7 @@ class CompFlowPhysicsNavierStokes {
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] R Right-hand side vector contributing to
     static void
-    viscousRhs( tk::real mult,
-                tk::real dt,
+    viscousRhs( tk::real dt,
                 tk::real J,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
@@ -66,7 +63,7 @@ class CompFlowPhysicsNavierStokes {
       // dynamic viscosity
       auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
       // add deviatoric viscous stress contribution to momentum rhs
-      auto c = mult * dt * J/6.0 * mu;
+      auto c = dt * J/6.0 * mu;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
@@ -80,7 +77,7 @@ class CompFlowPhysicsNavierStokes {
                                                   grad[k][i]*u[j+1][k])/u[0][k];
           }
       // add isotropic viscous stress contribution to momentum rhs
-      c = mult * dt * J/6.0 * mu * 2.0/3.0;
+      c = dt * J/6.0 * mu * 2.0/3.0;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
@@ -90,7 +87,7 @@ class CompFlowPhysicsNavierStokes {
             R.var(r[i+1],N[3]) += c * grad[3][i]*grad[k][j]*u[j+1][k]/u[0][k];
           }
       // add deviatoric viscous stress contribution to energy rhs
-      c = mult * dt * J/24.0 * mu;
+      c = dt * J/24.0 * mu;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
@@ -108,7 +105,7 @@ class CompFlowPhysicsNavierStokes {
                                             grad[k][i]*u[j+1][k])/u[0][k];
           }
       // add isotropic viscous stress contribution to energy rhs
-      c = mult * dt * J/24.0 * mu * 2.0/3.0;
+      c = dt * J/24.0 * mu * 2.0/3.0;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
@@ -144,8 +141,6 @@ class CompFlowPhysicsNavierStokes {
     }
 
     //! Add heat conduction contribution to energy rhs
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] dt Size of time step
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
@@ -154,8 +149,7 @@ class CompFlowPhysicsNavierStokes {
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] R Right-hand side vector contributing to
     static void
-    conductRhs( tk::real mult,
-                tk::real dt,
+    conductRhs( tk::real dt,
                 tk::real J,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
@@ -174,7 +168,7 @@ class CompFlowPhysicsNavierStokes {
                               u[2][i]*u[2][i] +
                               u[3][i]*u[3][i])/2.0/u[0][i]) / u[0][i];
       // add heat conduction contribution to energy rhs
-      auto c = mult * dt * J/24.0 * kc;
+      auto c = dt * J/24.0 * kc;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t k=0; k<4; ++k) {
           R.var(r[4],N[0]) += c * grad[k][i] * T[k];
@@ -225,7 +219,6 @@ class CompFlowPhysicsEuler {
     static void
     viscousRhs( tk::real,
                 tk::real,
-                tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
                 const std::array< std::array< tk::real, 4 >, 5 >&,
@@ -241,7 +234,6 @@ class CompFlowPhysicsEuler {
     //! Add heat conduction contribution to energy rhs (no-op)
     static void
     conductRhs( tk::real,
-                tk::real,
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,

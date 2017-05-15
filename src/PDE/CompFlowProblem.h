@@ -86,7 +86,6 @@ class CompFlowProblemUserDefined {
                tk::ctr::ncomp_type,
                tk::real,
                tk::real,
-               tk::real,
                const std::array< std::size_t, 4 >&,
                const std::array< std::array< tk::real, 4 >, 4 >&,
                const std::array< std::array< tk::real, 3 >, 4 >&,
@@ -135,20 +134,17 @@ class CompFlowProblemUserDefined {
     }
 
     //! Return field output going to file
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    output( tk::ctr::ncomp_type e,
+    output( tk::ctr::ncomp_type,
             tk::ctr::ncomp_type offset,
             tk::real,
             const std::array< std::vector< tk::real >, 3 >&,
             const tk::Fields& U )
     {
-      IGNORE(e);
       std::vector< std::vector< tk::real > > out;
       const auto r = U.extract( 0, offset );
       const auto ru = U.extract( 1, offset );
@@ -181,7 +177,7 @@ class CompFlowProblemUserDefined {
       tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
       for (std::size_t i=0; i<T.size(); ++i)
         T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
-      out.push_back( p );
+      out.push_back( T );
       return out;
    }
 
@@ -243,8 +239,6 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] dt Size of time step
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
@@ -257,7 +251,6 @@ class CompFlowProblemVorticalFlow {
     sourceRhs( tk::real,
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
-               tk::real mult,
                tk::real dt,
                tk::real J,
                const std::array< std::size_t, 4 >& N,
@@ -300,10 +293,7 @@ class CompFlowProblemVorticalFlow {
                 b*ru[1] + a*rv[1],
                 b*ru[2] + a*rv[2],
                 b*ru[3] + a*rv[3] }},
-             {{ 4.0*a*a*z[N[0]],
-                4.0*a*a*z[N[1]],
-                4.0*a*a*z[N[2]],
-                4.0*a*a*z[N[3]] }} }};
+             {{ 0.0, 0.0, 0.0, 0.0 }} }};
 
       // compute energy source
       std::array< tk::real, 4 > Se{{
@@ -313,17 +303,16 @@ class CompFlowProblemVorticalFlow {
         Sm[0][3]*ru[3] + Sm[1][3]*rv[3] + 8.0*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
 
       // add momentum and energy source at element nodes
-      tk::real c = mult * dt;
       for (std::size_t alpha=0; alpha<4; ++alpha)
         for (std::size_t beta=0; beta<4; ++beta) {
           // source contribution to mass rhs
-          for (std::size_t i=0; i<3; ++i)
-            R.var(r[0],N[alpha]) += c * J/24.0 * grad[beta][i] * u[i+1][beta];
+          //for (std::size_t i=0; i<3; ++i)
+          //  R.var(r[0],N[alpha]) += c * J/24.0 * grad[beta][i] * u[i+1][beta];
           // source contribution to momentum rhs
           for (std::size_t i=0; i<3; ++i)
-            R.var(r[i+1],N[alpha]) += c * mass[alpha][beta] * Sm[i][beta];
+            R.var(r[i+1],N[alpha]) += dt * mass[alpha][beta] * Sm[i][beta];
           // source contribution to energy rhs
-          R.var(r[4],N[alpha]) += c * mass[alpha][beta] * Se[beta];
+          R.var(r[4],N[alpha]) += dt * mass[alpha][beta] * Se[beta];
         }
     }
 
@@ -366,6 +355,8 @@ class CompFlowProblemVorticalFlow {
       n.push_back( "z-velocity analytical" );
       n.push_back( "specific total energy numerical" );
       n.push_back( "specific total energy analytical" );
+      n.push_back( "pressure numerical" );
+      n.push_back( "pressure analytical" );
       return n;
     }
 
@@ -436,9 +427,17 @@ class CompFlowProblemVorticalFlow {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
       for (std::size_t i=0; i<E.size(); ++i)
-         E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
-                (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
+        E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
+               (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
       out.push_back( E );
+
+      std::vector< tk::real > P( r.size(), 0.0 );
+      for (std::size_t i=0; i<P.size(); ++i)
+        P[i] = (g-1.0)*(re[i] - r[i]*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+      out.push_back( P );
+      for (std::size_t i=0; i<P.size(); ++i)
+        P[i] = p0 - 2.0*a*a*z[i]*z[i];
+      out.push_back( P );
 
       return out;
    }
@@ -503,8 +502,6 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] dt Size of time step
     //! \param[in] N Element node indices
     //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
@@ -514,7 +511,6 @@ class CompFlowProblemNLEnergyGrowth {
     sourceRhs( tk::real t,
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
-               tk::real mult,
                tk::real dt,
                tk::real,
                const std::array< std::size_t, 4 >& N,
@@ -678,16 +674,15 @@ class CompFlowProblemNLEnergyGrowth {
                 std::exp(-a*t)*dg[2][3] }} }};
 
       // add momentum and energy source at element nodes
-      tk::real c = mult * dt;
       for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k) {
           // source contribution to mass rhs
-          R.var(r[0],N[j]) += c * mass[j][k] * Sr[k];
+          R.var(r[0],N[j]) += dt * mass[j][k] * Sr[k];
           // source contribution to momentum rhs
           for (std::size_t l=0; l<3; ++l)
-            R.var(r[l+1],N[j]) += c * mass[j][k] * Sm[l][k];
+            R.var(r[l+1],N[j]) += dt * mass[j][k] * Sm[l][k];
           // source contribution to enerhy rhs
-          R.var(r[4],N[j]) += c * mass[j][k] * Se[k];
+          R.var(r[4],N[j]) += dt * mass[j][k] * Se[k];
         }
     }
 

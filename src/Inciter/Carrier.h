@@ -293,6 +293,7 @@ class Carrier : public CBase_Carrier {
       p | m_lhsd;
       p | m_lhso;
       p | m_msum;
+      p | m_v;
       p | m_vol;
       p | m_bid;
       p | m_pc;
@@ -383,7 +384,15 @@ class Carrier : public CBase_Carrier {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
-    //! Volume of nodes of owned elements (sum of surrounding cell volumes / 4 )
+    //! Nodal mesh volumes
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) without contributions
+    //!   from other chares on chare-boundaries
+    std::vector< tk::real > m_v;
+    //! \brief Volume of nodes
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) with contributions from
+    //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
@@ -412,7 +421,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( tk::real mult, const tk::Fields& sol );
+    void rhs( const tk::Fields& sol );
 
     //! Output chare element blocks to output file
     void writeMesh();

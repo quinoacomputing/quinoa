@@ -322,7 +322,7 @@ class Data {
     Data< Layout > operator+ ( const Data< Layout >& rhs )
     const { return Data< Layout >( *this ) += rhs; }
 
-    //! Compound operator*=
+    //! Compound operator*= multiplying by another Data object item by item
     //! \param[in] rhs Data object to multiply with
     //! \return Reference to ourselves after multiplication
     //! \author J. Bakosi
@@ -334,12 +334,28 @@ class Data {
                       []( tk::real s, tk::real d ){ return d*s; } );
       return *this;
     }
-    //! Operator *
+    //! Operator * multiplying by another Data object item by item
     //! \param[in] rhs Data object to multiply with
     //! \return Copy of Data object after rhs has been multiplied with
     //! \details Implemented in terms of compound operator*=
     //! \author J. Bakosi
     Data< Layout > operator* ( const Data< Layout >& rhs )
+    const { return Data< Layout >( *this ) *= rhs; }
+
+    //! Compound operator*= multiplying all items by a scalar
+    //! \param[in] rhs Scalar to multiply with
+    //! \return Reference to ourselves after multiplication
+    //! \author J. Bakosi
+    Data< Layout >& operator*= ( tk::real rhs ) {
+      for (auto& v : m_vec) v *= rhs;
+      return *this;
+    }
+    //! Operator * multiplying all items by a scalar
+    //! \param[in] rhs Scalar to multiply with
+    //! \return Copy of Data object after rhs has been multiplied with
+    //! \details Implemented in terms of compound operator*=
+    //! \author J. Bakosi
+    Data< Layout > operator* ( tk::real rhs )
     const { return Data< Layout >( *this ) *= rhs; }
 
     //! Compound operator/=
@@ -546,6 +562,14 @@ class Data {
     ncomp_t m_nprop;                    //!< Number of properties/unknown
 };
 
+//! Operator * multiplying all items by a scalar from the left
+//! \param[in] lhs Scalar to multiply with
+//! \return New Data object with all items multipled with lhs
+//! \author J. Bakosi
+template< uint8_t Layout >
+Data< Layout > operator* ( tk::real lhs, const Data< Layout >& rhs ) {
+  return Data< Layout >( rhs ) *= lhs;
+}
 
 //! Operator min between two Data objects
 //! \param[in] a 1st Data object

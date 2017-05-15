@@ -102,6 +102,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_bid(),
   m_pc(),
@@ -202,14 +203,8 @@ Carrier::vol()
                    std::to_string(y[N[3]]) + ", " +
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
+    for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
   }
-
-  // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_vol) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
@@ -253,6 +248,7 @@ void
 Carrier::setup()
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
+//! \param[in] v Total mesh volume (across the whole problem)
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -509,11 +505,9 @@ Carrier::lhs()
 }
 
 void
-Carrier::rhs( tk::real mult, const tk::Fields& sol )
+Carrier::rhs( const tk::Fields& sol )
 // *****************************************************************************
 // Compute right-hand side of transport equations
-//! \param[in] mult Multiplier differentiating the different stages in
-//!    multi-stage time stepping
 //! \param[in] sol Solution vector at current stage
 //! \author J. Bakosi
 // *****************************************************************************
@@ -537,8 +531,11 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
 
   // Compute right-hand side vector for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes)
-     eq.rhs( m_t, mult, m_dt, m_coord, m_inpoel, sol, r );
+  // Scale dt by 0.5 for first stage in Runge-Kutta 2-stage time stepping only
+  // while computing the right-hand sides
+  if (m_stage < 1) m_dt *= 0.5;
+  for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
+  if (m_stage < 1) m_dt /= 0.5;
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
@@ -698,7 +695,7 @@ Carrier::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_coord, u );
+    auto o = eq.output( time, m_coord, m_v, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -944,10 +941,7 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
   wait4app();
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  if (m_stage < 1)
-    rhs( 0.5, m_u );
-  else
-    rhs( 1.0, m_uf );
+  rhs( m_stage < 1 ? m_u : m_uf );
 }
 
 void
@@ -1083,14 +1077,27 @@ Carrier::diagnostics()
     for (const auto& eq : g_pdes)
       eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
 
-    // Weigh solutions by mesh volume at nodes. This way we compute the
-    // integral of all solution variables across the whole domain. We send
-    // these to LinSysMerger and the final aggregated solution will end up in
-    // Transporter::diagnostics().
+    // Prepare for computing diagnostics. Diagnostics are defined as the L2
+    // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
+    // sum_i ( A_i )^2 V_i ], where the sum is taken over all mesh nodes and
+    // V_i is the nodal volume. We send two sets of quantities to the host for
+    // aggregation across the whole mesh: (1) the numerical solutions of all
+    // components of all PDEs, and their error, defined as A_i = (a_i - n_i),
+    // where a_i and n_i are the analytical and numerical solutions at node i,
+    // respectively. We send these to LinSysMerger and the final aggregated
+    // solution will end up in Transporter::diagnostics(). Note that we
+    // weigh/multiply all data here by sqrt(V_i), so that the nodal volumes do
+    // not have to be communicated separately. In LinSysMerger::diagnostics(),
+    // where we collect all contributions from chares on a PE, all data is
+    // squared. LinSysMerger::diagnostics() is where the sums are computed,
+    // then the sums are summed accross the whole problem in
+    // Transporter::diagnostics(), where the final square-root of the L2 norm,
+    // defined above, is taken.
     for (std::size_t p=0; p<m_u.nunk(); ++p)
       for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-        m_ul(p,c,0) = m_vol[p] * m_ul(p,c,0);
-        m_ulf(p,c,0) = m_vol[p] * m_u(p,c,0);
+        auto r = std::sqrt( m_v[p] );
+        m_ul(p,c,0) = r * m_ul(p,c,0);
+        m_ulf(p,c,0) = r * m_u(p,c,0);
       }
 
     // Send both numerical and analytical solutions to linsysmerger

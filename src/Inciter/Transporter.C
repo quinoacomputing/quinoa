@@ -74,7 +74,6 @@ Transporter::Transporter() :
   m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
-  m_vol( 0.0 ),
   m_npoin( 0 ),
   m_timer(),
   m_linsysbc(),
@@ -152,7 +151,6 @@ Transporter::Transporter() :
 
     // Enable SDAG waits
     wait4eval();
-    wait4vol();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -383,19 +381,7 @@ Transporter::volcomplete()
 {
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh ...",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  nodevol_complete();
-}
-
-void
-Transporter::vol( tk::real v )
-// *****************************************************************************
-// Reduction target summing total mesh volume across all workers
-//! \param[in] v mesh volume
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  m_vol = v;
-  meshvol_complete();
+  m_carrier.setup();
 }
 
 void
@@ -444,6 +430,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] d Diagnostics (sums) collected over all chares
 //! \param[in] n Number of diagnostics in array d
+//! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -455,7 +442,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
           "Number of diagnostics contributed not equal to expected" );
 
   // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_vol;
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i]);
 
   diag_complete();
 }
