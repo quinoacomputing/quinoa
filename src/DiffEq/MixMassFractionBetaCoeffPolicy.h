@@ -603,7 +603,9 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * ts;
         // latest: k[c] = kprime[c] * ds * f * mix * ts;
 
-        k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * ds;
+        // current baseline:
+        //k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * ds;
+
         //k[c] = kprime[c] * (1+r[c]*yt)/(1.0+r[c]) * ts * f * v;
         //tk::real ebnm = r[c]*r[c]/(1.0+r[c])*yt*(1.0-yt);
         //tk::real G0 = (1.0 + 3.0*r[c] - 2.0*(2.0+r[c])*r[c]*yt)
@@ -628,14 +630,19 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //A = thetar + m_s[c] * thetar*(1.0-thetar) * (1.0+r[c]*yt)/(1.0+r[c]);
         //b[c] = bprime[c] * (1.0+A*f) * (1.0+r[c]*yt)/(1.0+r[c]) / (1.0 + d2/d/d + d2/d/d/ds) * ts;
 
-        tk::real beta2 = m_s[c];
+        // current baseline:
+        //tk::real beta2 = m_s[c];
+        //tk::real beta1 = bprime[c] / (1.0 + d2/d/d + d2/d/d/ds) *
+        //                 (1.0 + thetab*f + beta2*thetab*(1.0-thetab)*f);
+        //b[c] = beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts;
+
+        // cleanup current baseline:
+        tk::real beta3 = m_s[c];
         tk::real beta1 = bprime[c] / (1.0 + d2/d/d + d2/d/d/ds) *
-                         (1.0 + thetab*f + beta2*thetab*(1.0-thetab)*f);
-                         //(1.0 + thetab*f + beta2*thetab*(1.0-thetab)*f*(1.0+ds));
-              //(1.0 + thetab*f*(1.0+d2/d/d) + beta2*thetab*(1.0-thetab)*f*(1.0+d2/d/d));
-              //(1.0 + thetab*f*(1.0+d2/d/d) + beta2*thetab*(1.0-thetab)*f/(1.0+r[c]*yt)*(1.0+r[c]));
-              //(1.0 + thetab*f*(1.0+d2/d/d));
+                         (1.0 + thetab*f + beta3*thetab*(1.0-thetab)*f);
         b[c] = beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts;
+        // cleanup of current baseline:
+        k[c] = kprime[c] * beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts * ds;
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
