@@ -168,17 +168,17 @@ class Carrier : public CBase_Carrier {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
     }
 
-    //! \brief Read mesh node coordinates, sum mesh volumes to nodes, and start
-    //!   communicating them on chare-boundaries
-    void vol();
-
-    //! Collect nodal volumes across chare boundaries
-    void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V );
+    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
+    //!   case of initial uniform refinement
+    void coord();
 
     //! \brief Setup rows, query boundary conditions, generate particles, output
     //!    mesh, etc.
     void setup();
+
+    //! Collect nodal volumes across chare boundaries
+    void comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V );
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
@@ -405,6 +405,12 @@ class Carrier : public CBase_Carrier {
 
     //! Query old node IDs for a list of new node IDs
     std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
+
+    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
+    void vol();
+
+    //! Compute mesh cell statistics
+    void stat();
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions

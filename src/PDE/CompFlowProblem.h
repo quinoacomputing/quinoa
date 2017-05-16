@@ -306,8 +306,8 @@ class CompFlowProblemVorticalFlow {
       for (std::size_t alpha=0; alpha<4; ++alpha)
         for (std::size_t beta=0; beta<4; ++beta) {
           // source contribution to mass rhs
-          //for (std::size_t i=0; i<3; ++i)
-          //  R.var(r[0],N[alpha]) += c * J/24.0 * grad[beta][i] * u[i+1][beta];
+          for (std::size_t i=0; i<3; ++i)
+            R.var(r[0],N[alpha]) += dt * J/24.0 * grad[beta][i] * u[i+1][beta];
           // source contribution to momentum rhs
           for (std::size_t i=0; i<3; ++i)
             R.var(r[i+1],N[alpha]) += dt * mass[alpha][beta] * Sm[i][beta];

@@ -363,7 +363,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         // Create linear solver
         m_solver.create();
         // Signal back to host that setup of workers can start
-        signal2host_setup( m_host );
+        signal2host_coord( m_host );
       }
     }
 
@@ -1236,10 +1236,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
     //! \brief Signal back to host that receiving the inverse PE-division map is
     //!  complete and we are ready for Prformers to start their setup.
-    void signal2host_setup( const inciter::CProxy_Transporter& host ) {
+    void signal2host_coord( const inciter::CProxy_Transporter& host ) {
       using inciter::CkIndex_Transporter;
       Group::contribute(
-       CkCallback( CkIndex_Transporter::redn_wrapper_setup(NULL), host ) );
+       CkCallback( CkIndex_Transporter::redn_wrapper_coord(NULL), host ) );
     }
     //! Contribute diagnostics back to host
     void signal2host_diag( const inciter::CProxy_Transporter& host,

@@ -156,20 +156,31 @@ Carrier::Carrier( const TransporterProxy& transporter,
 }
 
 void
-Carrier::vol()
+Carrier::coord()
 // *****************************************************************************
-//  Read mesh node coordinates, sum mesh volumes to nodes, and start
-//  communicating them on chare-boundaries
+//  Read mesh node coordinates and optionally add new edge-nodes in case of
+//  initial uniform refinement
 //! \author J. Bakosi
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
-
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
   addEdgeNodeCoords();
+  // Compute mesh cell volumes
+  vol();
+  // Compute mesh cell statistics
+  stat();
+}
 
+void
+Carrier::vol()
+// *****************************************************************************
+// Sum mesh volumes to nodes, start communicating them on chare-boundaries
+//! \author J. Bakosi
+// *****************************************************************************
+{
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -219,6 +230,68 @@ Carrier::vol()
 }
 
 void
+Carrier::stat()
+// *****************************************************************************
+// Compute mesh volume statistics
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
+
+  auto MIN = -std::numeric_limits< tk::real >::max();
+  auto MAX = std::numeric_limits< tk::real >::max();
+  std::array< tk::real, 2 > min = {{ MAX, MAX }};
+  std::array< tk::real, 2 > max = {{ MIN, MIN }};
+  std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
+
+  // Compute edge length statistics
+  // Note that while the min and max edge lengths are independent of the number
+  // of CPUs (by the time they are aggregated across all chares), the sum of
+  // the edge lengths is not. This is because the edges on the chare-boundary
+  // are counted multiple times and we conscientiously do not make an effort to
+  // precisely compute this, because that would require communication and more
+  // complex logic. Since this is an average diagnostic, we ignore these small
+  // differences. For reproducible average edge lengths, run the mesh in serial.
+  for (std::size_t p=0; p<m_gid.size(); ++p)
+    for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
+       const auto dx = x[ m_psup.first[i] ] - x[ p ];
+       const auto dy = y[ m_psup.first[i] ] - y[ p ];
+       const auto dz = z[ m_psup.first[i] ] - z[ p ];
+       const auto length = std::sqrt( dx*dx + dy*dy + dz*dz );
+       if (length < min[0]) min[0] = length;
+       if (length > max[0]) max[0] = length;
+       sum[0] += 1.0;
+       sum[1] += length;
+    }
+
+  // Compute mesh cell volume statistics
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
+                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }};
+    // compute cubic root of element volume, J = 6V
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
+    if (L < min[1]) min[1] = L;
+    if (L > max[1]) max[1] = L;
+    sum[2] += 1.0;
+    sum[3] += L;
+  }
+
+  // Contribute to mesh statistics across all Carrier chares
+  contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
+    CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
+  contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
+    CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
+  contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
+}
+
+void
 Carrier::comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V )
 // *****************************************************************************
@@ -248,7 +321,6 @@ void
 Carrier::setup()
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
-//! \param[in] v Total mesh volume (across the whole problem)
 //! \author J. Bakosi
 // *****************************************************************************
 {
