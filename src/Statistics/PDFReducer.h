@@ -21,6 +21,15 @@
 
 namespace tk {
 
+//! Serialize univariate PDF to raw memory stream
+std::pair< int, std::unique_ptr<char[]> >
+serialize( const std::vector< tk::UniPDF >& u );
+
+//! \brief Charm++ custom reducer for merging a univariate PDF during reduction
+//!    across PEs
+CkReductionMsg*
+mergeUniPDFs( int nmsg, CkReductionMsg **msgs );
+
 //! Serialize vectors of PDFs to raw memory stream
 std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< tk::UniPDF >& u,

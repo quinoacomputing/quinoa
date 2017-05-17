@@ -26,6 +26,7 @@ module transporter {
       entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
@@ -77,9 +78,9 @@ module transporter {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // MinStat, MaxStat, and SumStat denoe different global reductions used to
-      // compute mesh cell statistics. Only when all of these are completed will
-      // they be echoed to screen at once, denoted by Stat.
+      // MinStat, MaxStat, SumStat, and PdfStat denote different global
+      // reductions used to compute mesh cell statistics. Only when all of these
+      // are completed will they be echoed to screen at once, denoted by Stat.
       //
       // Only when both Stat and Vol are completed (this latter computing mesh
       // nodal volumes) can the setup phase in Carriers continue by setting up
@@ -105,7 +106,8 @@ module transporter {
       // same.
 
       entry void wait4stat() {
-        when minstat_complete(), maxstat_complete(), sumstat_complete()
+        when minstat_complete(), maxstat_complete(), sumstat_complete(),
+             pdfstat_complete()
         serial "stat" {
           stat(); } };
 
@@ -120,6 +122,7 @@ module transporter {
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();
+      entry void pdfstat_complete();
       entry void stat_complete();
       entry void vol_complete();
       entry void out_complete();

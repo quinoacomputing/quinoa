@@ -24,6 +24,8 @@
 #include "Transporter.h"
 #include "Fields.h"
 #include "PDEStack.h"
+#include "UniPDF.h"
+#include "PDFWriter.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
@@ -452,6 +454,34 @@ Transporter::sumstat( tk::real* d, std::size_t n )
   m_avgstat[1] = d[3] / d[2];      // average cell volume cubic root
 
   sumstat_complete();
+}
+
+void
+Transporter::pdfstat( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target yielding PDF of mesh statistics across all workers
+//! \param[in] msg Serialized PDF
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< tk::UniPDF > pdf;
+
+  // Deserialize final PDF
+  PUP::fromMem creator( msg->getData() );
+  creator | pdf;
+  delete msg;
+
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
+  // Output edgelength PDF
+  pdfe.writeTxt( pdf[0], tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"} } );
+
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfv( "mesh_vol_pdf.txt" );
+  // Output cell volume cubic root PDF
+  pdfv.writeTxt( pdf[1], tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"} } );
+
+  pdfstat_complete();
 }
 
 void

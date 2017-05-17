@@ -53,6 +53,7 @@ extern std::vector< PDE > g_pdes;
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
 CkReduction::reducerType VerifyBCMerger;
+CkReduction::reducerType PDFMerger;
 
 } // inciter::
 
@@ -245,15 +246,19 @@ Carrier::stat()
   std::array< tk::real, 2 > min = {{ MAX, MAX }};
   std::array< tk::real, 2 > max = {{ MIN, MIN }};
   std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
+  tk::UniPDF edgePDF( 1e-4 );
+  tk::UniPDF volPDF( 1e-4 );
 
   // Compute edge length statistics
   // Note that while the min and max edge lengths are independent of the number
   // of CPUs (by the time they are aggregated across all chares), the sum of
-  // the edge lengths is not. This is because the edges on the chare-boundary
-  // are counted multiple times and we conscientiously do not make an effort to
-  // precisely compute this, because that would require communication and more
-  // complex logic. Since this is an average diagnostic, we ignore these small
-  // differences. For reproducible average edge lengths, run the mesh in serial.
+  // the edge lengths and the edge length PDF are not. This is because the
+  // edges on the chare-boundary are counted multiple times and we
+  // conscientiously do not make an effort to precisely compute this, because
+  // that would require communication and more complex logic. Since these
+  // statistics are intended as simple average diagnostics, we ignore these
+  // small differences. For reproducible average edge lengths and edge length
+  // PDFs, run the mesh in serial.
   for (std::size_t p=0; p<m_gid.size(); ++p)
     for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
        const auto dx = x[ m_psup.first[i] ] - x[ p ];
@@ -264,13 +269,13 @@ Carrier::stat()
        if (length > max[0]) max[0] = length;
        sum[0] += 1.0;
        sum[1] += length;
+       edgePDF.add( length );
     }
 
   // Compute mesh cell volume statistics
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
                                            m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-    // compute cubic root of element volume, J = 6V
     const std::array< tk::real, 3 >
       ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
@@ -280,6 +285,7 @@ Carrier::stat()
     if (L > max[1]) max[1] = L;
     sum[2] += 1.0;
     sum[3] += L;
+    volPDF.add( L );
   }
 
   // Contribute to mesh statistics across all Carrier chares
@@ -289,6 +295,14 @@ Carrier::stat()
     CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
   contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
+
+  // Serialize PDFs to raw stream
+  auto stream = tk::serialize( { edgePDF, volPDF } );
+  // Create Charm++ callback function for reduction of PDFs with
+  // Transporter::pdfstat() as the final target where the results will appear.
+  CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
+  // Contribute serialized PDF of partial sums to host via Charm++ reduction
+  contribute( stream.first, stream.second.get(), PDFMerger, cb );
 }
 
 void

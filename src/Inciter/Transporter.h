@@ -2,7 +2,6 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 16 May 2017 01:32:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -47,6 +46,9 @@
       SumStat [ label="SumStat"
               tooltip="chares contribute to sum mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
+      PDFStat [ label="PDFStat"
+              tooltip="chares contribute to PDF mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
       Stat [ label="Stat"
               tooltip="chares contributed to mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
@@ -59,6 +61,7 @@
       MinStat -> Stat [ style="solid" ];
       MaxStat -> Stat [ style="solid" ];
       SumStat -> Stat [ style="solid" ];
+      PDFStat -> Stat [ style="solid" ];
       Stat -> Setup [ style="solid" ];
       Vol -> Setup [ style="solid" ];
     }
@@ -207,6 +210,10 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target yielding the sum of mesh statistics across
     //!   all workers
     void sumstat( tk::real* d, std::size_t n );
+
+    //! \brief Reduction target yielding PDF of mesh statistics across all
+    //!    workers
+    void pdfstat( CkReductionMsg* msg );
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers

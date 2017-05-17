@@ -93,6 +93,7 @@
 #include "Tracker.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
+#include "PDFReducer.h"
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -106,6 +107,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType VerifyBCMerger;
+extern CkReduction::reducerType PDFMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
 class Carrier : public CBase_Carrier {
@@ -166,6 +168,7 @@ class Carrier : public CBase_Carrier {
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
       VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
+      PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
     }
 
     //! \brief Read mesh node coordinates and optionally add new edge-nodes in
