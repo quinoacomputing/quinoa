@@ -230,6 +230,7 @@ Transporter::Transporter() :
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
+    m_timer[ TimerTag::MESHREAD ];
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
                                              m_linsysmerger,
                                              m_particlewriter );
@@ -306,6 +307,8 @@ Transporter::partition()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
+  m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
   m_progPart.start( "Partitioning and distributing mesh ..." );
   m_partitioner.partition( m_nchare );
 }
