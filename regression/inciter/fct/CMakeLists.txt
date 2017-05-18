@@ -19,7 +19,7 @@ add_regression_test(fct ${INCITER_EXECUTABLE}
                                slot_cyl_pe4_u0.0.std.exo.1
                                slot_cyl_pe4_u0.0.std.exo.2
                                slot_cyl_pe4_u0.0.std.exo.3
-                    ARGS -c slot_cyl.q -i unitcube_01_31k.exo -v
+                    ARGS -c slot_cyl.q -i unitcube_01_31k.exo -v -f
                     BIN_BASELINE slot_cyl_pe4_u0.0.std.exo.0
                                  slot_cyl_pe4_u0.0.std.exo.1
                                  slot_cyl_pe4_u0.0.std.exo.2
