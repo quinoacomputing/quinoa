@@ -513,8 +513,8 @@ Carrier::init()
   // Compute initial time step size
   dt();
 
-  // Output initial conditions to file (time = 0.0)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( 0.0 );
+  // Output initial conditions to file (time = t0)
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
