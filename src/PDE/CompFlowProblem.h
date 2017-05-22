@@ -240,24 +240,21 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] dt Size of time step
-    //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
     //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] u Solution at element nodes at recent time step stage
     //! \param[in,out] R Right-hand side vector contributing to
     static void
     sourceRhs( tk::real,
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real dt,
-               tk::real J,
+               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >& grad,
+               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >& u,
+               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
@@ -305,9 +302,6 @@ class CompFlowProblemVorticalFlow {
       // add momentum and energy source at element nodes
       for (std::size_t alpha=0; alpha<4; ++alpha)
         for (std::size_t beta=0; beta<4; ++beta) {
-          // source contribution to mass rhs
-          for (std::size_t i=0; i<3; ++i)
-            R.var(r[0],N[alpha]) += dt * J/24.0 * grad[beta][i] * u[i+1][beta];
           // source contribution to momentum rhs
           for (std::size_t i=0; i<3; ++i)
             R.var(r[i+1],N[alpha]) += dt * mass[alpha][beta] * Sm[i][beta];
