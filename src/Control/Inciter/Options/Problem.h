@@ -27,6 +27,7 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    DIR_NEU,
                                    VORTICAL_FLOW,
                                    NL_ENERGY_GROWTH,
+                                   RAYLEIGH_TAYLOR,
                                    SLOT_CYL };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -45,6 +46,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                        , kw::dir_neu
                                        , kw::vortical_flow
                                        , kw::nl_energy_growth
+                                       , kw::rayleigh_taylor
                                        , kw::slot_cyl
                                        >;
 
@@ -62,6 +64,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::DIR_NEU, kw::dir_neu::name() },
           { ProblemType::VORTICAL_FLOW, kw::vortical_flow::name() },
           { ProblemType::NL_ENERGY_GROWTH, kw::nl_energy_growth::name() },
+          { ProblemType::RAYLEIGH_TAYLOR, kw::rayleigh_taylor::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -69,6 +72,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::dir_neu::string(), ProblemType::DIR_NEU },
           { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
           { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
+          { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR }
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
@@ -106,6 +110,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::DIR_NEU, *kw::dir_neu::code() }
       , { ProblemType::VORTICAL_FLOW, *kw::vortical_flow::code() }
       , { ProblemType::NL_ENERGY_GROWTH, *kw::nl_energy_growth::code() }
+      , { ProblemType::RAYLEIGH_TAYLOR, *kw::rayleigh_taylor::code() }      
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
     };
 };
