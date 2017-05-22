@@ -297,7 +297,7 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { TIMESTEP };
+    enum class TimerTag { TIMESTEP, MESHREAD };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger

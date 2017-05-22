@@ -193,10 +193,27 @@ namespace grm {
              ce.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
       }
+      else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
+        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
+        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
+        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
+        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             p0.size() != problem.size() ||
+             r0.size() != problem.size() )
+          Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
+      }
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
-        if (s.empty()) 
+        if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };

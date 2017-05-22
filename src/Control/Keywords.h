@@ -93,7 +93,7 @@
         // However, if it is defined, it must at least define the static member
         // function description() which returns the description of the type the
         // keyword expects. It may also optionally define the following fields:
-        // 
+        //
         //    - type - defining the expected type
         //    - lower - lower bound of the expected value
         //    - upper - upper bound of the expected value
@@ -2953,6 +2953,26 @@ struct nl_energy_growth_info {
 using nl_energy_growth =
   keyword< nl_energy_growth_info, pegtl_string_t("nl_energy_growth") >;
 
+struct rayleigh_taylor_info {
+  using code = Code< V >;
+  static std::string name() { return "Rayleigh-Taylor"; }
+  static std::string shortDescription() { return
+    "Select the Rayleigh-Taylor test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Rayleigh-Taylor unstable configuration
+    test problem. The purpose of this test problem is to assess time dependent
+    fluid motion in the presence of Rayleigh-Taylor unstable conditions, i.e.
+    opposing density and pressure gradients. Example: "problem rayleigh_taylor".
+    For more details, see Waltz, et. al, "Manufactured solutions for the
+    three-dimensional Euler equations with relevance to Inertial Confinement
+    Fusion", Journal of Computational Physics 267 (2014) 196-209.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using rayleigh_taylor =
+  keyword< rayleigh_taylor_info, pegtl_string_t("rayleigh_taylor") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "problem"; }
@@ -2971,6 +2991,7 @@ struct problem_info {
                   + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
+                  + rayleigh_taylor::string() + "\' | \'"                  
                   + slot_cyl::string() + '\'';
     }
   };
