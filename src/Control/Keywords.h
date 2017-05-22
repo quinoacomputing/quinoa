@@ -3242,9 +3242,12 @@ struct pde_ce_info {
   static std::string shortDescription() { return
     R"(Set PDE parameter(s) ce)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Example:
-    "ce -1.0".)"; }
+    R"(This keyword is used to specify a real number used to parameterize the
+    Euler equations solving the manufactured solution test case "non-linear
+    energy growth". Example: "ce -1.0". For more information on the test case see
+    Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
+    equations with relevance to Inertial Confinement Fusion", Journal of
+    Computational Physics 267 (2014) 196-209.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
@@ -3258,7 +3261,7 @@ struct pde_kappa_info {
     R"(Set PDE parameter(s) kappa)"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Exmpale:
+    parameterize a system of partial differential equations. Example:
     "kappa 0.8")"; }
   struct expect {
     using type = tk::real;
@@ -3272,12 +3275,15 @@ struct pde_r0_info {
   static std::string shortDescription() { return
     R"(Set PDE parameter(s) r0)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Example:
-    "r0 2.0)"; }
+    R"(This keyword is used to specify a real number used to parameterize the
+    Euler equations solving the manufactured solution test case "non-linear
+    energy growth". Example: "r0 2.0". For more information on the test case see
+    Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
+    equations with relevance to Inertial Confinement Fusion", Journal of
+    Computational Physics 267 (2014) 196-209.)"; }
   struct expect {
     using type = tk::real;
-    static std::string description() { return "r0"; }
+    static std::string description() { return "real"; }
   };
 };
 using pde_r0 = keyword< pde_r0_info, pegtl_string_t("r0") >;

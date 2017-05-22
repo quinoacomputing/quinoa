@@ -56,7 +56,8 @@ class CompFlowProblemUserDefined {
                               std::vector< std::pair< bool, tk::real > > >& bc,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset )
+                      tk::ctr::ncomp_type offset,
+                      tk::real )
     {
       IGNORE(e);
       const auto& x = coord[0];
@@ -205,7 +206,8 @@ class CompFlowProblemVorticalFlow {
                               std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset )
+                      tk::ctr::ncomp_type offset,
+                      tk::real )
     {
       // manufactured solution parameters
       const auto& a =
@@ -454,20 +456,33 @@ class CompFlowProblemNLEnergyGrowth {
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
+    //! \param[in] t Physical time
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
                       const std::vector< std::size_t >&,
                       const std::unordered_map< std::size_t,
                               std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset )
+                      tk::ctr::ncomp_type offset,
+                      tk::real t )
     {
       // manufactured solution parameters
       const auto& ce =
         g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
       const auto& r0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
-
+      const auto& alpha =
+        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
+      const auto& k =
+        g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
+      const auto& bx =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betax >()[e];
+      const auto& by =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
+      const auto& bz =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
+      // temporal component of density field
+      tk::real f = std::exp( -alpha*t );
       // set initial and boundary conditions
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -477,17 +492,19 @@ class CompFlowProblemNLEnergyGrowth {
         auto& ru = unk(i,1,offset); // rho * u
         auto& rv = unk(i,2,offset); // rho * v
         auto& rw = unk(i,3,offset); // rho * w
-        auto& re = unk(i,4,offset); // rho * e
-
+        auto& re = unk(i,4,offset); // rho * e, e:total=kinetic+internal energy
         // spatial component of density field
-        tk::real gx = 1-(x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
-
-        // Since these are initial conditions, taking t=0. Verify.
-        r = r0 + 1.0*gx;
+        tk::real g = 1.0 - (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
+        // internal energy parameter
+        const tk::real h = std::cos(bx*M_PI*x[i]) *
+                           std::cos(by*M_PI*y[i]) *
+                           std::cos(bz*M_PI*z[i]);
+        // solution at t
+        r = r0 + f*g;
         ru = 0.0;
         rv = 0.0;
         rw = 0.0;
-        re = r*std::pow(-3*ce,-1/3);
+        re = r*std::pow( -3.0*(ce + k*h*h*t), -1.0/3.0 );
       }
     }
 
@@ -525,7 +542,7 @@ class CompFlowProblemNLEnergyGrowth {
         g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
       const auto& ce =
         g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
-      const auto& ka =
+      const auto& kappa =
         g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
       const auto& r0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
@@ -599,72 +616,72 @@ class CompFlowProblemNLEnergyGrowth {
 
       // energy source
       std::array< tk::real, 4 > Se{{
-        (r0+std::exp(-a*t)*gx[0])*ka*hx[0]*hx[0]*
-          std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)-
+        (r0+std::exp(-a*t)*gx[0])*kappa*hx[0]*hx[0]*
+          std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-4.0/3.0)-
           a*std::exp(-a*t)*gx[0]*
-          std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0),
-        (r0+std::exp(-a*t)*gx[1])*ka*hx[1]*hx[1]*
-          std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)-
+          std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-1.0/3.0),
+        (r0+std::exp(-a*t)*gx[1])*kappa*hx[1]*hx[1]*
+          std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-4.0/3.0)-
           a*std::exp(-a*t)*gx[1]*
-          std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0),
-        (r0+std::exp(-a*t)*gx[2])*ka*hx[2]*hx[2]*
-          std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)-
+          std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-1.0/3.0),
+        (r0+std::exp(-a*t)*gx[2])*kappa*hx[2]*hx[2]*
+          std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-4.0/3.0)-
           a*std::exp(-a*t)*gx[2]*
-          std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0),
-        (r0+std::exp(-a*t)*gx[3])*ka*hx[3]*hx[3]*
-          std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)-
+          std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-1.0/3.0),
+        (r0+std::exp(-a*t)*gx[3])*kappa*hx[3]*hx[3]*
+          std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-4.0/3.0)-
           a*std::exp(-a*t)*gx[3]*
-          std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0) }};
+          std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-1.0/3.0) }};
 
       // momentum source
       std::array< std::array< tk::real, 4 >, 3 >
-        Sm{{ {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[0][0] +
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+        Sm{{ {{ 2*kappa*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-4.0/3.0)*dh[0][0] +
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[0][0],
-                2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[0][1] +
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-4.0/3.0)*dh[0][1] +
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[0][1],
-                2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[0][2] +
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-4.0/3.0)*dh[0][2] +
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[0][2],
-                2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[0][3] +
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-4.0/3.0)*dh[0][3] +
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[0][3] }},
-             {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[1][0] +
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+             {{ 2*kappa*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-4.0/3.0)*dh[1][0] +
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[1][0],
-                2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[1][1] +
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-4.0/3.0)*dh[1][1] +
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[1][1],
-                2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[1][2] +
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-4.0/3.0)*dh[1][2] +
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[1][2],
-                2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[1][3] +
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-4.0/3.0)*dh[1][3] +
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[1][3] }},
-             {{ 2*ka*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-4.0/3.0)*dh[2][0] +
-                  std::pow(-3*ce-3*ka*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
+             {{ 2*kappa*hx[0]*(r0+std::exp(-a*t)*gx[0])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-4.0/3.0)*dh[2][0] +
+                  std::pow(-3*ce-3*kappa*hx[0]*hx[0]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[2][0],
-                2*ka*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-4.0/3.0)*dh[2][1] +
-                  std::pow(-3*ce-3*ka*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[1]*(r0+std::exp(-a*t)*gx[1])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-4.0/3.0)*dh[2][1] +
+                  std::pow(-3*ce-3*kappa*hx[1]*hx[1]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[2][1],
-                2*ka*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-4.0/3.0)*dh[2][2] +
-                  std::pow(-3*ce-3*ka*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[2]*(r0+std::exp(-a*t)*gx[2])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-4.0/3.0)*dh[2][2] +
+                  std::pow(-3*ce-3*kappa*hx[2]*hx[2]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[2][2],
-                2*ka*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-4.0/3.0)*dh[2][3] +
-                  std::pow(-3*ce-3*ka*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
+                2*kappa*hx[3]*(r0+std::exp(-a*t)*gx[3])*(g-1)*
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-4.0/3.0)*dh[2][3] +
+                  std::pow(-3*ce-3*kappa*hx[3]*hx[3]*t,-1.0/3.0)*(g-1)*
                   std::exp(-a*t)*dg[2][3] }} }};
 
       // add momentum and energy source at element nodes
@@ -749,7 +766,7 @@ class CompFlowProblemNLEnergyGrowth {
         g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
       const auto& ce =
         g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
-      const auto& ka =
+      const auto& kappa =
         g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
       const auto& r0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
@@ -803,7 +820,7 @@ class CompFlowProblemNLEnergyGrowth {
       for (std::size_t i=0; i<E.size(); ++i) {
         tk::real hx = std::cos(bx*M_PI*x[i])*std::cos(by*M_PI*y[i])*
                       std::cos(bz*M_PI*z[i]);
-        E[i] = rho[i]*std::pow(-3*ce-3*ka*hx*hx*t,-1.0/3.0);
+        E[i] = rho[i]*std::pow(-3*ce-3*kappa*hx*hx*t,-1.0/3.0);
       }
       out.push_back( E );
 
@@ -834,7 +851,8 @@ class CompFlowProblemRayleighTaylor {
                               std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset )
+                      tk::ctr::ncomp_type offset,
+                      tk::real )
     {
       // manufactured solution parameters
       const auto& a =
@@ -905,7 +923,7 @@ class CompFlowProblemRayleighTaylor {
         g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
       const auto& bz =
         g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
-      const auto& ka =
+      const auto& kappa =
         g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
       const auto& p0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
@@ -921,10 +939,10 @@ class CompFlowProblemRayleighTaylor {
       const auto& z = coord[2];
 
       // temporal component of velocity field
-      tk::real f = std::cos(ka*M_PI*t);
+      tk::real f = std::cos(kappa*M_PI*t);
 
       // derivative of temporal component of velocity field
-      tk::real df = -ka*M_PI*std::sin(ka*M_PI*t);
+      tk::real df = -kappa*M_PI*std::sin(kappa*M_PI*t);
 
       // spatial component of velocity field
       std::array< std::array< tk::real, 4 >, 3 >
@@ -1208,7 +1226,7 @@ class CompFlowProblemRayleighTaylor {
         g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
       const auto& bz =
         g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
-      const auto& ka =
+      const auto& kappa =
         g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
       const auto& p0 =
         g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
@@ -1242,7 +1260,7 @@ class CompFlowProblemRayleighTaylor {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( u );
       for (std::size_t i=0; i<u.size(); ++i) {
-        u[i] = rho[i]*std::cos(ka*M_PI*t)*(z[i]*std::sin(M_PI*x[i]));
+        u[i] = rho[i]*std::cos(kappa*M_PI*t)*(z[i]*std::sin(M_PI*x[i]));
       }
       out.push_back( u );
 
@@ -1251,7 +1269,7 @@ class CompFlowProblemRayleighTaylor {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( v );
       for (std::size_t i=0; i<v.size(); ++i) {
-        v[i] = rho[i]*std::cos(ka*M_PI*t)*(z[i]*std::cos(M_PI*y[i]));
+        v[i] = rho[i]*std::cos(kappa*M_PI*t)*(z[i]*std::cos(M_PI*y[i]));
       }
       out.push_back( v );
 
@@ -1260,7 +1278,7 @@ class CompFlowProblemRayleighTaylor {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( w );
       for (std::size_t i=0; i<w.size(); ++i) {
-        w[i] = rho[i]*std::cos(ka*M_PI*t)*(-M_PI*z[i]*z[i]*
+        w[i] = rho[i]*std::cos(kappa*M_PI*t)*(-M_PI*z[i]*z[i]*
                (std::cos(M_PI*x[i])-std::sin(M_PI*y[i]))/2.0);
       }
       out.push_back( w );

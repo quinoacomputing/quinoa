@@ -49,16 +49,17 @@ class CompFlow {
     //! \param[in] bc Vector of pairs of bool and boundary condition value
     //!   associated to mesh node IDs at which to set Dirichlet boundary
     //!   conditions
+    //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real,
+                     tk::real t,
                      const std::vector< std::size_t >& gid,
                      const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc )
     const {
       // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, bc, unk, 0, m_offset );
+      Problem::init( coord, gid, bc, unk, 0, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
