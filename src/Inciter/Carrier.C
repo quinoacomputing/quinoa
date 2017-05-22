@@ -1046,7 +1046,7 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
   wait4app();
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  rhs( m_stage < 1 ? m_u : m_uf );
+  if (m_stage < 1) rhs( m_u ); else rhs( m_uf );
 }
 
 void
