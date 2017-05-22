@@ -248,5 +248,50 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   if (!npar.empty())
     nfo.emplace_back( "number of tracker particles", parameters( npar ) );
 
+  const auto& alpha =
+    g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();;
+  if (!alpha.empty())
+    nfo.emplace_back( "coeff alpha", parameters( alpha ) );
+
+  const auto& beta =
+    g_inputdeck.get< tag::param, tag::compflow, tag::beta >();;
+  if (!beta.empty())
+    nfo.emplace_back( "coeff beta", parameters( beta ) );
+
+  const auto& betax =
+    g_inputdeck.get< tag::param, tag::compflow, tag::betax >();;
+  if (!betax.empty())
+    nfo.emplace_back( "coeff betax", parameters( betax ) );
+
+  const auto& betay =
+    g_inputdeck.get< tag::param, tag::compflow, tag::betay >();;
+  if (!betay.empty())
+    nfo.emplace_back( "coeff betay", parameters( betay ) );
+
+  const auto& betaz =
+    g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();;
+  if (!betaz.empty())
+    nfo.emplace_back( "coeff betaz", parameters( betaz ) );
+
+  const auto& r0 =
+    g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();;
+  if (!r0.empty())
+    nfo.emplace_back( "coeff r0", parameters( r0 ) );
+
+  const auto& ce =
+    g_inputdeck.get< tag::param, tag::compflow, tag::ce >();;
+  if (!ce.empty())
+    nfo.emplace_back( "coeff ce", parameters( ce ) );
+
+  const auto& kappa =
+    g_inputdeck.get< tag::param, tag::compflow, tag::kappa >();;
+  if (!kappa.empty())
+    nfo.emplace_back( "coeff kappa", parameters( kappa ) );
+
+  const auto& p0 =
+    g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();;
+  if (!p0.empty())
+    nfo.emplace_back( "coeff p0", parameters( p0 ) );
+
   return nfo;
 }

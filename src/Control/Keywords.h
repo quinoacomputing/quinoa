@@ -93,7 +93,7 @@
         // However, if it is defined, it must at least define the static member
         // function description() which returns the description of the type the
         // keyword expects. It may also optionally define the following fields:
-        // 
+        //
         //    - type - defining the expected type
         //    - lower - lower bound of the expected value
         //    - upper - upper bound of the expected value
@@ -2932,6 +2932,47 @@ struct vortical_flow_info {
 using vortical_flow =
   keyword< vortical_flow_info, pegtl_string_t("vortical_flow") >;
 
+struct nl_energy_growth_info {
+  using code = Code< V >;
+  static std::string name() { return "Nonlinear energy growth"; }
+  static std::string shortDescription() { return
+    "Select the nonlinear energy growth test problem ";}
+  static std::string longDescription() { return
+    R"(This keyword is used to select the nonlinear energy growth test problem.
+    The purpose of this test problem is to test nonlinear, time dependent energy
+    growth and the subsequent development of pressure gradients due to coupling
+    between the internal energy and the equation of state. Example: "problem
+    nl_energy_growth". For more details, see Waltz, et. al, "Manufactured
+    solutions for the three-dimensional Euler equations with relevance to
+    Inertial Confinement Fusion", Journal of Computational Physics 267 (2014)
+    196-209.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using nl_energy_growth =
+  keyword< nl_energy_growth_info, pegtl_string_t("nl_energy_growth") >;
+
+struct rayleigh_taylor_info {
+  using code = Code< V >;
+  static std::string name() { return "Rayleigh-Taylor"; }
+  static std::string shortDescription() { return
+    "Select the Rayleigh-Taylor test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Rayleigh-Taylor unstable configuration
+    test problem. The purpose of this test problem is to assess time dependent
+    fluid motion in the presence of Rayleigh-Taylor unstable conditions, i.e.
+    opposing density and pressure gradients. Example: "problem rayleigh_taylor".
+    For more details, see Waltz, et. al, "Manufactured solutions for the
+    three-dimensional Euler equations with relevance to Inertial Confinement
+    Fusion", Journal of Computational Physics 267 (2014) 196-209.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using rayleigh_taylor =
+  keyword< rayleigh_taylor_info, pegtl_string_t("rayleigh_taylor") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "problem"; }
@@ -2949,6 +2990,8 @@ struct problem_info {
                   + shear_diff::string() + "\' | \'"
                   + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
+                  + nl_energy_growth::string() + "\' | \'"
+                  + rayleigh_taylor::string() + "\' | \'"                  
                   + slot_cyl::string() + '\'';
     }
   };
@@ -3147,6 +3190,97 @@ struct pde_p0_info {
   };
 };
 using pde_p0 = keyword< pde_p0_info, pegtl_string_t("p0") >;
+
+// nonlinear energy parameters here
+struct pde_betax_info {
+  static std::string name() { return "betax"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betax)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betax 1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betax = keyword< pde_betax_info, pegtl_string_t("betax") >;
+
+struct pde_betay_info {
+  static std::string name() { return "betay"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betay)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betay 0.75".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betay = keyword< pde_betay_info, pegtl_string_t("betay") >;
+
+struct pde_betaz_info {
+  static std::string name() { return "betaz"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betaz)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betaz 0.5".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betaz = keyword< pde_betaz_info, pegtl_string_t("betaz") >;
+
+struct pde_ce_info {
+  static std::string name() { return "ce"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) ce)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "ce -1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_ce = keyword< pde_ce_info, pegtl_string_t("ce") >;
+
+struct pde_kappa_info {
+  static std::string name() { return "kappa"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) kappa)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Exmpale:
+    "kappa 0.8")"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_kappa = keyword< pde_kappa_info, pegtl_string_t("kappa") >;
+
+struct pde_r0_info {
+  static std::string name() { return "r0"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) r0)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "r0 2.0)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "r0"; }
+  };
+};
+using pde_r0 = keyword< pde_r0_info, pegtl_string_t("r0") >;
 
 struct ctau_info {
   static std::string name() { return "ctau"; }

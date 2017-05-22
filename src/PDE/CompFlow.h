@@ -149,15 +149,14 @@ class CompFlow {
     }
 
     //! Compute right hand side
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
+    //! \param[in] t Physical time
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
-    void rhs( tk::real mult,
+    void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -176,6 +175,9 @@ class CompFlow {
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<5; ++c) R.fill( c, m_offset, 0.0 );
+
+      // ratio of specific heats
+      auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
@@ -211,9 +213,6 @@ class CompFlow {
         std::array< const tk::real*, 5 > r;
         for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
-        // ratio of specific heats
-        auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
         // compute pressure
         std::array< tk::real, 4 > p;
         for (std::size_t i=0; i<4; ++i)
@@ -222,29 +221,29 @@ class CompFlow {
                                      u[3][i]*u[3][i])/2.0/u[0][i]);
 
         // scatter-add mass, momentum, and energy contributions to rhs
-        tk::real c = mult * deltat * J/24.0;
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<4; ++k) {
+        tk::real c = deltat * J/24.0;
+        for (std::size_t j=0; j<3; ++j)
+          for (std::size_t alpha=0; alpha<4; ++alpha)
+            for (std::size_t beta=0; beta<4; ++beta) {
               // advection contribution to mass rhs
-              R.var(r[0],N[j]) -= c * grad[k][i] * u[i+1][k];
+              R.var(r[0],N[alpha]) -= c * grad[beta][j] * u[j+1][beta];
               // advection contribution to momentum rhs
-              for (std::size_t l=0; l<3; ++l)
-                R.var(r[l+1],N[j]) -= c * grad[k][i] *
-                                      u[l+1][k]*u[i+1][k]/u[0][k];
+              for (std::size_t k=0; k<3; ++k)
+                R.var(r[k+1],N[alpha]) -=
+                  c * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
               // pressure gradient contribution to momentum rhs
-              R.var(r[i+1],N[j]) -= c * grad[k][i] * p[k];
+              R.var(r[j+1],N[alpha]) -= c * grad[beta][j] * p[beta];
               // advection and pressure gradient contribution to energy rhs
-              R.var(r[4],N[j]) -= c * grad[k][i] *
-                                  (u[4][k] + p[k]) * u[i+1][k]/u[0][k];
+              R.var(r[4],N[alpha]) -= c * grad[beta][j] *
+                (u[4][beta] + p[beta]) * u[j+1][beta]/u[0][beta];
             }
 
         // add viscous stress contribution to momentum and energy rhs
-        Physics::viscousRhs( mult, deltat, J, N, grad, u, r, R );
+        Physics::viscousRhs( deltat, J, N, grad, u, r, R );
         // add heat conduction contribution to energy rhs
-        Physics::conductRhs( mult, deltat, J, N, grad, u, r, R );
+        Physics::conductRhs( deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( coord, 0, mult, deltat, J, N, mass, grad, r, u, R );
+        Problem::sourceRhs( t, coord, 0, deltat, J, N, mass, grad, r, u, R );
       }
     }
 
@@ -348,11 +347,15 @@ class CompFlow {
     std::vector< std::string > names() const { return Problem::names(); }
 
     //! Return field output going to file
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] t Physical time
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     output( tk::real t,
+            tk::real,
             const std::array< std::vector< tk::real >, 3 >& coord,
+            const std::vector< tk::real >&,
             const tk::Fields& U ) const
     { return Problem::output( 0, m_offset, t, coord, U ); }
 

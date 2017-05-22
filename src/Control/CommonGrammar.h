@@ -112,6 +112,8 @@ namespace grm {
     PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
+    ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
+    RT_UNFINISHED,      //!< Reyleigh-Taylor unstable configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
@@ -242,6 +244,14 @@ namespace grm {
     { MsgKey::VORTICAL_UNFINISHED, "Specifying the vortical flow test problem "
       "requires the specification of parameters alpha, beta, and p0. The error"
       "is in the block finished above the line above." },
+    { MsgKey::ENERGY_UNFINISHED, "Specifying the nonlinear energy growth test "
+      "problem requires the specification of parameters alpha, betax, betay, "
+      "betaz, ce, kappa, and r0. The error is in the block finished above the "
+      "line above."},
+    { MsgKey::RT_UNFINISHED, "Specifying Reyleigh-Taylor test problem "
+      "requires the specification of parameters alpha, betax, betay, betaz, "
+      "kappa, r0, and p0. The error is in the block finished above the line "
+      "above."},
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
@@ -287,7 +297,7 @@ namespace grm {
       stack.template push_back< tag::error >( ss.str() );
     } else {
       stack.template push_back< tag::error >
-        ( std::string("Unknown parser ") + 
+        ( std::string("Unknown parser ") +
           (type == MsgType::ERROR ? "error" : "warning" ) +
           " with no location information." );
     }

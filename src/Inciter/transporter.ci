@@ -20,9 +20,14 @@ module transporter {
       entry [reductiontarget] void partition();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
-      entry [reductiontarget] void setup();
+      entry [reductiontarget] void coord();
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void vol( tk::real v );
       entry [reductiontarget] void volcomplete();
+      entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
@@ -74,6 +79,15 @@ module transporter {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
+      // MinStat, MaxStat, SumStat, and PdfStat denote different global
+      // reductions used to compute mesh cell statistics. Only when all of these
+      // are completed will they be echoed to screen at once, denoted by Stat.
+      //
+      // Only when both Stat and Vol are completed (this latter computing mesh
+      // nodal volumes) can the setup phase in Carriers continue by setting up
+      // rows, querying boundary conditions, generating particles, outputting
+      // mesh, etc.
+      //
       // The time step is evaluated only if both the diagnostics and the
       // field and particle output have been done by the workers.
       //
@@ -92,10 +106,28 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
+      entry void wait4stat() {
+        when minstat_complete(), maxstat_complete(), sumstat_complete(),
+             pdfstat_complete()
+        serial "stat" {
+          stat(); } };
+
+      entry void wait4setup() {
+        when totalvol_complete(), stat_complete(), vol_complete()
+        serial "setup" {
+          setup(); } };
+
       entry void wait4eval() {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
+      entry void minstat_complete();
+      entry void maxstat_complete();
+      entry void sumstat_complete();
+      entry void pdfstat_complete();
+      entry void totalvol_complete();
+      entry void stat_complete();
+      entry void vol_complete();
       entry void out_complete();
       entry void diag_complete();
     }

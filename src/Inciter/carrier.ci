@@ -34,10 +34,10 @@ module carrier {
                  const tk::UnsMesh::EdgeNodes& edgenodes,
                  int ncarr );
       initnode void registerReducers();
-      entry void vol();
+      entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& V );
-      entry void setup();
+      entry void setup( tk::real v );
       entry void init();
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );

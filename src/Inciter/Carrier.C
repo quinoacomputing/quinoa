@@ -53,6 +53,7 @@ extern std::vector< PDE > g_pdes;
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
 CkReduction::reducerType VerifyBCMerger;
+CkReduction::reducerType PDFMerger;
 
 } // inciter::
 
@@ -73,6 +74,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_lastFieldWriteTime( -1.0 ),
   m_stage( 0 ),
   m_nvol( 0 ),
   m_nhsol( 0 ),
@@ -80,6 +82,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_naec( 0 ),
   m_nalw( 0 ),
   m_nlim( 0 ),
+  m_V( 0.0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
@@ -102,6 +105,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_bid(),
   m_pc(),
@@ -155,20 +159,31 @@ Carrier::Carrier( const TransporterProxy& transporter,
 }
 
 void
-Carrier::vol()
+Carrier::coord()
 // *****************************************************************************
-//  Read mesh node coordinates, sum mesh volumes to nodes, and start
-//  communicating them on chare-boundaries
+//  Read mesh node coordinates and optionally add new edge-nodes in case of
+//  initial uniform refinement
 //! \author J. Bakosi
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
   readCoords();
-
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
   addEdgeNodeCoords();
+  // Compute mesh cell volumes
+  vol();
+  // Compute mesh cell statistics
+  stat();
+}
 
+void
+Carrier::vol()
+// *****************************************************************************
+// Sum mesh volumes to nodes, start communicating them on chare-boundaries
+//! \author J. Bakosi
+// *****************************************************************************
+{
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -202,8 +217,14 @@ Carrier::vol()
                    std::to_string(y[N[3]]) + ", " +
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
+    for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
   }
+
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_v) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
@@ -215,6 +236,81 @@ Carrier::vol()
       for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comvol( n.second, v );
     }
+}
+
+void
+Carrier::stat()
+// *****************************************************************************
+// Compute mesh volume statistics
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
+
+  auto MIN = -std::numeric_limits< tk::real >::max();
+  auto MAX = std::numeric_limits< tk::real >::max();
+  std::array< tk::real, 2 > min = {{ MAX, MAX }};
+  std::array< tk::real, 2 > max = {{ MIN, MIN }};
+  std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
+  tk::UniPDF edgePDF( 1e-4 );
+  tk::UniPDF volPDF( 1e-4 );
+
+  // Compute edge length statistics
+  // Note that while the min and max edge lengths are independent of the number
+  // of CPUs (by the time they are aggregated across all chares), the sum of
+  // the edge lengths and the edge length PDF are not. This is because the
+  // edges on the chare-boundary are counted multiple times and we
+  // conscientiously do not make an effort to precisely compute this, because
+  // that would require communication and more complex logic. Since these
+  // statistics are intended as simple average diagnostics, we ignore these
+  // small differences. For reproducible average edge lengths and edge length
+  // PDFs, run the mesh in serial.
+  for (std::size_t p=0; p<m_gid.size(); ++p)
+    for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
+       const auto dx = x[ m_psup.first[i] ] - x[ p ];
+       const auto dy = y[ m_psup.first[i] ] - y[ p ];
+       const auto dz = z[ m_psup.first[i] ] - z[ p ];
+       const auto length = std::sqrt( dx*dx + dy*dy + dz*dz );
+       if (length < min[0]) min[0] = length;
+       if (length > max[0]) max[0] = length;
+       sum[0] += 1.0;
+       sum[1] += length;
+       edgePDF.add( length );
+    }
+
+  // Compute mesh cell volume statistics
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
+                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }};
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
+    if (L < min[1]) min[1] = L;
+    if (L > max[1]) max[1] = L;
+    sum[2] += 1.0;
+    sum[3] += L;
+    volPDF.add( L );
+  }
+
+  // Contribute to mesh statistics across all Carrier chares
+  contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
+    CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
+  contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
+    CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
+  contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
+
+  // Serialize PDFs to raw stream
+  auto stream = tk::serialize( { edgePDF, volPDF } );
+  // Create Charm++ callback function for reduction of PDFs with
+  // Transporter::pdfstat() as the final target where the results will appear.
+  CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
+  // Contribute serialized PDF of partial sums to host via Charm++ reduction
+  contribute( stream.first, stream.second.get(), PDFMerger, cb );
 }
 
 void
@@ -244,12 +340,15 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::setup()
+Carrier::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
+//! \param[in] v Total mesh volume
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Store total mesh volume
+  m_V = v;
   // Output chare mesh to file
   writeMesh();
   // Send off global row IDs to linear system merger
@@ -425,8 +524,8 @@ Carrier::init()
   // Compute initial time step size
   dt();
 
-  // Output initial conditions to file (time = 0.0)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( 0.0 );
+  // Output initial conditions to file (regardless of whether it was requested)
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
@@ -503,11 +602,9 @@ Carrier::lhs()
 }
 
 void
-Carrier::rhs( tk::real mult, const tk::Fields& sol )
+Carrier::rhs( const tk::Fields& sol )
 // *****************************************************************************
 // Compute right-hand side of transport equations
-//! \param[in] mult Multiplier differentiating the different stages in
-//!    multi-stage time stepping
 //! \param[in] sol Solution vector at current stage
 //! \author J. Bakosi
 // *****************************************************************************
@@ -531,7 +628,11 @@ Carrier::rhs( tk::real mult, const tk::Fields& sol )
 
   // Compute right-hand side vector for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes) eq.rhs( mult, m_dt, m_coord, m_inpoel, sol, r );
+  // Scale dt by 0.5 for first stage in Runge-Kutta 2-stage time stepping only
+  // while computing the right-hand sides
+  if (m_stage < 1) m_dt *= 0.5;
+  for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
+  if (m_stage < 1) m_dt /= 0.5;
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
@@ -678,6 +779,14 @@ Carrier::writeFields( tk::real time )
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Only write if the last time is different than the current one
+  if (std::abs(m_lastFieldWriteTime - time) <
+      std::numeric_limits< tk::real >::epsilon() )
+    return;
+
+  // Save time stamp at which the last field write happened
+  m_lastFieldWriteTime = time;
+
   // Increase field output iteration count
   ++m_itf;
 
@@ -691,7 +800,7 @@ Carrier::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_coord, u );
+    auto o = eq.output( time, m_V, m_coord, m_v, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -937,10 +1046,7 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
   wait4app();
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  if (m_stage < 1)
-    rhs( 0.5, m_u );
-  else
-    rhs( 1.0, m_uf );
+  if (m_stage < 1) rhs( m_u ); else rhs( m_uf );
 }
 
 void
@@ -952,7 +1058,7 @@ Carrier::out()
 {
   // Optionally output field and particle data
   if ( m_stage == 1 &&
-       !(m_it % g_inputdeck.get< tag::interval, tag::field >()) &&
+       !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
@@ -1076,8 +1182,31 @@ Carrier::diagnostics()
     for (const auto& eq : g_pdes)
       eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
 
+    // Prepare for computing diagnostics. Diagnostics are defined as the L2
+    // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
+    // sum_i ( A_i )^2 V_i ], where the sum is taken over all mesh nodes and
+    // V_i is the nodal volume. We send two sets of quantities to the host for
+    // aggregation across the whole mesh: (1) the numerical solutions of all
+    // components of all PDEs, and their error, defined as A_i = (a_i - n_i),
+    // where a_i and n_i are the analytical and numerical solutions at node i,
+    // respectively. We send these to LinSysMerger and the final aggregated
+    // solution will end up in Transporter::diagnostics(). Note that we
+    // weigh/multiply all data here by sqrt(V_i), so that the nodal volumes do
+    // not have to be communicated separately. In LinSysMerger::diagnostics(),
+    // where we collect all contributions from chares on a PE, all data is
+    // squared. LinSysMerger::diagnostics() is where the sums are computed,
+    // then the sums are summed accross the whole problem in
+    // Transporter::diagnostics(), where the final square-root of the L2 norm,
+    // defined above, is taken.
+    for (std::size_t p=0; p<m_u.nunk(); ++p)
+      for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
+        auto r = std::sqrt( m_v[p] );
+        m_ul(p,c,0) = r * m_ul(p,c,0);
+        m_ulf(p,c,0) = r * m_u(p,c,0);
+      }
+
     // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_u, m_ul );
+    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_ulf, m_ul );
 
   } else
     contribute(
@@ -1175,6 +1304,15 @@ Carrier::apply()
 
   // Compute diagnostics, e.g., residuals
   diagnostics();
+
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (m_stage == 1) &&
+       (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
+       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+    writeFields( m_t+m_dt );
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.

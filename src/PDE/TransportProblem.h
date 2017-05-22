@@ -36,7 +36,41 @@
 
 namespace inciter {
 
-//! Transport PDE problem: diffusion of a shear layer
+/*! Transport PDE problem: diffusion of a shear layer
+    \details This class implements the analytical solutions for the test
+    problem, adopted from Okubo Akira Karweit Michael J. , (1969),
+    [DIFFUSION FROM A CONTINUOUS SOURCE IN A UNIFORM SHEAR
+    FLOW](http://onlinelibrary.wiley.com/doi/10.4319/lo.1969.14.4.0514/abstract),
+    Limnology and Oceanography, 14, doi: 10.4319/lo.1969.14.4.0514. In essence,
+    this is a test problem for the advection-diffusion equation in 3D where the
+    analytical solution is known in a closed form as the solution evolves in
+    time. The initial solution is a Gaussian that is advected and diffused in
+    time with an imposed constant-in-time velocity field that features
+    advection and shear. Also, the diffusion coefficients can be different in
+    the three coordinate directions. Note that t0 as well as all three
+    components of the diffusion must be larger than zero at t=t0 to have a
+    well-defined initial condition.
+   
+    In a nutshell, the equation solved is
+    \f[
+      \frac{\partial S}{\partial t} + \left(V_0 + \Omega_y y + \Omega_z z
+      \right) \frac{\partial S}{\partial x} =
+      A_x \frac{\partial^2S}{\partial x^2} +
+      A_y \frac{\partial^2S}{\partial y^2} +
+      A_z \frac{\partial^2S}{\partial z^2}
+    \f]
+    whose solution is given by
+    \f[
+      S(t,x,y,z,) = \frac{1}{8\pi^{3/2}(A_xA_yA_z)^{1/2}t^{3/2}
+                             (1+\phi_3^2t^2)^{1/2}}
+                    \exp\left[ -\frac{x-V_0t-(\Omega_yy+\Omega_zz)^2/2}
+                                     {4A_xt(1+\phi_3^2t^2}
+                               -\frac{y^2}{4A_yt}
+                               -\frac{z^2}{4A_zt} \right]
+    \f]
+    where \f$ \phi_3^2 = (\Omega_y^2A_y/A_x + \Omega_z^2A_z/A_x)/12\f$.
+    See also the paper.
+*/
 class TransportProblemShearDiff {
 
   public:
@@ -51,11 +85,10 @@ class TransportProblemShearDiff {
       ErrChk( ncomp == u0.size(),
         "Wrong number of advection-diffusion PDE parameters 'u0'" );
       const auto& lambda = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
-      ErrChk( ncomp == lambda.size(),
+      ErrChk( 2*ncomp == lambda.size(),
         "Wrong number of advection-diffusion PDE parameters 'lambda'" );
-      const auto& diff =
-        g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
-      ErrChk( ncomp == diff.size(),
+      const auto& d = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
+      ErrChk( 3*ncomp == d.size(),
         "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
     }
 
@@ -77,23 +110,26 @@ class TransportProblemShearDiff {
                       tk::real t )
     {
       const auto& u0 = g_inputdeck.get< tag::param, eq, tag::u0 >()[e];
-      const auto& lambda = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
-      const auto& diff =
-        g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
-      const tk::real X0 = 7200.0;        // x position of source
-      const tk::real t0 = g_inputdeck.get< tag::discr, tag::t0 >(); // initial t
+      const auto& d = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
+      const auto& l = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
       const auto& x = coord[0];
       const auto& y = coord[1];
+      const auto& z = coord[2];
       for (ncomp_t c=0; c<ncomp; ++c) {
-        const auto b = 1.0 + lambda[c]*lambda[c]*t*t/12.0;
-        const auto M =
-          4.0*M_PI*t0*std::sqrt( 1.0 + lambda[c]*lambda[c]*t0*t0/12.0 );
-        for (ncomp_t i=0; i<x.size(); ++i) {
-          tk::real a = x[i] - X0 - u0[c]*t - 0.5*lambda[c]*y[i]*t;
+        const auto li = 2*c;
+        const auto di = 3*c;
+        const auto phi3s = (l[li+0]*l[li+0]*d[di+1]/d[di+0] +
+                            l[li+1]*l[li+1]*d[di+2]/d[di+0]) / 12.0;
+        for (ncomp_t i=0; i<x.size(); ++i)
           unk( i, c, offset ) =
-            M * exp( -a*a/(4.0*M_PI*diff[c]*t*b) - y[i]*y[i]/(4.0*diff[c]*t) )
-              / ( 4.0*M_PI*t*std::sqrt(b) );
-        }
+            1.0 / ( 8.0 * std::pow(M_PI,3.0/2.0) *
+                    std::sqrt(d[di+0]*d[di+1]*d[di+2]) *
+                    std::pow(t,3.0/2.0) * std::sqrt(1.0+phi3s*t*t) ) *
+            exp( -std::pow( x[i] - u0[c]*t -
+                            0.5*(l[li+0]*y[i] -l[li+1]*z[i])*t, 2.0 ) /
+                  ( 4.0 * d[di+0] * t * (1.0 + phi3s*t*t) )
+                 -y[i]*y[i] / ( 4.0 * d[di+1] * t )
+                 -z[i]*z[i] / ( 4.0 * d[di+2] * t ) );
       }
     }
 
@@ -113,15 +149,25 @@ class TransportProblemShearDiff {
                         tk::ctr::ncomp_type ncomp )
     {
       const auto& u0 = g_inputdeck.get< tag::param, eq, tag::u0 >()[e];
-      const auto& lambda = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
+      const auto& l = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
       const auto& y = coord[1];
+      const auto& z = coord[2];
       std::vector< std::array< std::array< tk::real, 4 >, 3 > > vel( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c) {
         std::array< std::array< tk::real, 4 >, 3 > v;
-        v[0][0] = u0[c] + lambda[c]*y[N[0]];  v[1][0] = 0.0;  v[2][0] = 0.0;
-        v[0][1] = u0[c] + lambda[c]*y[N[1]];  v[1][1] = 0.0;  v[2][1] = 0.0;
-        v[0][2] = u0[c] + lambda[c]*y[N[2]];  v[1][2] = 0.0;  v[2][2] = 0.0;
-        v[0][3] = u0[c] + lambda[c]*y[N[3]];  v[1][3] = 0.0;  v[2][3] = 0.0;
+        const auto li = 2*c;
+        v[0][0] = u0[c] + l[li+0]*y[N[0]] + l[li+1]*z[N[0]];
+        v[1][0] = 0.0;
+        v[2][0] = 0.0;
+        v[0][1] = u0[c] + l[li+0]*y[N[1]]+  l[li+1]*z[N[1]];
+        v[1][1] = 0.0;
+        v[2][1] = 0.0;
+        v[0][2] = u0[c] + l[li+0]*y[N[2]] + l[li+1]*z[N[2]];
+        v[1][2] = 0.0;
+        v[2][2] = 0.0;
+        v[0][3] = u0[c] + l[li+0]*y[N[3]] + l[li+1]*z[N[3]];
+        v[1][3] = 0.0;
+        v[2][3] = 0.0;
         vel[c] = std::move(v);
       }
       return vel;
@@ -219,7 +265,7 @@ class TransportProblemSlotCyl {
           // hump
           r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
           if (r<1.0)
-              unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
+            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
           // cylinder
           r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
           const std::array< tk::real, 2 > r1{{ v1x, v1y }},
