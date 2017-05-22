@@ -72,7 +72,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::dir_neu::string(), ProblemType::DIR_NEU },
           { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
           { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
-          { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR }
+          { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
