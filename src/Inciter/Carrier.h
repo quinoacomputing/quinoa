@@ -177,7 +177,7 @@ class Carrier : public CBase_Carrier {
 
     //! \brief Setup rows, query boundary conditions, generate particles, output
     //!    mesh, etc.
-    void setup();
+    void setup( tk::real v );
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
@@ -268,6 +268,7 @@ class Carrier : public CBase_Carrier {
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
+      p | m_V;
       p | m_ncarr;
       p | m_outFilename;
       p | m_transporter;
@@ -322,6 +323,8 @@ class Carrier : public CBase_Carrier {
     tk::real m_t;
     //! Physical time step size
     tk::real m_dt;
+    //! Physical time at which the last field output was written
+    tk::real m_lastFieldWriteTime;
     //! Stage in multi-stage time stepping
     uint8_t m_stage;
     //! \brief Number of chares from which we received nodal volume
@@ -340,6 +343,8 @@ class Carrier : public CBase_Carrier {
     //! \brief Number of chares from which we received limited antidiffusion
     //!   element contributiones on chare boundaries
     std::size_t m_nlim;
+    //! Total mesh volume
+    tk::real m_V;
     //! Total number of carrier chares
     std::size_t m_ncarr;
     //! Output filename

@@ -347,10 +347,13 @@ class CompFlow {
     std::vector< std::string > names() const { return Problem::names(); }
 
     //! Return field output going to file
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] t Physical time
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     output( tk::real t,
+            tk::real,
             const std::array< std::vector< tk::real >, 3 >& coord,
             const std::vector< tk::real >&,
             const tk::Fields& U ) const

@@ -74,6 +74,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_lastFieldWriteTime( -1.0 ),
   m_stage( 0 ),
   m_nvol( 0 ),
   m_nhsol( 0 ),
@@ -81,6 +82,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_naec( 0 ),
   m_nalw( 0 ),
   m_nlim( 0 ),
+  m_V( 0.0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
@@ -218,6 +220,12 @@ Carrier::vol()
     for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
   }
 
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_v) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
     contribute(
@@ -332,12 +340,15 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::setup()
+Carrier::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
+//! \param[in] v Total mesh volume
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Store total mesh volume
+  m_V = v;
   // Output chare mesh to file
   writeMesh();
   // Send off global row IDs to linear system merger
@@ -513,7 +524,7 @@ Carrier::init()
   // Compute initial time step size
   dt();
 
-  // Output initial conditions to file (time = t0)
+  // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
 
   // send progress report to host
@@ -768,6 +779,14 @@ Carrier::writeFields( tk::real time )
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Only write if the last time is different than the current one
+  if (std::abs(m_lastFieldWriteTime - time) <
+      std::numeric_limits< tk::real >::epsilon() )
+    return;
+
+  // Save time stamp at which the last field write happened
+  m_lastFieldWriteTime = time;
+
   // Increase field output iteration count
   ++m_itf;
 
@@ -781,7 +800,7 @@ Carrier::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_coord, m_v, u );
+    auto o = eq.output( time, m_V, m_coord, m_v, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -1039,7 +1058,7 @@ Carrier::out()
 {
   // Optionally output field and particle data
   if ( m_stage == 1 &&
-       !(m_it % g_inputdeck.get< tag::interval, tag::field >()) &&
+       !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
@@ -1285,6 +1304,15 @@ Carrier::apply()
 
   // Compute diagnostics, e.g., residuals
   diagnostics();
+
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (m_stage == 1) &&
+       (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
+       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+    writeFields( m_t+m_dt );
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.

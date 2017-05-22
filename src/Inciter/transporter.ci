@@ -22,6 +22,7 @@ module transporter {
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void vol( tk::real v );
       entry [reductiontarget] void volcomplete();
       entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
@@ -112,7 +113,8 @@ module transporter {
           stat(); } };
 
       entry void wait4setup() {
-        when stat_complete(), vol_complete() serial "setup" {
+        when totalvol_complete(), stat_complete(), vol_complete()
+        serial "setup" {
           setup(); } };
 
       entry void wait4eval() {
@@ -123,6 +125,7 @@ module transporter {
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
+      entry void totalvol_complete();
       entry void stat_complete();
       entry void vol_complete();
       entry void out_complete();

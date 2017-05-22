@@ -342,6 +342,7 @@ class Transport {
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
     //! \param[in] v Nodal volumes
     //! \param[in,out] U Solution vector at recent time step stage
@@ -351,6 +352,7 @@ class Transport {
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
     output( tk::real t,
+            tk::real V,
             const std::array< std::vector< tk::real >, 3 >& coord,
             const std::vector< tk::real >& v,
             tk::Fields& U ) const
@@ -372,7 +374,7 @@ class Transport {
         Assert( u.size() == e.size(), "Size mismatch" );
         Assert( u.size() == v.size(), "Size mismatch" );
         for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i];
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
         out.push_back( e );
       }
       return out;

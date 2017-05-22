@@ -123,6 +123,19 @@ namespace grm {
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
+      // If physics type is advection-diffusion, check for correct number of
+      // advection velocity, shear, and diffusion coefficients
+      if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
+        auto& u0 = stack.template get< tag::param, eq, tag::u0 >();
+        if (u0.back().size() != ncomp.back())  // must define 1 component
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+        auto& diff = stack.template get< tag::param, eq, tag::diffusivity >();
+        if (diff.back().size() != 3*ncomp.back())  // must define 3 components
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+        auto& lambda = stack.template get< tag::param, eq, tag::lambda >();
+        if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+      }
       // If problem type is not given, error out
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())

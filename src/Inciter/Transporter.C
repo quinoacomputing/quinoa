@@ -76,6 +76,7 @@ Transporter::Transporter() :
   m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
+  m_V( 0.0 ),
   m_npoin( 0 ),
   m_minstat( {{ 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0 }} ),
@@ -391,6 +392,18 @@ Transporter::volcomplete()
 }
 
 void
+Transporter::vol( tk::real v )
+// *****************************************************************************
+// Reduction target summing total mesh volume across all workers
+//! \param[in] v mesh volume
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_V = v;
+  totalvol_complete();
+}
+
+void
 Transporter::minstat( tk::real* d, std::size_t n )
 // *****************************************************************************
 // Reduction target yielding minimum mesh statistcs across all workers
@@ -511,7 +524,7 @@ Transporter::setup( )
 {
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_carrier.setup();
+  m_carrier.setup( m_V );
 }
 
 void
@@ -572,7 +585,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
           "Number of diagnostics contributed not equal to expected" );
 
   // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i]);
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i])/m_V;
 
   diag_complete();
 }

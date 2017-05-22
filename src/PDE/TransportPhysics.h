@@ -24,6 +24,7 @@
 #define TransportPhysics_h
 
 #include <limits>
+#include <algorithm>
 
 #include <boost/mpl/vector.hpp>
 
@@ -91,13 +92,14 @@ class TransportPhysicsAdvDiff {
       const auto& diff =
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // add diffusion contribution to right hand side
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        tk::real a = dt * diff[c] * J;
-        for (std::size_t i=0; i<4; ++i)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<3; ++k)
-              R.var(r[c],N[j]) -= a * grad[j][k] * grad[i][k] * u[c][i];
-      }
+      const auto a = dt * J / 6.0;
+      for (ncomp_t c=0; c<ncomp; ++c)
+        for (std::size_t k=0; k<3; ++k) {
+          const auto d = diff[ 3*c+k ];
+          for (std::size_t i=0; i<4; ++i)
+            for (std::size_t j=0; j<4; ++j)
+              R.var(r[c],N[j]) -= a * d * grad[j][k] * grad[i][k] * u[c][i];
+        }
     }
 
     //! Compute the minimum time step size based on the diffusion
@@ -105,24 +107,24 @@ class TransportPhysicsAdvDiff {
     //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this PDE
     //! \param[in] L Characteristic length scale
-    //! \param[in] u Solution at element nodes at recent time step stage
     //! \return Minimum time step size based on diffusion
     static tk::real
     diffusion_dt( tk::ctr::ncomp_type e,
                   tk::ctr::ncomp_type ncomp,
                   tk::real L,
-                  const std::vector< std::array< tk::real, 4 > >& u )
+                  const std::vector< std::array< tk::real, 4 > >& )
     {
       // diffusivities for all components
-      const auto& diff =
+      const auto& df =
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // compute the minimum diffusion time step size across the four nodes
       tk::real mindt = std::numeric_limits< tk::real >::max();
-      for (ncomp_t c=0; c<ncomp; ++c)
-        for (std::size_t j=0; j<4; ++j) {
-          auto dt = L * L * u[c][j] / diff[c];  // dt ~ dx^2/D
-          if (dt < mindt) mindt = dt;
-        }
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        const auto di = 3*c;
+        const auto d = std::max( df[di+2], std::max( df[di+0], df[di+1] ) );
+        const auto dt = L * L / (2.0*d);  // dt ~ dx^2/(2D)
+        if (dt < mindt) mindt = dt;
+      }
       return mindt;
     }
 
