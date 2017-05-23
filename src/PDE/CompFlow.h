@@ -244,7 +244,7 @@ class CompFlow {
         // add heat conduction contribution to energy rhs
         Physics::conductRhs( deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( t, coord, 0, deltat, J, N, mass, grad, r, u, R );
+        Problem::sourceRhs( t, coord, 0, deltat, N, mass, r, R );
       }
     }
 

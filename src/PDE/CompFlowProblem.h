@@ -86,12 +86,9 @@ class CompFlowProblemUserDefined {
                const std::array< std::vector< tk::real >, 3 >&,
                tk::ctr::ncomp_type,
                tk::real,
-               tk::real,
                const std::array< std::size_t, 4 >&,
                const std::array< std::array< tk::real, 4 >, 4 >&,
-               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >&,
-               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& ) {}
 
     //! Return field names to be output to file
@@ -251,12 +248,9 @@ class CompFlowProblemVorticalFlow {
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real dt,
-               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
@@ -523,12 +517,9 @@ class CompFlowProblemNLEnergyGrowth {
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real dt,
-               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
@@ -906,12 +897,9 @@ class CompFlowProblemRayleighTaylor {
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real dt,
-               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
