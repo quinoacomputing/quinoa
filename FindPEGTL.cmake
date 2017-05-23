@@ -30,7 +30,7 @@ endif()
 find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hh
                              HINTS ${PEGTL_ROOT}/include
                                    $ENV{PEGTL_ROOT}
-                             PATH_SUFFIXES pegtl)
+                             PATH_SUFFIXES pegtl tao/pegtl)
 
 set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
 
