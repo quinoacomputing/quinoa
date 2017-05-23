@@ -35,6 +35,8 @@ namespace tk {
 //! Toolkit general purpose grammar definition
 namespace grm {
 
+  using namespace tao;
+
   using ncomp_t = kw::ncomp::info::expect::type;
 
   //! Parser's printer: this should be defined once per library in global-scope
@@ -286,13 +288,13 @@ namespace grm {
     if (msg != message.end()) {
       std::stringstream ss;
       const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
-      auto pos = pegtl::position_info( in );
+      auto pos = pegtl::position( in );
       if (!in.empty()) {
         ss << typestr << " while parsing '" << in.string() << "' at "
-           << pos.line << ',' << pos.column << ". " << msg->second;
+           << pos.line << ',' << pos.byte_in_line << ". " << msg->second;
       } else {
-        ss << typestr << " while parsing at " << pos.line << ',' << pos.column
-           << ". " << msg->second;
+        ss << typestr << " while parsing at " << pos.line << ','
+           << pos.byte_in_line << ". " << msg->second;
       }
       stack.template push_back< tag::error >( ss.str() );
     } else {
@@ -360,7 +362,7 @@ namespace grm {
     Option opt;
     auto value = in.string();
     if (opt.exist(value)) {
-      auto pos = pegtl::position_info( in );
+      auto pos = pegtl::position( in );
       // Emit warning on overwriting a non-default option value. This is
       // slightly inelegant. To be more elegant, we could simply call Message()
       // here, but the warning message can be more customized here (inside of
@@ -375,7 +377,7 @@ namespace grm {
                 << opt.group() << "' option. Overwriting '"
                 << opt.name( stack.template get< tags... >() ) << "' with '"
                 << opt.name( opt.value( value ) ) << "' at "
-                << pos.line << ',' << pos.column << ".\n\n";
+                << pos.line << ',' << pos.byte_in_line << ".\n\n";
       stack.template set< tags... >( opt.value( value ) );
     } else {
       Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );

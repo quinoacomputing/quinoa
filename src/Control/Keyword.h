@@ -20,6 +20,8 @@
 
 namespace kw {
 
+using namespace tao;
+
 //! \brief Keyword alias helper
 //! \details This struct is used to define both a type and a value for a keyword
 //!   alias, which is a single character. Used for command-line arguments, e.g.,
