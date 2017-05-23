@@ -34,6 +34,8 @@
 namespace inciter {
 
 //! Transport equation system of PDEs problem: advection
+//! \details This class is a no-op, consistent with no additional physics needed
+//!   to make the basic implementation in Transport the advection equation.
 class TransportPhysicsAdvection {
 
   public:
