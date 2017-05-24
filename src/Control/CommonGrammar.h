@@ -288,7 +288,7 @@ namespace grm {
     if (msg != message.end()) {
       std::stringstream ss;
       const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
-      auto pos = pegtl::position( in );
+      auto pos = in.position();
       if (!in.empty()) {
         ss << typestr << " while parsing '" << in.string() << "' at "
            << pos.line << ',' << pos.byte_in_line << ". " << msg->second;
