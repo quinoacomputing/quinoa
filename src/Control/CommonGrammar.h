@@ -362,7 +362,7 @@ namespace grm {
     Option opt;
     auto value = in.string();
     if (opt.exist(value)) {
-      auto pos = pegtl::position( in );
+      auto pos = in.position();
       // Emit warning on overwriting a non-default option value. This is
       // slightly inelegant. To be more elegant, we could simply call Message()
       // here, but the warning message can be more customized here (inside of
