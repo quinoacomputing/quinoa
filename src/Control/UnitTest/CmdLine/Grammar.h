@@ -19,6 +19,8 @@ namespace unittest {
 //! UnitTest command line grammar definition
 namespace cmd {
 
+  using namespace tao;
+
   //! \brief Specialization of tk::grm::use for UnitTest's command line parser
   //! \author J. Bakosi
   template< typename keyword >
