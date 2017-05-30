@@ -198,7 +198,7 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-    Assert( J > 0, "Element Jacobian non-positive: PE:" +
+    ErrChk( J > 0, "Element Jacobian non-positive: PE:" +
                    std::to_string(CkMyPe()) + ", node IDs: " +
                    std::to_string(m_gid[N[0]]) + ',' +
                    std::to_string(m_gid[N[1]]) + ',' +
