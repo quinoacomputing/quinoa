@@ -80,7 +80,7 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
   // Create empty tag vector
   std::vector< std::vector< int > > tg;
   tg.resize( n );
-  for (auto& t : tg) t.push_back( 0 );
+  for (auto& t : tg) t.push_back( 1 );
 
   // Write out tetrehadra element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {
@@ -108,7 +108,7 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
   // Create empty tag vector if there is no tag
   tg.clear();
   tg.resize( n );
-  for (auto& t : tg) t.push_back( 0 );
+  for (auto& t : tg) t.push_back( 1 );
 
   // Write out triangle element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {
