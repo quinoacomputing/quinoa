@@ -13,7 +13,6 @@
 #include <istream>
 #include <string>
 #include <vector>
-#include <cstddef>
 
 #include "Types.h"
 #include "Exception.h"

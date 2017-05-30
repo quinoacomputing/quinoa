@@ -11,7 +11,7 @@
 #ifndef ASCMeshReader_h
 #define ASCMeshReader_h
 
-#include <iosfwd>
+#include <string>
 
 #include "Reader.h"
 
