@@ -46,7 +46,7 @@ detectInput( const std::string& filename )
               s.find("HDF") != std::string::npos ) {
     return MeshReader::EXODUSII;
   } else if ( s.find("<?x") != std::string::npos ) {
-    return MeshReader::HYPERMESH;
+    return MeshReader::HYPER;
   } else if ( s.find("*nd") != std::string::npos ) {
     return MeshReader::ASC;
   } else {
@@ -123,7 +123,7 @@ readUnsMesh( const tk::Print& print,
     ExodusIIMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::ASC)
     ASCMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::HYPERMESH)
+  else if (meshtype == MeshReader::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
