@@ -19,8 +19,10 @@
 namespace unittest {
 namespace ctr {
 
+using namespace tao;
+
 //! PEGTL location/position type to use throughout all of UnitTest's parsers
-using Location = pegtl::position_info;
+using Location = pegtl::position;
 
 } // ctr::
 } // unittest::

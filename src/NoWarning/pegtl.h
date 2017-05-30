@@ -21,7 +21,7 @@
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#include <pegtl.hh>
+#include <pegtl.hpp>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

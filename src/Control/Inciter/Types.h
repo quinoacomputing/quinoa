@@ -26,6 +26,8 @@
 namespace inciter {
 namespace ctr {
 
+using namespace tao;
+
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
@@ -139,7 +141,7 @@ using parameters = tk::tuple::tagged_tuple<
 >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers
-using Location = pegtl::position_info;
+using Location = pegtl::position;
 
 } // ctr::
 } // inciter::

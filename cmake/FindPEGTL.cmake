@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find PEGTL
-# \date      Fri 20 Jan 2017 01:13:15 PM MST
+# \date      Fri 26 May 2017 06:41:15 AM MDT
 #
 ################################################################################
 
@@ -27,10 +27,10 @@ if(PEGTL_INCLUDE_DIRS)
   set (PEGTL_FIND_QUIETLY TRUE)
 endif()
 
-find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hh
-                             HINTS ${PEGTL_ROOT}/include
-                                   $ENV{PEGTL_ROOT}
-                             PATH_SUFFIXES pegtl)
+find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hpp
+                            HINTS ${PEGTL_ROOT}/include
+                                  $ENV{PEGTL_ROOT}
+                            PATH_SUFFIXES tao pegtl/include/tao)
 
 set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
 
