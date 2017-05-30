@@ -23,7 +23,8 @@ namespace tk {
 enum class MeshReader : uint8_t { GMSH=0,
                                   NETGEN,
                                   EXODUSII,
-                                  HYPERMESH };
+                                  HYPERMESH,
+                                  ASC };
 
 //! Supported mesh writers
 enum class MeshWriter : uint8_t { GMSH=0,

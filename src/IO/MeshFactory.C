@@ -19,6 +19,7 @@
 #include "NetgenMeshReader.h"
 #include "ExodusIIMeshReader.h"
 #include "HyperMeshReader.h"
+#include "ASCMeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
@@ -46,6 +47,8 @@ detectInput( const std::string& filename )
     return MeshReader::EXODUSII;
   } else if ( s.find("<?x") != std::string::npos ) {
     return MeshReader::HYPERMESH;
+  } else if ( s.find("*nd") != std::string::npos ) {
+    return MeshReader::ASC;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -118,6 +121,8 @@ readUnsMesh( const tk::Print& print,
     NetgenMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReader::ASC)
+    ASCMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::HYPERMESH)
     HyperMeshReader( filename ).readMesh( mesh );
 
