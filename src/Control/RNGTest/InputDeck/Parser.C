@@ -59,8 +59,8 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   tk::grm::g_print.reset( print.save() );
 
   // Parse input file and populate the underlying tagged tuple
-  pegtl::read_parser p( m_filename );
-  p.parse< deck::read_file, tk::grm::action >( id );
+  tao::pegtl::file_input<> in( m_filename );
+  tao::pegtl::parse< deck::read_file, tk::grm::action >( in, id );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );

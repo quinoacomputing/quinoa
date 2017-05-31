@@ -20,6 +20,8 @@
 namespace meshconv {
 namespace ctr {
 
+using namespace tao;
+
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
   tag::input,           std::string,    //!< Input filename
@@ -27,7 +29,7 @@ using ios = tk::tuple::tagged_tuple<
 >;
 
 //! PEGTL location/position type to use throughout all of MeshConv's parsers
-using Location = pegtl::position_info;
+using Location = pegtl::position;
 
 } // ctr::
 } // meshconv::

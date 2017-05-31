@@ -17,6 +17,8 @@ namespace tk {
 //! Toolkit, grammar definition for the Random123 library
 namespace random123 {
 
+  using namespace tao;
+
   // Random123 PEGTL grammar
 
   //! \brief rng: match any one of the Random123 random number generators

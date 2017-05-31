@@ -65,8 +65,8 @@ CmdLineParser::CmdLineParser( int argc,
   tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple
-  pegtl::parse< cmd::read_string, tk::grm::action >
-              ( m_string, "command line", cmd );
+  tao::pegtl::memory_input<> in( m_string, "command line" );
+  tao::pegtl::parse< cmd::read_string, tk::grm::action >( in, cmd );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, cmd.get< tag::error >() );
