@@ -1180,11 +1180,11 @@ void Data_object::test< 23 >() {
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
 }
 
-//! Test tk::Data's operator*=
+//! Test tk::Data's operator*= by Data as rhs
 //! \author J. Bakosi
 template<> template<>
 void Data_object::test< 24 >() {
-  set_test_name( "operator*=" );
+  set_test_name( "operator*= by Data right" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
   tk::Data< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
@@ -1228,11 +1228,11 @@ void Data_object::test< 24 >() {
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
 }
 
-//! Test tk::Data's operator*
+//! Test tk::Data's operator* by Data as rhs
 //! \author J. Bakosi
 template<> template<>
 void Data_object::test< 25 >() {
-  set_test_name( "operator*" );
+  set_test_name( "operator* by Data right" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
   tk::Data< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
@@ -1291,10 +1291,92 @@ void Data_object::test< 25 >() {
          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
 }
 
-//! Test tk::Data's operator/=
+//! Test tk::Data's operator*= by tk::real as rhs
 //! \author J. Bakosi
 template<> template<>
 void Data_object::test< 26 >() {
+  set_test_name( "operator*= by tk::real right" );
+
+  tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::Data< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.4 );
+  e1.fill( 0.3 );
+
+  p1 *= 0.5;
+  e1 *= 4;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator*=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*=() at 0,0 incorrect",
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*=() at 1,0 incorrect",
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*=() at 0,1 incorrect",
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 0, 1 ) );
+}
+
+//! Test tk::Data's operator* by tk::real as rhs
+//! \author J. Bakosi
+template<> template<>
+void Data_object::test< 27 >() {
+  set_test_name( "operator* by tk::real right" );
+
+  tk::Data< tk::UnkEqComp > p1( 3, 2 );
+  tk::Data< tk::EqCompUnk > e1( 3, 2 );
+
+  p1.fill( 0.1 );
+  e1.fill( 0.3 );
+
+  auto p = p1 * 0.2;
+  auto e = e1 * 0.3;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 1 ) );
+
+  // Test the lhs of the multiply stay the same for all template specializations
+  veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+}
+
+
+//! Test tk::Data's operator/=
+//! \author J. Bakosi
+template<> template<>
+void Data_object::test< 28 >() {
   set_test_name( "operator/=" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1342,7 +1424,7 @@ void Data_object::test< 26 >() {
 //! Test tk::Data's operator/
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 27 >() {
+void Data_object::test< 29 >() {
   set_test_name( "operator/" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1402,10 +1484,58 @@ void Data_object::test< 27 >() {
          std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 0, 1 ) );
 }
 
+//! Test tk::Data's operator* by tk::real as lhs
+//! \author J. Bakosi
+template<> template<>
+void Data_object::test< 31 >() {
+  set_test_name( "operator* by tk::real left" );
+
+  tk::Data< tk::UnkEqComp > p1( 3, 2 );
+  tk::Data< tk::EqCompUnk > e1( 3, 2 );
+
+  p1.fill( 0.1 );
+  e1.fill( 0.3 );
+
+  auto p = 0.2 * p1;
+  auto e = 0.3 * e1;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 1 ) );
+
+  // Test the lhs of the multiply stay the same for all template specializations
+  veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+}
+
 //! Test tk::Data's operator min
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 28 >() {
+void Data_object::test< 32 >() {
   set_test_name( "operator min" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1438,7 +1568,7 @@ void Data_object::test< 28 >() {
 //! Test tk::Data's operator max
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 29 >() {
+void Data_object::test< 33 >() {
   set_test_name( "operator max" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1471,7 +1601,7 @@ void Data_object::test< 29 >() {
 //! Test tk::Data's operator==
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 30 >() {
+void Data_object::test< 34 >() {
   set_test_name( "operator==" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1493,7 +1623,7 @@ void Data_object::test< 30 >() {
 //! Test tk::Data's operator!=
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 31 >() {
+void Data_object::test< 35 >() {
   set_test_name( "operator!=" );
 
   tk::Data< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
@@ -1515,7 +1645,7 @@ void Data_object::test< 31 >() {
 //! Test maxdiff between two tk::Data objects
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 32 >() {
+void Data_object::test< 36 >() {
   set_test_name( "maxdiff" );
 
   // Test equal objects with UnkEqComp data layout
@@ -1554,7 +1684,7 @@ void Data_object::test< 32 >() {
 //! Test tk::Data::push_back()
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 33 >() {
+void Data_object::test< 37 >() {
   set_test_name( "push_back" );
 
   // Test with UnkEqComp data layout
@@ -1586,7 +1716,7 @@ void Data_object::test< 33 >() {
 //! Test tk::Data::rm()
 //! \author J. Bakosi
 template<> template<>
-void Data_object::test< 34 >() {
+void Data_object::test< 38 >() {
   set_test_name( "rm" );
 
   // Test with UnkEqComp data layout with a single component

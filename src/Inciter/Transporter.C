@@ -24,6 +24,8 @@
 #include "Transporter.h"
 #include "Fields.h"
 #include "PDEStack.h"
+#include "UniPDF.h"
+#include "PDFWriter.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
@@ -74,7 +76,11 @@ Transporter::Transporter() :
   m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
+  m_V( 0.0 ),
   m_npoin( 0 ),
+  m_minstat( {{ 0.0, 0.0 }} ),
+  m_maxstat( {{ 0.0, 0.0 }} ),
+  m_avgstat( {{ 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
   m_diag( g_inputdeck.get< tag::component >().nprop() * 2, 0.0 ),
@@ -150,6 +156,8 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4stat();
+    wait4setup();
     wait4eval();
 
     // Print I/O filenames
@@ -223,6 +231,7 @@ Transporter::Transporter() :
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
+    m_timer[ TimerTag::MESHREAD ];
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
                                              m_linsysmerger,
                                              m_particlewriter );
@@ -299,6 +308,8 @@ Transporter::partition()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
+  m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
   m_progPart.start( "Partitioning and distributing mesh ..." );
   m_partitioner.partition( m_nchare );
 }
@@ -361,14 +372,15 @@ Transporter::stdCost( tk::real c )
 }
 
 void
-Transporter::setup()
+Transporter::coord()
 // *****************************************************************************
-// Reduction target indicating that all chare groups are ready for workers
+// Reduction target indicating that all chare groups are ready for workers to
+// start reading their mesh node coordinates
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
-  m_carrier.vol();
+  m_carrier.coord();
 }
 
 void
@@ -379,9 +391,143 @@ Transporter::volcomplete()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh ...",
+  vol_complete();
+}
+
+void
+Transporter::vol( tk::real v )
+// *****************************************************************************
+// Reduction target summing total mesh volume across all workers
+//! \param[in] v mesh volume
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_V = v;
+  totalvol_complete();
+}
+
+void
+Transporter::minstat( tk::real* d, std::size_t n )
+// *****************************************************************************
+// Reduction target yielding minimum mesh statistcs across all workers
+//! \param[in] d Minimum mesh statistics collected over all chares
+//! \param[in] n Size of data behind d
+//! \author  J. Bakosi
+// *****************************************************************************
+{
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == m_minstat.size(),
+          "Size of min(stat) must be " + std::to_string(m_minstat.size()) );
+
+  m_minstat[0] = d[0];  // minimum edge length
+  m_minstat[1] = d[1];  // minimum cell volume cubic root
+
+  minstat_complete();
+}
+
+void
+Transporter::maxstat( tk::real* d, std::size_t n )
+// *****************************************************************************
+// Reduction target yielding the maximum mesh statistics across all workers
+//! \param[in] d Maximum mesh statistics collected over all chares
+//! \param[in] n Size of data behind d
+//! \author  J. Bakosi
+// *****************************************************************************
+{
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == m_maxstat.size(),
+          "Size of max(stat) must be " + std::to_string(m_maxstat.size()) );
+
+  m_maxstat[0] = d[0];  // maximum edge length
+  m_maxstat[1] = d[1];  // maximum cell volume cubic root
+
+  maxstat_complete();
+}
+
+void
+Transporter::sumstat( tk::real* d, std::size_t n )
+// *****************************************************************************
+// Reduction target yielding the sum mesh statistics across all workers
+//! \param[in] d Sum mesh statistics collected over all chares
+//! \param[in] n Size of data behind d
+//! \author  J. Bakosi
+// *****************************************************************************
+{
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == 2*m_avgstat.size(),
+          "Size of sum(stat) must be " + std::to_string(2*m_avgstat.size()) );
+
+  m_avgstat[0] = d[1] / d[0];      // average edge length
+  m_avgstat[1] = d[3] / d[2];      // average cell volume cubic root
+
+  sumstat_complete();
+}
+
+void
+Transporter::pdfstat( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target yielding PDF of mesh statistics across all workers
+//! \param[in] msg Serialized PDF
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< tk::UniPDF > pdf;
+
+  // Deserialize final PDF
+  PUP::fromMem creator( msg->getData() );
+  creator | pdf;
+  delete msg;
+
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
+  // Output edgelength PDF
+  pdfe.writeTxt( pdf[0], tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"} } );
+
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfv( "mesh_vol_pdf.txt" );
+  // Output cell volume cubic root PDF
+  pdfv.writeTxt( pdf[1], tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"} } );
+
+  pdfstat_complete();
+}
+
+void
+Transporter::stat( )
+// *****************************************************************************
+// Echo diagnostics mesh statistics
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
+                std::to_string( m_minstat[0] ) + " / " +
+                std::to_string( m_maxstat[0] ) + " / " +
+                std::to_string( m_avgstat[0] ) );
+  m_print.diag( "Mesh statistics: min/max/avg(V^{1/3}) = " +
+                std::to_string( m_minstat[1] ) + " / " +
+                std::to_string( m_maxstat[1] ) + " / " +
+                std::to_string( m_avgstat[1] ) );
+  stat_complete();
+}
+
+void
+Transporter::setup( )
+// *****************************************************************************
+// Start computing row IDs, querying BCs, outputing mesh
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_carrier.setup();
+  m_carrier.setup( m_V );
 }
 
 void
@@ -427,10 +573,10 @@ Transporter::initcomplete()
 void
 Transporter::diagnostics( tk::real* d, std::size_t n )
 // *****************************************************************************
-// Reduction target optionally collecting diagnostics, e.g., residuals, from all
-// Carrier chares
+// Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] d Diagnostics (sums) collected over all chares
 //! \param[in] n Number of diagnostics in array d
+//! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -442,7 +588,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
           "Number of diagnostics contributed not equal to expected" );
 
   // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i])/m_V;
 
   diag_complete();
 }

@@ -26,6 +26,8 @@
 namespace inciter {
 namespace ctr {
 
+using namespace tao;
+
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
@@ -104,6 +106,18 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::beta, std::vector< kw::pde_beta::info::expect::type >,
   //! Parameter vector (for specific, e.g., verification, problems)
+  tag::betax, std::vector< kw::pde_betax::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::betay, std::vector< kw::pde_betay::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::betaz, std::vector< kw::pde_betaz::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::r0, std::vector< kw::pde_r0::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::ce, std::vector< kw::pde_ce::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::kappa, std::vector< kw::pde_kappa::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
   tag::p0, std::vector< kw::pde_p0::info::expect::type >,
   //! Material ID
   tag::id,    std::vector< kw::id::info::expect::type >,
@@ -127,7 +141,7 @@ using parameters = tk::tuple::tagged_tuple<
 >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers
-using Location = pegtl::position_info;
+using Location = pegtl::position;
 
 } // ctr::
 } // inciter::

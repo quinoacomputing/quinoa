@@ -93,13 +93,13 @@ class PDE {
     { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
-    void rhs( tk::real mult,
+    void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( mult, deltat, coord, inpoel, U, R ); }
+    { self->rhs( t, deltat, coord, inpoel, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -129,9 +129,11 @@ class PDE {
     //! Public interface to returning field output
     std::vector< std::vector< tk::real > > output(
       tk::real t,
+      tk::real V,
       const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->output( t, coord, U ); }
+    { return self->output( t, V, coord, v, U ); }
 
     //! Copy assignment
     PDE& operator=( const PDE& x )
@@ -181,7 +183,9 @@ class PDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
+        tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
+        const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
     };
 
@@ -204,13 +208,13 @@ class PDE {
                                  std::vector< std::size_t > >& psup,
                 tk::Fields& lhsd, tk::Fields& lhso ) const override
       { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
-      void rhs( tk::real mult,
+      void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( mult, deltat, coord, inpoel, U, R ); }
+      { data.rhs( t, deltat, coord, inpoel, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
@@ -227,8 +231,11 @@ class PDE {
       std::vector< std::string > names() const override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
+        tk::real V,
         const std::array< std::vector< tk::real >, 3 >& coord,
-        tk::Fields& U ) const override { return data.output( t, coord, U ); }
+        const std::vector< tk::real >& v,
+        tk::Fields& U ) const override
+      { return data.output( t, V, coord, v, U ); }
       T data;
     };
 

@@ -20,7 +20,7 @@ Currently, Quinoa consists of the following tools:
 
    ```
    apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-   apt-get install gmsh pegtl-dev libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+   apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 
 - Mac OS X: (line 1: required, line 2: recommended)
@@ -51,4 +51,4 @@ Currently, Quinoa consists of the following tools:
 
 ## Resources
 
-[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/index.html) - [manifesto](http://quinoacomputing.github.io/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing) - [travis](https://travis-ci.org/quinoacomputing/quinoa) - [codecov](https://codecov.io/gh/quinoacomputing/quinoa/commits) - [gcov](http://quinoacomputing.github.io/coverage.html) - [cppcheck](http://quinoacomputing.github.io/cppcheck/index.html) - [doxygen](http://quinoacomputing.github.io) - [sonarqube](https://sonarqube.com/dashboard?id=quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)
+[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/index.html) - [manifesto](http://quinoacomputing.github.io/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing) - [travis](https://travis-ci.org/quinoacomputing/quinoa) - [codecov](https://codecov.io/gh/quinoacomputing/quinoa/commits) - [gcov](http://quinoacomputing.github.io/coverage.html) - [cppcheck](http://quinoacomputing.github.io/cppcheck/index.html) - [doxygen](http://quinoacomputing.github.io) - [sonarqube](https://sonarqube.com/organizations/quinoacomputing) - [analytics](https://www.openhub.net/p/quinoacomputing) - [cite](https://zenodo.org/badge/latestdoi/38454430)

@@ -110,10 +110,18 @@ class InputDeck :
                                        kw::cfl,
                                        kw::mj,
                                        kw::depvar >;
-    using keywords4 = boost::mpl::set< kw::amr,
+    using keywords4 = boost::mpl::set< kw::nl_energy_growth,
+                                       kw::pde_betax,
+                                       kw::pde_betay,
+                                       kw::pde_betaz,
+                                       kw::pde_ce,
+                                       kw::pde_kappa,
+                                       kw::pde_r0,
+                                       kw::amr,
                                        kw::amr_initial,
-                                       kw::amr_uniform >;
-                                     
+                                       kw::amr_uniform,
+                                       kw::rayleigh_taylor >;
+
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the

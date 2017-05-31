@@ -93,7 +93,7 @@
         // However, if it is defined, it must at least define the static member
         // function description() which returns the description of the type the
         // keyword expects. It may also optionally define the following fields:
-        // 
+        //
         //    - type - defining the expected type
         //    - lower - lower bound of the expected value
         //    - upper - upper bound of the expected value
@@ -146,7 +146,7 @@
 #ifndef Keywords_h
 #define Keywords_h
 
-#include <pegtl/contrib/alphabet.hh>
+#include <pegtl/contrib/alphabet.hpp>
 
 #include "Types.h"
 #include "Keyword.h"
@@ -155,7 +155,7 @@
 //! Keywords used by all input deck and command line parsers
 namespace kw {
 
-using namespace pegtl::alphabet;
+using namespace tao::pegtl::alphabet;
 
 struct title_info {
   static std::string name() { return "title"; }
@@ -171,7 +171,7 @@ struct title_info {
     static std::string description() { return "string"; }
   };
 };
-using title = keyword< title_info, pegtl_string_t("title") >;
+using title = keyword< title_info, TAOCPP_PEGTL_STRING("title") >;
 
 struct end_info {
   static std::string name() { return "end"; }
@@ -181,7 +181,7 @@ struct end_info {
     Example: "rngs ... end".)";
   }
 };
-using end = keyword< end_info, pegtl_string_t("end") >;
+using end = keyword< end_info, TAOCPP_PEGTL_STRING("end") >;
 
 struct help_info {
   static std::string name() { return "help"; }
@@ -196,7 +196,7 @@ struct help_info {
   }
   using alias = Alias< h >;
 };
-using help = keyword< help_info, pegtl_string_t("help") >;
+using help = keyword< help_info, TAOCPP_PEGTL_STRING("help") >;
 
 struct helpctr_info {
   static std::string name() { return "helpctr"; }
@@ -208,7 +208,7 @@ struct helpctr_info {
   }
   using alias = Alias< C >;
 };
-using helpctr = keyword< helpctr_info, pegtl_string_t("helpctr") >;
+using helpctr = keyword< helpctr_info, TAOCPP_PEGTL_STRING("helpctr") >;
 
 struct helpkw_info {
   static std::string name() { return "helpkw"; }
@@ -225,7 +225,7 @@ struct helpkw_info {
     static std::string description() { return "string"; }
   };
 };
-using helpkw = keyword< helpkw_info, pegtl_string_t("helpkw") >;
+using helpkw = keyword< helpkw_info, TAOCPP_PEGTL_STRING("helpkw") >;
 
 struct seed_info {
   static std::string name() { return "seed"; }
@@ -240,7 +240,7 @@ struct seed_info {
     static std::string description() { return "uint"; }
   };
 };
-using seed = keyword< seed_info, pegtl_string_t("seed") >;
+using seed = keyword< seed_info, TAOCPP_PEGTL_STRING("seed") >;
 
 struct mkl_mcg31_info {
   static std::string name() { return "MKL MCG311"; }
@@ -253,7 +253,7 @@ struct mkl_mcg31_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using mkl_mcg31 = keyword< mkl_mcg31_info, pegtl_string_t("mkl_mcg31") >;
+using mkl_mcg31 = keyword< mkl_mcg31_info, TAOCPP_PEGTL_STRING("mkl_mcg31") >;
 
 struct mkl_r250_info {
   static std::string name() { return "MKL R250"; }
@@ -266,7 +266,7 @@ struct mkl_r250_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using mkl_r250 = keyword< mkl_r250_info, pegtl_string_t("mkl_r250") >;
+using mkl_r250 = keyword< mkl_r250_info, TAOCPP_PEGTL_STRING("mkl_r250") >;
 
 struct mkl_mrg32k3a_info {
   static std::string name() { return "MKL MRG32K3A"; }
@@ -281,7 +281,7 @@ struct mkl_mrg32k3a_info {
   }
 };
 using mkl_mrg32k3a =
-  keyword< mkl_mrg32k3a_info, pegtl_string_t("mkl_mrg32k3a") >;
+  keyword< mkl_mrg32k3a_info, TAOCPP_PEGTL_STRING("mkl_mrg32k3a") >;
 
 struct mkl_mcg59_info {
   static std::string name() { return "MKL MCG59"; }
@@ -295,7 +295,7 @@ struct mkl_mcg59_info {
   }
 };
 
-using mkl_mcg59 = keyword< mkl_mcg59_info, pegtl_string_t("mkl_mcg59") >;
+using mkl_mcg59 = keyword< mkl_mcg59_info, TAOCPP_PEGTL_STRING("mkl_mcg59") >;
 
 struct mkl_wh_info {
   static std::string name() { return "MKL WH"; }
@@ -308,7 +308,7 @@ struct mkl_wh_info {
     software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
-using mkl_wh = keyword< mkl_wh_info, pegtl_string_t("mkl_wh") >;
+using mkl_wh = keyword< mkl_wh_info, TAOCPP_PEGTL_STRING("mkl_wh") >;
 
 struct mkl_mt19937_info {
   static std::string name() { return "MKL MT19937"; }
@@ -322,7 +322,7 @@ struct mkl_mt19937_info {
   }
 };
 using mkl_mt19937 =
-  keyword< mkl_mt19937_info, pegtl_string_t("mkl_mt19937") >;
+  keyword< mkl_mt19937_info, TAOCPP_PEGTL_STRING("mkl_mt19937") >;
 
 struct mkl_mt2203_info {
   static std::string name() { return "MKL MT2203"; }
@@ -335,7 +335,7 @@ struct mkl_mt2203_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using mkl_mt2203 = keyword< mkl_mt2203_info, pegtl_string_t("mkl_mt2203") >;
+using mkl_mt2203 = keyword< mkl_mt2203_info, TAOCPP_PEGTL_STRING("mkl_mt2203") >;
 
 struct mkl_sfmt19937_info {
   static std::string name() { return "MKL SFMT19937"; }
@@ -349,7 +349,7 @@ struct mkl_sfmt19937_info {
   }
 };
 using mkl_sfmt19937 =
-  keyword< mkl_sfmt19937_info, pegtl_string_t("mkl_sfmt19937") >;
+  keyword< mkl_sfmt19937_info, TAOCPP_PEGTL_STRING("mkl_sfmt19937") >;
 
 struct mkl_sobol_info {
   static std::string name() { return "MKL SOBOL"; }
@@ -363,7 +363,7 @@ struct mkl_sobol_info {
     software.intel.com/en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
-using mkl_sobol = keyword< mkl_sobol_info, pegtl_string_t("mkl_sobol") >;
+using mkl_sobol = keyword< mkl_sobol_info, TAOCPP_PEGTL_STRING("mkl_sobol") >;
 
 struct mkl_niederr_info {
   static std::string name() { return "MKL NIEDERR"; }
@@ -378,7 +378,7 @@ struct mkl_niederr_info {
     documentation.)";
   }
 };
-using mkl_niederr = keyword< mkl_niederr_info, pegtl_string_t("mkl_niederr") >;
+using mkl_niederr = keyword< mkl_niederr_info, TAOCPP_PEGTL_STRING("mkl_niederr") >;
 
 struct mkl_iabstract_info {
   static std::string name() { return "MKL IABSTRACT"; }
@@ -392,7 +392,7 @@ struct mkl_iabstract_info {
   }
 };
 using mkl_iabstract =
-  keyword< mkl_iabstract_info, pegtl_string_t("mkl_iabstract") >;
+  keyword< mkl_iabstract_info, TAOCPP_PEGTL_STRING("mkl_iabstract") >;
 
 struct mkl_dabstract_info {
   static std::string name() { return "MKL DABSTRACT"; }
@@ -406,7 +406,7 @@ struct mkl_dabstract_info {
   }
 };
 using mkl_dabstract =
-  keyword< mkl_dabstract_info, pegtl_string_t("mkl_dabstract") >;
+  keyword< mkl_dabstract_info, TAOCPP_PEGTL_STRING("mkl_dabstract") >;
 
 struct mkl_sabstract_info {
   static std::string name() { return "MKL SABSTRACT"; }
@@ -420,7 +420,7 @@ struct mkl_sabstract_info {
   }
 };
 using mkl_sabstract =
-  keyword< mkl_sabstract_info, pegtl_string_t("mkl_sabstract") >;
+  keyword< mkl_sabstract_info, TAOCPP_PEGTL_STRING("mkl_sabstract") >;
 
 struct mkl_nondeterm_info {
   static std::string name() { return "MKL NONDETERM"; }
@@ -434,7 +434,7 @@ struct mkl_nondeterm_info {
   }
 };
 using mkl_nondeterm =
-  keyword< mkl_nondeterm_info, pegtl_string_t("mkl_nondeterm") >;
+  keyword< mkl_nondeterm_info, TAOCPP_PEGTL_STRING("mkl_nondeterm") >;
 
 struct standard_info {
   static std::string name() { return "standard"; }
@@ -448,7 +448,7 @@ struct standard_info {
     kernel-library-documentation.)";
   }
 };
-using standard = keyword< standard_info, pegtl_string_t("standard") >;
+using standard = keyword< standard_info, TAOCPP_PEGTL_STRING("standard") >;
 
 struct accurate_info {
   static std::string name() { return "accurate"; }
@@ -462,7 +462,7 @@ struct accurate_info {
     kernel-library-documentation.)";
   }
 };
-using accurate = keyword< accurate_info, pegtl_string_t("accurate") >;
+using accurate = keyword< accurate_info, TAOCPP_PEGTL_STRING("accurate") >;
 
 struct uniform_method_info {
   static std::string name() { return "uniform method"; }
@@ -484,7 +484,7 @@ struct uniform_method_info {
   };
 };
 using uniform_method =
-  keyword< uniform_method_info, pegtl_string_t("uniform_method") >;
+  keyword< uniform_method_info, TAOCPP_PEGTL_STRING("uniform_method") >;
 
 struct boxmuller_info {
   static std::string name() { return "Box-Muller"; }
@@ -498,7 +498,7 @@ struct boxmuller_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using boxmuller = keyword< boxmuller_info, pegtl_string_t("boxmuller") >;
+using boxmuller = keyword< boxmuller_info, TAOCPP_PEGTL_STRING("boxmuller") >;
 
 struct boxmuller2_info {
   static std::string name() { return "Box-Muller 2"; }
@@ -511,7 +511,7 @@ struct boxmuller2_info {
     en-us/articles/intel-math-kernel-library-documentation.)";
   }
 };
-using boxmuller2 = keyword< boxmuller2_info, pegtl_string_t("boxmuller2") >;
+using boxmuller2 = keyword< boxmuller2_info, TAOCPP_PEGTL_STRING("boxmuller2") >;
 
 struct icdf_info {
   static std::string name() { return "ICDF"; }
@@ -525,7 +525,7 @@ struct icdf_info {
     library-documentation.)";
   }
 };
-using icdf = keyword< icdf_info, pegtl_string_t("icdf") >;
+using icdf = keyword< icdf_info, TAOCPP_PEGTL_STRING("icdf") >;
 
 struct gaussian_method_info {
   static std::string name() { return "Gaussian method"; }
@@ -548,7 +548,7 @@ struct gaussian_method_info {
   };
 };
 using gaussian_method =
-  keyword< gaussian_method_info, pegtl_string_t("gaussian_method") >;
+  keyword< gaussian_method_info, TAOCPP_PEGTL_STRING("gaussian_method") >;
 
 struct cja_info {
   static std::string name() { return "CJA"; }
@@ -562,7 +562,7 @@ struct cja_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using cja = keyword< cja_info, pegtl_string_t("cja") >;
+using cja = keyword< cja_info, TAOCPP_PEGTL_STRING("cja") >;
 
 struct cja_accurate_info {
   static std::string name() { return "CJA accurate"; }
@@ -576,7 +576,7 @@ struct cja_accurate_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using cja_accurate = keyword< cja_accurate_info, pegtl_string_t("cja_accurate") >;
+using cja_accurate = keyword< cja_accurate_info, TAOCPP_PEGTL_STRING("cja_accurate") >;
 
 struct beta_method_info {
   static std::string name() { return "Beta method"; }
@@ -598,7 +598,7 @@ struct beta_method_info {
   };
 };
 using beta_method =
-  keyword< beta_method_info, pegtl_string_t("beta_method") >;
+  keyword< beta_method_info, TAOCPP_PEGTL_STRING("beta_method") >;
 
 struct rngsse_gm19_info {
   static std::string name() { return "RNGSSE GM19"; }
@@ -612,7 +612,7 @@ struct rngsse_gm19_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm19 = keyword< rngsse_gm19_info, pegtl_string_t("rngsse_gm19") >;
+using rngsse_gm19 = keyword< rngsse_gm19_info, TAOCPP_PEGTL_STRING("rngsse_gm19") >;
 
 struct rngsse_gm29_info {
   static std::string name() { return "RNGSSE GM29"; }
@@ -626,7 +626,7 @@ struct rngsse_gm29_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm29 = keyword< rngsse_gm29_info, pegtl_string_t("rngsse_gm29") >;
+using rngsse_gm29 = keyword< rngsse_gm29_info, TAOCPP_PEGTL_STRING("rngsse_gm29") >;
 
 struct rngsse_gm31_info {
   static std::string name() { return "RNGSSE GM31"; }
@@ -640,7 +640,7 @@ struct rngsse_gm31_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm31 = keyword< rngsse_gm31_info, pegtl_string_t("rngsse_gm31") >;
+using rngsse_gm31 = keyword< rngsse_gm31_info, TAOCPP_PEGTL_STRING("rngsse_gm31") >;
 
 struct rngsse_gm55_info {
   static std::string name() { return "RNGSSE GM55"; }
@@ -654,7 +654,7 @@ struct rngsse_gm55_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm55 = keyword< rngsse_gm55_info, pegtl_string_t("rngsse_gm55") >;
+using rngsse_gm55 = keyword< rngsse_gm55_info, TAOCPP_PEGTL_STRING("rngsse_gm55") >;
 
 struct rngsse_gm61_info {
   static std::string name() { return "RNGSSE GM61"; }
@@ -668,7 +668,7 @@ struct rngsse_gm61_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using rngsse_gm61 = keyword< rngsse_gm61_info, pegtl_string_t("rngsse_gm61") >;
+using rngsse_gm61 = keyword< rngsse_gm61_info, TAOCPP_PEGTL_STRING("rngsse_gm61") >;
 
 struct rngsse_gq581_info {
   static std::string name() { return "RNGSSE GQ58.1"; }
@@ -683,7 +683,7 @@ struct rngsse_gq581_info {
   }
 };
 using rngsse_gq581 =
-  keyword< rngsse_gq581_info, pegtl_string_t("rngsse_gq58.1") >;
+  keyword< rngsse_gq581_info, TAOCPP_PEGTL_STRING("rngsse_gq58.1") >;
 
 struct rngsse_gq583_info {
   static std::string name() { return "RNGSSE GQ58.3"; }
@@ -698,7 +698,7 @@ struct rngsse_gq583_info {
   }
 };
 using rngsse_gq583 =
-  keyword< rngsse_gq583_info, pegtl_string_t("rngsse_gq58.3") >;
+  keyword< rngsse_gq583_info, TAOCPP_PEGTL_STRING("rngsse_gq58.3") >;
 
 struct rngsse_gq584_info {
   static std::string name() { return "RNGSSE GQ58.4"; }
@@ -713,7 +713,7 @@ struct rngsse_gq584_info {
   }
 };
 using rngsse_gq584 =
-  keyword< rngsse_gq584_info, pegtl_string_t("rngsse_gq58.4") >;
+  keyword< rngsse_gq584_info, TAOCPP_PEGTL_STRING("rngsse_gq58.4") >;
 
 struct rngsse_mt19937_info {
   static std::string name() { return "RNGSSE MT19937"; }
@@ -726,7 +726,7 @@ struct rngsse_mt19937_info {
   }
 };
 using rngsse_mt19937 =
-  keyword< rngsse_mt19937_info, pegtl_string_t("rngsse_mt19937") >;
+  keyword< rngsse_mt19937_info, TAOCPP_PEGTL_STRING("rngsse_mt19937") >;
 
 struct rngsse_lfsr113_info {
   static std::string name() { return "RNGSSE LSFR113"; }
@@ -739,7 +739,7 @@ struct rngsse_lfsr113_info {
   }
 };
 using rngsse_lfsr113 =
-  keyword< rngsse_lfsr113_info, pegtl_string_t("rngsse_lfsr113") >;
+  keyword< rngsse_lfsr113_info, TAOCPP_PEGTL_STRING("rngsse_lfsr113") >;
 
 struct rngsse_mrg32k3a_info {
   static std::string name() { return "RNGSSE MRG32K3A"; }
@@ -753,7 +753,7 @@ struct rngsse_mrg32k3a_info {
   }
 };
 using rngsse_mrg32k3a =
-  keyword< rngsse_mrg32k3a_info, pegtl_string_t("rngsse_mrg32k3a") >;
+  keyword< rngsse_mrg32k3a_info, TAOCPP_PEGTL_STRING("rngsse_mrg32k3a") >;
 
 struct seq_short_info {
   static std::string name() { return "short"; }
@@ -766,7 +766,7 @@ struct seq_short_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using seq_short = keyword< seq_short_info, pegtl_string_t("short") >;
+using seq_short = keyword< seq_short_info, TAOCPP_PEGTL_STRING("short") >;
 
 struct seq_med_info {
   static std::string name() { return "medium"; }
@@ -779,7 +779,7 @@ struct seq_med_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using seq_med = keyword< seq_med_info, pegtl_string_t("medium") >;
+using seq_med = keyword< seq_med_info, TAOCPP_PEGTL_STRING("medium") >;
 
 struct seq_long_info {
   static std::string name() { return "long"; }
@@ -792,7 +792,7 @@ struct seq_long_info {
     http://dx.doi.org/10.1016/j.cpc.2011.03.022.)";
   }
 };
-using seq_long = keyword< seq_long_info, pegtl_string_t("long") >;
+using seq_long = keyword< seq_long_info, TAOCPP_PEGTL_STRING("long") >;
 
 struct seqlen_info {
   static std::string name() { return "RNGSSE2 sequence length"; }
@@ -813,7 +813,7 @@ struct seqlen_info {
     }
   };
 };
-using seqlen = keyword< seqlen_info, pegtl_string_t("seqlen") >;
+using seqlen = keyword< seqlen_info, TAOCPP_PEGTL_STRING("seqlen") >;
 
 struct r123_threefry_info {
   static std::string name() { return "Random123 ThreeFry"; }
@@ -827,7 +827,7 @@ struct r123_threefry_info {
   }
 };
 using r123_threefry =
-  keyword< r123_threefry_info, pegtl_string_t("r123_threefry") >;
+  keyword< r123_threefry_info, TAOCPP_PEGTL_STRING("r123_threefry") >;
 
 struct r123_philox_info {
   static std::string name() { return "Random123 Philox"; }
@@ -841,7 +841,7 @@ struct r123_philox_info {
   }
 };
 using r123_philox =
-  keyword< r123_philox_info, pegtl_string_t("r123_philox") >;
+  keyword< r123_philox_info, TAOCPP_PEGTL_STRING("r123_philox") >;
 
 struct pdfs_info {
   static std::string name() { return "PDFs block"; }
@@ -858,7 +858,7 @@ struct pdfs_info {
     doc/pages/statistics_output.dox.)";
   }
 };
-using pdfs = keyword< pdfs_info, pegtl_string_t("pdfs") >;
+using pdfs = keyword< pdfs_info, TAOCPP_PEGTL_STRING("pdfs") >;
 
 struct txt_info {
   static std::string name() { return "txt"; }
@@ -872,7 +872,7 @@ struct txt_info {
     For more info on the structure of the pdfs ... end block, see
     doc/pages/statistics_output.dox.)"; }
 };
-using txt = keyword< txt_info, pegtl_string_t("txt") >;
+using txt = keyword< txt_info, TAOCPP_PEGTL_STRING("txt") >;
 
 struct gmshtxt_info {
   static std::string name() { return "gmshtxt"; }
@@ -887,7 +887,7 @@ struct gmshtxt_info {
     the pdfs ... end block, see doc/pages/statistics_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
-using gmshtxt = keyword< gmshtxt_info, pegtl_string_t("gmshtxt") >;
+using gmshtxt = keyword< gmshtxt_info, TAOCPP_PEGTL_STRING("gmshtxt") >;
 
 struct gmshbin_info {
   static std::string name() { return "gmshbin"; }
@@ -902,7 +902,7 @@ struct gmshbin_info {
     the pdfs ... end block, see doc/pages/statistics_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
-using gmshbin = keyword< gmshbin_info, pegtl_string_t("gmshbin") >;
+using gmshbin = keyword< gmshbin_info, TAOCPP_PEGTL_STRING("gmshbin") >;
 
 struct exodusii_info {
   static std::string name() { return "exo"; }
@@ -919,7 +919,7 @@ struct exodusii_info {
     http://sourceforge.net/projects/exodusii.)";
   }
 };
-using exodusii = keyword< exodusii_info, pegtl_string_t("exodusii") >;
+using exodusii = keyword< exodusii_info, TAOCPP_PEGTL_STRING("exodusii") >;
 
 struct filetype_info {
   static std::string name() { return "filetype"; }
@@ -943,7 +943,7 @@ struct filetype_info {
   };
 
 };
-using pdf_filetype = keyword< filetype_info, pegtl_string_t("filetype") >;
+using pdf_filetype = keyword< filetype_info, TAOCPP_PEGTL_STRING("filetype") >;
 
 struct overwrite_info {
   static std::string name() { return "overwrite"; }
@@ -959,7 +959,7 @@ struct overwrite_info {
     'evolution'. For more info on the structure of the pdfs ... end block,
     see doc/pages/statistics_output.dox.)"; }
 };
-using overwrite = keyword< overwrite_info, pegtl_string_t("overwrite") >;
+using overwrite = keyword< overwrite_info, TAOCPP_PEGTL_STRING("overwrite") >;
 
 struct multiple_info {
   static std::string name() { return "multiple"; }
@@ -975,7 +975,7 @@ struct multiple_info {
     info on the structure of the pdfs ... end block, see
     doc/pages/statistics_output.dox.)"; }
 };
-using multiple = keyword< multiple_info, pegtl_string_t("multiple") >;
+using multiple = keyword< multiple_info, TAOCPP_PEGTL_STRING("multiple") >;
 
 struct evolution_info {
   static std::string name() { return "evolution"; }
@@ -993,7 +993,7 @@ struct evolution_info {
     doc/pages/statistics_output.dox.)";
   }
 };
-using evolution = keyword< evolution_info, pegtl_string_t("evolution") >;
+using evolution = keyword< evolution_info, TAOCPP_PEGTL_STRING("evolution") >;
 
 struct policy_info {
   static std::string name() { return "policy"; }
@@ -1016,7 +1016,7 @@ struct policy_info {
     }
   };
 };
-using pdf_policy = keyword< policy_info, pegtl_string_t("policy") >;
+using pdf_policy = keyword< policy_info, TAOCPP_PEGTL_STRING("policy") >;
 
 struct txt_float_default_info {
   static std::string name() { return "default"; }
@@ -1031,7 +1031,7 @@ struct txt_float_default_info {
     http://en.cppreference.com/w/cpp/io/manip/fixed.)";
   }
 };
-using txt_float_default = keyword< txt_float_default_info, pegtl_string_t("default") >;
+using txt_float_default = keyword< txt_float_default_info, TAOCPP_PEGTL_STRING("default") >;
 
 struct txt_float_scientific_info {
   static std::string name() { return "scientific"; }
@@ -1047,7 +1047,7 @@ struct txt_float_scientific_info {
   }
 };
 using txt_float_scientific =
-  keyword< txt_float_scientific_info, pegtl_string_t("scientific") >;
+  keyword< txt_float_scientific_info, TAOCPP_PEGTL_STRING("scientific") >;
 
 struct txt_float_fixed_info {
   static std::string name() { return "fixed"; }
@@ -1062,7 +1062,7 @@ struct txt_float_fixed_info {
     http://en.cppreference.com/w/cpp/io/manip/fixed.)";
   }
 };
-using txt_float_fixed = keyword< txt_float_fixed_info, pegtl_string_t("fixed") >;
+using txt_float_fixed = keyword< txt_float_fixed_info, TAOCPP_PEGTL_STRING("fixed") >;
 
 struct txt_float_format_info {
   static std::string name() { return "float format"; }
@@ -1084,7 +1084,7 @@ struct txt_float_format_info {
     }
   };
 };
-using txt_float_format = keyword< txt_float_format_info, pegtl_string_t("format") >;
+using txt_float_format = keyword< txt_float_format_info, TAOCPP_PEGTL_STRING("format") >;
 
 struct precision_info {
   static std::string name() { return "precision"; }
@@ -1112,7 +1112,7 @@ struct precision_info {
     }
   };
 };
-using precision = keyword< precision_info, pegtl_string_t("precision") >;
+using precision = keyword< precision_info, TAOCPP_PEGTL_STRING("precision") >;
 
 struct elem_info {
   static std::string name() { return "elem"; }
@@ -1126,7 +1126,7 @@ struct elem_info {
     are 'elem' and 'node', denoting cell-centered and point-centered output,
     respectively.)"; }
 };
-using elem = keyword< elem_info, pegtl_string_t("elem") >;
+using elem = keyword< elem_info, TAOCPP_PEGTL_STRING("elem") >;
 
 struct node_info {
   static std::string name() { return "node"; }
@@ -1140,7 +1140,7 @@ struct node_info {
     and 'node', denoting cell-centered and point-centered output,
     respectively.)"; }
 };
-using node = keyword< node_info, pegtl_string_t("node") >;
+using node = keyword< node_info, TAOCPP_PEGTL_STRING("node") >;
 
 struct centering_info {
   static std::string name() { return "centering"; }
@@ -1162,7 +1162,7 @@ struct centering_info {
     }
   };
 };
-using pdf_centering = keyword< centering_info, pegtl_string_t("centering") >;
+using pdf_centering = keyword< centering_info, TAOCPP_PEGTL_STRING("centering") >;
 
 struct raw_info {
   using code = Code< R >;
@@ -1178,7 +1178,7 @@ struct raw_info {
     differently depending on the particular equation or physical model. See the
     the init policies in DiffEq/InitPolicy.h for valid options.)"; }
 };
-using raw = keyword< raw_info, pegtl_string_t("raw") >;
+using raw = keyword< raw_info, TAOCPP_PEGTL_STRING("raw") >;
 
 struct zero_info {
   using code = Code< Z >;
@@ -1194,7 +1194,7 @@ struct zero_info {
     depending on the particular equation or physical model. See the init
     policies in DiffEq/InitPolicy.h for valid options.)"; }
 };
-using zero = keyword< zero_info, pegtl_string_t("zero") >;
+using zero = keyword< zero_info, TAOCPP_PEGTL_STRING("zero") >;
 
 struct jointdelta_info {
   using code = Code< D >;
@@ -1216,7 +1216,7 @@ struct jointdelta_info {
     and 0.7, respectively. Note that the sum of the heights must add up to
     unity. See also the help on keyword spike.)"; }
 };
-using jointdelta = keyword< jointdelta_info, pegtl_string_t("jointdelta") >;
+using jointdelta = keyword< jointdelta_info, TAOCPP_PEGTL_STRING("jointdelta") >;
 
 struct jointbeta_info {
   using code = Code< B >;
@@ -1236,7 +1236,7 @@ struct jointbeta_info {
     marginal univariate beta distributions.)";
   }
 };
-using jointbeta = keyword< jointbeta_info, pegtl_string_t("jointbeta") >;
+using jointbeta = keyword< jointbeta_info, TAOCPP_PEGTL_STRING("jointbeta") >;
 
 struct init_info {
   using code = Code< i >;
@@ -1261,7 +1261,7 @@ struct init_info {
     }
   };
 };
-using init = keyword< init_info, pegtl_string_t("init") >;
+using init = keyword< init_info, TAOCPP_PEGTL_STRING("init") >;
 
 struct const_info {
   using code = Code< C >;
@@ -1277,7 +1277,7 @@ struct const_info {
     unchanged during time integration. Note that this option may behave
     differently depending on the particular equation or physical model.)"; }
 };
-using constant = keyword< const_info, pegtl_string_t("const") >;
+using constant = keyword< const_info, TAOCPP_PEGTL_STRING("const") >;
 
 struct decay_info {
   using code = Code< D >;
@@ -1295,7 +1295,7 @@ struct decay_info {
     option may behave differently depending on the particular equation or
     physical model.)"; }
 };
-using decay = keyword< decay_info, pegtl_string_t("decay") >;
+using decay = keyword< decay_info, TAOCPP_PEGTL_STRING("decay") >;
 
 struct homdecay_info {
   using code = Code< H >;
@@ -1318,7 +1318,7 @@ struct homdecay_info {
     during time integration. Note that this option may behave differently
     depending on the particular equation or physical model.)"; }
 };
-using homdecay = keyword< homdecay_info, pegtl_string_t("homdecay") >;
+using homdecay = keyword< homdecay_info, TAOCPP_PEGTL_STRING("homdecay") >;
 
 struct montecarlo_homdecay_info {
   using code = Code< M >;
@@ -1343,7 +1343,7 @@ struct montecarlo_homdecay_info {
     physical model.)"; }
 };
 using montecarlo_homdecay =
-  keyword< montecarlo_homdecay_info, pegtl_string_t("montecarlo_homdecay") >;
+  keyword< montecarlo_homdecay_info, TAOCPP_PEGTL_STRING("montecarlo_homdecay") >;
 
 struct hydrotimescale_info {
   using code = Code< T >;
@@ -1370,7 +1370,7 @@ struct hydrotimescale_info {
     physical model.)"; }
 };
 using hydrotimescale =
-  keyword< hydrotimescale_info, pegtl_string_t("hydrotimescale") >;
+  keyword< hydrotimescale_info, TAOCPP_PEGTL_STRING("hydrotimescale") >;
 
 struct coeff_info {
   using code = Code< c >;
@@ -1392,7 +1392,7 @@ struct coeff_info {
     }
   };
 };
-using coeff = keyword< coeff_info,  pegtl_string_t("coeff") >;
+using coeff = keyword< coeff_info,  TAOCPP_PEGTL_STRING("coeff") >;
 
 struct walker_info {
   static std::string name() { return "walker"; }
@@ -1407,7 +1407,7 @@ struct walker_info {
     and its statistics.)";
   }
 };
-using walker = keyword< walker_info, pegtl_string_t("walker") >;
+using walker = keyword< walker_info, TAOCPP_PEGTL_STRING("walker") >;
 
 struct npar_info {
   static std::string name() { return "npar"; }
@@ -1423,7 +1423,7 @@ struct npar_info {
     static std::string description() { return "uint"; }
   };
 };
-using npar = keyword< npar_info, pegtl_string_t("npar") >;
+using npar = keyword< npar_info, TAOCPP_PEGTL_STRING("npar") >;
 
 struct nstep_info {
   static std::string name() { return "nstep"; }
@@ -1442,7 +1442,7 @@ struct nstep_info {
     static std::string description() { return "uint"; }
   };
 };
-using nstep = keyword< nstep_info, pegtl_string_t("nstep") >;
+using nstep = keyword< nstep_info, TAOCPP_PEGTL_STRING("nstep") >;
 
 struct term_info {
   static std::string name() { return "term"; }
@@ -1461,7 +1461,7 @@ struct term_info {
     static std::string description() { return "real"; }
   };
 };
-using term = keyword< term_info, pegtl_string_t("term") >;
+using term = keyword< term_info, TAOCPP_PEGTL_STRING("term") >;
 
 struct t0_info {
   static std::string name() { return "t0"; }
@@ -1476,7 +1476,7 @@ struct t0_info {
     static std::string description() { return "real"; }
   };
 };
-using t0 = keyword< t0_info, pegtl_string_t("t0") >;
+using t0 = keyword< t0_info, TAOCPP_PEGTL_STRING("t0") >;
 
 struct dt_info {
   static std::string name() { return "dt"; }
@@ -1493,7 +1493,7 @@ struct dt_info {
     static std::string description() { return "real"; }
   };
 };
-using dt = keyword< dt_info, pegtl_string_t("dt") >;
+using dt = keyword< dt_info, TAOCPP_PEGTL_STRING("dt") >;
 
 struct cfl_info {
   static std::string name() { return "CFL"; }
@@ -1510,7 +1510,7 @@ struct cfl_info {
     static std::string description() { return "real"; }
   };
 };
-using cfl = keyword< cfl_info, pegtl_string_t("cfl") >;
+using cfl = keyword< cfl_info, TAOCPP_PEGTL_STRING("cfl") >;
 
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
@@ -1526,7 +1526,7 @@ struct ncomp_info {
     static std::string description() { return "uint"; }
   };
 };
-using ncomp = keyword< ncomp_info,  pegtl_string_t("ncomp") >;
+using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
 
 struct ttyi_info {
   static std::string name() { return "ttyi"; }
@@ -1542,7 +1542,7 @@ struct ttyi_info {
     static std::string description() { return "uint"; }
   };
 };
-using ttyi = keyword< ttyi_info, pegtl_string_t("ttyi") >;
+using ttyi = keyword< ttyi_info, TAOCPP_PEGTL_STRING("ttyi") >;
 
 struct interval_info {
   static std::string name() { return "interval"; }
@@ -1558,7 +1558,7 @@ struct interval_info {
     static std::string description() { return "uint"; }
   };
 };
-using interval = keyword< interval_info, pegtl_string_t("interval") >;
+using interval = keyword< interval_info, TAOCPP_PEGTL_STRING("interval") >;
 
 struct statistics_info {
   static std::string name() { return "statistics"; }
@@ -1572,7 +1572,7 @@ struct statistics_info {
     statistics ... end block, see doc/pages/statistics_output.dox.)";
   }
 };
-using statistics = keyword< statistics_info, pegtl_string_t("statistics") >;
+using statistics = keyword< statistics_info, TAOCPP_PEGTL_STRING("statistics") >;
 
 struct plotvar_info {
   static std::string name() { return "plotvar"; }
@@ -1583,7 +1583,7 @@ struct plotvar_info {
     list and settings of requested field output.)";
   }
 };
-using plotvar = keyword< plotvar_info, pegtl_string_t("plotvar") >;
+using plotvar = keyword< plotvar_info, TAOCPP_PEGTL_STRING("plotvar") >;
 
 struct rngs_info {
   static std::string name() { return "rngs"; }
@@ -1598,7 +1598,7 @@ struct rngs_info {
     doc/pages/rngs_input.dox.)";
   }
 };
-using rngs = keyword< rngs_info, pegtl_string_t("rngs") >;
+using rngs = keyword< rngs_info, TAOCPP_PEGTL_STRING("rngs") >;
 
 struct rng_info {
   static std::string name() { return "rng"; }
@@ -1653,7 +1653,7 @@ struct rng_info {
     }
   };
 };
-using rng = keyword< rng_info, pegtl_string_t("rng") >;
+using rng = keyword< rng_info, TAOCPP_PEGTL_STRING("rng") >;
 
 struct sde_omega_info {
   static std::string name() { return "omega"; }
@@ -1669,7 +1669,7 @@ struct sde_omega_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_omega = keyword< sde_omega_info, pegtl_string_t("omega") >;
+using sde_omega = keyword< sde_omega_info, TAOCPP_PEGTL_STRING("omega") >;
 
 struct sde_b_info {
   static std::string name() { return "b"; }
@@ -1685,7 +1685,7 @@ struct sde_b_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_b = keyword< sde_b_info,  pegtl_string_t("b") >;
+using sde_b = keyword< sde_b_info,  TAOCPP_PEGTL_STRING("b") >;
 
 struct sde_S_info {
   static std::string name() { return "S"; }
@@ -1701,7 +1701,7 @@ struct sde_S_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_S = keyword< sde_S_info,  pegtl_string_t("S") >;
+using sde_S = keyword< sde_S_info,  TAOCPP_PEGTL_STRING("S") >;
 
 struct sde_kappa_info {
   static std::string name() { return "kappa"; }
@@ -1717,7 +1717,7 @@ struct sde_kappa_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_kappa = keyword< sde_kappa_info,  pegtl_string_t("kappa") >;
+using sde_kappa = keyword< sde_kappa_info,  TAOCPP_PEGTL_STRING("kappa") >;
 
 struct sde_bprime_info {
   static std::string name() { return "bprime"; }
@@ -1733,7 +1733,7 @@ struct sde_bprime_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_bprime = keyword< sde_bprime_info,  pegtl_string_t("bprime") >;
+using sde_bprime = keyword< sde_bprime_info,  TAOCPP_PEGTL_STRING("bprime") >;
 
 struct sde_kappaprime_info {
   static std::string name() { return "kappaprime"; }
@@ -1750,7 +1750,7 @@ struct sde_kappaprime_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_kappaprime = keyword< sde_kappaprime_info,  pegtl_string_t("kappaprime") >;
+using sde_kappaprime = keyword< sde_kappaprime_info,  TAOCPP_PEGTL_STRING("kappaprime") >;
 
 struct sde_c_info {
   static std::string name() { return "c"; }
@@ -1766,7 +1766,7 @@ struct sde_c_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_c = keyword< sde_c_info,  pegtl_string_t("c") >;
+using sde_c = keyword< sde_c_info,  TAOCPP_PEGTL_STRING("c") >;
 
 struct sde_sigmasq_info {
   static std::string name() { return "sigmasq"; }
@@ -1783,7 +1783,7 @@ struct sde_sigmasq_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_sigmasq = keyword< sde_sigmasq_info, pegtl_string_t("sigmasq") >;
+using sde_sigmasq = keyword< sde_sigmasq_info, TAOCPP_PEGTL_STRING("sigmasq") >;
 
 struct sde_theta_info {
   static std::string name() { return "theta"; }
@@ -1799,7 +1799,7 @@ struct sde_theta_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_theta = keyword< sde_theta_info, pegtl_string_t("theta") >;
+using sde_theta = keyword< sde_theta_info, TAOCPP_PEGTL_STRING("theta") >;
 
 struct sde_mu_info {
   static std::string name() { return "mu"; }
@@ -1815,7 +1815,7 @@ struct sde_mu_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_mu = keyword< sde_mu_info, pegtl_string_t("mu") >;
+using sde_mu = keyword< sde_mu_info, TAOCPP_PEGTL_STRING("mu") >;
 
 struct sde_T_info {
   static std::string name() { return "T"; }
@@ -1831,7 +1831,7 @@ struct sde_T_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_T = keyword< sde_T_info, pegtl_string_t("T") >;
+using sde_T = keyword< sde_T_info, TAOCPP_PEGTL_STRING("T") >;
 
 struct sde_lambda_info {
   static std::string name() { return "lambda"; }
@@ -1847,7 +1847,7 @@ struct sde_lambda_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_lambda = keyword< sde_lambda_info, pegtl_string_t("lambda") >;
+using sde_lambda = keyword< sde_lambda_info, TAOCPP_PEGTL_STRING("lambda") >;
 
 struct spike_info {
   static std::string name() { return "spike"; }
@@ -1865,7 +1865,7 @@ struct spike_info {
     static std::string description() { return "even reals"; }
   };
 };
-using spike = keyword< spike_info, pegtl_string_t("spike") >;
+using spike = keyword< spike_info, TAOCPP_PEGTL_STRING("spike") >;
 
 struct icdelta_info {
   static std::string name() { return "icdelta"; }
@@ -1880,7 +1880,7 @@ struct icdelta_info {
     and 0.7, respectively. Note that the sum of the heights must add up to
     unity. See also the help on keyword jointdelta and spike.)"; }
 };
-using icdelta = keyword< icdelta_info, pegtl_string_t("icdelta") >;
+using icdelta = keyword< icdelta_info, TAOCPP_PEGTL_STRING("icdelta") >;
 
 struct betapdf_info {
   static std::string name() { return "betapdf"; }
@@ -1898,7 +1898,7 @@ struct betapdf_info {
     static std::string description() { return "4 reals"; }
   };
 };
-using betapdf = keyword< betapdf_info, pegtl_string_t("betapdf") >;
+using betapdf = keyword< betapdf_info, TAOCPP_PEGTL_STRING("betapdf") >;
 
 struct icbeta_info {
   static std::string name() { return "icbeta"; }
@@ -1912,7 +1912,7 @@ struct icbeta_info {
     0.2 and 0.3, displacement 0.0, and scale 1.0. See also the help on keyword
     jointbeta and betapdf.)"; }
 };
-using icbeta = keyword< icbeta_info, pegtl_string_t("icbeta") >;
+using icbeta = keyword< icbeta_info, TAOCPP_PEGTL_STRING("icbeta") >;
 
 struct ic_info {
   static std::string name() { return "ic"; }
@@ -1923,7 +1923,7 @@ struct ic_info {
     conditions. Example: "ic density 1.0 end" - set the initial density field to
     1.0 across the whole domain.)"; }
 };
-using ic = keyword< ic_info, pegtl_string_t("i,c") >;
+using ic = keyword< ic_info, TAOCPP_PEGTL_STRING("i,c") >;
 
 struct depvar_info {
   static std::string name() { return "depvar"; }
@@ -1932,7 +1932,7 @@ struct depvar_info {
   static std::string longDescription() { return
     R"(Dependent variable, e.g, in differential equations.)"; }
 };
-using depvar = keyword< depvar_info, pegtl_string_t("depvar") >;
+using depvar = keyword< depvar_info, TAOCPP_PEGTL_STRING("depvar") >;
 
 struct sde_rho2_info {
   static std::string name() { return "rho2"; }
@@ -1948,7 +1948,7 @@ struct sde_rho2_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_rho2 = keyword< sde_rho2_info,  pegtl_string_t("rho2") >;
+using sde_rho2 = keyword< sde_rho2_info,  TAOCPP_PEGTL_STRING("rho2") >;
 
 struct sde_rcomma_info {
   static std::string name() { return "rcomma"; }
@@ -1964,7 +1964,7 @@ struct sde_rcomma_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_rcomma = keyword< sde_rcomma_info, pegtl_string_t("rcomma") >;
+using sde_rcomma = keyword< sde_rcomma_info, TAOCPP_PEGTL_STRING("rcomma") >;
 
 struct sde_r_info {
   static std::string name() { return "r"; }
@@ -1980,7 +1980,7 @@ struct sde_r_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_r = keyword< sde_r_info, pegtl_string_t("r") >;
+using sde_r = keyword< sde_r_info, TAOCPP_PEGTL_STRING("r") >;
 
 struct dirichlet_info {
   static std::string name() { return "Dirichlet"; }
@@ -2004,7 +2004,7 @@ struct dirichlet_info {
       doc/html/walker_example_dirichlet.html.)";
   }
 };
-using dirichlet = keyword< dirichlet_info,  pegtl_string_t("dirichlet") >;
+using dirichlet = keyword< dirichlet_info,  TAOCPP_PEGTL_STRING("dirichlet") >;
 
 struct gendir_info {
   static std::string name() { return "Generalized Dirichlet"; }
@@ -2030,7 +2030,7 @@ struct gendir_info {
       doc/html/walker_example_gendir.html.)";
   }
 };
-using gendir = keyword< gendir_info, pegtl_string_t("gendir") >;
+using gendir = keyword< gendir_info, TAOCPP_PEGTL_STRING("gendir") >;
 
 struct wrightfisher_info {
   static std::string name() { return "Wright-Fisher"; }
@@ -2054,7 +2054,7 @@ struct wrightfisher_info {
   }
 };
 using wrightfisher =
-  keyword< wrightfisher_info, pegtl_string_t("wright-fisher") >;
+  keyword< wrightfisher_info, TAOCPP_PEGTL_STRING("wright-fisher") >;
 
 struct skewnormal_info {
   static std::string name() { return "Skew-Normal"; }
@@ -2079,7 +2079,7 @@ struct skewnormal_info {
       doc/html/walker_example_skewnormal.html.)";
   }
 };
-using skewnormal = keyword< skewnormal_info,  pegtl_string_t("skew-normal") >;
+using skewnormal = keyword< skewnormal_info,  TAOCPP_PEGTL_STRING("skew-normal") >;
 
 struct beta_info {
   static std::string name() { return "Beta"; }
@@ -2104,7 +2104,7 @@ struct beta_info {
       doc/html/walker_example_beta.html.)";
   }
 };
-using beta = keyword< beta_info, pegtl_string_t("beta") >;
+using beta = keyword< beta_info, TAOCPP_PEGTL_STRING("beta") >;
 
 struct numfracbeta_info {
   static std::string name() { return "Number-fraction beta"; }
@@ -2138,7 +2138,7 @@ struct numfracbeta_info {
       doc/html/walker_example_numfracbeta.html.)";
   }
 };
-using numfracbeta = keyword< numfracbeta_info, pegtl_string_t("numfracbeta") >;
+using numfracbeta = keyword< numfracbeta_info, TAOCPP_PEGTL_STRING("numfracbeta") >;
 
 struct massfracbeta_info {
   static std::string name() { return "Mass-fraction beta"; }
@@ -2172,7 +2172,7 @@ struct massfracbeta_info {
       doc/html/walker_example_massfracbeta.html.)";
   }
 };
-using massfracbeta = keyword< massfracbeta_info, pegtl_string_t("massfracbeta") >;
+using massfracbeta = keyword< massfracbeta_info, TAOCPP_PEGTL_STRING("massfracbeta") >;
 
 struct mixnumfracbeta_info {
   static std::string name() { return "Mix number-fraction beta"; }
@@ -2215,7 +2215,7 @@ struct mixnumfracbeta_info {
   }
 };
 using mixnumfracbeta =
-  keyword< mixnumfracbeta_info, pegtl_string_t("mixnumfracbeta") >;
+  keyword< mixnumfracbeta_info, TAOCPP_PEGTL_STRING("mixnumfracbeta") >;
 
 struct mixmassfracbeta_info {
   static std::string name() { return "Mix mass-fraction beta"; }
@@ -2258,7 +2258,7 @@ struct mixmassfracbeta_info {
   }
 };
 using mixmassfracbeta =
-  keyword< mixmassfracbeta_info, pegtl_string_t("mixmassfracbeta") >;
+  keyword< mixmassfracbeta_info, TAOCPP_PEGTL_STRING("mixmassfracbeta") >;
 
 struct eq_A005H_info {
   static std::string name() { return "eq_A005H"; }
@@ -2268,7 +2268,7 @@ struct eq_A005H_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light << heavy.)"; }
 };
-using eq_A005H = keyword< eq_A005H_info, pegtl_string_t("eq_A005H") >;
+using eq_A005H = keyword< eq_A005H_info, TAOCPP_PEGTL_STRING("eq_A005H") >;
 
 struct eq_A005S_info {
   static std::string name() { return "eq_A005S"; }
@@ -2278,7 +2278,7 @@ struct eq_A005S_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light = heavy.)"; }
 };
-using eq_A005S = keyword< eq_A005S_info, pegtl_string_t("eq_A005S") >;
+using eq_A005S = keyword< eq_A005S_info, TAOCPP_PEGTL_STRING("eq_A005S") >;
 
 struct eq_A005L_info {
   static std::string name() { return "eq_A005L"; }
@@ -2288,7 +2288,7 @@ struct eq_A005L_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.05, IC: light >> heavy.)"; }
 };
-using eq_A005L = keyword< eq_A005L_info, pegtl_string_t("eq_A005L") >;
+using eq_A005L = keyword< eq_A005L_info, TAOCPP_PEGTL_STRING("eq_A005L") >;
 
 struct eq_A05H_info {
   static std::string name() { return "eq_A05H"; }
@@ -2298,7 +2298,7 @@ struct eq_A05H_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light << heavy.)"; }
 };
-using eq_A05H = keyword< eq_A05H_info, pegtl_string_t("eq_A05H") >;
+using eq_A05H = keyword< eq_A05H_info, TAOCPP_PEGTL_STRING("eq_A05H") >;
 
 struct eq_A05S_info {
   static std::string name() { return "eq_A05S"; }
@@ -2308,7 +2308,7 @@ struct eq_A05S_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light = heavy.)"; }
 };
-using eq_A05S = keyword< eq_A05S_info, pegtl_string_t("eq_A05S") >;
+using eq_A05S = keyword< eq_A05S_info, TAOCPP_PEGTL_STRING("eq_A05S") >;
 
 struct eq_A05L_info {
   static std::string name() { return "eq_A05L"; }
@@ -2318,7 +2318,7 @@ struct eq_A05L_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.5, IC: light >> heavy.)"; }
 };
-using eq_A05L = keyword< eq_A05L_info, pegtl_string_t("eq_A05L") >;
+using eq_A05L = keyword< eq_A05L_info, TAOCPP_PEGTL_STRING("eq_A05L") >;
 
 struct eq_A075H_info {
   static std::string name() { return "eq_A075H"; }
@@ -2328,7 +2328,7 @@ struct eq_A075H_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light << heavy.)"; }
 };
-using eq_A075H = keyword< eq_A075H_info, pegtl_string_t("eq_A075H") >;
+using eq_A075H = keyword< eq_A075H_info, TAOCPP_PEGTL_STRING("eq_A075H") >;
 
 struct eq_A075S_info {
   static std::string name() { return "eq_A075S"; }
@@ -2338,7 +2338,7 @@ struct eq_A075S_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light = heavy.)"; }
 };
-using eq_A075S = keyword< eq_A075S_info, pegtl_string_t("eq_A075S") >;
+using eq_A075S = keyword< eq_A075S_info, TAOCPP_PEGTL_STRING("eq_A075S") >;
 
 struct eq_A075L_info {
   static std::string name() { return "eq_A075L"; }
@@ -2348,7 +2348,7 @@ struct eq_A075L_info {
     R"(Inverse equilibrium hydrodynamics time scale from DNS of homogeneous
        Rayleigh-Taylor instability, tau_eq, A = 0.75, IC: light >> heavy.)"; }
 };
-using eq_A075L = keyword< eq_A075L_info, pegtl_string_t("eq_A075L") >;
+using eq_A075L = keyword< eq_A075L_info, TAOCPP_PEGTL_STRING("eq_A075L") >;
 
 struct hydrotimescales_info {
   static std::string name() { return "hydrotimescales"; }
@@ -2391,7 +2391,7 @@ struct hydrotimescales_info {
   };
 };
 using hydrotimescales =
-  keyword< hydrotimescales_info, pegtl_string_t("hydrotimescales") >;
+  keyword< hydrotimescales_info, TAOCPP_PEGTL_STRING("hydrotimescales") >;
 
 struct prod_A005H_info {
   static std::string name() { return "prod_A005H"; }
@@ -2401,7 +2401,7 @@ struct prod_A005H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light << heavy.)"; }
 };
-using prod_A005H = keyword< prod_A005H_info, pegtl_string_t("prod_A005H") >;
+using prod_A005H = keyword< prod_A005H_info, TAOCPP_PEGTL_STRING("prod_A005H") >;
 
 struct prod_A005S_info {
   static std::string name() { return "prod_A005S"; }
@@ -2411,7 +2411,7 @@ struct prod_A005S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light = heavy.)"; }
 };
-using prod_A005S = keyword< prod_A005S_info, pegtl_string_t("prod_A005S") >;
+using prod_A005S = keyword< prod_A005S_info, TAOCPP_PEGTL_STRING("prod_A005S") >;
 
 struct prod_A005L_info {
   static std::string name() { return "prod_A005L"; }
@@ -2421,7 +2421,7 @@ struct prod_A005L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.05, IC: light >> heavy.)"; }
 };
-using prod_A005L = keyword< prod_A005L_info, pegtl_string_t("prod_A005L") >;
+using prod_A005L = keyword< prod_A005L_info, TAOCPP_PEGTL_STRING("prod_A005L") >;
 
 struct prod_A05H_info {
   static std::string name() { return "prod_A05H"; }
@@ -2431,7 +2431,7 @@ struct prod_A05H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light << heavy.)"; }
 };
-using prod_A05H = keyword< prod_A05H_info, pegtl_string_t("prod_A05H") >;
+using prod_A05H = keyword< prod_A05H_info, TAOCPP_PEGTL_STRING("prod_A05H") >;
 
 struct prod_A05S_info {
   static std::string name() { return "prod_A05S"; }
@@ -2441,7 +2441,7 @@ struct prod_A05S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light = heavy.)"; }
 };
-using prod_A05S = keyword< prod_A05S_info, pegtl_string_t("prod_A05S") >;
+using prod_A05S = keyword< prod_A05S_info, TAOCPP_PEGTL_STRING("prod_A05S") >;
 
 struct prod_A05L_info {
   static std::string name() { return "prod_A05L"; }
@@ -2451,7 +2451,7 @@ struct prod_A05L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.5, IC: light >> heavy.)"; }
 };
-using prod_A05L = keyword< prod_A05L_info, pegtl_string_t("prod_A05L") >;
+using prod_A05L = keyword< prod_A05L_info, TAOCPP_PEGTL_STRING("prod_A05L") >;
 
 struct prod_A075H_info {
   static std::string name() { return "prod_A075H"; }
@@ -2461,7 +2461,7 @@ struct prod_A075H_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light << heavy.)"; }
 };
-using prod_A075H = keyword< prod_A075H_info, pegtl_string_t("prod_A075H") >;
+using prod_A075H = keyword< prod_A075H_info, TAOCPP_PEGTL_STRING("prod_A075H") >;
 
 struct prod_A075S_info {
   static std::string name() { return "prod_A075S"; }
@@ -2471,7 +2471,7 @@ struct prod_A075S_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light = heavy.)"; }
 };
-using prod_A075S = keyword< prod_A075S_info, pegtl_string_t("prod_A075S") >;
+using prod_A075S = keyword< prod_A075S_info, TAOCPP_PEGTL_STRING("prod_A075S") >;
 
 struct prod_A075L_info {
   static std::string name() { return "prod_A075L"; }
@@ -2481,7 +2481,7 @@ struct prod_A075L_info {
     R"(Production divided by dissipation rate from DNS of homogeneous
        Rayleigh-Taylor instability, P/e, A = 0.75, IC: light >> heavy.)"; }
 };
-using prod_A075L = keyword< prod_A075L_info, pegtl_string_t("prod_A075L") >;
+using prod_A075L = keyword< prod_A075L_info, TAOCPP_PEGTL_STRING("prod_A075L") >;
 
 struct hydroproductions_info {
   static std::string name() { return "P/eps"; }
@@ -2526,7 +2526,7 @@ struct hydroproductions_info {
   };
 };
 using hydroproductions =
-  keyword< hydroproductions_info, pegtl_string_t("hydroproductions") >;
+  keyword< hydroproductions_info, TAOCPP_PEGTL_STRING("hydroproductions") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -2539,7 +2539,7 @@ struct gamma_info {
     is the joint gamma distribution.)";
   }
 };
-using gamma = keyword< gamma_info, pegtl_string_t("gamma") >;
+using gamma = keyword< gamma_info, TAOCPP_PEGTL_STRING("gamma") >;
 
 struct ornstein_uhlenbeck_info {
   static std::string name() { return "Ornstein-Uhlenbeck"; }
@@ -2564,7 +2564,7 @@ struct ornstein_uhlenbeck_info {
   }
 };
 using ornstein_uhlenbeck =
-  keyword< ornstein_uhlenbeck_info, pegtl_string_t("ornstein-uhlenbeck") >;
+  keyword< ornstein_uhlenbeck_info, TAOCPP_PEGTL_STRING("ornstein-uhlenbeck") >;
 
 struct diag_ou_info {
   static std::string name() { return "Diagonal Ornstein-Uhlenbeck"; }
@@ -2589,7 +2589,7 @@ struct diag_ou_info {
       doc/html/walker_example_diagou.html.)";
   }
 };
-using diag_ou = keyword< diag_ou_info, pegtl_string_t("diag_ou") >;
+using diag_ou = keyword< diag_ou_info, TAOCPP_PEGTL_STRING("diag_ou") >;
 
 struct control_info {
   static std::string name() { return "control"; }
@@ -2605,7 +2605,7 @@ struct control_info {
     static std::string description() { return "string"; }
   };
 };
-using control = keyword< control_info, pegtl_string_t("control") >;
+using control = keyword< control_info, TAOCPP_PEGTL_STRING("control") >;
 
 struct smallcrush_info {
   static std::string name() { return "SmallCrush"; }
@@ -2619,7 +2619,7 @@ struct smallcrush_info {
     info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
   }
 };
-using smallcrush = keyword< smallcrush_info, pegtl_string_t("smallcrush") >;
+using smallcrush = keyword< smallcrush_info, TAOCPP_PEGTL_STRING("smallcrush") >;
 
 struct crush_info {
   static std::string name() { return "Crush"; }
@@ -2633,7 +2633,7 @@ struct crush_info {
     http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
   }
 };
-using crush = keyword< crush_info, pegtl_string_t("crush") >;
+using crush = keyword< crush_info, TAOCPP_PEGTL_STRING("crush") >;
 
 struct bigcrush_info {
   static std::string name() { return "BigCrush"; }
@@ -2647,7 +2647,7 @@ struct bigcrush_info {
     info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
   }
 };
-using bigcrush = keyword< bigcrush_info, pegtl_string_t("bigcrush") >;
+using bigcrush = keyword< bigcrush_info, TAOCPP_PEGTL_STRING("bigcrush") >;
 
 struct verbose_info {
   static std::string name() { return "verbose"; }
@@ -2660,7 +2660,7 @@ struct verbose_info {
   }
   using alias = Alias< v >;
 };
-using verbose = keyword< verbose_info, pegtl_string_t("verbose") >;
+using verbose = keyword< verbose_info, TAOCPP_PEGTL_STRING("verbose") >;
 
 struct benchmark_info {
   static std::string name() { return "benchmark"; }
@@ -2673,7 +2673,7 @@ struct benchmark_info {
   using alias = Alias< b >;
 };
 
-using benchmark = keyword< benchmark_info, pegtl_string_t("benchmark") >;
+using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
 
 struct feedback_info {
   static std::string name() { return "feedback"; }
@@ -2686,7 +2686,7 @@ struct feedback_info {
   using alias = Alias< f >;
 };
 
-using feedback = keyword< feedback_info, pegtl_string_t("feedback") >;
+using feedback = keyword< feedback_info, TAOCPP_PEGTL_STRING("feedback") >;
 
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
@@ -2720,7 +2720,7 @@ struct virtualization_info {
   };
 };
 using virtualization =
-  keyword< virtualization_info, pegtl_string_t("virtualization") >;
+  keyword< virtualization_info, TAOCPP_PEGTL_STRING("virtualization") >;
 
 struct pdf_info {
   static std::string name() { return "pdf"; }
@@ -2736,7 +2736,7 @@ struct pdf_info {
     static std::string description() { return "string"; }
   };
 };
-using pdf = keyword< pdf_info, pegtl_string_t("pdf") >;
+using pdf = keyword< pdf_info, TAOCPP_PEGTL_STRING("pdf") >;
 
 struct stat_info {
   static std::string name() { return "stat"; }
@@ -2752,7 +2752,7 @@ struct stat_info {
     static std::string description() { return "string"; }
   };
 };
-using stat = keyword< stat_info, pegtl_string_t("stat") >;
+using stat = keyword< stat_info, TAOCPP_PEGTL_STRING("stat") >;
 
 struct input_info {
   static std::string name() { return "input"; }
@@ -2766,7 +2766,7 @@ struct input_info {
     static std::string description() { return "string"; }
   };
 };
-using input = keyword< input_info, pegtl_string_t("input") >;
+using input = keyword< input_info, TAOCPP_PEGTL_STRING("input") >;
 
 struct output_info {
   static std::string name() { return "output"; }
@@ -2780,7 +2780,7 @@ struct output_info {
     static std::string description() { return "string"; }
   };
 };
-using output = keyword< output_info, pegtl_string_t("output") >;
+using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
 
 struct diagnostics_info {
   static std::string name() { return "diagnostics"; }
@@ -2795,7 +2795,7 @@ struct diagnostics_info {
     static std::string description() { return "string"; }
   };
 };
-using diagnostics = keyword< diagnostics_info, pegtl_string_t("diagnostics") >;
+using diagnostics = keyword< diagnostics_info, TAOCPP_PEGTL_STRING("diagnostics") >;
 
 struct reorder_info {
   static std::string name() { return "reorder"; }
@@ -2810,7 +2810,7 @@ struct reorder_info {
     static std::string description() { return "string"; }
   };
 };
-using reorder = keyword< reorder_info, pegtl_string_t("reorder") >;
+using reorder = keyword< reorder_info, TAOCPP_PEGTL_STRING("reorder") >;
 
 struct group_info {
   static std::string name() { return "group"; }
@@ -2831,7 +2831,7 @@ struct group_info {
     static std::string description() { return "string"; }
   };
 };
-using group = keyword< group_info, pegtl_string_t("group") >;
+using group = keyword< group_info, TAOCPP_PEGTL_STRING("group") >;
 
 struct inciter_info {
   static std::string name() { return "inciter"; }
@@ -2842,7 +2842,7 @@ struct inciter_info {
     shock hydrodynamics tool, solving a PDE.)";
   }
 };
-using inciter = keyword< inciter_info, pegtl_string_t("inciter") >;
+using inciter = keyword< inciter_info, TAOCPP_PEGTL_STRING("inciter") >;
 
 struct user_defined_info {
   using code = Code< U >;
@@ -2860,7 +2860,7 @@ struct user_defined_info {
   };
 };
 
-using user_defined = keyword< user_defined_info, pegtl_string_t("user_defined") >;
+using user_defined = keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
 
 struct shear_diff_info {
   using code = Code< S >;
@@ -2876,7 +2876,7 @@ struct shear_diff_info {
     static std::string description() { return "string"; }
   };
 };
-using shear_diff = keyword< shear_diff_info, pegtl_string_t("shear_diff") >;
+using shear_diff = keyword< shear_diff_info, TAOCPP_PEGTL_STRING("shear_diff") >;
 
 struct dir_neu_info {
   using code = Code< D >;
@@ -2893,7 +2893,7 @@ struct dir_neu_info {
     static std::string description() { return "string"; }
   };
 };
-using dir_neu = keyword< dir_neu_info, pegtl_string_t("dir_neu") >;
+using dir_neu = keyword< dir_neu_info, TAOCPP_PEGTL_STRING("dir_neu") >;
 
 struct slot_cyl_info {
   using code = Code< Z >;
@@ -2909,7 +2909,7 @@ struct slot_cyl_info {
     static std::string description() { return "string"; }
   };
 };
-using slot_cyl = keyword< slot_cyl_info, pegtl_string_t("slot_cyl") >;
+using slot_cyl = keyword< slot_cyl_info, TAOCPP_PEGTL_STRING("slot_cyl") >;
 
 struct vortical_flow_info {
   using code = Code< V >;
@@ -2930,7 +2930,48 @@ struct vortical_flow_info {
   };
 };
 using vortical_flow =
-  keyword< vortical_flow_info, pegtl_string_t("vortical_flow") >;
+  keyword< vortical_flow_info, TAOCPP_PEGTL_STRING("vortical_flow") >;
+
+struct nl_energy_growth_info {
+  using code = Code< V >;
+  static std::string name() { return "Nonlinear energy growth"; }
+  static std::string shortDescription() { return
+    "Select the nonlinear energy growth test problem ";}
+  static std::string longDescription() { return
+    R"(This keyword is used to select the nonlinear energy growth test problem.
+    The purpose of this test problem is to test nonlinear, time dependent energy
+    growth and the subsequent development of pressure gradients due to coupling
+    between the internal energy and the equation of state. Example: "problem
+    nl_energy_growth". For more details, see Waltz, et. al, "Manufactured
+    solutions for the three-dimensional Euler equations with relevance to
+    Inertial Confinement Fusion", Journal of Computational Physics 267 (2014)
+    196-209.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using nl_energy_growth =
+  keyword< nl_energy_growth_info, TAOCPP_PEGTL_STRING("nl_energy_growth") >;
+
+struct rayleigh_taylor_info {
+  using code = Code< V >;
+  static std::string name() { return "Rayleigh-Taylor"; }
+  static std::string shortDescription() { return
+    "Select the Rayleigh-Taylor test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Rayleigh-Taylor unstable configuration
+    test problem. The purpose of this test problem is to assess time dependent
+    fluid motion in the presence of Rayleigh-Taylor unstable conditions, i.e.
+    opposing density and pressure gradients. Example: "problem rayleigh_taylor".
+    For more details, see Waltz, et. al, "Manufactured solutions for the
+    three-dimensional Euler equations with relevance to Inertial Confinement
+    Fusion", Journal of Computational Physics 267 (2014) 196-209.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using rayleigh_taylor =
+  keyword< rayleigh_taylor_info, TAOCPP_PEGTL_STRING("rayleigh_taylor") >;
 
 struct problem_info {
   using code = Code< r >;
@@ -2949,11 +2990,13 @@ struct problem_info {
                   + shear_diff::string() + "\' | \'"
                   + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
+                  + nl_energy_growth::string() + "\' | \'"
+                  + rayleigh_taylor::string() + "\' | \'"                  
                   + slot_cyl::string() + '\'';
     }
   };
 };
-using problem = keyword< problem_info, pegtl_string_t("problem") >;
+using problem = keyword< problem_info, TAOCPP_PEGTL_STRING("problem") >;
 
 struct compflow_navierstokes_info {
   using code = Code< N >;
@@ -2969,7 +3012,7 @@ struct compflow_navierstokes_info {
   };
 };
 using compflow_navierstokes =
-  keyword< compflow_navierstokes_info, pegtl_string_t("navierstokes") >;
+  keyword< compflow_navierstokes_info, TAOCPP_PEGTL_STRING("navierstokes") >;
 
 struct compflow_euler_info {
   using code = Code< E >;
@@ -2984,7 +3027,7 @@ struct compflow_euler_info {
     static std::string description() { return "string"; }
   };
 };
-using compflow_euler = keyword< compflow_euler_info, pegtl_string_t("euler") >;
+using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
 struct advection_info {
   using code = Code< A >;
@@ -2999,7 +3042,7 @@ struct advection_info {
     static std::string description() { return "string"; }
   };
 };
-using advection = keyword< advection_info, pegtl_string_t("advection") >;
+using advection = keyword< advection_info, TAOCPP_PEGTL_STRING("advection") >;
 
 struct advdiff_info {
   using code = Code< D >;
@@ -3014,7 +3057,7 @@ struct advdiff_info {
     static std::string description() { return "string"; }
   };
 };
-using advdiff = keyword< advdiff_info, pegtl_string_t("advdiff") >;
+using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
 struct laplace_info {
   using code = Code< L >;
@@ -3029,7 +3072,7 @@ struct laplace_info {
     static std::string description() { return "string"; }
   };
 };
-using laplace = keyword< laplace_info, pegtl_string_t("laplace") >;
+using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
 
 struct physics_info {
   using code = Code< h >;
@@ -3052,7 +3095,7 @@ struct physics_info {
     }
   };
 };
-using physics = keyword< physics_info, pegtl_string_t("physics") >;
+using physics = keyword< physics_info, TAOCPP_PEGTL_STRING("physics") >;
 
 struct pde_diffusivity_info {
   static std::string name() { return "diffusivity"; }
@@ -3069,7 +3112,7 @@ struct pde_diffusivity_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using pde_diffusivity = keyword< pde_diffusivity_info, pegtl_string_t("diffusivity") >;
+using pde_diffusivity = keyword< pde_diffusivity_info, TAOCPP_PEGTL_STRING("diffusivity") >;
 
 struct pde_lambda_info {
   static std::string name() { return "lambda"; }
@@ -3085,7 +3128,7 @@ struct pde_lambda_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using pde_lambda = keyword< pde_lambda_info, pegtl_string_t("lambda") >;
+using pde_lambda = keyword< pde_lambda_info, TAOCPP_PEGTL_STRING("lambda") >;
 
 struct pde_u0_info {
   static std::string name() { return "u0"; }
@@ -3101,7 +3144,7 @@ struct pde_u0_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using pde_u0 = keyword< pde_u0_info, pegtl_string_t("u0") >;
+using pde_u0 = keyword< pde_u0_info, TAOCPP_PEGTL_STRING("u0") >;
 
 struct pde_alpha_info {
   static std::string name() { return "alpha"; }
@@ -3116,7 +3159,7 @@ struct pde_alpha_info {
     static std::string description() { return "real"; }
   };
 };
-using pde_alpha = keyword< pde_alpha_info, pegtl_string_t("alpha") >;
+using pde_alpha = keyword< pde_alpha_info, TAOCPP_PEGTL_STRING("alpha") >;
 
 struct pde_beta_info {
   static std::string name() { return "beta"; }
@@ -3131,7 +3174,7 @@ struct pde_beta_info {
     static std::string description() { return "real"; }
   };
 };
-using pde_beta = keyword< pde_beta_info, pegtl_string_t("beta") >;
+using pde_beta = keyword< pde_beta_info, TAOCPP_PEGTL_STRING("beta") >;
 
 struct pde_p0_info {
   static std::string name() { return "p0"; }
@@ -3146,7 +3189,98 @@ struct pde_p0_info {
     static std::string description() { return "real"; }
   };
 };
-using pde_p0 = keyword< pde_p0_info, pegtl_string_t("p0") >;
+using pde_p0 = keyword< pde_p0_info, TAOCPP_PEGTL_STRING("p0") >;
+
+// nonlinear energy parameters here
+struct pde_betax_info {
+  static std::string name() { return "betax"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betax)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betax 1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betax = keyword< pde_betax_info, TAOCPP_PEGTL_STRING("betax") >;
+
+struct pde_betay_info {
+  static std::string name() { return "betay"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betay)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betay 0.75".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betay = keyword< pde_betay_info, TAOCPP_PEGTL_STRING("betay") >;
+
+struct pde_betaz_info {
+  static std::string name() { return "betaz"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) betaz)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "betaz 0.5".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_betaz = keyword< pde_betaz_info, TAOCPP_PEGTL_STRING("betaz") >;
+
+struct pde_ce_info {
+  static std::string name() { return "ce"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) ce)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "ce -1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_ce = keyword< pde_ce_info, TAOCPP_PEGTL_STRING("ce") >;
+
+struct pde_kappa_info {
+  static std::string name() { return "kappa"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) kappa)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Exmpale:
+    "kappa 0.8")"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pde_kappa = keyword< pde_kappa_info, TAOCPP_PEGTL_STRING("kappa") >;
+
+struct pde_r0_info {
+  static std::string name() { return "r0"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) r0)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a real number used to
+    parameterize a system of partial differential equations. Example:
+    "r0 2.0)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "r0"; }
+  };
+};
+using pde_r0 = keyword< pde_r0_info, TAOCPP_PEGTL_STRING("r0") >;
 
 struct ctau_info {
   static std::string name() { return "ctau"; }
@@ -3167,7 +3301,7 @@ struct ctau_info {
     }
   };
 };
-using ctau = keyword< ctau_info, pegtl_string_t("ctau") >;
+using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
 
 struct transport_info {
   static std::string name() { return "Transport"; }
@@ -3186,7 +3320,7 @@ struct transport_info {
       doc/html/inicter_example_transport.html.)";
   }
 };
-using transport = keyword< transport_info, pegtl_string_t("transport") >;
+using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
 struct poisson_info {
   static std::string name() { return "Poisson"; }
@@ -3202,7 +3336,7 @@ struct poisson_info {
       doc/html/inicter_example_poisson.html.)";
   }
 };
-using poisson = keyword< poisson_info, pegtl_string_t("poisson") >;
+using poisson = keyword< poisson_info, TAOCPP_PEGTL_STRING("poisson") >;
 
 struct sideset_info {
   static std::string name() { return "sideset"; }
@@ -3218,7 +3352,7 @@ struct sideset_info {
     static std::string description() { return "strings"; }
   };
 };
-using sideset = keyword< sideset_info, pegtl_string_t("sideset") >;
+using sideset = keyword< sideset_info, TAOCPP_PEGTL_STRING("sideset") >;
 
 struct bc_dirichlet_info {
   static std::string name() { return "Dirichlet boundary condition"; }
@@ -3234,7 +3368,7 @@ struct bc_dirichlet_info {
       doc/html/inicter_example_poisson.html.)";
   }
 };
-using bc_dirichlet = keyword< bc_dirichlet_info, pegtl_string_t("bc_dirichlet") >;
+using bc_dirichlet = keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
 
 struct id_info {
   static std::string name() { return "id"; }
@@ -3248,7 +3382,7 @@ struct id_info {
     static std::string description() { return "uint"; }
   };
 };
-using id = keyword< id_info, pegtl_string_t("id") >;
+using id = keyword< id_info, TAOCPP_PEGTL_STRING("id") >;
 
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
@@ -3263,7 +3397,7 @@ struct mat_gamma_info {
     static std::string description() { return "real"; }
   };
 };
-using mat_gamma = keyword< mat_gamma_info, pegtl_string_t("gamma") >;
+using mat_gamma = keyword< mat_gamma_info, TAOCPP_PEGTL_STRING("gamma") >;
 
 struct mat_mu_info {
   static std::string name() { return "mu"; }
@@ -3278,7 +3412,7 @@ struct mat_mu_info {
     static std::string description() { return "real"; }
   };
 };
-using mat_mu = keyword< mat_mu_info, pegtl_string_t("mu") >;
+using mat_mu = keyword< mat_mu_info, TAOCPP_PEGTL_STRING("mu") >;
 
 struct mat_cv_info {
   static std::string name() { return "cv"; }
@@ -3294,7 +3428,7 @@ struct mat_cv_info {
     static std::string description() { return "real"; }
   };
 };
-using mat_cv = keyword< mat_cv_info, pegtl_string_t("cv") >;
+using mat_cv = keyword< mat_cv_info, TAOCPP_PEGTL_STRING("cv") >;
 
 struct mat_k_info {
   static std::string name() { return "k"; }
@@ -3309,7 +3443,7 @@ struct mat_k_info {
     static std::string description() { return "real"; }
   };
 };
-using mat_k = keyword< mat_k_info, pegtl_string_t("k") >;
+using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
 struct material_info {
   static std::string name() { return "Material properties block"; }
@@ -3328,7 +3462,7 @@ struct material_info {
       doc/html/inicter_example_compflow.html.)";
   }
 };
-using material = keyword< material_info, pegtl_string_t("material") >;
+using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
 
 struct velocity_info {
   static std::string name() { return "velocity"; }
@@ -3343,7 +3477,7 @@ struct velocity_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using velocity = keyword< velocity_info, pegtl_string_t("velocity") >;
+using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct compflow_info {
   static std::string name() { return "Compressible flow"; }
@@ -3359,7 +3493,7 @@ struct compflow_info {
       doc/html/inicter_example_compflow.html.)";
   }
 };
-using compflow = keyword< compflow_info, pegtl_string_t("compflow") >;
+using compflow = keyword< compflow_info, TAOCPP_PEGTL_STRING("compflow") >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }
@@ -3371,7 +3505,7 @@ struct rcb_info {
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using rcb = keyword< rcb_info, pegtl_string_t("rcb") >;
+using rcb = keyword< rcb_info, TAOCPP_PEGTL_STRING("rcb") >;
 
 struct rib_info {
   static std::string name() { return "recursive inertial bisection"; }
@@ -3383,7 +3517,7 @@ struct rib_info {
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using rib = keyword< rib_info, pegtl_string_t("rib") >;
+using rib = keyword< rib_info, TAOCPP_PEGTL_STRING("rib") >;
 
 struct hsfc_info {
   static std::string name() { return "Hilbert space filling curve"; }
@@ -3395,7 +3529,7 @@ struct hsfc_info {
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using hsfc = keyword< hsfc_info, pegtl_string_t("hsfc") >;
+using hsfc = keyword< hsfc_info, TAOCPP_PEGTL_STRING("hsfc") >;
 
 struct mj_info {
   static std::string name() { return "multi-jagged"; }
@@ -3407,7 +3541,7 @@ struct mj_info {
     processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using mj = keyword< mj_info, pegtl_string_t("mj") >;
+using mj = keyword< mj_info, TAOCPP_PEGTL_STRING("mj") >;
 
 struct phg_info {
   static std::string name() { return "hypergraph"; }
@@ -3419,7 +3553,7 @@ struct phg_info {
     input mesh among processing elements. See
     Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
 };
-using phg = keyword< phg_info, pegtl_string_t("phg") >;
+using phg = keyword< phg_info, TAOCPP_PEGTL_STRING("phg") >;
 
 struct algorithm_info {
   static std::string name() { return "algorithm"; }
@@ -3439,7 +3573,7 @@ struct algorithm_info {
     }
   };
 };
-using algorithm = keyword< algorithm_info, pegtl_string_t("algorithm") >;
+using algorithm = keyword< algorithm_info, TAOCPP_PEGTL_STRING("algorithm") >;
 
 struct partitioning_info {
   static std::string name() { return "partitioning"; }
@@ -3452,7 +3586,7 @@ struct partitioning_info {
     + rcb::string() + "\'.";
   }
 };
-using partitioning = keyword< partitioning_info, pegtl_string_t("partitioning") >;
+using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
 
 struct amr_uniform_info {
   static std::string name() { return "uniform"; }
@@ -3461,7 +3595,7 @@ struct amr_uniform_info {
   static std::string longDescription() { return
     R"(This keyword is used to select uniform initial mesh refinement.)"; }
 };
-using amr_uniform = keyword< amr_uniform_info, pegtl_string_t("uniform") >;
+using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
 struct amr_initial_info {
   static std::string name() { return "initial refinement"; }
@@ -3478,7 +3612,7 @@ struct amr_initial_info {
     }
   };
 };
-using amr_initial = keyword< amr_initial_info, pegtl_string_t("initial") >;
+using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
 
 struct amr_info {
   static std::string name() { return "AMR"; }
@@ -3491,7 +3625,7 @@ struct amr_info {
     + amr_initial::string() + "\'.";
   }
 };
-using amr = keyword< amr_info, pegtl_string_t("amr") >;
+using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
 
 
@@ -3507,7 +3641,7 @@ struct mix_iem_info {
     shear-driven flows.)";
   }
 };
-using mix_iem = keyword<mix_iem_info,  pegtl_string_t("mix_iem") >;
+using mix_iem = keyword<mix_iem_info,  TAOCPP_PEGTL_STRING("mix_iem") >;
 
 struct mix_iecm_info {
   static std::string name() { return "IECM"; }
@@ -3519,7 +3653,7 @@ struct mix_iecm_info {
     intended shear-driven flows.)";
   }
 };
-using mix_iecm = keyword<mix_iecm_info,  pegtl_string_t("mix_iecm") >;
+using mix_iecm = keyword<mix_iecm_info,  TAOCPP_PEGTL_STRING("mix_iecm") >;
 
 struct mix_dir_info {
   static std::string name() { return "Dirichlet"; }
@@ -3530,7 +3664,7 @@ struct mix_dir_info {
     statistical samples.)";
   }
 };
-using mix_dir = keyword<mix_dir_info,  pegtl_string_t("mix_dir") >;
+using mix_dir = keyword<mix_dir_info,  TAOCPP_PEGTL_STRING("mix_dir") >;
 
 struct mix_gendir_info {
   static std::string name() { return "Generalized Dirichlet"; }
@@ -3541,7 +3675,7 @@ struct mix_gendir_info {
     unit-sum requirement for all statistical samples.)";
   }
 };
-using mix_gendir = keyword<mix_gendir_info,  pegtl_string_t("mix_gendir") >;
+using mix_gendir = keyword<mix_gendir_info,  TAOCPP_PEGTL_STRING("mix_gendir") >;
 
 struct hommix_info {
   static std::string name() { return "HomMix"; }
@@ -3557,7 +3691,7 @@ struct hommix_info {
     The common physics keywords are recognized.)";
   }
 };
-using hommix = keyword<hommix_info, pegtl_string_t("hommix") >;
+using hommix = keyword<hommix_info, TAOCPP_PEGTL_STRING("hommix") >;
 
 struct homhydro_info {
   static std::string name() { return "HomHydro"; }
@@ -3572,7 +3706,7 @@ struct homhydro_info {
     hydrodynamics model(s). The common physics keywords are recognized.)";
   }
 };
-using homhydro = keyword<homhydro_info,  pegtl_string_t("homhydro") >;
+using homhydro = keyword<homhydro_info,  TAOCPP_PEGTL_STRING("homhydro") >;
 
 struct homrt_info {
   static std::string name() { return "HomRT"; }
@@ -3590,7 +3724,7 @@ struct homrt_info {
     recognized.)";
   }
 };
-using homrt = keyword<homrt_info,  pegtl_string_t("homrt") >;
+using homrt = keyword<homrt_info,  TAOCPP_PEGTL_STRING("homrt") >;
 
 struct spinsflow_info {
   static std::string name() { return "SPINSFlow"; }
@@ -3608,7 +3742,7 @@ struct spinsflow_info {
     equations and their models. The common physics keywords are recognized.)";
   }
 };
-using spinsflow = keyword<spinsflow_info,  pegtl_string_t("spinsflow") >;
+using spinsflow = keyword<spinsflow_info,  TAOCPP_PEGTL_STRING("spinsflow") >;
 
 // This will go away once all the keywords below are documented
 struct undefined_info {
@@ -3617,42 +3751,42 @@ struct undefined_info {
   static std::string longDescription() { return "Undefined."; }
 };
 
-using dmpi = keyword<undefined_info,  pegtl_string_t("dmpi") >;
-using glbi = keyword<undefined_info,  pegtl_string_t("glbi") >;
-using glob = keyword<undefined_info, pegtl_string_t("glob") >;
-using pos_inviscid = keyword<undefined_info,  pegtl_string_t("pos_inviscid") >;
-using pos_viscous = keyword<undefined_info,  pegtl_string_t("pos_viscous") >;
-using mass_beta = keyword<undefined_info,  pegtl_string_t("mass_beta") >;
-using hydro_slm = keyword<undefined_info,  pegtl_string_t("hydro_slm") >;
-using hydro_glm = keyword<undefined_info,  pegtl_string_t("hydro_glm") >;
-using mixrate_gamma = keyword<undefined_info,  pegtl_string_t("mixrate_gamma") >;
-using freq_gamma = keyword<undefined_info,  pegtl_string_t("freq_gamma") >;
-using position = keyword<undefined_info,  pegtl_string_t("position") >;
-using hydro = keyword<undefined_info,  pegtl_string_t("hydro") >;
-using mix = keyword<undefined_info,  pegtl_string_t("mix") >;
-using nposition = keyword<undefined_info,  pegtl_string_t("nposition") >;
-using ndensity = keyword<undefined_info,  pegtl_string_t("ndensity") >;
-using nvelocity = keyword<undefined_info,  pegtl_string_t("nvelocity") >;
-using nscalar = keyword<undefined_info,  pegtl_string_t("nscalar") >;
-using nfreq = keyword<undefined_info,  pegtl_string_t("nfreq") >;
-using SLM_C0 = keyword<undefined_info,  pegtl_string_t("C0") >;
-using freq_gamma_C1 = keyword<undefined_info,  pegtl_string_t("C1") >;
-using freq_gamma_C2 = keyword<undefined_info,  pegtl_string_t("C2") >;
-using freq_gamma_C3 = keyword<undefined_info,  pegtl_string_t("C3") >;
-using freq_gamma_C4 = keyword<undefined_info,  pegtl_string_t("C4") >;
-using Beta_At = keyword<undefined_info,  pegtl_string_t("At") >;
-using transported_scalar = keyword<undefined_info,  pegtl_string_t("Y") >;
-using transported_scalar_fluctuation = keyword<undefined_info,  pegtl_string_t("y") >;
-using velocity_x = keyword<undefined_info,  pegtl_string_t("U") >;
-using velocity_fluctuation_x = keyword<undefined_info,  pegtl_string_t("u") >;
-using velocity_y = keyword<undefined_info,  pegtl_string_t("V") >;
-using velocity_fluctuation_y = keyword<undefined_info,  pegtl_string_t("v") >;
-using velocity_z = keyword<undefined_info,  pegtl_string_t("W") >;
-using velocity_fluctuation_z = keyword<undefined_info,  pegtl_string_t("w") >;
-using pressure = keyword<undefined_info,  pegtl_string_t("P") >;
-using pressure_fluctuation = keyword<undefined_info,  pegtl_string_t("p") >;
-using density = keyword<undefined_info,  pegtl_string_t("R") >;
-using density_fluctuation = keyword<undefined_info,  pegtl_string_t("r") >;
+using dmpi = keyword<undefined_info,  TAOCPP_PEGTL_STRING("dmpi") >;
+using glbi = keyword<undefined_info,  TAOCPP_PEGTL_STRING("glbi") >;
+using glob = keyword<undefined_info, TAOCPP_PEGTL_STRING("glob") >;
+using pos_inviscid = keyword<undefined_info,  TAOCPP_PEGTL_STRING("pos_inviscid") >;
+using pos_viscous = keyword<undefined_info,  TAOCPP_PEGTL_STRING("pos_viscous") >;
+using mass_beta = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mass_beta") >;
+using hydro_slm = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro_slm") >;
+using hydro_glm = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro_glm") >;
+using mixrate_gamma = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mixrate_gamma") >;
+using freq_gamma = keyword<undefined_info,  TAOCPP_PEGTL_STRING("freq_gamma") >;
+using position = keyword<undefined_info,  TAOCPP_PEGTL_STRING("position") >;
+using hydro = keyword<undefined_info,  TAOCPP_PEGTL_STRING("hydro") >;
+using mix = keyword<undefined_info,  TAOCPP_PEGTL_STRING("mix") >;
+using nposition = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nposition") >;
+using ndensity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("ndensity") >;
+using nvelocity = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nvelocity") >;
+using nscalar = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nscalar") >;
+using nfreq = keyword<undefined_info,  TAOCPP_PEGTL_STRING("nfreq") >;
+using SLM_C0 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C0") >;
+using freq_gamma_C1 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C1") >;
+using freq_gamma_C2 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C2") >;
+using freq_gamma_C3 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C3") >;
+using freq_gamma_C4 = keyword<undefined_info,  TAOCPP_PEGTL_STRING("C4") >;
+using Beta_At = keyword<undefined_info,  TAOCPP_PEGTL_STRING("At") >;
+using transported_scalar = keyword<undefined_info,  TAOCPP_PEGTL_STRING("Y") >;
+using transported_scalar_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("y") >;
+using velocity_x = keyword<undefined_info,  TAOCPP_PEGTL_STRING("U") >;
+using velocity_fluctuation_x = keyword<undefined_info,  TAOCPP_PEGTL_STRING("u") >;
+using velocity_y = keyword<undefined_info,  TAOCPP_PEGTL_STRING("V") >;
+using velocity_fluctuation_y = keyword<undefined_info,  TAOCPP_PEGTL_STRING("v") >;
+using velocity_z = keyword<undefined_info,  TAOCPP_PEGTL_STRING("W") >;
+using velocity_fluctuation_z = keyword<undefined_info,  TAOCPP_PEGTL_STRING("w") >;
+using pressure = keyword<undefined_info,  TAOCPP_PEGTL_STRING("P") >;
+using pressure_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("p") >;
+using density = keyword<undefined_info,  TAOCPP_PEGTL_STRING("R") >;
+using density_fluctuation = keyword<undefined_info,  TAOCPP_PEGTL_STRING("r") >;
 
 } // kw::
 

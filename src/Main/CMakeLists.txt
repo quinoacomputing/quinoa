@@ -71,6 +71,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       AsyncIO
                       Mesh
                       Particles
+                      Statistics
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}

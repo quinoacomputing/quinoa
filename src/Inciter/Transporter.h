@@ -37,6 +37,33 @@
               URL="\ref inciter::Transporter::evaluateTime"];
       Diag -> Eval [ style="solid" ];
       Out -> Eval [ style="solid" ];
+      MinStat [ label="MinStat"
+              tooltip="chares contribute to minimum mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
+      MaxStat [ label="MaxStat"
+              tooltip="chares contribute to maximum mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
+      SumStat [ label="SumStat"
+              tooltip="chares contribute to sum mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
+      PDFStat [ label="PDFStat"
+              tooltip="chares contribute to PDF mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
+      Stat [ label="Stat"
+              tooltip="chares contributed to mesh cell statistics"
+              URL="\ref inciter::Carrier::stat"];
+      Vol [ label="Vol"
+              tooltip="chares compute nodal mesh volumes"
+              URL="\ref inciter::Carrier::vol"];
+      Setup [ label="Setup"
+              tooltip="start computing row IDs, querying BCs, outputing mesh"
+              URL="\ref inciter::Transporter::setup"];
+      MinStat -> Stat [ style="solid" ];
+      MaxStat -> Stat [ style="solid" ];
+      SumStat -> Stat [ style="solid" ];
+      PDFStat -> Stat [ style="solid" ];
+      Stat -> Setup [ style="solid" ];
+      Vol -> Setup [ style="solid" ];
     }
     \enddot
     \include Inciter/transporter.ci
@@ -120,8 +147,9 @@ class Transporter : public CBase_Transporter {
     //!   communication cost of merging the linear system
     void stdCost( tk::real c );
 
-    //! Reduction target indicating that all chare groups are ready for workers
-    void setup();
+    //! \brief Reduction target indicating that all chare groups are ready for
+    //!   workers to read their mesh coordinates
+    void coord();
 
     //! Non-reduction target for receiving progress report on reading mesh graph
     void pegraph() { m_progGraph.inc<0>(); }
@@ -167,9 +195,28 @@ class Transporter : public CBase_Transporter {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! Reduction target summing total mesh volume
+    void vol( tk::real v );
+
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
     void volcomplete();
+
+    //! \brief Reduction target yielding the minimum mesh statistics across
+    //!   all workers
+    void minstat( tk::real* d, std::size_t n );
+
+    //! \brief Reduction target yielding the maximum mesh statistics across
+    //!   all workers
+    void maxstat( tk::real* d, std::size_t n );
+
+    //! \brief Reduction target yielding the sum of mesh statistics across
+    //!   all workers
+    void sumstat( tk::real* d, std::size_t n );
+
+    //! \brief Reduction target yielding PDF of mesh statistics across all
+    //!    workers
+    void pdfstat( CkReductionMsg* msg );
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers
@@ -239,10 +286,18 @@ class Transporter : public CBase_Transporter {
     PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
+     //! Total mesh volume
+    tk::real m_V;
     //! Total number of mesh nodes
     std::size_t m_npoin;
+    //! Minimum mesh statistics
+    std::array< tk::real, 2 > m_minstat;
+    //! Maximum mesh statistics
+    std::array< tk::real, 2 > m_maxstat;
+    //! Average mesh statistics
+    std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { TIMESTEP };
+    enum class TimerTag { TIMESTEP, MESHREAD };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger
@@ -268,6 +323,12 @@ class Transporter : public CBase_Transporter {
 
     //! Evaluate time step and output one-liner report
     void evaluateTime();
+
+    //! Echo diagnostics on mesh statistics
+    void stat();
+
+    //! Start computing row IDs, querying BCs, outputing mesh
+    void setup();
 };
 
 } // inciter::
