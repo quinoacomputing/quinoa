@@ -26,6 +26,7 @@
 #include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
+#include "RootMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
@@ -723,9 +724,10 @@ Carrier::writeMesh()
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
     // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+    //tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
     // Write chare mesh initializing element connectivity and point coords
-    ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+    //ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+    tk::RootMeshWriter rmw( m_outFilename );
   }
 }
 

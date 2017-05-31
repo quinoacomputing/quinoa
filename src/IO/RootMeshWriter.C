@@ -24,7 +24,6 @@
 using tk::RootMeshWriter;
 
 RootMeshWriter::RootMeshWriter( const std::string& filename,
-                                        RootWriter mode,
                                         int cpuwordsize,
                                         int iowordsize ) :
   m_filename( filename ), m_outFile( 0 )
@@ -39,6 +38,7 @@ RootMeshWriter::RootMeshWriter( const std::string& filename,
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  TFile *f = new TFile(filename);
   ErrChk( m_outFile > 0, "Failed to create/open Root file: " + filename );
 }
 
