@@ -128,4 +128,8 @@ if(TestU01_FOUND)
   set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
+### Root library
+set(ROOTSYS /usr/local)
+find_package(Root REQUIRED)
+
 message(STATUS "------------------------------------------")

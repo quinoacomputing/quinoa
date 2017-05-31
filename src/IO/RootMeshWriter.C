@@ -13,8 +13,7 @@
 #include <iterator>
 #include <string>
 #include <utility>
-#include <cstdint>
-#include <cstdio>
+#include <iostream>
 
 #include "RootMeshWriter.h"
 #include "TFile.h"
@@ -23,9 +22,7 @@
 
 using tk::RootMeshWriter;
 
-RootMeshWriter::RootMeshWriter( const std::string& filename,
-                                        int cpuwordsize,
-                                        int iowordsize ) :
+RootMeshWriter::RootMeshWriter( const std::string filename ) :
   m_filename( filename ), m_outFile( 0 )
 // *****************************************************************************
 //  Constructor: create/open Root file
@@ -38,8 +35,8 @@ RootMeshWriter::RootMeshWriter( const std::string& filename,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  TFile *f = new TFile(filename);
-  ErrChk( m_outFile > 0, "Failed to create/open Root file: " + filename );
+  TFile *f = new TFile(filename.c_str());
+  f->Close();
 }
 
 RootMeshWriter::~RootMeshWriter() noexcept
@@ -69,4 +66,6 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 //! \author J. Bakosi
 // *****************************************************************************
 {
+    std::cout<<mesh.neblk()<<std::endl;
 }
+

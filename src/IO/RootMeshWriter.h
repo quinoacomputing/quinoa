@@ -24,10 +24,7 @@ class RootMeshWriter {
 
   public:
     //! Constructor: create/open Root file
-    explicit RootMeshWriter( const std::string& filename,
-                                 RootWriter mode,
-                                 int cpuwordsize = sizeof(double),
-                                 int iowordsize = sizeof(double) );
+    explicit RootMeshWriter( const std::string filename );
     //! Destructor
     ~RootMeshWriter() noexcept;
     //! Write Root mesh to file

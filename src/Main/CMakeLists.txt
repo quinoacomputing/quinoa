@@ -75,6 +75,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
+                      ${ROOT_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
