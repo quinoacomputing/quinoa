@@ -27,6 +27,7 @@ add_library(MeshIO
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
+	    RootWriter.C
             #SiloWriter.C
 )
 
