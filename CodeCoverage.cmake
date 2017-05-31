@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Wed 22 Feb 2017 07:39:09 AM MST
+# \date      Mon 03 Apr 2017 07:41:25 AM MDT
 #
 ################################################################################
 
@@ -63,6 +63,9 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
   # Set shortcut for output: path/target
   set(OUTPUT ${path}/${targetname})
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${path})
+
+  # Convert test runner args to (semi-colon-separated cmake) list of arguments
+  string(REPLACE " " ";" ARG_TESTRUNNER_ARGS "${ARG_TESTRUNNER_ARGS}")
 
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${targetname}
