@@ -101,7 +101,8 @@
 #include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
-namespace tk { class ExodusIIMeshWriter; }
+namespace tk { class ExodusIIMeshWriter; 
+	       class RootMeshWriter; }
 
 namespace inciter {
 
@@ -442,6 +443,10 @@ class Carrier : public CBase_Carrier {
 
     //! Output solution to file
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const;
+
+    void writeSolution( const tk::RootMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
 

@@ -16,27 +16,26 @@
 #include <iostream>
 
 #include "RootMeshWriter.h"
-#include "TFile.h"
 #include "Exception.h"
 #include "UnsMesh.h"
 
 using tk::RootMeshWriter;
 
-RootMeshWriter::RootMeshWriter( const std::string filename ) :
+RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
   m_filename( filename ), m_outFile( 0 )
 // *****************************************************************************
 //  Constructor: create/open Root file
-//! \param[in] filename File to open as Root file
+//! \param[in] "filename" File to open as Root file
 //! \param[in] mode Root writer constructor mode: ExoWriter::CREATE for
 //!   creating a new file, ExoWriter::OPEN for opening an existing file for
 //!   appending
-//! \param[in] cpuwordsize Set CPU word size, see Root documentation
-//! \param[in] iowordsize Set I/O word size, see Root documentation
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  TFile *f = new TFile(filename.c_str());
-  f->Close();
+  if (option == 0 ) {
+    f = new TFile(filename.c_str(), "RECREATE" );
+    std::cout<<"File opened successfully via recreate "<< std::endl;	
+  }
 }
 
 RootMeshWriter::~RootMeshWriter() noexcept
@@ -45,6 +44,7 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  f->Close();
 }
 
 void
@@ -67,5 +67,61 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
     std::cout<<mesh.neblk()<<std::endl;
+}
+
+void
+RootMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
+const
+// *****************************************************************************
+//  Write the names of nodal output variables to ExodusII file
+//! \param[in] nv Nodal variable names
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wvla"
+    #pragma clang diagnostic ignored "-Wvla-extension"
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvla"
+  #endif
+
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic pop
+  #endif
+}
+
+void
+RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
+// *****************************************************************************
+//  Write time stamp to ExodusII file
+//! \param[in] it Iteration number
+//! \param[in] time Time
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::cout<<it<<"*"<<time<<"time stamp the iteration" << std::endl;
+}
+
+void
+RootMeshWriter::writeNodeScalar( uint64_t it,
+                                     int varid,
+                                     const std::vector< tk::real >& var ) const
+// *****************************************************************************
+//  Write node scalar field to ExodusII file
+//! \param[in] it Iteration number
+//! \param[in] varid Variable id
+//! \param[in] var Vector of variable to output
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::cout<<it<<"*"<<varid<<"Trying to write scalars" << std::endl;
+  for (auto iterx : var)
+    std::cout<<":"<<iterx;
+  std::cout<<std::endl;
 }
 
