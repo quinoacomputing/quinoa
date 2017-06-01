@@ -28,8 +28,8 @@ endif()
 
 find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hpp
                             HINTS ${PEGTL_ROOT}/include
-                                  $ENV{PEGTL_ROOT}
-                            PATH_SUFFIXES pegtl tao/pegtl pegtl/include/tao)
+                                  $ENV{PEGTL_ROOT}/include
+                            PATH_SUFFIXES tao pegtl/include/tao)
 
 set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
 
