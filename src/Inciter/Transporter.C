@@ -588,7 +588,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
           "Number of diagnostics contributed not equal to expected" );
 
   // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i])/m_V;
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i]/m_V);
 
   diag_complete();
 }
