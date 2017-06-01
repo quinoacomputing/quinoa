@@ -46,7 +46,7 @@ add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
 add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES shear_advdiffshear.q shear_centered_12k.exo
-                               exodiff.cfg
+                               exodiff_par.cfg
                                shear_centered_advdiffshear_pe4.std.exo.0
                                shear_centered_advdiffshear_pe4.std.exo.1
                                shear_centered_advdiffshear_pe4.std.exo.2
@@ -58,7 +58,7 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                                  shear_centered_advdiffshear_pe4.std.exo.3
                     BIN_RESULT out.0 out.1 out.2 out.3
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff_par.cfg)
 
 # Parallel + virtualization
 
