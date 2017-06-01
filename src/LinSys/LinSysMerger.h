@@ -708,16 +708,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   nonzero values for computing diagnostics
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] num Portion of the numerical unknown/solution vector
-    //! \param[in] an Portion of the analytical solution vector
+    //! \param[in] u Portion of the numerical unknown/solution vector
+    //! \param[in] a Portion of the analytical solution vector
+    //! \param[in] v Vector of nodal volumes
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charediag( int fromch,
                     const std::vector< std::size_t >& gid,
-                    const Fields& num,
-                    const Fields& an )
+                    const Fields& u,
+                    const Fields& a,
+                    const std::vector< tk::real >& v )
     {
-      Assert( gid.size() == num.nunk(),
+      Assert( gid.size() == u.nunk(),
               "Size of numerical solution and row ID vectors must equal" );
       // Store numerical and analytical solution vector nonzero values owned and
       // pack those to be exported, also build import map used to test for
@@ -727,9 +729,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
           m_diagimport[ fromch ].push_back( gid[i] );
-          m_diag[ gid[i] ] = {{ num[i], an[i] }};
+          updateDiag( gid[i], u[i], a[i], v[i] );
         } else
-          exp[ pe(gid[i]) ][ gid[i] ] = {{ num[i], an[i] }};
+          exp[ pe(gid[i]) ][ gid[i] ] = {{ u[i], a[i], {{v[i]}} }};
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -744,12 +746,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   containing global row indices and values for all components of the
     //!   numerical and analytical solutions (if available)
     void adddiag( int fromch,
-                  const std::map< std::size_t,
-                          std::vector< std::vector< tk::real > > >& solution )
+                  std::map< std::size_t,
+                            std::vector< std::vector< tk::real > > >& solution )
     {
-      for (const auto& r : solution) {
+      for (auto&& r : solution) {
         m_diagimport[ fromch ].push_back( r.first );
-        m_diag[ r.first ] = r.second;
+        updateDiag( r.first, std::move(r.second[0]), std::move(r.second[1]),
+                    r.second[2][0] );
       }
       if (diagcomplete()) diagnostics();
     }
@@ -1147,6 +1150,34 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       auxsolve_complete();
     }
 
+    //! Update diagnostics vector
+    //! \param[in] row Global row index of the diagnostics vector to update
+    //! \param[in] u Numerical solution vector for all components
+    //! \param[in] a Analytical solution vector for all components
+    //! \param[in] v Nodal volume
+    //! \details This function is used to update the vector of diagnostics that
+    //!   collects (across PEs) the numerical solution, the analytical solution,
+    //!   and the nodal volumes at nodes. This involves communication across PEs
+    //!   and can be called for rows with first contributions or subsequent
+    //!   contributions to rows which already hold partial data. The correct
+    //!   policy for updates across PEs (i.e., at nodes that are shared across
+    //!   PEs) is: overwrite the numerical and analytical solutions and summing
+    //!   nodal volumes.
+    void updateDiag( std::size_t row,
+                     std::vector< tk::real >&& u,
+                     std::vector< tk::real >&& a,
+                     tk::real v )
+    {
+      auto& d = m_diag[ row ];
+      if (d.size() != 3) {
+        d.resize( 2, std::vector<tk::real>(m_ncomp,0.0) );
+        d.resize( 3, std::vector<tk::real>(1,0.0) );
+      }
+      d[0] = std::move( u );    // overwrite numerical solution
+      d[1] = std::move( a );    // overwrite analytical solution
+      d[2][0] += v;             // sum nodal volume
+    }
+
     //! Compute diagnostics (residuals) and contribute them back to host
     //! \details Diagnostics: L2 norm for all components.
     //! \see For info, see e.g., inciter::Carrier::diagnostics().
@@ -1156,14 +1187,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
               std::to_string( CkMyPe() ) + " is incomplete" );
       std::vector< tk::real > diag( m_ncomp*2, 0.0 );
       for (const auto& s : m_diag) {
-        Assert( s.second.size() == 2, "Size of diagnostics vector must be 2" );
-        // Compute L1 norm of the numerical solution
+        Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
+        const auto& u = s.second[0];    // numerical solution (all components)
+        const auto& a = s.second[1];    // analytical solution (all components)
+        auto v = s.second[2][0];        // nodal volume
+        // Compute L2 norm of the numerical solution
         for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += s.second[0][c] * s.second[0][c];
-        // Compute L1 norm of the numerical - analytical solution
+          diag[c] += u[c] * u[c] * v;
+        // Compute L2 norm of the numerical - analytical solution
         for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[m_ncomp+c] += (s.second[0][c] - s.second[1][c]) *
-                             (s.second[0][c] - s.second[1][c]);
+          diag[m_ncomp+c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
       }
       // Contribute to diagnostics across all PEs
       signal2host_diag( m_host, diag );

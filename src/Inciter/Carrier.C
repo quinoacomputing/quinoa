@@ -1200,13 +1200,13 @@ Carrier::diagnostics()
     // defined above, is taken.
     for (std::size_t p=0; p<m_u.nunk(); ++p)
       for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-        auto r = std::sqrt( m_v[p] );
-        m_ul(p,c,0) = r * m_ul(p,c,0);
-        m_ulf(p,c,0) = r * m_u(p,c,0);
+        m_ul(p,c,0) = m_ul(p,c,0);
+        m_ulf(p,c,0) = m_u(p,c,0);
       }
 
     // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_ulf, m_ul );
+    m_linsysmerger.ckLocalBranch()->
+      charediag( thisIndex, m_gid, m_ulf, m_ul, m_v );
 
   } else
     contribute(
