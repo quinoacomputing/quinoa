@@ -150,30 +150,30 @@ void ContainerUtil_object::test< 5 >() {
                  v1[2], v2[2], precision );
 
   // add empty vector to non-empty one: throw in DEBUG to warn on no-op
+  // skipped in RELEASE mode, would yield segmentation fault
+  #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > r1{{ 4.0, 9.0, 2.0 }}, r2;
     r1 += r2;
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
   }
+  #endif
 
   // add empty vector to empty one: throw in DEBUG to warn on no-op
+  // skipped in RELEASE mode, would yield segmentation fault
+  #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > q1, q2;
     q1 += q2;
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
   }
+  #endif
 
   // add non-empty vector to non-empty one with src.size() == dst.size():
   // dst += src for all components, leave src unchanged
@@ -220,17 +220,17 @@ void ContainerUtil_object::test< 5 >() {
 
   // add non-empty vector to non-empty one with src.size() < dst.size(): thrown
   // in DEBUG to warn on loosing data
+  // skipped in RELEASE mode, would yield segmentation fault
+  #ifndef NDEBUG        // exception only thrown in DEBUG mode
   try {
     std::vector< tk::real > n1{{ 4.0, 9.0, 2.0 }}, n2{{ 3.0, -3.0 }};
     n1 += n2;
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
   }
+  #endif
 }
 
 //! Test keyEqual()
@@ -239,26 +239,26 @@ template<> template<>
 void ContainerUtil_object::test< 6 >() {
   set_test_name( "keyEqual" );
 
-  // test if throws in DEBUG to warn on unequal-size containers
-  try {
-    std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0} };
-    tk::keyEqual( r1, r2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
   // Test if keys are equal
-  std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0}, {2,3.0} };
-  ensure_equals( "keys are not equal", tk::keyEqual(r1,r2), true );
-  
+  std::map< int, tk::real > t1{ {1,4.0}, {2,2.0} }, t2{ {1,4.0}, {2,3.0} };
+  ensure_equals( "keys are not equal", tk::keyEqual(t1,t2), true );
+
   // Test if keys are unequal
   std::map< int, tk::real > q1{ {3,4.0}, {2,2.0} }, q2{ {1,4.0}, {2,3.0} };
   ensure_equals( "keys are equal", tk::keyEqual(q1,q2), false );
+
+  // test if throws in DEBUG to warn on unequal-size containers
+  // skipped in RELEASE mode, would yield segmentation fault
+  #ifndef NDEBUG        // exception only thrown in DEBUG mode
+  try {
+    std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0} };
+    tk::keyEqual( r1, r2 );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
 }
 
 //! Test sumsize()
