@@ -240,8 +240,8 @@ void ContainerUtil_object::test< 6 >() {
   set_test_name( "keyEqual" );
 
   // Test if keys are equal
-  std::map< int, tk::real > r1{ {1,4.0}, {2,2.0} }, r2{ {1,4.0}, {2,3.0} };
-  ensure_equals( "keys are not equal", tk::keyEqual(r1,r2), true );
+  std::map< int, tk::real > t1{ {1,4.0}, {2,2.0} }, t2{ {1,4.0}, {2,3.0} };
+  ensure_equals( "keys are not equal", tk::keyEqual(t1,t2), true );
 
   // Test if keys are unequal
   std::map< int, tk::real > q1{ {3,4.0}, {2,2.0} }, q2{ {1,4.0}, {2,3.0} };
