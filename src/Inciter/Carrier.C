@@ -52,7 +52,6 @@ extern std::vector< PDE > g_pdes;
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
-CkReduction::reducerType VerifyBCMerger;
 CkReduction::reducerType PDFMerger;
 
 } // inciter::

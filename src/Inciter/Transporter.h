@@ -222,12 +222,6 @@ class Transporter : public CBase_Transporter {
     //!   all workers
     void dt( tk::real* d, std::size_t n );
 
-    //! Reduction target initiating verification of the boundary conditions set
-    void verifybc( CkReductionMsg* msg );
-
-    //! Reduction target as a 2nd (final) of the verification of BCs
-    void doverifybc( CkReductionMsg* msg );
-
     //! \brief Reduction target indicating that all Carrier chares have
     //!   finished their initialization step
     void initcomplete();
