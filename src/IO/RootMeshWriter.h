@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \author    A. Pakki 
+  \copyright 2012-2015, Aditya Pakki, 2016, Los Alamos National Security, LLC.
   \brief     ROOT mesh-based data writer
   \details   ROOT mesh-based data writer class declaration.
 */

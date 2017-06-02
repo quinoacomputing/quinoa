@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \author    A. Pakki
+  \copyright 2012-2015, Jozsef Pakki, 2016, Los Alamos National Security, LLC.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class definition.
 */
@@ -29,7 +29,7 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 //! \param[in] mode Root writer constructor mode: ExoWriter::CREATE for
 //!   creating a new file, ExoWriter::OPEN for opening an existing file for
 //!   appending
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   if (option == 0 ) {
@@ -52,7 +52,7 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 RootMeshWriter::~RootMeshWriter() noexcept
 // *****************************************************************************
 //  Destructor
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   if (rfile)
@@ -64,7 +64,7 @@ RootMeshWriter::writeMesh( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write Root mesh file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   writeHeader( mesh );
@@ -77,7 +77,7 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write Root header
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
     std::cout<<mesh.neblk()<<std::endl;
@@ -88,7 +88,7 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write node coordinates to Root file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
 
@@ -104,7 +104,7 @@ RootMeshWriter::writeElements( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write element connectivity to Root file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   int elclass = 0;
@@ -125,7 +125,7 @@ const
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
 //! \param[in] inpoel Element connectivity.
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   if (inpoel.empty()) return;
@@ -146,7 +146,7 @@ const
 // *****************************************************************************
 //  Write the names of nodal output variables to ExodusII file
 //! \param[in] nv Nodal variable names
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   #if defined(__clang__)
@@ -173,7 +173,7 @@ RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 //  Write time stamp to ExodusII file
 //! \param[in] it Iteration number
 //! \param[in] time Time
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   std::cout<<it<<"*"<<time<<"time stamp the iteration" << std::endl;
@@ -188,7 +188,7 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
 //! \param[in] it Iteration number
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output
-//! \author J. Bakosi
+//! \author A. Pakki
 // *****************************************************************************
 {
   tk::real count = 0.0;

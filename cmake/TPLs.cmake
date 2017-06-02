@@ -129,7 +129,11 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-set(ROOTSYS /usr/local)
-find_package(Root REQUIRED RIO Core Tree)
+set(ENABLE_ROOT OFF CACHE BOOL "link ROOT with the Quinoa Framework" )
+
+if(ENABLE_ROOT)
+  message(STATUS "Enable Root library linking")
+  find_package(Root COMPONENTS RIO Core Tree)
+endif()
 
 message(STATUS "------------------------------------------")
