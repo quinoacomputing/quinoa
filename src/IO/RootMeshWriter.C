@@ -89,10 +89,8 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
 
-  for ( int i = 0 ; i < mesh.size() ; i++ ) {
+  for ( int i = 0 ; i < mesh.size() ; i++ ) 
     ntuple_xyz->Fill( mesh.x()[i], mesh.y()[i], mesh.z()[i] );
-    std::cout << i <<",";
-  }
 
   ntuple_xyz->Write();
 
@@ -115,9 +113,8 @@ const
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
   #endif
-  int count = 0;
-  for (auto iter_string : nv ) count += 1;
-  std::cout<< count << " Number of variables " <<  count << std::endl;
+  for (auto iter_string : nv ) 
+    std::cout<< iter_string << " From the nv string vector"  << std::endl;
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
