@@ -577,7 +577,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chfilenodes;
     //! \brief Maps associating new node IDs (as in producing contiguous-row-id
-    //!   linear system contributions)to edges (a pair of old node IDs) in
+    //!   linear system contributions) to edges (a pair of old node IDs) in
     //!   tk::UnsMesh::EdgeNodes maps, associated to and categorized by chares.
     //! \details Maps associating new node IDs (as in producing
     //!   contiguous-row-id linear system contributions) to edges (a pair of old
