@@ -73,6 +73,8 @@ namespace deck {
 namespace tk {
 namespace grm {
 
+  using namespace tao;
+
   // Note that PEGTL action specializations must be in the same namespace as the
   // template being specialized. See http://stackoverflow.com/a/3052604.
 
@@ -240,6 +242,8 @@ namespace walker {
 
 //! Walker input deck facilitating user input for integrating SDEs
 namespace deck {
+
+  using namespace tao;
 
   // Walker's InputDeck grammar
 

@@ -15,6 +15,8 @@ namespace tk {
 //! Toolkit, grammar definition for Intel's Math Kernel Library
 namespace mkl {
 
+  using namespace tao;
+
   //! \brief rng: match any one of the MKL random number generators
   //! \author J. Bakosi
   template< template< class > class use >

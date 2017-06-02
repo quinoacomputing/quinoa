@@ -24,6 +24,8 @@
 namespace rngtest {
 namespace ctr {
 
+using namespace tao;
+
 using tk::ctr::RNGType;
 
 //! Storage of selected options
@@ -47,7 +49,7 @@ using parameters = tk::tuple::tagged_tuple<
 >;
 
 //! PEGTL location/position type to use throughout all of RNGTest's parsers
-using Location = pegtl::position_info;
+using Location = pegtl::position;
 
 } // ctr::
 } // rngtest::

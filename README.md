@@ -20,7 +20,7 @@ Currently, Quinoa consists of the following tools:
 
    ```
    apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-   apt-get install gmsh pegtl-dev libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+   apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 
 - Mac OS X: (line 1: required, line 2: recommended)

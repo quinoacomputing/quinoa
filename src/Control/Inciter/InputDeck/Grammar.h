@@ -51,6 +51,8 @@ namespace deck {
 namespace tk {
 namespace grm {
 
+  using namespace tao;
+
   // Note that PEGTL action specializations must be in the same namespace as the
   // template being specialized. See http://stackoverflow.com/a/3052604.
 
@@ -268,6 +270,8 @@ namespace inciter {
 
 //! Inciter input deck facilitating user input for computing shock hydrodynamics
 namespace deck {
+
+  using namespace tao;
 
   // Inciter's InputDeck grammar
 
