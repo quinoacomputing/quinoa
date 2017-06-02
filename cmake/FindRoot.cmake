@@ -18,9 +18,23 @@ endif()
 find_path(ROOT_INCLUDE_DIR NAMES TFile.h 
                            HINTS ${ROOTSYS}/include
 )
-
-find_library(ROOT_LIBRARY NAMES RIO Core TTree
+### Find the libraries necessary at minimum
+find_library(ROOT_RIO_LIBRARY NAMES RIO
 	                  HINTS ${ROOTSYS}/lib 
+)
+
+find_library(ROOT_CORE_LIBRARY NAMES Core
+	                  HINTS ${ROOTSYS}/lib 
+)
+
+find_library(ROOT_TREE_LIBRARY NAMES Tree
+	                  HINTS ${ROOTSYS}/lib 
+)
+
+### Link the libraries as one
+set ( ROOT_LIBRARY  ${ROOT_RIO_LIBRARY}
+		    ${ROOT_CORE_LIBRARY} 
+		    ${ROOT_TREE_LIBRARY} 
 )
 
 set(ROOT_INCLUDE_DIRS ${ROOT_INCLUDE_DIR})

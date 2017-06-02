@@ -130,6 +130,6 @@ endif()
 
 ### Root library
 set(ROOTSYS /usr/local)
-find_package(Root REQUIRED)
+find_package(Root REQUIRED RIO Core Tree)
 
 message(STATUS "------------------------------------------")

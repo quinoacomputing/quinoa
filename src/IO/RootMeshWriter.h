@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <TFile.h>
+#include <TNtuple.h>
 #include "Types.h"
 
 namespace tk {
@@ -48,7 +49,11 @@ class RootMeshWriter {
     //! Write Root header
     void writeHeader( const UnsMesh& mesh ) const;
 
-    TFile *f = 0;
+    //! Write nodes coordinates 
+    void writeNodes( const UnsMesh& mesh ) const;
+
+    TFile *rfile = 0;
+    TNtuple *ntuple_xyz = 0;
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< Root file handle
 };

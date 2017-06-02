@@ -33,9 +33,18 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 // *****************************************************************************
 {
   if (option == 0 ) {
-    f = new TFile(filename.c_str(), "RECREATE" );
+
+    rfile = new TFile(filename.c_str(), "RECREATE" );
+    ntuple_xyz = new TNtuple( "ntuple", "coordinates of the file", "x:y:z" );
     std::cout<<"File opened successfully via recreate "<< std::endl;	
-  }
+
+  } else if (option == 1) {
+
+      rfile = TFile::Open(filename.c_str(), "UPDATE" );
+      std::cout<< "File opened successfully via update" <<std::endl;
+
+  } else Throw( "Root Mesh modes not supported" );
+
 }
 
 RootMeshWriter::~RootMeshWriter() noexcept
@@ -44,7 +53,8 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  f->Close();
+  if (rfile)
+   rfile->Close();
 }
 
 void
@@ -56,6 +66,7 @@ RootMeshWriter::writeMesh( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
   writeHeader( mesh );
+  writeNodes( mesh );
 }
 
 void
@@ -67,6 +78,24 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
     std::cout<<mesh.neblk()<<std::endl;
+}
+
+void
+RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
+// *****************************************************************************
+//  Write node coordinates to Root file
+//! \param[in] mesh Unstructured mesh object
+//! \author J. Bakosi
+// *****************************************************************************
+{
+
+  for ( int i = 0 ; i < mesh.size() ; i++ ) {
+    ntuple_xyz->Fill( mesh.x()[i], mesh.y()[i], mesh.z()[i] );
+    std::cout << i <<",";
+  }
+
+  ntuple_xyz->Write();
+
 }
 
 void
@@ -86,7 +115,9 @@ const
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvla"
   #endif
-
+  int count = 0;
+  for (auto iter_string : nv ) count += 1;
+  std::cout<< count << " Number of variables " <<  count << std::endl;
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
@@ -119,9 +150,10 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  std::cout<<it<<"*"<<varid<<"Trying to write scalars" << std::endl;
+  tk::real count = 0.0;
   for (auto iterx : var)
-    std::cout<<":"<<iterx;
-  std::cout<<std::endl;
+    count += iterx;
+  std::cout<<it<<"*"<<varid<<"Trying to write scalars with sum as " << count 
+	    << std::endl;
 }
 
