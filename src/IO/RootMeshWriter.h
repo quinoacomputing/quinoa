@@ -16,6 +16,7 @@
 
 #include <TFile.h>
 #include <TNtuple.h>
+#include <TTree.h>
 #include "Types.h"
 
 namespace tk {
@@ -52,8 +53,20 @@ class RootMeshWriter {
     //! Write nodes coordinates 
     void writeNodes( const UnsMesh& mesh ) const;
 
+    //! Write element conectivity to ROOT file
+    void writeElements( const UnsMesh& mesh ) const;
+
+    //! Write element block to ROOT file
+    void writeElemBlock( int& elclass,
+                         int64_t nnpe,
+                         const std::string& eltype,
+                         const std::vector< std::size_t >& inpoel ) const;
+
+    //! Variables for ROOT files, tuples
     TFile *rfile = 0;
     TNtuple *ntuple_xyz = 0;
+    TTree *tree_connect = 0;
+
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< Root file handle
 };

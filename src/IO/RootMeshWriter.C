@@ -35,7 +35,9 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
   if (option == 0 ) {
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
-    ntuple_xyz = new TNtuple( "ntuple", "coordinates of the file", "x:y:z" );
+    ntuple_xyz = new TNtuple( "ntuple", "meshes  of the file", "x:y:z" );
+    tree_connect = new TTree ( "ctree", "store the connectivity" );
+
     std::cout<<"File opened successfully via recreate "<< std::endl;	
 
   } else if (option == 1) {
@@ -67,6 +69,7 @@ RootMeshWriter::writeMesh( const UnsMesh& mesh ) const
 {
   writeHeader( mesh );
   writeNodes( mesh );
+  writeElements( mesh );
 }
 
 void
@@ -94,6 +97,47 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
 
   ntuple_xyz->Write();
 
+}
+
+void
+RootMeshWriter::writeElements( const UnsMesh& mesh ) const
+// *****************************************************************************
+//  Write element connectivity to Root file
+//! \param[in] mesh Unstructured mesh object
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  int elclass = 0;
+
+  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
+  writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel() );
+}
+
+void
+RootMeshWriter::writeElemBlock( int& elclass,
+                                    int64_t nnpe,
+                                    const std::string& eltype,
+                                    const std::vector< std::size_t >& inpoel )
+const
+// *****************************************************************************
+//  Write element block to ExodusII file
+//! \param[inout] elclass Count element class ids in file
+//! \param[in] nnpe Number of nodes per element for block
+//! \param[in] eltype String describing element type
+//! \param[in] inpoel Element connectivity.
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  if (inpoel.empty()) return;
+
+  // increase number of element classes in file
+  ++elclass;
+
+  // Make sure element connectivity starts with zero
+  Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
+          "node ids should start from zero" );
+  
+  tree_connect->Write(); 
 }
 
 void
