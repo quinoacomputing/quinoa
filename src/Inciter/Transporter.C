@@ -83,7 +83,7 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
-  m_diag( g_inputdeck.get< tag::component >().nprop() * 2, 0.0 ),
+  m_diag( g_inputdeck.get< tag::component >().nprop() * 3, 0.0 ),
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -571,24 +571,41 @@ Transporter::initcomplete()
 }
 
 void
-Transporter::diagnostics( tk::real* d, std::size_t n )
+Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
-//! \param[in] d Diagnostics (sums) collected over all chares
-//! \param[in] n Number of diagnostics in array d
+//! \param[in] msg Serialized diagnostics vector aggregated across all PEs
 //! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
+  std::vector< std::vector< tk::real > > d;
 
-  Assert( n == m_diag.size(),
-          "Number of diagnostics contributed not equal to expected" );
+  // Deserialize diagnostics vector
+  PUP::fromMem creator( msg->getData() );
+  creator | d;
+  delete msg;
 
-  // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i]/m_V);
+  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+
+  Assert( d.size() == 3, "Diagnostics vector size mismatch" );
+
+  for (std::size_t i=0; i<d.size(); ++i)
+     Assert( d[i].size() == ncomp,
+             "Size mismatch at final stage of diagnostics aggregation" );
+
+  // Finish computing diagnostics
+  //for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i]/m_V);
+
+  // Finish computing the L2 norm of the numerical solution
+  for (std::size_t i=0; i<d[0].size(); ++i)
+    m_diag[i] = sqrt( d[0][i] / m_V );
+  // Finish computing the L2 norm of the numerical - analytical solution
+  for (std::size_t i=0; i<d[1].size(); ++i)
+    m_diag[ ncomp + i ] = sqrt( d[1][i] / m_V );
+  // Finish computing the Linf norm of the numerical - analytical solution
+  for (std::size_t i=0; i<d[2].size(); ++i)
+    m_diag[ ncomp*2 + i ] = d[2][i];
 
   diag_complete();
 }

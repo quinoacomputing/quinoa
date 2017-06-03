@@ -34,7 +34,7 @@ module transporter {
       entry [reductiontarget] void initcomplete();
       entry [reductiontarget] void parcomcomplete();
       entry [reductiontarget] void nparcomplete();
-      entry [reductiontarget] void diagnostics( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void diagcomplete();
       entry [reductiontarget] void outcomplete();
       entry [reductiontarget] void computedt();

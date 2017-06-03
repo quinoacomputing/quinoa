@@ -10,6 +10,7 @@ add_library(Inciter
             Partitioner.C
             Carrier.C
             FluxCorrector.C
+            DiagReducer.C
 )
 
 addCharmModule( "transporter" "Inciter" )

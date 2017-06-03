@@ -193,6 +193,7 @@
 #include "HypreSolver.h"
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
+#include "DiagReducer.h"
 #include "AuxSolver.h"
 
 #include "NoWarning/linsysmerger.decl.h"
@@ -203,6 +204,7 @@ namespace tk {
 extern CkReduction::reducerType BCVectorMerger;
 extern CkReduction::reducerType BCMapMerger;
 extern CkReduction::reducerType BCValMerger;
+extern CkReduction::reducerType DiagMerger;
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -336,6 +338,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       BCValMerger = CkReduction::addReducer(
                       tk::mergeHashMap< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > );
+      DiagMerger = CkReduction::addReducer( tk::mergeDiag );
     }
 
     //! Receive lower and upper global node IDs all PEs will operate on
@@ -1185,18 +1188,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       Assert( diagcomplete(),
               "Values of distributed solution vector (for diagnostics) on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      std::vector< tk::real > diag( m_ncomp*2, 0.0 );
+      std::vector< std::vector< tk::real > >
+        diag( 3, std::vector< tk::real >( m_ncomp, 0.0 ) );
       for (const auto& s : m_diag) {
         Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
-        const auto& u = s.second[0];    // numerical solution (all components)
-        const auto& a = s.second[1];    // analytical solution (all components)
-        auto v = s.second[2][0];        // nodal volume
-        // Compute L2 norm of the numerical solution
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += u[c] * u[c] * v;
-        // Compute L2 norm of the numerical - analytical solution
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[m_ncomp+c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
+        auto row = s.first;
+        if (row >= m_lower && row < m_upper) {    // only if own
+          const auto& u = s.second[0];    // numerical solution (all components)
+          const auto& a = s.second[1];    // analytical solution (all components)
+          auto v = s.second[2][0];        // nodal volume
+          // Compute L2 norm of the numerical solution
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            diag[0][c] += u[c] * u[c] * v;
+          // Compute L2 norm of the numerical - analytical solution
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            diag[1][c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
+          // Compute Linf norm of the numerical - analytical solution
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            auto err = std::abs( u[c] - a[c] );
+            if (err > diag[2][c]) diag[2][c] = err;
+          }
+        }
       }
       // Contribute to diagnostics across all PEs
       signal2host_diag( m_host, diag );
@@ -1276,11 +1288,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
     //! Contribute diagnostics back to host
     void signal2host_diag( const inciter::CProxy_Transporter& host,
-                           const std::vector< tk::real >& diag ) {
+                           const std::vector< std::vector< tk::real > >& diag )
+    {
       using inciter::CkIndex_Transporter;
-      Group::contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
-                         diag.data(), CkReduction::sum_double,
-        CkCallback( CkReductionTarget( Transporter, diagnostics), host ) );
+      auto stream = tk::serialize( diag );
+      CkCallback cb( CkIndex_Transporter::diagnostics(nullptr), host );
+      Group::contribute( stream.first, stream.second.get(), DiagMerger, cb );
     }
     ///@}
     #if defined(__clang__)

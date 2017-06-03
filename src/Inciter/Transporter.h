@@ -235,7 +235,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
-    void diagnostics( tk::real* d, std::size_t n );
+    void diagnostics( CkReductionMsg* msg );
 
     //! \brief Reduction target indicating that Carrier chares contribute no
     //!    diagnostics and we ready to output the one-liner report

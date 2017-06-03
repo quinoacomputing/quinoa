@@ -31,6 +31,7 @@ namespace tk {
 CkReduction::reducerType BCVectorMerger;
 CkReduction::reducerType BCMapMerger;
 CkReduction::reducerType BCValMerger;
+CkReduction::reducerType DiagMerger;
 
 }
 
