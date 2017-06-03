@@ -1297,7 +1297,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
     ///@}
     #if defined(__clang__)
-      #pragma GCC diagnostic pop
+      #pragma clang diagnostic pop
     #endif
 };
 

@@ -1201,6 +1201,57 @@ class Partitioner : public CBase_Partitioner< HostProxy,
              static_cast<tk::real>(ownpts + compts);
     }
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wdocumentation"
+    #endif
+    /** @name Host signal calls
+      * \brief These functions signal back to the host via a global reduction
+      *   originating from each PE branch
+      * \details Singal calls contribute to a reduction on all branches (PEs)
+      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
+      *   by the template argument HostProxy. The signal functions are overloads
+      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
+      *   LinSysMerger template. They create Charm++ reduction targets via
+      *   creating a callback that invokes the typed reduction client, where
+      *   host is the proxy on which the reduction target method, given by the
+      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
+      *   upon completion of the reduction.
+      *
+      *   Note that we do not use Charm++'s CkReductionTarget macro here,
+      *   but instead explicitly generate the code that that macro would
+      *   generate. To explain why, here is Charm++'s CkReductionTarget macro's
+      *   definition, given in ckreduction.h:
+      *   \code{.cpp}
+      *      #define CkReductionTarget(me, method) \
+      *        CkIndex_##me::redn_wrapper_##method(NULL)
+      *   \endcode
+      *   This macro takes arguments 'me' (a class name) and 'method' a member
+      *   function of class 'me' and generates the call
+      *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
+      *   signal2* functions generate, we do the above macro's job for
+      *   LinSysMerger specialized by HostProxy, hard-coded here, as well its
+      *   reduction target. This is required since
+      *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
+      *      than type resolution and the string of the template argument would
+      *      be substituted instead of the type specialized (which is not what
+      *      we want here), and
+      *    * the template argument class, e.g, CProxy_Transporter, is in a
+      *      namespace different than that of LinSysMerger. When a new class is
+      *      used to specialize LinSysMerger, the compiler will alert that a new
+      *      overload needs to be defined.
+      *
+      * \note This simplifies client-code, e.g., inciter::Transporter, which now
+      *   requires no explicit book-keeping with counters, etc. Also a reduction
+      *   (instead of a direct call to the host) better utilizes the
+      *   communication network as computational nodes can send their aggregated
+      *   contribution to other nodes on a network instead of all chares sending
+      *   their (smaller) contributions to the same host, (hopefully)
+      *   implemented using a tree among the PEs.
+      * \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
+      *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
+      * */
+    ///@{
     //! \brief Signal back to host that we have done our part of reading the
     //!   mesh graph
     //! \details Signaling back is done via a Charm++ typed reduction, which
@@ -1248,6 +1299,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_flattened(NULL), host ));
     }
+    ///@}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 };
 
 #if defined(__clang__)
