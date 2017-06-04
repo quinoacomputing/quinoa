@@ -1179,7 +1179,7 @@ Carrier::diagnostics()
     // really the initial condition.
     auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
+      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid, dbc );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2
     // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
