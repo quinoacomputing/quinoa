@@ -798,6 +798,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/rngtest/SmallCrush_all.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/rngtest/Crush_all.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/inciter/shear.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/inciter/slot_cyl.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Charm++_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PEGTL_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/TUT_license.dox \

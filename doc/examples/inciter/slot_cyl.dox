@@ -1,0 +1,329 @@
+/*!
+  \page      inciter_example_slot_cyl Inciter: Integrating the scalar advection equation
+  \tableofcontents
+
+This example runs [inciter](inciter_doc.html) to integrate the advection
+equation (see PDE/Transport.h) configured to solve the Zalesak's slotted
+cylinder (inciter::TransportProblemSlotCyl) problem.
+
+\section inciter_example_slot_cyl_control Control file
+
+\verbatim
+# vim: filetype=sh:
+# This is a comment
+# Keywords are case-sensitive
+
+title "Zalesak's slotted cylinder"
+
+inciter
+
+  #nstep 10  # Max number of time steps
+  #term 6.28318530718  # Max time = 2*pi
+  term 1.57079632679  # Max time = pi/2
+  #term 0.78539816339  # Max time = pi/4
+  #term 0.39270  # Max time = pi/8
+  cfl  0.5
+  ttyi 10      # TTY output interval
+  ctau 1.0  # FCT mass diffusivity
+
+  transport
+    physics advection
+    problem slot_cyl
+    ncomp 1
+  end
+
+  plotvar
+    interval 100
+  end
+
+end
+\endverbatim
+
+\section inciter_example_slot_cyl_run Example run on 80 CPUs
+\verbatim
+./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+\endverbatim
+
+\section inciter_example_ou_output Output
+\verbatim
+Running on 80 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 80  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+App launch reported: 5 (out of 5) daemons - 16 (out of 80) procs
+Charm++> Running on MPI version: 3.1
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 80
+Converse/Charm++ Commit ID:
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 5 unique compute nodes (16-way SMP).
+Charm++> cpu topology info is gathered in 0.029 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     .___              .__  __
+   .;@+@';;;;;;' |   | ____   ____ |__|/  |_  ___________
+    `     '#''@` |   |/    \_/ ___\|  \   __\/ __ \_  __ \
+                 |   |   |  \  \___|  ||  | \  ___/|  | \/
+                 |___|___|  /\___  >__||__|  \___  >__|
+                          \/     \/              \/
+
+                                 < ENVIRONMENT >
+                                 ------ o ------
+
+ * Build environment:
+ --------------------
+     Hostname                       : pi012.localdomain
+     Executable                     : inciter
+     Version                        : 0.1 (C16015)
+     Revision SHA1                  : Quinoa_v0.1-914-g40abfa9
+     CMake build type               : RELEASE
+     Asserts                        : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     Exception trace                : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     MPI C++ wrapper                : /usr/projects/hpcsoft/toss2/pinto/openmpi/2.0.2-gcc-6.1.0/bin/mpicxx
+     Underlying C++ compiler        : /usr/projects/hpcsoft/toss2/common/gcc/6.1.0/bin/g++
+     Build date                     : Sun Jun  4 13:54:29 MDT 2017
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Jun  5 09:44:41 2017
+     Work directory                 : /net/scratch2/jbakosi/code/quinoa/build/gnup
+     Executable (rel. to work dir)  : Main/inciter
+     Command line arguments         : '-v -c slot_cyl.q -i unitcube_01_6M.exo'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : slot_cyl.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >
+                                   ---- o ----
+
+ * Unknowns data layout (CMake: FIELD_DATA_LAYOUT):
+ --------------------------------------------------
+     unknown-major
+
+ * Registered partial differential equations:
+ --------------------------------------------
+     Unique equation types          : 2
+     With all policy combinations   : 12
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * h: physics configuration:
+        A - Advection
+        D - Advection + diffusion
+        L - Laplace
+        N - Navier-Stokes
+        E - Euler
+      * r: problem:
+        U - User-defined
+        S - Shear-diffusion
+        D - Dirichlet & Neumann
+        V - Vortical flow
+        V - Nonlinear energy growth
+        V - Rayleigh-Taylor
+        Z - Zalesak's slotted cylinder
+
+     Compressible flow              : h:EN, r:UV
+     Transport                      : h:AD, r:SZ
+
+
+                                   < PROBLEM >
+                                   ---- o ----
+
+ * Title: Zalesak's slotted cylinder
+ -----------------------------------
+
+ * Partial differential equations integrated (1):
+ ------------------------------------------------
+   < Transport >
+     problem                        : Zalesak's slotted cylinder
+     start offset in unknowns array : 0
+     number of components           : 1
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Start time                     : 0
+     Terminate time                 : 1.5708
+     CFL coefficient                : 0.5
+     Mass diffusion coeff           : 1
+
+ * Output filenames:
+ -------------------
+     Field                          : out.<chareid>
+     Diagnostics                    : diag
+
+ * Output intervals:
+ -------------------
+     TTY                            : 10
+     Field                          : 100
+     Diagnostics                    : 1
+
+Quinoa> Reading side sets ... done
+Quinoa> Creating linear system mergers
+Quinoa> Creating particle writers
+Quinoa> Creating partitioners and reading mesh graph ... done
+
+ * Input mesh graph statistics:
+ ------------------------------
+     Number of tetrahedra           : 6000000
+     Number of nodes                : 1030301
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of tetrahedra)    : 6000000
+     Number of processing elements  : 80
+     Number of work units           : 80 (79*75000+75000)
+
+ * Initial mesh partitioning:
+ ----------------------------
+     Mesh partitioning algorithm    : recursive coordinate bisection
+
+Quinoa> Mesh read time: 0.232970 sec
+Quinoa> Partitioning and distributing mesh ... ZOLTAN Load balancing method = 3 (RCB)
+Build configuration:
+
+  ZOLTAN_ID_TYPE: unsigned int (4 bytes)
+  ZOLTAN_GNO_TYPE: ssize_t, (8 bytes)
+  MPI_Datatype for ZOLTAN_ID_TYPE: MPI_UNSIGNED
+  MPI_Datatype for ZOLTAN_GNO_TYPE: MPI_LONG
+
+ZOLTAN Parameter IMBALANCE_TOL[0] = 1.100000
+ZOLTAN Parameter AUTO_MIGRATE = FALSE
+ZOLTAN Parameter MIGRATE_ONLY_PROC_CHANGES = 1
+ZOLTAN Parameter OBJ_WEIGHT_DIM = 0
+ZOLTAN Parameter EDGE_WEIGHT_DIM = 0
+ZOLTAN Parameter DEBUG_LEVEL = 1
+ZOLTAN Parameter DEBUG_PROCESSOR = 0
+ZOLTAN Parameter DETERMINISTIC = TRUE
+ZOLTAN Parameter TIMER = 1 (wall)
+ZOLTAN Parameter NUM_GID_ENTRIES = 2
+ZOLTAN Parameter NUM_LID_ENTRIES = 2
+ZOLTAN Parameter RETURN_LISTS = PARTITION ASSIGNMENTS
+ZOLTAN Parameter NUM_GLOBAL_PARTS = 80
+ZOLTAN Parameter NUM_LOCAL_PARTS = -1
+ZOLTAN Parameter REMAP = 1
+ZOLTAN Parameter SEED = 123456789 (123456789)
+ZOLTAN Parameter LB_APPROACH = repartition
+ZOLTAN Parameter RCB_OVERALLOC = 1.200000
+ZOLTAN Parameter RCB_REUSE = 0
+ZOLTAN Parameter CHECK_GEOM = 1
+ZOLTAN Parameter RCB_OUTPUT_LEVEL = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter RCB_LOCK_DIRECTIONS = 0
+ZOLTAN Parameter RCB_SET_DIRECTIONS = 0
+ZOLTAN Parameter RCB_RECTILINEAR_BLOCKS = 0
+ZOLTAN Parameter OBJ_WEIGHTS_COMPARABLE = 0
+ZOLTAN Parameter RCB_MULTICRITERIA_NORM = 1
+ZOLTAN Parameter RCB_MAX_ASPECT_RATIO = 10.000000
+ZOLTAN Parameter AVERAGE_CUTS = 0
+ZOLTAN Parameter RANDOM_PIVOTS = 0
+ZOLTAN Parameter RCB_RECOMPUTE_BOX = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 0.000000
+ZOLTAN Parameter FINAL_OUTPUT = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 10.000000
+done
+Quinoa> Reordering mesh ... done
+Quinoa> Creating workers
+Quinoa> Linear system communication cost: avg = 0.112230, std = 0.070685
+Quinoa> Reading mesh node coordinates, computing nodal volumes
+Quinoa> Mesh statistics: min/max/avg(edgelength) = 0.010000 / 0.017321 / 0.012753
+Quinoa> Mesh statistics: min/max/avg(V^{1/3}) = 0.005503 / 0.005503 / 0.005503
+Quinoa> Computing row IDs, querying BCs, outputting mesh done
+Quinoa> Setting and outputting ICs, computing initial dt, computing LHS ... done
+Quinoa> Starting time stepping ...
+
+ * Time integration: Unstructured-mesh PDE solver testbed
+ --------------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (F: field, D: diagnostics)
+
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+      10  3.891359e-02  3.891359e-03  000:00:04  000:02:42  D
+      20  7.782717e-02  3.891359e-03  000:00:08  000:02:38  D
+      30  1.167408e-01  3.891359e-03  000:00:12  000:02:35  D
+      40  1.556543e-01  3.891359e-03  000:00:16  000:02:32  D
+      50  1.945679e-01  3.891359e-03  000:00:20  000:02:28  D
+      60  2.334815e-01  3.891359e-03  000:00:25  000:02:24  D
+      70  2.723951e-01  3.891359e-03  000:00:29  000:02:20  D
+      80  3.113087e-01  3.891359e-03  000:00:33  000:02:16  D
+      90  3.502223e-01  3.891359e-03  000:00:38  000:02:12  D
+     100  3.891359e-01  3.891359e-03  000:00:59  000:03:01  FD
+     110  4.280494e-01  3.891359e-03  000:01:04  000:02:51  D
+     120  4.669630e-01  3.891359e-03  000:01:08  000:02:41  D
+     130  5.058766e-01  3.891359e-03  000:01:12  000:02:33  D
+     140  5.447902e-01  3.891359e-03  000:01:17  000:02:25  D
+     150  5.837038e-01  3.891359e-03  000:01:21  000:02:17  D
+     160  6.226174e-01  3.891359e-03  000:01:25  000:02:10  D
+     170  6.615310e-01  3.891359e-03  000:01:30  000:02:04  D
+     180  7.004445e-01  3.891359e-03  000:01:34  000:01:57  D
+     190  7.393581e-01  3.891359e-03  000:01:39  000:01:51  D
+     200  7.782717e-01  3.891359e-03  000:01:54  000:01:56  FD
+     210  8.171853e-01  3.891359e-03  000:01:58  000:01:49  D
+     220  8.560989e-01  3.891359e-03  000:02:03  000:01:42  D
+     230  8.950125e-01  3.891359e-03  000:02:07  000:01:36  D
+     240  9.339261e-01  3.891359e-03  000:02:12  000:01:30  D
+     250  9.728396e-01  3.891359e-03  000:02:16  000:01:24  D
+     260  1.011753e+00  3.891359e-03  000:02:21  000:01:18  D
+     270  1.050667e+00  3.891359e-03  000:02:26  000:01:12  D
+     280  1.089580e+00  3.891359e-03  000:02:30  000:01:06  D
+     290  1.128494e+00  3.891359e-03  000:02:35  000:01:00  D
+     300  1.167408e+00  3.891359e-03  000:02:41  000:00:55  FD
+     310  1.206321e+00  3.891359e-03  000:02:46  000:00:50  D
+     320  1.245235e+00  3.891359e-03  000:02:50  000:00:44  D
+     330  1.284148e+00  3.891359e-03  000:02:54  000:00:39  D
+     340  1.323062e+00  3.891359e-03  000:02:59  000:00:33  D
+     350  1.361976e+00  3.891359e-03  000:03:03  000:00:28  D
+     360  1.400889e+00  3.891359e-03  000:03:08  000:00:22  D
+     370  1.439803e+00  3.891359e-03  000:03:12  000:00:17  D
+     380  1.478716e+00  3.891359e-03  000:03:17  000:00:12  D
+     390  1.517630e+00  3.891359e-03  000:03:21  000:00:07  D
+     400  1.556543e+00  3.891359e-03  000:03:39  000:00:02  FD
+
+     Normal finish, maximum time reached: 1.570796
+
+ * Timers (h:m:s):
+ -----------------
+     Migrate global-scope data                                                   : 0:0:0
+     Total runtime                                                               : 0:4:23
+
+[Partition 0][Node 0] End of program
+\endverbatim
+
+\section inciter_example_slot_cyl_fieldvis Example visualization
+
+Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
+
+\verbatim
+paraview out.0
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Mon 05 Jun 2017 10:43:53 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
+</small></div>
+*/

@@ -45,10 +45,10 @@ end
 ./charmrun +p80 Main/inciter -v -c shear.q -i shear_centered_190k.exo
 \endverbatim
 
-\section inciter_example_ou_output Output
+\section inciter_example_shear_output Output
 \verbatim
-Running on 80 processors:  Main/inciter -v -c ../../tmp/shear.q -i ../../tmp/shear_centered_190k.exo
-charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 80  Main/inciter -v -c ../../tmp/shear.q -i ../../tmp/shear_centered_190k.exo
+Running on 80 processors:  Main/inciter -v -c shear.q -i shear_centered_190k.exo
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 80  Main/inciter -v -c shear.q -i shear_centered_190k.exo
 App launch reported: 5 (out of 5) daemons - 64 (out of 80) procs
 Charm++> Running on MPI version: 3.1
 Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
@@ -102,9 +102,9 @@ Charm++> cpu topology info is gathered in 0.027 seconds.
      Date, time                     : Mon Jun  5 08:42:26 2017
      Work directory                 : /net/scratch2/jbakosi/code/quinoa/build/gnup
      Executable (rel. to work dir)  : Main/inciter
-     Command line arguments         : '-v -c ../../tmp/shear.q -i ../../tmp/shear_centered_190k.exo'
+     Command line arguments         : '-v -c shear.q -i shear_centered_190k.exo'
      Output                         : verbose (quiet: omit -v)
-     Control file                   : ../../tmp/shear.q
+     Control file                   : shear.q
      Parsed control file            : success
 
 
@@ -881,7 +881,7 @@ Quinoa> Starting time stepping ...
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section inciter_example_shear_fieldvis
+\section inciter_example_slot_cyl_fieldvis Example visualization
 
 Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
 
@@ -891,7 +891,7 @@ paraview out.0
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 05 Jun 2017 09:22:36 AM MDT
+<em>Page last updated:</em> Mon 05 Jun 2017 10:44:04 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

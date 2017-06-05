@@ -21,10 +21,11 @@
 
 \section inciter_examples Inciter examples
   - \subpage inciter_example_shear
+  - \subpage inciter_example_slot_cyl
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 05 Jun 2017 08:55:09 AM MDT
+<em>Page last updated:</em> Mon 05 Jun 2017 10:42:11 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
