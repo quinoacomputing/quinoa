@@ -1,10 +1,11 @@
 /*!
-  \page      inciter_example_slot_cyl Inciter: Integrating the scalar advection equation
+  \page      inciter_example_slot_cyl Inciter: Integrating the scalar advection equation for a non-smooth problem
   \tableofcontents
 
 This example runs [inciter](inciter_doc.html) to integrate the advection
 equation (see PDE/Transport.h) configured to solve the Zalesak's slotted
-cylinder (inciter::TransportProblemSlotCyl) problem.
+cylinder (inciter::TransportProblemSlotCyl) problem, which contains both smooth
+and non-smooth regions.
 
 \section inciter_example_slot_cyl_control Control file
 
@@ -323,7 +324,7 @@ paraview out.0
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 05 Jun 2017 10:43:53 AM MDT
+<em>Page last updated:</em> Mon 05 Jun 2017 12:53:09 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
