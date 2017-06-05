@@ -19,9 +19,12 @@
   - \subpage rngtest_example_smallcrush_all
   - \subpage rngtest_example_crush_all
 
+\section inciter_examples Inciter examples
+  - \subpage inciter_example_shear
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 13 May 2015 11:45:07 AM MDT
+<em>Page last updated:</em> Mon 05 Jun 2017 08:55:09 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
