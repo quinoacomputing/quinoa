@@ -14,9 +14,12 @@
 #include <iosfwd>
 #include <vector>
 
+#ifdef WRITE_TO_ROOT
 #include <TFile.h>
 #include <TNtuple.h>
 #include <TTree.h>
+#endif
+
 #include "Types.h"
 
 namespace tk {
@@ -63,9 +66,11 @@ class RootMeshWriter {
                          const std::vector< std::size_t >& inpoel ) const;
 
     //! Variables for ROOT files, tuples
+    #ifdef WRITE_TO_ROOT
     TFile *rfile = 0;
     TNtuple *ntuple_xyz = 0;
     TTree *tree_connect = 0;
+    #endif
 
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< Root file handle

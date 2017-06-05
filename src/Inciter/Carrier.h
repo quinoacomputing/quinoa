@@ -446,7 +446,7 @@ class Carrier : public CBase_Carrier {
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
 
-    void writeSolution( const tk::RootMeshWriter& ew,
+    void writeSolution( const tk::RootMeshWriter& rmw,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
 

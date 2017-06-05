@@ -85,8 +85,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_nlim( 0 ),
   m_V( 0.0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
+  #ifdef WRITE_TO_ROOT
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() +
                  std::to_string( thisIndex ) + ".root" ),
+  #else
+  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
+                 std::to_string( thisIndex ) ),
+  #endif
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
@@ -723,12 +728,19 @@ Carrier::writeMesh()
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-    // Create ExodusII writer
-    //tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-    // Write chare mesh initializing element connectivity and point coords
-    //ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    #ifdef WRITE_TO_ROOT
+
     tk::RootMeshWriter rmw( m_outFilename, 0 );
     rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    #else
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+    // Write chare mesh initializing element connectivity and point coords
+    ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+    
+    #endif    
   }
 }
 
@@ -775,7 +787,8 @@ Carrier::writeMeta() const
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-    /* Create ExodusII writer
+    #ifndef WRITE_TO_ROOT
+    // Create ExodusII writer
     tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
     // Collect nodal field output names from all PDEs
@@ -787,8 +800,8 @@ Carrier::writeMeta() const
 
     // Write node field names
     ew.writeNodeVarNames( names );
-    */
 
+    #else
     tk::RootMeshWriter rmw( m_outFilename, 1 );
 
     // Collect nodal field output names from all PDEs
@@ -800,6 +813,7 @@ Carrier::writeMeta() const
 
     // Write node field names
     rmw.writeNodeVarNames( names );
+    #endif
   }
 }
 
@@ -822,18 +836,19 @@ Carrier::writeFields( tk::real time )
   // Increase field output iteration count
   ++m_itf;
 
-  /* comment the changes
+  #ifndef WRITE_TO_ROOT
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );
-  */
 
+  #else
   tk::RootMeshWriter rmw( m_outFilename, 1 );
 
   // Write time stamp
   rmw.writeTimeStamp( m_itf, time );
+  #endif
 
   // Collect node fields output from all PDEs
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
@@ -843,8 +858,12 @@ Carrier::writeFields( tk::real time )
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
-  //writeSolution( ew, m_itf, output );
+  
+  #ifdef WRITE_TO_ROOT
   writeSolution( rmw, m_itf, output );
+  #else
+  writeSolution( ew, m_itf, output );
+  #endif
 }
 
 void

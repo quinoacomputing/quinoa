@@ -32,6 +32,7 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 //! \author A. Pakki
 // *****************************************************************************
 {
+  #ifdef WRITE_TO_ROOT
   if (option == 0 ) {
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
@@ -46,7 +47,7 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
       std::cout<< "File opened successfully via update" <<std::endl;
 
   } else Throw( "Root Mesh modes not supported" );
-
+  #endif
 }
 
 RootMeshWriter::~RootMeshWriter() noexcept
@@ -55,8 +56,10 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author A. Pakki
 // *****************************************************************************
 {
+  #ifdef WRITE_TO_ROOT
   if (rfile)
-   rfile->Close();
+    rfile->Close();
+  #endif
 }
 
 void
@@ -92,11 +95,12 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
 
+  #ifdef WRITE_TO_ROOT
   for ( int i = 0 ; i < mesh.size() ; i++ ) 
     ntuple_xyz->Fill( mesh.x()[i], mesh.y()[i], mesh.z()[i] );
 
   ntuple_xyz->Write();
-
+  #endif
 }
 
 void
@@ -137,7 +141,9 @@ const
   Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
           "node ids should start from zero" );
   
+  #ifdef WRITE_TO_ROOT
   tree_connect->Write(); 
+  #endif
 }
 
 void
