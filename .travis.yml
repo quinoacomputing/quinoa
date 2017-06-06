@@ -59,10 +59,6 @@ matrix:
   - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
     compiler: clang
 
-matrix:
-  allow_failures:
-  - compiler: clang
-
 notifications:
   email:
     recipients:
