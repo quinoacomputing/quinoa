@@ -128,4 +128,14 @@ if(TestU01_FOUND)
   set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
+### Root library
+set(ENABLE_ROOT OFF CACHE BOOL "link ROOT with the Quinoa Framework" )
+
+if(ENABLE_ROOT)
+  # compile programs with ROOT headers
+  add_definitions( -DWRITE_TO_ROOT )
+  message(STATUS "Enable Root library linking")
+  find_package(Root COMPONENTS RIO Core Tree Hist)
+endif()
+
 message(STATUS "------------------------------------------")

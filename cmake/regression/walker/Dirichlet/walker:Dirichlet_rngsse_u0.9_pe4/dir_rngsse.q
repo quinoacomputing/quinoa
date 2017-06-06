@@ -1,0 +1,1 @@
+/home/aditya/quinoa/regression/walker/Dirichlet/dir_rngsse.q

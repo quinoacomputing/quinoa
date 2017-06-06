@@ -1,0 +1,1 @@
+/home/aditya/quinoa/regression/inciter/amr/initial/uniform/slot_cyl_amr.q
