@@ -760,7 +760,7 @@ Carrier::writeMeta() const
     // Collect nodal field output names from all PDEs
     std::vector< std::string > names;
     for (const auto& eq : g_pdes) {
-      auto n = eq.names();
+      auto n = eq.fieldNames();
       names.insert( end(names), begin(n), end(n) );
     }
 
@@ -799,7 +799,7 @@ Carrier::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_V, m_coord, m_v, u );
+    auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields

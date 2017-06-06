@@ -312,6 +312,9 @@ class Transporter : public CBase_Transporter {
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
 
+    //! Configure and write diagnostics file header
+    void diagHeader();
+
     //! Print out time integration header
     void header();
 

@@ -322,9 +322,9 @@ class Transport {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with output(),
-    //!   which provides the vector of fields to be output
-    std::vector< std::string > names() const {
+    //! \details This functions should be written in conjunction with
+    //!   fieldOutput(), which provides the vector of fields to be output
+    std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
         g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
@@ -351,11 +351,11 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    output( tk::real t,
-            tk::real V,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const std::vector< tk::real >& v,
-            tk::Fields& U ) const
+    fieldOutput( tk::real t,
+                 tk::real V,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >& v,
+                 tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
@@ -378,6 +378,18 @@ class Transport {
         out.push_back( e );
       }
       return out;
+    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    std::vector< std::string > names() const {
+      std::vector< std::string > n;
+      const auto& depvar =
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      // construct the name of the numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) );
+      return n;
     }
 
   private:

@@ -124,16 +124,19 @@ class PDE {
     dirbc( int sideset ) const { return self->dirbc( sideset ); }
 
     //! Public interface to returning field output labels
+    std::vector< std::string > fieldNames() const { return self->fieldNames(); }
+
+    //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
     //! Public interface to returning field output
-    std::vector< std::vector< tk::real > > output(
+    std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->output( t, V, coord, v, U ); }
+    { return self->fieldOutput( t, V, coord, v, U ); }
 
     //! Copy assignment
     PDE& operator=( const PDE& x )
@@ -180,8 +183,9 @@ class PDE {
         const std::array< std::size_t, 4 >&  ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
+      virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
-      virtual std::vector< std::vector< tk::real > > output(
+      virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
@@ -228,14 +232,17 @@ class PDE {
       { data.side( conf ); }
       std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
       override { return data.dirbc( sideset ); }
-      std::vector< std::string > names() const override { return data.names(); }
-      std::vector< std::vector< tk::real > > output(
+      std::vector< std::string > fieldNames() const override
+      { return data.fieldNames(); }
+      std::vector< std::string > names() const override
+      { return data.names(); }
+      std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
-      { return data.output( t, V, coord, v, U ); }
+      { return data.fieldOutput( t, V, coord, v, U ); }
       T data;
     };
 

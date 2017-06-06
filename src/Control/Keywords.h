@@ -3097,6 +3097,50 @@ struct physics_info {
 };
 using physics = keyword< physics_info, TAOCPP_PEGTL_STRING("physics") >;
 
+struct l2_info {
+  static std::string name() { return "L2"; }
+  static std::string shortDescription() { return "Select the L2 norm"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable computing the L2 norm. Example:
+    "diagnostics error l2 end'.")"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using l2 = keyword< l2_info, TAOCPP_PEGTL_STRING("l2") >;
+
+struct linf_info {
+  static std::string name() { return "Linf"; }
+  static std::string shortDescription() { return
+    "Select the L_{infinity} norm"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to enable computing the L-infinity norm. Example:
+    "diagnostics error linf end'.")"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using linf = keyword< linf_info, TAOCPP_PEGTL_STRING("linf") >;
+
+struct error_info {
+  using code = Code< h >;
+  static std::string name() { return "error"; }
+  static std::string shortDescription() { return "Select an error norm"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select, i.e., turn on, the estimation of an
+    error norm. The keyword is used in a 'diagnostics ... end' block. Example:
+    "diagnostics error l2 end", which configures computation of the L2 norm.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + l2::string() + "\' | \'"
+                  + linf::string() + '\'';
+    }
+  };
+};
+using error = keyword< error_info, TAOCPP_PEGTL_STRING("error") >;
+
 struct pde_diffusivity_info {
   static std::string name() { return "diffusivity"; }
   static std::string shortDescription() { return
