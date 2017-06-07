@@ -2933,7 +2933,7 @@ using vortical_flow =
   keyword< vortical_flow_info, TAOCPP_PEGTL_STRING("vortical_flow") >;
 
 struct nl_energy_growth_info {
-  using code = Code< V >;
+  using code = Code< N >;
   static std::string name() { return "Nonlinear energy growth"; }
   static std::string shortDescription() { return
     "Select the nonlinear energy growth test problem ";}
@@ -2954,7 +2954,7 @@ using nl_energy_growth =
   keyword< nl_energy_growth_info, TAOCPP_PEGTL_STRING("nl_energy_growth") >;
 
 struct rayleigh_taylor_info {
-  using code = Code< V >;
+  using code = Code< R >;
   static std::string name() { return "Rayleigh-Taylor"; }
   static std::string shortDescription() { return
     "Select the Rayleigh-Taylor test problem "; }
@@ -2973,6 +2973,26 @@ struct rayleigh_taylor_info {
 using rayleigh_taylor =
   keyword< rayleigh_taylor_info, TAOCPP_PEGTL_STRING("rayleigh_taylor") >;
 
+struct taylor_green_info {
+  using code = Code< T >;
+  static std::string name() { return "Taylor-Green"; }
+  static std::string shortDescription() { return
+    "Select the Taylor-Green test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Taylor-Green vortex test problem. The
+    purpose of this problem is to test time accuracy and the correctness of the
+    discretization of the viscous term in the Navier-Stokes equation. Example:
+    "problem taylor_green". For more details on the flow, see G.I. Taylor, A.E.
+    Green, "Mechanism of the Production of Small Eddies from Large Ones", Proc.
+    R. Soc. Lond. A 1937 158 499-521; DOI: 10.1098/rspa.1937.0036. Published 3
+    February 1937.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using taylor_green =
+  keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "problem"; }
@@ -2988,11 +3008,12 @@ struct problem_info {
     static std::string choices() {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
+                  + slot_cyl::string() + "\' | \'"
                   + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
-                  + rayleigh_taylor::string() + "\' | \'"                  
-                  + slot_cyl::string() + '\'';
+                  + rayleigh_taylor::string() + "\' | \'"
+                  + taylor_green::string() + '\'';
     }
   };
 };

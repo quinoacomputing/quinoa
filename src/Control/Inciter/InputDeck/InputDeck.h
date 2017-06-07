@@ -120,7 +120,8 @@ class InputDeck :
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
-                                       kw::rayleigh_taylor >;
+                                       kw::rayleigh_taylor,
+                                       kw::taylor_green >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line

@@ -28,6 +28,7 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    VORTICAL_FLOW,
                                    NL_ENERGY_GROWTH,
                                    RAYLEIGH_TAYLOR,
+                                   TAYLOR_GREEN,
                                    SLOT_CYL };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -47,6 +48,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                        , kw::vortical_flow
                                        , kw::nl_energy_growth
                                        , kw::rayleigh_taylor
+                                       , kw::taylor_green
                                        , kw::slot_cyl
                                        >;
 
@@ -65,6 +67,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::VORTICAL_FLOW, kw::vortical_flow::name() },
           { ProblemType::NL_ENERGY_GROWTH, kw::nl_energy_growth::name() },
           { ProblemType::RAYLEIGH_TAYLOR, kw::rayleigh_taylor::name() },
+          { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -73,6 +76,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
           { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
           { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR },
+          { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
@@ -111,6 +115,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::VORTICAL_FLOW, *kw::vortical_flow::code() }
       , { ProblemType::NL_ENERGY_GROWTH, *kw::nl_energy_growth::code() }
       , { ProblemType::RAYLEIGH_TAYLOR, *kw::rayleigh_taylor::code() }      
+      , { ProblemType::TAYLOR_GREEN, *kw::taylor_green::code() }      
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
     };
 };

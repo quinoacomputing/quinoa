@@ -820,7 +820,8 @@ class CompFlowProblemNLEnergyGrowth {
     { return ctr::ProblemType::NL_ENERGY_GROWTH; }
 };
 
-//! CompFlow system of PDEs problem: rayleigh-taylor
+
+//! CompFlow system of PDEs problem: Rayleigh-Taylor
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
 //!   equations with relevance to Inertial Confinement Fusion", Journal of
 //!   Computational Physics 267 (2014) 196-209.
@@ -879,7 +880,7 @@ class CompFlowProblemRayleighTaylor {
       }
     }
 
-    //! Add source term to rhs for rayleigh-taylor manufactured solution
+    //! Add source term to rhs for Rayleigh-Taylor manufactured solution
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] e Equation system index, i.e., which compressible
@@ -1287,13 +1288,152 @@ class CompFlowProblemRayleighTaylor {
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::RAYLEIGH_TAYLOR; }
 };
+//! CompFlow system of PDEs problem: Taylor-Green
+//! \see G.I. Taylor, A.E. Green, "Mechanism of the Production of Small Eddies
+//!   from Large Ones", Proc. R. Soc. Lond. A 1937 158 499-521; DOI:
+//!   10.1098/rspa.1937.0036. Published 3 February 1937
+class CompFlowProblemTaylorGreen {
+  public:
 
+    //! Set initial conditions
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   PDEs among other systems
+    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
+                      const std::vector< std::size_t >&,
+                      const std::unordered_map< std::size_t,
+                              std::vector< std::pair< bool, tk::real > > >&,
+                      tk::Fields& unk,
+                      tk::ctr::ncomp_type e,
+                      tk::ctr::ncomp_type offset )
+    {
+      // manufactured solution parameters
+      const auto& a =
+        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
+      const auto& bx =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betax >()[e];
+      const auto& by =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
+      const auto& bz =
+        g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
+      const auto& p0 =
+        g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
+      const auto& r0 =
+        g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
+      // ratio of specific heats
+      tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+
+      // set initial and boundary conditions
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      for (ncomp_t i=0; i<x.size(); ++i) {
+        auto& r  = unk(i,0,offset); // rho
+        auto& ru = unk(i,1,offset); // rho * u
+        auto& rv = unk(i,2,offset); // rho * v
+        auto& rw = unk(i,3,offset); // rho * w
+        auto& re = unk(i,4,offset); // rho * e
+        // pressure field
+        tk::real p = p0 + a*(bx*x[i]*x[i] + by*y[i]*y[i] + bz*z[i]*z[i]);
+        r = r0-(bx*x[i]*x[i] + by*y[i]*y[i] + bz*z[i]*z[i]);
+        ru = r*(z[i]*std::sin(M_PI*x[i]));
+        rv = r*(z[i]*std::cos(M_PI*y[i]));
+        rw = r*(-M_PI*z[i]*z[i]*(std::cos(M_PI*x[i])-std::sin(M_PI*y[i]))/2.0);
+        re = p/(g-1) + (ru*ru + rv*rv + rw*rw)/2.0;
+      }
+    }
+
+    //! Add source term to rhs
+    //! \details No-op for Taylor-Green
+    static void
+    sourceRhs( tk::real,
+               const std::array< std::vector< tk::real >, 3 >&,
+               tk::ctr::ncomp_type,
+               tk::real,
+               tk::real,
+               const std::array< std::size_t, 4 >&,
+               const std::array< std::array< tk::real, 4 >, 4 >&,
+               const std::array< std::array< tk::real, 3 >, 4 >&,
+               const std::array< const tk::real*, 5 >&,
+               std::array< std::array< tk::real, 4 >, 5 >&,
+               tk::Fields& ) {}
+
+    //! \brief Query all side set IDs the user has configured for all components
+    //!   in this PDE system
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    static void side( std::unordered_set< int >& conf ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+        for (const auto& i : s)
+          conf.insert( std::stoi(i) );
+    }
+
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
+    //! \param[in] sideset Side set ID
+    //! \return Vector of pairs of bool and BC value for all components
+    static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
+      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+        for (const auto& i : s)
+          if (std::stoi(i) == sideset)
+            for (auto& b : bc)
+               b = { true, 0.0 };
+      return bc;
+    }
+
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    static std::vector< std::string > names() {
+      std::vector< std::string > n;
+      n.push_back( "density numerical" );
+      n.push_back( "density analytical" );
+      n.push_back( "x-velocity numerical" );
+      n.push_back( "x-velocity analytical" );
+      n.push_back( "y-velocity numerical" );
+      n.push_back( "y-velocity analytical" );
+      n.push_back( "z-velocity numerical" );
+      n.push_back( "z-velocity analytical" );
+      n.push_back( "specific total energy numerical" );
+      n.push_back( "specific total energy analytical" );
+      return n;
+    }
+
+    //! Return field output going to file
+//     //! \param[in] e Equation system index, i.e., which compressible
+//     //!   flow equation system we operate on among the systems of PDEs
+//     //! \param[in] offset System offset specifying the position of the system of
+//     //!   PDEs among other systems
+//     //! \param[in] t Physical time
+//     //! \param[in] coord Mesh node coordinates
+//     //! \param[in] U Solution vector at recent time step stage
+    //! \return Vector of vectors to be output to file
+    static std::vector< std::vector< tk::real > >
+    output( tk::ctr::ncomp_type,
+            tk::ctr::ncomp_type,
+            tk::real,
+            const std::array< std::vector< tk::real >, 3 >&,
+            const tk::Fields& )
+    {
+      std::vector< std::vector< tk::real > > out;
+      return out;
+   }
+
+    static ctr::ProblemType type() noexcept
+    { return ctr::ProblemType::TAYLOR_GREEN; }
+};
 
 //! List of all CompFlow problem policies
 using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
                                            , CompFlowProblemVorticalFlow
                                            , CompFlowProblemNLEnergyGrowth
-                                           , CompFlowProblemRayleighTaylor >;
+                                           , CompFlowProblemRayleighTaylor
+                                           , CompFlowProblemTaylorGreen >;
 
 } // inciter::
 
