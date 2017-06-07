@@ -497,6 +497,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
+                    ${ROOT_INCLUDE_DIRS}                # checking for ROOT
                     ${PSTREAMS_INCLUDE_DIRS}
                     ${PUGIXML_INCLUDE_DIRS}
                     ${H5PART_INCLUDE_DIRS}

@@ -1,0 +1,1 @@
+/home/aditya/quinoa/regression/rngtest/SmallCrush_all_r123.q
