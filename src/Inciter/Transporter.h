@@ -222,12 +222,6 @@ class Transporter : public CBase_Transporter {
     //!   all workers
     void dt( tk::real* d, std::size_t n );
 
-    //! Reduction target initiating verification of the boundary conditions set
-    void verifybc( CkReductionMsg* msg );
-
-    //! Reduction target as a 2nd (final) of the verification of BCs
-    void doverifybc( CkReductionMsg* msg );
-
     //! \brief Reduction target indicating that all Carrier chares have
     //!   finished their initialization step
     void initcomplete();
@@ -241,7 +235,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
-    void diagnostics( tk::real* d, std::size_t n );
+    void diagnostics( CkReductionMsg* msg );
 
     //! \brief Reduction target indicating that Carrier chares contribute no
     //!    diagnostics and we ready to output the one-liner report
@@ -317,6 +311,9 @@ class Transporter : public CBase_Transporter {
     tk::Progress< 3 > m_progInit;
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
+
+    //! Configure and write diagnostics file header
+    void diagHeader();
 
     //! Print out time integration header
     void header();

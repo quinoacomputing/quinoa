@@ -43,6 +43,7 @@ class InputDeck :
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
+                      tag::diag,       diagnostics,
                       tag::error,      std::vector< std::string > > {
 
   public:
@@ -121,7 +122,10 @@ class InputDeck :
                                        kw::amr_initial,
                                        kw::amr_uniform,
                                        kw::rayleigh_taylor,
-                                       kw::taylor_green >;
+                                       kw::taylor_green,
+                                       kw::error,
+                                       kw::l2,
+                                       kw::linf >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -171,6 +175,7 @@ class InputDeck :
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
+                   tag::diag,       diagnostics,
                    tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|

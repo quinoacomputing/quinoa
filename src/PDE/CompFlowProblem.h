@@ -95,7 +95,7 @@ class CompFlowProblemUserDefined {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > names() {
+    static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
       n.push_back( "density" );
       n.push_back( "x-velocity" );
@@ -139,11 +139,11 @@ class CompFlowProblemUserDefined {
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    output( tk::ctr::ncomp_type,
-            tk::ctr::ncomp_type offset,
-            tk::real,
-            const std::array< std::vector< tk::real >, 3 >&,
-            const tk::Fields& U )
+    fieldOutput( tk::ctr::ncomp_type,
+                 tk::ctr::ncomp_type offset,
+                 tk::real,
+                 const std::array< std::vector< tk::real >, 3 >&,
+                 const tk::Fields& U )
     {
       std::vector< std::vector< tk::real > > out;
       const auto r = U.extract( 0, offset );
@@ -179,7 +179,12 @@ class CompFlowProblemUserDefined {
         T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( T );
       return out;
-   }
+    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    static std::vector< std::string > names()
+    { return { "r", "ru", "rv", "rw", "re" }; }
 
    static ctr::ProblemType type() noexcept
    { return ctr::ProblemType::USER_DEFINED; }
@@ -240,24 +245,21 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] dt Size of time step
-    //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
     //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] u Solution at element nodes at recent time step stage
     //! \param[in,out] R Right-hand side vector contributing to
     static void
     sourceRhs( tk::real,
                const std::array< std::vector< tk::real >, 3 >& coord,
                tk::ctr::ncomp_type e,
                tk::real dt,
-               tk::real J,
+               tk::real,
                const std::array< std::size_t, 4 >& N,
                const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< std::array< tk::real, 3 >, 4 >& grad,
+               const std::array< std::array< tk::real, 3 >, 4 >&,
                const std::array< const tk::real*, 5 >& r,
-               std::array< std::array< tk::real, 4 >, 5 >& u,
+               std::array< std::array< tk::real, 4 >, 5 >&,
                tk::Fields& R )
     {
       // manufactured solution parameters
@@ -305,9 +307,6 @@ class CompFlowProblemVorticalFlow {
       // add momentum and energy source at element nodes
       for (std::size_t alpha=0; alpha<4; ++alpha)
         for (std::size_t beta=0; beta<4; ++beta) {
-          // source contribution to mass rhs
-          for (std::size_t i=0; i<3; ++i)
-            R.var(r[0],N[alpha]) += dt * J/24.0 * grad[beta][i] * u[i+1][beta];
           // source contribution to momentum rhs
           for (std::size_t i=0; i<3; ++i)
             R.var(r[i+1],N[alpha]) += dt * mass[alpha][beta] * Sm[i][beta];
@@ -343,7 +342,7 @@ class CompFlowProblemVorticalFlow {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > names() {
+    static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
       n.push_back( "density numerical" );
       n.push_back( "density analytical" );
@@ -369,11 +368,11 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    output( tk::ctr::ncomp_type e,
-            tk::ctr::ncomp_type offset,
-            tk::real,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::Fields& U )
+    fieldOutput( tk::ctr::ncomp_type e,
+                 tk::ctr::ncomp_type offset,
+                 tk::real,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
@@ -441,6 +440,11 @@ class CompFlowProblemVorticalFlow {
 
       return out;
    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    static std::vector< std::string > names()
+    { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::VORTICAL_FLOW; }
@@ -713,7 +717,7 @@ class CompFlowProblemNLEnergyGrowth {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > names() {
+    static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
       n.push_back( "density numerical" );
       n.push_back( "density analytical" );
@@ -738,11 +742,11 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    output( tk::ctr::ncomp_type e,
-            tk::ctr::ncomp_type offset,
-            tk::real t,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::Fields& U )
+    fieldOutput( tk::ctr::ncomp_type e,
+                 tk::ctr::ncomp_type offset,
+                 tk::real t,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
@@ -815,6 +819,11 @@ class CompFlowProblemNLEnergyGrowth {
 
       return out;
    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    static std::vector< std::string > names()
+    { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::NL_ENERGY_GROWTH; }
@@ -1175,7 +1184,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > names() {
+    static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
       n.push_back( "density numerical" );
       n.push_back( "density analytical" );
@@ -1200,11 +1209,11 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    output( tk::ctr::ncomp_type e,
-            tk::ctr::ncomp_type offset,
-            tk::real t,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const tk::Fields& U )
+    fieldOutput( tk::ctr::ncomp_type e,
+                 tk::ctr::ncomp_type offset,
+                 tk::real t,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U )
     {
       // manufactured solution parameters
       const auto& a =
@@ -1284,6 +1293,11 @@ class CompFlowProblemRayleighTaylor {
 
       return out;
    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    static std::vector< std::string > names()
+    { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::RAYLEIGH_TAYLOR; }

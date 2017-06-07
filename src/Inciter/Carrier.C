@@ -52,7 +52,6 @@ extern std::vector< PDE > g_pdes;
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
-CkReduction::reducerType VerifyBCMerger;
 CkReduction::reducerType PDFMerger;
 
 } // inciter::
@@ -198,7 +197,7 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-    Assert( J > 0, "Element Jacobian non-positive: PE:" +
+    ErrChk( J > 0, "Element Jacobian non-positive: PE:" +
                    std::to_string(CkMyPe()) + ", node IDs: " +
                    std::to_string(m_gid[N[0]]) + ',' +
                    std::to_string(m_gid[N[1]]) + ',' +
@@ -761,7 +760,7 @@ Carrier::writeMeta() const
     // Collect nodal field output names from all PDEs
     std::vector< std::string > names;
     for (const auto& eq : g_pdes) {
-      auto n = eq.names();
+      auto n = eq.fieldNames();
       names.insert( end(names), begin(n), end(n) );
     }
 
@@ -800,7 +799,7 @@ Carrier::writeFields( tk::real time )
   auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_V, m_coord, m_v, u );
+    auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -1180,7 +1179,7 @@ Carrier::diagnostics()
     // really the initial condition.
     auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
+      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid, dbc );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2
     // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
@@ -1200,13 +1199,13 @@ Carrier::diagnostics()
     // defined above, is taken.
     for (std::size_t p=0; p<m_u.nunk(); ++p)
       for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-        auto r = std::sqrt( m_v[p] );
-        m_ul(p,c,0) = r * m_ul(p,c,0);
-        m_ulf(p,c,0) = r * m_u(p,c,0);
+        m_ul(p,c,0) = m_ul(p,c,0);
+        m_ulf(p,c,0) = m_u(p,c,0);
       }
 
     // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_ulf, m_ul );
+    m_linsysmerger.ckLocalBranch()->
+      charediag( thisIndex, m_gid, m_ulf, m_ul, m_v );
 
   } else
     contribute(
