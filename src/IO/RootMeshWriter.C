@@ -36,7 +36,6 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
   if (option == 0 ) {
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
-    tgraph2d = new TGraph2D();
     tree_connect = new TTree ( "ctree", "store the connectivity" );
 
     std::cout<<"File opened successfully via recreate "<< std::endl;	
@@ -87,7 +86,7 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
-RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
+RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
 // *****************************************************************************
 //  Write node coordinates to Root file
 //! \param[in] mesh Unstructured mesh object
@@ -96,8 +95,29 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh ) const
 {
 
   #ifdef WRITE_TO_ROOT
-  for ( int i = 0 ; i < mesh.size() ; i++ ) ;
-//    tgraph2d->SetPoint(i, mesh.x()[i], mesh.y()[i], mesh.z()[i] );
+
+  // the file requires the vertices and the number of triangles
+  // 4 triangles per tetrahedron and mesh.tetinpoel() stores 4 
+  // vertices per tet in the vector (# vertices = # of triangles)
+
+  object.coordinates = mesh.size(); 
+  object.triangles   = mesh.tetinpoel().size() + mesh.triinpoel().size();
+
+  tree_connect->Branch( "coord", &object.coordinates, "coordinates/I" );
+  tree_connect->Branch( "trian", &object.triangles, "triangles/I" );
+  
+/*
+  tree_connect->Branch( "x_coord", &object.mx_root );
+  tree_connect->Branch( "y_coord", &object.my_root );
+  tree_connect->Branch( "z_coord", &object.mz_root );
+
+  for ( int i = 0 ; i < object.coordinates; i++ ) {
+    object.mx_root.push_back( mesh.x()[i] );
+    object.my_root.push_back( mesh.y()[i] );
+    object.mz_root.push_back( mesh.z()[i] );
+  }
+*/
+  tree_connect->Fill();
 
   #endif
 }
@@ -112,16 +132,15 @@ RootMeshWriter::writeElements( const UnsMesh& mesh ) const
 {
   int elclass = 0;
 
-  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel(), mesh);
-  writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel(), mesh);
+  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
+  writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel() );
 }
 
 void
 RootMeshWriter::writeElemBlock( int& elclass,
                                     int64_t nnpe,
                                     const std::string& eltype,
-                                    const std::vector< std::size_t >& inpoel,
-				    const UnsMesh& mesh )
+                                    const std::vector< std::size_t >& inpoel )
 const
 // *****************************************************************************
 //  Write element block to ExodusII file
@@ -148,7 +167,6 @@ const
   //display the vertices on to the std output
   #ifdef WRITE_TO_ROOT
   int x,y,z,w;
-  int edgeCount = 0;
   for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr += 4) {
 
     x =  *itr ;
@@ -156,15 +174,13 @@ const
     z =  *(itr+2) ;
     w =  *(itr+3) ;
     
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[x], mesh.y()[x], mesh.z()[x] );
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[z], mesh.y()[z], mesh.z()[z] );
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[y], mesh.y()[y], mesh.z()[y] );
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[w], mesh.y()[w], mesh.z()[w] );
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[x], mesh.y()[x], mesh.z()[x] );
-    tgraph2d->SetPoint(edgeCount++, mesh.x()[y], mesh.y()[y], mesh.z()[y] );
+    // write to the file for 4 triangles per tetrahedron
+    std::cout << x << " " << y << " " << z << std::endl;
+    std::cout << x << " " << y << " " << w << std::endl;
+    std::cout << x << " " << z << " " << w << std::endl;
+    std::cout << y << " " << z << " " << w << std::endl;
 
   }
-  tgraph2d->Write();
 
   #endif
 

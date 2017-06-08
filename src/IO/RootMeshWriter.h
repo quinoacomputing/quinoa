@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <iosfwd>
 #include <vector>
+#include <array>
 
 #ifdef WRITE_TO_ROOT
 #include <TFile.h>
@@ -63,14 +64,24 @@ class RootMeshWriter {
     void writeElemBlock( int& elclass,
                          int64_t nnpe,
                          const std::string& eltype,
-                         const std::vector< std::size_t >& inpoel,
-			 const UnsMesh& mesh) const;
+                         const std::vector< std::size_t >& inpoel )
+			 const;
 
     //! Variables for ROOT files, tuples
     #ifdef WRITE_TO_ROOT
-    TFile *rfile = 0;
-    TGraph2D *tgraph2d = 0;
-    TTree *tree_connect = 0;
+    TFile *rfile = nullptr;
+    TTree *tree_connect = nullptr;
+    
+    mutable struct mesh_data {
+      int coordinates;
+      int triangles;
+/*
+      std::vector<float> mx_root;
+      std::vector<float> my_root;
+      std::vector<float> mz_root;
+*/
+    } object;
+
     #endif
 
     const std::string m_filename;          //!< File name
