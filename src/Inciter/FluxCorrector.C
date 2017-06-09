@@ -422,14 +422,16 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       Q(p,c*2+1,0) -= Ul(p,c,0);
     }
 
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+
   // compute the ratios of positive and negative element contributions that
   // ensure monotonicity (Lohner: R^{+,-})
   for (std::size_t p=0; p<P.nunk(); ++p)
     for (ncomp_t c=0; c<ncomp; ++c) {
       Q(p,c*2+0,0) =
-        (P(p,c*2+0,0) > 0.0 ? std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0)) : 0.0);
+        P(p,c*2+0,0) > 0.0 ? std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0)) : 0.0;
       Q(p,c*2+1,0) =
-        (P(p,c*2+1,0) < 0.0 ? std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0)) : 0.0);
+        P(p,c*2+1,0) < 0.0 ? std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0)) : 0.0;
     }
 
   // calculate limit coefficient for all elements (Lohner: C_el)
@@ -439,12 +441,18 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
                                            inpoel[e*4+2], inpoel[e*4+3] }};
     for (ncomp_t c=0; c<ncomp; ++c) {
       std::array< tk::real, 4 > R;
-      for (std::size_t j=0; j<4; ++j)
-        R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
+      for (std::size_t j=0; j<4; ++j) {
+        // ignore Diriclhet BCs when computing cell limit coefficient
+        if (std::abs(m_aec(e*4+j,c,0)) < eps)
+          R[j] = std::numeric_limits< tk::real >::max();
+        else
+          R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
+      }
       C(e,c,0) = *std::min_element( begin(R), end(R) );
-      Assert( C(e,c,0) > -std::numeric_limits< tk::real >::epsilon() &&
-              C(e,c,0) < 1.0+std::numeric_limits< tk::real >::epsilon(),
-              "0 <= AEC <= 1.0 failed" );
+      // if all vertices happened to be on a Dirichlet boundary, ignore limiting
+      if (C(e,c,0) > 1.0) C(e,c,0) = 1.0;
+      Assert( C(e,c,0) > -eps && C(e,c,0) < 1.0+eps,
+              "0 <= AEC <= 1.0 failed: C = " + std::to_string(C(e,c,0)) );
     }
   }
 
