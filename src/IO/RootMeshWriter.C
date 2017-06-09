@@ -37,7 +37,7 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
     tree_connect = new TTree ( "ctree", "store the connectivity" );
-
+    
     std::cout<<"File opened successfully via recreate "<< std::endl;	
 
   } else if (option == 1) {
@@ -100,24 +100,21 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
   // 4 triangles per tetrahedron and mesh.tetinpoel() stores 4 
   // vertices per tet in the vector (# vertices = # of triangles)
 
-  object.coordinates = mesh.size(); 
-  object.triangles   = mesh.tetinpoel().size() + mesh.triinpoel().size();
+  csobject = new mesh_data(mesh.size(), ( mesh.tetinpoel().size() + 
+			      mesh.triinpoel().size() ) );
 
-  tree_connect->Branch( "coord", &object.coordinates, "coordinates/I" );
-  tree_connect->Branch( "trian", &object.triangles, "triangles/I" );
+  tree_connect->Branch( "coord", &csobject->coordinates, "coordinates/I" );
+  tree_connect->Branch( "trian", &csobject->triangles, "triangles/I" );
   
-/*
-  tree_connect->Branch( "x_coord", &object.mx_root );
-  tree_connect->Branch( "y_coord", &object.my_root );
-  tree_connect->Branch( "z_coord", &object.mz_root );
+  tree_connect->Branch( "x_coord", &csobject->mx_root );
+  tree_connect->Branch( "y_coord", &csobject->my_root );
+  tree_connect->Branch( "z_coord", &csobject->mz_root );
 
-  for ( int i = 0 ; i < object.coordinates; i++ ) {
-    object.mx_root.push_back( mesh.x()[i] );
-    object.my_root.push_back( mesh.y()[i] );
-    object.mz_root.push_back( mesh.z()[i] );
+  for ( int i = 0 ; i < csobject->coordinates; i++ ) {
+    csobject->mx_root.push_back( mesh.x()[i] );
+    csobject->my_root.push_back( mesh.y()[i] );
+    csobject->mz_root.push_back( mesh.z()[i] );
   }
-*/
-  tree_connect->Fill();
 
   #endif
 }
@@ -138,12 +135,12 @@ RootMeshWriter::writeElements( const UnsMesh& mesh ) const
 
 void
 RootMeshWriter::writeElemBlock( int& elclass,
-                                    int64_t nnpe,
-                                    const std::string& eltype,
-                                    const std::vector< std::size_t >& inpoel )
+                                int64_t nnpe,
+                                const std::string& eltype,
+                                const std::vector< std::size_t >& inpoel )
 const
 // *****************************************************************************
-//  Write element block to ExodusII file
+//  Write element block to ROOT file
 //! \param[inout] elclass Count element class ids in file
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
@@ -161,26 +158,14 @@ const
           "node ids should start from zero" );
   
   #ifdef WRITE_TO_ROOT
-  tree_connect->Write(); 
-  #endif
   
-  //display the vertices on to the std output
-  #ifdef WRITE_TO_ROOT
-  int x,y,z,w;
-  for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr += 4) {
+  // create a branch for storing the tetrahedrons  
+  tree_connect->Branch( "connect", &csobject->connectivity );
+  for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr++ )
+    csobject->connectivity.push_back( *itr );
 
-    x =  *itr ;
-    y =  *(itr+1) ;
-    z =  *(itr+2) ;
-    w =  *(itr+3) ;
-    
-    // write to the file for 4 triangles per tetrahedron
-    std::cout << x << " " << y << " " << z << std::endl;
-    std::cout << x << " " << y << " " << w << std::endl;
-    std::cout << x << " " << z << " " << w << std::endl;
-    std::cout << y << " " << z << " " << w << std::endl;
-
-  }
+  tree_connect->Fill();
+  tree_connect->Write(); 
 
   #endif
 
@@ -190,7 +175,7 @@ void
 RootMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
 const
 // *****************************************************************************
-//  Write the names of nodal output variables to ExodusII file
+//  Write the names of nodal output variables to ROOT file
 //! \param[in] nv Nodal variable names
 //! \author A. Pakki
 // *****************************************************************************
@@ -216,7 +201,7 @@ const
 void
 RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 // *****************************************************************************
-//  Write time stamp to ExodusII file
+//  Write time stamp to ROOT file
 //! \param[in] it Iteration number
 //! \param[in] time Time
 //! \author A. Pakki
@@ -230,7 +215,7 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
                                      int varid,
                                      const std::vector< tk::real >& var ) const
 // *****************************************************************************
-//  Write node scalar field to ExodusII file
+//  Write node scalar field to ROOT file
 //! \param[in] it Iteration number
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output

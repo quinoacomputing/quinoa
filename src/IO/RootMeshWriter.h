@@ -64,23 +64,35 @@ class RootMeshWriter {
     void writeElemBlock( int& elclass,
                          int64_t nnpe,
                          const std::string& eltype,
-                         const std::vector< std::size_t >& inpoel )
-			 const;
+                         const std::vector< std::size_t >& inpoel ) const;
 
     //! Variables for ROOT files, tuples
     #ifdef WRITE_TO_ROOT
     TFile *rfile = nullptr;
     TTree *tree_connect = nullptr;
     
-    mutable struct mesh_data {
+    typedef struct mesh_data {
       int coordinates;
       int triangles;
-/*
       std::vector<float> mx_root;
       std::vector<float> my_root;
       std::vector<float> mz_root;
-*/
-    } object;
+      std::vector<int> connectivity;
+
+      public : mesh_data () {
+	coordinates = 0;
+	triangles = 0;
+      }
+
+      public : mesh_data( int vertices, int tri_count ) {
+	coordinates = vertices;
+	triangles = tri_count;
+      }
+
+    } connect_store; 
+    
+    // declare the object for the connectivity
+    mutable connect_store *csobject = nullptr;
 
     #endif
 
