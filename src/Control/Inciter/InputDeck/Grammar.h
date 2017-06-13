@@ -170,6 +170,9 @@ namespace grm {
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::EULER );
+      // If artificial viscosity is not given, default to 1.0
+      auto& av = stack.template get< tag::param, eq, tag::artvisc >();
+      if (av.empty()) av.push_back( 1.0 );
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -426,6 +429,7 @@ namespace deck {
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::npar, tag::npar,
                                       pegtl::digit >,
+                           parameter< tag::compflow, kw::artvisc, tag::artvisc >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
                            parameter< tag::compflow, kw::pde_betax, tag::betax >,

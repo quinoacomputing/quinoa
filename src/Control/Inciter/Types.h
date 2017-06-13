@@ -107,6 +107,7 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::problem,      std::vector< ProblemType >,
   tag::bcdir,        std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
+  tag::artvisc,      std::vector< kw::artvisc::info::expect::type >,
   //! Parameter vector (for specific, e.g., verification, problems)
   tag::alpha, std::vector< kw::pde_alpha::info::expect::type >,
   //! Parameter vector (for specific, e.g., verification, problems)

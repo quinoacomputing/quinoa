@@ -232,6 +232,10 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
 
+  const auto& av = g_inputdeck.get< tag::param, tag::compflow, tag::artvisc >();
+  if (!av.empty())
+    nfo.emplace_back( "artificial viscosity", parameters( av ) );
+
   const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
   if (!mu.empty())
     nfo.emplace_back( "dynamic viscosity", parameters( mu ) );

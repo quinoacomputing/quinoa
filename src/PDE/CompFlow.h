@@ -45,6 +45,7 @@ class CompFlow {
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
     //! \param[in] gid Global node IDs of owned elements
     //! \param[in] bc Vector of pairs of bool and boundary condition value
     //!   associated to mesh node IDs at which to set Dirichlet boundary
@@ -52,13 +53,13 @@ class CompFlow {
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real,
+                     tk::real t,
                      const std::vector< std::size_t >& gid,
                      const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bc )
     const {
       // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, bc, unk, 0, m_offset );
+      Problem::init( coord, gid, bc, unk, 0, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -179,6 +180,9 @@ class CompFlow {
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
+      // artificial viscosity
+      auto av = g_inputdeck.get< tag::param, tag::compflow, tag::artvisc >()[0];
+
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                                inpoel[e*4+2], inpoel[e*4+3] }};
@@ -238,6 +242,16 @@ class CompFlow {
                 (u[4][beta] + p[beta]) * u[j+1][beta]/u[0][beta];
             }
 
+        // artificial viscosity
+        c = av * deltat * J/6.0;
+        auto h2 = std::pow( J/6.0, 2.0/3.0 );
+        for (std::size_t j=0; j<5; ++j)
+          for (std::size_t alpha=0; alpha<4; ++alpha)
+            for (std::size_t beta=0; beta<4; ++beta)
+              for (std::size_t k=0; k<3; ++k)
+                R.var(r[j],N[alpha]) -= c * h2 *
+                  grad[alpha][k] * grad[beta][k] * u[j][beta];
+
         // add viscous stress contribution to momentum and energy rhs
         Physics::viscousRhs( deltat, J, N, grad, u, r, R );
         // add heat conduction contribution to energy rhs
@@ -287,6 +301,7 @@ class CompFlow {
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
           auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
+          if (p<0) p = 0.0;
           auto c = std::sqrt(g*p/r);     // sound speed
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
@@ -354,11 +369,11 @@ class CompFlow {
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
-                 tk::real,
+                 tk::real V,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >&,
+                 const std::vector< tk::real >& v,
                  const tk::Fields& U ) const
-    { return Problem::fieldOutput( 0, m_offset, t, coord, U ); }
+    { return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

@@ -123,6 +123,7 @@ class InputDeck :
                                        kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
+                                       kw::artvisc,
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;

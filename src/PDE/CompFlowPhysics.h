@@ -134,7 +134,7 @@ class CompFlowPhysicsNavierStokes {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       for (std::size_t j=0; j<4; ++j) {
         auto& r = u[0][j];              // rho
-        auto dt = L * L * r / mu;       // dt ~ dx^2/nu = dx^2*rho/mu
+        auto dt = L * L * r / (2.0*mu); // dt ~ dx^2/nu = dx^2*rho/(2mu)
         if (dt < mindt) mindt = dt;
       }
       return mindt;
