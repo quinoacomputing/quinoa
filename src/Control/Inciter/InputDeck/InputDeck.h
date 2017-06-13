@@ -120,7 +120,10 @@ class InputDeck :
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
-                                       kw::rayleigh_taylor >;
+                                       kw::rayleigh_taylor,
+                                       kw::filetype,
+                                       kw::exodusii,
+                                       kw::root >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -139,6 +142,8 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
+      // Default field output file type
+      set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
       // Default txt floating-point output precision in digits

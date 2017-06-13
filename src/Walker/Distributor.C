@@ -435,7 +435,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
       tk::ctr::PDFPolicyType::MULTIPLE)
     filename += '_' + std::to_string( m_t );
 
-  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
   // Augment PDF filename by the appropriate extension
   if (filetype == tk::ctr::PDFFileType::TXT)
@@ -497,7 +497,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
       tk::ctr::PDFPolicyType::MULTIPLE)
     filename += '_' + std::to_string( m_t );
 
-  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
   // Augment PDF filename by the appropriate extension
   if (filetype == tk::ctr::PDFFileType::TXT)

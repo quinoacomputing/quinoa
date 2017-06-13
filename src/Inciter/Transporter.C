@@ -174,6 +174,13 @@ Transporter::Transporter() :
     m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
     m_print.endsubsection();
 
+    // Field output configuration
+    m_print.section( "Field output" );
+    auto opt = tk::ctr::FieldFile();
+    auto fo = opt.name( g_inputdeck.get< tag::selected, tag::filetype >() );
+    m_print.item( "Filetype", fo );
+    m_print.endsubsection();
+
     // Output header for diagnostics output file
     tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
                        g_inputdeck.get< tag::flformat, tag::diag >(),

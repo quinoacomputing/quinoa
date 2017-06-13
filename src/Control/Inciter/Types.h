@@ -21,6 +21,7 @@
 #include "Inciter/Options/InitialAMR.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
+#include "Options/FieldFile.h"
 #include "PUPUtil.h"
 
 namespace inciter {
@@ -32,6 +33,7 @@ using namespace tao;
 using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
+  tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
   tag::initialamr,   tk::ctr::InitialAMRType            //!< Initial AMR type
 >;
 

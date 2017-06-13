@@ -42,6 +42,7 @@ namespace tk {
 #cmakedefine HAS_MKL
 #cmakedefine HAS_RNGSSE2
 #cmakedefine HAS_TESTU01
+#cmakedefine HAS_ROOT
 
 } // tk::
 

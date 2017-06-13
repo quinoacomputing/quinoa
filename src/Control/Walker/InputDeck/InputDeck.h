@@ -80,7 +80,7 @@ class InputDeck :
                                      , kw::statistics
                                      , kw::interval
                                      , kw::pdfs
-                                     , kw::pdf_filetype
+                                     , kw::filetype
                                      , kw::pdf_policy
                                      , kw::pdf_centering
                                      , kw::txt_float_format

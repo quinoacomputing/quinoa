@@ -32,7 +32,6 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 //! \author A. Pakki
 // *****************************************************************************
 {
-  #ifdef WRITE_TO_ROOT
   if (option == 0 ) {
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
@@ -46,7 +45,6 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
       std::cout<< "File opened successfully via update" <<std::endl;
 
   } else Throw( "Root Mesh modes not supported" );
-  #endif
 }
 
 RootMeshWriter::~RootMeshWriter() noexcept
@@ -55,10 +53,8 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author A. Pakki
 // *****************************************************************************
 {
-  #ifdef WRITE_TO_ROOT
   if (rfile)
     rfile->Close();
-  #endif
 }
 
 void
@@ -94,8 +90,6 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
 // *****************************************************************************
 {
 
-  #ifdef WRITE_TO_ROOT
-
   // the file requires the vertices and the number of triangles
   // 4 triangles per tetrahedron and mesh.tetinpoel() stores 4 
   // vertices per tet in the vector (# vertices = # of triangles)
@@ -115,8 +109,6 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
     csobject->my_root.push_back( mesh.y()[i] );
     csobject->mz_root.push_back( mesh.z()[i] );
   }
-
-  #endif
 }
 
 void
@@ -129,21 +121,17 @@ RootMeshWriter::writeElements( const UnsMesh& mesh ) const
 {
   int elclass = 0;
 
-  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
-  writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel() );
+  writeElemBlock( elclass, mesh.triinpoel() );
+  writeElemBlock( elclass, mesh.tetinpoel() );
 }
 
 void
 RootMeshWriter::writeElemBlock( int& elclass,
-                                int64_t nnpe,
-                                const std::string& eltype,
                                 const std::vector< std::size_t >& inpoel )
 const
 // *****************************************************************************
 //  Write element block to ROOT file
 //! \param[inout] elclass Count element class ids in file
-//! \param[in] nnpe Number of nodes per element for block
-//! \param[in] eltype String describing element type
 //! \param[in] inpoel Element connectivity.
 //! \author A. Pakki
 // *****************************************************************************
@@ -157,8 +145,6 @@ const
   Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
           "node ids should start from zero" );
   
-  #ifdef WRITE_TO_ROOT
-  
   // create a branch for storing the tetrahedrons  
   tree_connect->Branch( "connect", &csobject->connectivity );
   for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr++ )
@@ -166,9 +152,6 @@ const
 
   tree_connect->Fill();
   tree_connect->Write(); 
-
-  #endif
-
 }
 
 void

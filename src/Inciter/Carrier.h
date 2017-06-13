@@ -88,6 +88,7 @@
 #include <unordered_set>
 #include <set>
 
+#include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
 #include "Tracker.h"
@@ -445,10 +446,11 @@ class Carrier : public CBase_Carrier {
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
-
+    #ifdef HAS_ROOT
     void writeSolution( const tk::RootMeshWriter& rmw,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
+    #endif
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;

@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Sun 05 Mar 2017 08:56:51 PM MST
 #
 ################################################################################
 
@@ -129,13 +128,9 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-set(ENABLE_ROOT OFF CACHE BOOL "link ROOT with the Quinoa Framework" )
-
-if(ENABLE_ROOT)
-  # compile programs with ROOT headers
-  add_definitions( -DWRITE_TO_ROOT )
-  message(STATUS "Enable Root library linking")
-  find_package(Root COMPONENTS RIO Core Tree Hist)
+#find_package(Root COMPONENTS RIO Core Tree Hist)
+if (Root_FOUND)
+  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
 message(STATUS "------------------------------------------")

@@ -497,7 +497,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
-                    ${ROOT_INCLUDE_DIRS}                # checking for ROOT
+                    ${ROOT_INCLUDE_DIRS}
                     ${PSTREAMS_INCLUDE_DIRS}
                     ${PUGIXML_INCLUDE_DIRS}
                     ${H5PART_INCLUDE_DIRS}
@@ -512,11 +512,11 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_INCLUDE_DIR}
                     ${CHARM_INCLUDE_DIRS}
+                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
