@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/inciter/asynclogic/slot_cyl.q

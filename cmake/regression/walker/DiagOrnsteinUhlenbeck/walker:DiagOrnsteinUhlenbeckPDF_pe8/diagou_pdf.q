@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/walker/DiagOrnsteinUhlenbeck/diagou_pdf.q

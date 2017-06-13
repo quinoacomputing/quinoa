@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/rngtest/Crush_r123_threefry.q

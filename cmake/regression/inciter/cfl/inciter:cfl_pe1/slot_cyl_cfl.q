@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/inciter/cfl/slot_cyl_cfl.q

@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/inciter/transport/shear_advdiffshear_c2.q

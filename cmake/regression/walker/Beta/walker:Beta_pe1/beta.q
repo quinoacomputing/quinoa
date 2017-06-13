@@ -1,1 +1,0 @@
-/home/aditya/quinoa/regression/walker/Beta/beta.q
