@@ -50,6 +50,7 @@ class CompFlow {
     //! \param[in] bc Vector of pairs of bool and boundary condition value
     //!   associated to mesh node IDs at which to set Dirichlet boundary
     //!   conditions
+    //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
@@ -257,7 +258,7 @@ class CompFlow {
         // add heat conduction contribution to energy rhs
         Physics::conductRhs( deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( t, coord, 0, deltat, J, N, mass, grad, r, u, R );
+        Problem::sourceRhs( t, coord, 0, deltat, N, mass, r, R );
       }
     }
 
