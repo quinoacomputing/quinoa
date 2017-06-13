@@ -128,7 +128,7 @@ if(TestU01_FOUND)
 endif()
 
 ### Root library
-#find_package(Root COMPONENTS RIO Core Tree Hist)
+find_package(Root COMPONENTS RIO Core Tree Hist)
 if (Root_FOUND)
   set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
