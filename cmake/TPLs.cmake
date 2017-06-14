@@ -131,6 +131,8 @@ endif()
 find_package(Root COMPONENTS RIO Core Tree Hist)
 if (Root_FOUND)
   set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  # Root does not support libc++ on linux, so remove if configured
+  string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif()
 
 message(STATUS "------------------------------------------")

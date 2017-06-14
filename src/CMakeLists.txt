@@ -390,6 +390,9 @@ message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
+# Include third-party libraries configuration
+include(TPLs)
+
 # Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
@@ -402,9 +405,6 @@ message(STATUS "C++ compiler flags: '${CMAKE_CXX_FLAGS}'")
 
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
-
-# Include third-party libraries configuration
-include(TPLs)
 
 # Set names of executables
 set(INCITER_EXECUTABLE inciter)
