@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Adaptive Entropy Coding library
-# \date      Fri 20 Jan 2017 12:18:02 PM MST
 #
 ################################################################################
 

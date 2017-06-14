@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Hypre library from LLNL
-# \date      Fri 20 Jan 2017 12:28:14 PM MST
 #
 ################################################################################
 

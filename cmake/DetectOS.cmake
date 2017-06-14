@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Detect operating system
-# \date      Wed 15 Jun 2016 09:14:33 AM MDT
 #
 ################################################################################
 

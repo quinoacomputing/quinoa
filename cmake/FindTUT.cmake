@@ -4,7 +4,6 @@
 # \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Template Unit Test library header
-# \date      Fri 20 Jan 2017 01:33:53 PM MST
 #
 ################################################################################
 

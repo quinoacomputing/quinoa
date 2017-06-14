@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Detect prerequesites for code coverage analysis
-# \date      Fri 03 Mar 2017 11:50:24 AM MST
 #
 ################################################################################
 

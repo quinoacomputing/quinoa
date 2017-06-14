@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Cmake code to get compiler flags
-# \date      Fri 06 May 2016 06:44:41 AM MDT
 #
 ################################################################################
 
@@ -56,13 +55,13 @@ macro(get_compiler_flags)
 
   # Echo compiler flags string used
   if (CFLAGS)
-    message(STATUS "All-TPL C compiler flags: '${CFLAGS}'")
+    message(STATUS "C compiler flags: '${CFLAGS}'")
   endif()
   if (CXXFLAGS)
-    message(STATUS "All-TPL C++ compiler flags: '${CXXFLAGS}'")
+    message(STATUS "C++ compiler flags: '${CXXFLAGS}'")
   endif()
   if (FFLAGS)
-    message(STATUS "All-TPL Fortran compiler flags: '${FFLAGS}'")
+    message(STATUS "Fortran compiler flags: '${FFLAGS}'")
   endif()
 
 endmacro()
