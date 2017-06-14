@@ -22,7 +22,7 @@
 using tk::RootMeshWriter;
 
 RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
-  m_filename( filename ), m_outFile( 0 )
+  m_filename( filename )
 // *****************************************************************************
 //  Constructor: create/open Root file
 //! \param[in] "filename" File to open as Root file

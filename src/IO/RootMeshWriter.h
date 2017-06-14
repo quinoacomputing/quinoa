@@ -90,7 +90,6 @@ class RootMeshWriter {
     mutable connect_store *csobject = nullptr;
 
     const std::string m_filename;          //!< File name
-    int m_outFile;                         //!< Root file handle
 };
 
 } // tk::
