@@ -16,8 +16,8 @@
 #include <array>
 
 #include "NoWarning/TFile.h"
-#include <TGraph2D.h>
-#include <TTree.h>
+#include "NoWarning/TTree.h"
+#include "NoWarning/TGraph2D.h"
 
 #include "Types.h"
 
