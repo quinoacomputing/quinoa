@@ -18,18 +18,25 @@ find_path(ROOT_INCLUDE_DIR NAMES TFile.h)
 
 ### Find ROOT libraries required
 find_library(ROOT_RIO_LIBRARY NAMES RIO)
-
 find_library(ROOT_CORE_LIBRARY NAMES Core)
-
 find_library(ROOT_TREE_LIBRARY NAMES Tree)
-
 find_library(ROOT_GRAPH_LIBRARY NAMES Hist)
+find_library(ROOT_THREAD_LIBRARY NAMES Thread)
+find_library(ROOT_NET_LIBRARY NAMES Net)
+find_library(ROOT_IMT_LIBRARY NAMES Imt)
+find_library(ROOT_MATRIX_LIBRARY NAMES Matrix)
+find_library(ROOT_MATHCORE_LIBRARY NAMES MathCore)
 
 ### Link the libraries as one
 set(ROOT_LIBRARY  ${ROOT_RIO_LIBRARY}
                   ${ROOT_CORE_LIBRARY}
+                  ${ROOT_TREE_LIBRARY}
                   ${ROOT_GRAPH_LIBRARY}
-                  ${ROOT_TREE_LIBRARY})
+                  ${ROOT_THREAD_LIBRARY}
+                  ${ROOT_NET_LIBRARY}
+                  ${ROOT_IMT_LIBRARY}
+                  ${ROOT_MATRIX_LIBRARY}
+                  ${ROOT_MATHCORE_LIBRARY})
 
 set(ROOT_INCLUDE_DIRS ${ROOT_INCLUDE_DIR})
 set(ROOT_LIBRARIES ${ROOT_LIBRARY})
