@@ -20,12 +20,18 @@
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundef"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 522 )
+  #pragma warning( disable: 2282 )
 #endif
 
 #include <TFile.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_TFile_h
