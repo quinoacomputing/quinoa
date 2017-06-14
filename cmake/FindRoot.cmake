@@ -28,15 +28,15 @@ find_library(ROOT_MATRIX_LIBRARY NAMES Matrix)
 find_library(ROOT_MATHCORE_LIBRARY NAMES MathCore)
 
 ### Link the libraries as one
-set(ROOT_LIBRARY  ${ROOT_RIO_LIBRARY}
-                  ${ROOT_CORE_LIBRARY}
-                  ${ROOT_TREE_LIBRARY}
-                  ${ROOT_GRAPH_LIBRARY}
-                  ${ROOT_THREAD_LIBRARY}
-                  ${ROOT_NET_LIBRARY}
-                  ${ROOT_IMT_LIBRARY}
-                  ${ROOT_MATRIX_LIBRARY}
-                  ${ROOT_MATHCORE_LIBRARY})
+set(ROOT_LIBRARY ${ROOT_RIO_LIBRARY}
+                 ${ROOT_CORE_LIBRARY}
+                 ${ROOT_TREE_LIBRARY}
+                 ${ROOT_GRAPH_LIBRARY}
+                 ${ROOT_THREAD_LIBRARY}
+                 ${ROOT_NET_LIBRARY}
+                 ${ROOT_IMT_LIBRARY}
+                 ${ROOT_MATRIX_LIBRARY}
+                 ${ROOT_MATHCORE_LIBRARY})
 
 set(ROOT_INCLUDE_DIRS ${ROOT_INCLUDE_DIR})
 set(ROOT_LIBRARIES ${ROOT_LIBRARY})
