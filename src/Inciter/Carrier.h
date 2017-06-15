@@ -93,6 +93,7 @@
 #include "Tracker.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
+#include "PDFReducer.h"
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -105,7 +106,7 @@ namespace tk { class ExodusIIMeshWriter; }
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern CkReduction::reducerType VerifyBCMerger;
+extern CkReduction::reducerType PDFMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
 class Carrier : public CBase_Carrier {
@@ -165,20 +166,20 @@ class Carrier : public CBase_Carrier {
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
-      VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
+      PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
     }
 
-    //! \brief Read mesh node coordinates, sum mesh volumes to nodes, and start
-    //!   communicating them on chare-boundaries
-    void vol();
+    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
+    //!   case of initial uniform refinement
+    void coord();
+
+    //! \brief Setup rows, query boundary conditions, generate particles, output
+    //!    mesh, etc.
+    void setup( tk::real v );
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V );
-
-    //! \brief Setup rows, query boundary conditions, generate particles, output
-    //!    mesh, etc.
-    void setup();
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
@@ -265,6 +266,7 @@ class Carrier : public CBase_Carrier {
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
+      p | m_V;
       p | m_ncarr;
       p | m_outFilename;
       p | m_transporter;
@@ -293,6 +295,7 @@ class Carrier : public CBase_Carrier {
       p | m_lhsd;
       p | m_lhso;
       p | m_msum;
+      p | m_v;
       p | m_vol;
       p | m_bid;
       p | m_pc;
@@ -318,6 +321,8 @@ class Carrier : public CBase_Carrier {
     tk::real m_t;
     //! Physical time step size
     tk::real m_dt;
+    //! Physical time at which the last field output was written
+    tk::real m_lastFieldWriteTime;
     //! Stage in multi-stage time stepping
     uint8_t m_stage;
     //! \brief Number of chares from which we received nodal volume
@@ -336,6 +341,8 @@ class Carrier : public CBase_Carrier {
     //! \brief Number of chares from which we received limited antidiffusion
     //!   element contributiones on chare boundaries
     std::size_t m_nlim;
+    //! Total mesh volume
+    tk::real m_V;
     //! Total number of carrier chares
     std::size_t m_ncarr;
     //! Output filename
@@ -383,7 +390,15 @@ class Carrier : public CBase_Carrier {
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
-    //! Volume of nodes of owned elements (sum of surrounding cell volumes / 4 )
+    //! Nodal mesh volumes
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) without contributions
+    //!   from other chares on chare-boundaries
+    std::vector< tk::real > m_v;
+    //! \brief Volume of nodes
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) with contributions from
+    //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
@@ -396,6 +411,12 @@ class Carrier : public CBase_Carrier {
 
     //! Query old node IDs for a list of new node IDs
     std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
+
+    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
+    void vol();
+
+    //! Compute mesh cell statistics
+    void stat();
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions
@@ -412,7 +433,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( tk::real mult, const tk::Fields& sol );
+    void rhs( const tk::Fields& sol );
 
     //! Output chare element blocks to output file
     void writeMesh();

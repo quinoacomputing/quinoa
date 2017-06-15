@@ -24,6 +24,7 @@ add_library(MeshIO
             NetgenMeshReader.C
             ExodusIIMeshReader.C
             HyperMeshReader.C
+            ASCMeshReader.C
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C

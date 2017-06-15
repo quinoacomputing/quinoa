@@ -1,0 +1,2275 @@
+/*!
+  \page      inciter_example_hump Inciter: Integrating the scalar advection equation for a smooth problem
+  \tableofcontents
+
+This example runs [inciter](inciter_doc.html) to integrate the advection
+equation (see PDE/Transport.h) configured to solve only the smooth portion of
+Zalesak's slotted cylinder (inciter::TransportProblemSlotCyl) problem.
+
+This example slightly differs from inciter_example_slot_cyl, in that the
+non-smooth regions are commented out. This can be used to estimate the order of
+converge of the spatial and teporal discretization for smooth problems.
+
+The following modification, applied in PDE/TransportProblem.h, removes the non-smooth part of the solution from the
+slotted cylinder case:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+class TransportProblemSlotCyl {
+
+  public:
+    //! Do error checking on PDE parameters
+    template< class eq >
+    static void errchk( tk::ctr::ncomp_type, tk::ctr::ncomp_type ) {}
+
+    //! Set initial conditions for Zalesak's slotted cylinder case
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] ncomp Number of components in this transport equation
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   PDEs among other systems
+    //! \param[in] time Physical time
+    template< class eq >
+    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
+                      tk::Fields& unk,
+                      tk::ctr::ncomp_type,
+                      tk::ctr::ncomp_type ncomp,
+                      tk::ctr::ncomp_type offset,
+                      tk::real time )
+    {
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        auto t = time + 2.0*M_PI/ncomp * c;
+        const tk::real R0 = 0.15;
+        // center of the cone
+        tk::real x0 = 0.5;
+        tk::real y0 = 0.25;
+        tk::real r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real kx = 0.5 + r*std::sin( t );
+        tk::real ky = 0.5 - r*std::cos( t );
+        // center of the hump
+        x0 = 0.25;
+        y0 = 0.5;
+        r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real hx = 0.5 + r*std::sin( t-M_PI/2.0 ),
+                 hy = 0.5 - r*std::cos( t-M_PI/2.0 );
+        // center of the slotted cylinder
+        x0 = 0.5;
+        y0 = 0.75;
+        r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
+        tk::real cx = 0.5 + r*std::sin( t+M_PI ),
+                 cy = 0.5 - r*std::cos( t+M_PI );
+        // end points of the cylinder slot
+        tk::real i1x = 0.525, i1y = cy - r*std::cos( std::asin(0.025/r) ),
+                 i2x = 0.525, i2y = 0.8,
+                 i3x = 0.475, i3y = 0.8;
+        // rotate end points of cylinder slot
+        tk::real ri1x = 0.5 + std::cos(t)*(i1x-0.5) - std::sin(t)*(i1y-0.5),
+                 ri1y = 0.5 + std::sin(t)*(i1x-0.5) + std::cos(t)*(i1y-0.5),
+                 ri2x = 0.5 + std::cos(t)*(i2x-0.5) - std::sin(t)*(i2y-0.5),
+                 ri2y = 0.5 + std::sin(t)*(i2x-0.5) + std::cos(t)*(i2y-0.5),
+                 ri3x = 0.5 + std::cos(t)*(i3x-0.5) - std::sin(t)*(i3y-0.5),
+                 ri3y = 0.5 + std::sin(t)*(i3x-0.5) + std::cos(t)*(i3y-0.5);
+        // direction of slot sides
+        tk::real v1x = ri2x-ri1x, v1y = ri2y-ri1y,
+                 v2x = ri3x-ri2x, v2y = ri3y-ri2y;
+        // lengths of direction of slot sides vectors
+        tk::real v1 = std::sqrt(v1x*v1x + v1y*v1y),
+                 v2 = std::sqrt(v2x*v2x + v2y*v2y);
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        unk.fill( c, offset, 0.0 );
+        for (ncomp_t i=0; i<x.size(); ++i) {
+          // cone
+//           r = std::sqrt((x[i]-kx)*(x[i]-kx) + (y[i]-ky)*(y[i]-ky)) / R0;
+//           if (r<1.0) unk( i, c, offset ) = 0.6*(1.0-r);
+          // hump
+          r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
+          if (r<1.0)
+            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
+          // cylinder
+//           r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
+//           const std::array< tk::real, 2 > r1{{ v1x, v1y }},
+//                                           r2{{ x[i]-ri1x, y[i]-ri1y }};
+//           const auto d1 = (r1[0]*r2[1] - r2[0]*r1[1]) / v1;
+//           const std::array< tk::real, 2 > r3{{ v2x, v2y }},
+//                                           r4{{ x[i]-ri2x, y[i]-ri2y }};
+//           const auto d2 = (r3[0]*r4[1] - r4[0]*r3[1]) / v2;
+//           if (r<1.0 && (d1>0.05 || d1<0.0 || d2<0.0)) unk( i, c, offset ) = 0.6;
+        }
+      }
+    }
+...
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+\section inciter_example_hump_control Control file
+
+The control file is the same as that of the slotted cylinder problem, see also
+inciter_exampl_slot_cyl.
+
+\verbatim
+# vim: filetype=sh:
+# This is a comment
+# Keywords are case-sensitive
+
+title "Zalesak's slotted cylinder"
+
+inciter
+
+  #nstep 10  # Max number of time steps
+  #term 6.28318530718  # Max time = 2*pi
+  term 1.57079632679  # Max time = pi/2
+  #term 0.78539816339  # Max time = pi/4
+  #term 0.39270  # Max time = pi/8
+  cfl  0.5
+  ttyi 10      # TTY output interval
+  ctau 1.0  # FCT mass diffusivity
+
+  transport
+    physics advection
+    problem slot_cyl
+    ncomp 1
+  end
+
+  plotvar
+    interval 100
+  end
+
+end
+\endverbatim
+
+\section inciter_example_hump_run Example runs on 80 CPUs
+\verbatim
+./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
+./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+\endverbatim
+
+\section inciter_example_ou_output Output for three runs (750K, 6M, and 48M)
+\verbatim
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
+
+Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
+Charm++> Running on MPI version: 3.1
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 36
+Converse/Charm++ Commit ID:
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (36-way SMP).
+Charm++> cpu topology info is gathered in 0.014 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     .___              .__  __
+   .;@+@';;;;;;' |   | ____   ____ |__|/  |_  ___________
+    `     '#''@` |   |/    \_/ ___\|  \   __\/ __ \_  __ \
+                 |   |   |  \  \___|  ||  | \  ___/|  | \/
+                 |___|___|  /\___  >__||__|  \___  >__|
+                          \/     \/              \/
+
+                                 < ENVIRONMENT >
+                                 ------ o ------
+
+ * Build environment:
+ --------------------
+     Hostname                       : lagrange
+     Executable                     : inciter
+     Version                        : 0.1 (C16015)
+     Revision SHA1                  : Quinoa_v0.1-914-g40abfa98
+     CMake build type               : RELEASE
+     Asserts                        : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     Exception trace                : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     MPI C++ wrapper                : /usr/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/g++
+     Build date                     : Sun Jun  4 13:51:45 MDT 2017
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Jun  5 07:07:37 2017
+     Work directory                 : /home/jbakosi/code/quinoa/build/gnu
+     Executable (rel. to work dir)  : Main/inciter
+     Command line arguments         : '-v -c slot_cyl.q -i unitcube_01_750K.exo'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : slot_cyl.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >
+                                   ---- o ----
+
+ * Unknowns data layout (CMake: FIELD_DATA_LAYOUT):
+ --------------------------------------------------
+     unknown-major
+
+ * Registered partial differential equations:
+ --------------------------------------------
+     Unique equation types          : 2
+     With all policy combinations   : 12
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * h: physics configuration:
+        A - Advection
+        D - Advection + diffusion
+        L - Laplace
+        N - Navier-Stokes
+        E - Euler
+      * r: problem:
+        U - User-defined
+        S - Shear-diffusion
+        D - Dirichlet & Neumann
+        V - Vortical flow
+        V - Nonlinear energy growth
+        V - Rayleigh-Taylor
+        Z - Zalesak's slotted cylinder
+
+     Compressible flow              : h:EN, r:UV
+     Transport                      : h:AD, r:SZ
+
+
+                                   < PROBLEM >
+                                   ---- o ----
+
+ * Title: Zalesak's slotted cylinder
+ -----------------------------------
+
+ * Partial differential equations integrated (1):
+ ------------------------------------------------
+   < Transport >
+     problem                        : Zalesak's slotted cylinder
+     start offset in unknowns array : 0
+     number of components           : 1
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Start time                     : 0
+     Terminate time                 : 1.5708
+     CFL coefficient                : 0.5
+     Mass diffusion coeff           : 1
+
+ * Output filenames:
+ -------------------
+     Field                          : out.<chareid>
+     Diagnostics                    : diag
+
+ * Output intervals:
+ -------------------
+     TTY                            : 1
+     Field                          : 10
+     Diagnostics                    : 1
+
+Quinoa> Reading side sets ... done
+Quinoa> Creating linear system mergers
+Quinoa> Creating particle writers
+Quinoa> Creating partitioners and reading mesh graph ... done
+
+ * Input mesh graph statistics:
+ ------------------------------
+     Number of tetrahedra           : 750000
+     Number of nodes                : 132651
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of tetrahedra)    : 750000
+     Number of processing elements  : 36
+     Number of work units           : 36 (35*20833+20845)
+
+ * Initial mesh partitioning:
+ ----------------------------
+     Mesh partitioning algorithm    : recursive coordinate bisection
+
+Quinoa> Mesh read time: 0.021658 sec
+Quinoa> Partitioning and distributing mesh ... ZOLTAN Load balancing method = 3 (RCB)
+Build configuration:
+
+  ZOLTAN_ID_TYPE: unsigned int (4 bytes)
+  ZOLTAN_GNO_TYPE: ssize_t, (8 bytes)
+  MPI_Datatype for ZOLTAN_ID_TYPE: MPI_UNSIGNED
+  MPI_Datatype for ZOLTAN_GNO_TYPE: MPI_LONG
+
+ZOLTAN Parameter IMBALANCE_TOL[0] = 1.100000
+ZOLTAN Parameter AUTO_MIGRATE = FALSE
+ZOLTAN Parameter MIGRATE_ONLY_PROC_CHANGES = 1
+ZOLTAN Parameter OBJ_WEIGHT_DIM = 0
+ZOLTAN Parameter EDGE_WEIGHT_DIM = 0
+ZOLTAN Parameter DEBUG_LEVEL = 1
+ZOLTAN Parameter DEBUG_PROCESSOR = 0
+ZOLTAN Parameter DETERMINISTIC = TRUE
+ZOLTAN Parameter TIMER = 1 (wall)
+ZOLTAN Parameter NUM_GID_ENTRIES = 2
+ZOLTAN Parameter NUM_LID_ENTRIES = 2
+ZOLTAN Parameter RETURN_LISTS = PARTITION ASSIGNMENTS
+ZOLTAN Parameter NUM_GLOBAL_PARTS = 36
+ZOLTAN Parameter NUM_LOCAL_PARTS = -1
+ZOLTAN Parameter REMAP = 1
+ZOLTAN Parameter SEED = 123456789 (123456789)
+ZOLTAN Parameter LB_APPROACH = repartition
+ZOLTAN Parameter RCB_OVERALLOC = 1.200000
+ZOLTAN Parameter RCB_REUSE = 0
+ZOLTAN Parameter CHECK_GEOM = 1
+ZOLTAN Parameter RCB_OUTPUT_LEVEL = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter RCB_LOCK_DIRECTIONS = 0
+ZOLTAN Parameter RCB_SET_DIRECTIONS = 0
+ZOLTAN Parameter RCB_RECTILINEAR_BLOCKS = 0
+ZOLTAN Parameter OBJ_WEIGHTS_COMPARABLE = 0
+ZOLTAN Parameter RCB_MULTICRITERIA_NORM = 1
+ZOLTAN Parameter RCB_MAX_ASPECT_RATIO = 10.000000
+ZOLTAN Parameter AVERAGE_CUTS = 0
+ZOLTAN Parameter RANDOM_PIVOTS = 0
+ZOLTAN Parameter RCB_RECOMPUTE_BOX = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 0.000000
+ZOLTAN Parameter FINAL_OUTPUT = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 10.000000
+done
+Quinoa> Reordering mesh ... done
+Quinoa> Creating workers
+Quinoa> Linear system communication cost: avg = 0.195648, std = 0.097498
+Quinoa> Reading mesh node coordinates, computing nodal volumes
+Quinoa> Mesh statistics: min/max/avg(edgelength) = 0.020000 / 0.034641 / 0.025496
+Quinoa> Mesh statistics: min/max/avg(V^{1/3}) = 0.011006 / 0.011006 / 0.011006
+Quinoa> Computing row IDs, querying BCs, outputting mesh done
+Quinoa> Setting and outputting ICs, computing initial dt, computing LHS ... done
+Quinoa> Starting time stepping ...
+
+ * Time integration: Unstructured-mesh PDE solver testbed
+ --------------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (F: field, D: diagnostics)
+
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+       1  7.782717e-03  7.782717e-03  000:00:00  000:00:28  D
+       2  1.556543e-02  7.782717e-03  000:00:00  000:00:28  D
+       3  2.334815e-02  7.782717e-03  000:00:00  000:00:28  D
+       4  3.113087e-02  7.782717e-03  000:00:00  000:00:29  D
+       5  3.891359e-02  7.782717e-03  000:00:00  000:00:29  D
+       6  4.669630e-02  7.782717e-03  000:00:00  000:00:29  D
+       7  5.447902e-02  7.782717e-03  000:00:01  000:00:30  D
+       8  6.226174e-02  7.782717e-03  000:00:01  000:00:30  D
+       9  7.004445e-02  7.782717e-03  000:00:01  000:00:30  D
+      10  7.782717e-02  7.782717e-03  000:00:01  000:00:31  FD
+      11  8.560989e-02  7.782717e-03  000:00:01  000:00:31  D
+      12  9.339261e-02  7.782717e-03  000:00:01  000:00:31  D
+      13  1.011753e-01  7.782717e-03  000:00:02  000:00:31  D
+      14  1.089580e-01  7.782717e-03  000:00:02  000:00:30  D
+      15  1.167408e-01  7.782717e-03  000:00:02  000:00:30  D
+      16  1.245235e-01  7.782717e-03  000:00:02  000:00:30  D
+      17  1.323062e-01  7.782717e-03  000:00:02  000:00:29  D
+      18  1.400889e-01  7.782717e-03  000:00:02  000:00:29  D
+      19  1.478716e-01  7.782717e-03  000:00:03  000:00:29  D
+      20  1.556543e-01  7.782717e-03  000:00:03  000:00:29  FD
+      21  1.634371e-01  7.782717e-03  000:00:03  000:00:29  D
+      22  1.712198e-01  7.782717e-03  000:00:03  000:00:29  D
+      23  1.790025e-01  7.782717e-03  000:00:03  000:00:30  D
+      24  1.867852e-01  7.782717e-03  000:00:04  000:00:30  D
+      25  1.945679e-01  7.782717e-03  000:00:04  000:00:30  D
+      26  2.023506e-01  7.782717e-03  000:00:04  000:00:30  D
+      27  2.101334e-01  7.782717e-03  000:00:04  000:00:30  D
+      28  2.179161e-01  7.782717e-03  000:00:04  000:00:29  D
+      29  2.256988e-01  7.782717e-03  000:00:04  000:00:29  D
+      30  2.334815e-01  7.782717e-03  000:00:05  000:00:29  FD
+      31  2.412642e-01  7.782717e-03  000:00:05  000:00:29  D
+      32  2.490469e-01  7.782717e-03  000:00:05  000:00:28  D
+      33  2.568297e-01  7.782717e-03  000:00:05  000:00:28  D
+      34  2.646124e-01  7.782717e-03  000:00:05  000:00:28  D
+      35  2.723951e-01  7.782717e-03  000:00:05  000:00:28  D
+      36  2.801778e-01  7.782717e-03  000:00:06  000:00:27  D
+      37  2.879605e-01  7.782717e-03  000:00:06  000:00:27  D
+      38  2.957433e-01  7.782717e-03  000:00:06  000:00:27  D
+      39  3.035260e-01  7.782717e-03  000:00:06  000:00:27  D
+      40  3.113087e-01  7.782717e-03  000:00:06  000:00:27  FD
+      41  3.190914e-01  7.782717e-03  000:00:06  000:00:26  D
+      42  3.268741e-01  7.782717e-03  000:00:07  000:00:26  D
+      43  3.346568e-01  7.782717e-03  000:00:07  000:00:26  D
+      44  3.424396e-01  7.782717e-03  000:00:07  000:00:26  D
+      45  3.502223e-01  7.782717e-03  000:00:07  000:00:26  D
+      46  3.580050e-01  7.782717e-03  000:00:07  000:00:26  D
+      47  3.657877e-01  7.782717e-03  000:00:07  000:00:25  D
+      48  3.735704e-01  7.782717e-03  000:00:07  000:00:25  D
+      49  3.813531e-01  7.782717e-03  000:00:08  000:00:25  D
+      50  3.891359e-01  7.782717e-03  000:00:08  000:00:25  FD
+      51  3.969186e-01  7.782717e-03  000:00:08  000:00:25  D
+      52  4.047013e-01  7.782717e-03  000:00:08  000:00:24  D
+      53  4.124840e-01  7.782717e-03  000:00:08  000:00:24  D
+      54  4.202667e-01  7.782717e-03  000:00:08  000:00:24  D
+      55  4.280494e-01  7.782717e-03  000:00:09  000:00:24  D
+      56  4.358322e-01  7.782717e-03  000:00:09  000:00:24  D
+      57  4.436149e-01  7.782717e-03  000:00:09  000:00:23  D
+      58  4.513976e-01  7.782717e-03  000:00:09  000:00:23  D
+      59  4.591803e-01  7.782717e-03  000:00:09  000:00:23  D
+      60  4.669630e-01  7.782717e-03  000:00:09  000:00:23  FD
+      61  4.747457e-01  7.782717e-03  000:00:10  000:00:23  D
+      62  4.825285e-01  7.782717e-03  000:00:10  000:00:23  D
+      63  4.903112e-01  7.782717e-03  000:00:10  000:00:22  D
+      64  4.980939e-01  7.782717e-03  000:00:10  000:00:22  D
+      65  5.058766e-01  7.782717e-03  000:00:10  000:00:22  D
+      66  5.136593e-01  7.782717e-03  000:00:10  000:00:22  D
+      67  5.214420e-01  7.782717e-03  000:00:10  000:00:22  D
+      68  5.292248e-01  7.782717e-03  000:00:11  000:00:21  D
+      69  5.370075e-01  7.782717e-03  000:00:11  000:00:21  D
+      70  5.447902e-01  7.782717e-03  000:00:11  000:00:21  FD
+      71  5.525729e-01  7.782717e-03  000:00:11  000:00:21  D
+      72  5.603556e-01  7.782717e-03  000:00:11  000:00:21  D
+      73  5.681384e-01  7.782717e-03  000:00:11  000:00:21  D
+      74  5.759211e-01  7.782717e-03  000:00:12  000:00:21  D
+      75  5.837038e-01  7.782717e-03  000:00:12  000:00:20  D
+      76  5.914865e-01  7.782717e-03  000:00:12  000:00:20  D
+      77  5.992692e-01  7.782717e-03  000:00:12  000:00:20  D
+      78  6.070519e-01  7.782717e-03  000:00:12  000:00:20  D
+      79  6.148347e-01  7.782717e-03  000:00:12  000:00:20  D
+      80  6.226174e-01  7.782717e-03  000:00:13  000:00:20  FD
+      81  6.304001e-01  7.782717e-03  000:00:13  000:00:19  D
+      82  6.381828e-01  7.782717e-03  000:00:13  000:00:19  D
+      83  6.459655e-01  7.782717e-03  000:00:13  000:00:19  D
+      84  6.537482e-01  7.782717e-03  000:00:13  000:00:19  D
+      85  6.615310e-01  7.782717e-03  000:00:13  000:00:19  D
+      86  6.693137e-01  7.782717e-03  000:00:14  000:00:19  D
+      87  6.770964e-01  7.782717e-03  000:00:14  000:00:18  D
+      88  6.848791e-01  7.782717e-03  000:00:14  000:00:18  D
+      89  6.926618e-01  7.782717e-03  000:00:14  000:00:18  D
+      90  7.004445e-01  7.782717e-03  000:00:14  000:00:18  FD
+      91  7.082273e-01  7.782717e-03  000:00:14  000:00:18  D
+      92  7.160100e-01  7.782717e-03  000:00:15  000:00:18  D
+      93  7.237927e-01  7.782717e-03  000:00:15  000:00:17  D
+      94  7.315754e-01  7.782717e-03  000:00:15  000:00:17  D
+      95  7.393581e-01  7.782717e-03  000:00:15  000:00:17  D
+      96  7.471408e-01  7.782717e-03  000:00:15  000:00:17  D
+      97  7.549236e-01  7.782717e-03  000:00:15  000:00:17  D
+      98  7.627063e-01  7.782717e-03  000:00:16  000:00:17  D
+      99  7.704890e-01  7.782717e-03  000:00:16  000:00:16  D
+     100  7.782717e-01  7.782717e-03  000:00:16  000:00:16  FD
+     101  7.860544e-01  7.782717e-03  000:00:16  000:00:16  D
+     102  7.938372e-01  7.782717e-03  000:00:16  000:00:16  D
+     103  8.016199e-01  7.782717e-03  000:00:16  000:00:16  D
+     104  8.094026e-01  7.782717e-03  000:00:17  000:00:15  D
+     105  8.171853e-01  7.782717e-03  000:00:17  000:00:15  D
+     106  8.249680e-01  7.782717e-03  000:00:17  000:00:15  D
+     107  8.327507e-01  7.782717e-03  000:00:17  000:00:15  D
+     108  8.405335e-01  7.782717e-03  000:00:17  000:00:15  D
+     109  8.483162e-01  7.782717e-03  000:00:17  000:00:15  D
+     110  8.560989e-01  7.782717e-03  000:00:17  000:00:15  FD
+     111  8.638816e-01  7.782717e-03  000:00:18  000:00:14  D
+     112  8.716643e-01  7.782717e-03  000:00:18  000:00:14  D
+     113  8.794470e-01  7.782717e-03  000:00:18  000:00:14  D
+     114  8.872298e-01  7.782717e-03  000:00:18  000:00:14  D
+     115  8.950125e-01  7.782717e-03  000:00:18  000:00:14  D
+     116  9.027952e-01  7.782717e-03  000:00:18  000:00:14  D
+     117  9.105779e-01  7.782717e-03  000:00:19  000:00:13  D
+     118  9.183606e-01  7.782717e-03  000:00:19  000:00:13  D
+     119  9.261433e-01  7.782717e-03  000:00:19  000:00:13  D
+     120  9.339261e-01  7.782717e-03  000:00:19  000:00:13  FD
+     121  9.417088e-01  7.782717e-03  000:00:20  000:00:13  D
+     122  9.494915e-01  7.782717e-03  000:00:20  000:00:13  D
+     123  9.572742e-01  7.782717e-03  000:00:20  000:00:13  D
+     124  9.650569e-01  7.782717e-03  000:00:20  000:00:13  D
+     125  9.728396e-01  7.782717e-03  000:00:20  000:00:12  D
+     126  9.806224e-01  7.782717e-03  000:00:21  000:00:12  D
+     127  9.884051e-01  7.782717e-03  000:00:21  000:00:12  D
+     128  9.961878e-01  7.782717e-03  000:00:21  000:00:12  D
+     129  1.003971e+00  7.782717e-03  000:00:21  000:00:12  D
+     130  1.011753e+00  7.782717e-03  000:00:21  000:00:12  FD
+     131  1.019536e+00  7.782717e-03  000:00:21  000:00:11  D
+     132  1.027319e+00  7.782717e-03  000:00:22  000:00:11  D
+     133  1.035101e+00  7.782717e-03  000:00:22  000:00:11  D
+     134  1.042884e+00  7.782717e-03  000:00:22  000:00:11  D
+     135  1.050667e+00  7.782717e-03  000:00:22  000:00:11  D
+     136  1.058450e+00  7.782717e-03  000:00:23  000:00:11  D
+     137  1.066232e+00  7.782717e-03  000:00:23  000:00:10  D
+     138  1.074015e+00  7.782717e-03  000:00:23  000:00:10  D
+     139  1.081798e+00  7.782717e-03  000:00:23  000:00:10  D
+     140  1.089580e+00  7.782717e-03  000:00:23  000:00:10  FD
+     141  1.097363e+00  7.782717e-03  000:00:23  000:00:10  D
+     142  1.105146e+00  7.782717e-03  000:00:24  000:00:10  D
+     143  1.112929e+00  7.782717e-03  000:00:24  000:00:10  D
+     144  1.120711e+00  7.782717e-03  000:00:24  000:00:09  D
+     145  1.128494e+00  7.782717e-03  000:00:24  000:00:09  D
+     146  1.136277e+00  7.782717e-03  000:00:24  000:00:09  D
+     147  1.144059e+00  7.782717e-03  000:00:25  000:00:09  D
+     148  1.151842e+00  7.782717e-03  000:00:25  000:00:09  D
+     149  1.159625e+00  7.782717e-03  000:00:25  000:00:09  D
+     150  1.167408e+00  7.782717e-03  000:00:25  000:00:08  FD
+     151  1.175190e+00  7.782717e-03  000:00:25  000:00:08  D
+     152  1.182973e+00  7.782717e-03  000:00:25  000:00:08  D
+     153  1.190756e+00  7.782717e-03  000:00:26  000:00:08  D
+     154  1.198538e+00  7.782717e-03  000:00:26  000:00:08  D
+     155  1.206321e+00  7.782717e-03  000:00:26  000:00:08  D
+     156  1.214104e+00  7.782717e-03  000:00:26  000:00:07  D
+     157  1.221887e+00  7.782717e-03  000:00:26  000:00:07  D
+     158  1.229669e+00  7.782717e-03  000:00:27  000:00:07  D
+     159  1.237452e+00  7.782717e-03  000:00:27  000:00:07  D
+     160  1.245235e+00  7.782717e-03  000:00:27  000:00:07  FD
+     161  1.253017e+00  7.782717e-03  000:00:27  000:00:07  D
+     162  1.260800e+00  7.782717e-03  000:00:27  000:00:06  D
+     163  1.268583e+00  7.782717e-03  000:00:28  000:00:06  D
+     164  1.276366e+00  7.782717e-03  000:00:28  000:00:06  D
+     165  1.284148e+00  7.782717e-03  000:00:28  000:00:06  D
+     166  1.291931e+00  7.782717e-03  000:00:28  000:00:06  D
+     167  1.299714e+00  7.782717e-03  000:00:28  000:00:06  D
+     168  1.307496e+00  7.782717e-03  000:00:29  000:00:05  D
+     169  1.315279e+00  7.782717e-03  000:00:29  000:00:05  D
+     170  1.323062e+00  7.782717e-03  000:00:29  000:00:05  FD
+     171  1.330845e+00  7.782717e-03  000:00:29  000:00:05  D
+     172  1.338627e+00  7.782717e-03  000:00:29  000:00:05  D
+     173  1.346410e+00  7.782717e-03  000:00:30  000:00:05  D
+     174  1.354193e+00  7.782717e-03  000:00:30  000:00:04  D
+     175  1.361976e+00  7.782717e-03  000:00:30  000:00:04  D
+     176  1.369758e+00  7.782717e-03  000:00:30  000:00:04  D
+     177  1.377541e+00  7.782717e-03  000:00:30  000:00:04  D
+     178  1.385324e+00  7.782717e-03  000:00:30  000:00:04  D
+     179  1.393106e+00  7.782717e-03  000:00:31  000:00:03  D
+     180  1.400889e+00  7.782717e-03  000:00:31  000:00:03  FD
+     181  1.408672e+00  7.782717e-03  000:00:31  000:00:03  D
+     182  1.416455e+00  7.782717e-03  000:00:31  000:00:03  D
+     183  1.424237e+00  7.782717e-03  000:00:31  000:00:03  D
+     184  1.432020e+00  7.782717e-03  000:00:31  000:00:03  D
+     185  1.439803e+00  7.782717e-03  000:00:32  000:00:02  D
+     186  1.447585e+00  7.782717e-03  000:00:32  000:00:02  D
+     187  1.455368e+00  7.782717e-03  000:00:32  000:00:02  D
+     188  1.463151e+00  7.782717e-03  000:00:32  000:00:02  D
+     189  1.470934e+00  7.782717e-03  000:00:32  000:00:02  D
+     190  1.478716e+00  7.782717e-03  000:00:32  000:00:02  FD
+     191  1.486499e+00  7.782717e-03  000:00:33  000:00:01  D
+     192  1.494282e+00  7.782717e-03  000:00:33  000:00:01  D
+     193  1.502064e+00  7.782717e-03  000:00:33  000:00:01  D
+     194  1.509847e+00  7.782717e-03  000:00:33  000:00:01  D
+     195  1.517630e+00  7.782717e-03  000:00:33  000:00:01  D
+     196  1.525413e+00  7.782717e-03  000:00:33  000:00:01  D
+     197  1.533195e+00  7.782717e-03  000:00:34  000:00:00  D
+     198  1.540978e+00  7.782717e-03  000:00:34  000:00:00  D
+     199  1.548761e+00  7.782717e-03  000:00:34  000:00:00  D
+     200  1.556543e+00  7.782717e-03  000:00:34  000:00:00  FD
+     201  1.564326e+00  7.782717e-03  000:00:34  000:00:00  D
+     202  1.570796e+00  6.470177e-03  000:00:34  000:00:00  D
+
+     Normal finish, maximum time reached: 1.570796
+
+ * Timers (h:m:s):
+ -----------------
+     Migrate global-scope data                                                   : 0:0:0
+     Total runtime                                                               : 0:0:35
+
+[Partition 0][Node 0] End of program
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.750K
+cp: overwrite 'diag.750K'? y
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+
+Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
+Charm++> Running on MPI version: 3.1
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 36
+Converse/Charm++ Commit ID:
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (36-way SMP).
+Charm++> cpu topology info is gathered in 0.022 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     .___              .__  __
+   .;@+@';;;;;;' |   | ____   ____ |__|/  |_  ___________
+    `     '#''@` |   |/    \_/ ___\|  \   __\/ __ \_  __ \
+                 |   |   |  \  \___|  ||  | \  ___/|  | \/
+                 |___|___|  /\___  >__||__|  \___  >__|
+                          \/     \/              \/
+
+                                 < ENVIRONMENT >
+                                 ------ o ------
+
+ * Build environment:
+ --------------------
+     Hostname                       : lagrange
+     Executable                     : inciter
+     Version                        : 0.1 (C16015)
+     Revision SHA1                  : Quinoa_v0.1-914-g40abfa98
+     CMake build type               : RELEASE
+     Asserts                        : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     Exception trace                : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     MPI C++ wrapper                : /usr/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/g++
+     Build date                     : Sun Jun  4 13:51:45 MDT 2017
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Jun  5 07:08:32 2017
+     Work directory                 : /home/jbakosi/code/quinoa/build/gnu
+     Executable (rel. to work dir)  : Main/inciter
+     Command line arguments         : '-v -c slot_cyl.q -i unitcube_01_6M.exo'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : slot_cyl.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >
+                                   ---- o ----
+
+ * Unknowns data layout (CMake: FIELD_DATA_LAYOUT):
+ --------------------------------------------------
+     unknown-major
+
+ * Registered partial differential equations:
+ --------------------------------------------
+     Unique equation types          : 2
+     With all policy combinations   : 12
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * h: physics configuration:
+        A - Advection
+        D - Advection + diffusion
+        L - Laplace
+        N - Navier-Stokes
+        E - Euler
+      * r: problem:
+        U - User-defined
+        S - Shear-diffusion
+        D - Dirichlet & Neumann
+        V - Vortical flow
+        V - Nonlinear energy growth
+        V - Rayleigh-Taylor
+        Z - Zalesak's slotted cylinder
+
+     Compressible flow              : h:EN, r:UV
+     Transport                      : h:AD, r:SZ
+
+
+                                   < PROBLEM >
+                                   ---- o ----
+
+ * Title: Zalesak's slotted cylinder
+ -----------------------------------
+
+ * Partial differential equations integrated (1):
+ ------------------------------------------------
+   < Transport >
+     problem                        : Zalesak's slotted cylinder
+     start offset in unknowns array : 0
+     number of components           : 1
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Start time                     : 0
+     Terminate time                 : 1.5708
+     CFL coefficient                : 0.5
+     Mass diffusion coeff           : 1
+
+ * Output filenames:
+ -------------------
+     Field                          : out.<chareid>
+     Diagnostics                    : diag
+
+ * Output intervals:
+ -------------------
+     TTY                            : 1
+     Field                          : 10
+     Diagnostics                    : 1
+
+Quinoa> Reading side sets ... done
+Quinoa> Creating linear system mergers
+Quinoa> Creating particle writers
+Quinoa> Creating partitioners and reading mesh graph ... done
+
+ * Input mesh graph statistics:
+ ------------------------------
+     Number of tetrahedra           : 6000000
+     Number of nodes                : 1030301
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of tetrahedra)    : 6000000
+     Number of processing elements  : 36
+     Number of work units           : 36 (35*166666+166690)
+
+ * Initial mesh partitioning:
+ ----------------------------
+     Mesh partitioning algorithm    : recursive coordinate bisection
+
+Quinoa> Mesh read time: 0.230858 sec
+Quinoa> Partitioning and distributing mesh ... ZOLTAN Load balancing method = 3 (RCB)
+Build configuration:
+
+  ZOLTAN_ID_TYPE: unsigned int (4 bytes)
+  ZOLTAN_GNO_TYPE: ssize_t, (8 bytes)
+  MPI_Datatype for ZOLTAN_ID_TYPE: MPI_UNSIGNED
+  MPI_Datatype for ZOLTAN_GNO_TYPE: MPI_LONG
+
+ZOLTAN Parameter IMBALANCE_TOL[0] = 1.100000
+ZOLTAN Parameter AUTO_MIGRATE = FALSE
+ZOLTAN Parameter MIGRATE_ONLY_PROC_CHANGES = 1
+ZOLTAN Parameter OBJ_WEIGHT_DIM = 0
+ZOLTAN Parameter EDGE_WEIGHT_DIM = 0
+ZOLTAN Parameter DEBUG_LEVEL = 1
+ZOLTAN Parameter DEBUG_PROCESSOR = 0
+ZOLTAN Parameter DETERMINISTIC = TRUE
+ZOLTAN Parameter TIMER = 1 (wall)
+ZOLTAN Parameter NUM_GID_ENTRIES = 2
+ZOLTAN Parameter NUM_LID_ENTRIES = 2
+ZOLTAN Parameter RETURN_LISTS = PARTITION ASSIGNMENTS
+ZOLTAN Parameter NUM_GLOBAL_PARTS = 36
+ZOLTAN Parameter NUM_LOCAL_PARTS = -1
+ZOLTAN Parameter REMAP = 1
+ZOLTAN Parameter SEED = 123456789 (123456789)
+ZOLTAN Parameter LB_APPROACH = repartition
+ZOLTAN Parameter RCB_OVERALLOC = 1.200000
+ZOLTAN Parameter RCB_REUSE = 0
+ZOLTAN Parameter CHECK_GEOM = 1
+ZOLTAN Parameter RCB_OUTPUT_LEVEL = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter RCB_LOCK_DIRECTIONS = 0
+ZOLTAN Parameter RCB_SET_DIRECTIONS = 0
+ZOLTAN Parameter RCB_RECTILINEAR_BLOCKS = 0
+ZOLTAN Parameter OBJ_WEIGHTS_COMPARABLE = 0
+ZOLTAN Parameter RCB_MULTICRITERIA_NORM = 1
+ZOLTAN Parameter RCB_MAX_ASPECT_RATIO = 10.000000
+ZOLTAN Parameter AVERAGE_CUTS = 0
+ZOLTAN Parameter RANDOM_PIVOTS = 0
+ZOLTAN Parameter RCB_RECOMPUTE_BOX = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 0.000000
+ZOLTAN Parameter FINAL_OUTPUT = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 10.000000
+done
+Quinoa> Reordering mesh ... done
+Quinoa> Creating workers
+Quinoa> Reading mesh node coordinates, computing nodal volumes
+Quinoa> Linear system communication cost: avg = 0.091166, std = 0.054424
+Quinoa> Mesh statistics: min/max/avg(edgelength) = 0.010000 / 0.017321 / 0.012771
+Quinoa> Mesh statistics: min/max/avg(V^{1/3}) = 0.005503 / 0.005503 / 0.005503
+Quinoa> Computing row IDs, querying BCs, outputting mesh done
+Quinoa> Setting and outputting ICs, computing initial dt, computing LHS ... done
+Quinoa> Starting time stepping ...
+
+ * Time integration: Unstructured-mesh PDE solver testbed
+ --------------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (F: field, D: diagnostics)
+
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+       1  3.891359e-03  3.891359e-03  000:00:01  000:08:19  D
+       2  7.782717e-03  3.891359e-03  000:00:02  000:08:38  D
+       3  1.167408e-02  3.891359e-03  000:00:03  000:08:47  D
+       4  1.556543e-02  3.891359e-03  000:00:05  000:08:42  D
+       5  1.945679e-02  3.891359e-03  000:00:06  000:08:48  D
+       6  2.334815e-02  3.891359e-03  000:00:07  000:08:46  D
+       7  2.723951e-02  3.891359e-03  000:00:09  000:09:11  D
+       8  3.113087e-02  3.891359e-03  000:00:11  000:09:09  D
+       9  3.502223e-02  3.891359e-03  000:00:12  000:09:10  D
+      10  3.891359e-02  3.891359e-03  000:00:13  000:09:08  FD
+      11  4.280494e-02  3.891359e-03  000:00:15  000:09:06  D
+      12  4.669630e-02  3.891359e-03  000:00:16  000:09:01  D
+      13  5.058766e-02  3.891359e-03  000:00:17  000:09:00  D
+      14  5.447902e-02  3.891359e-03  000:00:19  000:08:57  D
+      15  5.837038e-02  3.891359e-03  000:00:20  000:08:56  D
+      16  6.226174e-02  3.891359e-03  000:00:22  000:08:54  D
+      17  6.615310e-02  3.891359e-03  000:00:23  000:08:53  D
+      18  7.004445e-02  3.891359e-03  000:00:25  000:08:56  D
+      19  7.393581e-02  3.891359e-03  000:00:27  000:09:08  D
+      20  7.782717e-02  3.891359e-03  000:00:28  000:09:08  FD
+      21  8.171853e-02  3.891359e-03  000:00:30  000:09:07  D
+      22  8.560989e-02  3.891359e-03  000:00:31  000:09:05  D
+      23  8.950125e-02  3.891359e-03  000:00:32  000:09:02  D
+      24  9.339261e-02  3.891359e-03  000:00:34  000:08:59  D
+      25  9.728396e-02  3.891359e-03  000:00:35  000:08:57  D
+      26  1.011753e-01  3.891359e-03  000:00:36  000:08:55  D
+      27  1.050667e-01  3.891359e-03  000:00:38  000:08:53  D
+      28  1.089580e-01  3.891359e-03  000:00:39  000:08:51  D
+      29  1.128494e-01  3.891359e-03  000:00:40  000:08:49  D
+      30  1.167408e-01  3.891359e-03  000:00:42  000:08:51  FD
+      31  1.206321e-01  3.891359e-03  000:00:44  000:08:50  D
+      32  1.245235e-01  3.891359e-03  000:00:45  000:08:46  D
+      33  1.284148e-01  3.891359e-03  000:00:46  000:08:45  D
+      34  1.323062e-01  3.891359e-03  000:00:48  000:08:43  D
+      35  1.361976e-01  3.891359e-03  000:00:49  000:08:40  D
+      36  1.400889e-01  3.891359e-03  000:00:50  000:08:38  D
+      37  1.439803e-01  3.891359e-03  000:00:52  000:08:36  D
+      38  1.478716e-01  3.891359e-03  000:00:53  000:08:35  D
+      39  1.517630e-01  3.891359e-03  000:00:54  000:08:33  D
+      40  1.556543e-01  3.891359e-03  000:00:56  000:08:31  FD
+      41  1.595457e-01  3.891359e-03  000:00:57  000:08:29  D
+      42  1.634371e-01  3.891359e-03  000:00:59  000:08:32  D
+      43  1.673284e-01  3.891359e-03  000:01:00  000:08:30  D
+      44  1.712198e-01  3.891359e-03  000:01:02  000:08:28  D
+      45  1.751111e-01  3.891359e-03  000:01:03  000:08:26  D
+      46  1.790025e-01  3.891359e-03  000:01:04  000:08:25  D
+      47  1.828939e-01  3.891359e-03  000:01:06  000:08:23  D
+      48  1.867852e-01  3.891359e-03  000:01:07  000:08:21  D
+      49  1.906766e-01  3.891359e-03  000:01:09  000:08:19  D
+      50  1.945679e-01  3.891359e-03  000:01:10  000:08:17  FD
+      51  1.984593e-01  3.891359e-03  000:01:11  000:08:16  D
+      52  2.023506e-01  3.891359e-03  000:01:13  000:08:14  D
+      53  2.062420e-01  3.891359e-03  000:01:14  000:08:13  D
+      54  2.101334e-01  3.891359e-03  000:01:16  000:08:13  D
+      55  2.140247e-01  3.891359e-03  000:01:17  000:08:12  D
+      56  2.179161e-01  3.891359e-03  000:01:18  000:08:10  D
+      57  2.218074e-01  3.891359e-03  000:01:20  000:08:08  D
+      58  2.256988e-01  3.891359e-03  000:01:21  000:08:07  D
+      59  2.295902e-01  3.891359e-03  000:01:23  000:08:05  D
+      60  2.334815e-01  3.891359e-03  000:01:24  000:08:05  FD
+      61  2.373729e-01  3.891359e-03  000:01:26  000:08:04  D
+      62  2.412642e-01  3.891359e-03  000:01:27  000:08:03  D
+      63  2.451556e-01  3.891359e-03  000:01:29  000:08:02  D
+      64  2.490469e-01  3.891359e-03  000:01:30  000:08:01  D
+      65  2.529383e-01  3.891359e-03  000:01:32  000:07:59  D
+      66  2.568297e-01  3.891359e-03  000:01:33  000:07:57  D
+      67  2.607210e-01  3.891359e-03  000:01:34  000:07:56  D
+      68  2.646124e-01  3.891359e-03  000:01:36  000:07:54  D
+      69  2.685037e-01  3.891359e-03  000:01:37  000:07:52  D
+      70  2.723951e-01  3.891359e-03  000:01:38  000:07:50  FD
+      71  2.762865e-01  3.891359e-03  000:01:40  000:07:48  D
+      72  2.801778e-01  3.891359e-03  000:01:41  000:07:47  D
+      73  2.840692e-01  3.891359e-03  000:01:43  000:07:47  D
+      74  2.879605e-01  3.891359e-03  000:01:44  000:07:46  D
+      75  2.918519e-01  3.891359e-03  000:01:45  000:07:44  D
+      76  2.957433e-01  3.891359e-03  000:01:47  000:07:42  D
+      77  2.996346e-01  3.891359e-03  000:01:48  000:07:41  D
+      78  3.035260e-01  3.891359e-03  000:01:50  000:07:39  D
+      79  3.074173e-01  3.891359e-03  000:01:51  000:07:38  D
+      80  3.113087e-01  3.891359e-03  000:01:53  000:07:37  FD
+      81  3.152000e-01  3.891359e-03  000:01:54  000:07:35  D
+      82  3.190914e-01  3.891359e-03  000:01:55  000:07:34  D
+      83  3.229828e-01  3.891359e-03  000:01:57  000:07:33  D
+      84  3.268741e-01  3.891359e-03  000:01:58  000:07:31  D
+      85  3.307655e-01  3.891359e-03  000:02:00  000:07:31  D
+      86  3.346568e-01  3.891359e-03  000:02:01  000:07:29  D
+      87  3.385482e-01  3.891359e-03  000:02:03  000:07:28  D
+      88  3.424396e-01  3.891359e-03  000:02:04  000:07:27  D
+      89  3.463309e-01  3.891359e-03  000:02:06  000:07:25  D
+      90  3.502223e-01  3.891359e-03  000:02:07  000:07:24  FD
+      91  3.541136e-01  3.891359e-03  000:02:08  000:07:22  D
+      92  3.580050e-01  3.891359e-03  000:02:10  000:07:21  D
+      93  3.618963e-01  3.891359e-03  000:02:11  000:07:19  D
+      94  3.657877e-01  3.891359e-03  000:02:12  000:07:18  D
+      95  3.696791e-01  3.891359e-03  000:02:14  000:07:16  D
+      96  3.735704e-01  3.891359e-03  000:02:15  000:07:15  D
+      97  3.774618e-01  3.891359e-03  000:02:17  000:07:13  D
+      98  3.813531e-01  3.891359e-03  000:02:18  000:07:11  D
+      99  3.852445e-01  3.891359e-03  000:02:19  000:07:10  D
+     100  3.891359e-01  3.891359e-03  000:02:21  000:07:08  FD
+     101  3.930272e-01  3.891359e-03  000:02:22  000:07:06  D
+     102  3.969186e-01  3.891359e-03  000:02:24  000:07:06  D
+     103  4.008099e-01  3.891359e-03  000:02:25  000:07:04  D
+     104  4.047013e-01  3.891359e-03  000:02:27  000:07:03  D
+     105  4.085927e-01  3.891359e-03  000:02:28  000:07:02  D
+     106  4.124840e-01  3.891359e-03  000:02:29  000:07:01  D
+     107  4.163754e-01  3.891359e-03  000:02:31  000:06:59  D
+     108  4.202667e-01  3.891359e-03  000:02:32  000:06:58  D
+     109  4.241581e-01  3.891359e-03  000:02:34  000:06:56  D
+     110  4.280494e-01  3.891359e-03  000:02:35  000:06:55  FD
+     111  4.319408e-01  3.891359e-03  000:02:36  000:06:53  D
+     112  4.358322e-01  3.891359e-03  000:02:38  000:06:52  D
+     113  4.397235e-01  3.891359e-03  000:02:39  000:06:50  D
+     114  4.436149e-01  3.891359e-03  000:02:40  000:06:49  D
+     115  4.475062e-01  3.891359e-03  000:02:42  000:06:47  D
+     116  4.513976e-01  3.891359e-03  000:02:43  000:06:46  D
+     117  4.552890e-01  3.891359e-03  000:02:45  000:06:44  D
+     118  4.591803e-01  3.891359e-03  000:02:46  000:06:42  D
+     119  4.630717e-01  3.891359e-03  000:02:47  000:06:41  D
+     120  4.669630e-01  3.891359e-03  000:02:49  000:06:39  FD
+     121  4.708544e-01  3.891359e-03  000:02:50  000:06:38  D
+     122  4.747457e-01  3.891359e-03  000:02:51  000:06:36  D
+     123  4.786371e-01  3.891359e-03  000:02:53  000:06:35  D
+     124  4.825285e-01  3.891359e-03  000:02:54  000:06:33  D
+     125  4.864198e-01  3.891359e-03  000:02:55  000:06:32  D
+     126  4.903112e-01  3.891359e-03  000:02:57  000:06:30  D
+     127  4.942025e-01  3.891359e-03  000:02:58  000:06:29  D
+     128  4.980939e-01  3.891359e-03  000:02:59  000:06:27  D
+     129  5.019853e-01  3.891359e-03  000:03:01  000:06:25  D
+     130  5.058766e-01  3.891359e-03  000:03:02  000:06:24  FD
+     131  5.097680e-01  3.891359e-03  000:03:03  000:06:22  D
+     132  5.136593e-01  3.891359e-03  000:03:05  000:06:21  D
+     133  5.175507e-01  3.891359e-03  000:03:06  000:06:19  D
+     134  5.214420e-01  3.891359e-03  000:03:07  000:06:18  D
+     135  5.253334e-01  3.891359e-03  000:03:09  000:06:16  D
+     136  5.292248e-01  3.891359e-03  000:03:10  000:06:15  D
+     137  5.331161e-01  3.891359e-03  000:03:11  000:06:13  D
+     138  5.370075e-01  3.891359e-03  000:03:13  000:06:12  D
+     139  5.408988e-01  3.891359e-03  000:03:14  000:06:10  D
+     140  5.447902e-01  3.891359e-03  000:03:16  000:06:09  FD
+     141  5.486816e-01  3.891359e-03  000:03:17  000:06:07  D
+     142  5.525729e-01  3.891359e-03  000:03:18  000:06:06  D
+     143  5.564643e-01  3.891359e-03  000:03:20  000:06:04  D
+     144  5.603556e-01  3.891359e-03  000:03:21  000:06:03  D
+     145  5.642470e-01  3.891359e-03  000:03:22  000:06:01  D
+     146  5.681384e-01  3.891359e-03  000:03:24  000:06:00  D
+     147  5.720297e-01  3.891359e-03  000:03:26  000:05:59  D
+     148  5.759211e-01  3.891359e-03  000:03:27  000:05:58  D
+     149  5.798124e-01  3.891359e-03  000:03:28  000:05:57  D
+     150  5.837038e-01  3.891359e-03  000:03:30  000:05:55  FD
+     151  5.875951e-01  3.891359e-03  000:03:31  000:05:54  D
+     152  5.914865e-01  3.891359e-03  000:03:33  000:05:52  D
+     153  5.953779e-01  3.891359e-03  000:03:34  000:05:51  D
+     154  5.992692e-01  3.891359e-03  000:03:35  000:05:49  D
+     155  6.031606e-01  3.891359e-03  000:03:37  000:05:48  D
+     156  6.070519e-01  3.891359e-03  000:03:38  000:05:47  D
+     157  6.109433e-01  3.891359e-03  000:03:40  000:05:45  D
+     158  6.148347e-01  3.891359e-03  000:03:41  000:05:44  D
+     159  6.187260e-01  3.891359e-03  000:03:42  000:05:42  D
+     160  6.226174e-01  3.891359e-03  000:03:44  000:05:41  FD
+     161  6.265087e-01  3.891359e-03  000:03:45  000:05:39  D
+     162  6.304001e-01  3.891359e-03  000:03:46  000:05:38  D
+     163  6.342914e-01  3.891359e-03  000:03:48  000:05:36  D
+     164  6.381828e-01  3.891359e-03  000:03:49  000:05:35  D
+     165  6.420742e-01  3.891359e-03  000:03:51  000:05:34  D
+     166  6.459655e-01  3.891359e-03  000:03:52  000:05:32  D
+     167  6.498569e-01  3.891359e-03  000:03:53  000:05:31  D
+     168  6.537482e-01  3.891359e-03  000:03:55  000:05:30  D
+     169  6.576396e-01  3.891359e-03  000:03:56  000:05:28  D
+     170  6.615310e-01  3.891359e-03  000:03:58  000:05:27  FD
+     171  6.654223e-01  3.891359e-03  000:03:59  000:05:25  D
+     172  6.693137e-01  3.891359e-03  000:04:00  000:05:24  D
+     173  6.732050e-01  3.891359e-03  000:04:02  000:05:23  D
+     174  6.770964e-01  3.891359e-03  000:04:03  000:05:21  D
+     175  6.809878e-01  3.891359e-03  000:04:05  000:05:20  D
+     176  6.848791e-01  3.891359e-03  000:04:06  000:05:18  D
+     177  6.887705e-01  3.891359e-03  000:04:07  000:05:17  D
+     178  6.926618e-01  3.891359e-03  000:04:09  000:05:15  D
+     179  6.965532e-01  3.891359e-03  000:04:10  000:05:14  D
+     180  7.004445e-01  3.891359e-03  000:04:12  000:05:13  FD
+     181  7.043359e-01  3.891359e-03  000:04:14  000:05:12  D
+     182  7.082273e-01  3.891359e-03  000:04:15  000:05:11  D
+     183  7.121186e-01  3.891359e-03  000:04:17  000:05:10  D
+     184  7.160100e-01  3.891359e-03  000:04:19  000:05:09  D
+     185  7.199013e-01  3.891359e-03  000:04:20  000:05:08  D
+     186  7.237927e-01  3.891359e-03  000:04:22  000:05:06  D
+     187  7.276841e-01  3.891359e-03  000:04:23  000:05:05  D
+     188  7.315754e-01  3.891359e-03  000:04:25  000:05:04  D
+     189  7.354668e-01  3.891359e-03  000:04:26  000:05:03  D
+     190  7.393581e-01  3.891359e-03  000:04:28  000:05:01  FD
+     191  7.432495e-01  3.891359e-03  000:04:29  000:05:00  D
+     192  7.471408e-01  3.891359e-03  000:04:31  000:04:59  D
+     193  7.510322e-01  3.891359e-03  000:04:32  000:04:57  D
+     194  7.549236e-01  3.891359e-03  000:04:34  000:04:56  D
+     195  7.588149e-01  3.891359e-03  000:04:36  000:04:55  D
+     196  7.627063e-01  3.891359e-03  000:04:37  000:04:53  D
+     197  7.665976e-01  3.891359e-03  000:04:38  000:04:52  D
+     198  7.704890e-01  3.891359e-03  000:04:40  000:04:51  D
+     199  7.743804e-01  3.891359e-03  000:04:41  000:04:49  D
+     200  7.782717e-01  3.891359e-03  000:04:43  000:04:48  FD
+     201  7.821631e-01  3.891359e-03  000:04:44  000:04:46  D
+     202  7.860544e-01  3.891359e-03  000:04:45  000:04:45  D
+     203  7.899458e-01  3.891359e-03  000:04:47  000:04:43  D
+     204  7.938372e-01  3.891359e-03  000:04:48  000:04:42  D
+     205  7.977285e-01  3.891359e-03  000:04:49  000:04:41  D
+     206  8.016199e-01  3.891359e-03  000:04:51  000:04:39  D
+     207  8.055112e-01  3.891359e-03  000:04:53  000:04:38  D
+     208  8.094026e-01  3.891359e-03  000:04:54  000:04:36  D
+     209  8.132939e-01  3.891359e-03  000:04:55  000:04:35  D
+     210  8.171853e-01  3.891359e-03  000:04:57  000:04:34  FD
+     211  8.210767e-01  3.891359e-03  000:04:58  000:04:32  D
+     212  8.249680e-01  3.891359e-03  000:04:59  000:04:31  D
+     213  8.288594e-01  3.891359e-03  000:05:01  000:04:29  D
+     214  8.327507e-01  3.891359e-03  000:05:02  000:04:28  D
+     215  8.366421e-01  3.891359e-03  000:05:04  000:04:26  D
+     216  8.405335e-01  3.891359e-03  000:05:05  000:04:25  D
+     217  8.444248e-01  3.891359e-03  000:05:06  000:04:24  D
+     218  8.483162e-01  3.891359e-03  000:05:08  000:04:22  D
+     219  8.522075e-01  3.891359e-03  000:05:09  000:04:21  D
+     220  8.560989e-01  3.891359e-03  000:05:11  000:04:19  FD
+     221  8.599902e-01  3.891359e-03  000:05:12  000:04:18  D
+     222  8.638816e-01  3.891359e-03  000:05:13  000:04:16  D
+     223  8.677730e-01  3.891359e-03  000:05:15  000:04:15  D
+     224  8.716643e-01  3.891359e-03  000:05:16  000:04:13  D
+     225  8.755557e-01  3.891359e-03  000:05:18  000:04:12  D
+     226  8.794470e-01  3.891359e-03  000:05:19  000:04:11  D
+     227  8.833384e-01  3.891359e-03  000:05:20  000:04:09  D
+     228  8.872298e-01  3.891359e-03  000:05:22  000:04:08  D
+     229  8.911211e-01  3.891359e-03  000:05:24  000:04:07  D
+     230  8.950125e-01  3.891359e-03  000:05:26  000:04:06  FD
+     231  8.989038e-01  3.891359e-03  000:05:27  000:04:04  D
+     232  9.027952e-01  3.891359e-03  000:05:28  000:04:03  D
+     233  9.066865e-01  3.891359e-03  000:05:30  000:04:01  D
+     234  9.105779e-01  3.891359e-03  000:05:31  000:04:00  D
+     235  9.144693e-01  3.891359e-03  000:05:33  000:03:59  D
+     236  9.183606e-01  3.891359e-03  000:05:34  000:03:57  D
+     237  9.222520e-01  3.891359e-03  000:05:36  000:03:56  D
+     238  9.261433e-01  3.891359e-03  000:05:37  000:03:55  D
+     239  9.300347e-01  3.891359e-03  000:05:39  000:03:53  D
+     240  9.339261e-01  3.891359e-03  000:05:40  000:03:52  FD
+     241  9.378174e-01  3.891359e-03  000:05:41  000:03:50  D
+     242  9.417088e-01  3.891359e-03  000:05:43  000:03:49  D
+     243  9.456001e-01  3.891359e-03  000:05:44  000:03:48  D
+     244  9.494915e-01  3.891359e-03  000:05:46  000:03:46  D
+     245  9.533829e-01  3.891359e-03  000:05:47  000:03:45  D
+     246  9.572742e-01  3.891359e-03  000:05:49  000:03:43  D
+     247  9.611656e-01  3.891359e-03  000:05:50  000:03:42  D
+     248  9.650569e-01  3.891359e-03  000:05:51  000:03:40  D
+     249  9.689483e-01  3.891359e-03  000:05:53  000:03:39  D
+     250  9.728396e-01  3.891359e-03  000:05:54  000:03:37  FD
+     251  9.767310e-01  3.891359e-03  000:05:56  000:03:36  D
+     252  9.806224e-01  3.891359e-03  000:05:57  000:03:35  D
+     253  9.845137e-01  3.891359e-03  000:05:59  000:03:33  D
+     254  9.884051e-01  3.891359e-03  000:06:00  000:03:32  D
+     255  9.922964e-01  3.891359e-03  000:06:02  000:03:31  D
+     256  9.961878e-01  3.891359e-03  000:06:03  000:03:29  D
+     257  1.000079e+00  3.891359e-03  000:06:04  000:03:28  D
+     258  1.003971e+00  3.891359e-03  000:06:06  000:03:26  D
+     259  1.007862e+00  3.891359e-03  000:06:07  000:03:25  D
+     260  1.011753e+00  3.891359e-03  000:06:08  000:03:23  FD
+     261  1.015645e+00  3.891359e-03  000:06:10  000:03:22  D
+     262  1.019536e+00  3.891359e-03  000:06:12  000:03:21  D
+     263  1.023427e+00  3.891359e-03  000:06:13  000:03:19  D
+     264  1.027319e+00  3.891359e-03  000:06:15  000:03:18  D
+     265  1.031210e+00  3.891359e-03  000:06:16  000:03:17  D
+     266  1.035101e+00  3.891359e-03  000:06:17  000:03:15  D
+     267  1.038993e+00  3.891359e-03  000:06:19  000:03:14  D
+     268  1.042884e+00  3.891359e-03  000:06:20  000:03:12  D
+     269  1.046775e+00  3.891359e-03  000:06:22  000:03:11  D
+     270  1.050667e+00  3.891359e-03  000:06:23  000:03:09  FD
+     271  1.054558e+00  3.891359e-03  000:06:25  000:03:08  D
+     272  1.058450e+00  3.891359e-03  000:06:26  000:03:07  D
+     273  1.062341e+00  3.891359e-03  000:06:28  000:03:05  D
+     274  1.066232e+00  3.891359e-03  000:06:29  000:03:04  D
+     275  1.070124e+00  3.891359e-03  000:06:31  000:03:03  D
+     276  1.074015e+00  3.891359e-03  000:06:32  000:03:01  D
+     277  1.077906e+00  3.891359e-03  000:06:34  000:03:00  D
+     278  1.081798e+00  3.891359e-03  000:06:35  000:02:58  D
+     279  1.085689e+00  3.891359e-03  000:06:36  000:02:57  D
+     280  1.089580e+00  3.891359e-03  000:06:38  000:02:55  FD
+     281  1.093472e+00  3.891359e-03  000:06:39  000:02:54  D
+     282  1.097363e+00  3.891359e-03  000:06:41  000:02:53  D
+     283  1.101254e+00  3.891359e-03  000:06:42  000:02:51  D
+     284  1.105146e+00  3.891359e-03  000:06:44  000:02:50  D
+     285  1.109037e+00  3.891359e-03  000:06:45  000:02:49  D
+     286  1.112929e+00  3.891359e-03  000:06:47  000:02:47  D
+     287  1.116820e+00  3.891359e-03  000:06:48  000:02:46  D
+     288  1.120711e+00  3.891359e-03  000:06:50  000:02:44  D
+     289  1.124603e+00  3.891359e-03  000:06:51  000:02:43  D
+     290  1.128494e+00  3.891359e-03  000:06:52  000:02:41  FD
+     291  1.132385e+00  3.891359e-03  000:06:54  000:02:40  D
+     292  1.136277e+00  3.891359e-03  000:06:55  000:02:39  D
+     293  1.140168e+00  3.891359e-03  000:06:57  000:02:37  D
+     294  1.144059e+00  3.891359e-03  000:06:58  000:02:36  D
+     295  1.147951e+00  3.891359e-03  000:07:00  000:02:34  D
+     296  1.151842e+00  3.891359e-03  000:07:01  000:02:33  D
+     297  1.155733e+00  3.891359e-03  000:07:03  000:02:31  D
+     298  1.159625e+00  3.891359e-03  000:07:04  000:02:30  D
+     299  1.163516e+00  3.891359e-03  000:07:05  000:02:29  D
+     300  1.167408e+00  3.891359e-03  000:07:07  000:02:27  FD
+     301  1.171299e+00  3.891359e-03  000:07:08  000:02:26  D
+     302  1.175190e+00  3.891359e-03  000:07:10  000:02:24  D
+     303  1.179082e+00  3.891359e-03  000:07:11  000:02:23  D
+     304  1.182973e+00  3.891359e-03  000:07:12  000:02:21  D
+     305  1.186864e+00  3.891359e-03  000:07:14  000:02:20  D
+     306  1.190756e+00  3.891359e-03  000:07:15  000:02:19  D
+     307  1.194647e+00  3.891359e-03  000:07:17  000:02:17  D
+     308  1.198538e+00  3.891359e-03  000:07:18  000:02:16  D
+     309  1.202430e+00  3.891359e-03  000:07:20  000:02:14  D
+     310  1.206321e+00  3.891359e-03  000:07:21  000:02:13  FD
+     311  1.210213e+00  3.891359e-03  000:07:23  000:02:12  D
+     312  1.214104e+00  3.891359e-03  000:07:24  000:02:10  D
+     313  1.217995e+00  3.891359e-03  000:07:26  000:02:09  D
+     314  1.221887e+00  3.891359e-03  000:07:28  000:02:07  D
+     315  1.225778e+00  3.891359e-03  000:07:29  000:02:06  D
+     316  1.229669e+00  3.891359e-03  000:07:31  000:02:05  D
+     317  1.233561e+00  3.891359e-03  000:07:32  000:02:03  D
+     318  1.237452e+00  3.891359e-03  000:07:34  000:02:02  D
+     319  1.241343e+00  3.891359e-03  000:07:35  000:02:00  D
+     320  1.245235e+00  3.891359e-03  000:07:37  000:01:59  FD
+     321  1.249126e+00  3.891359e-03  000:07:38  000:01:58  D
+     322  1.253017e+00  3.891359e-03  000:07:39  000:01:56  D
+     323  1.256909e+00  3.891359e-03  000:07:41  000:01:55  D
+     324  1.260800e+00  3.891359e-03  000:07:42  000:01:53  D
+     325  1.264692e+00  3.891359e-03  000:07:43  000:01:52  D
+     326  1.268583e+00  3.891359e-03  000:07:45  000:01:50  D
+     327  1.272474e+00  3.891359e-03  000:07:46  000:01:49  D
+     328  1.276366e+00  3.891359e-03  000:07:48  000:01:48  D
+     329  1.280257e+00  3.891359e-03  000:07:50  000:01:46  D
+     330  1.284148e+00  3.891359e-03  000:07:51  000:01:45  FD
+     331  1.288040e+00  3.891359e-03  000:07:52  000:01:43  D
+     332  1.291931e+00  3.891359e-03  000:07:54  000:01:42  D
+     333  1.295822e+00  3.891359e-03  000:07:55  000:01:40  D
+     334  1.299714e+00  3.891359e-03  000:07:57  000:01:39  D
+     335  1.303605e+00  3.891359e-03  000:07:58  000:01:38  D
+     336  1.307496e+00  3.891359e-03  000:08:00  000:01:36  D
+     337  1.311388e+00  3.891359e-03  000:08:01  000:01:35  D
+     338  1.315279e+00  3.891359e-03  000:08:02  000:01:33  D
+     339  1.319171e+00  3.891359e-03  000:08:04  000:01:32  D
+     340  1.323062e+00  3.891359e-03  000:08:05  000:01:30  FD
+     341  1.326953e+00  3.891359e-03  000:08:07  000:01:29  D
+     342  1.330845e+00  3.891359e-03  000:08:08  000:01:28  D
+     343  1.334736e+00  3.891359e-03  000:08:10  000:01:26  D
+     344  1.338627e+00  3.891359e-03  000:08:11  000:01:25  D
+     345  1.342519e+00  3.891359e-03  000:08:13  000:01:23  D
+     346  1.346410e+00  3.891359e-03  000:08:14  000:01:22  D
+     347  1.350301e+00  3.891359e-03  000:08:15  000:01:20  D
+     348  1.354193e+00  3.891359e-03  000:08:17  000:01:19  D
+     349  1.358084e+00  3.891359e-03  000:08:18  000:01:18  D
+     350  1.361976e+00  3.891359e-03  000:08:19  000:01:16  FD
+     351  1.365867e+00  3.891359e-03  000:08:21  000:01:15  D
+     352  1.369758e+00  3.891359e-03  000:08:22  000:01:13  D
+     353  1.373650e+00  3.891359e-03  000:08:24  000:01:12  D
+     354  1.377541e+00  3.891359e-03  000:08:26  000:01:10  D
+     355  1.381432e+00  3.891359e-03  000:08:27  000:01:09  D
+     356  1.385324e+00  3.891359e-03  000:08:29  000:01:08  D
+     357  1.389215e+00  3.891359e-03  000:08:30  000:01:06  D
+     358  1.393106e+00  3.891359e-03  000:08:32  000:01:05  D
+     359  1.396998e+00  3.891359e-03  000:08:33  000:01:03  D
+     360  1.400889e+00  3.891359e-03  000:08:34  000:01:02  FD
+     361  1.404780e+00  3.891359e-03  000:08:36  000:01:01  D
+     362  1.408672e+00  3.891359e-03  000:08:37  000:00:59  D
+     363  1.412563e+00  3.891359e-03  000:08:39  000:00:58  D
+     364  1.416455e+00  3.891359e-03  000:08:40  000:00:56  D
+     365  1.420346e+00  3.891359e-03  000:08:42  000:00:55  D
+     366  1.424237e+00  3.891359e-03  000:08:43  000:00:53  D
+     367  1.428129e+00  3.891359e-03  000:08:44  000:00:52  D
+     368  1.432020e+00  3.891359e-03  000:08:46  000:00:51  D
+     369  1.435911e+00  3.891359e-03  000:08:47  000:00:49  D
+     370  1.439803e+00  3.891359e-03  000:08:49  000:00:48  FD
+     371  1.443694e+00  3.891359e-03  000:08:50  000:00:46  D
+     372  1.447585e+00  3.891359e-03  000:08:51  000:00:45  D
+     373  1.451477e+00  3.891359e-03  000:08:53  000:00:43  D
+     374  1.455368e+00  3.891359e-03  000:08:54  000:00:42  D
+     375  1.459259e+00  3.891359e-03  000:08:56  000:00:40  D
+     376  1.463151e+00  3.891359e-03  000:08:57  000:00:39  D
+     377  1.467042e+00  3.891359e-03  000:08:59  000:00:38  D
+     378  1.470934e+00  3.891359e-03  000:09:00  000:00:36  D
+     379  1.474825e+00  3.891359e-03  000:09:01  000:00:35  D
+     380  1.478716e+00  3.891359e-03  000:09:03  000:00:33  FD
+     381  1.482608e+00  3.891359e-03  000:09:04  000:00:32  D
+     382  1.486499e+00  3.891359e-03  000:09:06  000:00:30  D
+     383  1.490390e+00  3.891359e-03  000:09:07  000:00:29  D
+     384  1.494282e+00  3.891359e-03  000:09:08  000:00:28  D
+     385  1.498173e+00  3.891359e-03  000:09:10  000:00:26  D
+     386  1.502064e+00  3.891359e-03  000:09:11  000:00:25  D
+     387  1.505956e+00  3.891359e-03  000:09:13  000:00:23  D
+     388  1.509847e+00  3.891359e-03  000:09:14  000:00:22  D
+     389  1.513738e+00  3.891359e-03  000:09:16  000:00:20  D
+     390  1.517630e+00  3.891359e-03  000:09:17  000:00:19  FD
+     391  1.521521e+00  3.891359e-03  000:09:18  000:00:18  D
+     392  1.525413e+00  3.891359e-03  000:09:20  000:00:16  D
+     393  1.529304e+00  3.891359e-03  000:09:21  000:00:15  D
+     394  1.533195e+00  3.891359e-03  000:09:23  000:00:13  D
+     395  1.537087e+00  3.891359e-03  000:09:24  000:00:12  D
+     396  1.540978e+00  3.891359e-03  000:09:26  000:00:10  D
+     397  1.544869e+00  3.891359e-03  000:09:27  000:00:09  D
+     398  1.548761e+00  3.891359e-03  000:09:29  000:00:08  D
+     399  1.552652e+00  3.891359e-03  000:09:30  000:00:06  D
+     400  1.556543e+00  3.891359e-03  000:09:32  000:00:05  FD
+     401  1.560435e+00  3.891359e-03  000:09:33  000:00:03  D
+     402  1.564326e+00  3.891359e-03  000:09:35  000:00:02  D
+     403  1.568218e+00  3.891359e-03  000:09:36  000:00:00  D
+     404  1.570796e+00  2.578819e-03  000:09:37  000:00:00  D
+
+     Normal finish, maximum time reached: 1.570796
+
+ * Timers (h:m:s):
+ -----------------
+     Migrate global-scope data                                                   : 0:0:0
+     Total runtime                                                               : 0:9:42
+
+[Partition 0][Node 0] End of program
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.6M
+cp: overwrite 'diag.6M'? y
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
+
+Running on 36 processors:  Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 36  Main/inciter -v -c slot_cyl.q -i unitcube_01_48M.exo
+Charm++> Running on MPI version: 3.1
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 36
+Converse/Charm++ Commit ID:
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (36-way SMP).
+Charm++> cpu topology info is gathered in 0.022 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     .___              .__  __
+   .;@+@';;;;;;' |   | ____   ____ |__|/  |_  ___________
+    `     '#''@` |   |/    \_/ ___\|  \   __\/ __ \_  __ \
+                 |   |   |  \  \___|  ||  | \  ___/|  | \/
+                 |___|___|  /\___  >__||__|  \___  >__|
+                          \/     \/              \/
+
+                                 < ENVIRONMENT >
+                                 ------ o ------
+
+ * Build environment:
+ --------------------
+     Hostname                       : lagrange
+     Executable                     : inciter
+     Version                        : 0.1 (C16015)
+     Revision SHA1                  : Quinoa_v0.1-914-g40abfa98
+     CMake build type               : RELEASE
+     Asserts                        : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     Exception trace                : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     MPI C++ wrapper                : /usr/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/g++
+     Build date                     : Sun Jun  4 13:51:45 MDT 2017
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Jun  5 07:18:32 2017
+     Work directory                 : /home/jbakosi/code/quinoa/build/gnu
+     Executable (rel. to work dir)  : Main/inciter
+     Command line arguments         : '-v -c slot_cyl.q -i unitcube_01_48M.exo'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : slot_cyl.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >
+                                   ---- o ----
+
+ * Unknowns data layout (CMake: FIELD_DATA_LAYOUT):
+ --------------------------------------------------
+     unknown-major
+
+ * Registered partial differential equations:
+ --------------------------------------------
+     Unique equation types          : 2
+     With all policy combinations   : 12
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * h: physics configuration:
+        A - Advection
+        D - Advection + diffusion
+        L - Laplace
+        N - Navier-Stokes
+        E - Euler
+      * r: problem:
+        U - User-defined
+        S - Shear-diffusion
+        D - Dirichlet & Neumann
+        V - Vortical flow
+        V - Nonlinear energy growth
+        V - Rayleigh-Taylor
+        Z - Zalesak's slotted cylinder
+
+     Compressible flow              : h:EN, r:UV
+     Transport                      : h:AD, r:SZ
+
+
+                                   < PROBLEM >
+                                   ---- o ----
+
+ * Title: Zalesak's slotted cylinder
+ -----------------------------------
+
+ * Partial differential equations integrated (1):
+ ------------------------------------------------
+   < Transport >
+     problem                        : Zalesak's slotted cylinder
+     start offset in unknowns array : 0
+     number of components           : 1
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Start time                     : 0
+     Terminate time                 : 1.5708
+     CFL coefficient                : 0.5
+     Mass diffusion coeff           : 1
+
+ * Output filenames:
+ -------------------
+     Field                          : out.<chareid>
+     Diagnostics                    : diag
+
+ * Output intervals:
+ -------------------
+     TTY                            : 1
+     Field                          : 10
+     Diagnostics                    : 1
+
+Quinoa> Reading side sets ... done
+Quinoa> Creating linear system mergers
+Quinoa> Creating particle writers
+Quinoa> Creating partitioners and reading mesh graph ... done
+
+ * Input mesh graph statistics:
+ ------------------------------
+     Number of tetrahedra           : 48000000
+     Number of nodes                : 8120601
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of tetrahedra)    : 48000000
+     Number of processing elements  : 36
+     Number of work units           : 36 (35*1333333+1333345)
+
+ * Initial mesh partitioning:
+ ----------------------------
+     Mesh partitioning algorithm    : recursive coordinate bisection
+
+Quinoa> Mesh read time: 1.933377 sec
+Quinoa> Partitioning and distributing mesh ... ZOLTAN Load balancing method = 3 (RCB)
+Build configuration:
+
+  ZOLTAN_ID_TYPE: unsigned int (4 bytes)
+  ZOLTAN_GNO_TYPE: ssize_t, (8 bytes)
+  MPI_Datatype for ZOLTAN_ID_TYPE: MPI_UNSIGNED
+  MPI_Datatype for ZOLTAN_GNO_TYPE: MPI_LONG
+
+ZOLTAN Parameter IMBALANCE_TOL[0] = 1.100000
+ZOLTAN Parameter AUTO_MIGRATE = FALSE
+ZOLTAN Parameter MIGRATE_ONLY_PROC_CHANGES = 1
+ZOLTAN Parameter OBJ_WEIGHT_DIM = 0
+ZOLTAN Parameter EDGE_WEIGHT_DIM = 0
+ZOLTAN Parameter DEBUG_LEVEL = 1
+ZOLTAN Parameter DEBUG_PROCESSOR = 0
+ZOLTAN Parameter DETERMINISTIC = TRUE
+ZOLTAN Parameter TIMER = 1 (wall)
+ZOLTAN Parameter NUM_GID_ENTRIES = 2
+ZOLTAN Parameter NUM_LID_ENTRIES = 2
+ZOLTAN Parameter RETURN_LISTS = PARTITION ASSIGNMENTS
+ZOLTAN Parameter NUM_GLOBAL_PARTS = 36
+ZOLTAN Parameter NUM_LOCAL_PARTS = -1
+ZOLTAN Parameter REMAP = 1
+ZOLTAN Parameter SEED = 123456789 (123456789)
+ZOLTAN Parameter LB_APPROACH = repartition
+ZOLTAN Parameter RCB_OVERALLOC = 1.200000
+ZOLTAN Parameter RCB_REUSE = 0
+ZOLTAN Parameter CHECK_GEOM = 1
+ZOLTAN Parameter RCB_OUTPUT_LEVEL = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter RCB_LOCK_DIRECTIONS = 0
+ZOLTAN Parameter RCB_SET_DIRECTIONS = 0
+ZOLTAN Parameter RCB_RECTILINEAR_BLOCKS = 0
+ZOLTAN Parameter OBJ_WEIGHTS_COMPARABLE = 0
+ZOLTAN Parameter RCB_MULTICRITERIA_NORM = 1
+ZOLTAN Parameter RCB_MAX_ASPECT_RATIO = 10.000000
+ZOLTAN Parameter AVERAGE_CUTS = 0
+ZOLTAN Parameter RANDOM_PIVOTS = 0
+ZOLTAN Parameter RCB_RECOMPUTE_BOX = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 0.000000
+ZOLTAN Parameter FINAL_OUTPUT = 0
+ZOLTAN Parameter KEEP_CUTS = 0
+ZOLTAN Parameter REDUCE_DIMENSIONS = 0
+ZOLTAN Parameter DEGENERATE_RATIO = 10.000000
+done
+Quinoa> Reordering mesh ... done
+Quinoa> Creating workers
+Quinoa> Reading mesh node coordinates, computing nodal volumes
+Quinoa> Linear system communication cost: avg = 0.044557, std = 0.026130
+Quinoa> Mesh statistics: min/max/avg(edgelength) = 0.005000 / 0.008660 / 0.006397
+Quinoa> Mesh statistics: min/max/avg(V^{1/3}) = 0.002752 / 0.002752 / 0.002752
+Quinoa> Computing row IDs, querying BCs, outputting mesh done
+Quinoa> Setting and outputting ICs, computing initial dt, computing LHS ... done
+Quinoa> Starting time stepping ...
+
+ * Time integration: Unstructured-mesh PDE solver testbed
+ --------------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (F: field, D: diagnostics)
+
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+       1  1.945679e-03  1.945679e-03  000:00:10  002:23:17  D
+       2  3.891359e-03  1.945679e-03  000:00:22  002:30:35  D
+       3  5.837038e-03  1.945679e-03  000:00:35  002:38:17  D
+       4  7.782717e-03  1.945679e-03  000:00:46  002:35:40  D
+       5  9.728396e-03  1.945679e-03  000:00:57  002:35:01  D
+       6  1.167408e-02  1.945679e-03  000:01:08  002:33:26  D
+       7  1.361976e-02  1.945679e-03  000:01:19  002:31:22  D
+       8  1.556543e-02  1.945679e-03  000:01:31  002:31:55  D
+       9  1.751111e-02  1.945679e-03  000:01:43  002:32:51  D
+      10  1.945679e-02  1.945679e-03  000:01:54  002:32:29  FD
+      11  2.140247e-02  1.945679e-03  000:02:05  002:31:21  D
+      12  2.334815e-02  1.945679e-03  000:02:17  002:31:28  D
+      13  2.529383e-02  1.945679e-03  000:02:29  002:31:47  D
+      14  2.723951e-02  1.945679e-03  000:02:39  002:30:31  D
+      15  2.918519e-02  1.945679e-03  000:02:51  002:30:38  D
+      16  3.113087e-02  1.945679e-03  000:03:01  002:29:44  D
+      17  3.307655e-02  1.945679e-03  000:03:12  002:29:09  D
+      18  3.502223e-02  1.945679e-03  000:03:23  002:28:59  D
+      19  3.696791e-02  1.945679e-03  000:03:34  002:28:26  D
+      20  3.891359e-02  1.945679e-03  000:03:46  002:28:31  FD
+      21  4.085927e-02  1.945679e-03  000:03:57  002:28:09  D
+      22  4.280494e-02  1.945679e-03  000:04:08  002:27:54  D
+      23  4.475062e-02  1.945679e-03  000:04:19  002:27:25  D
+      24  4.669630e-02  1.945679e-03  000:04:30  002:26:55  D
+      25  4.864198e-02  1.945679e-03  000:04:41  002:26:41  D
+      26  5.058766e-02  1.945679e-03  000:04:52  002:26:29  D
+      27  5.253334e-02  1.945679e-03  000:05:03  002:26:06  D
+      28  5.447902e-02  1.945679e-03  000:05:13  002:25:36  D
+      29  5.642470e-02  1.945679e-03  000:05:24  002:25:20  D
+      30  5.837038e-02  1.945679e-03  000:05:35  002:25:03  FD
+      31  6.031606e-02  1.945679e-03  000:05:48  002:25:21  D
+      32  6.226174e-02  1.945679e-03  000:05:58  002:24:56  D
+      33  6.420742e-02  1.945679e-03  000:06:10  002:24:46  D
+      34  6.615310e-02  1.945679e-03  000:06:21  002:24:28  D
+      35  6.809878e-02  1.945679e-03  000:06:31  002:24:04  D
+      36  7.004445e-02  1.945679e-03  000:06:42  002:23:52  D
+      37  7.199013e-02  1.945679e-03  000:06:54  002:23:44  D
+      38  7.393581e-02  1.945679e-03  000:07:05  002:23:26  D
+      39  7.588149e-02  1.945679e-03  000:07:16  002:23:12  D
+      40  7.782717e-02  1.945679e-03  000:07:27  002:23:05  FD
+      41  7.977285e-02  1.945679e-03  000:07:38  002:22:43  D
+      42  8.171853e-02  1.945679e-03  000:07:50  002:22:55  D
+      43  8.366421e-02  1.945679e-03  000:08:01  002:22:44  D
+      44  8.560989e-02  1.945679e-03  000:08:12  002:22:30  D
+      45  8.755557e-02  1.945679e-03  000:08:23  002:22:17  D
+      46  8.950125e-02  1.945679e-03  000:08:34  002:22:00  D
+      47  9.144693e-02  1.945679e-03  000:08:46  002:21:54  D
+      48  9.339261e-02  1.945679e-03  000:08:57  002:21:45  D
+      49  9.533829e-02  1.945679e-03  000:09:08  002:21:29  D
+      50  9.728396e-02  1.945679e-03  000:09:19  002:21:13  FD
+      51  9.922964e-02  1.945679e-03  000:09:30  002:21:01  D
+      52  1.011753e-01  1.945679e-03  000:09:42  002:21:02  D
+      53  1.031210e-01  1.945679e-03  000:09:53  002:20:48  D
+      54  1.050667e-01  1.945679e-03  000:10:04  002:20:37  D
+      55  1.070124e-01  1.945679e-03  000:10:15  002:20:26  D
+      56  1.089580e-01  1.945679e-03  000:10:27  002:20:14  D
+      57  1.109037e-01  1.945679e-03  000:10:37  002:19:55  D
+      58  1.128494e-01  1.945679e-03  000:10:48  002:19:41  D
+      59  1.147951e-01  1.945679e-03  000:10:59  002:19:20  D
+      60  1.167408e-01  1.945679e-03  000:11:09  002:19:03  FD
+      61  1.186864e-01  1.945679e-03  000:11:20  002:18:49  D
+      62  1.206321e-01  1.945679e-03  000:11:31  002:18:35  D
+      63  1.225778e-01  1.945679e-03  000:11:42  002:18:19  D
+      64  1.245235e-01  1.945679e-03  000:11:53  002:18:02  D
+      65  1.264692e-01  1.945679e-03  000:12:03  002:17:47  D
+      66  1.284148e-01  1.945679e-03  000:12:15  002:17:36  D
+      67  1.303605e-01  1.945679e-03  000:12:26  002:17:26  D
+      68  1.323062e-01  1.945679e-03  000:12:37  002:17:10  D
+      69  1.342519e-01  1.945679e-03  000:12:48  002:17:05  D
+      70  1.361976e-01  1.945679e-03  000:12:59  002:16:49  FD
+      71  1.381432e-01  1.945679e-03  000:13:10  002:16:33  D
+      72  1.400889e-01  1.945679e-03  000:13:21  002:16:22  D
+      73  1.420346e-01  1.945679e-03  000:13:32  002:16:10  D
+      74  1.439803e-01  1.945679e-03  000:13:43  002:16:00  D
+      75  1.459259e-01  1.945679e-03  000:13:54  002:15:48  D
+      76  1.478716e-01  1.945679e-03  000:14:05  002:15:39  D
+      77  1.498173e-01  1.945679e-03  000:14:17  002:15:35  D
+      78  1.517630e-01  1.945679e-03  000:14:29  002:15:32  D
+      79  1.537087e-01  1.945679e-03  000:14:42  002:15:32  D
+      80  1.556543e-01  1.945679e-03  000:14:53  002:15:23  FD
+      81  1.576000e-01  1.945679e-03  000:15:04  002:15:07  D
+      82  1.595457e-01  1.945679e-03  000:15:14  002:14:53  D
+      83  1.614914e-01  1.945679e-03  000:15:25  002:14:40  D
+      84  1.634371e-01  1.945679e-03  000:15:36  002:14:25  D
+      85  1.653827e-01  1.945679e-03  000:15:48  002:14:21  D
+      86  1.673284e-01  1.945679e-03  000:15:59  002:14:08  D
+      87  1.692741e-01  1.945679e-03  000:16:10  002:13:56  D
+      88  1.712198e-01  1.945679e-03  000:16:21  002:13:44  D
+      89  1.731655e-01  1.945679e-03  000:16:32  002:13:32  D
+      90  1.751111e-01  1.945679e-03  000:16:43  002:13:21  FD
+      91  1.770568e-01  1.945679e-03  000:16:55  002:13:11  D
+      92  1.790025e-01  1.945679e-03  000:17:06  002:12:58  D
+      93  1.809482e-01  1.945679e-03  000:17:17  002:12:49  D
+      94  1.828939e-01  1.945679e-03  000:17:28  002:12:39  D
+      95  1.848395e-01  1.945679e-03  000:17:40  002:12:28  D
+      96  1.867852e-01  1.945679e-03  000:17:51  002:12:17  D
+      97  1.887309e-01  1.945679e-03  000:18:02  002:12:09  D
+      98  1.906766e-01  1.945679e-03  000:18:13  002:11:56  D
+      99  1.926222e-01  1.945679e-03  000:18:24  002:11:44  D
+     100  1.945679e-01  1.945679e-03  000:18:35  002:11:30  FD
+     101  1.965136e-01  1.945679e-03  000:18:47  002:11:28  D
+     102  1.984593e-01  1.945679e-03  000:18:58  002:11:13  D
+     103  2.004050e-01  1.945679e-03  000:19:09  002:11:02  D
+     104  2.023506e-01  1.945679e-03  000:19:20  002:10:49  D
+     105  2.042963e-01  1.945679e-03  000:19:31  002:10:37  D
+     106  2.062420e-01  1.945679e-03  000:19:43  002:10:28  D
+     107  2.081877e-01  1.945679e-03  000:19:54  002:10:14  D
+     108  2.101334e-01  1.945679e-03  000:20:04  002:10:01  D
+     109  2.120790e-01  1.945679e-03  000:20:15  002:09:47  D
+     110  2.140247e-01  1.945679e-03  000:20:26  002:09:34  FD
+     111  2.159704e-01  1.945679e-03  000:20:37  002:09:23  D
+     112  2.179161e-01  1.945679e-03  000:20:49  002:09:14  D
+     113  2.198618e-01  1.945679e-03  000:20:59  002:08:59  D
+     114  2.218074e-01  1.945679e-03  000:21:10  002:08:44  D
+     115  2.237531e-01  1.945679e-03  000:21:21  002:08:32  D
+     116  2.256988e-01  1.945679e-03  000:21:32  002:08:21  D
+     117  2.276445e-01  1.945679e-03  000:21:43  002:08:12  D
+     118  2.295902e-01  1.945679e-03  000:21:55  002:08:03  D
+     119  2.315358e-01  1.945679e-03  000:22:06  002:07:52  D
+     120  2.334815e-01  1.945679e-03  000:22:17  002:07:41  FD
+     121  2.354272e-01  1.945679e-03  000:22:29  002:07:33  D
+     122  2.373729e-01  1.945679e-03  000:22:40  002:07:22  D
+     123  2.393186e-01  1.945679e-03  000:22:51  002:07:12  D
+     124  2.412642e-01  1.945679e-03  000:23:02  002:06:59  D
+     125  2.432099e-01  1.945679e-03  000:23:13  002:06:46  D
+     126  2.451556e-01  1.945679e-03  000:23:24  002:06:35  D
+     127  2.471013e-01  1.945679e-03  000:23:35  002:06:21  D
+     128  2.490469e-01  1.945679e-03  000:23:46  002:06:12  D
+     129  2.509926e-01  1.945679e-03  000:23:57  002:05:58  D
+     130  2.529383e-01  1.945679e-03  000:24:08  002:05:47  FD
+     131  2.548840e-01  1.945679e-03  000:24:19  002:05:35  D
+     132  2.568297e-01  1.945679e-03  000:24:31  002:05:26  D
+     133  2.587753e-01  1.945679e-03  000:24:42  002:05:14  D
+     134  2.607210e-01  1.945679e-03  000:24:52  002:05:01  D
+     135  2.626667e-01  1.945679e-03  000:25:04  002:04:52  D
+     136  2.646124e-01  1.945679e-03  000:25:15  002:04:38  D
+     137  2.665581e-01  1.945679e-03  000:25:26  002:04:26  D
+     138  2.685037e-01  1.945679e-03  000:25:37  002:04:17  D
+     139  2.704494e-01  1.945679e-03  000:25:48  002:04:05  D
+     140  2.723951e-01  1.945679e-03  000:25:59  002:03:54  FD
+     141  2.743408e-01  1.945679e-03  000:26:10  002:03:41  D
+     142  2.762865e-01  1.945679e-03  000:26:21  002:03:28  D
+     143  2.782321e-01  1.945679e-03  000:26:32  002:03:17  D
+     144  2.801778e-01  1.945679e-03  000:26:44  002:03:09  D
+     145  2.821235e-01  1.945679e-03  000:26:55  002:02:59  D
+     146  2.840692e-01  1.945679e-03  000:27:07  002:02:49  D
+     147  2.860149e-01  1.945679e-03  000:27:19  002:02:43  D
+     148  2.879605e-01  1.945679e-03  000:27:33  002:02:45  D
+     149  2.899062e-01  1.945679e-03  000:27:46  002:02:45  D
+     150  2.918519e-01  1.945679e-03  000:27:58  002:02:35  FD
+     151  2.937976e-01  1.945679e-03  000:28:09  002:02:24  D
+     152  2.957433e-01  1.945679e-03  000:28:20  002:02:12  D
+     153  2.976889e-01  1.945679e-03  000:28:31  002:02:00  D
+     154  2.996346e-01  1.945679e-03  000:28:42  002:01:49  D
+     155  3.015803e-01  1.945679e-03  000:28:54  002:01:39  D
+     156  3.035260e-01  1.945679e-03  000:29:05  002:01:28  D
+     157  3.054716e-01  1.945679e-03  000:29:16  002:01:17  D
+     158  3.074173e-01  1.945679e-03  000:29:28  002:01:08  D
+     159  3.093630e-01  1.945679e-03  000:29:39  002:00:55  D
+     160  3.113087e-01  1.945679e-03  000:29:51  002:00:47  FD
+     161  3.132544e-01  1.945679e-03  000:30:02  002:00:37  D
+     162  3.152000e-01  1.945679e-03  000:30:13  002:00:25  D
+     163  3.171457e-01  1.945679e-03  000:30:25  002:00:14  D
+     164  3.190914e-01  1.945679e-03  000:30:37  002:00:06  D
+     165  3.210371e-01  1.945679e-03  000:30:49  001:59:58  D
+     166  3.229828e-01  1.945679e-03  000:31:01  001:59:50  D
+     167  3.249284e-01  1.945679e-03  000:31:12  001:59:41  D
+     168  3.268741e-01  1.945679e-03  000:31:24  001:59:31  D
+     169  3.288198e-01  1.945679e-03  000:31:36  001:59:21  D
+     170  3.307655e-01  1.945679e-03  000:31:48  001:59:13  FD
+     171  3.327112e-01  1.945679e-03  000:31:58  001:58:59  D
+     172  3.346568e-01  1.945679e-03  000:32:09  001:58:46  D
+     173  3.366025e-01  1.945679e-03  000:32:20  001:58:34  D
+     174  3.385482e-01  1.945679e-03  000:32:31  001:58:21  D
+     175  3.404939e-01  1.945679e-03  000:32:42  001:58:11  D
+     176  3.424396e-01  1.945679e-03  000:32:54  001:58:02  D
+     177  3.443852e-01  1.945679e-03  000:33:06  001:57:54  D
+     178  3.463309e-01  1.945679e-03  000:33:17  001:57:42  D
+     179  3.482766e-01  1.945679e-03  000:33:29  001:57:32  D
+     180  3.502223e-01  1.945679e-03  000:33:40  001:57:21  FD
+     181  3.521680e-01  1.945679e-03  000:33:52  001:57:14  D
+     182  3.541136e-01  1.945679e-03  000:34:03  001:57:02  D
+     183  3.560593e-01  1.945679e-03  000:34:16  001:56:54  D
+     184  3.580050e-01  1.945679e-03  000:34:27  001:56:43  D
+     185  3.599507e-01  1.945679e-03  000:34:39  001:56:34  D
+     186  3.618963e-01  1.945679e-03  000:34:50  001:56:24  D
+     187  3.638420e-01  1.945679e-03  000:35:02  001:56:15  D
+     188  3.657877e-01  1.945679e-03  000:35:14  001:56:06  D
+     189  3.677334e-01  1.945679e-03  000:35:25  001:55:55  D
+     190  3.696791e-01  1.945679e-03  000:35:37  001:55:46  FD
+     191  3.716247e-01  1.945679e-03  000:35:49  001:55:36  D
+     192  3.735704e-01  1.945679e-03  000:36:00  001:55:24  D
+     193  3.755161e-01  1.945679e-03  000:36:12  001:55:14  D
+     194  3.774618e-01  1.945679e-03  000:36:23  001:55:02  D
+     195  3.794075e-01  1.945679e-03  000:36:34  001:54:49  D
+     196  3.813531e-01  1.945679e-03  000:36:45  001:54:40  D
+     197  3.832988e-01  1.945679e-03  000:37:01  001:54:41  D
+     198  3.852445e-01  1.945679e-03  000:37:11  001:54:28  D
+     199  3.871902e-01  1.945679e-03  000:37:23  001:54:16  D
+     200  3.891359e-01  1.945679e-03  000:37:34  001:54:04  FD
+     201  3.910815e-01  1.945679e-03  000:37:44  001:53:51  D
+     202  3.930272e-01  1.945679e-03  000:37:55  001:53:39  D
+     203  3.949729e-01  1.945679e-03  000:38:07  001:53:28  D
+     204  3.969186e-01  1.945679e-03  000:38:17  001:53:15  D
+     205  3.988643e-01  1.945679e-03  000:38:28  001:53:02  D
+     206  4.008099e-01  1.945679e-03  000:38:39  001:52:51  D
+     207  4.027556e-01  1.945679e-03  000:38:50  001:52:39  D
+     208  4.047013e-01  1.945679e-03  000:39:02  001:52:28  D
+     209  4.066470e-01  1.945679e-03  000:39:14  001:52:19  D
+     210  4.085927e-01  1.945679e-03  000:39:25  001:52:08  FD
+     211  4.105383e-01  1.945679e-03  000:39:36  001:51:55  D
+     212  4.124840e-01  1.945679e-03  000:39:47  001:51:43  D
+     213  4.144297e-01  1.945679e-03  000:39:58  001:51:32  D
+     214  4.163754e-01  1.945679e-03  000:40:10  001:51:22  D
+     215  4.183210e-01  1.945679e-03  000:40:22  001:51:12  D
+     216  4.202667e-01  1.945679e-03  000:40:34  001:51:03  D
+     217  4.222124e-01  1.945679e-03  000:40:46  001:50:55  D
+     218  4.241581e-01  1.945679e-03  000:40:58  001:50:46  D
+     219  4.261038e-01  1.945679e-03  000:41:10  001:50:37  D
+     220  4.280494e-01  1.945679e-03  000:41:22  001:50:27  FD
+     221  4.299951e-01  1.945679e-03  000:41:34  001:50:16  D
+     222  4.319408e-01  1.945679e-03  000:41:45  001:50:06  D
+     223  4.338865e-01  1.945679e-03  000:41:57  001:49:56  D
+     224  4.358322e-01  1.945679e-03  000:42:09  001:49:46  D
+     225  4.377778e-01  1.945679e-03  000:42:20  001:49:35  D
+     226  4.397235e-01  1.945679e-03  000:42:31  001:49:23  D
+     227  4.416692e-01  1.945679e-03  000:42:43  001:49:13  D
+     228  4.436149e-01  1.945679e-03  000:42:54  001:49:02  D
+     229  4.455606e-01  1.945679e-03  000:43:05  001:48:50  D
+     230  4.475062e-01  1.945679e-03  000:43:17  001:48:38  FD
+     231  4.494519e-01  1.945679e-03  000:43:28  001:48:29  D
+     232  4.513976e-01  1.945679e-03  000:43:40  001:48:17  D
+     233  4.533433e-01  1.945679e-03  000:43:51  001:48:07  D
+     234  4.552890e-01  1.945679e-03  000:44:02  001:47:54  D
+     235  4.572346e-01  1.945679e-03  000:44:14  001:47:44  D
+     236  4.591803e-01  1.945679e-03  000:44:26  001:47:34  D
+     237  4.611260e-01  1.945679e-03  000:44:38  001:47:26  D
+     238  4.630717e-01  1.945679e-03  000:44:50  001:47:15  D
+     239  4.650174e-01  1.945679e-03  000:45:01  001:47:04  D
+     240  4.669630e-01  1.945679e-03  000:45:12  001:46:52  FD
+     241  4.689087e-01  1.945679e-03  000:45:23  001:46:40  D
+     242  4.708544e-01  1.945679e-03  000:45:34  001:46:27  D
+     243  4.728001e-01  1.945679e-03  000:45:45  001:46:15  D
+     244  4.747457e-01  1.945679e-03  000:45:56  001:46:04  D
+     245  4.766914e-01  1.945679e-03  000:46:07  001:45:52  D
+     246  4.786371e-01  1.945679e-03  000:46:18  001:45:40  D
+     247  4.805828e-01  1.945679e-03  000:46:29  001:45:28  D
+     248  4.825285e-01  1.945679e-03  000:46:41  001:45:18  D
+     249  4.844741e-01  1.945679e-03  000:46:53  001:45:08  D
+     250  4.864198e-01  1.945679e-03  000:47:04  001:44:56  FD
+     251  4.883655e-01  1.945679e-03  000:47:15  001:44:45  D
+     252  4.903112e-01  1.945679e-03  000:47:27  001:44:34  D
+     253  4.922569e-01  1.945679e-03  000:47:38  001:44:22  D
+     254  4.942025e-01  1.945679e-03  000:47:50  001:44:12  D
+     255  4.961482e-01  1.945679e-03  000:48:01  001:44:01  D
+     256  4.980939e-01  1.945679e-03  000:48:13  001:43:51  D
+     257  5.000396e-01  1.945679e-03  000:48:25  001:43:41  D
+     258  5.019853e-01  1.945679e-03  000:48:37  001:43:32  D
+     259  5.039309e-01  1.945679e-03  000:48:48  001:43:20  D
+     260  5.058766e-01  1.945679e-03  000:49:00  001:43:10  FD
+     261  5.078223e-01  1.945679e-03  000:49:12  001:43:00  D
+     262  5.097680e-01  1.945679e-03  000:49:23  001:42:49  D
+     263  5.117137e-01  1.945679e-03  000:49:34  001:42:37  D
+     264  5.136593e-01  1.945679e-03  000:49:46  001:42:26  D
+     265  5.156050e-01  1.945679e-03  000:49:57  001:42:15  D
+     266  5.175507e-01  1.945679e-03  000:50:08  001:42:02  D
+     267  5.194964e-01  1.945679e-03  000:50:20  001:41:52  D
+     268  5.214420e-01  1.945679e-03  000:50:31  001:41:41  D
+     269  5.233877e-01  1.945679e-03  000:50:43  001:41:31  D
+     270  5.253334e-01  1.945679e-03  000:50:54  001:41:19  FD
+     271  5.272791e-01  1.945679e-03  000:51:05  001:41:07  D
+     272  5.292248e-01  1.945679e-03  000:51:16  001:40:55  D
+     273  5.311704e-01  1.945679e-03  000:51:28  001:40:44  D
+     274  5.331161e-01  1.945679e-03  000:51:39  001:40:32  D
+     275  5.350618e-01  1.945679e-03  000:51:51  001:40:22  D
+     276  5.370075e-01  1.945679e-03  000:52:02  001:40:11  D
+     277  5.389532e-01  1.945679e-03  000:52:14  001:40:01  D
+     278  5.408988e-01  1.945679e-03  000:52:25  001:39:49  D
+     279  5.428445e-01  1.945679e-03  000:52:37  001:39:38  D
+     280  5.447902e-01  1.945679e-03  000:52:49  001:39:29  FD
+     281  5.467359e-01  1.945679e-03  000:53:01  001:39:18  D
+     282  5.486816e-01  1.945679e-03  000:53:13  001:39:08  D
+     283  5.506272e-01  1.945679e-03  000:53:24  001:38:57  D
+     284  5.525729e-01  1.945679e-03  000:53:36  001:38:46  D
+     285  5.545186e-01  1.945679e-03  000:53:48  001:38:36  D
+     286  5.564643e-01  1.945679e-03  000:53:58  001:38:23  D
+     287  5.584100e-01  1.945679e-03  000:54:10  001:38:13  D
+     288  5.603556e-01  1.945679e-03  000:54:21  001:38:01  D
+     289  5.623013e-01  1.945679e-03  000:54:32  001:37:49  D
+     290  5.642470e-01  1.945679e-03  000:54:44  001:37:38  FD
+     291  5.661927e-01  1.945679e-03  000:54:54  001:37:26  D
+     292  5.681384e-01  1.945679e-03  000:55:05  001:37:13  D
+     293  5.700840e-01  1.945679e-03  000:55:16  001:37:01  D
+     294  5.720297e-01  1.945679e-03  000:55:28  001:36:50  D
+     295  5.739754e-01  1.945679e-03  000:55:39  001:36:39  D
+     296  5.759211e-01  1.945679e-03  000:55:50  001:36:28  D
+     297  5.778667e-01  1.945679e-03  000:56:01  001:36:16  D
+     298  5.798124e-01  1.945679e-03  000:56:12  001:36:04  D
+     299  5.817581e-01  1.945679e-03  000:56:23  001:35:52  D
+     300  5.837038e-01  1.945679e-03  000:56:35  001:35:41  FD
+     301  5.856495e-01  1.945679e-03  000:56:47  001:35:31  D
+     302  5.875951e-01  1.945679e-03  000:56:57  001:35:18  D
+     303  5.895408e-01  1.945679e-03  000:57:08  001:35:06  D
+     304  5.914865e-01  1.945679e-03  000:57:20  001:34:56  D
+     305  5.934322e-01  1.945679e-03  000:57:31  001:34:43  D
+     306  5.953779e-01  1.945679e-03  000:57:42  001:34:32  D
+     307  5.973235e-01  1.945679e-03  000:57:54  001:34:21  D
+     308  5.992692e-01  1.945679e-03  000:58:05  001:34:09  D
+     309  6.012149e-01  1.945679e-03  000:58:16  001:33:59  D
+     310  6.031606e-01  1.945679e-03  000:58:28  001:33:48  FD
+     311  6.051063e-01  1.945679e-03  000:58:40  001:33:37  D
+     312  6.070519e-01  1.945679e-03  000:58:52  001:33:27  D
+     313  6.089976e-01  1.945679e-03  000:59:03  001:33:15  D
+     314  6.109433e-01  1.945679e-03  000:59:14  001:33:04  D
+     315  6.128890e-01  1.945679e-03  000:59:25  001:32:53  D
+     316  6.148347e-01  1.945679e-03  000:59:37  001:32:42  D
+     317  6.167803e-01  1.945679e-03  000:59:49  001:32:32  D
+     318  6.187260e-01  1.945679e-03  001:00:01  001:32:21  D
+     319  6.206717e-01  1.945679e-03  001:00:12  001:32:10  D
+     320  6.226174e-01  1.945679e-03  001:00:24  001:31:59  FD
+     321  6.245631e-01  1.945679e-03  001:00:36  001:31:49  D
+     322  6.265087e-01  1.945679e-03  001:00:48  001:31:38  D
+     323  6.284544e-01  1.945679e-03  001:00:58  001:31:26  D
+     324  6.304001e-01  1.945679e-03  001:01:09  001:31:14  D
+     325  6.323458e-01  1.945679e-03  001:01:21  001:31:03  D
+     326  6.342914e-01  1.945679e-03  001:01:32  001:30:52  D
+     327  6.362371e-01  1.945679e-03  001:01:45  001:30:42  D
+     328  6.381828e-01  1.945679e-03  001:01:56  001:30:31  D
+     329  6.401285e-01  1.945679e-03  001:02:09  001:30:22  D
+     330  6.420742e-01  1.945679e-03  001:02:24  001:30:15  FD
+     331  6.440198e-01  1.945679e-03  001:02:35  001:30:04  D
+     332  6.459655e-01  1.945679e-03  001:02:48  001:29:55  D
+     333  6.479112e-01  1.945679e-03  001:02:59  001:29:43  D
+     334  6.498569e-01  1.945679e-03  001:03:11  001:29:33  D
+     335  6.518026e-01  1.945679e-03  001:03:23  001:29:22  D
+     336  6.537482e-01  1.945679e-03  001:03:36  001:29:12  D
+     337  6.556939e-01  1.945679e-03  001:03:47  001:29:02  D
+     338  6.576396e-01  1.945679e-03  001:03:58  001:28:50  D
+     339  6.595853e-01  1.945679e-03  001:04:10  001:28:38  D
+     340  6.615310e-01  1.945679e-03  001:04:21  001:28:27  FD
+     341  6.634766e-01  1.945679e-03  001:04:32  001:28:16  D
+     342  6.654223e-01  1.945679e-03  001:04:44  001:28:04  D
+     343  6.673680e-01  1.945679e-03  001:04:56  001:27:54  D
+     344  6.693137e-01  1.945679e-03  001:05:08  001:27:43  D
+     345  6.712594e-01  1.945679e-03  001:05:18  001:27:31  D
+     346  6.732050e-01  1.945679e-03  001:05:29  001:27:19  D
+     347  6.751507e-01  1.945679e-03  001:05:42  001:27:09  D
+     348  6.770964e-01  1.945679e-03  001:05:53  001:26:58  D
+     349  6.790421e-01  1.945679e-03  001:06:05  001:26:47  D
+     350  6.809878e-01  1.945679e-03  001:06:17  001:26:36  FD
+     351  6.829334e-01  1.945679e-03  001:06:27  001:26:24  D
+     352  6.848791e-01  1.945679e-03  001:06:38  001:26:12  D
+     353  6.868248e-01  1.945679e-03  001:06:50  001:26:01  D
+     354  6.887705e-01  1.945679e-03  001:07:01  001:25:49  D
+     355  6.907161e-01  1.945679e-03  001:07:12  001:25:37  D
+     356  6.926618e-01  1.945679e-03  001:07:23  001:25:25  D
+     357  6.946075e-01  1.945679e-03  001:07:34  001:25:14  D
+     358  6.965532e-01  1.945679e-03  001:07:46  001:25:03  D
+     359  6.984989e-01  1.945679e-03  001:07:57  001:24:52  D
+     360  7.004445e-01  1.945679e-03  001:08:09  001:24:41  FD
+     361  7.023902e-01  1.945679e-03  001:08:20  001:24:30  D
+     362  7.043359e-01  1.945679e-03  001:08:32  001:24:19  D
+     363  7.062816e-01  1.945679e-03  001:08:43  001:24:07  D
+     364  7.082273e-01  1.945679e-03  001:08:55  001:23:56  D
+     365  7.101729e-01  1.945679e-03  001:09:05  001:23:44  D
+     366  7.121186e-01  1.945679e-03  001:09:16  001:23:32  D
+     367  7.140643e-01  1.945679e-03  001:09:28  001:23:21  D
+     368  7.160100e-01  1.945679e-03  001:09:38  001:23:08  D
+     369  7.179557e-01  1.945679e-03  001:09:49  001:22:57  D
+     370  7.199013e-01  1.945679e-03  001:10:01  001:22:46  FD
+     371  7.218470e-01  1.945679e-03  001:10:12  001:22:34  D
+     372  7.237927e-01  1.945679e-03  001:10:23  001:22:22  D
+     373  7.257384e-01  1.945679e-03  001:10:34  001:22:10  D
+     374  7.276841e-01  1.945679e-03  001:10:46  001:22:00  D
+     375  7.296297e-01  1.945679e-03  001:10:57  001:21:48  D
+     376  7.315754e-01  1.945679e-03  001:11:08  001:21:37  D
+     377  7.335211e-01  1.945679e-03  001:11:20  001:21:25  D
+     378  7.354668e-01  1.945679e-03  001:11:31  001:21:14  D
+     379  7.374125e-01  1.945679e-03  001:11:43  001:21:03  D
+     380  7.393581e-01  1.945679e-03  001:11:54  001:20:51  FD
+     381  7.413038e-01  1.945679e-03  001:12:05  001:20:40  D
+     382  7.432495e-01  1.945679e-03  001:12:16  001:20:28  D
+     383  7.451952e-01  1.945679e-03  001:12:28  001:20:17  D
+     384  7.471408e-01  1.945679e-03  001:12:39  001:20:06  D
+     385  7.490865e-01  1.945679e-03  001:12:51  001:19:55  D
+     386  7.510322e-01  1.945679e-03  001:13:03  001:19:44  D
+     387  7.529779e-01  1.945679e-03  001:13:14  001:19:32  D
+     388  7.549236e-01  1.945679e-03  001:13:25  001:19:20  D
+     389  7.568692e-01  1.945679e-03  001:13:36  001:19:09  D
+     390  7.588149e-01  1.945679e-03  001:13:47  001:18:58  FD
+     391  7.607606e-01  1.945679e-03  001:13:58  001:18:46  D
+     392  7.627063e-01  1.945679e-03  001:14:09  001:18:34  D
+     393  7.646520e-01  1.945679e-03  001:14:20  001:18:22  D
+     394  7.665976e-01  1.945679e-03  001:14:31  001:18:11  D
+     395  7.685433e-01  1.945679e-03  001:14:42  001:17:59  D
+     396  7.704890e-01  1.945679e-03  001:14:53  001:17:47  D
+     397  7.724347e-01  1.945679e-03  001:15:04  001:17:35  D
+     398  7.743804e-01  1.945679e-03  001:15:15  001:17:23  D
+     399  7.763260e-01  1.945679e-03  001:15:26  001:17:12  D
+     400  7.782717e-01  1.945679e-03  001:15:37  001:17:00  FD
+     401  7.802174e-01  1.945679e-03  001:15:49  001:16:49  D
+     402  7.821631e-01  1.945679e-03  001:16:00  001:16:37  D
+     403  7.841088e-01  1.945679e-03  001:16:10  001:16:26  D
+     404  7.860544e-01  1.945679e-03  001:16:21  001:16:13  D
+     405  7.880001e-01  1.945679e-03  001:16:32  001:16:02  D
+     406  7.899458e-01  1.945679e-03  001:16:45  001:15:52  D
+     407  7.918915e-01  1.945679e-03  001:16:56  001:15:40  D
+     408  7.938372e-01  1.945679e-03  001:17:07  001:15:29  D
+     409  7.957828e-01  1.945679e-03  001:17:18  001:15:17  D
+     410  7.977285e-01  1.945679e-03  001:17:29  001:15:05  FD
+     411  7.996742e-01  1.945679e-03  001:17:41  001:14:55  D
+     412  8.016199e-01  1.945679e-03  001:17:53  001:14:44  D
+     413  8.035655e-01  1.945679e-03  001:18:04  001:14:32  D
+     414  8.055112e-01  1.945679e-03  001:18:15  001:14:21  D
+     415  8.074569e-01  1.945679e-03  001:18:26  001:14:09  D
+     416  8.094026e-01  1.945679e-03  001:18:37  001:13:57  D
+     417  8.113483e-01  1.945679e-03  001:18:49  001:13:46  D
+     418  8.132939e-01  1.945679e-03  001:19:00  001:13:35  D
+     419  8.152396e-01  1.945679e-03  001:19:12  001:13:24  D
+     420  8.171853e-01  1.945679e-03  001:19:23  001:13:13  FD
+     421  8.191310e-01  1.945679e-03  001:19:35  001:13:02  D
+     422  8.210767e-01  1.945679e-03  001:19:47  001:12:51  D
+     423  8.230223e-01  1.945679e-03  001:19:59  001:12:40  D
+     424  8.249680e-01  1.945679e-03  001:20:11  001:12:30  D
+     425  8.269137e-01  1.945679e-03  001:20:24  001:12:20  D
+     426  8.288594e-01  1.945679e-03  001:20:35  001:12:08  D
+     427  8.308051e-01  1.945679e-03  001:20:47  001:11:57  D
+     428  8.327507e-01  1.945679e-03  001:20:58  001:11:46  D
+     429  8.346964e-01  1.945679e-03  001:21:10  001:11:35  D
+     430  8.366421e-01  1.945679e-03  001:21:22  001:11:24  FD
+     431  8.385878e-01  1.945679e-03  001:21:35  001:11:14  D
+     432  8.405335e-01  1.945679e-03  001:21:47  001:11:03  D
+     433  8.424791e-01  1.945679e-03  001:21:58  001:10:52  D
+     434  8.444248e-01  1.945679e-03  001:22:09  001:10:40  D
+     435  8.463705e-01  1.945679e-03  001:22:20  001:10:28  D
+     436  8.483162e-01  1.945679e-03  001:22:31  001:10:16  D
+     437  8.502618e-01  1.945679e-03  001:22:42  001:10:05  D
+     438  8.522075e-01  1.945679e-03  001:22:53  001:09:53  D
+     439  8.541532e-01  1.945679e-03  001:23:04  001:09:42  D
+     440  8.560989e-01  1.945679e-03  001:23:16  001:09:30  FD
+     441  8.580446e-01  1.945679e-03  001:23:27  001:09:19  D
+     442  8.599902e-01  1.945679e-03  001:23:38  001:09:08  D
+     443  8.619359e-01  1.945679e-03  001:23:50  001:08:57  D
+     444  8.638816e-01  1.945679e-03  001:24:02  001:08:46  D
+     445  8.658273e-01  1.945679e-03  001:24:14  001:08:35  D
+     446  8.677730e-01  1.945679e-03  001:24:25  001:08:23  D
+     447  8.697186e-01  1.945679e-03  001:24:36  001:08:12  D
+     448  8.716643e-01  1.945679e-03  001:24:48  001:08:01  D
+     449  8.736100e-01  1.945679e-03  001:24:59  001:07:49  D
+     450  8.755557e-01  1.945679e-03  001:25:11  001:07:38  FD
+     451  8.775014e-01  1.945679e-03  001:25:23  001:07:27  D
+     452  8.794470e-01  1.945679e-03  001:25:34  001:07:16  D
+     453  8.813927e-01  1.945679e-03  001:25:46  001:07:05  D
+     454  8.833384e-01  1.945679e-03  001:25:58  001:06:54  D
+     455  8.852841e-01  1.945679e-03  001:26:12  001:06:45  D
+     456  8.872298e-01  1.945679e-03  001:26:24  001:06:34  D
+     457  8.891754e-01  1.945679e-03  001:26:36  001:06:23  D
+     458  8.911211e-01  1.945679e-03  001:26:48  001:06:12  D
+     459  8.930668e-01  1.945679e-03  001:26:59  001:06:00  D
+     460  8.950125e-01  1.945679e-03  001:27:10  001:05:49  FD
+     461  8.969582e-01  1.945679e-03  001:27:21  001:05:37  D
+     462  8.989038e-01  1.945679e-03  001:27:33  001:05:26  D
+     463  9.008495e-01  1.945679e-03  001:27:45  001:05:15  D
+     464  9.027952e-01  1.945679e-03  001:27:57  001:05:04  D
+     465  9.047409e-01  1.945679e-03  001:28:08  001:04:53  D
+     466  9.066865e-01  1.945679e-03  001:28:20  001:04:42  D
+     467  9.086322e-01  1.945679e-03  001:28:32  001:04:31  D
+     468  9.105779e-01  1.945679e-03  001:28:45  001:04:21  D
+     469  9.125236e-01  1.945679e-03  001:28:59  001:04:11  D
+     470  9.144693e-01  1.945679e-03  001:29:10  001:04:00  FD
+     471  9.164149e-01  1.945679e-03  001:29:22  001:03:48  D
+     472  9.183606e-01  1.945679e-03  001:29:33  001:03:37  D
+     473  9.203063e-01  1.945679e-03  001:29:44  001:03:25  D
+     474  9.222520e-01  1.945679e-03  001:29:55  001:03:14  D
+     475  9.241977e-01  1.945679e-03  001:30:06  001:03:02  D
+     476  9.261433e-01  1.945679e-03  001:30:17  001:02:50  D
+     477  9.280890e-01  1.945679e-03  001:30:27  001:02:38  D
+     478  9.300347e-01  1.945679e-03  001:30:38  001:02:26  D
+     479  9.319804e-01  1.945679e-03  001:30:49  001:02:15  D
+     480  9.339261e-01  1.945679e-03  001:30:59  001:02:03  FD
+     481  9.358717e-01  1.945679e-03  001:31:10  001:01:51  D
+     482  9.378174e-01  1.945679e-03  001:31:21  001:01:39  D
+     483  9.397631e-01  1.945679e-03  001:31:32  001:01:28  D
+     484  9.417088e-01  1.945679e-03  001:31:43  001:01:16  D
+     485  9.436545e-01  1.945679e-03  001:31:54  001:01:04  D
+     486  9.456001e-01  1.945679e-03  001:32:06  001:00:53  D
+     487  9.475458e-01  1.945679e-03  001:32:17  001:00:42  D
+     488  9.494915e-01  1.945679e-03  001:32:28  001:00:30  D
+     489  9.514372e-01  1.945679e-03  001:32:39  001:00:18  D
+     490  9.533829e-01  1.945679e-03  001:32:50  001:00:07  FD
+     491  9.553285e-01  1.945679e-03  001:33:01  000:59:55  D
+     492  9.572742e-01  1.945679e-03  001:33:12  000:59:44  D
+     493  9.592199e-01  1.945679e-03  001:33:22  000:59:32  D
+     494  9.611656e-01  1.945679e-03  001:33:33  000:59:20  D
+     495  9.631112e-01  1.945679e-03  001:33:44  000:59:08  D
+     496  9.650569e-01  1.945679e-03  001:33:55  000:58:57  D
+     497  9.670026e-01  1.945679e-03  001:34:06  000:58:45  D
+     498  9.689483e-01  1.945679e-03  001:34:17  000:58:33  D
+     499  9.708940e-01  1.945679e-03  001:34:28  000:58:22  D
+     500  9.728396e-01  1.945679e-03  001:34:41  000:58:12  FD
+     501  9.747853e-01  1.945679e-03  001:34:52  000:58:00  D
+     502  9.767310e-01  1.945679e-03  001:35:03  000:57:48  D
+     503  9.786767e-01  1.945679e-03  001:35:13  000:57:36  D
+     504  9.806224e-01  1.945679e-03  001:35:24  000:57:25  D
+     505  9.825680e-01  1.945679e-03  001:35:35  000:57:13  D
+     506  9.845137e-01  1.945679e-03  001:35:47  000:57:02  D
+     507  9.864594e-01  1.945679e-03  001:35:58  000:56:51  D
+     508  9.884051e-01  1.945679e-03  001:36:09  000:56:39  D
+     509  9.903508e-01  1.945679e-03  001:36:19  000:56:27  D
+     510  9.922964e-01  1.945679e-03  001:36:30  000:56:15  FD
+     511  9.942421e-01  1.945679e-03  001:36:41  000:56:04  D
+     512  9.961878e-01  1.945679e-03  001:36:52  000:55:52  D
+     513  9.981335e-01  1.945679e-03  001:37:02  000:55:40  D
+     514  1.000079e+00  1.945679e-03  001:37:13  000:55:29  D
+     515  1.002025e+00  1.945679e-03  001:37:24  000:55:17  D
+     516  1.003971e+00  1.945679e-03  001:37:35  000:55:05  D
+     517  1.005916e+00  1.945679e-03  001:37:46  000:54:54  D
+     518  1.007862e+00  1.945679e-03  001:37:57  000:54:42  D
+     519  1.009808e+00  1.945679e-03  001:38:09  000:54:31  D
+     520  1.011753e+00  1.945679e-03  001:38:20  000:54:20  FD
+     521  1.013699e+00  1.945679e-03  001:38:32  000:54:09  D
+     522  1.015645e+00  1.945679e-03  001:38:44  000:53:58  D
+     523  1.017590e+00  1.945679e-03  001:38:55  000:53:46  D
+     524  1.019536e+00  1.945679e-03  001:39:07  000:53:35  D
+     525  1.021482e+00  1.945679e-03  001:39:19  000:53:24  D
+     526  1.023427e+00  1.945679e-03  001:39:30  000:53:13  D
+     527  1.025373e+00  1.945679e-03  001:39:42  000:53:02  D
+     528  1.027319e+00  1.945679e-03  001:39:53  000:52:50  D
+     529  1.029264e+00  1.945679e-03  001:40:04  000:52:38  D
+     530  1.031210e+00  1.945679e-03  001:40:14  000:52:27  FD
+     531  1.033156e+00  1.945679e-03  001:40:26  000:52:15  D
+     532  1.035101e+00  1.945679e-03  001:40:37  000:52:04  D
+     533  1.037047e+00  1.945679e-03  001:40:48  000:51:53  D
+     534  1.038993e+00  1.945679e-03  001:41:00  000:51:42  D
+     535  1.040938e+00  1.945679e-03  001:41:11  000:51:30  D
+     536  1.042884e+00  1.945679e-03  001:41:22  000:51:19  D
+     537  1.044830e+00  1.945679e-03  001:41:33  000:51:07  D
+     538  1.046775e+00  1.945679e-03  001:41:45  000:50:56  D
+     539  1.048721e+00  1.945679e-03  001:41:56  000:50:45  D
+     540  1.050667e+00  1.945679e-03  001:42:08  000:50:33  FD
+     541  1.052612e+00  1.945679e-03  001:42:20  000:50:22  D
+     542  1.054558e+00  1.945679e-03  001:42:32  000:50:11  D
+     543  1.056504e+00  1.945679e-03  001:42:43  000:50:00  D
+     544  1.058450e+00  1.945679e-03  001:42:56  000:49:49  D
+     545  1.060395e+00  1.945679e-03  001:43:07  000:49:38  D
+     546  1.062341e+00  1.945679e-03  001:43:19  000:49:27  D
+     547  1.064287e+00  1.945679e-03  001:43:29  000:49:15  D
+     548  1.066232e+00  1.945679e-03  001:43:41  000:49:03  D
+     549  1.068178e+00  1.945679e-03  001:43:52  000:48:52  D
+     550  1.070124e+00  1.945679e-03  001:44:04  000:48:41  FD
+     551  1.072069e+00  1.945679e-03  001:44:15  000:48:30  D
+     552  1.074015e+00  1.945679e-03  001:44:26  000:48:18  D
+     553  1.075961e+00  1.945679e-03  001:44:37  000:48:07  D
+     554  1.077906e+00  1.945679e-03  001:44:48  000:47:55  D
+     555  1.079852e+00  1.945679e-03  001:44:59  000:47:44  D
+     556  1.081798e+00  1.945679e-03  001:45:11  000:47:32  D
+     557  1.083743e+00  1.945679e-03  001:45:22  000:47:21  D
+     558  1.085689e+00  1.945679e-03  001:45:33  000:47:09  D
+     559  1.087635e+00  1.945679e-03  001:45:46  000:46:59  D
+     560  1.089580e+00  1.945679e-03  001:45:57  000:46:47  FD
+     561  1.091526e+00  1.945679e-03  001:46:09  000:46:36  D
+     562  1.093472e+00  1.945679e-03  001:46:20  000:46:25  D
+     563  1.095417e+00  1.945679e-03  001:46:32  000:46:13  D
+     564  1.097363e+00  1.945679e-03  001:46:44  000:46:02  D
+     565  1.099309e+00  1.945679e-03  001:46:54  000:45:51  D
+     566  1.101254e+00  1.945679e-03  001:47:06  000:45:39  D
+     567  1.103200e+00  1.945679e-03  001:47:17  000:45:28  D
+     568  1.105146e+00  1.945679e-03  001:47:28  000:45:16  D
+     569  1.107092e+00  1.945679e-03  001:47:38  000:45:05  D
+     570  1.109037e+00  1.945679e-03  001:47:49  000:44:53  FD
+     571  1.110983e+00  1.945679e-03  001:48:00  000:44:42  D
+     572  1.112929e+00  1.945679e-03  001:48:11  000:44:30  D
+     573  1.114874e+00  1.945679e-03  001:48:22  000:44:18  D
+     574  1.116820e+00  1.945679e-03  001:48:32  000:44:07  D
+     575  1.118766e+00  1.945679e-03  001:48:44  000:43:56  D
+     576  1.120711e+00  1.945679e-03  001:48:55  000:43:44  D
+     577  1.122657e+00  1.945679e-03  001:49:06  000:43:33  D
+     578  1.124603e+00  1.945679e-03  001:49:17  000:43:21  D
+     579  1.126548e+00  1.945679e-03  001:49:29  000:43:10  D
+     580  1.128494e+00  1.945679e-03  001:49:40  000:42:59  FD
+     581  1.130440e+00  1.945679e-03  001:49:52  000:42:47  D
+     582  1.132385e+00  1.945679e-03  001:50:02  000:42:36  D
+     583  1.134331e+00  1.945679e-03  001:50:13  000:42:24  D
+     584  1.136277e+00  1.945679e-03  001:50:24  000:42:13  D
+     585  1.138222e+00  1.945679e-03  001:50:36  000:42:01  D
+     586  1.140168e+00  1.945679e-03  001:50:47  000:41:50  D
+     587  1.142114e+00  1.945679e-03  001:50:58  000:41:39  D
+     588  1.144059e+00  1.945679e-03  001:51:10  000:41:28  D
+     589  1.146005e+00  1.945679e-03  001:51:22  000:41:16  D
+     590  1.147951e+00  1.945679e-03  001:51:35  000:41:06  FD
+     591  1.149896e+00  1.945679e-03  001:51:50  000:40:56  D
+     592  1.151842e+00  1.945679e-03  001:52:01  000:40:44  D
+     593  1.153788e+00  1.945679e-03  001:52:13  000:40:33  D
+     594  1.155733e+00  1.945679e-03  001:52:24  000:40:22  D
+     595  1.157679e+00  1.945679e-03  001:52:36  000:40:11  D
+     596  1.159625e+00  1.945679e-03  001:52:48  000:40:00  D
+     597  1.161571e+00  1.945679e-03  001:53:05  000:39:50  D
+     598  1.163516e+00  1.945679e-03  001:53:19  000:39:40  D
+     599  1.165462e+00  1.945679e-03  001:53:32  000:39:29  D
+     600  1.167408e+00  1.945679e-03  001:53:44  000:39:18  FD
+     601  1.169353e+00  1.945679e-03  001:53:55  000:39:06  D
+     602  1.171299e+00  1.945679e-03  001:54:06  000:38:55  D
+     603  1.173245e+00  1.945679e-03  001:54:18  000:38:43  D
+     604  1.175190e+00  1.945679e-03  001:54:29  000:38:32  D
+     605  1.177136e+00  1.945679e-03  001:54:40  000:38:21  D
+     606  1.179082e+00  1.945679e-03  001:54:51  000:38:09  D
+     607  1.181027e+00  1.945679e-03  001:55:01  000:37:57  D
+     608  1.182973e+00  1.945679e-03  001:55:12  000:37:46  D
+     609  1.184919e+00  1.945679e-03  001:55:24  000:37:34  D
+     610  1.186864e+00  1.945679e-03  001:55:35  000:37:23  FD
+     611  1.188810e+00  1.945679e-03  001:55:46  000:37:12  D
+     612  1.190756e+00  1.945679e-03  001:55:57  000:37:00  D
+     613  1.192701e+00  1.945679e-03  001:56:09  000:36:49  D
+     614  1.194647e+00  1.945679e-03  001:56:20  000:36:38  D
+     615  1.196593e+00  1.945679e-03  001:56:32  000:36:26  D
+     616  1.198538e+00  1.945679e-03  001:56:44  000:36:15  D
+     617  1.200484e+00  1.945679e-03  001:56:55  000:36:04  D
+     618  1.202430e+00  1.945679e-03  001:57:06  000:35:52  D
+     619  1.204375e+00  1.945679e-03  001:57:18  000:35:41  D
+     620  1.206321e+00  1.945679e-03  001:57:29  000:35:29  FD
+     621  1.208267e+00  1.945679e-03  001:57:41  000:35:18  D
+     622  1.210213e+00  1.945679e-03  001:57:51  000:35:07  D
+     623  1.212158e+00  1.945679e-03  001:58:03  000:34:55  D
+     624  1.214104e+00  1.945679e-03  001:58:14  000:34:44  D
+     625  1.216050e+00  1.945679e-03  001:58:25  000:34:32  D
+     626  1.217995e+00  1.945679e-03  001:58:36  000:34:21  D
+     627  1.219941e+00  1.945679e-03  001:58:48  000:34:10  D
+     628  1.221887e+00  1.945679e-03  001:59:00  000:33:58  D
+     629  1.223832e+00  1.945679e-03  001:59:11  000:33:47  D
+     630  1.225778e+00  1.945679e-03  001:59:23  000:33:36  FD
+     631  1.227724e+00  1.945679e-03  001:59:34  000:33:24  D
+     632  1.229669e+00  1.945679e-03  001:59:47  000:33:13  D
+     633  1.231615e+00  1.945679e-03  001:59:58  000:33:02  D
+     634  1.233561e+00  1.945679e-03  002:00:09  000:32:50  D
+     635  1.235506e+00  1.945679e-03  002:00:20  000:32:39  D
+     636  1.237452e+00  1.945679e-03  002:00:32  000:32:28  D
+     637  1.239398e+00  1.945679e-03  002:00:43  000:32:16  D
+     638  1.241343e+00  1.945679e-03  002:00:54  000:32:05  D
+     639  1.243289e+00  1.945679e-03  002:01:05  000:31:53  D
+     640  1.245235e+00  1.945679e-03  002:01:17  000:31:42  FD
+     641  1.247180e+00  1.945679e-03  002:01:29  000:31:31  D
+     642  1.249126e+00  1.945679e-03  002:01:40  000:31:20  D
+     643  1.251072e+00  1.945679e-03  002:01:52  000:31:08  D
+     644  1.253017e+00  1.945679e-03  002:02:03  000:30:57  D
+     645  1.254963e+00  1.945679e-03  002:02:13  000:30:45  D
+     646  1.256909e+00  1.945679e-03  002:02:24  000:30:34  D
+     647  1.258855e+00  1.945679e-03  002:02:36  000:30:22  D
+     648  1.260800e+00  1.945679e-03  002:02:48  000:30:11  D
+     649  1.262746e+00  1.945679e-03  002:02:59  000:30:00  D
+     650  1.264692e+00  1.945679e-03  002:03:10  000:29:48  FD
+     651  1.266637e+00  1.945679e-03  002:03:21  000:29:37  D
+     652  1.268583e+00  1.945679e-03  002:03:33  000:29:26  D
+     653  1.270529e+00  1.945679e-03  002:03:45  000:29:14  D
+     654  1.272474e+00  1.945679e-03  002:03:57  000:29:03  D
+     655  1.274420e+00  1.945679e-03  002:04:08  000:28:52  D
+     656  1.276366e+00  1.945679e-03  002:04:19  000:28:40  D
+     657  1.278311e+00  1.945679e-03  002:04:30  000:28:29  D
+     658  1.280257e+00  1.945679e-03  002:04:42  000:28:18  D
+     659  1.282203e+00  1.945679e-03  002:04:55  000:28:06  D
+     660  1.284148e+00  1.945679e-03  002:05:07  000:27:55  FD
+     661  1.286094e+00  1.945679e-03  002:05:18  000:27:44  D
+     662  1.288040e+00  1.945679e-03  002:05:29  000:27:32  D
+     663  1.289985e+00  1.945679e-03  002:05:41  000:27:21  D
+     664  1.291931e+00  1.945679e-03  002:05:52  000:27:10  D
+     665  1.293877e+00  1.945679e-03  002:06:04  000:26:58  D
+     666  1.295822e+00  1.945679e-03  002:06:16  000:26:47  D
+     667  1.297768e+00  1.945679e-03  002:06:27  000:26:36  D
+     668  1.299714e+00  1.945679e-03  002:06:39  000:26:24  D
+     669  1.301659e+00  1.945679e-03  002:06:50  000:26:13  D
+     670  1.303605e+00  1.945679e-03  002:07:01  000:26:02  FD
+     671  1.305551e+00  1.945679e-03  002:07:12  000:25:50  D
+     672  1.307496e+00  1.945679e-03  002:07:23  000:25:39  D
+     673  1.309442e+00  1.945679e-03  002:07:35  000:25:27  D
+     674  1.311388e+00  1.945679e-03  002:07:46  000:25:16  D
+     675  1.313334e+00  1.945679e-03  002:07:57  000:25:05  D
+     676  1.315279e+00  1.945679e-03  002:08:08  000:24:53  D
+     677  1.317225e+00  1.945679e-03  002:08:20  000:24:42  D
+     678  1.319171e+00  1.945679e-03  002:08:32  000:24:31  D
+     679  1.321116e+00  1.945679e-03  002:08:44  000:24:19  D
+     680  1.323062e+00  1.945679e-03  002:08:55  000:24:08  FD
+     681  1.325008e+00  1.945679e-03  002:09:07  000:23:57  D
+     682  1.326953e+00  1.945679e-03  002:09:18  000:23:45  D
+     683  1.328899e+00  1.945679e-03  002:09:29  000:23:34  D
+     684  1.330845e+00  1.945679e-03  002:09:40  000:23:22  D
+     685  1.332790e+00  1.945679e-03  002:09:51  000:23:11  D
+     686  1.334736e+00  1.945679e-03  002:10:02  000:22:59  D
+     687  1.336682e+00  1.945679e-03  002:10:13  000:22:48  D
+     688  1.338627e+00  1.945679e-03  002:10:24  000:22:37  D
+     689  1.340573e+00  1.945679e-03  002:10:35  000:22:25  D
+     690  1.342519e+00  1.945679e-03  002:10:46  000:22:14  FD
+     691  1.344464e+00  1.945679e-03  002:10:58  000:22:02  D
+     692  1.346410e+00  1.945679e-03  002:11:09  000:21:51  D
+     693  1.348356e+00  1.945679e-03  002:11:20  000:21:40  D
+     694  1.350301e+00  1.945679e-03  002:11:31  000:21:28  D
+     695  1.352247e+00  1.945679e-03  002:11:42  000:21:17  D
+     696  1.354193e+00  1.945679e-03  002:11:53  000:21:05  D
+     697  1.356138e+00  1.945679e-03  002:12:04  000:20:54  D
+     698  1.358084e+00  1.945679e-03  002:12:15  000:20:42  D
+     699  1.360030e+00  1.945679e-03  002:12:27  000:20:31  D
+     700  1.361976e+00  1.945679e-03  002:12:38  000:20:20  FD
+     701  1.363921e+00  1.945679e-03  002:12:49  000:20:08  D
+     702  1.365867e+00  1.945679e-03  002:13:01  000:19:57  D
+     703  1.367813e+00  1.945679e-03  002:13:12  000:19:46  D
+     704  1.369758e+00  1.945679e-03  002:13:23  000:19:34  D
+     705  1.371704e+00  1.945679e-03  002:13:34  000:19:23  D
+     706  1.373650e+00  1.945679e-03  002:13:45  000:19:11  D
+     707  1.375595e+00  1.945679e-03  002:13:57  000:19:00  D
+     708  1.377541e+00  1.945679e-03  002:14:09  000:18:49  D
+     709  1.379487e+00  1.945679e-03  002:14:20  000:18:37  D
+     710  1.381432e+00  1.945679e-03  002:14:31  000:18:26  FD
+     711  1.383378e+00  1.945679e-03  002:14:42  000:18:15  D
+     712  1.385324e+00  1.945679e-03  002:14:54  000:18:03  D
+     713  1.387269e+00  1.945679e-03  002:15:05  000:17:52  D
+     714  1.389215e+00  1.945679e-03  002:15:16  000:17:40  D
+     715  1.391161e+00  1.945679e-03  002:15:27  000:17:29  D
+     716  1.393106e+00  1.945679e-03  002:15:38  000:17:18  D
+     717  1.395052e+00  1.945679e-03  002:15:50  000:17:06  D
+     718  1.396998e+00  1.945679e-03  002:16:01  000:16:55  D
+     719  1.398943e+00  1.945679e-03  002:16:12  000:16:43  D
+     720  1.400889e+00  1.945679e-03  002:16:24  000:16:32  FD
+     721  1.402835e+00  1.945679e-03  002:16:35  000:16:21  D
+     722  1.404780e+00  1.945679e-03  002:16:46  000:16:09  D
+     723  1.406726e+00  1.945679e-03  002:16:57  000:15:58  D
+     724  1.408672e+00  1.945679e-03  002:17:09  000:15:47  D
+     725  1.410617e+00  1.945679e-03  002:17:20  000:15:35  D
+     726  1.412563e+00  1.945679e-03  002:17:31  000:15:24  D
+     727  1.414509e+00  1.945679e-03  002:17:42  000:15:12  D
+     728  1.416455e+00  1.945679e-03  002:17:53  000:15:01  D
+     729  1.418400e+00  1.945679e-03  002:18:04  000:14:50  D
+     730  1.420346e+00  1.945679e-03  002:18:15  000:14:38  FD
+     731  1.422292e+00  1.945679e-03  002:18:25  000:14:27  D
+     732  1.424237e+00  1.945679e-03  002:18:37  000:14:15  D
+     733  1.426183e+00  1.945679e-03  002:18:48  000:14:04  D
+     734  1.428129e+00  1.945679e-03  002:19:00  000:13:53  D
+     735  1.430074e+00  1.945679e-03  002:19:11  000:13:41  D
+     736  1.432020e+00  1.945679e-03  002:19:22  000:13:30  D
+     737  1.433966e+00  1.945679e-03  002:19:34  000:13:19  D
+     738  1.435911e+00  1.945679e-03  002:19:46  000:13:07  D
+     739  1.437857e+00  1.945679e-03  002:19:56  000:12:56  D
+     740  1.439803e+00  1.945679e-03  002:20:08  000:12:45  FD
+     741  1.441748e+00  1.945679e-03  002:20:19  000:12:33  D
+     742  1.443694e+00  1.945679e-03  002:20:30  000:12:22  D
+     743  1.445640e+00  1.945679e-03  002:20:41  000:12:10  D
+     744  1.447585e+00  1.945679e-03  002:20:52  000:11:59  D
+     745  1.449531e+00  1.945679e-03  002:21:03  000:11:48  D
+     746  1.451477e+00  1.945679e-03  002:21:15  000:11:36  D
+     747  1.453422e+00  1.945679e-03  002:21:27  000:11:25  D
+     748  1.455368e+00  1.945679e-03  002:21:38  000:11:14  D
+     749  1.457314e+00  1.945679e-03  002:21:49  000:11:02  D
+     750  1.459259e+00  1.945679e-03  002:22:00  000:10:51  FD
+     751  1.461205e+00  1.945679e-03  002:22:11  000:10:39  D
+     752  1.463151e+00  1.945679e-03  002:22:22  000:10:28  D
+     753  1.465097e+00  1.945679e-03  002:22:33  000:10:17  D
+     754  1.467042e+00  1.945679e-03  002:22:44  000:10:05  D
+     755  1.468988e+00  1.945679e-03  002:22:55  000:09:54  D
+     756  1.470934e+00  1.945679e-03  002:23:06  000:09:42  D
+     757  1.472879e+00  1.945679e-03  002:23:17  000:09:31  D
+     758  1.474825e+00  1.945679e-03  002:23:28  000:09:20  D
+     759  1.476771e+00  1.945679e-03  002:23:39  000:09:08  D
+     760  1.478716e+00  1.945679e-03  002:23:50  000:08:57  FD
+     761  1.480662e+00  1.945679e-03  002:24:01  000:08:46  D
+     762  1.482608e+00  1.945679e-03  002:24:12  000:08:34  D
+     763  1.484553e+00  1.945679e-03  002:24:23  000:08:23  D
+     764  1.486499e+00  1.945679e-03  002:24:35  000:08:11  D
+     765  1.488445e+00  1.945679e-03  002:24:47  000:08:00  D
+     766  1.490390e+00  1.945679e-03  002:24:57  000:07:49  D
+     767  1.492336e+00  1.945679e-03  002:25:09  000:07:37  D
+     768  1.494282e+00  1.945679e-03  002:25:20  000:07:26  D
+     769  1.496227e+00  1.945679e-03  002:25:31  000:07:15  D
+     770  1.498173e+00  1.945679e-03  002:25:43  000:07:03  FD
+     771  1.500119e+00  1.945679e-03  002:25:55  000:06:52  D
+     772  1.502064e+00  1.945679e-03  002:26:06  000:06:41  D
+     773  1.504010e+00  1.945679e-03  002:26:17  000:06:29  D
+     774  1.505956e+00  1.945679e-03  002:26:30  000:06:18  D
+     775  1.507901e+00  1.945679e-03  002:26:43  000:06:07  D
+     776  1.509847e+00  1.945679e-03  002:26:55  000:05:55  D
+     777  1.511793e+00  1.945679e-03  002:27:07  000:05:44  D
+     778  1.513738e+00  1.945679e-03  002:27:22  000:05:33  D
+     779  1.515684e+00  1.945679e-03  002:27:35  000:05:21  D
+     780  1.517630e+00  1.945679e-03  002:27:47  000:05:10  FD
+     781  1.519576e+00  1.945679e-03  002:27:57  000:04:59  D
+     782  1.521521e+00  1.945679e-03  002:28:10  000:04:47  D
+     783  1.523467e+00  1.945679e-03  002:28:21  000:04:36  D
+     784  1.525413e+00  1.945679e-03  002:28:32  000:04:25  D
+     785  1.527358e+00  1.945679e-03  002:28:44  000:04:13  D
+     786  1.529304e+00  1.945679e-03  002:28:55  000:04:02  D
+     787  1.531250e+00  1.945679e-03  002:29:06  000:03:51  D
+     788  1.533195e+00  1.945679e-03  002:29:17  000:03:39  D
+     789  1.535141e+00  1.945679e-03  002:29:28  000:03:28  D
+     790  1.537087e+00  1.945679e-03  002:29:40  000:03:16  FD
+     791  1.539032e+00  1.945679e-03  002:29:51  000:03:05  D
+     792  1.540978e+00  1.945679e-03  002:30:02  000:02:54  D
+     793  1.542924e+00  1.945679e-03  002:30:13  000:02:42  D
+     794  1.544869e+00  1.945679e-03  002:30:24  000:02:31  D
+     795  1.546815e+00  1.945679e-03  002:30:35  000:02:20  D
+     796  1.548761e+00  1.945679e-03  002:30:47  000:02:08  D
+     797  1.550706e+00  1.945679e-03  002:30:58  000:01:57  D
+     798  1.552652e+00  1.945679e-03  002:31:10  000:01:45  D
+     799  1.554598e+00  1.945679e-03  002:31:22  000:01:34  D
+     800  1.556543e+00  1.945679e-03  002:31:33  000:01:23  FD
+     801  1.558489e+00  1.945679e-03  002:31:44  000:01:11  D
+     802  1.560435e+00  1.945679e-03  002:31:56  000:01:00  D
+     803  1.562380e+00  1.945679e-03  002:32:07  000:00:49  D
+     804  1.564326e+00  1.945679e-03  002:32:18  000:00:37  D
+     805  1.566272e+00  1.945679e-03  002:32:29  000:00:26  D
+     806  1.568218e+00  1.945679e-03  002:32:41  000:00:15  D
+     807  1.570163e+00  1.945679e-03  002:32:52  000:00:03  D
+     808  1.570796e+00  6.331393e-04  002:33:03  000:00:00  D
+
+     Normal finish, maximum time reached: 1.570796
+
+ * Timers (h:m:s):
+ -----------------
+     Migrate global-scope data                                                   : 0:0:0
+     Total runtime                                                               : 2:33:54
+
+[Partition 0][Node 0] End of program
+jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ cp diag diag.48M
+cp: overwrite 'diag.48M'? y
+\endverbatim
+
+\section inciter_example_hump_fieldvis Example visualization
+
+Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
+
+\verbatim
+paraview out.0
+\endverbatim
+
+\section inciter_example_hump_error L2 errors
+
+The following figure shows the time evolution of the \f$L_2\f$ error for three
+different meshes whose edge lengths are successively halved, which indicates
+approximately second-order convergence. See also
+https://github.com/quinoacomputing/quinoa-examples/tree/master/inciter/Hump for
+the diagnostics files.
+
+<img src="https://quinoacomputing.github.io/l2.svg" align="left" width="50%" background=transparent>
+
+Gnuplot commands to reproduce the above plot:
+\verbatim
+plot "diag.750K" u 2:4, "diag.6M" u 2:4, "diag.48M" u 2:4
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Mon 05 Jun 2017 01:25:36 PM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
+</small></div>
+*/

@@ -57,6 +57,8 @@ namespace grm {
 //! Toolkit, grammar definition for the RNGSSE library
 namespace rngsse {
 
+  using namespace tao;
+
   // RNGSSE PEGTL grammar
 
   //! \brief rng: match any one of the RNGSSE random number generators

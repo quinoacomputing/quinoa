@@ -20,6 +20,8 @@ namespace rngtest {
 //! RNGTest command line grammar definition
 namespace cmd {
 
+  using namespace tao;
+
   //! \brief Specialization of tk::grm::use for RNGTest's command line parser
   //! \author J. Bakosi
   template< typename keyword >

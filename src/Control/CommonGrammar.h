@@ -30,10 +30,13 @@
 #include "Options/PDFPolicy.h"
 #include "Options/PDFCentering.h"
 #include "Options/TxtFloatFormat.h"
+#include "Options/Error.h"
 
 namespace tk {
 //! Toolkit general purpose grammar definition
 namespace grm {
+
+  using namespace tao;
 
   using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -112,6 +115,8 @@ namespace grm {
     PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
     UNFINISHED,         //!< Unfinished block
     VORTICAL_UNFINISHED,//!< Vortical flow problem configuration unfinished
+    ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
+    RT_UNFINISHED,      //!< Reyleigh-Taylor unstable configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
@@ -242,6 +247,14 @@ namespace grm {
     { MsgKey::VORTICAL_UNFINISHED, "Specifying the vortical flow test problem "
       "requires the specification of parameters alpha, beta, and p0. The error"
       "is in the block finished above the line above." },
+    { MsgKey::ENERGY_UNFINISHED, "Specifying the nonlinear energy growth test "
+      "problem requires the specification of parameters alpha, betax, betay, "
+      "betaz, ce, kappa, and r0. The error is in the block finished above the "
+      "line above."},
+    { MsgKey::RT_UNFINISHED, "Specifying Reyleigh-Taylor test problem "
+      "requires the specification of parameters alpha, betax, betay, betaz, "
+      "kappa, r0, and p0. The error is in the block finished above the line "
+      "above."},
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
@@ -276,18 +289,18 @@ namespace grm {
     if (msg != message.end()) {
       std::stringstream ss;
       const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
-      auto pos = pegtl::position_info( in );
+      auto pos = in.position();
       if (!in.empty()) {
         ss << typestr << " while parsing '" << in.string() << "' at "
-           << pos.line << ',' << pos.column << ". " << msg->second;
+           << pos.line << ',' << pos.byte_in_line << ". " << msg->second;
       } else {
-        ss << typestr << " while parsing at " << pos.line << ',' << pos.column
-           << ". " << msg->second;
+        ss << typestr << " while parsing at " << pos.line << ','
+           << pos.byte_in_line << ". " << msg->second;
       }
       stack.template push_back< tag::error >( ss.str() );
     } else {
       stack.template push_back< tag::error >
-        ( std::string("Unknown parser ") + 
+        ( std::string("Unknown parser ") +
           (type == MsgType::ERROR ? "error" : "warning" ) +
           " with no location information." );
     }
@@ -350,7 +363,7 @@ namespace grm {
     Option opt;
     auto value = in.string();
     if (opt.exist(value)) {
-      auto pos = pegtl::position_info( in );
+      auto pos = in.position();
       // Emit warning on overwriting a non-default option value. This is
       // slightly inelegant. To be more elegant, we could simply call Message()
       // here, but the warning message can be more customized here (inside of
@@ -365,7 +378,7 @@ namespace grm {
                 << opt.group() << "' option. Overwriting '"
                 << opt.name( stack.template get< tags... >() ) << "' with '"
                 << opt.name( opt.value( value ) ) << "' at "
-                << pos.line << ',' << pos.column << ".\n\n";
+                << pos.line << ',' << pos.byte_in_line << ".\n\n";
       stack.template set< tags... >( opt.value( value ) );
     } else {
       Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
@@ -1469,6 +1482,12 @@ namespace grm {
                                                 tag::flformat,
                                                 tag::diag >,
                                          pegtl::alpha >,
+                                process< use< kw::error >,
+                                         store_back_option< use,
+                                                            tk::ctr::Error,
+                                                            tag::diag,
+                                                            tag::error >,
+                                         pegtl::alpha >,
                                 precision< use, tag::diag > > > {};
 
   //! \brief Match model parameter
@@ -1578,11 +1597,11 @@ namespace grm {
   //! \brief Match and set policy parameter
   //! \author J. Bakosi
   template< template< class > class use, typename keyword,
-            typename option, typename sde, typename... tags >
+            typename option, typename p, typename... tags >
   struct policy :
          process<
            keyword,
-           store_back_option< use, option, tag::param, sde, tags... >,
+           store_back_option< use, option, tag::param, p, tags... >,
            pegtl::alpha > {};
 
   //! \brief Match and set a PDF option

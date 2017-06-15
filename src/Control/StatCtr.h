@@ -271,7 +271,7 @@ using Probability = std::vector< Term >;
 struct PDFInfo {
   const std::string& name;                  //!< PDF identifier, i.e., name
   const std::vector< tk::real >& exts;      //!< Sample space extents
-  std::vector< std::string > vars;          //!< List of sample space ariables
+  std::vector< std::string > vars;          //!< List of sample space variables
 };
 
 //! \brief Find PDF information, see tk::ctr::PDFInfo

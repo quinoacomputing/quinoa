@@ -19,6 +19,8 @@ namespace meshconv {
 //! Mesh converter command line grammar definition
 namespace cmd {
 
+  using namespace tao;
+
   //! \brief Specialization of tk::grm::use for MeshConv's command line parser
   //! \author J. Bakosi
   template< typename keyword >

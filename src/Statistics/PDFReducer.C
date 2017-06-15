@@ -14,6 +14,67 @@
 namespace tk {
 
 std::pair< int, std::unique_ptr<char[]> >
+serialize( const std::vector< tk::UniPDF >& u )
+// *****************************************************************************
+// Serialize univariate PDFs to raw memory stream
+//! \param[in] u Univariate PDFs
+//! \return Pair of the length and the raw stream containing the serialized PDFs
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Prepare for serializing PDF to a raw binary stream, compute size
+  PUP::sizer sizer;
+  sizer | const_cast< std::vector< tk::UniPDF >& >( u );
+
+  // Create raw character stream to store the serialized PDF
+  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+
+  // Serialize PDF, the message will contain a univariate PDF
+  PUP::toMem packer( flatData.get() );
+  packer | const_cast< std::vector< tk::UniPDF >& >( u );
+
+  // Return size of and raw stream
+  return { sizer.size(), std::move(flatData) };
+}
+
+CkReductionMsg*
+mergeUniPDFs( int nmsg, CkReductionMsg **msgs )
+// *****************************************************************************
+// Charm++ custom reducer for merging a univariate PDFs during reduction across
+// PEs
+//! \param[in] nmsg Number of messages in msgs
+//! \param[in] msgs Charm++ reduction message containing the serialized PDF
+//! \return Aggregated PDF built for further aggregation if needed
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Will store deserialized univariate PDFs
+  std::vector< tk::UniPDF > updf;
+
+  // Create PUP deserializer based on message passed in
+  PUP::fromMem creator( msgs[0]->getData() );
+
+  // Deserialize PDFs from raw stream
+  creator | updf;
+
+  for (int m=1; m<nmsg; ++m) {
+    // Unpack PDF
+    std::vector< tk::UniPDF > u;
+    PUP::fromMem curCreator( msgs[m]->getData() );
+    curCreator | u;
+    // Merge PDFs
+    std::size_t i = 0;
+    for (const auto& p : u) updf[i++].addPDF( p );
+  }
+
+  // Serialize vector of merged PDF to raw stream
+  auto stream = tk::serialize( updf );
+
+  // Forward serialized PDFs
+  return CkReductionMsg::buildNew( stream.first, stream.second.get() );
+}
+
+std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< tk::UniPDF >& u,
            const std::vector< tk::BiPDF >& b,
            const std::vector< tk::TriPDF >& t )

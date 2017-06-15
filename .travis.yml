@@ -18,12 +18,12 @@ env:
 script:
   - rm -rf tpl
   - cp -vr docker ${HOME}/docker
-  - sed -i "1s/gentoo/${DISTRO}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
+  - if [[ ${CC} != gcc ]]; then TAG="-${CC}"; fi
+  - sed -i "1s/gentoo/${DISTRO}${TAG}/" ${HOME}/docker/Dockerfile.quinoa-build-travis
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker/quinoa
   - cp -r $HOME/.ccache ${HOME}/docker/ccache
   - cp -r $HOME/.sonar ${HOME}/docker/sonar
-  - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
   - docker build --build-arg CXXFLAGS=${WERROR:+-Werror}
                 --build-arg COVERAGE=${COVERAGE}
                 --build-arg CC=${CC} --build-arg CXX=${CXX}
@@ -58,10 +58,6 @@ matrix:
   exclude:
   - env: DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
     compiler: clang
-
-matrix:
-  allow_failures:
-  - compiler: clang
 
 notifications:
   email:

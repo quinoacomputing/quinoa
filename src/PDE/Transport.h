@@ -160,15 +160,13 @@ class Transport {
     }
 
     //! Compute right hand side
-    //! \param[in] mult Multiplier differentiating the different stages in
-    //!    multi-stage time stepping
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
-    void rhs( tk::real mult,
+    void rhs( tk::real,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -230,17 +228,16 @@ class Transport {
             prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
 
         // add advection contribution to right hand side
-        tk::real a = mult * deltat;
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t i=0; i<4; ++i)
             for (std::size_t j=0; j<4; ++j)
               for (std::size_t k=0; k<3; ++k)
                 for (std::size_t l=0; l<4; ++l)
-                  R.var(r[c],N[j]) -= a * mass[j][i] * vel[c][k][i]
-                                        * grad[l][k] * u[c][l];
+                  R.var(r[c],N[j]) -= deltat * mass[j][i] * vel[c][k][i]
+                                             * grad[l][k] * u[c][l];
 
         // add diffusion contribution to right hand side
-        Physics::diffusionRhs( m_c, m_ncomp, mult, deltat, J, N, grad, u, r, R );
+        Physics::diffusionRhs( m_c, m_ncomp, deltat, J, N, grad, u, r, R );
       }
     }
 
@@ -325,9 +322,9 @@ class Transport {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with output(),
-    //!   which provides the vector of fields to be output
-    std::vector< std::string > names() const {
+    //! \details This functions should be written in conjunction with
+    //!   fieldOutput(), which provides the vector of fields to be output
+    std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
         g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
@@ -337,24 +334,32 @@ class Transport {
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
+      // will output error for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
     }
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] v Nodal volumes
     //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    output( tk::real t,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::Fields& U ) const
+    fieldOutput( tk::real t,
+                 tk::real V,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >& v,
+                 tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
+      auto E = U;
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
@@ -362,7 +367,29 @@ class Transport {
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
+      // will output error for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c) {
+        auto u = U.extract( c, m_offset );
+        auto e = E.extract( c, m_offset );
+        Assert( u.size() == e.size(), "Size mismatch" );
+        Assert( u.size() == v.size(), "Size mismatch" );
+        for (std::size_t i=0; i<u.size(); ++i)
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
+        out.push_back( e );
+      }
       return out;
+    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    std::vector< std::string > names() const {
+      std::vector< std::string > n;
+      const auto& depvar =
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      // construct the name of the numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) );
+      return n;
     }
 
   private:

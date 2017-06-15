@@ -51,6 +51,8 @@ namespace deck {
 namespace tk {
 namespace grm {
 
+  using namespace tao;
+
   // Note that PEGTL action specializations must be in the same namespace as the
   // template being specialized. See http://stackoverflow.com/a/3052604.
 
@@ -123,10 +125,28 @@ namespace grm {
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
+      // If physics type is advection-diffusion, check for correct number of
+      // advection velocity, shear, and diffusion coefficients
+      if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
+        auto& u0 = stack.template get< tag::param, eq, tag::u0 >();
+        if (u0.back().size() != ncomp.back())  // must define 1 component
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+        auto& diff = stack.template get< tag::param, eq, tag::diffusivity >();
+        if (diff.back().size() != 3*ncomp.back())  // must define 3 components
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+        auto& lambda = stack.template get< tag::param, eq, tag::lambda >();
+        if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
+          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+      }
       // If problem type is not given, error out
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
+      // Error check Dirichlet boundary condition block for all transport eq
+      // configurations
+      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
+        if (s.empty())
+          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -163,10 +183,44 @@ namespace grm {
              p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
+      else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
+        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
+        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
+        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
+        const auto& ce = stack.template get< tag::param, eq, tag::ce >();
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             r0.size() != problem.size() ||
+             ce.size() != problem.size() )
+          Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
+      }
+      else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
+        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
+        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
+        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
+        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
+        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
+        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             p0.size() != problem.size() ||
+             r0.size() != problem.size() )
+          Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
+      }
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
-        if (s.empty()) 
+        if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
@@ -221,6 +275,8 @@ namespace inciter {
 
 //! Inciter input deck facilitating user input for computing shock hydrodynamics
 namespace deck {
+
+  using namespace tao;
 
   // Inciter's InputDeck grammar
 
@@ -312,10 +368,12 @@ namespace deck {
                              material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! put in PDE parameter for equation matching keyword
-  template< typename eq, typename keyword, typename p >
+  template< typename eq, typename keyword, typename p,
+            class kw_type = tk::grm::number >
   struct parameter :
          tk::grm::process< use< keyword >,
-           tk::grm::Store_back< tag::param, eq, p > > {};
+                           tk::grm::Store_back< tag::param, eq, p >,
+                           kw_type > {};
 
   //! transport equation for scalars
   struct transport :
@@ -345,7 +403,8 @@ namespace deck {
                                                  tag::lambda >,
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
-                                                 tag::u0 > >,
+                                                 tag::u0 >,
+                           bc_dirichlet< tag::compflow, tag::bcdir > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -365,10 +424,17 @@ namespace deck {
                                             tag::problem >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
-                           parameter< tag::compflow, kw::npar, tag::npar >,
+                           parameter< tag::compflow, kw::npar, tag::npar,
+                                      pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
-                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
+                           parameter< tag::compflow, kw::pde_betax, tag::betax >,
+                           parameter< tag::compflow, kw::pde_betay, tag::betay >,
+                           parameter< tag::compflow, kw::pde_betaz, tag::betaz >,
+                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
+                           parameter< tag::compflow, kw::pde_r0, tag::r0 >,
+                           parameter< tag::compflow, kw::pde_ce, tag::ce >,
+                           parameter< tag::compflow, kw::pde_kappa, tag::kappa >,
                            bc_dirichlet< tag::compflow, tag::bcdir > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
