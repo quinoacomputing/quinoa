@@ -36,13 +36,11 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 
     rfile = new TFile(filename.c_str(), "RECREATE" );
     tree_connect = new TTree ( "ctree", "store the connectivity" );
-    
-    std::cout<<"File opened successfully via recreate "<< std::endl;	
 
   } else if (option == 1) {
 
       rfile = TFile::Open(filename.c_str(), "UPDATE" );
-      std::cout<< "File opened successfully via update" <<std::endl;
+      tree_connect = (TTree*) rfile->Get( "ctree" );
 
   } else Throw( "Root Mesh modes not supported" );
 }
@@ -53,8 +51,10 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author A. Pakki
 // *****************************************************************************
 {
-  if (rfile)
+  if (rfile) {
+    rfile->Write();
     rfile->Close();
+  }
 }
 
 void
@@ -78,7 +78,10 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 //! \author A. Pakki
 // *****************************************************************************
 {
-    std::cout<<mesh.neblk()<<std::endl;
+
+  csobject = new mesh_data(mesh.size(), ( mesh.tetinpoel().size() + 
+		  mesh.triinpoel().size() ) );
+
 }
 
 void
@@ -93,9 +96,6 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
   // the file requires the vertices and the number of triangles
   // 4 triangles per tetrahedron and mesh.tetinpoel() stores 4 
   // vertices per tet in the vector (# vertices = # of triangles)
-
-  csobject = new mesh_data(mesh.size(), ( mesh.tetinpoel().size() + 
-			      mesh.triinpoel().size() ) );
 
   tree_connect->Branch( "coord", &csobject->coordinates, "coordinates/I" );
   tree_connect->Branch( "trian", &csobject->triangles, "triangles/I" );
@@ -163,22 +163,15 @@ const
 //! \author A. Pakki
 // *****************************************************************************
 {
-  #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wvla"
-    #pragma clang diagnostic ignored "-Wvla-extension"
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvla"
-  #endif
-  for (auto iter_string : nv ) 
-    std::cout<< iter_string << " From the nv string vector"  << std::endl;
+  std::vector < std::string > nv_copy;
+  TBranch *branch = tree_connect->Branch( "variables", &nv_copy );
 
-  #if defined(__clang__)
-    #pragma clang diagnostic pop
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic pop
-  #endif
+  for ( auto itr = nv.begin(); itr != nv.end(); itr++)
+    nv_copy.push_back( *itr );
+
+  branch->Fill();
+  tree_connect->Write();
+
 }
 
 void
@@ -190,7 +183,19 @@ RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 //! \author A. Pakki
 // *****************************************************************************
 {
-  std::cout<<it<<"*"<<time<<"time stamp the iteration" << std::endl;
+  
+  // create a friend tree to the main tree
+  std::string tree = "tf_var_" + std::to_string(it);
+  friendTree = new TTree( tree.c_str(), "friend trees" );
+
+  // create a branch for the time step
+  tk::real elapsed_time = time;
+  std::string branch_time = "time_branch_" + std::to_string(it);
+  friendTree->Branch( branch_time.c_str(), &elapsed_time, "elapsed_time/D" );
+
+  friendTree->Fill();
+  tree_connect->AddFriend( tree.c_str() );
+
 }
 
 void
@@ -205,10 +210,20 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
 //! \author A. Pakki
 // *****************************************************************************
 {
-  tk::real count = 0.0;
-  for (auto iterx : var)
-    count += iterx;
-  std::cout<<it<<"*"<<varid<<"Trying to write scalars with sum as " << count 
-	    << std::endl;
+
+  std::vector< tk::real > vec_copy;
+
+  std::string branch_field = "branch_" + std::to_string(it) + "_field_" + 
+			      std::to_string(varid);
+  //create a Branch
+  friendTree->Branch( branch_field.c_str(), &vec_copy );
+  
+  //copy the values
+  for( auto itr = var.begin(); itr != var.end(); itr++ )
+    vec_copy.push_back( *itr );
+
+  friendTree->Fill();
+  friendTree->Write();
+
 }
 

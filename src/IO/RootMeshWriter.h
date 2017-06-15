@@ -65,6 +65,7 @@ class RootMeshWriter {
     //! Variables for ROOT files, tuples
     TFile *rfile = nullptr;
     TTree *tree_connect = nullptr;
+    mutable TTree *friendTree = nullptr;
     
     typedef struct mesh_data {
       int coordinates;

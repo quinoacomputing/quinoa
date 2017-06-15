@@ -18,6 +18,7 @@ inciter
 
   plotvar
     interval 1
+    filetype root
   end
 
 end
