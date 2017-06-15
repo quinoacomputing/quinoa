@@ -218,39 +218,51 @@ class CompFlow {
         std::array< const tk::real*, 5 > r;
         for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
-        // compute pressure
+        // pressure
         std::array< tk::real, 4 > p;
-        for (std::size_t i=0; i<4; ++i)
-          p[i] = (g-1.0)*(u[4][i] - (u[1][i]*u[1][i] +
-                                     u[2][i]*u[2][i] +
-                                     u[3][i]*u[3][i])/2.0/u[0][i]);
+        for (std::size_t alpha=0; alpha<4; ++alpha)
+          p[alpha] = (g-1.0)*(u[4][alpha] -
+                                (u[1][alpha]*u[1][alpha] +
+                                 u[2][alpha]*u[2][alpha] +
+                                 u[3][alpha]*u[3][alpha])/2.0/u[0][alpha]);
 
-        // scatter-add mass, momentum, and energy contributions to rhs
-        tk::real c = deltat * J/24.0;
+        // mass, momentum, and energy rhs
+        tk::real d = deltat * J/24.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t alpha=0; alpha<4; ++alpha)
             for (std::size_t beta=0; beta<4; ++beta) {
               // advection contribution to mass rhs
-              R.var(r[0],N[alpha]) -= c * grad[beta][j] * u[j+1][beta];
+              R.var(r[0],N[alpha]) -= d * grad[beta][j] * u[j+1][beta];
               // advection contribution to momentum rhs
               for (std::size_t k=0; k<3; ++k)
                 R.var(r[k+1],N[alpha]) -=
-                  c * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
+                  d * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
               // pressure gradient contribution to momentum rhs
-              R.var(r[j+1],N[alpha]) -= c * grad[beta][j] * p[beta];
+              R.var(r[j+1],N[alpha]) -= d * grad[beta][j] * p[beta];
               // advection and pressure gradient contribution to energy rhs
-              R.var(r[4],N[alpha]) -= c * grad[beta][j] *
+              R.var(r[4],N[alpha]) -= d * grad[beta][j] *
                 (u[4][beta] + p[beta]) * u[j+1][beta]/u[0][beta];
             }
 
+        // average characteristic velocity
+        tk::real v = 0.0;
+        for (std::size_t alpha=0; alpha<4; ++alpha) {
+          if (p[alpha] < 0) p[alpha] = 0.0;
+          auto c = std::sqrt( g * p[alpha] / u[0][alpha] );
+          v += std::sqrt((u[1][alpha]*u[1][alpha] +
+                            u[2][alpha]*u[2][alpha] +
+                            u[3][alpha]*u[3][alpha])/u[0][alpha]) + c;
+        }
+        v /= 4.0;
+
         // artificial viscosity
-        c = av * deltat * J/6.0;
-        auto h2 = std::pow( J/6.0, 2.0/3.0 );
+        auto h = std::cbrt( J/6.0 );
+        d = av * v * h * deltat * J/6.0;
         for (std::size_t j=0; j<5; ++j)
           for (std::size_t alpha=0; alpha<4; ++alpha)
             for (std::size_t beta=0; beta<4; ++beta)
               for (std::size_t k=0; k<3; ++k)
-                R.var(r[j],N[alpha]) -= c * h2 *
+                R.var(r[j],N[alpha]) -= d *
                   grad[alpha][k] * grad[beta][k] * u[j][beta];
 
         // add viscous stress contribution to momentum and energy rhs
@@ -302,7 +314,7 @@ class CompFlow {
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
           auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
-          if (p<0) p = 0.0;
+          if (p < 0) p = 0.0;
           auto c = std::sqrt(g*p/r);     // sound speed
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
