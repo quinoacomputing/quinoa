@@ -363,10 +363,10 @@ class CompFlowProblemNLEnergyGrowth {
 
       std::vector< tk::real > rho = r;
       out.push_back( rho );
+      tk::real ft = std::exp(-a*t);
       for (std::size_t i=0; i<rho.size(); ++i) {
-        tk::real f = std::exp(-a*t);
-        tk::real gx = 1-(x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
-        rho[i] = r0 + f*gx;
+        tk::real gx = 1.0 - (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
+        rho[i] = r0 + ft*gx;
       }
       out.push_back( rho );
 
@@ -395,11 +395,8 @@ class CompFlowProblemNLEnergyGrowth {
       std::transform( r.begin(), r.end(), E.begin(), E.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
-      for (std::size_t i=0; i<E.size(); ++i) {
-        tk::real hx = std::cos(bx*M_PI*x[i])*std::cos(by*M_PI*y[i])*
-                      std::cos(bz*M_PI*z[i]);
-        E[i] = rho[i]*std::pow(-3.0*ce-3.0*kappa*hx*hx*t,-1.0/3.0);
-      }
+      for (std::size_t i=0; i<E.size(); ++i)
+        E[i] = ec(ce, kappa, t, hx(bx,by,bz,x[i],y[i],z[i]), -1.0/3.0);
       out.push_back( E );
 
       return out;
