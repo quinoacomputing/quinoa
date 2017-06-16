@@ -26,6 +26,9 @@ namespace inciter {
 //! \see G.I. Taylor, A.E. Green, "Mechanism of the Production of Small Eddies
 //!   from Large Ones", Proc. R. Soc. Lond. A 1937 158 499-521; DOI:
 //!   10.1098/rspa.1937.0036. Published 3 February 1937
+//! \see Waltz, et. al, "Verification of a three-dimensional unstructured finite
+//!   element method using analytic and manufactured solutions", Computers and
+//!   Fluids, 2013, Vol.81, pp.57-67.
 class CompFlowProblemTaylorGreen {
   public:
 
@@ -44,17 +47,15 @@ class CompFlowProblemTaylorGreen {
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset,
-                      tk::real t )
+                      tk::real)
     {
       // dynamic = kinematic viscosity, since rho assumed 1.0
-//      auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[e];
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
       // set initial and boundary conditions
       const auto& x = coord[0];
       const auto& y = coord[1];
-      const auto F = 1.0;//std::exp( -2.0*mu*t );
       for (ncomp_t i=0; i<x.size(); ++i) {
         auto& r  = unk(i,0,offset); // rho
         auto& ru = unk(i,1,offset); // rho * u
@@ -62,14 +63,12 @@ class CompFlowProblemTaylorGreen {
         auto& rw = unk(i,3,offset); // rho * w
         auto& re = unk(i,4,offset); // rho * e
         r = 1.0;
-        ru = std::sin(x[i]) * std::cos(y[i]) * F;
-        //ru = std::exp( -(x[i]-t-M_PI)*(x[i]-M_PI) );
-        rv = -std::cos(x[i]) * std::sin(y[i]) * F;
+        ru = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
+        rv = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
         rw = 0.0;
-        // pressure
-        //tk::real p = -r/4.0*( std::cos(2.0*x[i]) + std::cos(2.0*y[i]) )*F*F;
-        tk::real p = 10.0 + r/4.0*( std::cos(2.0*x[i]) + std::cos(2.0*y[i]) )*F*F;
-        re = p/(g-1.0)/r + 0.5*(ru*ru + rv*rv + rw*rw);
+        tk::real p = 10.0 +
+          r/4.0*( std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]) );
+        re = p/(g-1.0)/r + 0.5*(ru*ru + rv*rv + rw*rw)/r/r;
       }
     }
 
@@ -97,18 +96,19 @@ class CompFlowProblemTaylorGreen {
 
       // compute energy source
       std::array< tk::real, 4 > Se{{
-        3.0/8.0*(std::cos(x[N[0]])*std::cos(3.0*y[N[0]]) -
-                 std::cos(3.0*x[N[0]])*std::cos(y[N[0]])),
-        3.0/8.0*(std::cos(x[N[1]])*std::cos(3.0*y[N[1]]) -
-                 std::cos(3.0*x[N[1]])*std::cos(y[N[1]])),
-        3.0/8.0*(std::cos(x[N[2]])*std::cos(3.0*y[N[2]]) -
-                 std::cos(3.0*x[N[2]])*std::cos(y[N[2]])),
-        3.0/8.0*(std::cos(x[N[3]])*std::cos(3.0*y[N[3]]) -
-                 std::cos(3.0*x[N[3]])*std::cos(y[N[3]])) }};
+        3.0/8.0*(std::cos(M_PI*x[N[0]])*std::cos(3.0*M_PI*y[N[0]]) -
+                 std::cos(3.0*M_PI*x[N[0]])*std::cos(M_PI*y[N[0]])),
+        3.0/8.0*(std::cos(M_PI*x[N[1]])*std::cos(3.0*M_PI*y[N[1]]) -
+                 std::cos(3.0*M_PI*x[N[1]])*std::cos(M_PI*y[N[1]])),
+        3.0/8.0*(std::cos(M_PI*x[N[2]])*std::cos(3.0*M_PI*y[N[2]]) -
+                 std::cos(3.0*M_PI*x[N[2]])*std::cos(M_PI*y[N[2]])),
+        3.0/8.0*(std::cos(M_PI*x[N[3]])*std::cos(3.0*M_PI*y[N[3]]) -
+                 std::cos(3.0*M_PI*x[N[3]])*std::cos(M_PI*y[N[3]])) }};
 
       std::array< tk::real, 4 > p;
       for (std::size_t i=0; i<4; ++i)
-         p[i] = 10.0 + 1.0/4.0*( std::cos(2.0*x[N[i]]) + std::cos(2.0*y[N[i]]) );
+         p[i] = 10.0 +
+           1.0/4.0*( std::cos(2.0*M_PI*x[N[i]]) + std::cos(2.0*M_PI*y[N[i]]) );
 
       // add source term at element nodes
       for (std::size_t alpha=0; alpha<4; ++alpha)
@@ -170,14 +170,13 @@ class CompFlowProblemTaylorGreen {
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( tk::ctr::ncomp_type e,
                  tk::ctr::ncomp_type offset,
-                 tk::real t,
+                 tk::real,
                  tk::real V,
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
@@ -186,8 +185,6 @@ class CompFlowProblemTaylorGreen {
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
-      // dynamic = kinematic viscosity, since rho assumed 1.0
-//      auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[e];
 
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0, offset );
@@ -200,8 +197,6 @@ class CompFlowProblemTaylorGreen {
       const auto& x = coord[0];
       const auto& y = coord[1];
 
-      const auto F = 1.0;//std::exp( -2.0*mu*t );
-
       out.push_back( r );
       out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
 
@@ -211,8 +206,7 @@ class CompFlowProblemTaylorGreen {
       out.push_back( u );
       std::vector< tk::real > ua = ru;
       for (std::size_t i=0; i<ua.size(); ++i)
-        ua[i] = std::sin(x[i]) * std::cos(y[i]) * F;
-        //ua[i] = std::exp( -(x[i]-t-M_PI)*(x[i]-t-M_PI) );
+        ua[i] = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
       out.push_back( ua );
 
       // error in x-velocity
@@ -227,7 +221,7 @@ class CompFlowProblemTaylorGreen {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( v );
       for (std::size_t i=0; i<va.size(); ++i)
-        va[i] = -std::cos(x[i]) * std::sin(y[i]) * F;
+        va[i] = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
       out.push_back( va );
 
       // error in v-velocity
@@ -251,10 +245,10 @@ class CompFlowProblemTaylorGreen {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
       for (std::size_t i=0; i<Ea.size(); ++i) {
-        Pa[i] = 10.0 + r[i]/4.0*( std::cos(2.0*x[i]) + std::cos(2.0*y[i]) )*F*F;
-        //Pa[i] = -r[i]/4.0*( std::cos(2.0*x[i]) + std::cos(2.0*y[i]) )*F*F;
+        Pa[i] = 10.0 +
+          r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
         Ea[i] = Pa[i]/(g-1.0)/r[i] +
-                0.5*(ua[i]*ua[i] + va[i]*va[i] + wa[i]*wa[i]);
+                0.5*(ua[i]*ua[i] + va[i]*va[i] + wa[i]*wa[i])/r[i];
       }
       out.push_back( Ea );
 
