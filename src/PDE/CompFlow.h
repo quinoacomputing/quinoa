@@ -250,8 +250,8 @@ class CompFlow {
           if (p[alpha] < 0) p[alpha] = 0.0;
           auto c = std::sqrt( g * p[alpha] / u[0][alpha] );
           v += std::sqrt((u[1][alpha]*u[1][alpha] +
-                            u[2][alpha]*u[2][alpha] +
-                            u[3][alpha]*u[3][alpha])/u[0][alpha]) + c;
+                          u[2][alpha]*u[2][alpha] +
+                          u[3][alpha]*u[3][alpha])/u[0][alpha]/u[0][alpha]) + c;
         }
         v /= 4.0;
 
@@ -316,7 +316,7 @@ class CompFlow {
           auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
           if (p < 0) p = 0.0;
           auto c = std::sqrt(g*p/r);     // sound speed
-          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r) + c; // char. velocity
+          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }
         // compute element dt for the Euler equations
