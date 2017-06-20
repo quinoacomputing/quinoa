@@ -30,6 +30,7 @@ enum class HeaderType : uint8_t { INCITER=0,
                                   RNGTEST,
                                   UNITTEST,
                                   MESHCONV,
+                                  FILEDIFF,
                                   WALKER };
 
 
@@ -95,6 +96,8 @@ static void echoHeader( const Print& print, HeaderType header )
     print.headerMeshConv();
   else if ( header == HeaderType::WALKER )
     print.headerWalker();
+  else if ( header == HeaderType::FILEDIFF )
+    print.headerFileDiff();
   else
     Throw( "Header not available" );
 }

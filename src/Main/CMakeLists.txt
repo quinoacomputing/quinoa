@@ -183,3 +183,29 @@ target_link_libraries(${WALKER_EXECUTABLE}
 
 # Add custom dependencies for Walker's main Charm++ module
 addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
+
+### FileDiff executable ########################################################
+if (HAS_ROOT)
+
+  add_executable(${FILEDIFF_EXECUTABLE}
+                 FileDiffDriver.C
+                 FileDiff.C
+  )
+
+  config_executable(${FILEDIFF_EXECUTABLE})
+
+  target_link_libraries(${FILEDIFF_EXECUTABLE}
+			MeshIO
+			Mesh
+                        FileDiffControl
+                        Base
+			${PUGIXML_LIBRARIES}
+	                ${SEACASExodus_LIBRARIES}
+	                ${ROOT_LIBRARIES}
+		        ${NETCDF_LIBRARIES}       # only for static link
+  )
+
+  # Add custom dependencies for FileDiff's main Charm++ module
+  addCharmModule( "filediff" "${FILEDIFF_EXECUTABLE}" )
+
+endif(HAS_ROOT)

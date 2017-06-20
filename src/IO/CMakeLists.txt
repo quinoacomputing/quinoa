@@ -19,6 +19,7 @@ INSTALL(TARGETS IO
 
 if (HAS_ROOT)
   set(ROOT_WRITER RootMeshWriter.C)
+  set(OUTPUT_COMPARATOR DiffWriterFiles.C)
 endif()
 
 add_library(MeshIO
@@ -32,6 +33,7 @@ add_library(MeshIO
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
 	    ${ROOT_WRITER}
+	    ${OUTPUT_COMPARATOR}
             #SiloWriter.C
 )
 

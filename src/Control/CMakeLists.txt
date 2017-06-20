@@ -77,6 +77,23 @@ INSTALL(TARGETS MeshConvControl
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
+#### FileDiff control ##########################################################
+project(FileDiffControl CXX)
+
+add_library(FileDiffControl
+            StringParser.C
+            FileDiff/CmdLine/Parser.C
+)
+
+set_target_properties(FileDiffControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_filediffcontrol)
+
+INSTALL(TARGETS FileDiffControl
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
 #### Walker control ############################################################
 add_library(WalkerControl
             FileParser.C
