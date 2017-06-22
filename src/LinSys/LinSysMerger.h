@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/LinSysMerger.h
-  \author    J. Bakosi
+  \author    Los Alamos National Laboratory
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -218,7 +218,7 @@ extern CkReduction::reducerType DiagMerger;
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   linsysmerger.ci.
-//! \author J. Bakosi
+//! \author Los Alamos National Laboratory
 template< class HostProxy, class WorkerProxy, class AuxSolver  >
 class LinSysMerger : public CBase_LinSysMerger< HostProxy,
                                                 WorkerProxy,
