@@ -9,6 +9,7 @@
 // *****************************************************************************
 
 #include <utility>
+#include <iostream>
 
 #include "Types.h"
 #include "Tags.h"
@@ -43,21 +44,20 @@ FileDiffDriver::FileDiffDriver( const tk::Print& print,
 void
 FileDiffDriver::execute() const
 // *****************************************************************************
-//  Execute: Convert file
+//  Execute: Compute Differences
 //! \author A. Pakki
 // *****************************************************************************
 {
-  //m_print.endsubsection();
 
   std::vector< std::pair< std::string, tk::real > > times( 1 );
 
   tk::DiffWriterFiles *dwf = new tk::DiffWriterFiles( m_input, m_output );
 
-  dwf->computeDifferences();
-  //auto wtimes = tk::writeFile( m_output, file );
+  dwf->convertFiles();
 
-  //times.insert( end(times), begin(wtimes), end(wtimes) );
   mainProxy.timestamp( times );
+
+  delete dwf;
 
   mainProxy.finalize();
 }

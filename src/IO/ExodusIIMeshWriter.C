@@ -112,6 +112,22 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
+ExodusIIMeshWriter::writeHeaderObject( const char* title, int64_t ndim, 
+		      int64_t nnodes, int64_t nelem, int64_t nblk, 
+		      int64_t node_set, int64_t side_set) const
+// *****************************************************************************
+//  Write ExodusII header
+//! \param[in] mesh Unstructured mesh object written for ROOT
+//! \author A. Pakki 
+// *****************************************************************************
+{
+  ErrChk(
+    ex_put_init( m_outFile, title, ndim, nnodes, nelem, nblk, 
+		  node_set, side_set) == 0,
+    "Failed to write header to file: " + m_filename );
+}
+
+void
 ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write node coordinates to ExodusII file
@@ -121,6 +137,22 @@ ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 {
   ErrChk( ex_put_coord( m_outFile, mesh.x().data(), mesh.y().data(),
                         mesh.z().data() ) == 0,
+          "Failed to write coordinates to ExodusII file: " + m_filename );
+}
+
+void
+ExodusIIMeshWriter::writeNodesObject( const std::vector< tk::real >& x,
+				      const std::vector< tk::real >& y,
+				      const std::vector< tk::real >& z) const
+// *****************************************************************************
+//  Write node coordinates to ExodusII file without Mesh
+//! \param[in] x coordinate data
+//! \param[in] y coordinate data
+//! \param[in] z coordinate data
+//! \author A. Pakki 
+// *****************************************************************************
+{
+  ErrChk( ex_put_coord( m_outFile, x.data(), y.data(), z.data() ) == 0,
           "Failed to write coordinates to ExodusII file: " + m_filename );
 }
 

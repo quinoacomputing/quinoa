@@ -70,9 +70,9 @@ class RootMeshWriter {
     typedef struct mesh_data {
       int coordinates;
       int triangles;
-      std::vector<float> mx_root;
-      std::vector<float> my_root;
-      std::vector<float> mz_root;
+      std::vector<tk::real> mx_root;
+      std::vector<tk::real> my_root;
+      std::vector<tk::real> mz_root;
       std::vector<int> connectivity;
 
       public : mesh_data () {

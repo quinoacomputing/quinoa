@@ -18,50 +18,46 @@
 #include "NoWarning/TFile.h"
 #include "NoWarning/TTree.h"
 #include "NoWarning/TGraph2D.h"
+#include "ExodusIIMeshWriter.h"
 
 #include "Types.h"
 
 namespace tk {
 
-class UnsMesh;
 
 class DiffWriterFiles {
 
   public:
     //! Constructor: Open ROOT, ExodusII files
     explicit DiffWriterFiles( const std::string& file_root, 
-			      const std::string& file_exodus,
-                              int cpuwordsize = sizeof(double),
-                              int iowordsize = sizeof(double) );
+			      const std::string& file_exodus );
 
     //! Destructor
     ~DiffWriterFiles() noexcept;
   
-    void computeDifferences();
+    //! Convert the files
+    void convertFiles();
 
   private:
 
+    int variables;
+
+    tk::ExodusIIMeshWriter *emw = nullptr;
     const std::string m_file_root;         // Root File name
     const std::string m_file_exodus;       // ExodusII File name
 
-    int m_inFile;                       //!< ExodusII file handle
-    TFile *rfile = nullptr;             // Root File handle
-    TTree *tree_local = nullptr;      // Get the tree handle in the file
-
-    int variables;			// stored variables
-    uint64_t timesteps;			// stored timesteps
-    int nodal_size;                     // number of nodes
-
-    double abs_tolerance = 10e-6;
-    double rel_tolerance = 10e-9;
-
-    // read ExodusII file timesteps
-    void readExodusIIVar( uint64_t timestep, int varid,
-			  tk::real* exodus_varvec );
+    TFile *m_infile = nullptr;                // Root File handle
+    TTree *tree_local = nullptr;           // Get the tree handle from ROOT
 
     // read ROOT file timesteps
     void readRootVar( uint64_t timestep, int varid, 
 		      std::vector<double>** root_varvec );
+    
+    //! Write the timestamp and the variables data
+    void writeHeader();
+    void writeCoordinates();
+    void writeVarNames();
+    void writeData();
 
 };
 
