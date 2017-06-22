@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Main/filediff.ci
+  \file      src/Main/fileconv.ci
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Charm++ module interface file for filediff
+  \brief     Charm++ module interface file for fileconv
   \details   Charm++ module interface file for the file converter,
-    filediff.
+    fileconv.
   \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
 */
 // *****************************************************************************
 
-mainmodule filediff {
+mainmodule fileconv {
 
   readonly CProxy_Main mainProxy;
 

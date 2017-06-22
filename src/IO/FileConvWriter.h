@@ -1,15 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/DiffWriterFiles.h
+  \file      src/IO/FileConvWriter.h
   \author    A. Pakki 
   \copyright 2012-2015, Aditya Pakki, 2016, Los Alamos National Security, LLC.
-  \brief     Compare the output files written by two Writers
-  \details   Compute the relative and absolute differences for variables
-	     written using RootMeshWriter and ExodusII Mesh Writer.
+  \brief     Convert the input files to output file format  
+  \details   Convert the input file in ROOT format to the ExodusII layout
+	     The next step post the output would be to utilize exodiff utility.
 */
 // *****************************************************************************
-#ifndef DiffWriterFiles_h
-#define DiffWriterFiles_h
+#ifndef FileConvWriter_h
+#define FileConvWriter_h
 
 #include <cstddef>
 #include <iosfwd>
@@ -25,15 +25,15 @@
 namespace tk {
 
 
-class DiffWriterFiles {
+class FileConvWriter {
 
   public:
     //! Constructor: Open ROOT, ExodusII files
-    explicit DiffWriterFiles( const std::string& file_root, 
+    explicit FileConvWriter( const std::string& file_root, 
 			      const std::string& file_exodus );
 
     //! Destructor
-    ~DiffWriterFiles() noexcept;
+    ~FileConvWriter() noexcept;
   
     //! Convert the files
     void convertFiles();
@@ -63,4 +63,4 @@ class DiffWriterFiles {
 
 } // tk::
 
-#endif // DiffWriterFiles_h
+#endif // FileConvWriter_h

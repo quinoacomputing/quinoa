@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/filediff.decl.h
+  \file      src/NoWarning/fileconv.decl.h
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include filediff.decl.h with turning off specific compiler
+  \brief     Include fileconv.decl.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_filediff_decl_h
-#define nowarning_filediff_decl_h
+#ifndef nowarning_fileconv_decl_h
+#define nowarning_fileconv_decl_h
 
 #include "Macro.h"
 
@@ -56,7 +56,7 @@
   #pragma warning( disable: 1720 )
 #endif
 
-#include "../Main/filediff.decl.h"
+#include "../Main/fileconv.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -66,4 +66,4 @@
   #pragma warning( pop )
 #endif
 
-#endif // nowarning_filediff_decl_h
+#endif // nowarning_fileconv_decl_h

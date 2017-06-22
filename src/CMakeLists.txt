@@ -417,7 +417,7 @@ set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
 if (HAS_ROOT)
-  set(FILEDIFF_EXECUTABLE filediff)
+  set(FILECONV_EXECUTABLE fileconv)
 endif()
 
 # Create set of all executables tested. These are the executables that do
@@ -427,7 +427,7 @@ set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
                         ${RNGTEST_EXECUTABLE}
                         ${MESHCONV_EXECUTABLE}
                         ${WALKER_EXECUTABLE}
-                        ${FILEDIFF_EXECUTABLE})
+                        ${FILECONV_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
@@ -435,7 +435,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
                 ${WALKER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
-                ${FILEDIFF_EXECUTABLE})
+                ${FILECONV_EXECUTABLE})
 
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code

@@ -3,21 +3,21 @@
   \file      src/Control/MeshConv/Types.h
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Types for FileDiff's parsers
+  \brief     Types for FileConv's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
     the tagged tuple that stores heteroegeneous objects in a hierarchical way.
     These components are therefore part of the grammar stack that is filled
     during command-line argument parsing.
 */
 // *****************************************************************************
-#ifndef FileDiffTypes_h
-#define FileDiffTypes_h
+#ifndef FileConvTypes_h
+#define FileConvTypes_h
 
 #include "TaggedTuple.h"
 #include "Tags.h"
 #include "Keyword.h"
 
-namespace filediff {
+namespace fileconv {
 namespace ctr {
 
 using namespace tao;
@@ -34,4 +34,4 @@ using Location = pegtl::position;
 } // ctr::
 } // meshconv::
 
-#endif // FileDiffTypes_h
+#endif // FileConvTypes_h

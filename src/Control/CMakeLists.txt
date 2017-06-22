@@ -77,18 +77,18 @@ INSTALL(TARGETS MeshConvControl
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
-#### FileDiff control ##########################################################
-project(FileDiffControl CXX)
+#### FileConv control ##########################################################
+project(FileConvControl CXX)
 
-add_library(FileDiffControl
+add_library(FileConvControl
             StringParser.C
-            FileDiff/CmdLine/Parser.C
+            FileConv/CmdLine/Parser.C
 )
 
-set_target_properties(FileDiffControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_filediffcontrol)
+set_target_properties(FileConvControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_fileconvcontrol)
 
-INSTALL(TARGETS FileDiffControl
+INSTALL(TARGETS FileConvControl
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development

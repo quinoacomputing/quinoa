@@ -1,26 +1,26 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/FileDiff/CmdLine/Parser.h
+  \file      src/Control/FileConv/CmdLine/Parser.h
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     FileDiff's command line parser
+  \brief     FileConv's command line parser
   \details   This file declares the command-line argument parser for the mesh
-     file converter, FileDiff.
+     file converter, FileConv.
 */
 // *****************************************************************************
-#ifndef FileDiffCmdLineParser_h
-#define FileDiffCmdLineParser_h
+#ifndef FileConvCmdLineParser_h
+#define FileConvCmdLineParser_h
 
 #include "StringParser.h"
-#include "FileDiff/CmdLine/CmdLine.h"
+#include "FileConv/CmdLine/CmdLine.h"
 
 namespace tk { class Print; }
 
-namespace filediff {
+namespace fileconv {
 
-//! \brief Command-line parser for FileDiff.
+//! \brief Command-line parser for FileConv.
 //! \details This class is used to interface with PEGTL, for the purpose of
-//!   parsing command-line arguments for the file converter, FileDiff.
+//!   parsing command-line arguments for the file converter, FileConv.
 class CmdLineParser : public tk::StringParser {
 
   public:
@@ -31,6 +31,6 @@ class CmdLineParser : public tk::StringParser {
                             ctr::CmdLine& cmdline );
 };
 
-} // filediff::
+} // fileconv::
 
-#endif // FileDiffCmdLineParser_h
+#endif // FileConvCmdLineParser_h

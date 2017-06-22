@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/FileDiff/CmdLine/CmdLine.h
+  \file      src/Control/FileConv/CmdLine/CmdLine.h
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     FileDiff's command line definition
+  \brief     FileConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the file
-     converter, FileDiff.
+     converter, FileConv.
 */
 // *****************************************************************************
-#ifndef FileDiffCmdLine_h
-#define FileDiffCmdLine_h
+#ifndef FileConvCmdLine_h
+#define FileConvCmdLine_h
 
 #include <string>
 
@@ -21,17 +21,17 @@
 #include "Control.h"
 #include "Keywords.h"
 #include "HelpFactory.h"
-#include "FileDiff/Types.h"
+#include "FileConv/Types.h"
 
-namespace filediff {
+namespace fileconv {
 //! File converter control facilitating user input to internal data transfer
 namespace ctr {
 
-//! \brief CmdLine : Control< specialized to FileDiff >
+//! \brief CmdLine : Control< specialized to FileConv >
 //! \details The stack is a tagged tuple, a hierarchical heterogeneous data
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
-//! \see Control/FileDiff/Types.h
+//! \see Control/FileConv/Types.h
 //! \author A. Pakki
 class CmdLine :
   public tk::Control< // tag        type
@@ -44,7 +44,7 @@ class CmdLine :
                       tag::helpkw,  tk::ctr::HelpKw,
                       tag::error,   std::vector< std::string > > {
   public:
-    //! \brief FileDiff command-line keywords
+    //! \brief FileConv command-line keywords
     //! \see tk::grm::use and its documentation
     using keywords = boost::mpl::set< kw::verbose
                                     , kw::help
@@ -56,7 +56,7 @@ class CmdLine :
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type. While there is a
-    //!   ctrinfo parameter, it is unused here, since filediff does not have a
+    //!   ctrinfo parameter, it is unused here, since fileconv does not have a
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
@@ -89,6 +89,6 @@ class CmdLine :
 };
 
 } // ctr::
-} // filediff::
+} // fileconv::
 
-#endif // FileDiffCmdLine_h
+#endif // FileConvCmdLine_h

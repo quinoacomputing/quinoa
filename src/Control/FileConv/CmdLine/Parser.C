@@ -1,11 +1,11 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/FileDiff/CmdLine/Parser.C
+  \file      src/Control/FileConv/CmdLine/Parser.C
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     FileDiff's command line parser
+  \brief     FileConv's command line parser
   \details   This file defines the command-line argument parser for the file 
-	     converter, FileDiff.
+	     converter, FileConv.
 */
 // *****************************************************************************
 
@@ -22,9 +22,9 @@
 #include "Print.h"
 #include "Keywords.h"
 #include "HelpFactory.h"
-#include "FileDiff/Types.h"
-#include "FileDiff/CmdLine/Parser.h"
-#include "FileDiff/CmdLine/Grammar.h"
+#include "FileConv/Types.h"
+#include "FileConv/CmdLine/Parser.h"
+#include "FileConv/CmdLine/Grammar.h"
 
 namespace tk {
 namespace grm {
@@ -34,7 +34,7 @@ tk::Print g_print;
 } // grm::
 } // tk::
 
-using filediff::CmdLineParser;
+using fileconv::CmdLineParser;
 
 CmdLineParser::CmdLineParser( int argc,
                               char** argv,
@@ -42,7 +42,7 @@ CmdLineParser::CmdLineParser( int argc,
                               ctr::CmdLine& cmdline ) :
   StringParser( argc, argv )
 // *****************************************************************************
-//  Contructor: parse the command line for FileDiff
+//  Contructor: parse the command line for FileConv
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer

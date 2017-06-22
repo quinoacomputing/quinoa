@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/DiffWriterFiles.C
+  \file      src/IO/FileConvWriter.C
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Comparator Writer Files
-  \details   Compare the tolerance (absolute and relative) for files written by
-     RootMeshWriter and ExodusIIMeshWriter classes. Right now, we are using the
-     default absolute tolerance of 10e-6 and relative of 10e-9.
+  \brief     Converter Writer Files
+  \details   Convert the input file written by RootMeshWriter into ExodusII 
+             layout. We make use of the ExodusIIMeshWriter class to write the 
+	     output file.
 */
 // *****************************************************************************
 
@@ -19,13 +19,13 @@
 #include "NoWarning/TFile.h"
 #include "NoWarning/TTree.h"
 
-#include "DiffWriterFiles.h"
+#include "FileConvWriter.h"
 #include "ContainerUtil.h"
 #include "Exception.h"
 
-using tk::DiffWriterFiles;
+using tk::FileConvWriter;
 
-DiffWriterFiles::DiffWriterFiles( const std::string& file_root,
+FileConvWriter::FileConvWriter( const std::string& file_root,
                                   const std::string& file_exodus) :
   m_file_root( file_root ),
   m_file_exodus( file_exodus )
@@ -54,7 +54,7 @@ DiffWriterFiles::DiffWriterFiles( const std::string& file_root,
 
 }
 
-DiffWriterFiles::~DiffWriterFiles() noexcept
+FileConvWriter::~FileConvWriter() noexcept
 // *****************************************************************************
 //  Destructor
 //! \author A. Pakki 
@@ -68,7 +68,7 @@ DiffWriterFiles::~DiffWriterFiles() noexcept
 }
 
 void
-DiffWriterFiles::readRootVar( uint64_t timestep, int varid,  
+FileConvWriter::readRootVar( uint64_t timestep, int varid,  
 		  std::vector<double>** root_varvec )
 //*****************************************************************************
 //  Retrieve the variables from the ROOT writer
@@ -88,7 +88,7 @@ DiffWriterFiles::readRootVar( uint64_t timestep, int varid,
 }
 
 void
-DiffWriterFiles::convertFiles() 
+FileConvWriter::convertFiles() 
 //*****************************************************************************
 //  Convert the input file [ROOT] layout to output file [ExodusII] layout
 //  Author A. Pakki
@@ -103,7 +103,7 @@ DiffWriterFiles::convertFiles()
 }
 
 void
-DiffWriterFiles::writeHeader() 
+FileConvWriter::writeHeader() 
 //*****************************************************************************
 //  Write the Header details
 //  Author A. Pakki
@@ -126,7 +126,7 @@ DiffWriterFiles::writeHeader()
 }
 
 void
-DiffWriterFiles::writeCoordinates()
+FileConvWriter::writeCoordinates()
 //*****************************************************************************
 //  Write the Coordinates (x,y,z) data
 //  Author A. Pakki
@@ -147,7 +147,7 @@ DiffWriterFiles::writeCoordinates()
 }
 
 void
-DiffWriterFiles::writeVarNames()
+FileConvWriter::writeVarNames()
 //*****************************************************************************
 //  Write the Variables names
 //  Author A. Pakki
@@ -164,7 +164,7 @@ DiffWriterFiles::writeVarNames()
 }
 
 void
-DiffWriterFiles::writeData()
+FileConvWriter::writeData()
 //*****************************************************************************
 //  Write the Timestamp and Variables from Input to Output
 //  Author A. Pakki

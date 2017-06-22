@@ -1,30 +1,30 @@
 // *****************************************************************************
 /*!
-  \file      src/Main/FileDiffDriver.h
+  \file      src/Main/FileConvDriver.h
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File converter driver
   \details   File converter driver.
 */
 // *****************************************************************************
-#ifndef FileDiffDriver_h
-#define FileDiffDriver_h
+#ifndef FileConvDriver_h
+#define FileConvDriver_h
 
 #include <iosfwd>
 
-#include "FileDiff/CmdLine/CmdLine.h"
+#include "FileConv/CmdLine/CmdLine.h"
 
 namespace tk { class Print; }
 
 //! File converter declarations and definitions
-namespace filediff {
+namespace fileconv {
 
-//! File Difference driver used polymorphically with tk::Driver
-class FileDiffDriver {
+//! File Converter driver used polymorphically with tk::Driver
+class FileConvDriver {
 
   public:
     //! Constructor
-    explicit FileDiffDriver( const tk::Print& print,
+    explicit FileConvDriver( const tk::Print& print,
                              const ctr::CmdLine& cmdline );
 
     //! Execute
@@ -37,6 +37,6 @@ class FileDiffDriver {
     std::string m_output;               //!< Output file name
 };
 
-} // filediff::
+} // fileconv::
 
-#endif // FileDiffDriver_h
+#endif // FileConvDriver_h

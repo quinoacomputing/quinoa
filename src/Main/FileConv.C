@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Main/FileDiff.C
+  \file      src/Main/FileConv.C
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File file converter Charm++ main chare
@@ -19,13 +19,13 @@
 #include "QuinoaConfig.h"
 #include "Init.h"
 #include "Tags.h"
-#include "FileDiffDriver.h"
-#include "FileDiff/CmdLine/CmdLine.h"
-#include "FileDiff/CmdLine/Parser.h"
+#include "FileConvDriver.h"
+#include "FileConv/CmdLine/CmdLine.h"
+#include "FileConv/CmdLine/Parser.h"
 #include "ProcessException.h"
 
 #include "NoWarning/charm.h"
-#include "NoWarning/filediff.decl.h"
+#include "NoWarning/fileconv.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -40,7 +40,7 @@ CProxy_Main mainProxy;
   #pragma clang diagnostic pop
 #endif
 
-//! \brief Charm++ main chare for the file converter executable, filediff.
+//! \brief Charm++ main chare for the file converter executable, fileconv.
 //! \details Note that this object should not be in a namespace.
 class Main : public CBase_Main {
 
@@ -68,12 +68,12 @@ class Main : public CBase_Main {
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
       m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-      // Create FileDiff driver
-      m_driver( tk::Main< filediff::FileDiffDriver >
+      // Create FileConv driver
+      m_driver( tk::Main< fileconv::FileConvDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
-			  tk::HeaderType::FILEDIFF,
-			  FILEDIFF_EXECUTABLE,
+			  tk::HeaderType::FILECONV,
+			  FILECONV_EXECUTABLE,
 			  m_print ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
@@ -117,10 +117,10 @@ class Main : public CBase_Main {
     { for (const auto& t : s) timestamp( t.first, t.second ); }
 
   private:
-    filediff::ctr::CmdLine m_cmdline;           //!< Command line
-    filediff::CmdLineParser m_cmdParser;        //!< Command line parser
+    fileconv::ctr::CmdLine m_cmdline;           //!< Command line
+    fileconv::CmdLineParser m_cmdParser;        //!< Command line parser
     tk::Print m_print;                          //!< Pretty printer
-    filediff::FileDiffDriver m_driver;          //!< Driver
+    fileconv::FileConvDriver m_driver;          //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
 
     //! Time stamps in h:m:s with labels
@@ -136,4 +136,4 @@ class execute : public CBase_execute {
   public: execute() { mainProxy.execute(); }
 };
 
-#include "NoWarning/filediff.def.h"
+#include "NoWarning/fileconv.def.h"

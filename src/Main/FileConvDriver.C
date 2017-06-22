@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Main/FileDiffDriver.C
+  \file      src/Main/FileConvDriver.C
   \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File converter driver
@@ -13,16 +13,16 @@
 
 #include "Types.h"
 #include "Tags.h"
-#include "FileDiffDriver.h"
-#include "DiffWriterFiles.h"
+#include "FileConvDriver.h"
+#include "FileConvWriter.h"
 
-#include "NoWarning/filediff.decl.h"
+#include "NoWarning/fileconv.decl.h"
 
-using filediff::FileDiffDriver;
+using fileconv::FileConvDriver;
 
 extern CProxy_Main mainProxy;
 
-FileDiffDriver::FileDiffDriver( const tk::Print& print,
+FileConvDriver::FileConvDriver( const tk::Print& print,
                                 const ctr::CmdLine& cmdline )
   : m_print( print ),
     m_input(),
@@ -42,22 +42,22 @@ FileDiffDriver::FileDiffDriver( const tk::Print& print,
 }
 
 void
-FileDiffDriver::execute() const
+FileConvDriver::execute() const
 // *****************************************************************************
-//  Execute: Compute Differences
+//  Execute: Convert the file layout
 //! \author A. Pakki
 // *****************************************************************************
 {
 
   std::vector< std::pair< std::string, tk::real > > times( 1 );
 
-  tk::DiffWriterFiles *dwf = new tk::DiffWriterFiles( m_input, m_output );
+  tk::FileConvWriter *fcw = new tk::FileConvWriter( m_input, m_output );
 
-  dwf->convertFiles();
+  fcw->convertFiles();
 
   mainProxy.timestamp( times );
 
-  delete dwf;
+  delete fcw;
 
   mainProxy.finalize();
 }

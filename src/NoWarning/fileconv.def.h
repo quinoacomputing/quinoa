@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/filediff.def.h
+  \file      src/NoWarning/fileconv.def.h
   \author    A. Pakki 
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include filediff.def.h with turning off specific compiler
+  \brief     Include fileconv.def.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_filediff_def_h
-#define nowarning_filediff_def_h
+#ifndef nowarning_fileconv_def_h
+#define nowarning_fileconv_def_h
 
 #include "Macro.h"
 
@@ -26,7 +26,7 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "../Main/filediff.def.h"
+#include "../Main/fileconv.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -34,4 +34,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_filediff_def_h
+#endif // nowarning_fileconv_def_h
