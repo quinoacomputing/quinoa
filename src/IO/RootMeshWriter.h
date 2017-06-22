@@ -73,7 +73,8 @@ class RootMeshWriter {
       std::vector<tk::real> mx_root;
       std::vector<tk::real> my_root;
       std::vector<tk::real> mz_root;
-      std::vector<int> connectivity;
+      std::vector<std::size_t> tri_connect;
+      std::vector<std::size_t> tet_connect;
 
       public : mesh_data () {
 	coordinates = 0;

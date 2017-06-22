@@ -146,12 +146,13 @@ const
           "node ids should start from zero" );
   
   // create a branch for storing the tetrahedrons  
-  tree_connect->Branch( "connect", &csobject->connectivity );
+  tree_connect->Branch( "tetconnect", &csobject->tet_connect );
   for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr++ )
-    csobject->connectivity.push_back( *itr );
+    csobject->tet_connect.push_back( *itr );
 
   tree_connect->Fill();
   tree_connect->Write(); 
+
 }
 
 void

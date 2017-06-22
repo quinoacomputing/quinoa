@@ -219,6 +219,23 @@ const
 }
 
 void
+ExodusIIMeshWriter::writeElemBlockObject( int elclass,
+                                    int64_t nnpe,
+                                    const std::string& eltype,
+                                    const std::vector< std::size_t >& inpoel )
+const
+// *****************************************************************************
+//! \param[inout] Dummy function, which calls the private writeElemBlock()
+//! \param[in] nnpe Number of nodes per element for block
+//! \param[in] eltype String describing element type
+//! \param[in] inpoel Element connectivity.
+//! \author A. Pakki
+// *****************************************************************************
+{
+  writeElemBlock( elclass, nnpe, eltype, inpoel );
+}
+
+void
 ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 // *****************************************************************************
 //  Write time stamp to ExodusII file

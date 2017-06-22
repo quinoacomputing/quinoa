@@ -40,7 +40,7 @@ class FileConvWriter {
 
   private:
 
-    int variables;
+    int nodal_size;
 
     tk::ExodusIIMeshWriter *emw = nullptr;
     const std::string m_file_root;         // Root File name
@@ -49,13 +49,10 @@ class FileConvWriter {
     TFile *m_infile = nullptr;                // Root File handle
     TTree *tree_local = nullptr;           // Get the tree handle from ROOT
 
-    // read ROOT file timesteps
-    void readRootVar( uint64_t timestep, int varid, 
-		      std::vector<double>** root_varvec );
-    
     //! Write the timestamp and the variables data
     void writeHeader();
     void writeCoordinates();
+    void writeConnectivity();
     void writeVarNames();
     void writeData();
 

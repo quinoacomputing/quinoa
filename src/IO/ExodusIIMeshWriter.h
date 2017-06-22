@@ -71,6 +71,12 @@ class ExodusIIMeshWriter {
 			   const std::vector< tk::real >& y,
 			   const std::vector< tk::real >& z ) const;
 
+    //! Write element without mesh
+    void writeElemBlockObject( int elclass,
+                         int64_t nnpe,
+                         const std::string& eltype,
+                         const std::vector< std::size_t >& inpoel ) const;
+
   private:
     //! Write ExodusII header
     void writeHeader( const UnsMesh& mesh ) const;

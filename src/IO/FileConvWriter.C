@@ -13,7 +13,6 @@
 #include <cmath>
 #include <string>
 #include <numeric>
-#include <unordered_map>
 
 #include "NoWarning/exodusII.h"
 #include "NoWarning/TFile.h"
@@ -68,26 +67,6 @@ FileConvWriter::~FileConvWriter() noexcept
 }
 
 void
-FileConvWriter::readRootVar( uint64_t timestep, int varid,  
-		  std::vector<double>** root_varvec )
-//*****************************************************************************
-//  Retrieve the variables from the ROOT writer
-//  in[0]  - timestep
-//  in[1]  - variable_id
-//  out[0] - vector of values at the "timestep" time.
-//  Author A. Pakki
-//*****************************************************************************
-{
-
-  std::string branch_var = "branch_" + std::to_string(timestep) + "_field_"
-			      + std::to_string(varid);
-
-  tree_local->SetBranchAddress( branch_var.c_str(), root_varvec );
-  tree_local->GetEntry( 0 );
-
-}
-
-void
 FileConvWriter::convertFiles() 
 //*****************************************************************************
 //  Convert the input file [ROOT] layout to output file [ExodusII] layout
@@ -96,9 +75,10 @@ FileConvWriter::convertFiles()
 {
 
   writeHeader();
-  writeCoordinates();
   writeVarNames();
-  //writeData();
+  writeConnectivity();
+  writeCoordinates();
+  writeData();
 
 }
 
@@ -110,19 +90,20 @@ FileConvWriter::writeHeader()
 //*****************************************************************************
 {
 
-  int coordinates, connectivity;
-  /*
-  tree_local->SetBranchAddress( "trian", &connectivity );
-  tree_local->SetBranchAddress( "coord", &coordinates );
-  
+  int coord, connect;
+
+  tree_local->SetBranchAddress( "trian", &connect );
+  tree_local->SetBranchAddress( "coord", &coord );
+
   tree_local->GetEntry( 0 );
-  */
   emw->writeHeaderObject( "Data copied from ROOT",
                  3, 
-		 //coordinates,
-		 //(connectivity / 4),
-		 1201, 3643, 
+		 coord,
+		 (connect / 4),
 		 1, 0, 0 );
+  
+  tree_local->ResetBranchAddresses();
+
 }
 
 void
@@ -140,10 +121,35 @@ FileConvWriter::writeCoordinates()
   tree_local->SetBranchAddress( "x_coord", &mx );
   tree_local->SetBranchAddress( "y_coord", &my );
   tree_local->SetBranchAddress( "z_coord", &mz );
+
   tree_local->GetEntry( 0 );
 
   // write to ExodusII
   emw->writeNodesObject( *mx, *my, *mz );
+  tree_local->ResetBranchAddresses();
+
+}
+
+void
+FileConvWriter::writeConnectivity()
+//*****************************************************************************
+//  Write the Connectivity between the coordinates.
+//  Author A. Pakki
+//*****************************************************************************
+{
+
+  std::vector<std::size_t> *tets_number = nullptr;
+
+  tree_local->SetBranchAddress( "tetconnect", &tets_number );
+  tree_local->GetEntry( 0 );
+
+  // write to ExodusII 
+  // param[0] - elclass, refer ExodusIIMeshWriter.C)
+  // param[1] - vertices, 4 is the number of vertices of Tetrahedron
+  // param[2] - string literal TETRAHEDRA/TRIANGLES
+  emw->writeElemBlockObject( 0, 4, "TETRAHEDRA", *tets_number );
+  tree_local->ResetBranchAddresses();
+
 }
 
 void
@@ -159,8 +165,9 @@ FileConvWriter::writeVarNames()
   tree_local->GetEntry(0);
 
   emw->writeNodeVarNames( *var_copy );
+  nodal_size = (*var_copy).size();
+  tree_local->ResetBranchAddresses();
 
-  variables = (*var_copy).size();
 }
 
 void
@@ -179,7 +186,7 @@ FileConvWriter::writeData()
     if( tree_local->GetBranch( time_branch.c_str() ) == nullptr )
       break;
 
-    for (int var_id = 1; var_id <= variables; var_id++ ) {
+    for (int var_id = 1; var_id <= nodal_size; var_id++ ) {
       std::string branch_var = "branch_" + std::to_string(timestep) + "_field_"
 			      + std::to_string(var_id);
 
@@ -194,7 +201,6 @@ FileConvWriter::writeData()
 	tree_local->GetEntry(0);
 	
 	emw->writeNodeScalar( timestep, var_id, *var_fields );
-	//tree_local->ResetBranchAddresses();
       }	
 
     } // End the variables loop.
