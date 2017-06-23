@@ -136,9 +136,9 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
   }
 
   // At nodes where Dirichlet boundary conditions (BC) are set, we set the AEC
-  // to zero. Since the right hand side of the low order solution is also set to
-  // zero at nodes where Dirichlet BCs are set, this properly enforces no
-  // increment at BC nodes. See also LinSysMerger::auxsolve().
+  // to zero. This is because if the (same) BCs are correctly set for both the
+  // low and the high order solution, there should be no difference between the
+  // low and high order increments, thus AEC = dUh - dUl = 0.
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                            inpoel[e*4+2], inpoel[e*4+3] }};

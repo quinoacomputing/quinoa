@@ -203,7 +203,6 @@ namespace tk {
 
 extern CkReduction::reducerType BCVectorMerger;
 extern CkReduction::reducerType BCMapMerger;
-extern CkReduction::reducerType BCValMerger;
 extern CkReduction::reducerType DiagMerger;
 
 #if defined(__clang__)
@@ -335,9 +334,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       BCMapMerger = CkReduction::addReducer(
                       tk::mergeHashMap< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > );
-      BCValMerger = CkReduction::addReducer(
-                      tk::mergeHashMap< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > > );
       DiagMerger = CkReduction::addReducer( tk::mergeDiag );
     }
 
@@ -384,6 +380,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       m_auxrhsimport.clear();
       m_diagimport.clear();
       m_rhs.clear();
+      m_bc.clear();
       m_auxrhs.clear();
       m_hypreRhs.clear();
       m_diag.clear();
@@ -693,6 +690,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         }
       // Forward all BC vectors received to fellow branches
       if (++m_nchbc == m_nchare) {
+        m_nchbc = 0;
         auto stream = tk::serialize( m_bc );
         Group::contribute( stream.first, stream.second.get(), BCMapMerger,
                       CkCallback(GroupIdx::addbc(nullptr),Group::thisProxy) );
@@ -704,7 +702,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       creator | m_bc;
       delete msg;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
-      bc_complete();
+      bc_complete_rhs();  bc_complete_lhs();
     }
 
     //! \brief Chares contribute their numerical and analytical solutions
@@ -972,16 +970,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
 
-      for (auto& r : m_lhs) {
-        auto it = m_bc.find( r.first );
-        if (it != end(m_bc)) {
-          auto& diag = tk::ref_find( r.second, r.first );
+      for (const auto& n : m_bc) {
+        if (n.first >= m_lower && n.first < m_upper) {
+          auto& r = tk::ref_find( m_lhs, n.first );
+          auto& diag = tk::ref_find( r, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
-            if (it->second[i].first) {
-              // zero columns in BC row
-              for (auto& col : r.second) col.second[i] = 0.0;
-              // put 1.0 in diagonal of BC row
-              diag[i] = 1.0;
+            if (n.second[i].first) {
+              for (auto& c : r) c.second[i] = 0.0;  // zero columns in BC row
+              diag[i] = 1.0;    // put 1.0 in diagonal of BC row
             }
         }
       }
@@ -1000,7 +996,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
           auto& r = tk::ref_find( m_rhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
             if (n.second[i].first)
-              r[i] = 0.0;
+              r[i] = n.second[i].second;
         }
       }
       rhsbc_complete(); rhsbc_complete();
@@ -1140,13 +1136,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 
     //! Solve auxiliary linear system
     void auxsolve() {
-      // Set boundary conditions on the auxiliary right hand side vector
+      // Set boundary conditions on the auxiliary system
       for (const auto& n : m_bc)
         if (n.first >= m_lower && n.first < m_upper) {
+          // lhs
+          auto& l = tk::ref_find( m_auxlhs, n.first );
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            if (n.second[i].first) l[i] = 1.0;
+          // rhs (set to zero instead of the solution increment at Dirichlet
+          // BCs, because for the low order solution we solve for L = R + D,
+          // where L is the lumped mass matrix, R is the high order RHS, and D
+          // is mass diffusion, and R already has the Dirichlet BC set)
           auto& r = tk::ref_find( m_auxrhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
-            if (n.second[i].first)
-              r[i] = 0.0;
+            if (n.second[i].first) r[i] = 0.0;
         }
       // Solve auxiliary system
       AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );

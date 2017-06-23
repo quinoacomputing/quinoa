@@ -155,6 +155,32 @@ Carrier::Carrier( const TransporterProxy& transporter,
   for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
   m_ac.resize( m_bid.size() );
   for (auto& b : m_ac) b.resize( m_u.nprop() );
+
+  // Invert file-node map, a map associating old node IDs (as in file) to new
+  // node IDs (as in producing contiguous-row-id linear system contributions),
+  // so we can search more efficiently for old node IDs.
+  decltype(m_filenodes) linnodes;
+  for (const auto& i : m_filenodes) {
+    auto n = tk::cref_find(m_lid,i.first);
+    Assert( n < m_gid.size(),
+            "Local IDs must be lower than the local number of grid points" );
+    linnodes[ i.second ] = n;
+  }
+
+  // Access all side sets and their old node IDs (as in file) from LinSysMerger
+  auto& oldside = m_linsysmerger.ckLocalBranch()->side();
+
+  // Create map that assigns the local mesh node IDs mapped to side set ids,
+  // soring only those nodes for a given side set that are part of our chunk of
+  // the mesh.
+  for (const auto& s : oldside) {
+    auto& n = m_side[ s.first ];
+    for (auto o : s.second) {
+      auto it = linnodes.find( o );
+      if (it != end(linnodes))
+        n.push_back( it->second );
+    }
+  }
 }
 
 void
@@ -352,8 +378,6 @@ Carrier::setup( tk::real v )
   writeMesh();
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
-  // Send node IDs from element side sets matched to BC set IDs
-  bc();
   // Generate particles
   m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
   // Output fields metadata to output file
@@ -366,12 +390,11 @@ Carrier::bc()
 //  Extract node IDs from side set node lists and match to user-specified
 //  boundary conditions
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
-//!   finite surfaces. These finite surfaces are given by element sets. This
-//!   function queries the node lists associated to side set IDs as read in from
-//!   file (old mesh node IDs as in file associated to all side sets in file).
-//!   Then the user-specified boundary conditions, their values and which side
-//!   set they are assigned to, are interrogated and only those nodes and their
-//!   BC values are extracted that we operate on. This BC data structure is then
+//!   finite surfaces. These finite surfaces are given by element sets (i.e., a
+//!   list of elements). This function queries Dirichlet boundary condition
+//!   values from all PDEs in the system of PDEs integrated at the node lists
+//!   associated to side set IDs (previously read from file). As a response to
+//!   this query, each PDE system returns a BC data structure which is then
 //!   sent to the linear system merger which needs to know about this to apply
 //!   BCs before a linear solve. Note that the BC mesh nodes that this function
 //!   results in, stored in dirbc and sent to the linear system merger, only
@@ -383,118 +406,80 @@ Carrier::bc()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Access all side sets from LinSysMerger
-  auto& side = m_linsysmerger.ckLocalBranch()->side();
+  // Vector of pairs of bool and boundary condition value associated to mesh
+  // node IDs at which the user has set Dirichlet boundary conditions for all
+  // PDEs integrated
+  std::unordered_map< std::size_t, NodeBC > dirbc;
 
-  // Invert file-node map, a map associating old node IDs (as in file) to new
-  // node IDs (as in producing contiguous-row-id linear system contributions),
-  // so we can search more efficiently for old node IDs.
-  decltype(m_filenodes) linnodes;
-  for (const auto& i : m_filenodes) linnodes[ i.second ] = i.first;
-
-  // lambda to find out if we own the old (as in file) global node id
-  auto own = [ &linnodes ]( std::size_t id ) -> std::pair< bool, std::size_t >
-  {
-    auto it = linnodes.find( id );
-    if (it != end(linnodes))
-      return { true, it->second };
-    else
-      return { false, 0 };
-  };
-
-  // lambda to collect all edge-nodes whose both edge-end-points are in the node
-  // set given
-  auto edgebc = [ this ]( const std::unordered_set< std::size_t >& bcnodes )
-              -> std::vector< std::pair< bool, std::size_t > >
-  {
-    std::vector< std::pair< bool, std::size_t > > en;
-    for (const auto& ed : m_edgenodes)
-      if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
-           bcnodes.find( ed.first[1] ) != end(bcnodes) )
-        en.push_back( { true, ed.second } );
-    return en;
-  };
-
-  // lambda to query the Dirichlet BCs on a side set for all components of all
-  // the PDEs integrated
-  auto bcval = []( int sideset ) {
-    // storage for whether the a BC is set and its value for all components of
-    // all PDEs configured to be solved
-    std::vector< std::pair< bool, tk::real > > b;
-    for (const auto& eq : g_pdes) {
-      auto e = eq.dirbc( sideset );
-      b.insert( end(b), begin(e), end(e) );
-    }
-    Assert( b.size() == g_inputdeck.get< tag::component >().nprop(),
-            "The total number of scalar components of all configured PDEs (" +
-            std::to_string( g_inputdeck.get< tag::component >().nprop() ) + ") "
-            "and the sum of the lengths of the Dirichlet BC vectors returned "
-            "from all configured PDE::dirbc() calls (" +
-            std::to_string( b.size() ) + ") does not match" );
-    return b;
-  };
-
-  // lambda to find out whether 'new' node id is in the list of 'old' node ids
-  // given in s (which contains the old node ids of a side set). Here 'old'
-  // means as in file, while 'new' means as in producing contiguous-row-id
-  // linear system contributions. See also Partitioner.h.
-  auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
-  -> bool {
-    for (auto n : s) if (tk::cref_find(this->m_filenodes,id) == n) return true;
-    return false;
-  };
-
-  // Dirichlet boundary conditions storage: Vector of pairs of bool and boundary
-  // condition value associated to mesh node IDs at which to set Dirichlet
-  // boundary conditions
-  std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > > dirbc;
-
-  // lambda to associate BC values and whether they are set (for all PDE
-  // components) to a node
-  auto assign = [&dirbc]( const std::vector< std::pair< bool, tk::real > >& b,
-                          std::size_t n )
-  {
-    auto& v = dirbc[ n ];
-    v.resize( b.size() );
-    for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
-  };
-
-  // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
-  // data structure in which this information is stored associates a vector of
-  // pairs of bool and BC value to new global mesh node IDs. 'New' as in
-  // producing contiguous-row-id linear system contributions, see also
-  // Partitioner.h. The bool indicates whether the BC value is set at the given
-  // node by the user. The size of the vectors is the number of PDEs integrated
-  // for all scalar components in all PDEs. The vector is associated to global
-  // node IDs at which the boundary condition will be set. If a node gets
-  // boundary conditions from multiple side sets, true values (the fact that a
-  // BC is set) overwrite existing false ones, i.e., the union of the boundary
-  // conditions will be applied at the node.
-  for (const auto& s : side) {
-    // get BC values for side set
-    auto b = bcval( s.first );
-    // query if any BC is to be set on the side set for any component of any of
-    // the PDEs integrated
-    bool ubc = std::any_of( b.cbegin(), b.cend(),
-                            [](const std::pair< bool, tk::real >& p)
-                            { return p.first; } );
-    // for all node IDs we contribute to in the side set associate BC values and
-    // whether they are set for a component (for all PDE components)
-    std::unordered_set< std::size_t > bcnodes;
-    for (auto o : s.second) {
-      auto n = own(o);
-      if (n.first && inset(n.second,s.second) && ubc) {
-        assign( b, n.second );          // assign BC values to nodes
-        bcnodes.insert( n.second );     // store BC nodes
+  // Query Dirichlet boundary conditions for all PDEs integrated. This is where
+  // the individual system of PDEs are queried for boundary conditions. The
+  // outer loop goes through all sides sets that exists in the input file and
+  // passes the map's value_type (a pair of the side set id and a vector of
+  // local node IDs) to PDE::dirbc(). PDE::dirbc() returns a new map that
+  // associates a vector of pairs associated to local node IDs. (The pair is a
+  // pair of bool and real value, the former is the fact that the BC is to be
+  // set while the latter is the value if it is to be set). The length of this
+  // NodeBC vector, returning from each system of PDEs equals to the number of
+  // scalar components the given PDE integrates. Here then we contatenate this
+  // map for all PDEs integrated. If there are multiple BCs set at a mesh node
+  // (dirbc::key), either because (1) in the same PDE system the user prescribed
+  // BCs on side sets that share nodes or (2) because more than a single PDE
+  // system assigns BCs to a given node (on different variables), the NodeBC
+  // vector must be correctly stored. "Correctly" here means that the size of
+  // the NodeBC vectors must all be the same and qual to the sum of all scalar
+  // components integrated by all PDE systems integrated. Example: single-phase
+  // compressible flow (density, momentum, energy = 5) + transported scalars of
+  // 10 variables -> NodeBC vector length = 15. Note that in case (1) above a
+  // new node encountered must "overwrite" the already existing space for the
+  // NodeBC vector. "Overwrite" here means that it should keep the existing BCs
+  // and add the new ones yielding the union the two prescription for BCs but in
+  // the same space that already exist in the NodeBC vector. In case (2),
+  // however, the NodeBC pairs must go to the location in the vector assigned to
+  // the given PDE system, i.e., using the above example BCs for the 10 (or
+  // less) scalars should go in the positions starting at 5, leaving the first 5
+  // false, indicating no BCs for the flow variables.
+  //
+  // TODO: Note that the logic described above is only partially implemented at
+  // this point. What works is the correct insertion of multiple BCs for nodes
+  // shared among multiple side sets, e.g., corners, originating from the same
+  // PDE system. What is not yet implemented is the case when there are no BCs
+  // set for flow variables but there are BCs for transport, the else branch
+  // below will incorrectly NOT skip the space for the flow variables. In other
+  // words, this only works for a single PDE system and a sytem of systems. This
+  // machinery is only tested with a single system of PDEs at this point.
+  for (const auto& s : m_side) {
+    std::size_t c = 0;
+    for (std::size_t eq=0; eq<g_pdes.size(); ++eq) {
+      auto eqbc = g_pdes[eq].dirbc( m_t, m_dt, s, m_coord );
+      for (const auto& n : eqbc) {
+        auto id = n.first;                      // BC node ID
+        const auto& bc = n.second;              // BCs
+        auto& nodebc = dirbc[ m_gid[id] ];      // BCs to be set for node
+        if (nodebc.size() > c) {        // node already has BCs from this PDE
+          Assert( nodebc.size() == c+bc.size(), "Size mismatch" );
+          for (std::size_t i=0; i<bc.size(); i++)
+            if (bc[i].first)
+              nodebc[c+i] = bc[i];
+        } else {        // node does not yet have BCs from this PDE
+          // This branch needs to be completed for system of systems of PDEs.
+          // See note above.
+          nodebc.insert( end(nodebc), begin(bc), end(bc) );
+        }
       }
+      if (!eqbc.empty()) c += eqbc.cbegin()->second.size();
     }
-    // associate BC values and whether they are set (for all PDE components) for
-    // all edge-nodes at whose both edge-end-points BCs are set
-    for (const auto& n : edgebc(bcnodes)) if (n.first) assign( b, n.second );
   }
 
-  // send progress report to host
+  // Verify the size of each NodeBC vectors. They must have the same lengths and
+  // equal to the total number of scalar components for all systems of PDEs
+  // integrated. This is intentional, because this way the linear system merger
+  // does not have to (and does not) know about individual equation systems.
+  for (const auto& n : dirbc) {
+    IGNORE(n);
+    Assert( n.second.size() == m_u.nprop(), "Size of NodeBC vector incorrect" );
+  }
+
+  // Send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_transporter.chbcmatched();
 
@@ -516,9 +501,8 @@ Carrier::init()
   // Send off initial guess for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
-  // Set initial and boundary conditions for all PDEs
-  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, dbc );
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
 
   // Compute initial time step size
   dt();
@@ -625,12 +609,14 @@ Carrier::rhs( const tk::Fields& sol )
       b[c*2+1] = std::numeric_limits< tk::real >::max();
     }
 
-  // Compute right-hand side vector for all equations
+  // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  // Scale dt by 0.5 for first stage in Runge-Kutta 2-stage time stepping only
-  // while computing the right-hand sides
+  // Scale dt by 0.5 for first stage in 2-stage time stepping
   if (m_stage < 1) m_dt *= 0.5;
   for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
+  // Query Dirichlet BCs and send to linear system merger
+  bc();
+  // Revert dt so that our copy is consistent with that of the host
   if (m_stage < 1) m_dt /= 0.5;
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
@@ -1177,9 +1163,8 @@ Carrier::diagnostics()
     // useful, but simplies the logic because all PDEs can be treated as baing
     // able to compute an error based on some "analytical" solution, which
     // really the initial condition.
-    auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid, dbc );
+      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2
     // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
@@ -1238,34 +1223,33 @@ Carrier::velocity( std::size_t e )
 bool
 Carrier::correctBC()
 // *****************************************************************************
-// Verify that solution does not change at Dirichlet boundary conditions
-//! \return True if the solution did not change at Dirichlet boundary condition
+//  Verify that the change in the solution at those nodes where Dirichlet
+//  boundary conditions are set is exactly the amount the BCs prescribe
+//! \return True if the solution is correct at Dirichlet boundary condition
 //!   nodes
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  auto& dirbc = m_linsysmerger.ckLocalBranch()->dirbc();
 
-  if (dbc.empty()) return true;
+  if (dirbc.empty()) return true;
 
-  tk::Fields b( dbc.size(), m_u.nprop() );
-  std::size_t i = 0;
-
-  for (const auto& n : dbc) {
-    auto p = m_lid.find(n.first);
-    if (p!=end(m_lid)) {
-      auto lid = p->second;
-      for (ncomp_t c=0; c<b.nprop(); ++c)
-        b(i,c,0) = std::abs( m_dul(lid,c,0) + m_a(lid,c,0) );
-      ++i;
-    }
+  for (const auto& s : m_side)
+    for (auto i : s.second) {
+      auto u = dirbc.find( m_gid[i] );
+      if (u != end(dirbc)) {
+        const auto& b = u->second;
+        Assert( b.size() == m_u.nprop(), "Size mismatch" );
+        for (std::size_t c=0; c<b.size(); ++c)
+          if ( b[c].first &&
+               std::abs( m_dul(i,c,0) + m_a(i,c,0) - b[c].second ) >
+                 std::numeric_limits< tk::real >::epsilon() ) {
+             return false;
+          }
+      }
   }
 
-  auto d = std::max_element( begin(b.data()), end(b.data()) );
-  if (*d > std::numeric_limits< tk::real >::epsilon())
-    return false;
-  else
-    return true;
+  return true;
 }
 
 void
@@ -1283,9 +1267,7 @@ Carrier::apply()
   }
 
   // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( correctBC(), "Dirichlet boundary condition incorrect. Solution "
-         "values at mesh nodes where Dirichlet boundary conditions are "
-         "prescribed must not change." );
+  Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (m_stage < 1)

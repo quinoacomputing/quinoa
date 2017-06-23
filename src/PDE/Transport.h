@@ -64,10 +64,8 @@ class Transport {
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     const std::vector< std::size_t >&,
-                     const std::unordered_map< std::size_t,
-                       std::vector< std::pair< bool, tk::real > > >& )
-    const {
+                     const std::vector< std::size_t >& ) const
+    {
       Problem::template
        init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
     }
@@ -310,14 +308,24 @@ class Transport {
     //!   in this PDE system
     static void side( std::unordered_set< int >& ) {}
 
-    //! \brief Query Dirichlet boundary condition value set by the user on a
-    //!   given side set for all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
-      std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
-      IGNORE(sideset);
-      return b;
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    dirbc( tk::real,
+           tk::real,
+           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::array< std::vector< tk::real >, 3 >& ) const
+    {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      // TODO
+      return bc;
     }
 
     //! Return field names to be output to file
@@ -363,7 +371,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t, {{}}, {{}} );
+      initialize( coord, U, t, {{}} );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

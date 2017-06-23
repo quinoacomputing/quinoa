@@ -52,6 +52,60 @@ class CompFlowProblemNLEnergyGrowth {
                         tk::real p )
     { return std::pow( -3.0*(ce + kappa*h*h*t), p ); }
 
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Time where to evaluate the solution
+    //! \return Values of all components evaluated at (x,y,z,t)
+    static std::array< tk::real, 5 >
+    solution( tk::ctr::ncomp_type e,
+              tk::real x, tk::real y, tk::real z, tk::real t )
+   {
+      using tag::param; using tag::compflow;
+      // manufactured solution parameters
+      const auto& ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
+      const auto& r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
+      const auto& alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
+      const auto& k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
+      const auto& bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
+      const auto& by = g_inputdeck.get< param, compflow, tag::betay >()[e];
+      const auto& bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
+      // spatial component of density field
+      const tk::real gx = 1.0 - (x*x + y*y + z*z);
+      // internal energy parameter
+      const auto h = hx( bx, by, bz, x, y, z );
+      // temporal component of the density field
+      tk::real ft = std::exp( -alpha*t );
+      // solution at t
+      auto r = r0 + ft*gx;
+      //return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
+      return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
+    }
+
+    //! \brief Evaluate the increment from t to t+dt of the analytical solution
+    //!   at (x,y,z) for all components
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Time where to evaluate the solution increment starting from
+    //! \param[in] dt Time increment at which evaluate the solution increment to
+    //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
+    static std::array< tk::real, 5 >
+    solinc( tk::ctr::ncomp_type e,
+            tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
+    {
+      auto st1 = solution( e, x, y, z, t );
+      auto st2 = solution( e, x, y, z, t+dt );
+      std::transform( begin(st1), end(st1), begin(st2), begin(st2),
+                      []( tk::real s, tk::real& d ){ return d -= s; } );
+      return st2;
+    }
+
   public:
 
     //! Set initial conditions
@@ -64,50 +118,23 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] t Physical time
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
                       const std::vector< std::size_t >&,
-                      const std::unordered_map< std::size_t,
-                              std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset,
                       tk::real t )
     {
-      // manufactured solution parameters
-      const auto& ce =
-        g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
-      const auto& r0 =
-        g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
-      const auto& alpha =
-        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
-      const auto& k =
-        g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
-      const auto& bx =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betax >()[e];
-      const auto& by =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
-      const auto& bz =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
-      // temporal component of density field
-      tk::real ft = std::exp( -alpha*t );
-      // set initial and boundary conditions
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        auto& r  = unk(i,0,offset); // rho
-        auto& ru = unk(i,1,offset); // rho * u
-        auto& rv = unk(i,2,offset); // rho * v
-        auto& rw = unk(i,3,offset); // rho * w
-        auto& re = unk(i,4,offset); // rho * e, e:total=kinetic+internal energy
-        // spatial component of density field
-        tk::real gx = 1.0 - (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
-        // internal energy parameter
-        const auto h = hx( bx, by, bz, x[i], y[i], z[i] );
-        // solution at t
-        r = r0 + ft*gx;
-        ru = 0.0;
-        rv = 0.0;
-        rw = 0.0;
-        re = r * ec(ce,k,t,h,-1.0/3.0);
+      // set initial and boundary conditions
+      for (ncomp_t i=0; i<coord[0].size(); ++i) {
+        const auto s = solution( e, x[i], y[i], z[i], t );
+        unk(i,0,offset) = s[0]; // rho
+        unk(i,1,offset) = s[1]; // rho * u
+        unk(i,2,offset) = s[2]; // rho * v
+        unk(i,3,offset) = s[3]; // rho * w
+        unk(i,4,offset) = s[4]; // rho * e, e: total = kinetic + internal energy
       }
     }
 
@@ -285,16 +312,41 @@ class CompFlowProblemNLEnergyGrowth {
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] t Physical time
+    //! \param[in] dt Time step size
+    //! \param[in] side Pair of side set ID and node IDs on the side set
+    //! \param[in] coord Mesh node coordinates
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    static std::unordered_map< std::size_t,
+                               std::vector< std::pair< bool, tk::real > > >
+    dirbc( tk::ctr::ncomp_type e,
+           tk::real t,
+           tk::real dt,
+           const std::pair< const int, std::vector< std::size_t > >& side,
+           const std::array< std::vector< tk::real >, 3 >& coord )
+    {
       using tag::param; using tag::compflow; using tag::bcdir;
-      std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        for (const auto& i : s)
-          if (std::stoi(i) == sideset)
-            for (auto& b : bc)
-               b = { true, 0.0 };
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      for (const auto& b : ubc[e])
+        if (std::stoi(b) == side.first)
+          for (auto n : side.second) {
+            Assert( x.size() > n, "Indexing out of coordinate array" );
+            auto s = solinc( e, x[n], y[n], z[n], t, dt );
+            bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
+                       {true,s[4]} }};
+          }
       return bc;
     }
 
@@ -333,21 +385,15 @@ class CompFlowProblemNLEnergyGrowth {
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const tk::Fields& U )
     {
+      using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& a =
-        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
-      const auto& bx =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betax >()[e];
-      const auto& by =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
-      const auto& bz =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
-      const auto& ce =
-        g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
-      const auto& kappa =
-        g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
-      const auto& r0 =
-        g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
+      const auto& ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
+      const auto& r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
+      const auto& alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
+      const auto& k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
+      const auto& bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
+      const auto& by = g_inputdeck.get< param, compflow, tag::betay >()[e];
+      const auto& bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
 
       std::vector< std::vector< tk::real > > out;
       const auto r  = U.extract( 0, offset );
@@ -363,7 +409,7 @@ class CompFlowProblemNLEnergyGrowth {
 
       std::vector< tk::real > rho = r;
       out.push_back( rho );
-      tk::real ft = std::exp(-a*t);
+      tk::real ft = std::exp( -alpha*t );
       for (std::size_t i=0; i<rho.size(); ++i) {
         tk::real gx = 1.0 - (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
         rho[i] = r0 + ft*gx;
@@ -396,7 +442,7 @@ class CompFlowProblemNLEnergyGrowth {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
       for (std::size_t i=0; i<E.size(); ++i)
-        E[i] = ec(ce, kappa, t, hx(bx,by,bz,x[i],y[i],z[i]), -1.0/3.0);
+        E[i] = ec( ce, k, t, hx(bx,by,bz,x[i],y[i],z[i]), -1.0/3.0 );
       out.push_back( E );
 
       return out;

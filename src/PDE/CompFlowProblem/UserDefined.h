@@ -28,25 +28,17 @@ class CompFlowProblemUserDefined {
 
     //! Set initial conditions
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] gid Global node IDs of owned elements
-    //! \param[in] bc Vector of pairs of bool and boundary condition value
-    //!   associated to mesh node IDs at which to set Dirichlet boundary
-    //!   conditions
     //! \param[in,out] unk Array of unknowns
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >& gid,
-                      const std::unordered_map< std::size_t,
-                              std::vector< std::pair< bool, tk::real > > >& bc,
+                      const std::vector< std::size_t >&,
                       tk::Fields& unk,
-                      tk::ctr::ncomp_type e,
+                      tk::ctr::ncomp_type,
                       tk::ctr::ncomp_type offset,
                       tk::real )
     {
-      IGNORE(e);
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       for (ncomp_t i=0; i<x.size(); ++i) {
         // domain points
@@ -55,14 +47,6 @@ class CompFlowProblemUserDefined {
         unk(i,2,offset) = 0.0;
         unk(i,3,offset) = 1.0;
         unk(i,4,offset) = 293.0;      // density * specific total energy
-        // boundary conditions
-        const auto b = bc.find( gid[i] );
-        if (b != end(bc)) {
-          const auto& v = b->second;
-          Assert( v.size() == 5, "Incorrect BC vector size" );
-          for (std::size_t c=0; c<v.size(); ++c)
-            if (v[c].first) unk(i,c,offset) = v[c].second;
-        }
       }
     }
 
@@ -101,21 +85,43 @@ class CompFlowProblemUserDefined {
         conf.insert( std::stoi(s[0]) );
     }
 
+//     //! \brief Query Dirichlet boundary condition value on a given side set for
+//     //!    all components in this PDE system
+//     //! \param[in] sideset Side set ID
+//     //! \return Vector of pairs of bool and BC value for all components
+//     static std::vector< std::pair< bool, tk::real > >
+//     dirbc( int sideset ) {
+//       using tag::param; using tag::compflow; using tag::bcdir;
+//       std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
+//       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >()) {
+//         Assert( s.size() == 3, "Side set vector size incorrect" );
+//         if (std::stoi(s[0]) == sideset)
+//           b[ static_cast<std::size_t>(std::stol(s[1])-1) ] =
+//             { true, std::atof(s[2].c_str()) };
+//       }
+//       return b;
+//     }
+
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    static std::vector< std::pair< bool, tk::real > >
-    dirbc( int sideset ) {
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    static std::unordered_map< std::size_t,
+                               std::vector< std::pair< bool, tk::real > > >
+    dirbc( tk::ctr::ncomp_type,
+           tk::real,
+           tk::real,
+           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::array< std::vector< tk::real >, 3 >& )
+    {
       using tag::param; using tag::compflow; using tag::bcdir;
-      std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >()) {
-        Assert( s.size() == 3, "Side set vector size incorrect" );
-        if (std::stoi(s[0]) == sideset)
-          b[ static_cast<std::size_t>(std::stol(s[1])-1) ] =
-            { true, std::atof(s[2].c_str()) };
-      }
-      return b;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      // TODO: include functionality from above dirbc() commented
+      return bc;
     }
 
     //! Return field output going to file

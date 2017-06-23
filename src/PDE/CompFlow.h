@@ -47,20 +47,14 @@ class CompFlow {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] gid Global node IDs of owned elements
-    //! \param[in] bc Vector of pairs of bool and boundary condition value
-    //!   associated to mesh node IDs at which to set Dirichlet boundary
-    //!   conditions
-    //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     const std::vector< std::size_t >& gid,
-                     const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc )
-    const {
+                     const std::vector< std::size_t >& gid ) const
+    {
       // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, bc, unk, 0, m_offset, t );
+      Problem::init( coord, gid, unk, 0, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -365,10 +359,21 @@ class CompFlow {
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    std::vector< std::pair< bool, tk::real > >
-    dirbc( int sideset ) const { return Problem::dirbc( sideset ); }
+    //! \param[in] t Physical time
+    //! \param[in] dt Time step size
+    //! \param[in] side Pair of side set ID and node IDs on the side set
+    //! \param[in] coord Mesh node coordinates
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    dirbc( tk::real t,
+           tk::real dt,
+           const std::pair< const int, std::vector< std::size_t > >& side,
+           const std::array< std::vector< tk::real >, 3 >& coord ) const
+    { return Problem::dirbc( 0, t, dt, side, coord ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

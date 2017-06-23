@@ -39,16 +39,14 @@ class CompFlowProblemTaylorGreen {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] t Physical time
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
                       const std::vector< std::size_t >&,
-                      const std::unordered_map< std::size_t,
-                              std::vector< std::pair< bool, tk::real > > >&,
                       tk::Fields& unk,
                       tk::ctr::ncomp_type e,
                       tk::ctr::ncomp_type offset,
-                      tk::real)
+                      tk::real )
     {
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       // dynamic = kinematic viscosity, since rho assumed 1.0
       // ratio of specific heats
       tk::real g =
@@ -128,18 +126,40 @@ class CompFlowProblemTaylorGreen {
           conf.insert( std::stoi(i) );
     }
 
+//     //! \brief Query Dirichlet boundary condition value on a given side set for
+//     //!    all components in this PDE system
+//     //! \param[in] sideset Side set ID
+//     //! \return Vector of pairs of bool and BC value for all components
+//     static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
+//       using tag::param; using tag::compflow; using tag::bcdir;
+//       std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
+//       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
+//         for (const auto& i : s)
+//           if (std::stoi(i) == sideset)
+//             for (auto& b : bc)
+//                b = { true, 0.0 };
+//       return bc;
+//     }
+
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    static std::unordered_map< std::size_t,
+                               std::vector< std::pair< bool, tk::real > > >
+    dirbc( tk::ctr::ncomp_type,
+           tk::real,
+           tk::real,
+           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::array< std::vector< tk::real >, 3 >& )
+    {
       using tag::param; using tag::compflow; using tag::bcdir;
-      std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        for (const auto& i : s)
-          if (std::stoi(i) == sideset)
-            for (auto& b : bc)
-               b = { true, 0.0 };
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      // TODO: include functionality from above dirbc() commented
       return bc;
     }
 
