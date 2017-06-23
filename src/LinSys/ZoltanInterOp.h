@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/ZoltanInterOp.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh

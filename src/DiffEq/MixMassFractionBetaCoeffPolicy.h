@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -109,7 +108,6 @@ namespace walker {
 //! \brief Mix mass-fraction beta SDE decay coefficients policy
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>.
-//! \author J. Bakosi
 class MixMassFracBetaCoeffDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -193,7 +191,6 @@ class MixMassFracBetaCoeffDecay {
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
 //!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
-//! \author J. Bakosi
 class MixMassFracBetaCoeffHomDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -317,7 +314,6 @@ class MixMassFracBetaCoeffHomDecay {
 //!   specification in MixMassFracBetaCoeffHomDecay, but uses more advanced
 //!   statistics, available from the Monte Carlo simulation, which yield a
 //!   simpler formula for the coefficient S.
-//! \author J. Bakosi
 class MixMassFracBetaCoeffMonteCarloHomDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -443,7 +439,6 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
 //!   in the evolution of <y^2>. Additionally, S is constrained to
 //!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
 //! \see kw::hydrotimescale_info
-//! \author J. Bakosi
 class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;

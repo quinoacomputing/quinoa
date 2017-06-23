@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Table.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Basic functionality for storing and sampling a discrete y = f(x)
              function

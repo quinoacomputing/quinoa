@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Factory.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
@@ -44,7 +43,6 @@ namespace tk {
 //!   reference semantics). The object is not instantiated here, i.e., the
 //!   constructor is not called here. The object can be instantiated by function
 //!   instantiate. \see instantiate
-//! \author J. Bakosi
 template< class C, class Key, class Factory, typename... ConstructorArgs >
 void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
   f.emplace( key,
@@ -68,7 +66,6 @@ void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
 //! \param[in] key Key used to identify the object to instantiate from factory
 //! \return std::unique_ptr pointing to the object instantiated from factory
 //! \see record
-//! \author J. Bakosi
 template< class Factory, class Key,
           class Obj = typename std::remove_pointer<
                         typename Factory::mapped_type::result_type >::type >
@@ -106,7 +103,6 @@ std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
 //!   constructor is not called here. The object can be instantiated by simply
 //!   calling the function call operator () on the mapped value. For an example,
 //!   RNGStack::selected() in RNG/RNGStack.C.
-//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename... ModelConstrArgs >
 void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
@@ -144,7 +140,6 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
 //! \warning Only works with a single constructor argument
-//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename ModelConstrArg >
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
@@ -177,7 +172,6 @@ void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
 //! \param[in] key Key used to identify the entry in the factory
 //! \param[in] args Variable number of arguments to pass to the constructor
 //!   being registered.
-//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename... ModelConstrArgs >
 void recordCharmModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {

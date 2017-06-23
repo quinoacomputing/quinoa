@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Random123Grammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random123-related grammar
   \details   This file defines Random1232 library related grammar, (re-)used by
@@ -22,14 +21,12 @@ namespace random123 {
   // Random123 PEGTL grammar
 
   //! \brief rng: match any one of the Random123 random number generators
-  //! \author J. Bakosi
   template< template< class > class use >
   struct rng :
          pegtl::sor< typename use< kw::r123_threefry >::pegtl_string,
                      typename use< kw::r123_philox >::pegtl_string > {};
 
   //! \brief Match and set Random123 RNG seed
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
@@ -39,7 +36,6 @@ namespace random123 {
 
   //! \brief Match Random123 RNGs in an rngs ... end block
   //! \see walker::deck::rngs
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct rngs :

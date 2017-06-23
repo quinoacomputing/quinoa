@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -139,7 +138,6 @@ static DerivedData_group DerivedData( "Mesh/DerivedData" );
 //! Test definitions for group
 
 //! Attempt to shift empty container using shiftToZero
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 1 >() {
   set_test_name( "shiftToZero graceful with empty inpoel" );
@@ -152,7 +150,6 @@ void DerivedData_object::test< 1 >() {
 }
 
 //! Shift node ids to zero in line mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 2 >() {
   set_test_name( "shiftToZero for lines" );
@@ -180,7 +177,6 @@ void DerivedData_object::test< 2 >() {
 }
 
 //! Shift node ids to zero in triangle mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 3 >() {
   set_test_name( "shiftToZero for triangles" );
@@ -220,7 +216,6 @@ void DerivedData_object::test< 3 >() {
 }
 
 //! Shift node ids to zero in tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 4 >() {
   set_test_name( "shiftToZero for tetrahedra" );
@@ -260,7 +255,6 @@ void DerivedData_object::test< 4 >() {
 }
 
 //! Attempt to generate elements surrounding points with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 5 >() {
   set_test_name( "genEsup throws with empty inpoel" );
@@ -280,7 +274,6 @@ void DerivedData_object::test< 5 >() {
 }
 
 //! Test genEsup if it throws on non-positive nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 6 >() {
   set_test_name( "genEsup throws on non-positive nnpe" );
@@ -303,7 +296,6 @@ void DerivedData_object::test< 6 >() {
 
 //! \brief Test genEsup if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 7 >() {
   set_test_name( "genEsup throws on inpoel non-div nnpe" );
@@ -324,7 +316,6 @@ void DerivedData_object::test< 7 >() {
 }
 
 //! Generate and test elements surrounding points for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 8 >() {
   set_test_name( "genEsup for tetrahedra" );
@@ -408,7 +399,6 @@ void DerivedData_object::test< 8 >() {
 }
 
 //! Generate and test elements surrounding points for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 9 >() {
   set_test_name( "genEsup for triangles" );
@@ -492,7 +482,6 @@ void DerivedData_object::test< 9 >() {
 }
 
 //! Attempt to generate points surrounding points with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 10 >() {
   set_test_name( "genPsup throws with empty inpoel" );
@@ -513,7 +502,6 @@ void DerivedData_object::test< 10 >() {
 }
 
 //! Test genPsup if it throws on non-positive number of nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 11 >() {
   set_test_name( "genPsup throws on non-positive nnpe" );
@@ -533,7 +521,6 @@ void DerivedData_object::test< 11 >() {
 }
 
 //! Test genPsup if it throws with empty element surrounding points
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 12 >() {
   set_test_name( "genPsup throws with empty esup.first" );
@@ -553,7 +540,6 @@ void DerivedData_object::test< 12 >() {
 }
 
 //! Test genPsup if it throws with empty element surrounding points
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 13 >() {
   set_test_name( "genPsup throws with empty esup.second" );
@@ -574,7 +560,6 @@ void DerivedData_object::test< 13 >() {
 
 //! \brief Test genPsup if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 14 >() {
   set_test_name( "genPsup throws on inpoel non-div nnpe" );
@@ -596,7 +581,6 @@ void DerivedData_object::test< 14 >() {
 }
 
 //! Generate and test points surrounding points for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 15 >() {
   set_test_name( "genPsup for tetrahedra" );
@@ -680,7 +664,6 @@ void DerivedData_object::test< 15 >() {
 }
 
 //! Generate and test points surrounding points for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 16 >() {
   set_test_name( "genPsup for triangles" );
@@ -765,7 +748,6 @@ void DerivedData_object::test< 16 >() {
 
 //! \brief Attempt to generate elements surrounding points of elements with
 //!   empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 17 >() {
   set_test_name( "genEsupel throws with empty inpoel" );
@@ -786,7 +768,6 @@ void DerivedData_object::test< 17 >() {
 }
 
 //! Test genEsupel if it throws on non-positive nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 18 >() {
   set_test_name( "genEsupel throws on non-positive nnpe" );
@@ -806,7 +787,6 @@ void DerivedData_object::test< 18 >() {
 }
 
 //! Test genEsupel if it throws with empty element surrounding points . first
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 19 >() {
   set_test_name( "genEsupel throws with empty esup.first" );
@@ -826,7 +806,6 @@ void DerivedData_object::test< 19 >() {
 }
 
 //! Test genEsupel if it throws with empty element surrounding points . second
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 20 >() {
   set_test_name( "genEsupel throws with empty esup.second" );
@@ -847,7 +826,6 @@ void DerivedData_object::test< 20 >() {
 
 //! \brief Test genEsupel if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 21 >() {
   set_test_name( "genEsupel throws on inpoel non-div nnpe" );
@@ -869,7 +847,6 @@ void DerivedData_object::test< 21 >() {
 
 //! \brief Generate and test elements surrounding points of elements for
 //!   tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 22 >() {
   set_test_name( "genEsupel for tetrahedra" );
@@ -976,7 +953,6 @@ void DerivedData_object::test< 22 >() {
 
 //! \brief Generate and test elements surrounding points of elements for
 //!   triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 23 >() {
   set_test_name( "genEsupel for triangles" );
@@ -1070,7 +1046,6 @@ void DerivedData_object::test< 23 >() {
 }
 
 //! Attempt to generate elements surrounding elements with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 24 >() {
   set_test_name( "genEsuel throws with empty inpoel" );
@@ -1090,7 +1065,6 @@ void DerivedData_object::test< 24 >() {
 }
 
 //! Test genEsuel if it throws on non-positive nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 25 >() {
   set_test_name( "genEsuel throws on non-positive nnpe" );
@@ -1110,7 +1084,6 @@ void DerivedData_object::test< 25 >() {
 }
 
 //! Test genEsuel if it throws with empty element surrounding points .first
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 26 >() {
   set_test_name( "genEsuel throws with empty esup.first" );
@@ -1130,7 +1103,6 @@ void DerivedData_object::test< 26 >() {
 }
 
 //! Test genEsuel if it throws with empty element surrounding points . second
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 27 >() {
   set_test_name( "genEsuel throws with empty esup.second" );
@@ -1151,7 +1123,6 @@ void DerivedData_object::test< 27 >() {
 
 //! \brief Test genEsuel if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 28 >() {
   set_test_name( "genEsuel throws on inpoel non-div nnpe" );
@@ -1172,7 +1143,6 @@ void DerivedData_object::test< 28 >() {
 }
 
 //! Generate and test elements surrounding elements for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 29 >() {
   set_test_name( "genEsuel for tetrahedra" );
@@ -1268,7 +1238,6 @@ void DerivedData_object::test< 29 >() {
 }
 
 //! Generate and test elements surrounding elements for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 30 >() {
   set_test_name( "genEsuel for triangles" );
@@ -1364,7 +1333,6 @@ void DerivedData_object::test< 30 >() {
 }
 
 //! Attempt to generate edges surrounding points with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 31 >() {
   set_test_name( "genEdsup throws with empty inpoel" );
@@ -1385,7 +1353,6 @@ void DerivedData_object::test< 31 >() {
 }
 
 //! Test genEdsup if it throws on non-positive number of nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 32 >() {
   set_test_name( "genEdsup throws on non-positive nnpe" );
@@ -1406,7 +1373,6 @@ void DerivedData_object::test< 32 >() {
 
 //! \brief Test genEdsup if it throws on non-tet or non-tri number of nodes per
 //!   elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 33 >() {
   set_test_name( "genEdsup throws on unsupported nnpe" );
@@ -1426,7 +1392,6 @@ void DerivedData_object::test< 33 >() {
 }
 
 //! Test genEdsup if it throws with empty element surrounding points
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 34 >() {
   set_test_name( "genEdsup throws with empty esup.first" );
@@ -1446,7 +1411,6 @@ void DerivedData_object::test< 34 >() {
 }
 
 //! Test genEdsup if it throws with empty element surrounding points
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 35 >() {
   set_test_name( "genEdsup throws with empty esup.second" );
@@ -1467,7 +1431,6 @@ void DerivedData_object::test< 35 >() {
 
 //! \brief Test genEdsup if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 36 >() {
   set_test_name( "genEdsup throws on inpoel non-div nnpe" );
@@ -1489,7 +1452,6 @@ void DerivedData_object::test< 36 >() {
 }
 
 //! Generate and test edges surrounding points for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 37 >() {
   set_test_name( "genEdsup for tetrahedra" );
@@ -1584,7 +1546,6 @@ void DerivedData_object::test< 37 >() {
 }
 
 //! Generate and test edges surrounding points for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 38 >() {
   set_test_name( "genEdsup for triangles" );
@@ -1680,7 +1641,6 @@ void DerivedData_object::test< 38 >() {
 }
 
 //! Attempt to generate edge connectivity with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 39 >() {
   set_test_name( "genInpoed throws with empty inpoel" );
@@ -1701,7 +1661,6 @@ void DerivedData_object::test< 39 >() {
 }
 
 //! Test genInpoed if it throws on non-positive number of nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 40 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
@@ -1722,7 +1681,6 @@ void DerivedData_object::test< 40 >() {
 
 //! \brief Test genInpoed if it throws on non-tet or non-tri number of nodes per
 //!   elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 41 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
@@ -1742,7 +1700,6 @@ void DerivedData_object::test< 41 >() {
 }
 
 //! Test genInpoed if it throws with empty element surrounding points . first
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 42 >() {
   set_test_name( "genInpoed throws with empty esup.first" );
@@ -1762,7 +1719,6 @@ void DerivedData_object::test< 42 >() {
 }
 
 //! Test genInpoed if it throws with empty element surrounding points .second
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 43 >() {
   set_test_name( "genInpoed throws with empty esup.second" );
@@ -1783,7 +1739,6 @@ void DerivedData_object::test< 43 >() {
 
 //! \brief Test genInpoed if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 44 >() {
   set_test_name( "genInpoed throws on inpoel non-div nnpe" );
@@ -1805,7 +1760,6 @@ void DerivedData_object::test< 44 >() {
 }
 
 //! Generate and test edge connectivity for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 45 >() {
   set_test_name( "genInpoed for tetrahedra" );
@@ -1876,7 +1830,6 @@ void DerivedData_object::test< 45 >() {
 }
 
 //! Generate and test edge connectivity for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 46 >() {
   set_test_name( "genInpoed for triangles" );
@@ -1942,7 +1895,6 @@ void DerivedData_object::test< 46 >() {
 }
 
 //! Attempt to generate edges of elements with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 47 >() {
   set_test_name( "genInedel throws with empty inpoel" );
@@ -1963,7 +1915,6 @@ void DerivedData_object::test< 47 >() {
 }
 
 //! Test genInedel if it throws on non-positive number of nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 48 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
@@ -1984,7 +1935,6 @@ void DerivedData_object::test< 48 >() {
 
 //! \brief Test genInedel if it throws on non-tet or non-tri number of nodes per
 //!   elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 49 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
@@ -2004,7 +1954,6 @@ void DerivedData_object::test< 49 >() {
 }
 
 //! Test genInedel if it throws with empty edge connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 50 >() {
   set_test_name( "genInpoed throws with empty inpoed" );
@@ -2025,7 +1974,6 @@ void DerivedData_object::test< 50 >() {
 
 //! \brief Test genInedel if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 51 >() {
   set_test_name( "genInedel throws on inpoel non-div nnpe" );
@@ -2047,7 +1995,6 @@ void DerivedData_object::test< 51 >() {
 }
 
 //! Generate and test edges of elements for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 52 >() {
   set_test_name( "genInedel for tetrahedra" );
@@ -2143,7 +2090,6 @@ void DerivedData_object::test< 52 >() {
 }
 
 //! Generate and test edges of elements for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 53 >() {
   set_test_name( "genInedel for triangles" );
@@ -2238,7 +2184,6 @@ void DerivedData_object::test< 53 >() {
 }
 
 //! Attempt to generate elements surrounding edges with empty connectivity
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 54 >() {
   set_test_name( "genEsued throws with empty inpoel" );
@@ -2259,7 +2204,6 @@ void DerivedData_object::test< 54 >() {
 }
 
 //! Test genEsued if it throws on non-positive number of nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 55 >() {
   set_test_name( "genEsued throws on non-positive nnpe" );
@@ -2280,7 +2224,6 @@ void DerivedData_object::test< 55 >() {
 
 //! \brief Test genEsued if it throws on non-tet or non-tri number of nodes per
 //!   elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 56 >() {
   set_test_name( "genEsued throws on unsupported nnpe" );
@@ -2300,7 +2243,6 @@ void DerivedData_object::test< 56 >() {
 }
 
 //! Test genEsued if it throws with empty element surrounding points . first
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 57 >() {
   set_test_name( "genEsued throws with empty esup.first" );
@@ -2320,7 +2262,6 @@ void DerivedData_object::test< 57 >() {
 }
 
 //! Test genEsued if it throws with empty element surrounding points . second
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 58 >() {
   set_test_name( "genEsued throws with empty esup.second" );
@@ -2341,7 +2282,6 @@ void DerivedData_object::test< 58 >() {
 
 //! \brief Test genEsued if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 59 >() {
   set_test_name( "genEsued throws on inpoel non-div nnpe" );
@@ -2363,7 +2303,6 @@ void DerivedData_object::test< 59 >() {
 }
 
 //! Generate and test elements surrounding edges for tetrahedron-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 60 >() {
   set_test_name( "genEsued for tetrahedra" );
@@ -2487,7 +2426,6 @@ void DerivedData_object::test< 60 >() {
 }
 
 //! Generate and test elements surrounding edges for triangle-only mesh
-//! \author J. Bakosi
 template<> template<>
 void DerivedData_object::test< 61 >() {
   set_test_name( "genEsued for triangles" );

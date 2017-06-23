@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Exception.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Exception class definition
   \details   Exception class definition
@@ -37,7 +36,6 @@ Exception::Exception( std::string&& message,
 //!   Exception safety: no-throw guarantee: this member function never throws
 //!   exceptions.
 //! \see Assert, ErrChk, Throw
-//! \author J. Bakosi
 // *****************************************************************************
 try :
 #ifdef NDEBUG
@@ -82,7 +80,6 @@ Exception::~Exception() noexcept
 //  Destructor
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // allocated by execinfo.h's backtrace_symbols() in Exception::saveTrace()
@@ -97,7 +94,6 @@ Exception::saveTrace() noexcept
 //!   throws exceptions. For more information see the libc manual at
 //!   http://www.gnu.org/software/libc/manual/html_node/Backtraces.html.
 //!   Requires stdio.h, execinfo.h.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Retrieve current stack addresses
@@ -120,7 +116,6 @@ Exception::echoTrace() noexcept
 //!   * http://panthema.net/2008/0901-stacktrace-demangled
 //!   * http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
 //!   * http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
-//! \author T. Bingmann, J. Bakosi
 // *****************************************************************************
 {
   // Allocate string which will be filled with the demangled function name
@@ -180,7 +175,6 @@ Exception::handleException() noexcept
 //! \return Error code, as defined in stdlib.h, i.e., cstdlib
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   printf("\n>>> Error: %s\n", what());

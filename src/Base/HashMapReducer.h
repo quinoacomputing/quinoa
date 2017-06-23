@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/HashMapReducer.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::unordered_maps across PEs
   \details   Custom Charm++ reducer for merging std::unordered_maps across PEs.
@@ -22,7 +21,6 @@ namespace tk {
 //! Serialize std::unordered_map to raw memory stream
 //! \param[in] m Hash map to serialize
 //! \return Pair of the length and the raw stream containing the serialized map
-//! \author J. Bakosi
 template< class Key,
           class T,
           class Hash = std::hash< Key >,
@@ -55,7 +53,6 @@ serialize( const std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
 //!   end() iterators() are concatenated.
 //! \note The mapped type must be a container, i.e., must provide iterators
 //!   begin() and end().
-//! \author J. Bakosi
 template< class Key,
           class T,
           class Hash = std::hash< Key >,

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestRandom123.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/Random123.h
   \details   Unit tests for RNG/Random123.h
@@ -37,7 +36,6 @@ static Random123_group Random123( "RNG/Random123" );
 #endif
 
 //! Test that constructor throws with zero number of threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
@@ -65,7 +63,6 @@ void Random123_object::test< 1 >() {
 #endif
 
 //! Test uniform generator statistics from threefry using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 2 >() {
   set_test_name( "uniform threefry from a single stream" );
@@ -75,7 +72,6 @@ void Random123_object::test< 2 >() {
 }
 
 //! Test uniform generator statistics from threefry using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 3 >() {
   set_test_name( "uniform threefry from 4 emulated streams" );
@@ -85,7 +81,6 @@ void Random123_object::test< 3 >() {
 }
 
 //! Test Gaussian generator statistics from threefry using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 4 >() {
   set_test_name( "Gaussian threefry from a single stream" );
@@ -95,7 +90,6 @@ void Random123_object::test< 4 >() {
 }
 
 //! Test Gaussian generator statistics from threefry using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 5 >() {
   set_test_name( "Gaussian threefry from 4 emulated streams" );
@@ -105,7 +99,6 @@ void Random123_object::test< 5 >() {
 }
 
 //! Test beta generator statistics from threefry using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 6 >() {
   set_test_name( "beta threefry from a single stream" );
@@ -115,7 +108,6 @@ void Random123_object::test< 6 >() {
 }
 
 //! Test beta generator statistics from threefry using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 7 >() {
   set_test_name( "beta threefry from 4 emulated streams" );
@@ -125,7 +117,6 @@ void Random123_object::test< 7 >() {
 }
 
 //! Test copy constructor for threefry
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 8 >() {
   set_test_name( "copy constructor with threefry" );
@@ -137,7 +128,6 @@ void Random123_object::test< 8 >() {
 }
 
 //! Test move constructor for threefry
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 9 >() {
   set_test_name( "move constructor with threefry" );
@@ -147,7 +137,6 @@ void Random123_object::test< 9 >() {
 }
 
 //! Test copy assignment for threefry
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 10 >() {
   set_test_name( "copy assignment with threefry" );
@@ -159,7 +148,6 @@ void Random123_object::test< 10 >() {
 }
 
 //! Test move assignment for threefry
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 11 >() {
   set_test_name( "move assignment with threefry" );
@@ -171,7 +159,6 @@ void Random123_object::test< 11 >() {
 }
 
 //! Test uniform generator statistics from philox using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 12 >() {
   set_test_name( "uniform philox from a single stream" );
@@ -181,7 +168,6 @@ void Random123_object::test< 12 >() {
 }
 
 //! Test uniform generator statistics from philox using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 13 >() {
   set_test_name( "uniform philox from 4 emulated streams" );
@@ -191,7 +177,6 @@ void Random123_object::test< 13 >() {
 }
 
 //! Test Gaussian generator statistics from philox using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 14 >() {
   set_test_name( "Gaussian philox from a single stream" );
@@ -201,7 +186,6 @@ void Random123_object::test< 14 >() {
 }
 
 //! Test Gaussian generator statistics from philox using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 15 >() {
   set_test_name( "Gaussian philox from 4 emulated streams" );
@@ -211,7 +195,6 @@ void Random123_object::test< 15 >() {
 }
 
 //! Test beta generator statistics from philox using a single thread
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 16 >() {
   set_test_name( "beta philox from a single stream" );
@@ -221,7 +204,6 @@ void Random123_object::test< 16 >() {
 }
 
 //! Test beta generator statistics from philox using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 17 >() {
   set_test_name( "beta philox from 4 emulated streams" );
@@ -231,7 +213,6 @@ void Random123_object::test< 17 >() {
 }
 
 //! Test copy constructor for philox
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 18 >() {
   set_test_name( "copy constructor with philox" );
@@ -243,7 +224,6 @@ void Random123_object::test< 18 >() {
 }
 
 //! Test move constructor for philox
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 19 >() {
   set_test_name( "move constructor with philox" );
@@ -253,7 +233,6 @@ void Random123_object::test< 19 >() {
 }
 
 //! Test copy assignment for philox
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 20 >() {
   set_test_name( "copy assignment with philox" );
@@ -265,7 +244,6 @@ void Random123_object::test< 20 >() {
 }
 
 //! Test move assignment for philox
-//! \author J. Bakosi
 template<> template<>
 void Random123_object::test< 21 >() {
   set_test_name( "move assignment with philox" );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessException.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Process an exception definition
   \details   This file contains the definition of processing an exception.

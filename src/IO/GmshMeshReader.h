@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
@@ -26,7 +25,6 @@ class UnsMesh;
 //! Gmsh mesh reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
 //!   the Gmsh mesh generator: http://geuz.org/gmsh.
-//! \author J. Bakosi
 class GmshMeshReader : public Reader {
 
   public:
@@ -56,14 +54,12 @@ class GmshMeshReader : public Reader {
 
     //! \brief Mesh ASCII type query
     //! \return true if member variable m_type indicates an ASCII mesh format
-    //! \author J. Bakosi
     bool isASCII() const {
       Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::ASCII ? true : false;
     }
     //! \brief Mesh binary type query
     //! \return true if member variable m_type indicates an binary mesh format
-    //! \author J. Bakosi
     bool isBinary() const {
       Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::BINARY ? true : false;

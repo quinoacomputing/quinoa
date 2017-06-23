@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Integrator.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -41,7 +40,6 @@ Integrator::Integrator( CProxy_Distributor& hostproxy,
 //! \param[in] hostproxy Host proxy to call back to
 //! \param[in] collproxy Collector proxy to send results to
 //! \param[in] npar Number of particles this integrator advances
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // register with the local branch of the statistics collector
@@ -78,7 +76,6 @@ void
 Integrator::ic()
 // *****************************************************************************
 // Set initial conditions
-//! \author J. Bakosi
 // *****************************************************************************
 {
   for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
@@ -95,7 +92,6 @@ Integrator::advance( tk::real dt,
 //! \param[in] t Physical time
 //! \param[in] it Iteration count
 //! \param[in] moments Map of statistical moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Advance all equations one step in time. At the 0th iteration skip advance
@@ -122,7 +118,6 @@ void
 Integrator::accumulateOrd()
 // *****************************************************************************
 // Accumulate sums for ordinary moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Accumulate partial sums for ordinary moments
@@ -136,7 +131,6 @@ Integrator::accumulateCen( const std::vector< tk::real >& ord )
 // *****************************************************************************
 // Accumulate sums for central moments
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Accumulate partial sums for central moments
@@ -149,7 +143,6 @@ void
 Integrator::accumulateOrdPDF()
 // *****************************************************************************
 // Accumulate sums for ordinary PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Accumulate partial sums for ordinary PDFs
@@ -165,7 +158,6 @@ Integrator::accumulateCenPDF( const std::vector< tk::real >& ord )
 // *****************************************************************************
 // Accumulate sums for central PDFs
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Accumulate partial sums for central PDFs
