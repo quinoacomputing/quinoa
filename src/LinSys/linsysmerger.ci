@@ -191,9 +191,9 @@ module linsysmerger {
           signal2host_row_complete( m_host ); } };
 
       entry void wait4lhsbc() {
-        when lhs_complete(), bc_complete() serial "lhsbc" { lhsbc(); } };
+        when lhs_complete(), bc_complete_lhs() serial "lhsbc" { lhsbc(); } };
       entry void wait4rhsbc() {
-        when rhs_complete(), bc_complete() serial "rhsbc" { rhsbc(); } };
+        when rhs_complete(), bc_complete_rhs() serial "rhsbc" { rhsbc(); } };
 
       entry void wait4sol() {
         when sol_complete() serial "hypresol" { hypresol(); } };
@@ -229,7 +229,8 @@ module linsysmerger {
         when auxsolve_complete() serial "updateaux" { updateAuxSol(); } };
 
       entry void row_complete();
-      entry void bc_complete();
+      entry void bc_complete_lhs();
+      entry void bc_complete_rhs();
       entry void lhsbc_complete();
       entry void rhsbc_complete();
       entry void hyprerow_complete();

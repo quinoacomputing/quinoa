@@ -703,7 +703,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       creator | m_bc;
       delete msg;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
-      bc_complete(); bc_complete();
+      bc_complete_lhs(); bc_complete_rhs();
       m_nchbc = 0;
     }
 
