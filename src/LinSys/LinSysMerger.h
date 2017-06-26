@@ -690,7 +690,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
         }
       // Forward all BC vectors received to fellow branches
       if (++m_nchbc == m_nchare) {
-std::cout << CkMyPe() << " charebc contr\n";// << m_nchbc << " of " << m_nchare << '\n';
         auto stream = tk::serialize( m_bc );
         Group::contribute( stream.first, stream.second.get(), BCMapMerger,
                       CkCallback(GroupIdx::addbc(nullptr),Group::thisProxy) );
@@ -698,13 +697,11 @@ std::cout << CkMyPe() << " charebc contr\n";// << m_nchbc << " of " << m_nchare 
     }
     // Reduction target collecting the final aggregated BC node list map
     void addbc( CkReductionMsg* msg ) {
-std::cout << CkMyPe() << " addbc\n";// << m_nchbc << " of " << m_nchare << '\n';
       PUP::fromMem creator( msg->getData() );
       creator | m_bc;
       delete msg;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
-      //bc_complete(); bc_complete();
-      bc_complete_rhs();  bc_complete_lhs();
+      bc_complete(); bc_complete();
       m_nchbc = 0;
     }
 
@@ -969,7 +966,6 @@ std::cout << CkMyPe() << " addbc\n";// << m_nchbc << " of " << m_nchare << '\n';
 
     //! Set boundary conditions on the left-hand side matrix
     void lhsbc() {
-std::cout << CkMyPe() << " lhsbc\n";
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
