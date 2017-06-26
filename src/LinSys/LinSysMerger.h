@@ -703,8 +703,8 @@ std::cout << CkMyPe() << " addbc\n";// << m_nchbc << " of " << m_nchare << '\n';
       creator | m_bc;
       delete msg;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
-      bc_complete(); bc_complete();
-      //bc_complete_rhs();  bc_complete_lhs();
+      //bc_complete(); bc_complete();
+      bc_complete_rhs();  bc_complete_lhs();
       m_nchbc = 0;
     }
 
