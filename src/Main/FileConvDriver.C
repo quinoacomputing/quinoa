@@ -9,7 +9,7 @@
 // *****************************************************************************
 
 #include <utility>
-#include <iostream>
+#include <memory>
 
 #include "Types.h"
 #include "Tags.h"
@@ -51,13 +51,11 @@ FileConvDriver::execute() const
 
   std::vector< std::pair< std::string, tk::real > > times( 1 );
 
-  tk::FileConvWriter *fcw = new tk::FileConvWriter( m_input, m_output );
-
+  std::unique_ptr< tk::FileConvWriter > fcw(new tk::FileConvWriter
+					  ( m_input, m_output ) );
   fcw->convertFiles();
 
   mainProxy.timestamp( times );
-
-  delete fcw;
-
   mainProxy.finalize();
+
 }

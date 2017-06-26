@@ -46,7 +46,7 @@ class FileConvWriter {
     const std::string m_file_root;         // Root File name
     const std::string m_file_exodus;       // ExodusII File name
 
-    TFile *m_infile = nullptr;                // Root File handle
+    TFile *m_infile = nullptr;             // Root File handle
     TTree *tree_local = nullptr;           // Get the tree handle from ROOT
 
     //! Write the timestamp and the variables data

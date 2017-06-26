@@ -52,10 +52,14 @@ message("  BIN_DIFF_PROG_CONF (binary diff tool configuration file(s)) : ${BIN_D
 message("  BIN_BASELINE (binary output known good solution file(s))    : ${BIN_BASELINE}")
 message("  BIN_RESULT (binary output file(s) diffed with good solution): ${BIN_RESULT}")
 
+message("  FILE_CONV_PROG ( File conv tool program)                    : ${FILECONV_PROG}")
+message("  FILE_CONV_PROG_ARGS (File conv tool arguments)              : ${FILECONV_PROG_ARGS}")
+message("  FILECONV_RESULT (Converted file(s))                         : ${FILECONV_RESULT}")
+
 # Remove previous test output (if any)
-if(TEXT_RESULT OR BIN_RESULT)
-  message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT}\n")
-  file(REMOVE ${TEXT_RESULT} ${BIN_RESULT})
+if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT)
+  message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT}\n")
+  file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT})
 endif()
 
 # Configure test run command
@@ -85,6 +89,16 @@ else() # Test command ran successfully, attempt to do diffs
     endif()
   elseif(POSTPROCESS_PROG_OUTPUT)
     message(WARNING "Postprocessor not found, but would be required for this test to be rigorous")
+  endif()
+
+  # Run fileconv program if args are specified
+  if (FILECONV_PROG_ARGS)
+    set(fileconv_command ${FILECONV_PROG} ${FILECONV_PROG_ARGS})
+    message("\nRunning file convert  command: \n")
+    execute_process(COMMAND ${fileconv_command} RESULT_VARIABLE ERROR )
+    if(ERROR)
+      message(FATAL_ERROR "File converter failed to run, returned error code: ${ERROR}")
+    endif()
   endif()
 
   # Do textual diff(s) if

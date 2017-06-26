@@ -30,10 +30,8 @@ FileConvWriter::FileConvWriter( const std::string& file_root,
   m_file_exodus( file_exodus )
 // *****************************************************************************
 //  Constructor: open Exodus II file, Root file
-//! \param[in] filename File to open as ExodusII file
-//! \param[inout] mesh Unstructured mesh object to load the data to
-//! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
-//! \param[in] iowordsize Set I/O word size, see ExodusII documentation
+//! \param[in] file_root File to open as ROOT file.
+//! \param[in] file_exodus File to be opened as ExodusII file to be written.
 //! \author A. Pakki
 // *****************************************************************************
 {
@@ -96,7 +94,7 @@ FileConvWriter::writeHeader()
   tree_local->SetBranchAddress( "coord", &coord );
 
   tree_local->GetEntry( 0 );
-  emw->writeHeaderObject( "Data copied from ROOT",
+  emw->writeHeader( "Data copied from ROOT",
                  3, 
 		 coord,
 		 (connect / 4),
@@ -125,7 +123,7 @@ FileConvWriter::writeCoordinates()
   tree_local->GetEntry( 0 );
 
   // write to ExodusII
-  emw->writeNodesObject( *mx, *my, *mz );
+  emw->writeNodes( *mx, *my, *mz );
   tree_local->ResetBranchAddresses();
 
 }
@@ -138,16 +136,16 @@ FileConvWriter::writeConnectivity()
 //*****************************************************************************
 {
 
+  // param[0] - elclass, refer ExodusIIMeshWriter.C
+  // param[1] - vertices, 4 is the number of vertices of Tetrahedron
+  // param[2] - string literal TETRAHEDRA/TRIANGLES
+  int elclass = 0;
   std::vector<std::size_t> *tets_number = nullptr;
 
   tree_local->SetBranchAddress( "tetconnect", &tets_number );
   tree_local->GetEntry( 0 );
 
-  // write to ExodusII 
-  // param[0] - elclass, refer ExodusIIMeshWriter.C)
-  // param[1] - vertices, 4 is the number of vertices of Tetrahedron
-  // param[2] - string literal TETRAHEDRA/TRIANGLES
-  emw->writeElemBlockObject( 0, 4, "TETRAHEDRA", *tets_number );
+  emw->writeElemBlock( elclass, 4, "TETRAHEDRA", *tets_number );
   tree_local->ResetBranchAddresses();
 
 }
@@ -210,4 +208,7 @@ FileConvWriter::writeData()
     timestep++;
 
   } // break after all the variables for all the timesteps are written
+  tree_local->ResetBranchAddresses();
+
 }
+

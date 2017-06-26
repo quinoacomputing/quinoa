@@ -10,11 +10,8 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
 #include <string>
 #include <utility>
-#include <cstdint>
-#include <cstdio>
 
 #include "NoWarning/exodusII.h"
 
@@ -112,7 +109,7 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
-ExodusIIMeshWriter::writeHeaderObject( const char* title, int64_t ndim, 
+ExodusIIMeshWriter::writeHeader( const char* title, int64_t ndim, 
 		      int64_t nnodes, int64_t nelem, int64_t nblk, 
 		      int64_t node_set, int64_t side_set) const
 // *****************************************************************************
@@ -141,7 +138,7 @@ ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 }
 
 void
-ExodusIIMeshWriter::writeNodesObject( const std::vector< tk::real >& x,
+ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
 				      const std::vector< tk::real >& y,
 				      const std::vector< tk::real >& z) const
 // *****************************************************************************
@@ -216,23 +213,6 @@ const
                        nullptr, nullptr ) == 0,
           "Failed to write " + eltype + " element connectivity to ExodusII "
           "file: " + m_filename );
-}
-
-void
-ExodusIIMeshWriter::writeElemBlockObject( int elclass,
-                                    int64_t nnpe,
-                                    const std::string& eltype,
-                                    const std::vector< std::size_t >& inpoel )
-const
-// *****************************************************************************
-//! \param[inout] Dummy function, which calls the private writeElemBlock()
-//! \param[in] nnpe Number of nodes per element for block
-//! \param[in] eltype String describing element type
-//! \param[in] inpoel Element connectivity.
-//! \author A. Pakki
-// *****************************************************************************
-{
-  writeElemBlock( elclass, nnpe, eltype, inpoel );
 }
 
 void

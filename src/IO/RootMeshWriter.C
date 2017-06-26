@@ -13,7 +13,6 @@
 #include <iterator>
 #include <string>
 #include <utility>
-#include <iostream>
 
 #include "RootMeshWriter.h"
 #include "Exception.h"
