@@ -382,7 +382,9 @@ class CompFlow {
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] v Nodal mesh volumes
     //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >

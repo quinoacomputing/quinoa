@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/Zoltam2_MeshAdapter.h
+  \file      src/NoWarning/Zoltan2_MeshAdapter.h
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler

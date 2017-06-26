@@ -881,7 +881,7 @@ Quinoa> Starting time stepping ...
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section inciter_example_slot_cyl_fieldvis Example visualization
+\section inciter_example_shear_fieldvis Example visualization
 
 Example visualization of the 3D field data result with [ParaView](https://www.paraview.org).
 
@@ -891,7 +891,7 @@ paraview out.0
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 05 Jun 2017 10:44:04 AM MDT
+<em>Page last updated:</em> Mon 26 Jun 2017 12:22:48 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

@@ -40,7 +40,6 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
 // *****************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
-//! \param[inout] mesh Unstructured mesh object to load the data to
 //! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
 //! \param[in] iowordsize Set I/O word size, see ExodusII documentation
 //! \author J. Bakosi

@@ -402,8 +402,8 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 //! \param[in] Ul Low order solution
 //! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
 //!   each node
-//! \param[in,out] Limited antidiffusive element contributions scatter-added to
-//!   nodes
+//! \param[in,out] A Limited antidiffusive element contributions scatter-added
+//!   to nodes
 //! \note Q is also overwritten to avoid using temporary memory
 //! \author J. Bakosi
 // *****************************************************************************

@@ -142,7 +142,7 @@ end
 ./charmrun +p80 Main/inciter -v -c slot_cyl.q -i unitcube_01_6M.exo
 \endverbatim
 
-\section inciter_example_ou_output Output for three runs (750K, 6M, and 48M)
+\section inciter_example_hump_output Output for three runs (750K, 6M, and 48M)
 \verbatim
 jbakosi@lagrange:~/code/quinoa/build/gnu:vort$ ./charmrun +p36 Main/inciter -v -c slot_cyl.q -i unitcube_01_750K.exo
 
@@ -2269,7 +2269,7 @@ plot "diag.750K" u 2:4, "diag.6M" u 2:4, "diag.48M" u 2:4
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 05 Jun 2017 01:25:36 PM MDT
+<em>Page last updated:</em> Mon 26 Jun 2017 12:23:15 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

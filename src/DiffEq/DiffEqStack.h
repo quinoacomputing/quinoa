@@ -250,6 +250,7 @@ class DiffEqStack {
     }
 
     //! \brief Return names of options (tk::Toggle) from vector as a string
+    //! \param[in] opt Option instance (inheriting from tk::Toggle)
     //! \param[in] v Option vector whose names of components to return
     //! \return Concatenated string of option names read from option vector
     //! \author J. Bakosi

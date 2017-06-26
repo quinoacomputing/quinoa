@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Statistics/DiagReducer.C
+  \file      src/Inciter/DiagReducer.C
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
@@ -18,7 +18,7 @@ std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< std::vector< tk::real > >& d )
 // *****************************************************************************
 // Serialize std::vectors to raw memory stream
-//! \param[in] v Diagnostics vector of vectors (of eq components)
+//! \param[in] d Diagnostics vector of vectors (of eq components)
 //! \return Pair of the length and the raw stream containing the serialized
 //!   vectors
 //! \author J. Bakosi

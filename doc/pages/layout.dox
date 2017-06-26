@@ -33,7 +33,7 @@ number. If the algorithm that advances the properties in time applies one
 equation at a time, the equations will access data contiguously in memory as the
 properties are contiguously stored.
 
-\section layout_discussion Discussion
+\section layout_preliminary_discussion Discussion
 
 A property-major storage, case 2 above, seems to be the most efficient at first
 sight, as it stores data, as it is read and written by the equation algorithms,
@@ -557,7 +557,7 @@ Total time measured in micro-seconds, run on a Lenovo laptop with Intel Core i7,
        intel/RELEASE |  90059133        |  89892665        | 0.99815 x speedup
        DEBUG/RELEASE | 1.9064 x speedup | 6.7682 x speedup | n/a
 
-\section layout_discussion Discussion
+\section layout_asm_discussion Discussion
 
 - As expected, inlining has a significant effect on performance: going from
   DEBUG to RELEASE mode yields a significant speedup with all three compilers,
@@ -588,7 +588,7 @@ For the implementation see the tk::Data.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 17 Sep 2016 10:26:02 AM MDT
+<em>Page last updated:</em> Mon 26 Jun 2017 12:24:00 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

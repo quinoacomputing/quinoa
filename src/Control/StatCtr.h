@@ -331,6 +331,9 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
 //! \details Count number of PDFs given the sample space dimension (template
 //!   argument D) and whether the PDF is ordinary or central (m)
 //! \note Size of binsizes, names, pdfs, and exts must all be equal
+//! \param[in] binsizes Vector of vector of bin sizes (inner vector: a different
+//!   entry for each sample space dimension for potentially multi-variate PDFs,
+//!   outer vector: potentially multiple PDFs)
 //! \param[in] pdfs Vector of PDFs
 //! \param[in] m ORDINARY or CENTRAL PDF we are looking for
 //! \return The number of PDFs matchin the criteria discussed above

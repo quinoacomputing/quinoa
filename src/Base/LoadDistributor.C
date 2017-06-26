@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/LoadBalance/LoadDistributor.C
+  \file      src/Base/LoadDistributor.C
   \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Load distributors

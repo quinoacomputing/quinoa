@@ -75,7 +75,7 @@ extents( const std::vector< T >& vec )
 //! \brief Return minimum and maximum values of a vector
 //! \param[in] vec Vector whose extents to compute
 //! \return Array of two values with the minimum and maximum values
-//! \Note This function should not be called with heavy T types, as the a copy
+//! \note This function should not be called with heavy T types, as the a copy
 //!   of a std::array< T, 2 > is created and returned.
 //! \author J. Bakosi
 // *****************************************************************************
@@ -166,11 +166,11 @@ std::size_t sumsize( const Container& c ) {
 }
 
 // *****************************************************************************
-//! Free memory of a container.
-//! \param[in] c Container defining ::swap() member function
+//! Free memory of a container
+//! \param[in] c Container defining a swap() member function
 //! \details See http://stackoverflow.com/a/10465032 as to why this is done with
 //!   the swap() member function of the container.
-//! \see The specializations of std::swap at
+//! \see Specializations of std::swap are documented at
 //!   http://en.cppreference.com/w/cpp/algorithm/swap
 //! \author J. Bakosi
 // *****************************************************************************

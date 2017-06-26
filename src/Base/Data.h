@@ -564,6 +564,7 @@ class Data {
 
 //! Operator * multiplying all items by a scalar from the left
 //! \param[in] lhs Scalar to multiply with
+//! \param[in] rhs Date object to multiply
 //! \return New Data object with all items multipled with lhs
 //! \author J. Bakosi
 template< uint8_t Layout >

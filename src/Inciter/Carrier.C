@@ -121,7 +121,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   mesh chunk we operate on
 //! \param[in] filenodes Map associating old node IDs (as in file) to new node
 //!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodemap Map associating new node IDs ('new' as in producing
+//! \param[in] edgenodes Map associating new node IDs ('new' as in producing
 //!   contiguous-row-id linear system contributions) to edges (a pair of old
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
@@ -722,7 +722,6 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
-//! \param[in] varid Exodus variable ID
 //! \param[in] u Vector of fields to write to file
 //! \author J. Bakosi
 // *****************************************************************************

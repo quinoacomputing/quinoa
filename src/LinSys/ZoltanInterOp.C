@@ -109,7 +109,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
 //! \param[in] algorithm Partitioning algorithm type
 //! \param[in] centroid Mesh element coordinates
 //! \param[in] elemid Global mesh element ids
-//! \parampin] nelem Number of elements in mesh (on this MPI rank)
+//! \param[in] nelem Number of elements in mesh (on this MPI rank)
 //! \param[in] npart Number of desired graph partitions
 //! \return Array of chare ownership IDs mapping graph points to concurrent
 //!   async chares
