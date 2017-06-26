@@ -374,6 +374,8 @@ Carrier::setup( tk::real v )
 {
   // Store total mesh volume
   m_V = v;
+  // Query Dirichlet BCs and send to linear system merger
+  //bc();
   // Output chare mesh to file
   writeMesh();
   // Send off global row IDs to linear system merger
