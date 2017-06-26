@@ -141,7 +141,6 @@
                color="#e6851c"style="filled"
                URL="\ref tk::LinSysMerger::updateAuxSol"];
       ChRow -> RowComplete [ style="solid" ];
-      ChBC -> RowComplete Ver [ style="solid" ];
       RowComplete -> Init [ style="solid" ];
       RowComplete -> Ver [ style="solid" ];
       Ver -> HypreRow [ style="solid" ];
@@ -158,6 +157,9 @@
       Init -> dt [ style="solid" ];
       dt -> ChRhs [ style="solid" ];
       dt -> ChAuxRhs [ style="solid" ];
+      dt -> ChBC [ style="solid" ];
+      ChBC -> LhsBC [ style="solid" ];
+      ChBC -> RhsBC [ style="solid" ];
       HypreRow -> FillSol [ style="solid" ];
       HypreRow -> FillLhs [ style="solid" ];
       HypreRow -> FillRhs [ style="solid" ];
