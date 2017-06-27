@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindRoot.cmake
-# \author    A. Pakki
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Root library from CERN
 #
