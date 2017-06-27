@@ -24,7 +24,7 @@ class FileConvDriver {
 
   public:
     //! Constructor
-    explicit FileConvDriver( const tk::Print& print,
+    explicit FileConvDriver( const tk::Print&,
                              const ctr::CmdLine& cmdline );
 
     //! Execute
@@ -32,7 +32,6 @@ class FileConvDriver {
 
   private:
 
-    const tk::Print& m_print;           //!< Pretty printer
     std::string m_input;                //!< Input file name
     std::string m_output;               //!< Output file name
 };

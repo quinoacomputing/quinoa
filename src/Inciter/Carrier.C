@@ -860,7 +860,7 @@ Carrier::writeFields( tk::real time )
     auto u = m_u;   // make a copy as eq::output() may overwrite its arg
     std::vector< std::vector< tk::real > > output;
     for (const auto& eq : g_pdes) {
-      auto o = eq.output( time, m_V, m_coord, m_v, u );
+      auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
       output.insert( end(output), begin(o), end(o) );
     }
     return output;

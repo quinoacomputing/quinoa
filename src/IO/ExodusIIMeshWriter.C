@@ -109,12 +109,22 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
-ExodusIIMeshWriter::writeHeader( const char* title, int64_t ndim, 
-		      int64_t nnodes, int64_t nelem, int64_t nblk, 
-		      int64_t node_set, int64_t side_set) const
+ExodusIIMeshWriter::writeHeader( const char* title,
+                                 int64_t ndim,
+                                 int64_t nnodes,
+                                 int64_t nelem,
+                                 int64_t nblk,
+                                 int64_t node_set,
+                                 int64_t side_set ) const
 // *****************************************************************************
 //  Write ExodusII header
-//! \param[in] mesh Unstructured mesh object written for ROOT
+//! \param[in] title ExodusII file header 'title'
+//! \param[in] ndim Number of spatial dimensions in ExodusII file
+//! \param[in] nnodes Number of mesh nodes in ExodusII file
+//! \param[in] nelem Number of mesh elements in ExodusII file
+//! \param[in] nblk Number of mesh element blocks in ExodusII file
+//! \param[in] node_set Number of node sets in ExodusII file
+//! \param[in] side_set Number of side sets in ExodusII file
 //! \author A. Pakki 
 // *****************************************************************************
 {
@@ -139,13 +149,13 @@ ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 
 void
 ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
-				      const std::vector< tk::real >& y,
-				      const std::vector< tk::real >& z) const
+                                const std::vector< tk::real >& y,
+                                const std::vector< tk::real >& z ) const
 // *****************************************************************************
 //  Write node coordinates to ExodusII file without Mesh
-//! \param[in] x coordinate data
-//! \param[in] y coordinate data
-//! \param[in] z coordinate data
+//! \param[in] x coordinates of mesh nodes
+//! \param[in] y coordinates of mesh nodes
+//! \param[in] z coordinates of mesh nodes
 //! \author A. Pakki 
 // *****************************************************************************
 {

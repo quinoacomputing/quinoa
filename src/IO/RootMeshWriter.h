@@ -35,7 +35,7 @@ class RootMeshWriter {
     ~RootMeshWriter() noexcept;
 
     //! Write Root mesh to file
-    void writeMesh( const UnsMesh& mesh ) const;
+    void writeMesh( const UnsMesh& mesh );
 
     //! Write the names of nodal output variables to Root file
     void writeNodeVarNames( const std::vector< std::string >& nv ) const;
@@ -46,14 +46,14 @@ class RootMeshWriter {
                           const std::vector< tk::real >& var ) const;
 
     //!  Write time stamp to Root file
-    void writeTimeStamp( uint64_t it, tk::real time ) const;
+    void writeTimeStamp( uint64_t it, tk::real time );
 
   private:
     //! Write Root header
-    void writeHeader( const UnsMesh& mesh ) const;
+    void writeHeader( const UnsMesh& mesh );
 
     //! Write nodes coordinates 
-    void writeNodes( const UnsMesh& mesh ) const;
+    void writeNodes( const UnsMesh& mesh );
 
     //! Write element conectivity to ROOT file
     void writeElements( const UnsMesh& mesh ) const;
@@ -63,9 +63,9 @@ class RootMeshWriter {
                          const std::vector< std::size_t >& inpoel ) const;
 
     //! Variables for ROOT files, tuples
-    TFile *rfile = nullptr;
-    TTree *tree_connect = nullptr;
-    mutable TTree *friendTree = nullptr;
+    TFile* m_rfile = nullptr;
+    TTree* m_tree_connect = nullptr;
+    TTree* m_friendTree = nullptr;
     
     typedef struct mesh_data {
       int coordinates;
@@ -81,15 +81,15 @@ class RootMeshWriter {
 	triangles = 0;
       }
 
-      public : mesh_data( int vertices, int tri_count ) {
-	coordinates = vertices;
-	triangles = tri_count;
+      public : mesh_data( std::size_t vertices, std::size_t tri_count ) {
+	coordinates = static_cast< int >( vertices );
+	triangles = static_cast< int >( tri_count );
       }
 
     } connect_store; 
     
     // declare the object for the connectivity
-    mutable connect_store *csobject = nullptr;
+    connect_store* m_csobject = nullptr;
 
     const std::string m_filename;          //!< File name
 };

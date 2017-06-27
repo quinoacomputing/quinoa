@@ -33,13 +33,13 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 {
   if (option == 0 ) {
 
-    rfile = new TFile(filename.c_str(), "RECREATE" );
-    tree_connect = new TTree ( "ctree", "store the connectivity" );
+    m_rfile = new TFile( filename.c_str(), "RECREATE" );
+    m_tree_connect = new TTree ( "ctree", "store the connectivity" );
 
   } else if (option == 1) {
 
-      rfile = TFile::Open(filename.c_str(), "UPDATE" );
-      tree_connect = (TTree*) rfile->Get( "ctree" );
+      m_rfile = TFile::Open( filename.c_str(), "UPDATE" );
+      m_tree_connect = static_cast< TTree* >( m_rfile->Get( "ctree" ) );
 
   } else Throw( "Root Mesh modes not supported" );
 }
@@ -50,14 +50,14 @@ RootMeshWriter::~RootMeshWriter() noexcept
 //! \author A. Pakki
 // *****************************************************************************
 {
-  if (rfile) {
-    rfile->Write();
-    rfile->Close();
+  if (m_rfile) {
+    m_rfile->Write();
+    m_rfile->Close();
   }
 }
 
 void
-RootMeshWriter::writeMesh( const UnsMesh& mesh ) const
+RootMeshWriter::writeMesh( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write Root mesh file
 //! \param[in] mesh Unstructured mesh object
@@ -70,7 +70,7 @@ RootMeshWriter::writeMesh( const UnsMesh& mesh ) const
 }
 
 void
-RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
+RootMeshWriter::writeHeader( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write Root header
 //! \param[in] mesh Unstructured mesh object
@@ -78,35 +78,35 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 {
 
-  csobject = new mesh_data(mesh.size(), ( mesh.tetinpoel().size() + 
-		  mesh.triinpoel().size() ) );
+  m_csobject = new mesh_data( mesh.size(),
+                            mesh.tetinpoel().size() + mesh.triinpoel().size() );
 
 }
 
 void
-RootMeshWriter::writeNodes( const UnsMesh& mesh )  const
+RootMeshWriter::writeNodes( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write node coordinates to Root file
 //! \param[in] mesh Unstructured mesh object
 //! \author A. Pakki
 // *****************************************************************************
 {
-
   // the file requires the vertices and the number of triangles
   // 4 triangles per tetrahedron and mesh.tetinpoel() stores 4 
   // vertices per tet in the vector (# vertices = # of triangles)
 
-  tree_connect->Branch( "coord", &csobject->coordinates, "coordinates/I" );
-  tree_connect->Branch( "trian", &csobject->triangles, "triangles/I" );
+  m_tree_connect->Branch( "coord", &m_csobject->coordinates, "coordinates/I" );
+  m_tree_connect->Branch( "trian", &m_csobject->triangles, "triangles/I" );
   
-  tree_connect->Branch( "x_coord", &csobject->mx_root );
-  tree_connect->Branch( "y_coord", &csobject->my_root );
-  tree_connect->Branch( "z_coord", &csobject->mz_root );
+  m_tree_connect->Branch( "x_coord", &m_csobject->mx_root );
+  m_tree_connect->Branch( "y_coord", &m_csobject->my_root );
+  m_tree_connect->Branch( "z_coord", &m_csobject->mz_root );
 
-  for ( int i = 0 ; i < csobject->coordinates; i++ ) {
-    csobject->mx_root.push_back( mesh.x()[i] );
-    csobject->my_root.push_back( mesh.y()[i] );
-    csobject->mz_root.push_back( mesh.z()[i] );
+  auto c = static_cast< std::size_t >( m_csobject->coordinates );
+  for (std::size_t i=0 ; i<c; ++i) {
+    m_csobject->mx_root.push_back( mesh.x()[i] );
+    m_csobject->my_root.push_back( mesh.y()[i] );
+    m_csobject->mz_root.push_back( mesh.z()[i] );
   }
 }
 
@@ -145,12 +145,12 @@ const
           "node ids should start from zero" );
   
   // create a branch for storing the tetrahedrons  
-  tree_connect->Branch( "tetconnect", &csobject->tet_connect );
+  m_tree_connect->Branch( "tetconnect", &m_csobject->tet_connect );
   for ( auto itr = inpoel.begin(); itr != inpoel.end(); itr++ )
-    csobject->tet_connect.push_back( *itr );
+    m_csobject->tet_connect.push_back( *itr );
 
-  tree_connect->Fill();
-  tree_connect->Write(); 
+  m_tree_connect->Fill();
+  m_tree_connect->Write(); 
 
 }
 
@@ -164,18 +164,18 @@ const
 // *****************************************************************************
 {
   std::vector < std::string > nv_copy;
-  TBranch *branch = tree_connect->Branch( "variables", &nv_copy );
+  TBranch *branch = m_tree_connect->Branch( "variables", &nv_copy );
 
   for ( auto itr = nv.begin(); itr != nv.end(); itr++)
     nv_copy.push_back( *itr );
 
   branch->Fill();
-  tree_connect->Write();
+  m_tree_connect->Write();
 
 }
 
 void
-RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
+RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time )
 // *****************************************************************************
 //  Write time stamp to ROOT file
 //! \param[in] it Iteration number
@@ -186,15 +186,15 @@ RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
   
   // create a friend tree to the main tree
   std::string tree = "tf_var_" + std::to_string(it);
-  friendTree = new TTree( tree.c_str(), "friend trees" );
+  m_friendTree = new TTree ( tree.c_str(), "friend trees" );
 
   // create a branch for the time step
   tk::real elapsed_time = time;
   std::string branch_time = "time_branch_" + std::to_string(it);
-  friendTree->Branch( branch_time.c_str(), &elapsed_time, "elapsed_time/D" );
+  m_friendTree->Branch( branch_time.c_str(), &elapsed_time, "elapsed_time/D" );
 
-  friendTree->Fill();
-  tree_connect->AddFriend( tree.c_str() );
+  m_friendTree->Fill();
+  m_tree_connect->AddFriend( tree.c_str() );
 
 }
 
@@ -216,14 +216,14 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
   std::string branch_field = "branch_" + std::to_string(it) + "_field_" + 
 			      std::to_string(varid);
   //create a Branch
-  friendTree->Branch( branch_field.c_str(), &vec_copy );
+  m_friendTree->Branch( branch_field.c_str(), &vec_copy );
   
   //copy the values
   for( auto itr = var.begin(); itr != var.end(); itr++ )
     vec_copy.push_back( *itr );
 
-  friendTree->Fill();
-  friendTree->Write();
+  m_friendTree->Fill();
+  m_friendTree->Write();
 
 }
 

@@ -15,6 +15,8 @@
 #include <iosfwd>
 #include <vector>
 
+#include "Make_unique.h"
+
 #include "NoWarning/TFile.h"
 #include "NoWarning/TTree.h"
 #include "NoWarning/TGraph2D.h"
@@ -30,7 +32,7 @@ class FileConvWriter {
   public:
     //! Constructor: Open ROOT, ExodusII files
     explicit FileConvWriter( const std::string& file_root, 
-			      const std::string& file_exodus );
+                             const std::string& file_exodus );
 
     //! Destructor
     ~FileConvWriter() noexcept;
@@ -40,14 +42,16 @@ class FileConvWriter {
 
   private:
 
-    int nodal_size;
+    std::size_t m_nodal_size;
 
-    tk::ExodusIIMeshWriter *emw = nullptr;
-    const std::string m_file_root;         // Root File name
-    const std::string m_file_exodus;       // ExodusII File name
+    std::unique_ptr< tk::ExodusIIMeshWriter > m_emw = nullptr;
+    const std::string m_file_root;         //!< Root File name
+    const std::string m_file_exodus;       //!< ExodusII File name
 
-    TFile *m_infile = nullptr;             // Root File handle
-    TTree *tree_local = nullptr;           // Get the tree handle from ROOT
+    //! Root file handle
+    tk::unique_ptr< TFile > m_infile = nullptr;
+    //! ROOT tree handle
+    TTree* m_tree_local = nullptr;
 
     //! Write the timestamp and the variables data
     void writeHeader();

@@ -22,14 +22,11 @@ using fileconv::FileConvDriver;
 
 extern CProxy_Main mainProxy;
 
-FileConvDriver::FileConvDriver( const tk::Print& print,
+FileConvDriver::FileConvDriver( const tk::Print&,
                                 const ctr::CmdLine& cmdline )
-  : m_print( print ),
-    m_input(),
-    m_output()
+  : m_input(), m_output()
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author A. Pakki
