@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Sun 05 Mar 2017 08:56:51 PM MST
 #
 ################################################################################
 
@@ -126,6 +125,21 @@ set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
 find_package(TestU01)
 if(TestU01_FOUND)
   set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
+endif()
+
+### Root library
+set(ENABLE_ROOT OFF CACHE BOOL "Enable ROOT")
+if(ENABLE_ROOT)
+  find_package(Root COMPONENTS RIO Core Tree Hist)
+  if (Root_FOUND)
+    set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+    # Root does not support libc++ on linux, so remove if configured
+    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
+    if (NOT "${pos}" STREQUAL "-1")
+      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
+      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    endif()
+  endif()
 endif()
 
 message(STATUS "------------------------------------------")

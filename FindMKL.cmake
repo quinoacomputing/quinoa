@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Thu 26 Jan 2017 02:05:50 PM MST
 #
 ################################################################################
 

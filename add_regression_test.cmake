@@ -4,7 +4,6 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Fri 31 Mar 2017 08:10:00 AM MDT
 #
 ################################################################################
 
@@ -24,6 +23,8 @@
 #                      [BIN_BASELINE stat1.std stat2.std ...]
 #                      [BIN_RESULT stat1.bin stat2.bin ...]
 #                      [BIN_DIFF_PROG_CONF exodiff.cfg]
+#                      [FILECONV_PROG fileconv]
+#                      [FILECONV_PROG_ARGS arg1 arg2 ...]
 #                      [POSTPROCESS_PROG exec]
 #                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
 #                      [POSTPROCESS_PROG_OUTPUT file]
@@ -85,6 +86,13 @@
 # BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ... - Binary diff program
 # configuration file(s). Default: "".
 #
+# FILECONV_PROG fileconv - File conversion program to convert input to output
+#
+# FILECONV_PROG_ARGS arg1 arg2 ... - File converter program args. Default: "".
+#
+# FILECONV_RESULT stat1.out Output files produced by the test to be be tested
+# If empty, further processing will fail.
+#
 # POSTPROCESS_PROG exec - Optional postprocess executable to run after test
 # run. Default: "".
 #
@@ -100,10 +108,11 @@
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
-                   POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
+                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT )
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
-                     TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF)
+                     TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF FILECONV_RESULT
+		     FILECONV_PROG_ARGS )
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -136,6 +145,9 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (ARG_BIN_DIFF_PROG)
     set(BIN_DIFF_PROG ${ARG_BIN_DIFF_PROG})
   endif()
+  # Set file converter tool
+  # FILECONV_EXECUTABLE points to fileconv, refer src/Main/FileConv.C
+  set(FILECONV_PROG ${FILECONV_EXECUTABLE})
 
   # Prefix executable and append NUMPES to test name
   set(test_name "${executable}:${test_name}_pe${NUMPES}")
@@ -189,6 +201,13 @@ function(ADD_REGRESSION_TEST test_name executable)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
+  endif()
+
+  if(ARG_FILECONV_PROG_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_FILECONV_PROG_ARGS 
+			   "${ARG_FILECONV_PROG_ARGS}")
   endif()
 
   if(ARG_BIN_DIFF_PROG_CONF)
@@ -245,6 +264,9 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DBIN_DIFF_PROG_CONF=${ARG_BIN_DIFF_PROG_CONF}
            -DBIN_BASELINE=${ARG_BIN_BASELINE}
            -DBIN_RESULT=${ARG_BIN_RESULT}
+           -DFILECONV_PROG=${FILECONV_PROG}
+           -DFILECONV_PROG_ARGS=${ARG_FILECONV_PROG_ARGS}
+           -DFILECONV_RESULT=${FILECONV_RESULT}
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
            -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}
