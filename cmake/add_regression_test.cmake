@@ -25,6 +25,7 @@
 #                      [BIN_DIFF_PROG_CONF exodiff.cfg]
 #                      [FILECONV_PROG fileconv]
 #                      [FILECONV_PROG_ARGS arg1 arg2 ...]
+#                      [FILECONV_RESULT out.0.exo out.1.exo ...]
 #                      [POSTPROCESS_PROG exec]
 #                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
 #                      [POSTPROCESS_PROG_OUTPUT file]
@@ -86,12 +87,13 @@
 # BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ... - Binary diff program
 # configuration file(s). Default: "".
 #
-# FILECONV_PROG fileconv - File conversion program to convert input to output
+# FILECONV_PROG fileconv - File conversion program to convert between field
+# output files. Default: fileconv.
 #
 # FILECONV_PROG_ARGS arg1 arg2 ... - File converter program args. Default: "".
 #
-# FILECONV_RESULT stat1.out Output files produced by the test to be be tested
-# If empty, further processing will fail.
+# FILECONV_RESULT out.0.exo out.1.exo ... - Output files produced by the
+# optional file converter step. Default: "".
 #
 # POSTPROCESS_PROG exec - Optional postprocess executable to run after test
 # run. Default: "".
@@ -210,6 +212,14 @@ function(ADD_REGRESSION_TEST test_name executable)
 			   "${ARG_FILECONV_PROG_ARGS}")
   endif()
 
+  # Do sainity check on and prepare to pass as cmake script arguments the
+  # filenames of the file converter result(s)
+  if(FILECONV_RESULT)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_FILECONV_RESULT "${ARG_FILECONV_RESULT}")
+  endif()
+
   if(ARG_BIN_DIFF_PROG_CONF)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
@@ -264,9 +274,9 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DBIN_DIFF_PROG_CONF=${ARG_BIN_DIFF_PROG_CONF}
            -DBIN_BASELINE=${ARG_BIN_BASELINE}
            -DBIN_RESULT=${ARG_BIN_RESULT}
-           -DFILECONV_PROG=${FILECONV_PROG}
+           -DFILECONV_PROG=${CMAKE_BINARY_DIR}/Main/${FILECONV_PROG}
            -DFILECONV_PROG_ARGS=${ARG_FILECONV_PROG_ARGS}
-           -DFILECONV_RESULT=${FILECONV_RESULT}
+           -DFILECONV_RESULT=${ARG_FILECONV_RESULT}
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
            -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}

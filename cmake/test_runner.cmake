@@ -52,7 +52,7 @@ message("  BIN_DIFF_PROG_CONF (binary diff tool configuration file(s)) : ${BIN_D
 message("  BIN_BASELINE (binary output known good solution file(s))    : ${BIN_BASELINE}")
 message("  BIN_RESULT (binary output file(s) diffed with good solution): ${BIN_RESULT}")
 
-message("  FILE_CONV_PROG ( File conv tool program)                    : ${FILECONV_PROG}")
+message("  FILE_CONV_PROG (File conv tool program)                     : ${FILECONV_PROG}")
 message("  FILE_CONV_PROG_ARGS (File conv tool arguments)              : ${FILECONV_PROG_ARGS}")
 message("  FILECONV_RESULT (Converted file(s))                         : ${FILECONV_RESULT}")
 
@@ -94,7 +94,8 @@ else() # Test command ran successfully, attempt to do diffs
   # Run fileconv program if args are specified
   if (FILECONV_PROG_ARGS)
     set(fileconv_command ${FILECONV_PROG} ${FILECONV_PROG_ARGS})
-    message("\nRunning file convert  command: \n")
+    string(REPLACE ";" " " fileconv_command_string "${fileconv_command}")
+    message("\nRunning file convert command: '${fileconv_command_string}'")
     execute_process(COMMAND ${fileconv_command} RESULT_VARIABLE ERROR )
     if(ERROR)
       message(FATAL_ERROR "File converter failed, returned error code: ${ERROR}")
