@@ -56,7 +56,7 @@ if (HAS_ROOT)
                       INPUTFILES slot_cyl_cfl_root.q unitsquare_01_3.6k.exo
                                  exodiff.cfg  slot_cyl_cfl_pe1_u0.0.std.exo
 	              ARGS -c slot_cyl_cfl_root.q -i unitsquare_01_3.6k.exo -v
-		      FILECONV_PROG_ARGS -i out.0.root -o out.0.exo
+		      FILECONV_INPUT out.0.root
 		      FILECONV_RESULT out.0.exo
 	              BIN_BASELINE slot_cyl_cfl_pe1_u0.0.std.exo
 		      BIN_RESULT out.0.exo
@@ -65,21 +65,21 @@ if (HAS_ROOT)
   # Virtualization = 0, Multiprocessor check
   add_regression_test(cfl_root ${INCITER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES slot_cyl_cfl.q unitcube_01_31k.exo
+                      INPUTFILES slot_cyl_cfl_root.q unitcube_01_31k.exo
 	                         exodiff.cfg
 	                         slot_cyl_cfl_pe4_u0.0.std.exo.0
 	                         slot_cyl_cfl_pe4_u0.0.std.exo.1
 	                         slot_cyl_cfl_pe4_u0.0.std.exo.2
 		                 slot_cyl_cfl_pe4_u0.0.std.exo.3
-		      ARGS -c slot_cyl_cfl.q -i unitcube_01_31k.exo -v
+		      ARGS -c slot_cyl_cfl_root.q -i unitcube_01_31k.exo -v
 		      FILECONV_RESULT out.0.exo
 				      out.1.exo
 				      out.2.exo
 				      out.3.exo
-		      FILECONV_PROG_ARGS -i out.0.root -o out.0.exo
-		      FILECONV_PROG_ARGS -i out.1.root -o out.1.exo
-		      FILECONV_PROG_ARGS -i out.2.root -o out.2.exo
-		      FILECONV_PROG_ARGS -i out.3.root -o out.3.exo
+		      FILECONV_INPUT out.0.root
+                                     out.1.root
+                                     out.2.root
+                                     out.3.root
 		      BIN_BASELINE slot_cyl_cfl_pe4_u0.0.std.exo.0
 			           slot_cyl_cfl_pe4_u0.0.std.exo.1
 			           slot_cyl_cfl_pe4_u0.0.std.exo.2

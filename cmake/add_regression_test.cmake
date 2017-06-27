@@ -24,7 +24,7 @@
 #                      [BIN_RESULT stat1.bin stat2.bin ...]
 #                      [BIN_DIFF_PROG_CONF exodiff.cfg]
 #                      [FILECONV_PROG fileconv]
-#                      [FILECONV_PROG_ARGS arg1 arg2 ...]
+#                      [FILECONV_INPUT arg1 arg2 ...]
 #                      [FILECONV_RESULT out.0.exo out.1.exo ...]
 #                      [POSTPROCESS_PROG exec]
 #                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
@@ -90,7 +90,8 @@
 # FILECONV_PROG fileconv - File conversion program to convert between field
 # output files. Default: fileconv.
 #
-# FILECONV_PROG_ARGS arg1 arg2 ... - File converter program args. Default: "".
+# FILECONV_INPUT arg1 arg2 ... - File converter program input files.
+# Default: "".
 #
 # FILECONV_RESULT out.0.exo out.1.exo ... - Output files produced by the
 # optional file converter step. Default: "".
@@ -110,11 +111,11 @@
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
-                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT )
+                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
                      TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF FILECONV_RESULT
-		     FILECONV_PROG_ARGS )
+		     FILECONV_INPUT)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -205,16 +206,15 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()
 
-  if(ARG_FILECONV_PROG_ARGS)
+  if(ARG_FILECONV_INPUT)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
-    string(REPLACE ";" " " ARG_FILECONV_PROG_ARGS 
-			   "${ARG_FILECONV_PROG_ARGS}")
+    string(REPLACE ";" " " ARG_FILECONV_INPUT "${ARG_FILECONV_INPUT}")
   endif()
 
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of the file converter result(s)
-  if(FILECONV_RESULT)
+  if(ARG_FILECONV_RESULT)
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
     string(REPLACE ";" " " ARG_FILECONV_RESULT "${ARG_FILECONV_RESULT}")
@@ -275,7 +275,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DBIN_BASELINE=${ARG_BIN_BASELINE}
            -DBIN_RESULT=${ARG_BIN_RESULT}
            -DFILECONV_PROG=${CMAKE_BINARY_DIR}/Main/${FILECONV_PROG}
-           -DFILECONV_PROG_ARGS=${ARG_FILECONV_PROG_ARGS}
+           -DFILECONV_INPUT=${ARG_FILECONV_INPUT}
            -DFILECONV_RESULT=${ARG_FILECONV_RESULT}
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}

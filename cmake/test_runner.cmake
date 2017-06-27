@@ -10,9 +10,12 @@
 # Regression test runner using the cmake scripting language. See also
 # http://www.cmake.org/Wiki/CMake/Language_Syntax.
 
-# Covert string to list of file names of text baseline(s) and text result(s)
+# Covert string to list of file names of text baseline(s), text result(s), and
+# file converter input(s) and output(s)
 string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
 string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
+string(REPLACE " " ";" FILECONV_INPUT "${FILECONV_INPUT}")
+string(REPLACE " " ";" FILECONV_RESULT "${FILECONV_RESULT}")
 # Covert string to list of file names of binary baseline(s), binary result(s),
 # and binary diff program confguration file(s)
 string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
@@ -53,12 +56,12 @@ message("  BIN_BASELINE (binary output known good solution file(s))    : ${BIN_B
 message("  BIN_RESULT (binary output file(s) diffed with good solution): ${BIN_RESULT}")
 
 message("  FILE_CONV_PROG (File conv tool program)                     : ${FILECONV_PROG}")
-message("  FILE_CONV_PROG_ARGS (File conv tool arguments)              : ${FILECONV_PROG_ARGS}")
-message("  FILECONV_RESULT (Converted file(s))                         : ${FILECONV_RESULT}")
+message("  FILE_CONV_INPUT (File conv tool input file(s))              : ${FILECONV_INPUT}")
+message("  FILECONV_RESULT (File conv tool output file(s))             : ${FILECONV_RESULT}")
 
 # Remove previous test output (if any)
-if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT)
-  message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT}\n")
+if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
+  message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT}\n")
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT})
 endif()
 
@@ -92,14 +95,30 @@ else() # Test command ran successfully, attempt to do diffs
   endif()
 
   # Run fileconv program if args are specified
-  if (FILECONV_PROG_ARGS)
-    set(fileconv_command ${FILECONV_PROG} ${FILECONV_PROG_ARGS})
-    string(REPLACE ";" " " fileconv_command_string "${fileconv_command}")
-    message("\nRunning file convert command: '${fileconv_command_string}'")
-    execute_process(COMMAND ${fileconv_command} RESULT_VARIABLE ERROR )
-    if(ERROR)
-      message(FATAL_ERROR "File converter failed, returned error code: ${ERROR}")
+  if (FILECONV_INPUT)
+
+    # Make sure the number of input and output files are equal
+    list(LENGTH FILECONV_INPUT ninput)
+    list(LENGTH FILECONV_RESULT nresult)
+    if (NOT ninput EQUAL nresult)
+      message(FATAL_ERROR
+              "Number of input and number of result must be equal.")
     endif()
+
+    # Run fileconv multiple times for all fileconv inputs
+    math(EXPR b "0")
+    foreach(input IN LISTS FILECONV_INPUT)
+      list(GET FILECONV_RESULT ${b} result)
+      set(fileconv_command ${FILECONV_PROG} -i ${input} -o ${result})
+      string(REPLACE ";" " " fileconv_command_string "${fileconv_command}")
+      message("\nRunning file convert command: '${fileconv_command_string}'")
+      execute_process(COMMAND ${fileconv_command} RESULT_VARIABLE ERROR )
+      if(ERROR)
+        message(FATAL_ERROR "File converter failed, returned error code: ${ERROR}")
+      endif(ERROR)
+      math(EXPR b "${b}+1")
+    endforeach(input)
+
   endif()
 
   # Do textual diff(s) if
