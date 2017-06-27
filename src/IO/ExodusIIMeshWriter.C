@@ -125,12 +125,12 @@ ExodusIIMeshWriter::writeHeader( const char* title,
 //! \param[in] nblk Number of mesh element blocks in ExodusII file
 //! \param[in] node_set Number of node sets in ExodusII file
 //! \param[in] side_set Number of side sets in ExodusII file
-//! \author A. Pakki 
+//! \author A. Pakki
 // *****************************************************************************
 {
   ErrChk(
     ex_put_init( m_outFile, title, ndim, nnodes, nelem, nblk, 
-		  node_set, side_set) == 0,
+                 node_set, side_set) == 0,
     "Failed to write header to file: " + m_filename );
 }
 
@@ -156,7 +156,7 @@ ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
 //! \param[in] x coordinates of mesh nodes
 //! \param[in] y coordinates of mesh nodes
 //! \param[in] z coordinates of mesh nodes
-//! \author A. Pakki 
+//! \author A. Pakki
 // *****************************************************************************
 {
   ErrChk( ex_put_coord( m_outFile, x.data(), y.data(), z.data() ) == 0,

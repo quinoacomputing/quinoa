@@ -761,7 +761,6 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
-//! \param[in] varid Exodus variable ID
 //! \param[in] u Vector of fields to write to file
 //! \author J. Bakosi
 // *****************************************************************************
@@ -779,7 +778,6 @@ Carrier::writeSolution( const tk::RootMeshWriter& rmw,
 // Output solution to file
 //! \param[in] rmw Root mesh-based writer object
 //! \param[in] it Iteration count
-//! \param[in] varid Exodus variable ID
 //! \param[in] u Vector of fields to write to file
 //! \author A. Pakki
 // *****************************************************************************
@@ -825,7 +823,7 @@ Carrier::writeMeta() const
       // Collect nodal field output names from all PDEs
       std::vector< std::string > names;
       for (const auto& eq : g_pdes) {
-        auto n = eq.names();
+        auto n = eq.fieldNames();
         names.insert( end(names), begin(n), end(n) );
       }
 
