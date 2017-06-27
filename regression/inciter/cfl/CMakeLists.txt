@@ -53,8 +53,8 @@ if (HAS_ROOT)
   # Virtualization = 0, RootMeshWriter check
   add_regression_test(cfl_root ${INCITER_EXECUTABLE}
                       NUMPES 1
-                      INPUTFILES slot_cyl_cfl_root.q unitsquare_01_3.6k.exo exodiff.cfg
-	                         slot_cyl_cfl_pe1_u0.0.std.exo
+                      INPUTFILES slot_cyl_cfl_root.q unitsquare_01_3.6k.exo
+                                 exodiff.cfg  slot_cyl_cfl_pe1_u0.0.std.exo
 	              ARGS -c slot_cyl_cfl_root.q -i unitsquare_01_3.6k.exo -v
 		      FILECONV_PROG_ARGS -i out.0.root -o out.0.exo
 		      FILECONV_RESULT out.0.exo
@@ -92,4 +92,3 @@ if (HAS_ROOT)
                       BIN_DIFF_PROG_CONF exodiff.cfg)
 
 endif()
-
