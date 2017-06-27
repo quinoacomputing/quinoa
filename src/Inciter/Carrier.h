@@ -108,7 +108,6 @@ namespace tk { class ExodusIIMeshWriter;
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern CkReduction::reducerType VerifyBCMerger;
 extern CkReduction::reducerType PDFMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
@@ -169,7 +168,6 @@ class Carrier : public CBase_Carrier {
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
-      VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
       PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
     }
 

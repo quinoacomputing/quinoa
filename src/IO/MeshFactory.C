@@ -19,6 +19,7 @@
 #include "NetgenMeshReader.h"
 #include "ExodusIIMeshReader.h"
 #include "HyperMeshReader.h"
+#include "ASCMeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
@@ -45,7 +46,9 @@ detectInput( const std::string& filename )
               s.find("HDF") != std::string::npos ) {
     return MeshReader::EXODUSII;
   } else if ( s.find("<?x") != std::string::npos ) {
-    return MeshReader::HYPERMESH;
+    return MeshReader::HYPER;
+  } else if ( s.find("*nd") != std::string::npos ) {
+    return MeshReader::ASC;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -118,7 +121,9 @@ readUnsMesh( const tk::Print& print,
     NetgenMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::HYPERMESH)
+  else if (meshtype == MeshReader::ASC)
+    ASCMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReader::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );

@@ -22,6 +22,7 @@
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
 #include "Options/FieldFile.h"
+#include "Options/Error.h"
 #include "PUPUtil.h"
 
 namespace inciter {
@@ -73,10 +74,15 @@ using ios = tk::tuple::tagged_tuple<
   tag::part,        std::string                       //!< Particles filename
 >;
 
+//! Error/diagnostics output configuration
+using diagnostics = tk::tuple::tagged_tuple<
+  tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
+>;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::physics,      std::vector< PhysicsType >,
+  tag::physics,     std::vector< PhysicsType >,
   tag::problem,     std::vector< ProblemType >,
   tag::diffusivity, std::vector< std::vector<
                       kw::pde_diffusivity::info::expect::type > >,

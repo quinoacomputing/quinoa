@@ -30,6 +30,7 @@
 #include "Options/PDFPolicy.h"
 #include "Options/PDFCentering.h"
 #include "Options/TxtFloatFormat.h"
+#include "Options/Error.h"
 
 namespace tk {
 //! Toolkit general purpose grammar definition
@@ -1481,6 +1482,12 @@ namespace grm {
                                                 tag::flformat,
                                                 tag::diag >,
                                          pegtl::alpha >,
+                                process< use< kw::error >,
+                                         store_back_option< use,
+                                                            tk::ctr::Error,
+                                                            tag::diag,
+                                                            tag::error >,
+                                         pegtl::alpha >,
                                 precision< use, tag::diag > > > {};
 
   //! \brief Match model parameter
@@ -1590,11 +1597,11 @@ namespace grm {
   //! \brief Match and set policy parameter
   //! \author J. Bakosi
   template< template< class > class use, typename keyword,
-            typename option, typename sde, typename... tags >
+            typename option, typename p, typename... tags >
   struct policy :
          process<
            keyword,
-           store_back_option< use, option, tag::param, sde, tags... >,
+           store_back_option< use, option, tag::param, p, tags... >,
            pegtl::alpha > {};
 
   //! \brief Match and set a PDF option

@@ -344,7 +344,8 @@ class CompFlow {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > names() const { return Problem::names(); }
+    std::vector< std::string > fieldNames() const
+    { return Problem::fieldNames(); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
@@ -352,12 +353,17 @@ class CompFlow {
     //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    output( tk::real t,
-            tk::real,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const std::vector< tk::real >&,
-            const tk::Fields& U ) const
-    { return Problem::output( 0, m_offset, t, coord, U ); }
+    fieldOutput( tk::real t,
+                 tk::real,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >&,
+                 const tk::Fields& U ) const
+    { return Problem::fieldOutput( 0, m_offset, t, coord, U ); }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    std::vector< std::string > names() const
+    { return Problem::names(); }
 
   private:
     const ncomp_t m_offset;             //!< Offset PDE operates from

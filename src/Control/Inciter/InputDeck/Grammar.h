@@ -142,6 +142,11 @@ namespace grm {
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
+      // Error check Dirichlet boundary condition block for all transport eq
+      // configurations
+      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
+        if (s.empty())
+          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -398,7 +403,8 @@ namespace deck {
                                                  tag::lambda >,
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
-                                                 tag::u0 > >,
+                                                 tag::u0 >,
+                           bc_dirichlet< tag::compflow, tag::bcdir > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow

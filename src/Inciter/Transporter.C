@@ -83,7 +83,7 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
-  m_diag( g_inputdeck.get< tag::component >().nprop() * 2, 0.0 ),
+  m_diag(),
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -174,23 +174,8 @@ Transporter::Transporter() :
     m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
     m_print.endsubsection();
 
-    // Field output configuration
-    m_print.section( "Field output" );
-    auto opt = tk::ctr::FieldFile();
-    auto fo = opt.name( g_inputdeck.get< tag::selected, tag::filetype >() );
-    m_print.item( "Filetype", fo );
-    m_print.endsubsection();
-
-    // Output header for diagnostics output file
-    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                       g_inputdeck.get< tag::flformat, tag::diag >(),
-                       g_inputdeck.get< tag::prec, tag::diag >() );
-    // This list is hard-coded here for CompFlow, so these are wrong for, e.g.,
-    // scalar transport. This is punt for now and should be fixed so that these
-    // column labels can be queried from the underlying PDEs, probably via a
-    // a new polymorphic function of inciter::PDE.
-    dw.header( { "r", "ru", "rv", "rw", "re",
-                 "err(r)", "err(ru)", "err(rv)", "err(rw)", "err(re)" } );
+    // Configure and write diagnostics file header
+    diagHeader();
 
     // Create (empty) worker array
     m_carrier = CarrierProxy::ckNew();
@@ -244,6 +229,47 @@ Transporter::Transporter() :
                                              m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
+}
+
+void
+Transporter::diagHeader()
+// *****************************************************************************
+// Configure and write diagnostics file header
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Output header for diagnostics output file
+  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                     g_inputdeck.get< tag::flformat, tag::diag >(),
+                     g_inputdeck.get< tag::prec, tag::diag >() );
+
+  // Collect variables names for integral/diagnostics output
+  std::vector< std::string > var;
+  for (const auto& eq : g_pdes) {
+    auto o = eq.names();
+    var.insert( end(var), begin(o), end(o) );
+  }
+
+  const tk::ctr::Error opt;
+  auto nv = var.size();
+  std::vector< std::string > d;
+
+  // Add 'L2(var)' for all variables as those are always computed
+  const auto& l2name = opt.name( tk::ctr::ErrorType::L2 );
+  for (std::size_t i=0; i<nv; ++i) d.push_back( l2name + '(' + var[i] + ')' );
+
+  // Query user-requested diagnostics and augment diagnostics file header by
+  // 'err(var)', where 'err' is the error type  configured, and var is the
+  // variable computed, for all variables and all error types configured.
+  const auto& err = g_inputdeck.get< tag::diag, tag::error >();
+  for (const auto& e : err) {
+    const auto& errname = opt.name( e );
+    for (std::size_t i=0; i<nv; ++i)
+      d.push_back( errname + '(' + var[i] + "-IC)" );
+  }
+
+  // Write diagnostics header
+  dw.header( d );
 }
 
 void
@@ -578,24 +604,53 @@ Transporter::initcomplete()
 }
 
 void
-Transporter::diagnostics( tk::real* d, std::size_t n )
+Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
-//! \param[in] d Diagnostics (sums) collected over all chares
-//! \param[in] n Number of diagnostics in array d
+//! \param[in] msg Serialized diagnostics vector aggregated across all PEs
 //! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
+  std::vector< std::vector< tk::real > > d;
 
-  Assert( n == m_diag.size(),
-          "Number of diagnostics contributed not equal to expected" );
+  // Deserialize diagnostics vector
+  PUP::fromMem creator( msg->getData() );
+  creator | d;
+  delete msg;
 
-  // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = sqrt(d[i])/m_V;
+  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+
+  Assert( d.size() == 3, "Diagnostics vector size mismatch" );
+
+  for (std::size_t i=0; i<d.size(); ++i)
+     Assert( d[i].size() == ncomp,
+             "Size mismatch at final stage of diagnostics aggregation" );
+
+  // Allocate storage for 'L2(var)' for all variables as those are always
+  // computed
+  m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
+
+  // Finish computing the L2 norm of the numerical solution
+  for (std::size_t i=0; i<d[0].size(); ++i)
+    m_diag[i] = sqrt( d[0][i] / m_V );
+  
+  // Query user-requested error types to be computed
+  const auto& error = g_inputdeck.get< tag::diag, tag::error >();
+
+  decltype(ncomp) n = 0;
+  for (const auto& e : error) {
+    n += ncomp;
+    if (e == tk::ctr::ErrorType::L2) {
+      // Finish computing the L2 norm of the numerical - analytical solution
+     for (std::size_t i=0; i<d[1].size(); ++i)
+       m_diag.push_back( sqrt( d[1][i] / m_V ) );
+    } else if (e == tk::ctr::ErrorType::LINF) {
+      // Finish computing the Linf norm of the numerical - analytical solution
+      for (std::size_t i=0; i<d[2].size(); ++i)
+        m_diag.push_back( d[2][i] );
+    }
+  }
 
   diag_complete();
 }
@@ -702,6 +757,7 @@ Transporter::evaluateTime()
                          g_inputdeck.get< tag::prec, tag::diag >(),
                          std::ios_base::app );
       if (dw.diag( m_it, m_t, m_diag )) diag = true;
+      m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
     }
 
     if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {

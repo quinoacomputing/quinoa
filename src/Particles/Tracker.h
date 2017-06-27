@@ -443,7 +443,7 @@ class Tracker {
     }
     ///@}
     #if defined(__clang__)
-      #pragma GCC diagnostic pop
+      #pragma clang diagnostic pop
     #endif
 };
 
