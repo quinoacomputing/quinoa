@@ -146,6 +146,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     set(BIN_DIFF_PROG ${ARG_BIN_DIFF_PROG})
   endif()
   # Set file converter tool
+  # FILECONV_EXECUTABLE points to fileconv, refer src/Main/FileConv.C
   set(FILECONV_PROG ${FILECONV_EXECUTABLE})
 
   # Prefix executable and append NUMPES to test name

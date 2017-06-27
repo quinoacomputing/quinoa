@@ -97,7 +97,7 @@ else() # Test command ran successfully, attempt to do diffs
     message("\nRunning file convert  command: \n")
     execute_process(COMMAND ${fileconv_command} RESULT_VARIABLE ERROR )
     if(ERROR)
-      message(FATAL_ERROR "File converter failed to run, returned error code: ${ERROR}")
+      message(FATAL_ERROR "File converter failed, returned error code: ${ERROR}")
     endif()
   endif()
 
