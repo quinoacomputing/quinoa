@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Inciter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -108,7 +107,6 @@ void operator|( PUP::er& p, std::vector< PDE >& eqs ) {
 //!   of the Charm++ runtime system is required since the mesh partitioning is
 //!   done by Zoltan, an MPI library. Note that this Charm++ main chare object
 //!   should not be in a namespace.
-//! \author J. Bakosi
 class Main : public CBase_Main {
 
   public:
@@ -195,7 +193,6 @@ class Main : public CBase_Main {
 //! \details By the time this object is constructed, the Charm++ runtime system
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
-//! \author J. Bakosi
 class execute : public CBase_execute {
  public: execute() { mainProxy.execute(); }
 };

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/RNGStack.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -67,7 +66,6 @@ RNGStack::RNGStack(
 //! \param[in] rngsseparam RNGSSE RNG parameters to use to configure RNGSSE RNGs
 //! \param[in] rngr123param Random123 RNG parameters to use to configure
 //!   Random123 RNGs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #ifdef HAS_MKL
@@ -85,7 +83,6 @@ RNGStack::selected( const std::vector< tk::ctr::RNGType >& sel ) const
 //  Instantiate selected RNGs from factory and place them in map
 //! \param[in] sel Vector of selected RNGs to instantiate (selected by the user)
 //! \return A std::map of keys and their associated instantiated RNG objects
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using tk::ctr::RawRNGType;
@@ -112,7 +109,6 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
 //!   the user.
 //! \param[in] nstreams Register MKL RNG using this many independent streams
 //! \param[in] param MKL RNG parameters to use to configure the RNGs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::ctr::RNGType;
@@ -177,7 +173,6 @@ RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
 //!   the user.
 //! \param[in] nstreams Register RNGSSE RNG using this many independent streams
 //! \param[in] param RNGSSE RNG parameters to use to configure the RNGs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::RNG;
@@ -287,7 +282,6 @@ RNGStack::regRandom123( int nstreams,
 //! \param[in] nstreams Register Randomer123 RNG using this many independent
 //!   streams
 //! \param[in] param Random123 RNG parameters to use to configure the RNGs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::ctr::RNGType;

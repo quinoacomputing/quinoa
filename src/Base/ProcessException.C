@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessException.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
@@ -32,7 +31,6 @@ processExceptionCharm()
 //  Process an exception from the Charm++ runtime system
 //! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
 //!    2nd Edition, 2012.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   try {
@@ -64,7 +62,6 @@ processExceptionMPI()
 //  Process an exception from the MPI runtime system
 //! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
 //!    2nd Edition, 2012.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int peid;

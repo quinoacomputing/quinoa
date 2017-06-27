@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/LoadDistributor.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Load distributors and partitioning data types
   \details   Load distributors and partitioning data types. Load distributors

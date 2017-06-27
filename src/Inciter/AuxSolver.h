@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/AuxSolver.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Auxiliary solvers used in tk::LinSysMerger by inciter.
   \details   This file defines policy classes for tk::LinSysMerger's auxiliary
@@ -56,7 +55,6 @@ class AuxSolverLumpMassDiff {
     //!   this particular low order system is lumped, i.e., stored as a single
     //!   vector of diagonal elements of the lhs matrix.
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     template< class HostProxy, class Host > static
     void chareauxlhs( const HostProxy& hostproxy,
                       Host* const host,
@@ -102,7 +100,6 @@ class AuxSolverLumpMassDiff {
     //!   this particular low order system is lumped, i.e., stored as a single
     //!   vector of diagonal elements of the lhs matrix.
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     static void
     addauxlhs( int fromch,
                const std::map< std::size_t, std::vector< tk::real > >& mass,
@@ -134,7 +131,6 @@ class AuxSolverLumpMassDiff {
     //!   diffusion terms to be added to the right-hand side for the low order
     //!   solution (for flux-corrected transport).
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     template< class HostProxy, class Host > static
     void chareauxrhs( const HostProxy& hostproxy,
                       Host* const host,
@@ -178,7 +174,6 @@ class AuxSolverLumpMassDiff {
     //!   diffusion terms to be added to the right-hand side for the low order
     //!   solution (for flux-corrected transport).
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     static void
     addauxrhs( int fromch,
                const std::map< std::size_t, std::vector< tk::real > >& diff,
@@ -212,7 +207,6 @@ class AuxSolverLumpMassDiff {
     //!   diffusion terms to be added to the right-hand side for the low order
     //!   solution (for flux-corrected transport).
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     template< class Host > static
     void solve( Host* const host,
                 std::size_t ncomp,
@@ -264,7 +258,6 @@ class AuxSolverLumpMassDiff {
     //!   (for each scalar equation solved) associated to global mesh point row
     //!   IDs.
     //! \note Static member function as it is called without an object.
-    //! \author J. Bakosi
     template< class WorkerProxy > static
     void update( const WorkerProxy& worker,
                  const std::map< int, std::vector< std::size_t > >& solimport,

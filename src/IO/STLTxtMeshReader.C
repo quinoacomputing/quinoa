@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/STLTxtMeshReader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
@@ -20,7 +19,6 @@ STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
 // Constructor
 //! \param[in] filename File to read STL data from
 //! \param[inout] mesh STLMesh object to store STL mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Set mesh name as filename modulo extension
@@ -31,7 +29,6 @@ void
 STLTxtMeshReader::readMesh()
 // *****************************************************************************
 //  Read ASCII STL mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Count up number of vertices in STL mesh
@@ -57,7 +54,6 @@ STLTxtMeshReader::readFacets( const bool store,
 //  \param[in]  y      Vertex y coordinates
 //  \param[in]  z      Vertex z coordinates
 //  \return            Number of vertices counted
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #ifdef STRICT_GNUC

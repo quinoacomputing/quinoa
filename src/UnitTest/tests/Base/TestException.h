@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestException.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
@@ -30,7 +29,6 @@ static Exception_group Exception( "Base/Exception" );
 //! Test definitions for group
 
 //! Test constructor with line number info
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 1 >() {
   set_test_name( "constructor message w/ line number info" );
@@ -42,7 +40,6 @@ void Exception_object::test< 1 >() {
 }
 
 //! Test constructor without line number info
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 2 >() {
   set_test_name( "constructor message w/o line number info" );
@@ -55,7 +52,6 @@ void Exception_object::test< 2 >() {
 }
 
 //! Test Throw macro
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 3 >() {
   set_test_name( "Throw macro" );
@@ -70,7 +66,6 @@ void Exception_object::test< 3 >() {
 }
 
 //! Test that Assert macro throws if condition is false
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 4 >() {
   set_test_name( "Assert macro throws if condition is false" );
@@ -88,7 +83,6 @@ void Exception_object::test< 4 >() {
 }
 
 //! Test that Assert macro does not throw if condition is true
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 5 >() {
   set_test_name( "Assert macro doesn't throw if cond is true" );
@@ -102,7 +96,6 @@ void Exception_object::test< 5 >() {
 }
 
 //! Test that ErrChk macro throws if condition is false
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 6 >() {
   set_test_name( "ErrChk macro throws if condition is false" );
@@ -117,7 +110,6 @@ void Exception_object::test< 6 >() {
 }
 
 //! Test that ErrChk macro does not throw if condition is true
-//! \author J. Bakosi
 template<> template<>
 void Exception_object::test< 7 >() {
   set_test_name( "ErrChk macro doesn't throw if cond is true" );
@@ -137,7 +129,6 @@ void Exception_object::test< 7 >() {
 // //!   Currently, the redirection to file works using the code below, but
 // //!   restoration happens in an unpredictable way: sometimes works sometimes
 // //!   does not, swallowing the rest of the output from the unit test harness.
-// //! \author J. Bakosi
 // template<> template<>
 // void Exception_object::test< 8 >() {
 //   set_test_name( "handleException" );

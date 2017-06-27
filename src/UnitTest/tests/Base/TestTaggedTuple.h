@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
@@ -42,7 +41,6 @@ static TaggedTuple_group TaggedTuple( "Base/TaggedTuple" );
 //! Test definitions for group
 
 //! Test const-ref accessor of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 1 >() {
   set_test_name( "const-ref accessors" );
@@ -65,7 +63,6 @@ void TaggedTuple_object::test< 1 >() {
 }
 
 //! Test non-const-ref accessors of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 2 >() {
   set_test_name( "non-const-ref accessors" );
@@ -80,7 +77,6 @@ void TaggedTuple_object::test< 2 >() {
 }
 
 //! Test set(const char*) with const rvalue argument of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 3 >() {
   set_test_name( "set(const char*) - const rvalue arg" );
@@ -91,7 +87,6 @@ void TaggedTuple_object::test< 3 >() {
 }
 
 //! Test set(std::string) with non-const lvalue argument of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 4 >() {
   set_test_name( "set(std::string) - non-const lvalue arg" );
@@ -104,7 +99,6 @@ void TaggedTuple_object::test< 4 >() {
 }
 
 //! Test set(std::string) with const lvalue argument of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 5 >() {
   set_test_name( "set(const std::string) - const lvalue" );
@@ -117,7 +111,6 @@ void TaggedTuple_object::test< 5 >() {
 }
 
 //! Test set(std::string) with rvalue argument of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 6 >() {
   set_test_name( "set(std::string&&) - rvalue ref arg" );
@@ -134,7 +127,6 @@ void TaggedTuple_object::test< 6 >() {
 }
 
 //! Test size of tagged_tuple
-//! \author J. Bakosi
 template<> template<>
 void TaggedTuple_object::test< 7 >() {
   set_test_name( "tagged_tuple_size()" );

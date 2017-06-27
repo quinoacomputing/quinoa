@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGSSEGrammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGSSE-related grammar
   \details   This file defines RNGSSE2 library related grammar, (re-)used by
@@ -27,7 +26,6 @@ namespace grm {
             typename... tags > struct insert_seq : pegtl::success {};
   //! \brief Convert and insert RNGSSE sequence option value to map at position
   //!   given by tags
-  //! \author J. Bakosi
   template< template < class > class use, class Option,
             typename field, typename sel, typename vec, typename tag,
             typename... tags >
@@ -62,7 +60,6 @@ namespace rngsse {
   // RNGSSE PEGTL grammar
 
   //! \brief rng: match any one of the RNGSSE random number generators
-  //! \author J. Bakosi
   template< template< class > class use >
   struct rng :
          pegtl::sor< typename use< kw::rngsse_gm19 >::pegtl_string,
@@ -78,7 +75,6 @@ namespace rngsse {
                      typename use< kw::rngsse_mrg32k3a >::pegtl_string > {};
 
   //! \brief Match and set RNGSSE RNG seed
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
@@ -87,7 +83,6 @@ namespace rngsse {
                                                   sel, vec, tags... > > {};
 
   //! \brief Match and set RNG sequence length parameter
-  //! \author J. Bakosi
   template< template < class > class use, typename keyword,
             typename option, typename field, typename sel, typename vec,
             typename... tags >
@@ -98,7 +93,6 @@ namespace rngsse {
            pegtl::alpha > {};
 
   //! \brief Match and set RNGSSE sequence length
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seqlen :
@@ -110,7 +104,6 @@ namespace rngsse {
 
   //! \brief Match RNGSSE RNGs in an rngs ... end block
   //! \see walker::deck::rngs
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct rngs :

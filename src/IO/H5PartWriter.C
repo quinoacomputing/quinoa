@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/H5PartWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class definition, facilitating writing
@@ -24,7 +23,6 @@ H5PartWriter::H5PartWriter( const std::string& filename ) :
 //!   case no IO will be performed. This is basically a punt to enable skipping
 //!   H5Part I/O. Particles are a highly experimental feature at this point.
 //! \note If the file exists, it will be truncated.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_filename.empty()) return;
@@ -61,7 +59,6 @@ H5PartWriter::writeCoords( uint64_t it,
 //! \param[in] x X coordinates of particles
 //! \param[in] y Y coordinates of particles
 //! \param[in] z Z coordinates of particles
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_filename.empty()) return;

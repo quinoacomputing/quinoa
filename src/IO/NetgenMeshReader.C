@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshReader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -27,7 +26,6 @@ NetgenMeshReader::readMesh( UnsMesh& mesh )
 // *****************************************************************************
 //  Read Netgen mesh
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read nodes
@@ -41,7 +39,6 @@ NetgenMeshReader::readNodes( UnsMesh& mesh )
 // *****************************************************************************
 //  Read nodes
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int nnode;
@@ -67,7 +64,6 @@ NetgenMeshReader::readElements( UnsMesh& mesh )
 // *****************************************************************************
 //  Read element connectivity
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int nel;

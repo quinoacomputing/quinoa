@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -40,7 +39,6 @@ static Timer_group Timer( "Base/Timer" );
 //! Test definitions for group
 
 //! Test timing a 0.1s duration as float with given precision
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 1 >() {
   double prec = 1.0e-1; // only for this single test (to pass on Mac OS)
@@ -54,7 +52,6 @@ void Timer_object::test< 1 >() {
 }
 
 //! Test timing a 1.0 duration as h:m:s with given precision
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 2 >() {
   set_test_name( "measure 1.0s using hms() with " + std::to_string(precision) +
@@ -73,7 +70,6 @@ void Timer_object::test< 2 >() {
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by term
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 3 >() {
   set_test_name( "ETE and ETA triggered by terminate time" );
@@ -105,7 +101,6 @@ void Timer_object::test< 3 >() {
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by nstep
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 4 >() {
   set_test_name( "ETE and ETA triggered by max number of steps" );
@@ -137,7 +132,6 @@ void Timer_object::test< 4 >() {
 }
 
 //! Test converting a 1.0s duration timed as a float to Timer::Watch
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 5 >() {
   set_test_name( "convert time stamp in float to Watch" );
@@ -189,7 +183,6 @@ class CharmTimer : public CBase_CharmTimer {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 6 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -205,7 +198,6 @@ void Timer_object::test< 6 >() {
 }
 
 //! Test querying a timer from a std::map
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 7 >() {
   double prec = 1.0e-2; // only for this single test (to pass on Mac OS)
@@ -220,7 +212,6 @@ void Timer_object::test< 7 >() {
 }
 
 //! Test that querying timer from a map throws with garbage key
-//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 8 >() {
   set_test_name( "query throws with non-existent key" );

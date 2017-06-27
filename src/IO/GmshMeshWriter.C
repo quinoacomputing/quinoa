@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -35,7 +34,6 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 //! \param[in] type Gmsh file type: ASCII or binary
 //! \param[in] version Gmsh file version
 //! \param[in] datasize Size of double precision number on machine
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::operator<<;
@@ -64,7 +62,6 @@ GmshMeshWriter::writeMesh( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write Gmsh mesh file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Write sections
@@ -77,7 +74,6 @@ GmshMeshWriter::writeNodes( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write "$Nodes--$EndNodes" section
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << "$Nodes" << std::endl;
@@ -117,7 +113,6 @@ GmshMeshWriter::writeElements( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write "$Elements--$EndElements" section
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << "$Elements" << std::endl;
@@ -150,7 +145,6 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] type Element type
 //! \param[in] inpoel Element connectivity (must be zero-based)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Return if connectivity is empty, there is no such element block in mesh

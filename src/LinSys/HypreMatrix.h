@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/HypreMatrix.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.

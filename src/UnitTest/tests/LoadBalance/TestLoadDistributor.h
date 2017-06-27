@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLoadDistributor.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for LoadBalance/LoadDistributor
   \details   Unit tests for LoadBalance/LoadDistributor
@@ -41,7 +40,6 @@ static LoadDistributor_group LoadDistributor( "LoadBalance/LoadDistributor" );
 //! Test definitions for group
 
 //! Test if linear distributor does not throw on bounded virtualization
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 1 >() {
   set_test_name( "linear doesn't throw on bounded virt" );
@@ -51,7 +49,6 @@ void LoadDistributor_object::test< 1 >() {
 }
 
 //! Test if linear distributor throws on too low virtualization parameter
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 2 >() {
   set_test_name( "linear throws on too low virt" );
@@ -76,7 +73,6 @@ void LoadDistributor_object::test< 2 >() {
 }
 
 //! Test if linear distributor throws on to high virtualization parameter
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 3 >() {
   set_test_name( "linear throws on too high virt" );
@@ -101,7 +97,6 @@ void LoadDistributor_object::test< 3 >() {
 }
 
 //! Test if linear distributor returns number of chares less than or equal load
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 4 >() {
   set_test_name( "linear returns sane nchare" );
@@ -114,7 +109,6 @@ void LoadDistributor_object::test< 4 >() {
 
 
 //! Test if linear distributor returns chunksize less than or equal the load
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 5 >() {
   set_test_name( "linear returns sane chunksize" );
@@ -126,7 +120,6 @@ void LoadDistributor_object::test< 5 >() {
 }
 
 //! Test if linear distributor returns remainder less than or equal to chunksize
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 6 >() {
   set_test_name( "linear returns sane remainder" );
@@ -138,7 +131,6 @@ void LoadDistributor_object::test< 6 >() {
 }
 
 //! Test if linear distributor throws on garbage number of processing elements
-//! \author J. Bakosi
 template<> template<>
 void LoadDistributor_object::test< 7 >() {
   set_test_name( "linear throws on garbage npe" );

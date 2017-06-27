@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -32,7 +31,6 @@ GmshMeshReader::readMesh( UnsMesh& mesh )
 // *****************************************************************************
 //  Public interface for read a Gmsh mesh from file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read in mandatory "$MeshFormat" section
@@ -56,7 +54,6 @@ void
 GmshMeshReader::readMeshFormat()
 // *****************************************************************************
 //  Read mandatory "$MeshFormat--$EndMeshFormat" section
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::operator<<;
@@ -113,7 +110,6 @@ GmshMeshReader::readNodes( UnsMesh& mesh )
 // *****************************************************************************
 //  Read "$Nodes--$EndNodes" section
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read in number of nodes in this node set
@@ -161,7 +157,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
 // *****************************************************************************
 //  Read "$Elements--$EndElements" section
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using tk::operator<<;
@@ -277,7 +272,6 @@ void
 GmshMeshReader::readPhysicalNames()
 // *****************************************************************************
 //  Read "$PhysicalNames--$EndPhysicalNames" section
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Throw( "Mesh section '$PhysicalNames -- $EndPhysicalNames' not implemented" );

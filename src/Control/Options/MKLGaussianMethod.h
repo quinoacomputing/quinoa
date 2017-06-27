@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -24,27 +23,23 @@ namespace tk {
 namespace ctr {
 
 //! MKL Gaussian random number generator method types
-//! \author J. Bakosi
 enum class MKLGaussianMethodType : uint8_t { BOXMULLER,
                                              BOXMULLER2,
                                              ICDF };
 
 //! \brief Pack/Unpack MKLGaussianMethodType: forward overload to generic enum
 //!   class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, MKLGaussianMethodType& e )
 { PUP::pup( p, e ); }
 
 //! \brief MKLGaussianMethod options: outsource searches to base templated on
 //!   enum type
-//! \author J. Bakosi
 class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
 
   public:
     using ParamType = int;
 
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::boxmuller
                                        , kw::boxmuller2
                                        , kw::icdf
@@ -53,7 +48,6 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit MKLGaussianMethod() :
       tk::Toggle< MKLGaussianMethodType >(
         //! Group, i.e., options, name
@@ -72,7 +66,6 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     //!    option, i.e., as the library identifies the given option
     //! \param[in] m Enum value of the option requested
     //! \return Library-specific parameter of the option
-    //! \author J. Bakosi
     const ParamType& param( MKLGaussianMethodType m ) const {
       using tk::operator<<;
       auto it = method.find( m );

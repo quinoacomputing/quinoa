@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileParser.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -31,7 +30,6 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 //!   from FileParser, e.g., walker::InputDeckParser, parses by completely
 //!   outsourcing the parsing (to PEGTL), so there is no need to store the file
 //!   stream handle here.
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Make sure there is a filename
@@ -66,7 +64,6 @@ FileParser::diagnostics( const tk::Print& print,
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print    Pretty printer
 //! \param[in] messages Vector of strings of errors and warnings
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Bundle storing multiple messages for a single errouneous line

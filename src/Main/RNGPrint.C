@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGPrint.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -34,7 +33,6 @@ RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
 // *****************************************************************************
 //  Echo information on MKL random number generator
 //! \param[in] p MKL RNG parameters
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ctr::MKLUniformMethod um;
@@ -66,7 +64,6 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
 //! \param[in] p RNGSSE RNG parameters
 //! \param[in] rng RNG options object
 //! \param[in] r RNG type enum
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_stream << m_item_name_value_fmt
@@ -88,7 +85,6 @@ RNGPrint::echoRandom123Params( const ctr::RNGRandom123Param& p ) const
 // *****************************************************************************
 //  Echo information on Random123 random number generator
 //! \param[in] p Random123 RNG parameters
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_stream << m_item_name_value_fmt
@@ -105,7 +101,6 @@ RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
 //  Print all fields of MKL RNG parameters
 //! \param[in] vec Vector of RNG type enums to print
 //! \param[in] map MKL RNG parameters map
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ctr::RNG rng;
@@ -131,7 +126,6 @@ RNGPrint::RNGSSEParams( const std::vector< ctr::RNGType >& vec,
 //  Print all fields of RNGSSE RNG parameters
 //! \param[in] vec Vector of RNG type enums to print
 //! \param[in] map RNGSSE RNG parameters map
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ctr::RNG rng;
@@ -156,7 +150,6 @@ RNGPrint::Random123Params( const std::vector< ctr::RNGType >& vec,
 //  Print all fields of Random123 RNG parameters
 //! \param[in] vec Vector of RNG type enums to print
 //! \param[in] map Random123 RNG parameters map
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ctr::RNG rng;

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/vector.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/mpl/vector.hpp with turning off specific compiler
              warnings
