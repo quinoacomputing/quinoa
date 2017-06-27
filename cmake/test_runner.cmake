@@ -61,7 +61,7 @@ message("  FILECONV_RESULT (File conv tool output file(s))             : ${FILEC
 # Remove previous test output (if any)
 if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
   message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT}\n")
-  file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT})
+  file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT})
 endif()
 
 # Configure test run command
