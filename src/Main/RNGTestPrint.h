@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTestPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest-specific pretty printer functionality
   \details   RNGTest-specific pretty printer functionality.
@@ -28,7 +27,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \param[in,out] str Verbose stream
     //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
-    //! \author J. Bakosi
     explicit RNGTestPrint( std::ostream& str = std::clog,
                            std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
@@ -38,7 +36,6 @@ class RNGTestPrint : public tk::RNGPrint {
     using Print::item;
 
     //! Print section only if differs from default
-    //! \author J. Bakosi
     template< class Option, typename... tags >
     void Section() const {
       if (g_inputdeck.get< tags... >() !=
@@ -58,7 +55,6 @@ class RNGTestPrint : public tk::RNGPrint {
     }
 
     //! Print control option: 'group : option' only if differs from its default
-    //! \author J. Bakosi
     template< class Option, typename... tags>
     void Item() const {
       if (g_inputdeck.get<tags...>() != g_inputdeck_defaults.get<tags...>()) {
@@ -72,7 +68,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! Print battery only if differs from default
     //! \param[in] ntest Number tests in battery
     //! \param[in] nstat Number statistics in battery
-    //! \author J. Bakosi
     void battery( std::size_t ntest, std::size_t nstat ) const {
       if (g_inputdeck.get< tag::selected, tag::battery >() !=
           g_inputdeck_defaults.get< tag::selected, tag::battery >() ) {
@@ -94,7 +89,6 @@ class RNGTestPrint : public tk::RNGPrint {
 
     //! Print statistical test name(s)
     //! \param[in] testnames Names of tests
-    //! \author J. Bakosi
     void names( const std::vector< std::string >& testnames ) const {
       for (const auto& n : testnames)
         m_stream << m_list_item_fmt % m_item_indent % n;
@@ -104,7 +98,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \param[in] t String to use as title
     //! \param[in] npval Number of p-values from tests
     //! \param[in] ntest Number of tests
-    //! \author J. Bakosi
     void statshead( const std::string& t, std::size_t npval, std::size_t ntest )
     const {
       std::stringstream ss;
@@ -143,7 +136,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //!   - status[1]: vector of p-value strings: "pass" or "fail, p-value = ...",
     //!                length: number of p-values
     //!   - status[2]: vector of length 1: RNG name used to run the test
-    //! \author J. Bakosi
     void test( std::size_t ncomplete,
                std::size_t ntest,
                std::map< std::string, std::size_t >& nfail,
@@ -175,7 +167,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \param[in] t String to use as title
     //! \param[in] npval Number of p-values from tests
     //! \param[in] nfail Number of failed tests for RNG
-    //! \author J. Bakosi
     template< class Failed >
     void failed( const std::string& t,
                  std::size_t npval,
@@ -207,7 +198,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \param[in] name Section name
     //! \param[in] costnote A note on how to interpret the costs
     //! \param[in] c Costs for RNGs
-    //! \author J. Bakosi
     void cost( const std::string& name,
                const std::string& costnote,
                std::map< std::string, tk::real > c ) const
@@ -229,7 +219,6 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \param[in] name Section name
     //! \param[in] ranknote A note on how to interpret ranks
     //! \param[in] f Ranks for RNGs
-    //! \author J. Bakosi
     void rank( const std::string& name,
                const std::string& ranknote,
                std::map< std::string, std::size_t > f ) const

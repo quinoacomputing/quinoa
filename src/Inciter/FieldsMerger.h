@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FieldsMerger.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging mesh node indices across PEs
   \details   Custom Charm++ reducer for merging mesh node indices across PEs.
@@ -22,7 +21,6 @@ namespace inciter {
 //! Serialize mesh node indices categorized by chares to raw memory stream
 //! \param[in] m Chare mesh node indices to serialize
 //! \return Pair of the length and the raw stream containing the serialized data
-//! \author J. Bakosi
 template< typename T >
 std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< std::pair< int, T > >& m ) {
@@ -51,7 +49,6 @@ serialize( const std::vector< std::pair< int, T > >& m ) {
 //! \return Aggregated mesh node indices categorized by chares built for further
 //!   aggregation if needed
 //! \details During aggregation the outer vector is simply concatenated.
-//! \author J. Bakosi
 template< typename T >
 CkReductionMsg*
 mergeFields( int nmsg, CkReductionMsg **msgs ) {

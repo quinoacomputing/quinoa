@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Make_unique.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Define make_unique for unique_ptr until C++14
   \details   Define make_unique for unique_ptr until C++14. When we switch to

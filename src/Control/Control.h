@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Control.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
@@ -28,7 +27,6 @@ namespace tk {
 //! nice to replace the triple-overloads with a single generic one that works at
 //! all depths. For an example specialization, i.e., client-side code, see
 //! walker::ctr::InputDeck.
-//! \author J. Bakosi
 template<typename... Ts>
 class Control : public tuple::tagged_tuple<Ts...> {
 
@@ -41,7 +39,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     ///@{
     //! \brief Const-ref accessor to single element at 1st level
     //! \return A constant reference behind a tag given by the template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     constexpr const typename Tuple::template nT<tag>&
@@ -52,7 +49,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \return A constant reference behind a tag, subtag given by the template
     //!   arguments
     // TODO Combine the three overloads into a single variadic one
-    //! \author J. Bakosi
     template< typename tag, typename subtag >
     constexpr const typename Tuple::template nT<tag>::template nT<subtag>&
     get() const noexcept {
@@ -62,7 +58,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \return A constant reference behind a tag, subtag, subsubtag given by
     //! the template arguments
     // TODO Combine the three overloads into a single variadic one
-    //! \author J. Bakosi
     template< typename tag, typename subtag, typename subsubtag >
     constexpr const typename Tuple::template nT<tag>
                                   ::template nT<subtag>
@@ -78,7 +73,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     ///@{
     //! \brief Rvalue accessor to single element at 1st level
     //! \return An rvalue reference behind a tag given by the template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     typename Tuple::template nT<tag>& get() noexcept {
@@ -87,7 +81,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Rvalue accessor to single element at 2nd level
     //! \return An rvalue reference behind a tag, subtag given by the template
     //!   arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     typename Tuple::template nT<tag>::template nT<subtag>& get() noexcept {
@@ -96,7 +89,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Rvalue accessor to single element at 3rd level
     //! \return An rvalue reference behind a tag, subtag, subsubtag given by the
     //!   template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     typename Tuple::template nT<tag>
@@ -112,7 +104,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     ///@{
     //! \brief Set value at slot at tag at 1st level
     //! \param[in] value Value to set behind tag given by the template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void set(const typename Tuple::template nT<tag>& value) noexcept {
@@ -121,7 +112,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Set value at slot at tag at 2nd level
     //! \param[in] value Value to set behind tag and subtag given by the
     //!   template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void set(const typename Tuple::template nT<tag>
@@ -131,7 +121,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Set value at slot at tag at 3rd level
     //! \param[in] value Value to set behind tag, subtag, and subsubtag given by
     //!   the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void set(const typename Tuple::template nT<tag>
@@ -148,7 +137,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and set value at tag at 1st level
     //! \param[in] value Value to convert and set behind tag given by the
     //!   template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void store(const std::string& value) noexcept {
@@ -158,7 +146,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and set value at tag at 2nd level
     //! \param[in] value Value to convert and set behind tag and subtag given by
     //!   the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void store(const std::string& value) noexcept {
@@ -170,7 +157,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and set value at tag at 3rd level
     //! \param[in] value Value to convert and set behind tag, subtag, and
     //    subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void store(const std::string& value) noexcept {
@@ -188,7 +174,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Push back value to vector at tag at 1st level without conversion
     //! \param[in] value Value to push back behind tag given by the template
     //!   argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void push_back( const typename Tuple::template nT<tag>::value_type& value =
@@ -198,7 +183,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Push back value to vector at tag at 2nd level without conversion
     //! \param[in] value Value to push back behind tag and subtag given by the
     //!   template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void push_back( const typename Tuple::template nT<tag>
@@ -213,7 +197,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Push back value to vector at tag at 3rd level without conversion
     //! \param[in] value Value to push back behind tag, subtag, and subsubtag
     //!   given by the template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void push_back( const typename Tuple::template nT<tag>
@@ -237,7 +220,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \details This is similar to store_back_back but performes no conversion.
     //! \param[in] value Value to push back behind tag given by the template
     //!   argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void push_back_back( const typename Tuple::template nT<tag>
@@ -252,7 +234,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   no conversion.
     //! \param[in] value Value to push back behind tag and subtag given by the
     //!   template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void push_back_back( const typename Tuple::template nT<tag>
@@ -270,7 +251,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   no conversion.
     //! \param[in] value Value to push back behind tag, subtag, and subsubtag
     //!   given by the template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void push_back_back( const typename Tuple::template nT<tag>
@@ -293,7 +273,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and push back value to vector at tag at 1st level
     //! \param[in] value Value to convert and push back behind tag given by the
     //!   template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void store_back(const std::string& value) {
@@ -304,7 +283,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and push back value to slot at tag at 2nd level
     //! \param[in] value Value to convert and push back behind tag and subtag
     //!   given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void store_back(const std::string& value) {
@@ -317,7 +295,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \brief Convert and push back value to slot at tag at 3rd level
     //! \param[in] value Value to convert and push back behind tag, subtag, and
     //!   subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void store_back(const std::string& value) {
@@ -337,7 +314,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   1st level
     //! \param[in] value Value to convert and push back behind tag given by the
     //!   template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void store_back_back(const std::string& value) {
@@ -349,7 +325,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   2nd level
     //! \param[in] value Value to convert and push back behind tag and subtag
     //!   given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void store_back_back(const std::string& value) {
@@ -363,7 +338,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   3rd level
     //! \param[in] value Value to convert and push back behind tag, subtag, and
     //!   subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void store_back_back(const std::string& value) {
@@ -383,7 +357,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!    of vector at tag at 1st level
     //! \param[in] value Value to convert and push back behind tag given by the
     //!   template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void store_back_back_back(const std::string& value) {
@@ -395,7 +368,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!    of vector at tag at 2nd level
     //! \param[in] value Value to convert and push back behind tag and subtag
     //!   given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void store_back_back_back(const std::string& value) {
@@ -409,7 +381,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!    of vector at tag at 3rd level
     //! \param[in] value Value to convert and push back behind tag, subtag, and
     //!   subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void store_back_back_back(const std::string& value) {
@@ -432,7 +403,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \param[in] value Value to insert to std::map behind tag given by the
     //!   template argument; optional argument, if not given, use default
     //!    constructor
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag >
     void insert( const typename Tuple::template nT<tag>
@@ -451,7 +421,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \param[in] value Value to insert to std::map behind tag and subtag given
     //!   by the template arguments; optional argument, if not given, use default
     //!    constructor
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag >
     void insert( const typename Tuple::template nT<tag>
@@ -474,7 +443,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \param[in] value Value to insert to std::map behind tag, subtag, and
     //!   subsubstag given by the template arguments; optional argument, if not
     //!    given, use default constructor
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename tag, typename subtag, typename subsubtag >
     void insert( const typename Tuple::template nT<tag>
@@ -510,7 +478,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   template argument
     //! \param[in] value Value to insert to std::map behind tag given by the
     //!   template argument
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename tag >
     void insert_field(const key_type& key, const std::string& value) {
@@ -532,7 +499,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   the template arguments
     //! \param[in] value Value to insert to std::map behind tag and subtag given
     //!   by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename tag, typename subtag >
     void insert_field(const key_type& key, const std::string& value) {
@@ -556,7 +522,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   subsubtag given by the template arguments
     //! \param[in] value Value to insert to std::map behind tag, subtag, and
     //!   subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename tag, typename subtag,
               typename subsubtag >
@@ -587,7 +552,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   std::map::operator[], behind which a type that defines the get()
     //!   member function (e.g., a tagged_tuple) is assumed to exist
     //! \param[in] value Value to insert
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename field_type,
               typename tag >
@@ -608,7 +572,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   std::map::operator[], behind which a type that defines the get()
     //!   member function (e.g., a tagged_tuple) is assumed to exist
     //! \param[in] value Value to insert
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename field_type,
               typename tag, typename subtag >
@@ -630,7 +593,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   subsubtag given by the template arguments
     //! \param[in] value Value to insert to std::map behind tag, subtag, and
     //!   subsubtag given by the template arguments
-    //! \author J. Bakosi
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename field_type,
               typename tag, typename subtag, typename subsubtag >
@@ -645,7 +607,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   std::stringstream
     //! \param[in] str String to convert
     //! \return A value of type given by the template argument
-    //! \author J. Bakosi
     template< typename type >
     type convert( const std::string& str ) {
       std::stringstream ss( str );
@@ -661,7 +622,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   std::string using std::stringstream
     //! \param[in] val Value of type given by the template argument
     //! \return std::string of value converted
-    //! \author J. Bakosi
     template< typename type >
     std::string convert( const type& val ) {
       std::stringstream ss;
@@ -675,12 +635,10 @@ class Control : public tuple::tagged_tuple<Ts...> {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \author J. Bakosi
     void pup( PUP::er& p ) { Tuple::pup(p); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] c Control object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, Control<Ts...>& c ) { c.pup(p); }
     ///@}
 };

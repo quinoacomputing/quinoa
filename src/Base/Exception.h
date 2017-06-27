@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Exception.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -29,7 +28,6 @@ namespace tk {
 //!   of invocation than a direct throw of Exception, as it hides the
 //!   file:func:line arguments. Whenever is possible, it should be used via the
 //!   Assert and ErrChk macros defined below.
-//! \author J. Bakosi
 #define Throw(...) \
    throw tk::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
@@ -41,7 +39,6 @@ namespace tk {
 //!    throwing an Exception instead will also generate a nice call-trace and
 //!    will attempt to free memory. This macro should be used to detect
 //!    programmer errors.
-//! \author J. Bakosi
 #ifdef NDEBUG
 #  define Assert(expr, ...) (static_cast<void>(0))
 #else  // NDEBUG
@@ -54,7 +51,6 @@ namespace tk {
 //!    not: expr is always evaluated. If expr is true, do nothing. If expr is
 //!    false, throw Exception with arguments passed in. This macro should be
 //!    used to detect user or runtime errors.
-//! \author J. Bakosi
 #define ErrChk(expr, ...) \
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
@@ -68,7 +64,6 @@ enum ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
 //!   facilitate printing out a message, together with the location of the
 //!   exception (file, line, funcion name), as well as a call trace if
 //!   available, when an exception is thrown.
-//! \author J. Bakosi
 class Exception : public std::exception {
 
   public:

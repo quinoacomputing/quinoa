@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTestDriver.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -38,7 +37,6 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here
@@ -54,7 +52,6 @@ void
 RNGTestDriver::execute() const
 // *****************************************************************************
 //  Run battery
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.part( "Factory" );

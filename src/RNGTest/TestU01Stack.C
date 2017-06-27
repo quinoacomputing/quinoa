@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Stack.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -48,7 +47,6 @@ TestU01Stack::TestU01Stack() : m_generator()
 //!   id enables the compiler generate a different wrapper for a different RNG
 //!   facilitating simultaneous calls to any or all wrappers as they are unique
 //!   functions.
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   for (const auto& r : g_inputdeck.get< tag::selected, tag::rng >()) {
@@ -126,7 +124,6 @@ void TestU01Stack::addRNG( tk::ctr::RNGType r )
 // *****************************************************************************
 //! Create TestU01 RNG wrapper
 //! \param[in] r RNG ID enum
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   m_generator.emplace( r,
@@ -139,7 +136,6 @@ TestU01Stack::generator( tk::ctr::RNGType r ) const
 //! Find TestU01 RNG wrapper based on RNG id
 //! \param[in] r RNG ID enum
 //! \return Raw function pointer to TestU01 statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   const auto& gen = m_generator.find( r );
@@ -160,7 +156,6 @@ TestU01Stack::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -179,7 +174,6 @@ TestU01Stack::Collision( unif01_Gen* gen, sknuth_Res2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -197,7 +191,6 @@ TestU01Stack::Gap( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -215,7 +208,6 @@ TestU01Stack::SimplePoker( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -233,7 +225,6 @@ TestU01Stack::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -251,7 +242,6 @@ TestU01Stack::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -270,7 +260,6 @@ TestU01Stack::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -288,7 +277,6 @@ TestU01Stack::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -306,7 +294,6 @@ TestU01Stack::HammingIndep( unif01_Gen* gen, sstring_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -324,7 +311,6 @@ TestU01Stack::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -346,7 +332,6 @@ TestU01Stack::SerialOver( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -364,7 +349,6 @@ TestU01Stack::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -382,7 +366,6 @@ TestU01Stack::ClosePairs( unif01_Gen* gen, snpair_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -413,7 +396,6 @@ TestU01Stack::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -431,7 +413,6 @@ TestU01Stack::Run( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -449,7 +430,6 @@ TestU01Stack::Permutation( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -467,7 +447,6 @@ TestU01Stack::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -485,7 +464,6 @@ TestU01Stack::SampleProd( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -503,7 +481,6 @@ TestU01Stack::SampleMean( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -520,7 +497,6 @@ TestU01Stack::SampleCorr( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -538,7 +514,6 @@ TestU01Stack::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -557,7 +532,6 @@ TestU01Stack::SumCollector( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -575,7 +549,6 @@ TestU01Stack::Savir2( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -593,7 +566,6 @@ TestU01Stack::GCD( unif01_Gen* gen, smarsa_Res2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -611,7 +583,6 @@ TestU01Stack::LinearComp( unif01_Gen* gen, scomp_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -630,7 +601,6 @@ TestU01Stack::LempelZiv( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -648,7 +618,6 @@ TestU01Stack::Fourier3( unif01_Gen* gen, sspectral_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -666,7 +635,6 @@ TestU01Stack::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -685,7 +653,6 @@ TestU01Stack::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -703,7 +670,6 @@ TestU01Stack::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -721,7 +687,6 @@ TestU01Stack::HammingCorr( unif01_Gen* gen, sstring_Res* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -739,7 +704,6 @@ TestU01Stack::StringRun( unif01_Gen* gen, sstring_Res3* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;
@@ -758,7 +722,6 @@ TestU01Stack::AutoCorr( unif01_Gen* gen, sres_Basic* res,
 //! \param[in] res Pointer to test results object
 //! \param[in] xargs Test arguments
 //! \return Vector p-values as a result of the statistical test
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   using std::get;

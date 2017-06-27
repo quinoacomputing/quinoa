@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/CommMap.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -67,7 +66,6 @@ poinCommMaps( std::size_t graphsize,
 //!   all the chares. Thus we compute the export mapping here.
 //! \note This function is only supposed to operate on MPI rank 0.
 //! \note This function does not and should not modify global-scope data.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Map to associate a chare id to a map of receiver chare ids associated to
@@ -169,7 +167,6 @@ elemCommMaps(
 //!   all the chares. Thus we compute the export mapping here.
 //! \note This function is only supposed to operate on MPI rank 0.
 //! \note This function does not and should not modify global-scope data.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Map to associate a chare id to a map of receiver chare ids associated to

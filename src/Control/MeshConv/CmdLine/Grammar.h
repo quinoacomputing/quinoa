@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -22,7 +21,6 @@ namespace cmd {
   using namespace tao;
 
   //! \brief Specialization of tk::grm::use for MeshConv's command line parser
-  //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 

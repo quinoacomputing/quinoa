@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -35,13 +34,11 @@ class InciterPrint : public tk::Print {
     //! \param[in,out] str Verbose stream
     //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
-    //! \author J. Bakosi
     explicit InciterPrint( std::ostream& str = std::clog,
                            std::ostream& qstr = std::cout ) :
       Print( str, qstr ) {}
 
     //! Print control option: 'group : option'
-    //! \author J. Bakosi
     template< typename Option, typename... tags >
     void Item() const {
       Option opt;
@@ -51,7 +48,6 @@ class InciterPrint : public tk::Print {
     }
 
     // Helper class for compact output of PDE policies
-    //! \author J. Bakosi
     class Policies {
       public:
         // Default constructor
@@ -86,7 +82,6 @@ class InciterPrint : public tk::Print {
     //! \param[in] t Section title
     //! \param[in] factory Factory to get equation data from
     //! \param[in] ntypes Unique equation types
-    //! \author J. Bakosi
     template< class Factory >
     void eqlist( const std::string& t,
                  const Factory& factory,

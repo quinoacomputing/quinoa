@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Timer.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
@@ -78,13 +77,11 @@ class Timer {
     ///@{
     //! Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \author J. Bakosi
     void pup( PUP::er& p )
     { p( reinterpret_cast<char*>(&m_start), sizeof(clock::time_point) ); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] t Timer object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, Timer& t ) { t.pup(p); } 
     ///@}
 

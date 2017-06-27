@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/mkl_lapacke.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mkl_lapacke.h with turning off specific compiler warnings
 */

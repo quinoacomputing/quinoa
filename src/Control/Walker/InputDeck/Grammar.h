@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the Parsing
@@ -39,7 +38,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 namespace deck {
 
   //! \brief Specialization of tk::grm::use for Walker's input deck parser
-  //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
@@ -54,7 +52,6 @@ namespace deck {
  
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  //! \author J. Bakosi
   static tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
                                   tag::gendir,          std::size_t,
                                   tag::wrightfisher,    std::size_t,
@@ -86,7 +83,6 @@ namespace grm {
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
   //!    stack defaults for walker.
-  //! \author J. Bakosi
   template< class Option, typename... tags >
   struct action< store_walker_option< Option, tags... > > {
     template< typename Input, typename Stack >
@@ -102,7 +98,6 @@ namespace grm {
   //! \brief Register differential equation after parsing its block
   //! \details This is used by the error checking functors (check_*) during
   //!    parsing to identify the recently-parsed block.
-  //! \author J. Bakosi
   template< class eq >
   struct action< register_eq< eq > > {
     template< typename Input, typename Stack >
@@ -121,7 +116,6 @@ namespace grm {
   //!   is required for that block. If the vector does not exist, we error out.
   //! \note This functor only checks existence. If the vector exists, the size
   //!   of it can be checked by check_vector_size.
-  //! \author J. Bakosi
   template< class eq, class vec, MsgKey Key >
   struct action< check_vector_exists< eq, vec, Key > > {
     template< typename Input, typename Stack >
@@ -147,7 +141,6 @@ namespace grm {
   //!   RELEASE mode it will attempt to access unallocated memory yielding a
   //!   segfault. The existence of the vector should be checked by
   //!   check_vector_exists first.
-  //! \author J. Bakosi
   template< class eq, class vec >
   struct action< check_vector_size< eq, vec > > {
     template< typename Input, typename Stack >
@@ -165,7 +158,6 @@ namespace grm {
   template< class eq > struct check_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
-  //! \author J. Bakosi
   template< class eq >
   struct action< check_eq< eq > > {
     template< typename Input, typename Stack >
@@ -204,7 +196,6 @@ namespace grm {
   //! Rule used to trigger action
   template< class eq > struct check_init : pegtl::success {};
   //! \brief Do error checking on the selected initialization policy
-  //! \author J. Bakosi
   template< class eq >
   struct action< check_init< eq > > {
     template< typename Input, typename Stack >

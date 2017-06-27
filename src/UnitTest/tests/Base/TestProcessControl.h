@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestProcessControl.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
@@ -30,7 +29,6 @@ static ProcessControl_group ProcessControl( "Base/ProcessControl" );
 //! Test definitions for group
 
 //! Attempt to call rm with empty argument 
-//! \author J. Bakosi
 template<> template<>
 void ProcessControl_object::test< 1 >() {
   set_test_name( "rm throws on empty argument" );

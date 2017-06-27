@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTestDriver.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.

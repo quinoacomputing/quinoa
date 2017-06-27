@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/TUTSuite.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -49,7 +48,6 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 // *****************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -103,7 +101,6 @@ TUTSuite::spawngrp( const std::string& g )
 // *****************************************************************************
 //  Fire up all tests in a test group
 //! \param[in] g Name of the test group
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ++m_ngroup;         // increase number of test groups to run
@@ -129,7 +126,6 @@ TUTSuite::evaluate( std::vector< std::string > status )
 // Evaluate a unit test
 //! \param[in] status Vector strings containing the test results. See
 //!   unittest::TUTTest constructor for the expected structure of status.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Increase number tests run (including dummies)

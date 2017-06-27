@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Reader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -26,7 +25,6 @@ Reader::Reader( const std::string& filename, std::ios_base::openmode mode ) :
 //! \param[in] filename Name of file to open for reading
 //! \param[in] mode Open mode, see
 //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Make sure there is a filename
@@ -62,7 +60,6 @@ Reader::~Reader() noexcept
 //!   Error handling, while done by throwing and catching exceptions, results in
 //!   warnings to terminal. We use C-style printf, since that will not throw
 //!   exceptions.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
@@ -92,7 +89,6 @@ Reader::firstline()
 //  Return first line (for detection of file type based on header)
 //! \return First line read from file. This can be used for detection of file
 //!   type based on header.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;
@@ -106,7 +102,6 @@ Reader::lines()
 // *****************************************************************************
 // Read file and return a string for each line
 //! \return A std::vector< std::string >, a string for each line of a file.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;
@@ -121,7 +116,6 @@ Reader::line( std::size_t lineNum )
 // Read a given line from file
 //! \param[in] lineNum Line number to read from file
 //! \return Line read from file at line given
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;

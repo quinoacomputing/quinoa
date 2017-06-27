@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Reader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class

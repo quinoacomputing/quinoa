@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -40,12 +39,10 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! \brief Partial differential equation factory: keys associated to their
 //!   constructors
-//! \author J. Bakosi
 using PDEFactory =
   std::map< ctr::PDEKey, std::function< PDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
-//! \author J. Bakosi
 class PDEStack {
 
   public:
@@ -58,7 +55,6 @@ class PDEStack {
     //! \brief Constant accessor to partial differential equation factory
     //! \return Constant reference to the internal partial differential equation
     //!   factory
-    //! \author J. Bakosi
     const PDEFactory& factory() const { return m_factory; }
 
     //! Return info on selected partial differential equations
@@ -67,7 +63,6 @@ class PDEStack {
 
     //! \brief Return number of unique equation types registered
     //! \return The number of unique equation types registered in the factory
-    //! \author J. Bakosi
     std::size_t ntypes() const { return m_eqTypes.size(); }
 
   private:
@@ -79,7 +74,6 @@ class PDEStack {
     //!   as that will not have to specify the template arguments of the
     //!   template argument (the policies of Eq), since we can figure it out
     //!   here. See also http://stackoverflow.com/a/214900
-    //! \author J. Bakosi
     template< template< class, class > class Eq >
     struct registerPDE {
       //! Need to store the reference to factory we are registering into
@@ -115,7 +109,6 @@ class PDEStack {
     //!   to instantiate.
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   partial differential equations by type.
-    //! \author J. Bakosi
     template< class EqTag >
     PDE createPDE( ctr::PDEType eq, std::map< ctr::PDEType, ncomp_t >& cnt )
     const {
@@ -150,7 +143,6 @@ class PDEStack {
     //! \brief Convert and return values from vector as string
     //! \param[in] v Vector whose components to return as a string
     //! \return Concatenated string of values read from a vector
-    //! \author J. Bakosi
     template< typename V >
     std::string parameters( const V& v) const {
       std::stringstream s;

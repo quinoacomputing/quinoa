@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/MigratedTypes.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Type definitions for unit tests of Charm++ migrated data
   \details   Type definitions for unit tests of Charm++ migrated data

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestUnsMeshMap.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for LoadBalance/UnsMeshMap
   \details   Unit tests for LoadBalance/UnsMeshMap
@@ -37,7 +36,6 @@ static UnsMeshMap_group UnsMeshMap( "LoadBalance/UnsMeshMap" );
 //! Test definitions for group
 
 //! Test if constructor behaves on sane input
-//! \author J. Bakosi
 template<> template<>
 void UnsMeshMap_object::test< 1 >() {
   set_test_name( "ctor behaves on sane input" );
@@ -55,7 +53,6 @@ void UnsMeshMap_object::test< 1 >() {
 
 //! \brief Test use of UnsMeshMap creating an array with nchare = numpes when
 //!   the points are nicely distributed
-//! \author J. Bakosi
 template<> template<>
 void UnsMeshMap_object::test< 2 >() {
   auto nchare = static_cast< std::size_t >( CkNumPes() );
@@ -86,7 +83,6 @@ void UnsMeshMap_object::test< 2 >() {
 
 //! \brief Test use of UnsMeshMap creating an array with nchare > numpes when
 //!   the points are nicely distributed
-//! \author J. Bakosi
 template<> template<>
 void UnsMeshMap_object::test< 3 >() {
   auto nchare = static_cast< std::size_t >( 2 * CkNumPes() );
@@ -123,7 +119,6 @@ void UnsMeshMap_object::test< 3 >() {
 //!   will distribute all points (and array chares) to PE 0, which is the worst
 //!   case for what we are testing here, UnsMeshMap::fixPEs(). The test is
 //!   successful if the assert at the end of fixPEs() does not fire.
-//! \author J. Bakosi
 template<> template<>
 void UnsMeshMap_object::test< 4 >() {
   auto nchare = static_cast< std::size_t >( CkNumPes() );
@@ -157,7 +152,6 @@ void UnsMeshMap_object::test< 4 >() {
 //!   will distribute all points (and array chares) to PE 0, which is the worst
 //!   case for what we are testing here, UnsMeshMap::fixPEs(). The test is
 //!   successful if the assert at the end of fixPEs() does not fire.
-//! \author J. Bakosi
 template<> template<>
 void UnsMeshMap_object::test< 5 >() {
   auto nchare = static_cast< std::size_t >( 2 * CkNumPes() );

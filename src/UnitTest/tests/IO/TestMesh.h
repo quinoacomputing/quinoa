@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestMesh.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
@@ -31,7 +30,6 @@ struct Mesh_common {
   //! Generic test function for testing writing and reading a tetrahedron mesh
   //! \param[in] reader Reader type
   //! \param[in] ascii Boolean selecting ASCII (TEXT) or binary mesh type
-  //! \author J. Bakosi
   void testPureTetMesh( tk::MeshReader reader, bool ascii = false ) {
     // Coordinates for simple tetrahedron-mesh
     std::vector< tk::real > coord { 0,   0,   0,
@@ -183,7 +181,6 @@ static Mesh_group Mesh( "IO/Mesh" );
 //! Test definitions for group
 
 //! Write and read Gmsh ascii mesh
-//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 1 >() {
   set_test_name( "write/read Gmsh ASCII tet-mesh" );
@@ -191,7 +188,6 @@ void Mesh_object::test< 1 >() {
 }
 
 //! Write and read Gmsh binary mesh
-//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 2 >() {
   set_test_name( "write/read Gmsh binary tet-mesh" );
@@ -199,7 +195,6 @@ void Mesh_object::test< 2 >() {
 }
 
 //! Write and read ExodusII mesh
-//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 3 >() {
   set_test_name( "write/read ExodusII tet-mesh" );
@@ -207,7 +202,6 @@ void Mesh_object::test< 3 >() {
 }
 
 //! Write and read Netgen mesh
-//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 4 >() {
   set_test_name( "write/read Netgen tet-mesh" );

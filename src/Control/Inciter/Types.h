@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Types.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of

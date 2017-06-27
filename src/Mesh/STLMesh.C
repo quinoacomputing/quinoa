@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/STLMesh.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition.
@@ -18,7 +17,6 @@ STLMesh::alloc( std::size_t num )
 // *****************************************************************************
 //  Allocate memory for mesh
 //! \param[in] num Number of vertices (nodes) in mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Store number of nodes

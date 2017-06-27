@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/PDFReducer.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging PDFs across PEs
   \details   Custom Charm++ reducer for merging PDFs across PEs.
@@ -19,7 +18,6 @@ serialize( const std::vector< tk::UniPDF >& u )
 // Serialize univariate PDFs to raw memory stream
 //! \param[in] u Univariate PDFs
 //! \return Pair of the length and the raw stream containing the serialized PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Prepare for serializing PDF to a raw binary stream, compute size
@@ -45,7 +43,6 @@ mergeUniPDFs( int nmsg, CkReductionMsg **msgs )
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized PDF
 //! \return Aggregated PDF built for further aggregation if needed
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Will store deserialized univariate PDFs
@@ -84,7 +81,6 @@ serialize( const std::vector< tk::UniPDF >& u,
 //! \param[in] b Vector of bivariate PDFs
 //! \param[in] t Vector of trivariate PDFs
 //! \return Pair of the length and the raw stream containing the serialized PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Prepare for serializing PDFs to a raw binary stream, compute size
@@ -113,7 +109,6 @@ mergePDF( int nmsg, CkReductionMsg **msgs )
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized PDFs
 //! \return Aggregated PDFs built for further aggregation if needed
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Will store deserialized uni-, bi-, and tri-variate PDFs

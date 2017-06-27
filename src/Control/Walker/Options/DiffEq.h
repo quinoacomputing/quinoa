@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker

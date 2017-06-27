@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Table.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Basic functionality for storing and sampling a discrete y = f(x)
              function
@@ -31,7 +30,6 @@ tk::sample( tk::real x, const tk::Table& table )
 //! \return Sampled value from discrete table
 //! \note The x column in the table is assumed to be in increasing order.
 //! \see walker::invhts_eq_A005H, walker::prod_A005H for example tables
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (x < table.front().first) return table.front().second;

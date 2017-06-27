@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.

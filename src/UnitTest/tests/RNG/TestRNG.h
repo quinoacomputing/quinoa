@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -248,7 +247,6 @@ static RNG_group RNG( "RNG/RNG" );
 //! Test definitions for group
 
 //! Test constructor taking an object modeling Concept in tk::RNG
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 1 >() {
   set_test_name( "ctor( rng() ) & nthreads()" );
@@ -259,7 +257,6 @@ void RNG_object::test< 1 >() {
 
 //! \brief Test constructor taking a function pointer to a constructor of an
 //!   object modeling Concept in tk::RNG
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 2 >() {
   set_test_name( "ctor( std::function<rng>(rng) )" );
@@ -304,7 +301,6 @@ void RNG_object::test< 2 >() {
 }
 
 //! Test Gaussian generator statistics via polymorphic call in tk::RNG
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 3 >() {
   set_test_name( "Gaussian from 4 emulated streams" );
@@ -312,7 +308,6 @@ void RNG_object::test< 3 >() {
 }
 
 //! Test beta generator statistics via polymorphic call in tk::RNG
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 4 >() {
   set_test_name( "beta from 4 emulated streams" );
@@ -320,7 +315,6 @@ void RNG_object::test< 4 >() {
 }
 
 //! Test uniform generator statistics via polymorphic call in tk::RNG
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 5 >() {
   set_test_name( "uniform from 4 emulated streams" );
@@ -328,7 +322,6 @@ void RNG_object::test< 5 >() {
 }
 
 //! Test copy constructor
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 6 >() {
   set_test_name( "copy constructor" );
@@ -336,7 +329,6 @@ void RNG_object::test< 6 >() {
 }
 
 //! Test move constructor
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 7 >() {
   set_test_name( "move constructor" );
@@ -344,7 +336,6 @@ void RNG_object::test< 7 >() {
 }
 
 //! Test copy assignment
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 8 >() {
   set_test_name( "copy assignment" );
@@ -352,7 +343,6 @@ void RNG_object::test< 8 >() {
 }
 
 //! Test move assignment
-//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 9 >() {
   set_test_name( "move assignment" );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/PUPUtil.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -43,7 +42,6 @@ namespace PUP {
 //!   {...}.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] e Enum class to pack/unpack
-//! \author J. Bakosi
 template< typename E,
           typename std::enable_if< std::is_enum< E >::value, int >::type = 0 >
 inline void pup( PUP::er& p, E& e ) {
@@ -74,7 +72,6 @@ pup_tuple_impl( PUP::er& p, std::tuple< Tp... >& t ) {
 //! Pack/Unpack std::tuple.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] t std::tuple to pack/unpack
-//! \author J. Bakosi
 template< typename... Ts >
 inline void pup( PUP::er& p, std::tuple< Ts... >& t ) {
   if (p.isUnpacking()) t = std::tuple< Ts... >();
@@ -83,7 +80,6 @@ inline void pup( PUP::er& p, std::tuple< Ts... >& t ) {
 //! Pack/Unpack std::tuple.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] t std::tuple to pack/unpack
-//! \author J. Bakosi
 template< typename... Ts >
 inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup( p, t ); }
 
@@ -92,7 +88,6 @@ inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup( p, t ); }
 //! Pack/Unpack std::array.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] a std::array< T, N > of arbitrary type T to pack/unpack
-//! \author J. Bakosi
 template< class T, std::size_t N >
 inline void pup( PUP::er& p, std::array< T, N >& a ) {
   for (std::size_t s=0; s<N; ++s) p | a[s];
@@ -100,7 +95,6 @@ inline void pup( PUP::er& p, std::array< T, N >& a ) {
 //! Pack/Unpack std::array.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] a std::array< T, N > of arbitrary type T to pack/unpack
-//! \author J. Bakosi
 template< class T, std::size_t N >
 inline void operator|( PUP::er& p, std::array< T, N >& a ) { pup( p, a ); }
 
@@ -109,7 +103,6 @@ inline void operator|( PUP::er& p, std::array< T, N >& a ) { pup( p, a ); }
 //! Pack/Unpack std::unordered_map.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] m std::unordered_map< Key, T, Hash, KeyEqual > to pack/unpack
-//! \author J. Bakosi
 template< class Key,
           class T,
           class Hash = std::hash< Key >,
@@ -132,7 +125,6 @@ inline void pup( PUP::er& p, std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
 //! Pack/Unpack std::unordered_map.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] m std::unordered_map< Key, T, Hash, KeyEqual > to pack/unpack
-//! \author J. Bakosi
 template< class Key,
           class T,
           class Hash = std::hash< Key >,
@@ -146,7 +138,6 @@ inline void operator|( PUP::er& p,
 //! Pack/Unpack std::unordered_set.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] s std::unordered_set< Key, Hash, KeyEqual > to pack/unpack
-//! \author J. Bakosi
 template< class Key,
           class Hash = std::hash< Key >,
           class KeyEqual = std::equal_to< Key > >
@@ -168,7 +159,6 @@ inline void pup( PUP::er& p, std::unordered_set< Key, Hash, KeyEqual >& s ) {
 //! Pack/Unpack std::unordered_set.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] s std::unordered_set< Key, Hash, KeyEqual > to pack/unpack
-//! \author J. Bakosi
 template< class Key,
           class Hash = std::hash< Key >,
           class KeyEqual = std::equal_to< Key > >
@@ -181,7 +171,6 @@ inline void operator|( PUP::er& p,
 //! Pack/Unpack boost::optional.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
-//! \author J. Bakosi
 template< class T >
 inline void pup( PUP::er& p, boost::optional< T >& o ) {
   T underlying_value = o ? *o : T();
@@ -193,7 +182,6 @@ inline void pup( PUP::er& p, boost::optional< T >& o ) {
 //! Pack/Unpack boost::optional.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
-//! \author J. Bakosi
 template< class T >
 inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 
