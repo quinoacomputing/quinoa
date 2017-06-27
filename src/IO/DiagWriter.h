@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/DiagWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
@@ -25,7 +24,6 @@ namespace tk {
 //! \brief DiagWriter : tk::Writer
 //! \details ASCII diagnostics writer class that facilitates outputing
 //!   diagnostics to text files.
-//! \author J. Bakosi
 class DiagWriter : public tk::Writer {
 
   public:

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/StringParser.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as
@@ -28,7 +27,6 @@ StringParser::StringParser( int argc, char** argv ) : m_string()
 //! \details   Convert C-style character array of character arrays to a single
 //!   std::string substrings separated by spaces. Exception safety: basic
 //!   guarantee: if an exception is thrown, the stream is in a valid state.
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   for (int i=1; i<argc; ++i)
@@ -42,7 +40,6 @@ StringParser::diagnostics( const tk::Print& print,
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print Pretty printer
 //! \param[in] messages Vector of strings of errors and warnings
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   bool err = false;     // signaling whether there were any errors

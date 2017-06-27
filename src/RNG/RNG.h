@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/RNG.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
@@ -30,7 +29,6 @@ namespace tk {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a RNG, see
 //!   see tk::MKLRNG or tk::RNGSSE.
-//! \author J. Bakosi
 class RNG {
 
     using ncomp_t = kw::ncomp::info::expect::type;    

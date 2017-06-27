@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keyword.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -27,7 +26,6 @@ using namespace tao;
 //!   alias, which is a single character. Used for command-line arguments, e.g.,
 //!   --help, -h, where 'h' is the alias for keyword 'help'.
 //! \see Control/Keywords.h
-//! \author J. Bakosi
 template< int Char >
 struct Alias {
   using type = pegtl::one< Char >;
@@ -38,7 +36,6 @@ struct Alias {
 //! \details This struct is used to define both a type and a value for a keyword
 //!   code, which is a single character. Used for printing out policy code.
 //! \see Control/Keywords.h
-//! \author J. Bakosi
 template< int Char >
 struct Code {
   using type = pegtl::one< Char >;
@@ -71,7 +68,6 @@ struct Code {
 //!    title'.
 //! \see For example client-code and more detailed documentation on the possible
 //!    fields, see Control/Keywords.h.
-//! \author J. Bakosi
 template< typename Info, typename > struct keyword;
 template< typename Info, char... Chars >
 struct keyword< Info, pegtl::string< Chars... > > {

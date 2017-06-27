@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/LinearMap.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -48,7 +47,6 @@ LinearMap::procNum( int, const CkArrayIndex& idx )
 //! \param[in] idx Charm++ array index object containing the array element index
 //!   to assign a PE to
 //! \return PE assigned
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int elem = *idx.data();       // array element we assign PE for
@@ -69,7 +67,6 @@ LinearMap::populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
 //!   array elements to be created
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int nelem = *opt.getNumInitial().data(); // number of array elements requested

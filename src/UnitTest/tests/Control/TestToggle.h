@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestToggle.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
@@ -52,7 +51,6 @@ static Toggle_group Toggle( "Control/Toggle" );
 //! Test definitions for group
 
 //! Test that constructor throws if maps aren't the same size
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 1 >() {
   set_test_name( "ctor throws if maps aren't the same size" );
@@ -81,7 +79,6 @@ void Toggle_object::test< 1 >() {
 }
 
 //! Test that member function group() returns the correct groupname
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 2 >() {
   set_test_name( "group() returns groupname" );
@@ -89,7 +86,6 @@ void Toggle_object::test< 2 >() {
 }
 
 //! Test that member function value() finds value for keyword
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 3 >() {
   set_test_name( "value() finds value for keyword" );
@@ -97,7 +93,6 @@ void Toggle_object::test< 3 >() {
 }
 
 //! Test that member function value() throws in DEBUG mode if can't find keyword
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 4 >() {
   set_test_name( "value() throws if can't find keyword" );
@@ -120,7 +115,6 @@ void Toggle_object::test< 4 >() {
 }
 
 //! Test that member function name() finds name for value
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 5 >() {
   set_test_name( "name() finds name for value" );
@@ -128,7 +122,6 @@ void Toggle_object::test< 5 >() {
 }
 
 //! Test that member function name() throws in DEBUG mode if can't find value
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 6 >() {
   set_test_name( "name() throws if can't find value" );
@@ -151,7 +144,6 @@ void Toggle_object::test< 6 >() {
 }
 
 //! Test that member function exist() finds existing keyword
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 7 >() {
   set_test_name( "exist() finds existing keyword" );
@@ -160,7 +152,6 @@ void Toggle_object::test< 7 >() {
 }
 
 //! Test that member function exists() does not find non-existing keyword
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 8 >() {
   set_test_name( "exist() doesn't find non-existing keyword" );
@@ -169,7 +160,6 @@ void Toggle_object::test< 8 >() {
 }
 
 //! Test copy constructor
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 9 >() {
   set_test_name( "copy constructor" );
@@ -182,7 +172,6 @@ void Toggle_object::test< 9 >() {
 }
 
 //! Test move constructor
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 10 >() {
   set_test_name( "move constructor" );
@@ -195,7 +184,6 @@ void Toggle_object::test< 10 >() {
 }
 
 //! Test copy assignment
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 11 >() {
   set_test_name( "copy assignment" );
@@ -218,7 +206,6 @@ void Toggle_object::test< 11 >() {
 }
 
 //! Test move assignment
-//! \author J. Bakosi
 template<> template<>
 void Toggle_object::test< 12 >() {
   set_test_name( "move assignment" );

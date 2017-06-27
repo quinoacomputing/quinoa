@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -38,7 +37,6 @@ static Print_group Print( "Base/Print" );
 //! Test definitions for group
 
 //! Test operator<< to default-constructed Print object's verbose stream
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 1 >() {
   set_test_name( "operator<< to default-ctor'd verbose stream" );
@@ -53,7 +51,6 @@ void Print_object::test< 1 >() {
 }
 
 //! Test operator<< to verbose stream of Print object
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 2 >() {
   set_test_name( "operator<< to verbose stream" );
@@ -63,7 +60,6 @@ void Print_object::test< 2 >() {
 }
 
 //! Test operator% to quiet stream of Print object
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 3 >() {
   set_test_name( "operator% to quiet stream" );
@@ -73,7 +69,6 @@ void Print_object::test< 3 >() {
 }
 
 //! Test saving pointer to verbose stream
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 4 >() {
   set_test_name( "save/reset pointer to verbose stream" );
@@ -90,7 +85,6 @@ void Print_object::test< 4 >() {
 }
 
 //! Test saving pointer to quiet stream
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 5 >() {
   set_test_name( "save/reset pointer to quiet stream" );
@@ -114,7 +108,6 @@ void Print_object::test< 5 >() {
 }
 
 //! Test that tk::Print::part() runs without throwing an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 6 >() {
   set_test_name( "part() does not throw" );
@@ -122,7 +115,6 @@ void Print_object::test< 6 >() {
 }
 
 //! Test that tk::Print::section(title) runs without throwing an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 7 >() {
   set_test_name( "section(title) does not throw" );
@@ -130,7 +122,6 @@ void Print_object::test< 7 >() {
 }
 
 //! Test that tk::Print::section(name,value) runs without throwing an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 8 >() {
   set_test_name( "section(name,value) does not throw" );
@@ -138,7 +129,6 @@ void Print_object::test< 8 >() {
 }
 
 //! Test that tk::Print::subsection(title) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 9 >() {
   set_test_name( "subsection(title) does not throw" );
@@ -146,7 +136,6 @@ void Print_object::test< 9 >() {
 }
 
 //! Test that tk::Print::title(title) runs without throwing an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 10 >() {
   set_test_name( "title(title) does not throw" );
@@ -155,7 +144,6 @@ void Print_object::test< 10 >() {
 }
 
 //! Test that tk::Print::item(name) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 11 >() {
   set_test_name( "item(name) does not throw" );
@@ -163,7 +151,6 @@ void Print_object::test< 11 >() {
 }
 
 //! Test that tk::Print::item(name,value) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 12 >() {
   set_test_name( "item(name,value) does not throw" );
@@ -173,7 +160,6 @@ void Print_object::test< 12 >() {
 }
 
 //! Test that tk::Print::item(name,watch) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 13 >() {
   set_test_name( "item(name,watch) does not throw" );
@@ -181,7 +167,6 @@ void Print_object::test< 13 >() {
 }
 
 //! Test that tk::Print::list(name,entries) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 14 >() {
   set_test_name( "list(name,entries) does not throw" );
@@ -194,7 +179,6 @@ void Print_object::test< 14 >() {
 }
 
 //! Test that tk::Print::list(name,factory) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 15 >() {
   set_test_name( "list(name,factory) does not throw" );
@@ -210,7 +194,6 @@ void Print_object::test< 15 >() {
 }
 
 //! Test that tk::Print::time(title,clocks) does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 16 >() {
   set_test_name( "time(title,clocks) does not throw" );
@@ -227,7 +210,6 @@ void Print_object::test< 16 >() {
 }
 
 //! Test that tk::Print::note() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 17 >() {
   set_test_name( "note() does not throw" );
@@ -235,7 +217,6 @@ void Print_object::test< 17 >() {
 }
 
 //! Test that tk::Print::help() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 18 >() {
   set_test_name( "help() does not throw" );
@@ -244,7 +225,6 @@ void Print_object::test< 18 >() {
 }
 
 //! Test that tk::Print::helpkw() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 19 >() {
   set_test_name( "helpkw() does not throw" );
@@ -263,7 +243,6 @@ void Print_object::test< 19 >() {
 }
 
 //! Test that tk::Print::endpart() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 20 >() {
   set_test_name( "endpart() does not throw" );
@@ -271,7 +250,6 @@ void Print_object::test< 20 >() {
 }
 
 //! Test that tk::Print::endsubsection() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 21 >() {
   set_test_name( "endsubsection() does not throw" );
@@ -279,7 +257,6 @@ void Print_object::test< 21 >() {
 }
 
 //! Test that tk::Print::raw() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 22 >() {
   set_test_name( "raw() does not throw" );
@@ -287,7 +264,6 @@ void Print_object::test< 22 >() {
 }
 
 //! Test tk::Print::stream to access verbose stream
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 23 >() {
   set_test_name( "verbose stream access" );
@@ -301,7 +277,6 @@ void Print_object::test< 23 >() {
 }
 
 //! Test tk::Print::stream to access quiet stream
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 24 >() {
   set_test_name( "quiet stream access" );
@@ -315,7 +290,6 @@ void Print_object::test< 24 >() {
 }
 
 //! Test that tk::Print::headerInciter() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 25 >() {
   set_test_name( "headerInciter() does not throw" );
@@ -323,7 +297,6 @@ void Print_object::test< 25 >() {
 }
 
 //! Test that tk::Print::headerRNGTest() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 26 >() {
   set_test_name( "headerRNGTest() does not throw" );
@@ -331,7 +304,6 @@ void Print_object::test< 26 >() {
 }
 
 //! Test that tk::Print::headerUnitTest() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 27 >() {
   set_test_name( "headerUnitTest() does not throw" );
@@ -339,7 +311,6 @@ void Print_object::test< 27 >() {
 }
 
 //! Test that tk::Print::headerMeshConv() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 28 >() {
   set_test_name( "headerMeshConv() does not throw" );
@@ -347,7 +318,6 @@ void Print_object::test< 28 >() {
 }
 
 //! Test that tk::Print::headerWalker() does not throw an exception
-//! \author J. Bakosi
 template<> template<>
 void Print_object::test< 29 >() {
   set_test_name( "headerWalker() does not throw" );

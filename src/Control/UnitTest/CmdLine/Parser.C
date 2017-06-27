@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's command line parser
   \details   This file defines the command-line argument parser for the unit
@@ -45,7 +44,6 @@ CmdLineParser::CmdLineParser( int argc,
 //! \param[in] print Pretty printer
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \param[inout] helped Boolean indicating if command-line help was requested
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create CmdLine (a tagged tuple) to store parsed input

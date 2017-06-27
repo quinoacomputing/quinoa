@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ASCMeshReader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASC mesh reader class definition
   \details   ASC mesh reader class definition. Mesh reader facilitating reading
@@ -26,7 +25,6 @@ void
 ASCMeshReader::readHeader()
 // *****************************************************************************
 //  Read ASC mesh header
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;
@@ -56,7 +54,6 @@ ASCMeshReader::readMesh( UnsMesh& mesh )
 // *****************************************************************************
 //  Read ASC mesh
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read header
@@ -72,7 +69,6 @@ ASCMeshReader::readNodes( UnsMesh& mesh )
 // *****************************************************************************
 //  Read nodes
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;
@@ -101,7 +97,6 @@ ASCMeshReader::readElements( UnsMesh& mesh )
 // *****************************************************************************
 //  Read element connectivity
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::string s;

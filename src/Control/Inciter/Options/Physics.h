@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Physics.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics options for inciter
   \details   Physics options for inciter
@@ -21,23 +20,19 @@ namespace inciter {
 namespace ctr {
 
 //! Physics types
-//! \author J. Bakosi
 enum class PhysicsType : uint8_t { ADVECTION=0,
                                    ADVDIFF,
                                    EULER,
                                    NAVIERSTOKES };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
 
 //! \brief Physics options: outsource to base templated on enum type
-//! \author J. Bakosi
 class Physics : public tk::Toggle< PhysicsType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::advection
                                        , kw::advdiff
                                        , kw::laplace
@@ -48,7 +43,6 @@ class Physics : public tk::Toggle< PhysicsType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit Physics() :
       tk::Toggle< PhysicsType >(
         //! Group, i.e., options, name
@@ -70,7 +64,6 @@ class Physics : public tk::Toggle< PhysicsType > {
     //! \brief Return policy code based on Enum
     //! \param[in] p Enum value of the physics option requested
     //! \return Policy code of the option
-    //! \author J. Bakosi
     const std::string& code( PhysicsType p ) const {
       using tk::operator<<;
       auto it = policy.find( p );
@@ -82,7 +75,6 @@ class Physics : public tk::Toggle< PhysicsType > {
 
   private:
     //! Function object for ensuring the existence of policy codes
-    //! \author J. Bakosi
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code

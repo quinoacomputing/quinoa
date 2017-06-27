@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ASCMeshReader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASC mesh reader class declaration
   \details   ASC mesh reader class declaration. Mesh reader facilitating reading

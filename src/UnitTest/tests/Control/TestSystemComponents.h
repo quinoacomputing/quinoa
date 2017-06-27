@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestSystemComponents.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/SystemComponents
   \details   Unit tests for Control/SystemComponents
@@ -68,7 +67,6 @@ static SystemComponents_group SystemComponents( "Control/SystemComponents" );
 //! Test definitions for group
 
 //! Test that number of components are correct
-//! \author J. Bakosi
 template<> template<>
 void SystemComponents_object::test< 1 >() {
   set_test_name( "number of components" );
@@ -89,7 +87,6 @@ void SystemComponents_object::test< 1 >() {
 }
 
 //! Test that number of components are correct
-//! \author J. Bakosi
 template<> template<>
 void SystemComponents_object::test< 2 >() {
   set_test_name( "offsets" );
@@ -110,7 +107,6 @@ void SystemComponents_object::test< 2 >() {
 }
 
 //! Test the total number of components are correct
-//! \author J. Bakosi
 template<> template<>
 void SystemComponents_object::test< 3 >() {
   set_test_name( "total number of components" );
@@ -131,7 +127,6 @@ void SystemComponents_object::test< 3 >() {
 }
 
 //! Test that offsetmap builds a linear map of offsets
-//! \author J. Bakosi
 template<> template<>
 void SystemComponents_object::test< 4 >() {
   set_test_name( "linear offsetmap" );

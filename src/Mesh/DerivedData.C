@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -57,7 +56,6 @@ genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe )
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsup() on empty container" );
@@ -150,7 +148,6 @@ genPsup( const std::vector< std::size_t >& inpoel,
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genPsup() on empty container" );
@@ -250,7 +247,6 @@ genEdsup( const std::vector< std::size_t >& inpoel,
 //!   and tetrahedra element connectivity.
 //! \see tk::genInpoed for similar data that sometimes may be more advantageous
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEdsup() on empty container" );
@@ -352,7 +348,6 @@ genInpoed( const std::vector< std::size_t >& inpoel,
 //!   and tetrahedra element connectivity.
 //! \see tk::genEdsup for similar data that sometimes may be more advantageous
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genInpoed() on empty container" );
@@ -448,7 +443,6 @@ genEsupel( const std::vector< std::size_t >& inpoel,
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsupel() on empty container" );
@@ -524,7 +518,6 @@ genEsuel( const std::vector< std::size_t >& inpoel,
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsuel() on empty container" );
@@ -627,7 +620,6 @@ genInedel( const std::vector< std::size_t >& inpoel,
 //!   tetrahedra have no internal edges, this algorithm only works for triangle
 //!   and tetrahedra element connectivity.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genInedel() on empty container" );
@@ -742,7 +734,6 @@ genEsued( const std::vector< std::size_t >& inpoel,
 //!   tetrahedra have no internal edges, this algorithm only works for triangle
 //!   and tetrahedra element connectivity.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsued() on empty container" );

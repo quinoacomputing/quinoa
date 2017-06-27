@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestMake_list.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Make_list.h
   \details   Unit tests for Base/Make_list.h
@@ -39,7 +38,6 @@ static Make_list_group Make_list( "Base/Make_list" );
 
 //! \brief Test that tk::make_list can correctly convert a variadic template
 //!   argument pack to boost::mpl::list
-//! \author J. Bakosi
 template<> template<>
 void Make_list_object::test< 1 >() {
   set_test_name( "make_list" );

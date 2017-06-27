@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/TaggedTuple.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access. This is very much like

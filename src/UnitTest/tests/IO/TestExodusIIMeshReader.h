@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestExodusIIMeshReader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for the ExodusII unstructured-mesh reader
   \details   Unit tests for the ExodusII unstructured-mesh reader
@@ -1389,7 +1388,6 @@ static ExodusIIMeshReader_group ExodusIIMeshReader( "IO/ExodusIIMeshReader" );
 //! Test definitions for group
 
 //! Read all of single-block tet-mesh
-//! \author J. Bakosi
 template<> template<>
 void ExodusIIMeshReader_object::test< 1 >() {
   set_test_name( "read all of single-block tet-mesh" );
@@ -1422,7 +1420,6 @@ void ExodusIIMeshReader_object::test< 1 >() {
 }
 
 //! Read all of multi-block tet-mesh
-//! \author J. Bakosi
 template<> template<>
 void ExodusIIMeshReader_object::test< 2 >() {
   set_test_name( "read all of multiblock tet-mesh" );
@@ -1469,7 +1466,6 @@ void ExodusIIMeshReader_object::test< 2 >() {
 }
 
 //! Read part of single-block tet-mesh graph
-//! \author J. Bakosi
 template<> template<>
 void ExodusIIMeshReader_object::test< 3 >() {
   set_test_name( "read part of single-block tet-mesh graph" );
@@ -1494,7 +1490,6 @@ void ExodusIIMeshReader_object::test< 3 >() {
 }
 
 //! Read part of multi-block tet-mesh graph
-//! \author J. Bakosi
 template<> template<>
 void ExodusIIMeshReader_object::test< 4 >() {
   set_test_name( "read part of multi-block tet-mesh graph" );

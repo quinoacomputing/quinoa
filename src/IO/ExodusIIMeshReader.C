@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshReader.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -43,7 +42,6 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
 //! \param[inout] mesh Unstructured mesh object to load the data to
 //! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
 //! \param[in] iowordsize Set I/O word size, see ExodusII documentation
-//! \author J. Bakosi
 // *****************************************************************************
 {
   float version;
@@ -57,7 +55,6 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
 ExodusIIMeshReader::~ExodusIIMeshReader() noexcept
 // *****************************************************************************
 //  Destructor
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if ( ex_close(m_inFile) < 0 )
@@ -70,7 +67,6 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
 // *****************************************************************************
 //  Read ExodusII mesh file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   readHeader( mesh );
@@ -83,7 +79,6 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
 // *****************************************************************************
 //  Read only connectivity graph from file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   readHeader( mesh );
@@ -95,7 +90,6 @@ ExodusIIMeshReader::readHeader()
 // *****************************************************************************
 //  Read ExodusII header without setting mesh size
 //! \return Number of nodes in mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   char title[MAX_LINE_LENGTH+1];
@@ -124,7 +118,6 @@ ExodusIIMeshReader::readHeader( UnsMesh& mesh )
 // *****************************************************************************
 //  Read ExodusII header with setting mesh size
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read ExodusII file header and set mesh graph size
@@ -136,7 +129,6 @@ ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
 // *****************************************************************************
 //  Read all node coordinates from ExodusII file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   mesh.x().resize( m_nnode );
@@ -155,7 +147,6 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
 //! \param[in] ext Extents of element ids whose connectivity to read, both
 //!   inclusive
 //! \return Mesh node coordinates
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto num = ext[1] - ext[0] + 1;
@@ -177,7 +168,6 @@ ExodusIIMeshReader::readElemBlockIDs()
 // *****************************************************************************
 //  Read element block IDs from ExodusII file
 //! \return Total number of nodes in mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read ExodusII file header
@@ -228,7 +218,6 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 // *****************************************************************************
 //  Read all element blocks and mesh connectivity from ExodusII file
 //! \param[inout] mesh Unstructured mesh object to store mesh in
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read element block ids
@@ -291,7 +280,6 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 //! \details This function takes the extents of element IDs in a zero-based
 //!   fashion. These input extents can be thought of "absolute" extents that
 //!   denote lowest and the largest-1 element IDs to be read from file.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( tk::sumsize(m_eidt) > 0,
@@ -395,7 +383,6 @@ ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
 //  Read node list of all side sets from ExodusII file
 //! \return Elem and side lists mapped to side set ids
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read ExodusII file header (fills m_neset)
@@ -446,7 +433,6 @@ ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 //! \param[in] elemtype Element type
 //! \return Number of elements in all blocks for the elem type
 //! \note Must be preceded by a call to readElemBlockIDs()
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto e = static_cast< std::size_t >( elemtype );

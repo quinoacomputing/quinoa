@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -31,7 +30,6 @@ namespace ctr {
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/Inciter/Types.h
-//! \author J. Bakosi
 class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
@@ -130,7 +128,6 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    //! \author J. Bakosi
     InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );
@@ -163,7 +160,6 @@ class InputDeck :
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
@@ -180,7 +176,6 @@ class InputDeck :
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i InputDeck object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}
 };

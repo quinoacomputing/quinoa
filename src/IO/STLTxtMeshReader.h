@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/STLTxtMeshReader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -34,7 +33,6 @@ class STLTxtMeshReader : public Reader {
   private:
     //! \brief ASCII STL keyword with operator>> redefined to do error checking
     //!    without contaminating client-code
-    //! \author J. Bakosi
     struct STLKeyword {
       std::string read;                 //!< Keyword read in from input
       const std::string correct;        //!< Keyword that should be read in

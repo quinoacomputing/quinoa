@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -41,7 +40,6 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
 //! \param[inout] inputdeck Input deck stack where data is stored during parsing
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create InputDeck (a tagged tuple) to store parsed input

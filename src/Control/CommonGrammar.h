@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \author    J. Bakosi, D. Frey
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
@@ -282,7 +281,6 @@ namespace grm {
   //! \param[in,out] stack Grammar stack (a tagged tuple) to operate on
   //! \param[in] in Last parsed PEGTL input token (can be empty, depending on
   //!   what context this function gets called.
-  //! \author J. Bakosi
   template< class Stack, MsgType type, MsgKey key, class Input >
   static void Message( Stack& stack, const Input& in ) {
     const auto& msg = message.find(key);
@@ -321,7 +319,6 @@ namespace grm {
   //!   the vector is a valid keyword that defines the type 'pegtl_string'.
   //!  \see kw::keyword in Control/Keyword.h
   //!  \see e.g. store_option
-  // \author J. Bakosi
   template< template< class > class use >
   struct is_keyword {
     template< typename U > void operator()( U ) {
@@ -354,7 +351,6 @@ namespace grm {
   //!   initial state, i.e., containing the defaults for all of its fields. This
   //!   is used to detect if the user wants to overwrite an option value that
   //!   has already been set differently from the default
-  //! \author J. Bakosi
   template< class Stack, template< class > class use, class Option,
             class DefaultStack, class Input, class... tags >
   static void store_option( Stack& stack,
@@ -392,12 +388,10 @@ namespace grm {
 
   //! PEGTL action base: do nothing by default
   //! \details This base is specialized to different actions duing parsing.
-  //! \author D. Frey
   template< typename Rule >
   struct action : pegtl::nothing< Rule > {};
 
   //! Helper for calling action::apply for multiple actions
-  //! \author D. Frey
   template< typename... As >
   struct call {
     template< typename Input, typename State >
@@ -408,11 +402,9 @@ namespace grm {
   };
 
   //! Rule used to trigger action(s) for a rule
-  //! \author J. Bakosi
   template< class rule, class... actions >
   struct act : rule {};
 
-  //! \author J. Bakosi
   //! \details Specialization of action for act< rule, actions... >
   template< class rule, class... actions >
   struct action< act< rule, actions... > > : call< actions... > {};
@@ -427,7 +419,6 @@ namespace grm {
   //!   function call operator, PEGTL uses the apply() member function for the
   //!   actions. Thus this struct can be passed to, i.e., specialize a template,
   //!   such as tk::grm::unknown, injecting in it the desired behavior.
-  //! \author J. Bakosi
   template< MsgType type, MsgKey key >
   struct action< msg< type, key > > {
     template< typename Input, typename Stack >
@@ -442,7 +433,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the set member function of the underlying grammar
   //!    stack, tk::Control::set.
-  //! \author J. Bakosi
   template< typename tag, typename... tags >
   struct action< Set< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -457,7 +447,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store member function of the underlying grammar
   //!    stack, tk::Control::store.
-  //! \author J. Bakosi
   template< typename tag, typename... tags >
   struct action< Store< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -476,7 +465,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back member function of the underlying
   //!    grammar stack, tk::Control::store_back.
-  //! \author J. Bakosi
   template< typename tag, typename...tags >
   struct action< Store_back< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -493,7 +481,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back_back member function of the
   //!    underlying grammar stack, tk::Control::store_back_back.
-  //! \author J. Bakosi
   template< typename tag, typename...tags >
   struct action< Store_back_back< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -510,7 +497,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back_back_back member function of the
   //!    underlying grammar stack, tk::Control::store_back_back_back.
-  //! \author J. Bakosi
   template< typename tag, typename...tags >
   struct action< Store_back_back_back< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -526,7 +512,6 @@ namespace grm {
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
   //!    stack via the member function tk::Control::set.
-  //! \author J. Bakosi
   template< typename... tags >
   struct action< Store_switch< tags... > > {
     template< typename Input, typename Stack >
@@ -548,7 +533,6 @@ namespace grm {
   //!   if the desired option value exist for the particular option type and
   //!   error out if there is a problem. Errors and warnings are accumulated
   //!   during parsing and diagnostics are given after the parsing is finished.
-  //! \author J. Bakosi
   template< template < class > class use, class Option,
             typename tag, typename... tags >
   struct action< store_back_option< use, Option, tag, tags... > > {
@@ -582,7 +566,6 @@ namespace grm {
   //!   accumulated during parsing and diagnostics are given after the parsing
   //!   is finished. This functor is similar to store_back_option but pushes the
   //!   option back to a vector of a vector.
-  //! \author J. Bakosi
   template< template < class > class use, class Option,
             typename tag, typename... tags >
   struct action< store_back_back_option< use, Option, tag, tags... > > {
@@ -622,7 +605,6 @@ namespace grm {
   //!   This key is then used to insert a new entry in the std::map under
   //!   tag::param to store the RNG parameter. Client-code is in, e.g.,
   //!   tk::rngsse::seed.
-  //! \author J. Bakosi
   template< typename field, typename sel, typename vec,
             typename tag, typename...tags >
   struct action< Insert_field< field, sel, vec, tag, tags... > > {
@@ -648,7 +630,6 @@ namespace grm {
   //!   grammar stack. An option is an object deriving from tk::Toggle. See,
   //!   e.g., walker::ctr::DiffEq for an example specialization of tk::Toggle to
   //!   see how an option is created from tk::Toggle.
-  //! \author J. Bakosi
   template< template< class > class use, class Option,
             typename field, typename sel, typename vec, typename tag,
             typename... tags >
@@ -676,7 +657,6 @@ namespace grm {
   //!   values into text files. We also make sure that the precision to be set
   //!   is between the correct bounds of the underlying floating-point type.
   //! \see kw::precision_info
-  //! \author J. Bakosi
   template< class prec >
   struct action< store_precision< prec > > {
     template< typename Input, typename Stack >
@@ -717,7 +697,6 @@ namespace grm {
   //!    respectively), and for the keyword and its info on which help was
   //!    requested (behind tag::helpkw). This is the structure of CmdLine
   //!    objects, thus this functor should be called from command line parsers.
-  //! \author J. Bakosi
   template<>
   struct action< helpkw > {
     template< typename Input, typename Stack >
@@ -744,7 +723,6 @@ namespace grm {
   //! \brief Match depvar (dependent variable) to one of the selected ones
   //! \details This is used to check the set of dependent variables previously
   //!    assigned to registered differential equations (or models).
-  //! \author J. Bakosi
   template< class push >
   struct action< match_depvar< push > > {
     template< typename Input, typename Stack >
@@ -764,7 +742,6 @@ namespace grm {
   //! \brief Match PDF name to the registered ones
   //! \details This is used to check the set of PDF names dependent previously
   //!    registered to make sure all are unique.
-  //! \author J. Bakosi
   template<>
   struct action< match_pdfname > {
     template< typename Input, typename Stack >
@@ -785,7 +762,6 @@ namespace grm {
             typename vec, typename... tags >
   struct check_store_option : pegtl::success {};
   //! \brief Put option in state at position given by tags if among the selected
-  //! \author J. Bakosi
   template< template < class > class use, class Option, typename sel,
             typename vec, typename... tags >
   struct action< check_store_option< use, Option, sel, vec, tags... > > {
@@ -806,7 +782,6 @@ namespace grm {
   //! Rule used to trigger action
   struct add_depvar : pegtl::success {};
   //! \brief Add depvar (dependent variable) to the selected ones
-  //! \author J. Bakosi
   template<>
   struct action< add_depvar > {
     template< typename Input, typename Stack >
@@ -825,7 +800,6 @@ namespace grm {
   template< typename tag, typename... tags >
   struct start_vector : pegtl::success {};
   //! \brief Start new vector in vector
-  //! \author J. Bakosi
   template< class tag, class... tags >
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -838,7 +812,6 @@ namespace grm {
   template< typename tag, typename... tags >
   struct start_vector_back : pegtl::success {};
   //! \brief Start new vector in back of a vector
-  //! \author J. Bakosi
   template< class tag, class... tags >
   struct action< start_vector_back< tag, tags... > > {
     template< typename Input, typename Stack >
@@ -852,7 +825,6 @@ namespace grm {
   template< typename tk::ctr::Moment, char var = '\0' >
   struct push_term : pegtl::success {};
   //! \brief Add matched value as Term into vector of vector of statistics
-  //! \author J. Bakosi
   template< tk::ctr::Moment m, char var >
   struct action< push_term< m, var > > {
     template< typename Input, typename Stack >
@@ -877,7 +849,6 @@ namespace grm {
   //! Rule used to trigger action
   template< tk::ctr::Moment m > struct push_sample : pegtl::success {};
   //! \brief Add matched value as Term into vector of vector of PDFs
-  //! \author J. Bakosi
   template< tk::ctr::Moment m >
   struct action< push_sample< m > > {
     template< typename Input, typename Stack >
@@ -911,7 +882,6 @@ namespace grm {
   //! Rule used to trigger action
   struct push_binsize : pegtl::success {};
   //! \brief Push matched value into vector of vector binsizes
-  //! \author J. Bakosi
   template<>
   struct action< push_binsize > {
     template< typename Input, typename Stack >
@@ -934,7 +904,6 @@ namespace grm {
   //! Rule used to trigger action
   struct push_extents : pegtl::success {};
   //! \brief Push matched value into vector of PDF extents
-  //! \author J. Bakosi
   template<>
   struct action< push_extents > {
     template< typename Input, typename Stack >
@@ -958,7 +927,6 @@ namespace grm {
   //! Rule used to trigger action
   template< class eq, class param > struct check_vector : pegtl::success {};
   //! \brief Check parameter vector
-  //! \author J. Bakosi
   template< class eq, class param >
   struct action< check_vector< eq, param > > {
     template< typename Input, typename Stack >
@@ -970,7 +938,6 @@ namespace grm {
   //! \brief Check if the spikes parameter vector specifications are correct
   //! \details Spikes are used to specify sample-space locations and relative
   //!    probability heights for a joint-delta PDF.
-  //! \author J. Bakosi
   template< class eq, class param >
   struct action< check_spikes< eq, param > > {
     template< typename Input, typename Stack >
@@ -999,7 +966,6 @@ namespace grm {
   //! \brief Check if the betapdf parameter vector specifications are correct
   //! \details Betapdf vectors are used to configure univariate beta
   //!   distributions.
-  //! \author J. Bakosi
   template< class eq, class param >
   struct action< check_betapdfs< eq, param > > {
     template< typename Input, typename Stack >
@@ -1015,7 +981,6 @@ namespace grm {
   //! Rule used to trigger action
   struct check_expectation : pegtl::success {};
   //! \brief Check if there is at least one variable in expectation
-  //! \author J. Bakosi
   template<>
   struct action< check_expectation > {
     template< typename Input, typename Stack >
@@ -1029,7 +994,6 @@ namespace grm {
   struct check_binsizes : pegtl::success {};
   //! \brief Check if the number of binsizes equal the PDF sample space
   //!   variables
-  //! \author J. Bakosi
   template<>
   struct action< check_binsizes > {
     template< typename Input, typename Stack >
@@ -1044,7 +1008,6 @@ namespace grm {
   struct check_extents : pegtl::success {};
   //! \brief Check if the number of extents equal 2 * the PDF sample space
   //!    variables
-  //! \author J. Bakosi
   template<>
   struct action< check_extents > {
     template< typename Input, typename Stack >
@@ -1069,7 +1032,6 @@ namespace grm {
   //! Rule used to trigger action
   struct check_samples : pegtl::success {};
   //! \brief Check if there is at least one sample space variable in PDF
-  //! \author J. Bakosi
   template<>
   struct action< check_samples > {
     template< typename Input, typename Stack >
@@ -1082,7 +1044,6 @@ namespace grm {
   //! Rule used to trigger action
   struct save_field : pegtl::success {};
   //! \brief Save field ID to parser's state so push_term can pick it up
-  //! \author J. Bakosi
   template<>
   struct action< save_field > {
     template< typename Input, typename Stack >
@@ -1097,7 +1058,6 @@ namespace grm {
   // Common grammar (grammar that is reused by multiple grammars)
 
   //! \brief Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
-  //! \author J. Bakosi
   template< class token, class erased >
   struct trim :
          pegtl::seq< token,
@@ -1106,7 +1066,6 @@ namespace grm {
                        msg< ERROR, MsgKey::PREMATURE > > > {};
 
   //! \brief Match unknown keyword and handle error
-  //! \author J. Bakosi
   template< MsgType type, MsgKey key >
   struct unknown :
          pegtl::pad< pegtl::seq< trim< pegtl::any, pegtl::space >,
@@ -1116,7 +1075,6 @@ namespace grm {
 
   //! \brief Match alias cmdline keyword
   //! \details An alias command line keyword is prefixed by a single dash, '-'.
-  //! \author J. Bakosi
   template< class keyword >
   struct alias :
          pegtl::seq<
@@ -1128,7 +1086,6 @@ namespace grm {
   //! \brief Match verbose cmdline keyword
   //! \details A verbose command line keyword is prefixed by a double-dash,
   //!   '--'.
-  //! \author J. Bakosi
   template< class keyword >
   struct verbose :
          pegtl::seq< pegtl::string<'-','-'>,
@@ -1136,7 +1093,6 @@ namespace grm {
                      pegtl::space > {};
 
   //! \brief Read keyword 'token' padded by blank at left and space at right
-  //! \author J. Bakosi
   template< class token >
   struct readkw :
          pegtl::pad< trim< token, pegtl::space >,
@@ -1145,7 +1101,6 @@ namespace grm {
 
   //! \brief Read command line 'keyword' in verbose form, i.e., '--keyword'
   //! \details This version is used if no alias is defined for the given keyword
-  //! \author J. Bakosi
   template< class keyword, typename = void >
   struct readcmd :
          verbose< keyword > {};
@@ -1168,7 +1123,6 @@ namespace grm {
   //! \see Control/Keyword.h and Control/Keywords.h
   //! \see http://en.cppreference.com/w/cpp/language/sfinae
   //! \see http://stackoverflow.com/a/11814074
-  //! \author J. Bakosi
   template< class keyword >
   struct readcmd< keyword,
                   typename if_< false, typename keyword::info::alias >::type > :
@@ -1177,7 +1131,6 @@ namespace grm {
   //! \brief Scan input padded by blank at left and space at right and if it
   //!   matches 'keywords', apply 'actions'
   //! \details As opposed to scan_until this rule, allows multiple actions
-  //! \author J. Bakosi
   template< class keyword, class... actions >
   struct scan :
            pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
@@ -1189,7 +1142,6 @@ namespace grm {
   //! \details This version uses an additional custom end rule. As opposed
   //!   to scan, this rule allows an additional end-rule until which parsing is
   //!   continued. The additional custom end-rule is OR'd to pegtl::space.
-  //! \author J. Bakosi
   template< class keywords, class action, class end = pegtl::space >
   struct scan_until :
          pegtl::pad< act< trim< keywords, pegtl::sor< pegtl::space, end > >,
@@ -1198,26 +1150,22 @@ namespace grm {
                      pegtl::space > {};
 
   //! \brief Parse comment: start with '#' until eol
-  //! \author J. Bakosi
   struct comment :
          pegtl::pad< trim< pegtl::one<'#'>, pegtl::eol >,
                      pegtl::blank,
                      pegtl::eol > {};
 
   //! \brief Ignore comments and empty lines
-  //! \author J. Bakosi
   struct ignore :
          pegtl::sor< comment, pegtl::until< pegtl::eol, pegtl::space > > {};
 
   //! \brief Parse a number: an optional sign followed by digits
-  //! \author J. Bakosi
   struct number :
          pegtl::seq< pegtl::opt< pegtl::sor< pegtl::one<'+'>,
                                              pegtl::one<'-'> > >,
                      pegtl::digit > {};
 
   //! \brief Plow through 'tokens' until 'endkeyword'
-  //! \author J. Bakosi
   template< class endkeyword, typename... tokens >
   struct block :
          pegtl::until<
@@ -1229,7 +1177,6 @@ namespace grm {
   //! \brief Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
-  //! \author J. Bakosi
   template< class key, class insert, class endkeyword,
             class starter, class value = number >
   struct vector :
@@ -1242,7 +1189,6 @@ namespace grm {
 
   //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
   //!   apply action 'insert'
-  //! \author J. Bakosi
   template< class insert, char lbound = '"', char rbound = '"' >
   struct quoted :
          pegtl::if_must< pegtl::one< lbound >,
@@ -1253,7 +1199,6 @@ namespace grm {
                          pegtl::one< rbound > > {};
 
   //! \brief Process 'keyword' and call its 'insert' action if matches 'kw_type'
-  //! \author J. Bakosi
   template< class keyword, class insert, class kw_type = pegtl::digit >
   struct process :
          pegtl::if_must<
@@ -1263,7 +1208,6 @@ namespace grm {
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
-  //! \author J. Bakosi
   template< class keyword, class insert, class kw_type = pegtl::any >
   struct process_cmd :
          pegtl::if_must< readcmd< keyword >,
@@ -1275,14 +1219,12 @@ namespace grm {
   //! \brief Process command line switch 'keyword'
   //! \details The value of a command line switch is a boolean, i.e., it can be
   //!    either set or unset.
-  //! \author J. Bakosi
   template< class keyword, typename tag, typename... tags >
   struct process_cmd_switch :
          pegtl::seq< readcmd< keyword >, Store_switch< tag, tags... > > {};
 
   //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
   //!   until end of file
-  //! \author J. Bakosi
   template< typename keywords, typename... ign >
   struct read_file :
          pegtl::until< pegtl::eof,
@@ -1292,14 +1234,12 @@ namespace grm {
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
 
   //! \brief Process but ignore Charm++'s charmrun arguments starting with '+'
-  //! \author J. Bakosi
   struct charmarg :
          pegtl::seq< pegtl::one<'+'>,
                      unknown< WARNING, MsgKey::CHARMARG > > {};
 
   //! \brief Generic string parser entry point: parse 'keywords' until end of
   //!   string
-  //! \author J. Bakosi
   template< typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
@@ -1313,7 +1253,6 @@ namespace grm {
   //!   deriving from tk::Toggle. See, e.g., walker::ctr::DiffEq for an example
   //!   specialization of tk::Toggle to see how an option is created from
   //!   tk::Toggle.
-  //! \author J. Bakosi
   template< template< class > class use, typename keyword,
             typename option, typename field, typename sel, typename vec,
             typename... tags >
@@ -1324,7 +1263,6 @@ namespace grm {
 
   //! \brief fieldvar: a character, denoting a variable, optionally followed by
   //!   a digit
-  //! \author J. Bakosi
   template< typename var >
   struct fieldvar :
          pegtl::sor<
@@ -1333,7 +1271,6 @@ namespace grm {
 
   //! \brief term: upper or lowercase fieldvar matched to selected depvars for
   //!   stats
-  //! \author J. Bakosi
   struct term :
          pegtl::sor<
            act< fieldvar< pegtl::upper >,
@@ -1342,7 +1279,6 @@ namespace grm {
                 match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
 
   //! \brief sample space variable: fieldvar matched to selected depvars
-  //! \author J. Bakosi
   template< class c, tk::ctr::Moment m >
   struct sample_space_var :
          scan_until<
@@ -1351,7 +1287,6 @@ namespace grm {
            pegtl::one<':'> > {};
 
   //! \brief samples: sample space variables optionally separated by fillers
-  //! \author J. Bakosi
   struct samples :
          pegtl::sor<
            sample_space_var< pegtl::upper, tk::ctr::Moment::ORDINARY >,
@@ -1359,7 +1294,6 @@ namespace grm {
          > {};
 
   //! \brief bin(sizes): real numbers as many sample space dimensions were given
-  //! \author J. Bakosi
   struct bins :
          pegtl::sor<
            scan_until< number, push_binsize, pegtl::one<')'> >,
@@ -1367,14 +1301,12 @@ namespace grm {
                 msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
 
   //! \brief plow through expectations between characters '<' and '>'
-  //! \author J. Bakosi
   struct parse_expectations :
          readkw< pegtl::seq< act< pegtl::one<'<'>, start_vector< tag::stat > >,
                              pegtl::until< pegtl::one<'>'>, term >,
                              check_expectation > > {};
 
   //! \brief list of sample space variables with error checking
-  //! \author J. Bakosi
   struct sample_space :
          pegtl::seq<
            start_vector< tag::pdf >,
@@ -1382,7 +1314,6 @@ namespace grm {
            check_samples > {};
 
   //! \brief extents: optional user-specified extents of PDF sample space
-  //! \author J. Bakosi
   struct extents :
          pegtl::sor<
            scan_until< number, push_extents, pegtl::one<')'> >,
@@ -1390,7 +1321,6 @@ namespace grm {
                 msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
 
   //! \brief binsizes followed by optional extents with error checking
-  //! \author J. Bakosi
   struct bins_exts :
          pegtl::seq<
            start_vector< tag::discr, tag::binsize >,
@@ -1407,7 +1337,6 @@ namespace grm {
   //!    'name' is the name of the pdf, and x,y,z are sample space variables,
   //!    while 1.0 2.0 3.0 are bin sizes corresponding to the x y z sample space
   //!    dimensions, respectively.
-  //! \author J. Bakosi
   struct parse_pdf :
          readkw<
            pegtl::if_must<
@@ -1420,7 +1349,6 @@ namespace grm {
 
   //! \brief Match precision of floating-point numbers in digits (for text
   //!   output)
-  //! \author J. Bakosi
   template< template< class > class use, class prec >
   struct precision :
          process< use< kw::precision >,
@@ -1428,19 +1356,16 @@ namespace grm {
                   pegtl::alnum > {};
 
   //! \brief Match control parameter
-  //! \author J. Bakosi
   template< typename keyword, class kw_type, typename... tags >
   struct control :
          process< keyword, Store< tags... >, kw_type > {};
 
   //! \brief Match discretization control parameter
-  //! \author J. Bakosi
   template< typename keyword, typename Tag >
   struct discr :
          control< keyword, pegtl::digit, tag::discr, Tag > {};
 
   //! \brief Match component control parameter
-  //! \author J. Bakosi
   template< typename keyword, typename Tag >
   struct component :
          process< keyword,
@@ -1448,13 +1373,11 @@ namespace grm {
                   pegtl::digit > {};
 
   //! \brief Match interval control parameter
-  //! \author J. Bakosi
   template< typename keyword, typename Tag >
   struct interval :
          control< keyword, pegtl::digit, tag::interval, Tag > {};
 
   //! \brief Parse statistics ... end block
-  //! \author J. Bakosi
   template< template< class > class use, template< class... Ts > class store >
   struct statistics :
          pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
@@ -1470,7 +1393,6 @@ namespace grm {
                                 parse_expectations > > {};
 
   //! \brief Parse diagnostics ... end block
-  //! \author J. Bakosi
   template< template< class > class use, template< class... Ts > class store >
   struct diagnostics :
          pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
@@ -1491,13 +1413,11 @@ namespace grm {
                                 precision< use, tag::diag > > > {};
 
   //! \brief Match model parameter
-  //! \author J. Bakosi
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
          control< keyword, kw_type, tag::param, model, Tag > {};
 
   //! \brief Match rng parameter
-  //! \author J. Bakosi
   template< template< class > class use, typename keyword,
             typename option, typename model, typename... tags >
   struct rng :
@@ -1510,7 +1430,6 @@ namespace grm {
                   pegtl::alpha > {};
 
   //! \brief Match rngs ... end block
-  //! \author J. Bakosi
   template< template< class > class use, class rngs >
   struct rngblock :
          pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
@@ -1530,7 +1449,6 @@ namespace grm {
   //!   and 'param' denote two levels of the hierarchy relative to tag::param,
   //!   at which the parameter vector lives. Example client-code: see
   //!   walker::deck::icbeta, or walker::deck::icdelta.
-  //! \author J. Bakosi
   template< template< class > class use,
             typename keyword,
             template< class, class... > class store,
@@ -1558,7 +1476,6 @@ namespace grm {
   //!   and 'param' denote two levels of the hierarchy relative to tag::param,
   //!   at which the parameter vector lives. Example client-code: see
   //!   walker::deck::sde_option_vector.
-  //! \author J. Bakosi
   template< template< class > class use,
             typename keyword,
             class option,
@@ -1578,7 +1495,6 @@ namespace grm {
            check< eq, param > > {};
 
   //! \brief Match model parameter dependent variable
-  //! \author J. Bakosi
   template< template< class > class use, typename model, typename Tag >
   struct depvar :
          pegtl::if_must<
@@ -1588,14 +1504,12 @@ namespace grm {
                  add_depvar > > {};
 
   //! \brief Match and set keyword 'title'
-  //! \author J. Bakosi
   template< template< class > class use >
   struct title :
          pegtl::if_must< readkw< typename use< kw::title >::pegtl_string >,
                          quoted< Set< tag::title > > > {};
 
   //! \brief Match and set policy parameter
-  //! \author J. Bakosi
   template< template< class > class use, typename keyword,
             typename option, typename p, typename... tags >
   struct policy :
@@ -1605,13 +1519,11 @@ namespace grm {
            pegtl::alpha > {};
 
   //! \brief Match and set a PDF option
-  //! \author J. Bakosi
   template< class keyword, class store >
   struct pdf_option :
          process< keyword, store, pegtl::alpha > {};
 
   //! \brief Match pdfs ... end block
-  //! \author J. Bakosi
   template< template< class > class use, template< class... Ts > class store >
   struct pdfs :
          pegtl::if_must<
@@ -1693,7 +1605,6 @@ namespace grm {
   //! \see http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/limit-metafunction-arity.html
   //! TODO It still would be nice to generate a more developer-friendly
   //!    compiler error if the keyword is not in the pool.
-  //! \author J. Bakosi
   template< typename keyword, typename pool, typename... pools >
   struct use :
          std::conditional< boost::mpl::or_<

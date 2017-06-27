@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessControl.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
@@ -28,7 +27,6 @@ namespace tk {
 //!   and the file argument doesn't contain a slash, the actions of the shell
 //!   are duplicated in searching for an executable in PATH. The shell will not
 //!   interpret the other arguments, so wildcard expansion will not take place.
-//! \author J. Bakosi
 // *****************************************************************************
 void rm( const std::string& file ) {
   std::vector< std::string > argv;

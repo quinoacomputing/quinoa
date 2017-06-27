@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -53,7 +52,6 @@ UnsMeshMap::UnsMeshMap( std::size_t npoin,
 // Constructor
 //! \param[in] npoin Total number of points in mesh
 //! \param[in] point Global mesh point ids owned by each array element
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( npoin > 0, "Need at least a single mesh point" );
@@ -100,7 +98,6 @@ UnsMeshMap::fixPEs()
 //!   map object, send messages to some Charm++ chare group branches and the
 //!   group happens to use Charm++'s structured dagger, such as LinSysMerger,
 //!   memory problems will occur.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Build unique set of PEs the array elements are assigned to
@@ -147,7 +144,6 @@ UnsMeshMap::procNum( int, const CkArrayIndex& idx )
 //! \param[in] idx Charm++ array index object containing the array element index
 //!   to assign a PE to
 //! \return PE assigned
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // array element we assign PE for
@@ -176,7 +172,6 @@ UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
 //!   array elements to be created
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int nelem = *opt.getNumInitial().data(); // number of array elements requested

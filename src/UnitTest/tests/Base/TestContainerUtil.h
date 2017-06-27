@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
@@ -40,7 +39,6 @@ static ContainerUtil_group ContainerUtil( "Base/ContainerUtil" );
 //! Test definitions for group
 
 //! Test unique making the elements of a container unique
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 1 >() {
   set_test_name( "unique" );
@@ -68,7 +66,6 @@ void ContainerUtil_object::test< 1 >() {
 }
 
 //! Test cref_find returning a const-ref to value found for key in map
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 2 >() {
   set_test_name( "[c]ref_find" );
@@ -95,7 +92,6 @@ void ContainerUtil_object::test< 2 >() {
 }
 
 //! Test vector extents
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 3 >() {
   set_test_name( "vector extents" );
@@ -111,7 +107,6 @@ void ContainerUtil_object::test< 3 >() {
 }
 
 //! Test associative container (value) extents
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 4 >() {
   set_test_name( "[hash]map value extents" );
@@ -128,7 +123,6 @@ void ContainerUtil_object::test< 4 >() {
 }
 
 //! Test operator += adding values of a std::vector to another one
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 5 >() {
   set_test_name( "operator+=" );
@@ -234,7 +228,6 @@ void ContainerUtil_object::test< 5 >() {
 }
 
 //! Test keyEqual()
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 6 >() {
   set_test_name( "keyEqual" );
@@ -262,7 +255,6 @@ void ContainerUtil_object::test< 6 >() {
 }
 
 //! Test sumsize()
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 7 >() {
   set_test_name( "sumsize" );
@@ -273,7 +265,6 @@ void ContainerUtil_object::test< 7 >() {
 }
 
 //! Test destroy()
-//! \author J. Bakosi
 template<> template<>
 void ContainerUtil_object::test< 8 >() {
   set_test_name( "destroy" );

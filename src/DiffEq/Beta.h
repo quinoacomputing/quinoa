@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/Beta.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -60,7 +59,6 @@ class Beta {
     //!   index specifies which beta SDE system to instantiate. The index
     //!   corresponds to the order in which the beta ... end blocks are given
     //!   the control file.
-    //! \author J. Bakosi
     explicit Beta( ncomp_t c ) :
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, tag::beta, tag::depvar >().at(c) ),
@@ -80,7 +78,6 @@ class Beta {
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
-    //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
@@ -92,7 +89,6 @@ class Beta {
     //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Has.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     "Has-a" utilities for detecting class internals
   \details   "Has-a" utilities for detecting class internals
@@ -13,7 +12,6 @@
 namespace tk {
 
 //! \brief Detect if T defines type "Proxy"
-//! \author Credits go to Kerrek B at stackoverflow.com
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
 struct HasTypedefProxy {
@@ -27,7 +25,6 @@ struct HasTypedefProxy {
 };
 
 //! \brief Detect if T defines type "alias"
-//! \author Credits go to Kerrek B at stackoverflow.com
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
 struct HasTypedefAlias {
@@ -41,7 +38,6 @@ struct HasTypedefAlias {
 };
 
 //! \brief Detect if T defines type "code"
-//! \author Credits go to Kerrek B at stackoverflow.com
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
 struct HasTypedefCode {
@@ -55,7 +51,6 @@ struct HasTypedefCode {
 };
 
 //! \brief Detect if T defines type "expect::type"
-//! \author Credits go to Kerrek B at stackoverflow.com
 //! \see http://stackoverflow.com/a/7235647
 template< typename T >
 struct HasTypedefExpectType {
@@ -69,7 +64,6 @@ struct HasTypedefExpectType {
 };
 
 //! \brief Detect if T defines function "expect::description"
-//! \author Credits go to Nicola Bonelli at stackoverflow.com
 //! \see http://stackoverflow.com/a/257382
 template< typename T >
 struct HasFunctionExpectDescription {
@@ -83,7 +77,6 @@ struct HasFunctionExpectDescription {
 };
 
 //! \brief Detect if T defines function "expect::choices"
-//! \author Credits go to Nicola Bonelli at stackoverflow.com
 //! \see http://stackoverflow.com/a/257382
 template< typename T >
 struct HasFunctionExpectChoices {

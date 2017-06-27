@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ParticleWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -57,7 +56,6 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //! \param[in] z Z coordinates of particles
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    //! \author J. Bakosi
     void writeCoords( uint64_t it,
                       const std::vector< tk::real >& x,
                       const std::vector< tk::real >& y,
