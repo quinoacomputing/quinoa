@@ -20,8 +20,8 @@
 #  find_package(PEGTL)
 #  include_directories(${PEGTL_INCLUDE_DIRS})
 
-function(_PEGTL_GET_VERSION _OUT_major _OUT_minor _OUT_micro _metisversion_hdr)
-    file(STRINGS ${_metisversion_hdr} _contents REGEX "#define PEGTL_VER_[A-Z]+[ \t]+")
+function(_PEGTL_GET_VERSION _OUT_major _OUT_minor _OUT_micro _version_hdr)
+    file(STRINGS ${_version_hdr} _contents REGEX "#define PEGTL_VER_[A-Z]+[ \t]+")
     if(_contents)
         string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" ${_OUT_major} "${_contents}")
 	string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" ${_OUT_minor} "${_contents}")
@@ -42,7 +42,7 @@ function(_PEGTL_GET_VERSION _OUT_major _OUT_minor _OUT_micro _metisversion_hdr)
         set(${_OUT_micro} ${${_OUT_micro}} PARENT_SCOPE)
 
     else()
-        message(FATAL_ERROR "Include file ${_metisversion_hdr} does not exist")
+        message(FATAL_ERROR "Include file ${_version_hdr} does not exist")
     endif()
 endfunction()
 
