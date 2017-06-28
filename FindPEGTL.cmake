@@ -21,11 +21,11 @@
 #  include_directories(${PEGTL_INCLUDE_DIRS})
 
 function(_PEGTL_GET_VERSION _OUT_major _OUT_minor _OUT_micro _metisversion_hdr)
-    file(STRINGS ${_metisversion_hdr} _contents REGEX "#define PEGTL_VER_[A-Z]+[ \t]+")
+    file(STRINGS ${_metisversion_hdr} _contents REGEX "#define TAOCPP_PEGTL_VERSION_[A-Z]+[ \t]+")
     if(_contents)
         string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" ${_OUT_major} "${_contents}")
-	string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" ${_OUT_minor} "${_contents}")
-	string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_PATCH[ \t]+([0-9]+).*" "\\1" ${_OUT_micro} "${_contents}")
+        string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" ${_OUT_minor} "${_contents}")
+        string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_PATCH[ \t]+([0-9]+).*" "\\1" ${_OUT_micro} "${_contents}")
 
         if(NOT ${_OUT_major} MATCHES "[0-9]+")
             message(FATAL_ERROR "Version parsing failed for TAOCPP_PEGTL_VERSION_MAJOR!")
