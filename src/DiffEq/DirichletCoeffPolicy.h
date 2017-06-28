@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DirichletCoeffPolicy.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Dirichlet coefficients policies
   \details   This file defines coefficients policy classes for the Dirichlet

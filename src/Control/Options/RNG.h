@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Options/RNG.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -29,7 +28,6 @@ namespace tk {
 namespace ctr {
 
 //! Random number generator types
-//! \author J. Bakosi
 enum class RNGType : uint8_t { NO_RNG=0
                              #ifdef HAS_RNGSSE2
                              , RNGSSE_GM19
@@ -69,21 +67,17 @@ enum class RNGType : uint8_t { NO_RNG=0
 };
 
 //! \brief Pack/Unpack RNGType: forward overload to generic enum class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, RNGType& e ) { PUP::pup( p, e ); }
 
 //! Enum class underlying type shortcut
-//! \author J. Bakosi
 using RawRNGType = std::underlying_type< RNGType >::type;
 
 //! Return underlying type
 //! \param[in] r RNG enum class value
 //! \return Enum class underlying value using static_cast
-//! \author J. Bakosi
 constexpr RawRNGType raw( RNGType r ) { return static_cast< RawRNGType >( r ); }
 
 //! Random number generator library types
-//! \author J. Bakosi
 enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSE,
@@ -91,12 +85,10 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   R123 };
 
 //! \brief RNG options: outsource searches to base templated on enum type
-//! \author J. Bakosi
 class RNG : public tk::Toggle< RNGType > {
 
   private:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywordsMKL = boost::mpl::vector<
                                           #ifdef HAS_MKL
                                             kw::mkl_mcg31
@@ -144,7 +136,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit RNG() :
       tk::Toggle< RNGType >(
         //! Group, i.e., options, name
@@ -223,7 +214,6 @@ class RNG : public tk::Toggle< RNGType > {
     //!    option, i.e., as the library identifies the given option
     //! \param[in] rng Enum value of the option requested
     //! \return Library-specific parameter of the option
-    //! \author J. Bakosi
     const ParamType& param( RNGType rng ) const {
       using tk::operator<<;
       auto it = brng.find( rng );
@@ -239,7 +229,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \param[in] def Default value of requested field if field is not found
     //! \param[in] bundle Parameter bundle to search in
     //! \return Field for requested enum if found, default if not found
-    //! \author J. Bakosi
     template< class tag, class Param, class Field >
     Field param( RNGType rng, const Field& def, const Param& bundle ) const {
       auto it = bundle.find( rng );
@@ -251,7 +240,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \param[in] rng Enum value of the option
     //! \return Library type enum
     //! \see tk::ctr::RNGLibType
-    //! \author J. Bakosi
     RNGLibType lib( RNGType rng ) const {
       const auto& n = name( rng );
       if ( found( "MKL", n ) ) return RNGLibType::MKL;
@@ -264,7 +252,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \brief Return whether RNG supports sequence option
     //! \param[in] rng Enum value of the option
     //! \return True if RNG supports sequence option
-    //! \author J. Bakosi
     bool supportsSeq( RNGType rng ) const
     { return support.find( rng ) != end( support ) ? true : false; }
 
@@ -272,7 +259,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \param[in] rng Enum value of the option
     //! \param[in] option Option type
     //! \return True if RNG supports sequence option
-    //! \author J. Bakosi
     template< class OptionType >
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
@@ -288,7 +274,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \param[in] kw Keyword to search for
     //! \param[in] str String to search in
     //! \return True if found, false if not
-    //! \author J. Bakosi
     bool found( const std::string& kw, const std::string& str ) const
     { return str.find( kw ) != std::string::npos ? true : false; }
 

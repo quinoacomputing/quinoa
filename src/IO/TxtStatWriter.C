@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/TxtStatWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -29,7 +28,6 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
 //! \param[in] format Configure floating-point output format ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
 //! \param[in] mode Configure file open mode
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Set floating-point format for output file stream
@@ -55,7 +53,6 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
 //! \param[in] nameOrd Vector of strings with the names of ordinary moments
 //! \param[in] nameCen Vector of strings with the names of central moments
 //! \param[in] nameExt Vector of strings with the names of extra data
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << "#" << std::setw(9) << "1:it";
@@ -101,7 +98,6 @@ TxtStatWriter::stat( uint64_t it,
 //! \param[in] central Vector with the central moment statistics
 //! \param[in] extra Vector with extra data to be also written (besides stats)
 //! \return The total number of statistics written to the output file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << std::setw(10) << it;

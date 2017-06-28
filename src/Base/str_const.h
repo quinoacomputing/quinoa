@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/str_const.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Constexpr, i.e., compile-time, string class
   \details   Constexpr, i.e., compile-time, string class
@@ -13,7 +12,6 @@
 namespace tk {
 
 //! \brief constexpr string
-//! \author Scott Schurr
 //! \see http://en.cppreference.com/w/cpp/language/constexpr
 //! \see https://github.com/boostcon/cppnow_presentations_2012/blob/master/wed/schurr_cpp11_tools_for_class_authors.pdf?raw=true
 class str_const {

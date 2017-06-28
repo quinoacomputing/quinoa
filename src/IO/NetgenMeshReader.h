@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshReader.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Netgen mesh reader class declaration
   \details   Netgen mesh reader class declaration. Only supports tetrahedra.

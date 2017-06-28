@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Collector.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -38,7 +37,6 @@ extern CkReduction::reducerType PDFMerger;
 //!   objects that happen to be on a given PE. See also the Charm++ interface
 //!   file collector.ci.
 //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
-//! \author J. Bakosi
 class Collector : public CBase_Collector {
 
   public:

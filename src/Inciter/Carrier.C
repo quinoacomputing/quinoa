@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Carrier.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -126,7 +125,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -188,7 +186,6 @@ Carrier::coord()
 // *****************************************************************************
 //  Read mesh node coordinates and optionally add new edge-nodes in case of
 //  initial uniform refinement
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
@@ -206,7 +203,6 @@ void
 Carrier::vol()
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -267,7 +263,6 @@ void
 Carrier::stat()
 // *****************************************************************************
 // Compute mesh volume statistics
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -346,7 +341,6 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
 //! \param[in] gid Global mesh node IDs at which we receive volume contributions
 //! \param[in] V Partial sums of nodal volume contributions to chare-boundary
 //!   nodes
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( V.size() == gid.size(), "Size mismatch" );
@@ -369,7 +363,6 @@ Carrier::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
 //! \param[in] v Total mesh volume
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Store total mesh volume
@@ -402,8 +395,6 @@ Carrier::bc()
 //!   contain those BC nodes at which other chares enforce Dirichlet BCs. The
 //!   linear system merger then collects these and communicates to other PEs so
 //!   that BC data held in LinSysMerger::m_bc are the same on all PEs. That is
-//!   the authoritative BC data, which can be queried by LinSysMerger::bc().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Vector of pairs of bool and boundary condition value associated to mesh
@@ -492,7 +483,6 @@ Carrier::init()
 // *****************************************************************************
 // Set ICs, compute initial time step size, output initial field data, compute
 // left-hand-side matrix
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // zero initial solution vector
@@ -522,7 +512,6 @@ void
 Carrier::dt()
 // *****************************************************************************
 // Start computing minimum time step size
-//! \author J. Bakosi
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -558,7 +547,6 @@ void
 Carrier::lhs()
 // *****************************************************************************
 // Compute left-hand side of transport equations
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute left-hand side matrix for all equations
@@ -589,7 +577,6 @@ Carrier::rhs( const tk::Fields& sol )
 // *****************************************************************************
 // Compute right-hand side of transport equations
 //! \param[in] sol Solution vector at current stage
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Initialize FCT data structures for new time step stage
@@ -635,7 +622,6 @@ void
 Carrier::readCoords()
 // *****************************************************************************
 //  Read coordinates of mesh nodes from file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -664,7 +650,6 @@ Carrier::addEdgeNodeCoords()
 // *****************************************************************************
 //  Add coordinates of mesh nodes newly generated to edge-mid points during
 //  initial refinement
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_edgenodes.empty()) return;
@@ -703,7 +688,6 @@ void
 Carrier::writeMesh()
 // *****************************************************************************
 // Output chare element blocks to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -723,7 +707,6 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of fields to write to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int varid = 0;
@@ -734,7 +717,6 @@ void
 Carrier::writeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
@@ -760,7 +742,6 @@ Carrier::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Only write if the last time is different than the current one
@@ -795,7 +776,6 @@ void
 Carrier::doWriteParticles()
 // *****************************************************************************
 // Output particles fields to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
@@ -809,7 +789,6 @@ Carrier::aec( const tk::Fields& Un )
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
@@ -846,7 +825,6 @@ Carrier::comaec( const std::vector< std::size_t >& gid,
 //!   own contributions, m_pc collects the neighbor chare contributions during
 //!   communication. This way work on m_p and m_pc is overlapped. The two are
 //!   combined in lim().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( P.size() == gid.size(), "Size mismatch" );
@@ -874,7 +852,6 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
@@ -912,7 +889,6 @@ Carrier::comalw( const std::vector< std::size_t >& gid,
 //!   own contributions, m_qc collects the neighbor chare contributions during
 //!   communication. This way work on m_q and m_qc is overlapped. The two are
 //!   combined in lim().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( Q.size() == gid.size(), "Size mismatch" );
@@ -941,7 +917,6 @@ Carrier::lim()
 //! \details This function computes and starts communicating m_a, which stores
 //!   the limited antidiffusive element contributions assembled to nodes
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Combine own and communicated contributions to P and Q
@@ -985,7 +960,6 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 //!   contributions, m_ac collects the neighbor chare contributions during
 //!   communication. This way work on m_a and m_ac is overlapped. The two are
 //!   combined in apply().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( A.size() == gid.size(), "Size mismatch" );
@@ -1012,7 +986,6 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
 //! \param[in] newdt Size of this new time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Update local copy of time step stage, physical time and time step size, and
@@ -1037,7 +1010,6 @@ void
 Carrier::out()
 // *****************************************************************************
 // Output mesh and particle fields
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Optionally output field and particle data
@@ -1059,7 +1031,6 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
 // Update low order solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] du Portion of the unknown/solution vector update
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -1097,7 +1068,6 @@ Carrier::updateSol( const std::vector< std::size_t >& gid,
 // Update high order solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] du Portion of the unknown/solution vector update
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -1126,7 +1096,6 @@ void
 Carrier::verify()
 // *****************************************************************************
 // Verify antidiffusive element contributions up to linear solver convergence
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_fluxcorrector.verify( m_ncarr, m_inpoel, m_du, m_dul ))
@@ -1138,7 +1107,6 @@ void
 Carrier::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Optionally: collect analytical solutions and send both the latest
@@ -1205,7 +1173,6 @@ Carrier::velocity( std::size_t e )
 //! \details This funcion extracts the velocity field, defined by each PDE
 //!   integrated. All PDEs configured are interrogated and the last nonzero
 //!   velocity vector is returned at all four nodes of the mesh element.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::array< std::array< tk::real, 4 >, 3 > c;
@@ -1226,7 +1193,6 @@ Carrier::correctBC()
 //  boundary conditions are set is exactly the amount the BCs prescribe
 //! \return True if the solution is correct at Dirichlet boundary condition
 //!   nodes
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto& dirbc = m_linsysmerger.ckLocalBranch()->dirbc();
@@ -1255,7 +1221,6 @@ void
 Carrier::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Combine own and communicated contributions to A

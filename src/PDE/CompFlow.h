@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -39,7 +38,6 @@ class CompFlow {
 
   public:
     //! \brief Constructor
-    //! \author J. Bakosi
     explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -47,7 +45,6 @@ class CompFlow {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] gid Global node IDs of owned elements
-    //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
@@ -71,7 +68,6 @@ class CompFlow {
     //!   where psup2 holds the indices at which psup1 holds the point ids
     //!   surrounding points, see also tk::genPsup()). Note that the number of
     //!   mesh points (our chunk) npoin = psup.second.size()-1.
-    //! \author J. Bakosi
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
@@ -151,7 +147,6 @@ class CompFlow {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
-    //! \author J. Bakosi
     void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,

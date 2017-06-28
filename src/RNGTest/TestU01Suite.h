@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Suite.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -43,7 +42,6 @@ extern ctr::InputDeck g_inputdeck;
 //! \details This class is a Charm++ chare and does the asynchronous
 //!   distribution, run, and evaluation of all statistical tests within a
 //!   TestU01 battery.
-//! \author J. Bakosi
 class TestU01Suite : public CBase_TestU01Suite {
 
   public:

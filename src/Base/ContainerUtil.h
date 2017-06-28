@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ContainerUtil.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -25,7 +24,6 @@ unique( Container& c )
 // *****************************************************************************
 //! Make elements of container unique
 //! \param[inout] c Container
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   std::sort( begin(c), end(c) );
@@ -45,7 +43,6 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
 //! \param[in] key Key to search for
 //! \return A constant reference to the value associated to the key in map
 //! \note If key is not found an exception is thrown.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto it = map.find( key );
@@ -62,7 +59,6 @@ auto ref_find( const Container& map, const typename Container::key_type& key )
 //! \param[in] key Key to search for
 //! \return A reference to the value associated to the key in map
 //! \note If key is not found an exception is thrown.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
@@ -77,7 +73,6 @@ extents( const std::vector< T >& vec )
 //! \return Array of two values with the minimum and maximum values
 //! \note This function should not be called with heavy T types, as the a copy
 //!   of a std::array< T, 2 > is created and returned.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto x = std::minmax_element( begin(vec), end(vec) );
@@ -93,7 +88,6 @@ auto extents( const Container& map )
 //! \return Array of two values with the minimum and maximum values in the map
 //! \Note This function should not be called with heavy Value types, as the a
 //!   copy of a std::array< Value, 2 > is created and returned.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using pair_type = typename Container::value_type;
@@ -116,7 +110,6 @@ operator+=( std::vector< T, Allocator >& dst,
 //!   padding with zeros.
 //! \note Will throw exception in DEBUG if src is empty (to warn on no-op), and
 //!   if src.size() < dst.size() (to warn on loosing data).
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !src.empty(), "src empty in std::vector<T,Allocator>::operator+=()" );
@@ -137,7 +130,6 @@ operator+=( std::vector< T, Allocator >& dst,
 //! \note It is an error to call this function with unequal-size containers,
 //!   triggering an exception in DEBUG mode.
 //! \note Operator != is used to compare the container keys.
-//! \author J. Bakosi
 // *****************************************************************************
 template< class Container >
 bool keyEqual( const Container& a, const Container& b ) {
@@ -156,7 +148,6 @@ bool keyEqual( const Container& a, const Container& b ) {
 //! Compute the sum of the sizes of a container of containers
 //! \param[in] c Container of containers
 //! \return Sum of the sizes of the containers of the container
-//! \author J. Bakosi
 // *****************************************************************************
 template< class Container >
 std::size_t sumsize( const Container& c ) {
@@ -172,7 +163,6 @@ std::size_t sumsize( const Container& c ) {
 //!   the swap() member function of the container.
 //! \see Specializations of std::swap are documented at
 //!   http://en.cppreference.com/w/cpp/algorithm/swap
-//! \author J. Bakosi
 // *****************************************************************************
 template< class Container >
 void destroy( Container& c ) {

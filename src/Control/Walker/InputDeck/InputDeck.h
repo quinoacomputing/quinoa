@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -220,7 +219,6 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    //! \author J. Bakosi
     explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );

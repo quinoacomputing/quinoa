@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGTest/Types.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers. This file defines the components of

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/StatCtr.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -21,7 +20,6 @@ namespace ctr {
 
 //! \brief Moment specifies which type of moment is computed for a quantity in
 //!    a Term
-//! \author J. Bakosi
 enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
                               CENTRAL          //!< Fluctuation
 };
@@ -30,7 +28,6 @@ enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
 //!    averaged
 //! \details Internally the numbering of field IDs starts from 0, but presented
 //!    to the user, e.g., in screen-output, as starting from 1.
-//! \author J. Bakosi
 struct Term {
   using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -42,7 +39,6 @@ struct Term {
   ///@{
   //! Pack/Unpack serialize member function
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
-  //! \author J. Bakosi
   void pup( PUP::er& p ) {
     p | var;
     p | field;
@@ -51,7 +47,6 @@ struct Term {
   //! \brief Pack/Unpack serialize operator|
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \param[in,out] t Term object reference
-  //! \author J. Bakosi
   friend void operator|( PUP::er& p, Term& t ) { t.pup(p); } 
   ///@}
 
@@ -59,7 +54,6 @@ struct Term {
   //! \param[in] v Variable name
   //! \param[in] f Field ID
   //! \param[in] m Moment type enum: Moment::ORDINARY or Moment::CENTRAL
-  //! \author J. Bakosi
   explicit Term( char v = 0, ncomp_t f = 0, Moment m = Moment::ORDINARY ) :
     var( v ), field( f ), moment( m ) {}
 
@@ -68,7 +62,6 @@ struct Term {
   //! \details Test on field, moment, and var
   //! \param[in] term Term to compare
   //! \return Boolean indicating if term equals 'this'
-  //! \author J. Bakosi
   bool operator== ( const Term& term ) const {
     if (var == term.var && field == term.field && moment == term.moment)
       return true;
@@ -80,7 +73,6 @@ struct Term {
   //! \details Test on var, field, and moment.
   //! \param[in] term Term to compare
   //! \return Boolean indicating if term is less than 'this'
-  //! \author J. Bakosi
   bool operator< ( const Term& term ) const {
     if (var < term.var)
       return true;
@@ -96,7 +88,6 @@ struct Term {
 //! \brief Pack/Unpack: Namespace-scope serialize Term object for Charm++
 //! \param[in,out] p Charm++'s PUP::er serializer object reference
 //! \param[in,out] t Term object reference
-//! \author J. Bakosi
 inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
 
 //! \brief Products are arbitrary number of Terms to be multiplied and ensemble
@@ -107,7 +98,6 @@ inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
 //! moment of three scalars which needs three terms for ensemble averaging:
 //! (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the central moment is
 //! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
-//! \author J. Bakosi
 using Product = std::vector< Term >;
 
 
@@ -121,7 +111,6 @@ using Product = std::vector< Term >;
 //! \param[in] lhs std::string to add to
 //! \param[in] term Term to add
 //! \return Updated std::string
-//! \author J. Bakosi
 static std::string operator+ ( const std::string& lhs, const Term& term ) {
   std::stringstream ss;
   ss << lhs << term.var << term.field+1;
@@ -133,7 +122,6 @@ static std::string operator+ ( const std::string& lhs, const Term& term ) {
 //! \param[in,out] os std::string to add to
 //! \param[in] term Term to add
 //! \return Updated std::string
-//! \author J. Bakosi
 static std::string& operator+= ( std::string& os, const Term& term ) {
   std::stringstream ss;
   ss << os << term.var << term.field+1;
@@ -145,7 +133,6 @@ static std::string& operator+= ( std::string& os, const Term& term ) {
 //! \param[in,out] os Output stream to write to
 //! \param[in] term Term to write
 //! \return Updated output stream
-//! \author J. Bakosi
 static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
   os << term.var << term.field+1;
   return os;
@@ -155,7 +142,6 @@ static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
 //! \param[in] lhs std::string to add to
 //! \param[in] p Product to add
 //! \return Updated std::string
-//! \author J. Bakosi
 static std::string operator+ ( const std::string& lhs, const Product& p ) {
   std::stringstream ss;
   ss << lhs;
@@ -172,7 +158,6 @@ static std::string operator+ ( const std::string& lhs, const Product& p ) {
 //! \param[in,out] os Output stream to write to
 //! \param[in] p Product, std::vector< Term >, to write
 //! \return Updated output stream
-//! \author J. Bakosi
 static
 std::ostream& operator<< ( std::ostream& os, const Product& p ) {
   if (!p.empty()) {
@@ -190,7 +175,6 @@ std::ostream& operator<< ( std::ostream& os, const Product& p ) {
 //! \param[in] name Name of PDF
 //! \param[in] ext Vector of sample space extents
 //! \return Updated output stream
-//! \author J. Bakosi
 static
 std::ostream& pdf( std::ostream& os,
                    const std::vector< Term >& var,
@@ -226,13 +210,11 @@ std::ostream& pdf( std::ostream& os,
 #endif
 
 //! \brief Case-insensitive character comparison functor
-//! \author J. Bakosi
 struct CaseInsensitiveCharLess {
   //! Function call operator
   //! \param[in] lhs Left character of the comparitor operand
   //! \param[in] rhs Right character of the comparitor operand
   //! \return Boolean indicating the result of the comparison
-  //! \author J. Bakosi
   bool operator() ( char lhs, char rhs ) const {
     return std::tolower( lhs ) < std::tolower( rhs );
   }
@@ -243,7 +225,6 @@ struct CaseInsensitiveCharLess {
 //!    ordinary.
 //! \param[in] vec Vector of Terms to check
 //! \return Boolean indicating if all terms are ordinary
-//! \author J. Bakosi
 static inline bool
 ordinary( const std::vector< ctr::Term >& vec ) {
   bool ord = true;
@@ -255,19 +236,16 @@ ordinary( const std::vector< ctr::Term >& vec ) {
 //! \details If any term is central, the vector of Terms is central.
 //! \param[in] vec Vector of Terms to check
 //! \return Boolean indicating of any term is central
-//! \author J. Bakosi
 static inline bool
 central( const std::vector< ctr::Term >& vec )
 { return !ordinary( vec ); }
 
 //! \brief Probability density function (vector of sample space variables)
-//! \author J. Bakosi
 using Probability = std::vector< Term >;
 
 //! \brief PDF information bundle
 //! \note If the user did not specify extents for a PDF, the corresponding
 //!   extents vector still exists but it is empty.
-//! \author J. Bakosi
 struct PDFInfo {
   const std::string& name;                  //!< PDF identifier, i.e., name
   const std::vector< tk::real >& exts;      //!< Sample space extents
@@ -292,7 +270,6 @@ struct PDFInfo {
 //!   matching (based on D and m) PDFs requested (idx). This function must find
 //!   the PDF, if it does not, it throws an exception.
 //! \see walker::Distributor
-//! \author J. Bakosi
 template< std::size_t D >
 PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
                  const std::vector< std::string >& names,
@@ -337,7 +314,6 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
 //! \param[in] pdfs Vector of PDFs
 //! \param[in] m ORDINARY or CENTRAL PDF we are looking for
 //! \return The number of PDFs matchin the criteria discussed above
-//! \author J. Bakosi
 template< std::size_t D >
 std::size_t numPDF( const std::vector< std::vector< tk::real > >& binsizes,
                     const std::vector< Probability >& pdfs,
@@ -369,7 +345,6 @@ lookup( const Product& p, const std::map< Product, tk::real >& moments ) {
 //! \param[in] c Component number
 //! \return Constructed vector< Term > identifying the first ordinary moment
 //!   (mean) of field (component) c of variable var
-//! \author J. Bakosi
 static inline Product
 mean( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term m( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );
@@ -380,7 +355,6 @@ mean( char var, kw::ncomp::info::expect::type c ) {
 //! \param[in] c Component number
 //! \return Constructed vector< Term > identifying the second central moment
 //!   (variance) of field (component) c of variable var
-//! \author J. Bakosi
 static inline Product
 variance( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
@@ -391,7 +365,6 @@ variance( char var, kw::ncomp::info::expect::type c ) {
 //! \param[in] c Component number
 //! \return Constructed vector< Term > identifying the third central moment
 //!   of field (component) c of variable var
-//! \author J. Bakosi
 static inline Product
 cen3( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
@@ -403,7 +376,6 @@ cen3( char var, kw::ncomp::info::expect::type c ) {
 //! \param[in] c Component number
 //! \return Constructed vector< Term > identifying the second ordinary moment
 //!   of field (component) c of variable var
-//! \author J. Bakosi
 static inline Product
 ord2( char var, kw::ncomp::info::expect::type c ) {
   tk::ctr::Term f( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLBetaMethod.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Options/MKLBetaMethod
   \details   Unit tests for Control/Options/MKLBetaMethod
@@ -33,7 +32,6 @@ static MKLBetaMethod_group MKLBetaMethod( "Control/Options/MKLBetaMethod" );
 //! Test definitions for group
 
 //! Test that member function param() finds MKL parameter for method type
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 1 >() {
   set_test_name( "param() finds MKL param" );
@@ -43,7 +41,6 @@ void MKLBetaMethod_object::test< 1 >() {
 }
 
 //! Test that member function param() throws in DEBUG mode if can't find param
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 2 >() {
   set_test_name( "param() throws" );
@@ -65,7 +62,6 @@ void MKLBetaMethod_object::test< 2 >() {
 }
 
 //! Test copy constructor
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 3 >() {
   set_test_name( "copy constructor" );
@@ -80,7 +76,6 @@ void MKLBetaMethod_object::test< 3 >() {
 }
 
 //! Test move constructor
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 4 >() {
   set_test_name( "move constructor" );
@@ -95,7 +90,6 @@ void MKLBetaMethod_object::test< 4 >() {
 }
 
 //! Test copy assignment
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 5 >() {
   set_test_name( "copy assignment" );
@@ -108,7 +102,6 @@ void MKLBetaMethod_object::test< 5 >() {
 }
 
 //! Test move assignment
-//! \author J. Bakosi
 template<> template<>
 void MKLBetaMethod_object::test< 6 >() {
   set_test_name( "move assignment" );

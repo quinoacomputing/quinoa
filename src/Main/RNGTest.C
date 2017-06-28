@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTest.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -257,7 +256,6 @@ class Main : public CBase_Main {
 //! \details By the time this object is constructed, the Charm++ runtime system
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
-//! \author J. Bakosi
 class execute : public CBase_execute {
   public: execute() { mainProxy.execute(); }
 };

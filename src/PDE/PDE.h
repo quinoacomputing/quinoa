@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDE.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -37,7 +36,6 @@ namespace inciter {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a PDE,
 //!   see inciter::CompFlow.
-//! \author J. Bakosi
 class PDE {
 
   private:

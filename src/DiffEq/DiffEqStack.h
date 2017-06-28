@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEqStack.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -42,13 +41,11 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 
 //! \brief Differential equation factory: keys associated to their constructors
-//! \author J. Bakosi
 using DiffEqFactory =
   std::map< ctr::DiffEqKey,
             std::function< DiffEq(const tk::ctr::ncomp_type&) > >;
 
 //! \brief Differential equations stack
-//! \author J. Bakosi
 class DiffEqStack {
 
   private:
@@ -68,7 +65,6 @@ class DiffEqStack {
 
     //! \brief Constant accessor to differential equation factory
     //! \return Constant reference to the internal differential equation factory
-    //! \author J. Bakosi
     const DiffEqFactory& factory() const { return m_factory; }
 
     //! Return info on selected differential equations
@@ -77,7 +73,6 @@ class DiffEqStack {
 
     //! \brief Return number of unique equation types registered
     //! \return The number of unique equation types registered in the factory
-    //! \author J. Bakosi
     std::size_t ntypes() const { return m_eqTypes.size(); }
 
   private:
@@ -89,7 +84,6 @@ class DiffEqStack {
     //!   not have to specify the template arguments of the template argument
     //!   (the policies of Eq), since we can figure it out here. See also
     //!   http://stackoverflow.com/a/214900
-    //! \author J. Bakosi
     template< template< class, class > class Eq >
     struct registerDiffEq {
       //! Need to store the reference to factory we are registering into
@@ -128,7 +122,6 @@ class DiffEqStack {
     //!   to instantiate.
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   differential equations systems by type.
-    //! \author J. Bakosi
     template< class EqTag >
     DiffEq createDiffEq( ctr::DiffEqType eq,
                          std::map< ctr::DiffEqType, ncomp_t >& cnt ) const {
@@ -163,7 +156,6 @@ class DiffEqStack {
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   vector of tables associated to a differential equations systems by
     //!   type.
-    //! \author J. Bakosi
     template< class EqTag >
     std::pair< std::vector< std::string >, std::vector< tk::Table > >
     createTables( ctr::DiffEqType eq,
@@ -239,7 +231,6 @@ class DiffEqStack {
     //! \brief Convert and return values from vector as string
     //! \param[in] v Vector whose components to return as a string
     //! \return Concatenated string of values read from a vector
-    //! \author J. Bakosi
     template< typename V >
     std::string parameters( const V& v) const {
       std::stringstream s;
@@ -253,7 +244,6 @@ class DiffEqStack {
     //! \param[in] opt Option instance (inheriting from tk::Toggle)
     //! \param[in] v Option vector whose names of components to return
     //! \return Concatenated string of option names read from option vector
-    //! \author J. Bakosi
     template< class Option, class OptTypeVec >
     std::string options( const Option& opt, const OptTypeVec& v ) const {
       std::stringstream s;
@@ -267,7 +257,6 @@ class DiffEqStack {
     //!   vector
     //! \param[in,out] nfo Info vector of string-pairs to insert to
     //! \param[in] spike Vector of vectors specifying spike info
-    //! \author J. Bakosi
     template< typename Info, typename VV >
     void spikes( Info& nfo, const VV& spike ) const {
       std::size_t i = 0;
@@ -281,7 +270,6 @@ class DiffEqStack {
     //!   vector
     //! \param[in,out] nfo Info vector of string-pairs to insert to
     //! \param[in] betapdf Vector of vectors specifying betapdf info
-    //! \author J. Bakosi
     template< typename Info, typename VV >
     void betapdfs( Info& nfo, const VV& betapdf ) const {
       std::size_t i = 0;

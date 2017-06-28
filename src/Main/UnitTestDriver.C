@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTestDriver.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit test driver
   \details   Unit test driver.
@@ -30,7 +29,6 @@ UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)

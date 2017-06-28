@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/StringParser.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     String parser base class declaration
   \details   String parser base class declaration. String parser base serves as
@@ -25,7 +24,6 @@ class StringParser {
   protected:
     //! Constructor from C++-style std::string
     //! \param[in] string String to be parsed
-    //! \author J. Bakosi
     explicit StringParser( const std::string& string ) : m_string( string ) {}
 
     //! Constructor from C-style command-line argument string

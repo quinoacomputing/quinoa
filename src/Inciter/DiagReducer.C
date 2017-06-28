@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DiagReducer.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
@@ -21,7 +20,6 @@ serialize( const std::vector< std::vector< tk::real > >& d )
 //! \param[in] d Diagnostics vector of vectors (of eq components)
 //! \return Pair of the length and the raw stream containing the serialized
 //!   vectors
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Prepare for serializing diagnostics to a raw binary stream, compute size
@@ -47,7 +45,6 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
 //! \param[in] msgs Charm++ reduction message containing the serialized
 //!   diagnostics
 //! \return Aggregated diagnostics built for further aggregation if needed
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Will store deserialized diagnostics vector of vectors

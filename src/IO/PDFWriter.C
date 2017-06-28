@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/PDFWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -30,7 +29,6 @@ PDFWriter::PDFWriter( const std::string& filename,
 //! \param[in] filename Output filename to which output the PDF
 //! \param[in] format Configure floating-point output format for ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Set floating-point format for output file stream
@@ -53,7 +51,6 @@ PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //  Write out standardized univariate PDF to file
 //! \param[in] pdf Univariate PDF
 //! \param[in] info PDF metadata
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -123,7 +120,6 @@ PDFWriter::writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //  Write out standardized bivariate PDF to text file
 //! \param[in] pdf Bivariate PDF
 //! \param[in] info PDF metadata
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -216,7 +212,6 @@ PDFWriter::writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //  Write out standardized trivariate PDF to text file
 //! \param[in] pdf Trivariate PDF
 //! \param[in] info PDF metadata
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -317,7 +312,6 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
 //! \param[in] pdf Bivariate PDF
 //! \param[in] info PDF metadata
 //! \param[in] centering Bin centering on sample space mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -429,7 +423,6 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
 //! \param[in] pdf Trivariate PDF
 //! \param[in] info PDF metadata
 //! \param[in] centering Bin centering on sample space mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -552,7 +545,6 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
 //! \param[in] pdf Bivariate PDF
 //! \param[in] info PDF metadata
 //! \param[in] centering Bin centering on sample space mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -695,7 +687,6 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 //! \param[in] pdf Trivariate PDF
 //! \param[in] info PDF metadata
 //! \param[in] centering Bin centering on sample space mesh
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -850,7 +841,6 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 //! \param[in] info PDF metadata
 //! \param[in] it Iteration count
 //! \param[in] centering Bin centering on sample space mesh
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -978,7 +968,6 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
 //! \param[in] info PDF metadata
 //! \param[in] it Iteration count
 //! \param[in] centering Bin centering on sample space mesh
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   const auto& name = info.name;
@@ -1112,7 +1101,6 @@ PDFWriter::createExFile() const
 // *****************************************************************************
 //  Create Exodus II file
 //! \return ExodusII file handle
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int cpuwordsize = sizeof( double );
@@ -1132,7 +1120,6 @@ PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
 //! \param[in] outFileId Output file ExodusII Id
 //! \param[in] nnode Number of nodes in mesh to write
 //! \param[in] nelem Number of elements in mesh to write
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk( ex_put_init( outFileId,
@@ -1155,7 +1142,6 @@ PDFWriter::writeExVar( int exoFile,
 //! \param[in] exoFile ExodusII file handle to write to
 //! \param[in] centering Node-, or element-centering to use on sample space mesh
 //! \param[in] probability Probabilities at each sample space location
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (centering == ctr::PDFCenteringType::NODE)
@@ -1202,7 +1188,6 @@ PDFWriter::extents( const UniPDF& pdf,
 //! \param[inout] binsize Bin size
 //! \param[inout] ext Extents of sample space
 //! \param[inout] outpdf PDF ready to be written out to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   assertSampleSpaceExtents< 1 >( uext );
@@ -1283,7 +1268,6 @@ PDFWriter::extents( const BiPDF& pdf,
 //! \param[inout] ext Extents of sample space
 //! \param[inout] outpdf PDF ready to be written out to file
 //! \param[in] centering Bin centering on sample space mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   assertSampleSpaceExtents< 2 >( uext );
@@ -1390,7 +1374,6 @@ PDFWriter::extents( const TriPDF& pdf,
 //! \param[inout] ext Extents of sample space
 //! \param[inout] outpdf PDF ready to be written out to file
 //! \param[in] centering Bin centering on sample space mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   assertSampleSpaceExtents< 3 >( uext );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestHas.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Has.h
   \details   Unit tests for Base/Has.h
@@ -44,7 +43,6 @@ static Has_group Has( "Base/Has" );
 //! Test definitions for group
 
 //! Test if tk::HasTypedefProxy correctly detects the absence of typedef Proxy
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 1 >() {
   set_test_name( "HasTypedefProxy detects absence" );
@@ -54,7 +52,6 @@ void Has_object::test< 1 >() {
 }
 
 //! Test if tk::HasTypedefProxy correctly detects the presence of typedef Proxy
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 2 >() {
   set_test_name( "HasTypedefProxy detects presence" );
@@ -64,7 +61,6 @@ void Has_object::test< 2 >() {
 }
 
 //! Test if tk::HasTypedefAlias correctly detects the absence of typedef alias
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 3 >() {
   set_test_name( "HasTypedefAlias detects absence" );
@@ -74,7 +70,6 @@ void Has_object::test< 3 >() {
 }
 
 //! Test if tk::HasTypedefAlias correctly detects the presence of typedef alias
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 4 >() {
   set_test_name( "HasTypedefAlias detects presence" );
@@ -84,7 +79,6 @@ void Has_object::test< 4 >() {
 }
 
 //! Test if tk::HasTypedefCode correctly detects the absence of typedef code
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 5 >() {
   set_test_name( "HasTypedefCode detects absence" );
@@ -94,7 +88,6 @@ void Has_object::test< 5 >() {
 }
 
 //! Test if tk::HasTypedefCode correctly detects the presence of typedef code
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 6 >() {
   set_test_name( "HasTypedefCode detects presence" );
@@ -105,7 +98,6 @@ void Has_object::test< 6 >() {
 
 //! \brief Test if tk::HasTypedefExpectType correctly detects the absence of
 //!   typedef expect::type
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 7 >() {
   set_test_name( "HasTypedefExpectType: absence" );
@@ -116,7 +108,6 @@ void Has_object::test< 7 >() {
 
 //! \brief Test if tk::HasTypedefExpectType correctly detects the presence of
 //!   typedef expect::type
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 8 >() {
   set_test_name( "HasTypedefExpectType: presence" );
@@ -127,7 +118,6 @@ void Has_object::test< 8 >() {
 
 //! \brief Test if tk::HasFunctionExpectDescription correctly detects the
 //!   absence of function expect::description()
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 9 >() {
   set_test_name( "HasFunctionExpectDescription: absence" );
@@ -140,7 +130,6 @@ void Has_object::test< 9 >() {
 
 //! \brief Test if tk::HasFunctionExpectDescription correctly detects the
 //!   presence of function expect::description()
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 10 >() {
   set_test_name( "HasFunctionExpectDescription: presence" );
@@ -153,7 +142,6 @@ void Has_object::test< 10 >() {
 
 //! \brief Test if tk::HasFunctionExpectChoices correctly detects the absence of
 //!   function expect::choices()
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 11 >() {
   set_test_name( "HasFunctionExpectChoices: absence" );
@@ -166,7 +154,6 @@ void Has_object::test< 11 >() {
 
 //! \brief Test if tk::HasFunctionExpectChoices correctly detects the presence
 //!   of function expect::choices()
-//! \author J. Bakosi
 template<> template<>
 void Has_object::test< 12 >() {
   set_test_name( "HasFunctionExpectChoices: presence" );

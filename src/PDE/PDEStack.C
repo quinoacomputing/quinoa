@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -97,7 +96,6 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //!   std::set< ctr::PDEType >, which is only used internally to PDEStack
 //!   for counting up the number of unique differential equation types
 //!   registered, used for diagnostics purposes.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   namespace mpl = boost::mpl;
@@ -122,7 +120,6 @@ PDEStack::selected() const
 // *****************************************************************************
 //  Instantiate all selected partial differential equations
 //! \return std::vector of instantiated partial differential equation objects
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
@@ -145,7 +142,6 @@ PDEStack::info() const
 //  Return information on all selected partial differential equations
 //! \return A vector of vector of pair of strings, containing the configuration
 //!   for each selected partial differential equation
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt; // count PDEs per type
@@ -170,7 +166,6 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
@@ -210,7 +205,6 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs

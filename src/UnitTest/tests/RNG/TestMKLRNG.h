@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/RNG/TestMKLRNG.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/MKLRNG.h
   \details   Unit tests for RNG/MKLRNG.h
@@ -34,7 +33,6 @@ static MKLRNG_group MKLRNG( "RNG/MKLRNG" );
 //! Test definitions for group
 
 //! Test that constructor throws with zero number of threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 1 >() {
   set_test_name( "constructor throws with zero threads" );
@@ -58,7 +56,6 @@ void MKLRNG_object::test< 1 >() {
 }
 
 //! Test that constructor throws with crap data for basic RNG
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 2 >() {
   set_test_name( "constructor throws with crap brng" );
@@ -86,7 +83,6 @@ void MKLRNG_object::test< 2 >() {
 
 //! \brief Test that constructor throws with multiple threads if basic RNG does
 //!   not support leapfrogging
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 3 >() {
   set_test_name( "ctor throws w/ multiple threads if leapfrog unsupported" );
@@ -107,7 +103,6 @@ void MKLRNG_object::test< 3 >() {
 }
 
 //! Test Gaussian generator statistics from mcg31 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 4 >() {
   set_test_name( "Gaussian mcg31 from 4 emulated streams" );
@@ -117,7 +112,6 @@ void MKLRNG_object::test< 4 >() {
 }
 
 //! Test Gaussian generator statistics from mcg59 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 5 >() {
   set_test_name( "Gaussian mcg59 from 4 emulated streams" );
@@ -129,7 +123,6 @@ void MKLRNG_object::test< 5 >() {
 // //! Test Gaussian generator statistics from wh using multiple threads
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 6 >() {
 //   set_test_name( "Gaussian wh from 4 emulated streams" );
@@ -139,7 +132,6 @@ void MKLRNG_object::test< 5 >() {
 // }
 
 //! Test beta generator statistics from mcg31 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 7 >() {
   set_test_name( "beta mcg31 from 4 emulated streams" );
@@ -149,7 +141,6 @@ void MKLRNG_object::test< 7 >() {
 }
 
 //! Test beta generator statistics from mcg59 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 8 >() {
   set_test_name( "beta mcg59 from 4 emulated streams" );
@@ -159,7 +150,6 @@ void MKLRNG_object::test< 8 >() {
 }
 
 //! Test beta generator statistics from wh using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 9 >() {
   set_test_name( "beta wh from 4 emulated streams" );
@@ -169,7 +159,6 @@ void MKLRNG_object::test< 9 >() {
 }
 
 //! Test uniform generator statistics from mcg31 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 10 >() {
   set_test_name( "uniform mcg31 from 4 emulated streams" );
@@ -179,7 +168,6 @@ void MKLRNG_object::test< 10 >() {
 }
 
 //! Test uniform generator statistics from mcg59 using multiple threads
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 11 >() {
   set_test_name( "uniform mcg59 from 4 emulated streams" );
@@ -192,7 +180,6 @@ void MKLRNG_object::test< 11 >() {
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable uniform random numbers: it generates samples outside the
 // //!   bounds (-eps, 1.0+eps)
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 12 >() {
 //   set_test_name( "uniform wh from 4 emulated streams" );
@@ -202,7 +189,6 @@ void MKLRNG_object::test< 11 >() {
 // }
 
 //! Test copy constructor for mcg31
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 13 >() {
   set_test_name( "copy constructor with mcg31" );
@@ -214,7 +200,6 @@ void MKLRNG_object::test< 13 >() {
 }
 
 //! Test copy constructor for mcg59
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 14 >() {
   set_test_name( "copy constructor with mcg59" );
@@ -226,7 +211,6 @@ void MKLRNG_object::test< 14 >() {
 // //! Test copy constructor for wh
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 15 >() {
 //   set_test_name( "copy constructor with wh" );
@@ -236,7 +220,6 @@ void MKLRNG_object::test< 14 >() {
 // }
 
 //! Test move constructor for mcg31
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 16 >() {
   set_test_name( "move constructor with mcg31" );
@@ -246,7 +229,6 @@ void MKLRNG_object::test< 16 >() {
 }
 
 //! Test move constructor for mcg59
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 17 >() {
   set_test_name( "move constructor with mcg59" );
@@ -258,7 +240,6 @@ void MKLRNG_object::test< 17 >() {
 // //! Test move constructor for wh
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 18 >() {
 //   set_test_name( "move constructor with wh" );
@@ -268,7 +249,6 @@ void MKLRNG_object::test< 17 >() {
 // }
 
 //! Test copy assignment for mcg31
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 19 >() {
   set_test_name( "copy assignment with mcg31" );
@@ -280,7 +260,6 @@ void MKLRNG_object::test< 19 >() {
 }
 
 //! Test copy assignment for mcg59
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 20 >() {
   set_test_name( "copy assignment with mcg59" );
@@ -292,7 +271,6 @@ void MKLRNG_object::test< 20 >() {
 // //! Test copy assignment for wh
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 21 >() {
 //   set_test_name( "copy assignment with wh" );
@@ -302,7 +280,6 @@ void MKLRNG_object::test< 20 >() {
 // }
 
 //! Test move assignment for mcg31
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 22 >() {
   set_test_name( "move assignment with mcg31" );
@@ -314,7 +291,6 @@ void MKLRNG_object::test< 22 >() {
 }
 
 //! Test move assignment for mcg59
-//! \author J. Bakosi
 template<> template<>
 void MKLRNG_object::test< 23 >() {
   set_test_name( "move assignment with mcg59" );
@@ -326,7 +302,6 @@ void MKLRNG_object::test< 23 >() {
 // //! Test move assignment for wh
 // //! \note For some reason this generator consistently fails to generate
 // //!   reasonable Gaussian random numbers
-// //! \author J. Bakosi
 // template<> template<>
 // void MKLRNG_object::test< 24 >() {
 //   set_test_name( "move assignment with wh" );

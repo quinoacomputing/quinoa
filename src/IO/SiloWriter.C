@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/SiloWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Silo writer definition.
   \details   Silo writer definition. This class currently only supports writing
@@ -24,7 +23,6 @@ tk::SiloError( char* msg )
 // *****************************************************************************
 //  Silo error handler
 //! \param[in]  msg  Error message
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Take out newlines from error message coming from library
@@ -50,7 +48,6 @@ SiloWriter::SiloWriter( const std::string& filename,
 //  \param[in] filename Name of Silo file to be created
 //  \param[in] mesh Mesh object
 //  \param[in] errLevel Silo library error output level
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Save Silo's error handler and reporting level
@@ -69,7 +66,6 @@ SiloWriter::~SiloWriter() noexcept
 // *****************************************************************************
 //  Destructor
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Close Silo file
@@ -83,7 +79,6 @@ void
 SiloWriter::write()
 // *****************************************************************************
 //  Write out Silo file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   tk::real* coords[] = { m_mesh.getx(), m_mesh.gety(), m_mesh.getz() };

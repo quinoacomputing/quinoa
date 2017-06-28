@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FluxCorrector.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
@@ -69,7 +68,6 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
 //!   doi:10.1002/fld.1650071007
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -190,7 +188,6 @@ FluxCorrector::verify( std::size_t nchare,
 //!   for the sake of verification.
 //! \note This function is optimized away in RELEASE mode, see carrier.ci and
 //!   Carrier::verify().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),
@@ -243,7 +240,6 @@ FluxCorrector::lump( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \return Lumped mass matrix
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = coord[0];
@@ -289,7 +285,6 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] Un Solution at the previous time step stage
 //! \return Mass diffusion contribution to the RHS of the low order system
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = coord[0];
@@ -349,7 +344,6 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 //! \param[in] Un Solution at the previous time step stage
 //! \param[in] Ul Low order solution
 //! \param[in,out] Q Maximum and mimimum unknowns of elements surrounding nodes
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( Q.nunk() == Un.nunk() && Q.nprop() == Un.nprop()*2, "Max and min "
@@ -405,7 +399,6 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 //! \param[in,out] A Limited antidiffusive element contributions scatter-added
 //!   to nodes
 //! \note Q is also overwritten to avoid using temporary memory
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( P.nunk() == Q.nunk() && P.nprop() == Q.nprop(), "Size mismatch" );

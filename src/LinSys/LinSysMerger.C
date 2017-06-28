@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/LinSysMerger.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.

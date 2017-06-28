@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Vector.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Vector algebra
   \details   Vector algebra.
@@ -22,7 +21,6 @@ cross( const std::array< T, 3 >& v1, const std::array< T, 3 >& v2 )
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
 //! \return Cross-product
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return {{ v1[1]*v2[2] - v2[1]*v1[2],
@@ -39,7 +37,6 @@ crossdiv( const std::array< T, 3 >& v1, const std::array< T, 3 >& v2, T j )
 //! \param[in] v2 2nd vector
 //! \param[in] j Scalar to divide each component by
 //! \return Cross-product divided by scalar
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return {{ (v1[1]*v2[2] - v2[1]*v1[2]) / j,
@@ -55,7 +52,6 @@ dot( const std::array< T, 3 >& v1, const std::array< T, 3 >& v2 )
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
 //! \return Dot-product
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
@@ -72,7 +68,6 @@ triple( const std::array< T, 3 >& v1,
 //! \param[in] v2 2nd vector
 //! \param[in] v3 3rd vector
 //! \return Triple-product
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return dot( v1, cross(v2,v3) );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/PDFWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Options/PDFFile.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF output file type options
   \details   PDF output file type options
@@ -20,7 +19,6 @@ namespace tk {
 namespace ctr {
 
 //! PDF output file types
-//! \author J. Bakosi
 enum class PDFFileType : uint8_t { TXT=0,
                                    GMSHTXT,
                                    GMSHBIN,
@@ -28,17 +26,14 @@ enum class PDFFileType : uint8_t { TXT=0,
 
 //! \brief Pack/Unpack PDFFileType: forward overload to generic enum class
 //!   packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, PDFFileType& e ) { PUP::pup( p, e ); }
 
 //! \brief PDFFileType options: outsource searches to base templated on enum
 //!   type
-//! \author J. Bakosi
 class PDFFile : public tk::Toggle< PDFFileType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::txt
                                        , kw::gmshtxt
                                        , kw::gmshbin
@@ -48,7 +43,6 @@ class PDFFile : public tk::Toggle< PDFFileType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit PDFFile() :
       tk::Toggle< PDFFileType >(
         //! Group, i.e., options, name 

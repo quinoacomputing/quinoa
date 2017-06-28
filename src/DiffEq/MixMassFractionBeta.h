@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -101,7 +100,6 @@ class MixMassFractionBeta {
     //!   in a control file. This index specifies which mix mass-fraction beta
     //!   SDE system to instantiate. The index corresponds to the order in which
     //!   the mixmassfracbeta ... end blocks are given the control file.
-    //! \author J. Bakosi
     explicit MixMassFractionBeta( ncomp_t c ) :
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param,
@@ -169,7 +167,6 @@ class MixMassFractionBeta {
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
-    //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
@@ -189,7 +186,6 @@ class MixMassFractionBeta {
     //! \param[in] dt Time step size
     //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
-    //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,

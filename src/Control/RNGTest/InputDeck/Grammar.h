@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -34,7 +33,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 namespace deck {
 
   //! \brief Specialization of tk::grm::use for RNGTest's control file parser
-  //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
@@ -60,7 +58,6 @@ namespace grm {
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
   //!    stack defaults for rngtest.
-  //! \author J. Bakosi
   template< class Option, typename... tags >
   struct action< store_rngtest_option< Option, tags... > > {
     template< typename Input, typename Stack >
@@ -84,7 +81,6 @@ namespace deck {
   // RNGTest's InputDeck grammar
 
   //! \brief Match the inside of rngs ... end block
-  //! \author J. Bakosi
   struct rngs :
          pegtl::sor<
                      #ifdef HAS_MKL
@@ -102,7 +98,6 @@ namespace deck {
                                           tag::param, tag::rng123 > > {};
 
   // \brief Match TestU01 batteries
-  //! \author J. Bakosi
   template< typename battery_kw >
   struct testu01 :
          pegtl::if_must<
@@ -115,19 +110,16 @@ namespace deck {
                                      tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! \brief Match all batteries
-  //! \author J. Bakosi
   struct battery :
          pegtl::sor< testu01< use< kw::smallcrush > >,
                      testu01< use< kw::crush > >,
                      testu01< use< kw::bigcrush > > > {};
 
   //! \brief All keywords
-  //! \author J. Bakosi
   struct keywords :
          pegtl::sor< tk::grm::title< use >, battery > {};
 
   //! \brief Grammar entry point: parse keywords and ignores until eof
-  //! \author J. Bakosi
   struct read_file :
          tk::grm::read_file< keywords, tk::grm::ignore > {};
 

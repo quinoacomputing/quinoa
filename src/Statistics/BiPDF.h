@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/BiPDF.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator. This class can be used to estimate a

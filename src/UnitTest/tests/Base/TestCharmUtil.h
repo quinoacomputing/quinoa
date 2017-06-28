@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestCharmUtil.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
@@ -34,7 +33,6 @@ static CharmUtil_group CharmUtil( "Base/CharmUtil" );
 //! Test definitions for group
 
 //! Test if is_enum_class correctly detects a strongly-typed enum
-//! \author J. Bakosi
 template<> template<>
 void CharmUtil_object::test< 1 >() {
   set_test_name( "is_enum_class detects a strongly-typed enum" );
@@ -45,7 +43,6 @@ void CharmUtil_object::test< 1 >() {
 }
 
 //! Test if is_enum_class correctly detects a C-style enum
-//! \author J. Bakosi
 template<> template<>
 void CharmUtil_object::test< 2 >() {
   set_test_name( "is_enum_class detects a C-style enum" );

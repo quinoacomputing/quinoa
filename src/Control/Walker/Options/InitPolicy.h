@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
@@ -21,23 +20,19 @@ namespace walker {
 namespace ctr {
 
 //! Differential equation initializion policy types
-//! \author J. Bakosi
 enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO,
                                       JOINTDELTA,
                                       JOINTBETA };
 
 //! Pack/Unpack InitPolicyType: forward overload to generic enum class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, InitPolicyType& e ) { PUP::pup( p, e ); }
 
 //! InitPolicy options: outsource searches to base templated on enum type
-//! \author J. Bakosi
 class InitPolicy : public tk::Toggle< InitPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::raw
                                        , kw::zero
                                        , kw::jointdelta
@@ -47,7 +42,6 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit InitPolicy() :
       tk::Toggle< InitPolicyType >(
         //! Group, i.e., options, name
@@ -69,7 +63,6 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //! \brief Return policy code based on Enum
     //! \param[in] p Enum value of the option requested
     //! \return Policy code of the option
-    //! \author J. Bakosi
     const std::string& code( InitPolicyType p ) const {
       using tk::operator<<;
       auto it = policy.find( p );
@@ -81,7 +74,6 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
 
   private:
     //! Function object for ensuring the existence of policy codes
-    //! \author J. Bakosi
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code

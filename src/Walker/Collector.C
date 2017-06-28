@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Collector.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -36,7 +35,6 @@ Collector::chareOrd( const std::vector< tk::real >& ord )
 //! \param[in] ord Vector of partial sums for the estimation of ordinary moments
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ++m_nord;
@@ -66,7 +64,6 @@ Collector::chareCen( const std::vector< tk::real >& cen )
 //! \param[in] cen Vector of partial sums for the estimation of central moments
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ++m_ncen;
@@ -103,7 +100,6 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
 //!   ordinary PDFs
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ++m_nopdf;
@@ -152,7 +148,6 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
 //!   central PDFs
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ++m_ncpdf;

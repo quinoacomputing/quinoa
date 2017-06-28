@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -99,7 +98,6 @@ Transporter::Transporter() :
               {{ "r", "s", "l", "p" }} )
 // *****************************************************************************
 //  Constructor
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -235,7 +233,6 @@ void
 Transporter::diagHeader()
 // *****************************************************************************
 // Configure and write diagnostics file header
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Output header for diagnostics output file
@@ -279,7 +276,6 @@ Transporter::load( uint64_t nelem )
 // reading their part of the contiguously-numbered computational mesh graph and
 // we are ready to compute the computational load
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progGraph.end();
@@ -338,7 +334,6 @@ Transporter::partition()
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
 // mesh and we are ready for partitioning
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
@@ -353,7 +348,6 @@ Transporter::distributed()
 // Reduction target indicating that all Partitioner chare groups have finished
 // distributing its global mesh node IDs and they are ready for preparing
 // (flattening) their owned mesh node IDs for reordering
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progPart.end();
@@ -373,7 +367,6 @@ Transporter::aveCost( tk::real c )
 //! \details The average, computed here, gives an idea of the average
 //!   communication cost across all PEs, while the standard deviation, computed
 //!   by stdCost(), gives an idea on the expected load imbalance.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progReorder.end();
@@ -396,7 +389,6 @@ Transporter::stdCost( tk::real c )
 //! \details The average, computed by avCost(), gives an idea of the average
 //!   communication cost across all PEs, while the standard deviation, computed
 //!   here, gives an idea on the expected load imbalance.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.diag( "Linear system communication cost: avg = " +
@@ -409,7 +401,6 @@ Transporter::coord()
 // *****************************************************************************
 // Reduction target indicating that all chare groups are ready for workers to
 // start reading their mesh node coordinates
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
@@ -421,7 +412,6 @@ Transporter::volcomplete()
 // *****************************************************************************
 // Reduction target indicating that all Carriers have finished
 // computing/receiving their part of the nodal volumes
-//! \author J. Bakosi
 // *****************************************************************************
 {
   vol_complete();
@@ -432,7 +422,6 @@ Transporter::vol( tk::real v )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
 //! \param[in] v mesh volume
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_V = v;
@@ -445,7 +434,6 @@ Transporter::minstat( tk::real* d, std::size_t n )
 // Reduction target yielding minimum mesh statistcs across all workers
 //! \param[in] d Minimum mesh statistics collected over all chares
 //! \param[in] n Size of data behind d
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -467,7 +455,6 @@ Transporter::maxstat( tk::real* d, std::size_t n )
 // Reduction target yielding the maximum mesh statistics across all workers
 //! \param[in] d Maximum mesh statistics collected over all chares
 //! \param[in] n Size of data behind d
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -489,7 +476,6 @@ Transporter::sumstat( tk::real* d, std::size_t n )
 // Reduction target yielding the sum mesh statistics across all workers
 //! \param[in] d Sum mesh statistics collected over all chares
 //! \param[in] n Size of data behind d
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -510,7 +496,6 @@ Transporter::pdfstat( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target yielding PDF of mesh statistics across all workers
 //! \param[in] msg Serialized PDF
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::vector< tk::UniPDF > pdf;
@@ -537,7 +522,6 @@ void
 Transporter::stat( )
 // *****************************************************************************
 // Echo diagnostics mesh statistics
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
@@ -555,7 +539,6 @@ void
 Transporter::setup( )
 // *****************************************************************************
 // Start computing row IDs, querying BCs, outputing mesh
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
@@ -576,7 +559,6 @@ Transporter::rowcomplete()
 //!   sufficient, one is parcomplete(). Together rowcomplete() and
 //!   parcomplete() are sufficient for continuing with the initialization. See
 //!   also transporter.ci.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progSetup.end();
@@ -592,7 +574,6 @@ Transporter::initcomplete()
 // *****************************************************************************
 //  Reduction target indicating that all Carrier chares have finished their
 //  initialization step and have already continued with start time stepping
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_progInit.end();
@@ -609,7 +590,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
 //! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -661,7 +641,6 @@ Transporter::dt( tk::real* d, std::size_t n )
 // Reduction target yielding a single minimum time step size across all workers
 //! \param[in] d Minimum time step size collected over all chares
 //! \param[in] n Size of data behind d
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -686,7 +665,6 @@ void
 Transporter::finish()
 // *****************************************************************************
 // Normal finish of time stepping
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Print out reason for stopping
@@ -707,7 +685,6 @@ void
 Transporter::header()
 // *****************************************************************************
 // Print out time integration header
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
@@ -726,7 +703,6 @@ void
 Transporter::evaluateTime()
 // *****************************************************************************
 // Evaluate time step and output one-liner report
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto term = g_inputdeck.get< tag::discr, tag::term >();

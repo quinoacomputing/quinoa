@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/HydroProductions.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hydrodynamics production divided by dissipation rate options
   \details   Hydrodynamics production divided by dissipation rate options
@@ -22,7 +21,6 @@ namespace walker {
 namespace ctr {
 
 //! Hydrodynamics production divided by dissipation rate types
-//! \author J. Bakosi
 enum class HydroProductionsType : uint8_t { PROD_A005H=0
                                           , PROD_A005S
                                           , PROD_A005L
@@ -36,17 +34,14 @@ enum class HydroProductionsType : uint8_t { PROD_A005H=0
 
 //! \brief Pack/Unpack HydroProductionsType: forward overload to generic enum
 //!   class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, HydroProductionsType& e )
 { PUP::pup( p, e ); }
 
 //! HydroProductions options: outsource searches to base templated on enum type
-//! \author J. Bakosi
 class HydroProductions : public tk::Toggle< HydroProductionsType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::prod_A005H
                                        , kw::prod_A005S
                                        , kw::prod_A005L
@@ -61,7 +56,6 @@ class HydroProductions : public tk::Toggle< HydroProductionsType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit HydroProductions() :
       tk::Toggle< HydroProductionsType >(
         //! Group, i.e., options, name
@@ -90,7 +84,6 @@ class HydroProductions : public tk::Toggle< HydroProductionsType > {
     //! \brief Return table based on Enum
     //! \param[in] t Enum value of the option requested
     //! \return tk::Table associated to the option
-    //! \author J. Bakosi
     tk::Table table( HydroProductionsType t ) const {
       if (t == HydroProductionsType::PROD_A005H)
         return prod_A005H;

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/WrightFisher.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -67,7 +66,6 @@ class WrightFisher {
     //!   control file. This index specifies which Wright-Fisher SDE system to
     //!   instantiate. The index corresponds to the order in which the
     //!   wright-fisher ... end blocks are given the control file.
-    //! \author J. Bakosi
     explicit WrightFisher( ncomp_t c ) :
       m_c( c ),
       m_depvar(
@@ -90,7 +88,6 @@ class WrightFisher {
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
-    //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       IGNORE( stream );
       //! Set initial conditions using initialization policy
@@ -119,7 +116,6 @@ class WrightFisher {
     //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,

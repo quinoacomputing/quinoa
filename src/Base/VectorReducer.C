@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/VectorReducer.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
@@ -21,7 +20,6 @@ serialize( const std::vector< std::size_t >& v )
 //! \param[in] v Vector
 //! \return Pair of the length and the raw stream containing the serialized
 //!   vectors
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Prepare for serializing vectors to a raw binary stream, compute size
@@ -46,7 +44,6 @@ mergeVector( int nmsg, CkReductionMsg **msgs )
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized vectors
 //! \return Aggregated std::vectors built for further aggregation if needed
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Will store deserialized vector

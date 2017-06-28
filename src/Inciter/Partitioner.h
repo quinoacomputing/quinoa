@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -90,7 +89,6 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-//! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
           class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,

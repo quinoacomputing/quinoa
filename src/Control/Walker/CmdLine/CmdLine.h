@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/CmdLine/CmdLine.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line
   \details   Walker's command line
@@ -79,7 +78,6 @@ class CmdLine : public tk::Control<
     //!   contains a copy of the command-line stack, the command-line stack must
     //!   be possible to be instantiated without passing the ctrinfo map,
     //!   otherwise it would be a mutual dependency.
-    //! \author J. Bakosi
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::pdf >( "pdf" );

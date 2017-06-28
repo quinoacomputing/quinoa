@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/DiagWriter.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
@@ -29,7 +28,6 @@ DiagWriter::DiagWriter( const std::string& filename,
 //! \param[in] format Configure floating-point output format ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
 //! \param[in] mode Configure file open mode
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Set floating-point format for output file stream
@@ -51,7 +49,6 @@ DiagWriter::header( const std::vector< std::string >& name ) const
 // *****************************************************************************
 //  Write out diagnostics file header
 //! \param[in] name Vector of strings with the names of diagnostics
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << "#" << std::setw(9) << "1:it";
@@ -79,7 +76,6 @@ DiagWriter::diag( uint64_t it,
 //! \param[in] t Time
 //! \param[in] diagnostics Vector with the diagnostics
 //! \return The total number of diagnostics written to the output file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << std::setw(10) << it;
