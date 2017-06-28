@@ -402,33 +402,33 @@ Carrier::bc()
   // PDEs integrated
   std::unordered_map< std::size_t, NodeBC > dirbc;
 
-  // Query Dirichlet boundary conditions for all PDEs integrated. This is where
-  // the individual system of PDEs are queried for boundary conditions. The
-  // outer loop goes through all sides sets that exists in the input file and
-  // passes the map's value_type (a pair of the side set id and a vector of
-  // local node IDs) to PDE::dirbc(). PDE::dirbc() returns a new map that
-  // associates a vector of pairs associated to local node IDs. (The pair is a
-  // pair of bool and real value, the former is the fact that the BC is to be
-  // set while the latter is the value if it is to be set). The length of this
-  // NodeBC vector, returning from each system of PDEs equals to the number of
-  // scalar components the given PDE integrates. Here then we contatenate this
-  // map for all PDEs integrated. If there are multiple BCs set at a mesh node
-  // (dirbc::key), either because (1) in the same PDE system the user prescribed
-  // BCs on side sets that share nodes or (2) because more than a single PDE
-  // system assigns BCs to a given node (on different variables), the NodeBC
-  // vector must be correctly stored. "Correctly" here means that the size of
-  // the NodeBC vectors must all be the same and qual to the sum of all scalar
-  // components integrated by all PDE systems integrated. Example: single-phase
-  // compressible flow (density, momentum, energy = 5) + transported scalars of
-  // 10 variables -> NodeBC vector length = 15. Note that in case (1) above a
-  // new node encountered must "overwrite" the already existing space for the
-  // NodeBC vector. "Overwrite" here means that it should keep the existing BCs
-  // and add the new ones yielding the union the two prescription for BCs but in
-  // the same space that already exist in the NodeBC vector. In case (2),
-  // however, the NodeBC pairs must go to the location in the vector assigned to
-  // the given PDE system, i.e., using the above example BCs for the 10 (or
-  // less) scalars should go in the positions starting at 5, leaving the first 5
-  // false, indicating no BCs for the flow variables.
+  // Query Dirichlet boundary conditions for all PDEs integrated and assign to
+  // nodes. This is where the individual system of PDEs are queried for boundary
+  // conditions. The outer loop goes through all sides sets that exists in the
+  // input file and passes the map's value_type (a pair of the side set id and a
+  // vector of local node IDs) to PDE::dirbc(). PDE::dirbc() returns a new map
+  // that associates a vector of pairs associated to local node IDs. (The pair
+  // is a pair of bool and real value, the former is the fact that the BC is to
+  // be set while the latter is the value if it is to be set). The length of
+  // this NodeBC vector, returning from each system of PDEs equals to the number
+  // of scalar components the given PDE integrates. Here then we contatenate
+  // this map for all PDEs integrated. If there are multiple BCs set at a mesh
+  // node (dirbc::key), either because (1) in the same PDE system the user
+  // prescribed BCs on side sets that share nodes or (2) because more than a
+  // single PDE system assigns BCs to a given node (on different variables), the
+  // NodeBC vector must be correctly stored. "Correctly" here means that the
+  // size of the NodeBC vectors must all be the same and qual to the sum of all
+  // scalar components integrated by all PDE systems integrated. Example:
+  // single-phase compressible flow (density, momentum, energy = 5) +
+  // transported scalars of 10 variables -> NodeBC vector length = 15. Note that
+  // in case (1) above a new node encountered must "overwrite" the already
+  // existing space for the NodeBC vector. "Overwrite" here means that it should
+  // keep the existing BCs and add the new ones yielding the union the two
+  // prescription for BCs but in the same space that already exist in the NodeBC
+  // vector. In case (2), however, the NodeBC pairs must go to the location in
+  // the vector assigned to the given PDE system, i.e., using the above example
+  // BCs for the 10 (or less) scalars should go in the positions starting at 5,
+  // leaving the first 5 false, indicating no BCs for the flow variables.
   //
   // TODO: Note that the logic described above is only partially implemented at
   // this point. What works is the correct insertion of multiple BCs for nodes
