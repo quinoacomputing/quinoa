@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindPEGTL.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find PEGTL
 #
@@ -21,6 +20,32 @@
 #  find_package(PEGTL)
 #  include_directories(${PEGTL_INCLUDE_DIRS})
 
+function(_PEGTL_GET_VERSION _OUT_major _OUT_minor _OUT_micro _metisversion_hdr)
+    file(STRINGS ${_metisversion_hdr} _contents REGEX "#define PEGTL_VER_[A-Z]+[ \t]+")
+    if(_contents)
+        string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" ${_OUT_major} "${_contents}")
+	string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" ${_OUT_minor} "${_contents}")
+	string(REGEX REPLACE ".*#define TAOCPP_PEGTL_VERSION_PATCH[ \t]+([0-9]+).*" "\\1" ${_OUT_micro} "${_contents}")
+
+        if(NOT ${_OUT_major} MATCHES "[0-9]+")
+            message(FATAL_ERROR "Version parsing failed for TAOCPP_PEGTL_VERSION_MAJOR!")
+        endif()
+        if(NOT ${_OUT_minor} MATCHES "[0-9]+")
+            message(FATAL_ERROR "Version parsing failed for TAOCPP_PEGTL_VERSION_MINOR!")
+        endif()
+        if(NOT ${_OUT_micro} MATCHES "[0-9]+")
+            message(FATAL_ERROR "Version parsing failed for TAOCPP_PEGTL_VERSION_PATCH!")
+        endif()
+
+        set(${_OUT_major} ${${_OUT_major}} PARENT_SCOPE)
+        set(${_OUT_minor} ${${_OUT_minor}} PARENT_SCOPE)
+        set(${_OUT_micro} ${${_OUT_micro}} PARENT_SCOPE)
+
+    else()
+        message(FATAL_ERROR "Include file ${_metisversion_hdr} does not exist")
+    endif()
+endfunction()
+
 # If already in cache, be silent
 if(PEGTL_INCLUDE_DIRS)
   set (PEGTL_FIND_QUIETLY TRUE)
@@ -30,12 +55,18 @@ find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hpp
                             HINTS ${PEGTL_ROOT}/include
                                   $ENV{PEGTL_ROOT}/include
                             PATH_SUFFIXES tao pegtl/include/tao)
+if(PEGTL_INCLUDE_DIR)
+  _PEGTL_GET_VERSION(PEGTL_MAJOR_VERSION PEGTL_MINOR_VERSION PEGTL_PATCH_VERSION ${PEGTL_INCLUDE_DIR}/pegtl/version.hpp)
+  set(PEGTL_VERSION ${PEGTL_MAJOR_VERSION}.${PEGTL_MINOR_VERSION}.${PEGTL_PATCH_VERSION})
+else()
+  set(PEGTL_VERSION 0.0.0)
+endif()
 
 set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
 
 # Handle the QUIETLY and REQUIRED arguments and set PEGTL_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(PEGTL DEFAULT_MSG PEGTL_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(PEGTL REQUIRED_VARS PEGTL_INCLUDE_DIRS VERSION_VAR PEGTL_VERSION)
 
 MARK_AS_ADVANCED(PEGTL_INCLUDE_DIRS)
