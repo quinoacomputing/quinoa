@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindH5Part.cmake
-# \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the H5Part library
 #
