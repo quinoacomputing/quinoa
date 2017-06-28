@@ -13,18 +13,29 @@ if(ROOT_INCLUDE_DIRS AND ROOT_LIBRARIES)
   set (ROOT_FIND_QUIETLY TRUE)
 endif()
 
-find_path(ROOT_INCLUDE_DIR NAMES TFile.h)
+### Find ROOT include files required
+find_path(ROOT_INCLUDE_DIR NAMES TFile.h HINTS ${ROOT_ROOT}/include
+                                               $ENV{ROOT_ROOT}/include)
 
 ### Find ROOT libraries required
-find_library(ROOT_RIO_LIBRARY NAMES RIO)
-find_library(ROOT_CORE_LIBRARY NAMES Core)
-find_library(ROOT_TREE_LIBRARY NAMES Tree)
-find_library(ROOT_GRAPH_LIBRARY NAMES Hist)
-find_library(ROOT_THREAD_LIBRARY NAMES Thread)
-find_library(ROOT_NET_LIBRARY NAMES Net)
-find_library(ROOT_IMT_LIBRARY NAMES Imt)
-find_library(ROOT_MATRIX_LIBRARY NAMES Matrix)
-find_library(ROOT_MATHCORE_LIBRARY NAMES MathCore)
+find_library(ROOT_RIO_LIBRARY NAMES RIO HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_CORE_LIBRARY NAMES Core HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_TREE_LIBRARY NAMES Tree HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_GRAPH_LIBRARY NAMES Hist HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_THREAD_LIBRARY NAMES Thread HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_NET_LIBRARY NAMES Net HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_IMT_LIBRARY NAMES Imt HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_MATRIX_LIBRARY NAMES Matrix HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
+find_library(ROOT_MATHCORE_LIBRARY NAMES MathCore HINTS ${ROOT_ROOT}/lib
+                                               $ENV{ROOT_ROOT}/lib)
 
 ### Link the libraries as one
 set(ROOT_LIBRARY ${ROOT_RIO_LIBRARY}
