@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/WalkerPrint.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -40,7 +39,6 @@ WalkerPrint::inthead( const std::string& t,
 //! \param[in] name Section name
 //! \param[in] legend Legend to print
 //! \param[in] head Head to append
-//! \author J. Bakosi
 // *****************************************************************************
 {
   section( t, name );
@@ -54,7 +52,6 @@ WalkerPrint::statistics( const std::string& t ) const
 // *****************************************************************************
 //  Print statistics and PDFs
 //! \param[in] t Section title
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if ( !g_inputdeck.get< tag::stat >().empty() ||
@@ -73,7 +70,6 @@ WalkerPrint::diffeqs( const std::string& t, const std::vector< std::vector<
 //  Print configuration of a stack of differential equations
 //! \param[in] t Title to use
 //! \param[in] info Info vector to use
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if ( !info.empty() ) {
@@ -95,7 +91,6 @@ WalkerPrint::stats( const std::string& msg ) const
 // *****************************************************************************
 //  Echo statistics container contents if differs from default
 //! \param[in] msg Message to print
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !msg.empty(), "Empty message size in WalkerPrint::stats()." );
@@ -130,7 +125,6 @@ const
 //! \param[in] op Functor to use
 //! \details See src/Control/StatCtr.h for the definition of functions that may
 //!    be passed in as op. Currently, the only example is tk::ctr::pdf.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( !msg.empty(), "Empty message size in WalkerPrint::vec()." );

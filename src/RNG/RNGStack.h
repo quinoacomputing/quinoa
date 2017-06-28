@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/RNGStack.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file declares class RNGStack, which implements various
@@ -28,11 +27,9 @@
 namespace tk {
 
 //! Random number generator factory: keys associated to their constructors
-//! \author J. Bakosi
 using RNGFactory = std::map< ctr::RNGType, std::function< RNG() > >;
 
 //! \brief Random number generator stack
-//! \author J. Bakosi
 class RNGStack {
 
   public:

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/HypreVector.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.

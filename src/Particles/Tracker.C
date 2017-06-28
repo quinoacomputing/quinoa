@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Particles/Tracker.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on
@@ -30,7 +29,6 @@ Tracker::genpar( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] nchare Total number of holder array chares
 //! \param[in] chid Host chare ID (thisIndex)
-//! \author F.J. Gonzalez
 // *****************************************************************************
 {
   Assert( m_elp.size() >= m_particles.nunk(),
@@ -78,7 +76,6 @@ Tracker::addpar( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] miss Indices of particles to find
 //! \param[in] ps Particle data associated to those particle indices to find
 //! \return Particle indices found
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( ps.size() == miss.size(), "Size mismatch" );
@@ -118,7 +115,6 @@ Tracker::parinel( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] e Mesh cell index
 //! \param[in,out] N Shapefunctions evaluated at the particle position
 //! \return True if particle is in mesh cell
-//! \author F.J. Gonzalez
 // *****************************************************************************
 {
   // Tetrahedron node indices
@@ -200,7 +196,6 @@ void
 Tracker::applyParBC( std::size_t i )
 // *****************************************************************************
 // Apply boundary conditions to particles
-//! \author F.J. Gonzalez
 // *****************************************************************************
 {
   auto& x = m_particles(i,0,0);
@@ -220,7 +215,6 @@ Tracker::remove( const std::set< std::size_t >& idx )
 // *****************************************************************************
 // Remove particles
 //! \param[in] idx Set of particle indices whose data to remove
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_particles.rm( idx );

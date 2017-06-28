@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Distributor.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -74,7 +73,6 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 // *****************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute load distribution given total work (= number of particles) and
@@ -139,7 +137,6 @@ Distributor::info( uint64_t chunksize, std::size_t nchare )
 //  Print information at startup
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
 //! \param[in] nchare Total number of Charem++ Integrator chares doing work
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -220,7 +217,6 @@ Distributor::computedt()
 // *****************************************************************************
 // Compute size of next time step
 //! \return Size of dt for the next time step
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Simply return a constant user-defined dt for now
@@ -233,7 +229,6 @@ Distributor::estimateOrd( tk::real* ord, int n )
 // Estimate ordinary moments
 //! \param[in] ord Ordinary moments (sum) collected over all chares
 //! \param[in] n Number of ordinary moments in array ord
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -259,7 +254,6 @@ Distributor::estimateCen( tk::real* cen, int n )
 // Estimate ordinary moments
 //! \param[in] cen Central moments (sum) collected over all chares
 //! \param[in] n Number of central moments in array cen
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #ifdef NDEBUG
@@ -284,7 +278,6 @@ Distributor::estimateOrdPDF( CkReductionMsg* msg )
 // *****************************************************************************
 // Estimate ordinary PDFs
 //! \param[in] msg Serialized vectors of uni-, bi-, and tri-variate PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Deserialize final PDFs
@@ -304,7 +297,6 @@ Distributor::estimateCenPDF( CkReductionMsg* msg )
 // *****************************************************************************
 // Estimate central PDFs
 //! \param[in] Serialized vectors of uni-, bi-, and tri-variate PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Deserialize final PDFs
@@ -323,7 +315,6 @@ void
 Distributor::outStat()
 // *****************************************************************************
 // Output statistics to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // lambda to sample tables to write to statistics file
@@ -351,7 +342,6 @@ void
 Distributor::outPDF()
 // *****************************************************************************
 // Output PDFs to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Output PDFs at selected times
@@ -372,7 +362,6 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
 //! \param[in] p Univariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get PDF metadata
@@ -414,7 +403,6 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
 //! \param[in] p Bivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get PDF metadata
@@ -476,7 +464,6 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
 //! \param[in] p Trivariate PDF to output
 //! \param[in] m ORDINARY or CENTRAL PDF we are writing
 //! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get PDF metadata
@@ -533,7 +520,6 @@ void
 Distributor::outUniPDF()
 // *****************************************************************************
 // Output all requested univariate PDFs to file(s)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::size_t idx = 0;
@@ -549,7 +535,6 @@ Distributor::outBiPDF()
 // *****************************************************************************
 // Output all requested bivariate PDFs to file(s)
 //! \return Number of PDFs written
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::size_t idx = 0;
@@ -566,7 +551,6 @@ Distributor::outTriPDF()
 // *****************************************************************************
 // Output all requested trivariate PDFs to file(s)
 //! \return Number of PDFs written
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::size_t idx = 0;
@@ -583,7 +567,6 @@ void
 Distributor::evaluateTime()
 // *****************************************************************************
 // Evaluate time step, compute new time step size, decide if it is time to quit
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -637,7 +620,6 @@ void
 Distributor::finish()
 // *****************************************************************************
 // Normal finish of time stepping
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Print out reason for stopping
@@ -662,7 +644,6 @@ Distributor::nostat()
 //! \details This reduction target is called if there are no statistics nor PDFs
 //!   to be estimated and thus some synchronization points can be skipped. Upon
 //!   this call we simply finish up the time step as usual.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   evaluateTime();
@@ -672,7 +653,6 @@ void
 Distributor::header() const
 // *****************************************************************************
 // Print out time integration header
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.inthead( "Time integration", "Differential equations testbed",
@@ -690,7 +670,6 @@ void
 Distributor::report()
 // *****************************************************************************
 // Print out one-liner report on time step
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {

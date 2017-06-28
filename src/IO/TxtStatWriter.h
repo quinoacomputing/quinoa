@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/TxtStatWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -25,7 +24,6 @@ namespace tk {
 //! \brief TxtStatWriter : tk::Writer
 //! \details ASCII statistics writer class that facilitates outputing
 //!   statistics to text files.
-//! \author J. Bakosi
 class TxtStatWriter : public tk::Writer {
 
   public:

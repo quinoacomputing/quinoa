@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Timer.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Timer definition
   \details   Timer definition. Timer is a simple class to do timing various
@@ -24,7 +23,6 @@ Timer::hms() const
 //  seconds.
 //! \return Time elapsed between start and stop as hours, minutes, and seconds,
 //!   as a Watch struct.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using std::chrono::duration_cast;
@@ -50,7 +48,6 @@ Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
 //! \param[in]  it              Current iteration count
 //! \param[out] elapsedWatch    Elapsed time in h:m:s
 //! \param[out] estimatedWatch  Estimated time for accomplishmet in h:m:s
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using std::chrono::duration_cast;
@@ -95,7 +92,6 @@ hms( tk::real stamp )
 //! Convert existing time stamp as a real to Watch (global-scope)
 //! \param[in] stamp Time stamp as a real number
 //! \return Time as hours, minutes, and seconds, as a Watch struct.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   using std::chrono::duration_cast;

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEq.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -33,7 +32,6 @@ namespace walker {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a DiffEq,
 //!   see walker::Beta.
-//! \author J. Bakosi
 class DiffEq {
 
   public:

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Writer.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Writer base class declaration
   \details   Writer base class declaration. Writer base serves as a base class

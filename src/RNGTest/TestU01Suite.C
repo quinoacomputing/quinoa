@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Suite.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -52,7 +51,6 @@ TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
 // *****************************************************************************
 // Constructor
 //! \param[in] suite Enum id selecting TestU01 battery type
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Add statistical tests to suite
@@ -76,7 +74,6 @@ TestU01Suite::npval( std::size_t n )
 // *****************************************************************************
 // Collect number of p-values from a statistical test
 //! \param[in] n Number of p-values the test contributes to the total
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_npval += n;
@@ -94,7 +91,6 @@ TestU01Suite::names( std::vector< std::string > n )
 // *****************************************************************************
 // Collect test names from a statistical test
 //! \param[in] n Vector of test names (there can be more than one from one test)
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.names( n );
@@ -140,7 +136,6 @@ TestU01Suite::evaluate( std::vector< std::vector< std::string > > status )
 // *****************************************************************************
 // Evaluate statistical test
 //! \param[in] status Status vectors of strings for a test
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.test( ++m_ncomplete, m_ctrs.size(), m_nfail, status );
@@ -162,7 +157,6 @@ TestU01Suite::time( std::pair< std::string, tk::real > t )
 // *****************************************************************************
 // Collect test times measured in seconds from a statistical test
 //! \param[in] t Measured time to do the test for an RNG
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   m_time[ t.first ] += t.second;
@@ -174,7 +168,6 @@ void
 TestU01Suite::assess()
 // *****************************************************************************
 // Output final assessment
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Output summary of failed tests for all RNGs tested
@@ -204,7 +197,6 @@ TestU01Suite::ntest() const
 // *****************************************************************************
 // Return the number of statistical tests per each RNG tested
 //! \return The number of statistical tests for each RNG tested
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();

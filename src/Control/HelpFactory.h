@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/HelpFactory.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
@@ -31,7 +30,6 @@ namespace ctr {
 //!    and InputDeck objects (which are tagged tuples) and thus can be migrated
 //!    through the network, thus the Charm++ parck/unpack routines are defined.
 //! \see Info functor used to fill the std::maps
-//! \author J. Bakosi
 struct KeywordInfo {
   std::string shortDescription;           //!< Short description
   std::string longDescription;            //!< Long description
@@ -43,7 +41,6 @@ struct KeywordInfo {
   ///@{
   //! \brief Pack/Unpack serialize member function
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
-  //! \author J. Bakosi
   void pup( PUP::er& p ) {
     p | shortDescription;
     p | longDescription;
@@ -54,21 +51,18 @@ struct KeywordInfo {
   //! \brief Pack/Unpack serialize operator|
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \param[in,out] info KeywordInfo object reference
-  //! \author J. Bakosi
   friend void operator|( PUP::er& p, KeywordInfo& info ) { info.pup(p); }
   ///@}
 };
 
 //! \brief A typedef for associating a keyword-string with its associated
 //!   information stored in a KeywordInfo struct
-//! \author J. Bakosi
 using HelpFactory = std::map< std::string, KeywordInfo >;
 
 //! \brief Help bundle on a single keyword
 //! \details This is used for delivering help on a single keyword. This struct
 //!    also differentiates between command-line arguments and control file
 //!    keywords.
-//! \author J. Bakosi
 struct HelpKw {
   HelpFactory::key_type keyword;        //!< Keyword string
   HelpFactory::mapped_type info;        //!< Keyword information
@@ -78,12 +72,10 @@ struct HelpKw {
   ///@{
   //! \brief Pack/Unpack serialize member function
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
-  //! \author J. Bakosi
   void pup( PUP::er& p ) { p|keyword; p|info; p|cmd; }
   //! \brief Pack/Unpack serialize operator|
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \param[in,out] h HelpKw object reference
-  //! \author J. Bakosi
   friend void operator|( PUP::er& p, HelpKw& h ) { h.pup(p); }
   ///@}
 };
@@ -92,7 +84,6 @@ struct HelpKw {
 //!   and their associated information bundle
 //! \details This struct is used as a functor to loop through a set of keywords
 //!   at compile-time and generate code for filling up the std::map.
-//! \author J. Bakosi
 struct Info {
   //! Store reference to map we are filling
   tk::ctr::HelpFactory& m_factory;

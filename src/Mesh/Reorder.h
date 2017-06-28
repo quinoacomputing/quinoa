@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.

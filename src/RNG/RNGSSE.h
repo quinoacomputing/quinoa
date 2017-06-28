@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/RNGSSE.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators

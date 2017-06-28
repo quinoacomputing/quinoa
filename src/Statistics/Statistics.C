@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/Statistics.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -67,7 +66,6 @@ Statistics::Statistics( const tk::Particles& particles,
 //! \param[in] stat List of requested statistical moments
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Prepare for computing ordinary and central moments, PDFs
@@ -83,7 +81,6 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 //  Prepare for computing ordinary moments
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   for (const auto& product : stat)
@@ -130,7 +127,6 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
 //  Prepare for computing central moments
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Central moments can only be estimated about ordinary moments
@@ -168,7 +164,6 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::size_t i = 0;
@@ -248,7 +243,6 @@ Statistics::mean( const tk::ctr::Term& term ) const
 //  Return mean for fluctuation
 //! \param[in] term Term (a fluctuation) whose mean to search for
 //! \return Index to mean
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto size = m_ordTerm.size();
@@ -265,7 +259,6 @@ void
 Statistics::accumulateOrd()
 // *****************************************************************************
 //  Accumulate (i.e., only do the sum for) ordinary moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_nord) {
@@ -300,7 +293,6 @@ Statistics::accumulateCen( const std::vector< tk::real >& om )
 //!   PEs and thus are the same to be passed here on all PEs. For example
 //!   client-code, see walker::Distributor.
 //! \param[in] om Ordinary moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_ncen) {
@@ -330,7 +322,6 @@ void
 Statistics::accumulateOrdPDF()
 // *****************************************************************************
 //  Accumulate (i.e., only do the sum for) ordinary PDFs
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!m_ordupdf.empty() || !m_ordbpdf.empty() || !m_ordtpdf.empty()) {
@@ -378,7 +369,6 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& om )
 //!   PEs and thus are the same to be passed here on all PEs. For example
 //!   client-code, see walker::Distributor.
 //! \param[in] om Ordinary moments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!m_cenupdf.empty() || !m_cenbpdf.empty() || !m_centpdf.empty()) {

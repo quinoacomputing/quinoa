@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Problem.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter
@@ -21,7 +20,6 @@ namespace inciter {
 namespace ctr {
 
 //! Problem types
-//! \author J. Bakosi
 enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    SHEAR_DIFF,
                                    DIR_NEU,
@@ -31,16 +29,13 @@ enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    SLOT_CYL };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
 
 //! \brief Problem options: outsource to base templated on enum type
-//! \author J. Bakosi
 class Problem : public tk::Toggle< ProblemType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::user_defined
                                        , kw::shear_diff
                                        , kw::dir_neu
@@ -53,7 +48,6 @@ class Problem : public tk::Toggle< ProblemType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit Problem() :
       tk::Toggle< ProblemType >(
         //! Group, i.e., options, name
@@ -81,7 +75,6 @@ class Problem : public tk::Toggle< ProblemType > {
     //! \brief Return policy code based on Enum
     //! \param[in] p Enum value of the problem option requested
     //! \return Policy code of the option
-    //! \author J. Bakosi
     const std::string& code( ProblemType p ) const {
       using tk::operator<<;
       auto it = policy.find( p );
@@ -93,7 +86,6 @@ class Problem : public tk::Toggle< ProblemType > {
 
   private:
     //! Function object for ensuring the existence of policy codes
-    //! \author J. Bakosi
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Props.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 statistical test properties class
   \details   This file defines a generic TestU01 statistical test properties
@@ -36,7 +35,6 @@ extern TestStack g_testStack;
 //!   object, is. Note that TestU01Props still needs to be migratable, i.e.,
 //!   defines the pack/unpack operator, as it is an argument to chare TestU01's
 //!   constructor.
-//! \author J. Bakosi
 template< class Test,                 //!< Statistical test tag, struct{}
           class Proxy,                //!< Host proxy type
           class Result,               //!< Results type

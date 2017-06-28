@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshFactory.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -34,7 +33,6 @@ detectInput( const std::string& filename )
 //  Detect input mesh file type
 //! \param[in] filename File to open and detect its type
 //! \return enum specifying the mesh reader type
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get first three letters from input file
@@ -70,7 +68,6 @@ pickOutput( const std::string& filename )
 //  Determine output mesh file type
 //! \param[in] filename Filename to pick its type based on extension given
 //! \return enum specifying the mesh writer type
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get extension of input file name
@@ -102,7 +99,6 @@ readUnsMesh( const tk::Print& print,
 //! \param[out] timestamp A time stamp consisting of a timer label (a string),
 //!   and a time state (a tk::real in seconds) measuring the mesh read time
 //! \return Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   print.diagstart( "Reading mesh from file ..." );
@@ -148,7 +144,6 @@ writeUnsMesh( const tk::Print& print,
 //! \return Vector of time stamps consisting of a timer label (a string), and a
 //!   time state (a tk::real in seconds) measuring the renumber and the mesh
 //!   write time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::vector< std::pair< std::string, tk::real > > times;

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Macro.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Macro definitions
   \details   Macro definitions for various utility functionality.
@@ -21,7 +20,6 @@ namespace tk {
 
 //! Start-time macro for fine-grained profiling. Put this in the beginning of
 //! the section of code to be profiled.
-//! \author J. Bakosi
 #define STARTTIME \
 struct timeval START_TIME, END_TIME; \
 int total_usecs; \
@@ -29,7 +27,6 @@ gettimeofday(&START_TIME, (struct timezone*)0);
 
 //! End-time macro for fine-grained profiling. Put this at the end of the
 //! section of code to be profiled.
-//! \author J. Bakosi
 #define ENDTIME \
 gettimeofday(&END_TIME, (struct timezone*)0); \
 total_usecs = (END_TIME.tv_sec-START_TIME.tv_sec) * 1000000 + (END_TIME.tv_usec-START_TIME.tv_usec); \

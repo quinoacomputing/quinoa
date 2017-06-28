@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -33,7 +32,6 @@ InciterPrint::inthead( const std::string& t,
 //! \param[in] name Section name
 //! \param[in] legend Legend to print
 //! \param[in] head Head to append
-//! \author J. Bakosi
 // *****************************************************************************
 {
   section( t, name );
@@ -49,7 +47,6 @@ InciterPrint::pdes( const std::string& t, const std::vector< std::vector<
 //  Print configuration of a stack of partial differential equations
 //! \param[in] t Title to use
 //! \param[in] info Info vector to use
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if ( !info.empty() ) {

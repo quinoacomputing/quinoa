@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/MKLGrammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,
@@ -18,7 +17,6 @@ namespace mkl {
   using namespace tao;
 
   //! \brief rng: match any one of the MKL random number generators
-  //! \author J. Bakosi
   template< template< class > class use >
   struct rng :
          pegtl::sor< typename use< kw::mkl_mcg31 >::pegtl_string,
@@ -37,7 +35,6 @@ namespace mkl {
                      typename use< kw::mkl_nondeterm >::pegtl_string > {};
 
   //! \brief Match and set MKL RNG seed
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct seed :
@@ -46,7 +43,6 @@ namespace mkl {
                                                   sel, vec, tags... > > {};
 
   //! \brief Match and set MKL uniform method algorithm
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct uniform_method :
@@ -57,7 +53,6 @@ namespace mkl {
                           sel, vec, tags... > {};
      
   //! \brief Match and set MKL Gaussian method algorithm
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct gaussian_method :
@@ -68,7 +63,6 @@ namespace mkl {
                           sel, vec, tags... > {};
 
   //! \brief Match and set MKL beta method algorithm
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct beta_method :
@@ -80,7 +74,6 @@ namespace mkl {
 
   //! \brief Match MKL RNGs in an rngs ... end block
   //! \see walker::deck::rngs
-  //! \author J. Bakosi
   template< template< class > class use, typename sel,
             typename vec, typename... tags >
   struct rngs :

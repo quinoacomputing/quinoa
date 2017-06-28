@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTestPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -26,7 +25,6 @@ class UnitTestPrint : public tk::Print {
     //! \param[in,out] str Verbose stream
     //! \param[in,out] qstr Quiet stream
     //! \see tk::Print::Print
-    //! \author J. Bakosi
     explicit UnitTestPrint( std::ostream& str = std::clog,
                             std::ostream& qstr = std::cout ) :
       Print( str, qstr ) {}
@@ -34,7 +32,6 @@ class UnitTestPrint : public tk::Print {
     //! Print unit tests header (with legend)
     //! \param[in] t Section title
     //! \param[in] group String attempting to match unit test groups
-    //! \author J. Bakosi
     void unithead( const std::string& t, const std::string& group ) const {
       std::string g = group.empty() ? "all" : group;
       m_stream << m_section_title_fmt % m_section_indent
@@ -62,7 +59,6 @@ class UnitTestPrint : public tk::Print {
     //!   - status[2]: result (tut::test_result::result_type as string)
     //!   - status[3]: exception message for failed test
     //!   - status[4]: exception type id for failed test
-    //! \author J. Bakosi
     void test( std::size_t ncomplete,
                std::size_t nfail,
                const std::vector< std::string >& status )
@@ -83,7 +79,6 @@ class UnitTestPrint : public tk::Print {
     //! \param[in] code Result code
     //! \param[in] msg Message to append
     //! \param[in] ex Expection message to attach to exceptions cases
-    //! \author J. Bakosi
     std::string result( const std::string& code,
                         const std::string& msg,
                         const std::string& ex ) const

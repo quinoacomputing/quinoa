@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/HydroTimeScales.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inverse hydrodynamics time scale options
   \details   Inverse hydrodynamics time scale options
@@ -22,7 +21,6 @@ namespace walker {
 namespace ctr {
 
 //! Inverse hydrodynamics time scale types
-//! \author J. Bakosi
 enum class HydroTimeScalesType : uint8_t { EQ_A005H=0
                                          , EQ_A005S
                                          , EQ_A005L
@@ -36,17 +34,14 @@ enum class HydroTimeScalesType : uint8_t { EQ_A005H=0
 
 //! \brief Pack/Unpack HydroTimeScalesType: forward overload to generic enum
 //!   class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, HydroTimeScalesType& e )
 { PUP::pup( p, e ); }
 
 //! HydroTimeScales options: outsource searches to base templated on enum type
-//! \author J. Bakosi
 class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::eq_A005H
                                        , kw::eq_A005S
                                        , kw::eq_A005L
@@ -61,7 +56,6 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit HydroTimeScales() :
       tk::Toggle< HydroTimeScalesType >(
         //! Group, i.e., options, name
@@ -90,7 +84,6 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
     //! \brief Return table based on Enum
     //! \param[in] t Enum value of the option requested
     //! \return tk::Table associated to the option
-    //! \author J. Bakosi
     tk::Table table( HydroTimeScalesType t ) const {
       if (t == HydroTimeScalesType::EQ_A005H)
         return invhts_eq_A005H;

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -28,7 +27,6 @@ extern ctr::InputDeck g_inputdeck_defaults;
 namespace deck {
 
   //! \brief Specialization of tk::grm::use for Inciter's input deck parser
-  //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
@@ -40,7 +38,6 @@ namespace deck {
 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  //! \author J. Bakosi
   static tk::tuple::tagged_tuple< tag::transport, std::size_t,
                                   tag::poisson,   std::size_t,
                                   tag::compflow,  std::size_t > neq;
@@ -63,7 +60,6 @@ namespace grm {
   //! \brief Register differential equation after parsing its block
   //! \details This is used by the error checking functors (check_*) during
   //!    parsing to identify the recently-parsed block.
-  //! \author J. Bakosi
   template< class eq >
   struct action< register_inciter_eq< eq > > {
     template< typename Input, typename Stack >
@@ -79,7 +75,6 @@ namespace grm {
   //! \details This is error checking that all equation types must satisfy. For
   //!   more specific equations, such as compressible flow, a more specialized
   //!   equation checker does and can do better error checking.
-  //! \author J. Bakosi
   template< class eq >
   struct action< check_inciter_eq< eq > > {
     template< typename Input, typename Stack >
@@ -107,7 +102,6 @@ namespace grm {
   //!   must satisfy. Besides error checking we also set defaults here as
   //!   this block is called when parsing of a transport...end block has
   //!   just finished.
-  //! \author J. Bakosi
   template< class eq >
   struct action< check_transport< eq > > {
     template< typename Input, typename Stack >
@@ -158,7 +152,6 @@ namespace grm {
   //!   block must satisfy. Besides error checking we also set defaults here as
   //!   this block is called when parsing of a compflow...end block has
   //!   just finished.
-  //! \author J. Bakosi
   template< class eq >
   struct action< check_compflow< eq > > {
     template< typename Input, typename Stack >
@@ -231,7 +224,6 @@ namespace grm {
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
   //!    stack defaults for inciter.
-  //! \author J. Bakosi
   template< class Option, typename... tags >
   struct action< store_inciter_option< Option, tags... > > {
     template< typename Input, typename Stack >
@@ -245,7 +237,6 @@ namespace grm {
   //! Rule used to trigger action
   struct check_dt : pegtl::success {};
   //! \brief Do error checking on setting the time step calculation policy
-  //! \author J. Bakosi
   template<> struct action< check_dt > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
@@ -502,12 +493,10 @@ namespace deck {
                           tk::grm::MsgKey::UNFINISHED > > > {};
 
   //! \brief All keywords
-  //! \author J. Bakosi
   struct keywords :
          pegtl::sor< tk::grm::title< use >, inciter > {};
 
   //! \brief Grammar entry point: parse keywords and ignores until eof
-  //! \author J. Bakosi
   struct read_file :
          tk::grm::read_file< keywords, tk::grm::ignore > {};
 

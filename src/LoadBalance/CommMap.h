@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/CommMap.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.

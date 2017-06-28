@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keywords.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those

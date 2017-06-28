@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestStringParser.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
@@ -38,7 +37,6 @@ static StringParser_group StringParser( "Control/StringParser" );
 //! Test definitions for group
 
 //! Test if constructor stores string passed in as std::string
-//! \author J. Bakosi
 template<> template<>
 void StringParser_object::test< 1 >() {
   set_test_name( "ctor stores string passed in" );
@@ -48,7 +46,6 @@ void StringParser_object::test< 1 >() {
 }
 
 //! Test if constructor stores string passed in as argc, argv
-//! \author J. Bakosi
 template<> template<>
 void StringParser_object::test< 2 >() {
   set_test_name( "ctor stores argc,argv passed in" );

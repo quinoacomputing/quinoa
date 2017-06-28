@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/QEndian.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Swap endianness
   \details   Swap endianness. Thanks to http://stackoverflow.com/a/4956493 and

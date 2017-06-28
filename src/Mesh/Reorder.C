@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -31,7 +30,6 @@ shiftToZero( std::vector< std::size_t >& inpoel )
 //!   smallest is zero.
 //! \note It is okay to call this function with an empty container; it will
 //!    simply return without throwing an exception.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (inpoel.empty()) return 0;
@@ -57,7 +55,6 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
 //!   The function overwrites every value, n, of vector id with newid[n].
 //! \note It is okay to call this function with either of the containers empty;
 //!   it will simply return without throwing an exception.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (id.empty() || newid.empty()) return;
@@ -76,7 +73,6 @@ renumber( const std::pair< std::vector< std::size_t >,
 //  Reorder mesh points with the advancing front technique
 //! \param[in] psup Points surrounding points
 //! \return Pair of maps between old->new and new->old order
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Find out number of nodes in graph
@@ -124,7 +120,6 @@ assignLid( const std::vector< std::size_t >& gid )
 //  Assign local ids to global ids
 //! \param[in] gid Global ids
 //! \return Map associating global ids to local ids
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::unordered_map< std::size_t, std::size_t > lid;
@@ -144,7 +139,6 @@ global2local( const std::vector< std::size_t >& ginpoel )
 //! \return Tuple of (1) element connectivity with local node IDs, (2) the
 //!   vector of unique global node IDs (i.e., the mapping between local to
 //!   global node IDs), and (3) mapping between global to local node IDs.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Make a copy of the element connectivity with global node ids

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/Assessment.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -33,7 +32,6 @@ evaluate( std::vector< std::string > status,
 //! \param[inout] nskip Number of skipped tests
 //! \param[inout] nexcp Number of tests with an exception
 //! \param[inout] nfail Number of failed tests
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (status[2] != "8") {             // only care about non-dummy tests
@@ -68,7 +66,6 @@ assess( const tk::Print& print,
 //! \param[in] ncomplete Number of completed tests
 //! \return True of all tests passed, false if there was at least a failure or
 //!   an exception
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!nfail && !nwarn && !nskip && !nexcp) {

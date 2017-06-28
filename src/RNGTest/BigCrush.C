@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/BigCrush.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Class re-creating the TestU01 library's BigCrush battery
   \details   Class re-creating the TestU01 library's BigCrush battery.
@@ -53,7 +52,6 @@ BigCrush::addTests( std::vector< std::function< StatTest() > >& tests,
 //! \param[in] tests Vector of test constructors
 //! \param[in] rng RNG ID enum associated with the RNG to be tested
 //! \param[in] proxy Charm++ host proxy to which the tests will call back to
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Select test stack

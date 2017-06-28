@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
@@ -45,7 +44,6 @@ class Transport {
   public:
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
-    //! \author J. Bakosi
     explicit Transport( ncomp_t c ) :
       m_c( c ),
       m_ncomp(
@@ -60,7 +58,6 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
@@ -86,7 +83,6 @@ class Transport {
     //!   where psup2 holds the indices at which psup1 holds the point ids
     //!   surrounding points, see also tk::genPsup()). Note that the number of
     //!   mesh points (our chunk) npoin = psup.second.size()-1.
-    //! \author J. Bakosi
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
@@ -165,7 +161,6 @@ class Transport {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
-    //! \author J. Bakosi
     void rhs( tk::real,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,

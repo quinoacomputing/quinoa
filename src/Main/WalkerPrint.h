@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/WalkerPrint.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -47,13 +46,11 @@ class WalkerPrint : public tk::RNGPrint {
     //! \param[in,out] str Verbose stream
     //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
-    //! \author J. Bakosi
     explicit WalkerPrint( std::ostream& str = std::clog,
                           std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
 
     //! Print section only if differs from its default
-    //! \author J. Bakosi
     template< typename Option, typename... tags >
     void Section() const {
       if (g_inputdeck.get< tags... >() !=
@@ -74,7 +71,6 @@ class WalkerPrint : public tk::RNGPrint {
 
     //! Print item: 'name : value' only if differs from its default
     //! \param[in] name Name of item
-    //! \author J. Bakosi
     template< typename... tags >
     void Item( const std::string& name ) const {
       if (g_inputdeck.get< tags... >() !=
@@ -84,7 +80,6 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     //! Print control option: 'group : option' only if differs from its default
-    //! \author J. Bakosi
     template<typename Option, typename... tags>
     void Item() const {
       if (g_inputdeck.get< tags... >() !=
@@ -97,7 +92,6 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     // Helper class for compact output of diff eq policies
-    //! \author J. Bakosi
     class Policies {
       public:
         // Default constructor
@@ -135,7 +129,6 @@ class WalkerPrint : public tk::RNGPrint {
     //! \param[in] t Section title
     //! \param[in] factory Factory to get equation data from
     //! \param[in] ntypes Unique equation types
-    //! \author J. Bakosi
     template< class Factory >
     void eqlist( const std::string& t,
                  const Factory& factory,
