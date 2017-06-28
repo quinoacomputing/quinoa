@@ -1,6 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindTUT.cmake
+# \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Template Unit Test library header
 #

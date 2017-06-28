@@ -1,6 +1,7 @@
 ################################################################################
 #
 # \file      cmake/BuildShared.cmake
+# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Set default value for building shared libs if none was specified
 #

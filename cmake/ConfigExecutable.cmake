@@ -1,6 +1,7 @@
 ################################################################################
 #
 # \file      cmake/ConfigExecutable.cmake
+# \author    J. Bakosi
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Configure Charm++ executable targets
 #
