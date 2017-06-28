@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindCartesianProduct.cmake
-# \author    C. Junghans
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Cartesian Product header
 #

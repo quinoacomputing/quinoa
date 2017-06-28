@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindRandom123.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find Random123
 #

@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      cmake/FindPEGTL.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find PEGTL
 #
@@ -56,12 +55,18 @@ find_path(PEGTL_INCLUDE_DIR NAMES pegtl.hpp
                             HINTS ${PEGTL_ROOT}/include
                                   $ENV{PEGTL_ROOT}/include
                             PATH_SUFFIXES tao pegtl/include/tao)
+if(PEGTL_INCLUDE_DIR)
+  _PEGTL_GET_VERSION(PEGTL_MAJOR_VERSION PEGTL_MINOR_VERSION PEGTL_PATCH_VERSION ${PEGTL_INCLUDE_DIR}/pegtl/version.hpp)
+  set(PEGTL_VERSION ${PEGTL_MAJOR_VERSION}.${PEGTL_MINOR_VERSION}.${PEGTL_PATCH_VERSION})
+else()
+  set(PEGTL_VERSION 0.0.0)
+endif()
 
 set(PEGTL_INCLUDE_DIRS ${PEGTL_INCLUDE_DIR})
 
 # Handle the QUIETLY and REQUIRED arguments and set PEGTL_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(PEGTL DEFAULT_MSG PEGTL_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(PEGTL REQUIRED_VARS PEGTL_INCLUDE_DIRS VERSION_VAR PEGTL_VERSION)
 
 MARK_AS_ADVANCED(PEGTL_INCLUDE_DIRS)
