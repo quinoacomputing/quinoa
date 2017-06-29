@@ -153,24 +153,12 @@ class CompFlowProblemVorticalFlow {
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
     }
-// 
-//     //! \brief Query Dirichlet boundary condition value on a given side set for
-//     //!    all components in this PDE system
-//     //! \param[in] sideset Side set ID
-//     //! \return Vector of pairs of bool and BC value for all components
-//     static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
-//       using tag::param; using tag::compflow; using tag::bcdir;
-//       std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
-//       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-//         for (const auto& i : s)
-//           if (std::stoi(i) == sideset)
-//             for (auto& b : bc)
-//                b = { true, 0.0 };
-//       return bc;
-//     }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
     //!   that instead of the actual boundary condition value, we return the
@@ -178,16 +166,22 @@ class CompFlowProblemVorticalFlow {
     //!   as we solve for the soution increments and not the solution itself.
     static std::unordered_map< std::size_t,
                                std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type,
+    dirbc( tk::ctr::ncomp_type e,
            tk::real,
            tk::real,
-           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& )
     {
       using tag::param; using tag::compflow; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::unordered_map< std::size_t, NodeBC > bc;
-      // TODO: include functionality from above dirbc() commented
+      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
+      for (const auto& b : ubc[e])
+        if (std::stoi(b) == side.first)
+        for (auto n : side.second)
+          bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
+                     {true,0.0} }};
       return bc;
     }
 
@@ -195,18 +189,18 @@ class CompFlowProblemVorticalFlow {
     //! \return Vector of strings labelling fields output in file
     static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
-      n.push_back( "density numerical" );
-      n.push_back( "density analytical" );
-      n.push_back( "x-velocity numerical" );
-      n.push_back( "x-velocity analytical" );
-      n.push_back( "y-velocity numerical" );
-      n.push_back( "y-velocity analytical" );
-      n.push_back( "z-velocity numerical" );
-      n.push_back( "z-velocity analytical" );
-      n.push_back( "specific total energy numerical" );
-      n.push_back( "specific total energy analytical" );
-      n.push_back( "pressure numerical" );
-      n.push_back( "pressure analytical" );
+      n.push_back( "density_numerical" );
+      n.push_back( "density_analytical" );
+      n.push_back( "x-velocity_numerical" );
+      n.push_back( "x-velocity_analytical" );
+      n.push_back( "y-velocity_numerical" );
+      n.push_back( "y-velocity_analytical" );
+      n.push_back( "z-velocity_numerical" );
+      n.push_back( "z-velocity_analytical" );
+      n.push_back( "specific_total_energy_numerical" );
+      n.push_back( "specific_total_energy_analytical" );
+      n.push_back( "pressure_numerical" );
+      n.push_back( "pressure_analytical" );
       return n;
     }
 
