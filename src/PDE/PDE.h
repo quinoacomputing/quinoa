@@ -118,10 +118,10 @@ class PDE {
     //!  set by the user on a given side set for all components in a PDE system
     std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
-           tk::real dt,
-           const std::pair< const int, std::vector< std::size_t > >& side,
+           tk::real deltat,
+           const std::pair< const int, std::vector< std::size_t > >& sides,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return self->dirbc( t, dt, side, coord ); }
+    { return self->dirbc( t, deltat, sides, coord ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -232,10 +232,10 @@ class PDE {
       { data.side( conf ); }
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
-             tk::real dt,
-             const std::pair< const int, std::vector< std::size_t > >& side,
+             tk::real deltat,
+             const std::pair< const int, std::vector< std::size_t > >& sides,
              const std::array< std::vector< tk::real >, 3 >& coord ) const
-        override { return data.dirbc( t, dt, side, coord ); }
+        override { return data.dirbc( t, deltat, sides, coord ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override
