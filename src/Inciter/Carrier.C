@@ -444,17 +444,17 @@ Carrier::bc()
       auto eqbc = g_pdes[eq].dirbc( m_t, m_dt, s, m_coord );
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
-        const auto& bc = n.second;              // BCs
+        const auto& bcs = n.second;             // BCs
         auto& nodebc = dirbc[ m_gid[id] ];      // BCs to be set for node
         if (nodebc.size() > c) {        // node already has BCs from this PDE
-          Assert( nodebc.size() == c+bc.size(), "Size mismatch" );
-          for (std::size_t i=0; i<bc.size(); i++)
-            if (bc[i].first)
-              nodebc[c+i] = bc[i];
+          Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
+          for (std::size_t i=0; i<bcs.size(); i++)
+            if (bcs[i].first)
+              nodebc[c+i] = bcs[i];
         } else {        // node does not yet have BCs from this PDE
           // This branch needs to be completed for system of systems of PDEs.
           // See note above.
-          nodebc.insert( end(nodebc), begin(bc), end(bc) );
+          nodebc.insert( end(nodebc), begin(bcs), end(bcs) );
         }
       }
       if (!eqbc.empty()) c += eqbc.cbegin()->second.size();
