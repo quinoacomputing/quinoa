@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/charm.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to setup a Charm++ module
-# \date      Sat 16 Jul 2016 08:50:27 PM MDT
 #
 ################################################################################
 

@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindRNGSSE2.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the RNGSSE2 library
-# \date      Fri 20 Jan 2017 01:27:21 PM MST
 #
 ################################################################################
 
