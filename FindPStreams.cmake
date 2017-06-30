@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindLPstreams.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Pstreams library
-# \date      Fri 20 Jan 2017 01:15:41 PM MST
 #
 ################################################################################
 

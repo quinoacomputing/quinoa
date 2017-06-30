@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/CppCheck.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Tue 21 Mar 2017 11:17:17 AM MDT
 #
 ################################################################################
 

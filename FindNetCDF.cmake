@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindLNetCDF.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find NetCDF
-# \date      Fri 06 May 2016 06:42:49 AM MDT
 #
 ################################################################################
 

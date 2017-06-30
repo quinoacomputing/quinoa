@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/ConfigureDataLayout.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Configure data layouts
-# \date      Sat 17 Sep 2016 10:27:08 AM MDT
 #
 ################################################################################
 
