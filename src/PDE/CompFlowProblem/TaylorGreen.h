@@ -196,7 +196,7 @@ class CompFlowProblemTaylorGreen {
                  tk::real V,
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U )
+                 tk::Fields& U )
     {
       // ratio of specific heats
       tk::real g =

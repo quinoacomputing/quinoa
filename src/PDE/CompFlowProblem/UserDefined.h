@@ -136,7 +136,7 @@ class CompFlowProblemUserDefined {
                  tk::real,
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >&,
-                 const tk::Fields& U )
+                 tk::Fields& U )
     {
       std::vector< std::vector< tk::real > > out;
       const auto r = U.extract( 0, offset );

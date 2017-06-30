@@ -383,7 +383,7 @@ class CompFlowProblemNLEnergyGrowth {
                  tk::real,
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U )
+                 tk::Fields& U )
     {
       using tag::param; using tag::compflow;
       // manufactured solution parameters

@@ -387,7 +387,7 @@ class CompFlow {
                  tk::real V,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
-                 const tk::Fields& U ) const
+                 tk::Fields& U ) const
     { return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
