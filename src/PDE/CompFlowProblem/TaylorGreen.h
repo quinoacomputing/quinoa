@@ -161,21 +161,21 @@ class CompFlowProblemTaylorGreen {
     //! \return Vector of strings labelling fields output in file
     static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
-      n.push_back( "density numerical" );
-      n.push_back( "density analytical" );
-      n.push_back( "x-velocity numerical" );
-      n.push_back( "x-velocity analytical" );
+      n.push_back( "density_numerical" );
+      n.push_back( "density_analytical" );
+      n.push_back( "x-velocity_numerical" );
+      n.push_back( "x-velocity_analytical" );
       n.push_back( "err(u)" );
-      n.push_back( "y-velocity numerical" );
-      n.push_back( "y-velocity analytical" );
+      n.push_back( "y-velocity_numerical" );
+      n.push_back( "y-velocity_analytical" );
       n.push_back( "err(v)" );
-      n.push_back( "z-velocity numerical" );
-      n.push_back( "z-velocity analytical" );
-      n.push_back( "specific total energy numerical" );
-      n.push_back( "specific total energy analytical" );
+      n.push_back( "z-velocity_numerical" );
+      n.push_back( "z-velocity_analytical" );
+      n.push_back( "specific_total_energy_numerical" );
+      n.push_back( "specific_total_energy_analytical" );
       n.push_back( "err(E)" );
-      n.push_back( "pressure numerical" );
-      n.push_back( "pressure analytical" );
+      n.push_back( "pressure_numerical" );
+      n.push_back( "pressure_analytical" );
       return n;
     }
 
