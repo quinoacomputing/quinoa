@@ -227,17 +227,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
   # Detect gcc version
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                  OUTPUT_VARIABLE GCC_VERSION)
-  string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
-  list(LENGTH GCC_VERSION_COMPONENTS GCCVER)
-  if (GCCVER GREATER 0)
-    list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
-  endif()
-  if (GCCVER GREATER 1)
-    list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-  endif()
-  message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
+  include(DetectGCCVersion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
