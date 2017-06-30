@@ -94,14 +94,14 @@ class CompFlowProblemTaylorGreen {
 
       // compute energy source
       std::array< tk::real, 4 > Se{{
-        3.0/8.0*(std::cos(M_PI*x[N[0]])*std::cos(3.0*M_PI*y[N[0]]) -
-                 std::cos(3.0*M_PI*x[N[0]])*std::cos(M_PI*y[N[0]])),
-        3.0/8.0*(std::cos(M_PI*x[N[1]])*std::cos(3.0*M_PI*y[N[1]]) -
-                 std::cos(3.0*M_PI*x[N[1]])*std::cos(M_PI*y[N[1]])),
-        3.0/8.0*(std::cos(M_PI*x[N[2]])*std::cos(3.0*M_PI*y[N[2]]) -
-                 std::cos(3.0*M_PI*x[N[2]])*std::cos(M_PI*y[N[2]])),
-        3.0/8.0*(std::cos(M_PI*x[N[3]])*std::cos(3.0*M_PI*y[N[3]]) -
-                 std::cos(3.0*M_PI*x[N[3]])*std::cos(M_PI*y[N[3]])) }};
+        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[0]])*std::cos(M_PI*y[N[0]]) -
+                      std::cos(M_PI*x[N[0]])*std::cos(3.0*M_PI*y[N[0]])),
+        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[1]])*std::cos(M_PI*y[N[1]]) -
+                      std::cos(M_PI*x[N[1]])*std::cos(3.0*M_PI*y[N[1]])),
+        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[2]])*std::cos(M_PI*y[N[2]]) -
+                      std::cos(M_PI*x[N[2]])*std::cos(3.0*M_PI*y[N[2]])),
+        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[3]])*std::cos(M_PI*y[N[3]]) -
+                      std::cos(M_PI*x[N[3]])*std::cos(3.0*M_PI*y[N[3]])) }};
 
       std::array< tk::real, 4 > p;
       for (std::size_t i=0; i<4; ++i)
@@ -126,23 +126,11 @@ class CompFlowProblemTaylorGreen {
           conf.insert( std::stoi(i) );
     }
 
-//     //! \brief Query Dirichlet boundary condition value on a given side set for
-//     //!    all components in this PDE system
-//     //! \param[in] sideset Side set ID
-//     //! \return Vector of pairs of bool and BC value for all components
-//     static std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) {
-//       using tag::param; using tag::compflow; using tag::bcdir;
-//       std::vector< std::pair< bool, tk::real > > bc( 5, { false, 0.0 } );
-//       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-//         for (const auto& i : s)
-//           if (std::stoi(i) == sideset)
-//             for (auto& b : bc)
-//                b = { true, 0.0 };
-//       return bc;
-//     }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
     //!   that instead of the actual boundary condition value, we return the
@@ -150,16 +138,22 @@ class CompFlowProblemTaylorGreen {
     //!   as we solve for the soution increments and not the solution itself.
     static std::unordered_map< std::size_t,
                                std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type,
+    dirbc( tk::ctr::ncomp_type e,
            tk::real,
            tk::real,
-           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& )
     {
       using tag::param; using tag::compflow; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::unordered_map< std::size_t, NodeBC > bc;
-      // TODO: include functionality from above dirbc() commented
+      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
+      for (const auto& b : ubc[e])
+        if (std::stoi(b) == side.first)
+        for (auto n : side.second)
+          bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
+                     {true,0.0} }};
       return bc;
     }
 
