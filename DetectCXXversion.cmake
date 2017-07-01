@@ -2,7 +2,7 @@
 #
 # \file      cmake/DetectCXXversion.cmake
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-# \brief     Detect GNU C version
+# \brief     Detect C++ compiler major, minor, and patch version
 #
 ################################################################################
 
