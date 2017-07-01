@@ -226,8 +226,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
-  # Detect gcc version
-  include(DetectGCCVersion)
+  # Detect compiler version
+  include(DetectCXXversion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
