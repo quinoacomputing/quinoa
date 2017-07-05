@@ -27,10 +27,9 @@ module integrator {
                           uint64_t it,
                           const std::map< tk::ctr::Product, tk::real >& moments
       );
-      entry void accumulateOrd();
-      entry void accumulateCen( const std::vector< tk::real >& ord );
-      entry void accumulateOrdPDF();
-      entry void accumulateCenPDF( const std::vector< tk::real >& ord );
+      entry void accumulateOrd( uint64_t it );
+      entry void accumulateCen( uint64_t it,
+                                const std::vector< tk::real >& ord );
     }
 
   } // walker::

@@ -117,10 +117,8 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 
   // Activate SDAG-wait for estimation of ordinary statistics
   wait4ord();
-  // Activate SDAG-wait for estimation of central moments
-  wait4cen();
   // Activate SDAG-wait for estimation of PDFs at select times
-  if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
+  wait4pdf();
 
   // Create statistics merger chare group collecting chare contributions
   CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
@@ -603,11 +601,8 @@ Distributor::evaluateTime()
 
       // Re-activate SDAG-wait for estimation of ordinary stats for next step
       wait4ord();
-      // Re-activate SDAG-wait for estimation of central moments for next step
-      wait4cen();
-
-      // Selectively re-activate SDAG-wait for estimation of PDFs for next step
-      if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
+      // Re-activate SDAG-wait for estimation of PDFs for next step
+      wait4pdf();
     }
 
     // Continue with next time step with all integrators
