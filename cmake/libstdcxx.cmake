@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/libstdcxx.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find libc++ and offer to switch between libc++ and libstdc++
-# \date      Fri 20 Jan 2017 12:39:24 PM MST
 #
 ################################################################################
 
