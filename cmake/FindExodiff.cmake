@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindExodiff.cmake
-# \author    J. Bakosi
 # \copyright 2016, Los Alamos National Security, LLC.
 # \brief     Find the Adaptive Entropy Coding library
-# \date      Fri 20 Jan 2017 12:16:07 PM MST
 #
 ################################################################################
 

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ExceptionMPI.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
@@ -24,7 +23,6 @@ namespace tk {
 //!    throwing an Exception instead will also generate a nice call-trace and
 //!    will attempt to free memory. This macro should be used to detect
 //!    programmer errors.
-//! \author J. Bakosi
 #ifdef NDEBUG
 #  define AssertMPI(expr, ...) (static_cast<void>(0))
 #else  // NDEBUG
@@ -45,7 +43,6 @@ namespace tk {
 //!    used to detect user or runtime errors from code sections that are
 //!    executed on multiple MPI ranks. Within asynchrounous Charm++ chares, the
 //!    simpler ErrChk macro suffices.
-//! \author J. Bakosi
 #ifdef QUINOA_CONFIG_MPI_ENABLED
 #define ErrChkMPI(expr, ...) \
 { \

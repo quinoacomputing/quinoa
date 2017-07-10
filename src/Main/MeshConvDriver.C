@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/MeshConvDriver.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -32,7 +31,6 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Save input file name
@@ -45,7 +43,6 @@ void
 MeshConvDriver::execute() const
 // *****************************************************************************
 //  Execute: Convert mesh file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   m_print.endsubsection();

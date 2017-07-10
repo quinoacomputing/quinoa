@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLinearMap.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for LoadBalance/LinearMap
   \details   Unit tests for LoadBalance/LinearMap
@@ -37,7 +36,6 @@ static LinearMap_group LinearMap( "LoadBalance/LinearMap" );
 //! Test definitions for group
 
 //! Test if constructor does not throw on positive number of elements
-//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 1 >() {
   set_test_name( "ctor doesn't throw on positive nelem" );
@@ -45,7 +43,6 @@ void LinearMap_object::test< 1 >() {
 }
 
 //! Test use of LinearMap creating an array with nchare <= numpes
-//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 2 >() {
   int nchare = CkNumPes() > 1 ? CkNumPes()/2 : 1;
@@ -67,7 +64,6 @@ void LinearMap_object::test< 2 >() {
 }
 
 //! Test use of LinearMap creating an array with nchare > numpes
-//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 3 >() {
   int nchare = 2 * CkNumPes();

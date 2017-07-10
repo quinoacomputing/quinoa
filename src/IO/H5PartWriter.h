@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/H5PartWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class declaration, facilitating

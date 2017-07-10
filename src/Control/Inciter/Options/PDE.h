@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/PDE.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter

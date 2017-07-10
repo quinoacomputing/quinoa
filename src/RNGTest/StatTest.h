@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/StatTest.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -35,7 +34,6 @@ namespace rngtest {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a Battery,
 //!   see rngtest::TestU01.
-//! \author J. Bakosi
 class StatTest {
 
   public:

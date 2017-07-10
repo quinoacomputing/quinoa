@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Toggle.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Toggle is the base for an Option, doing generic searches
   \details   Toggle is the base for an Option, doing generic searches.
@@ -21,7 +20,6 @@ namespace tk {
 //! \details Toggle is templated on an enum type (a strongly typed enum), whose
 //!   values are used as keys in maps of associated option values.
 //! \see Control/Option for client code examples
-//! \author J. Bakosi
 template< typename Enum >
 class Toggle {
 

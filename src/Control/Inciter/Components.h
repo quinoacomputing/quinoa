@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Components.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck

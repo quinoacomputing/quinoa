@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Writer.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class
@@ -26,7 +25,6 @@ Writer::Writer( const std::string& filename, std::ios_base::openmode mode ) :
 //! \param[in] filename Name of file to open for writing
 //! \param[in] mode Open mode, see
 //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Doing this if-test gives the derived class an option to pass an empty
@@ -46,7 +44,6 @@ Writer::~Writer() noexcept
 //!   Error handling, while done by throwing and catching exceptions, results in
 //!   warnings to terminal. We use C-style printf, since that will not throw
 //!   exceptions.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!m_filename.empty()) {

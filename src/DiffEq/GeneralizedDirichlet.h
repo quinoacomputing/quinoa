@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -85,7 +84,6 @@ class GeneralizedDirichlet {
     //!   file. This index specifies which generalized Dirichlet SDE system to
     //!   instantiate. The index corresponds to the order in which the gendir
     //!   ... end blocks are given the control file.
-    //! \author J. Bakosi
     explicit GeneralizedDirichlet( ncomp_t c ) :
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, tag::gendir, tag::depvar >().at(c) ),
@@ -107,7 +105,6 @@ class GeneralizedDirichlet {
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
-    //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
@@ -119,7 +116,6 @@ class GeneralizedDirichlet {
     //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,

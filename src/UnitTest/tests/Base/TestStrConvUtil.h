@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestStrConvUtil.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -29,7 +28,6 @@ static StrConvUtil_group StrConvUtil( "Base/StrConvUtil" );
 //! Test definitions for group
 
 //! Test tk::operator<< used for writing enum class value to output stream
-//! \author J. Bakosi
 template<> template<>
 void StrConvUtil_object::test< 1 >() {
   set_test_name( "tk::operator<<( enum class )" );
@@ -48,7 +46,6 @@ void StrConvUtil_object::test< 1 >() {
 }
 
 //! Test tk::operator<< used for writing non-enum-class to output stream
-//! \author J. Bakosi
 template<> template<>
 void StrConvUtil_object::test< 2 >() {
   set_test_name( "tk::operator<<( non-enum-class )" );
@@ -60,7 +57,6 @@ void StrConvUtil_object::test< 2 >() {
 }
 
 //! Test tk::operator<< used for concatenating to std::basic_string for lvalues
-//! \author J. Bakosi
 template<> template<>
 void StrConvUtil_object::test< 3 >() {
   set_test_name( "tk::operator<<( std::basic_string& )" );
@@ -81,7 +77,6 @@ void StrConvUtil_object::test< 3 >() {
 }
 
 //! Test tk::operator<< used for concatenating to std::basic_string for rvalues
-//! \author J. Bakosi
 template<> template<>
 void StrConvUtil_object::test< 4 >() {
   set_test_name( "tk::operator<<( std::basic_string&& )" );

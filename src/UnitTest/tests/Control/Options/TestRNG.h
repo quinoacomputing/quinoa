@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -34,7 +33,6 @@ static RNGOptions_group RNGOptions( "Control/Options/RNGOptions" );
 //! Test definitions for group
 
 //! Test that member function param() finds RNG parameter for method type
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 1 >() {
   set_test_name( "param() finds RNG parameter" );
@@ -43,7 +41,6 @@ void RNGOptions_object::test< 1 >() {
 }
 
 //! Test that member function param() throws in DEBUG mode if can't find param
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 2 >() {
   set_test_name( "param() throws if can't find" );
@@ -65,7 +62,6 @@ void RNGOptions_object::test< 2 >() {
 }
 
 //! Test copy constructor
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 3 >() {
   set_test_name( "copy constructor" );
@@ -78,7 +74,6 @@ void RNGOptions_object::test< 3 >() {
 }
 
 //! Test move constructor
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 4 >() {
   set_test_name( "move constructor" );
@@ -91,7 +86,6 @@ void RNGOptions_object::test< 4 >() {
 }
 
 //! Test copy assignment
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 5 >() {
   set_test_name( "copy assignment" );
@@ -103,7 +97,6 @@ void RNGOptions_object::test< 5 >() {
 }
 
 //! Test move assignment
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 6 >() {
   set_test_name( "move assignment" );
@@ -116,7 +109,6 @@ void RNGOptions_object::test< 6 >() {
 
 #ifdef HAS_MKL
 //! Test that member function lib() finds MKL library type for a MKL rng
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 7 >() {
   set_test_name( "lib() finds MKL library type" );
@@ -127,7 +119,6 @@ void RNGOptions_object::test< 7 >() {
 
 #ifdef HAS_RNGSSE2
 //! Test that member function lib() finds RNGSSE library type for a RNGSSE rng
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 8 >() {
   set_test_name( "lib() finds RNGSSE library type" );
@@ -139,7 +130,6 @@ void RNGOptions_object::test< 8 >() {
 
 //! \brief Test that member function lib() finds Random123 library type for a
 //!   Random123 rng
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 9 >() {
   set_test_name( "lib() finds Random123 library type" );
@@ -150,7 +140,6 @@ void RNGOptions_object::test< 9 >() {
 
 #ifdef HAS_RNGSSE2
 //! Test that member function supportSeq() returns true for an RNGSSE rng
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 10 >() {
   set_test_name( "supportsSeq() true for RNGSSE" );
@@ -161,7 +150,6 @@ void RNGOptions_object::test< 10 >() {
 
 //! \brief Test that member function supportSeq() returns false for an
 //!    non-RNGSSE rng
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 11 >() {
   set_test_name( "supportsSeq() false for non-RNGSSE" );
@@ -172,7 +160,6 @@ void RNGOptions_object::test< 11 >() {
 #ifdef HAS_RNGSSE2
 //! \brief Test that member function param<>() returns default for non-specified
 //!   parameter
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 12 >() {
   set_test_name( "param() correctly returns default" );
@@ -188,7 +175,6 @@ void RNGOptions_object::test< 12 >() {
 #ifdef HAS_RNGSSE2
 //! \brief Test that member function param<>() returns parameter for specified
 //!   parameter
-//! \author J. Bakosi
 template<> template<>
 void RNGOptions_object::test< 13 >() {
   set_test_name( "param() returns specified param" );

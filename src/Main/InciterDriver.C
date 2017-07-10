@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/InciterDriver.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -34,7 +33,6 @@ InciterDriver::InciterDriver( const InciterPrint& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
@@ -50,7 +48,6 @@ void
 InciterDriver::execute() const
 // *****************************************************************************
 //  Run inciter
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Instantiate Transporter chare on PE 0 which drives the time-integration of

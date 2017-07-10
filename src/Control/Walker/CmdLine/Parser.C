@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -53,7 +52,6 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create CmdLine (a tagged tuple) to store parsed input

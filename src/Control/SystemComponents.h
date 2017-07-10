@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/SystemComponents.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,
@@ -117,7 +116,6 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
   private:
     //! Function object for zeroing all number of components
-    //! \author J. Bakosi
     struct zero {
       //! Need to store reference to host class whose data we operate on
       ncomponents* const m_host;
@@ -132,7 +130,6 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
     //! \brief Function object for computing the total number of components
     //!   (i.e., the sum of all of the number of components)
-    //! \author J. Bakosi
     struct addncomp {
       //! Need to store reference to host class whose data we operate on
       const ncomponents* const m_host;
@@ -154,7 +151,6 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
     //! \details This is used to index into the data array (the equation systems
     //!   operate on during the numerical solution) and get to the beginning of
     //!   data for a given differential equation system.
-    //! \author J. Bakosi
     template< typename tag >
     struct addncomp4tag {
       //! Need to store reference to host class whose data we operate on
@@ -195,11 +191,9 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
   public:
     //! Default constructor: set defaults to zero for all number of components
-    //! \author J. Bakosi
     ncomponents() { boost::mpl::for_each< tags >( zero( this ) ); }
 
     //! \return Total number of components
-    //! \author J. Bakosi
     ncomp_type nprop() const noexcept {
       ncomp_type n;
       boost::mpl::for_each< tags >( addncomp( this, n ) );
@@ -208,7 +202,6 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
     //! \return offset for tag
     //! \param[in] c Index for system given by template argument tag
-    //! \author J. Bakosi
     template< typename tag >
     ncomp_type offset( ncomp_type c ) const noexcept {
       ncomp_type n;
@@ -218,7 +211,6 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
     //! \return Map of offsets associated to dependent variables
     //! \param[in] depvars Vector of vectors of dependent variables
-    //! \author J. Bakosi
     OffsetMap offsetmap( const std::vector< std::vector< char > >& depvars )
     const {
       OffsetMap o;

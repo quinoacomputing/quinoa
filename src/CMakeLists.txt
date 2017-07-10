@@ -1,7 +1,6 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
 #
@@ -227,13 +226,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
-  # Detect gcc version
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                  OUTPUT_VARIABLE GCC_VERSION)
-  string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
-  list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
-  list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-  message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
+  # Detect compiler version
+  include(DetectCXXversion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 

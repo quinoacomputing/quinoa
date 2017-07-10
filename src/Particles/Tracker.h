@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Particles/Tracker.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker tracks Lagrangian particles in physical space
   \details   Tracker tracks Lagrangian particles in physical space. It works on
@@ -39,7 +38,6 @@ class Tracker {
     //! \param[in] npar Number of particles per mesh element
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] feedback Whether to send sub-task feedback to host
-    //! \author J. Bakosi
     explicit Tracker( bool feedback = false,
                       std::size_t npar = 0,
                       const std::vector< std::size_t >& inpoel = {} ) :
@@ -63,7 +61,6 @@ class Tracker {
     //! \param[in] hostproxy Charm++ host proxy to which address reductions
     //! \param[in] pw Charm++ particle writer proxy
     //! \param[in] array Charm++ array object pointer of the holder class
-    //! \author J. Bakosi
     template< class HostProxy, class ParticleWriterProxy, class ChareArray >
     void writeParticles( HostProxy& hostproxy,
                          const ParticleWriterProxy& pw,
@@ -78,7 +75,6 @@ class Tracker {
     //! Output particles fields to file
     //! \param[in] pw Charm++ particle writer proxy
     //! \param[in] it Iteration count
-    //! \author J. Bakosi
     template< class ParticleWriterProxy >
     void doWriteParticles( const ParticleWriterProxy& pw, uint64_t it ) {
       pw.ckLocalBranch()->writeCoords( it, m_particles.extract(0,0),
@@ -93,7 +89,6 @@ class Tracker {
     //! \param[in] dt Time step size
     //! \param[in] Np Four finite-element shapefunctions evaluated (as a result
     //!   of the particle search) at the particle location in element e
-    //! \author F.J. Gonzalez
     template< class ChareArray >
     void advanceParticle( ChareArray* const array,
                           std::size_t i,
@@ -127,7 +122,6 @@ class Tracker {
     //! \param[in] array Charm++ array object pointer of the holder class
     //! \param[in] stage Time step stage
     //! \param[in] dt Time step size
-    //! \author F.J. Gonzalez
     template< class HostProxy, class ChareArrayProxy, class ChareArray >
     void track( HostProxy& hostproxy,
                 const ChareArrayProxy& arrayProxy,
@@ -203,7 +197,6 @@ class Tracker {
     //! \param[in] fromch Chare ID the request originates from
     //! \param[in] miss Indices of particles to find
     //! \param[in] ps Particle data associated to those particle indices to find
-    //! \author J. Bakosi
     template< class ChareArrayProxy >
     void findpar( const ChareArrayProxy& arrayProxy,
                   const std::array< std::vector< tk::real >, 3 >& coord,
@@ -228,7 +221,6 @@ class Tracker {
     //! \param[in] array Charm++ array object pointer of the holder class
     //! \param[in] chid Charm++ array index (thisIndex of the holder class)
     //! \param[in] found Indices of particles found
-    //! \author J. Bakosi
     template< class HostProxy, class ChareArrayProxy, class ChareArray >
     void
     foundpar( HostProxy& hostproxy,
@@ -271,7 +263,6 @@ class Tracker {
     //! \param[in] fromch Chare ID the request originates from
     //! \param[in] miss Indices of particles to find
     //! \param[in] ps Particle data associated to those particle indices to find
-    //! \author J. Bakosi
     template< class ChareArrayProxy >
     void collectpar( const ChareArrayProxy& arrayProxy,
                      const std::array< std::vector< tk::real >, 3 >& coord,
@@ -291,7 +282,6 @@ class Tracker {
     //! \param[in] array Charm++ array object pointer of the holder class
     //! \param[in] found Indices of particles found
     //! \param[in] nchare Total number of holder array chares
-    //! \author J. Bakosi
     template< class HostProxy, class ChareArray >
     void collectedpar( HostProxy& hostproxy,
                        ChareArray* const array,
@@ -320,7 +310,6 @@ class Tracker {
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i Tracker object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, Tracker& i ) { i.pup(p); }
     //@}
 

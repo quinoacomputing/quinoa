@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindLibCXX.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find libc++
-# \date      Fri 20 Jan 2017 12:42:21 PM MST
 #
 ################################################################################
 

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -21,7 +20,6 @@ namespace walker {
 namespace ctr {
 
 //! Differential equation coefficients policy types
-//! \author J. Bakosi
 enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , DECAY
                                      , HOMOGENEOUS_DECAY
@@ -30,16 +28,13 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
-//! \author J. Bakosi
 inline void operator|( PUP::er& p, CoeffPolicyType& e ) { PUP::pup( p, e ); }
 
 //! CoeffPolicy options: outsource searches to base templated on enum type
-//! \author J. Bakosi
 class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::constant
                                        , kw::decay
                                        , kw::homdecay
@@ -50,7 +45,6 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
-    //! \author J. Bakosi
     explicit CoeffPolicy() :
       tk::Toggle< CoeffPolicyType >(
         //! Group, i.e., options, name
@@ -78,7 +72,6 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! \brief Return policy code based on Enum
     //! \param[in] p Enum value of the option requested
     //! \return Policy code of the option
-    //! \author J. Bakosi
     const std::string& code( CoeffPolicyType p ) const {
       using tk::operator<<;
       auto it = policy.find( p );
@@ -90,7 +83,6 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
   private:
     //! Function object for ensuring the existence of policy codes
-    //! \author J. Bakosi
     struct assertPolicyCodes {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code

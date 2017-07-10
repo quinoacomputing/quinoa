@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestData.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Data.h
   \details   Unit tests for Base/Data.h
@@ -39,7 +38,6 @@ static Data_group Data( "Base/Data" );
 
 //! Test that tk::Data's constructor creates
 //!   correctly sized arrays
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 1 >() {
   set_test_name( "correct size" );
@@ -57,7 +55,6 @@ void Data_object::test< 1 >() {
 }
 
 //! Test that tk::Data's operator() returns the correct value
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 2 >() {
   set_test_name( "operator() returns correct value" );
@@ -83,7 +80,6 @@ void Data_object::test< 2 >() {
 }
 
 //! Test that tk::Data's operator() throws for out-of-bounds indices
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 3 >() {
   set_test_name( "operator() throws for out-of-bounds indices" );
@@ -232,7 +228,6 @@ void Data_object::test< 3 >() {
 }
 
 //! Test that tk::Data's var( cptr() ) returns the correct value
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 4 >() {
   set_test_name( "var(cptr()) returns correct value" );
@@ -258,7 +253,6 @@ void Data_object::test< 4 >() {
 }
 
 //! Test that tk::Data's var() throws for out-of-bounds indices
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 5 >() {
   set_test_name( "var(cptr()) throws for out-of-bounds indices" );
@@ -419,7 +413,6 @@ void Data_object::test< 5 >() {
 }
 
 //! Test that tk::Data's var( cptr() ) is equivalent to operator()
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 6 >() {
   set_test_name( "var(cptr()) == operator()" );
@@ -438,7 +431,6 @@ void Data_object::test< 6 >() {
 }
 
 //! Test that tk::Data's layou() returns correct string
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 7 >() {
   set_test_name( "layou()" );
@@ -452,7 +444,6 @@ void Data_object::test< 7 >() {
 }
 
 //! Test that tk::Data's extract() returns correct vector of unknowns
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 8 >() {
   set_test_name( "extract() vector of unknowns" );
@@ -505,7 +496,6 @@ void Data_object::test< 8 >() {
 }
 
 //! Test that tk::Data's extract() returns correct vector components
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 9 >() {
   set_test_name( "extract() vector of components" );
@@ -542,7 +532,6 @@ void Data_object::test< 9 >() {
 }
 
 //! Test that tk::Data's operator[] returns correct vector components
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 10 >() {
   set_test_name( "operator[] to access vector of components" );
@@ -579,7 +568,6 @@ void Data_object::test< 10 >() {
 }
 
 //! Test that tk::Data's extract() returns correct array of four reals
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 11 >() {
   set_test_name( "extract() array of four reals for A,B,C,D" );
@@ -654,7 +642,6 @@ void Data_object::test< 11 >() {
 }
 
 //! Test that tk::Data's extract() returns correct array of four reals
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 12 >() {
   set_test_name( "extract() array of four reals for N[4]" );
@@ -729,7 +716,6 @@ void Data_object::test< 12 >() {
 }
 
 //! Test that tk::Data's fill() correctly fills complete data array
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 13 >() {
   set_test_name( "fill() all with the same value" );
@@ -759,7 +745,6 @@ void Data_object::test< 13 >() {
 }
 
 //! Test that tk::Data's fill() correctly fills vector of unknowns
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 14 >() {
   set_test_name( "fill() vector of unknowns with the same value" );
@@ -799,7 +784,6 @@ void Data_object::test< 14 >() {
 
 //! \brief Test that tk::Data's memory layout, i.e., stores data with
 //!   correct strides
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 15 >() {
   set_test_name( "strides" );
@@ -820,7 +804,6 @@ void Data_object::test< 15 >() {
 }
 
 //! Test tk::Data's copy constructor
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 16 >() {
   set_test_name( "copy constructor" );
@@ -855,7 +838,6 @@ void Data_object::test< 16 >() {
 }
 
 //! Test tk::Data's copy assignment
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 17 >() {
   set_test_name( "copy assignment" );
@@ -891,7 +873,6 @@ void Data_object::test< 17 >() {
 }
 
 //! Test tk::Data's move constructor
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 18 >() {
   set_test_name( "move constructor" );
@@ -926,7 +907,6 @@ void Data_object::test< 18 >() {
 }
 
 //! Test tk::Data's move assignment
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 19 >() {
   set_test_name( "move assignment" );
@@ -959,7 +939,6 @@ void Data_object::test< 19 >() {
 }
 
 //! Test tk::Data's operator-=
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 20 >() {
   set_test_name( "operator-=" );
@@ -1007,7 +986,6 @@ void Data_object::test< 20 >() {
 }
 
 //! Test tk::Data's operator-
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 21 >() {
   set_test_name( "operator-" );
@@ -1070,7 +1048,6 @@ void Data_object::test< 21 >() {
 }
 
 //! Test tk::Data's operator+=
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 22 >() {
   set_test_name( "operator+=" );
@@ -1118,7 +1095,6 @@ void Data_object::test< 22 >() {
 }
 
 //! Test tk::Data's operator+
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 23 >() {
   set_test_name( "operator+" );
@@ -1181,7 +1157,6 @@ void Data_object::test< 23 >() {
 }
 
 //! Test tk::Data's operator*= by Data as rhs
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 24 >() {
   set_test_name( "operator*= by Data right" );
@@ -1229,7 +1204,6 @@ void Data_object::test< 24 >() {
 }
 
 //! Test tk::Data's operator* by Data as rhs
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 25 >() {
   set_test_name( "operator* by Data right" );
@@ -1292,7 +1266,6 @@ void Data_object::test< 25 >() {
 }
 
 //! Test tk::Data's operator*= by tk::real as rhs
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 26 >() {
   set_test_name( "operator*= by tk::real right" );
@@ -1325,7 +1298,6 @@ void Data_object::test< 26 >() {
 }
 
 //! Test tk::Data's operator* by tk::real as rhs
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 27 >() {
   set_test_name( "operator* by tk::real right" );
@@ -1374,7 +1346,6 @@ void Data_object::test< 27 >() {
 
 
 //! Test tk::Data's operator/=
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 28 >() {
   set_test_name( "operator/=" );
@@ -1422,7 +1393,6 @@ void Data_object::test< 28 >() {
 }
 
 //! Test tk::Data's operator/
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 29 >() {
   set_test_name( "operator/" );
@@ -1485,7 +1455,6 @@ void Data_object::test< 29 >() {
 }
 
 //! Test tk::Data's operator* by tk::real as lhs
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 31 >() {
   set_test_name( "operator* by tk::real left" );
@@ -1533,7 +1502,6 @@ void Data_object::test< 31 >() {
 }
 
 //! Test tk::Data's operator min
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 32 >() {
   set_test_name( "operator min" );
@@ -1566,7 +1534,6 @@ void Data_object::test< 32 >() {
 }
 
 //! Test tk::Data's operator max
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 33 >() {
   set_test_name( "operator max" );
@@ -1599,7 +1566,6 @@ void Data_object::test< 33 >() {
 }
 
 //! Test tk::Data's operator==
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 34 >() {
   set_test_name( "operator==" );
@@ -1621,7 +1587,6 @@ void Data_object::test< 34 >() {
 }
 
 //! Test tk::Data's operator!=
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 35 >() {
   set_test_name( "operator!=" );
@@ -1643,7 +1608,6 @@ void Data_object::test< 35 >() {
 }
 
 //! Test maxdiff between two tk::Data objects
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 36 >() {
   set_test_name( "maxdiff" );
@@ -1682,7 +1646,6 @@ void Data_object::test< 36 >() {
 }
 
 //! Test tk::Data::push_back()
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 37 >() {
   set_test_name( "push_back" );
@@ -1714,7 +1677,6 @@ void Data_object::test< 37 >() {
 }
 
 //! Test tk::Data::rm()
-//! \author J. Bakosi
 template<> template<>
 void Data_object::test< 38 >() {
   set_test_name( "rm" );

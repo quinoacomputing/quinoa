@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestWriter.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer
@@ -39,7 +38,6 @@ static Writer_group Writer( "Base/Writer" );
 //! Test definitions for group
 
 //! Test if constructor can open a file
-//! \author J. Bakosi
 template<> template<>
 void Writer_object::test< 1 >() {
   set_test_name( "ctor can open file" );
@@ -51,7 +49,6 @@ void Writer_object::test< 1 >() {
 }
 
 //! Test if constructor does not throw if empty filename is given
-//! \author J. Bakosi
 template<> template<>
 void Writer_object::test< 2 >() {
   set_test_name( "ctor does not throw if filename empty" );

@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/TransportPhysics.h
-  \author    J. Bakosi
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for a system of transport equations
   \details   This file defines policy classes for transport equations,
