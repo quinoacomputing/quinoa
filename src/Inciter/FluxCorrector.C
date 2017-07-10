@@ -394,7 +394,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
-//! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
+//! \param[in,out] Q The maximum and mimimum unknowns of elements surrounding
 //!   each node
 //! \param[in,out] A Limited antidiffusive element contributions scatter-added
 //!   to nodes

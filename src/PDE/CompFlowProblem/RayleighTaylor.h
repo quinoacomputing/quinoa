@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlowProblem/RayleighTaylor.h
-  \author    F. Gonzalez
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the compressible flow equations
   \details   This file defines a policy classe for the compressible flow

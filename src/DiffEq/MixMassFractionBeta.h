@@ -184,7 +184,7 @@ class MixMassFractionBeta {
     //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \param[in] t Physical time
+    //! \param[in] t Physical time of the simulation
     //! \param[in] moments Map of statistical moments
     void advance( tk::Particles& particles,
                   int stream,

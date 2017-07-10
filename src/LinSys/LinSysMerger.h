@@ -965,11 +965,21 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
 
     //! Set boundary conditions on the left-hand side matrix
+    //! \details Setting boundary conditions on the left-hand side matrix is
+    //!   done by zeroing all nonzero entries in rows where BCs are prescribed
+    //!   and putting in 1.0 for the diagonal.
     void lhsbc() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
 
+      // Set Dirichlet BCs on the lhs matrix. Loop through all BCs and if a BC
+      // is prescribed on a row we own, find that row (r) and in that row the
+      // position of the diagonal entry (diag) in the LHS matrix. Then for all
+      // scalar components the system of system of PDEs we intagrate, query the
+      // entry in the BC data structure to see if we need to set BC for the
+      // given component and set the off-diagonals to zero while put 1.0 into
+      // the diagonal.
       for (const auto& n : m_bc) {
         if (n.first >= m_lower && n.first < m_upper) {
           auto& r = tk::ref_find( m_lhs, n.first );
