@@ -1207,6 +1207,16 @@ Carrier::correctBC()
 
   if (dirbc.empty()) return true;
 
+  // We loop through the map that associates a vector of local node IDs to side
+  // set IDs for all side sets read from mesh file. Then for each side set for
+  // all mesh nodes on a given side set we attempt to find the global node ID in
+  // dirbc, which stores only those nodes (and BC settings) at which the user
+  // has configured Dirichlet BCs to be set. Then for all scalar components of
+  // all system of systems of PDEs integrated if a BC is to be set for a given
+  // component, we compute the low order solution increment + the anti-diffusive
+  // element contributions, which is the current solution (to be updated) at
+  // that node. This solution must equal the BC prescribed at the given node. If
+  // not, the BCs are not set correctly, which is an error.
   for (const auto& s : m_side)
     for (auto i : s.second) {
       auto u = dirbc.find( m_gid[i] );
