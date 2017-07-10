@@ -125,6 +125,14 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
+//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
+//!   (which corresponds to rows in the linear system) are (approximately)
+//!   contiguous (as much as this can be done with an unstructured mesh) as the
+//!   problem is distirbuted across PEs, held by LinSysMerger objects. This
+//!   ordering is in start contrast with "as-in-file" ordering, which is the
+//!   ordering of the mesh nodes as it is stored in the file from which the mesh
+//!   is read in. The as-in-file ordering is highly non-contiguous across the
+//!   distributed problem.
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -169,7 +177,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   auto& oldside = m_linsysmerger.ckLocalBranch()->side();
 
   // Create map that assigns the local mesh node IDs mapped to side set ids,
-  // soring only those nodes for a given side set that are part of our chunk of
+  // storing only those nodes for a given side set that are part of our chunk of
   // the mesh.
   for (const auto& s : oldside) {
     auto& n = m_side[ s.first ];
