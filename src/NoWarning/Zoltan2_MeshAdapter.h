@@ -46,7 +46,6 @@
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   #pragma GCC diagnostic ignored "-Wshadow"
-  #pragma GCC diagnostic ignored "-Wint-in-bool-context"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 239 )

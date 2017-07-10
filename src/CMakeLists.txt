@@ -222,7 +222,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-sign-compare")
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-Wno-stack-protector")
-  add_compiler_flag("-Wno-expansion-to-defined")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
