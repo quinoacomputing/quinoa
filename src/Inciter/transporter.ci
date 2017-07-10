@@ -16,7 +16,7 @@ module transporter {
     chare Transporter {
       entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
-      entry [reductiontarget] void partition();
+      entry [reductiontarget] void part();
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
@@ -105,6 +105,10 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
+      entry void wait4part() {
+        when load_complete(), part_complete() serial "part" {
+          m_partitioner.partition( m_nchare ); } };
+
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete()
@@ -120,6 +124,8 @@ module transporter {
         when out_complete(), diag_complete() serial "eval" {
           evaluateTime(); } };
 
+      entry void load_complete();
+      entry void part_complete();
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();

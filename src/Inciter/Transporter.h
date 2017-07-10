@@ -126,7 +126,7 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished setting up the necessary data structures for
     //!   partitioning the computational mesh and we are ready for partitioning
-    void partition();
+    void part();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready

@@ -154,6 +154,7 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4part();
     wait4stat();
     wait4setup();
     wait4eval();
@@ -288,6 +289,9 @@ Transporter::load( uint64_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
+  // signal to runtime system that m_nchare is set
+  load_complete();
+
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
@@ -329,7 +333,7 @@ Transporter::load( uint64_t nelem )
 }
 
 void
-Transporter::partition()
+Transporter::part()
 // *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
@@ -339,7 +343,8 @@ Transporter::partition()
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
   m_progPart.start( "Partitioning and distributing mesh ..." );
-  m_partitioner.partition( m_nchare );
+  // signal to runtime system that all workers are ready for mesh partitioning
+  part_complete();
 }
 
 void
