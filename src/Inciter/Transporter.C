@@ -156,7 +156,6 @@ Transporter::Transporter() :
     // Enable SDAG waits
     wait4part();
     wait4stat();
-    wait4setup();
     wait4eval();
 
     // Print I/O filenames
@@ -419,18 +418,18 @@ Transporter::volcomplete()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  vol_complete();
+  m_carrier.totalvol();
 }
 
 void
-Transporter::vol( tk::real v )
+Transporter::totalvol( tk::real v )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
   m_V = v;
-  totalvol_complete();
+  m_carrier.stat();
 }
 
 void
@@ -524,7 +523,7 @@ Transporter::pdfstat( CkReductionMsg* msg )
 }
 
 void
-Transporter::stat( )
+Transporter::stat()
 // *****************************************************************************
 // Echo diagnostics mesh statistics
 // *****************************************************************************
@@ -537,15 +536,7 @@ Transporter::stat( )
                 std::to_string( m_minstat[1] ) + " / " +
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
-  stat_complete();
-}
 
-void
-Transporter::setup( )
-// *****************************************************************************
-// Start computing row IDs, querying BCs, outputing mesh
-// *****************************************************************************
-{
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
   m_carrier.setup( m_V );

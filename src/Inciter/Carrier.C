@@ -169,8 +169,6 @@ Carrier::coord()
   addEdgeNodeCoords();
   // Compute mesh cell volumes
   vol();
-  // Compute mesh cell statistics
-  stat();
 }
 
 void
@@ -212,14 +210,12 @@ Carrier::vol()
                    std::to_string(y[N[3]]) + ", " +
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
+    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
 
-  // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_v) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+  // Store nodal volumes without contributions from other chares on
+  // chare-boundaries
+  m_v = m_vol;
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
@@ -234,9 +230,47 @@ Carrier::vol()
 }
 
 void
+Carrier::comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V )
+// *****************************************************************************
+//  Receive nodal volumes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive volume contributions
+//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//!   nodes
+// *****************************************************************************
+{
+  Assert( V.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto lid = tk::cref_find( m_lid, gid[i] );
+    Assert( lid < m_vol.size(), "Indexing out of bounds" );
+    m_vol[ lid ] += V[i];
+  }
+
+  if (++m_nvol == m_msum.size()) {
+    m_nvol = 0;
+    contribute(
+       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+  }
+}
+
+void
+Carrier::totalvol()
+// *****************************************************************************
+// Sum mesh volumes and contribute own mesh volume to total volume
+// *****************************************************************************
+{
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_v) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
+}
+
+void
 Carrier::stat()
 // *****************************************************************************
-// Compute mesh volume statistics
+// Compute mesh cell statistics
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -305,31 +339,6 @@ Carrier::stat()
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
   // Contribute serialized PDF of partial sums to host via Charm++ reduction
   contribute( stream.first, stream.second.get(), PDFMerger, cb );
-}
-
-void
-Carrier::comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V )
-// *****************************************************************************
-//  Receive nodal volumes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive volume contributions
-//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
-//!   nodes
-// *****************************************************************************
-{
-  Assert( V.size() == gid.size(), "Size mismatch" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_vol.size(), "Indexing out of bounds" );
-    m_vol[ lid ] += V[i];
-  }
-
-  if (++m_nvol == m_msum.size()) {
-    m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
-  }
 }
 
 void

@@ -34,8 +34,19 @@
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
+      Load [ label="Load"
+              tooltip="Load is computed"
+              URL="\ref inciter::Transporter::load"];
+      PartSetup [ label="PartSetup"
+              tooltip="Prerequsites done for mesh partitioning"
+              URL="\ref inciter::Transporter::part"];
+      Part [ label="Part"
+              tooltip="Partition mesh"
+              URL="\ref inciter::Partitioner::partition"];
       Diag -> Eval [ style="solid" ];
       Out -> Eval [ style="solid" ];
+      Load -> Part [ style="solid" ];
+      PartSetup -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
@@ -51,9 +62,6 @@
       Stat [ label="Stat"
               tooltip="chares contributed to mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
-      Vol [ label="Vol"
-              tooltip="chares compute nodal mesh volumes"
-              URL="\ref inciter::Carrier::vol"];
       Setup [ label="Setup"
               tooltip="start computing row IDs, querying BCs, outputing mesh"
               URL="\ref inciter::Transporter::setup"];
@@ -62,7 +70,6 @@
       SumStat -> Stat [ style="solid" ];
       PDFStat -> Stat [ style="solid" ];
       Stat -> Setup [ style="solid" ];
-      Vol -> Setup [ style="solid" ];
     }
     \enddot
     \include Inciter/transporter.ci
@@ -195,7 +202,7 @@ class Transporter : public CBase_Transporter {
     void rowcomplete();
 
     //! Reduction target summing total mesh volume
-    void vol( tk::real v );
+    void totalvol( tk::real v );
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
@@ -322,9 +329,6 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
-
-    //! Start computing row IDs, querying BCs, outputing mesh
-    void setup();
 };
 
 } // inciter::
