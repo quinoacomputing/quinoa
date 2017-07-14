@@ -546,6 +546,38 @@ class Print {
       << std::endl;
     }
 
+    //! Print FileConv header. Text ASCII Art Generator used for executable
+    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
+    //! used for converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
+    template< Style s = VERBOSE >
+    void headerFileConv() const {
+      stream<s>() << R"(
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     ___________.__.__         _________
+   .;@+@';;;;;;' \_   _____/|__|  |   ____ \_   ___ \  ____   _______  __
+    `     '#''@`  |    __)  |  |  | _/ __ \/    \  \/ /  _ \ /    \  \/ /
+                  |     \   |  |  |_\  ___/\     \___(  <_> )   |  \   /
+                  \___  /   |__|____/\___  >\______  /\____/|___|  /\_/
+                      \/                 \/        \/            \/)"
+      << std::endl;
+    }
+
     //! Print MeshConv header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.

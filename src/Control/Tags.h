@@ -33,7 +33,7 @@ struct error {};
 struct pdf {};
 struct ordpdf {};
 struct cenpdf {};
-struct pdffiletype {};
+struct filetype {};
 struct pdfpolicy {};
 struct pdfctr {};
 struct pdfnames {};

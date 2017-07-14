@@ -384,6 +384,9 @@ message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
+# Include third-party libraries configuration
+include(TPLs)
+
 # Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
@@ -397,9 +400,6 @@ message(STATUS "C++ compiler flags: '${CMAKE_CXX_FLAGS}'")
 # Include cmake code to enable configuration for data layouts
 include(ConfigureDataLayout)
 
-# Include third-party libraries configuration
-include(TPLs)
-
 # Set names of executables
 set(INCITER_EXECUTABLE inciter)
 if (HAS_TESTU01)
@@ -410,6 +410,9 @@ endif()
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
+if (HAS_ROOT)
+  set(FILECONV_EXECUTABLE fileconv)
+endif()
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
@@ -417,14 +420,16 @@ set(UNITTEST_EXECUTABLE unittest)
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
                         ${RNGTEST_EXECUTABLE}
                         ${MESHCONV_EXECUTABLE}
-                        ${WALKER_EXECUTABLE})
+                        ${WALKER_EXECUTABLE}
+                        ${FILECONV_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${RNGTEST_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
                 ${WALKER_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE})
+                ${UNITTEST_EXECUTABLE}
+                ${FILECONV_EXECUTABLE})
 
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
@@ -491,6 +496,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${MKL_INCLUDE_DIRS}
                     ${HDF5_INCLUDE_DIRS}
                     ${HYPRE_INCLUDE_DIRS}
+                    ${ROOT_INCLUDE_DIRS}
                     ${PSTREAMS_INCLUDE_DIRS}
                     ${PUGIXML_INCLUDE_DIRS}
                     ${H5PART_INCLUDE_DIRS}
@@ -505,11 +511,11 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${SEACASExodus_INCLUDE_DIRS}
                     ${TPL_INCLUDE_DIR}
                     ${CHARM_INCLUDE_DIRS}
+                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/LoadBalance   # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
-                    ${RNGTEST_BIN_DIR}
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules

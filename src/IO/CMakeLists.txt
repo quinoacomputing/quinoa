@@ -17,6 +17,11 @@ INSTALL(TARGETS IO
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
+if (HAS_ROOT)
+  set(ROOT_WRITER RootMeshWriter.C)
+  set(FILE_CONVERTER FileConvWriter.C)
+endif()
+
 add_library(MeshIO
             MeshFactory.C
             GmshMeshReader.C
@@ -28,6 +33,8 @@ add_library(MeshIO
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
+	    ${ROOT_WRITER}
+	    ${FILE_CONVERTER}
             #SiloWriter.C
 )
 
