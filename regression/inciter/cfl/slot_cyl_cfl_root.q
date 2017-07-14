@@ -18,7 +18,7 @@ inciter
 
   plotvar
     interval 1
-    filetype exodusii
+    filetype root
   end
 
 end

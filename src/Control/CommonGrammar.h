@@ -1531,10 +1531,10 @@ namespace grm {
            tk::grm::block<
              use< kw::end >,
              tk::grm::interval< use< kw::interval >, tag::pdf >,
-             pdf_option< use< kw::pdf_filetype >,
+             pdf_option< use< kw::filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
-                                tag::pdffiletype > >,
+                                tag::filetype > >,
              pdf_option< use< kw::pdf_policy >,
                          store< tk::ctr::PDFPolicy,
                                 tag::selected,

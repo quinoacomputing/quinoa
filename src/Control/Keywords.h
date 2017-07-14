@@ -906,43 +906,56 @@ using gmshbin = keyword< gmshbin_info, TAOCPP_PEGTL_STRING("gmshbin") >;
 struct exodusii_info {
   static std::string name() { return "exo"; }
   static std::string shortDescription() { return
-    "Select ExodusII output for outputing PDFs"; }
+    "Select ExodusII output"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the
-    ExodusII output file type readable by, e.g., ParaView of a requested
-    probability density function (PDF) within a pdfs ... end block. Example:
-    "filetype exodusii", which selects ExodusII file output. Valid options
-    are 'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
-    structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox. For more info on ExodusII, see
-    http://sourceforge.net/projects/exodusii.)";
+    ExodusII output file type readable by, e.g., ParaView of either a requested
+    probability density function (PDF) within a pdfs ... end block or for
+    mesh-based field output in a plotvar ... end block. Example:
+    "filetype exodusii", which selects ExodusII file output. For more info on
+    ExodusII, see http://sourceforge.net/projects/exodusii.)";
   }
 };
 using exodusii = keyword< exodusii_info, TAOCPP_PEGTL_STRING("exodusii") >;
 
+struct root_info {
+  static std::string name() { return "root"; }
+  static std::string shortDescription() { return
+    "Select Root output"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Root output file type readable by the
+    Root framework from CERN for mesh-based field output in a plotvar ... end
+    block. Example: "filetype root", which selects the root file output format.
+    For more info on Root, see https://root.cern.ch.)";
+  }
+};
+using root = keyword< root_info, TAOCPP_PEGTL_STRING("root") >;
+
 struct filetype_info {
   static std::string name() { return "filetype"; }
   static std::string shortDescription() { return
-    "Select PDF output file type"; }
+    "Select output file type"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the output file type of a requested
-    probability density function (PDF) within a pdfs ... end block. Example:
-    "filetype exodusii", which selects ExodusII output. Valid options are
-    'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
-    structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox.)"; }
+    probability density function (PDF) within a pdfs ... end block or for
+    mesh-based field output in a plotvar ... end block. Example:
+    "filetype exodusii", which selects ExodusII output. Valid options depend on
+    which block the keyword is used: in a pdfs ... end the valid choices are
+    'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a plotvar ... end  block the
+    valid choices are 'exodusii' and 'root'.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + txt::string() + "\' | \'"
                   + gmshtxt::string() + "\' | \'"
                   + gmshbin::string() + "\' | \'"
+                  + root::string() + "\' | \'"
                   + exodusii::string() + '\'';
     }
   };
 
 };
-using pdf_filetype = keyword< filetype_info, TAOCPP_PEGTL_STRING("filetype") >;
+using filetype = keyword< filetype_info, TAOCPP_PEGTL_STRING("filetype") >;
 
 struct overwrite_info {
   static std::string name() { return "overwrite"; }

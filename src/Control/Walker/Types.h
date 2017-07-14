@@ -34,7 +34,7 @@ namespace ctr {
 using selects = tk::tuple::tagged_tuple<
   tag::diffeq,       std::vector< ctr::DiffEqType >,  //!< Differential eqs
   tag::rng,          std::vector< tk::ctr::RNGType >, //!< RNGs
-  tag::pdffiletype,  tk::ctr::PDFFileType,      //!< PDF output file type
+  tag::filetype,     tk::ctr::PDFFileType,      //!< PDF output file type
   tag::pdfpolicy,    tk::ctr::PDFPolicyType,    //!< PDF output file policy
   tag::pdfctr,       tk::ctr::PDFCenteringType  //!< PDF output file centering
 >;

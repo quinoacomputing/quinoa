@@ -152,7 +152,7 @@ const
   if (!c.empty()) {
     tk::ctr::PDFFile f;
     item( f.group(),
-          f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
+          f.name( g_inputdeck.get< tag::selected, tag::filetype >() ) );
     tk::ctr::PDFPolicy p;
     item( p.group(),
           p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
