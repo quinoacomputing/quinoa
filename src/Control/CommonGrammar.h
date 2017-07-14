@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
     Template Library (PEGTL) to create the grammar and the associated parser.
@@ -1531,10 +1531,10 @@ namespace grm {
            tk::grm::block<
              use< kw::end >,
              tk::grm::interval< use< kw::interval >, tag::pdf >,
-             pdf_option< use< kw::pdf_filetype >,
+             pdf_option< use< kw::filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
-                                tag::pdffiletype > >,
+                                tag::filetype > >,
              pdf_option< use< kw::pdf_policy >,
                          store< tk::ctr::PDFPolicy,
                                 tag::selected,

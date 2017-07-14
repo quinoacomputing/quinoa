@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/TransportProblem.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Problem configurations for transport equations
   \details   This file defines policy classes for a transport equation, defined
     in PDE/Transport.h.

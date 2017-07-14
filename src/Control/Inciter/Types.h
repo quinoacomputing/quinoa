@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Types.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
     the agged tuple that stores heteroegeneous objects in a hierarchical way.
@@ -20,6 +20,7 @@
 #include "Inciter/Options/InitialAMR.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
+#include "Options/FieldFile.h"
 #include "Options/Error.h"
 #include "PUPUtil.h"
 
@@ -32,6 +33,7 @@ using namespace tao;
 using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
+  tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
   tag::initialamr,   tk::ctr::InitialAMRType            //!< Initial AMR type
 >;
 

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTestDriver.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Unit test driver
   \details   Unit test driver.
 */

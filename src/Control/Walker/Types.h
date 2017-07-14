@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/Types.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
     tagged tuple that stores heteroegeneous objects in a hierarchical way. These
@@ -34,7 +34,7 @@ namespace ctr {
 using selects = tk::tuple::tagged_tuple<
   tag::diffeq,       std::vector< ctr::DiffEqType >,  //!< Differential eqs
   tag::rng,          std::vector< tk::ctr::RNGType >, //!< RNGs
-  tag::pdffiletype,  tk::ctr::PDFFileType,      //!< PDF output file type
+  tag::filetype,     tk::ctr::PDFFileType,      //!< PDF output file type
   tag::pdfpolicy,    tk::ctr::PDFPolicyType,    //!< PDF output file policy
   tag::pdfctr,       tk::ctr::PDFCenteringType  //!< PDF output file centering
 >;

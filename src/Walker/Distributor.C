@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Distributor.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
@@ -423,7 +423,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
       tk::ctr::PDFPolicyType::MULTIPLE)
     filename += '_' + std::to_string( m_t );
 
-  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
   // Augment PDF filename by the appropriate extension
   if (filetype == tk::ctr::PDFFileType::TXT)
@@ -483,7 +483,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
       tk::ctr::PDFPolicyType::MULTIPLE)
     filename += '_' + std::to_string( m_t );
 
-  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
   // Augment PDF filename by the appropriate extension
   if (filetype == tk::ctr::PDFFileType::TXT)

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class declaration.
 */
@@ -60,6 +60,22 @@ class ExodusIIMeshWriter {
                           int varid,
                           const std::vector< tk::real >& var ) const;
 
+    //! Write header without mesh, function overloading
+    void writeHeader( const char* title, int64_t ndim, int64_t nnodes,
+			    int64_t nelem, int64_t nblk, int64_t node_set,
+			    int64_t side_set) const;
+
+    //! Write nodes without mesh, function overloading.
+    void writeNodes( const std::vector< tk::real >& x, 
+			   const std::vector< tk::real >& y,
+			   const std::vector< tk::real >& z ) const;
+
+    //! Write element block to ExodusII file
+    void writeElemBlock( int& elclass,
+                         int64_t nnpe,
+                         const std::string& eltype,
+                         const std::vector< std::size_t >& inpoel ) const;
+
   private:
     //! Write ExodusII header
     void writeHeader( const UnsMesh& mesh ) const;
@@ -69,12 +85,6 @@ class ExodusIIMeshWriter {
 
     //! Write element conectivity to ExodusII file
     void writeElements( const UnsMesh& mesh ) const;
-
-    //! Write element block to ExodusII file
-    void writeElemBlock( int& elclass,
-                         int64_t nnpe,
-                         const std::string& eltype,
-                         const std::vector< std::size_t >& inpoel ) const;
 
     const std::string m_filename;          //!< File name
     int m_outFile;                         //!< ExodusII file handle

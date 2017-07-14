@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/RNGTest.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
     This file contains the definition of the Charm++ main chare, equivalent to

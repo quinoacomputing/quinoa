@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindNumDiff.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find NumDiff
-# \date      Mon 27 Mar 2017 08:26:37 AM MDT
 #
 ################################################################################
 

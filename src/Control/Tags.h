@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Tags.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
 */
@@ -34,7 +34,7 @@ struct error {};
 struct pdf {};
 struct ordpdf {};
 struct cenpdf {};
-struct pdffiletype {};
+struct filetype {};
 struct pdfpolicy {};
 struct pdfctr {};
 struct pdfnames {};

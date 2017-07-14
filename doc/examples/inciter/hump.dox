@@ -2269,7 +2269,7 @@ plot "diag.750K" u 2:4, "diag.6M" u 2:4, "diag.48M" u 2:4
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 26 Jun 2017 12:23:15 PM MDT
-<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
+<em>Page last updated:</em> Fri 14 Jul 2017 09:31:44 AM MDT
+<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
 </small></div>
 */

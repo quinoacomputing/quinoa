@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
 */
@@ -79,7 +79,7 @@ class InputDeck :
                                      , kw::statistics
                                      , kw::interval
                                      , kw::pdfs
-                                     , kw::pdf_filetype
+                                     , kw::filetype
                                      , kw::pdf_policy
                                      , kw::pdf_centering
                                      , kw::txt_float_format

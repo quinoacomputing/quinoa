@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileParser.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     File parser base class declaration
   \details   File parser base class declaration. File parser base serves as a
     base class for various file parsers, e.g., input deck parsers. It does

@@ -1,10 +1,8 @@
 ################################################################################
 #
 # \file      cmake/FindTestU01.cmake
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the TestU01 library
-# \date      Fri 20 Jan 2017 01:29:39 PM MST
 #
 ################################################################################
 

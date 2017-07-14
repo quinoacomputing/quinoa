@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/QuinoaConfig.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
     also src/CMakeLists.txt.
@@ -14,6 +14,7 @@
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
+#define FILECONV_EXECUTABLE          "@FILECONV_EXECUTABLE@"
 #define WALKER_EXECUTABLE            "@WALKER_EXECUTABLE@"
 
 namespace tk {
@@ -41,6 +42,7 @@ namespace tk {
 #cmakedefine HAS_MKL
 #cmakedefine HAS_RNGSSE2
 #cmakedefine HAS_TESTU01
+#cmakedefine HAS_ROOT
 
 } // tk::
 

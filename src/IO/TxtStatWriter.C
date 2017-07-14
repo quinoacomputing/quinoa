@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/TxtStatWriter.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
      facilitates outputing statistics to text files.
