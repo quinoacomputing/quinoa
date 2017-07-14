@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Walker.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
     of the Charm++ main chare, equivalent to main() in Charm++-land.

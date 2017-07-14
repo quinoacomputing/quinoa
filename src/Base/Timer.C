@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Timer.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Timer definition
   \details   Timer definition. Timer is a simple class to do timing various
     parts of the code in a portable way. The functionality is intended to be

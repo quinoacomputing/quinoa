@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keywords.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
     of command-line argument parsers as well as input, i.e., control, file

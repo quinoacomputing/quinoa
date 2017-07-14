@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Beta coefficients policies
   \details   This file defines coefficients policy classes for the beta SDE,
     defined in DiffEq/Beta.h.

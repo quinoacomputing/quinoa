@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/StringParser.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     String parser base class declaration
   \details   String parser base class declaration. String parser base serves as
     a base class for various string parsers, e.g., command-line parsers. It does

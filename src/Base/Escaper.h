@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Escaper.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     String escaper pulled over from PEGTL v0.32
   \details   String escaper pulled over from PEGTL v0.32 used to extract an
              std::string from pegtl::string.

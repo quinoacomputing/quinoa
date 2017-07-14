@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     UnitTest's command line parser
   \details   This file defines the command-line argument parser for the unit
      test suite, UnitTest.

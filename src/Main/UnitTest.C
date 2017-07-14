@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTest.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-

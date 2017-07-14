@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/LinearMap.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
      be created with the Charm++ runtime system. See

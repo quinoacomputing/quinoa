@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Print.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
     functions defined here provides formatting, and a consistent look with
