@@ -15,13 +15,15 @@ endif()
 
 ### Find ROOT include files required
 find_path(ROOT_INCLUDE_DIR NAMES TFile.h HINTS ${ROOT_ROOT}/include
-                                               $ENV{ROOT_ROOT}/include)
+                                               $ENV{ROOT_ROOT}/include
+                                         PATH_SUFFIXES root root6)
 
 ### Find ROOT libraries required
 set(ROOT_REQLIBS RIO Core Tree Hist Thread Net Imt Matrix MathCore)
 foreach(lib ${ROOT_REQLIBS})
   find_library(ROOT_${lib}_LIBRARY NAMES ${lib}
-               HINTS ${ROOT_ROOT}/lib $ENV{ROOT_ROOT}/lib)
+               HINTS ${ROOT_ROOT}/lib $ENV{ROOT_ROOT}/lib
+               PATH_SUFFIXES root root6)
   list(APPEND ROOT_LIBRARY "${ROOT_${lib}_LIBRARY}")
   list(APPEND ROOT_LIBRARY_VARS ROOT_${lib}_LIBRARY)
 endforeach()
