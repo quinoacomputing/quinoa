@@ -1126,10 +1126,11 @@ Carrier::out()
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
-    m_tracker.writeParticles( m_transporter, m_particlewriter, this );
-  } else
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
+    //m_tracker.writeParticles( m_transporter, m_particlewriter, this );
+  } //else
+
+  contribute(
+     CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
 }
 
 void
