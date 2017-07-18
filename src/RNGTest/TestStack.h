@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestStack.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Stack collecting all types of random number generator statistical
      tests
   \details   Stack collecting all types of statistical tests. Currently, on

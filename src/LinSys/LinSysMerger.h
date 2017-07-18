@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/LinSysMerger.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,

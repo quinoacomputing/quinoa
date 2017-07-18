@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Suite.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
     which facilitates subjecting any supported random number generator to a

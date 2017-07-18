@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
     functionality related to registering and instantiating partial differential

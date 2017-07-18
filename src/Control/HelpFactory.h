@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/HelpFactory.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
      on-screen help.
