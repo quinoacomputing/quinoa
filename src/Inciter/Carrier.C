@@ -887,7 +887,7 @@ Carrier::doWriteParticles()
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-    m_tracker.doWriteParticles( m_particlewriter, m_it );
+    m_tracker.doWriteParticles( m_particlewriter, m_it, m_ncarr );
 }
 
 void

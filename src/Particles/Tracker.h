@@ -75,11 +75,17 @@ class Tracker {
     //! Output particles fields to file
     //! \param[in] pw Charm++ particle writer proxy
     //! \param[in] it Iteration count
+    //! \param[in] nchare Number of chares that contribute
     template< class ParticleWriterProxy >
-    void doWriteParticles( const ParticleWriterProxy& pw, uint64_t it ) {
-      pw.ckLocalBranch()->writeCoords( it, m_particles.extract(0,0),
-                                           m_particles.extract(1,0),
-                                           m_particles.extract(2,0) );
+    void doWriteParticles( const ParticleWriterProxy& pw,
+                           uint64_t it,
+                           std::size_t nchare )
+    {
+      pw.ckLocalBranch()->writeCoords( nchare,
+                                       it,
+                                       m_particles.extract(0,0),
+                                       m_particles.extract(1,0),
+                                       m_particles.extract(2,0) );
     }
 
     //! Advance particle based on velocity from mesh cell

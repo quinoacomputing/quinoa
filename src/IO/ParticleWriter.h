@@ -38,7 +38,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
                              const std::string& filename ) :
       m_host( host ),
       m_writer( filename ),
-      m_npar( 0 ),
+      m_nchare( 0 ),
       m_x(),
       m_y(),
       m_z() {}
@@ -50,18 +50,24 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     void npar( std::size_t n ) { m_npar += n; }
 
     //! Receive, buffer, and write particle coordinates to file
+    //! \param[in] nchare Number of chares that contribute
     //! \param[in] it Iteration count
     //! \param[in] x X coordinates of particles
     //! \param[in] y Y coordinates of particles
     //! \param[in] z Z coordinates of particles
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void writeCoords( uint64_t it,
+    void writeCoords( std::size_t nchare,
+                      uint64_t it,
                       const std::vector< tk::real >& x,
                       const std::vector< tk::real >& y,
                       const std::vector< tk::real >& z )
     {
-      if (m_npar == 0) { signal2host_outcomplete( m_host ); return; }
+      if (m_npar == 0 && ++m_nchare == nchare) {
+        signal2host_outcomplete( m_host );
+        m_nchare = 0;
+        return;
+      }
       Assert( x.size() == y.size() && y.size() == z.size(),
               "Particle coordinates array sizes mismatch" );
       // buffer up coordinates
@@ -69,13 +75,14 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       m_y.insert( end(m_y), begin(y), end(y) );
       m_z.insert( end(m_z), begin(z), end(z) );
       // if received from all chares on my PE, write to file
-      if (m_x.size() == m_npar) {
+      if (++m_nchare == nchare) {
         m_writer.writeCoords( it, m_x, m_y, m_z );
         signal2host_outcomplete( m_host );
         m_x.clear();        // prepare for next step
         m_y.clear();
         m_z.clear();
         m_npar = 0;
+        m_nchare = 0;
       }
     }
 
@@ -83,6 +90,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     HostProxy m_host;
     tk::H5PartWriter m_writer;     //!< Particle file format writer
     uint64_t m_npar;               //!< Number of particles to be written
+    std::size_t m_nchare;          //!< Number of chares contributed
     std::vector< tk::real > m_x;   //!< Buffer collecting x coordinates
     std::vector< tk::real > m_y;   //!< Buffer collecting y coordinates
     std::vector< tk::real > m_z;   //!< Buffer collecting z coordinates
