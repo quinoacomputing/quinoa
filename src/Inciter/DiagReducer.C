@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DiagReducer.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
 */

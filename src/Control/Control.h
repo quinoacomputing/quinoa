@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Control.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
     implementing still very generic accessors to tuple elements at various

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FluxCorrector.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
     FluxCorrector object performs the limiting procedure, according to a
@@ -394,7 +394,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
-//! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
+//! \param[in,out] Q The maximum and mimimum unknowns of elements surrounding
 //!   each node
 //! \param[in,out] A Limited antidiffusive element contributions scatter-added
 //!   to nodes

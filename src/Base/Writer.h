@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Writer.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Writer base class declaration
   \details   Writer base class declaration. Writer base serves as a base class
     for various file writers. It does generic low-level I/O, e.g., opening and

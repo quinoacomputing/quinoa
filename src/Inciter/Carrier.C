@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Carrier.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
     potentially large number of Carrier Charm++ chares created by Transporter.
@@ -16,6 +16,7 @@
 #include <set>
 #include <algorithm>
 
+#include "QuinoaConfig.h"
 #include "Carrier.h"
 #include "LinSysMerger.h"
 #include "Vector.h"
@@ -29,6 +30,10 @@
 #include "DerivedData.h"
 #include "PDE.h"
 #include "Tracker.h"
+
+#ifdef HAS_ROOT
+  #include "RootMeshWriter.h"
+#endif
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
@@ -82,8 +87,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_nlim( 0 ),
   m_V( 0.0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
-  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
-                 std::to_string( thisIndex ) ),
+  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
+                 std::to_string( thisIndex )
+                 #ifdef HAS_ROOT
+                 + (g_inputdeck.get< tag::selected, tag::filetype >() ==
+                     tk::ctr::FieldFileType::ROOT ? ".root" : "")
+                 #endif
+                ),
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
@@ -125,6 +135,14 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
+//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
+//!   (which corresponds to rows in the linear system) are (approximately)
+//!   contiguous (as much as this can be done with an unstructured mesh) as the
+//!   problem is distirbuted across PEs, held by LinSysMerger objects. This
+//!   ordering is in start contrast with "as-in-file" ordering, which is the
+//!   ordering of the mesh nodes as it is stored in the file from which the mesh
+//!   is read in. The as-in-file ordering is highly non-contiguous across the
+//!   distributed problem.
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -169,7 +187,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   auto& oldside = m_linsysmerger.ckLocalBranch()->side();
 
   // Create map that assigns the local mesh node IDs mapped to side set ids,
-  // soring only those nodes for a given side set that are part of our chunk of
+  // storing only those nodes for a given side set that are part of our chunk of
   // the mesh.
   for (const auto& s : oldside) {
     auto& n = m_side[ s.first ];
@@ -691,10 +709,25 @@ Carrier::writeMesh()
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-    // Write chare mesh initializing element connectivity and point coords
-    ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    #ifdef HAS_ROOT
+    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
+
+    if (filetype == tk::ctr::FieldFileType::ROOT) {
+
+      tk::RootMeshWriter rmw( m_outFilename, 0 );
+      rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    } else
+    #endif
+    {
+
+      // Create ExodusII writer
+      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+      // Write chare mesh initializing element connectivity and point coords
+      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+    
+    }    
   }
 }
 
@@ -713,6 +746,24 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
   for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
 }
 
+#ifdef HAS_ROOT
+void
+Carrier::writeSolution( const tk::RootMeshWriter& rmw,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const
+// *****************************************************************************
+// Output solution to file
+//! \param[in] rmw Root mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] u Vector of fields to write to file
+//! \author A. Pakki
+// *****************************************************************************
+{
+  int varid = 0;
+  for (const auto& f : u) rmw.writeNodeScalar( it, ++varid, f );
+}
+#endif
+
 void
 Carrier::writeMeta() const
 // *****************************************************************************
@@ -721,18 +772,40 @@ Carrier::writeMeta() const
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    #ifdef HAS_ROOT
+    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
-    // Collect nodal field output names from all PDEs
-    std::vector< std::string > names;
-    for (const auto& eq : g_pdes) {
-      auto n = eq.fieldNames();
-      names.insert( end(names), begin(n), end(n) );
+    if (filetype == tk::ctr::FieldFileType::ROOT) {
+ 
+      tk::RootMeshWriter rmw( m_outFilename, 1 );
+
+      // Collect nodal field output names from all PDEs
+      std::vector< std::string > names;
+      for (const auto& eq : g_pdes) {
+        auto n = eq.fieldNames();
+        names.insert( end(names), begin(n), end(n) );
+      }
+
+      // Write node field names
+      rmw.writeNodeVarNames( names );
+
+    } else
+    #endif
+    {
+
+      // Create ExodusII writer
+      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+      // Collect nodal field output names from all PDEs
+      std::vector< std::string > names;
+      for (const auto& eq : g_pdes) {
+        auto n = eq.fieldNames();
+        names.insert( end(names), begin(n), end(n) );
+      }
+
+      // Write node field names
+      ew.writeNodeVarNames( names );
     }
-
-    // Write node field names
-    ew.writeNodeVarNames( names );
 
   }
 }
@@ -755,21 +828,41 @@ Carrier::writeFields( tk::real time )
   // Increase field output iteration count
   ++m_itf;
 
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+  // Lambda to collect node fields output from all PDEs
+  auto nodefields = [&]() {
+    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+    std::vector< std::vector< tk::real > > output;
+    for (const auto& eq : g_pdes) {
+      auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
+      output.insert( end(output), begin(o), end(o) );
+    }
+    return output;
+  };
 
-  // Write time stamp
-  ew.writeTimeStamp( m_itf, time );
+  #ifdef HAS_ROOT
+  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
-  // Collect node fields output from all PDEs
-  auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
-  std::vector< std::vector< tk::real > > output;
-  for (const auto& eq : g_pdes) {
-    auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
-    output.insert( end(output), begin(o), end(o) );
+  if (filetype == tk::ctr::FieldFileType::ROOT) {
+
+    // Create Root writer
+    tk::RootMeshWriter rmw( m_outFilename, 1 );
+    // Write time stamp
+    rmw.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    writeSolution( rmw, m_itf, nodefields() );
+
+  } else
+  #endif
+  {
+
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    // Write time stamp
+    ew.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    writeSolution( ew, m_itf, nodefields() );
+
   }
-  // Write node fields
-  writeSolution( ew, m_itf, output );
 }
 
 void
@@ -1199,6 +1292,16 @@ Carrier::correctBC()
 
   if (dirbc.empty()) return true;
 
+  // We loop through the map that associates a vector of local node IDs to side
+  // set IDs for all side sets read from mesh file. Then for each side set for
+  // all mesh nodes on a given side set we attempt to find the global node ID in
+  // dirbc, which stores only those nodes (and BC settings) at which the user
+  // has configured Dirichlet BCs to be set. Then for all scalar components of
+  // all system of systems of PDEs integrated if a BC is to be set for a given
+  // component, we compute the low order solution increment + the anti-diffusive
+  // element contributions, which is the current solution (to be updated) at
+  // that node. This solution must equal the BC prescribed at the given node. If
+  // not, the BCs are not set correctly, which is an error.
   for (const auto& s : m_side)
     for (auto i : s.second) {
       auto u = dirbc.find( m_gid[i] );

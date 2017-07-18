@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Wrappers.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     TestU01 global-scope wrappers
   \details   TestU01 global-scope wrappers. For more info on why these functions
     are in global-scope, see Main/RNGTest.C, for more info on why they are

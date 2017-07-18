@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.

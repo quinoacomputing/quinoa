@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the
@@ -122,6 +122,9 @@ class InputDeck :
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
                                        kw::artvisc,
+                                       kw::filetype,
+                                       kw::exodusii,
+                                       kw::root,
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;
@@ -142,6 +145,8 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
+      // Default field output file type
+      set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
       // Default txt floating-point output precision in digits

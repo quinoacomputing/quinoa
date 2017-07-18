@@ -252,6 +252,6 @@ plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt
 <hr>
 <div><small>
 <em>Page last updated:</em> Thu 06 Apr 2017 10:45:52 AM MDT
-<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
+<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
 </small></div>
 */

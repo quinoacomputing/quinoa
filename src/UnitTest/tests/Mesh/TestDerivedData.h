@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
      mesh connectivities defined in the code. The tetrahedron mesh in Gmsh ASCII
