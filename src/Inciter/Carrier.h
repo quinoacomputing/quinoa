@@ -304,6 +304,7 @@ class Carrier : public CBase_Carrier {
       p | m_msum;
       p | m_v;
       p | m_vol;
+      p | m_volc;
       p | m_bid;
       p | m_pc;
       p | m_qc;
@@ -406,6 +407,12 @@ class Carrier : public CBase_Carrier {
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
+    //! Receive buffer for volume of nodes
+    //! \details This is a communication buffer used to compute the volume of
+    //!   the mesh associated to nodes of owned elements (sum of surrounding
+    //!   cell volumes / 4) with contributions from other chares on
+    //!   chare-boundaries.
+    std::vector< tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
