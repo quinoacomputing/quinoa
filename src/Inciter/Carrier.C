@@ -918,10 +918,6 @@ Carrier::aec( const tk::Fields& Un )
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
   m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
-  ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
 
   if (m_msum.empty())
     comaec_complete();
@@ -931,6 +927,11 @@ Carrier::aec( const tk::Fields& Un )
       for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comaec( n.second, p );
     }
+
+  ownaec_complete();
+  #ifndef NDEBUG
+  ownaec_complete();
+  #endif
 }
 
 void
@@ -981,10 +982,6 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
   m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
-  ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
 
   if (m_msum.empty())
     comalw_complete();
@@ -994,6 +991,11 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
       for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comalw( n.second, q );
     }
+
+  ownalw_complete();
+  #ifndef NDEBUG
+  ownalw_complete();
+  #endif
 }
 
 void
@@ -1055,7 +1057,6 @@ Carrier::lim()
   }
 
   m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
-  ownlim_complete();
 
   if (m_msum.empty())
     comlim_complete();
@@ -1065,6 +1066,8 @@ Carrier::lim()
       for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comlim( n.second, a );
     }
+
+  ownlim_complete();
 }
 
 void
