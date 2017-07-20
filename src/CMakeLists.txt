@@ -133,11 +133,16 @@ execute_process(
 )
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
-# Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+# Set the requirement for the C++ standard. If user sets it, use that, if not,
+# require C++11 by default..
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11 CACHE STRING "Required C++ language standard. See https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html for supported values")
+elseif(${CMAKE_CXX_STANDARD} EQUAL 98)
+  message(FATAL_ERROR "Minimum required C++ standard: C++11")
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
+message(STATUS "C++ language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -239,8 +244,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++11")
+  # Use the C++ language standard configured; (CMAKE_CXX_STANDARD does not set
+  # this for the intel compiler)
+  add_compiler_flag("-std=c++${CMAKE_CXX_STANDARD}")
 
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
@@ -294,8 +300,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for cray)
-  add_compiler_flag("-hstd=c++11")
+  # Use the C++ language standard configured; (CMAKE_CXX_STANDARD does not set
+  # this for the cray compiler)
+  add_compiler_flag("-std=c++${CMAKE_CXX_STANDARD}")
 
   # Compiler flags for cray
   # enable errors, warnings, cautions, notes, comments
