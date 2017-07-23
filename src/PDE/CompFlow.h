@@ -356,7 +356,7 @@ class CompFlow {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] dt Time step size
-    //! \param[in] side Pair of side set ID and node IDs on the side set
+    //! \param[in] s Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
@@ -366,9 +366,9 @@ class CompFlow {
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real dt,
-           const std::pair< const int, std::vector< std::size_t > >& side,
+           const std::pair< const int, std::vector< std::size_t > >& s,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return Problem::dirbc( 0, t, dt, side, coord ); }
+    { return Problem::dirbc( 0, t, dt, s, coord ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
