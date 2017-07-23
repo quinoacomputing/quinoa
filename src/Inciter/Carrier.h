@@ -312,6 +312,7 @@ class Carrier : public CBase_Carrier {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
+    using NodeBC = std::vector< std::pair< bool, tk::real > >;
 
     //! Iteration count
     uint64_t m_it;
@@ -356,6 +357,9 @@ class Carrier : public CBase_Carrier {
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
+    //! \brief Map associating local node IDs to side set IDs for all side sets
+    //!   read from mesh file (not only those the user sets BCs on)
+    std::map< int, std::vector< std::size_t > > m_side;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.

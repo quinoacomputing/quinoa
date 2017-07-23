@@ -43,19 +43,15 @@ class CompFlow {
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
     //! \param[in] gid Global node IDs of owned elements
-    //! \param[in] bc Vector of pairs of bool and boundary condition value
-    //!   associated to mesh node IDs at which to set Dirichlet boundary
-    //!   conditions
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real,
-                     const std::vector< std::size_t >& gid,
-                     const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc )
-    const {
+                     tk::real t,
+                     const std::vector< std::size_t >& gid ) const
+    {
       // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, bc, unk, 0, m_offset );
+      Problem::init( coord, gid, unk, 0, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -174,6 +170,9 @@ class CompFlow {
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
+      // artificial viscosity
+      auto av = g_inputdeck.get< tag::param, tag::compflow, tag::artvisc >()[0];
+
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                                inpoel[e*4+2], inpoel[e*4+3] }};
@@ -208,37 +207,59 @@ class CompFlow {
         std::array< const tk::real*, 5 > r;
         for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
-        // compute pressure
+        // pressure
         std::array< tk::real, 4 > p;
-        for (std::size_t i=0; i<4; ++i)
-          p[i] = (g-1.0)*(u[4][i] - (u[1][i]*u[1][i] +
-                                     u[2][i]*u[2][i] +
-                                     u[3][i]*u[3][i])/2.0/u[0][i]);
+        for (std::size_t alpha=0; alpha<4; ++alpha)
+          p[alpha] = (g-1.0)*(u[4][alpha] -
+                                (u[1][alpha]*u[1][alpha] +
+                                 u[2][alpha]*u[2][alpha] +
+                                 u[3][alpha]*u[3][alpha])/2.0/u[0][alpha]);
 
-        // scatter-add mass, momentum, and energy contributions to rhs
-        tk::real c = deltat * J/24.0;
+        // mass, momentum, and energy rhs
+        tk::real d = deltat * J/24.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t alpha=0; alpha<4; ++alpha)
             for (std::size_t beta=0; beta<4; ++beta) {
               // advection contribution to mass rhs
-              R.var(r[0],N[alpha]) -= c * grad[beta][j] * u[j+1][beta];
+              R.var(r[0],N[alpha]) -= d * grad[beta][j] * u[j+1][beta];
               // advection contribution to momentum rhs
               for (std::size_t k=0; k<3; ++k)
                 R.var(r[k+1],N[alpha]) -=
-                  c * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
+                  d * grad[beta][j] * u[k+1][beta]*u[j+1][beta]/u[0][beta];
               // pressure gradient contribution to momentum rhs
-              R.var(r[j+1],N[alpha]) -= c * grad[beta][j] * p[beta];
+              R.var(r[j+1],N[alpha]) -= d * grad[beta][j] * p[beta];
               // advection and pressure gradient contribution to energy rhs
-              R.var(r[4],N[alpha]) -= c * grad[beta][j] *
+              R.var(r[4],N[alpha]) -= d * grad[beta][j] *
                 (u[4][beta] + p[beta]) * u[j+1][beta]/u[0][beta];
             }
+
+        // average characteristic velocity
+        tk::real v = 0.0;
+        for (std::size_t alpha=0; alpha<4; ++alpha) {
+          if (p[alpha] < 0) p[alpha] = 0.0;
+          auto c = std::sqrt( g * p[alpha] / u[0][alpha] );
+          v += std::sqrt((u[1][alpha]*u[1][alpha] +
+                          u[2][alpha]*u[2][alpha] +
+                          u[3][alpha]*u[3][alpha])/u[0][alpha]/u[0][alpha]) + c;
+        }
+        v /= 4.0;
+
+        // artificial viscosity
+        auto h = std::cbrt( J/6.0 );
+        d = av * v * h * deltat * J/6.0;
+        for (std::size_t j=0; j<5; ++j)
+          for (std::size_t alpha=0; alpha<4; ++alpha)
+            for (std::size_t beta=0; beta<4; ++beta)
+              for (std::size_t k=0; k<3; ++k)
+                R.var(r[j],N[alpha]) -= d *
+                  grad[alpha][k] * grad[beta][k] * u[j][beta];
 
         // add viscous stress contribution to momentum and energy rhs
         Physics::viscousRhs( deltat, J, N, grad, u, r, R );
         // add heat conduction contribution to energy rhs
         Physics::conductRhs( deltat, J, N, grad, u, r, R );
         // add source to rhs for all equations
-        Problem::sourceRhs( t, coord, 0, deltat, J, N, mass, grad, r, u, R );
+        Problem::sourceRhs( t, coord, 0, deltat, N, mass, r, R );
       }
     }
 
@@ -282,8 +303,9 @@ class CompFlow {
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
           auto p = (g-1.0)*(re - (ru*ru + rv*rv + rw*rw)/2.0/r); // pressure
+          if (p < 0) p = 0.0;
           auto c = std::sqrt(g*p/r);     // sound speed
-          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r) + c; // char. velocity
+          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }
         // compute element dt for the Euler equations
@@ -332,10 +354,21 @@ class CompFlow {
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    std::vector< std::pair< bool, tk::real > >
-    dirbc( int sideset ) const { return Problem::dirbc( sideset ); }
+    //! \param[in] t Physical time
+    //! \param[in] dt Time step size
+    //! \param[in] side Pair of side set ID and node IDs on the side set
+    //! \param[in] coord Mesh node coordinates
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    dirbc( tk::real t,
+           tk::real dt,
+           const std::pair< const int, std::vector< std::size_t > >& side,
+           const std::array< std::vector< tk::real >, 3 >& coord ) const
+    { return Problem::dirbc( 0, t, dt, side, coord ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -344,16 +377,18 @@ class CompFlow {
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] v Nodal mesh volumes
     //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
-                 tk::real,
+                 tk::real V,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >&,
+                 const std::vector< tk::real >& v,
                  const tk::Fields& U ) const
-    { return Problem::fieldOutput( 0, m_offset, t, coord, U ); }
+    { return Problem::fieldOutput( 0, m_offset, t, V, v, coord, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

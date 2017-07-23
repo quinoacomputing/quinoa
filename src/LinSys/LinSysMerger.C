@@ -29,7 +29,6 @@ namespace tk {
 //!   undefined behavior, segfault, and formatting the internet ...
 CkReduction::reducerType BCVectorMerger;
 CkReduction::reducerType BCMapMerger;
-CkReduction::reducerType BCValMerger;
 CkReduction::reducerType DiagMerger;
 
 }

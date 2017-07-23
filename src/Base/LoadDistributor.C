@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/LoadBalance/LoadDistributor.C
+  \file      src/Base/LoadDistributor.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of

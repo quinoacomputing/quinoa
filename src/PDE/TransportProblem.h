@@ -108,6 +108,7 @@ class TransportProblemShearDiff {
                       tk::ctr::ncomp_type offset,
                       tk::real t )
     {
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& u0 = g_inputdeck.get< tag::param, eq, tag::u0 >()[e];
       const auto& d = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
       const auto& l = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
@@ -216,6 +217,7 @@ class TransportProblemSlotCyl {
                       tk::ctr::ncomp_type offset,
                       tk::real time )
     {
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       for (ncomp_t c=0; c<ncomp; ++c) {
         auto t = time + 2.0*M_PI/ncomp * c;
         const tk::real R0 = 0.15;

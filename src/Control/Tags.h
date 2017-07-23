@@ -17,6 +17,7 @@ struct input {};
 struct output {};
 struct diag {};
 struct seed {};
+struct artvisc {};
 struct uniform_method {};
 struct gaussian_method {};
 struct beta_method {};
