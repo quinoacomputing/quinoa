@@ -1009,7 +1009,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
               r[i] = n.second[i].second;
         }
       }
-      rhsbc_complete(); rhsbc_complete();
+      rhsbc_complete_rhs();
+      rhsbc_complete_aux();
     }
 
     //! Build Hypre data for our portion of the solution vector
