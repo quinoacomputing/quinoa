@@ -314,7 +314,7 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] t Physical time
-    //! \param[in] dt Time step size
+    //! \param[in] deltat Time step size
     //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
@@ -326,7 +326,7 @@ class CompFlowProblemNLEnergyGrowth {
                                std::vector< std::pair< bool, tk::real > > >
     dirbc( tk::ctr::ncomp_type e,
            tk::real t,
-           tk::real dt,
+           tk::real deltat,
            const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& coord )
     {
@@ -342,7 +342,7 @@ class CompFlowProblemNLEnergyGrowth {
         if (std::stoi(b) == side.first)
           for (auto n : side.second) {
             Assert( x.size() > n, "Indexing out of coordinate array" );
-            auto s = solinc( e, x[n], y[n], z[n], t, dt );
+            auto s = solinc( e, x[n], y[n], z[n], t, deltat );
             bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                        {true,s[4]} }};
           }
