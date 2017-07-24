@@ -153,14 +153,32 @@ writeUnsMesh( const tk::Print& print,
   if (reorder) {
     print.diagstart( "Reordering mesh nodes ..." );
 
-    auto& inpoel = mesh.tetinpoel();
-    const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
-    std::vector< std::size_t > map, invmap;
-    std::tie( map, invmap ) = tk::renumber( psup );
-    tk::remap( inpoel, map );
+    // If mesh has tetrahedra elements, reorder based on those
+    if (!mesh.tetinpoel().empty()) {
+
+      auto& inpoel = mesh.tetinpoel();
+      const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+      auto map = tk::renumber( psup );
+      tk::remap( inpoel, map );
+      tk::remap( mesh.triinpoel(), map );
+      tk::remap( mesh.x(), map );
+      tk::remap( mesh.y(), map );
+      tk::remap( mesh.z(), map );
+
+    // If mesh has no tetrahedra elements, reorder based on triangle mesh if any
+    } else if (!mesh.triinpoel().empty()) {
+
+      auto& inpoel = mesh.triinpoel();
+      const auto psup = tk::genPsup( inpoel, 3, tk::genEsup( inpoel, 3 ) );
+      auto map = tk::renumber( psup );
+      tk::remap( inpoel, map );
+      tk::remap( mesh.x(), map );
+      tk::remap( mesh.y(), map );
+      tk::remap( mesh.z(), map );
+    }
 
     print.diagend( "done" );
-    times.emplace_back( "Renumber mesh", t.dsec() );
+    times.emplace_back( "Reorder mesh", t.dsec() );
     t.zero();
   }
 
