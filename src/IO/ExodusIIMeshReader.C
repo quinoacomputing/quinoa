@@ -381,7 +381,7 @@ std::map< int, std::vector< std::size_t > >
 ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
 //  Read node list of all side sets from ExodusII file
-//! \return Elem and side lists mapped to side set ids
+//! \return Node lists mapped to side set ids
 // *****************************************************************************
 {
   // Read ExodusII file header (fills m_neset)
