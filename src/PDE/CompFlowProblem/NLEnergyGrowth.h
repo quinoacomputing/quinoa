@@ -40,13 +40,13 @@ class CompFlowProblemNLEnergyGrowth {
                         tk::real x, tk::real y, tk::real z )
     { return std::cos(bx*M_PI*x) * std::cos(by*M_PI*y) * std::cos(bz*M_PI*z); }
 
-    //! Compute a power of the negative cube of the internal energy
+    //! Compute a power of the internal energy
     //! \param[in] ce Internal energy parameter
     //! \param[in] kappa Internal energy parameter
     //! \param[in] t Physical time
     //! \param[in] h Internal energy parameter
     //! \param[in] p Power
-    //! \return Negative cube of the internal energy raised to power p
+    //! \return Internal energy raised to power p
     static tk::real ec( tk::real ce, tk::real kappa, tk::real t, tk::real h,
                         tk::real p )
     { return std::pow( -3.0*(ce + kappa*h*h*t), p ); }
@@ -80,7 +80,6 @@ class CompFlowProblemNLEnergyGrowth {
       tk::real ft = std::exp( -alpha*t );
       // solution at t
       auto r = r0 + ft*gx;
-      //return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
       return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
     }
 
@@ -195,7 +194,6 @@ class CompFlowProblemNLEnergyGrowth {
               {{ -2.0*z[N[0]], -2.0*z[N[1]], -2.0*z[N[2]], -2.0*z[N[3]] }} }};
 
       // spatial component of energy field
-      // NOTE: look into making beta_{x,y,z} into a vector
       std::array< tk::real, 4 > h{{
         hx( bx, by, bz, x[N[0]], y[N[0]], z[N[0]] ),
         hx( bx, by, bz, x[N[1]], y[N[1]], z[N[1]] ),
@@ -229,73 +227,71 @@ class CompFlowProblemNLEnergyGrowth {
                 -bz*M_PI*std::cos(bx*M_PI*x[N[3]])*std::cos(by*M_PI*y[N[3]])*
                   std::sin(bz*M_PI*z[N[3]]) }} }};
 
-      // density source
-      std::array< tk::real, 4 >
-        Sr{{ -a*std::exp(-a*t)*gx[0],
-             -a*std::exp(-a*t)*gx[1],
-             -a*std::exp(-a*t)*gx[2],
-             -a*std::exp(-a*t)*gx[3] }};
+      // temporal function f and its derivative
+      tk::real f = std::exp(-a*t);
+      tk::real dfdt = -a*f;
 
-      std::array< tk::real, 4 > ec4{{
-        ec(ce,kappa,t,h[0],-4.0/3.0),
-        ec(ce,kappa,t,h[1],-4.0/3.0),
-        ec(ce,kappa,t,h[2],-4.0/3.0),
-        ec(ce,kappa,t,h[3],-4.0/3.0) }};
+      // density and its derivatives
+      std::array< tk::real, 4 > rho{{
+        r0 + gx[0]*std::exp(-a*t),
+        r0 + gx[1]*std::exp(-a*t),
+        r0 + gx[2]*std::exp(-a*t),
+        r0 + gx[3]*std::exp(-a*t) }};
+      std::array< std::array< tk::real, 4 >, 3 > drdx{{
+        {{ f*dg[0][0],
+           f*dg[0][1],
+           f*dg[0][2],
+           f*dg[0][3] }},
+        {{ f*dg[1][0],
+           f*dg[1][1],
+           f*dg[1][2],
+           f*dg[1][3] }},
+        {{ f*dg[2][0],
+           f*dg[2][1],
+           f*dg[2][2],
+           f*dg[2][3] }} }};
+      std::array< tk::real, 4 > drdt{{
+        gx[0]*dfdt,
+        gx[1]*dfdt,
+        gx[2]*dfdt,
+        gx[3]*dfdt }};
 
-      std::array< tk::real, 4 > ec1{{
+      // internal energy and its derivatives
+      std::array< tk::real, 4 > ie{{
         ec(ce,kappa,t,h[0],-1.0/3.0),
         ec(ce,kappa,t,h[1],-1.0/3.0),
         ec(ce,kappa,t,h[2],-1.0/3.0),
         ec(ce,kappa,t,h[3],-1.0/3.0) }};
-
-      // energy source
-      std::array< tk::real, 4 > Se{{
-        (r0 + std::exp(-a*t)*gx[0])*kappa*h[0]*h[0]*ec4[0]
-            - a*std::exp(-a*t)*gx[0]*ec1[0],
-        (r0 + std::exp(-a*t)*gx[1])*kappa*h[1]*h[1]*ec4[1]
-            - a*std::exp(-a*t)*gx[1]*ec1[1],
-        (r0 + std::exp(-a*t)*gx[2])*kappa*h[2]*h[2]*ec4[2]
-            - a*std::exp(-a*t)*gx[2]*ec1[2],
-        (r0 + std::exp(-a*t)*gx[3])*kappa*h[3]*h[3]*ec4[3]
-            - a*std::exp(-a*t)*gx[3]*ec1[3] }};
-
-      // momentum source
-      std::array< std::array< tk::real, 4 >, 3 > Sm{{
-        {{ 2.0*kappa*h[0]*t*(r0+std::exp(-a*t)*gx[0])*(g-1)*ec4[0]*dh[0][0] +
-             ec1[0]*(g-1)*std::exp(-a*t)*dg[0][0],
-           2.0*kappa*h[1]*t*(r0+std::exp(-a*t)*gx[1])*(g-1)*ec4[1]*dh[0][1] +
-             ec1[1]*(g-1)*std::exp(-a*t)*dg[0][1],
-           2.0*kappa*h[2]*t*(r0+std::exp(-a*t)*gx[2])*(g-1)*ec4[2]*dh[0][2] +
-             ec1[2]*(g-1)*std::exp(-a*t)*dg[0][2],
-           2.0*kappa*h[3]*t*(r0+std::exp(-a*t)*gx[3])*(g-1)*ec4[3]*dh[0][3] +
-             ec1[3]*(g-1)*std::exp(-a*t)*dg[0][3] }},
-        {{ 2.0*kappa*h[0]*t*(r0+std::exp(-a*t)*gx[0])*(g-1)*ec4[0]*dh[1][0] +
-             ec1[0]*(g-1)*std::exp(-a*t)*dg[1][0],
-           2.0*kappa*h[1]*t*(r0+std::exp(-a*t)*gx[1])*(g-1)*ec4[1]*dh[1][1] +
-             ec1[1]*(g-1)*std::exp(-a*t)*dg[1][1],
-           2.0*kappa*h[2]*t*(r0+std::exp(-a*t)*gx[2])*(g-1)*ec4[2]*dh[1][2] +
-             ec1[2]*(g-1)*std::exp(-a*t)*dg[1][2],
-           2.0*kappa*h[3]*t*(r0+std::exp(-a*t)*gx[3])*(g-1)*ec4[3]*dh[1][3] +
-             ec1[3]*(g-1)*std::exp(-a*t)*dg[1][3] }},
-        {{ 2.0*kappa*h[0]*t*(r0+std::exp(-a*t)*gx[0])*(g-1)*ec4[0]*dh[2][0] +
-             ec1[0]*(g-1)*std::exp(-a*t)*dg[2][0],
-           2.0*kappa*h[1]*t*(r0+std::exp(-a*t)*gx[1])*(g-1)*ec4[1]*dh[2][1] +
-             ec1[1]*(g-1)*std::exp(-a*t)*dg[2][1],
-           2.0*kappa*h[2]*t*(r0+std::exp(-a*t)*gx[2])*(g-1)*ec4[2]*dh[2][2] +
-             ec1[2]*(g-1)*std::exp(-a*t)*dg[2][2],
-           2.0*kappa*h[3]*t*(r0+std::exp(-a*t)*gx[3])*(g-1)*ec4[3]*dh[2][3] +
-             ec1[3]*(g-1)*std::exp(-a*t)*dg[2][3] }} }};
+      std::array< std::array< tk::real, 4 >, 3 > dedx{{
+        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[0][0]*t,
+           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[0][1]*t,
+           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[0][2]*t,
+           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[0][3]*t }},
+        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[1][0]*t,
+           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[1][1]*t,
+           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[1][2]*t,
+           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[1][3]*t }},
+        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[2][0]*t,
+           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[2][1]*t,
+           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[2][2]*t,
+           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[2][3]*t }} }};
+      std::array< tk::real, 4 > dedt{{
+        kappa*h[0]*h[0]*std::pow(ie[0],4.0),
+        kappa*h[1]*h[1]*std::pow(ie[1],4.0),
+        kappa*h[2]*h[2]*std::pow(ie[2],4.0),
+        kappa*h[3]*h[3]*std::pow(ie[3],4.0) }};
 
       // add momentum and energy source at element nodes
       for (std::size_t j=0; j<4; ++j)
         for (std::size_t k=0; k<4; ++k) {
           // source contribution to mass rhs
-          R.var(r[0],N[j]) += dt * mass[j][k] * Sr[k];
+          R.var(r[0],N[j]) += dt * mass[j][k] * drdt[k];
           // source contribution to momentum rhs
           for (std::size_t l=0; l<3; ++l)
-            R.var(r[l+1],N[j]) += dt * mass[j][k] * Sm[l][k];
+            R.var(r[l+1],N[j]) += dt * mass[j][k] *
+                                 (g-1.0)*(rho[k]*dedx[l][k] + ie[k]*drdx[l][k]);
           // source contribution to enerhy rhs
-          R.var(r[4],N[j]) += dt * mass[j][k] * Se[k];
+          R.var(r[4],N[j]) += dt * mass[j][k] * (rho[k]*dedt[k] + ie[k]*drdt[k]);
         }
     }
 
@@ -354,15 +350,19 @@ class CompFlowProblemNLEnergyGrowth {
     static std::vector< std::string > fieldNames() {
       std::vector< std::string > n;
       n.push_back( "density_numerical" );
-      n.push_back( "density_analytical" );
       n.push_back( "x-velocity_numerical" );
-      n.push_back( "x-velocity_analytical" );
       n.push_back( "y-velocity_numerical" );
-      n.push_back( "y-velocity_analytical" );
       n.push_back( "z-velocity_numerical" );
-      n.push_back( "z-velocity_analytical" );
       n.push_back( "specific_total_energy_numerical" );
+      n.push_back( "pressure_numerical" );
+      n.push_back( "density_analytical" );
+      n.push_back( "x-velocity_analytical" );
+      n.push_back( "y-velocity_analytical" );
+      n.push_back( "z-velocity_analytical" );
       n.push_back( "specific_total_energy_analytical" );
+      n.push_back( "pressure_analytical" );
+      n.push_back( "err(rho)" );
+      n.push_back( "err(e)" );
       return n;
     }
 
@@ -379,70 +379,68 @@ class CompFlowProblemNLEnergyGrowth {
     fieldOutput( tk::ctr::ncomp_type e,
                  tk::ctr::ncomp_type offset,
                  tk::real t,
-                 tk::real,
-                 const std::vector< tk::real >&,
+                 tk::real V,
+                 const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  tk::Fields& U )
     {
-      using tag::param; using tag::compflow;
-      // manufactured solution parameters
-      const auto& ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
-      const auto& r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
-      const auto& alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
-      const auto& k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
-      const auto& bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
-      const auto& by = g_inputdeck.get< param, compflow, tag::betay >()[e];
-      const auto& bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
+      // ratio of specific heats
+      tk::real g =
+        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
 
       std::vector< std::vector< tk::real > > out;
-      const auto r  = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
+      auto r  = U.extract( 0, offset );
+      auto u = U.extract( 1, offset );
+      auto v = U.extract( 2, offset );
+      auto w = U.extract( 3, offset );
+      auto E = U.extract( 4, offset );
 
       // mesh node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      std::vector< tk::real > rho = r;
-      out.push_back( rho );
-      tk::real ft = std::exp( -alpha*t );
-      for (std::size_t i=0; i<rho.size(); ++i) {
-        tk::real gx = 1.0 - (x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
-        rho[i] = r0 + ft*gx;
-      }
-      out.push_back( rho );
-
-      std::vector< tk::real > u = ru;
+      out.push_back( r );
       std::transform( r.begin(), r.end(), u.begin(), u.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( u );
-      for (std::size_t i=0; i<u.size(); ++i) u[i] = 0.0;
-      out.push_back( u );
-
-      std::vector< tk::real > v = rv;
       std::transform( r.begin(), r.end(), v.begin(), v.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( v );
-      for (std::size_t i=0; i<v.size(); ++i) v[i] = 0.0;
-      out.push_back( v );
-
-      std::vector< tk::real > w = rw;
       std::transform( r.begin(), r.end(), w.begin(), w.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( w );
-      for (std::size_t i=0; i<w.size(); ++i) w[i] = 0.0;
-      out.push_back( w );
-
-      std::vector< tk::real > E = re;
       std::transform( r.begin(), r.end(), E.begin(), E.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
-      for (std::size_t i=0; i<E.size(); ++i)
-        E[i] = ec( ce, k, t, hx(bx,by,bz,x[i],y[i],z[i]), -1.0/3.0 );
+
+      auto p = r;
+      for (std::size_t i=0; i<r.size(); ++i)
+        p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+      out.push_back( p );
+
+      auto er = r, ee = r;
+      for (std::size_t i=0; i<r.size(); ++i) {
+        auto s = solution( e, x[i], y[i], z[i], t );
+        er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
+        ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
+        r[i] = s[0];
+        u[i] = s[1]/s[0];
+        v[i] = s[2]/s[0];
+        w[i] = s[3]/s[0];
+        E[i] = s[4]/s[0];
+        p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+      }
+
+      out.push_back( r );
+      out.push_back( u );
+      out.push_back( v );
+      out.push_back( w );
       out.push_back( E );
+      out.push_back( p );
+
+      out.push_back( er );
+      out.push_back( ee );
 
       return out;
    }
