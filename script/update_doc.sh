@@ -31,7 +31,7 @@ cd ${WORKDIR}
 
 # Get git commit sha1 for latest code commit and for the commit which doc was
 # most recently generated
-cd quinoa && CODE_SHA=$(git rev-parse --verify develop) && cd -
+cd quinoa && CODE_SHA=$(git rev-parse --verify master) && cd -
 cd quinoacomputing.github.io && DOC_SHA=$(git log -1 master --pretty=%B | awk '{print $4}') && cd -
 
 # See if doc commit sha1 equals that of code (if so, no need to regenerate doc)
