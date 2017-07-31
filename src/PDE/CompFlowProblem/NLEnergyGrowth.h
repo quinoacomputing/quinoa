@@ -65,13 +65,13 @@ class CompFlowProblemNLEnergyGrowth {
    {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
-      const auto& r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
-      const auto& alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
-      const auto& k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
-      const auto& bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
-      const auto& by = g_inputdeck.get< param, compflow, tag::betay >()[e];
-      const auto& bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
+      const auto ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
+      const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
+      const auto alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
+      const auto k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
+      const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
+      const auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
+      const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
       // spatial component of density field
       const tk::real gx = 1.0 - (x*x + y*y + z*z);
       // internal energy parameter
@@ -156,24 +156,17 @@ class CompFlowProblemNLEnergyGrowth {
                const std::array< const tk::real*, 5 >& r,
                tk::Fields& R )
     {
+      using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& a =
-        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
-      const auto& bx =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betax >()[e];
-      const auto& by =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betay >()[e];
-      const auto& bz =
-        g_inputdeck.get< tag::param, tag::compflow, tag::betaz >()[e];
-      const auto& ce =
-        g_inputdeck.get< tag::param, tag::compflow, tag::ce >()[e];
-      const auto& kappa =
-        g_inputdeck.get< tag::param, tag::compflow, tag::kappa >()[e];
-      const auto& r0 =
-        g_inputdeck.get< tag::param, tag::compflow, tag::r0 >()[e];
+      const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
+      const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
+      const auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
+      const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
+      const auto ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
+      const auto kappa = g_inputdeck.get< param, compflow, tag::kappa >()[e];
+      const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
 
       // mesh node coordinates
       const auto& x = coord[0];
