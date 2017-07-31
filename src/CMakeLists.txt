@@ -181,6 +181,17 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
 
+  # Using clang on mac in release mode, use -O1, otherwise we get a runtime
+  # error: auxlhs_complete() not found referenced by libquinoa_inciter.dylib
+  if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND CMAKE_BUILD_TYPE MATCHES "REL")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
+        "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
+        FORCE)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O1 -g -DNDEBUG" CACHE STRING
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO: Flags used by the compiler during release builds with debug info."
+        FORCE)
+  endif()
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
