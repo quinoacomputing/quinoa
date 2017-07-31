@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindLibCXX.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2016-2017, Los Alamos National Security, LLC.
 # \brief     Find libc++
 #
 ################################################################################

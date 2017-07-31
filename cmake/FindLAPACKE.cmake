@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/FindLAPACKE.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2016-2017, Los Alamos National Security, LLC.
 # \brief     Find the C-interface to LAPACK as well as LAPACK/BLAS
 #
 ################################################################################
