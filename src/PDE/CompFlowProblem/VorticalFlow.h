@@ -175,12 +175,14 @@ class CompFlowProblemVorticalFlow {
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::unordered_map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
-      Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-      for (const auto& b : ubc[e])
-        if (std::stoi(b) == side.first)
-        for (auto n : side.second)
-          bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
-                     {true,0.0} }};
+      if (!ubc.empty()) {
+        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
+        for (const auto& b : ubc[e])
+          if (std::stoi(b) == side.first)
+          for (auto n : side.second)
+            bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
+                       {true,0.0} }};
+      }
       return bc;
     }
 

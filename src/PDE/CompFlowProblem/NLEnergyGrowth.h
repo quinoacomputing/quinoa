@@ -323,18 +323,20 @@ class CompFlowProblemNLEnergyGrowth {
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::unordered_map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
-      Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      for (const auto& b : ubc[e])
-        if (std::stoi(b) == side.first)
-          for (auto n : side.second) {
-            Assert( x.size() > n, "Indexing out of coordinate array" );
-            auto s = solinc( e, x[n], y[n], z[n], t, deltat );
-            bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
-                       {true,s[4]} }};
-          }
+      if (!ubc.empty()) {
+        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        const auto& z = coord[2];
+        for (const auto& b : ubc[e])
+          if (std::stoi(b) == side.first)
+            for (auto n : side.second) {
+              Assert( x.size() > n, "Indexing out of coordinate array" );
+              auto s = solinc( e, x[n], y[n], z[n], t, deltat );
+              bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
+                         {true,s[4]} }};
+            }
+      }
       return bc;
     }
 
