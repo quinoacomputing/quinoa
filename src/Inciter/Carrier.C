@@ -115,6 +115,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
+  m_volc(),
   m_bid(),
   m_pc(),
   m_qc(),
@@ -163,6 +164,9 @@ Carrier::Carrier( const TransporterProxy& transporter,
   for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
   tk::unique( c );
   m_bid = tk::assignLid( c );
+
+  // Allocate receive buffer for nodal volumes
+  m_volc.resize( m_bid.size(), 0.0 );
 
   // Allocate receive buffers for FCT
   m_pc.resize( m_bid.size() );
@@ -213,8 +217,6 @@ Carrier::coord()
   addEdgeNodeCoords();
   // Compute mesh cell volumes
   vol();
-  // Compute mesh cell statistics
-  stat();
 }
 
 void
@@ -256,14 +258,12 @@ Carrier::vol()
                    std::to_string(y[N[3]]) + ", " +
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
+    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
 
-  // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_v) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+  // Store nodal volumes without contributions from other chares on
+  // chare-boundaries
+  m_v = m_vol;
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
@@ -278,9 +278,57 @@ Carrier::vol()
 }
 
 void
+Carrier::comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V )
+// *****************************************************************************
+//  Receive nodal volumes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive volume contributions
+//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//!   nodes
+//! \details This function receives contributions to m_vol, which stores the
+//!   nodal volumes. While m_vol stores own contributions, m_volc collects the
+//!   neighbor chare contributions during communication. This way work on m_vol
+//!   and m_volc is overlapped. The two are combined in totalvol().
+// *****************************************************************************
+{
+  Assert( V.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( m_bid, gid[i] );
+    Assert( bid < m_volc.size(), "Indexing out of bounds" );
+    m_volc[ bid ] += V[i];
+  }
+
+  if (++m_nvol == m_msum.size()) {
+    m_nvol = 0;
+    contribute(
+       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+  }
+}
+
+void
+Carrier::totalvol()
+// *****************************************************************************
+// Sum mesh volumes and contribute own mesh volume to total volume
+// *****************************************************************************
+{
+  // Combine own and communicated contributions of nodal volumes
+  for (const auto& b : m_bid) {
+    auto lid = tk::cref_find( m_lid, b.first );
+    m_vol[ lid ] += m_volc[ b.second ];
+  }
+
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_v) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
+}
+
+void
 Carrier::stat()
 // *****************************************************************************
-// Compute mesh volume statistics
+// Compute mesh cell statistics
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -349,31 +397,6 @@ Carrier::stat()
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
   // Contribute serialized PDF of partial sums to host via Charm++ reduction
   contribute( stream.first, stream.second.get(), PDFMerger, cb );
-}
-
-void
-Carrier::comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V )
-// *****************************************************************************
-//  Receive nodal volumes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive volume contributions
-//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
-//!   nodes
-// *****************************************************************************
-{
-  Assert( V.size() == gid.size(), "Size mismatch" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_vol.size(), "Indexing out of bounds" );
-    m_vol[ lid ] += V[i];
-  }
-
-  if (++m_nvol == m_msum.size()) {
-    m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
-  }
 }
 
 void
@@ -889,10 +912,6 @@ Carrier::aec( const tk::Fields& Un )
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
   m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
-  ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
 
   if (m_msum.empty())
     comaec_complete();
@@ -902,6 +921,11 @@ Carrier::aec( const tk::Fields& Un )
       for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comaec( n.second, p );
     }
+
+  ownaec_complete();
+  #ifndef NDEBUG
+  ownaec_complete();
+  #endif
 }
 
 void
@@ -952,10 +976,6 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
   m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
-  ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
 
   if (m_msum.empty())
     comalw_complete();
@@ -965,6 +985,11 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
       for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comalw( n.second, q );
     }
+
+  ownalw_complete();
+  #ifndef NDEBUG
+  ownalw_complete();
+  #endif
 }
 
 void
@@ -1026,7 +1051,6 @@ Carrier::lim()
   }
 
   m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
-  ownlim_complete();
 
   if (m_msum.empty())
     comlim_complete();
@@ -1036,6 +1060,8 @@ Carrier::lim()
       for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comlim( n.second, a );
     }
+
+  ownlim_complete();
 }
 
 void

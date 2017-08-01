@@ -38,6 +38,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
                              const std::string& filename ) :
       m_host( host ),
       m_writer( filename ),
+      m_npar( 0 ),
       m_nchare( 0 ),
       m_x(),
       m_y(),

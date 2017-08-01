@@ -154,8 +154,8 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4part();
     wait4stat();
-    wait4setup();
     wait4eval();
 
     // Print I/O filenames
@@ -288,6 +288,9 @@ Transporter::load( uint64_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
+  // signal to runtime system that m_nchare is set
+  load_complete();
+
   // Print out mesh graph stats
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
@@ -329,7 +332,7 @@ Transporter::load( uint64_t nelem )
 }
 
 void
-Transporter::partition()
+Transporter::part()
 // *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
@@ -339,7 +342,8 @@ Transporter::partition()
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
   m_progPart.start( "Partitioning and distributing mesh ..." );
-  m_partitioner.partition( m_nchare );
+  // signal to runtime system that all workers are ready for mesh partitioning
+  part_complete();
 }
 
 void
@@ -414,18 +418,18 @@ Transporter::volcomplete()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  vol_complete();
+  m_carrier.totalvol();
 }
 
 void
-Transporter::vol( tk::real v )
+Transporter::totalvol( tk::real v )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
   m_V = v;
-  totalvol_complete();
+  m_carrier.stat();
 }
 
 void
@@ -519,7 +523,7 @@ Transporter::pdfstat( CkReductionMsg* msg )
 }
 
 void
-Transporter::stat( )
+Transporter::stat()
 // *****************************************************************************
 // Echo diagnostics mesh statistics
 // *****************************************************************************
@@ -532,15 +536,7 @@ Transporter::stat( )
                 std::to_string( m_minstat[1] ) + " / " +
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
-  stat_complete();
-}
 
-void
-Transporter::setup( )
-// *****************************************************************************
-// Start computing row IDs, querying BCs, outputing mesh
-// *****************************************************************************
-{
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
   m_carrier.setup( m_V );

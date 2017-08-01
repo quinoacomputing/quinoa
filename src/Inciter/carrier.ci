@@ -36,6 +36,8 @@ module carrier {
       entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& V );
+      entry void totalvol();
+      entry void stat();
       entry void setup( tk::real v );
       entry void init();
       entry void updateSol( const std::vector< std::size_t >& gid,

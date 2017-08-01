@@ -106,66 +106,52 @@ Integrator::advance( tk::real dt,
       CkCallback(CkReductionTarget( Distributor, nostat ), m_hostproxy) );
   } else {
     // Accumulate sums for ordinary moments (every time step)
-    accumulateOrd();
-    // Accumulate sums for ordinary PDFs at select times
-    if ( g_inputdeck.pdf() &&
-         !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
-      accumulateOrdPDF();
+    accumulateOrd( it );
   }
 }
 
 void
-Integrator::accumulateOrd()
+Integrator::accumulateOrd( uint64_t it )
 // *****************************************************************************
-// Accumulate sums for ordinary moments
+// Accumulate sums for ordinary moments and ordinary PDFs
+//! \param[in] it Iteration count
 // *****************************************************************************
 {
   // Accumulate partial sums for ordinary moments
   m_stat.accumulateOrd();
-  // Send accumulated ordinary moments to collector for estimation
-  m_collproxy.ckLocalBranch()->chareOrd( m_stat.ord() );
+  // Accumulate sums for ordinary PDFs at select times
+  if ( g_inputdeck.pdf() &&
+       !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
+    m_stat.accumulateOrdPDF();
+
+  // Send accumulated ordinary moments and ordinary PDFs to collector for
+  // estimation
+  m_collproxy.ckLocalBranch()->chareOrd( m_stat.ord(),
+                                         m_stat.oupdf(),
+                                         m_stat.obpdf(),
+                                         m_stat.otpdf() );
 }
 
 void
-Integrator::accumulateCen( const std::vector< tk::real >& ord )
+Integrator::accumulateCen( uint64_t it, const std::vector< tk::real >& ord )
 // *****************************************************************************
-// Accumulate sums for central moments
+// Accumulate sums for central moments and central PDFs
+//! \param[in] it Iteration count
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
 // *****************************************************************************
 {
   // Accumulate partial sums for central moments
   m_stat.accumulateCen( ord );
+  // Accumulate partial sums for central PDFs at select times
+  if ( g_inputdeck.pdf() &&
+       !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
+    m_stat.accumulateCenPDF( ord );
+
   // Send accumulated central moments to host for estimation
-  m_collproxy.ckLocalBranch()->chareCen( m_stat.ctr() );
-}
-
-void
-Integrator::accumulateOrdPDF()
-// *****************************************************************************
-// Accumulate sums for ordinary PDFs
-// *****************************************************************************
-{
-  // Accumulate partial sums for ordinary PDFs
-  m_stat.accumulateOrdPDF();
-  // Send accumulated ordinary PDFs to host for estimation
-  m_collproxy.ckLocalBranch()->chareOrdPDF( m_stat.oupdf(),
-                                            m_stat.obpdf(),
-                                            m_stat.otpdf() );
-}
-
-void
-Integrator::accumulateCenPDF( const std::vector< tk::real >& ord )
-// *****************************************************************************
-// Accumulate sums for central PDFs
-//! \param[in] ord Estimated ordinary moments (collected from all PEs)
-// *****************************************************************************
-{
-  // Accumulate partial sums for central PDFs
-  m_stat.accumulateCenPDF( ord );
-  // Send accumulated central PDFs to host for estimation
-  m_collproxy.ckLocalBranch()->chareCenPDF( m_stat.cupdf(),
-                                            m_stat.cbpdf(),
-                                            m_stat.ctpdf() );
+  m_collproxy.ckLocalBranch()->chareCen( m_stat.ctr(),
+                                         m_stat.cupdf(),
+                                         m_stat.cbpdf(),
+                                         m_stat.ctpdf() );
 }
 
 #include "NoWarning/integrator.def.h"
