@@ -48,8 +48,7 @@ namespace AMR {
             void mark_refinement();
             void perform_refinement();
 
-            void refinement_class_one(int num_to_refine, edge_list_t edge_list,
-                    size_t tet_id);
+            void refinement_class_one(int num_to_refine, size_t tet_id);
             void refinement_class_two(edge_list_t edge_list, size_t tet_id);
             void refinement_class_three(size_t tet_id);
 

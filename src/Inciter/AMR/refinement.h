@@ -545,7 +545,7 @@ namespace AMR {
             node_pair_t find_single_refinement_nodes(edge_list_t edge_list)
             {
                 node_pair_t returned_nodes;
-                bool found_break = false;
+                //bool found_break = false;
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     edge_t edge = edge_list[k];
@@ -559,12 +559,12 @@ namespace AMR {
                             returned_nodes[0] << " and " <<
                             returned_nodes[1] << std::endl;
 
-                        found_break = true;
+                        //found_break = true;
                         break;
                     }
                 }
 
-                assert(found_break);
+                //assert(found_break);
 
                 return returned_nodes;
             }

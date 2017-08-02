@@ -96,7 +96,7 @@ namespace AMR {
             size_t parent_id;
 
             // Only needed for active
-            size_t master_element_number; // TODO: Some of these can be removed?
+            //size_t master_element_number = 0; // TODO: Some of these can be removed?
 
             // Constructor
             Refinement_State() {

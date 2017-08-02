@@ -195,7 +195,7 @@ namespace AMR {
                         // Now check num_to_refine against situations
                         if (compatibility == 1)
                         {
-                            refinement_class_one(num_to_refine, edge_list, tet_id);
+                            refinement_class_one(num_to_refine, tet_id);
                         }
                         else if (compatibility == 2)
                         {
@@ -293,7 +293,10 @@ namespace AMR {
                     case AMR::Refinement_Case::none:
                         // Do nothing
                         break;
-                        // No need for default as enum is explicitly covered
+                        // No need for default as enum is explicitly covered?
+                    case default:
+                        assert(0);
+                        break;
                 }
                 // Mark tet as not needing refinement
                 tet_store.marked_refinements.erase(tet_id);
@@ -351,8 +354,7 @@ namespace AMR {
      * @param edge_list The list of the edges for the tet
      * @param tet_id The id of the given tet
      */
-    void mesh_adapter_t::refinement_class_one(int num_to_refine, edge_list_t edge_list,
-            size_t tet_id)
+    void mesh_adapter_t::refinement_class_one(int num_to_refine, size_t tet_id)
     {
         trace_out << "Refinement Class One" << std::endl;
 
