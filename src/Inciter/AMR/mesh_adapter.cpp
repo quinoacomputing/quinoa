@@ -294,7 +294,7 @@ namespace AMR {
                         // Do nothing
                         break;
                         // No need for default as enum is explicitly covered?
-                    case default:
+                    default:
                         assert(0);
                         break;
                 }
