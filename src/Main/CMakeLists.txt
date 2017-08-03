@@ -41,6 +41,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARIES}
+                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -75,6 +76,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
+                      ${ROOT_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
                       ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
@@ -137,6 +139,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARIES}
+                      ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
@@ -180,3 +183,29 @@ target_link_libraries(${WALKER_EXECUTABLE}
 
 # Add custom dependencies for Walker's main Charm++ module
 addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
+
+### FileConv executable ########################################################
+if (HAS_ROOT)
+
+  add_executable(${FILECONV_EXECUTABLE}
+                 FileConvDriver.C
+                 FileConv.C
+  )
+
+  config_executable(${FILECONV_EXECUTABLE})
+
+  target_link_libraries(${FILECONV_EXECUTABLE}
+			MeshIO
+			Mesh
+                        FileConvControl
+                        Base
+			${PUGIXML_LIBRARIES}
+	                ${SEACASExodus_LIBRARIES}
+	                ${ROOT_LIBRARIES}
+		        ${NETCDF_LIBRARIES}       # only for static link
+  )
+
+  # Add custom dependencies for FileConv's main Charm++ module
+  addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )
+
+endif(HAS_ROOT)

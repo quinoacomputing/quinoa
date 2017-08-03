@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LoadBalance/UnsMeshMap.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
   \details   Advanced Charm++ array creation refers to various ways arrays can

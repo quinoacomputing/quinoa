@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Driver.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Driver base class declaration
   \details   Driver base class declaration. This class used as a base for
      various drivers. Note that "base" is not in a classical OOP sense. See also

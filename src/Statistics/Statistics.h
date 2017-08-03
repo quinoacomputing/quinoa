@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/Statistics.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Statistics class declaration
   \details   This file implements a statistics class that can be used to
     estimate statistics from an ensemble. Supported at this time are ordinary

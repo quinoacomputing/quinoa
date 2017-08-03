@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
@@ -163,6 +163,9 @@ namespace grm {
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::EULER );
+      // If artificial viscosity is not given, default to 1.0
+      auto& av = stack.template get< tag::param, eq, tag::artvisc >();
+      if (av.empty()) av.push_back( 0.05 );
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -417,6 +420,7 @@ namespace deck {
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::npar, tag::npar,
                                       pegtl::digit >,
+                           parameter< tag::compflow, kw::artvisc, tag::artvisc >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
                            parameter< tag::compflow, kw::pde_betax, tag::betax >,
@@ -464,6 +468,12 @@ namespace deck {
          pegtl::if_must<
            tk::grm::readkw< use< kw::plotvar >::pegtl_string >,
            tk::grm::block< use< kw::end >,
+                           tk::grm::process< use< kw::filetype >,
+                                             tk::grm::store_inciter_option<
+                                               tk::ctr::FieldFile,
+                                               tag::selected,
+                                               tag::filetype >,
+                                             pegtl::alpha >,
                            tk::grm::interval< use< kw::interval >,
                                               tag::field > > > {};
 

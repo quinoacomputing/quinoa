@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/TPLs.cmake
-# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
 #
 ################################################################################
@@ -133,10 +133,12 @@ if(ENABLE_ROOT)
   if (Root_FOUND)
     set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
     # Root does not support libc++ on linux, so remove if configured
-    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
-    if (NOT "${pos}" STREQUAL "-1")
-      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
-      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
+      if (NOT "${pos}" STREQUAL "-1")
+        message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
+        string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+      endif()
     endif()
   endif()
 endif()

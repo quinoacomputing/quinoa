@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/ProcessException.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Process an exception definition
   \details   This file contains the definition of processing an exception.
     Logically, it would make sense to put this into Exception.C, however,

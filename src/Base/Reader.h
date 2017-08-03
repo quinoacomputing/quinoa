@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Reader.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
     for various file readers. It does generic low-level I/O, e.g., opening and

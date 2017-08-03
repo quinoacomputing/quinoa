@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
 */
@@ -44,35 +44,64 @@ shiftToZero( std::vector< std::size_t >& inpoel )
 }
 
 void
-remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
+remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& map )
 // *****************************************************************************
-//  Reorder mesh points given a new order, i.e., index map
-//! \param[inout] id Vector of point ids
-//! \param[in] newid Array of indices creating a new order
-//! \details This function implements a simple reordering (or remapping) of the
-//!   node ids of the vector passed in using the vector newid. Thus the vector
-//!   in newid is thought of as a mapping between the array index to its value.
-//!   The function overwrites every value, n, of vector id with newid[n].
+//  Apply new maping to vector of indices
+//! \param[inout] id Vector of integer IDs to remap
+//! \param[in] map Array of indices creating a new order
+//! \details This function applies a mapping (reordering) to the integer IDs
+//!   passed in using the map passed in. The mapping is expressed between the
+//!   array index ands its value. The function overwrites every value, i, of
+//!   vector id with map[i].
+//! \note The sizes of id and map need not equal. Only the maximum index in id
+//!   must be lower than the size of map.
 //! \note It is okay to call this function with either of the containers empty;
 //!   it will simply return without throwing an exception.
 // *****************************************************************************
 {
-  if (id.empty() || newid.empty()) return;
+  if (id.empty() || map.empty()) return;
 
-  Assert( *max_element( begin(id), end(id) ) < newid.size(),
-          "attempt to index out of node id bounds using newid" );
+  Assert( *max_element( begin(id), end(id) ) < map.size(),
+          "Indexing out of bounds" );
 
-  // remap node ids in vector id
-  for (auto& n : id) n = newid[n];
+  // remap integer IDs in vector id
+  for (auto& i : id) i = map[i];
 }
 
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+void
+remap( std::vector< tk::real >& r, const std::vector< std::size_t >& map )
+// *****************************************************************************
+//  Apply new maping to vector of real numbers
+//! \param[inout] r Vector of real numbers to remap
+//! \param[in] map Array of indices creating a new order
+//! \details This function applies a mapping (reordering) to the real values
+//!   passed in using the map passed in. The mapping is expressed between the
+//!   array index ands its value. The function moves every value r[i] to
+//!   r[ map[i] ].
+//! \note The sizes of r and map must be equal and the maximum index in map must
+//!   be lower than the size of map.
+//! \note It is okay to call this function with either of the containers empty;
+//!   it will simply return without throwing an exception.
+// *****************************************************************************
+{
+  if (r.empty() || map.empty()) return;
+
+  Assert( r.size() == map.size(), "Size mismatch" );
+  Assert( *max_element( begin(map), end(map) ) < map.size(),
+          "Indexing out of bounds" );
+
+  // remap real numbers in vector
+  auto m = r;
+  for (std::size_t i=0; i<map.size(); ++i) r[ map[i] ] = m[i];
+}
+
+std::vector< std::size_t >
 renumber( const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup )
 // *****************************************************************************
 //  Reorder mesh points with the advancing front technique
 //! \param[in] psup Points surrounding points
-//! \return Pair of maps between old->new and new->old order
+//! \return Mapping created by renumbering (reordering)
 // *****************************************************************************
 {
   // Find out number of nodes in graph
@@ -80,7 +109,7 @@ renumber( const std::pair< std::vector< std::size_t >,
 
   // Construct mapping using advancing front
   std::vector< int > hpoin( npoin, -1 ), lpoin( npoin, 0 );
-  std::vector< std::size_t > mapvec( npoin, 0 );
+  std::vector< std::size_t > map( npoin, 0 );
   hpoin[0] = 0;
   lpoin[0] = 1;
   std::size_t num = 1;
@@ -95,7 +124,7 @@ renumber( const std::pair< std::vector< std::size_t >,
       for (auto j=psup.second[P]+1; j<=psup.second[P+1]; ++j) {
         auto q = psup.first[j];
         if (lpoin[q] != 1) {    // consider points not yet counted
-          mapvec[q] = num++;
+          map[q] = num++;
           kpoin[cnt] = static_cast< int >( q ); // register point as counted
           lpoin[q] = 1;                         // register the point as counted
           ++cnt;
@@ -105,13 +134,13 @@ renumber( const std::pair< std::vector< std::size_t >,
     hpoin = kpoin;
   }
 
-  // Construct new->old id map
-  std::size_t i = 0;
-  std::vector< std::size_t > oldmap( npoin );
-  for (auto n : mapvec) oldmap[n] = i++;
+//   // Construct new->old id map
+//   std::size_t i = 0;
+//   std::vector< std::size_t > oldmap( npoin );
+//   for (auto n : map) oldmap[n] = i++;
 
   // Return old->new and new->old maps
-  return { mapvec, oldmap };
+  return map;
 }
 
 std::unordered_map< std::size_t, std::size_t >

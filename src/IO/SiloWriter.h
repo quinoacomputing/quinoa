@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/SiloWriter.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Silo writer declaration.
   \details   Silo writer declaration. This class currently only supports writing
     an STL triangulation into a Silo file. See also

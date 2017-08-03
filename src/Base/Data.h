@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Data.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
     rationale discussed in the [design](layout.html) document.
@@ -528,6 +528,7 @@ class Data {
 
 //! Operator * multiplying all items by a scalar from the left
 //! \param[in] lhs Scalar to multiply with
+//! \param[in] rhs Date object to multiply
 //! \return New Data object with all items multipled with lhs
 template< uint8_t Layout >
 Data< Layout > operator* ( tk::real lhs, const Data< Layout >& rhs ) {
@@ -542,7 +543,7 @@ Data< Layout > operator* ( tk::real lhs, const Data< Layout >& rhs ) {
 //! \note The Data objects _a_ and _b_ must have the same number of
 //!   unknowns and properties.
 //! \note As opposed to std::min, this function creates and returns a new object
-//!   instead of returning a reference to the smaller one of the operands.
+//!   instead of returning a reference to one of the operands.
 template< uint8_t Layout >
 Data< Layout > min( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
@@ -551,6 +552,7 @@ Data< Layout > min( const Data< Layout >& a, const Data< Layout >& b ) {
   std::transform( a.data().cbegin(), a.data().cend(),
                   b.data().cbegin(), r.data().begin(),
                   []( tk::real s, tk::real d ){ return std::min(s,d); } );
+
   return r;
 }
 
@@ -562,7 +564,7 @@ Data< Layout > min( const Data< Layout >& a, const Data< Layout >& b ) {
 //! \note The Data objects _a_ and _b_ must have the same number of
 //!   unknowns and properties.
 //! \note As opposed to std::max, this function creates and returns a new object
-//!   instead of returning a reference to the smaller one of the operands.
+//!   instead of returning a reference to one of the operands.
 template< uint8_t Layout >
 Data< Layout > max( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );

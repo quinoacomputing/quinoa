@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Distributor.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
     The implementation uses the Charm++ runtime system and is fully

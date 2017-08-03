@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/UnsMesh.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
     supports line, triangle, and tetrahedron elements.
@@ -25,7 +25,7 @@ namespace tk {
 class UnsMesh {
 
   public:
-    using Coords = std::array< std::vector< tk::real >, 3 >;
+    using Coords = std::array< std::vector< real >, 3 >;
 
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
@@ -44,18 +44,13 @@ class UnsMesh {
       }
     };
     //! Map associating IDs of mesh nodes to edges
-    using EdgeNodes = std::unordered_map< tk::UnsMesh::Edge,
-                                          std::size_t,
-                                          tk::UnsMesh::EdgeHash,
-                                          tk::UnsMesh::EdgeEq >;
-    using EdgeChares = std::unordered_map< tk::UnsMesh::Edge,
+    using EdgeNodes = std::unordered_map< Edge, std::size_t, EdgeHash, EdgeEq >;
+    using EdgeChares = std::unordered_map< Edge,
                                            std::vector< int >,
-                                           tk::UnsMesh::EdgeHash,
-                                           tk::UnsMesh::EdgeEq >;
+                                           EdgeHash,
+                                           EdgeEq >;
     //! Unique set of edges
-    using Edges = std::unordered_set< tk::UnsMesh::Edge,
-                                      tk::UnsMesh::EdgeHash,
-                                      tk::UnsMesh::EdgeEq >;
+    using Edges = std::unordered_set< Edge, EdgeHash, EdgeEq >;
 
     /** @name Constructors */
     ///@{
@@ -87,9 +82,9 @@ class UnsMesh {
 
     //! Constructor copying over element connectivity and point coordinates
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
-                      const std::vector< tk::real >& X,
-                      const std::vector< tk::real >& Y,
-                      const std::vector< tk::real >& Z ) :
+                      const std::vector< real >& X,
+                      const std::vector< real >& Y,
+                      const std::vector< real >& Z ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
@@ -104,7 +99,7 @@ class UnsMesh {
     //! \brief Constructor copying over element connectivity and array of point
     //!   coordinates
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
-                      const std::array< std::vector< tk::real >, 3 >& coord ) :
+                      const std::array< std::vector< real >, 3 >& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
@@ -118,9 +113,9 @@ class UnsMesh {
 
     //! Constructor swallowing element connectivity and point coordinates
     explicit UnsMesh( std::vector< std::size_t >&& tetinp,
-                      std::vector< tk::real >&& X,
-                      std::vector< tk::real >&& Y,
-                      std::vector< tk::real >&& Z ) :
+                      std::vector< real >&& X,
+                      std::vector< real >&& Y,
+                      std::vector< real >&& Z ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
@@ -136,7 +131,7 @@ class UnsMesh {
     //! \brief Constructor swallowing element connectivity and array of point
     //!   coordinates
     explicit UnsMesh( std::vector< std::size_t >&& tetinp,
-                      std::array< std::vector< tk::real >, 3 >&& coord ) :
+                      std::array< std::vector< real >, 3 >&& coord ) :
       m_graphsize( graphsize( tetinp ) ),
       m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
@@ -151,12 +146,12 @@ class UnsMesh {
 
     /** @name Point coordinates accessors */
     ///@{
-    const std::vector< tk::real >& x() const noexcept { return m_x; }
-    const std::vector< tk::real >& y() const noexcept { return m_y; }
-    const std::vector< tk::real >& z() const noexcept { return m_z; }
-    std::vector< tk::real >& x() noexcept { return m_x; }
-    std::vector< tk::real >& y() noexcept { return m_y; }
-    std::vector< tk::real >& z() noexcept { return m_z; }
+    const std::vector< real >& x() const noexcept { return m_x; }
+    const std::vector< real >& y() const noexcept { return m_y; }
+    const std::vector< real >& z() const noexcept { return m_z; }
+    std::vector< real >& x() noexcept { return m_x; }
+    std::vector< real >& y() noexcept { return m_y; }
+    std::vector< real >& z() noexcept { return m_z; }
     ///@}
 
     /** @name Number of nodes accessors */
@@ -217,9 +212,9 @@ class UnsMesh {
     std::vector< std::size_t > m_tetinpoel;     //!< Tetrahedron connectivity
 
     //! Node coordinates
-    std::vector< tk::real > m_x;
-    std::vector< tk::real > m_y;
-    std::vector< tk::real > m_z;
+    std::vector< real > m_x;
+    std::vector< real > m_y;
+    std::vector< real > m_z;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity
@@ -227,7 +222,7 @@ class UnsMesh {
     std::size_t
     graphsize( const std::vector< std::size_t >& inpoel ) {
       auto conn = inpoel;
-      tk::unique( conn );
+      unique( conn );
       return conn.size();
    }
 };

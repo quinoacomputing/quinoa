@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/WalkerPrint.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */
@@ -152,7 +152,7 @@ const
   if (!c.empty()) {
     tk::ctr::PDFFile f;
     item( f.group(),
-          f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
+          f.name( g_inputdeck.get< tag::selected, tag::filetype >() ) );
     tk::ctr::PDFPolicy p;
     item( p.group(),
           p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );

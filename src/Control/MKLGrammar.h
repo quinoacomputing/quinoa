@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/MKLGrammar.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,
     (re-)used by several executables.

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Carrier.h
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
     potentially large number of Carrier Charm++ chares created by Transporter.
@@ -87,6 +87,7 @@
 #include <unordered_set>
 #include <set>
 
+#include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
 #include "Tracker.h"
@@ -100,7 +101,8 @@
 #include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
-namespace tk { class ExodusIIMeshWriter; }
+namespace tk { class ExodusIIMeshWriter; 
+	       class RootMeshWriter; }
 
 namespace inciter {
 
@@ -310,6 +312,7 @@ class Carrier : public CBase_Carrier {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
+    using NodeBC = std::vector< std::pair< bool, tk::real > >;
 
     //! Iteration count
     uint64_t m_it;
@@ -354,6 +357,9 @@ class Carrier : public CBase_Carrier {
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
+    //! \brief Map associating local node IDs to side set IDs for all side sets
+    //!   read from mesh file (not only those the user sets BCs on)
+    std::map< int, std::vector< std::size_t > > m_side;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.
@@ -440,6 +446,11 @@ class Carrier : public CBase_Carrier {
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
+    #ifdef HAS_ROOT
+    void writeSolution( const tk::RootMeshWriter& rmw,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const;
+    #endif
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;

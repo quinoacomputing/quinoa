@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ASCMeshReader.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     ASC mesh reader class definition
   \details   ASC mesh reader class definition. Mesh reader facilitating reading
              a mesh from a simple text file used by Jacob Waltz's Chicoma code.

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
 */
@@ -9,11 +9,8 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
 #include <string>
 #include <utility>
-#include <cstdint>
-#include <cstdio>
 
 #include "NoWarning/exodusII.h"
 
@@ -107,6 +104,32 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
+ExodusIIMeshWriter::writeHeader( const char* title,
+                                 int64_t ndim,
+                                 int64_t nnodes,
+                                 int64_t nelem,
+                                 int64_t nblk,
+                                 int64_t node_set,
+                                 int64_t side_set ) const
+// *****************************************************************************
+//  Write ExodusII header
+//! \param[in] title ExodusII file header 'title'
+//! \param[in] ndim Number of spatial dimensions in ExodusII file
+//! \param[in] nnodes Number of mesh nodes in ExodusII file
+//! \param[in] nelem Number of mesh elements in ExodusII file
+//! \param[in] nblk Number of mesh element blocks in ExodusII file
+//! \param[in] node_set Number of node sets in ExodusII file
+//! \param[in] side_set Number of side sets in ExodusII file
+//! \author A. Pakki
+// *****************************************************************************
+{
+  ErrChk(
+    ex_put_init( m_outFile, title, ndim, nnodes, nelem, nblk, 
+                 node_set, side_set) == 0,
+    "Failed to write header to file: " + m_filename );
+}
+
+void
 ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write node coordinates to ExodusII file
@@ -115,6 +138,22 @@ ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 {
   ErrChk( ex_put_coord( m_outFile, mesh.x().data(), mesh.y().data(),
                         mesh.z().data() ) == 0,
+          "Failed to write coordinates to ExodusII file: " + m_filename );
+}
+
+void
+ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
+                                const std::vector< tk::real >& y,
+                                const std::vector< tk::real >& z ) const
+// *****************************************************************************
+//  Write node coordinates to ExodusII file without Mesh
+//! \param[in] x coordinates of mesh nodes
+//! \param[in] y coordinates of mesh nodes
+//! \param[in] z coordinates of mesh nodes
+//! \author A. Pakki
+// *****************************************************************************
+{
+  ErrChk( ex_put_coord( m_outFile, x.data(), y.data(), z.data() ) == 0,
           "Failed to write coordinates to ExodusII file: " + m_filename );
 }
 
