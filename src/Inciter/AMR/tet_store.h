@@ -345,6 +345,16 @@ namespace AMR {
                             case Refinement_Case::initial_grid:
                                 val = 1.0;
                                 break;
+                            // Note: Below here isn't used right now?
+                            case Refinement_Case::two_to_eight:
+                                val = 2.8;
+                                break;
+                            case Refinement_Case::four_to_eight:
+                                val = 4.8;
+                                break;
+                            case Refinement_Case::none:
+                                val = 0.0;
+                                break;
                             default:
                                 val = -1.0;
                         }

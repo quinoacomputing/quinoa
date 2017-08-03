@@ -66,7 +66,7 @@ namespace AMR {
                 return (*m_z)[id];
             }
 
-            real_t size()
+            size_t size()
             {
                 return m_x->size();
             }

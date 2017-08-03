@@ -994,19 +994,20 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                    const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
                    */
 
-                const size_t AB = mesh_adapter->node_connectivity.find(A, B);
-                const size_t AC = mesh_adapter->node_connectivity.find(A, C);
-                const size_t AD = mesh_adapter->node_connectivity.find(A, D);
-                const size_t BC = mesh_adapter->node_connectivity.find(B, C);
-                const size_t BD = mesh_adapter->node_connectivity.find(B, D);
-                const size_t CD = mesh_adapter->node_connectivity.find(C, D);
+                // TODO: We should likely check the return values here
+                const int AB = mesh_adapter->node_connectivity.find(A, B);
+                const int AC = mesh_adapter->node_connectivity.find(A, C);
+                const int AD = mesh_adapter->node_connectivity.find(A, D);
+                const int BC = mesh_adapter->node_connectivity.find(B, C);
+                const int BD = mesh_adapter->node_connectivity.find(B, D);
+                const int CD = mesh_adapter->node_connectivity.find(C, D);
 
-                en[ {{A,B}} ] = AB;
-                en[ {{A,C}} ] = AC;
-                en[ {{A,D}} ] = AD;
-                en[ {{B,C}} ] = BC;
-                en[ {{B,D}} ] = BD;
-                en[ {{C,D}} ] = CD;
+                en[ {{A,B}} ] = static_cast<size_t>(AB);
+                en[ {{A,C}} ] = static_cast<size_t>(AC);
+                en[ {{A,D}} ] = static_cast<size_t>(AD);
+                en[ {{B,C}} ] = static_cast<size_t>(BC);
+                en[ {{B,D}} ] = static_cast<size_t>(BD);
+                en[ {{C,D}} ] = static_cast<size_t>(CD);
             }
         }
 

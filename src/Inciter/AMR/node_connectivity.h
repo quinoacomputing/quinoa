@@ -22,7 +22,7 @@ namespace AMR {
             /**
              * @brief Method to add initial nodes to the store
              *
-             * @param initial_size
+             * @param initial_size Size of the list to fill to
              */
             void fill_initial_nodes(size_t initial_size)
             {
@@ -88,27 +88,32 @@ namespace AMR {
                 {
                     case 0:  // ABC
                         result = 3;
+                        break;
                     case 1:  // ABD
                         result = 2;
+                        break;
                     case 2:  // ACD
                         result = 1;
+                        break;
                     case 3:  // BCD
                         result = 0;
+                        break;
                     default: // something went horribly wrong..
                         assert(0);
+                        break;
                 }
 
                 return result;
             }
 
             // TODO: Document this
-            // Int because it's signed..
+            // Int because it's signed.. is this a good idea?
             int find(size_t A, size_t B)
             {
                 size_t min = std::min(A,B);
                 size_t max = std::max(A,B);
 
-                for (size_t i = 0; i < size(); i++)
+                for (int i = 0; i < size(); i++)
                 {
                     // Did we find it?
                     node_pair_t n = get(i);
@@ -133,7 +138,7 @@ namespace AMR {
                     int f = find(A,B);
                     if (f != -1) {
                         std::cout << "Connect already exits " << A << " " << B << std::endl;
-                        return f;
+                        return static_cast<size_t>(f);
                     }
                 }
 
@@ -148,7 +153,7 @@ namespace AMR {
             void print()
             {
                 std::cout << "Connectivity" << std::endl;
-                for (int i = 0; i < size(); i ++)
+                for (size_t i = 0; i < size(); i ++)
                 {
                     std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
                 }

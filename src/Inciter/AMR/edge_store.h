@@ -149,7 +149,7 @@ namespace AMR {
                 size_t C = face_ids[2];
 
                 edge_t key = nodes_to_key(A,B);
-                key_list[0] = key;
+                key_list[0] = key; // TODO: Is it OK to use copy assignment here?
 
                 key = nodes_to_key(A,C);
                 key_list[1] = key;

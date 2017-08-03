@@ -201,7 +201,7 @@ namespace AMR {
             */
             void refine_one_to_four(size_t tet_id)
             {
-                bool face_refine = false;
+                //bool face_refine = false;
                 size_t face_refine_id = 0; // FIXME: Does this need a better default
                 face_list_t face_list = tet_store->generate_face_lists(tet_id);
 
@@ -239,13 +239,13 @@ namespace AMR {
                     if (num_face_refine_edges >= 2)
                     {
                         assert(num_face_refine_edges < 4);
-                        face_refine = true;
+                        //face_refine = true;
                         face_refine_id = face;
                         break;
                     }
                 }
 
-                assert(face_refine);
+                //assert(face_refine);
 
                 tet_t tet = tet_store->get(tet_id);
                 size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
@@ -564,7 +564,7 @@ namespace AMR {
                     }
                 }
 
-                //assert(found_break);
+                //(found_break);
 
                 return returned_nodes;
             }

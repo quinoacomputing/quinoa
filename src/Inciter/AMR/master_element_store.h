@@ -99,7 +99,7 @@ namespace AMR {
             /**
              * @brief Accessor method to retrieve master element by element id
              *
-             * @param element_id The element_id of the master_element to fetch
+             * @param id The element_id of the master_element to fetch
              *
              * @return The master_element which represents the corresponding tet
              */

@@ -31,6 +31,13 @@ class edge_t {
             data = e.data;
         }
 
+        // TODO: Sanity check this
+        edge_t& operator=(const edge_t& e)
+        {
+            data = e.data;
+            return *this;
+        }
+
         // Operators
             // Piggy back underlying edge_ type where possible
         bool operator==(const edge_t& rhs) const
