@@ -113,13 +113,13 @@ namespace AMR {
                 size_t min = std::min(A,B);
                 size_t max = std::max(A,B);
 
-                for (int i = 0; i < size(); i++)
+                for (size_t i = 0; i < size(); i++)
                 {
                     // Did we find it?
                     node_pair_t n = get(i);
                     if (min == n[0] && max == n[1])
                     {
-                        return i;
+                        return static_cast<int>(i);
                     }
                 }
                 return -1;

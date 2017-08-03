@@ -12,7 +12,6 @@
 #include "node_store.h"
 
 #include "refinement.h"
-#include "derefinement.h"
 
 #include "Refinement_State.h"
 

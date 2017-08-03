@@ -355,8 +355,6 @@ namespace AMR {
                             case Refinement_Case::none:
                                 val = 0.0;
                                 break;
-                            default:
-                                val = -1.0;
                         }
                         cell_type_list.push_back(val);
                     }
@@ -508,7 +506,7 @@ namespace AMR {
                 int one_to_two = 0;
                 int one_to_four = 0;
                 int one_to_eight = 0;
-                int unknown = 0;
+                int other = 0;
 
                 for (const auto& kv : tets)
                 {
@@ -529,8 +527,18 @@ namespace AMR {
                             case Refinement_Case::initial_grid:
                                 initial_grid++;
                                 break;
-                            default:
-                                unknown++;
+                            case Refinement_Case::two_to_eight:
+                                // Don't care (yet)
+                                other++;
+                                break;
+                            case Refinement_Case::four_to_eight:
+                                // Don't care (yet)
+                                other++;
+                                break;
+                            case Refinement_Case::none:
+                                // Don't care (yet)
+                                other++;
+                                break;
                         }
 
                     }
@@ -541,6 +549,7 @@ namespace AMR {
                 std::cout << "  --> 1:2 = " << one_to_two << std::endl;
                 std::cout << "  --> 1:4 = " << one_to_four << std::endl;
                 std::cout << "  --> 1:8 = " << one_to_eight << std::endl;
+                std::cout << "  --> other = " << other << std::endl;
             }
 
             edge_list_t generate_edge_keys(size_t tet_id)
