@@ -10,9 +10,8 @@ git:
 
 env:
   matrix:
-    - DISTRO=gentoo DOCKERHUB=true
+    - DISTRO=gentoo DOCKERHUB=true WERROR=on
     - DISTRO=gentoo COVERAGE=ON
-    - DISTRO=gentoo WERROR=ON
     - DISTRO=alpine SONARQUBE=ON COVERAGE=ON RUNNER_ARGS="-mca plm isolated"
 
 script:
