@@ -648,9 +648,9 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real beta3 = c0 * c1 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
         tk::real beta1 = bprime[c] / (1.0 + d2/d/d + d2/d/d/ds) *
                          (1.0 + beta2*thetab*f + beta3*thetab*(1.0-thetab)*f);
-        b[c] = beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts;
+        b[c] = beta1 * ts;
         // cleanup of current baseline:
-        k[c] = kprime[c] * beta1 * (1.0+r[c]*yt)/(1.0+r[c]) * ts * ds;
+        k[c] = kprime[c] * beta1 * ts * ds;
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
