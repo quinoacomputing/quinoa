@@ -587,7 +587,7 @@ namespace AMR {
                     size_t edge_node_B_id = edge.second();
 
                     if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
-                        tet_store->edge_store.get(edge).lockCase = lock_case;
+                        tet_store->edge_store.get(edge).lock_case = lock_case;
                     }
                 }
             }
@@ -657,6 +657,7 @@ namespace AMR {
             }
 
             /* Not currently used..
+            // TODO: Re-enable this
             // TODO: Document This.
             void derefine_four_to_two(size_t parent_id)
             {
@@ -690,7 +691,13 @@ namespace AMR {
                 }
             }
 
-            // TODO: Document this
+            /**
+             * @brief Function to delete all intermediate edges for a given
+             * tet_id. Useful for de-refining, as they're the edges which were
+             * added
+             *
+             * @param tet_id ID of the tet for which we will delete intermediates
+             */
             void delete_intermediates(size_t tet_id)
             {
                 edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
@@ -699,7 +706,7 @@ namespace AMR {
                     edge_t edge = edge_list[k];
                     // accept this code may try delete an edge which has already gone
                     if (tet_store->edge_store.exists(edge)) {
-                        if (tet_store->edge_store.get(edge).lockCase == Edge_Lock_Case::intermediate)
+                        if (tet_store->edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
                         {
                             tet_store->edge_store.erase(edge);
                         }

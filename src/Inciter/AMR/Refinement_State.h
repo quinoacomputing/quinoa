@@ -30,7 +30,7 @@ namespace AMR {
         bool needs_refining; // TODO: This could possibly be deduced implicitly
         bool needs_derefining; // TODO: Marge this with needs_refining
         bool is_dead;
-        Edge_Lock_Case lockCase; // TODO: Refactor this to match _ style?
+        Edge_Lock_Case lock_case;
 
         // Explicit Empty Constructor
         Edge_Refinement() {
@@ -40,7 +40,7 @@ namespace AMR {
             needs_refining = false;
             needs_derefining = false;
             is_dead = false;
-            lockCase = Edge_Lock_Case::unlocked;
+            lock_case = Edge_Lock_Case::unlocked;
         }
 
         // Explicit copy Constructor
@@ -51,7 +51,7 @@ namespace AMR {
             needs_refining(a.needs_refining),
             needs_derefining(a.needs_derefining),
             is_dead(a.is_dead),
-            lockCase(a.lockCase)
+            lock_case(a.lock_case)
         {
             // Empty
         }
@@ -65,7 +65,7 @@ namespace AMR {
                 bool needs_refining_in,
                 bool needs_derefining_in,
                 bool is_dead_in,
-                Edge_Lock_Case lockCase_in
+                Edge_Lock_Case lock_case_in
                 ) :
             A(A_in),
             B(B_in),
@@ -73,7 +73,7 @@ namespace AMR {
             needs_refining(needs_refining_in),
             needs_derefining(needs_derefining_in),
             is_dead(is_dead_in),
-            lockCase(lockCase_in)
+            lock_case(lock_case_in)
         {
             // Empty, all implicit.
             // Could add logic here to reconcile needs_refining and needs_derefining
