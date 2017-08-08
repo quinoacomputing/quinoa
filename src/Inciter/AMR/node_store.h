@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include "Base/Exception.h"
 #include "types.h"
 #include "tet_store.h"
 
@@ -225,7 +226,7 @@ namespace AMR {
              */
             coordinate_t id_to_coordinate(size_t id)
             {
-                assert( id < size());
+                Assert( id < size(), "Invalid ID");
 
                 // Note: extra braces are to appease Clangs warning generator.
                 //   (It's probably ok to remove them....)

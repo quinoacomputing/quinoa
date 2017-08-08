@@ -4,6 +4,7 @@
 #include <map>
 #include <algorithm>
 
+#include "Base/Exception.h"
 #include "Refinement_State.h"
 
 namespace AMR {
@@ -102,7 +103,7 @@ namespace AMR {
              */
             Refinement_State& get(size_t id)
             {
-                assert( exists(id) );
+                Assert( exists(id), "ID does not exist" );
                 return master_elements.at(id);
             }
 
@@ -149,33 +150,17 @@ namespace AMR {
             {
                 get(parent_id).children.push_back(child_id);
                 get(parent_id).num_children++;
-                assert( get(parent_id).num_children <= 8);
+
+                Assert(
+                    get(parent_id).num_children <= 8,
+                    "Addition would violate max child rules"
+                );
             }
 
             size_t get_child_id(size_t parent_id, size_t offset)
             {
-                assert(offset < get(parent_id).children.size());
+                Assert(offset < get(parent_id).children.size(), "Child ID out of range");
                 return get(parent_id).children[offset];
-            }
-
-            void replace(size_t old_id, size_t new_id)
-            {
-                // Swap id out in map
-                auto i = master_elements.find(old_id);
-                auto value = i->second;
-                master_elements.erase(i);
-                master_elements[new_id] = value;
-
-                // Replace child reference too
-                auto children = get(new_id).children;
-                std::replace (children.begin(), children.end(), old_id, new_id);
-
-                // Iterate over children and update their parent
-                for (auto c : children)
-                {
-                    get(c).parent_id = new_id;
-                }
-
             }
 
     };

@@ -32,7 +32,6 @@ namespace AMR {
         bool is_dead;
         Edge_Lock_Case lock_case;
 
-        // Explicit Empty Constructor
         Edge_Refinement() :
             A(0),
             B(0),
@@ -70,9 +69,8 @@ namespace AMR {
     };
 
     //stop it being copied around?
-
-    class Refinement_State {
-
+    class Refinement_State
+    {
         public:
 
             /// Common to active and master elements
@@ -83,14 +81,6 @@ namespace AMR {
             size_t refinement_level;
             size_t child_number;
             size_t parent_id;
-
-            // Only needed for active
-            //size_t master_element_number = 0; // TODO: Some of these can be removed?
-
-            // Constructor
-            Refinement_State() {
-                // Empty
-            }
 
             /**
              * @brief Constructor which allows for all data fields to be explicitly

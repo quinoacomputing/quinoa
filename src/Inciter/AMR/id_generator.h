@@ -2,7 +2,7 @@
 #define AMR_id_generator_h
 
 #include <limits>
-#include <cassert>
+#include "Base/Exception.h"
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
@@ -124,7 +124,10 @@ namespace AMR {
             static size_t get_child_id(size_t parent_id, size_t offset)
             {
                 // Try detect overflow
-                assert( parent_id <= get_parent_id(std::numeric_limits<size_t>::max()));
+                Assert(
+                    parent_id <= get_parent_id(std::numeric_limits<size_t>::max()),
+                    "Parent id is too large to make sense"
+                );
                 return get_child_id(parent_id) + offset;
             }
 

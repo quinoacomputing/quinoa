@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "Base/Exception.h"
 #include "tet_store.h"
 #include "node_connectivity.h"
 
@@ -49,12 +50,17 @@ namespace AMR {
                 Refinement_State& master_element = tet_store->data(tet_id);
 
                 // These asserts mean we never actually try refine a 1:2 or 1:4
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_two);
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_four);
+                Assert(
+                    master_element.refinement_case != Refinement_Case::one_to_two,
+                    "Trying to refine a 1:2 (not allowed)"
+                );
 
-                assert( tet_store->is_active(tet_id) );
+                Assert(
+                    master_element.refinement_case != Refinement_Case::one_to_four,
+                    "Trying to refine a 1:4 (not allowed)"
+                );
+
+                Assert( tet_store->is_active(tet_id), "ID is not active" );
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level >= MAX_REFINEMENT_LEVEL)
@@ -224,8 +230,6 @@ namespace AMR {
                     }
                     if (num_face_refine_edges >= 2)
                     {
-                        assert(num_face_refine_edges < 4);
-                        //face_refine = true;
                         face_refine_id = face;
                         break;
                     }
@@ -606,19 +610,19 @@ namespace AMR {
             // TODO: Document This.
             void derefine_four_to_two(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
 
             // TODO: Document This.
             void derefine_eight_to_two(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
 
             // TODO: Document This.
             void derefine_eight_to_four(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
             */
 

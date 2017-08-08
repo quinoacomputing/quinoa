@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 
+#include "Base/Exception.h"
+
 #include "types.h"
 #include "active_element_store.h"
 #include "master_element_store.h"
@@ -79,7 +81,7 @@ namespace AMR {
             // TODO: Rename this?
             void insert(size_t id, tet_t t)
             {
-                assert( !exists(id) );
+                Assert( !exists(id), "ID already exists" );
                 tets.insert( std::pair<size_t, tet_t>(id, t));
             }
 
@@ -92,7 +94,7 @@ namespace AMR {
              */
             tet_t get( size_t id )
             {
-                assert( exists(id) );
+                Assert( exists(id), "ID does not exist" );
                 return tets.at(id);
             }
 
@@ -120,18 +122,19 @@ namespace AMR {
              *
              * @param nodes The node ids which make up the tet
              */
-            void store_tet(size_t id, tet_t nodes) {
-
+            void store_tet(size_t id, tet_t nodes)
+            {
                 insert(id, nodes);
 
                 // Sanity check the storage ids
                 // (this is probably better in a function/2d loop)
-                assert( nodes[0] != nodes[1] );
-                assert( nodes[0] != nodes[2] );
-                assert( nodes[0] != nodes[3] );
-                assert( nodes[1] != nodes[2] );
-                assert( nodes[1] != nodes[3] );
-                assert( nodes[2] != nodes[3] );
+                // TODO: Dry this
+                Assert( nodes[0] != nodes[1], "Tet has duplicate node ID" );
+                Assert( nodes[0] != nodes[2], "Tet has duplicate node ID" );
+                Assert( nodes[0] != nodes[3], "Tet has duplicate node ID" );
+                Assert( nodes[1] != nodes[2], "Tet has duplicate node ID" );
+                Assert( nodes[1] != nodes[3], "Tet has duplicate node ID" );
+                Assert( nodes[2] != nodes[3], "Tet has duplicate node ID" );
             }
 
             /**
@@ -262,7 +265,7 @@ namespace AMR {
              */
             void add_center(size_t id)
             {
-                assert( !is_center(id) );
+                Assert( !is_center(id), "Center Node already added" );
                 center_tets.insert(id);
             }
 
@@ -659,6 +662,7 @@ namespace AMR {
                 return master_elements.get_parent(id);
             }
 
+            /*
             void update_id(size_t old_id, size_t new_id)
             {
                 // General map replacement idiom. VERY slow. Map keys are just
@@ -684,6 +688,7 @@ namespace AMR {
                 // Update edges..
                 // TODO: This
             }
+            */
 
             void replace(size_t old_id, size_t new_id)
             {

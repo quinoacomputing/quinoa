@@ -2,6 +2,7 @@
 #define AMR_node_connectivity_h
 
 #include <vector>
+#include "Base/Exception.h"
 
 namespace AMR {
 
@@ -99,7 +100,7 @@ namespace AMR {
                         result = 0;
                         break;
                     default: // something went horribly wrong..
-                        assert(0);
+                        Assert(0, "Invalid Opposite Index");
                         break;
                 }
 
@@ -130,7 +131,7 @@ namespace AMR {
             {
                 if (A != 0 || B != 0)
                 {
-                    assert(A != B);
+                    Assert(A != B, "Trying to add node with duplicated ID");
                     // TODO: Abstract to exists method. (Could have one for id,
                     // as well as one for val)
 

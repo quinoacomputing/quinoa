@@ -1,5 +1,7 @@
 #include "mesh_adapter.h"
 
+#include "Base/Exception.h"
+
 namespace AMR {
 
     void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)
@@ -296,7 +298,7 @@ namespace AMR {
                         break;
                         // No need for default as enum is explicitly covered?
                     //default:
-                        //assert(0);
+                        //Assert(0);
                         //break;
                 }
                 // Mark tet as not needing refinement
@@ -320,7 +322,7 @@ namespace AMR {
             }
             else {
                 std::cout << "num children " << element.num_children << std::endl;
-                assert(0);
+                Assert(0);
             }
 
             //trace_out << "parent_id " << i << std::endl;

@@ -1,6 +1,8 @@
 #ifndef AMR_edge_store_h
 #define AMR_edge_store_h
 
+#include "Base/Exception.h"
+
 namespace AMR {
 
     class edge_store_t {
@@ -54,7 +56,7 @@ namespace AMR {
              */
             void generate(size_t A, size_t B, Edge_Lock_Case lock_case)
             {
-                assert(A != B);
+                Assert(A != B, "Trying to add edge between duplicate IDs");
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
@@ -82,8 +84,8 @@ namespace AMR {
              */
             Edge_Refinement& get(edge_t key)
             {
-                assert( exists(key) );
-                return edges.at(key);
+                Assert( exists(key), "Key does not exist" );
+                return edges[key];
             }
 
             Edge_Lock_Case lock_case(edge_t key)
@@ -185,7 +187,7 @@ namespace AMR {
              */
             void mark_for_refinement(edge_t key)
             {
-                    assert( exists(key) );
+                    Assert( exists(key), "Key does not exist" );
                     get(key).needs_refining = true;
             }
 
@@ -196,7 +198,7 @@ namespace AMR {
              */
             void unmark_for_refinement(edge_t key)
             {
-                    assert( exists(key) );
+                    Assert( exists(key), "Key does not exist");
                     get(key).needs_refining = false;
             }
 
