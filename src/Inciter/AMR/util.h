@@ -5,7 +5,6 @@
 #include <vector>
 #include <sstream>
 
-#include "Loggers.h"
 #include "types.h"
 
 namespace AMR {
