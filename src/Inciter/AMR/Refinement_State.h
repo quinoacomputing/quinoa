@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstddef>
 
-#include "types.h"
+#include "AMR_types.h"
 
 namespace AMR {
     // Types

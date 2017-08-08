@@ -5,7 +5,7 @@
 #include <vector>
 #include <sstream>
 
-#include "types.h"
+#include "AMR_types.h"
 
 namespace AMR {
     namespace util {

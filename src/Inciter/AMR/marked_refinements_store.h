@@ -49,6 +49,13 @@ namespace AMR {
                 return marked_refinements.at(id);
             }
 
+            // TODO: This should probably actually delete the element, not mark it as none?
+            // TODO: Document
+            void erase(size_t id)
+            {
+                marked_refinements[id] = Refinement_Case::none;
+            }
+
             /**
              * @brief Function to add a marked refinement to the store, which
              * is context aware based on existing values

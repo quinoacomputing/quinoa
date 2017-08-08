@@ -1,7 +1,7 @@
 #ifndef QUINOA_MESH_ADAPTER_H
 #define QUINOA_MESH_ADAPTER_H
 
-#include "types.h"
+#include "AMR_types.h"
 #include "util.h"
 #include "id_generator.h"
 
