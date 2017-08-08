@@ -294,7 +294,7 @@ void
 Distributor::estimateCenPDF( CkReductionMsg* msg )
 // *****************************************************************************
 // Estimate central PDFs
-//! \param[in] Serialized vectors of uni-, bi-, and tri-variate PDFs
+//! \param[in] msg Serialized vectors of uni-, bi-, and tri-variate PDFs
 // *****************************************************************************
 {
   // Deserialize final PDFs
@@ -449,7 +449,6 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
     pdfw.writeExodusII( p, nfo,
-                        m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 
@@ -510,7 +509,6 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
     pdfw.writeExodusII( p, nfo,
-                        m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 

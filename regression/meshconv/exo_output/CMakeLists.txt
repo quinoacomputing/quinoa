@@ -41,3 +41,14 @@ add_regression_test(multiblockexo2exo ${MESHCONV_EXECUTABLE}
                     BIN_BASELINE shear.exo.std
                     BIN_RESULT shear.exo
                     BIN_DIFF_PROG_CONF exodiff.cfg)
+
+# With reordering
+
+add_regression_test(asc2reordexo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES cube_coarse.asc_mesh cube_coarse_reord.exo.std
+                               exodiff.cfg
+                    ARGS -i cube_coarse.asc_mesh -o cube_coarse_reord.exo -v -r
+                    BIN_BASELINE cube_coarse_reord.exo.std
+                    BIN_RESULT cube_coarse_reord.exo
+                    BIN_DIFF_PROG_CONF exodiff.cfg)

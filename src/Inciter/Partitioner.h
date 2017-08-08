@@ -128,6 +128,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
+    //! \param[in] pw Particle writer proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm,
@@ -387,6 +388,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
     //! \param[in] cn Vector containing the set of potentially multiple chare
     //!   IDs that we own (i.e., contribute to) for all of our node IDs.
+    //! \param[in] ce Map associating a vector of chare IDs to edges (at which
+    //!   we added nodes during initial mesh refinement)
     //! \details Note that every PE will call this function, since query() was
     //!   called in a broadcast fashion and query() answers to every PE once.
     //!   This is more efficient than calling only the PEs from which we would
@@ -1253,6 +1256,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     ///@{
     //! \brief Signal back to host that we have done our part of reading the
     //!   mesh graph
+    //! \param[in] host Host to signal to
+    //! \param[in] nelem Nunmber of elements in mesh graph contributed
     //! \details Signaling back is done via a Charm++ typed reduction, which
     //!   also computes the sum of the number of mesh cells our PE operates on.
     void signal2host_graph_complete( const CProxy_Transporter& host,
@@ -1261,6 +1266,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                         CkCallback(CkReductionTarget(Transporter,load), host));
     }
     //! Compute average communication cost of merging the linear system
+    //! \param[in] host Host to signal to
     //! \details This is done via a Charm++ typed reduction, adding up the cost
     //!   across all PEs and reducing the result to our host chare.
     void signal2host_avecost( const CProxy_Transporter& host ) {
@@ -1271,6 +1277,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
     //! \brief Compute standard deviation of the communication cost of merging
     //!   the linear system
+    //! \param[in] host Host to signal to
     //! \param[in] var Square of the communication cost minus the average for
     //!   our PE.
     //! \details This is done via a Charm++ typed reduction, adding up the
@@ -1282,18 +1289,21 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                          host ));
     }
     //! Signal back to host that we are ready for partitioning the mesh
+    //! \param[in] host Host to signal to
     void signal2host_setup_complete( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_part(NULL), host ));
     }
     //! \brief Signal host that we are done our part of distributing mesh node
     //!   IDs and we are ready for preparing (flattening) data for reordering
+    //! \param[in] host Host to signal to
     void signal2host_distributed( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_distributed(NULL), host ));
     }
     //! \brief Signal host that we are ready for computing the communication
     //!   map, required for parallel distributed global mesh node reordering
+    //! \param[in] host Host to signal to
     void signal2host_flattened( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_flattened(NULL), host ));

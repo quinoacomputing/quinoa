@@ -834,7 +834,6 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 void
 PDFWriter::writeExodusII( const BiPDF& pdf,
                           const tk::ctr::PDFInfo& info,
-                          std::size_t it,
                           ctr::PDFCenteringType centering ) const
 // *****************************************************************************
 //  Write out standardized bivariate PDF to Exodus II format
@@ -948,11 +947,11 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
         p.second / binsize[0] / binsize[1]
                  / static_cast<tk::real>(pdf.nsample());
     }
-    writeExVar( outFile, it+1, centering, prob );
+    writeExVar( outFile, centering, prob );
 
   } else { // If user-specified sample space extents, output outpdf array
 
-    writeExVar( outFile, it+1, centering, outpdf );
+    writeExVar( outFile, centering, outpdf );
 
   }
 
@@ -962,7 +961,6 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 void
 PDFWriter::writeExodusII( const TriPDF& pdf,
                           const tk::ctr::PDFInfo& info,
-                          std::size_t it,
                           ctr::PDFCenteringType centering ) const
 // *****************************************************************************
 //  Write out standardized trivariate PDF to Exodus II format
@@ -1087,11 +1085,11 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
         q.second / binsize[0] / binsize[1] / binsize[2]
                  / static_cast<tk::real>(pdf.nsample());
     }
-    writeExVar( outFile, it+1, centering, prob );
+    writeExVar( outFile, centering, prob );
 
   } else { // If user-specified sample space extents, output outpdf array
 
-    writeExVar( outFile, it+1, centering, outpdf );
+    writeExVar( outFile, centering, outpdf );
 
   }
 
@@ -1137,7 +1135,6 @@ PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
 
 void
 PDFWriter::writeExVar( int exoFile,
-                       std::size_t,
                        ctr::PDFCenteringType centering,
                        const std::vector< tk::real >& probability ) const
 // *****************************************************************************

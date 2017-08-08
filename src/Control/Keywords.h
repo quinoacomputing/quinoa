@@ -2945,7 +2945,7 @@ using vortical_flow =
   keyword< vortical_flow_info, TAOCPP_PEGTL_STRING("vortical_flow") >;
 
 struct nl_energy_growth_info {
-  using code = Code< V >;
+  using code = Code< N >;
   static std::string name() { return "Nonlinear energy growth"; }
   static std::string shortDescription() { return
     "Select the nonlinear energy growth test problem ";}
@@ -2966,7 +2966,7 @@ using nl_energy_growth =
   keyword< nl_energy_growth_info, TAOCPP_PEGTL_STRING("nl_energy_growth") >;
 
 struct rayleigh_taylor_info {
-  using code = Code< V >;
+  using code = Code< R >;
   static std::string name() { return "Rayleigh-Taylor"; }
   static std::string shortDescription() { return
     "Select the Rayleigh-Taylor test problem "; }
@@ -2985,6 +2985,26 @@ struct rayleigh_taylor_info {
 using rayleigh_taylor =
   keyword< rayleigh_taylor_info, TAOCPP_PEGTL_STRING("rayleigh_taylor") >;
 
+struct taylor_green_info {
+  using code = Code< T >;
+  static std::string name() { return "Taylor-Green"; }
+  static std::string shortDescription() { return
+    "Select the Taylor-Green test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Taylor-Green vortex test problem. The
+    purpose of this problem is to test time accuracy and the correctness of the
+    discretization of the viscous term in the Navier-Stokes equation. Example:
+    "problem taylor_green". For more details on the flow, see G.I. Taylor, A.E.
+    Green, "Mechanism of the Production of Small Eddies from Large Ones", Proc.
+    R. Soc. Lond. A 1937 158 499-521; DOI: 10.1098/rspa.1937.0036. Published 3
+    February 1937.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using taylor_green =
+  keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
+
 struct problem_info {
   using code = Code< r >;
   static std::string name() { return "problem"; }
@@ -3000,11 +3020,12 @@ struct problem_info {
     static std::string choices() {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
+                  + slot_cyl::string() + "\' | \'"
                   + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
-                  + rayleigh_taylor::string() + "\' | \'"                  
-                  + slot_cyl::string() + '\'';
+                  + rayleigh_taylor::string() + "\' | \'"
+                  + taylor_green::string() + '\'';
     }
   };
 };
@@ -3016,8 +3037,8 @@ struct compflow_navierstokes_info {
   static std::string shortDescription() { return "Specify the Navier-Stokes "
     "(viscous) compressible flow physics configuration"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the Navier-Stokes (viscous) compressible "
-    "flow physics configuration. Example: "compflow physics navierstokes end")";
+    R"(This keyword is used to select the Navier-Stokes (viscous) compressible
+    flow physics configuration. Example: "compflow physics navierstokes end")";
     }
   struct expect {
     static std::string description() { return "string"; }
@@ -3032,14 +3053,35 @@ struct compflow_euler_info {
   static std::string shortDescription() { return "Specify the Euler (inviscid) "
     "compressible flow physics configuration"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the Euler (inviscid) compressible "
-    "flow physics configuration. Example: "compflow physics euler end")";
+    R"(This keyword is used to select the Euler (inviscid) compressible
+    flow physics configuration. Example: "compflow physics euler end")";
     }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
 using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
+
+struct artvisc_info {
+  static std::string name() { return "artificial viscosity"; }
+  static std::string shortDescription() { return
+    R"(Configure artificial viscosity)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify amount of artifical viscosity to
+    stabilize time integration of the the Euler equations. The same scalar value
+    is applied to all equations of the system. Note that while this keyword is
+    supposed to be (and recognized) in a 'compflow ... end' block, it is only
+    used for the Euler equations.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real larger than or equal to " + std::to_string(lower);
+    }
+  };
+};
+using artvisc = keyword< artvisc_info, TAOCPP_PEGTL_STRING("artvisc") >;
 
 struct advection_info {
   using code = Code< A >;
@@ -3298,9 +3340,12 @@ struct pde_ce_info {
   static std::string shortDescription() { return
     R"(Set PDE parameter(s) ce)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Example:
-    "ce -1.0".)"; }
+    R"(This keyword is used to specify a real number used to parameterize the
+    Euler equations solving the manufactured solution test case "non-linear
+    energy growth". Example: "ce -1.0". For more information on the test case see
+    Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
+    equations with relevance to Inertial Confinement Fusion", Journal of
+    Computational Physics 267 (2014) 196-209.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
@@ -3314,7 +3359,7 @@ struct pde_kappa_info {
     R"(Set PDE parameter(s) kappa)"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Exmpale:
+    parameterize a system of partial differential equations. Example:
     "kappa 0.8")"; }
   struct expect {
     using type = tk::real;
@@ -3328,12 +3373,15 @@ struct pde_r0_info {
   static std::string shortDescription() { return
     R"(Set PDE parameter(s) r0)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify a real number used to
-    parameterize a system of partial differential equations. Example:
-    "r0 2.0)"; }
+    R"(This keyword is used to specify a real number used to parameterize the
+    Euler equations solving the manufactured solution test case "non-linear
+    energy growth". Example: "r0 2.0". For more information on the test case see
+    Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
+    equations with relevance to Inertial Confinement Fusion", Journal of
+    Computational Physics 267 (2014) 196-209.)"; }
   struct expect {
     using type = tk::real;
-    static std::string description() { return "r0"; }
+    static std::string description() { return "real"; }
   };
 };
 using pde_r0 = keyword< pde_r0_info, TAOCPP_PEGTL_STRING("r0") >;

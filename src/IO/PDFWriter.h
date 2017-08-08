@@ -61,11 +61,11 @@ class PDFWriter : public tk::Writer {
 
     //! Write bivariate PDF to Exodus II file format
     void writeExodusII( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
-                        std::size_t it, ctr::PDFCenteringType centering ) const;
+                        ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to Exodus II file format
     void writeExodusII( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
-                        std::size_t it, ctr::PDFCenteringType centering ) const;
+                        ctr::PDFCenteringType centering ) const;
 
   private:
     //! Assert the number of sample space dimensions given
@@ -96,7 +96,6 @@ class PDFWriter : public tk::Writer {
 
     // Output probability density function as Exodus II results field
     void writeExVar( int exoFile,
-                     std::size_t it,
                      ctr::PDFCenteringType centering,
                      const std::vector< tk::real >& probability ) const;
 
