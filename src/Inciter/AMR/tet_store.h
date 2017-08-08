@@ -95,7 +95,7 @@ namespace AMR {
             tet_t get( size_t id )
             {
                 Assert( exists(id), "ID does not exist" );
-                return tets.at(id);
+                return tets[id];
             }
 
             /**
@@ -258,8 +258,7 @@ namespace AMR {
 
             /**
              * @brief Function to add a tet to a list which maintains what is a
-             * center tet. (The need to maintain a list could be replaced by a
-             * geometric check on the tet itself)
+             * center tet.
              *
              * @param id Id of the tet to add
              */

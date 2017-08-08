@@ -86,24 +86,6 @@ namespace AMR {
                 refine_one_to_two( tet_id, nodes[0], nodes[1]);
             }
 
-            /**
-             * @brief Method which takes a tet id, and transforms arguments
-             * into the form needed for the main 1:2 refinement method
-             *
-             * @param tet_id The id to refine 1:2
-             */
-            void refine_one_to_two(
-                    size_t tet_id,
-                    std::string edge_key
-            )
-            {
-                std::vector<std::string> nodes = util::split(edge_key,KEY_DELIM);
-                size_t edge_node_A_id =  std::stoul (nodes[0],nullptr,0);
-                size_t edge_node_B_id =  std::stoul (nodes[1],nullptr,0);
-                refine_one_to_two( tet_id, edge_node_A_id, edge_node_B_id);
-            }
-
-            /**
              * @brief Refine a given tet id into 2 children.
              * NOTE: Does not do any validity checking (currently?)
              *
@@ -138,15 +120,13 @@ namespace AMR {
                 copy_tet(&new_tet1, &original_tet);
 
                 // Replace all node ids in tet that were pointing to A with new_node_id
-                std::replace(new_tet1.begin(), new_tet1.end(), edge_node_A_id,
-                        new_node_id);
+                replace_node(&new_tet1, edge_node_A_id, new_node_id);
 
                 // Create a new tet that is based on the original
                 copy_tet(&new_tet2, &original_tet);
 
                 // Replace all node ids in tet that were pointing to B with new_node_id
-                std::replace(new_tet2.begin(), new_tet2.end(), edge_node_B_id,
-                        new_node_id);
+                replace_node(&new_tet2, edge_node_B_id, new_node_id);
 
                 // Now, update the edge list
 
@@ -451,6 +431,7 @@ namespace AMR {
              * @param out The tet to store the copy
              * @param original The tet to copy the data from
              */
+            // TODO: Is it better to rely on the copy constructor
             void copy_tet(tet_t* out, tet_t* original)
             {
                 // NOTE: This will do a deep copy, so is safer than it may look
@@ -484,8 +465,8 @@ namespace AMR {
              *
              * @return tet into data arrays the tet lives
              */
-            // TODO: Move this (or rename?)
             size_t tet_id_to_node_id(size_t tet, size_t element) {
+                Assert( element < NUM_TET_NODES, "Indexing greater than tet bounds");
                 return tet_store->get(tet)[element];
             }
 

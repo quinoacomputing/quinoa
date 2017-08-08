@@ -34,9 +34,9 @@ namespace AMR {
 
             void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
             void init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size);
-            void init(std::vector<size_t> m_tetinpoel, size_t num_nodes);
+            void init(const std::vector<size_t>& tetinpoel, size_t num_nodes);
 
-            void consume_tets( std::vector< std::size_t > m_tetinpoel );
+            void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
             void evaluate_error_estimate();
             void uniform_refinement();

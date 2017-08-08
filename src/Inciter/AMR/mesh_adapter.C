@@ -18,31 +18,31 @@ namespace AMR {
         //init(); // TODO: This also needs to call init if you want node support to work
     }
 
-    void mesh_adapter_t::init(std::vector<size_t> m_tetinpoel, size_t num_nodes) {
+    void mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes) {
         node_connectivity.fill_initial_nodes(num_nodes);
 
         refiner = new AMR::refinement_t(&tet_store, &node_connectivity);
 
-        consume_tets(m_tetinpoel);
+        consume_tets(tetinpoel);
         tet_store.generate_edges();
     }
 
     // This would be a candidate for a nice design pattern with runtime
     // selectable functionality..
     // TODO: Document this
-    void mesh_adapter_t::consume_tets( std::vector< std::size_t > m_tetinpoel )
+    void mesh_adapter_t::consume_tets(const std::vector< std::size_t >& tetinpoel )
     {
-        for (size_t i = 0; i < m_tetinpoel.size(); i+=4)
+        for (size_t i = 0; i < tetinpoel.size(); i+=4)
         {
             tet_t t = {
-                {   m_tetinpoel[i],
-                    m_tetinpoel[i+1],
-                    m_tetinpoel[i+2],
-                    m_tetinpoel[i+3]
+                {
+                    tetinpoel[i],
+                    tetinpoel[i+1],
+                    tetinpoel[i+2],
+                    tetinpoel[i+3]
                 }
             };
 
-            //trace_out << "Consume tet " << i << std::endl;
             tet_store.add(t, AMR::Refinement_Case::initial_grid);
         }
     }
@@ -138,8 +138,6 @@ namespace AMR {
             {
                 size_t tet_id = kv.first;
 
-                //trace_out << "Process tet " << tet_id << std::endl;
-
                 //Only apply checks to tets on the active list
                 if (tet_store.is_active(tet_id)) {
                     int compatibility = 1;
@@ -162,8 +160,6 @@ namespace AMR {
                         // Count Locked Edges
                         if(tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
                         {
-                            //trace_out << "Found locked edge " << key << std::endl;
-                            //trace_out << "Locked :" << tet_store.edge_store.get(key).lock_case << std::endl;
                             num_locked_edges++;
                         }
                         else
@@ -174,17 +170,11 @@ namespace AMR {
                             if (tet_store.edge_store.get(key).needs_refining)
                             {
                                 num_to_refine++;
-                                //trace_out << "key needs ref " << key << std::endl;
                             }
                         }
                     }
 
-                    // TODO: Should this be a reference?
                     AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
-
-                    //trace_out << "Checking " << tet_id <<
-                        //" num ref " << num_to_refine <<
-                        //std::endl;
 
                     //If we have any tets to refine
                     if (num_to_refine > 0)
@@ -192,8 +182,6 @@ namespace AMR {
                         //Determine compatibility case
                         compatibility = detect_compatibility(num_locked_edges,
                                 refinement_case);
-
-                        //trace_out << "compatibility " << compatibility << std::endl;
 
                         // Now check num_to_refine against situations
                         if (compatibility == 1)
@@ -228,20 +216,14 @@ namespace AMR {
                         tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
                     }
                 } // if active
-                else {
-                    //trace_out << "Inactive" << std::endl;
-                }
             } // For
 
             // If nothing changed during that round, break
             if (!tet_store.marked_refinements.get_state_changed())
             {
-                //trace_out << "Terminating loop at iter " << iter << std::endl;
                 break;
             }
-            //trace_out << "End iter " << iter << std::endl;
         }
-        //trace_out << "Loop took " << iter << " rounds." << std::endl;
 
         std::cout << "Print Tets" << std::endl;
         print_tets();
@@ -261,8 +243,6 @@ namespace AMR {
     {
         // Track tets which needs to be deleted this iteration
         std::set<size_t> round_two;
-
-        //trace_out << "Perform ref" << std::endl;
 
         // Do refinements
         for (const auto& kv : tet_store.tets)
@@ -308,8 +288,6 @@ namespace AMR {
 
         for (const auto i : round_two)
         {
-            //trace_out << "i " << i << std::endl;
-
             AMR::Refinement_State& element = tet_store.data(i);
 
             if (element.num_children == 2)
@@ -325,7 +303,6 @@ namespace AMR {
                 Assert(0, "Invalid number of children");
             }
 
-            //trace_out << "parent_id " << i << std::endl;
             refiner->refine_one_to_eight(i);
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
@@ -345,7 +322,6 @@ namespace AMR {
         std::cout << "Total Tets : " << tet_store.size() << std::endl;
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
-        //trace_out << "Done ref" << std::endl;
         tet_store.print_node_types();
         //node_connectivity.print();
     }
@@ -358,8 +334,6 @@ namespace AMR {
      */
     void mesh_adapter_t::refinement_class_one(int num_to_refine, size_t tet_id)
     {
-        //trace_out << "Refinement Class One" << std::endl;
-
         // "If nrefine = 1
         // Accept as a 1:2 refinement"
         if (num_to_refine == 1)
@@ -388,12 +362,6 @@ namespace AMR {
                 int num_face_refine_edges = 0;
                 face_ids_t face_ids = face_list[face];
 
-                //trace_out << "Face is " <<
-                    //face_ids[0] << ", " <<
-                    //face_ids[1] << ", " <<
-                    //face_ids[2] << ", " <<
-                    //std::endl;
-
                 edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_ids);
                 // For this face list, see which ones need refining
                 for (size_t k = 0; k < NUM_FACE_NODES; k++)
@@ -408,7 +376,6 @@ namespace AMR {
                 {
                     edges_on_same_face = true;
                     face_refine_id = face;
-                    //trace_out << "Breaking with face value " << face << std::endl;
                     break;
                 }
             }
@@ -423,10 +390,6 @@ namespace AMR {
 
                 //tet_t tet = tet_store.get(tet_id);
                 //size_t opposite_id = tet[opposite_offset];
-
-                //trace_out << "face_refine_id " << face_refine_id << std::endl;
-                //trace_out << "opposite_offset " << opposite_offset << std::endl;
-                //trace_out << "opposite_id " << opposite_id << std::endl;
 
                 // Activate edges on this face
                 edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_list[face_refine_id]);
@@ -470,7 +433,6 @@ namespace AMR {
             edge_t key = edge_list[k];
             if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
             {
-                //trace_out << "LOCKING! " << key << std::endl;
                 tet_store.edge_store.get(key).lock_case = AMR::Edge_Lock_Case::locked;
             }
         }
@@ -485,7 +447,6 @@ namespace AMR {
             edge_t key = edge_list[k];
 
             tet_store.edge_store.unmark_for_refinement(key);
-            //trace_out << "Deactivating " << key << std::endl;
             // TODO: Should this also set something to not need derefining?
             tet_store.edge_store.get(key).needs_derefining = false;
         }
@@ -497,10 +458,8 @@ namespace AMR {
      * @param edge_list The list of edges for the given tet
      * @param tet_id The id of the given tet
      */
-    void mesh_adapter_t::refinement_class_two(edge_list_t edge_list, size_t tet_id) {
-
-        //trace_out << "Refinement Class Two" << std::endl;
-
+    void mesh_adapter_t::refinement_class_two(edge_list_t edge_list, size_t tet_id)
+    {
         // "Deactivate all locked edges"
 
         // count number of active edges
@@ -569,16 +528,6 @@ namespace AMR {
         // Accept as a 1:4 refinement"
         else if (face_refine)
         {
-            //size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
-
-            //tet_t tet = tet_store.get(tet_id);
-            //size_t opposite_id = tet[opposite_offset];
-
-            //trace_out << "Tet ID " << tet_id << std::endl;
-            //trace_out << "Opposite offset " << opposite_offset << std::endl;
-            //trace_out << "Opposite id " << opposite_id << std::endl;
-            //trace_out << "Face refine id " << face_refine_id << std::endl;
-
             edge_list_t face_edge_list =
                 AMR::edge_store_t::generate_keys_from_face_ids(face_list[face_refine_id]);
 
@@ -596,7 +545,6 @@ namespace AMR {
         // Deactivate all edges
         // Mark all edges as locked"
         else {
-            //trace_out << "Class 2 causes some locking.." << std::endl;
             deactivate_tet_edges(tet_id);
             lock_tet_edges(tet_id);
         }
@@ -628,31 +576,26 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            //trace_out << "Key " << key << std::endl;
 
             // Count intermediate edges
             if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate)
             {
-                //trace_out << "found intermediate" << std::endl;
                 num_intermediate++;
             }
 
             // Count number of marked for refinement
             if (tet_store.edge_store.get(key).needs_refining)
             {
-                //trace_out << "found refine" << std::endl;
                 num_to_refine++;
             }
 
             if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
             {
-                //trace_out << "found unlocked" << std::endl;
                 unlocked++;
             }
 
             if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
             {
-                //trace_out << "found locked" << std::endl;
                 locked++;
             }
 
@@ -660,28 +603,12 @@ namespace AMR {
 
         AMR::Refinement_State& element = tet_store.data(child_id);
 
-        //trace_out <<
-            //"Intermediates " << num_intermediate <<
-            //" num to refine " << num_to_refine <<
-            //" unlocked " << unlocked <<
-            //" locked " << locked <<
-            //" Case " << element.refinement_case <<
-            //std::endl;
-
         // check if element is 1:2
         if (element.refinement_case == AMR::Refinement_Case::one_to_two)
         {
             // If so check it has 3 intermediates and 3 which need refining
             if (num_intermediate != 3 || num_to_refine != 3) {
                 return false;
-            }
-            else {
-                //trace_out << "True " <<
-                    //"Intermediates " << num_intermediate <<
-                    //" num to refine " << num_to_refine <<
-                    //" Case " << element.refinement_case <<
-                    //" 2:1 " << AMR::Refinement_Case::one_to_two <<
-                    //std::endl;
             }
         }
 
@@ -698,14 +625,12 @@ namespace AMR {
             {
                 if (num_to_refine != 0 || num_intermediate != 6)
                 {
-                    //trace_out << "Fail compat 1:4 center" << std::endl;
                     return false;
                 }
             }
             else { // Is one of the outsides (not center)
                 if (num_to_refine != 1 || num_intermediate != 5)
                 {
-                    //trace_out << "Fail compat 1:4 non center" << std::endl;
                     return false;
                 }
             }
@@ -721,16 +646,13 @@ namespace AMR {
      * 3" from the paper
      */
     // TODO: Does this parse a childs siblings multiple times?
-    void mesh_adapter_t::refinement_class_three(size_t tet_id) {
-
-        //trace_out << "Refinement Class Three" << std::endl;
+    void mesh_adapter_t::refinement_class_three(size_t tet_id)
+    {
 
         // "Identify parent element iparent"
         // TODO: WE should either always use the id to fetch, or always do the data lookup
         //size_t parent_id = master_elements.get_parent(tet_id);
         size_t parent_id = tet_store.get_parent_id(tet_id);
-
-        //trace_out << "Parent id = " << parent_id << std::endl;
 
         // NOTE: This implies comms when we use these ids?
         child_id_list_t children = tet_store.data(parent_id).children;
@@ -741,14 +663,12 @@ namespace AMR {
         for (size_t i = 0; i < children.size(); i++)
         {
             // TODO: Is this in element or tet ids?
-            //trace_out << "Checking child " << children[i] << std::endl;
             edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
             for (size_t k = 0; k < NUM_TET_EDGES; k++)
             {
                 edge_t key = edge_list[k];
-                //trace_out << "Compat 3 " << key << std::endl;
-                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked) {
-                    //trace_out << "Compat 3 marking edge " << key << std::endl;
+                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+                {
                     tet_store.edge_store.mark_for_refinement(key);
                 }
                 else {
@@ -768,14 +688,7 @@ namespace AMR {
             size_t child = children[i];
             if ( !check_valid_refinement_case(child) )
             {
-                //trace_out <<
-                // "Compat 3 Marking compatible false because of invalid refinement case"
-                // << std::endl;
-
                 compatible = false;
-            }
-            else {
-                //trace_out << "Is compatible" << std::endl;
             }
         }
 
@@ -791,13 +704,9 @@ namespace AMR {
                 size_t child = children[i];
                 deactivate_tet_edges(child);
                 lock_tet_edges(child);
-                //trace_out << "Compat 3 locking edges of " << child << std::endl;
-                // TODO: Mark tet as "normal"
-                // This may be implicit?
             }
         }
         else {
-            //trace_out << "TIME TO 2:8" << std::endl;
             // Accept as 2:8 or 4:8
             AMR::Refinement_State& element = tet_store.data(tet_id);
             if (element.refinement_case == AMR::Refinement_Case::one_to_two)
