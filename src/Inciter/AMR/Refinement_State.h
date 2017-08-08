@@ -33,25 +33,14 @@ namespace AMR {
         Edge_Lock_Case lock_case;
 
         // Explicit Empty Constructor
-        Edge_Refinement() {
-            A = 0;
-            B = 0;
-            refinement_criteria = 0.0;
-            needs_refining = false;
-            needs_derefining = false;
-            is_dead = false;
-            lock_case = Edge_Lock_Case::unlocked;
-        }
-
-        // Explicit copy Constructor
-        Edge_Refinement(const Edge_Refinement& a) :
-            A(a.A),
-            B(a.B),
-            refinement_criteria(a.refinement_criteria),
-            needs_refining(a.needs_refining),
-            needs_derefining(a.needs_derefining),
-            is_dead(a.is_dead),
-            lock_case(a.lock_case)
+        Edge_Refinement() :
+            A(0),
+            B(0),
+            refinement_criteria(0.0),
+            needs_refining(false),
+            needs_derefining(false),
+            is_dead(false),
+            lock_case(Edge_Lock_Case::unlocked)
         {
             // Empty
         }
@@ -66,7 +55,7 @@ namespace AMR {
                 bool needs_derefining_in,
                 bool is_dead_in,
                 Edge_Lock_Case lock_case_in
-                ) :
+        ) :
             A(A_in),
             B(B_in),
             refinement_criteria(refinement_criteria_in),

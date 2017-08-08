@@ -76,7 +76,7 @@ namespace AMR {
             {
 								for (size_t i = 0; i < size(); i++)
 								{
-										trace_out << "Node " << i << " has coords :" <<
+                    std::cout << "Node " << i << " has coords :" <<
 												x(i) << ", " <<
 												y(i) << ", " <<
 												z(i) << ", " <<
@@ -103,12 +103,10 @@ namespace AMR {
 
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(x,y,z);
-                    (*m_graphsize)++; // TODO: how to deal with this?
-                    trace_out << "--> Made " << return_node_id << std::endl;
+                    (*m_graphsize)++; // TODO: how best to deal with this?
                     return return_node_id;
                 }
                 else {
-                    trace_out << "--> Reusing " << already_exists << std::endl;
                     return static_cast<size_t>(already_exists);
                 }
 
@@ -161,11 +159,9 @@ namespace AMR {
                 if (already_exists == -1) {
                     size_t return_node_id = add_coordinates(x,y,z);
                     (*m_graphsize)++; // TODO: how to deal with this?
-                    trace_out << "--> Made " << return_node_id << std::endl;
                     return return_node_id;
                 }
                 else {
-                    trace_out << "--> Reusing " << already_exists << std::endl;
                     return static_cast<size_t>(already_exists);
                 }
 
@@ -196,9 +192,7 @@ namespace AMR {
                         std::abs( z(i) - z_in) < eps
                     )
                     {
-                        trace_out << "!!!! x " << x_in << " y " << y_in <<
-                            " z " << z_in << " exits " << std::endl;
-                            return static_cast<int>(i);
+                        return static_cast<int>(i);
                     }
                 }
 

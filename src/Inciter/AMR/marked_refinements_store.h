@@ -29,9 +29,6 @@ namespace AMR {
                 auto f = marked_refinements.find(id);
                 if (f != marked_refinements.end())
                 {
-                    trace_out << "Marked element " << id << " has value " <<
-                        f->second << std::endl;
-
                     return true;
                 }
                 return false;
@@ -68,20 +65,13 @@ namespace AMR {
                 {
                     if (marked_refinements[id] != r)
                     {
-                        trace_out << "Updating marked value to " << r <<
-                            " was " << marked_refinements[id] << std::endl;
-
                         marked_refinements[id] = r;
 
                         // TODO :Find a better way to handle/update this global
                         refinement_state_changed = true;
                     }
-                    else {
-                        trace_out << "Not setting marked refinement val as same val"<< std::endl;
-                    }
                 }
                 else {
-                    trace_out << "Adding new marked value " << id << std::endl;
                     marked_refinements.insert( std::pair<size_t, Refinement_Case>(id, r));
                     refinement_state_changed = true;
                 }

@@ -87,9 +87,6 @@ namespace AMR {
                 size_t refinement_level =
                     get(parent_id).refinement_level + 1;
 
-                trace_out << "Refinement Level " << refinement_level <<
-                    std::endl;
-
                 add(element_number, refinement_case,
                         refinement_level, parent_id);
 
@@ -123,7 +120,6 @@ namespace AMR {
                 auto f = master_elements.find(id);
                 if (f != master_elements.end())
                 {
-                    trace_out << "master_elements " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;

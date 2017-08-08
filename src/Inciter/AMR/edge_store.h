@@ -82,14 +82,13 @@ namespace AMR {
              */
             Edge_Refinement& get(edge_t key)
             {
-                //trace_out << "get edge " << key << std::endl;
                 assert( exists(key) );
                 return edges.at(key);
             }
 
             Edge_Lock_Case lock_case(edge_t key)
             {
-                return get(key).lockCase;
+                return get(key).lock_case;
             }
 
             void erase(edge_t key)
@@ -173,7 +172,6 @@ namespace AMR {
                     edge_t key = nodes_to_key(pair[0], pair[1]);
 
                     mark_for_refinement(key);
-                    trace_out << get(key).needs_refining << std::endl;
                 }
             }
 
@@ -266,7 +264,7 @@ namespace AMR {
             void print() {
                 for (const auto& kv : edges)
                 {
-                    trace_out << "edge " << kv.first << " between " <<
+                    std::cout << "edge " << kv.first << " between " <<
                         kv.second.A << " and " << kv.second.B << " val " <<
                         kv.second.refinement_criteria <<
                     std::endl;

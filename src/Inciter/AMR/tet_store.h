@@ -110,7 +110,6 @@ namespace AMR {
                 auto f = tets.find(id);
                 if (f != tets.end())
                 {
-                    trace_out << "tet " << id << " exists." << std::endl;
                     return true;
                 }
                 return false;
@@ -162,9 +161,6 @@ namespace AMR {
                     size_t parent_id
             )
             {
-
-                std::cout << "id " << id << " parent " << parent_id << std::endl;
-
                 add(id, nodes, refinement_case);
 
                 // Set parent id
@@ -175,9 +171,6 @@ namespace AMR {
 
                 // Deal with updating parent
                 master_elements.add_child(parent_id, id);
-
-                trace_out << "Added child " << id << " (" <<
-                    master_elements.get(parent_id).num_children << ")" << std::endl;
             }
 
             /**
@@ -308,7 +301,6 @@ namespace AMR {
                     }
                 }
 
-                trace_out << "Made refinement level list of len " << refinement_level_list.size() << std::endl;
                 return refinement_level_list;
             }
 
@@ -360,7 +352,6 @@ namespace AMR {
                     }
                 }
 
-                trace_out << "Made cell type list of len " << cell_type_list.size() << std::endl;
                 return cell_type_list;
             }
 
@@ -412,7 +403,6 @@ namespace AMR {
                     }
                 }
 
-                trace_out << "in size " << in.size() << " active size " << active.size() << std::endl;
                 return active;
             }
 
@@ -427,8 +417,6 @@ namespace AMR {
             {
                 // TODO: If none of these methods need extra markings, then
                 // change them into a single method
-                // TODO: Mark extra edges
-                trace_out << "Mark " << tet_id << " as 1:2" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_two);
             }
 
@@ -440,7 +428,6 @@ namespace AMR {
             void mark_one_to_four(size_t tet_id)
             {
                 // TODO: Mark extra edges
-                trace_out << "Mark " << tet_id << " as 1:4" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_four);
             }
 
@@ -448,7 +435,6 @@ namespace AMR {
             void mark_two_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
-                trace_out << "Mark " << tet_id << " as 2:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::two_to_eight);
             }
 
@@ -456,7 +442,6 @@ namespace AMR {
             void mark_four_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
-                trace_out << "Mark " << tet_id << " as 4:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::four_to_eight);
             }
 
@@ -468,7 +453,6 @@ namespace AMR {
             void mark_one_to_eight(size_t tet_id)
             {
                 // TODO: Mark extra edges
-                trace_out << "Mark " << tet_id << " as 1:8" << std::endl;
                 marked_refinements.add(tet_id, Refinement_Case::one_to_eight);
             }
 
@@ -485,7 +469,7 @@ namespace AMR {
                 {
                     tet_t tet = kv.second;
 
-                    trace_out << "Tet " << kv.first << " has edges :" <<
+                    std::cout << "Tet " << kv.first << " has edges :" <<
                         tet[0] << ", " <<
                         tet[1] << ", " <<
                         tet[2] << ", " <<
@@ -593,13 +577,6 @@ namespace AMR {
                 // Hard code this for now...
                 tet_t tet = get(tet_id);
 
-                trace_out  << "Tet has nodes " <<
-                    tet[0] << ", " <<
-                    tet[1] << ", " <<
-                    tet[2] << ", " <<
-                    tet[3] << ", " <<
-                    std::endl;
-
                 face_list_t face_list;
 
                 // ABC
@@ -638,7 +615,6 @@ namespace AMR {
                 {
                     edge_t edge = edge_list[k];
                     edge_store.mark_for_refinement(edge);
-                    trace_out << "Marking edge " << edge << " for refine " << std::endl;
                 }
             }
 
