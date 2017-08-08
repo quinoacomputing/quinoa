@@ -322,7 +322,7 @@ namespace AMR {
             }
             else {
                 std::cout << "num children " << element.num_children << std::endl;
-                Assert(0);
+                Assert(0, "Invalid number of children");
             }
 
             //trace_out << "parent_id " << i << std::endl;
