@@ -40,25 +40,25 @@ module linsysmerger {
       initnode void registerBCMerger();
       entry void bounds( int pe, std::size_t lower, std::size_t upper );
       entry void enable_wait4rhs();
-      entry void addrow( int fromch,
+      entry [expedited] void addrow( int fromch,
                          int frompe,
                          const std::set< std::size_t >& row );
       entry void recrow();
       entry [reductiontarget] void addbc( CkReductionMsg* msg );
-      entry void addsol( int fromch,
+      entry [expedited] void addsol( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& solution );
-      entry void addlhs( int fromch,
+      entry [expedited] void addlhs( int fromch,
         const std::map< std::size_t,
                         std::map< std::size_t,
                                   std::vector< tk::real > > >& lhs );
-      entry void addrhs( int fromch,
+      entry [expedited] void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
-      entry void addauxrhs( int fromch,
+      entry [expedited] void addauxrhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& auxrhs );
-      entry void addauxlhs( int fromch,
+      entry [expedited] void addauxlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& auxlhs );
       entry void adddiag( int fromch,

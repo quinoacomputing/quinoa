@@ -82,7 +82,7 @@ module distributor {
       // 'wait4cen' and 'estimateCenDone'. Since there may not be any PDFs
       // estimated, having finished estimating the central moments may finish
       // the time step and 'evalulateTime' can be called (EvT). If PDFs are
-      // estimated evaluateTyme is called only after the PDFs have been
+      // estimated evaluateTime is called only after the PDFs have been
       // estimated.
       //
       // Understanding 'wait4pdf'. Once a PE has finished its part of the
@@ -132,35 +132,35 @@ module distributor {
       // estimation, the control flow in wait4ord() skips the estimation of
       // central PDFs.
 
+      // Note that estimating the ordinary moments and the ordinary PDFs are
+      // started in Integrator::accumulateOrd(), and when their accumulation
+      // step is done, a Charm++ group, Collector, collects those contributions
+      // from Integrators that happened to be on its PE. This collection is done
+      // via Collector::chareOrd(), which aggregates the partial sums (for the
+      // given PE) and forwards them to the host, Distributor. While the
+      // accumulation of the ordinary moments and the ordinary PDFs happen
+      // serially in Integrator::accumulateOrd(), their aggregation from
+      // Collectors to Distributor happen asynchronously. The same procedure is
+      // followed for the central moments and the central PDFs. If PDFs are not
+      // collected in a time step, the PDF containers are simply empty. This
+      // simplifies asynchronous logic.
+
       // SDAG wait-for: wait for ordinary moments to have been estimated
       entry void wait4ord() {
         when estimateOrdDone() serial "accumulateCen" {
-          // Start accumulating sums for central moments (every time step)
-          m_intproxy.accumulateCen( m_ordinary );
-          // Start accumulating sums for central PDFs at select times
-          if ( g_inputdeck.pdf() &&
-               !((m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
-            m_intproxy.accumulateCenPDF( m_ordinary );
-        }
-      };
-
-      // SDAG wait-for: wait for central moments to have been estimated
-      entry void wait4cen() {
-        when estimateCenDone() serial "outStat" {
-          // Output statistics to file
-          outStat();
-          // If PDFs not estimated, evaluate time step
-          if ( !g_inputdeck.pdf() ||
-                (m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >() )
-            evaluateTime();
+          // Start accumulating sums for central moments
+          m_intproxy.accumulateCen( m_it, m_ordinary );
         }
       };
 
       // SDAG wait-for: wait for PDFs to have been estimated, the two 'when'
       // statements are undestood with a logical AND between them
       entry void wait4pdf() {
-        when estimateOrdPDFDone()
-        when estimateCenPDFDone() serial "outPDF" {
+        when estimateCenDone(),
+             estimateOrdPDFDone(),
+             estimateCenPDFDone() serial "outPDF"
+        {
+          outStat();            // Output statistics to file
           outPDF();             // output PDFs to file
           evaluateTime();       // evaluate time step, compute new time step
         }
