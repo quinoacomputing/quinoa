@@ -18,10 +18,10 @@ namespace AMR {
     const size_t DEFAULT_NUM_CHILDREN = 0; // Default to no children
 
     // TODO: Populate this enum with the available refinement cases
-    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,
+    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
 
-    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};
+    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};
 
     struct Edge_Refinement {
         size_t A;

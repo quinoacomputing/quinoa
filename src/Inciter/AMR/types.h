@@ -7,6 +7,8 @@
 
 #include "../Base/Types.h"
 
+// TODO: Do we need to merge this with Base/Types.h?
+
 const int DIMENSION = 3;
 const size_t NUM_TET_NODES = 4;
 const size_t NUM_FACE_NODES = 3;
