@@ -10,7 +10,6 @@ namespace AMR {
 
     class id_generator_t {
         protected:
-            size_t START_TET_ID = 0;
             size_t start_id;
 
             // Used to track which tet_id to give the next parent
@@ -20,10 +19,11 @@ namespace AMR {
 
         public:
             // Constructor
-            id_generator_t()
+            id_generator_t(size_t start_tet_id = 0) :
+                start_id(start_tet_id),
+                next_tet_id(start_id)
             {
-                start_id = START_TET_ID;
-                next_tet_id = start_id;
+                // Empty
             }
 
             /**
@@ -50,10 +50,9 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
-                c[0] = parent_id; // TODO: Remove this. Horrific hack to suppress warning
-                for (size_t i = 0; i < count; i++)
+                for (auto& i : c)
                 {
-                    c[i] = get_next_tet_id();
+                    i = get_next_tet_id();
                 }
                 return c;
             }
@@ -69,14 +68,11 @@ namespace AMR {
             // This basically says the number of tets which can be in an initial grid
             // A sensible value is 2^20 (1,048,576) for big simulations, and anything
             // smaller for toy problems
-            size_t START_TET_ID = 1024;
+            const size_t START_TET_ID = 1024;
 
             // Constructor to reset START_TET_ID on the new value
-            morton_id_generator_t() : id_generator_t() {
-                // TODO: Is there a nice way to remove this code duplication
-                // between this and the base class?
-                id_generator_t::start_id = START_TET_ID;
-                next_tet_id = start_id;
+            morton_id_generator_t() : id_generator_t(START_TET_ID) {
+                // Empty
             }
 
             /**
@@ -125,9 +121,9 @@ namespace AMR {
             {
                 // Try detect overflow
                 Assert(
-                    parent_id <= get_parent_id(std::numeric_limits<size_t>::max()),
-                    "Parent id is too large to make sense"
-                );
+                        parent_id <= get_parent_id(std::numeric_limits<size_t>::max()),
+                        "Parent id is too large to make sense"
+                      );
                 return get_child_id(parent_id) + offset;
             }
 

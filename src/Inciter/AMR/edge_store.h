@@ -7,17 +7,7 @@ namespace AMR {
 
     class edge_store_t {
         public:
-            // TODO: convert this to an unordered map with a custom hash (can lift from Quinoa)
             edges_t edges;
-
-            // Node connectivity does this any way, but in a slightly less efficient way
-            // Maps the edge to the child node which splits it
-                // This was added retrospectivley to support the operation "for
-                // edge formed of initial nodes {A,B}, what node(s) were added
-                // between them"
-                // NOTE: At some point, this could probably be deleted..
-                // NOTE: This is only mainted by split.
-            //std::map<edge_t, size_t> children;
 
             size_t size()
             {
@@ -149,6 +139,7 @@ namespace AMR {
                 size_t B = face_ids[1];
                 size_t C = face_ids[2];
 
+                // TODO: Investigate if AB BC CA is a much better jacobian ordering
                 edge_t key = nodes_to_key(A,B);
                 key_list[0] = key; // TODO: Is it OK to use copy assignment here?
 
@@ -168,10 +159,9 @@ namespace AMR {
              * @param ids List of ids to mark for refinement
              */
             void mark_edges_for_refinement(std::vector<node_pair_t> ids) {
-                for (size_t i = 0; i < ids.size(); i++)
+                for (const auto& id : ids)
                 {
-                    node_pair_t pair = ids[i];
-                    edge_t key = nodes_to_key(pair[0], pair[1]);
+                    edge_t key = nodes_to_key(id[0], id[1]);
 
                     mark_for_refinement(key);
                 }
@@ -204,10 +194,9 @@ namespace AMR {
 
             // TODO: Document this (and implement!)
             void mark_edges_for_derefinement(std::vector<node_pair_t> ids) {
-                for (size_t i = 0; i < ids.size(); i++)
+                for (const auto& id : ids)
                 {
-                    node_pair_t pair = ids[i];
-                    edge_t key = nodes_to_key(pair[0], pair[1]);
+                    edge_t key = nodes_to_key(id[0], id[1]);
 
                     mark_edge_for_derefinement(key);
                 }
@@ -228,8 +217,7 @@ namespace AMR {
             // TODO: Should this return a pointer/reference?
             edge_list_t generate_keys(tet_t tet)
             {
-                // FIXME : Generate these with a (2d) loop and not hard code them?
-                    // DRY THIS
+                // NOTE: Generate these with a (2d) loop and not hard code them?
                 edge_list_t key_list;
 
                 size_t A = tet[0];
