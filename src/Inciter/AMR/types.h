@@ -22,7 +22,7 @@ using real_t = tk::real;
 using coordinate_t = std::array<real_t, DIMENSION>;
 using tet_t = std::array<size_t, NUM_TET_NODES>;
 
-using node_pair_t  = std::array<std::size_t, 2>; // TODO: should this be a std::pair
+using node_pair_t  = std::array<std::size_t, 2>;
 
 using face_ids_t = std::array<std::size_t, NUM_FACE_NODES>;
 using face_list_t  = std::array< face_ids_t, NUM_TET_FACES>;

@@ -639,6 +639,7 @@ namespace AMR {
                 }
             }
 
+            /*
             void unset_marked_children(size_t parent_id)
             {
                 Refinement_State& parent = data(parent_id);
@@ -646,7 +647,7 @@ namespace AMR {
                 {
                     marked_refinements.erase(c);
                 }
-            }
+            }*/
 
             child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)
             {

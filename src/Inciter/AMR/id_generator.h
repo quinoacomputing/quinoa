@@ -85,8 +85,7 @@ namespace AMR {
              */
             static size_t get_child_id(size_t parent_id)
             {
-                size_t child_id = (parent_id << ID_SHIFT);
-                return child_id;
+                return parent_id << ID_SHIFT;
             }
 
             /**
@@ -101,6 +100,7 @@ namespace AMR {
             {
                 child_id_list_t c;
                 c.resize(count);
+                // TODO: Should this be range based?
                 for (size_t i = 0; i < count; i++)
                 {
                     c[i] = get_child_id(parent_id, i);

@@ -26,6 +26,7 @@ namespace AMR {
             node_store_t& operator=(const node_store_t&) = delete;
 
         public:
+            // TODO: This needs to set the member variables
             node_store_t() { } // default cons
 
             size_t* m_graphsize;

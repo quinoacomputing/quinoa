@@ -6,8 +6,11 @@
 
 namespace AMR {
 
+    // TODO: Should we more careful about deleting things from here?
+        // Or is it OK to just set them to none?
     class marked_refinements_store_t {
         private:
+            // TODO: Make this unordered
             std::map<size_t, Refinement_Case> marked_refinements;
 
             // TODO: This probably isn't the right place for this
@@ -46,11 +49,6 @@ namespace AMR {
                 return marked_refinements.at(id);
             }
 
-            void erase(size_t id)
-            {
-                marked_refinements[id] = Refinement_Case::none;
-            }
-
             /**
              * @brief Function to add a marked refinement to the store, which
              * is context aware based on existing values
@@ -60,6 +58,9 @@ namespace AMR {
              */
             void add(size_t id, Refinement_Case r)
             {
+                // TODO: This is doing a nice double find, once in exist, and
+                    // once when looking/setting the value. We can avoid this
+
                 // Check if that active element already exists
                 if (exists(id))
                 {
@@ -67,7 +68,7 @@ namespace AMR {
                     {
                         marked_refinements[id] = r;
 
-                        // TODO :Find a better way to handle/update this global
+                        // TODO: Find a better way to handle/update this global
                         refinement_state_changed = true;
                     }
                 }
@@ -89,14 +90,6 @@ namespace AMR {
                 refinement_state_changed = t;
             }
 
-            void replace(size_t old_id, size_t new_id)
-            {
-                // Swap id out in map
-                auto i = marked_refinements.find(old_id);
-                auto value = i->second;
-                marked_refinements.erase(i);
-                marked_refinements[new_id] = value;
-            }
     };
 }
 
