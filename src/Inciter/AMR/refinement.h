@@ -86,6 +86,7 @@ namespace AMR {
                 refine_one_to_two( tet_id, nodes[0], nodes[1]);
             }
 
+            /*
              * @brief Refine a given tet id into 2 children.
              * NOTE: Does not do any validity checking (currently?)
              *
