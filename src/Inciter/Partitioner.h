@@ -837,6 +837,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details This is computed based on a simple contiguous linear
     //!   distribution of chare ids to PEs.
     int pe( int id ) const {
+      Assert( m_nchare > 0, "Number of chares must be a positive number" );
       auto p = id / (m_nchare / CkNumPes());
       if (p >= CkNumPes()) p = CkNumPes()-1;
       Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
@@ -1291,7 +1292,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] host Host to signal to
     void signal2host_setup_complete( const CProxy_Transporter& host ) {
       Group::contribute(
-        CkCallback(CkIndex_Transporter::redn_wrapper_partition(NULL), host ));
+        CkCallback(CkIndex_Transporter::redn_wrapper_part(NULL), host ));
     }
     //! \brief Signal host that we are done our part of distributing mesh node
     //!   IDs and we are ready for preparing (flattening) data for reordering

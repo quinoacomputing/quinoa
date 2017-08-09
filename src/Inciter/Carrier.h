@@ -182,6 +182,12 @@ class Carrier : public CBase_Carrier {
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V );
 
+    //! Sum mesh volumes and contribute own mesh volume to total volume
+    void totalvol();
+
+    //! Compute mesh cell statistics
+    void stat();
+
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
 
@@ -298,6 +304,7 @@ class Carrier : public CBase_Carrier {
       p | m_msum;
       p | m_v;
       p | m_vol;
+      p | m_volc;
       p | m_bid;
       p | m_pc;
       p | m_qc;
@@ -399,11 +406,17 @@ class Carrier : public CBase_Carrier {
     //!   elements (sum of surrounding cell volumes / 4) without contributions
     //!   from other chares on chare-boundaries
     std::vector< tk::real > m_v;
-    //! \brief Volume of nodes
+    //! Volume of nodes
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
+    //! Receive buffer for volume of nodes
+    //! \details This is a communication buffer used to compute the volume of
+    //!   the mesh associated to nodes of owned elements (sum of surrounding
+    //!   cell volumes / 4) with contributions from other chares on
+    //!   chare-boundaries.
+    std::vector< tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
@@ -418,9 +431,6 @@ class Carrier : public CBase_Carrier {
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
-
-    //! Compute mesh cell statistics
-    void stat();
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions
