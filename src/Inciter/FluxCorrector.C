@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FluxCorrector.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
     FluxCorrector object performs the limiting procedure, according to a
@@ -69,7 +68,6 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
 //!   doi:10.1002/fld.1650071007
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -136,9 +134,9 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
   }
 
   // At nodes where Dirichlet boundary conditions (BC) are set, we set the AEC
-  // to zero. Since the right hand side of the low order solution is also set to
-  // zero at nodes where Dirichlet BCs are set, this properly enforces no
-  // increment at BC nodes. See also LinSysMerger::auxsolve().
+  // to zero. This is because if the (same) BCs are correctly set for both the
+  // low and the high order solution, there should be no difference between the
+  // low and high order increments, thus AEC = dUh - dUl = 0.
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                            inpoel[e*4+2], inpoel[e*4+3] }};
@@ -190,7 +188,6 @@ FluxCorrector::verify( std::size_t nchare,
 //!   for the sake of verification.
 //! \note This function is optimized away in RELEASE mode, see carrier.ci and
 //!   Carrier::verify().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),
@@ -243,7 +240,6 @@ FluxCorrector::lump( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \return Lumped mass matrix
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = coord[0];
@@ -289,7 +285,6 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] Un Solution at the previous time step stage
 //! \return Mass diffusion contribution to the RHS of the low order system
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = coord[0];
@@ -349,7 +344,6 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 //! \param[in] Un Solution at the previous time step stage
 //! \param[in] Ul Low order solution
 //! \param[in,out] Q Maximum and mimimum unknowns of elements surrounding nodes
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( Q.nunk() == Un.nunk() && Q.nprop() == Un.nprop()*2, "Max and min "
@@ -400,12 +394,11 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
-//! \param[inout] Q The maximum and mimimum unknowns of elements surrounding
+//! \param[in,out] Q The maximum and mimimum unknowns of elements surrounding
 //!   each node
-//! \param[in,out] Limited antidiffusive element contributions scatter-added to
-//!   nodes
+//! \param[in,out] A Limited antidiffusive element contributions scatter-added
+//!   to nodes
 //! \note Q is also overwritten to avoid using temporary memory
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( P.nunk() == Q.nunk() && P.nprop() == Q.nprop(), "Size mismatch" );
@@ -422,14 +415,16 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       Q(p,c*2+1,0) -= Ul(p,c,0);
     }
 
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+
   // compute the ratios of positive and negative element contributions that
   // ensure monotonicity (Lohner: R^{+,-})
   for (std::size_t p=0; p<P.nunk(); ++p)
     for (ncomp_t c=0; c<ncomp; ++c) {
       Q(p,c*2+0,0) =
-        (P(p,c*2+0,0) > 0.0 ? std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0)) : 0.0);
+        P(p,c*2+0,0) > 0.0 ? std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0)) : 0.0;
       Q(p,c*2+1,0) =
-        (P(p,c*2+1,0) < 0.0 ? std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0)) : 0.0);
+        P(p,c*2+1,0) < 0.0 ? std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0)) : 0.0;
     }
 
   // calculate limit coefficient for all elements (Lohner: C_el)
@@ -439,12 +434,18 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
                                            inpoel[e*4+2], inpoel[e*4+3] }};
     for (ncomp_t c=0; c<ncomp; ++c) {
       std::array< tk::real, 4 > R;
-      for (std::size_t j=0; j<4; ++j)
-        R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
+      for (std::size_t j=0; j<4; ++j) {
+        // ignore Diriclhet BCs when computing cell limit coefficient
+        if (std::abs(m_aec(e*4+j,c,0)) < eps)
+          R[j] = std::numeric_limits< tk::real >::max();
+        else
+          R[j] = m_aec(e*4+j,c,0) > 0.0 ? Q(N[j],c*2+0,0) : Q(N[j],c*2+1,0);
+      }
       C(e,c,0) = *std::min_element( begin(R), end(R) );
-      Assert( C(e,c,0) > -std::numeric_limits< tk::real >::epsilon() &&
-              C(e,c,0) < 1.0+std::numeric_limits< tk::real >::epsilon(),
-              "0 <= AEC <= 1.0 failed" );
+      // if all vertices happened to be on a Dirichlet boundary, ignore limiting
+      if (C(e,c,0) > 1.0) C(e,c,0) = 1.0;
+      Assert( C(e,c,0) > -eps && C(e,c,0) < 1.0+eps,
+              "0 <= AEC <= 1.0 failed: C = " + std::to_string(C(e,c,0)) );
     }
   }
 

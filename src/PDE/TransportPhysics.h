@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/TransportPhysics.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Physics configurations for a system of transport equations
   \details   This file defines policy classes for transport equations,
     defined in PDE/Transport.h.
@@ -34,6 +33,8 @@
 namespace inciter {
 
 //! Transport equation system of PDEs problem: advection
+//! \details This class is a no-op, consistent with no additional physics needed
+//!   to make the basic implementation in Transport the advection equation.
 class TransportPhysicsAdvection {
 
   public:

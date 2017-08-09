@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
 
@@ -35,8 +34,19 @@
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
+      Load [ label="Load"
+              tooltip="Load is computed"
+              URL="\ref inciter::Transporter::load"];
+      PartSetup [ label="PartSetup"
+              tooltip="Prerequsites done for mesh partitioning"
+              URL="\ref inciter::Transporter::part"];
+      Part [ label="Part"
+              tooltip="Partition mesh"
+              URL="\ref inciter::Partitioner::partition"];
       Diag -> Eval [ style="solid" ];
       Out -> Eval [ style="solid" ];
+      Load -> Part [ style="solid" ];
+      PartSetup -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
@@ -52,9 +62,6 @@
       Stat [ label="Stat"
               tooltip="chares contributed to mesh cell statistics"
               URL="\ref inciter::Carrier::stat"];
-      Vol [ label="Vol"
-              tooltip="chares compute nodal mesh volumes"
-              URL="\ref inciter::Carrier::vol"];
       Setup [ label="Setup"
               tooltip="start computing row IDs, querying BCs, outputing mesh"
               URL="\ref inciter::Transporter::setup"];
@@ -63,7 +70,6 @@
       SumStat -> Stat [ style="solid" ];
       PDFStat -> Stat [ style="solid" ];
       Stat -> Setup [ style="solid" ];
-      Vol -> Setup [ style="solid" ];
     }
     \enddot
     \include Inciter/transporter.ci
@@ -127,7 +133,7 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished setting up the necessary data structures for
     //!   partitioning the computational mesh and we are ready for partitioning
-    void partition();
+    void part();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing its global mesh node IDs and they are ready
@@ -196,7 +202,7 @@ class Transporter : public CBase_Transporter {
     void rowcomplete();
 
     //! Reduction target summing total mesh volume
-    void vol( tk::real v );
+    void totalvol( tk::real v );
 
     //! \brief Reduction target indicating that all Carriers have finished
     //!   computing/receiving their part of the nodal volumes
@@ -222,12 +228,6 @@ class Transporter : public CBase_Transporter {
     //!   all workers
     void dt( tk::real* d, std::size_t n );
 
-    //! Reduction target initiating verification of the boundary conditions set
-    void verifybc( CkReductionMsg* msg );
-
-    //! Reduction target as a 2nd (final) of the verification of BCs
-    void doverifybc( CkReductionMsg* msg );
-
     //! \brief Reduction target indicating that all Carrier chares have
     //!   finished their initialization step
     void initcomplete();
@@ -241,7 +241,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
-    void diagnostics( tk::real* d, std::size_t n );
+    void diagnostics( CkReductionMsg* msg );
 
     //! \brief Reduction target indicating that Carrier chares contribute no
     //!    diagnostics and we ready to output the one-liner report
@@ -318,6 +318,9 @@ class Transporter : public CBase_Transporter {
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
 
+    //! Configure and write diagnostics file header
+    void diagHeader();
+
     //! Print out time integration header
     void header();
 
@@ -326,9 +329,6 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
-
-    //! Start computing row IDs, querying BCs, outputing mesh
-    void setup();
 };
 
 } // inciter::

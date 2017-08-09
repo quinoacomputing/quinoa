@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
     The implementation uses the Charm++ runtime system and is fully
@@ -90,7 +89,6 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-//! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
           class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
@@ -130,6 +128,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
+    //! \param[in] pw Particle writer proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm,
@@ -389,6 +388,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \param[in] p The PE uniquely assigns the node IDs marked listed in ch
     //! \param[in] cn Vector containing the set of potentially multiple chare
     //!   IDs that we own (i.e., contribute to) for all of our node IDs.
+    //! \param[in] ce Map associating a vector of chare IDs to edges (at which
+    //!   we added nodes during initial mesh refinement)
     //! \details Note that every PE will call this function, since query() was
     //!   called in a broadcast fashion and query() answers to every PE once.
     //!   This is more efficient than calling only the PEs from which we would
@@ -577,7 +578,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_chfilenodes;
     //! \brief Maps associating new node IDs (as in producing contiguous-row-id
-    //!   linear system contributions)to edges (a pair of old node IDs) in
+    //!   linear system contributions) to edges (a pair of old node IDs) in
     //!   tk::UnsMesh::EdgeNodes maps, associated to and categorized by chares.
     //! \details Maps associating new node IDs (as in producing
     //!   contiguous-row-id linear system contributions) to edges (a pair of old
@@ -836,6 +837,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details This is computed based on a simple contiguous linear
     //!   distribution of chare ids to PEs.
     int pe( int id ) const {
+      Assert( m_nchare > 0, "Number of chares must be a positive number" );
       auto p = id / (m_nchare / CkNumPes());
       if (p >= CkNumPes()) p = CkNumPes()-1;
       Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
@@ -1201,8 +1203,61 @@ class Partitioner : public CBase_Partitioner< HostProxy,
              static_cast<tk::real>(ownpts + compts);
     }
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wdocumentation"
+    #endif
+    /** @name Host signal calls
+      * \brief These functions signal back to the host via a global reduction
+      *   originating from each PE branch
+      * \details Singal calls contribute to a reduction on all branches (PEs)
+      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
+      *   by the template argument HostProxy. The signal functions are overloads
+      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
+      *   LinSysMerger template. They create Charm++ reduction targets via
+      *   creating a callback that invokes the typed reduction client, where
+      *   host is the proxy on which the reduction target method, given by the
+      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
+      *   upon completion of the reduction.
+      *
+      *   Note that we do not use Charm++'s CkReductionTarget macro here,
+      *   but instead explicitly generate the code that that macro would
+      *   generate. To explain why, here is Charm++'s CkReductionTarget macro's
+      *   definition, given in ckreduction.h:
+      *   \code{.cpp}
+      *      #define CkReductionTarget(me, method) \
+      *        CkIndex_##me::redn_wrapper_##method(NULL)
+      *   \endcode
+      *   This macro takes arguments 'me' (a class name) and 'method' a member
+      *   function of class 'me' and generates the call
+      *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
+      *   signal2* functions generate, we do the above macro's job for
+      *   LinSysMerger specialized by HostProxy, hard-coded here, as well its
+      *   reduction target. This is required since
+      *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
+      *      than type resolution and the string of the template argument would
+      *      be substituted instead of the type specialized (which is not what
+      *      we want here), and
+      *    * the template argument class, e.g, CProxy_Transporter, is in a
+      *      namespace different than that of LinSysMerger. When a new class is
+      *      used to specialize LinSysMerger, the compiler will alert that a new
+      *      overload needs to be defined.
+      *
+      * \note This simplifies client-code, e.g., inciter::Transporter, which now
+      *   requires no explicit book-keeping with counters, etc. Also a reduction
+      *   (instead of a direct call to the host) better utilizes the
+      *   communication network as computational nodes can send their aggregated
+      *   contribution to other nodes on a network instead of all chares sending
+      *   their (smaller) contributions to the same host, (hopefully)
+      *   implemented using a tree among the PEs.
+      * \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
+      *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
+      * */
+    ///@{
     //! \brief Signal back to host that we have done our part of reading the
     //!   mesh graph
+    //! \param[in] host Host to signal to
+    //! \param[in] nelem Nunmber of elements in mesh graph contributed
     //! \details Signaling back is done via a Charm++ typed reduction, which
     //!   also computes the sum of the number of mesh cells our PE operates on.
     void signal2host_graph_complete( const CProxy_Transporter& host,
@@ -1211,6 +1266,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                         CkCallback(CkReductionTarget(Transporter,load), host));
     }
     //! Compute average communication cost of merging the linear system
+    //! \param[in] host Host to signal to
     //! \details This is done via a Charm++ typed reduction, adding up the cost
     //!   across all PEs and reducing the result to our host chare.
     void signal2host_avecost( const CProxy_Transporter& host ) {
@@ -1221,6 +1277,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
     //! \brief Compute standard deviation of the communication cost of merging
     //!   the linear system
+    //! \param[in] host Host to signal to
     //! \param[in] var Square of the communication cost minus the average for
     //!   our PE.
     //! \details This is done via a Charm++ typed reduction, adding up the
@@ -1232,22 +1289,29 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                          host ));
     }
     //! Signal back to host that we are ready for partitioning the mesh
+    //! \param[in] host Host to signal to
     void signal2host_setup_complete( const CProxy_Transporter& host ) {
       Group::contribute(
-        CkCallback(CkIndex_Transporter::redn_wrapper_partition(NULL), host ));
+        CkCallback(CkIndex_Transporter::redn_wrapper_part(NULL), host ));
     }
     //! \brief Signal host that we are done our part of distributing mesh node
     //!   IDs and we are ready for preparing (flattening) data for reordering
+    //! \param[in] host Host to signal to
     void signal2host_distributed( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_distributed(NULL), host ));
     }
     //! \brief Signal host that we are ready for computing the communication
     //!   map, required for parallel distributed global mesh node reordering
+    //! \param[in] host Host to signal to
     void signal2host_flattened( const CProxy_Transporter& host ) {
       Group::contribute(
         CkCallback(CkIndex_Transporter::redn_wrapper_flattened(NULL), host ));
     }
+    ///@}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 };
 
 #if defined(__clang__)

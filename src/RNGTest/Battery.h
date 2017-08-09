@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/Battery.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
     class. The class uses runtime polymorphism without client-side inheritance:
@@ -35,7 +34,6 @@ namespace rngtest {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a Battery,
 //!   see rngtest::TestU01Suite.
-//! \author J. Bakosi
 class Battery {
 
   public:

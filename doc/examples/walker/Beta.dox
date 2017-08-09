@@ -279,6 +279,6 @@ plot [] [-0.003:0.003] "stat.txt" u 2:9 w l t "<x1x2>", "stat.txt" u 2:10 w l t 
 <hr>
 <div><small>
 <em>Page last updated:</em> Thu 06 Apr 2017 10:46:50 AM MDT
-<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
+<em>Copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.</em>
 </small></div>
 */

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Wrappers.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     TestU01 global-scope wrappers
   \details   TestU01 global-scope wrappers. For more info on why these functions
     are in global-scope, see Main/RNGTest.C, for more info on why they are
@@ -32,7 +31,6 @@ static inline double uniform( void*, void* )
 //!   a different wrapper for a different RNG facilitating simultaneous calls to
 //!   any or all wrappers as they are unique functions.
 //! \return Random number generated as a double-precision floating point value
-//! \author J. Bakosi
 // *****************************************************************************
 {
   double r = 0.0;
@@ -56,7 +54,6 @@ static inline unsigned long uniform_bits( void*, void* )
 //!   a different wrapper for a different RNG facilitating simultaneous calls to
 //!   any or all wrappers as they are unique functions.
 //! \return Random number generated as a unsigned long integer value
-//! \author J. Bakosi
 // *****************************************************************************
 {
   double r = 0.0;
@@ -78,7 +75,6 @@ static inline unif01_Gen* createTestU01Gen( const std::string& name )
 //!   wrappers templated on the unique RNG id, thus TestU01 will see them as
 //!   different external generators.
 //! \param[in] name Random number generator name
-//! \author J. Bakosi
 // *****************************************************************************
 {
   return unif01_CreateExternGen01( const_cast<char*>(name.c_str()),

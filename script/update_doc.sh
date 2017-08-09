@@ -3,7 +3,6 @@
 ################################################################################
 # 
 # \file      script/update_doc.sh
-# \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script assumes a new clone of

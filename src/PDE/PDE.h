@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDE.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
     The class uses runtime polymorphism without client-side inheritance:
@@ -37,7 +36,6 @@ namespace inciter {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a PDE,
 //!   see inciter::CompFlow.
-//! \author J. Bakosi
 class PDE {
 
   private:
@@ -78,10 +76,8 @@ class PDE {
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     const std::vector< std::size_t >& gid,
-                     const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc )
-    const { self->initialize( coord, unk, t, gid, bc ); }
+                     const std::vector< std::size_t >& gid ) const
+    { self->initialize( coord, unk, t, gid ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -120,20 +116,27 @@ class PDE {
 
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
-    std::vector< std::pair< bool, tk::real > >
-    dirbc( int sideset ) const { return self->dirbc( sideset ); }
+    std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
+    dirbc( tk::real t,
+           tk::real deltat,
+           const std::pair< const int, std::vector< std::size_t > >& s,
+           const std::array< std::vector< tk::real >, 3 >& coord ) const
+    { return self->dirbc( t, deltat, s, coord ); }
 
     //! Public interface to returning field output labels
+    std::vector< std::string > fieldNames() const { return self->fieldNames(); }
+
+    //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
     //! Public interface to returning field output
-    std::vector< std::vector< tk::real > > output(
+    std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->output( t, V, coord, v, U ); }
+    { return self->fieldOutput( t, V, coord, v, U ); }
 
     //! Copy assignment
     PDE& operator=( const PDE& x )
@@ -156,10 +159,7 @@ class PDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real,
-                               const std::vector< std::size_t >&,
-                               const std::unordered_map< std::size_t,
-                                 std::vector< std::pair< bool, tk::real > > >& )
-        const = 0;
+                               const std::vector< std::size_t >& ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
@@ -179,9 +179,15 @@ class PDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::array< std::size_t, 4 >&  ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
-      virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
+      virtual
+      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      dirbc( tk::real,
+             tk::real,
+             const std::pair< const int, std::vector< std::size_t > >&,
+             const std::array< std::vector< tk::real >, 3 >& ) const = 0;
+      virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
-      virtual std::vector< std::vector< tk::real > > output(
+      virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
@@ -198,10 +204,8 @@ class PDE {
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                        tk::Fields& unk,
                        tk::real t,
-                       const std::vector< std::size_t >& gid,
-                       const std::unordered_map< std::size_t,
-                             std::vector< std::pair< bool, tk::real > > >& bc )
-      const override { data.initialize( coord, unk, t, gid, bc ); }
+                       const std::vector< std::size_t >& gid )
+      const override { data.initialize( coord, unk, t, gid ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
@@ -226,16 +230,23 @@ class PDE {
       { return data.velocity( U, coord, N ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
-      std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
-      override { return data.dirbc( sideset ); }
-      std::vector< std::string > names() const override { return data.names(); }
-      std::vector< std::vector< tk::real > > output(
+      std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+      dirbc( tk::real t,
+             tk::real deltat,
+             const std::pair< const int, std::vector< std::size_t > >& s,
+             const std::array< std::vector< tk::real >, 3 >& coord ) const
+        override { return data.dirbc( t, deltat, s, coord ); }
+      std::vector< std::string > fieldNames() const override
+      { return data.fieldNames(); }
+      std::vector< std::string > names() const override
+      { return data.names(); }
+      std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
-      { return data.output( t, V, coord, v, U ); }
+      { return data.fieldOutput( t, V, coord, v, U ); }
       T data;
     };
 

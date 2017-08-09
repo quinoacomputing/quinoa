@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshWriter.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Netgen mesh writer class definition
   \details   Netgen mesh writer class definition. Only supports tetrahedra.
 */
@@ -29,7 +28,6 @@ NetgenMeshWriter::writeMesh( const UnsMesh& mesh )
 // *****************************************************************************
 //  Public interface for writing Netgen mesh
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   writeNodes( mesh );
@@ -41,7 +39,6 @@ NetgenMeshWriter::writeNodes( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write nodes
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Write out number of nodes
@@ -61,7 +58,6 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write elements, i.e., connectivity
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (mesh.tetinpoel().empty()) return;
@@ -80,7 +76,7 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
   // Create empty tag vector
   std::vector< std::vector< int > > tg;
   tg.resize( n );
-  for (auto& t : tg) t.push_back( 0 );
+  for (auto& t : tg) t.push_back( 1 );
 
   // Write out tetrehadra element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {
@@ -108,7 +104,7 @@ NetgenMeshWriter::writeElements( const UnsMesh& mesh )
   // Create empty tag vector if there is no tag
   tg.clear();
   tg.resize( n );
-  for (auto& t : tg) t.push_back( 0 );
+  for (auto& t : tg) t.push_back( 1 );
 
   // Write out triangle element tags and connectivity
   for (std::size_t i=0; i<n; ++i) {

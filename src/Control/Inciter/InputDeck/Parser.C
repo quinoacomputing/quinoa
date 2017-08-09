@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Inciter's input deck file parser
   \details   This file defines the input deck, i.e., control file, parser for
     the computational shock hydrodynamics tool, Inciter.
@@ -41,7 +40,6 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \param[in] cmdline Command line stack
 //! \param[in,out] inputdeck Input deck stack where data is stored during
 //!    parsing
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create InputDeck (a tagged tuple) to store parsed input

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/integrator.ci
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Integrator
   \details   Charm++ module interface file for Integrator
 */
@@ -28,10 +27,9 @@ module integrator {
                           uint64_t it,
                           const std::map< tk::ctr::Product, tk::real >& moments
       );
-      entry void accumulateOrd();
-      entry void accumulateCen( const std::vector< tk::real >& ord );
-      entry void accumulateOrdPDF();
-      entry void accumulateCenPDF( const std::vector< tk::real >& ord );
+      entry void accumulateOrd( uint64_t it );
+      entry void accumulateCen( uint64_t it,
+                                const std::vector< tk::real >& ord );
     }
 
   } // walker::

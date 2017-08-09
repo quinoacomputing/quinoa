@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/UniPDF.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
     probability density function of (PDF) a scalar variable from an ensemble.
@@ -118,7 +117,6 @@ class UniPDF {
 //! \param[in] p PDF to output
 //! \return Updated stream
 //! \note Used for debugging.
-//! \author J. Bakosi
 static inline
 std::ostream& operator<< ( std::ostream& os, const tk::UniPDF& p ) {
   os << p.binsize() << ", " << p.nsample() << ": ";

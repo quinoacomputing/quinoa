@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/ZoltanInterOp.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
@@ -109,13 +108,12 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
 //! \param[in] algorithm Partitioning algorithm type
 //! \param[in] centroid Mesh element coordinates
 //! \param[in] elemid Global mesh element ids
-//! \parampin] nelem Number of elements in mesh (on this MPI rank)
+//! \param[in] nelem Number of elements in mesh (on this MPI rank)
 //! \param[in] npart Number of desired graph partitions
 //! \return Array of chare ownership IDs mapping graph points to concurrent
 //!   async chares
 //! \details This function uses Zoltan to partition the mesh graph in parallel.
 //!   It assumes that the mesh graph is distributed among all the MPI ranks.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Set Zoltan parameters

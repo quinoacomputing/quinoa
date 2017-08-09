@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Carrier.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
     potentially large number of Carrier Charm++ chares created by Transporter.
@@ -17,6 +16,7 @@
 #include <set>
 #include <algorithm>
 
+#include "QuinoaConfig.h"
 #include "Carrier.h"
 #include "LinSysMerger.h"
 #include "Vector.h"
@@ -30,6 +30,10 @@
 #include "DerivedData.h"
 #include "PDE.h"
 #include "Tracker.h"
+
+#ifdef HAS_ROOT
+  #include "RootMeshWriter.h"
+#endif
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
@@ -52,7 +56,6 @@ extern std::vector< PDE > g_pdes;
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
-CkReduction::reducerType VerifyBCMerger;
 CkReduction::reducerType PDFMerger;
 
 } // inciter::
@@ -84,8 +87,13 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_nlim( 0 ),
   m_V( 0.0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
-  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
-                 std::to_string( thisIndex ) ),
+  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
+                 std::to_string( thisIndex )
+                 #ifdef HAS_ROOT
+                 + (g_inputdeck.get< tag::selected, tag::filetype >() ==
+                     tk::ctr::FieldFileType::ROOT ? ".root" : "")
+                 #endif
+                ),
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
@@ -107,6 +115,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
+  m_volc(),
   m_bid(),
   m_pc(),
   m_qc(),
@@ -122,12 +131,19 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   mesh chunk we operate on
 //! \param[in] filenodes Map associating old node IDs (as in file) to new node
 //!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodemap Map associating new node IDs ('new' as in producing
+//! \param[in] edgenodes Map associating new node IDs ('new' as in producing
 //!   contiguous-row-id linear system contributions) to edges (a pair of old
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
 //! \param[in] ncarr Total number of Carrier chares
-//! \author J. Bakosi
+//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
+//!   (which corresponds to rows in the linear system) are (approximately)
+//!   contiguous (as much as this can be done with an unstructured mesh) as the
+//!   problem is distirbuted across PEs, held by LinSysMerger objects. This
+//!   ordering is in start contrast with "as-in-file" ordering, which is the
+//!   ordering of the mesh nodes as it is stored in the file from which the mesh
+//!   is read in. The as-in-file ordering is highly non-contiguous across the
+//!   distributed problem.
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -149,6 +165,9 @@ Carrier::Carrier( const TransporterProxy& transporter,
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
+  // Allocate receive buffer for nodal volumes
+  m_volc.resize( m_bid.size(), 0.0 );
+
   // Allocate receive buffers for FCT
   m_pc.resize( m_bid.size() );
   for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
@@ -156,6 +175,32 @@ Carrier::Carrier( const TransporterProxy& transporter,
   for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
   m_ac.resize( m_bid.size() );
   for (auto& b : m_ac) b.resize( m_u.nprop() );
+
+  // Invert file-node map, a map associating old node IDs (as in file) to new
+  // node IDs (as in producing contiguous-row-id linear system contributions),
+  // so we can search more efficiently for old node IDs.
+  decltype(m_filenodes) linnodes;
+  for (const auto& i : m_filenodes) {
+    auto n = tk::cref_find(m_lid,i.first);
+    Assert( n < m_gid.size(),
+            "Local IDs must be lower than the local number of grid points" );
+    linnodes[ i.second ] = n;
+  }
+
+  // Access all side sets and their old node IDs (as in file) from LinSysMerger
+  auto& oldside = m_linsysmerger.ckLocalBranch()->side();
+
+  // Create map that assigns the local mesh node IDs mapped to side set ids,
+  // storing only those nodes for a given side set that are part of our chunk of
+  // the mesh.
+  for (const auto& s : oldside) {
+    auto& n = m_side[ s.first ];
+    for (auto o : s.second) {
+      auto it = linnodes.find( o );
+      if (it != end(linnodes))
+        n.push_back( it->second );
+    }
+  }
 }
 
 void
@@ -163,7 +208,6 @@ Carrier::coord()
 // *****************************************************************************
 //  Read mesh node coordinates and optionally add new edge-nodes in case of
 //  initial uniform refinement
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
@@ -173,15 +217,12 @@ Carrier::coord()
   addEdgeNodeCoords();
   // Compute mesh cell volumes
   vol();
-  // Compute mesh cell statistics
-  stat();
 }
 
 void
 Carrier::vol()
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries
-//! \author J. Bakosi
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -198,7 +239,7 @@ Carrier::vol()
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-    Assert( J > 0, "Element Jacobian non-positive: PE:" +
+    ErrChk( J > 0, "Element Jacobian non-positive: PE:" +
                    std::to_string(CkMyPe()) + ", node IDs: " +
                    std::to_string(m_gid[N[0]]) + ',' +
                    std::to_string(m_gid[N[1]]) + ',' +
@@ -217,14 +258,12 @@ Carrier::vol()
                    std::to_string(y[N[3]]) + ", " +
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) { m_v[N[j]] = m_vol[N[j]] += J; }
+    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
   }
 
-  // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_v) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+  // Store nodal volumes without contributions from other chares on
+  // chare-boundaries
+  m_v = m_vol;
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
@@ -239,10 +278,57 @@ Carrier::vol()
 }
 
 void
+Carrier::comvol( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& V )
+// *****************************************************************************
+//  Receive nodal volumes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive volume contributions
+//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//!   nodes
+//! \details This function receives contributions to m_vol, which stores the
+//!   nodal volumes. While m_vol stores own contributions, m_volc collects the
+//!   neighbor chare contributions during communication. This way work on m_vol
+//!   and m_volc is overlapped. The two are combined in totalvol().
+// *****************************************************************************
+{
+  Assert( V.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( m_bid, gid[i] );
+    Assert( bid < m_volc.size(), "Indexing out of bounds" );
+    m_volc[ bid ] += V[i];
+  }
+
+  if (++m_nvol == m_msum.size()) {
+    m_nvol = 0;
+    contribute(
+       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+  }
+}
+
+void
+Carrier::totalvol()
+// *****************************************************************************
+// Sum mesh volumes and contribute own mesh volume to total volume
+// *****************************************************************************
+{
+  // Combine own and communicated contributions of nodal volumes
+  for (const auto& b : m_bid) {
+    auto lid = tk::cref_find( m_lid, b.first );
+    m_vol[ lid ] += m_volc[ b.second ];
+  }
+
+  // Sum mesh volume to host
+  tk::real V = 0.0;
+  for (auto v : m_v) V += v;
+  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
+}
+
+void
 Carrier::stat()
 // *****************************************************************************
-// Compute mesh volume statistics
-//! \author J. Bakosi
+// Compute mesh cell statistics
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -314,37 +400,10 @@ Carrier::stat()
 }
 
 void
-Carrier::comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V )
-// *****************************************************************************
-//  Receive nodal volumes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive volume contributions
-//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
-//!   nodes
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  Assert( V.size() == gid.size(), "Size mismatch" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid < m_vol.size(), "Indexing out of bounds" );
-    m_vol[ lid ] += V[i];
-  }
-
-  if (++m_nvol == m_msum.size()) {
-    m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
-  }
-}
-
-void
 Carrier::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, generate particles, output mesh, etc.
 //! \param[in] v Total mesh volume
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Store total mesh volume
@@ -353,8 +412,6 @@ Carrier::setup( tk::real v )
   writeMesh();
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
-  // Send node IDs from element side sets matched to BC set IDs
-  bc();
   // Generate particles
   m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
   // Output fields metadata to output file
@@ -367,12 +424,11 @@ Carrier::bc()
 //  Extract node IDs from side set node lists and match to user-specified
 //  boundary conditions
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
-//!   finite surfaces. These finite surfaces are given by element sets. This
-//!   function queries the node lists associated to side set IDs as read in from
-//!   file (old mesh node IDs as in file associated to all side sets in file).
-//!   Then the user-specified boundary conditions, their values and which side
-//!   set they are assigned to, are interrogated and only those nodes and their
-//!   BC values are extracted that we operate on. This BC data structure is then
+//!   finite surfaces. These finite surfaces are given by element sets (i.e., a
+//!   list of elements). This function queries Dirichlet boundary condition
+//!   values from all PDEs in the system of PDEs integrated at the node lists
+//!   associated to side set IDs (previously read from file). As a response to
+//!   this query, each PDE system returns a BC data structure which is then
 //!   sent to the linear system merger which needs to know about this to apply
 //!   BCs before a linear solve. Note that the BC mesh nodes that this function
 //!   results in, stored in dirbc and sent to the linear system merger, only
@@ -380,122 +436,82 @@ Carrier::bc()
 //!   contain those BC nodes at which other chares enforce Dirichlet BCs. The
 //!   linear system merger then collects these and communicates to other PEs so
 //!   that BC data held in LinSysMerger::m_bc are the same on all PEs. That is
-//!   the authoritative BC data, which can be queried by LinSysMerger::bc().
-//! \author J. Bakosi
 // *****************************************************************************
 {
-  // Access all side sets from LinSysMerger
-  auto& side = m_linsysmerger.ckLocalBranch()->side();
+  // Vector of pairs of bool and boundary condition value associated to mesh
+  // node IDs at which the user has set Dirichlet boundary conditions for all
+  // PDEs integrated
+  std::unordered_map< std::size_t, NodeBC > dirbc;
 
-  // Invert file-node map, a map associating old node IDs (as in file) to new
-  // node IDs (as in producing contiguous-row-id linear system contributions),
-  // so we can search more efficiently for old node IDs.
-  decltype(m_filenodes) linnodes;
-  for (const auto& i : m_filenodes) linnodes[ i.second ] = i.first;
-
-  // lambda to find out if we own the old (as in file) global node id
-  auto own = [ &linnodes ]( std::size_t id ) -> std::pair< bool, std::size_t >
-  {
-    auto it = linnodes.find( id );
-    if (it != end(linnodes))
-      return { true, it->second };
-    else
-      return { false, 0 };
-  };
-
-  // lambda to collect all edge-nodes whose both edge-end-points are in the node
-  // set given
-  auto edgebc = [ this ]( const std::unordered_set< std::size_t >& bcnodes )
-              -> std::vector< std::pair< bool, std::size_t > >
-  {
-    std::vector< std::pair< bool, std::size_t > > en;
-    for (const auto& ed : m_edgenodes)
-      if ( bcnodes.find( ed.first[0] ) != end(bcnodes) &&
-           bcnodes.find( ed.first[1] ) != end(bcnodes) )
-        en.push_back( { true, ed.second } );
-    return en;
-  };
-
-  // lambda to query the Dirichlet BCs on a side set for all components of all
-  // the PDEs integrated
-  auto bcval = []( int sideset ) {
-    // storage for whether the a BC is set and its value for all components of
-    // all PDEs configured to be solved
-    std::vector< std::pair< bool, tk::real > > b;
-    for (const auto& eq : g_pdes) {
-      auto e = eq.dirbc( sideset );
-      b.insert( end(b), begin(e), end(e) );
-    }
-    Assert( b.size() == g_inputdeck.get< tag::component >().nprop(),
-            "The total number of scalar components of all configured PDEs (" +
-            std::to_string( g_inputdeck.get< tag::component >().nprop() ) + ") "
-            "and the sum of the lengths of the Dirichlet BC vectors returned "
-            "from all configured PDE::dirbc() calls (" +
-            std::to_string( b.size() ) + ") does not match" );
-    return b;
-  };
-
-  // lambda to find out whether 'new' node id is in the list of 'old' node ids
-  // given in s (which contains the old node ids of a side set). Here 'old'
-  // means as in file, while 'new' means as in producing contiguous-row-id
-  // linear system contributions. See also Partitioner.h.
-  auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
-  -> bool {
-    for (auto n : s) if (tk::cref_find(this->m_filenodes,id) == n) return true;
-    return false;
-  };
-
-  // Dirichlet boundary conditions storage: Vector of pairs of bool and boundary
-  // condition value associated to mesh node IDs at which to set Dirichlet
-  // boundary conditions
-  std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > > dirbc;
-
-  // lambda to associate BC values and whether they are set (for all PDE
-  // components) to a node
-  auto assign = [&dirbc]( const std::vector< std::pair< bool, tk::real > >& b,
-                          std::size_t n )
-  {
-    auto& v = dirbc[ n ];
-    v.resize( b.size() );
-    for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
-  };
-
-  // Collect mesh node IDs we contribute to at which a Dirichlet BC is set. The
-  // data structure in which this information is stored associates a vector of
-  // pairs of bool and BC value to new global mesh node IDs. 'New' as in
-  // producing contiguous-row-id linear system contributions, see also
-  // Partitioner.h. The bool indicates whether the BC value is set at the given
-  // node by the user. The size of the vectors is the number of PDEs integrated
-  // for all scalar components in all PDEs. The vector is associated to global
-  // node IDs at which the boundary condition will be set. If a node gets
-  // boundary conditions from multiple side sets, true values (the fact that a
-  // BC is set) overwrite existing false ones, i.e., the union of the boundary
-  // conditions will be applied at the node.
-  for (const auto& s : side) {
-    // get BC values for side set
-    auto b = bcval( s.first );
-    // query if any BC is to be set on the side set for any component of any of
-    // the PDEs integrated
-    bool ubc = std::any_of( b.cbegin(), b.cend(),
-                            [](const std::pair< bool, tk::real >& p)
-                            { return p.first; } );
-    // for all node IDs we contribute to in the side set associate BC values and
-    // whether they are set for a component (for all PDE components)
-    std::unordered_set< std::size_t > bcnodes;
-    for (auto o : s.second) {
-      auto n = own(o);
-      if (n.first && inset(n.second,s.second) && ubc) {
-        assign( b, n.second );          // assign BC values to nodes
-        bcnodes.insert( n.second );     // store BC nodes
+  // Query Dirichlet boundary conditions for all PDEs integrated and assign to
+  // nodes. This is where the individual system of PDEs are queried for boundary
+  // conditions. The outer loop goes through all sides sets that exists in the
+  // input file and passes the map's value_type (a pair of the side set id and a
+  // vector of local node IDs) to PDE::dirbc(). PDE::dirbc() returns a new map
+  // that associates a vector of pairs associated to local node IDs. (The pair
+  // is a pair of bool and real value, the former is the fact that the BC is to
+  // be set while the latter is the value if it is to be set). The length of
+  // this NodeBC vector, returning from each system of PDEs equals to the number
+  // of scalar components the given PDE integrates. Here then we contatenate
+  // this map for all PDEs integrated. If there are multiple BCs set at a mesh
+  // node (dirbc::key), either because (1) in the same PDE system the user
+  // prescribed BCs on side sets that share nodes or (2) because more than a
+  // single PDE system assigns BCs to a given node (on different variables), the
+  // NodeBC vector must be correctly stored. "Correctly" here means that the
+  // size of the NodeBC vectors must all be the same and qual to the sum of all
+  // scalar components integrated by all PDE systems integrated. Example:
+  // single-phase compressible flow (density, momentum, energy = 5) +
+  // transported scalars of 10 variables -> NodeBC vector length = 15. Note that
+  // in case (1) above a new node encountered must "overwrite" the already
+  // existing space for the NodeBC vector. "Overwrite" here means that it should
+  // keep the existing BCs and add the new ones yielding the union the two
+  // prescription for BCs but in the same space that already exist in the NodeBC
+  // vector. In case (2), however, the NodeBC pairs must go to the location in
+  // the vector assigned to the given PDE system, i.e., using the above example
+  // BCs for the 10 (or less) scalars should go in the positions starting at 5,
+  // leaving the first 5 false, indicating no BCs for the flow variables.
+  //
+  // TODO: Note that the logic described above is only partially implemented at
+  // this point. What works is the correct insertion of multiple BCs for nodes
+  // shared among multiple side sets, e.g., corners, originating from the same
+  // PDE system. What is not yet implemented is the case when there are no BCs
+  // set for flow variables but there are BCs for transport, the else branch
+  // below will incorrectly NOT skip the space for the flow variables. In other
+  // words, this only works for a single PDE system and a sytem of systems. This
+  // machinery is only tested with a single system of PDEs at this point.
+  for (const auto& s : m_side) {
+    std::size_t c = 0;
+    for (std::size_t eq=0; eq<g_pdes.size(); ++eq) {
+      auto eqbc = g_pdes[eq].dirbc( m_t, m_dt, s, m_coord );
+      for (const auto& n : eqbc) {
+        auto id = n.first;                      // BC node ID
+        const auto& bcs = n.second;             // BCs
+        auto& nodebc = dirbc[ m_gid[id] ];      // BCs to be set for node
+        if (nodebc.size() > c) {        // node already has BCs from this PDE
+          Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
+          for (std::size_t i=0; i<bcs.size(); i++)
+            if (bcs[i].first)
+              nodebc[c+i] = bcs[i];
+        } else {        // node does not yet have BCs from this PDE
+          // This branch needs to be completed for system of systems of PDEs.
+          // See note above.
+          nodebc.insert( end(nodebc), begin(bcs), end(bcs) );
+        }
       }
+      if (!eqbc.empty()) c += eqbc.cbegin()->second.size();
     }
-    // associate BC values and whether they are set (for all PDE components) for
-    // all edge-nodes at whose both edge-end-points BCs are set
-    for (const auto& n : edgebc(bcnodes)) if (n.first) assign( b, n.second );
   }
 
-  // send progress report to host
+  // Verify the size of each NodeBC vectors. They must have the same lengths and
+  // equal to the total number of scalar components for all systems of PDEs
+  // integrated. This is intentional, because this way the linear system merger
+  // does not have to (and does not) know about individual equation systems.
+  for (const auto& n : dirbc) {
+    IGNORE(n);
+    Assert( n.second.size() == m_u.nprop(), "Size of NodeBC vector incorrect" );
+  }
+
+  // Send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_transporter.chbcmatched();
 
@@ -508,7 +524,6 @@ Carrier::init()
 // *****************************************************************************
 // Set ICs, compute initial time step size, output initial field data, compute
 // left-hand-side matrix
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // zero initial solution vector
@@ -517,9 +532,8 @@ Carrier::init()
   // Send off initial guess for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
-  // Set initial and boundary conditions for all PDEs
-  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid, dbc );
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
 
   // Compute initial time step size
   dt();
@@ -539,7 +553,6 @@ void
 Carrier::dt()
 // *****************************************************************************
 // Start computing minimum time step size
-//! \author J. Bakosi
 // *****************************************************************************
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -575,7 +588,6 @@ void
 Carrier::lhs()
 // *****************************************************************************
 // Compute left-hand side of transport equations
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute left-hand side matrix for all equations
@@ -606,7 +618,6 @@ Carrier::rhs( const tk::Fields& sol )
 // *****************************************************************************
 // Compute right-hand side of transport equations
 //! \param[in] sol Solution vector at current stage
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Initialize FCT data structures for new time step stage
@@ -626,12 +637,14 @@ Carrier::rhs( const tk::Fields& sol )
       b[c*2+1] = std::numeric_limits< tk::real >::max();
     }
 
-  // Compute right-hand side vector for all equations
+  // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  // Scale dt by 0.5 for first stage in Runge-Kutta 2-stage time stepping only
-  // while computing the right-hand sides
+  // Scale dt by 0.5 for first stage in 2-stage time stepping
   if (m_stage < 1) m_dt *= 0.5;
   for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
+  // Query Dirichlet BCs and send to linear system merger
+  bc();
+  // Revert dt so that our copy is consistent with that of the host
   if (m_stage < 1) m_dt /= 0.5;
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
@@ -650,7 +663,6 @@ void
 Carrier::readCoords()
 // *****************************************************************************
 //  Read coordinates of mesh nodes from file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -679,7 +691,6 @@ Carrier::addEdgeNodeCoords()
 // *****************************************************************************
 //  Add coordinates of mesh nodes newly generated to edge-mid points during
 //  initial refinement
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_edgenodes.empty()) return;
@@ -718,14 +729,28 @@ void
 Carrier::writeMesh()
 // *****************************************************************************
 // Output chare element blocks to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-    // Write chare mesh initializing element connectivity and point coords
-    ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    #ifdef HAS_ROOT
+    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
+
+    if (filetype == tk::ctr::FieldFileType::ROOT) {
+
+      tk::RootMeshWriter rmw( m_outFilename, 0 );
+      rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+
+    } else
+    #endif
+    {
+
+      // Create ExodusII writer
+      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
+      // Write chare mesh initializing element connectivity and point coords
+      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
+    
+    }    
   }
 }
 
@@ -737,36 +762,73 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
-//! \param[in] varid Exodus variable ID
 //! \param[in] u Vector of fields to write to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int varid = 0;
   for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
 }
 
+#ifdef HAS_ROOT
+void
+Carrier::writeSolution( const tk::RootMeshWriter& rmw,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const
+// *****************************************************************************
+// Output solution to file
+//! \param[in] rmw Root mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] u Vector of fields to write to file
+//! \author A. Pakki
+// *****************************************************************************
+{
+  int varid = 0;
+  for (const auto& f : u) rmw.writeNodeScalar( it, ++varid, f );
+}
+#endif
+
 void
 Carrier::writeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    #ifdef HAS_ROOT
+    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
-    // Collect nodal field output names from all PDEs
-    std::vector< std::string > names;
-    for (const auto& eq : g_pdes) {
-      auto n = eq.names();
-      names.insert( end(names), begin(n), end(n) );
+    if (filetype == tk::ctr::FieldFileType::ROOT) {
+ 
+      tk::RootMeshWriter rmw( m_outFilename, 1 );
+
+      // Collect nodal field output names from all PDEs
+      std::vector< std::string > names;
+      for (const auto& eq : g_pdes) {
+        auto n = eq.fieldNames();
+        names.insert( end(names), begin(n), end(n) );
+      }
+
+      // Write node field names
+      rmw.writeNodeVarNames( names );
+
+    } else
+    #endif
+    {
+
+      // Create ExodusII writer
+      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+      // Collect nodal field output names from all PDEs
+      std::vector< std::string > names;
+      for (const auto& eq : g_pdes) {
+        auto n = eq.fieldNames();
+        names.insert( end(names), begin(n), end(n) );
+      }
+
+      // Write node field names
+      ew.writeNodeVarNames( names );
     }
-
-    // Write node field names
-    ew.writeNodeVarNames( names );
 
   }
 }
@@ -776,7 +838,6 @@ Carrier::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Only write if the last time is different than the current one
@@ -790,32 +851,51 @@ Carrier::writeFields( tk::real time )
   // Increase field output iteration count
   ++m_itf;
 
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+  // Lambda to collect node fields output from all PDEs
+  auto nodefields = [&]() {
+    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+    std::vector< std::vector< tk::real > > output;
+    for (const auto& eq : g_pdes) {
+      auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
+      output.insert( end(output), begin(o), end(o) );
+    }
+    return output;
+  };
 
-  // Write time stamp
-  ew.writeTimeStamp( m_itf, time );
+  #ifdef HAS_ROOT
+  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
-  // Collect node fields output from all PDEs
-  auto u = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
-  std::vector< std::vector< tk::real > > output;
-  for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_V, m_coord, m_v, u );
-    output.insert( end(output), begin(o), end(o) );
+  if (filetype == tk::ctr::FieldFileType::ROOT) {
+
+    // Create Root writer
+    tk::RootMeshWriter rmw( m_outFilename, 1 );
+    // Write time stamp
+    rmw.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    writeSolution( rmw, m_itf, nodefields() );
+
+  } else
+  #endif
+  {
+
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+    // Write time stamp
+    ew.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    writeSolution( ew, m_itf, nodefields() );
+
   }
-  // Write node fields
-  writeSolution( ew, m_itf, output );
 }
 
 void
 Carrier::doWriteParticles()
 // *****************************************************************************
 // Output particles fields to file
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-    m_tracker.doWriteParticles( m_particlewriter, m_it );
+    m_tracker.doWriteParticles( m_particlewriter, m_it, m_ncarr );
 }
 
 void
@@ -825,7 +905,6 @@ Carrier::aec( const tk::Fields& Un )
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
@@ -833,10 +912,6 @@ Carrier::aec( const tk::Fields& Un )
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
   m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
-  ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
 
   if (m_msum.empty())
     comaec_complete();
@@ -846,6 +921,11 @@ Carrier::aec( const tk::Fields& Un )
       for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comaec( n.second, p );
     }
+
+  ownaec_complete();
+  #ifndef NDEBUG
+  ownaec_complete();
+  #endif
 }
 
 void
@@ -862,7 +942,6 @@ Carrier::comaec( const std::vector< std::size_t >& gid,
 //!   own contributions, m_pc collects the neighbor chare contributions during
 //!   communication. This way work on m_p and m_pc is overlapped. The two are
 //!   combined in lim().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( P.size() == gid.size(), "Size mismatch" );
@@ -890,7 +969,6 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
@@ -898,10 +976,6 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
   m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
-  ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
 
   if (m_msum.empty())
     comalw_complete();
@@ -911,6 +985,11 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
       for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comalw( n.second, q );
     }
+
+  ownalw_complete();
+  #ifndef NDEBUG
+  ownalw_complete();
+  #endif
 }
 
 void
@@ -928,7 +1007,6 @@ Carrier::comalw( const std::vector< std::size_t >& gid,
 //!   own contributions, m_qc collects the neighbor chare contributions during
 //!   communication. This way work on m_q and m_qc is overlapped. The two are
 //!   combined in lim().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( Q.size() == gid.size(), "Size mismatch" );
@@ -957,7 +1035,6 @@ Carrier::lim()
 //! \details This function computes and starts communicating m_a, which stores
 //!   the limited antidiffusive element contributions assembled to nodes
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Combine own and communicated contributions to P and Q
@@ -974,7 +1051,6 @@ Carrier::lim()
   }
 
   m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
-  ownlim_complete();
 
   if (m_msum.empty())
     comlim_complete();
@@ -984,6 +1060,8 @@ Carrier::lim()
       for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
       thisProxy[ n.first ].comlim( n.second, a );
     }
+
+  ownlim_complete();
 }
 
 void
@@ -1001,7 +1079,6 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 //!   contributions, m_ac collects the neighbor chare contributions during
 //!   communication. This way work on m_a and m_ac is overlapped. The two are
 //!   combined in apply().
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( A.size() == gid.size(), "Size mismatch" );
@@ -1028,7 +1105,6 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
 //! \param[in] newdt Size of this new time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Update local copy of time step stage, physical time and time step size, and
@@ -1053,7 +1129,6 @@ void
 Carrier::out()
 // *****************************************************************************
 // Output mesh and particle fields
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Optionally output field and particle data
@@ -1062,10 +1137,11 @@ Carrier::out()
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
-    m_tracker.writeParticles( m_transporter, m_particlewriter, this );
-  } else
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
+    //m_tracker.writeParticles( m_transporter, m_particlewriter, this );
+  } //else
+
+  contribute(
+     CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
 }
 
 void
@@ -1075,7 +1151,6 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
 // Update low order solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] du Portion of the unknown/solution vector update
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -1113,7 +1188,6 @@ Carrier::updateSol( const std::vector< std::size_t >& gid,
 // Update high order solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] du Portion of the unknown/solution vector update
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -1142,7 +1216,6 @@ void
 Carrier::verify()
 // *****************************************************************************
 // Verify antidiffusive element contributions up to linear solver convergence
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (m_fluxcorrector.verify( m_ncarr, m_inpoel, m_du, m_dul ))
@@ -1154,7 +1227,6 @@ void
 Carrier::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Optionally: collect analytical solutions and send both the latest
@@ -1178,9 +1250,8 @@ Carrier::diagnostics()
     // useful, but simplies the logic because all PDEs can be treated as baing
     // able to compute an error based on some "analytical" solution, which
     // really the initial condition.
-    auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, m_ul, m_t, m_gid, dbc );
+      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2
     // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
@@ -1200,13 +1271,13 @@ Carrier::diagnostics()
     // defined above, is taken.
     for (std::size_t p=0; p<m_u.nunk(); ++p)
       for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-        auto r = std::sqrt( m_v[p] );
-        m_ul(p,c,0) = r * m_ul(p,c,0);
-        m_ulf(p,c,0) = r * m_u(p,c,0);
+        m_ul(p,c,0) = m_ul(p,c,0);
+        m_ulf(p,c,0) = m_u(p,c,0);
       }
 
     // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->charediag( thisIndex, m_gid, m_ulf, m_ul );
+    m_linsysmerger.ckLocalBranch()->
+      charediag( thisIndex, m_gid, m_ulf, m_ul, m_v );
 
   } else
     contribute(
@@ -1222,7 +1293,6 @@ Carrier::velocity( std::size_t e )
 //! \details This funcion extracts the velocity field, defined by each PDE
 //!   integrated. All PDEs configured are interrogated and the last nonzero
 //!   velocity vector is returned at all four nodes of the mesh element.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::array< std::array< tk::real, 4 >, 3 > c;
@@ -1239,41 +1309,48 @@ Carrier::velocity( std::size_t e )
 bool
 Carrier::correctBC()
 // *****************************************************************************
-// Verify that solution does not change at Dirichlet boundary conditions
-//! \return True if the solution did not change at Dirichlet boundary condition
+//  Verify that the change in the solution at those nodes where Dirichlet
+//  boundary conditions are set is exactly the amount the BCs prescribe
+//! \return True if the solution is correct at Dirichlet boundary condition
 //!   nodes
-//! \author J. Bakosi
 // *****************************************************************************
 {
-  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  auto& dirbc = m_linsysmerger.ckLocalBranch()->dirbc();
 
-  if (dbc.empty()) return true;
+  if (dirbc.empty()) return true;
 
-  tk::Fields b( dbc.size(), m_u.nprop() );
-  std::size_t i = 0;
-
-  for (const auto& n : dbc) {
-    auto p = m_lid.find(n.first);
-    if (p!=end(m_lid)) {
-      auto lid = p->second;
-      for (ncomp_t c=0; c<b.nprop(); ++c)
-        b(i,c,0) = std::abs( m_dul(lid,c,0) + m_a(lid,c,0) );
-      ++i;
-    }
+  // We loop through the map that associates a vector of local node IDs to side
+  // set IDs for all side sets read from mesh file. Then for each side set for
+  // all mesh nodes on a given side set we attempt to find the global node ID in
+  // dirbc, which stores only those nodes (and BC settings) at which the user
+  // has configured Dirichlet BCs to be set. Then for all scalar components of
+  // all system of systems of PDEs integrated if a BC is to be set for a given
+  // component, we compute the low order solution increment + the anti-diffusive
+  // element contributions, which is the current solution (to be updated) at
+  // that node. This solution must equal the BC prescribed at the given node. If
+  // not, the BCs are not set correctly, which is an error.
+  for (const auto& s : m_side)
+    for (auto i : s.second) {
+      auto u = dirbc.find( m_gid[i] );
+      if (u != end(dirbc)) {
+        const auto& b = u->second;
+        Assert( b.size() == m_u.nprop(), "Size mismatch" );
+        for (std::size_t c=0; c<b.size(); ++c)
+          if ( b[c].first &&
+               std::abs( m_dul(i,c,0) + m_a(i,c,0) - b[c].second ) >
+                 std::numeric_limits< tk::real >::epsilon() ) {
+             return false;
+          }
+      }
   }
 
-  auto d = std::max_element( begin(b.data()), end(b.data()) );
-  if (*d > std::numeric_limits< tk::real >::epsilon())
-    return false;
-  else
-    return true;
+  return true;
 }
 
 void
 Carrier::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Combine own and communicated contributions to A
@@ -1284,9 +1361,7 @@ Carrier::apply()
   }
 
   // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( correctBC(), "Dirichlet boundary condition incorrect. Solution "
-         "values at mesh nodes where Dirichlet boundary conditions are "
-         "prescribed must not change." );
+  Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (m_stage < 1)

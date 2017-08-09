@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
 */
@@ -80,7 +79,7 @@ class InputDeck :
                                      , kw::statistics
                                      , kw::interval
                                      , kw::pdfs
-                                     , kw::pdf_filetype
+                                     , kw::filetype
                                      , kw::pdf_policy
                                      , kw::pdf_centering
                                      , kw::txt_float_format
@@ -220,7 +219,6 @@ class InputDeck :
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    //! \author J. Bakosi
     explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Random number generator test suite input deck parser
   \details   This file declares the input deck, i.e., control file, parser for
     the random number generator test suite, RNGTest.

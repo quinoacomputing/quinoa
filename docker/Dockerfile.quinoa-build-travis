@@ -9,6 +9,7 @@ ARG CXX
 ENV OMPI_CXX=${CXX}
 ARG CXXFLAGS
 ARG RUNNER_ARGS
+ARG TPL_DIR
 
 #for coverage
 ENV CI true
@@ -36,7 +37,7 @@ WORKDIR build
 RUN ccache -z
 RUN cmake \
     ${COVERAGE:+-DCOVERAGE=ON} \
-    ${SONARQUBE:+-DTPL_DIR=/home/quinoa/tpl} \
+    -DTPL_DIR="${TPL_DIR}" \
     -DLCOV=/bin/true \
     -DGENHTML=/bin/true \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/WalkerDriver.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
 */
@@ -36,7 +35,6 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)

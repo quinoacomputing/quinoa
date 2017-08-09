@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the
@@ -31,7 +30,6 @@ namespace ctr {
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/Inciter/Types.h
-//! \author J. Bakosi
 class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
@@ -43,6 +41,7 @@ class InputDeck :
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
+                      tag::diag,       diagnostics,
                       tag::error,      std::vector< std::string > > {
 
   public:
@@ -120,13 +119,20 @@ class InputDeck :
                                        kw::amr,
                                        kw::amr_initial,
                                        kw::amr_uniform,
-                                       kw::rayleigh_taylor >;
+                                       kw::rayleigh_taylor,
+                                       kw::taylor_green,
+                                       kw::artvisc,
+                                       kw::filetype,
+                                       kw::exodusii,
+                                       kw::root,
+                                       kw::error,
+                                       kw::l2,
+                                       kw::linf >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
-    //! \author J. Bakosi
     InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
       set< tag::cmd >( cl );
@@ -139,6 +145,8 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
       set< tag::discr, tag::ctau >( 1.0 );
+      // Default field output file type
+      set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
       set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
       // Default txt floating-point output precision in digits
@@ -159,7 +167,6 @@ class InputDeck :
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
@@ -170,12 +177,12 @@ class InputDeck :
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
+                   tag::diag,       diagnostics,
                    tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i InputDeck object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}
 };

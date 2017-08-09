@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/PDFWriter.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing
     probability density functions (PDFs) into files in various formats using
@@ -62,11 +61,11 @@ class PDFWriter : public tk::Writer {
 
     //! Write bivariate PDF to Exodus II file format
     void writeExodusII( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
-                        std::size_t it, ctr::PDFCenteringType centering ) const;
+                        ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to Exodus II file format
     void writeExodusII( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
-                        std::size_t it, ctr::PDFCenteringType centering ) const;
+                        ctr::PDFCenteringType centering ) const;
 
   private:
     //! Assert the number of sample space dimensions given
@@ -97,7 +96,6 @@ class PDFWriter : public tk::Writer {
 
     // Output probability density function as Exodus II results field
     void writeExVar( int exoFile,
-                     std::size_t it,
                      ctr::PDFCenteringType centering,
                      const std::vector< tk::real >& probability ) const;
 

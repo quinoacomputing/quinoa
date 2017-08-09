@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshFactory.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
 */
@@ -19,6 +18,7 @@
 #include "NetgenMeshReader.h"
 #include "ExodusIIMeshReader.h"
 #include "HyperMeshReader.h"
+#include "ASCMeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
@@ -33,7 +33,6 @@ detectInput( const std::string& filename )
 //  Detect input mesh file type
 //! \param[in] filename File to open and detect its type
 //! \return enum specifying the mesh reader type
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get first three letters from input file
@@ -45,7 +44,9 @@ detectInput( const std::string& filename )
               s.find("HDF") != std::string::npos ) {
     return MeshReader::EXODUSII;
   } else if ( s.find("<?x") != std::string::npos ) {
-    return MeshReader::HYPERMESH;
+    return MeshReader::HYPER;
+  } else if ( s.find("*nd") != std::string::npos ) {
+    return MeshReader::ASC;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -67,7 +68,6 @@ pickOutput( const std::string& filename )
 //  Determine output mesh file type
 //! \param[in] filename Filename to pick its type based on extension given
 //! \return enum specifying the mesh writer type
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Get extension of input file name
@@ -99,7 +99,6 @@ readUnsMesh( const tk::Print& print,
 //! \param[out] timestamp A time stamp consisting of a timer label (a string),
 //!   and a time state (a tk::real in seconds) measuring the mesh read time
 //! \return Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   print.diagstart( "Reading mesh from file ..." );
@@ -118,7 +117,9 @@ readUnsMesh( const tk::Print& print,
     NetgenMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
-  else if (meshtype == MeshReader::HYPERMESH)
+  else if (meshtype == MeshReader::ASC)
+    ASCMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReader::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
@@ -143,7 +144,6 @@ writeUnsMesh( const tk::Print& print,
 //! \return Vector of time stamps consisting of a timer label (a string), and a
 //!   time state (a tk::real in seconds) measuring the renumber and the mesh
 //!   write time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::vector< std::pair< std::string, tk::real > > times;
@@ -153,14 +153,32 @@ writeUnsMesh( const tk::Print& print,
   if (reorder) {
     print.diagstart( "Reordering mesh nodes ..." );
 
-    auto& inpoel = mesh.tetinpoel();
-    const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
-    std::vector< std::size_t > map, invmap;
-    std::tie( map, invmap ) = tk::renumber( psup );
-    tk::remap( inpoel, map );
+    // If mesh has tetrahedra elements, reorder based on those
+    if (!mesh.tetinpoel().empty()) {
+
+      auto& inpoel = mesh.tetinpoel();
+      const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+      auto map = tk::renumber( psup );
+      tk::remap( inpoel, map );
+      tk::remap( mesh.triinpoel(), map );
+      tk::remap( mesh.x(), map );
+      tk::remap( mesh.y(), map );
+      tk::remap( mesh.z(), map );
+
+    // If mesh has no tetrahedra elements, reorder based on triangle mesh if any
+    } else if (!mesh.triinpoel().empty()) {
+
+      auto& inpoel = mesh.triinpoel();
+      const auto psup = tk::genPsup( inpoel, 3, tk::genEsup( inpoel, 3 ) );
+      auto map = tk::renumber( psup );
+      tk::remap( inpoel, map );
+      tk::remap( mesh.x(), map );
+      tk::remap( mesh.y(), map );
+      tk::remap( mesh.z(), map );
+    }
 
     print.diagend( "done" );
-    times.emplace_back( "Renumber mesh", t.dsec() );
+    times.emplace_back( "Reorder mesh", t.dsec() );
     t.zero();
   }
 

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/RNG/Random123.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Interface to Random123 random number generators
   \details   Interface to Random123 random number generators
 */
@@ -67,9 +66,9 @@ class Random123 {
     //! Constructor
     //! \param[in] n Initialize RNG using this many independent streams
     //! \param[in] seed RNG seed
-    explicit Random123( uint64_t n = 1, uint32_t seed = 0 ) {
+    explicit Random123( uint64_t n = 1, uint64_t seed = 0 ) {
       Assert( n > 0, "Need at least one thread" );
-      m_data.resize( n, {{ 0, static_cast< uint64_t >( seed ) << 32, 0 }} );
+      m_data.resize( n, {{ 0, seed << 32, 0 }} );
     }
 
     //! Uniform RNG: Generate uniform random numbers

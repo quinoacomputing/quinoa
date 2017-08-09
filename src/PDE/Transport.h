@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
      of set of scalars.
@@ -45,7 +44,6 @@ class Transport {
   public:
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
-    //! \author J. Bakosi
     explicit Transport( ncomp_t c ) :
       m_c( c ),
       m_ncomp(
@@ -60,14 +58,11 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     const std::vector< std::size_t >&,
-                     const std::unordered_map< std::size_t,
-                       std::vector< std::pair< bool, tk::real > > >& )
-    const {
+                     const std::vector< std::size_t >& ) const
+    {
       Problem::template
        init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
     }
@@ -86,7 +81,6 @@ class Transport {
     //!   where psup2 holds the indices at which psup1 holds the point ids
     //!   surrounding points, see also tk::genPsup()). Note that the number of
     //!   mesh points (our chunk) npoin = psup.second.size()-1.
-    //! \author J. Bakosi
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
@@ -165,7 +159,6 @@ class Transport {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in,out] R Right-hand side vector computed
-    //! \author J. Bakosi
     void rhs( tk::real,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
@@ -310,21 +303,31 @@ class Transport {
     //!   in this PDE system
     static void side( std::unordered_set< int >& ) {}
 
-    //! \brief Query Dirichlet boundary condition value set by the user on a
-    //!   given side set for all components in this PDE system
-    //! \param[in] sideset Side set ID
-    //! \return Vector of pairs of bool and BC value for all components
-    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
-      std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
-      IGNORE(sideset);
-      return b;
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
+    //! \return Vector of pairs of bool and boundary condition value associated
+    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
+    //!   that instead of the actual boundary condition value, we return the
+    //!   increment between t+dt and t, since that is what the solution requires
+    //!   as we solve for the soution increments and not the solution itself.
+    std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
+    dirbc( tk::real,
+           tk::real,
+           const std::pair< const int, std::vector< std::size_t > >&,
+           const std::array< std::vector< tk::real >, 3 >& ) const
+    {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      // TODO
+      return bc;
     }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with output(),
-    //!   which provides the vector of fields to be output
-    std::vector< std::string > names() const {
+    //! \details This functions should be written in conjunction with
+    //!   fieldOutput(), which provides the vector of fields to be output
+    std::vector< std::string > fieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
         g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
@@ -351,11 +354,11 @@ class Transport {
     //!   which provides the vector of field names
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
-    output( tk::real t,
-            tk::real V,
-            const std::array< std::vector< tk::real >, 3 >& coord,
-            const std::vector< tk::real >& v,
-            tk::Fields& U ) const
+    fieldOutput( tk::real t,
+                 tk::real V,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >& v,
+                 tk::Fields& U ) const
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
@@ -363,7 +366,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t, {{}}, {{}} );
+      initialize( coord, U, t, {{}} );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
@@ -378,6 +381,18 @@ class Transport {
         out.push_back( e );
       }
       return out;
+    }
+
+    //! Return names of integral variables to be output to diagnostics file
+    //! \return Vector of strings labelling integral variables output
+    std::vector< std::string > names() const {
+      std::vector< std::string > n;
+      const auto& depvar =
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
+      // construct the name of the numerical solution for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c)
+        n.push_back( depvar + std::to_string(c) );
+      return n;
     }
 
   private:

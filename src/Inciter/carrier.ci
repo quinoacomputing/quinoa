@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/carrier.ci
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Carrier
   \details   Charm++ module interface file for Carrier
 */
@@ -37,6 +36,8 @@ module carrier {
       entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& V );
+      entry void totalvol();
+      entry void stat();
       entry void setup( tk::real v );
       entry void init();
       entry void updateSol( const std::vector< std::size_t >& gid,

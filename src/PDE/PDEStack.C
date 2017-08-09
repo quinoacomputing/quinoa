@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
     functionality related to registering and instantiating partial differential
@@ -97,7 +96,6 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //!   std::set< ctr::PDEType >, which is only used internally to PDEStack
 //!   for counting up the number of unique differential equation types
 //!   registered, used for diagnostics purposes.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   namespace mpl = boost::mpl;
@@ -122,7 +120,6 @@ PDEStack::selected() const
 // *****************************************************************************
 //  Instantiate all selected partial differential equations
 //! \return std::vector of instantiated partial differential equation objects
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
@@ -145,7 +142,6 @@ PDEStack::info() const
 //  Return information on all selected partial differential equations
 //! \return A vector of vector of pair of strings, containing the configuration
 //!   for each selected partial differential equation
-//! \author J. Bakosi
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt; // count PDEs per type
@@ -170,7 +166,6 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
@@ -210,7 +205,6 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
 // *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
@@ -232,6 +226,10 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
 
+  const auto& av = g_inputdeck.get< tag::param, tag::compflow, tag::artvisc >();
+  if (!av.empty())
+    nfo.emplace_back( "artificial viscosity", parameters( av ) );
+
   const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
   if (!mu.empty())
     nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
@@ -248,45 +246,31 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   if (!npar.empty())
     nfo.emplace_back( "number of tracker particles", parameters( npar ) );
 
-  const auto& alpha =
-    g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();;
-  if (!alpha.empty())
-    nfo.emplace_back( "coeff alpha", parameters( alpha ) );
+  const auto& alpha = g_inputdeck.get< tag::param, tag::compflow, tag::alpha >();;
+  if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
 
   const auto& beta =
     g_inputdeck.get< tag::param, tag::compflow, tag::beta >();;
   if (!beta.empty())
     nfo.emplace_back( "coeff beta", parameters( beta ) );
 
-  const auto& betax =
-    g_inputdeck.get< tag::param, tag::compflow, tag::betax >();;
-  if (!betax.empty())
-    nfo.emplace_back( "coeff betax", parameters( betax ) );
+  const auto& bx = g_inputdeck.get< tag::param, tag::compflow, tag::betax >();;
+  if (!bx.empty()) nfo.emplace_back( "coeff betax", parameters( bx ) );
 
-  const auto& betay =
-    g_inputdeck.get< tag::param, tag::compflow, tag::betay >();;
-  if (!betay.empty())
-    nfo.emplace_back( "coeff betay", parameters( betay ) );
+  const auto& by = g_inputdeck.get< tag::param, tag::compflow, tag::betay >();;
+  if (!by.empty()) nfo.emplace_back( "coeff betay", parameters( by ) );
 
-  const auto& betaz =
-    g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();;
-  if (!betaz.empty())
-    nfo.emplace_back( "coeff betaz", parameters( betaz ) );
+  const auto& bz = g_inputdeck.get< tag::param, tag::compflow, tag::betaz >();;
+  if (!bz.empty()) nfo.emplace_back( "coeff betaz", parameters( bz ) );
 
-  const auto& r0 =
-    g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();;
-  if (!r0.empty())
-    nfo.emplace_back( "coeff r0", parameters( r0 ) );
+  const auto& r0 = g_inputdeck.get< tag::param, tag::compflow, tag::r0 >();;
+  if (!r0.empty()) nfo.emplace_back( "coeff r0", parameters( r0 ) );
 
-  const auto& ce =
-    g_inputdeck.get< tag::param, tag::compflow, tag::ce >();;
-  if (!ce.empty())
-    nfo.emplace_back( "coeff ce", parameters( ce ) );
+  const auto& ce = g_inputdeck.get< tag::param, tag::compflow, tag::ce >();;
+  if (!ce.empty()) nfo.emplace_back( "coeff ce", parameters( ce ) );
 
-  const auto& kappa =
-    g_inputdeck.get< tag::param, tag::compflow, tag::kappa >();;
-  if (!kappa.empty())
-    nfo.emplace_back( "coeff kappa", parameters( kappa ) );
+  const auto& kappa = g_inputdeck.get< tag::param, tag::compflow, tag::kappa >();
+  if (!kappa.empty()) nfo.emplace_back( "coeff k", parameters( kappa ) );
 
   const auto& p0 =
     g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();;

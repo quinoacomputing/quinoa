@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
-  \file      src/LoadBalance/LoadDistributor.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \file      src/Base/LoadDistributor.C
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of
      virtualization.
@@ -57,7 +56,6 @@ linearLoadDistributor( tk::real virtualization,
 //!    - n = load/npes
 //!    - load = total work, e.g., number of particles, number of mesh cells
 //!    - npes = number of hardware processing elements
-//! \author J. Bakosi
 // *****************************************************************************
 {
   Assert( virtualization > -std::numeric_limits< tk::real >::epsilon() &&

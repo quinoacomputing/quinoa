@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/MixNumberFractionBetaCoeffPolicy.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Mix number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
     number-fraction beta SDE, defined in DiffEq/MixNumberFractionBeta.h.
@@ -82,7 +81,6 @@ namespace walker {
 //! \brief Mix number-fraction beta SDE decay coefficients policity.
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <x^2>.
-//! \author J. Bakosi
 class MixNumFracBetaCoeffDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;

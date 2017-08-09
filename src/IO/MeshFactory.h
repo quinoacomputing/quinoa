@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/MeshFactory.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
 */
@@ -23,7 +22,8 @@ namespace tk {
 enum class MeshReader : uint8_t { GMSH=0,
                                   NETGEN,
                                   EXODUSII,
-                                  HYPERMESH };
+                                  HYPER,
+                                  ASC };
 
 //! Supported mesh writers
 enum class MeshWriter : uint8_t { GMSH=0,

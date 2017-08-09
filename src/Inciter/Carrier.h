@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Carrier.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
     potentially large number of Carrier Charm++ chares created by Transporter.
@@ -88,6 +87,7 @@
 #include <unordered_set>
 #include <set>
 
+#include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
 #include "Tracker.h"
@@ -101,12 +101,12 @@
 #include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
-namespace tk { class ExodusIIMeshWriter; }
+namespace tk { class ExodusIIMeshWriter; 
+	       class RootMeshWriter; }
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern CkReduction::reducerType VerifyBCMerger;
 extern CkReduction::reducerType PDFMerger;
 
 //! Carrier Charm++ chare array used to advance transport equations in time
@@ -167,7 +167,6 @@ class Carrier : public CBase_Carrier {
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
     static void registerReducers() {
-      VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
       PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
     }
 
@@ -182,6 +181,12 @@ class Carrier : public CBase_Carrier {
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V );
+
+    //! Sum mesh volumes and contribute own mesh volume to total volume
+    void totalvol();
+
+    //! Compute mesh cell statistics
+    void stat();
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
@@ -299,6 +304,7 @@ class Carrier : public CBase_Carrier {
       p | m_msum;
       p | m_v;
       p | m_vol;
+      p | m_volc;
       p | m_bid;
       p | m_pc;
       p | m_qc;
@@ -308,12 +314,12 @@ class Carrier : public CBase_Carrier {
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i Carrier object reference
-    //! \author J. Bakosi
     friend void operator|( PUP::er& p, Carrier& i ) { i.pup(p); }
     //@}
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
+    using NodeBC = std::vector< std::pair< bool, tk::real > >;
 
     //! Iteration count
     uint64_t m_it;
@@ -358,6 +364,9 @@ class Carrier : public CBase_Carrier {
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
+    //! \brief Map associating local node IDs to side set IDs for all side sets
+    //!   read from mesh file (not only those the user sets BCs on)
+    std::map< int, std::vector< std::size_t > > m_side;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.
@@ -397,11 +406,17 @@ class Carrier : public CBase_Carrier {
     //!   elements (sum of surrounding cell volumes / 4) without contributions
     //!   from other chares on chare-boundaries
     std::vector< tk::real > m_v;
-    //! \brief Volume of nodes
+    //! Volume of nodes
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
+    //! Receive buffer for volume of nodes
+    //! \details This is a communication buffer used to compute the volume of
+    //!   the mesh associated to nodes of owned elements (sum of surrounding
+    //!   cell volumes / 4) with contributions from other chares on
+    //!   chare-boundaries.
+    std::vector< tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
@@ -416,9 +431,6 @@ class Carrier : public CBase_Carrier {
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
-
-    //! Compute mesh cell statistics
-    void stat();
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions
@@ -444,6 +456,11 @@ class Carrier : public CBase_Carrier {
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
+    #ifdef HAS_ROOT
+    void writeSolution( const tk::RootMeshWriter& rmw,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const;
+    #endif
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;

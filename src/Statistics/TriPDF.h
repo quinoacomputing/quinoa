@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Statistics/TriPDF.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate
     a joint probability density function (PDF) of three scalar variables from an

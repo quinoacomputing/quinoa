@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTest.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-
@@ -90,6 +89,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/IO/TestExodusIIMeshReader.h"
 
 #include "tests/Mesh/TestDerivedData.h"
+#include "tests/Mesh/TestReorder.h"
 
 #include "tests/RNG/TestRNG.h"
 #ifdef HAS_MKL
@@ -268,7 +268,6 @@ class Main : public CBase_Main {
 //! \details By the time this object is constructed, the Charm++ runtime system
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
-//! \author J. Bakosi
 class execute : public CBase_execute {
  public: execute() { mainProxy.execute(); }
 };
@@ -280,7 +279,6 @@ class execute : public CBase_execute {
 //!   library. This is necessary, since MPI_Init() is a bit adamant about
 //!   capturing resources it wants and hence it has to be called before Charm is
 //!   initialized.
-//! \author J. Bakosi
 int main( int argc, char **argv ) {
 
   int peid, numpes;

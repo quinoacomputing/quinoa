@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/LinSysMerger.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
 */
@@ -30,7 +29,7 @@ namespace tk {
 //!   undefined behavior, segfault, and formatting the internet ...
 CkReduction::reducerType BCVectorMerger;
 CkReduction::reducerType BCMapMerger;
-CkReduction::reducerType BCValMerger;
+CkReduction::reducerType DiagMerger;
 
 }
 

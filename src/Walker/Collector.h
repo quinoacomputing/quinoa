@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Collector.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
   \details   Charm++ module interface file for collecting contributions from
@@ -38,7 +37,6 @@ extern CkReduction::reducerType PDFMerger;
 //!   objects that happen to be on a given PE. See also the Charm++ interface
 //!   file collector.ci.
 //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
-//! \author J. Bakosi
 class Collector : public CBase_Collector {
 
   public:
@@ -48,8 +46,6 @@ class Collector : public CBase_Collector {
       m_nchare( 0 ),
       m_nord( 0 ),
       m_ncen( 0 ),
-      m_nopdf( 0 ),
-      m_ncpdf( 0 ),
       m_ordinary( g_inputdeck.momentNames( tk::ctr::ordinary ).size(), 0.0 ),
       m_central( g_inputdeck.momentNames( tk::ctr::central ).size(), 0.0 ),
       m_ordupdf(
@@ -93,29 +89,23 @@ class Collector : public CBase_Collector {
     //!   method since it is always called by chares on the same PE.
     void checkin() { ++m_nchare; }
 
-    //! Chares contribute ordinary moments
-    void chareOrd( const std::vector< tk::real >& ord );
+    //! Chares contribute ordinary moments and ordinary PDFs
+    void chareOrd( const std::vector< tk::real >& ord,
+                   const std::vector< tk::UniPDF >& updf,
+                   const std::vector< tk::BiPDF >& bpdf,
+                   const std::vector< tk::TriPDF >& tpdf );
 
-    //! Chares contribute central moments
-    void chareCen( const std::vector< tk::real >& cen );
-
-    //! Chares contribute ordinary PDFs
-    void chareOrdPDF( const std::vector< tk::UniPDF >& updf,
-                      const std::vector< tk::BiPDF >& bpdf,
-                      const std::vector< tk::TriPDF >& tpdf );
-
-    //! Chares contribute central PDFs
-    void chareCenPDF( const std::vector< tk::UniPDF >& updf,
-                      const std::vector< tk::BiPDF >& bpdf,
-                      const std::vector< tk::TriPDF >& tpdf );
+    //! Chares contribute central moments and central PDFs
+    void chareCen( const std::vector< tk::real >& cen,
+                   const std::vector< tk::UniPDF >& updf,
+                   const std::vector< tk::BiPDF >& bpdf,
+                   const std::vector< tk::TriPDF >& tpdf );
 
   private:
     CProxy_Distributor m_hostproxy;             //!< Host proxy    
     std::size_t m_nchare;  //!< Number of chares contributing to my PE
     std::size_t m_nord;    //!< Number of chares contributed ordinary moments
     std::size_t m_ncen;    //!< Number of chares contributed central moments
-    std::size_t m_nopdf;   //!< Number of chares contributed ordinary PDFs
-    std::size_t m_ncpdf;   //!< Number of chares contributed central PDFs
     std::vector< tk::real > m_ordinary;         //!< Ordinary moments
     std::vector< tk::real > m_central;          //!< Central moments
     std::vector< tk::UniPDF > m_ordupdf;        //!< Ordinary univariate PDFs

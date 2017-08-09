@@ -77,6 +77,23 @@ INSTALL(TARGETS MeshConvControl
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
+#### FileConv control ##########################################################
+project(FileConvControl CXX)
+
+add_library(FileConvControl
+            StringParser.C
+            FileConv/CmdLine/Parser.C
+)
+
+set_target_properties(FileConvControl PROPERTIES
+                      LIBRARY_OUTPUT_NAME quinoa_fileconvcontrol)
+
+INSTALL(TARGETS FileConvControl
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
 #### Walker control ############################################################
 add_library(WalkerControl
             FileParser.C

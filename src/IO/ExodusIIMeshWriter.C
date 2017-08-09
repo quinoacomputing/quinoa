@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
 */
@@ -10,11 +9,8 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
 #include <string>
 #include <utility>
-#include <cstdint>
-#include <cstdio>
 
 #include "NoWarning/exodusII.h"
 
@@ -37,7 +33,6 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
 //!   appending
 //! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
 //! \param[in] iowordsize Set I/O word size, see ExodusII documentation
-//! \author J. Bakosi
 // *****************************************************************************
 {
   // Increase verbosity from ExodusII library in debug mode
@@ -69,7 +64,6 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
 ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 // *****************************************************************************
 //  Destructor
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if ( ex_close(m_outFile) < 0 )
@@ -82,7 +76,6 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write ExodusII mesh file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   writeHeader( mesh );
@@ -95,7 +88,6 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write ExodusII header
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk(
@@ -112,11 +104,36 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 }
 
 void
+ExodusIIMeshWriter::writeHeader( const char* title,
+                                 int64_t ndim,
+                                 int64_t nnodes,
+                                 int64_t nelem,
+                                 int64_t nblk,
+                                 int64_t node_set,
+                                 int64_t side_set ) const
+// *****************************************************************************
+//  Write ExodusII header
+//! \param[in] title ExodusII file header 'title'
+//! \param[in] ndim Number of spatial dimensions in ExodusII file
+//! \param[in] nnodes Number of mesh nodes in ExodusII file
+//! \param[in] nelem Number of mesh elements in ExodusII file
+//! \param[in] nblk Number of mesh element blocks in ExodusII file
+//! \param[in] node_set Number of node sets in ExodusII file
+//! \param[in] side_set Number of side sets in ExodusII file
+//! \author A. Pakki
+// *****************************************************************************
+{
+  ErrChk(
+    ex_put_init( m_outFile, title, ndim, nnodes, nelem, nblk, 
+                 node_set, side_set) == 0,
+    "Failed to write header to file: " + m_filename );
+}
+
+void
 ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write node coordinates to ExodusII file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk( ex_put_coord( m_outFile, mesh.x().data(), mesh.y().data(),
@@ -125,11 +142,26 @@ ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 }
 
 void
+ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
+                                const std::vector< tk::real >& y,
+                                const std::vector< tk::real >& z ) const
+// *****************************************************************************
+//  Write node coordinates to ExodusII file without Mesh
+//! \param[in] x coordinates of mesh nodes
+//! \param[in] y coordinates of mesh nodes
+//! \param[in] z coordinates of mesh nodes
+//! \author A. Pakki
+// *****************************************************************************
+{
+  ErrChk( ex_put_coord( m_outFile, x.data(), y.data(), z.data() ) == 0,
+          "Failed to write coordinates to ExodusII file: " + m_filename );
+}
+
+void
 ExodusIIMeshWriter::writeElements( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write element connectivity to ExodusII file
 //! \param[in] mesh Unstructured mesh object
-//! \author J. Bakosi
 // *****************************************************************************
 {
   int elclass = 0;
@@ -150,7 +182,6 @@ const
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
 //! \param[in] inpoel Element connectivity.
-//! \author J. Bakosi
 // *****************************************************************************
 {
   if (inpoel.empty()) return;
@@ -192,7 +223,6 @@ ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 //  Write time stamp to ExodusII file
 //! \param[in] it Iteration number
 //! \param[in] time Time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk( ex_put_time( m_outFile, static_cast<int>(it), &time ) == 0,
@@ -205,7 +235,6 @@ const
 // *****************************************************************************
 //  Write the names of nodal output variables to ExodusII file
 //! \param[in] nv Nodal variable names
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #if defined(__clang__)
@@ -247,7 +276,6 @@ const
 // *****************************************************************************
 //  Write the names of element output variables to ExodusII file
 //! \param[in] ev Elem variable names
-//! \author J. Bakosi
 // *****************************************************************************
 {
   #if defined(__clang__)
@@ -292,7 +320,6 @@ ExodusIIMeshWriter::writeNodeScalar( uint64_t it,
 //! \param[in] it Iteration number
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk( ex_put_var( m_outFile,
@@ -314,7 +341,6 @@ ExodusIIMeshWriter::writeElemScalar( uint64_t it,
 //! \param[in] it Iteration number
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output
-//! \author J. Bakosi
 // *****************************************************************************
 {
   ErrChk( ex_put_var( m_outFile,

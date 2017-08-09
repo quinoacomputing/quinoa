@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Walker/Integrator.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
     large number of Integrator Charm++ chares created by Distributor. Each
@@ -77,17 +76,11 @@ class Integrator : public CBase_Integrator {
                   uint64_t it,
                   const std::map< tk::ctr::Product, tk::real >& moments );
 
-    // Accumulate sums for ordinary moments
-    void accumulateOrd();
+    // Accumulate sums for ordinary moments and ordinary PDFs
+    void accumulateOrd( uint64_t it );
 
-    // Accumulate sums for central moments
-    void accumulateCen( const std::vector< tk::real >& ord );
-
-    // Accumulate sums for ordinary PDFs
-    void accumulateOrdPDF();
-
-    // Accumulate sums for central PDFs
-    void accumulateCenPDF( const std::vector< tk::real >& ord );
+    // Accumulate sums for central moments and central PDFs
+    void accumulateCen( uint64_t it, const std::vector< tk::real >& ord );
 
   private:
     CProxy_Distributor m_hostproxy;     //!< Host proxy

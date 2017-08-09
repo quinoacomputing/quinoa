@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/Init.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
   \details   Common initialization routines for main() functions for multiple
@@ -30,6 +29,7 @@ enum class HeaderType : uint8_t { INCITER=0,
                                   RNGTEST,
                                   UNITTEST,
                                   MESHCONV,
+                                  FILECONV,
                                   WALKER };
 
 
@@ -37,7 +37,6 @@ static std::string workdir()
 // *****************************************************************************
 //! \brief Wrapper for POSIX API's getcwd() from unistd.h
 //! \return A stirng containing the current working directory
-//! \author J. Bakosi
 // *****************************************************************************
 {
   char cwd[1024];
@@ -52,7 +51,6 @@ static std::string curtime()
 // *****************************************************************************
 //! \brief Wrapper for the standard C library's gettimeofday() from
 //! \return A stirng containing the current date and time
-//! \author J. Bakosi
 // *****************************************************************************
 {
   time_t current_time;
@@ -82,7 +80,6 @@ static void echoHeader( const Print& print, HeaderType header )
 //! \brief Echo program header
 //! \param[in] print Pretty printer
 //! \param[in] header Header type enum indicating which header to print
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   if ( header == HeaderType::INCITER )
@@ -95,6 +92,8 @@ static void echoHeader( const Print& print, HeaderType header )
     print.headerMeshConv();
   else if ( header == HeaderType::WALKER )
     print.headerWalker();
+  else if ( header == HeaderType::FILECONV )
+    print.headerFileConv();
   else
     Throw( "Header not available" );
 }
@@ -106,7 +105,6 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 //!    CMake based on src/Main/Config.h.in.
 //! \param[in] print Pretty printer
 //! \param[in] executable Name of the executable
-//! \author J. Bakosi
 // *****************************************************************************
 {
   print.section( "Build environment" );
@@ -137,7 +135,6 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
 //! \param[in] argc Number of command-line arguments to executable
 //! \param[in] argv C-style string array to command-line arguments to executable
 //! \param[in] verbose True for verbose screen-output
-//! \author J. Bakosi
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -178,7 +175,6 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
 //! \param[in] print Pretty printer to use
 //! \return Instantiated driver object which can then be used to execute()
 //!   whatever it is intended to drive
-//! \author J. Bakosi
 template< class Driver, class Printer, class CmdLine >
 Driver Main( int argc, char* argv[],
              const CmdLine& cmdline,

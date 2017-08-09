@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/LinSys/LinSysMerger.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
@@ -69,7 +68,7 @@
               storing and exporting global row ids"
               URL="\ref inciter::Transporter::rowcomplete"];
       Init [ label="Init"
-              tooltip="Worker start setting and outputing ICs, computing
+              tooltip="Workers start setting and outputing ICs, computing
                        initial dt, computing LHS"];
       dt [ label="dt"
            tooltip="Worker chares compute their minimum time step size"
@@ -141,7 +140,6 @@
                color="#e6851c"style="filled"
                URL="\ref tk::LinSysMerger::updateAuxSol"];
       ChRow -> RowComplete [ style="solid" ];
-      ChBC -> RowComplete Ver [ style="solid" ];
       RowComplete -> Init [ style="solid" ];
       RowComplete -> Ver [ style="solid" ];
       Ver -> HypreRow [ style="solid" ];
@@ -158,6 +156,9 @@
       Init -> dt [ style="solid" ];
       dt -> ChRhs [ style="solid" ];
       dt -> ChAuxRhs [ style="solid" ];
+      dt -> ChBC [ style="solid" ];
+      ChBC -> LhsBC [ style="solid" ];
+      ChBC -> RhsBC [ style="solid" ];
       HypreRow -> FillSol [ style="solid" ];
       HypreRow -> FillLhs [ style="solid" ];
       HypreRow -> FillRhs [ style="solid" ];
@@ -193,6 +194,7 @@
 #include "HypreSolver.h"
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
+#include "DiagReducer.h"
 #include "AuxSolver.h"
 
 #include "NoWarning/linsysmerger.decl.h"
@@ -202,7 +204,7 @@ namespace tk {
 
 extern CkReduction::reducerType BCVectorMerger;
 extern CkReduction::reducerType BCMapMerger;
-extern CkReduction::reducerType BCValMerger;
+extern CkReduction::reducerType DiagMerger;
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -216,7 +218,6 @@ extern CkReduction::reducerType BCValMerger;
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   linsysmerger.ci.
-//! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class AuxSolver  >
 class LinSysMerger : public CBase_LinSysMerger< HostProxy,
                                                 WorkerProxy,
@@ -333,9 +334,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       BCMapMerger = CkReduction::addReducer(
                       tk::mergeHashMap< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > );
-      BCValMerger = CkReduction::addReducer(
-                      tk::mergeHashMap< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > > );
+      DiagMerger = CkReduction::addReducer( tk::mergeDiag );
     }
 
     //! Receive lower and upper global node IDs all PEs will operate on
@@ -381,6 +380,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       m_auxrhsimport.clear();
       m_diagimport.clear();
       m_rhs.clear();
+      m_bc.clear();
       m_auxrhs.clear();
       m_hypreRhs.clear();
       m_diag.clear();
@@ -701,23 +701,26 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       creator | m_bc;
       delete msg;
       if (m_feedback) m_host.pebccomplete();    // send progress report to host
-      bc_complete();
+      bc_complete_lhs(); bc_complete_rhs();
+      m_nchbc = 0;
     }
 
     //! \brief Chares contribute their numerical and analytical solutions
     //!   nonzero values for computing diagnostics
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] num Portion of the numerical unknown/solution vector
-    //! \param[in] an Portion of the analytical solution vector
+    //! \param[in] u Portion of the numerical unknown/solution vector
+    //! \param[in] a Portion of the analytical solution vector
+    //! \param[in] v Vector of nodal volumes
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charediag( int fromch,
                     const std::vector< std::size_t >& gid,
-                    const Fields& num,
-                    const Fields& an )
+                    const Fields& u,
+                    const Fields& a,
+                    const std::vector< tk::real >& v )
     {
-      Assert( gid.size() == num.nunk(),
+      Assert( gid.size() == u.nunk(),
               "Size of numerical solution and row ID vectors must equal" );
       // Store numerical and analytical solution vector nonzero values owned and
       // pack those to be exported, also build import map used to test for
@@ -727,9 +730,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
           m_diagimport[ fromch ].push_back( gid[i] );
-          m_diag[ gid[i] ] = {{ num[i], an[i] }};
+          updateDiag( gid[i], u[i], a[i], v[i] );
         } else
-          exp[ pe(gid[i]) ][ gid[i] ] = {{ num[i], an[i] }};
+          exp[ pe(gid[i]) ][ gid[i] ] = {{ u[i], a[i], {{v[i]}} }};
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -744,12 +747,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   containing global row indices and values for all components of the
     //!   numerical and analytical solutions (if available)
     void adddiag( int fromch,
-                  const std::map< std::size_t,
-                          std::vector< std::vector< tk::real > > >& solution )
+                  std::map< std::size_t,
+                            std::vector< std::vector< tk::real > > >& solution )
     {
-      for (const auto& r : solution) {
+      for (auto&& r : solution) {
         m_diagimport[ fromch ].push_back( r.first );
-        m_diag[ r.first ] = r.second;
+        updateDiag( r.first, std::move(r.second[0]), std::move(r.second[1]),
+                    r.second[2][0] );
       }
       if (diagcomplete()) diagnostics();
     }
@@ -961,21 +965,29 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
 
     //! Set boundary conditions on the left-hand side matrix
+    //! \details Setting boundary conditions on the left-hand side matrix is
+    //!   done by zeroing all nonzero entries in rows where BCs are prescribed
+    //!   and putting in 1.0 for the diagonal.
     void lhsbc() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
 
-      for (auto& r : m_lhs) {
-        auto it = m_bc.find( r.first );
-        if (it != end(m_bc)) {
-          auto& diag = tk::ref_find( r.second, r.first );
+      // Set Dirichlet BCs on the lhs matrix. Loop through all BCs and if a BC
+      // is prescribed on a row we own, find that row (r) and in that row the
+      // position of the diagonal entry (diag) in the LHS matrix. Then for all
+      // scalar components the system of system of PDEs we intagrate, query the
+      // entry in the BC data structure to see if we need to set BC for the
+      // given component and set the off-diagonals to zero while put 1.0 into
+      // the diagonal.
+      for (const auto& n : m_bc) {
+        if (n.first >= m_lower && n.first < m_upper) {
+          auto& r = tk::ref_find( m_lhs, n.first );
+          auto& diag = tk::ref_find( r, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
-            if (it->second[i].first) {
-              // zero columns in BC row
-              for (auto& col : r.second) col.second[i] = 0.0;
-              // put 1.0 in diagonal of BC row
-              diag[i] = 1.0;
+            if (n.second[i].first) {
+              for (auto& c : r) c.second[i] = 0.0;  // zero columns in BC row
+              diag[i] = 1.0;    // put 1.0 in diagonal of BC row
             }
         }
       }
@@ -994,7 +1006,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
           auto& r = tk::ref_find( m_rhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
             if (n.second[i].first)
-              r[i] = 0.0;
+              r[i] = n.second[i].second;
         }
       }
       rhsbc_complete(); rhsbc_complete();
@@ -1134,17 +1146,52 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 
     //! Solve auxiliary linear system
     void auxsolve() {
-      // Set boundary conditions on the auxiliary right hand side vector
+      // Set boundary conditions on the auxiliary system
       for (const auto& n : m_bc)
         if (n.first >= m_lower && n.first < m_upper) {
+          // lhs
+          auto& l = tk::ref_find( m_auxlhs, n.first );
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            if (n.second[i].first) l[i] = 1.0;
+          // rhs (set to zero instead of the solution increment at Dirichlet
+          // BCs, because for the low order solution we solve for L = R + D,
+          // where L is the lumped mass matrix, R is the high order RHS, and D
+          // is mass diffusion, and R already has the Dirichlet BC set)
           auto& r = tk::ref_find( m_auxrhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
-            if (n.second[i].first)
-              r[i] = 0.0;
+            if (n.second[i].first) r[i] = 0.0;
         }
       // Solve auxiliary system
       AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );
       auxsolve_complete();
+    }
+
+    //! Update diagnostics vector
+    //! \param[in] row Global row index of the diagnostics vector to update
+    //! \param[in] u Numerical solution vector for all components
+    //! \param[in] a Analytical solution vector for all components
+    //! \param[in] v Nodal volume
+    //! \details This function is used to update the vector of diagnostics that
+    //!   collects (across PEs) the numerical solution, the analytical solution,
+    //!   and the nodal volumes at nodes. This involves communication across PEs
+    //!   and can be called for rows with first contributions or subsequent
+    //!   contributions to rows which already hold partial data. The correct
+    //!   policy for updates across PEs (i.e., at nodes that are shared across
+    //!   PEs) is: overwrite the numerical and analytical solutions and summing
+    //!   nodal volumes.
+    void updateDiag( std::size_t row,
+                     std::vector< tk::real >&& u,
+                     std::vector< tk::real >&& a,
+                     tk::real v )
+    {
+      auto& d = m_diag[ row ];
+      if (d.size() != 3) {
+        d.resize( 2, std::vector<tk::real>(m_ncomp,0.0) );
+        d.resize( 3, std::vector<tk::real>(1,0.0) );
+      }
+      d[0] = std::move( u );    // overwrite numerical solution
+      d[1] = std::move( a );    // overwrite analytical solution
+      d[2][0] += v;             // sum nodal volume
     }
 
     //! Compute diagnostics (residuals) and contribute them back to host
@@ -1154,16 +1201,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       Assert( diagcomplete(),
               "Values of distributed solution vector (for diagnostics) on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      std::vector< tk::real > diag( m_ncomp*2, 0.0 );
+      std::vector< std::vector< tk::real > >
+        diag( 3, std::vector< tk::real >( m_ncomp, 0.0 ) );
       for (const auto& s : m_diag) {
-        Assert( s.second.size() == 2, "Size of diagnostics vector must be 2" );
-        // Compute L1 norm of the numerical solution
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[c] += s.second[0][c] * s.second[0][c];
-        // Compute L1 norm of the numerical - analytical solution
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          diag[m_ncomp+c] += (s.second[0][c] - s.second[1][c]) *
-                             (s.second[0][c] - s.second[1][c]);
+        Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
+        auto row = s.first;
+        if (row >= m_lower && row < m_upper) {    // only if own
+          const auto& u = s.second[0];    // numerical solution (all components)
+          const auto& a = s.second[1];    // analytical solution (all components)
+          auto v = s.second[2][0];        // nodal volume
+          // Compute L2 norm of the numerical solution
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            diag[0][c] += u[c] * u[c] * v;
+          // Compute L2 norm of the numerical - analytical solution
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            diag[1][c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
+          // Compute Linf norm of the numerical - analytical solution
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            auto err = std::abs( u[c] - a[c] );
+            if (err > diag[2][c]) diag[2][c] = err;
+          }
+        }
       }
       // Contribute to diagnostics across all PEs
       signal2host_diag( m_host, diag );
@@ -1243,15 +1301,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
     //! Contribute diagnostics back to host
     void signal2host_diag( const inciter::CProxy_Transporter& host,
-                           const std::vector< tk::real >& diag ) {
+                           const std::vector< std::vector< tk::real > >& diag )
+    {
       using inciter::CkIndex_Transporter;
-      Group::contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
-                         diag.data(), CkReduction::sum_double,
-        CkCallback( CkReductionTarget( Transporter, diagnostics), host ) );
+      auto stream = tk::serialize( diag );
+      CkCallback cb( CkIndex_Transporter::diagnostics(nullptr), host );
+      Group::contribute( stream.first, stream.second.get(), DiagMerger, cb );
     }
     ///@}
     #if defined(__clang__)
-      #pragma GCC diagnostic pop
+      #pragma clang diagnostic pop
     #endif
 };
 

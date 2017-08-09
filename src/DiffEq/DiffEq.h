@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEq.h
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
     uses runtime polymorphism without client-side inheritance: inheritance is
@@ -33,7 +32,6 @@ namespace walker {
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a DiffEq,
 //!   see walker::Beta.
-//! \author J. Bakosi
 class DiffEq {
 
   public:

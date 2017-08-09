@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
-  \author    J. Bakosi
-  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     RNGTest's command line parser
   \details   This file defines the command-line argument parser for the random
     number generator test suite, RNGTest.
@@ -55,7 +54,6 @@ CmdLineParser::CmdLineParser( int argc,
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
 //! \param[in,out] cmdline Command-line stack where data is stored from parsing
-//! \author  J. Bakosi
 // *****************************************************************************
 {
   // Create CmdLine (a tagged tuple) to store parsed input
