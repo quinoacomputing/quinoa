@@ -474,7 +474,7 @@ if("${isSystemDir}" STREQUAL "-1")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
+find_package(Doxygen 1.8.13)
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
