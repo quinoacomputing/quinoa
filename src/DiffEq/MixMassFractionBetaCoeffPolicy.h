@@ -575,7 +575,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real f = std::pow(theta,0.5);
         //tk::real f = (1.0+A)*theta/(1.0+30.0*A*theta);
         //tk::real f = 1.0 / ( 1.0 + std::pow(pe-1.0,2.0)*std::sqrt(d2/d/d) );
-        tk::real f = 1.0 / ( 1.0 + std::pow(pe-1.0,2.0));//*std::pow(ds,0.5) );
+        tk::real f = 1.0 / std::pow( 1.0 + std::pow(pe-1.0,2.0), 0.5 );//*std::pow(ds,0.5) );
         //tk::real f = std::pow(1.0 / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) ), 2.0);
         //tk::real f = theta / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
         //tk::real f = std::pow(theta,0.5) / std::sqrt( 1.0 + std::pow(pe-1.0,2.0) );
@@ -645,7 +645,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real beta3 = c0 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
         //tk::real beta3 = c0 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
         //tk::real beta2 = 1.0 / (1.0+ds);
-        tk::real beta2 = 1.0;
+        tk::real beta2 = d2/d/d/ds/(1.0+ds);
         //tk::real beta3 = c0*c1 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
         //tk::real beta3 = c0*c1 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
         tk::real eta = (1.0+d2/d/d);
