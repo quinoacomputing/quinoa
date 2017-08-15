@@ -69,7 +69,8 @@ namespace AMR {
             // This basically says the number of tets which can be in an initial grid
             // A sensible value is 2^20 (1,048,576) for big simulations, and anything
             // smaller for toy problems
-            const size_t START_TET_ID = 1024;
+            #define START_TET_ID 1024 // TODO: There must be a better way to pass a literal value
+            // const int START_TET_ID 1024 is technically uninitialized in constructor
 
             // Constructor to reset START_TET_ID on the new value
             morton_id_generator_t() : id_generator_t(START_TET_ID) {
