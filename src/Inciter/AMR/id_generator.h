@@ -48,9 +48,9 @@ namespace AMR {
              */
             child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)
             {
-                Assert(parent_id > 0, "Make it OK to pass parent_id..");
                 child_id_list_t c;
                 c.resize(count);
+                c[0] = parent_id; // TODO: Remove this hack which suppresses warning
                 for (auto& i : c)
                 {
                     i = get_next_tet_id();
