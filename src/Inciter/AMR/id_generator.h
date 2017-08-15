@@ -48,6 +48,7 @@ namespace AMR {
              */
             child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)
             {
+                Assert(parent_id > 0, "Make it OK to pass parent_id..");
                 child_id_list_t c;
                 c.resize(count);
                 for (auto& i : c)
