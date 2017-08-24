@@ -510,6 +510,11 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       using tk::ctr::mean;
       using tk::ctr::variance;
       using tk::ctr::cen3;
+
+      if (m_it == 0)
+        for (ncomp_t c=0; c<ncomp; ++c)
+           m_s.push_back( S[c] );
+
       // statistics nomenclature:
       //   Y = instantaneous mass fraction,
       //   R = instantaneous density,
@@ -569,7 +574,6 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real mix = (1.0+r[c]*yt);//* std::pow(theta,0.5);
         // latest: tk::real mix = 1.0+r[c]*yt;
 
-        if (m_it == 0) m_s.push_back( S[c] );
         //tk::real f = 1.0;
         //tk::real f = 1.0 / (1.0+r[c]);
         //tk::real f = std::pow(theta,0.5);
@@ -635,6 +639,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real beta3 = m_s[c];
         tk::real c0 = m_s[0];
         tk::real c1 = m_s[1];
+        tk::real c2 = m_s[2];
         //tk::real beta3 = c0 + c1 * std::pow(1.0+d2/d/d,2.0) / (1.0 + d2/d/d/ds + d2/d/d);
         //tk::real beta3 = c0 + c1 * /*ds/(d2/d/d) **/ std::pow(d2/d/d + d2/d/d/ds,2.0);
         //tk::real beta3 = c0 + c1 * ds/(d2/d/d) * (1.0+d2/d/d) / (1.0 + ds);
@@ -645,7 +650,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real beta3 = c0 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
         //tk::real beta3 = c0 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
         //tk::real beta2 = 1.0 / (1.0+ds);
-        tk::real beta2 = 1.0; //d2/d/d/ds/(1.0+ds);
+        tk::real beta2 = c2; //d2/d/d/ds/(1.0+ds);
         //tk::real beta3 = c0*c1 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
         //tk::real beta3 = c0*c1 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
         tk::real eta = d2/d/d/ds;
