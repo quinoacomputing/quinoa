@@ -332,7 +332,7 @@ class CompFlowProblemRayleighTaylor {
                 s[2][0]*dudt[2] + u[2]*Sr[2] + dpdx[0][2] +
                   s[2][1]*dudx[0][2] + s[2][2]*dudx[1][2] + s[2][3]*dudx[2][2],
                 s[3][0]*dudt[3] + u[3]*Sr[3] + dpdx[0][3] +
-                  s[3][1]*dudx[0][3] + s[3][2]*dudx[1][3] + s[3][3]*dudx[3][3],
+                  s[3][1]*dudx[0][3] + s[3][2]*dudx[1][3] + s[3][3]*dudx[2][3],
              }},
              {{ s[0][0]*dvdt[0] + v[0]*Sr[0] + dpdx[1][0] +
                   s[0][1]*dvdx[0][0] + s[0][2]*dvdx[1][0] + s[0][3]*dvdx[2][0],
@@ -341,7 +341,7 @@ class CompFlowProblemRayleighTaylor {
                 s[2][0]*dvdt[2] + v[2]*Sr[2] + dpdx[1][2] +
                   s[2][1]*dvdx[0][2] + s[2][2]*dvdx[1][2] + s[2][3]*dvdx[2][2],
                 s[3][0]*dvdt[3] + v[3]*Sr[3] + dpdx[1][3] +
-                  s[3][1]*dvdx[0][3] + s[3][2]*dvdx[1][3] + s[3][3]*dvdx[3][3]
+                  s[3][1]*dvdx[0][3] + s[3][2]*dvdx[1][3] + s[3][3]*dvdx[2][3]
              }},
              {{ s[0][0]*dwdt[0] + w[0]*Sr[0] + dpdx[2][0] +
                   s[0][1]*dwdx[0][0] + s[0][2]*dwdx[1][0] + s[0][3]*dwdx[2][0],
@@ -350,7 +350,7 @@ class CompFlowProblemRayleighTaylor {
                 s[2][0]*dwdt[2] + w[2]*Sr[2] + dpdx[2][2] +
                   s[2][1]*dwdx[0][2] + s[2][2]*dwdx[1][2] + s[2][3]*dwdx[2][2],
                 s[3][0]*dwdt[3] + w[3]*Sr[3] + dpdx[2][3] +
-                  s[3][1]*dwdx[0][3] + s[3][2]*dwdx[1][3] + s[3][3]*dwdx[3][3]
+                  s[3][1]*dwdx[0][3] + s[3][2]*dwdx[1][3] + s[3][3]*dwdx[2][3]
              }} }};
 
       // energy source
@@ -365,7 +365,7 @@ class CompFlowProblemRayleighTaylor {
                + s[2][1]*dedx[0][2] + s[2][2]*dedx[1][2] + s[2][3]*dedx[2][2]
                + u[2]*dpdx[0][2] + v[2]*dpdx[1][2] + w[2]*dpdx[2][2],
              s[3][0]*dedt[3] + s[3][4]/s[3][0]*Sr[3]
-               + s[3][1]*dedx[0][3] + s[3][2]*dedx[1][3] + s[3][3]*dedx[3][3]
+               + s[3][1]*dedx[0][3] + s[3][2]*dedx[1][3] + s[3][3]*dedx[2][3]
                + u[3]*dpdx[0][3] + v[3]*dpdx[1][3] + w[3]*dpdx[2][3] }};
 
       // add density, momentum, and energy source at element nodes
@@ -452,6 +452,9 @@ class CompFlowProblemRayleighTaylor {
       n.push_back( "err(rho)" );
       n.push_back( "err(e)" );
       n.push_back( "err(p)" );
+      n.push_back( "err(u)" );
+      n.push_back( "err(v)" );
+      n.push_back( "err(w)" );
       return n;
     }
 
@@ -508,11 +511,14 @@ class CompFlowProblemRayleighTaylor {
         p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( p );
 
-      auto er = r, ee = r, ep = r;
+      auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
       for (std::size_t i=0; i<r.size(); ++i) {
         auto s = solution( e, x[i], y[i], z[i], t );
         er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
         ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
+        eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
+        ev[i] = std::pow( v[i] - s[2]/s[0], 2.0 ) * vol[i] / V;
+        ew[i] = std::pow( w[i] - s[3]/s[0], 2.0 ) * vol[i] / V;
         auto ap = (g-1.0)*(s[4] - (s[1]*s[1] + s[2]*s[2] + s[3]*s[3])/2.0/s[0]);
         r[i] = s[0];
         u[i] = s[1]/s[0];
@@ -533,6 +539,9 @@ class CompFlowProblemRayleighTaylor {
       out.push_back( er );
       out.push_back( ee );
       out.push_back( ep );
+      out.push_back( eu );
+      out.push_back( ev );
+      out.push_back( ew );
 
       return out;
    }
