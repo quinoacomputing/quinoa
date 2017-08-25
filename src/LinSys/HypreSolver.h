@@ -35,7 +35,7 @@ class HypreSolver {
       // Set solver parameters, see Hypre manual for more
       HYPRE_PCGSetMaxIter( m_solver, 1000 ); // max iterations
       HYPRE_PCGSetTol( m_solver, 1.0e-14 );  // conv. tolerance
-      HYPRE_PCGSetTwoNorm( m_solver, 1);     // use 2-norm as stopping criteria
+      HYPRE_PCGSetTwoNorm( m_solver, 1 );    // use 2-norm as stopping criteria
       HYPRE_PCGSetPrintLevel( m_solver, 1 ); // print out iteration info
       HYPRE_PCGSetLogging( m_solver, 1 );    // for run info
     }
