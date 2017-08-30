@@ -69,6 +69,7 @@ Transporter::Transporter() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_nstage( g_inputdeck.get< tag::discr, tag::nstage >() ),
   m_stage( 0 ),
   m_linsysmerger(),
   m_carrier(),
@@ -127,6 +128,7 @@ Transporter::Transporter() :
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto nstage = g_inputdeck.get< tag::discr, tag::nstage >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -134,6 +136,7 @@ Transporter::Transporter() :
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
+  m_print.item( "Number of time step stages", nstage );
 
   if (std::abs(constdt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
         std::numeric_limits< tk::real >::epsilon())
@@ -645,7 +648,7 @@ Transporter::dt( tk::real* d, std::size_t n )
 
   Assert( n == 1, "Size of min(dt) must be 1" );
 
-  if (m_stage == 1 || m_it == 0) {
+  if (m_stage == m_nstage-1 || m_it == 0) {
     // Use newly computed time step size
     m_dt = *d;
     // Truncate the size of last time step
@@ -653,8 +656,12 @@ Transporter::dt( tk::real* d, std::size_t n )
     if (m_t+m_dt > term) m_dt = term - m_t;;
   }
 
+  // Compute physical time (t) and time step size (dt) for next stage
+  auto t = m_stage==0 ? m_t : m_t+m_dt/(m_nstage-(m_stage-1));
+  auto dt = m_dt/(m_nstage-m_stage);
+
   // Advance to next time step stage
-  m_carrier.advance( m_stage, m_dt, m_it, m_t );
+  m_carrier.advance( m_it, t, dt, m_stage );
 }
 
 void
@@ -708,7 +715,7 @@ Transporter::evaluateTime()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_progStep.end();
 
-  if (m_stage < 1) {    // if at half-stage, simply go to next one
+  if (m_stage < m_nstage-1) {     // if not final stage, go to next one
 
     ++m_stage;
 

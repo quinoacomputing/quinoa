@@ -1475,6 +1475,25 @@ struct term_info {
 };
 using term = keyword< term_info, TAOCPP_PEGTL_STRING("term") >;
 
+struct nstage_info {
+  static std::string name() { return "nstage"; }
+  static std::string shortDescription() { return
+    "Set number of stages per time step"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the number of stages per time step. 'nstage
+    2' corresponds to Lax-Wendroff or R_{2,0} as given by Donea, B. Roig, A.
+    Huerta, High-order accurate time-stepping schemes for convection-diffusion
+    problems, Computer Methods in Applied Mechanics and Engineering, Volume 182,
+    Issue 3, 2000, Pages 249-275.)";
+  }
+  struct expect {
+    using type = uint8_t;
+    static constexpr type lower = 2;
+    static std::string description() { return "uint"; }
+  };
+};
+using nstage = keyword< nstage_info, TAOCPP_PEGTL_STRING("nstage") >;
+
 struct t0_info {
   static std::string name() { return "t0"; }
   static std::string shortDescription() { return

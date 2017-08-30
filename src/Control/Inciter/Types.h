@@ -39,12 +39,13 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::nstep,     kw::nstep::info::expect::type, //!< Number of time steps
-  tag::term,      kw::term::info::expect::type,  //!< Time to terminate
-  tag::t0,        kw::t0::info::expect::type,    //!< Starting time
-  tag::dt,        kw::dt::info::expect::type,    //!< Size of time step
-  tag::cfl,       kw::cfl::info::expect::type,   //!< CFL coefficient
-  tag::ctau,      kw::ctau::info::expect::type   //!< FCT mass diffisivity
+  tag::nstep,  kw::nstep::info::expect::type, //!< Number of time steps
+  tag::nstage, kw::nstage::info::expect::type,//!< Number of stages in time step
+  tag::term,   kw::term::info::expect::type,  //!< Time to terminate
+  tag::t0,     kw::t0::info::expect::type,    //!< Starting time
+  tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
+  tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
+  tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
 >;
 
 //! ASCII output floating-point precision in digits

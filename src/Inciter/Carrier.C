@@ -78,6 +78,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
+  m_nstage( g_inputdeck.get< tag::discr, tag::nstage >() ),
   m_stage( 0 ),
   m_nvol( 0 ),
   m_nhsol( 0 ),
@@ -103,7 +104,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ulf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -479,6 +479,7 @@ Carrier::bc()
   // below will incorrectly NOT skip the space for the flow variables. In other
   // words, this only works for a single PDE system and a sytem of systems. This
   // machinery is only tested with a single system of PDEs at this point.
+
   for (const auto& s : m_side) {
     std::size_t c = 0;
     for (std::size_t eq=0; eq<g_pdes.size(); ++eq) {
@@ -534,6 +535,9 @@ Carrier::init()
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
+
+  // Equate solution at fractional time step stage with initial condition at t=0
+  m_uf = m_u;
 
   // Compute initial time step size
   dt();
@@ -639,13 +643,9 @@ Carrier::rhs( const tk::Fields& sol )
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  // Scale dt by 0.5 for first stage in 2-stage time stepping
-  if (m_stage < 1) m_dt *= 0.5;
   for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
   // Query Dirichlet BCs and send to linear system merger
   bc();
-  // Revert dt so that our copy is consistent with that of the host
-  if (m_stage < 1) m_dt /= 0.5;
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
@@ -899,7 +899,7 @@ Carrier::doWriteParticles()
 }
 
 void
-Carrier::aec( const tk::Fields& Un )
+Carrier::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \details This function computes and starts communicating m_p, which stores
@@ -911,7 +911,7 @@ Carrier::aec( const tk::Fields& Un )
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, Un, m_p );
+  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, m_uf, m_p );
 
   if (m_msum.empty())
     comaec_complete();
@@ -961,11 +961,9 @@ Carrier::comaec( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
+Carrier::alw()
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
-//! \param[in] Un Solution at previous time step stage
-//! \param[in] Ul Low order solution
 //! \details This function computes and starts communicating m_q, which stores
 //!    the maximum and mimimum unknowns of all elements surrounding each node
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
@@ -975,7 +973,7 @@ Carrier::alw( const tk::Fields& Un, const tk::Fields& Ul )
   // Note that the maximum and minimum unknowns are complete on nodes that are
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
-  m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
+  m_fluxcorrector.alw( m_inpoel, m_u, m_ulf, m_q );
 
   if (m_msum.empty())
     comalw_complete();
@@ -1050,7 +1048,7 @@ Carrier::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, (m_stage<1?m_ulf:m_ul), m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, m_p, m_ulf, m_q, m_a );
 
   if (m_msum.empty())
     comlim_complete();
@@ -1098,7 +1096,7 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
+Carrier::advance( uint64_t it, tk::real t, tk::real newdt, uint8_t stage )
 // *****************************************************************************
 // Advance equations to next stage in multi-stage time stepping
 //! \param[in] stage Stage in multi-stage time stepping
@@ -1107,12 +1105,11 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
 //! \param[in] t Physical time
 // *****************************************************************************
 {
-  // Update local copy of time step stage, physical time and time step size, and
-  // iteration count
-  m_stage = stage;
+  // Update local copy of time step info (the master copies are in Transporter)
+  m_it = it;
   m_t = t;
   m_dt = newdt;
-  m_it = it;
+  m_stage = stage;
 
   // Activate SDAG-waits
   #ifndef NDEBUG
@@ -1122,7 +1119,7 @@ Carrier::advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t )
   wait4app();
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  if (m_stage < 1) rhs( m_u ); else rhs( m_uf );
+  rhs( m_uf );
 }
 
 void
@@ -1132,7 +1129,7 @@ Carrier::out()
 // *****************************************************************************
 {
   // Optionally output field and particle data
-  if ( m_stage == 1 &&
+  if ( m_stage == m_nstage-1 &&
        !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
@@ -1171,13 +1168,8 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
   // different solution vector depending on time step stage
   if (m_nlsol == m_gid.size()) {
     m_nlsol = 0;
-    if (m_stage < 1) {
-      m_ulf = m_u + m_dul;
-      alw( m_u, m_ulf );
-     } else {
-      m_ul = m_u + m_dul;
-      alw( m_uf, m_ul );
-    }
+    m_ulf = m_u + m_dul;
+    alw();
   }
 }
 
@@ -1208,7 +1200,7 @@ Carrier::updateSol( const std::vector< std::size_t >& gid,
   // different solution vector depending on time step stage
   if (m_nhsol == m_gid.size()) {
     m_nhsol = 0;
-    aec( m_stage < 1 ? m_u : m_uf );
+    aec();
   }
 }
 
@@ -1232,7 +1224,8 @@ Carrier::diagnostics()
   // Optionally: collect analytical solutions and send both the latest
   // analytical and numerical solutions to LinSysMerger for computing and
   // outputing diagnostics
-  if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+  if (m_stage == m_nstage-1 &&
+      !(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
@@ -1250,8 +1243,9 @@ Carrier::diagnostics()
     // useful, but simplies the logic because all PDEs can be treated as baing
     // able to compute an error based on some "analytical" solution, which
     // really the initial condition.
+    auto a = m_u;
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, m_ul, m_t+m_dt, m_gid );
+      eq.initialize( m_coord, a, m_t+m_dt, m_gid );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2
     // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
@@ -1269,15 +1263,10 @@ Carrier::diagnostics()
     // then the sums are summed accross the whole problem in
     // Transporter::diagnostics(), where the final square-root of the L2 norm,
     // defined above, is taken.
-    for (std::size_t p=0; p<m_u.nunk(); ++p)
-      for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-        m_ul(p,c,0) = m_ul(p,c,0);
-        m_ulf(p,c,0) = m_u(p,c,0);
-      }
 
     // Send both numerical and analytical solutions to linsysmerger
     m_linsysmerger.ckLocalBranch()->
-      charediag( thisIndex, m_gid, m_ulf, m_ul, m_v );
+      charediag( thisIndex, m_gid, m_u, a, m_v );
 
   } else
     contribute(
@@ -1364,10 +1353,8 @@ Carrier::apply()
   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
-  if (m_stage < 1)
-    m_uf = m_ulf + m_a;   // update half-time solution with limited solution
-  else
-    m_u = m_ul + m_a;     // update solution with new (limited) solution
+  m_uf = m_ulf + m_a;
+  if (m_stage == m_nstage-1) m_u = m_uf;
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
@@ -1384,7 +1371,7 @@ Carrier::apply()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (m_stage == 1) &&
+  if ( (m_stage == m_nstage-1) &&
        (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
        (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
     writeFields( m_t+m_dt );

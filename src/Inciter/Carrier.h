@@ -207,7 +207,7 @@ class Carrier : public CBase_Carrier {
                        const std::vector< tk::real >& sol );
 
     //! Advance equations to next stage in multi-stage time stepping
-    void advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t );
+    void advance( uint64_t it, tk::real t, tk::real newdt, uint8_t stage );
 
     //! Compute time step size
     void dt();
@@ -266,6 +266,7 @@ class Carrier : public CBase_Carrier {
       p | m_itf;
       p | m_t;
       p | m_dt;
+      p | m_nstage;
       p | m_stage;
       p | m_nvol;
       p | m_nhsol;
@@ -291,7 +292,6 @@ class Carrier : public CBase_Carrier {
       p | m_coord;
       p | m_psup;
       p | m_u;
-      p | m_ul;
       p | m_uf;
       p | m_ulf;
       p | m_du;
@@ -331,6 +331,8 @@ class Carrier : public CBase_Carrier {
     tk::real m_dt;
     //! Physical time at which the last field output was written
     tk::real m_lastFieldWriteTime;
+    //! Number of stages in time step
+    uint8_t m_nstage;
     //! Stage in multi-stage time stepping
     uint8_t m_stage;
     //! \brief Number of chares from which we received nodal volume
@@ -392,8 +394,18 @@ class Carrier : public CBase_Carrier {
     FluxCorrector m_fluxcorrector;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
-    //! Unknown/solution vectors: global mesh point row ids and values
-    tk::Fields m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_p, m_q, m_a;
+    //! Unknown/solution vector at time n
+    tk::Fields m_u;
+    //! Unknown/solution vector at fractional time step stage
+    tk::Fields m_uf;
+    //! Unknown/solution vector at fractional time step stage (low order)
+    tk::Fields m_ulf;
+    //! Unknown/solution vector increment (high order)
+    tk::Fields m_du;
+    //! Unknown/solution vector increment (low order)
+    tk::Fields m_dul;
+    //! Flux-corrected transport data structures
+    tk::Fields m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
@@ -490,11 +502,11 @@ class Carrier : public CBase_Carrier {
     void writeParticles();
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec( const tk::Fields& Un );
+    void aec();
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
-    void alw( const tk::Fields& Un, const tk::Fields& Ul );
+    void alw();
 
     //! \brief Verify antidiffusive element contributions up to linear solver
     //!   convergence

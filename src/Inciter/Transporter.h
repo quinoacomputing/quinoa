@@ -279,6 +279,7 @@ class Transporter : public CBase_Transporter {
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
+    uint8_t m_nstage;                    //!< Number of stages in time step
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
     CarrierProxy m_carrier;              //!< Carrier chare array proxy

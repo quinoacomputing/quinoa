@@ -72,6 +72,7 @@ struct initpolicy {};
 struct coeffpolicy {};
 struct montecarlo {};
 struct nstep {};
+struct nstage {};
 struct term {};
 struct t0 {};
 struct dt {};
