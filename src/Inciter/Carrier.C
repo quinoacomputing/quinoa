@@ -1096,7 +1096,7 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::advance( uint64_t it, tk::real t, tk::real newdt, uint8_t stage )
+Carrier::advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage )
 // *****************************************************************************
 // Advance equations to next stage in multi-stage time stepping
 //! \param[in] stage Stage in multi-stage time stepping

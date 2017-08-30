@@ -207,7 +207,7 @@ class Carrier : public CBase_Carrier {
                        const std::vector< tk::real >& sol );
 
     //! Advance equations to next stage in multi-stage time stepping
-    void advance( uint64_t it, tk::real t, tk::real newdt, uint8_t stage );
+    void advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage );
 
     //! Compute time step size
     void dt();
@@ -332,9 +332,9 @@ class Carrier : public CBase_Carrier {
     //! Physical time at which the last field output was written
     tk::real m_lastFieldWriteTime;
     //! Number of stages in time step
-    uint8_t m_nstage;
+    unsigned int m_nstage;
     //! Stage in multi-stage time stepping
-    uint8_t m_stage;
+    unsigned int m_stage;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;

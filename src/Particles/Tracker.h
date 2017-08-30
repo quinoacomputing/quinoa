@@ -136,7 +136,7 @@ class Tracker {
                 const std::unordered_map<int, std::vector< std::size_t >> msum,
                 int chid,
                 ChareArray* const array,
-                uint8_t stage,
+                unsigned int stage,
                 tk::real dt )
     {
       // Only advance particles in the final time step stage

@@ -1487,7 +1487,7 @@ struct nstage_info {
     Issue 3, 2000, Pages 249-275.)";
   }
   struct expect {
-    using type = uint8_t;
+    using type = unsigned int;
     static constexpr type lower = 2;
     static std::string description() { return "uint"; }
   };
