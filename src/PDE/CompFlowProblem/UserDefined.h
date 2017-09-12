@@ -23,6 +23,7 @@ namespace inciter {
 
 //! CompFlow system of PDEs problem: user defined
 class CompFlowProblemUserDefined {
+
   public:
 
     //! Set initial conditions
@@ -49,17 +50,12 @@ class CompFlowProblemUserDefined {
       }
     }
 
-    //! Add source term to rhs
-    //! \details No-op for user-defined problem
-    static void
-    sourceRhs( tk::real,
-               const std::array< std::vector< tk::real >, 3 >&,
-               tk::ctr::ncomp_type,
-               tk::real,
-               const std::array< std::size_t, 4 >&,
-               const std::array< std::array< tk::real, 4 >, 4 >&,
-               const std::array< const tk::real*, 5 >&,
-               tk::Fields& ) {}
+    //! Compute and return source term for Rayleigh-Taylor manufactured solution
+    //! \details No-op for user-deefined problems.
+    //! \return Array of reals containing the source for all components
+    static std::array< tk::real, 5 >
+    src( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real )
+    { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

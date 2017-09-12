@@ -163,9 +163,11 @@ class Transport {
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
+              tk::Fields& U,
+              tk::Fields& Ue,
               tk::Fields& R ) const
     {
+      IGNORE(Ue);
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
       Assert( R.nunk() == coord[0].size() && R.nprop() == m_ncomp,

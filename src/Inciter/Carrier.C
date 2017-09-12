@@ -105,6 +105,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_ue( m_inpoel.size()/4, g_inputdeck.get< tag::component >().nprop() ),
   m_ulf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_dul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -618,10 +619,9 @@ Carrier::lhs()
 }
 
 void
-Carrier::rhs( const tk::Fields& sol )
+Carrier::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
-//! \param[in] sol Solution vector at current stage
 // *****************************************************************************
 {
   // Initialize FCT data structures for new time step stage
@@ -643,14 +643,14 @@ Carrier::rhs( const tk::Fields& sol )
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, sol, r );
+  for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, m_uf, m_ue, r );
   // Query Dirichlet BCs and send to linear system merger
   bc();
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
-  auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, sol );
+  auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_uf );
   // Send off mass diffusion rhs contribution for assembly
   m_linsysmerger.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
 
@@ -1119,7 +1119,7 @@ Carrier::advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage )
   wait4app();
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  rhs( m_uf );
+  rhs();
 }
 
 void
@@ -1310,14 +1310,16 @@ Carrier::correctBC()
 
   // We loop through the map that associates a vector of local node IDs to side
   // set IDs for all side sets read from mesh file. Then for each side set for
-  // all mesh nodes on a given side set we attempt to find the global node ID in
-  // dirbc, which stores only those nodes (and BC settings) at which the user
-  // has configured Dirichlet BCs to be set. Then for all scalar components of
-  // all system of systems of PDEs integrated if a BC is to be set for a given
-  // component, we compute the low order solution increment + the anti-diffusive
-  // element contributions, which is the current solution (to be updated) at
-  // that node. This solution must equal the BC prescribed at the given node. If
-  // not, the BCs are not set correctly, which is an error.
+  // all mesh nodes on a given side set we attempt to find the global node ID
+  // in dirbc, which stores only those nodes (and BC settings) at which the
+  // user has configured Dirichlet BCs to be set. Then for all scalar
+  // components of all system of systems of PDEs integrated if a BC is to be
+  // set for a given component, we compute the low order solution increment +
+  // the anti-diffusive element contributions, which is the current solution
+  // increment (to be used to update the solution at time n) at that node. This
+  // solution increment must equal the BC prescribed at the given node as we
+  // solve for solution increments. If not, the BCs are not set correctly,
+  // which is an error.
   for (const auto& s : m_side)
     for (auto i : s.second) {
       auto u = dirbc.find( m_gid[i] );
@@ -1353,7 +1355,8 @@ Carrier::apply()
   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
-  m_uf = m_ulf + m_a;
+  //m_uf = m_ulf + m_a;
+  m_uf = m_u + m_du;
   if (m_stage == m_nstage-1) m_u = m_uf;
 
   // send progress report to host

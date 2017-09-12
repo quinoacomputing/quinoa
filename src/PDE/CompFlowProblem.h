@@ -25,8 +25,8 @@
       computed fields as well as sampling the analytical solution (if exist) at
       time t.
 
-    - Must define the static function _sourceRhs()_, used for adding source
-      terms to the righ hand side.
+    - Must define the static function _src()_, used for adding source terms to
+      the righ hand side.
 
     - Must define the static function _side()_,  used to uery all side set IDs
       the user has configured for all components.
@@ -56,11 +56,11 @@
 namespace inciter {
 
 //! List of all CompFlow problem policies (defined in the includes above)
-using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
-                                           , CompFlowProblemVorticalFlow
-                                           , CompFlowProblemNLEnergyGrowth
-                                           , CompFlowProblemRayleighTaylor
-                                           , CompFlowProblemTaylorGreen >;
+using CompFlowProblems = boost::mpl::vector< //CompFlowProblemUserDefined
+                                           //, CompFlowProblemVorticalFlow
+                                           //, CompFlowProblemNLEnergyGrowth
+                                           CompFlowProblemRayleighTaylor >;
+                                           //, CompFlowProblemTaylorGreen >;
 
 } // inciter::
 

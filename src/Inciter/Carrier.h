@@ -76,7 +76,6 @@
 #ifndef Carrier_h
 #define Carrier_h
 
-#include <array>
 #include <cstddef>
 #include <iosfwd>
 #include <utility>
@@ -397,7 +396,7 @@ class Carrier : public CBase_Carrier {
     //! Unknown/solution vector at time n
     tk::Fields m_u;
     //! Unknown/solution vector at fractional time step stage
-    tk::Fields m_uf;
+    tk::Fields m_uf, m_ue;
     //! Unknown/solution vector at fractional time step stage (low order)
     tk::Fields m_ulf;
     //! Unknown/solution vector increment (high order)
@@ -459,7 +458,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( const tk::Fields& sol );
+    void rhs();
 
     //! Output chare element blocks to output file
     void writeMesh();

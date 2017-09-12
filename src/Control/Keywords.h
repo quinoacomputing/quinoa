@@ -1488,7 +1488,7 @@ struct nstage_info {
   }
   struct expect {
     using type = unsigned int;
-    static constexpr type lower = 2;
+    static constexpr type lower = 1;
     static std::string description() { return "uint"; }
   };
 };

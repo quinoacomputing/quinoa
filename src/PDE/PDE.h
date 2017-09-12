@@ -93,9 +93,10 @@ class PDE {
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
+              tk::Fields& U,
+              tk::Fields& Ue,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, R ); }
+    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -169,7 +170,8 @@ class PDE {
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const tk::Fields&,
+                        tk::Fields&,
+                        tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
@@ -216,9 +218,10 @@ class PDE {
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const tk::Fields& U,
+                tk::Fields& U,
+                tk::Fields& Ue,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, R ); }
+      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
