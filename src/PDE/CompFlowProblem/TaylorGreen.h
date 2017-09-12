@@ -29,6 +29,32 @@ namespace inciter {
 //!   element method using analytic and manufactured solutions", Computers and
 //!   Fluids, 2013, Vol.81, pp.57-67.
 class CompFlowProblemTaylorGreen {
+
+  private:
+    //! Evaluate analytical solution at (x,y,0) for all components
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \return Values of all components evaluated at (x,y,0)
+    static std::array< tk::real, 5 >
+    solution( tk::ctr::ncomp_type e, tk::real x, tk::real y ) {
+      using tag::param; using tag::compflow; using std::sin; using std::cos;
+      // ratio of specific heats
+      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
+      // density
+      const tk::real r = 1.0;
+      // pressure
+      const tk::real p = 10.0 + r/4.0*(cos(2.0*M_PI*x) + cos(2.0*M_PI*y));
+      // velocity
+      const tk::real u =  sin(M_PI*x) * cos(M_PI*y);
+      const tk::real v = -cos(M_PI*x) * sin(M_PI*y);
+      const tk::real w = 0.0;
+      // total specific energy
+      const tk::real rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
+      return {{ r, r*u, r*v, r*w, rE }};
+    }
+
   public:
 
     //! Set initial conditions
@@ -46,73 +72,31 @@ class CompFlowProblemTaylorGreen {
                       tk::real )
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      // dynamic = kinematic viscosity, since rho assumed 1.0
-      // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
-      // set initial and boundary conditions
       const auto& x = coord[0];
       const auto& y = coord[1];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto& r  = unk(i,0,offset); // rho
-        auto& ru = unk(i,1,offset); // rho * u
-        auto& rv = unk(i,2,offset); // rho * v
-        auto& rw = unk(i,3,offset); // rho * w
-        auto& re = unk(i,4,offset); // rho * e
-        r = 1.0;
-        ru = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
-        rv = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
-        rw = 0.0;
-        tk::real p = 10.0 +
-          r/4.0*( std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]) );
-        re = p/(g-1.0)/r + 0.5*(ru*ru + rv*rv + rw*rw)/r/r;
+        const auto s = solution( e, x[i], y[i] );
+        unk(i,0,offset) = s[0]; // rho
+        unk(i,1,offset) = s[1]; // rho * u
+        unk(i,2,offset) = s[2]; // rho * v
+        unk(i,3,offset) = s[3]; // rho * w
+        unk(i,4,offset) = s[4]; // rho * e, e: total = kinetic + internal energy
       }
     }
 
-    //! Add source term to rhs
-    //! \param[in] coord Mesh node coordinates
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] dt Size of time step
-    //! \param[in] N Element node indices
-    //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] R Right-hand side vector contributing to
-    static void
-    sourceRhs( tk::real,
-               const std::array< std::vector< tk::real >, 3 >& coord,
-               tk::ctr::ncomp_type,
-               tk::real dt,
-               const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< const tk::real*, 5 >& r,
-               tk::Fields& R )
-    {
-      // mesh node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-
-      // compute energy source
-      std::array< tk::real, 4 > Se{{
-        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[0]])*std::cos(M_PI*y[N[0]]) -
-                      std::cos(M_PI*x[N[0]])*std::cos(3.0*M_PI*y[N[0]])),
-        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[1]])*std::cos(M_PI*y[N[1]]) -
-                      std::cos(M_PI*x[N[1]])*std::cos(3.0*M_PI*y[N[1]])),
-        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[2]])*std::cos(M_PI*y[N[2]]) -
-                      std::cos(M_PI*x[N[2]])*std::cos(3.0*M_PI*y[N[2]])),
-        3.0*M_PI/8.0*(std::cos(3.0*M_PI*x[N[3]])*std::cos(M_PI*y[N[3]]) -
-                      std::cos(M_PI*x[N[3]])*std::cos(3.0*M_PI*y[N[3]])) }};
-
-      std::array< tk::real, 4 > p;
-      for (std::size_t i=0; i<4; ++i)
-         p[i] = 10.0 +
-           1.0/4.0*( std::cos(2.0*M_PI*x[N[i]]) + std::cos(2.0*M_PI*y[N[i]]) );
-
-      // add source term at element nodes
-      for (std::size_t alpha=0; alpha<4; ++alpha)
-        for (std::size_t beta=0; beta<4; ++beta) {
-          // source contribution to energy rhs
-          R.var(r[4],N[alpha]) += dt * mass[alpha][beta] * Se[beta];
-        }
+    //! Compute and return source term for Rayleigh-Taylor manufactured solution
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \return Array of reals containing the source for all components
+    static std::array< tk::real, 5 >
+    src( tk::ctr::ncomp_type, tk::real x, tk::real y, tk::real, tk::real ) {
+      using tag::param; using tag::compflow; using std::sin; using std::cos;
+      // ratio of specific heats
+      std::array< tk::real, 5 > r{{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
+      // only energy source
+      r[4] = 3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
+                            cos(3.0*M_PI*y)*cos(M_PI*x) );
+      return r;
     }
 
     //! \brief Query all side set IDs the user has configured for all components

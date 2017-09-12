@@ -27,6 +27,32 @@ namespace inciter {
 //!   Computational Physics 267 (2014) 196-209.
 class CompFlowProblemVorticalFlow {
 
+  private:
+    //! Evaluate analytical solution at (x,y,z) for all components
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \return Values of all components evaluated at (x,y,z)
+    static std::array< tk::real, 5 >
+    solution( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z ) {
+      using tag::param; using tag::compflow;
+      // manufactured solution parameters
+      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
+      const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ e ];
+      // ratio of specific heats
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
+      // velocity
+      const tk::real ru = a*x - b*y;
+      const tk::real rv = b*x + a*y;
+      const tk::real rw = -2.0*a*z;
+      // total specific energy
+      const tk::real rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+      return {{ 1.0, ru, rv, rw, rE }};
+    }
+
   public:
 
     //! Set initial conditions
@@ -45,27 +71,16 @@ class CompFlowProblemVorticalFlow {
     {
       using tag::param;  using tag::compflow;
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      // manufactured solution parameters
-      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
-      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
-      const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ e ];
-      // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
-      // set initial and boundary conditions
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto& r  = unk(i,0,offset); // rho
-        auto& ru = unk(i,1,offset); // rho * u
-        auto& rv = unk(i,2,offset); // rho * v
-        auto& rw = unk(i,3,offset); // rho * w
-        auto& re = unk(i,4,offset); // rho * e, e:total=kinetic+internal energy
-        r = 1.0;
-        ru = a*x[i] - b*y[i];
-        rv = b*x[i] + a*y[i];
-        rw = -2.0*a*z[i];
-        re = (ru*ru + rv*rv + rw*rw)/2.0 + (p0-2.0*a*a*z[i]*z[i])/(g-1.0);
+        const auto s = solution( e, x[i], y[i], z[i] );
+        unk(i,0,offset) = s[0]; // rho
+        unk(i,1,offset) = s[1]; // rho * u
+        unk(i,2,offset) = s[2]; // rho * v
+        unk(i,3,offset) = s[3]; // rho * w
+        unk(i,4,offset) = s[4]; // rho * e, e: total = kinetic + internal energy
       }
     }
 
@@ -75,145 +90,27 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
-    //! \param[in] t Physical time at which to evaluate the source
     //! \return Array of reals containing the source for all components
     static std::array< tk::real, 5 >
-    src( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z, tk::real t )
-    {
-//       using tag::param; using tag::compflow; using std::sin; using std::cos;
-// 
-//       // manufactured solution parameters
-//       auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
-//       auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
-//       auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
-//       auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
-//       auto k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
-//       auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[e];
-//       // ratio of specific heats
-//       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
-// 
-//       // evaluate solution at x,y,z,t
-//       auto s = solution( e, x, y, z, t );
-// 
-//       // density, velocity, energy, pressure
-//       auto rho = s[0];
-//       auto u = s[1]/s[0];
-//       auto v = s[2]/s[0];
-//       auto w = s[3]/s[0];
-//       auto E = s[4]/s[0];
-//       auto p = p0 + a*(bx*x*x + by*y*y + bz*z*z);
-// 
-//       // spatial gradients
-//       std::array< tk::real, 3 > drdx{{ -2.0*bx*x, -2.0*by*y, -2.0*bz*z }};
-//       std::array< tk::real, 3 > dpdx{{ 2.0*a*bx*x, 2.0*a*by*y, 2.0*a*bz*z }};
-//       tk::real ft = cos(k*M_PI*t);
-//       std::array< tk::real, 3 > dudx{{ ft*M_PI*z*cos(M_PI*x),
-//                                        0.0,
-//                                        ft*sin(M_PI*x) }};
-//       std::array< tk::real, 3 > dvdx{{ 0.0,
-//                                        -ft*M_PI*z*sin(M_PI*y),
-//                                        ft*cos(M_PI*y) }};
-//       std::array< tk::real, 3 > dwdx{{ ft*M_PI*0.5*M_PI*z*z*sin(M_PI*x),
-//                                        ft*M_PI*0.5*M_PI*z*z*cos(M_PI*y),
-//                                       -ft*M_PI*z*(cos(M_PI*x) - sin(M_PI*y)) }};
-//       std::array< tk::real, 3 > dedx{{
-//         dpdx[0]/rho/(g-1.0) - p/(g-1.0)/rho/rho*drdx[0]
-//         + u*dudx[0] + v*dvdx[0] + w*dwdx[0],
-//         dpdx[1]/rho/(g-1.0) - p/(g-1.0)/rho/rho*drdx[1]
-//         + u*dudx[1] + v*dvdx[1] + w*dwdx[1],
-//         dpdx[2]/rho/(g-1.0) - p/(g-1.0)/rho/rho*drdx[2]
-//         + u*dudx[2] + v*dvdx[2] + w*dwdx[2] }};
-//       
-//       // time derivatives
-//       auto dudt = -k*M_PI*sin(k*M_PI*t)*z*sin(M_PI*x);
-//       auto dvdt = -k*M_PI*sin(k*M_PI*t)*z*cos(M_PI*y);
-//       auto dwdt =  k*M_PI*sin(k*M_PI*t)/2*M_PI*z*z*(cos(M_PI*x) - sin(M_PI*y));
-//       auto dedt = u*dudt + v*dvdt + w*dwdt;
-// 
-//       std::array< tk::real, 5 > r;
-//       // density source
-//       r[0] = u*drdx[0] + v*drdx[1] + w*drdx[2];
-//       // momentum source
-//       r[1] = rho*dudt+u*r[0]+dpdx[0] + s[1]*dudx[0]+s[2]*dudx[1]+s[3]*dudx[2];
-//       r[2] = rho*dvdt+v*r[0]+dpdx[1] + s[1]*dvdx[0]+s[2]*dvdx[1]+s[3]*dvdx[2];
-//       r[3] = rho*dwdt+w*r[0]+dpdx[2] + s[1]*dwdx[0]+s[2]*dwdx[1]+s[3]*dwdx[2];
-//       // energy source
-//       r[4] = rho*dedt + E*r[0] + s[1]*dedx[0]+s[2]*dedx[1]+s[3]*dedx[2]
-//              + u*dpdx[0]+v*dpdx[1]+w*dpdx[2];
-// 
-//       return r;
-    }
-
-    //! Add source term to rhs for vortical flow manufactured solution
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] dt Size of time step
-    //! \param[in] N Element node indices
-    //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] R Right-hand side vector contributing to
-    static void
-    sourceRhs( tk::real,
-               const std::array< std::vector< tk::real >, 3 >& coord,
-               tk::ctr::ncomp_type e,
-               tk::real dt,
-               const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< const tk::real*, 5 >& r,
-               tk::Fields& R )
-    {
+    src( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z, tk::real ) {
+      using tag::param; using tag::compflow;
       // manufactured solution parameters
-      const auto& a =
-        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
-      const auto& b =
-        g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[e];
+      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
       // ratio of specific heats
-      tk::real g =
-        g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
-
-      // mesh node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      std::array< tk::real, 4 > ru{{ a*x[N[0]] - b*y[N[0]],
-                                     a*x[N[1]] - b*y[N[1]],
-                                     a*x[N[2]] - b*y[N[2]],
-                                     a*x[N[3]] - b*y[N[3]] }};
-      std::array< tk::real, 4 > rv{{ b*x[N[0]] + a*y[N[0]],
-                                     b*x[N[1]] + a*y[N[1]],
-                                     b*x[N[2]] + a*y[N[2]],
-                                     b*x[N[3]] + a*y[N[3]] }};
-
-      // compute momentum source
-      std::array< std::array< tk::real, 4 >, 3 >
-        Sm{{ {{ a*ru[0] - b*rv[0],
-                a*ru[1] - b*rv[1],
-                a*ru[2] - b*rv[2],
-                a*ru[3] - b*rv[3] }},
-             {{ b*ru[0] + a*rv[0],
-                b*ru[1] + a*rv[1],
-                b*ru[2] + a*rv[2],
-                b*ru[3] + a*rv[3] }},
-             {{ 0.0, 0.0, 0.0, 0.0 }} }};
-
-      // compute energy source
-      std::array< tk::real, 4 > Se{{
-        Sm[0][0]*ru[0] + Sm[1][0]*rv[0] + 8.0*a*a*a*z[N[0]]*z[N[0]]/(g-1.0),
-        Sm[0][1]*ru[1] + Sm[1][1]*rv[1] + 8.0*a*a*a*z[N[1]]*z[N[1]]/(g-1.0),
-        Sm[0][2]*ru[2] + Sm[1][2]*rv[2] + 8.0*a*a*a*z[N[2]]*z[N[2]]/(g-1.0),
-        Sm[0][3]*ru[3] + Sm[1][3]*rv[3] + 8.0*a*a*a*z[N[3]]*z[N[3]]/(g-1.0) }};
-
-      // add momentum and energy source at element nodes
-      for (std::size_t alpha=0; alpha<4; ++alpha)
-        for (std::size_t beta=0; beta<4; ++beta) {
-          // source contribution to momentum rhs
-          for (std::size_t i=0; i<3; ++i)
-            R.var(r[i+1],N[alpha]) += dt * mass[alpha][beta] * Sm[i][beta];
-          // source contribution to energy rhs
-          R.var(r[4],N[alpha]) += dt * mass[alpha][beta] * Se[beta];
-        }
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
+      // evaluate solution at x,y,z
+      auto s = solution( e, x, y, z );
+      std::array< tk::real, 5 > r;
+      // density source
+      r[0] = 0.0;
+      // momentum source
+      r[1] = a*s[1]/s[0] - b*s[2]/s[0];
+      r[2] = b*s[1]/s[0] + a*s[2]/s[0];
+      r[3] = 0.0;
+      // energy source
+      r[4] = (r[1]*s[1] + r[2]*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
+      return r;
     }
 
     //! \brief Query all side set IDs the user has configured for all components

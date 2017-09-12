@@ -56,11 +56,11 @@
 namespace inciter {
 
 //! List of all CompFlow problem policies (defined in the includes above)
-using CompFlowProblems = boost::mpl::vector< //CompFlowProblemUserDefined
-                                           //, CompFlowProblemVorticalFlow
+using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
+                                           , CompFlowProblemVorticalFlow
                                            //, CompFlowProblemNLEnergyGrowth
-                                           CompFlowProblemRayleighTaylor >;
-                                           //, CompFlowProblemTaylorGreen >;
+                                           , CompFlowProblemRayleighTaylor
+                                           , CompFlowProblemTaylorGreen >;
 
 } // inciter::
 
