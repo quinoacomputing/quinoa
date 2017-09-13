@@ -651,13 +651,13 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real beta3 = b1 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
         //tk::real beta3 = b1 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
         //tk::real beta2 = 1.0 / (1.0+ds);
-        tk::real beta2 = b2;//*(1.0+d2/d/d); ///(1.0+ds);
+        tk::real eta = d2/d/d/ds;
+        tk::real beta2 = b2*2.0*(1.0+eta*ds)/(1.0+eta*ds+eta);
         //tk::real beta3 = b1*b3 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
         //tk::real beta3 = b1*b3 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
-        tk::real eta = d2/d/d/ds;
         tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
         //tk::real Thetap = thetab*eta/(1.0+ds);
-        tk::real beta3 = b3 /** (1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt) */;
+        tk::real beta3 = b3*2.0*(1.0+eta*ds)/(1.0+eta*ds+eta); /** (1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt) */;
         tk::real beta10 = b1;// * (1.0+ds)/(1.0+d2/d/d);//* 0.5*(1.0+d2/d/d+d2/d/d/ds);
         tk::real beta1 = bprime[c] * 2.0/(1.0+eta+eta*ds) *
                          (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f3);
