@@ -638,28 +638,28 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
 
         // cleanup current baseline:
         //tk::real beta3 = m_s[c];
-        tk::real c0 = m_s[0];
-        tk::real c1 = m_s[1];
-        tk::real c2 = m_s[2];
-        //tk::real beta3 = c0 + c1 * std::pow(1.0+d2/d/d,2.0) / (1.0 + d2/d/d/ds + d2/d/d);
-        //tk::real beta3 = c0 + c1 * /*ds/(d2/d/d) **/ std::pow(d2/d/d + d2/d/d/ds,2.0);
-        //tk::real beta3 = c0 + c1 * ds/(d2/d/d) * (1.0+d2/d/d) / (1.0 + ds);
-        //tk::real beta3 = c0; // + c1 * (ds*(1.0+ds))/(1.0 + d2/d/d)/(d2/d/d);
-        //tk::real beta3 = c0 * d2/d/d/ds; // / (1.0+ds);
-        //tk::real beta3 = c0 * (1.0+d2/d/d) * d2/d/d/ds / (1.0+ds);
-        //tk::real beta3 = c0 * (1.0+d2/d/d) / (1.0+d2/d/d+d2/d/d/ds);
-        //tk::real beta3 = c0 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
-        //tk::real beta3 = c0 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
+        tk::real b1 = m_s[0];
+        tk::real b2 = m_s[1];
+        tk::real b3 = m_s[2];
+        //tk::real beta3 = b1 + b3 * std::pow(1.0+d2/d/d,2.0) / (1.0 + d2/d/d/ds + d2/d/d);
+        //tk::real beta3 = b1 + b3 * /*ds/(d2/d/d) **/ std::pow(d2/d/d + d2/d/d/ds,2.0);
+        //tk::real beta3 = b1 + b3 * ds/(d2/d/d) * (1.0+d2/d/d) / (1.0 + ds);
+        //tk::real beta3 = b1; // + b3 * (ds*(1.0+ds))/(1.0 + d2/d/d)/(d2/d/d);
+        //tk::real beta3 = b1 * d2/d/d/ds; // / (1.0+ds);
+        //tk::real beta3 = b1 * (1.0+d2/d/d) * d2/d/d/ds / (1.0+ds);
+        //tk::real beta3 = b1 * (1.0+d2/d/d) / (1.0+d2/d/d+d2/d/d/ds);
+        //tk::real beta3 = b1 * (d2/d/d/ds) / (1.0+ds) * (1.0+d2/d/d);
+        //tk::real beta3 = b1 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
         //tk::real beta2 = 1.0 / (1.0+ds);
-        tk::real beta2 = c2;//*(1.0+d2/d/d); ///(1.0+ds);
-        //tk::real beta3 = c0*c1 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
-        //tk::real beta3 = c0*c1 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
+        tk::real beta2 = b2;//*(1.0+d2/d/d); ///(1.0+ds);
+        //tk::real beta3 = b1*b3 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
+        //tk::real beta3 = b1*b3 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
         tk::real eta = d2/d/d/ds;
         tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
         //tk::real Thetap = thetab*eta/(1.0+ds);
-        tk::real beta3 = c1 /** (1.0+d2/d/d) */ * (1.0+r[c])/(1.0+r[c]*yt);
-        tk::real beta10 = c0 * (1.0+ds)/(1.0+d2/d/d);//* 0.5*(1.0+d2/d/d+d2/d/d/ds);
-        tk::real beta1 = bprime[c] * // (1.0 + d2/d/d + d2/d/d/ds) *
+        tk::real beta3 = b3 /** (1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt) */;
+        tk::real beta10 = b1;// * (1.0+ds)/(1.0+d2/d/d);//* 0.5*(1.0+d2/d/d+d2/d/d/ds);
+        tk::real beta1 = bprime[c] * 2.0/(1.0+eta+eta*ds) *
                          (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f3);
         b[c] = beta1 * ts;
         // cleanup of current baseline:
