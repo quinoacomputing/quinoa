@@ -289,10 +289,10 @@ class Carrier : public CBase_Carrier {
       p | m_coord;
       p | m_psup;
       p | m_u;
-      p | m_uf;
-      p | m_ulf;
+      p | m_ul;
       p | m_du;
       p | m_dul;
+      p | m_ue;
       p | m_p;
       p | m_q;
       p | m_a;
@@ -387,16 +387,16 @@ class Carrier : public CBase_Carrier {
     FluxCorrector m_fluxcorrector;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
-    //! Unknown/solution vector at time n
+    //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
-    //! Unknown/solution vector at fractional time step stage
-    tk::Fields m_uf, m_ue;
-    //! Unknown/solution vector at fractional time step stage (low order)
-    tk::Fields m_ulf;
+    //! Unknown/solution vector at mesh nodes (low orderd)
+    tk::Fields m_ul;
     //! Unknown/solution vector increment (high order)
     tk::Fields m_du;
     //! Unknown/solution vector increment (low order)
     tk::Fields m_dul;
+    //! Unknown/solution vector at mesh cells
+    tk::Fields m_ue;
     //! Flux-corrected transport data structures
     tk::Fields m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros

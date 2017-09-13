@@ -102,11 +102,10 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_fluxcorrector( m_inpoel.size() ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_ue( m_inpoel.size()/4, g_inputdeck.get< tag::component >().nprop() ),
-  m_ulf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_dul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_ue( m_inpoel.size()/4, g_inputdeck.get< tag::component >().nprop() ),
   m_p( m_u.nunk(), m_u.nprop()*2 ),
   m_q( m_u.nunk(), m_u.nprop()*2 ),
   m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -535,9 +534,6 @@ Carrier::init()
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
 
-  // Equate solution at fractional time step stage with initial condition at t=0
-  m_uf = m_u;
-
   // Compute initial time step size
   dt();
 
@@ -641,14 +637,15 @@ Carrier::rhs()
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes) eq.rhs( m_t, m_dt, m_coord, m_inpoel, m_uf, m_ue, r );
+  for (const auto& eq : g_pdes)
+    eq.rhs( m_t, m_dt, m_coord, m_inpoel, m_u, m_ue, r );
   // Query Dirichlet BCs and send to linear system merger
   bc();
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
-  auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_uf );
+  auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_u );
   // Send off mass diffusion rhs contribution for assembly
   m_linsysmerger.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
 
@@ -909,7 +906,7 @@ Carrier::aec()
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, m_uf, m_p );
+  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, m_u, m_p );
 
   if (m_msum.empty())
     comaec_complete();
@@ -971,7 +968,7 @@ Carrier::alw()
   // Note that the maximum and minimum unknowns are complete on nodes that are
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
-  m_fluxcorrector.alw( m_inpoel, m_u, m_ulf, m_q );
+  m_fluxcorrector.alw( m_inpoel, m_u, m_ul, m_q );
 
   if (m_msum.empty())
     comalw_complete();
@@ -1046,7 +1043,7 @@ Carrier::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, m_ulf, m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, m_p, m_ul, m_q, m_a );
 
   if (m_msum.empty())
     comlim_complete();
@@ -1163,7 +1160,7 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
   // different solution vector
   if (m_nlsol == m_gid.size()) {
     m_nlsol = 0;
-    m_ulf = m_u + m_dul;
+    m_ul = m_u + m_dul;
     alw();
   }
 }
@@ -1349,9 +1346,8 @@ Carrier::apply()
   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
-  //m_uf = m_ulf + m_a;
-  m_uf = m_u + m_du;
-  m_u = m_uf;
+  m_u = m_ul + m_a;
+  //m_u = m_u + m_du; // no FCT
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
