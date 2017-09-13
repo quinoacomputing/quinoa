@@ -134,42 +134,26 @@ class TransportProblemShearDiff {
     }
 
     //! Assign prescribed shear velocity to nodes of tetrahedron element
-    //! \param[in] N Element node indices
-    //! \param[in] coord Mesh node coordinates
+    //! \param[in] y y coordinate at which to assign velocity
+    //! \param[in] z Z coordinate at which to assign velocity
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this transport equation
     //! \return Velocity assigned to all vertices of a tetrehedron, size:
-    //!   ncomp * ndim * nnode = [ncomp][3][4]
+    //!   ncomp * ndim = [ncomp][3]
     template< class eq >
-    static std::vector< std::array< std::array< tk::real, 4 >, 3 > >
-    prescribedVelocity( const std::array< std::size_t, 4 >& N,
-                        const std::array< std::vector< tk::real >, 3 >& coord,
+    static std::vector< std::array< tk::real, 3 > >
+    prescribedVelocity( tk::real,
+                        tk::real y,
+                        tk::real z,
                         tk::ctr::ncomp_type e,
                         tk::ctr::ncomp_type ncomp )
     {
       const auto& u0 = g_inputdeck.get< tag::param, eq, tag::u0 >()[e];
       const auto& l = g_inputdeck.get< tag::param, eq, tag::lambda >()[e];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      std::vector< std::array< std::array< tk::real, 4 >, 3 > > vel( ncomp );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        std::array< std::array< tk::real, 4 >, 3 > v;
-        const auto li = 2*c;
-        v[0][0] = u0[c] + l[li+0]*y[N[0]] + l[li+1]*z[N[0]];
-        v[1][0] = 0.0;
-        v[2][0] = 0.0;
-        v[0][1] = u0[c] + l[li+0]*y[N[1]]+  l[li+1]*z[N[1]];
-        v[1][1] = 0.0;
-        v[2][1] = 0.0;
-        v[0][2] = u0[c] + l[li+0]*y[N[2]] + l[li+1]*z[N[2]];
-        v[1][2] = 0.0;
-        v[2][2] = 0.0;
-        v[0][3] = u0[c] + l[li+0]*y[N[3]] + l[li+1]*z[N[3]];
-        v[1][3] = 0.0;
-        v[2][3] = 0.0;
-        vel[c] = std::move(v);
-      }
+      std::vector< std::array< tk::real, 3 > > vel( ncomp );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        vel[c] = {{ u0[c] + l[2*c+0]*y + l[2*c+1]*z, 0.0, 0.0 }};
       return vel;
     }
 
@@ -217,6 +201,7 @@ class TransportProblemSlotCyl {
                       tk::ctr::ncomp_type offset,
                       tk::real time )
     {
+      using std::sin; using std::cos;
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       for (ncomp_t c=0; c<ncomp; ++c) {
         auto t = time + 2.0*M_PI/ncomp * c;
@@ -225,31 +210,31 @@ class TransportProblemSlotCyl {
         tk::real x0 = 0.5;
         tk::real y0 = 0.25;
         tk::real r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real kx = 0.5 + r*std::sin( t );
-        tk::real ky = 0.5 - r*std::cos( t );
+        tk::real kx = 0.5 + r*sin( t );
+        tk::real ky = 0.5 - r*cos( t );
         // center of the hump
         x0 = 0.25;
         y0 = 0.5;
         r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real hx = 0.5 + r*std::sin( t-M_PI/2.0 ),
-                 hy = 0.5 - r*std::cos( t-M_PI/2.0 );
+        tk::real hx = 0.5 + r*sin( t-M_PI/2.0 ),
+                 hy = 0.5 - r*cos( t-M_PI/2.0 );
         // center of the slotted cylinder
         x0 = 0.5;
         y0 = 0.75;
         r = std::sqrt((x0-0.5)*(x0-0.5) + (y0-0.5)*(y0-0.5));
-        tk::real cx = 0.5 + r*std::sin( t+M_PI ),
-                 cy = 0.5 - r*std::cos( t+M_PI );
+        tk::real cx = 0.5 + r*sin( t+M_PI ),
+                 cy = 0.5 - r*cos( t+M_PI );
         // end points of the cylinder slot
-        tk::real i1x = 0.525, i1y = cy - r*std::cos( std::asin(0.025/r) ),
+        tk::real i1x = 0.525, i1y = cy - r*cos( std::asin(0.025/r) ),
                  i2x = 0.525, i2y = 0.8,
                  i3x = 0.475, i3y = 0.8;
         // rotate end points of cylinder slot
-        tk::real ri1x = 0.5 + std::cos(t)*(i1x-0.5) - std::sin(t)*(i1y-0.5),
-                 ri1y = 0.5 + std::sin(t)*(i1x-0.5) + std::cos(t)*(i1y-0.5),
-                 ri2x = 0.5 + std::cos(t)*(i2x-0.5) - std::sin(t)*(i2y-0.5),
-                 ri2y = 0.5 + std::sin(t)*(i2x-0.5) + std::cos(t)*(i2y-0.5),
-                 ri3x = 0.5 + std::cos(t)*(i3x-0.5) - std::sin(t)*(i3y-0.5),
-                 ri3y = 0.5 + std::sin(t)*(i3x-0.5) + std::cos(t)*(i3y-0.5);
+        tk::real ri1x = 0.5 + cos(t)*(i1x-0.5) - sin(t)*(i1y-0.5),
+                 ri1y = 0.5 + sin(t)*(i1x-0.5) + cos(t)*(i1y-0.5),
+                 ri2x = 0.5 + cos(t)*(i2x-0.5) - sin(t)*(i2y-0.5),
+                 ri2y = 0.5 + sin(t)*(i2x-0.5) + cos(t)*(i2y-0.5),
+                 ri3x = 0.5 + cos(t)*(i3x-0.5) - sin(t)*(i3y-0.5),
+                 ri3y = 0.5 + sin(t)*(i3x-0.5) + cos(t)*(i3y-0.5);
         // direction of slot sides
         tk::real v1x = ri2x-ri1x, v1y = ri2y-ri1y,
                  v2x = ri3x-ri2x, v2y = ri3y-ri2y;
@@ -266,7 +251,7 @@ class TransportProblemSlotCyl {
           // hump
           r = std::sqrt((x[i]-hx)*(x[i]-hx) + (y[i]-hy)*(y[i]-hy)) / R0;
           if (r<1.0)
-            unk( i, c, offset ) = 0.2*(1.0+std::cos(M_PI*std::min(r,1.0)));
+            unk( i, c, offset ) = 0.2*(1.0+cos(M_PI*std::min(r,1.0)));
           // cylinder
           r = std::sqrt((x[i]-cx)*(x[i]-cx) + (y[i]-cy)*(y[i]-cy)) / R0;
           const std::array< tk::real, 2 > r1{{ v1x, v1y }},
@@ -280,30 +265,23 @@ class TransportProblemSlotCyl {
       }
     }
 
-    //! Assign prescribed velocity to nodes of tetrahedron element
-    //! \param[in] N Element node indices
-    //! \param[in] coord Mesh node coordinates
+    //! Assign prescribed shear velocity to nodes of tetrahedron element
+    //! \param[in] x X coordinate at which to assign velocity
+    //! \param[in] y y coordinate at which to assign velocity
     //! \param[in] ncomp Number of components in this transport equation
     //! \return Velocity assigned to all vertices of a tetrehedron, size:
-    //!   ncomp * ndim * nnode = [ncomp][3][4]
+    //!   ncomp * ndim = [ncomp][3]
     template< class eq >
-    static std::vector< std::array< std::array< tk::real, 4 >, 3 > >
-    prescribedVelocity( const std::array< std::size_t, 4 >& N,
-                        const std::array< std::vector< tk::real >, 3 >& coord,
+    static std::vector< std::array< tk::real, 3 > >
+    prescribedVelocity( tk::real x,
+                        tk::real y,
+                        tk::real,
                         tk::ctr::ncomp_type,
                         tk::ctr::ncomp_type ncomp )
     {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      std::vector< std::array< std::array< tk::real, 4 >, 3 > > vel( ncomp );
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        std::array< std::array< tk::real, 4 >, 3 > v;
-        v[0][0] = 0.5-y[N[0]];  v[1][0] = x[N[0]]-0.5;  v[2][0] = 0.0;
-        v[0][1] = 0.5-y[N[1]];  v[1][1] = x[N[1]]-0.5;  v[2][1] = 0.0;
-        v[0][2] = 0.5-y[N[2]];  v[1][2] = x[N[2]]-0.5;  v[2][2] = 0.0;
-        v[0][3] = 0.5-y[N[3]];  v[1][3] = x[N[3]]-0.5;  v[2][3] = 0.0;
-        vel[c] = std::move(v);
-      }
+      std::vector< std::array< tk::real, 3 > > vel( ncomp );
+      for (ncomp_t c=0; c<ncomp; ++c)
+        vel[c] = {{ 0.5-y, x-0.5, 0.0 }};
       return vel;
     }
 

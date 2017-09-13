@@ -167,21 +167,25 @@ class Transport {
               tk::Fields& Ue,
               tk::Fields& R ) const
     {
-      IGNORE(Ue);
+      using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
       Assert( R.nunk() == coord[0].size() && R.nprop() == m_ncomp,
               "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
+      Assert( U.nprop() == m_ncomp, "Number of components in solution vector "
+              "must equal " + std::to_string(m_ncomp) );
+      Assert( R.nprop() == m_ncomp, "Number of components in rhs must equal " +
+              std::to_string(m_ncomp) );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // zero right hand side for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
-
+      // 1st stage: update element values from node values (gather-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+
+        // access node IDs
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                                inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
@@ -189,51 +193,102 @@ class Transport {
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
         Assert( J > 0, "Element Jacobian non-positive" );
 
-        // construct tetrahedron element-level matrices
-
-        // consistent mass
-        std::array< std::array< tk::real, 4 >, 4 > mass;  // nnode*nnode [4][4]
-        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;  // diagonal
-        mass[0][1] = mass[0][2] = mass[0][3] =                   // off-diagonal
-        mass[1][0] = mass[1][2] = mass[1][3] =
-        mass[2][0] = mass[2][1] = mass[2][3] =
-        mass[3][0] = mass[3][1] = mass[3][2] = J/120.0;
-
-        // shape function derivatives
-        std::array< std::array< tk::real, 3 >, 4 > grad;  // nnode*ndim [4][3]
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
         grad[1] = tk::crossdiv( ca, da, J );
         grad[2] = tk::crossdiv( da, ba, J );
         grad[3] = tk::crossdiv( ba, ca, J );
         for (std::size_t i=0; i<3; ++i)
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-        // access solution at element nodes at recent time step
+        // access solution at element nodes
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // access solution at elements
+        std::vector< const tk::real* > ue( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
+
+        // sum nodal averages to element
+        for (ncomp_t c=0; c<m_ncomp; ++c) {
+          Ue.var(ue[c],e) = 0.0;
+          for (std::size_t a=0; a<4; ++a)
+            Ue.var(ue[c],e) += u[c][a]/4.0;
+        }
+
+        // get prescribed velocity
+        const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp )}};
+
+        // sum flux (advection) contributions to element
+        tk::real d = deltat/2.0;
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t a=0; a<4; ++a)
+              Ue.var(ue[c],e) -= d * grad[a][j] * vel[a][c][j]*u[c][a];
+
+      }
+
+
+      // zero right hand side for all components
+      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
+
+      // 2nd stage: form rhs from element values (scatter-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+
+        // access node IDs
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+        // access solution at elements
+        std::vector< tk::real > ue( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
         // access pointer to right hand side at component and offset
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
-        // get velocity for problem
+        // get prescribed velocity
+        auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
+        auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
+        auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
         const auto vel =
           Problem::template
-            prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
+            prescribedVelocity< transport >( xc, yc, zc, m_c, m_ncomp );
 
-        // add advection contribution to right hand side
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t i=0; i<4; ++i)
-            for (std::size_t j=0; j<4; ++j)
-              for (std::size_t k=0; k<3; ++k)
-                for (std::size_t l=0; l<4; ++l)
-                  R.var(r[c],N[j]) -= deltat * mass[j][i] * vel[c][k][i]
-                                             * grad[l][k] * u[c][l];
+        // scatter-add flux contributions to rhs at nodes
+        tk::real d = deltat * J/6.0;
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t a=0; a<4; ++a)
+              R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
-        // add diffusion contribution to right hand side
-        Physics::diffusionRhs( m_c, m_ncomp, deltat, J, N, grad, u, r, R );
       }
+//         // add diffusion contribution to right hand side
+//         Physics::diffusionRhs( m_c, m_ncomp, deltat, J, N, grad, u, r, R );
     }
 
     //! Compute the minimum time step size
@@ -245,6 +300,7 @@ class Transport {
                  const std::vector< std::size_t >& inpoel,
                  const tk::Fields& U ) const
     {
+      using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
       const auto& x = coord[0];
@@ -265,17 +321,23 @@ class Transport {
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // get velocity for problem
-        const auto vel =
-          Problem::template
-            prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
+        const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp ),
+          Problem::template prescribedVelocity< transport >
+            ( x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp )}};
         // compute the maximum length of the characteristic velocity (advection
         // velocity) across the four element nodes
         tk::real maxvel = 0.0;
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t i=0; i<4; ++i) {
-            auto v = std::sqrt( vel[c][0][i]*vel[c][0][i] + 
-                                vel[c][1][i]*vel[c][1][i] +
-                                vel[c][2][i]*vel[c][2][i] );
+            auto v = std::sqrt( vel[i][c][0]*vel[i][c][0] + 
+                                vel[i][c][1]*vel[i][c][1] +
+                                vel[i][c][2]*vel[i][c][2] );
             if (v > maxvel) maxvel = v;
           }
         // compute element dt for the advection

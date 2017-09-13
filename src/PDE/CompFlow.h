@@ -160,6 +160,9 @@ class CompFlow {
       Assert( R.nunk() == coord[0].size() && R.nprop() == 5,
               "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
+      Assert( U.nprop() == 5,
+              "Number of components in solution vector must be 5" );
+      Assert( R.nprop() == 5, "Number of components in rhs must be 5" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -236,6 +239,7 @@ class CompFlow {
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t a=0; a<4; ++a)
             Ue.var(ue[c],e) += d/4.0 * s[a][c];
+
       }
 
 
@@ -298,6 +302,7 @@ class CompFlow {
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t a=0; a<4; ++a)
             R.var(r[c],N[a]) += d/4.0 * s[c];
+
       }
 //         // add viscous stress contribution to momentum and energy rhs
 //         Physics::viscousRhs( deltat, J, N, grad, u, r, R );
