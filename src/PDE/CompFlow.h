@@ -145,7 +145,7 @@ class CompFlow {
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               tk::real deltat,
@@ -306,7 +306,7 @@ class CompFlow {
     }
 
     //! Compute the minimum time step size
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \return Minimum time step size
@@ -332,7 +332,7 @@ class CompFlow {
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
-        // access solution at element nodes at recent time step stage
+        // access solution at element nodes at recent time step
         std::array< std::array< tk::real, 4 >, 5 > u;
         for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
         // compute the maximum length of the characteristic velocity (fluid
@@ -366,7 +366,7 @@ class CompFlow {
     }
 
     //! Extract the velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the velocity field
     std::array< std::array< tk::real, 4 >, 3 >
@@ -422,7 +422,7 @@ class CompFlow {
     //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
     //! \param[in] v Nodal mesh volumes
-    //! \param[in,out] U Solution vector at recent time step stage
+    //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,

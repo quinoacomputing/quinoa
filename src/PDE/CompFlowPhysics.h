@@ -91,7 +91,7 @@ class CompFlowPhysicsNavierStokes {
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
-    //! \param[in] u Solution at element nodes at recent time step stage
+    //! \param[in] u Solution at element nodes at recent time step
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] R Right-hand side vector contributing to
     static void
@@ -165,7 +165,7 @@ class CompFlowPhysicsNavierStokes {
 
     //! Compute the minimum time step size based on the viscous force
     //! \param[in] L Characteristic length scale
-    //! \param[in] u Solution at element nodes at recent time step stage
+    //! \param[in] u Solution at element nodes at recent time step
     //! \return Minimum time step size based on viscous force
     static tk::real
     viscous_dt( tk::real L,
@@ -188,7 +188,7 @@ class CompFlowPhysicsNavierStokes {
     //! \param[in] J Element Jacobi determinant
     //! \param[in] N Element node indices
     //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
-    //! \param[in] u Solution at element nodes at recent time step stage
+    //! \param[in] u Solution at element nodes at recent time step
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] R Right-hand side vector contributing to
     static void
@@ -223,7 +223,7 @@ class CompFlowPhysicsNavierStokes {
 
     //! Compute the minimum time step size based on thermal diffusion
     //! \param[in] L Characteristic length scale
-    //! \param[in] u Solution at element nodes at recent time step stage
+    //! \param[in] u Solution at element nodes at recent time step
     //! \return Minimum time step size based on thermal diffusion
     static tk::real
     heat_diffusion_dt( tk::real L,

@@ -157,7 +157,7 @@ class Transport {
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
               tk::real deltat,
@@ -210,7 +210,7 @@ class Transport {
         for (std::size_t i=0; i<3; ++i)
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-        // access solution at element nodes at recent time step stage
+        // access solution at element nodes at recent time step
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
@@ -237,7 +237,7 @@ class Transport {
     }
 
     //! Compute the minimum time step size
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \return Minimum time step size
@@ -261,7 +261,7 @@ class Transport {
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
-        // access solution at element nodes at recent time step stage
+        // access solution at element nodes at recent time step
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // get velocity for problem
@@ -291,7 +291,7 @@ class Transport {
     }
 
     //! Extract the transport velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the transport velocity
@@ -350,7 +350,7 @@ class Transport {
     //! \param[in] V Total mesh volume
     //! \param[in] coord Mesh node coordinates
     //! \param[in] v Nodal volumes
-    //! \param[in,out] U Solution vector at recent time step stage
+    //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
     //!   which provides the vector of field names

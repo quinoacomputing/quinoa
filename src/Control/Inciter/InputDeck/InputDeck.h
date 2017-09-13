@@ -127,7 +127,6 @@ class InputDeck :
                                        kw::root,
                                        kw::error,
                                        kw::l2,
-                                       kw::nstage,
                                        kw::linf >;
 
     //! \brief Constructor: set defaults
@@ -142,7 +141,6 @@ class InputDeck :
          ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
       set< tag::discr, tag::term >
          ( std::numeric_limits< kw::term::info::expect::type >::max() );
-      set< tag::discr, tag::nstage >( 2 );
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );

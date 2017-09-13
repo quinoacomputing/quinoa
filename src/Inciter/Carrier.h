@@ -205,8 +205,8 @@ class Carrier : public CBase_Carrier {
     void updateLowSol( const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& sol );
 
-    //! Advance equations to next stage in multi-stage time stepping
-    void advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage );
+    //! Advance equations to next time step
+    void advance( uint64_t it, tk::real t, tk::real newdt );
 
     //! Compute time step size
     void dt();
@@ -265,8 +265,6 @@ class Carrier : public CBase_Carrier {
       p | m_itf;
       p | m_t;
       p | m_dt;
-      p | m_nstage;
-      p | m_stage;
       p | m_nvol;
       p | m_nhsol;
       p | m_nlsol;
@@ -330,10 +328,6 @@ class Carrier : public CBase_Carrier {
     tk::real m_dt;
     //! Physical time at which the last field output was written
     tk::real m_lastFieldWriteTime;
-    //! Number of stages in time step
-    unsigned int m_nstage;
-    //! Stage in multi-stage time stepping
-    unsigned int m_stage;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;

@@ -295,7 +295,6 @@ namespace deck {
   //! Discretization parameters
   struct discretization_parameters :
          pegtl::sor< tk::grm::discr< use< kw::nstep >, tag::nstep >,
-                     tk::grm::discr< use< kw::nstage >, tag::nstage >,
                      tk::grm::discr< use< kw::term >, tag::term >,
                      tk::grm::discr< use< kw::t0 >, tag::t0 >,
                      tk::grm::discr< use< kw::dt >, tag::dt >,

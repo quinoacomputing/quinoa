@@ -279,7 +279,7 @@ class CompFlowProblemRayleighTaylor {
     //!   PDEs among other systems
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( tk::ctr::ncomp_type e,

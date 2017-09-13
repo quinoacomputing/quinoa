@@ -122,7 +122,7 @@ class CompFlowProblemUserDefined {
     //! Return field output going to file
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( tk::ctr::ncomp_type,

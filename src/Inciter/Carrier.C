@@ -78,8 +78,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
-  m_nstage( g_inputdeck.get< tag::discr, tag::nstage >() ),
-  m_stage( 0 ),
   m_nvol( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -624,7 +622,7 @@ Carrier::rhs()
 // Compute right-hand side of transport equations
 // *****************************************************************************
 {
-  // Initialize FCT data structures for new time step stage
+  // Initialize FCT data structures for new time step
   m_p.fill( 0.0 );
   m_a.fill( 0.0 );
   for (std::size_t p=0; p<m_u.nunk(); ++p)
@@ -1096,10 +1094,9 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage )
+Carrier::advance( uint64_t it, tk::real t, tk::real newdt )
 // *****************************************************************************
-// Advance equations to next stage in multi-stage time stepping
-//! \param[in] stage Stage in multi-stage time stepping
+// Advance equations to next time step
 //! \param[in] newdt Size of this new time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
@@ -1109,7 +1106,6 @@ Carrier::advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage )
   m_it = it;
   m_t = t;
   m_dt = newdt;
-  m_stage = stage;
 
   // Activate SDAG-waits
   #ifndef NDEBUG
@@ -1118,7 +1114,7 @@ Carrier::advance( uint64_t it, tk::real t, tk::real newdt, unsigned int stage )
   wait4fct();
   wait4app();
 
-  // Advance stage in multi-stage time stepping by updating the rhs
+  // Compute rhs for next time step
   rhs();
 }
 
@@ -1129,8 +1125,7 @@ Carrier::out()
 // *****************************************************************************
 {
   // Optionally output field and particle data
-  if ( m_stage == m_nstage-1 &&
-       !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
+  if ( !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
@@ -1165,7 +1160,7 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
   m_nlsol += gid.size();
 
   // If all contributions we own have been received, continue by updating a
-  // different solution vector depending on time step stage
+  // different solution vector
   if (m_nlsol == m_gid.size()) {
     m_nlsol = 0;
     m_ulf = m_u + m_dul;
@@ -1197,7 +1192,7 @@ Carrier::updateSol( const std::vector< std::size_t >& gid,
   m_nhsol += gid.size();
 
   // If all contributions we own have been received, continue by updating a
-  // different solution vector depending on time step stage
+  // different solution vector
   if (m_nhsol == m_gid.size()) {
     m_nhsol = 0;
     aec();
@@ -1224,8 +1219,7 @@ Carrier::diagnostics()
   // Optionally: collect analytical solutions and send both the latest
   // analytical and numerical solutions to LinSysMerger for computing and
   // outputing diagnostics
-  if (m_stage == m_nstage-1 &&
-      !(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+  if ( !(m_it % g_inputdeck.get< tag::interval, tag::diag >()) ) {
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
@@ -1357,7 +1351,7 @@ Carrier::apply()
   // Apply limited antidiffusive element contributions to low order solution
   //m_uf = m_ulf + m_a;
   m_uf = m_u + m_du;
-  if (m_stage == m_nstage-1) m_u = m_uf;
+  m_u = m_uf;
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
@@ -1365,7 +1359,7 @@ Carrier::apply()
 
   // Advance particles
   m_tracker.track( m_transporter, thisProxy, m_coord, m_inpoel, m_msum,
-                   thisIndex, this, m_stage, m_dt );
+                   thisIndex, this, m_dt );
 
   // Compute diagnostics, e.g., residuals
   diagnostics();
@@ -1374,8 +1368,7 @@ Carrier::apply()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (m_stage == m_nstage-1) &&
-       (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
+  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
        (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
     writeFields( m_t+m_dt );
 
