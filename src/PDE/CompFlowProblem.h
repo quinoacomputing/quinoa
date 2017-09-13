@@ -58,7 +58,7 @@ namespace inciter {
 //! List of all CompFlow problem policies (defined in the includes above)
 using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
                                            , CompFlowProblemVorticalFlow
-                                           //, CompFlowProblemNLEnergyGrowth
+                                           , CompFlowProblemNLEnergyGrowth
                                            , CompFlowProblemRayleighTaylor
                                            , CompFlowProblemTaylorGreen >;
 

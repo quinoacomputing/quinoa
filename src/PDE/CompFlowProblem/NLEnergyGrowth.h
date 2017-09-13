@@ -21,7 +21,7 @@
 
 namespace inciter {
 
-//! CompFlow system of PDEs problem: nonlinear energy growth
+//! CompFlow system of PDEs problem: nonlinear energy growth (NLEG)
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
 //!   equations with relevance to Inertial Confinement Fusion", Journal of
 //!   Computational Physics 267 (2014) 196-209.
@@ -67,17 +67,17 @@ class CompFlowProblemNLEnergyGrowth {
       // manufactured solution parameters
       const auto ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
       const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
-      const auto alpha = g_inputdeck.get< param, compflow, tag::alpha >()[e];
+      const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
       const auto k = g_inputdeck.get< param, compflow, tag::kappa >()[e];
       const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
       const auto by = g_inputdeck.get< param, compflow, tag::betay >()[e];
       const auto bz = g_inputdeck.get< param, compflow, tag::betaz >()[e];
       // spatial component of density field
-      const tk::real gx = 1.0 - (x*x + y*y + z*z);
+      const tk::real gx = 1.0 - x*x - y*y - z*z;
       // internal energy parameter
       const auto h = hx( bx, by, bz, x, y, z );
       // temporal component of the density field
-      tk::real ft = std::exp( -alpha*t );
+      tk::real ft = std::exp( -a*t );
       // solution at t
       auto r = r0 + ft*gx;
       return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
@@ -136,27 +136,18 @@ class CompFlowProblemNLEnergyGrowth {
       }
     }
 
-    //! Add source term to rhs for nonlinear energy growth manufactured solution
-    //! \param[in] t Physical time
-    //! \param[in] coord Mesh node coordinates
+    //! Compute and return source term for NLEG manufactured solution
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] dt Size of time step
-    //! \param[in] N Element node indices
-    //! \param[in] mass Element mass matrix, nnode*nnode [4][4]
-    //! \param[in] r Pointers to right hand side at component and offset
-    //! \param[in,out] R Right-hand side vector contributing to
-    static void
-    sourceRhs( tk::real t,
-               const std::array< std::vector< tk::real >, 3 >& coord,
-               tk::ctr::ncomp_type e,
-               tk::real dt,
-               const std::array< std::size_t, 4 >& N,
-               const std::array< std::array< tk::real, 4 >, 4 >& mass,
-               const std::array< const tk::real*, 5 >& r,
-               tk::Fields& R )
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in] t Physical time at which to evaluate the source
+    //! \return Array of reals containing the source for all components
+    static std::array< tk::real, 5 >
+    src( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z, tk::real t )
     {
-      using tag::param; using tag::compflow;
+      using tag::param; using tag::compflow; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, compflow, tag::alpha >()[e];
       const auto bx = g_inputdeck.get< param, compflow, tag::betax >()[e];
@@ -166,126 +157,43 @@ class CompFlowProblemNLEnergyGrowth {
       const auto kappa = g_inputdeck.get< param, compflow, tag::kappa >()[e];
       const auto r0 = g_inputdeck.get< param, compflow, tag::r0 >()[e];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
-
-      // mesh node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
+      const auto g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
       // spatial component of density field
-      std::array< tk::real, 4 >
-        gx{{ 1.0 - (x[N[0]]*x[N[0]] + y[N[0]]*y[N[0]] + z[N[0]]*z[N[0]]),
-             1.0 - (x[N[1]]*x[N[1]] + y[N[1]]*y[N[1]] + z[N[1]]*z[N[1]]),
-             1.0 - (x[N[2]]*x[N[2]] + y[N[2]]*y[N[2]] + z[N[2]]*z[N[2]]),
-             1.0 - (x[N[3]]*x[N[3]] + y[N[3]]*y[N[3]] + z[N[3]]*z[N[3]]) }};
-
+      const auto gx = 1.0 - x*x - y*y - z*z;
       // derivative of spatial component of density field
-      std::array< std::array< tk::real, 4 >, 3 >
-        dg{{  {{ -2.0*x[N[0]], -2.0*x[N[1]], -2.0*x[N[2]], -2.0*x[N[3]] }},
-              {{ -2.0*y[N[0]], -2.0*y[N[1]], -2.0*y[N[2]], -2.0*y[N[3]] }},
-              {{ -2.0*z[N[0]], -2.0*z[N[1]], -2.0*z[N[2]], -2.0*z[N[3]] }} }};
-
+      const std::array< tk::real, 3 > dg{{ -2.0*x, -2.0*y, -2.0*z }};
       // spatial component of energy field
-      std::array< tk::real, 4 > h{{
-        hx( bx, by, bz, x[N[0]], y[N[0]], z[N[0]] ),
-        hx( bx, by, bz, x[N[1]], y[N[1]], z[N[1]] ),
-        hx( bx, by, bz, x[N[2]], y[N[2]], z[N[2]] ),
-        hx( bx, by, bz, x[N[3]], y[N[3]], z[N[3]] ) }};
-
+      const auto h = hx( bx, by, bz, x, y, z );
       // derivative of spatial component of energy field
-      std::array< std::array< tk::real, 4 >, 3 >
-        dh{{ {{ -bx*M_PI*std::sin(bx*M_PI*x[N[0]])*std::cos(by*M_PI*y[N[0]])*
-                  std::cos(bz*M_PI*z[N[0]]),
-                -bx*M_PI*std::sin(bx*M_PI*x[N[1]])*std::cos(by*M_PI*y[N[1]])*
-                  std::cos(bz*M_PI*z[N[1]]),
-                -bx*M_PI*std::sin(bx*M_PI*x[N[2]])*std::cos(by*M_PI*y[N[2]])*
-                  std::cos(bz*M_PI*z[N[2]]),
-                -bx*M_PI*std::sin(bx*M_PI*x[N[3]])*std::cos(by*M_PI*y[N[3]])*
-                  std::cos(bz*M_PI*z[N[3]]) }},
-             {{ -by*M_PI*std::cos(bx*M_PI*x[N[0]])*std::sin(by*M_PI*y[N[0]])*
-                  std::cos(bz*M_PI*z[N[0]]),
-                -by*M_PI*std::cos(bx*M_PI*x[N[1]])*std::sin(by*M_PI*y[N[1]])*
-                  std::cos(bz*M_PI*z[N[1]]),
-                -by*M_PI*std::cos(bx*M_PI*x[N[2]])*std::sin(by*M_PI*y[N[2]])*
-                  std::cos(bz*M_PI*z[N[2]]),
-                -by*M_PI*std::cos(bx*M_PI*x[N[3]])*std::sin(by*M_PI*y[N[3]])*
-                  std::cos(bz*M_PI*z[N[3]]) }},
-             {{ -bz*M_PI*std::cos(bx*M_PI*x[N[0]])*std::cos(by*M_PI*y[N[0]])*
-                  std::sin(bz*M_PI*z[N[0]]),
-                -bz*M_PI*std::cos(bx*M_PI*x[N[1]])*std::cos(by*M_PI*y[N[1]])*
-                  std::sin(bz*M_PI*z[N[1]]),
-                -bz*M_PI*std::cos(bx*M_PI*x[N[2]])*std::cos(by*M_PI*y[N[2]])*
-                  std::sin(bz*M_PI*z[N[2]]),
-                -bz*M_PI*std::cos(bx*M_PI*x[N[3]])*std::cos(by*M_PI*y[N[3]])*
-                  std::sin(bz*M_PI*z[N[3]]) }} }};
-
+      std::array< tk::real, 3 >
+        dh{{ -bx*M_PI*sin(bx*M_PI*x)*cos(by*M_PI*y)*cos(bz*M_PI*z),
+             -by*M_PI*cos(bx*M_PI*x)*sin(by*M_PI*y)*cos(bz*M_PI*z),
+             -bz*M_PI*cos(bx*M_PI*x)*cos(by*M_PI*y)*sin(bz*M_PI*z) }};
       // temporal function f and its derivative
-      tk::real f = std::exp(-a*t);
-      tk::real dfdt = -a*f;
-
+      const auto ft = std::exp(-a*t);
+      const auto dfdt = -a*ft;
       // density and its derivatives
-      std::array< tk::real, 4 > rho{{
-        r0 + gx[0]*std::exp(-a*t),
-        r0 + gx[1]*std::exp(-a*t),
-        r0 + gx[2]*std::exp(-a*t),
-        r0 + gx[3]*std::exp(-a*t) }};
-      std::array< std::array< tk::real, 4 >, 3 > drdx{{
-        {{ f*dg[0][0],
-           f*dg[0][1],
-           f*dg[0][2],
-           f*dg[0][3] }},
-        {{ f*dg[1][0],
-           f*dg[1][1],
-           f*dg[1][2],
-           f*dg[1][3] }},
-        {{ f*dg[2][0],
-           f*dg[2][1],
-           f*dg[2][2],
-           f*dg[2][3] }} }};
-      std::array< tk::real, 4 > drdt{{
-        gx[0]*dfdt,
-        gx[1]*dfdt,
-        gx[2]*dfdt,
-        gx[3]*dfdt }};
-
+      const auto rho = r0 + ft*gx;
+      const std::array< tk::real, 3 > drdx{{ ft*dg[0], ft*dg[1], ft*dg[2] }};
+      const auto drdt = gx*dfdt;
       // internal energy and its derivatives
-      std::array< tk::real, 4 > ie{{
-        ec(ce,kappa,t,h[0],-1.0/3.0),
-        ec(ce,kappa,t,h[1],-1.0/3.0),
-        ec(ce,kappa,t,h[2],-1.0/3.0),
-        ec(ce,kappa,t,h[3],-1.0/3.0) }};
-      std::array< std::array< tk::real, 4 >, 3 > dedx{{
-        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[0][0]*t,
-           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[0][1]*t,
-           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[0][2]*t,
-           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[0][3]*t }},
-        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[1][0]*t,
-           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[1][1]*t,
-           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[1][2]*t,
-           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[1][3]*t }},
-        {{ 2.0*std::pow(ie[0],4.0)*kappa*h[0]*dh[2][0]*t,
-           2.0*std::pow(ie[1],4.0)*kappa*h[1]*dh[2][1]*t,
-           2.0*std::pow(ie[2],4.0)*kappa*h[2]*dh[2][2]*t,
-           2.0*std::pow(ie[3],4.0)*kappa*h[3]*dh[2][3]*t }} }};
-      std::array< tk::real, 4 > dedt{{
-        kappa*h[0]*h[0]*std::pow(ie[0],4.0),
-        kappa*h[1]*h[1]*std::pow(ie[1],4.0),
-        kappa*h[2]*h[2]*std::pow(ie[2],4.0),
-        kappa*h[3]*h[3]*std::pow(ie[3],4.0) }};
-
-      // add momentum and energy source at element nodes
-      for (std::size_t j=0; j<4; ++j)
-        for (std::size_t k=0; k<4; ++k) {
-          // source contribution to mass rhs
-          R.var(r[0],N[j]) += dt * mass[j][k] * drdt[k];
-          // source contribution to momentum rhs
-          for (std::size_t l=0; l<3; ++l)
-            R.var(r[l+1],N[j]) += dt * mass[j][k] *
-                                 (g-1.0)*(rho[k]*dedx[l][k] + ie[k]*drdx[l][k]);
-          // source contribution to enerhy rhs
-          R.var(r[4],N[j]) += dt * mass[j][k] * (rho[k]*dedt[k] + ie[k]*drdt[k]);
-        }
+      const auto ie = ec( ce, kappa, t, h, -1.0/3.0 );
+      const std::array< tk::real, 3 > dedx{{
+        2.0*std::pow(ie,4.0)*kappa*h*dh[0]*t,
+        2.0*std::pow(ie,4.0)*kappa*h*dh[1]*t,
+        2.0*std::pow(ie,4.0)*kappa*h*dh[2]*t }};
+      const auto dedt = kappa*h*h*std::pow(ie,4.0);
+      // sources
+      std::array< tk::real, 5 > r;
+      // density source
+      r[0] = drdt;
+      // momentum source
+      r[1] = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
+      r[2] = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
+      r[3] = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
+      // energy source
+      r[4] = rho*dedt + ie*drdt;
+      return r;
     }
 
     //! \brief Query all side set IDs the user has configured for all components
