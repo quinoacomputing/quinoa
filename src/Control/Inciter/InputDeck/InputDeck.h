@@ -121,7 +121,6 @@ class InputDeck :
                                        kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
-                                       kw::artvisc,
                                        kw::filetype,
                                        kw::exodusii,
                                        kw::root,
