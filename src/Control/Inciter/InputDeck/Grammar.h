@@ -395,7 +395,7 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 >,
-                           bc_dirichlet< tag::compflow, tag::bcdir > >,
+                           bc_dirichlet< tag::transport, tag::bcdir > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow

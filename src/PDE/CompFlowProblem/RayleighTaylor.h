@@ -184,7 +184,6 @@ class CompFlowProblemRayleighTaylor {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
-      // set initial and boundary conditions
       for (ncomp_t i=0; i<x.size(); ++i) {
         const auto s = solution( e, x[i], y[i], z[i], t );
         unk(i,0,offset) = s[0]; // rho

@@ -93,15 +93,6 @@ using TransportPDEParameters = tk::tuple::tagged_tuple<
                        kw::sideset::info::expect::type > >
 >;
 
-//! Poisson equation parameters storage
-using PoissonPDEParameters = tk::tuple::tagged_tuple<
-  tag::depvar,       std::vector< char >,
-  tag::physics,      std::vector< PhysicsType >,
-  tag::problem,      std::vector< ProblemType >,
-  tag::bcdir,        std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
->;
-
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::physics,      std::vector< PhysicsType >,
@@ -143,7 +134,6 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tag::transport,   TransportPDEParameters,
-  tag::poisson,     PoissonPDEParameters,
   tag::compflow,    CompFlowPDEParameters
 >;
 

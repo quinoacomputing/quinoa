@@ -38,17 +38,19 @@ namespace inciter {
 class TransportPhysicsAdvection {
 
   public:
-    //! Add diffusion contribution to rhs (no-op)
+
+    //! Add diffusion contribution to rhs at 2nd step stage (no-op)
     static void
     diffusionRhs( tk::ctr::ncomp_type,
                   tk::ctr::ncomp_type,
                   tk::real,
                   tk::real,
-                  const std::array< std::size_t, 4 >&,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
+                  const std::array< std::size_t, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
                   const std::vector< const tk::real* >&,
-                  tk::Fields& ) {}
+                  tk::Fields& )
+    {}
 
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore
@@ -67,24 +69,24 @@ class TransportPhysicsAdvection {
 class TransportPhysicsAdvDiff {
 
   public:
-    //! Add diffusion contribution to rhs
+    //! Add diffusion contribution to rhs at 2nd time step stage
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this PDE
-    //! \param[in] dt Size of time step
+    //! \param[in] deltat Size of time step
     //! \param[in] J Element Jacobi determinant
-    //! \param[in] N Element node indices
     //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
+    //! \param[in] N Element node indices
     //! \param[in] u Solution at element nodes at recent time step
     //! \param[in] r Pointers to right hand side at component and offset
     //! \param[in,out] R Right-hand side vector contributing to
     static void
     diffusionRhs( tk::ctr::ncomp_type e,
                   tk::ctr::ncomp_type ncomp,
-                  tk::real dt,
+                  tk::real deltat,
                   tk::real J,
-                  const std::array< std::size_t, 4 >& N,
                   const std::array< std::array< tk::real, 3 >, 4 >& grad,
+                  const std::array< std::size_t, 4 >& N,
                   const std::vector< std::array< tk::real, 4 > >& u,
                   const std::vector< const tk::real* >& r,
                   tk::Fields& R )
@@ -93,13 +95,13 @@ class TransportPhysicsAdvDiff {
       const auto& diff =
         g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
       // add diffusion contribution to right hand side
-      const auto a = dt * J / 6.0;
+      const auto d = deltat * J/6.0;
       for (ncomp_t c=0; c<ncomp; ++c)
         for (std::size_t k=0; k<3; ++k) {
-          const auto d = diff[ 3*c+k ];
-          for (std::size_t i=0; i<4; ++i)
-            for (std::size_t j=0; j<4; ++j)
-              R.var(r[c],N[j]) -= a * d * grad[j][k] * grad[i][k] * u[c][i];
+          const auto D = diff[ 3*c+k ];
+          for (std::size_t a=0; a<4; ++a)
+            for (std::size_t b=0; b<4; ++b)
+              R.var(r[c],N[a]) -= d * D * grad[a][k] * grad[b][k] * u[c][b];
         }
     }
 

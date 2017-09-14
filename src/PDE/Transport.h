@@ -51,7 +51,7 @@ class Transport {
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
     {
-      Problem::template errchk< tag::transport >( m_c, m_ncomp );
+      Problem::errchk( m_c, m_ncomp );
     }
 
     //! Initalize the transport equations using problem policy
@@ -63,8 +63,7 @@ class Transport {
                      tk::real t,
                      const std::vector< std::size_t >& ) const
     {
-      Problem::template
-       init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
+      Problem::init( coord, unk, m_c, m_ncomp, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -220,14 +219,10 @@ class Transport {
 
         // get prescribed velocity
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp )}};
+         Problem::prescribedVelocity(x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp)}};
 
         // sum flux (advection) contributions to element
         tk::real d = deltat/2.0;
@@ -270,14 +265,16 @@ class Transport {
         // access pointer to right hand side at component and offset
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+        // access solution at nodes of element
+        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
 
         // get prescribed velocity
         auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
         const auto vel =
-          Problem::template
-            prescribedVelocity< transport >( xc, yc, zc, m_c, m_ncomp );
+          Problem::prescribedVelocity( xc, yc, zc, m_c, m_ncomp );
 
         // scatter-add flux contributions to rhs at nodes
         tk::real d = deltat * J/6.0;
@@ -286,9 +283,10 @@ class Transport {
             for (std::size_t a=0; a<4; ++a)
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
+        // add (optional) diffusion contribution to right hand side
+        Physics::diffusionRhs( m_c, m_ncomp, deltat, J, grad, N, u, r, R );
+
       }
-//         // add diffusion contribution to right hand side
-//         Physics::diffusionRhs( m_c, m_ncomp, deltat, J, N, grad, u, r, R );
     }
 
     //! Compute the minimum time step size
@@ -322,14 +320,10 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // get velocity for problem
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp ),
-          Problem::template prescribedVelocity< transport >
-            ( x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp )}};
+         Problem::prescribedVelocity(x[N[0]], y[N[0]], z[N[0]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[1]], z[N[1]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[2]], z[N[2]], m_c, m_ncomp),
+         Problem::prescribedVelocity(x[N[0]], y[N[3]], z[N[3]], m_c, m_ncomp)}};
         // compute the maximum length of the characteristic velocity (advection
         // velocity) across the four element nodes
         tk::real maxvel = 0.0;
@@ -365,27 +359,27 @@ class Transport {
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
-    static void side( std::unordered_set< int >& ) {}
+    //! \param[in,out] conf Set of unique side set IDs to add to
+    void side( std::unordered_set< int >& conf ) const
+    { Problem::side( conf ); }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
+    //! \param[in] t Physical time
+    //! \param[in] deltat Time step size
+    //! \param[in] sides Pair of side set ID and node IDs on the side set
+    //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
     //!   that instead of the actual boundary condition value, we return the
     //!   increment between t+dt and t, since that is what the solution requires
     //!   as we solve for the soution increments and not the solution itself.
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real,
-           tk::real,
-           const std::pair< const int, std::vector< std::size_t > >&,
-           const std::array< std::vector< tk::real >, 3 >& ) const
-    {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      // TODO
-      return bc;
-    }
+    dirbc( tk::real t,
+           tk::real deltat,
+           const std::pair< const int, std::vector< std::size_t > >& sides,
+           const std::array< std::vector< tk::real >, 3 >& coord ) const
+    { return Problem::dirbc( m_c, m_ncomp, t, deltat, sides, coord ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

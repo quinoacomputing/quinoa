@@ -149,9 +149,9 @@ class CompFlowProblemVorticalFlow {
         Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
         for (const auto& b : ubc[e])
           if (std::stoi(b) == side.first)
-          for (auto n : side.second)
-            bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
-                       {true,0.0} }};
+            for (auto n : side.second)
+              bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
+                         {true,0.0} }};
       }
       return bc;
     }
