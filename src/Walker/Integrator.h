@@ -76,17 +76,11 @@ class Integrator : public CBase_Integrator {
                   uint64_t it,
                   const std::map< tk::ctr::Product, tk::real >& moments );
 
-    // Accumulate sums for ordinary moments
-    void accumulateOrd();
+    // Accumulate sums for ordinary moments and ordinary PDFs
+    void accumulateOrd( uint64_t it );
 
-    // Accumulate sums for central moments
-    void accumulateCen( const std::vector< tk::real >& ord );
-
-    // Accumulate sums for ordinary PDFs
-    void accumulateOrdPDF();
-
-    // Accumulate sums for central PDFs
-    void accumulateCenPDF( const std::vector< tk::real >& ord );
+    // Accumulate sums for central moments and central PDFs
+    void accumulateCen( uint64_t it, const std::vector< tk::real >& ord );
 
   private:
     CProxy_Distributor m_hostproxy;     //!< Host proxy

@@ -54,7 +54,7 @@ find_package(PStreams REQUIRED)
 
 #### Hypre
 set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
-find_package(Hypre REQUIRED)
+find_package(Hypre 2.9.0 REQUIRED)
 
 #### PugiXML
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours

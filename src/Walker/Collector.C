@@ -29,69 +29,13 @@ CkReduction::reducerType PDFMerger;
 using walker::Collector;
 
 void
-Collector::chareOrd( const std::vector< tk::real >& ord )
+Collector::chareOrd( const std::vector< tk::real >& ord,
+                     const std::vector< tk::UniPDF >& updf,
+                     const std::vector< tk::BiPDF >& bpdf,
+                     const std::vector< tk::TriPDF >& tpdf )
 // *****************************************************************************
-// Chares contribute ordinary moments
+// Chares contribute ordinary moments and ordinary PDFs
 //! \param[in] ord Vector of partial sums for the estimation of ordinary moments
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
-// *****************************************************************************
-{
-  ++m_nord;
-
-  for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
-
-  // If all chares on my PE have contributed, send partial sums to host
-  if (m_nord == m_nchare) {
-
-    // Create Charm++ callback function for reduction
-    CkCallback cb( CkReductionTarget( Distributor, estimateOrd ), m_hostproxy );
-
-    // Contribute partial sums to host via Charm++ reduction
-    contribute( static_cast< int >( m_ordinary.size() * sizeof(tk::real) ),
-                m_ordinary.data(), CkReduction::sum_double, cb );
-
-    // Zero counters for next collection operation
-    m_nord = 0;
-    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
-  }
-}
-
-void
-Collector::chareCen( const std::vector< tk::real >& cen )
-// *****************************************************************************
-// Chares contribute central moments
-//! \param[in] cen Vector of partial sums for the estimation of central moments
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
-// *****************************************************************************
-{
-  ++m_ncen;
-
-  for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
-
-  // If all chares on my PE have contributed, send partial sums to host
-  if (m_ncen == m_nchare) {
-
-    // Create Charm++ callback function for reduction
-    CkCallback cb( CkReductionTarget( Distributor, estimateCen ), m_hostproxy );
-
-    // Contribute partial sums to host via Charm++ reduction
-    contribute( static_cast< int >( m_central.size() * sizeof(tk::real) ),
-                m_central.data(), CkReduction::sum_double, cb );
-
-    // Zero counters for next collection operation
-    m_ncen = 0;
-    std::fill( begin(m_central), end(m_central), 0.0 );
-  }
-}
-
-void
-Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
-                        const std::vector< tk::BiPDF >& bpdf,
-                        const std::vector< tk::TriPDF >& tpdf )
-// *****************************************************************************
-// Chares contribute ordinary PDFs
 //! \param[in] updf Vector of partial sums for the estimation of univariate
 //!   ordinary PDFs
 //! \param[in] bpdf Vector of partial sums for the estimation of bivariate
@@ -102,7 +46,9 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
 //!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
-  ++m_nopdf;
+  ++m_nord;
+
+  for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
 
   // Add contribution from worker chares to partial sums on my PE
   std::size_t i = 0;
@@ -113,7 +59,17 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
   for (const auto& p : tpdf) m_ordtpdf[i++].addPDF( p );
 
   // If all chares on my PE have contributed, send partial sums to host
-  if (m_nopdf == m_nchare) {
+  if (m_nord == m_nchare) {
+
+    // Create Charm++ callback function for reduction
+    CkCallback c1( CkReductionTarget( Distributor, estimateOrd ), m_hostproxy );
+
+    // Contribute partial sums to host via Charm++ reduction
+    contribute( static_cast< int >( m_ordinary.size() * sizeof(tk::real) ),
+                m_ordinary.data(), CkReduction::sum_double, c1 );
+
+    // Zero counters for next collection operation
+    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
 
     // Serialize vector of PDFs to raw stream
     auto stream = tk::serialize( m_ordupdf, m_ordbpdf, m_ordtpdf );
@@ -121,25 +77,28 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
     // Create Charm++ callback function for reduction.
     // Distributor::estimateOrdPDF() will be the final target of the reduction
     // where the results of the reduction will appear.
-    CkCallback cb( CkIndex_Distributor::estimateOrdPDF(nullptr), m_hostproxy );
+    CkCallback c2( CkIndex_Distributor::estimateOrdPDF(nullptr), m_hostproxy );
 
     // Contribute serialized PDFs of partial sums to host via Charm++ reduction
-    contribute( stream.first, stream.second.get(), PDFMerger, cb );
+    contribute( stream.first, stream.second.get(), PDFMerger, c2 );
 
     // Zero counters for next collection operation
-    m_nopdf = 0;
     for (auto& p : m_ordupdf) p.zero();
     for (auto& p : m_ordbpdf) p.zero();
     for (auto& p : m_ordtpdf) p.zero();
+
+    m_nord = 0;
   }
 }
 
 void
-Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
-                        const std::vector< tk::BiPDF >& bpdf,
-                        const std::vector< tk::TriPDF >& tpdf )
+Collector::chareCen( const std::vector< tk::real >& cen,
+                     const std::vector< tk::UniPDF >& updf,
+                     const std::vector< tk::BiPDF >& bpdf,
+                     const std::vector< tk::TriPDF >& tpdf )
 // *****************************************************************************
-// Chares contribute central PDFs
+// Chares contribute central moments and central PDFs
+//! \param[in] cen Vector of partial sums for the estimation of central moments
 //! \param[in] updf Vector of partial sums for the estimation of univariate
 //!   central PDFs
 //! \param[in] bpdf Vector of partial sums for the estimation of bivariate
@@ -150,7 +109,9 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
 //!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
-  ++m_ncpdf;
+  ++m_ncen;
+
+  for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
 
   // Add contribution from worker chares to partial sums on my PE
   std::size_t i = 0;
@@ -161,7 +122,17 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
   for (const auto& p : tpdf) m_centpdf[i++].addPDF( p );
 
   // If all chares on my PE have contributed, send partial sums to host
-  if (m_ncpdf == m_nchare) {
+  if (m_ncen == m_nchare) {
+
+    // Create Charm++ callback function for reduction
+    CkCallback c1( CkReductionTarget( Distributor, estimateCen ), m_hostproxy );
+
+    // Contribute partial sums to host via Charm++ reduction
+    contribute( static_cast< int >( m_central.size() * sizeof(tk::real) ),
+                m_central.data(), CkReduction::sum_double, c1 );
+
+    // Zero counters for next collection operation
+    std::fill( begin(m_central), end(m_central), 0.0 );
 
     // Serialize vector of PDFs to raw stream
     auto stream = tk::serialize( m_cenupdf, m_cenbpdf, m_centpdf );
@@ -169,16 +140,17 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
     // Create Charm++ callback function for reduction.
     // Distributor::estimateCenPDF() will be the final target of the reduction
     // where the results of the reduction will appear.
-    CkCallback cb( CkIndex_Distributor::estimateCenPDF(nullptr), m_hostproxy );
+    CkCallback c2( CkIndex_Distributor::estimateCenPDF(nullptr), m_hostproxy );
 
     // Contribute serialized PDFs of partial sums to host via Charm++ reduction
-    contribute( stream.first, stream.second.get(), PDFMerger, cb );
+    contribute( stream.first, stream.second.get(), PDFMerger, c2 );
 
     // Zero counters for next collection operation
-    m_ncpdf = 0;
     for (auto& p : m_cenupdf) p.zero();
     for (auto& p : m_cenbpdf) p.zero();
     for (auto& p : m_centpdf) p.zero();
+
+    m_ncen = 0;
   }
 }
 
