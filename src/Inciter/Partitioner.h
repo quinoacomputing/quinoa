@@ -74,6 +74,8 @@
 #include "DerivedData.h"
 #include "UnsMesh.h"
 
+#include "AMR/mesh_adapter.h"
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -870,68 +872,151 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       reorderowned_complete();
     }
 
-    //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
-    void refine() {
-      // Concatenate mesh connectivities of our chares
-      tk::destroy( m_tetinpoel );
-      std::size_t nn = 0;
-      for (const auto& c : m_chinpoel) nn += c.second.size();
-      m_tetinpoel.resize( nn );
-      nn = 0;
-      for (const auto& c : m_chinpoel)
-        for (auto i : c.second)
-          m_tetinpoel[ nn++ ] = i;
-      // Generate unique edges (nodes connected to nodes)
-      auto minmax = std::minmax_element( begin(m_tetinpoel), end(m_tetinpoel) );
-      std::array< std::size_t, 2 > ext{{ *minmax.first, *minmax.second }};
-      for (auto& i : m_tetinpoel) i -= ext[0];  // shift to zero-based node IDs
-      auto esup = tk::genEsup( m_tetinpoel, 4 );
-      for (auto& i : m_tetinpoel) i += ext[0];  // shift back node IDs
-      auto nnode = ext[1] - ext[0] + 1;
-      std::unordered_map< std::size_t, std::unordered_set< std::size_t > > star;
-      for (std::size_t j=0; j<nnode; ++j)
-        for (std::size_t i=esup.second[j]+1; i<=esup.second[j+1]; ++i )
-          for (std::size_t n=0; n<4; ++n) {
-            auto p = ext[0] + j;
-            auto q = m_tetinpoel[ esup.first[i] * 4 + n ];
-            if (p < q) star[p].insert( q );
-            if (p > q) star[q].insert( p );
-          }
-      tk::destroy( m_tetinpoel );
-      // Starting node ID (on all PEs) while assigning new edge-nodes
-      nnode = tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io,
-                                        tag::input >() ).readHeader();
-      // Add new edge-nodes
-      tk::UnsMesh::EdgeNodes edgenodes;
-      for (const auto& s : star)
-        for (auto q : s.second)
-          edgenodes[ {{ s.first, q }} ] = nnode++;
-      // Generate maps associating new node IDs (as in producing
-      // contiguous-row-id linear system contributions)to edges (a pair of old
-      // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
-      // by chares. Note that the new edge-node IDs assigned here will be
-      // overwritten with globally unique node IDs after reordering.
-      for (const auto& conn : m_chinpoel) {
-        auto& en = m_chedgenodes[ conn.first ];
-        for (std::size_t e=0; e<conn.second.size()/4; ++e) {
-          const auto A = conn.second[e*4+0];
-          const auto B = conn.second[e*4+1];
-          const auto C = conn.second[e*4+2];
-          const auto D = conn.second[e*4+3];
-          const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
-          const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
-          const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
-          const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
-          const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
-          const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
-          en[ {{A,B}} ] = AB;
-          en[ {{A,C}} ] = AC;
-          en[ {{A,D}} ] = AD;
-          en[ {{B,C}} ] = BC;
-          en[ {{B,D}} ] = BD;
-          en[ {{C,D}} ] = CD;
+    void generate_compact_inpoel()
+    {
+        // Concatenate mesh connectivities of our chares
+        tk::destroy(m_tetinpoel);
+
+        std::size_t nn = 0;
+
+        // M_chinpoel contains an array of size chars.
+        // Each slot in the array contains "connectivity"
+        // This is a vector of size_t. This is tets?
+
+        // This loop counts up the total number of elements in all lsots of
+        // m_chinpoel
+        for (const auto &c : m_chinpoel)
+        {
+            nn += c.second.size();
         }
-      }
+
+        // Resize global array to avoid resize later
+        m_tetinpoel.resize(nn);
+
+        // Flatten out m_chinpoel into m_tetinpoel
+        size_t n = 0;
+        for (const auto &c : m_chinpoel) {
+            for (auto i : c.second) {
+                m_tetinpoel[n++] = i;
+            }
+        }
+
+    }
+
+    //! Uniformly refine our mesh replacing each tetrahedron with 8 new ones
+    void refine()
+    {
+
+        generate_compact_inpoel();
+
+        // Create AMR object
+        AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
+
+        // Generate unique edges (nodes connected to nodes)?
+
+        // shift to zero-based node IDs
+        // Find min/max to shift
+        auto minmax = std::minmax_element(begin(m_tetinpoel), end(m_tetinpoel));
+
+        std::array<std::size_t, 2> ext{{*minmax.first, *minmax.second}};
+        auto nnode = ext[1] - ext[0] + 1;
+
+        mesh_adapter->init(m_tetinpoel, nnode);
+
+        // Do uniform refinement
+        mesh_adapter->uniform_refinement();
+
+        // TODO: Do we need to replicate the shift?
+
+        /*
+        // Perform shift
+        for (auto &i : m_tetinpoel) {
+        i -= ext[0];
+        }
+
+        // TODO: Is there a reason we want to not enforce 0 based no ids
+        // always? (i.e not put them back?)
+
+        // Generate elements surrounding points..? If we have tets, why do we
+        // need to do this? Can't we just generate edges?
+        auto esup = tk::genEsup(m_tetinpoel, 4);
+
+        for (auto &i : m_tetinpoel) i += ext[0];  // shift back node IDs
+
+        std::unordered_map<std::size_t, std::unordered_set<std::size_t> > star;
+
+        for (std::size_t j = 0; j < nnode; ++j) {
+        for (std::size_t i = esup.second[j] + 1; i <= esup.second[j + 1]; ++i) {
+        for (std::size_t n = 0; n < 4; ++n) {
+        auto p = ext[0] + j;
+        auto q = m_tetinpoel[esup.first[i] * 4 + n];
+        if (p < q) star[p].insert(q);
+        if (p > q) star[q].insert(p);
+        }
+        }
+        }
+
+        // Starting node ID (on all PEs) while assigning new edge-nodes
+        nnode = tk::ExodusIIMeshReader(g_inputdeck.get<tag::cmd, tag::io,
+        tag::input>()).readHeader();
+
+        // Add new edge-nodes
+        tk::UnsMesh::EdgeNodes edgenodes;
+        for (const auto &s : star) {
+        for (auto q : s.second) {
+        edgenodes[ {{ s.first, q }} ] = nnode++;
+        }
+        }
+        */
+
+        tk::destroy(m_tetinpoel);
+
+        // Generate maps associating new node IDs (as in producing
+        // contiguous-row-id linear system contributions)to edges (a pair of old
+        // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
+        // by chares. Note that the new edge-node IDs assigned here will be
+        // overwritten with globally unique node IDs after reordering.
+        for (const auto& conn : m_chinpoel) {
+            auto& en = m_chedgenodes[ conn.first ];
+            for (std::size_t e=0; e<conn.second.size()/4; ++e) {
+                const auto A = conn.second[e*4+0];
+                const auto B = conn.second[e*4+1];
+                const auto C = conn.second[e*4+2];
+                const auto D = conn.second[e*4+3];
+                // Look up the added node IDs based on old ids {A,B}
+                // (vector)
+
+                /*
+                   const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
+                   const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
+                   const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
+                   const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
+                   const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
+                   const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
+                   */
+
+                // TODO: We should likely check the return values here
+                const int AB = mesh_adapter->node_connectivity.find(A, B);
+                const int AC = mesh_adapter->node_connectivity.find(A, C);
+                const int AD = mesh_adapter->node_connectivity.find(A, D);
+                const int BC = mesh_adapter->node_connectivity.find(B, C);
+                const int BD = mesh_adapter->node_connectivity.find(B, D);
+                const int CD = mesh_adapter->node_connectivity.find(C, D);
+
+                en[ {{A,B}} ] = static_cast<size_t>(AB);
+                en[ {{A,C}} ] = static_cast<size_t>(AC);
+                en[ {{A,D}} ] = static_cast<size_t>(AD);
+                en[ {{B,C}} ] = static_cast<size_t>(BC);
+                en[ {{B,D}} ] = static_cast<size_t>(BD);
+                en[ {{C,D}} ] = static_cast<size_t>(CD);
+            }
+        }
+
+        generate_compact_inpoel();
+
+        delete mesh_adapter;
+
+        // TODO: This only needs to have set en? Which is m_chedgenodes.
     }
 
     //! Compute final result of reordering
