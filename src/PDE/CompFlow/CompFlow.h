@@ -150,7 +150,7 @@ class CompFlow {
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              tk::Fields& U,
+              const tk::Fields& U,
               tk::Fields& Ue,
               tk::Fields& R ) const
     {

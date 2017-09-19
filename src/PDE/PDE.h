@@ -93,7 +93,7 @@ class PDE {
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              tk::Fields& U,
+              const tk::Fields& U,
               tk::Fields& Ue,
               tk::Fields& R ) const
     { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
@@ -170,7 +170,7 @@ class PDE {
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        tk::Fields&,
+                        const tk::Fields&,
                         tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
@@ -218,7 +218,7 @@ class PDE {
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                tk::Fields& U,
+                const tk::Fields& U,
                 tk::Fields& Ue,
                 tk::Fields& R ) const override
       { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
