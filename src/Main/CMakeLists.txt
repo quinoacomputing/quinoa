@@ -64,8 +64,8 @@ config_executable(${INCITER_EXECUTABLE})
 target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       InciterControl
-                      LoadBalance
                       Inciter
+                      LoadBalance
                       LinSys
                       Base
                       IO
