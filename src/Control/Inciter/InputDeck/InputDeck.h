@@ -104,7 +104,6 @@ class InputDeck :
                                        kw::pde_alpha,
                                        kw::pde_beta,
                                        kw::pde_p0,
-                                       kw::laplace,
                                        kw::ctau,
                                        kw::cfl,
                                        kw::mj,

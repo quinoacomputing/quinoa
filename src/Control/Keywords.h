@@ -3092,21 +3092,6 @@ struct advdiff_info {
 };
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
-struct laplace_info {
-  using code = Code< L >;
-  static std::string name() { return "Laplace"; }
-  static std::string shortDescription() { return
-    "Specify the Laplace physics configuration for a PDE "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Laplace physics configuration for a
-    PDE. Example: "poisson physics laplace end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
-
 struct physics_info {
   using code = Code< h >;
   static std::string name() { return "physics configuration"; }
@@ -3122,7 +3107,7 @@ struct physics_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + advection::string() + "\' | \'"
-                  + laplace::string() + "\' | \'"
+                  + advdiff::string() + "\' | \'"
                   + compflow_navierstokes::string() + "\' | \'"
                   + compflow_euler::string() + '\'';
     }
