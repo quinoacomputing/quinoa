@@ -19,14 +19,13 @@
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
 
-#include "Transport.h"
-
-#include "TransportPhysics.h"
-#include "TransportProblem.h"
+#include "Transport/Transport.h"
+#include "Transport/Physics.h"
+#include "Transport/Problem.h"
 
 #include "CompFlow/CompFlow.h"
 #include "CompFlow/Physics.h"
-#include "CompFlow/Problems.h"
+#include "CompFlow/Problem.h"
 
 using inciter::PDEStack;
 

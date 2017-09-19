@@ -2,9 +2,9 @@
 /*!
   \file      src/PDE/Transport.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Transport equation
-  \details   This file implements the time integration of a transport equation
-     of set of scalars.
+  \brief     Governing equations describing transport of scalars
+  \details   This file implements the physics operators governing transported
+     scalars.
 */
 // *****************************************************************************
 #ifndef Transport_h
@@ -17,12 +17,9 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include "TransportPhysics.h"
-#include "TransportProblem.h"
-#include "Vector.h"
-#include "DerivedData.h"
-#include "Exception.h"
 #include "Macro.h"
+#include "Exception.h"
+#include "Vector.h"
 
 namespace inciter {
 

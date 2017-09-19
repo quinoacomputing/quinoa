@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Problems.h
+  \file      src/PDE/CompFlow/Problem.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible

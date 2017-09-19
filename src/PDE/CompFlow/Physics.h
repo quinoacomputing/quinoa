@@ -31,8 +31,8 @@
       step size based on the heat diffusion term.
 */
 // *****************************************************************************
-#ifndef CompFlowPhysicsh
-#define CompFlowPhysicsh
+#ifndef CompFlowPhysics_h
+#define CompFlowPhysics_h
 
 #include <boost/mpl/vector.hpp>
 
