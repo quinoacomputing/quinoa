@@ -225,7 +225,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wshadow")
   add_compiler_flag("-Wstack-protector")
   add_compiler_flag("-Wstrict-aliasing=2")
-  add_compiler_flag("-Wswitch-default")
   add_compiler_flag("-Wunreachable-code")
   add_compiler_flag("-Wunused")
   add_compiler_flag("-Wunused-parameter")
