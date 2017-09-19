@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/LinSys/ZoltanInterOp.h
+  \file      src/LoadBalance/ZoltanInterOp.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh

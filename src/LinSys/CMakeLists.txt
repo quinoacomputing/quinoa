@@ -6,9 +6,7 @@ project(LinSys CXX)
 include(charm)
 
 add_library(LinSys
-            LinSysMerger.C
-            ZoltanInterOp.C
-)
+            LinSysMerger.C)
 
 addCharmModule( "linsysmerger" "LinSys" )
 
