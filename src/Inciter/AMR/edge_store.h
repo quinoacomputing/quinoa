@@ -21,12 +21,12 @@ namespace AMR {
              * @param A First end node
              * @param B Second end node
              * @param AB Intermediate node
-             * @param lock_case Lock case for the new edges
+             * @param lockcase Lock case for the new edges
              */
-            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lock_case)
+            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lockcase)
             {
-                generate(A, AB, lock_case);
-                generate(B, AB, lock_case);
+                generate(A, AB, lockcase);
+                generate(B, AB, lockcase);
 
                 //children.insert( std::pair<edge_t, size_t>(edge_t(A,B), AB));
                 // Generate pertinent keys
@@ -42,16 +42,16 @@ namespace AMR {
              *
              * @param A First node
              * @param B Second node
-             * @param lock_case Lock case for new edge
+             * @param lockcase Lock case for new edge
              */
-            void generate(size_t A, size_t B, Edge_Lock_Case lock_case)
+            void generate(size_t A, size_t B, Edge_Lock_Case lockcase)
             {
                 Assert(A != B, "Trying to add edge between duplicate IDs");
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
                 Edge_Refinement edgeAB = Edge_Refinement(A, B, 0.00, false,
-                        false, false, lock_case);
+                        false, false, lockcase);
                 // Add edge to store
                 add(keyAB, edgeAB);
             }

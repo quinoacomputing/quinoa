@@ -36,25 +36,25 @@ namespace AMR {
             void set_z(coord_type* z_in) { m_z = z_in; }
 
             /**
-             * @brief Function to add z coordinate data
+             * @brief Function to add x coordinate data
              *
-             * @param x Data to add
+             * @param xc Data to add
              */
-            void add_x(real_t x) { m_x->push_back(x); }
+            void add_x(real_t xc) { m_x->push_back(xc); }
+
+            /**
+             * @brief Function to add y coordinate data
+             *
+             * @param yc Data to add
+             */
+            void add_y(real_t yc) { m_y->push_back(yc); }
 
             /**
              * @brief Function to add z coordinate data
              *
-             * @param y Data to add
+             * @param zc data to add
              */
-            void add_y(real_t y) { m_y->push_back(y); }
-
-            /**
-             * @brief Function to add z coordinate data
-             *
-             * @param z data to add
-             */
-            void add_z(real_t z) { m_z->push_back(z); }
+            void add_z(real_t zc) { m_z->push_back(zc); }
             real_t x(size_t id)
             {
                 return (*m_x)[id];
@@ -76,35 +76,35 @@ namespace AMR {
             // TODO: Document this
             void print()
             {
-								for (size_t i = 0; i < size(); i++)
-								{
+                for (size_t i = 0; i < size(); i++)
+                {
                     std::cout << "Node " << i << " has coords :" <<
-												x(i) << ", " <<
-												y(i) << ", " <<
-												z(i) << ", " <<
-												std::endl;
-								}
-						}
+                        x(i) << ", " <<
+                        y(i) << ", " <<
+                        z(i) << ", " <<
+                        std::endl;
+               }
+            }
 
 
             /**
              * @brief Function to add a new node
              *
-             * @param x x val of node
-             * @param y y val of node
-             * @param z z val of node
+             * @param xc x val of node
+             * @param yc y val of node
+             * @param zc z val of node
              *
              * @return id of node added
              */
-            size_t add(real_t x, real_t y, real_t z) {
+            size_t add(real_t xc, real_t yc, real_t zc) {
 
-                // Need to: Add to {x,y,z} Add any connectivity?
+                // Need to: Add to {xc,yc,zc} Add any connectivity?
 
                 // Check if the node already exists
-                int already_exists = check_node_exists(x,y,z);
+                int already_exists = check_node_exists(xc,yc,zc);
 
                 if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(x,y,z);
+                    size_t return_node_id = add_coordinates(xc,yc,zc);
                     (*m_graphsize)++; // TODO: how best to deal with this?
                     return return_node_id;
                 }
@@ -129,37 +129,37 @@ namespace AMR {
             /**
              * @brief Function to add a new point/coordinates
              *
-             * @param x x val
-             * @param y y val
-             * @param z z val
+             * @param xc x val
+             * @param yc y val
+             * @param zc z val
              *
              * @return id of coordinate added
              */
-            size_t add_coordinates(real_t x, real_t y, real_t z) {
-                add_x(x);
-                add_y(y);
-                add_z(z);
+            size_t add_coordinates(real_t xc, real_t yc, real_t zc) {
+                add_x(xc);
+                add_y(yc);
+                add_z(zc);
                 return size()-1; // -1 because of the 0 index
             }
 
             /**
              * @brief Function to add a new node
              *
-             * @param x x val of node
-             * @param y y val of node
-             * @param z z val of node
+             * @param xc x val of node
+             * @param yc y val of node
+             * @param zc z val of node
              *
              * @return id of node added
              */
-            size_t add_node(real_t x, real_t y, real_t z) {
+            size_t add_node(real_t xc, real_t yc, real_t zc) {
 
-                // Need to: Add to {x,y,z} Add any connectivity?
+                // Need to: Add to {xc,y,z} Add any connectivity?
 
                 // Check if the node already exists
-                int already_exists = check_node_exists(x,y,z);
+                int already_exists = check_node_exists(xc,yc,zc);
 
                 if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(x,y,z);
+                    size_t return_node_id = add_coordinates(xc,yc,zc);
                     (*m_graphsize)++; // TODO: how to deal with this?
                     return return_node_id;
                 }
