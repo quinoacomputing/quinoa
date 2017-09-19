@@ -1,15 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlowProblem/TaylorGreen.h
+  \file      src/PDE/CompFlow/Problem/VorticalFlow.h
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Problem configurations for the compressible flow equations
-  \details   This file defines policy classes for the compressible flow
-    equations, defined in PDE/CompFlow.h. See PDE/CompFlow.h for general
-    requirements on flow equations problem policy classes.
+  \brief     Problem configuration for the compressible flow equations
+  \details   This file defines a Problem policy class for the compressible flow
+    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problems.h
+    for general requirements on Problem policy classes for CompFlow.
 */
 // *****************************************************************************
-#ifndef CompFlowProblemTaylorGreen_h
-#define CompFlowProblemTaylorGreen_h
+#ifndef CompFlowProblemVorticalFlow_h
+#define CompFlowProblemVorticalFlow_h
 
 #include <string>
 #include <unordered_set>
@@ -21,47 +21,45 @@
 
 namespace inciter {
 
-//! CompFlow system of PDEs problem: Taylor-Green
-//! \see G.I. Taylor, A.E. Green, "Mechanism of the Production of Small Eddies
-//!   from Large Ones", Proc. R. Soc. Lond. A 1937 158 499-521; DOI:
-//!   10.1098/rspa.1937.0036. Published 3 February 1937
-//! \see Waltz, et. al, "Verification of a three-dimensional unstructured finite
-//!   element method using analytic and manufactured solutions", Computers and
-//!   Fluids, 2013, Vol.81, pp.57-67.
-class CompFlowProblemTaylorGreen {
+//! CompFlow system of PDEs problem: vortical flow
+//! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
+//!   equations with relevance to Inertial Confinement Fusion", Journal of
+//!   Computational Physics 267 (2014) 196-209.
+class CompFlowProblemVorticalFlow {
 
   private:
-    //! Evaluate analytical solution at (x,y,0) for all components
+    //! Evaluate analytical solution at (x,y,z) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
-    //! \return Values of all components evaluated at (x,y,0)
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \return Values of all components evaluated at (x,y,z)
     static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e, tk::real x, tk::real y ) {
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+    solution( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z ) {
+      using tag::param; using tag::compflow;
+      // manufactured solution parameters
+      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
+      const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ e ];
       // ratio of specific heats
-      const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
-      // density
-      const tk::real r = 1.0;
-      // pressure
-      const tk::real p = 10.0 + r/4.0*(cos(2.0*M_PI*x) + cos(2.0*M_PI*y));
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
       // velocity
-      const tk::real u =  sin(M_PI*x) * cos(M_PI*y);
-      const tk::real v = -cos(M_PI*x) * sin(M_PI*y);
-      const tk::real w = 0.0;
+      const tk::real ru = a*x - b*y;
+      const tk::real rv = b*x + a*y;
+      const tk::real rw = -2.0*a*z;
       // total specific energy
-      const tk::real rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
-      return {{ r, r*u, r*v, r*w, rE }};
+      const tk::real rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+      return {{ 1.0, ru, rv, rw, rE }};
     }
 
   public:
 
     //! Set initial conditions
     //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in,out] unk Array of unknowns
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     static void init( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -71,11 +69,13 @@ class CompFlowProblemTaylorGreen {
                       tk::ctr::ncomp_type offset,
                       tk::real )
     {
+      using tag::param;  using tag::compflow;
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
+      const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( e, x[i], y[i] );
+        const auto s = solution( e, x[i], y[i], z[i] );
         unk(i,0,offset) = s[0]; // rho
         unk(i,1,offset) = s[1]; // rho * u
         unk(i,2,offset) = s[2]; // rho * v
@@ -84,18 +84,32 @@ class CompFlowProblemTaylorGreen {
       }
     }
 
-    //! Compute and return source term for Rayleigh-Taylor manufactured solution
+    //! Compute and return source term for vortical flow manufactured solution
+    //! \param[in] e Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
     //! \return Array of reals containing the source for all components
     static std::array< tk::real, 5 >
-    src( tk::ctr::ncomp_type, tk::real x, tk::real y, tk::real, tk::real ) {
-      using tag::param; using tag::compflow; using std::sin; using std::cos;
+    src( tk::ctr::ncomp_type e, tk::real x, tk::real y, tk::real z, tk::real ) {
+      using tag::param; using tag::compflow;
+      // manufactured solution parameters
+      const auto& a = g_inputdeck.get< param, compflow, tag::alpha >()[ e ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ e ];
       // ratio of specific heats
-      std::array< tk::real, 5 > r{{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-      // only energy source
-      r[4] = 3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
-                            cos(3.0*M_PI*y)*cos(M_PI*x) );
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ e ];
+      // evaluate solution at x,y,z
+      auto s = solution( e, x, y, z );
+      std::array< tk::real, 5 > r;
+      // density source
+      r[0] = 0.0;
+      // momentum source
+      r[1] = a*s[1]/s[0] - b*s[2]/s[0];
+      r[2] = b*s[1]/s[0] + a*s[2]/s[0];
+      r[3] = 0.0;
+      // energy source
+      r[4] = (r[1]*s[1] + r[2]*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
       return r;
     }
 
@@ -135,9 +149,9 @@ class CompFlowProblemTaylorGreen {
         Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
         for (const auto& b : ubc[e])
           if (std::stoi(b) == side.first)
-          for (auto n : side.second)
-            bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
-                       {true,0.0} }};
+            for (auto n : side.second)
+              bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
+                         {true,0.0} }};
       }
       return bc;
     }
@@ -150,15 +164,12 @@ class CompFlowProblemTaylorGreen {
       n.push_back( "density_analytical" );
       n.push_back( "x-velocity_numerical" );
       n.push_back( "x-velocity_analytical" );
-      n.push_back( "err(u)" );
       n.push_back( "y-velocity_numerical" );
       n.push_back( "y-velocity_analytical" );
-      n.push_back( "err(v)" );
       n.push_back( "z-velocity_numerical" );
       n.push_back( "z-velocity_analytical" );
       n.push_back( "specific_total_energy_numerical" );
       n.push_back( "specific_total_energy_analytical" );
-      n.push_back( "err(E)" );
       n.push_back( "pressure_numerical" );
       n.push_back( "pressure_analytical" );
       return n;
@@ -169,8 +180,6 @@ class CompFlowProblemTaylorGreen {
     //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
-    //! \param[in] V Total mesh volume
-    //! \param[in] vol Nodal mesh volumes
     //! \param[in] coord Mesh node coordinates
     //! \param[in] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
@@ -178,11 +187,18 @@ class CompFlowProblemTaylorGreen {
     fieldOutput( tk::ctr::ncomp_type e,
                  tk::ctr::ncomp_type offset,
                  tk::real,
-                 tk::real V,
-                 const std::vector< tk::real >& vol,
+                 tk::real,
+                 const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  tk::Fields& U )
     {
+      // manufactured solution parameters
+      const auto& a =
+        g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[e];
+      const auto& b =
+        g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[e];
+      const auto& p0 =
+        g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[e];
       // ratio of specific heats
       tk::real g =
         g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[e];
@@ -197,6 +213,7 @@ class CompFlowProblemTaylorGreen {
       // mesh node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
+      const auto& z = coord[2];
 
       out.push_back( r );
       out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
@@ -205,64 +222,39 @@ class CompFlowProblemTaylorGreen {
       std::transform( r.begin(), r.end(), u.begin(), u.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( u );
-      std::vector< tk::real > ua = ru;
-      for (std::size_t i=0; i<ua.size(); ++i)
-        ua[i] = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
-      out.push_back( ua );
-
-      // error in x-velocity
-      auto err = u;
-      for (std::size_t i=0; i<u.size(); ++i)
-         err[i] = std::pow( ua[i] - u[i], 2.0 ) * vol[i] / V;
-       out.push_back( err );
+      for (std::size_t i=0; i<u.size(); ++i) u[i] = a*x[i] - b*y[i];
+      out.push_back( u );
 
       std::vector< tk::real > v = rv;
-      std::vector< tk::real > va = rv;
       std::transform( r.begin(), r.end(), v.begin(), v.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( v );
-      for (std::size_t i=0; i<va.size(); ++i)
-        va[i] = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
-      out.push_back( va );
-
-      // error in v-velocity
-      for (std::size_t i=0; i<v.size(); ++i)
-        err[i] = std::pow( va[i] - v[i], 2.0 ) * vol[i] / V;
-      out.push_back( err );
+      for (std::size_t i=0; i<v.size(); ++i) v[i] = b*x[i] + a*y[i];
+      out.push_back( v );
 
       std::vector< tk::real > w = rw;
-      std::vector< tk::real > wa = rw;
       std::transform( r.begin(), r.end(), w.begin(), w.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( w );
-      for (std::size_t i=0; i<wa.size(); ++i)
-        wa[i] = 0.0;
-      out.push_back( wa );
+      for (std::size_t i=0; i<w.size(); ++i) w[i] = -2.0*a*z[i];
+      out.push_back( w );
 
       std::vector< tk::real > E = re;
-      std::vector< tk::real > Ea = re;
-      std::vector< tk::real > Pa( r.size(), 0.0 );
       std::transform( r.begin(), r.end(), E.begin(), E.begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
-      for (std::size_t i=0; i<Ea.size(); ++i) {
-        Pa[i] = 10.0 +
-          r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
-        Ea[i] = Pa[i]/(g-1.0)/r[i] +
-                0.5*(ua[i]*ua[i] + va[i]*va[i] + wa[i]*wa[i])/r[i];
-      }
-      out.push_back( Ea );
-
-      // error in total specific energy
-      for (std::size_t i=0; i<v.size(); ++i)
-        err[i] = std::pow( Ea[i] - E[i], 2.0 ) * vol[i] / V;
-      out.push_back( err );
+      for (std::size_t i=0; i<E.size(); ++i)
+        E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
+               (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
+      out.push_back( E );
 
       std::vector< tk::real > P( r.size(), 0.0 );
       for (std::size_t i=0; i<P.size(); ++i)
-        P[i] = (g-1.0)*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0/r[i]);
+        P[i] = (g-1.0)*(re[i] - r[i]*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( P );
-      out.push_back( Pa );
+      for (std::size_t i=0; i<P.size(); ++i)
+        P[i] = p0 - 2.0*a*a*z[i]*z[i];
+      out.push_back( P );
 
       return out;
    }
@@ -273,9 +265,9 @@ class CompFlowProblemTaylorGreen {
     { return { "r", "ru", "rv", "rw", "re" }; }
 
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::TAYLOR_GREEN; }
+    { return ctr::ProblemType::VORTICAL_FLOW; }
 };
 
 } // inciter::
 
-#endif // CompFlowProblemTaylorGreen_h
+#endif // CompFlowProblemVorticalFlow_h

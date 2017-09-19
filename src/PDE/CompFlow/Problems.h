@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlowProblem.h
+  \file      src/PDE/CompFlow/Problems.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Problem configurations for the compressible flow equations
-  \details   This file includes policy classes for the compressible flow
-    equations, defined in PDE/CompFlow.h.
+  \brief     All problem configurations for the compressible flow equations
+  \details   This file collects all Problem policy classes for the compressible
+    flow equations, defined in PDE/CompFlow/CompFlow.h.
 
-    General requirements on flow equations problem policy classes:
+    General requirements on CompFlow Problem policy classes:
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -47,15 +47,15 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include "CompFlowProblem/UserDefined.h"
-#include "CompFlowProblem/VorticalFlow.h"
-#include "CompFlowProblem/NLEnergyGrowth.h"
-#include "CompFlowProblem/RayleighTaylor.h"
-#include "CompFlowProblem/TaylorGreen.h"
+#include "Problem/UserDefined.h"
+#include "Problem/VorticalFlow.h"
+#include "Problem/NLEnergyGrowth.h"
+#include "Problem/RayleighTaylor.h"
+#include "Problem/TaylorGreen.h"
 
 namespace inciter {
 
-//! List of all CompFlow problem policies (defined in the includes above)
+//! List of all CompFlow Problem policies (defined in the includes above)
 using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined
                                            , CompFlowProblemVorticalFlow
                                            , CompFlowProblemNLEnergyGrowth

@@ -1,10 +1,10 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow.h
+  \file      src/PDE/CompFlow/CompFlow.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
-  \details   This file implements the time integration of the equations
-     governing compressible fluid flow.
+  \details   This file implements the physics operators governing compressible
+    fluid flow.
 */
 // *****************************************************************************
 #ifndef CompFlow_h
@@ -16,9 +16,8 @@
 #include <unordered_map>
 
 #include "Macro.h"
-#include "Keywords.h"
-#include "CompFlowPhysics.h"
-#include "CompFlowProblem.h"
+#include "Exception.h"
+#include "Vector.h"
 
 namespace inciter {
 
@@ -27,8 +26,8 @@ extern ctr::InputDeck g_inputdeck;
 //! \brief CompFlow used polymorphically with tk::PDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/CompFlowPhysics.h
-//!   - Problem - problem configuration, see PDE/CompFlowProblem.h
+//!   - Physics - physics configuration, see PDE/CompFlow/Physics.h
+//!   - Problem - problem configuration, see PDE/CompFlow/Problems.h
 //! \note The default physics is Euler, set in inciter::deck::check_compflow()
 template< class Physics, class Problem >
 class CompFlow {
@@ -360,10 +359,9 @@ class CompFlow {
         // compute element dt based on the viscous force
         auto viscous_dt = Physics::viscous_dt( L, u );
         // compute element dt based on thermal diffusion
-        auto heat_diffusion_dt = Physics::heat_diffusion_dt( L, u );
+        auto conduct_dt = Physics::conduct_dt( L, u );
         // compute minimum element dt
-        auto elemdt = std::min( euler_dt,
-                        std::min( viscous_dt, heat_diffusion_dt ) );
+        auto elemdt = std::min( euler_dt, std::min( viscous_dt, conduct_dt ) );
         // find minimum dt across all elements
         if (elemdt < mindt) mindt = elemdt;
       }

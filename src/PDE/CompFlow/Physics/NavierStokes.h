@@ -1,33 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlowPhysics.h
+  \file      src/PDE/CompFlow/Physics/NavierStokes.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Physics configurations for the compressible flow equations
-  \details   This file defines policy classes for the compressible flow
-    equations, defined in PDE/CompFlow.h.
-
-    General requirements on flow equations problem policy classes:
-
-    - Must define the static function _type()_, returning the enum value of the
-      policy option. Example:
-      \code{.cpp}
-        static ctr::PhysicsType type() noexcept {
-          return ctr::PhysicsType::NAVIERSTOKES;
-        }
-      \endcode
-      which returns the enum value of the option from the underlying option
-      class, collecting all possible options for coefficients policies.
+  \brief     Physics configuration for the Navier-Stples equation
+  \details   This file defines a Physics policy class for the compressible flow
+     equations, defined in PDE/CompFlow/CompFlow.h. The class defined here is
+     used to configure the behavior of CompFlow. See PDE/CompFlow/Physics.h
+     for general requirements on Physics policy classes for CompFlow.
 */
 // *****************************************************************************
-#ifndef CompFlowPhysics_h
-#define CompFlowPhysics_h
+#ifndef CompFlowPhysicsNavierStokes_h
+#define CompFlowPhysicsNavierStokes_h
 
-#include <vector>
 #include <array>
-#include <numeric>
 #include <limits>
-
-#include <boost/mpl/vector.hpp>
 
 #include "Types.h"
 #include "Inciter/Options/Physics.h"
@@ -35,50 +21,6 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-
-//! CompFlow system of PDEs problem: Euler (inviscid flow)
-//! \details This class is a no-op, consistent with no additional physics needed
-//!   to make the basic implementation in CompFlow the Euler equations governing
-//!   compressible flow.
-class CompFlowPhysicsEuler {
-
-  public:
-    //! Add viscous stress contribution to momentum and energy rhs (no-op)
-    static void
-    viscousRhs( tk::real,
-                tk::real,
-                const std::array< std::size_t, 4 >&,
-                const std::array< std::array< tk::real, 3 >, 4 >&,
-                const std::array< std::array< tk::real, 4 >, 5 >&,
-                const std::array< const tk::real*, 5 >&,
-                tk::Fields& ) {}
-
-    //! Compute the minimum time step size based on the viscous force
-    //! \return A large time step size, i.e., ignore
-    static tk::real
-    viscous_dt( tk::real, const std::array< std::array< tk::real, 4 >, 5 >& )
-    { return std::numeric_limits< tk::real >::max(); }
-
-    //! Add heat conduction contribution to energy rhs (no-op)
-    static void
-    conductRhs( tk::real,
-                tk::real,
-                const std::array< std::size_t, 4 >&,
-                const std::array< std::array< tk::real, 3 >, 4 >&,
-                const std::array< std::array< tk::real, 4 >, 5 >&,
-                const std::array< const tk::real*, 5 >&,
-                tk::Fields& ) {}
-
-    //! Compute the minimum time step size based on thermal diffusion
-    //! \return A large time step size, i.e., ignore
-    static tk::real
-    heat_diffusion_dt( tk::real,
-                       const std::array< std::array< tk::real, 4 >, 5 >& )
-    { return std::numeric_limits< tk::real >::max(); }
-
-    static ctr::PhysicsType type() noexcept
-    { return ctr::PhysicsType::EULER; }
-};
 
 //! CompFlow system of PDEs problem: Navier-Stokes (viscous flow)
 //! \details This class adds the viscous force contributions to the momentum and
@@ -226,8 +168,8 @@ class CompFlowPhysicsNavierStokes {
     //! \param[in] u Solution at element nodes at recent time step
     //! \return Minimum time step size based on thermal diffusion
     static tk::real
-    heat_diffusion_dt( tk::real L,
-                       const std::array< std::array< tk::real, 4 >, 5 >& u )
+    conduct_dt( tk::real L,
+                const std::array< std::array< tk::real, 4 >, 5 >& u )
     {
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
@@ -251,10 +193,7 @@ class CompFlowPhysicsNavierStokes {
     { return ctr::PhysicsType::NAVIERSTOKES; }
 };
 
-//! List of all CompFlow problem policies
-using CompFlowPhysics = boost::mpl::vector< CompFlowPhysicsEuler
-                                          , CompFlowPhysicsNavierStokes >;
 
 } // inciter::
 
-#endif // CompFlowPhysics_h
+#endif // CompFlowPhysicsNavierStokes_h
