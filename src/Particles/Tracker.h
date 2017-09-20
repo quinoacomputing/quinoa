@@ -126,7 +126,6 @@ class Tracker {
     //!   via the arrayProxy
     //! \param[in] chid Charm++ array index (thisIndex of the holder class)
     //! \param[in] array Charm++ array object pointer of the holder class
-    //! \param[in] stage Time step stage
     //! \param[in] dt Time step size
     template< class HostProxy, class ChareArrayProxy, class ChareArray >
     void track( HostProxy& hostproxy,
@@ -136,14 +135,8 @@ class Tracker {
                 const std::unordered_map<int, std::vector< std::size_t >> msum,
                 int chid,
                 ChareArray* const array,
-                uint8_t stage,
                 tk::real dt )
     {
-      // Only advance particles in the final time step stage
-      if (stage < 1) {
-        signal2host_parcomcomplete( hostproxy, array );
-        return;
-      }
       // Lambda to attempt to find and advance particle i in element e. Returns
       // true if the particle was found (and advanced), false if was not found.
       std::array< tk::real, 4 > N;

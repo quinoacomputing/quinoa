@@ -176,6 +176,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unused-command-line-argument")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags

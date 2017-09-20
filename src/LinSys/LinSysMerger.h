@@ -183,6 +183,7 @@
 #include <algorithm>
 #include <iosfwd>
 #include <cstddef>
+#include <limits>
 
 #include "Types.h"
 #include "Exception.h"
@@ -388,6 +389,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       hyprerow_complete();
       asmsol_complete();
       asmlhs_complete();
+      lhsbc_complete();
       signal2host_computedt( m_host );
     }
 
@@ -900,6 +902,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //!   this PE.
     std::unordered_map< std::size_t,
                         std::vector< std::pair< bool, tk::real > > > m_bc;
+    //! \brief Matrix non-zero coefficients for Dirichlet boundary conditions
+    std::unordered_map< std::size_t,
+                        std::map< std::size_t, std::vector<tk::real> > > m_bca;
 
     //! Check if we have done our part in storing and exporting global row ids
     //! \details This does not mean the global row ids on our PE is complete
@@ -980,6 +985,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       // entry in the BC data structure to see if we need to set BC for the
       // given component and set the off-diagonals to zero while put 1.0 into
       // the diagonal.
+
+//std::cout << "l: ";
+// std::map< std::size_t, std::vector< std::pair< bool, tk::real > > >
+//   s( begin(m_bc), end(m_bc) );
+// for (const auto& n : s) std::cout << n.first << ' '; std::cout << '\n';
+
       for (const auto& n : m_bc) {
         if (n.first >= m_lower && n.first < m_upper) {
           auto& r = tk::ref_find( m_lhs, n.first );
@@ -991,7 +1002,69 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
             }
         }
       }
-      lhsbc_complete();
+
+//       for (const auto& n : m_bc) {
+//         auto r = m_lhs.find( n.first );
+//         if (r != end(m_lhs)) {
+//           m_bca[ n.first ] = r->second;
+//           for (const auto& c : r->second)
+//             if (c.first != n.first ) {
+//               auto a = m_lhs.find( c.first );
+//               if (a != end(m_lhs)) {
+//                 auto& b = tk::ref_find( a->second, n.first );
+//                 for (std::size_t i=0; i<m_ncomp; ++i)
+//                   if (n.second[i].first)
+//                     b[i] = 0.0;
+//               }
+//             }
+//         }
+//       }
+
+//       // test BCs in matrix (only in serial)
+//       auto eps = std::numeric_limits< tk::real >::epsilon();
+//       for (const auto& n : m_bc) {
+//         auto r = m_lhs.find( n.first );
+//         if (r != end(m_lhs)) {
+//           std::size_t ver_row = 0, ver_col = 0;
+//           for (const auto& c : r->second)
+//             if (c.first != n.first) {
+//               // test row
+//               for (std::size_t i=0; i<m_ncomp; ++i)
+//                 if (std::abs(c.second[i]) > eps)      // test zero
+//                   std::cout << 'r';
+//                 else                                  // count nonzeros
+//                   ++ver_row;
+//               // test column
+//               auto b = m_lhs.find( c.first );
+//               if (b !=end(m_lhs)) {
+//                 auto d = b->second.find( n.first );
+//                 if (d != end(b->second)) {
+//                   for (std::size_t i=0; i<m_ncomp; ++i)
+//                     if (std::abs(d->second[i]) > eps)  // test zero
+//                       std::cout << 'c';
+//                     else
+//                       ++ver_col;                       // count nonzeros
+//                 }
+//               }
+//             }
+//           // test number of nonzeros in BC row
+//           if (ver_row != (r->second.size()-1)*m_ncomp) std::cout << 'R';
+//           // test number of nonzeros in BC column
+//           if (ver_col != (r->second.size()-1)*m_ncomp) std::cout << 'C';
+//         }
+//       }
+// 
+//       // test symmetry of matrix (only in serial)
+//       for (const auto& r : m_lhs)
+//         for (const auto& c : r.second) {
+//           const auto& v = tk::cref_find( m_lhs, c.first );
+//           const auto& w = tk::cref_find( v, r.first );
+//           for (std::size_t i=0; i<m_ncomp; ++i)
+//             if (std::abs(c.second[i]-w[i]) > 1.0e-14)
+//               std::cout << 's';
+//         }
+
+      lhsbc_complete(); lhsbc_complete();
     }
 
     //! Set Dirichlet boundary conditions on the right-hand side vector
@@ -1001,6 +1074,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+
+//       for (const auto& n : m_bc) {
+//          auto r = m_bca.find( n.first );
+//          if (r != end(m_bca))
+//            for (const auto& c : r->second)
+//              if (c.first != n.first ) {
+//                auto a = m_rhs.find( c.first );
+//                if (a != end(m_rhs))
+//                  for (std::size_t i=0; i<m_ncomp; ++i)
+//                    if (n.second[i].first)
+//                      a->second[i] -= n.second[i].second * c.second[i];
+//              }
+//        }
+
       for (const auto& n : m_bc) {
         if (n.first >= m_lower && n.first < m_upper) {
           auto& r = tk::ref_find( m_rhs, n.first );
@@ -1009,6 +1096,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
               r[i] = n.second[i].second;
         }
       }
+
       rhsbc_complete(); rhsbc_complete();
     }
 

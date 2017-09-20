@@ -69,7 +69,6 @@ Transporter::Transporter() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_stage( 0 ),
   m_linsysmerger(),
   m_carrier(),
   m_particlewriter(),
@@ -576,7 +575,7 @@ Transporter::initcomplete()
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step stage ...",
+    m_progStep.start( "Time step ...",
       {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
 }
 
@@ -645,16 +644,14 @@ Transporter::dt( tk::real* d, std::size_t n )
 
   Assert( n == 1, "Size of min(dt) must be 1" );
 
-  if (m_stage == 1 || m_it == 0) {
-    // Use newly computed time step size
-    m_dt = *d;
-    // Truncate the size of last time step
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    if (m_t+m_dt > term) m_dt = term - m_t;;
-  }
+  // Use newly computed time step size
+  m_dt = *d;
+  // Truncate the size of last time step
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  if (m_t+m_dt > term) m_dt = term - m_t;;
 
-  // Advance to next time step stage
-  m_carrier.advance( m_stage, m_dt, m_it, m_t );
+  // Advance to next time step
+  m_carrier.advance( m_it, m_t, m_dt );
 }
 
 void
@@ -708,62 +705,54 @@ Transporter::evaluateTime()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_progStep.end();
 
-  if (m_stage < 1) {    // if at half-stage, simply go to next one
+  // Increase number of iterations taken
+  ++m_it;
+  // Advance physical time to include time step just finished
+  m_t += m_dt;
 
-    ++m_stage;
+  bool diag = false;
 
-  } else {      // if final stage of time step, finish time step just taken
+  // Append diagnostics file at selected times
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >(),
+                       std::ios_base::app );
+    if (dw.diag( m_it, m_t, m_diag )) diag = true;
+    m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
+  }
 
-    m_stage = 0;
-    // Increase number of iterations taken
-    ++m_it;
-    // Advance physical time to include time step just finished
-    m_t += m_dt;
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
-    bool diag = false;
+    // estimate time elapsed and time for accomplishment
+    tk::Timer::Watch ete, eta;
+    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
+    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
+                 g_inputdeck.get< tag::discr, tag::t0 >(),
+               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
+               g_inputdeck.get< tag::discr, tag::nstep >(),
+               m_it,
+               ete,
+               eta );
 
-    // Append diagnostics file at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-      tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                         g_inputdeck.get< tag::flformat, tag::diag >(),
-                         g_inputdeck.get< tag::prec, tag::diag >(),
-                         std::ios_base::app );
-      if (dw.diag( m_it, m_t, m_diag )) diag = true;
-      m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
-    }
+    // Output one-liner
+    m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
+            << std::scientific << std::setprecision(6)
+            << std::setw(12) << m_t << "  "
+            << m_dt << "  "
+            << std::setfill('0')
+            << std::setw(3) << ete.hrs.count() << ":"
+            << std::setw(2) << ete.min.count() << ":"
+            << std::setw(2) << ete.sec.count() << "  "
+            << std::setw(3) << eta.hrs.count() << ":"
+            << std::setw(2) << eta.min.count() << ":"
+            << std::setw(2) << eta.sec.count() << "  ";
 
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+    // Augment one-liner with output indicators
+    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+    if (diag) m_print << 'D';
 
-      // estimate time elapsed and time for accomplishment
-      tk::Timer::Watch ete, eta;
-      const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-      timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                   g_inputdeck.get< tag::discr, tag::t0 >(),
-                 m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-                 g_inputdeck.get< tag::discr, tag::nstep >(),
-                 m_it,
-                 ete,
-                 eta );
-
-      // Output one-liner
-      m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-              << std::scientific << std::setprecision(6)
-              << std::setw(12) << m_t << "  "
-              << m_dt << "  "
-              << std::setfill('0')
-              << std::setw(3) << ete.hrs.count() << ":"
-              << std::setw(2) << ete.min.count() << ":"
-              << std::setw(2) << ete.sec.count() << "  "
-              << std::setw(3) << eta.hrs.count() << ":"
-              << std::setw(2) << eta.min.count() << ":"
-              << std::setw(2) << eta.sec.count() << "  ";
-
-      // Augment one-liner with output indicators
-      if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-      if (diag) m_print << 'D';
-
-      m_print << std::endl;
-    }
+    m_print << std::endl;
   }
 
   wait4eval();
@@ -774,7 +763,7 @@ Transporter::evaluateTime()
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
     m_linsysmerger.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step stage ..." );
+      m_progStep.start( "Time step ..." );
   } else
     finish();
 }
