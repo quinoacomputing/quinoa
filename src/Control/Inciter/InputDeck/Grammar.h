@@ -39,7 +39,6 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   static tk::tuple::tagged_tuple< tag::transport, std::size_t,
-                                  tag::poisson,   std::size_t,
                                   tag::compflow,  std::size_t > neq;
 
 } // ::deck

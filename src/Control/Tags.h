@@ -143,7 +143,6 @@ struct psup {};
 struct gid {};
 struct transport {};
 struct advection {};
-struct poisson {};
 struct compflow {};
 struct problem {};
 struct physics {};

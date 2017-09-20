@@ -75,8 +75,6 @@ class InputDeck :
                                        kw::pde_diffusivity,
                                        kw::pde_lambda,
                                        kw::pde_u0,
-                                       kw::poisson,
-                                       kw::dir_neu,
                                        kw::bc_dirichlet,
                                        kw::sideset,
                                        kw::compflow,

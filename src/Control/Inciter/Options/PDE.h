@@ -39,7 +39,6 @@ class PDE : public tk::Toggle< PDEType > {
   public:
     // List valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::transport
-                                       , kw::poisson
                                        , kw::compflow
                                        >;
 
