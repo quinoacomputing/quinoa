@@ -3617,7 +3617,7 @@ struct partitioning_info {
     R"(This keyword is used to introduce a partitioning ... end block, used to
     specify the configuration for mesh partitioning. Keywords allowed
     in a partitioning ... end block: )" + std::string("\'")
-    + rcb::string() + "\'.";
+    + algorithm::string() + "\'.";
   }
 };
 using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
@@ -3661,7 +3661,61 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
+struct cg_info {
+  static std::string name() { return "continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return
+    "Select continuous Galerkin discretization"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin (CG) spatial
+    discretiztaion used in inciter. Selecting CG also selects the Lax-Wendroff
+    scheme for time discretization. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using cg = keyword< cg_info, TAOCPP_PEGTL_STRING("cg") >;
 
+struct dg_info {
+  static std::string name() { return "discontinuous Galerkin + Runge-Kutta"; }
+  static std::string shortDescription() { return
+    "Select discontinuous Galerkin discretization"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the discontinuous Galerkin (DG) spatial
+    discretiztaion used in inciter. Selecting DG also selects the Runge-Kutta
+    scheme for time discretization. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
+
+struct scheme_info {
+  static std::string name() { return "scheme"; }
+  static std::string shortDescription() { return
+    "Select discretization scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a spatial discretization scheme,
+    necessarily connected to the teporal discretization scheme. See
+    Control/Inciter/Options/Scheme.h for valid options.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + cg::string() + "\' | \'"
+                  + dg::string() + '\'';
+    }
+  };
+};
+using scheme = keyword< scheme_info, TAOCPP_PEGTL_STRING("scheme") >;
+
+struct discretization_info {
+  static std::string name() { return "discretization"; }
+  static std::string shortDescription() { return
+    "Start configuration block for discretization scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a discretization ... end block, used to
+    configure the spatial discretization. Keywords allowed in a discretization
+    ... end block: )" + std::string("\'")
+    + scheme::string() + "\'.";
+  }
+};
+using discretization =
+  keyword< discretization_info, TAOCPP_PEGTL_STRING("discretization") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

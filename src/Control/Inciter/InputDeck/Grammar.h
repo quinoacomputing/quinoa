@@ -32,7 +32,8 @@ namespace deck {
                             ctr::InputDeck::keywords1,
                             ctr::InputDeck::keywords2,
                             ctr::InputDeck::keywords3,
-                            ctr::InputDeck::keywords4 >;
+                            ctr::InputDeck::keywords4,
+                            ctr::InputDeck::keywords5 >;
 
   // Inciter's InputDeck state
 
@@ -441,6 +442,19 @@ namespace deck {
                                tag::partitioner >,
                              pegtl::alpha > > > {};
 
+  //! discretization ... end block
+  struct discretization :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::discretization >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::process<
+                             use< kw::scheme >,
+                             tk::grm::store_inciter_option<
+                               inciter::ctr::Scheme,
+                               tag::selected,
+                               tag::scheme >,
+                             pegtl::alpha > > > {};
+
   //! equation types
   struct equations :
          pegtl::sor< transport, compflow > {};
@@ -483,6 +497,7 @@ namespace deck {
                            equations,
                            amr,
                            partitioning,
+                           discretization,
                            plotvar,
                            tk::grm::diagnostics<
                              use,

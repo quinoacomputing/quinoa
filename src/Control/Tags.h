@@ -66,6 +66,7 @@ struct hydroproductions {};
 struct diffeq {};
 struct pde {};
 struct partitioner {};
+struct scheme {};
 struct initialamr {};
 struct initpolicy {};
 struct coeffpolicy {};
