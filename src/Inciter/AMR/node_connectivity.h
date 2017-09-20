@@ -138,13 +138,11 @@ namespace AMR {
                     // check if already exists
                     int f = find(A,B);
                     if (f != -1) {
-                        std::cout << "Connect already exits " << A << " " << B << std::endl;
                         return static_cast<size_t>(f);
                     }
                 }
 
                 nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
-                std::cout << " add " << size()-1 << " a = " <<  A << " b = " << B << std::endl;
                 return size()-1;
             }
 

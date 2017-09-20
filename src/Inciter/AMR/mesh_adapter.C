@@ -225,9 +225,6 @@ namespace AMR {
             }
         }
 
-        std::cout << "Print Tets" << std::endl;
-        print_tets();
-
     }
 
     // TODO: Document
