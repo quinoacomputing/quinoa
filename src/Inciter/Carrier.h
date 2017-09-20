@@ -76,7 +76,6 @@
 #ifndef Carrier_h
 #define Carrier_h
 
-#include <array>
 #include <cstddef>
 #include <iosfwd>
 #include <utility>
@@ -206,8 +205,8 @@ class Carrier : public CBase_Carrier {
     void updateLowSol( const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& sol );
 
-    //! Advance equations to next stage in multi-stage time stepping
-    void advance( uint8_t stage, tk::real newdt, uint64_t it, tk::real t );
+    //! Advance equations to next time step
+    void advance( uint64_t it, tk::real t, tk::real newdt );
 
     //! Compute time step size
     void dt();
@@ -266,7 +265,6 @@ class Carrier : public CBase_Carrier {
       p | m_itf;
       p | m_t;
       p | m_dt;
-      p | m_stage;
       p | m_nvol;
       p | m_nhsol;
       p | m_nlsol;
@@ -292,10 +290,9 @@ class Carrier : public CBase_Carrier {
       p | m_psup;
       p | m_u;
       p | m_ul;
-      p | m_uf;
-      p | m_ulf;
       p | m_du;
       p | m_dul;
+      p | m_ue;
       p | m_p;
       p | m_q;
       p | m_a;
@@ -331,8 +328,6 @@ class Carrier : public CBase_Carrier {
     tk::real m_dt;
     //! Physical time at which the last field output was written
     tk::real m_lastFieldWriteTime;
-    //! Stage in multi-stage time stepping
-    uint8_t m_stage;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
@@ -392,8 +387,18 @@ class Carrier : public CBase_Carrier {
     FluxCorrector m_fluxcorrector;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
-    //! Unknown/solution vectors: global mesh point row ids and values
-    tk::Fields m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_p, m_q, m_a;
+    //! Unknown/solution vector at mesh nodes
+    tk::Fields m_u;
+    //! Unknown/solution vector at mesh nodes (low orderd)
+    tk::Fields m_ul;
+    //! Unknown/solution vector increment (high order)
+    tk::Fields m_du;
+    //! Unknown/solution vector increment (low order)
+    tk::Fields m_dul;
+    //! Unknown/solution vector at mesh cells
+    tk::Fields m_ue;
+    //! Flux-corrected transport data structures
+    tk::Fields m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
@@ -447,7 +452,7 @@ class Carrier : public CBase_Carrier {
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
-    void rhs( const tk::Fields& sol );
+    void rhs();
 
     //! Output chare element blocks to output file
     void writeMesh();
@@ -490,11 +495,11 @@ class Carrier : public CBase_Carrier {
     void writeParticles();
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec( const tk::Fields& Un );
+    void aec();
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
-    void alw( const tk::Fields& Un, const tk::Fields& Ul );
+    void alw();
 
     //! \brief Verify antidiffusive element contributions up to linear solver
     //!   convergence

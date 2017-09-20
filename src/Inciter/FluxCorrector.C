@@ -44,7 +44,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   across all PEs, not just the ones need to be set on this PE.
 //! \param[in] gid Local to global node ID mapping
 //! \param[in] dUh Increment of the high order solution
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \param[in,out] P The sums of positive (negative) AECs to nodes
 //! \details The antidiffusive element contributions (AEC) are defined as the
 //!   difference between the high and low order solution, where the high order
@@ -57,7 +57,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!    * M_Le is the element's lumped mass matrix,
 //!    * ctau is the mass diffusion coefficient on the rhs of the low order
 //!      solution, see also FluxCorrector::diff(),
-//!    * Un is the solution at the previous time step stage,
+//!    * Un is the solution at the previous time step
 //!    * dUh is the increment of the high order solution, and
 //!    * M_L^{-1} is the inverse of the assembled lumped mass matrix, i.e., the
 //!      volume associated to a mesh node by summing the quarter of the element
@@ -283,7 +283,7 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //  Compute mass diffusion contribution to the RHS of the low order system
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
@@ -341,7 +341,7 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \param[in] Ul Low order solution
 //! \param[in,out] Q Maximum and mimimum unknowns of elements surrounding nodes
 // *****************************************************************************

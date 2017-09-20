@@ -3062,27 +3062,6 @@ struct compflow_euler_info {
 };
 using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
-struct artvisc_info {
-  static std::string name() { return "artificial viscosity"; }
-  static std::string shortDescription() { return
-    R"(Configure artificial viscosity)"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify amount of artifical viscosity to
-    stabilize time integration of the the Euler equations. The same scalar value
-    is applied to all equations of the system. Note that while this keyword is
-    supposed to be (and recognized) in a 'compflow ... end' block, it is only
-    used for the Euler equations.)"; }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-    static std::string choices() {
-      return "real larger than or equal to " + std::to_string(lower);
-    }
-  };
-};
-using artvisc = keyword< artvisc_info, TAOCPP_PEGTL_STRING("artvisc") >;
-
 struct advection_info {
   using code = Code< A >;
   static std::string name() { return "Advection"; }
@@ -3113,21 +3092,6 @@ struct advdiff_info {
 };
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
-struct laplace_info {
-  using code = Code< L >;
-  static std::string name() { return "Laplace"; }
-  static std::string shortDescription() { return
-    "Specify the Laplace physics configuration for a PDE "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Laplace physics configuration for a
-    PDE. Example: "poisson physics laplace end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
-
 struct physics_info {
   using code = Code< h >;
   static std::string name() { return "physics configuration"; }
@@ -3143,7 +3107,7 @@ struct physics_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + advection::string() + "\' | \'"
-                  + laplace::string() + "\' | \'"
+                  + advdiff::string() + "\' | \'"
                   + compflow_navierstokes::string() + "\' | \'"
                   + compflow_euler::string() + '\'';
     }
