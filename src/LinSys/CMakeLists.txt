@@ -6,9 +6,9 @@ project(LinSys CXX)
 include(charm)
 
 add_library(LinSys
-            LinSysMerger.C)
+            Solver.C)
 
-addCharmModule( "linsysmerger" "LinSys" )
+addCharmModule( "solver" "LinSys" )
 
 # Add extra dependency of LinSys on charm modules implementing advanced array
 # element placement using maps. This is required to pull in the dependencies of
@@ -18,17 +18,15 @@ addCharmModule( "linsysmerger" "LinSys" )
 add_dependencies( "LinSys" "linearmapCharmModule" )
 add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 
-# Add extra dependency of LinSysMerger charm module on Transporter charm module.
-# This is required to make sure transporter.decl.h is generated before
-# linsysmerger.ci is processed, as LinSysMerger is specialized on
-# CProxy_Transporter.
-add_dependencies( "linsysmergerCharmModule" "transporterCharmModule" )
+# Add extra dependency of Solver charm module on Transporter charm module.  This
+# is required to make sure transporter.decl.h is generated before solver.ci is
+# processed, as Solver is specialized on CProxy_Transporter.
+add_dependencies( "solverCharmModule" "transporterCharmModule" )
 
-# Add extra dependency of LinSysMerger charm module on Carrier charm module.
-# This is required to make sure carrier.decl.h is generated before
-# linsysmerger.ci is processed, as LinSysMerger is specialized on
-# CProxy_Carrier.
-add_dependencies( "linsysmergerCharmModule" "carrierCharmModule" )
+# Add extra dependency of Solver charm module on Carrier charm module.  This is
+# required to make sure carrier.decl.h is generated before solver.ci is
+# processed, as Solver is specialized on CProxy_Carrier.
+add_dependencies( "solverCharmModule" "carrierCharmModule" )
 
 set_target_properties(LinSys PROPERTIES LIBRARY_OUTPUT_NAME quinoa_linsys)
 

@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/LinSys/linsysmerger.ci
+  \file      src/LinSys/solver.ci
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system. See more
-     in src/LinSys/LinSysMerger.h.
+     in src/LinSys/Solver.h.
 */
 // *****************************************************************************
 
-module linsysmerger {
+module solver {
 
   include "unordered_map";
 
@@ -19,24 +19,24 @@ module linsysmerger {
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system merger for Transporter & Carrier
-    chare LinSysMerger< inciter::CProxy_Transporter,
-                        inciter::CProxy_Carrier,
-                        inciter::AuxSolverLumpMassDiff >;
+    // Will specialize linear system solver for Transporter & Carrier
+    chare Solver< inciter::CProxy_Transporter,
+                  inciter::CProxy_Carrier,
+                  inciter::AuxSolverLumpMassDiff >;
 
-    // LinSysMerger is templated so that the same code (parameterized by the
-    // type given by the template arguments, HostProxy and WorkerProxy) can be
+    // Solver is templated so that the same code (parameterized by the type
+    // given by the template arguments, HostProxy and WorkerProxy) can be
     // generated for different types of proxies. Howver, all possible
     // specializations must be listed above to ensure that Charm++ generates
     // correct code.
     template< class HostProxy, class WorkerProxy, class AuxSolver >
-    group LinSysMerger {
-      entry LinSysMerger( const HostProxy& host,
-                          const WorkerProxy& worker,
-                          const std::map< int,
-                            std::vector< std::size_t > >& side,
-                          std::size_t ncomp,
-                          bool feedback );
+    group Solver {
+      entry Solver( const HostProxy& host,
+                    const WorkerProxy& worker,
+                    const std::map< int,
+                      std::vector< std::size_t > >& side,
+                    std::size_t ncomp,
+                    bool feedback );
       initnode void registerBCMerger();
       entry void bounds( int pe, std::size_t lower, std::size_t upper );
       entry void enable_wait4rhs();
@@ -75,9 +75,9 @@ module linsysmerger {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      // See src/LinSys/LinSysMerger.h.
+      // See src/LinSys/Solver.h.
       //
-      // Interpretation of the DAG in src/LinSys/LinSysMerger.h
+      // Interpretation of the DAG in src/LinSys/Solver.h
       // ------------------------------------------------------
       // Control flow is from left to right and top to bottom.
       //
@@ -85,26 +85,26 @@ module linsysmerger {
       // global row IDs that each work on. This is labelled ChRow. The worker
       // chares also contribute, in parallel, their portion of the global node
       // ID lists at which they can set boundary conditions, labelled, ChBCs.
-      // Once both row IDs and BC node lists are received on LinSysMerger, we do
+      // Once both row IDs and BC node lists are received on Solver, we do
       // a global reduction to Transport::rowcomplete() which spawns two
-      // broadcasts: (1) LinSysMerger::rowsreceived(), and (2) worker::init().
+      // broadcasts: (1) Solver::rowsreceived(), and (2) worker::init().
       //
-      // LinSysMerger::rowsreceived() path: The member function
-      // tk::LinSysMerger::rowsreceived(), labeled Ver in the task-graph,
+      // Solver::rowsreceived() path: The member function
+      // tk::Solver::rowsreceived(), labeled Ver in the task-graph,
       // triggers and performs the following tasks: (1) Verification that
       // ensures consistent global row IDs. This step only happens in DEBUG
       // mode: VerRow is simply an Assert in member function rowsreceived). (2)
-      // The second step in tk::LinSysMerger::rowsreceived() initiates is
+      // The second step in tk::Solver::rowsreceived() initiates is
       // building Hypre data from the global row indices received, labeled
       // HypreRow.
       //
       // Worker::init() path: Once the row IDs are contributed,
       // tk::Transporter::rowcomplete(), not only spaws
-      // tk::LinSysMerger::rowsreceived() but also issues a broadcast to the
+      // tk::Solver::rowsreceived() but also issues a broadcast to the
       // worker chares to start initializing their system. This is started with
       // a call to the init() member function of the worker. The tasks done in
       // init() include setting initial and boundary conditions, sending
-      // unknown/solution vectors for assembly to LinSysMerger, start computing
+      // unknown/solution vectors for assembly to Solver, start computing
       // the minimum time step size, outputing initial field data to file, start
       // computing the left hand sides for both the primary and auxiliary linear
       // systems, and sending all this for linear system assembly. The
@@ -181,7 +181,7 @@ module linsysmerger {
       // also
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
       //
-      // As discussed in src/LinSys/LinSysMerger.h, the SDAG logic discussed
+      // As discussed in src/LinSys/Solver.h, the SDAG logic discussed
       // here is the same regardless whether an auxiliary linear solution is
       // performed.
 

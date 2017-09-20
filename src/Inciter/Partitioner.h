@@ -70,7 +70,7 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Options/PartitioningAlgorithm.h"
-#include "LinSysMerger.h"
+#include "Solver.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
 
@@ -91,11 +91,11 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
+template< class HostProxy, class WorkerProxy, class SolverProxy,
           class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
-                                              LinSysMergerProxy,
+                                              SolverProxy,
                                               ParticleWriterProxy > {
 
   #if defined(__clang__)
@@ -122,23 +122,23 @@ class Partitioner : public CBase_Partitioner< HostProxy,
   #endif
 
   private:
-    using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
+    using Group = CBase_Partitioner< HostProxy, WorkerProxy, SolverProxy,
                                      ParticleWriterProxy >;
 
   public:
     //! Constructor
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
-    //! \param[in] lsm Linear system merger proxy (required by the workers)
+    //! \param[in] lsm Linear system solver proxy (required by the workers)
     //! \param[in] pw Particle writer proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
-                 const LinSysMergerProxy& lsm,
+                 const SolverProxy& lsm,
                  const ParticleWriterProxy& pw ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
-      m_linsysmerger( lsm ),
+      m_solver( lsm ),
       m_particlewriter( pw ),
       m_npe( 0 ),
       m_reqNodes(),
@@ -494,8 +494,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     HostProxy m_host;
     //! Worker proxy
     WorkerProxy m_worker;
-    //! Linear system merger proxy
-    LinSysMergerProxy m_linsysmerger;
+    //! Linear system solver proxy
+    SolverProxy m_solver;
     //! Particle writer proxy
     ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
@@ -1186,9 +1186,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
       // The bounds are the dividers (global mesh point indices) at which the
       // linear system assembly is divided among PEs. However, Hypre and thus
-      // LinSysMerger expect exclusive upper indices, so we increase the last
-      // one by one here. Note that the cost calculation, Partitioner::cost()
-      // also expects exclusive upper indices.
+      // Solver expect exclusive upper indices, so we increase the last one by
+      // one here. Note that the cost calculation, Partitioner::cost() also
+      // expects exclusive upper indices.
       if (CkMyPe() == CkNumPes()-1) ++m_upper;
       // Tell the runtime system that the upper bound has been computed
       upper_complete();
@@ -1216,8 +1216,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       signal2host_avecost( m_host );
       // Create worker chare array elements
       createWorkers( chareDistribution() );
-      // Broadcast our bounds of global node IDs to all linear system mergers
-      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
+      // Broadcast our bounds of global node IDs to all linear system solvers
+      m_solver.bounds( CkMyPe(), m_lower, m_upper );
     }
 
     //! Create chare array elements on this PE
@@ -1235,7 +1235,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
         // Create worker array element
         m_worker[ cid ].insert( m_host,
-                                m_linsysmerger,
+                                m_solver,
                                 m_particlewriter,
                                 tk::cref_find( m_chinpoel, cid ),
                                 msum,
@@ -1296,14 +1296,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       * \brief These functions signal back to the host via a global reduction
       *   originating from each PE branch
       * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
-      *   by the template argument HostProxy. The signal functions are overloads
-      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
-      *   LinSysMerger template. They create Charm++ reduction targets via
-      *   creating a callback that invokes the typed reduction client, where
-      *   host is the proxy on which the reduction target method, given by the
-      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
-      *   upon completion of the reduction.
+      *   of Solver to the host, e.g., inciter::CProxy_Transporter, given by the
+      *   template argument HostProxy. The signal functions are overloads on the
+      *   specialization, e.g., inciter::CProxy_Transporter, of the Solver
+      *   template. They create Charm++ reduction targets via creating a
+      *   callback that invokes the typed reduction client, where host is the
+      *   proxy on which the reduction target method, given by the string
+      *   followed by "redn_wrapper_", e.g., rowcomplete(), is called upon
+      *   completion of the reduction.
       *
       *   Note that we do not use Charm++'s CkReductionTarget macro here,
       *   but instead explicitly generate the code that that macro would
@@ -1317,16 +1317,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       *   function of class 'me' and generates the call
       *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
       *   signal2* functions generate, we do the above macro's job for
-      *   LinSysMerger specialized by HostProxy, hard-coded here, as well its
+      *   Solver specialized by HostProxy, hard-coded here, as well its
       *   reduction target. This is required since
       *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
-      *      than type resolution and the string of the template argument would
-      *      be substituted instead of the type specialized (which is not what
-      *      we want here), and
+      *    than type resolution and the string of the template argument would be
+      *    substituted instead of the type specialized (which is not what we
+      *    want here), and
       *    * the template argument class, e.g, CProxy_Transporter, is in a
-      *      namespace different than that of LinSysMerger. When a new class is
-      *      used to specialize LinSysMerger, the compiler will alert that a new
-      *      overload needs to be defined.
+      *    namespace different than that of Solver. When a new class is used to
+      *    specialize Solver, the compiler will alert that a new overload needs
+      *    to be defined.
       *
       * \note This simplifies client-code, e.g., inciter::Transporter, which now
       *   requires no explicit book-keeping with counters, etc. Also a reduction

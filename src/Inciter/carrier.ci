@@ -10,7 +10,7 @@
 module carrier {
 
   extern module transporter;
-  extern module linsysmerger;
+  extern module solver;
   extern module particlewriter;
 
   include "Particles.h";
@@ -22,9 +22,9 @@ module carrier {
     array [1D] Carrier {
       entry
         Carrier( const CProxy_Transporter& transporter,
-                 const tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                CProxy_Carrier,
-                                                AuxSolverLumpMassDiff >& lsm,
+                 const tk::CProxy_Solver< CProxy_Transporter,
+                                          CProxy_Carrier,
+                                          AuxSolverLumpMassDiff >& solver,
                  const tk::CProxy_ParticleWriter< CProxy_Transporter >& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< int,

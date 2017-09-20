@@ -28,9 +28,9 @@
 template class inciter::Partitioner<
                  inciter::CProxy_Transporter,
                  inciter::CProxy_Carrier,
-                 tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                                          inciter::CProxy_Carrier,
-                                          inciter::AuxSolverLumpMassDiff >,
+                 tk::CProxy_Solver< inciter::CProxy_Transporter,
+                                    inciter::CProxy_Carrier,
+                                    inciter::AuxSolverLumpMassDiff >,
                  tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 #if defined(__clang__)

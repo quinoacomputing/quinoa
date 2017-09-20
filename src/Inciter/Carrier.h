@@ -113,9 +113,9 @@ class Carrier : public CBase_Carrier {
 
   private:
     using TransporterProxy = CProxy_Transporter;
-    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Carrier,
-                                                       AuxSolverLumpMassDiff >;
+    using SolverProxy = tk::CProxy_Solver< CProxy_Transporter,
+                                           CProxy_Carrier,
+                                           AuxSolverLumpMassDiff >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
@@ -146,7 +146,7 @@ class Carrier : public CBase_Carrier {
     //! Constructor
     explicit
       Carrier( const TransporterProxy& transporter,
-               const LinSysMergerProxy& lsm,
+               const SolverProxy& solver,
                const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
                const std::unordered_map< int,
@@ -275,7 +275,7 @@ class Carrier : public CBase_Carrier {
       p | m_ncarr;
       p | m_outFilename;
       p | m_transporter;
-      p | m_linsysmerger;
+      p | m_solver;
       p | m_particlewriter;
       p | m_fluxcorrector;
       p | m_filenodes;
@@ -352,8 +352,8 @@ class Carrier : public CBase_Carrier {
     std::string m_outFilename;
     //! Transporter proxy
     TransporterProxy m_transporter;
-    //! Linear system merger proxy
-    LinSysMergerProxy m_linsysmerger;
+    //! Linear system merger and solver proxy
+    SolverProxy m_solver;
     //! Particle writer proxy
     ParticleWriterProxy m_particlewriter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in

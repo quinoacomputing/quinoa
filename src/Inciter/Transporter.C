@@ -35,10 +35,10 @@
 #include "NoWarning/partitioner.decl.h"
 
 // Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier,
-                                        inciter::AuxSolverLumpMassDiff >;
+// instantiated in LinSys/Solver.C (only seems to be required on mac)
+extern template class tk::Solver< inciter::CProxy_Transporter,
+                                  inciter::CProxy_Carrier,
+                                  inciter::AuxSolverLumpMassDiff >;
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
@@ -46,9 +46,9 @@ extern template class
   inciter::Partitioner<
     inciter::CProxy_Transporter,
     inciter::CProxy_Carrier,
-    tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                             inciter::CProxy_Carrier,
-                             inciter::AuxSolverLumpMassDiff >,
+    tk::CProxy_Solver< inciter::CProxy_Transporter,
+                       inciter::CProxy_Carrier,
+                       inciter::AuxSolverLumpMassDiff >,
     tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 extern CProxy_Main mainProxy;
@@ -69,7 +69,7 @@ Transporter::Transporter() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_linsysmerger(),
+  m_solver(),
   m_carrier(),
   m_particlewriter(),
   m_partitioner(),
@@ -179,9 +179,9 @@ Transporter::Transporter() :
     m_carrier = CarrierProxy::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
-    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
-    // a serial read, then send the same copy to all PEs. Carriers then will
-    // query the side sets from their local LinSysMerger branch.
+    // Solver, er.readSideSets() reads all side sets from file, which is a
+    // serial read, then send the same copy to all PEs. Carriers then will query
+    // the side sets from their local Solver branch.
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
@@ -203,7 +203,7 @@ Transporter::Transporter() :
 
     // Create linear system merger chare group
     m_print.diag( "Creating linear system mergers" );
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
+    m_solver = SolverProxy::ckNew( thisProxy, m_carrier, ss,
                        g_inputdeck.get< tag::component >().nprop(),
                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
@@ -222,8 +222,9 @@ Transporter::Transporter() :
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
-                                             m_linsysmerger,
+    m_partitioner = PartitionerProxy::ckNew( thisProxy,
+                                             m_carrier,
+                                             m_solver,
                                              m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
@@ -561,7 +562,7 @@ Transporter::rowcomplete()
   m_progInit.start( "Setting and outputting ICs, computing initial dt, "
                     "computing LHS ...",
                     {{ CkNumPes(), m_nchare, m_nchare }} );
-  m_linsysmerger.rowsreceived();
+  m_solver.rowsreceived();
   m_carrier.init();
 }
 
@@ -762,7 +763,7 @@ Transporter::evaluateTime()
   // all linear system merger group elements to prepare for a new rhs),
   // otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
-    m_linsysmerger.enable_wait4rhs();
+    m_solver.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
       m_progStep.start( "Time step ..." );
   } else

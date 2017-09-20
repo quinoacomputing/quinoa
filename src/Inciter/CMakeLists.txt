@@ -32,10 +32,10 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 #add_dependencies( "transporterCharmModule" "linearmapCharmModule" )
 #add_dependencies( "transporterCharmModule" "unsmeshmapCharmModule" )
 
-# Add extra dependency of Inciter on LinSysMerger charm module. This is required
-# so that linsysmerger.decl.h and linsysmerger.def.h are generated before
-# Inciter including those.
-add_dependencies( "Inciter" "linsysmergerCharmModule" )
+# Add extra dependency of Inciter on Solver charm module. This is required so
+# that solver.decl.h and solver.def.h are generated before Inciter including
+# those.
+add_dependencies( "Inciter" "solverCharmModule" )
 
 # Add extra dependency of Inciter on ParticleWriter charm module. This is
 # required so that particlewriter.decl.h and particlewriter.def.h are generated
