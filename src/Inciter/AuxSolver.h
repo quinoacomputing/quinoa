@@ -2,8 +2,8 @@
 /*!
   \file      src/Inciter/AuxSolver.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Auxiliary solvers used in tk::LinSysMerger by inciter.
-  \details   This file defines policy classes for tk::LinSysMerger's auxiliary
+  \brief     Auxiliary solvers used in tk::Solver by inciter.
+  \details   This file defines policy classes for tk::Solver's auxiliary
     solver. They can be used as the AuxSolver template argument as long as the
     correct member functions are defined with their correct return types and
     arguments.
@@ -28,9 +28,9 @@ namespace inciter {
 //!   right hand side vector. Used in flux-corrected transport for transport
 //!   equations as the low order system. This is only the functionality that is
 //!   needed for the parallel merging of the linear system. Used by and
-//!   abstracted away from tk::LinSysMerger as its auxiliary solver, injected in
+//!   abstracted away from tk::Solver as its auxiliary solver, injected in
 //!   via the template argument AuxSolver.
-//! \see src/LinSys/LinSysMerger.h
+//! \see src/LinSys/Solver.h
 //! \note All member functions are static as they are called without an object.
 class AuxSolverLumpMassDiff {
 

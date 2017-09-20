@@ -1,13 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/linsysmerger.decl.h
+  \file      src/NoWarning/solver.decl.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include linsysmerger.decl.h with turning off specific compiler
-             warnings
+  \brief     Include solver.decl.h with turning off specific compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_linsysmerger_decl_h
-#define nowarning_linsysmerger_decl_h
+#ifndef nowarning_solver_decl_h
+#define nowarning_solver_decl_h
 
 #include "Macro.h"
 
@@ -23,7 +22,7 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "../LinSys/linsysmerger.decl.h"
+#include "../LinSys/solver.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -31,4 +30,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_linsysmerger_decl_h
+#endif // nowarning_solver_decl_h

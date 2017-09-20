@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/LinSys/LinSysMerger.h
+  \file      src/LinSys/Solver.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -19,7 +19,7 @@
     of member functions. For possible auxiliary solver classes, see, e.g.,
     src/Inciter/AuxSolver.h.
 
-    When LinSysMerger is configured to solve an auxiliary solution beside its
+    When Solver is configured to solve an auxiliary solution beside its
     primary solution, the class behind the AuxSolver template argument, must
     have static member functions only, which may provide the necessary
     functionality to collect, assemble, solve, and update an auxiliary linear
@@ -30,41 +30,41 @@
     enables configuring the auxiliary system to be, e.g., the low order solution
     as required by the flux-corrected transport algorithm used for transport
     equations in inciter. However, it also enables entirely removing the
-    auxiliary solution from LinSysMerger, via inciter::AuxSolverNull. Tthe
+    auxiliary solution from Solver, via inciter::AuxSolverNull. Tthe
     Charm++ SDAG logic does not change depending on whether an auxiliary
     solution is performed or not. The composition is done at compile time,
-    depending on how LinSysMerger is instantiated.
+    depending on how Solver is instantiated.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/LinSys/linsysmerger.ci. Note
+    discussed in the Charm++ interface file src/LinSys/solver.ci. Note
     that the SDAG logic is the same regardless whether an auxiliary solution is
     performed.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
     asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file linsysmerger.ci. On the
+    the algorithm is given in the Charm++ interface file solver.ci. On the
     DAG orange fills denote global synchronization points that contain or
     eventually lead to global reductions. Dashed lines are potential shortcuts
     that allow jumping over some of the task-graph under some circumstances or
     optional code paths (taken, e.g., only in DEBUG mode). See the detailed
     discussion in linsysmrger.ci.
     \dot
-    digraph "LinSysMerger SDAG" {
+    digraph "Solver SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       ChRow [ label="ChRow"
               tooltip="chares contribute their global row IDs"
-              URL="\ref tk::LinSysMerger::charerow"];
+              URL="\ref tk::Solver::charerow"];
       ChBC [ label="ChBC"
              tooltip="chares contribute their global node IDs at which
                       they can set boundary conditions"
-             URL="\ref tk::LinSysMerger::charebc"];
+             URL="\ref tk::Solver::charebc"];
       RowComplete   [ label="RowComplete" color="#e6851c" style="filled"
-              tooltip="all linear system merger branches have done heir part of
+              tooltip="all linear system solver branches have done heir part of
               storing and exporting global row ids"
               URL="\ref inciter::Transporter::rowcomplete"];
       Init [ label="Init"
@@ -76,69 +76,69 @@
       Ver  [ label="Ver"
               tooltip="start optional verifications, query BCs, and converting
                        row IDs to hypre format"
-              URL="\ref tk::LinSysMerger::rowsreceived"];
+              URL="\ref tk::Solver::rowsreceived"];
       LhsBC [ label="LhsBC"
               tooltip="set boundary conditions on the left-hand side matrix"
-              URL="\ref tk::LinSysMerger::lhsbc"];
+              URL="\ref tk::Solver::lhsbc"];
       RhsBC [ label="RhsBC"
               tooltip="set boundary conditions on the right-hand side vector"
-              URL="\ref tk::LinSysMerger::rhsbc"];
+              URL="\ref tk::Solver::rhsbc"];
       ChSol [ label="ChSol"
               tooltip="chares contribute their solution vector nonzeros"
-              URL="\ref tk::LinSysMerger::charesol"];
+              URL="\ref tk::Solver::charesol"];
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
-              URL="\ref tk::LinSysMerger::charelhs"];
+              URL="\ref tk::Solver::charelhs"];
       ChAuxLhs [ label="ChAuxLhs"
               tooltip="chares contribute their auxiliary left hand side matrix"
-              URL="\ref tk::LinSysMerger::chareaux"];
+              URL="\ref tk::Solver::chareaux"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
-              URL="\ref tk::LinSysMerger::charesol"];
+              URL="\ref tk::Solver::charesol"];
       ChAuxRhs [ label="ChAuxRhs"
               tooltip="chares contribute their contribution to the auxiliary
                        right hand side vector"
-              URL="\ref tk::LinSysMerger::chareauxrhs"];
+              URL="\ref tk::Solver::chareauxrhs"];
       HypreRow [ label="HypreRow"
               tooltip="convert global row ID vector to hypre format"
-              URL="\ref tk::LinSysMerger::hyprerow"];
+              URL="\ref tk::Solver::hyprerow"];
       HypreSol [ label="HypreSol"
               tooltip="convert solution vector to hypre format"
-              URL="\ref tk::LinSysMerger::hypresol"];
+              URL="\ref tk::Solver::hypresol"];
       HypreLhs [ label="HypreLhs"
               tooltip="convert left hand side matrix to hypre format"
-              URL="\ref tk::LinSysMerger::hyprelhs"];
+              URL="\ref tk::Solver::hyprelhs"];
       HypreRhs [ label="HypreRhs"
               tooltip="convert right hand side vector to hypre format"
-              URL="\ref tk::LinSysMerger::hyprerhs"];
+              URL="\ref tk::Solver::hyprerhs"];
       FillSol [ label="FillSol"
               tooltip="fill/set solution vector"
-              URL="\ref tk::LinSysMerger::sol"];
+              URL="\ref tk::Solver::sol"];
       FillLhs [ label="FillLhs"
               tooltip="fill/set left hand side matrix"
-              URL="\ref tk::LinSysMerger::lhs"];
+              URL="\ref tk::Solver::lhs"];
       FillRhs [ label="FillRhs"
               tooltip="fill/set right hand side vector"
-              URL="\ref tk::LinSysMerger::rhs"];
+              URL="\ref tk::Solver::rhs"];
       AsmSol [ label="AsmSol"
               tooltip="assemble solution vector"
-              URL="\ref tk::LinSysMerger::assemblesol"];
+              URL="\ref tk::Solver::assemblesol"];
       AsmLhs [ label="AsmLhs"
               tooltip="assemble left hand side matrix"
-              URL="\ref tk::LinSysMerger::assemblelhs"];
+              URL="\ref tk::Solver::assemblelhs"];
       AsmRhs [ label="AsmRhs"
               tooltip="assemble right hand side vector"
-              URL="\ref tk::LinSysMerger::assemblerhs"];
+              URL="\ref tk::Solver::assemblerhs"];
       Solve [ label="Solve" tooltip="solve linear system"
-              URL="\ref tk::LinSysMerger::solve"];
+              URL="\ref tk::Solver::solve"];
       AuxSolve [ label="AuxSolve" tooltip="solve auxiliary linear system"
-              URL="\ref tk::LinSysMerger::auxsolve"];
+              URL="\ref tk::Solver::auxsolve"];
       Upd [ label="Upd" tooltip="update solution"
                 color="#e6851c" style="filled"
-                URL="\ref tk::LinSysMerger::updateSol"];
+                URL="\ref tk::Solver::updateSol"];
       AuxUpd [ label="AuxUpd" tooltip="update auxiliary solution"
                color="#e6851c"style="filled"
-               URL="\ref tk::LinSysMerger::updateAuxSol"];
+               URL="\ref tk::Solver::updateAuxSol"];
       ChRow -> RowComplete [ style="solid" ];
       RowComplete -> Init [ style="solid" ];
       RowComplete -> Ver [ style="solid" ];
@@ -169,11 +169,11 @@
       AuxSolve -> AuxUpd [ style="solid" ];
     }
     \enddot
-    \include LinSys/linsysmerger.ci
+    \include LinSys/solver.ci
 */
 // *****************************************************************************
-#ifndef LinSysMerger_h
-#define LinSysMerger_h
+#ifndef Solver_h
+#define Solver_h
 
 #include <vector>
 #include <map>
@@ -198,7 +198,7 @@
 #include "DiagReducer.h"
 #include "AuxSolver.h"
 
-#include "NoWarning/linsysmerger.decl.h"
+#include "NoWarning/solver.decl.h"
 #include "NoWarning/transporter.decl.h"
 
 namespace tk {
@@ -212,17 +212,15 @@ extern CkReduction::reducerType DiagMerger;
   #pragma clang diagnostic ignored "-Wundefined-func-template"
 #endif
 
-//! Linear system merger Charm++ chare group class
-//! \details Instantiations of LinSysMerger comprise a processor aware Charm++
+//! Linear system merger and solver Charm++ chare group class
+//! \details Instantiations of Solver comprise a processor aware Charm++
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). The
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
-//!   linsysmerger.ci.
+//!   solver.ci.
 template< class HostProxy, class WorkerProxy, class AuxSolver  >
-class LinSysMerger : public CBase_LinSysMerger< HostProxy,
-                                                WorkerProxy,
-                                                AuxSolver > {
+class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -238,7 +236,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
   #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-  LinSysMerger_SDAG_CODE
+  Solver_SDAG_CODE
   #if defined(__clang__)
     #pragma clang diagnostic pop
   #elif defined(STRICT_GNUC)
@@ -248,8 +246,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
   #endif
 
   private:
-    using Group = CBase_LinSysMerger< HostProxy, WorkerProxy, AuxSolver >;
-    using GroupIdx = CkIndex_LinSysMerger< HostProxy, WorkerProxy, AuxSolver >;
+    using Group = CBase_Solver< HostProxy, WorkerProxy, AuxSolver >;
+    using GroupIdx = CkIndex_Solver< HostProxy, WorkerProxy, AuxSolver >;
 
   public:
     //! Constructor
@@ -258,11 +256,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     //! \param[in] s Mesh node IDs mapped to side set ids
     //! \param[in] n Total number of scalar components in the linear system
     //! \param[in] feedback Whether to send sub-task feedback to host    
-    LinSysMerger( const HostProxy& host,
-                  const WorkerProxy& worker,
-                  const std::map< int, std::vector< std::size_t > >& s,
-                  std::size_t n,
-                  bool feedback ) :
+    Solver( const HostProxy& host,
+            const WorkerProxy& worker,
+            const std::map< int, std::vector< std::size_t > >& s,
+            std::size_t n,
+            bool feedback ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
@@ -324,7 +322,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
     }
 
     //! \brief Configure Charm++ reduction types for concatenating BC nodelists
-    //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
+    //! \details Since this is a [nodeinit] routine, see solver.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
     //!   it is called without an object. See also: Section "Initializations at
@@ -1323,10 +1321,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       * \brief These functions signal back to the host via a global reduction
       *   originating from each PE branch
       * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
+      *   of Solver to the host, e.g., inciter::CProxy_Transporter, given
       *   by the template argument HostProxy. The signal functions are overloads
       *   on the specialization, e.g., inciter::CProxy_Transporter, of the
-      *   LinSysMerger template. They create Charm++ reduction targets via
+      *   Solver template. They create Charm++ reduction targets via
       *   creating a callback that invokes the typed reduction client, where
       *   host is the proxy on which the reduction target method, given by the
       *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
@@ -1344,15 +1342,15 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
       *   function of class 'me' and generates the call
       *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
       *   signal2* functions generate, we do the above macro's job for
-      *   LinSysMerger specialized by HostProxy, hard-coded here, as well its
+      *   Solver specialized by HostProxy, hard-coded here, as well its
       *   reduction target. This is required since
       *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
       *      than type resolution and the string of the template argument would
       *      be substituted instead of the type specialized (which is not what
       *      we want here), and
       *    * the template argument class, e.g, CProxy_Transporter, is in a
-      *      namespace different than that of LinSysMerger. When a new class is
-      *      used to specialize LinSysMerger, the compiler will alert that a new
+      *      namespace different than that of Solver. When a new class is
+      *      used to specialize Solver, the compiler will alert that a new
       *      overload needs to be defined.
       *
       * \note This simplifies client-code, e.g., inciter::Transporter, which now
@@ -1427,7 +1425,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
 #endif
 
 #define CK_TEMPLATES_ONLY
-#include "linsysmerger.def.h"
+#include "solver.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #if defined(__clang__)
@@ -1436,4 +1434,4 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy,
   #pragma GCC diagnostic pop
 #endif
 
-#endif // LinSysMerger_h
+#endif // Solver_h

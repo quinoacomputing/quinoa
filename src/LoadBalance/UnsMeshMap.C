@@ -96,7 +96,7 @@ UnsMeshMap::fixPEs()
 //  Check that all PEs create at least a single array element, fix if not
 //! \details This is required because if the array elements, placed using this
 //!   map object, send messages to some Charm++ chare group branches and the
-//!   group happens to use Charm++'s structured dagger, such as LinSysMerger,
+//!   group happens to use Charm++'s structured dagger, such as Solver,
 //!   memory problems will occur.
 // *****************************************************************************
 {
