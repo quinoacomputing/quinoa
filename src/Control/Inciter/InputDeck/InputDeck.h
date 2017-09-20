@@ -124,6 +124,10 @@ class InputDeck :
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;
+    using keywords5 = boost::mpl::set< kw::discretization,
+                                       kw::scheme,
+                                       kw::cg,
+                                       kw::dg >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -157,6 +161,7 @@ class InputDeck :
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
+      boost::mpl::for_each< keywords5 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */
