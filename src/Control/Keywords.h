@@ -2890,23 +2890,6 @@ struct shear_diff_info {
 };
 using shear_diff = keyword< shear_diff_info, TAOCPP_PEGTL_STRING("shear_diff") >;
 
-struct dir_neu_info {
-  using code = Code< D >;
-  static std::string name() { return "Dirichlet & Neumann"; }
-  static std::string shortDescription() { return
-    "Select the Poisson equation test problem with Dirichlet and Neumann BCs"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select a Poisson equation test problem.
-    Dirichlet and Neumann boundary conditions are simply hard-coded to set up
-    the test problem, suitable to exercise and test the finite element
-    discretization of the Laplace operator yielding both volume and boundary
-    integral terms in its weak form. Example: "problem dir_neu".)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using dir_neu = keyword< dir_neu_info, TAOCPP_PEGTL_STRING("dir_neu") >;
-
 struct slot_cyl_info {
   using code = Code< Z >;
   static std::string name() { return "Zalesak's slotted cylinder"; }
@@ -3021,7 +3004,6 @@ struct problem_info {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + "\' | \'"
-                  + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
@@ -3390,22 +3372,6 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
-struct poisson_info {
-  static std::string name() { return "Poisson"; }
-  static std::string shortDescription() { return
-    "Start configuration block for a Poisson equation"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce an poisson ... end block, used to
-    specify the configuration for a partial differential equation of
-    Poisson type. Keywords allowed in an poisson ... end block: )"
-    + std::string("\'")
-    + problem::string() + "\'. "
-    + R"(For an example poisson ... end block, see
-      doc/html/inicter_example_poisson.html.)";
-  }
-};
-using poisson = keyword< poisson_info, TAOCPP_PEGTL_STRING("poisson") >;
-
 struct sideset_info {
   static std::string name() { return "sideset"; }
   static std::string shortDescription() { return
@@ -3433,7 +3399,7 @@ struct bc_dirichlet_info {
     block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
-      doc/html/inicter_example_poisson.html.)";
+      doc/html/inicter_example_shear.html.)";
   }
 };
 using bc_dirichlet = keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
