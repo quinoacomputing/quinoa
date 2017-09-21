@@ -453,6 +453,10 @@ namespace deck {
                                inciter::ctr::Scheme,
                                tag::selected,
                                tag::scheme >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::fct >,
+                             tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha > > > {};
 
   //! equation types

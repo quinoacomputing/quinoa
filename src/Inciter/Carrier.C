@@ -1342,8 +1342,10 @@ Carrier::apply()
   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
-  m_u = m_ul + m_a;
-  //m_u = m_u + m_du; // no FCT
+  if (g_inputdeck.get< tag::discr, tag::fct >())
+    m_u = m_ul + m_a;
+  else
+    m_u = m_u + m_du;
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )

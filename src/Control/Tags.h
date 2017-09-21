@@ -76,6 +76,7 @@ struct term {};
 struct t0 {};
 struct dt {};
 struct cfl {};
+struct fct {};
 struct ctau {};
 struct npar {};
 struct part {};

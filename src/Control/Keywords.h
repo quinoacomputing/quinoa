@@ -3703,6 +3703,25 @@ struct scheme_info {
 };
 using scheme = keyword< scheme_info, TAOCPP_PEGTL_STRING("scheme") >;
 
+struct fct_info {
+  static std::string name() { return "Flux-corrected transport"; }
+  static std::string shortDescription() { return
+    "Turn flux-corrected transport on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
+    Note that FCT is only used in conjunction with continuous Galerkin finite
+    element discretization, configured by 'scheme cg' and it has no effect when
+    the discontinuous Galerkin (DG) scheme is used, configured by 'scheme
+    dg'. Also note that even if FCT is turnedd off, it is still performed, only
+    its result is not applied.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
+
 struct discretization_info {
   static std::string name() { return "discretization"; }
   static std::string shortDescription() { return
@@ -3711,6 +3730,7 @@ struct discretization_info {
     R"(This keyword is used to introduce a discretization ... end block, used to
     configure the spatial discretization. Keywords allowed in a discretization
     ... end block: )" + std::string("\'")
+    + fct::string() + "\' | \'"
     + scheme::string() + "\'.";
   }
 };

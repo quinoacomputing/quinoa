@@ -125,6 +125,7 @@ class InputDeck :
                                        kw::l2,
                                        kw::linf >;
     using keywords5 = boost::mpl::set< kw::discretization,
+                                       kw::fct,
                                        kw::scheme,
                                        kw::cg,
                                        kw::dg >;
@@ -144,6 +145,7 @@ class InputDeck :
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
+      set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::ctau >( 1.0 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );

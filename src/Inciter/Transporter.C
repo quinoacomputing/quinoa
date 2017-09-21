@@ -121,14 +121,21 @@ Transporter::Transporter() :
   // Print out info on settings of selected partial differential equations
   m_print.pdes( "Partial differential equations integrated", stack.info() );
 
-  // Print discretization parameters
-  m_print.section( "Discretization parameters" );
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG) {
+    m_print.item( "Flux-corrected transport (FCT)",
+                  g_inputdeck.get< tag::discr, tag::fct >() );
+    m_print.item( "FCT mass diffusion coeff",
+                  g_inputdeck.get< tag::discr, tag::ctau >() );
+  }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
@@ -139,9 +146,6 @@ Transporter::Transporter() :
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
-
-  m_print.item( "Mass diffusion coeff",
-                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
