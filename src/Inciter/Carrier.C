@@ -38,8 +38,7 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
 extern template class tk::Solver< inciter::CProxy_Transporter,
-                                  inciter::CProxy_Carrier,
-                                  inciter::AuxSolverLumpMassDiff >;
+                                  inciter::CProxy_Carrier >;
 
 namespace inciter {
 
@@ -599,7 +598,7 @@ Carrier::lhs()
   // Compute lumped mass lhs required for the low order solution
   auto lump = m_fluxcorrector.lump( m_coord, m_inpoel );
   // Send off lumped mass lhs for assembly
-  m_solver.ckLocalBranch()->chareauxlhs( thisIndex, m_gid, lump );
+  m_solver.ckLocalBranch()->charelowlhs( thisIndex, m_gid, lump );
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
@@ -646,7 +645,7 @@ Carrier::rhs()
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_u );
   // Send off mass diffusion rhs contribution for assembly
-  m_solver.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
+  m_solver.ckLocalBranch()->charelowrhs( thisIndex, m_gid, diff );
 
   // send progress report to host
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )

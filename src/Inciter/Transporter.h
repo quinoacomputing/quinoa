@@ -264,9 +264,7 @@ class Transporter : public CBase_Transporter {
     void verified() { m_print.diag( "AEC verified" ); }
 
   private:
-    using SolverProxy = tk::CProxy_Solver< CProxy_Transporter,
-                                           CProxy_Carrier,
-                                           AuxSolverLumpMassDiff >;
+    using SolverProxy = tk::CProxy_Solver< CProxy_Transporter, CProxy_Carrier >;
     using CarrierProxy = CProxy_Carrier;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,

@@ -14,7 +14,6 @@ module carrier {
   extern module particlewriter;
 
   include "Particles.h";
-  include "AuxSolver.h";
   include "UnsMesh.h";
 
   namespace inciter {
@@ -23,8 +22,7 @@ module carrier {
       entry
         Carrier( const CProxy_Transporter& transporter,
                  const tk::CProxy_Solver< CProxy_Transporter,
-                                          CProxy_Carrier,
-                                          AuxSolverLumpMassDiff >& solver,
+                                          CProxy_Carrier >& solver,
                  const tk::CProxy_ParticleWriter< CProxy_Transporter >& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< int,

@@ -10,38 +10,22 @@
     solution is outsourced to hypre, an MPI-only library. Once the solution is
     available, the individual worker chares are updated with the new solution.
 
-    In the basic configuration this class assembles and solves a single linear
-    system, whose rhs vector may change during time stepping. In a more advanced
-    configuration, an additional, auxiliary, linear system can also be solved.
-    The basic configuration is configured by instantiating this class using the
-    AuxSolver = AuxSolverNull template argument, while the one that solves the
-    auxiliary system is configured by an AuxSolver class that provides a number
-    of member functions. For possible auxiliary solver classes, see, e.g.,
-    src/Inciter/AuxSolver.h.
+    This class assembles and solves two linear systems, whose rhs vectors may
+    change during time stepping. One of the two linear systems is called a
+    high-order and the other one is the low-order linear system.
 
-    When Solver is configured to solve an auxiliary solution beside its
-    primary solution, the class behind the AuxSolver template argument, must
-    have static member functions only, which may provide the necessary
-    functionality to collect, assemble, solve, and update an auxiliary linear
-    system. The requirements on the auxiliary linear system are: (1) the left
-    hand side matrix must be diagonal, (2) the right hand side vector is
-    (optionally) a combination of the primary right hand side vector and another
-    vector, assembled separately (and overlapped with the primary system). This
-    enables configuring the auxiliary system to be, e.g., the low order solution
-    as required by the flux-corrected transport algorithm used for transport
-    equations in inciter. However, it also enables entirely removing the
-    auxiliary solution from Solver, via inciter::AuxSolverNull. Tthe
-    Charm++ SDAG logic does not change depending on whether an auxiliary
-    solution is performed or not. The composition is done at compile time,
-    depending on how Solver is instantiated.
+    Characteristics of the low-order linear system: (1) the left hand side
+    matrix is diagonal, (2) the right hand side vector is a combination of the
+    high-order right hand side vector and another vector, assembled separately
+    (and overlapped with that of the high-order system). This dual system
+    solution is done here as required by the flux-corrected transport algorithm
+    used for transport equations in inciter.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/LinSys/solver.ci. Note
-    that the SDAG logic is the same regardless whether an auxiliary solution is
-    performed.
+    discussed in the Charm++ interface file src/LinSys/solver.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
@@ -89,16 +73,16 @@
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
               URL="\ref tk::Solver::charelhs"];
-      ChAuxLhs [ label="ChAuxLhs"
-              tooltip="chares contribute their auxiliary left hand side matrix"
-              URL="\ref tk::Solver::chareaux"];
+      ChLoLhs [ label="ChLowLhs"
+              tooltip="chares contribute their low-order left hand side matrix"
+              URL="\ref tk::Solver::charelow"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::Solver::charesol"];
-      ChAuxRhs [ label="ChAuxRhs"
-              tooltip="chares contribute their contribution to the auxiliary
+      ChLoRhs [ label="ChLowRhs"
+              tooltip="chares contribute their contribution to the low-order
                        right hand side vector"
-              URL="\ref tk::Solver::chareauxrhs"];
+              URL="\ref tk::Solver::charelowrhs"];
       HypreRow [ label="HypreRow"
               tooltip="convert global row ID vector to hypre format"
               URL="\ref tk::Solver::hyprerow"];
@@ -131,14 +115,14 @@
               URL="\ref tk::Solver::assemblerhs"];
       Solve [ label="Solve" tooltip="solve linear system"
               URL="\ref tk::Solver::solve"];
-      AuxSolve [ label="AuxSolve" tooltip="solve auxiliary linear system"
-              URL="\ref tk::Solver::auxsolve"];
+      LoSolve [ label="LoSolve" tooltip="solve low-order linear system"
+              URL="\ref tk::Solver::lowsolve"];
       Upd [ label="Upd" tooltip="update solution"
                 color="#e6851c" style="filled"
                 URL="\ref tk::Solver::updateSol"];
-      AuxUpd [ label="AuxUpd" tooltip="update auxiliary solution"
+      LowUpd [ label="LowUpd" tooltip="update low-order solution"
                color="#e6851c"style="filled"
-               URL="\ref tk::Solver::updateAuxSol"];
+               URL="\ref tk::Solver::updateLowol"];
       ChRow -> RowComplete [ style="solid" ];
       RowComplete -> Init [ style="solid" ];
       RowComplete -> Ver [ style="solid" ];
@@ -147,15 +131,15 @@
       ChRhs -> RhsBC [ style="solid" ];
       LhsBC -> HypreLhs [ style="solid" ];
       RhsBC -> HypreRhs [ style="solid" ];
-      RhsBC -> AuxSolve [ style="solid" ];
-      ChAuxRhs -> AuxSolve [ style="solid" ];
-      ChAuxLhs -> AuxSolve [ style="solid" ];
+      RhsBC -> LowSolve [ style="solid" ];
+      ChLowRhs -> LowSolve [ style="solid" ];
+      ChLowLhs -> LowSolve [ style="solid" ];
       Init -> ChSol [ style="solid" ];
       Init -> ChLhs [ style="solid" ];
-      Init -> ChAuxLhs [ style="solid" ];
+      Init -> ChLowLhs [ style="solid" ];
       Init -> dt [ style="solid" ];
       dt -> ChRhs [ style="solid" ];
-      dt -> ChAuxRhs [ style="solid" ];
+      dt -> ChLowRhs [ style="solid" ];
       dt -> ChBC [ style="solid" ];
       ChBC -> LhsBC [ style="solid" ];
       ChBC -> RhsBC [ style="solid" ];
@@ -166,7 +150,7 @@
       HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
       HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
       Solve -> Upd [ style="solid" ];
-      AuxSolve -> AuxUpd [ style="solid" ];
+      LowSolve -> LowUpd [ style="solid" ];
     }
     \enddot
     \include LinSys/solver.ci
@@ -196,7 +180,6 @@
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
 #include "DiagReducer.h"
-#include "AuxSolver.h"
 
 #include "NoWarning/solver.decl.h"
 #include "NoWarning/transporter.decl.h"
@@ -219,8 +202,8 @@ extern CkReduction::reducerType DiagMerger;
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   solver.ci.
-template< class HostProxy, class WorkerProxy, class AuxSolver  >
-class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
+template< class HostProxy, class WorkerProxy  >
+class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -246,8 +229,8 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
   #endif
 
   private:
-    using Group = CBase_Solver< HostProxy, WorkerProxy, AuxSolver >;
-    using GroupIdx = CkIndex_Solver< HostProxy, WorkerProxy, AuxSolver >;
+    using Group = CBase_Solver< HostProxy, WorkerProxy >;
+    using GroupIdx = CkIndex_Solver< HostProxy, WorkerProxy >;
 
   public:
     //! Constructor
@@ -277,15 +260,15 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       m_solimport(),
       m_lhsimport(),
       m_rhsimport(),
-      m_auxrhsimport(),
-      m_auxlhsimport(),
+      m_lowrhsimport(),
+      m_lowlhsimport(),
       m_diagimport(),
       m_row(),
       m_sol(),
       m_lhs(),
       m_rhs(),
-      m_auxrhs(),
-      m_auxlhs(),
+      m_lowrhs(),
+      m_lowlhs(),
       m_diag(),
       m_x(),
       m_A(),
@@ -316,9 +299,9 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       wait4filllhs();
       wait4fillrhs();
       wait4asm();
-      wait4aux();
+      wait4low();
       wait4solve();
-      wait4auxsolve();
+      wait4lowsolve();
     }
 
     //! \brief Configure Charm++ reduction types for concatenating BC nodelists
@@ -372,18 +355,18 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       wait4hyprerhs();
       wait4fillrhs();
       wait4asm();
-      wait4aux();
+      wait4low();
       wait4solve();
-      wait4auxsolve();
+      wait4lowsolve();
       m_rhsimport.clear();
-      m_auxrhsimport.clear();
+      m_lowrhsimport.clear();
       m_diagimport.clear();
       m_rhs.clear();
       m_bc.clear();
-      m_auxrhs.clear();
+      m_lowrhs.clear();
       m_hypreRhs.clear();
       m_diag.clear();
-      auxlhs_complete();
+      lowlhs_complete();
       hyprerow_complete();
       asmsol_complete();
       asmlhs_complete();
@@ -589,55 +572,91 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       if (rhscomplete()) rhs_complete();
     }
 
-    //! Chares contribute to the rhs of the auxiliary linear system
+    //! Chares contribute to the rhs of the low-order linear system
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] auxrhs Portion of the auxiliary rhs vector contributed
+    //! \param[in] lowrhs Portion of the low-order rhs vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void chareauxrhs( int fromch,
+    void charelowrhs( int fromch,
                       const std::vector< std::size_t >& gid,
-                      const Fields& auxrhs )
+                      const Fields& lowrhs )
     {
-      AuxSolver::chareauxrhs( Group::thisProxy, this, m_lower, m_upper, fromch,
-                              gid, auxrhs, m_auxrhsimport, m_auxrhs );
-      if (auxrhscomplete()) auxrhs_complete();
+      using tk::operator+=;
+      Assert( gid.size() == lowrhs.nunk(),
+              "Size of mass diffusion rhs and row ID vectors must equal" );
+      // Store+add vector of nonzero values owned and pack those to be exported
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_lowrhsimport[ fromch ].push_back( gid[i] );
+          m_lowrhs[ gid[i] ] += lowrhs[i];
+        } else
+          exp[ pe(gid[i]) ][ gid[i] ] = lowrhs[i];
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp) {
+        auto tope = static_cast< int >( p.first );
+        Group::thisProxy[ tope ].addlowrhs( fromch, p.second );
+      }
+      if (lowrhscomplete()) lowrhs_complete();
     }
-    //! Receive+add auxiliary rhs vector nonzeros from fellow group branches
+    //! Receive+add low-order rhs vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] auxrhs Portion of the auxiliary rhs vector contributed,
+    //! \param[in] lowrhs Portion of the low-order rhs vector contributed,
     //!   containing global row indices and values
-    void addauxrhs( int fromch, const std::map< std::size_t,
-                                   std::vector< tk::real > >& auxrhs )
+    void addlowrhs( int fromch, const std::map< std::size_t,
+                                   std::vector< tk::real > >& lowrhs )
     {
-      AuxSolver::addauxrhs( fromch, auxrhs, m_auxrhsimport, m_auxrhs );
-      if (auxrhscomplete()) auxrhs_complete();
+      using tk::operator+=;
+      for (const auto& r : lowrhs) {
+        m_lowrhsimport[ fromch ].push_back( r.first );
+        m_lowrhs[ r.first ] += r.second;
+      }
+      if (lowrhscomplete()) lowrhs_complete();
     }
 
-    //! Chares contribute to the lhs of the auxiliary linear system
+    //! Chares contribute to the lhs of the low-order linear system
     //! \param[in] fromch Charm chare array the contribution coming from
     //! \param[in] gid Global row indices of the vector contributed
-    //! \param[in] auxlhs Portion of the auxiliary lhs vector contributed
+    //! \param[in] lowlhs Portion of the low-order lhs vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void chareauxlhs( int fromch,
+    void charelowlhs( int fromch,
                       const std::vector< std::size_t >& gid,
-                      const Fields& auxlhs )
+                      const Fields& lowlhs )
     {
-      AuxSolver::chareauxlhs( Group::thisProxy, this, m_lower, m_upper, fromch,
-                              gid, auxlhs, m_auxlhsimport, m_auxlhs );
-      if (auxlhscomplete()) auxlhs_complete();
+      using tk::operator+=;
+      Assert( gid.size() == lowlhs.nunk(),
+              "Size of mass diffusion lhs and row ID vectors must equal" );
+      // Store+add vector of nonzero values owned and pack those to be exported
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_lowlhsimport[ fromch ].push_back( gid[i] );
+          m_lowlhs[ gid[i] ] += lowlhs[i];
+        } else
+          exp[ pe(gid[i]) ][ gid[i] ] = lowlhs[i];
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp) {
+        auto tope = static_cast< int >( p.first );
+        Group::thisProxy[ tope ].addlowlhs( fromch, p.second );
+      }
+      if (lowlhscomplete()) lowlhs_complete();
     }
-    //! \brief Receive and add lhs vector to the auxiliary system from fellow
+    //! \brief Receive and add lhs vector to the low-order system from fellow
     //!   group branches
     //! \param[in] fromch Charm chare array index contribution coming from
-    //! \param[in] auxlhs Portion of the lhs vector contributed to the auxiliary
+    //! \param[in] lowlhs Portion of the lhs vector contributed to the low-order
     //!   linear system, containing global row indices and values
-    void addauxlhs( int fromch, const std::map< std::size_t,
-                                  std::vector< tk::real > >& auxlhs )
+    void addlowlhs( int fromch, const std::map< std::size_t,
+                                  std::vector< tk::real > >& lowlhs )
     {
-      AuxSolver::addauxlhs( fromch, auxlhs, m_auxlhsimport, m_auxlhs );
-      if (auxlhscomplete()) auxlhs_complete();
+      using tk::operator+=;
+      for (const auto& r : lowlhs) {
+        m_lowlhsimport[ fromch ].push_back( r.first );
+        m_lowlhs[ r.first ] += r.second;
+      }
+      if (lowlhscomplete()) lowlhs_complete();
     }
 
     //! Assert that all global row indices have been received on my PE
@@ -762,12 +781,12 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
     //! \return True if all parts of the right-hand side vector have been
     //!   received
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }
-    //! Check if our portion of the auxiliary rhs vector values is complete
-    //! \return True if all parts of the auxiliary rhs vector have been received
-    bool auxrhscomplete() const { return m_auxrhsimport == m_rowimport; }
-    //! Check if our portion of the auxiliary lhs vector values is complete
-    //! \return True if all parts of the auxiliary lhs vector have been received
-    bool auxlhscomplete() const { return m_auxlhsimport == m_rowimport; }
+    //! Check if our portion of the low-order rhs vector values is complete
+    //! \return True if all parts of the low-order rhs vector have been received
+    bool lowrhscomplete() const { return m_lowrhsimport == m_rowimport; }
+    //! Check if our portion of the low-order lhs vector values is complete
+    //! \return True if all parts of the low-order lhs vector have been received
+    bool lowlhscomplete() const { return m_lowlhsimport == m_rowimport; }
 
     //! Return processing element for global mesh row id
     //! \param[in] gid Global mesh point (matrix or vector row) id
@@ -817,11 +836,11 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
     //!   id during the communication of the righ-hand side vector
     std::map< int, std::vector< std::size_t > > m_rhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the auxiliary rhs vector
-    std::map< int, std::vector< std::size_t > > m_auxrhsimport;
+    //!   id during the communication of the low-order rhs vector
+    std::map< int, std::vector< std::size_t > > m_lowrhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the auxiliary lhs vector
-    std::map< int, std::vector< std::size_t > > m_auxlhsimport;
+    //!   id during the communication of the low-order lhs vector
+    std::map< int, std::vector< std::size_t > > m_lowlhsimport;
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the solution/unknown vector for
     //!   computing diagnostics, e.g., residuals
@@ -841,16 +860,16 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids
     std::map< std::size_t, std::vector< tk::real > > m_rhs;
-    //! \brief Part of auxiliary right-hand side vector owned by my PE
+    //! \brief Part of low-order right-hand side vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the rhs
-    //!   terms to be combined with the rhs to produce the auxiliary rhs.
-    std::map< std::size_t, std::vector< tk::real > > m_auxrhs;
-    //! \brief Part of the auxiliary system left-hand side vector owned by my PE
+    //!   terms to be combined with the rhs to produce the low-order rhs.
+    std::map< std::size_t, std::vector< tk::real > > m_lowrhs;
+    //! \brief Part of the low-order system left-hand side vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids. This vector collects the nonzero values
-    //!   of the auxiliary system lhs "matrix" solution.
-    std::map< std::size_t, std::vector< tk::real > > m_auxlhs;
+    //!   of the low-order system lhs "matrix" solution.
+    std::map< std::size_t, std::vector< tk::real > > m_lowlhs;
     //! \brief Part of solution vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row IDs. The map-value is a pair of vectors,
@@ -1217,7 +1236,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       }
     }
 
-    //! Solve linear system
+    //! Solve hyigh-order linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
       // send progress report to host
@@ -1225,31 +1244,73 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy, AuxSolver > {
       solve_complete();
     }
 
-    //! Update auxiliary solution vector in our PE's workers
-    void updateAuxSol() {
-      AuxSolver::update( m_worker, m_solimport, m_auxrhs );
+    //! Update low-order solution vector in our PE's workers
+    void updateLowSol() {
+      for (const auto& w : m_solimport) {
+        std::vector< std::size_t > gid;
+        std::vector< tk::real > solution;
+        for (auto r : w.second) {
+          const auto it = m_lowrhs.find( r );
+          if (it != end(m_lowrhs)) {
+            gid.push_back( it->first );
+            solution.insert(end(solution), begin(it->second), end(it->second));
+          } else
+            Throw( "Can't find global row id " + std::to_string(r) +
+                   " to export in low order solution vector" );
+        }
+        m_worker[ w.first ].updateLowSol( gid, solution );
+      }
     }
 
-    //! Solve auxiliary linear system
-    void auxsolve() {
-      // Set boundary conditions on the auxiliary system
+    //! Solve low-order linear system
+    void lowsolve() {
+      // Set boundary conditions on the low-order system
       for (const auto& n : m_bc)
         if (n.first >= m_lower && n.first < m_upper) {
           // lhs
-          auto& l = tk::ref_find( m_auxlhs, n.first );
+          auto& l = tk::ref_find( m_lowlhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
             if (n.second[i].first) l[i] = 1.0;
           // rhs (set to zero instead of the solution increment at Dirichlet
           // BCs, because for the low order solution we solve for L = R + D,
           // where L is the lumped mass matrix, R is the high order RHS, and D
           // is mass diffusion, and R already has the Dirichlet BC set)
-          auto& r = tk::ref_find( m_auxrhs, n.first );
+          auto& r = tk::ref_find( m_lowrhs, n.first );
           for (std::size_t i=0; i<m_ncomp; ++i)
             if (n.second[i].first) r[i] = 0.0;
         }
-      // Solve auxiliary system
-      AuxSolver::solve( this, m_ncomp, m_rhs, m_auxlhs, m_auxrhs );
-      auxsolve_complete();
+      // Solve low-order system
+      Assert( rhscomplete(),
+              "Values of distributed right-hand-side vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( lowrhscomplete(),
+              "Values of distributed mass diffusion rhs vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( lowlhscomplete(),
+              "Values of distributed lumped mass lhs vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( tk::keyEqual( m_rhs, m_lowrhs ), "Row IDs of rhs and mass "
+              "diffusion rhs vector unequal on PE " + std::to_string( CkMyPe() )
+              + ": cannot solve low order system" );
+      Assert( tk::keyEqual( m_rhs, m_lowlhs ), "Row IDs of rhs and lumped mass "
+              "lhs vector unequal on PE " + std::to_string( CkMyPe() ) + ": "
+              "cannot solve low order system" );
+      auto ir = m_rhs.cbegin();
+      auto id = m_lowrhs.begin();
+      auto im = m_lowlhs.cbegin();
+      while (ir != m_rhs.cend()) {
+        const auto& r = ir->second;
+        const auto& m = im->second;
+        auto& d = id->second;
+        Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,
+                "Wrong number of components in solving the low order system" );
+        for (std::size_t i=0; i<m_ncomp; ++i) d[i] = (r[i]+d[i])/m[i];
+        ++ir; ++id; ++im;
+      }
+      lowsolve_complete();
     }
 
     //! Update diagnostics vector
