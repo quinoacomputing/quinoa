@@ -8,7 +8,6 @@
 // *****************************************************************************
 
 #include "Partitioner.h"
-#include "AuxSolver.h"
 
 #include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
@@ -29,8 +28,7 @@ template class inciter::Partitioner<
                  inciter::CProxy_Transporter,
                  inciter::CProxy_Carrier,
                  tk::CProxy_Solver< inciter::CProxy_Transporter,
-                                    inciter::CProxy_Carrier,
-                                    inciter::AuxSolverLumpMassDiff >,
+                                    inciter::CProxy_Carrier >,
                  tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 #if defined(__clang__)

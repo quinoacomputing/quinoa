@@ -37,8 +37,7 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
 extern template class tk::Solver< inciter::CProxy_Transporter,
-                                  inciter::CProxy_Carrier,
-                                  inciter::AuxSolverLumpMassDiff >;
+                                  inciter::CProxy_Carrier >;
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
@@ -47,8 +46,7 @@ extern template class
     inciter::CProxy_Transporter,
     inciter::CProxy_Carrier,
     tk::CProxy_Solver< inciter::CProxy_Transporter,
-                       inciter::CProxy_Carrier,
-                       inciter::AuxSolverLumpMassDiff >,
+                       inciter::CProxy_Carrier >,
     tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 extern CProxy_Main mainProxy;

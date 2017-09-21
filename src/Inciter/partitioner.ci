@@ -20,8 +20,7 @@ module partitioner {
     chare Partitioner< CProxy_Transporter,
                        CProxy_Carrier,
                        tk::CProxy_Solver< CProxy_Transporter,
-                                          CProxy_Carrier,
-                                          AuxSolverLumpMassDiff >,
+                                          CProxy_Carrier >,
                        tk::CProxy_ParticleWriter< CProxy_Transporter > >;
 
     template< class HostProxy, class WorkerProxy, class SolverProxy,

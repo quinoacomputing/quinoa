@@ -114,8 +114,7 @@ class Carrier : public CBase_Carrier {
   private:
     using TransporterProxy = CProxy_Transporter;
     using SolverProxy = tk::CProxy_Solver< CProxy_Transporter,
-                                           CProxy_Carrier,
-                                           AuxSolverLumpMassDiff >;
+                                           CProxy_Carrier >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:

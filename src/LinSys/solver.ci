@@ -20,16 +20,14 @@ module solver {
     // registration and delivery of code for the individual specializations
 
     // Will specialize linear system solver for Transporter & Carrier
-    chare Solver< inciter::CProxy_Transporter,
-                  inciter::CProxy_Carrier,
-                  inciter::AuxSolverLumpMassDiff >;
+    chare Solver< inciter::CProxy_Transporter, inciter::CProxy_Carrier >;
 
     // Solver is templated so that the same code (parameterized by the type
     // given by the template arguments, HostProxy and WorkerProxy) can be
     // generated for different types of proxies. Howver, all possible
     // specializations must be listed above to ensure that Charm++ generates
     // correct code.
-    template< class HostProxy, class WorkerProxy, class AuxSolver >
+    template< class HostProxy, class WorkerProxy >
     group Solver {
       entry Solver( const HostProxy& host,
                     const WorkerProxy& worker,
@@ -55,12 +53,12 @@ module solver {
       entry [expedited] void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
-      entry [expedited] void addauxrhs( int fromch,
+      entry [expedited] void addlowrhs( int fromch,
                             const std::map< std::size_t,
-                                            std::vector< tk::real > >& auxrhs );
-      entry [expedited] void addauxlhs( int fromch,
+                                            std::vector< tk::real > >& lorhs );
+      entry [expedited] void addlowlhs( int fromch,
                             const std::map< std::size_t,
-                                            std::vector< tk::real > >& auxlhs );
+                                            std::vector< tk::real > >& lolhs );
       entry void adddiag( int fromch,
                           std::map< std::size_t,
                            std::vector< std::vector< tk::real > > >& solution );
@@ -106,13 +104,13 @@ module solver {
       // init() include setting initial and boundary conditions, sending
       // unknown/solution vectors for assembly to Solver, start computing
       // the minimum time step size, outputing initial field data to file, start
-      // computing the left hand sides for both the primary and auxiliary linear
+      // computing the left hand sides for both the high-, and low-order linear
       // systems, and sending all this for linear system assembly. The
       // contribution goes to those Linear System Merger group branch (one per
       // CPU) the workers happen to reside on. These steps are denoted by ChSol,
-      // ChLhs, and ChAuxLhs in the graph above, and the contributions/assembly
+      // ChLhs, and ChLoLhs in the graph above, and the contributions/assembly
       // is performed by the member functions charesol(), charelhs(), and
-      // chareauxlhs(), respectively.
+      // charelolhs(), respectively.
       //
       // Among other tasks, worker::init(), discussed above, also start
       // computing the minimum time step sizes based on all PDEs integrated.
@@ -120,25 +118,25 @@ module solver {
       // the smallest dt for computing a global minimum in Transporter::dt(),
       // which then spawns a broadcast to the workers to start advancing their
       // PDEs, which consists of computing the right hand sides for both the
-      // primary system and the auxiliary system, ChRhs, ChAuxRhs. These
-      // right hand sides can only be comnputed if the dt is available.
+      // high-, and low-order linear systems, ChRhs, ChLoRhs. These right hand
+      // sides can only be comnputed if the dt is available.
       //
       // Once the collection of the right hand side vector, ChRhs, is done, we
       // set boundary conditions on the RHS vector, RhsBC. Once the collection
       // of the left hand side matrix, ChLhs, is done, we set boundary
       // conditions on the LHS matrix, LhsBC.
       //
-      // Primary solution only: Once each of the tasks, ChSol, LhsBC, and RhsBC,
-      // (not all at the same time but separately) are done, we continue by
-      // converting these data structures to a format that Hypre expects, done
-      // in hypresol(), hyprelhs(), and hyprerhs(), denoted by similars labels
-      // in the graph. These functions basically flatten the C++ data
+      // High-order solution only: Once each of the tasks, ChSol, LhsBC, and
+      // RhsBC, (not all at the same time but separately) are done, we continue
+      // by converting these data structures to a format that Hypre expects,
+      // done in hypresol(), hyprelhs(), and hyprerhs(), denoted by similars
+      // labels in the graph. These functions basically flatten the C++ data
       // structures to C-style arrays and linked arrays (for the matrix). Note
       // that the left and right hand sides can only begin to be converted to
       // Hypre data format if the boundary conditions have also been applied on
       // each.
       //
-      // Primary solution only: Once the tasks, HypreSol, HypreLhs, HypreRhs,
+      // High-order solution only: Once the tasks, HypreSol, HypreLhs, HypreRhs,
       // (not all at the same time but separately) are done and the Hypre data
       // structure for the row IDs are complete, we continue by assigning the
       // flattened data structures (more precisely, their pointers) to the Hypre
@@ -146,44 +144,41 @@ module solver {
       // FillRhs in the DAG and correspond to the member functions sol(), lhs(),
       // and rhs().
       //
-      // Primary solution only: Once the tasks, FillSol, FillLhs, FIllRhs, (not
-      // all at the same time, but separately) are, we continue by calling the
-      // Hypre "assembly" routines for the solution vector, the left hand side
-      // matrix, and the right hand side vector. These are denoted by AsmSol,
-      // AsmLhs, and AsmRhs in the DAG, and performed by the member functions
-      // assemblesol(), assemblelhs(), and assemblerhs(), respectively.
+      // High-order solution only: Once the tasks, FillSol, FillLhs, FIllRhs,
+      // (not all at the same time, but separately) are, we continue by calling
+      // the Hypre "assembly" routines for the solution vector, the left hand
+      // side matrix, and the right hand side vector. These are denoted by
+      // AsmSol, AsmLhs, and AsmRhs in the DAG, and performed by the member
+      // functions assemblesol(), assemblelhs(), and assemblerhs(),
+      // respectively.
       //
-      // Primary solution only: Once the assembly of the solution (unknown)
+      // High-order solution only: Once the assembly of the solution (unknown)
       // vector, the left hand side matrix, and the right hand side vector are
       // all done (on a CPU), labels AsmSol, AsmLhs, AsmRhs, respectively, we
-      // call the solve() member function which solves the primary linear system
-      // by calling Hypre and also updates the primary solution, i.e.,
+      // call the solve() member function which solves the high-order linear
+      // system by calling Hypre and also updates the high-order solution, i.e.,
       // propagates the new solution back to the worker chares, labeled Upd.
       //
-      // Auxiliary solution only: The auxiliary solution is performed once the
-      // boundary conditions have been set on the primary right hand side vector
-      // (RhsBC), the auxiliary rhs vector, combined with primary the rhs
-      // (AuxRhs) has been ready, and the auxiliary left hand side (AuxLhs) are
-      // all complete. The solution of the auxiliary system is a simple
+      // Low-order solution only: The low-order solution is performed once the
+      // boundary conditions have been set on the high-order right hand side
+      // vector (RhsBC), the low-order rhs vector, combined with the high-order
+      // rhs (LoRhs) has been ready, and the low-order left hand side (LoLhs)
+      // are all complete. The solution of the low-order system is a simple
       // back-substitution, since the system is assumed diagonal. Note also,
       // that due to the way FluxCorrector::aec() computes the antidiffusive
       // element contributions and the way it applies the limiter in
       // FluxCorrector::lim(), there is no need to set Dirichlet boundary
-      // conditions on the auxiliary system. See more details in
+      // conditions on the low-order system. See more details in
       // FluxCorrector::aec().
       //
       // A word on multiple invokation of SDAG triggers: As the commit message
       // of b79ea29 explains, the "triggers", such as hyprerow_complete(),
       // enumerated below, at threir call site should be thought of as messages
-      // being put in some message queue and consumed at when clauses wherever
+      // being put in some message queue and consumed at 'when' clauses wherever
       // they appear. If they appear in multiple when clauses, they consume
       // multple messages, thus they have to be triggered multiple times. See
       // also
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
-      //
-      // As discussed in src/LinSys/Solver.h, the SDAG logic discussed
-      // here is the same regardless whether an auxiliary linear solution is
-      // performed.
 
       entry void wait4row() {
         when row_complete() serial "row" {
@@ -219,14 +214,14 @@ module solver {
       entry void wait4asm() {
         when asmsol_complete(), asmlhs_complete(), asmrhs_complete()
           serial "solve" { solve(); } };
-      entry void wait4aux() {
-        when rhsbc_complete(), auxlhs_complete(), auxrhs_complete()
-          serial "aux" { auxsolve(); } };
+      entry void wait4low() {
+        when rhsbc_complete(), lowlhs_complete(), lowrhs_complete()
+          serial "low" { lowsolve(); } };
 
       entry void wait4solve() {
         when solve_complete() serial "update" { updateSol(); } };
-      entry void wait4auxsolve() {
-        when auxsolve_complete() serial "updateaux" { updateAuxSol(); } };
+      entry void wait4lowsolve() {
+        when lowsolve_complete() serial "updatelow" { updateLowSol(); } };
 
       entry void row_complete();
       entry void bc_complete_lhs();
@@ -237,8 +232,8 @@ module solver {
       entry void lhs_complete();
       entry void rhs_complete();
       entry void sol_complete();
-      entry void auxrhs_complete();
-      entry void auxlhs_complete();
+      entry void lowrhs_complete();
+      entry void lowlhs_complete();
       entry void hyprelhs_complete();
       entry void hyprerhs_complete();
       entry void hypresol_complete();
@@ -249,7 +244,7 @@ module solver {
       entry void asmrhs_complete();
       entry void asmsol_complete();
       entry void solve_complete();
-      entry void auxsolve_complete();
+      entry void lowsolve_complete();
     };
 
   } // tk::

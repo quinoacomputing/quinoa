@@ -41,8 +41,7 @@ CkReduction::reducerType DiagMerger;
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
 template class tk::Solver< inciter::CProxy_Transporter,
-                           inciter::CProxy_Carrier,
-                           inciter::AuxSolverLumpMassDiff >;
+                           inciter::CProxy_Carrier >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
