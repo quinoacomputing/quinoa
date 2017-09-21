@@ -2,11 +2,17 @@
 /*!
   \file      src/Inciter/Carrier.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Carrier advances a system of transport equations
-  \details   Carrier advances a system of transport equations. There are a
-    potentially large number of Carrier Charm++ chares created by Transporter.
-    Each carrier gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances a PDE in time.
+  \brief     Carrier advances a system of transport equations using CG+LW+FCT
+  \details   Carrier advances a system of transport equations using continuous
+    Galerkin (CG) finite elements with linear shapefunctions for spatial
+    discretization combined with a time stepping discretization that is
+    equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
+    finite element context and treats discontinuities with flux-corrected
+    transport (FCT).
+
+    There are a potentially large number of Carrier Charm++ chares created by
+    Transporter.  Each carrier gets a chunk of the full load (part of the mesh)
+    and does the same: initializes and advances a number of PDE systems in time.
 */
 // *****************************************************************************
 

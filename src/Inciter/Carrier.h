@@ -2,11 +2,17 @@
 /*!
   \file      src/Inciter/Carrier.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Carrier advances a system of transport equations
-  \details   Carrier advances a system of transport equations. There are a
-    potentially large number of Carrier Charm++ chares created by Transporter.
-    Each carrier gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances a system of systems of PDEs in time.
+  \brief     Carrier advances a system of transport equations using CG+LW+FCT
+  \details   Carrier advances a system of transport equations using continuous
+    Galerkin (CG) finite elements with linear shapefunctions for spatial
+    discretization combined with a time stepping discretization that is
+    equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
+    finite element context and treats discontinuities with flux-corrected
+    transport (FCT).
+
+    There are a potentially large number of Carrier Charm++ chares created by
+    Transporter.  Each carrier gets a chunk of the full load (part of the mesh)
+    and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
@@ -100,15 +106,17 @@
 #include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
-namespace tk { class ExodusIIMeshWriter; 
-	       class RootMeshWriter; }
+namespace tk {
+  class ExodusIIMeshWriter;
+  class RootMeshWriter;
+}
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType PDFMerger;
 
-//! Carrier Charm++ chare array used to advance transport equations in time
+//! Carrier Charm++ chare array used to advance PDEs in time with CG+LW+FCT
 class Carrier : public CBase_Carrier {
 
   private:
@@ -482,13 +490,6 @@ class Carrier : public CBase_Carrier {
     void advanceParticle( std::size_t i,
                           std::size_t e,
                           const std::array< tk::real, 4>& N );
-
-    //! Apply boundary conditions to particles
-    void applyParBC( std::size_t i );
-
-    //! Try to find particles and add those found to the list of ours
-    std::vector< std::size_t > addpar( const std::vector< std::size_t >& miss,
-                                       const tk::Particles& ps );
 
     //! Output number of particles we will write to file in this step
     void writeParticles();
