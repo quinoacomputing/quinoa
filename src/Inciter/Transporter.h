@@ -29,8 +29,7 @@
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Carrier::diagnostics"];
       Out [ label="Out"
-              tooltip="particles output to file"
-              URL="\ref inciter::Carrier::doWriteParticles"];
+              tooltip="fields output to file"];
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
@@ -88,7 +87,6 @@
 #include "InciterPrint.h"
 #include "Partitioner.h"
 #include "VectorReducer.h"
-#include "ParticleWriter.h"
 #include "Progress.h"
 
 #include "NoWarning/carrier.decl.h"
@@ -232,13 +230,6 @@ class Transporter : public CBase_Transporter {
     //!   finished their initialization step
     void initcomplete();
 
-    //! Reduction target indicating the particle communication is complete
-    void parcomcomplete() { m_carrier.out(); }
-
-    //! \brief Reduction target indicating that all workers have sent their
-    //!   number of particles to be output
-    void nparcomplete() { m_carrier.doWriteParticles(); }
-
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
     void diagnostics( CkReductionMsg* msg );
@@ -266,11 +257,9 @@ class Transporter : public CBase_Transporter {
   private:
     using SolverProxy = tk::CProxy_Solver< CProxy_Transporter, CProxy_Carrier >;
     using CarrierProxy = CProxy_Carrier;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,
                                                  CarrierProxy,
-                                                 SolverProxy,
-                                                 ParticleWriterProxy >;
+                                                 SolverProxy >;
 
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
@@ -279,7 +268,6 @@ class Transporter : public CBase_Transporter {
     tk::real m_dt;                       //!< Physical time step size
     SolverProxy m_solver;                //!< Linear system solver group proxy
     CarrierProxy m_carrier;              //!< Carrier chare array proxy
-    ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
     PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;

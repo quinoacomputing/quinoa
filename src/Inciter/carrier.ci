@@ -12,9 +12,7 @@ module carrier {
 
   extern module transporter;
   extern module solver;
-  extern module particlewriter;
 
-  include "Particles.h";
   include "UnsMesh.h";
 
   namespace inciter {
@@ -24,7 +22,6 @@ module carrier {
         Carrier( const CProxy_Transporter& transporter,
                  const tk::CProxy_Solver< CProxy_Transporter,
                                           CProxy_Carrier >& solver,
-                 const tk::CProxy_ParticleWriter< CProxy_Transporter >& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< int,
                          std::unordered_set< std::size_t > >& msum,
@@ -45,16 +42,7 @@ module carrier {
                                const std::vector< tk::real >& sol );
       entry void advance( uint64_t it, tk::real t, tk::real newdt );
       entry void dt();
-      entry void findpar( int fromch,
-                          const std::vector< std::size_t >& miss,
-                          const std::vector< std::vector< tk::real > >& ps );
-      entry void foundpar( const std::vector< std::size_t >& found );
-      entry void collectpar( int fromch,
-                             const std::vector< std::size_t >& miss,
-                             const std::vector< std::vector< tk::real > >& ps );
-      entry void collectedpar( const std::vector< std::size_t >& found );
       entry void out();
-      entry void doWriteParticles();
       entry void comaec( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& P );
       entry void comalw( const std::vector< std::size_t >& gid,

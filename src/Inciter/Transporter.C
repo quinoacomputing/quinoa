@@ -46,8 +46,7 @@ extern template class
     inciter::CProxy_Transporter,
     inciter::CProxy_Carrier,
     tk::CProxy_Solver< inciter::CProxy_Transporter,
-                       inciter::CProxy_Carrier >,
-    tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
+                       inciter::CProxy_Carrier > >;
 
 extern CProxy_Main mainProxy;
 
@@ -69,7 +68,6 @@ Transporter::Transporter() :
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_solver(),
   m_carrier(),
-  m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -209,25 +207,10 @@ Transporter::Transporter() :
                        g_inputdeck.get< tag::component >().nprop(),
                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
-    // Create particle writer Charm++ chare group. Note that by passing an empty
-    // filename argument to the constructor, we tell the writer not to open a
-    // file and not to perform I/O. To enable particle I/O, put in the filename
-    // argument, commented out, instead of the empty string, and change the
-    // number of particles (the constructor argument to m_particles) in the
-    // initializer list of Carrier::Carrier(). This is basically a punt to
-    // enable skipping H5Part I/O. Particles are a highly experimental feature
-    // at this point.
-    m_print.diag( "Creating particle writers" );
-    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
-                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
-
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy,
-                                             m_carrier,
-                                             m_solver,
-                                             m_particlewriter );
+    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }

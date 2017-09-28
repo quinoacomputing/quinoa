@@ -10,7 +10,6 @@
 #include "Partitioner.h"
 
 #include "NoWarning/carrier.decl.h"
-#include "NoWarning/particlewriter.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -28,8 +27,7 @@ template class inciter::Partitioner<
                  inciter::CProxy_Transporter,
                  inciter::CProxy_Carrier,
                  tk::CProxy_Solver< inciter::CProxy_Transporter,
-                                    inciter::CProxy_Carrier >,
-                 tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
+                                    inciter::CProxy_Carrier > >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

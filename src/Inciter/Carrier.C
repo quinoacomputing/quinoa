@@ -35,7 +35,6 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
-#include "Tracker.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -69,7 +68,6 @@ using inciter::Carrier;
 
 Carrier::Carrier( const TransporterProxy& transporter,
                   const SolverProxy& solver,
-                  const ParticleWriterProxy& pw,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
                           std::unordered_set< std::size_t > >& msum,
@@ -100,7 +98,6 @@ Carrier::Carrier( const TransporterProxy& transporter,
                 ),
   m_transporter( transporter ),
   m_solver( solver ),
-  m_particlewriter( pw ),
   m_filenodes( filenodes ),
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
@@ -122,13 +119,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_bid(),
   m_pc(),
   m_qc(),
-  m_ac(),                                               // 0 = no particles
-  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
+  m_ac()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] pw Particle writer proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
@@ -405,7 +400,7 @@ Carrier::stat()
 void
 Carrier::setup( tk::real v )
 // *****************************************************************************
-// Setup rows, query boundary conditions, generate particles, output mesh, etc.
+// Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
@@ -415,8 +410,6 @@ Carrier::setup( tk::real v )
   writeMesh();
   // Send off global row IDs to linear system solver
   m_solver.ckLocalBranch()->charerow( thisIndex, m_gid );
-  // Generate particles
-  m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
   // Output fields metadata to output file
   writeMeta();
 }
@@ -888,16 +881,6 @@ Carrier::writeFields( tk::real time )
 }
 
 void
-Carrier::doWriteParticles()
-// *****************************************************************************
-// Output particles fields to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-    m_tracker.doWriteParticles( m_particlewriter, m_it, m_ncarr );
-}
-
-void
 Carrier::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
@@ -1130,8 +1113,15 @@ Carrier::out()
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
-    //m_tracker.writeParticles( m_transporter, m_particlewriter, this );
-  } //else
+  }
+
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
+       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+    writeFields( m_t+m_dt );
 
   contribute(
      CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
@@ -1357,20 +1347,11 @@ Carrier::apply()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_transporter.chlim();
 
-  // Advance particles
-  m_tracker.track( m_transporter, thisProxy, m_coord, m_inpoel, m_msum,
-                   thisIndex, this, m_dt );
-
   // Compute diagnostics, e.g., residuals
   diagnostics();
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-    writeFields( m_t+m_dt );
+  // Output field data to file
+  out();
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.

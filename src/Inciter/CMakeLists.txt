@@ -37,16 +37,6 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # those.
 add_dependencies( "Inciter" "solverCharmModule" )
 
-# Add extra dependency of Inciter on ParticleWriter charm module. This is
-# required so that particlewriter.decl.h and particlewriter.def.h are generated
-# before Inciter including those.
-add_dependencies( "Inciter" "particlewriterCharmModule" )
-
-# Add extra dependency of Carrier charm module on ParticleWriter charm module.
-# This is required so that particlewriter.decl.h and particlewriter.def.h are
-# generated before Carrier including those.
-add_dependencies( "carrierCharmModule" "particlewriterCharmModule" )
-
 # Add extra dependency of Transporter charm module on Partitioner charm module.
 # This is required so that Partitioner.decl.h and Partitioner.def.h are
 # generated before Transporter including those.

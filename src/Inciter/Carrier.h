@@ -95,7 +95,6 @@
 #include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
-#include "Tracker.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "PDFReducer.h"
@@ -104,7 +103,6 @@
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/carrier.decl.h"
-#include "NoWarning/particlewriter.decl.h"
 
 namespace tk {
   class ExodusIIMeshWriter;
@@ -123,7 +121,6 @@ class Carrier : public CBase_Carrier {
     using TransporterProxy = CProxy_Transporter;
     using SolverProxy = tk::CProxy_Solver< CProxy_Transporter,
                                            CProxy_Carrier >;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
     using Array = CBase_Carrier;
@@ -154,7 +151,6 @@ class Carrier : public CBase_Carrier {
     explicit
       Carrier( const TransporterProxy& transporter,
                const SolverProxy& solver,
-               const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
                const std::unordered_map< int,
                        std::unordered_set< std::size_t > >& msum,
@@ -180,7 +176,7 @@ class Carrier : public CBase_Carrier {
     //!   case of initial uniform refinement
     void coord();
 
-    //! \brief Setup rows, query boundary conditions, generate particles, output
+    //! \brief Setup rows, query boundary conditions, output
     //!    mesh, etc.
     void setup( tk::real v );
 
@@ -218,36 +214,11 @@ class Carrier : public CBase_Carrier {
     //! Compute time step size
     void dt();
 
-    //! Find particles missing by the requestor and make those found ours
-    void findpar( int fromch,
-                  const std::vector< std::size_t >& miss,
-                  const std::vector< std::vector< tk::real > >& ps )
-    { m_tracker.findpar( thisProxy, m_coord, m_inpoel, fromch, miss, ps ); }
-
-    //! Receive particle indices found elsewhere (by fellow neighbors)
-    void foundpar( const std::vector< std::size_t >& found ) {
-      m_tracker.foundpar( m_transporter, thisProxy, m_msum, this, thisIndex,
-                          found );
-    }
-
-    //! Find particles missing by the requestor and make those found ours
-    void collectpar( int fromch,
-                     const std::vector< std::size_t >& miss,
-                     const std::vector< std::vector< tk::real > >& ps )
-    { m_tracker.collectpar( thisProxy, m_coord, m_inpoel, fromch, miss, ps ); }
-
-    //! Collect particle indices found elsewhere (by far fellows)
-    void collectedpar( const std::vector< std::size_t >& found )
-    { m_tracker.collectedpar( m_transporter, this, found, m_ncarr ); }
-
     //! Extract the velocity at cell nodes
     std::array< std::array< tk::real, 4 >, 3 > velocity( std::size_t e );
 
     //! Output mesh and particle fields to files
     void out();
-
-    //! Output particles fields to file
-    void doWriteParticles();
 
     //! Receive sums of antidiffusive element contributions on chare-boundaries
     void comaec( const std::vector< std::size_t >& gid,
@@ -283,7 +254,6 @@ class Carrier : public CBase_Carrier {
       p | m_outFilename;
       p | m_transporter;
       p | m_solver;
-      p | m_particlewriter;
       p | m_fluxcorrector;
       p | m_filenodes;
       p | m_edgenodes;
@@ -313,7 +283,6 @@ class Carrier : public CBase_Carrier {
       p | m_pc;
       p | m_qc;
       p | m_ac;
-      p | m_tracker;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -361,8 +330,6 @@ class Carrier : public CBase_Carrier {
     TransporterProxy m_transporter;
     //! Linear system merger and solver proxy
     SolverProxy m_solver;
-    //! Particle writer proxy
-    ParticleWriterProxy m_particlewriter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
@@ -435,8 +402,6 @@ class Carrier : public CBase_Carrier {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Receive buffers for FCT
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
-    //! Particle tracker
-    tk::Tracker m_tracker;
 
     //! Query old node IDs for a list of new node IDs
     std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
@@ -482,17 +447,6 @@ class Carrier : public CBase_Carrier {
 
     //! Search particle ina single mesh cell
     bool parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N );
-
-    //! Search particles in our chunk of the mesh
-    void track();
-
-    //! Advance particles based on velocity from mesh cell
-    void advanceParticle( std::size_t i,
-                          std::size_t e,
-                          const std::array< tk::real, 4>& N );
-
-    //! Output number of particles we will write to file in this step
-    void writeParticles();
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
     void aec();

@@ -20,16 +20,13 @@ module partitioner {
     chare Partitioner< CProxy_Transporter,
                        CProxy_Carrier,
                        tk::CProxy_Solver< CProxy_Transporter,
-                                          CProxy_Carrier >,
-                       tk::CProxy_ParticleWriter< CProxy_Transporter > >;
+                                          CProxy_Carrier > >;
 
-    template< class HostProxy, class WorkerProxy, class SolverProxy,
-              class ParticleWriterProxy >
+    template< class HostProxy, class WorkerProxy, class SolverProxy >
     group Partitioner {
       entry Partitioner( const HostProxy& host,
                          const WorkerProxy& worker,
-                         const SolverProxy& solver,
-                         const ParticleWriterProxy& pw );
+                         const SolverProxy& solver );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

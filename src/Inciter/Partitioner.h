@@ -91,12 +91,10 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-template< class HostProxy, class WorkerProxy, class SolverProxy,
-          class ParticleWriterProxy >
+template< class HostProxy, class WorkerProxy, class SolverProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
-                                              SolverProxy,
-                                              ParticleWriterProxy > {
+                                              SolverProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -122,24 +120,20 @@ class Partitioner : public CBase_Partitioner< HostProxy,
   #endif
 
   private:
-    using Group = CBase_Partitioner< HostProxy, WorkerProxy, SolverProxy,
-                                     ParticleWriterProxy >;
+    using Group = CBase_Partitioner< HostProxy, WorkerProxy, SolverProxy >;
 
   public:
     //! Constructor
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
     //! \param[in] lsm Linear system solver proxy (required by the workers)
-    //! \param[in] pw Particle writer proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
-                 const SolverProxy& lsm,
-                 const ParticleWriterProxy& pw ) :
+                 const SolverProxy& lsm ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_solver( lsm ),
-      m_particlewriter( pw ),
       m_npe( 0 ),
       m_reqNodes(),
       m_reqEdges(),
@@ -496,8 +490,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     WorkerProxy m_worker;
     //! Linear system solver proxy
     SolverProxy m_solver;
-    //! Particle writer proxy
-    ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -1236,7 +1228,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_solver,
-                                m_particlewriter,
                                 tk::cref_find( m_chinpoel, cid ),
                                 msum,
                                 tk::cref_find( m_chfilenodes, cid ),
