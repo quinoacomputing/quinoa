@@ -119,8 +119,7 @@ class Carrier : public CBase_Carrier {
 
   private:
     using TransporterProxy = CProxy_Transporter;
-    using SolverProxy = tk::CProxy_Solver< CProxy_Transporter,
-                                           CProxy_Carrier >;
+    using SolverProxy = tk::CProxy_Solver< CProxy_Carrier >;
 
   public:
     using Array = CBase_Carrier;

@@ -19,8 +19,7 @@ module partitioner {
 
     chare Partitioner< CProxy_Transporter,
                        CProxy_Carrier,
-                       tk::CProxy_Solver< CProxy_Transporter,
-                                          CProxy_Carrier > >;
+                       tk::CProxy_Solver< CProxy_Carrier > >;
 
     template< class HostProxy, class WorkerProxy, class SolverProxy >
     group Partitioner {

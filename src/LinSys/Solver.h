@@ -170,6 +170,7 @@
 #include <limits>
 
 #include "Types.h"
+#include "Tags.h"
 #include "Exception.h"
 #include "ContainerUtil.h"
 #include "PUPUtil.h"
@@ -180,6 +181,7 @@
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
 #include "DiagReducer.h"
+#include "TaggedTuple.h"
 
 #include "NoWarning/solver.decl.h"
 #include "NoWarning/transporter.decl.h"
@@ -202,8 +204,8 @@ extern CkReduction::reducerType DiagMerger;
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   solver.ci.
-template< class HostProxy, class WorkerProxy  >
-class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
+template< class WorkerProxy  >
+class Solver : public CBase_Solver< WorkerProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -229,23 +231,22 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
   #endif
 
   private:
-    using Group = CBase_Solver< HostProxy, WorkerProxy >;
-    using GroupIdx = CkIndex_Solver< HostProxy, WorkerProxy >;
+    using Group = CBase_Solver< WorkerProxy >;
+    using GroupIdx = CkIndex_Solver< WorkerProxy >;
 
   public:
     //! Constructor
-    //! \param[in] host Charm++ host proxy
     //! \param[in] worker Charm++ worker proxy
     //! \param[in] s Mesh node IDs mapped to side set ids
     //! \param[in] n Total number of scalar components in the linear system
     //! \param[in] feedback Whether to send sub-task feedback to host    
-    Solver( const HostProxy& host,
+    Solver( const std::vector< CkCallback >& cb,
             const WorkerProxy& worker,
             const std::map< int, std::vector< std::size_t > >& s,
             std::size_t n,
             bool feedback ) :
       __dep(),
-      m_host( host ),
+      m_cb( cb[0], cb[1], cb[2], cb[3] ),
       m_worker( worker ),
       m_side( s ),
       m_ncomp( n ),
@@ -344,7 +345,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
         // Create linear solver
         m_solver.create();
         // Signal back to host that setup of workers can start
-        signal2host_coord( m_host );
+        Group::contribute( m_cb.get< tag::coord >() );
       }
     }
 
@@ -371,7 +372,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
       asmsol_complete();
       asmlhs_complete();
       lhsbc_complete();
-      signal2host_computedt( m_host );
+      Group::contribute( m_cb.get< tag::dt >() );
     }
 
     //! Chares register on my PE
@@ -719,7 +720,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
       PUP::fromMem creator( msg->getData() );
       creator | m_bc;
       delete msg;
-      if (m_feedback) m_host.pebccomplete();    // send progress report to host
+      //if (m_feedback) m_host.pebccomplete();    // send progress report to host
       bc_complete_lhs(); bc_complete_rhs();
       m_nchbc = 0;
     }
@@ -810,7 +811,13 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
     }
 
   private:
-    HostProxy m_host;           //!< Host proxy
+    //! Charm++ callbacks associated to compile-time tags
+    tk::tuple::tagged_tuple<
+        tag::row,   CkCallback
+      , tag::dt,    CkCallback
+      , tag::coord, CkCallback
+      , tag::diag , CkCallback
+    > m_cb;
     WorkerProxy m_worker;       //!< Worker proxy
     //! Global (as in file) mesh node IDs mapped to side set ids of the mesh
     std::map< int, std::vector< std::size_t > > m_side;
@@ -960,7 +967,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
     //!   and tell the runtime system that this is complete.
     void checkifrowcomplete() {
       if (rowcomplete()) {
-        if (m_feedback) m_host.perowcomplete();
+        //if (m_feedback) m_host.perowcomplete();
         row_complete();
       };
     }
@@ -969,7 +976,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
     //!   and tell the runtime system that this is complete.
     void checkifsolcomplete() {
       if (solcomplete()) {
-        if (m_feedback) m_host.pesolcomplete();
+        //if (m_feedback) m_host.pesolcomplete();
         sol_complete();
       }
     }
@@ -1240,7 +1247,7 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
       // send progress report to host
-      if (m_feedback) m_host.pesolve();
+      //if (m_feedback) m_host.pesolve();
       solve_complete();
     }
 
@@ -1371,94 +1378,10 @@ class Solver : public CBase_Solver< HostProxy, WorkerProxy > {
         }
       }
       // Contribute to diagnostics across all PEs
-      signal2host_diag( m_host, diag );
-    }
-
-    #if defined(__clang__)
-      #pragma clang diagnostic push
-      #pragma clang diagnostic ignored "-Wdocumentation"
-    #endif
-    /** @name Host signal calls
-      * \brief These functions signal back to the host via a global reduction
-      *   originating from each PE branch
-      * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of Solver to the host, e.g., inciter::CProxy_Transporter, given
-      *   by the template argument HostProxy. The signal functions are overloads
-      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
-      *   Solver template. They create Charm++ reduction targets via
-      *   creating a callback that invokes the typed reduction client, where
-      *   host is the proxy on which the reduction target method, given by the
-      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
-      *   upon completion of the reduction.
-      *
-      *   Note that we do not use Charm++'s CkReductionTarget macro here,
-      *   but instead explicitly generate the code that that macro would
-      *   generate. To explain why, here is Charm++'s CkReductionTarget macro's
-      *   definition, given in ckreduction.h:
-      *   \code{.cpp}
-      *      #define CkReductionTarget(me, method) \
-      *        CkIndex_##me::redn_wrapper_##method(NULL)
-      *   \endcode
-      *   This macro takes arguments 'me' (a class name) and 'method' a member
-      *   function of class 'me' and generates the call
-      *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
-      *   signal2* functions generate, we do the above macro's job for
-      *   Solver specialized by HostProxy, hard-coded here, as well its
-      *   reduction target. This is required since
-      *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
-      *      than type resolution and the string of the template argument would
-      *      be substituted instead of the type specialized (which is not what
-      *      we want here), and
-      *    * the template argument class, e.g, CProxy_Transporter, is in a
-      *      namespace different than that of Solver. When a new class is
-      *      used to specialize Solver, the compiler will alert that a new
-      *      overload needs to be defined.
-      *
-      * \note This simplifies client-code, e.g., inciter::Transporter, which now
-      *   requires no explicit book-keeping with counters, etc. Also a reduction
-      *   (instead of a direct call to the host) better utilizes the
-      *   communication network as computational nodes can send their aggregated
-      *   contribution to other nodes on a network instead of all chares sending
-      *   their (smaller) contributions to the same host, (hopefully)
-      *   implemented using a tree among the PEs.
-      * \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
-      *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
-      * */
-    ///@{
-    //! \brief Signal back to host that the initialization of the row indices of
-    //!   the linear system is complete
-    void signal2host_row_complete( const inciter::CProxy_Transporter& host ) {
-      using inciter::CkIndex_Transporter;
-      Group::contribute(
-        CkCallback( CkIndex_Transporter::redn_wrapper_rowcomplete(NULL), host ) );
-    }
-    //! \brief Signal back to host that enabling the SDAG waits for assembling
-    //!    the right-hand side is complete and ready for a new advance in time
-    void signal2host_computedt( const inciter::CProxy_Transporter& host ) {
-      using inciter::CkIndex_Transporter;
-      Group::contribute(
-       CkCallback( CkIndex_Transporter::redn_wrapper_computedt(NULL), host ) );
-    }
-    //! \brief Signal back to host that receiving the inverse PE-division map is
-    //!  complete and we are ready for Prformers to start their setup.
-    void signal2host_coord( const inciter::CProxy_Transporter& host ) {
-      using inciter::CkIndex_Transporter;
-      Group::contribute(
-       CkCallback( CkIndex_Transporter::redn_wrapper_coord(NULL), host ) );
-    }
-    //! Contribute diagnostics back to host
-    void signal2host_diag( const inciter::CProxy_Transporter& host,
-                           const std::vector< std::vector< tk::real > >& diag )
-    {
-      using inciter::CkIndex_Transporter;
       auto stream = tk::serialize( diag );
-      CkCallback cb( CkIndex_Transporter::diagnostics(nullptr), host );
-      Group::contribute( stream.first, stream.second.get(), DiagMerger, cb );
+      Group::contribute( stream.first, stream.second.get(), DiagMerger,
+                         m_cb.get< tag::diag >() );
     }
-    ///@}
-    #if defined(__clang__)
-      #pragma clang diagnostic pop
-    #endif
 };
 
 #if defined(__clang__)

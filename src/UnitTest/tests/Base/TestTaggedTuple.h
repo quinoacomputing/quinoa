@@ -45,7 +45,7 @@ template<> template<>
 void TaggedTuple_object::test< 1 >() {
   set_test_name( "const-ref accessors" );
 
-  // Defina a struct holding a record with const-ref accessors
+  // Define a struct holding a record with const-ref accessors
   struct A {
     A( const record& r ) : m_rec( r ) {}
     const std::string& getName() const { return m_rec.get< name >(); }

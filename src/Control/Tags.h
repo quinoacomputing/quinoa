@@ -155,6 +155,8 @@ struct material {};
 struct id {};
 struct cv {};
 struct k {};
+struct row {};
+struct coord {};
 
 struct BirthdaySpacings {};
 struct Collision {};

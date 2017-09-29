@@ -42,8 +42,7 @@
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
-extern template class tk::Solver< inciter::CProxy_Transporter,
-                                  inciter::CProxy_Carrier >;
+extern template class tk::Solver< inciter::CProxy_Carrier >;
 
 namespace inciter {
 

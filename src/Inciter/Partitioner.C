@@ -26,8 +26,7 @@
 template class inciter::Partitioner<
                  inciter::CProxy_Transporter,
                  inciter::CProxy_Carrier,
-                 tk::CProxy_Solver< inciter::CProxy_Transporter,
-                                    inciter::CProxy_Carrier > >;
+                 tk::CProxy_Solver< inciter::CProxy_Carrier > >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

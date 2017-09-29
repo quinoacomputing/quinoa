@@ -10,26 +10,21 @@
 
 module solver {
 
-  include "unordered_map";
-
-  extern module transporter;
-
   namespace tk {
 
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
     // Will specialize linear system solver for Transporter & Carrier
-    chare Solver< inciter::CProxy_Transporter, inciter::CProxy_Carrier >;
+    chare Solver< inciter::CProxy_Carrier >;
 
     // Solver is templated so that the same code (parameterized by the type
-    // given by the template arguments, HostProxy and WorkerProxy) can be
-    // generated for different types of proxies. Howver, all possible
-    // specializations must be listed above to ensure that Charm++ generates
-    // correct code.
-    template< class HostProxy, class WorkerProxy >
+    // given by the template argument, WorkerProxy, can be generated for
+    // different types of proxies. Howver, all possible specializations must be
+    // listed above to ensure that Charm++ generates correct code.
+    template< class WorkerProxy >
     group Solver {
-      entry Solver( const HostProxy& host,
+      entry Solver( const std::vector< CkCallback >& cb,
                     const WorkerProxy& worker,
                     const std::map< int,
                       std::vector< std::size_t > >& side,
@@ -182,7 +177,7 @@ module solver {
 
       entry void wait4row() {
         when row_complete() serial "row" {
-          signal2host_row_complete( m_host ); } };
+          Group::contribute( m_cb.get< tag::row >() ); } };
 
       entry void wait4lhsbc() {
         when lhs_complete(), bc_complete_lhs() serial "lhsbc" { lhsbc(); } };

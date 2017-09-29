@@ -20,8 +20,7 @@ module carrier {
     array [1D] Carrier {
       entry
         Carrier( const CProxy_Transporter& transporter,
-                 const tk::CProxy_Solver< CProxy_Transporter,
-                                          CProxy_Carrier >& solver,
+                 const tk::CProxy_Solver< CProxy_Carrier >& solver,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< int,
                          std::unordered_set< std::size_t > >& msum,

@@ -255,7 +255,7 @@ class Transporter : public CBase_Transporter {
     void verified() { m_print.diag( "AEC verified" ); }
 
   private:
-    using SolverProxy = tk::CProxy_Solver< CProxy_Transporter, CProxy_Carrier >;
+    using SolverProxy = tk::CProxy_Solver< CProxy_Carrier >;
     using CarrierProxy = CProxy_Carrier;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,
                                                  CarrierProxy,
