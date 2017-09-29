@@ -5,7 +5,7 @@
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
-    and the solution (unknown) vector from individual worker (e.g., Carrier)
+    and the solution (unknown) vector from individual worker (Carrier)
     chares. Beside collection and assembly, the system is also solved. The
     solution is outsourced to hypre, an MPI-only library. Once the solution is
     available, the individual worker chares are updated with the new solution.
@@ -184,7 +184,6 @@
 #include "TaggedTuple.h"
 
 #include "NoWarning/solver.decl.h"
-#include "NoWarning/transporter.decl.h"
 
 namespace tk {
 
@@ -204,7 +203,7 @@ extern CkReduction::reducerType DiagMerger;
 //!   group's elements are used to collect information from all chare objects
 //!   that happen to be on a given PE. See also the Charm++ interface file
 //!   solver.ci.
-template< class WorkerProxy  >
+template< class WorkerProxy >
 class Solver : public CBase_Solver< WorkerProxy > {
 
   #if defined(__clang__)
@@ -236,6 +235,7 @@ class Solver : public CBase_Solver< WorkerProxy > {
 
   public:
     //! Constructor
+    //! \param[in] cb Charm++ callbacks
     //! \param[in] worker Charm++ worker proxy
     //! \param[in] s Mesh node IDs mapped to side set ids
     //! \param[in] n Total number of scalar components in the linear system
@@ -752,7 +752,9 @@ class Solver : public CBase_Solver< WorkerProxy > {
           m_diagimport[ fromch ].push_back( gid[i] );
           updateDiag( gid[i], u[i], a[i], v[i] );
         } else
-          exp[ pe(gid[i]) ][ gid[i] ] = {{ u[i], a[i], {{v[i]}} }};
+          exp[ pe(gid[i]) ][ gid[i] ] = {{ u[i],
+                                           a[i],
+                                           std::vector<tk::real>(1,v[i]) }};
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -816,7 +818,7 @@ class Solver : public CBase_Solver< WorkerProxy > {
         tag::row,   CkCallback
       , tag::dt,    CkCallback
       , tag::coord, CkCallback
-      , tag::diag , CkCallback
+      , tag::diag,  CkCallback
     > m_cb;
     WorkerProxy m_worker;       //!< Worker proxy
     //! Global (as in file) mesh node IDs mapped to side set ids of the mesh

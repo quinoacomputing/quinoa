@@ -507,9 +507,9 @@ Carrier::bc()
     Assert( n.second.size() == m_u.nprop(), "Size of NodeBC vector incorrect" );
   }
 
-  // Send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chbcmatched();
+//   // Send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chbcmatched();
 
   // Send off list of owned node IDs mapped to side sets to Solver
   m_solver.ckLocalBranch()->charebc( dirbc );
@@ -537,9 +537,9 @@ Carrier::init()
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chic();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chic();
 
   // Compute left-hand side of PDE
   lhs();
@@ -598,9 +598,9 @@ Carrier::lhs()
   // Send off lumped mass lhs for assembly
   m_solver.ckLocalBranch()->charelowlhs( thisIndex, m_gid, lump );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chlhs();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chlhs();
 
   // Call back to Transporter::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
@@ -645,9 +645,9 @@ Carrier::rhs()
   // Send off mass diffusion rhs contribution for assembly
   m_solver.ckLocalBranch()->charelowrhs( thisIndex, m_gid, diff );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chrhs();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chrhs();
 }
 
 void
@@ -1342,9 +1342,9 @@ Carrier::apply()
   else
     m_u = m_u + m_du;
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chlim();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chlim();
 
   // Compute diagnostics, e.g., residuals
   diagnostics();

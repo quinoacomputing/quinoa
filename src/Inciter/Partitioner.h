@@ -73,8 +73,10 @@
 #include "Solver.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
-
 #include "AMR/mesh_adapter.h"
+
+#include "NoWarning/partitioner.decl.h"
+#include "NoWarning/transporter.decl.h"
 
 namespace inciter {
 
