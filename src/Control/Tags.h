@@ -157,6 +157,11 @@ struct cv {};
 struct k {};
 struct row {};
 struct coord {};
+struct distributed {};
+struct flattened {};
+struct load {};
+struct avecost {};
+struct stdcost {};
 
 struct BirthdaySpacings {};
 struct Collision {};

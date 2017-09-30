@@ -41,8 +41,7 @@ extern template class tk::Solver< inciter::CProxy_Carrier >;
 // Force the compiler to not instantiate the template below as it is
 // instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
 extern template class
-  inciter::Partitioner< inciter::CProxy_Transporter,
-                        inciter::CProxy_Carrier,
+  inciter::Partitioner< inciter::CProxy_Carrier,
                         tk::CProxy_Solver< inciter::CProxy_Carrier > >;
 
 extern CProxy_Main mainProxy;
@@ -201,20 +200,28 @@ Transporter::Transporter() :
     // Create linear system merger and solver chare group
     m_print.diag( "Creating linear system mergers" );
     // Create linear system merger and solver callbacks
-    std::vector< CkCallback > cb {{
-      CkCallback( CkReductionTarget(Transporter,rowcomplete), thisProxy )
+    std::vector< CkCallback > cbs {{
+        CkCallback( CkReductionTarget(Transporter,rowcomplete), thisProxy )
       , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
       , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
       , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
     }};
-    m_solver = SolverProxy::ckNew( cb, m_carrier, ss,
+    m_solver = SolverProxy::ckNew( cbs, m_carrier, ss,
                        g_inputdeck.get< tag::component >().nprop(),
                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier, m_solver );
+    std::vector< CkCallback > cbp {{
+        CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
+    }};
+    m_partitioner = PartitionerProxy::ckNew( cbp, thisProxy, m_carrier, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }

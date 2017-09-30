@@ -9,8 +9,6 @@
 
 module transporter {
 
-  extern module partitioner;
-
   namespace inciter {
 
     chare Transporter {
