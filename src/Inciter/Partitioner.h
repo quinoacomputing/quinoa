@@ -92,8 +92,8 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-template< class WorkerProxy, class SolverProxy >
-class Partitioner : public CBase_Partitioner< WorkerProxy, SolverProxy > {
+template< class WorkerProxy >
+class Partitioner : public CBase_Partitioner< WorkerProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -119,23 +119,23 @@ class Partitioner : public CBase_Partitioner< WorkerProxy, SolverProxy > {
   #endif
 
   private:
-    using Group = CBase_Partitioner< WorkerProxy, SolverProxy >;
+    using Group = CBase_Partitioner< WorkerProxy >;
 
   public:
     //! Constructor
     //! \param[in] cb Charm++ callbacks
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
-    //! \param[in] lsm Linear system solver proxy (required by the workers)
+    //! \param[in] solver Linear system solver proxy
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const WorkerProxy& worker,
-                 const SolverProxy& lsm ) :
+                 const tk::CProxy_Solver< WorkerProxy >& solver ) :
       __dep(),
       m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5] ),
       m_host( host ),
       m_worker( worker ),
-      m_solver( lsm ),
+      m_solver( solver ),
       m_npe( 0 ),
       m_reqNodes(),
       m_reqEdges(),
@@ -505,7 +505,7 @@ class Partitioner : public CBase_Partitioner< WorkerProxy, SolverProxy > {
     //! Worker proxy
     WorkerProxy m_worker;
     //! Linear system solver proxy
-    SolverProxy m_solver;
+    tk::CProxy_Solver< WorkerProxy > m_solver;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs

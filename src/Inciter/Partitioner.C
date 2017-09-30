@@ -21,9 +21,7 @@
 // to instantiate registration and delivery of code for the individual
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
-template class inciter::Partitioner<
-                 inciter::CProxy_Carrier,
-                 tk::CProxy_Solver< inciter::CProxy_Carrier > >;
+template class inciter::Partitioner< inciter::CProxy_Carrier >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

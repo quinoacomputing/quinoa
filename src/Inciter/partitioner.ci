@@ -18,15 +18,14 @@ module partitioner {
 
   namespace inciter {
 
-    chare Partitioner< CProxy_Carrier,
-                       tk::CProxy_Solver< CProxy_Carrier > >;
+    chare Partitioner< CProxy_Carrier >;
 
-    template< class WorkerProxy, class SolverProxy >
+    template< class WorkerProxy  >
     group Partitioner {
       entry Partitioner( const std::vector< CkCallback >& cb,
                          const CProxy_Transporter& host,
                          const WorkerProxy& worker,
-                         const SolverProxy& solver );
+                         const tk::CProxy_Solver< WorkerProxy >& solver );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

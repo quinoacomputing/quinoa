@@ -257,7 +257,7 @@ class Transporter : public CBase_Transporter {
   private:
     using SolverProxy = tk::CProxy_Solver< CProxy_Carrier >;
     using CarrierProxy = CProxy_Carrier;
-    using PartitionerProxy = CProxy_Partitioner< CarrierProxy, SolverProxy >;
+    using PartitionerProxy = CProxy_Partitioner< CarrierProxy >;
 
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
