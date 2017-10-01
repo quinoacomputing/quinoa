@@ -255,18 +255,15 @@ class Transporter : public CBase_Transporter {
     void verified() { m_print.diag( "AEC verified" ); }
 
   private:
-    using SolverProxy = tk::CProxy_Solver< CProxy_Carrier >;
-    using CarrierProxy = CProxy_Carrier;
-    using PartitionerProxy = CProxy_Partitioner< CarrierProxy >;
-
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
-    SolverProxy m_solver;                //!< Linear system solver group proxy
-    CarrierProxy m_carrier;              //!< Carrier chare array proxy
-    PartitionerProxy m_partitioner;      //!< Partitioner group proxy
+    //! Linear system solver group proxy
+    tk::CProxy_Solver< CProxy_Carrier > m_solver;
+    CProxy_Carrier m_carrier;            //!< Carrier chare array proxy
+    CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
      //! Total mesh volume

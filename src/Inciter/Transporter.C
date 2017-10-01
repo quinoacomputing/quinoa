@@ -38,10 +38,6 @@
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
 extern template class tk::Solver< inciter::CProxy_Carrier >;
 
-// Force the compiler to not instantiate the template below as it is
-// instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
-extern template class inciter::Partitioner< inciter::CProxy_Carrier >;
-
 extern CProxy_Main mainProxy;
 
 namespace inciter {
@@ -170,7 +166,7 @@ Transporter::Transporter() :
     diagHeader();
 
     // Create (empty) worker array
-    m_carrier = CarrierProxy::ckNew();
+    m_carrier = CProxy_Carrier::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
     // Solver, er.readSideSets() reads all side sets from file, which is a
@@ -204,9 +200,10 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
       , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
     }};
-    m_solver = SolverProxy::ckNew( cbs, m_carrier, ss,
-                       g_inputdeck.get< tag::component >().nprop(),
-                       g_inputdeck.get< tag::cmd, tag::feedback >() );
+    m_solver = tk::CProxy_Solver< CProxy_Carrier >::
+                 ckNew( cbs, m_carrier, ss,
+                        g_inputdeck.get< tag::component >().nprop(),
+                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
@@ -219,7 +216,8 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
       , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
     }};
-    m_partitioner = PartitionerProxy::ckNew( cbp, thisProxy, m_carrier, m_solver );
+    m_partitioner =
+      CProxy_Partitioner::ckNew( cbp, thisProxy, m_carrier, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }
