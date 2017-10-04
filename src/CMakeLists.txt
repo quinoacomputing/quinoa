@@ -512,7 +512,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
@@ -561,7 +560,6 @@ if (HAS_TESTU01)
   add_subdirectory(RNGTest)
 endif()
 add_subdirectory(Statistics)
-add_subdirectory(Particles)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.

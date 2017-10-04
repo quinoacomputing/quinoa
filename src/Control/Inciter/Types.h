@@ -17,6 +17,7 @@
 #include "Types.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
+#include "Inciter/Options/Scheme.h"
 #include "Inciter/Options/InitialAMR.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
@@ -34,7 +35,8 @@ using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
   tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
-  tag::initialamr,   tk::ctr::InitialAMRType            //!< Initial AMR type
+  tag::initialamr,   tk::ctr::InitialAMRType,        //!< Initial AMR type
+  tag::scheme,       inciter::ctr::SchemeType //!< Spatial discretization scheme
 >;
 
 //! Discretization parameters storage
@@ -44,6 +46,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::t0,     kw::t0::info::expect::type,    //!< Starting time
   tag::dt,     kw::dt::info::expect::type,    //!< Size of time step
   tag::cfl,    kw::cfl::info::expect::type,   //!< CFL coefficient
+  tag::fct,    bool,                          //!< FCT on/off
   tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
 >;
 

@@ -29,6 +29,7 @@
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "../Inciter/partitioner.def.h"

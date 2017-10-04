@@ -70,11 +70,12 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Options/PartitioningAlgorithm.h"
-#include "LinSysMerger.h"
+#include "Solver.h"
 #include "DerivedData.h"
 #include "UnsMesh.h"
-
 #include "AMR/mesh_adapter.h"
+
+#include "NoWarning/partitioner.decl.h"
 
 namespace inciter {
 
@@ -91,12 +92,7 @@ extern CkReduction::reducerType NodesMerger;
 //!   chare group. When instantiated, a new object is created on each PE and not
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
-template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-          class ParticleWriterProxy >
-class Partitioner : public CBase_Partitioner< HostProxy,
-                                              WorkerProxy,
-                                              LinSysMergerProxy,
-                                              ParticleWriterProxy > {
+class Partitioner : public CBase_Partitioner {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -121,25 +117,21 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     #pragma warning( pop )
   #endif
 
-  private:
-    using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
-                                     ParticleWriterProxy >;
-
   public:
     //! Constructor
+    //! \param[in] cb Charm++ callbacks
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
-    //! \param[in] lsm Linear system merger proxy (required by the workers)
-    //! \param[in] pw Particle writer proxy (required by the workers)
-    Partitioner( const HostProxy& host,
-                 const WorkerProxy& worker,
-                 const LinSysMergerProxy& lsm,
-                 const ParticleWriterProxy& pw ) :
+    //! \param[in] solver Linear system solver proxy
+    Partitioner( const std::vector< CkCallback >& cb,
+                 const CProxy_Transporter& host,
+                 const CProxy_Carrier& worker,
+                 const tk::CProxy_Solver< CProxy_Carrier >& solver ) :
       __dep(),
+      m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5] ),
       m_host( host ),
       m_worker( worker ),
-      m_linsysmerger( lsm ),
-      m_particlewriter( pw ),
+      m_solver( solver ),
       m_npe( 0 ),
       m_reqNodes(),
       m_reqEdges(),
@@ -179,7 +171,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
         computeCentroids( er );
       else
-        signal2host_setup_complete( m_host );
+        contribute( m_cb.get< tag::part >() );
     }
 
     //! Partition the computational mesh
@@ -193,8 +185,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                                  m_tetinpoel.size()/4,
                                                  nchare );
       // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.pepartitioned();
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.pepartitioned();
       Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
               "not equal the number of mesh graph elements" );
       // Construct global mesh node ids for each chare and distribute
@@ -281,11 +273,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         auto& inpoel = m_chinpoel[ c.first ];
         inpoel.insert( end(inpoel), begin(c.second), end(c.second) );
       }
-      Group::thisProxy[ frompe ].recv();
+      thisProxy[ frompe ].recv();
     }
 
     //! Acknowledge received node IDs
-    void recv() { if (--m_npe == 0) signal2host_distributed( m_host ); }
+    void recv() {
+      if (--m_npe == 0) contribute( m_cb.get< tag::distributed >() );
+    }
 
     //! Prepare owned mesh node IDs for reordering
     //! \details The 'flatten' is used here as a concatenation of a data
@@ -321,12 +315,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (const auto& c : m_chedgenodes)
         for (const auto& e : c.second)
           m_edgeset.insert( e.first );
-      // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.peflattened();
+//       // send progress report to host
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.peflattened();
       // Signal host that we are ready for computing the communication map,
       // required for parallel distributed global mesh node reordering
-      signal2host_flattened( m_host );
+      contribute( m_cb.get< tag::flattened >() );
     }
 
     //! Receive lower bound of node IDs our PE operates on after reordering
@@ -342,12 +336,15 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details Computing the standard deviation is done via computing and
     //!   summing up the variances on each PE and asynchronously reducing the
     //!   sum to our host.
-    void stdCost( tk::real av )
-    { signal2host_stdcost( m_host, (m_cost-av)*(m_cost-av) ); }
+    void stdCost( tk::real av ) {
+      tk::real var = (m_cost-av)*(m_cost-av);
+      contribute( sizeof(tk::real), &var, CkReduction::sum_double,
+                  m_cb.get< tag::stdcost >() );
+    }
 
     //! \brief Start gathering global node IDs this PE will need to receive
     //!   (instead of assign) during reordering
-    void gather() { Group::thisProxy.query( CkMyPe(), m_nodeset, m_edgeset ); }
+    void gather() { thisProxy.query( CkMyPe(), m_nodeset, m_edgeset ); }
 
     //! \brief Query our global node IDs and edges by other PEs so they know if
     //!   they are to receive IDs for those from during reordering
@@ -383,7 +380,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
           chares.insert( end(chares), begin(c), end(c) );
         }
       }
-      Group::thisProxy[ p ].mask( CkMyPe(), cn, ce );
+      thisProxy[ p ].mask( CkMyPe(), cn, ce );
     }
 
     //! Receive mask of to-be-received global mesh node IDs
@@ -479,25 +476,32 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         std::size_t nrecv = 0, erecv = 0;
         for (const auto& u : m_ncommunication) nrecv += u.second.size();
         for (const auto& e : m_ecommunication) erecv += e.second.size();
-        // send progress report to host
-        if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-          m_host.pemask();
+//         // send progress report to host
+//         if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//           m_host.pemask();
         // Compute number of mesh node IDs we will assign IDs to
         auto nuniq = m_nodeset.size() - nrecv + m_edgeset.size() - erecv;
         // Start computing PE offsets for node reordering
-        Group::thisProxy.offset( CkMyPe(), nuniq );
+        thisProxy.offset( CkMyPe(), nuniq );
       }
     }
 
   private:
+    //! Charm++ callbacks associated to compile-time tags
+    tk::tuple::tagged_tuple<
+        tag::part,        CkCallback
+      , tag::distributed, CkCallback
+      , tag::flattened,   CkCallback
+      , tag::load,        CkCallback
+      , tag::avecost,     CkCallback
+      , tag::stdcost,     CkCallback
+    > m_cb;
     //! Host proxy
-    HostProxy m_host;
+    CProxy_Transporter m_host;
     //! Worker proxy
-    WorkerProxy m_worker;
-    //! Linear system merger proxy
-    LinSysMergerProxy m_linsysmerger;
-    //! Particle writer proxy
-    ParticleWriterProxy m_particlewriter;
+    CProxy_Carrier m_worker;
+    //! Linear system solver proxy
+    tk::CProxy_Solver< CProxy_Carrier > m_solver;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -642,10 +646,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
       m_gelemid.resize( till-from );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
-      // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.pegraph();
-      signal2host_graph_complete( m_host, m_gelemid.size() );
+//       // send progress report to host
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.pegraph();
+      uint64_t nelem = m_gelemid.size();
+      contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+                  m_cb.get< tag::load >() );
     }
 
     // Compute element centroid coordinates
@@ -678,7 +684,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         cy[e] = (y[A] + y[B] + y[C] + y[D]) / 4.0;
         cz[e] = (z[A] + z[B] + z[C] + z[D]) / 4.0;
       }
-      signal2host_setup_complete( m_host );
+      Group::contribute( m_cb.get< tag::part >() );
     }
 
     //! Construct global mesh node ids for each chare
@@ -750,11 +756,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Export chare IDs and node IDs we do not own to fellow PEs
       m_npe = exp.size();
       for (const auto& p : exp)
-        Group::thisProxy[ p.first ].add( CkMyPe(), p.second );
-      // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.pedistributed();
-      if (m_npe == 0) signal2host_distributed( m_host );
+        thisProxy[ p.first ].add( CkMyPe(), p.second );
+//       // send progress report to host
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.pedistributed();
+      if (m_npe == 0) contribute( m_cb.get< tag::distributed >() );
     }
 
     //! Compute chare distribution
@@ -789,10 +795,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       if (CkNumPes() == 1) participated_complete();
       // Send out request for new global node IDs for nodes we do not reorder
       for (const auto& c : m_ncommunication)
-        Group::thisProxy[ c.first ].request( CkMyPe(), c.second );
+        thisProxy[ c.first ].request( CkMyPe(), c.second );
       // Send out request for new global node IDs for edges we do not reorder
       for (const auto& e : m_ecommunication)
-        Group::thisProxy[ e.first ].request( CkMyPe(), e.second );
+        thisProxy[ e.first ].request( CkMyPe(), e.second );
       // Lambda to decide if node ID is being assigned a new ID by us
       auto ownnode = [ this ]( std::size_t p ) {
         using Set = typename std::remove_reference<
@@ -854,7 +860,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (const auto& r : m_reqNodes) {
         std::unordered_map< std::size_t, std::size_t > n;
         for (auto p : r.second) n[ p ] = tk::cref_find( m_linnodes, p );
-        Group::thisProxy[ r.first ].neworder( n );
+        thisProxy[ r.first ].neworder( n );
         tk::destroy( n );
       }
       tk::destroy( m_reqNodes ); // Clear queue of requests just fulfilled
@@ -862,7 +868,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (const auto& r : m_reqEdges) {
         tk::UnsMesh::EdgeNodes n;
         for (const auto& e : r.second) n[ e ] = tk::cref_find( m_linedges, e );
-        Group::thisProxy[ r.first ].neworder( n );
+        thisProxy[ r.first ].neworder( n );
         tk::destroy( n );
       }
       tk::destroy( m_reqEdges ); // Clear queue of requests just fulfilled
@@ -1151,9 +1157,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         for (auto i : c.second)
           m_nodeset.insert( i );
 
-      // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.pereordered();
+//       // send progress report to host
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.pereordered();
       // Compute lower and upper bounds of reordered node IDs our PE operates on
       bounds();
     }
@@ -1186,9 +1192,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
       // The bounds are the dividers (global mesh point indices) at which the
       // linear system assembly is divided among PEs. However, Hypre and thus
-      // LinSysMerger expect exclusive upper indices, so we increase the last
-      // one by one here. Note that the cost calculation, Partitioner::cost()
-      // also expects exclusive upper indices.
+      // Solver expect exclusive upper indices, so we increase the last one by
+      // one here. Note that the cost calculation, Partitioner::cost() also
+      // expects exclusive upper indices.
       if (CkMyPe() == CkNumPes()-1) ++m_upper;
       // Tell the runtime system that the upper bound has been computed
       upper_complete();
@@ -1197,7 +1203,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // All PEs except the last one send their upper indices as the lower index
       // for PE+1
       if (CkMyPe() < CkNumPes()-1)
-        Group::thisProxy[ CkMyPe()+1 ].lower( m_upper );
+        thisProxy[ CkMyPe()+1 ].lower( m_upper );
     }
 
     //! \brief Create chare array elements on this PE and assign the global mesh
@@ -1208,16 +1214,18 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   connectivity, i.e., node IDs, it contributes to and the old->new node
     //!   ID map.
     void create() {
-      // send progress report to host
-      if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-        m_host.pebounds();
+//       // send progress report to host
+//       if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//         m_host.pebounds();
       // Initiate asynchronous reduction across all Partitioner objects
       // computing the average communication cost of merging the linear system
-      signal2host_avecost( m_host );
+      m_cost = cost( m_lower, m_upper );
+      contribute( sizeof(tk::real), &m_cost, CkReduction::sum_double,
+                  m_cb.get< tag::avecost >() );
       // Create worker chare array elements
       createWorkers( chareDistribution() );
-      // Broadcast our bounds of global node IDs to all linear system mergers
-      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
+      // Broadcast our bounds of global node IDs to all linear system solvers
+      m_solver.bounds( CkMyPe(), m_lower, m_upper );
     }
 
     //! Create chare array elements on this PE
@@ -1235,8 +1243,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
         // Create worker array element
         m_worker[ cid ].insert( m_host,
-                                m_linsysmerger,
-                                m_particlewriter,
+                                m_solver,
                                 tk::cref_find( m_chinpoel, cid ),
                                 msum,
                                 tk::cref_find( m_chfilenodes, cid ),
@@ -1287,116 +1294,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       return static_cast<tk::real>(compts) /
              static_cast<tk::real>(ownpts + compts);
     }
-
-    #if defined(__clang__)
-      #pragma clang diagnostic push
-      #pragma clang diagnostic ignored "-Wdocumentation"
-    #endif
-    /** @name Host signal calls
-      * \brief These functions signal back to the host via a global reduction
-      *   originating from each PE branch
-      * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
-      *   by the template argument HostProxy. The signal functions are overloads
-      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
-      *   LinSysMerger template. They create Charm++ reduction targets via
-      *   creating a callback that invokes the typed reduction client, where
-      *   host is the proxy on which the reduction target method, given by the
-      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
-      *   upon completion of the reduction.
-      *
-      *   Note that we do not use Charm++'s CkReductionTarget macro here,
-      *   but instead explicitly generate the code that that macro would
-      *   generate. To explain why, here is Charm++'s CkReductionTarget macro's
-      *   definition, given in ckreduction.h:
-      *   \code{.cpp}
-      *      #define CkReductionTarget(me, method) \
-      *        CkIndex_##me::redn_wrapper_##method(NULL)
-      *   \endcode
-      *   This macro takes arguments 'me' (a class name) and 'method' a member
-      *   function of class 'me' and generates the call
-      *   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With the overloads the
-      *   signal2* functions generate, we do the above macro's job for
-      *   LinSysMerger specialized by HostProxy, hard-coded here, as well its
-      *   reduction target. This is required since
-      *    * Charm++'s CkReductionTarget macro's preprocessing happens earlier
-      *      than type resolution and the string of the template argument would
-      *      be substituted instead of the type specialized (which is not what
-      *      we want here), and
-      *    * the template argument class, e.g, CProxy_Transporter, is in a
-      *      namespace different than that of LinSysMerger. When a new class is
-      *      used to specialize LinSysMerger, the compiler will alert that a new
-      *      overload needs to be defined.
-      *
-      * \note This simplifies client-code, e.g., inciter::Transporter, which now
-      *   requires no explicit book-keeping with counters, etc. Also a reduction
-      *   (instead of a direct call to the host) better utilizes the
-      *   communication network as computational nodes can send their aggregated
-      *   contribution to other nodes on a network instead of all chares sending
-      *   their (smaller) contributions to the same host, (hopefully)
-      *   implemented using a tree among the PEs.
-      * \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
-      *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
-      * */
-    ///@{
-    //! \brief Signal back to host that we have done our part of reading the
-    //!   mesh graph
-    //! \param[in] host Host to signal to
-    //! \param[in] nelem Nunmber of elements in mesh graph contributed
-    //! \details Signaling back is done via a Charm++ typed reduction, which
-    //!   also computes the sum of the number of mesh cells our PE operates on.
-    void signal2host_graph_complete( const CProxy_Transporter& host,
-                                     uint64_t nelem ) {
-      Group::contribute(sizeof(uint64_t), &nelem, CkReduction::sum_int,
-                        CkCallback(CkReductionTarget(Transporter,load), host));
-    }
-    //! Compute average communication cost of merging the linear system
-    //! \param[in] host Host to signal to
-    //! \details This is done via a Charm++ typed reduction, adding up the cost
-    //!   across all PEs and reducing the result to our host chare.
-    void signal2host_avecost( const CProxy_Transporter& host ) {
-      m_cost = cost( m_lower, m_upper );
-      Group::contribute( sizeof(tk::real), &m_cost, CkReduction::sum_double,
-                         CkCallback( CkReductionTarget(Transporter,aveCost),
-                         host ));
-    }
-    //! \brief Compute standard deviation of the communication cost of merging
-    //!   the linear system
-    //! \param[in] host Host to signal to
-    //! \param[in] var Square of the communication cost minus the average for
-    //!   our PE.
-    //! \details This is done via a Charm++ typed reduction, adding up the
-    //!   squares of the communication cost minus the average across all PEs and
-    //!   reducing the result to our host chare.
-    void signal2host_stdcost( const CProxy_Transporter& host, tk::real var ) {
-      Group::contribute( sizeof(tk::real), &var, CkReduction::sum_double,
-                         CkCallback( CkReductionTarget(Transporter,stdCost),
-                         host ));
-    }
-    //! Signal back to host that we are ready for partitioning the mesh
-    //! \param[in] host Host to signal to
-    void signal2host_setup_complete( const CProxy_Transporter& host ) {
-      Group::contribute(
-        CkCallback(CkIndex_Transporter::redn_wrapper_part(NULL), host ));
-    }
-    //! \brief Signal host that we are done our part of distributing mesh node
-    //!   IDs and we are ready for preparing (flattening) data for reordering
-    //! \param[in] host Host to signal to
-    void signal2host_distributed( const CProxy_Transporter& host ) {
-      Group::contribute(
-        CkCallback(CkIndex_Transporter::redn_wrapper_distributed(NULL), host ));
-    }
-    //! \brief Signal host that we are ready for computing the communication
-    //!   map, required for parallel distributed global mesh node reordering
-    //! \param[in] host Host to signal to
-    void signal2host_flattened( const CProxy_Transporter& host ) {
-      Group::contribute(
-        CkCallback(CkIndex_Transporter::redn_wrapper_flattened(NULL), host ));
-    }
-    ///@}
-    #if defined(__clang__)
-      #pragma clang diagnostic pop
-    #endif
 };
 
 #if defined(__clang__)
@@ -1404,9 +1301,5 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 #endif
 
 } // inciter::
-
-#define CK_TEMPLATES_ONLY
-#include "NoWarning/partitioner.def.h"
-#undef CK_TEMPLATES_ONLY
 
 #endif // Partitioner_h

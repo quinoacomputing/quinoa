@@ -12,6 +12,15 @@ add_regression_test(shear_centered_diffonly ${INCITER_EXECUTABLE}
                     BIN_RESULT out.0
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
+add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES shear_diffonly_nofct.q shear_centered_12k.exo
+                               exodiff.cfg shear_centered_diffonly_nofct.std.exo
+                    ARGS -c shear_diffonly_nofct.q -i shear_centered_12k.exo -v
+                    BIN_BASELINE shear_centered_diffonly_nofct.std.exo
+                    BIN_RESULT out.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg)
+
 add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES shear_advdiff.q shear_centered_12k.exo

@@ -10,27 +10,19 @@
 
 module partitioner {
 
-  include "unordered_set";
-  include "unordered_map";
   include "Types.h";
   include "UnsMesh.h";
 
+  extern module transporter;
+  extern module carrier;
+
   namespace inciter {
 
-    chare Partitioner< CProxy_Transporter,
-                       CProxy_Carrier,
-                       tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                CProxy_Carrier,
-                                                AuxSolverLumpMassDiff >,
-                       tk::CProxy_ParticleWriter< CProxy_Transporter > >;
-
-    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-              class ParticleWriterProxy >
     group Partitioner {
-      entry Partitioner( const HostProxy& host,
-                         const WorkerProxy& worker,
-                         const LinSysMergerProxy& lsm,
-                         const ParticleWriterProxy& pw );
+      entry Partitioner( const std::vector< CkCallback >& cb,
+                         const CProxy_Transporter& host,
+                         const CProxy_Carrier& worker,
+                         const tk::CProxy_Solver< CProxy_Carrier >& solver );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

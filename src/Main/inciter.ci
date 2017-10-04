@@ -12,6 +12,7 @@
 mainmodule inciter {
 
   extern module carrier;
+  extern module partitioner;
 
   readonly CProxy_Main mainProxy;
 

@@ -70,9 +70,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
                       MeshIO
-                      AsyncIO
                       Mesh
-                      Particles
                       Statistics
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}

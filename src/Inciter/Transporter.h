@@ -29,8 +29,7 @@
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Carrier::diagnostics"];
       Out [ label="Out"
-              tooltip="particles output to file"
-              URL="\ref inciter::Carrier::doWriteParticles"];
+              tooltip="fields output to file"];
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
@@ -88,7 +87,6 @@
 #include "InciterPrint.h"
 #include "Partitioner.h"
 #include "VectorReducer.h"
-#include "ParticleWriter.h"
 #include "Progress.h"
 
 #include "NoWarning/carrier.decl.h"
@@ -197,7 +195,7 @@ class Transporter : public CBase_Transporter {
     //! Non-reduction target for receiving progress report on tracking particles
     void chtrack() { m_progStep.inc<3>(); }
 
-    //! \brief Reduction target indicating that all linear system merger
+    //! \brief Reduction target indicating that all linear system solver
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
@@ -232,13 +230,6 @@ class Transporter : public CBase_Transporter {
     //!   finished their initialization step
     void initcomplete();
 
-    //! Reduction target indicating the particle communication is complete
-    void parcomcomplete() { m_carrier.out(); }
-
-    //! \brief Reduction target indicating that all workers have sent their
-    //!   number of particles to be output
-    void nparcomplete() { m_carrier.doWriteParticles(); }
-
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
     void diagnostics( CkReductionMsg* msg );
@@ -253,7 +244,7 @@ class Transporter : public CBase_Transporter {
     //!   all carrier chares have finished communicating particles
     void outcomplete() { out_complete(); }
 
-    //! \brief Reduction target indicating that the linear system mergers are
+    //! \brief Reduction target indicating that the linear system solvers are
     //!   ready for the next time step
     void computedt() { m_carrier.dt(); }
 
@@ -264,25 +255,15 @@ class Transporter : public CBase_Transporter {
     void verified() { m_print.diag( "AEC verified" ); }
 
   private:
-    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Carrier,
-                                                       AuxSolverLumpMassDiff >;
-    using CarrierProxy = CProxy_Carrier;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
-    using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,
-                                                 CarrierProxy,
-                                                 LinSysMergerProxy,
-                                                 ParticleWriterProxy >;
-
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of carrier chares
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
-    LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
-    CarrierProxy m_carrier;              //!< Carrier chare array proxy
-    ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
-    PartitionerProxy m_partitioner;      //!< Partitioner group proxy
+    //! Linear system solver group proxy
+    tk::CProxy_Solver< CProxy_Carrier > m_solver;
+    CProxy_Carrier m_carrier;            //!< Carrier chare array proxy
+    CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
      //! Total mesh volume
@@ -299,7 +280,7 @@ class Transporter : public CBase_Transporter {
     enum class TimerTag { TIMESTEP, MESHREAD };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-    //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger
+    //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
     //! Diagnostics

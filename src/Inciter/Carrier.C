@@ -2,11 +2,17 @@
 /*!
   \file      src/Inciter/Carrier.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Carrier advances a system of transport equations
-  \details   Carrier advances a system of transport equations. There are a
-    potentially large number of Carrier Charm++ chares created by Transporter.
-    Each carrier gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances a PDE in time.
+  \brief     Carrier advances a system of transport equations using CG+LW+FCT
+  \details   Carrier advances a system of transport equations using continuous
+    Galerkin (CG) finite elements with linear shapefunctions for spatial
+    discretization combined with a time stepping discretization that is
+    equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
+    finite element context and treats discontinuities with flux-corrected
+    transport (FCT).
+
+    There are a potentially large number of Carrier Charm++ chares created by
+    Transporter.  Each carrier gets a chunk of the full load (part of the mesh)
+    and does the same: initializes and advances a number of PDE systems in time.
 */
 // *****************************************************************************
 
@@ -18,7 +24,7 @@
 
 #include "QuinoaConfig.h"
 #include "Carrier.h"
-#include "LinSysMerger.h"
+#include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -29,17 +35,14 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
-#include "Tracker.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
 #endif
 
 // Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier,
-                                        inciter::AuxSolverLumpMassDiff >;
+// instantiated in LinSys/Solver.C (only seems to be required on mac)
+extern template class tk::Solver< inciter::CProxy_Carrier >;
 
 namespace inciter {
 
@@ -63,8 +66,7 @@ CkReduction::reducerType PDFMerger;
 using inciter::Carrier;
 
 Carrier::Carrier( const TransporterProxy& transporter,
-                  const LinSysMergerProxy& lsm,
-                  const ParticleWriterProxy& pw,
+                  const SolverProxy& solver,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
                           std::unordered_set< std::size_t > >& msum,
@@ -94,8 +96,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                  #endif
                 ),
   m_transporter( transporter ),
-  m_linsysmerger( lsm ),
-  m_particlewriter( pw ),
+  m_solver( solver ),
   m_filenodes( filenodes ),
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
@@ -117,13 +118,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_bid(),
   m_pc(),
   m_qc(),
-  m_ac(),                                               // 0 = no particles
-  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
+  m_ac()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
-//! \param[in] lsm Linear system merger (LinSysMerger) proxy
-//! \param[in] pw Particle writer proxy
+//! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
 //!   mesh chunk we operate on
@@ -137,11 +136,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
 //!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by LinSysMerger objects. This
-//!   ordering is in start contrast with "as-in-file" ordering, which is the
-//!   ordering of the mesh nodes as it is stored in the file from which the mesh
-//!   is read in. The as-in-file ordering is highly non-contiguous across the
-//!   distributed problem.
+//!   problem is distirbuted across PEs, held by Solver objects. This ordering
+//!   is in start contrast with "as-in-file" ordering, which is the ordering of
+//!   the mesh nodes as it is stored in the file from which the mesh is read in.
+//!   The as-in-file ordering is highly non-contiguous across the distributed
+//!   problem.
 // *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
@@ -153,8 +152,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
     v.insert( end(v), begin(n.second), end(n.second) );
   }
 
-  // Register ourselves with the linear system merger
-  m_linsysmerger.ckLocalBranch()->checkin();
+  // Register ourselves with the linear system solver
+  m_solver.ckLocalBranch()->checkin();
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
@@ -185,8 +184,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
     linnodes[ i.second ] = n;
   }
 
-  // Access all side sets and their old node IDs (as in file) from LinSysMerger
-  auto& oldside = m_linsysmerger.ckLocalBranch()->side();
+  // Access all side sets and their old node IDs (as in file) from Solver
+  auto& oldside = m_solver.ckLocalBranch()->side();
 
   // Create map that assigns the local mesh node IDs mapped to side set ids,
   // storing only those nodes for a given side set that are part of our chunk of
@@ -400,7 +399,7 @@ Carrier::stat()
 void
 Carrier::setup( tk::real v )
 // *****************************************************************************
-// Setup rows, query boundary conditions, generate particles, output mesh, etc.
+// Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
@@ -408,10 +407,8 @@ Carrier::setup( tk::real v )
   m_V = v;
   // Output chare mesh to file
   writeMesh();
-  // Send off global row IDs to linear system merger
-  m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
-  // Generate particles
-  m_tracker.genpar( m_coord, m_inpoel, m_ncarr, thisIndex );
+  // Send off global row IDs to linear system solver
+  m_solver.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Output fields metadata to output file
   writeMeta();
 }
@@ -427,13 +424,13 @@ Carrier::bc()
 //!   values from all PDEs in the system of PDEs integrated at the node lists
 //!   associated to side set IDs (previously read from file). As a response to
 //!   this query, each PDE system returns a BC data structure which is then
-//!   sent to the linear system merger which needs to know about this to apply
+//!   sent to the linear system solver which needs to know about this to apply
 //!   BCs before a linear solve. Note that the BC mesh nodes that this function
-//!   results in, stored in dirbc and sent to the linear system merger, only
+//!   results in, stored in dirbc and sent to the linear system solver, only
 //!   contains those nodes that this chare contributes to, i.e., it does not
 //!   contain those BC nodes at which other chares enforce Dirichlet BCs. The
-//!   linear system merger then collects these and communicates to other PEs so
-//!   that BC data held in LinSysMerger::m_bc are the same on all PEs. That is
+//!   linear system solver then collects these and communicates to other PEs so
+//!   that BC data held in Solver::m_bc are the same on all PEs. That is
 // *****************************************************************************
 {
   // Vector of pairs of bool and boundary condition value associated to mesh
@@ -503,19 +500,19 @@ Carrier::bc()
 
   // Verify the size of each NodeBC vectors. They must have the same lengths and
   // equal to the total number of scalar components for all systems of PDEs
-  // integrated. This is intentional, because this way the linear system merger
+  // integrated. This is intentional, because this way the linear system solver
   // does not have to (and does not) know about individual equation systems.
   for (const auto& n : dirbc) {
     IGNORE(n);
     Assert( n.second.size() == m_u.nprop(), "Size of NodeBC vector incorrect" );
   }
 
-  // Send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chbcmatched();
+//   // Send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chbcmatched();
 
-  // Send off list of owned node IDs mapped to side sets to LinSysMerger
-  m_linsysmerger.ckLocalBranch()->charebc( dirbc );
+  // Send off list of owned node IDs mapped to side sets to Solver
+  m_solver.ckLocalBranch()->charebc( dirbc );
 }
 
 void
@@ -529,7 +526,7 @@ Carrier::init()
   m_du.fill( 0.0 );
 
   // Send off initial guess for assembly
-  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
+  m_solver.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
@@ -540,9 +537,9 @@ Carrier::init()
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chic();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chic();
 
   // Compute left-hand side of PDE
   lhs();
@@ -594,17 +591,16 @@ Carrier::lhs()
     eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
-  m_linsysmerger.ckLocalBranch()->
-    charelhs( thisIndex, m_gid, m_psup, m_lhsd, m_lhso );
+  m_solver.ckLocalBranch()->charelhs(thisIndex, m_gid, m_psup, m_lhsd, m_lhso);
 
   // Compute lumped mass lhs required for the low order solution
   auto lump = m_fluxcorrector.lump( m_coord, m_inpoel );
   // Send off lumped mass lhs for assembly
-  m_linsysmerger.ckLocalBranch()->chareauxlhs( thisIndex, m_gid, lump );
+  m_solver.ckLocalBranch()->charelowlhs( thisIndex, m_gid, lump );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chlhs();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chlhs();
 
   // Call back to Transporter::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
@@ -639,19 +635,19 @@ Carrier::rhs()
   tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
   for (const auto& eq : g_pdes)
     eq.rhs( m_t, m_dt, m_coord, m_inpoel, m_u, m_ue, r );
-  // Query Dirichlet BCs and send to linear system merger
+  // Query Dirichlet BCs and send to linear system solver
   bc();
   // Send off right-hand sides for assembly
-  m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
+  m_solver.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
   auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_u );
   // Send off mass diffusion rhs contribution for assembly
-  m_linsysmerger.ckLocalBranch()->chareauxrhs( thisIndex, m_gid, diff );
+  m_solver.ckLocalBranch()->charelowrhs( thisIndex, m_gid, diff );
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chrhs();
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chrhs();
 }
 
 void
@@ -884,16 +880,6 @@ Carrier::writeFields( tk::real time )
 }
 
 void
-Carrier::doWriteParticles()
-// *****************************************************************************
-// Output particles fields to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
-    m_tracker.doWriteParticles( m_particlewriter, m_it, m_ncarr );
-}
-
-void
 Carrier::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
@@ -905,7 +891,7 @@ Carrier::aec()
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  auto& dbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  auto& dbc = m_solver.ckLocalBranch()->dirbc();
   m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, m_u, m_p );
 
   if (m_msum.empty())
@@ -1126,8 +1112,15 @@ Carrier::out()
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
     writeFields( m_t+m_dt );
-    //m_tracker.writeParticles( m_transporter, m_particlewriter, this );
-  } //else
+  }
+
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
+       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+    writeFields( m_t+m_dt );
 
   contribute(
      CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
@@ -1214,8 +1207,8 @@ Carrier::diagnostics()
 // *****************************************************************************
 {
   // Optionally: collect analytical solutions and send both the latest
-  // analytical and numerical solutions to LinSysMerger for computing and
-  // outputing diagnostics
+  // analytical and numerical solutions to Solver for computing and outputing
+  // diagnostics
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::diag >()) ) {
 
     // Collect analytical solutions (if available) from all PDEs. Note that
@@ -1238,26 +1231,24 @@ Carrier::diagnostics()
     for (const auto& eq : g_pdes)
       eq.initialize( m_coord, a, m_t+m_dt, m_gid );
 
-    // Prepare for computing diagnostics. Diagnostics are defined as the L2
-    // norm of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[
-    // sum_i ( A_i )^2 V_i ], where the sum is taken over all mesh nodes and
-    // V_i is the nodal volume. We send two sets of quantities to the host for
-    // aggregation across the whole mesh: (1) the numerical solutions of all
-    // components of all PDEs, and their error, defined as A_i = (a_i - n_i),
-    // where a_i and n_i are the analytical and numerical solutions at node i,
-    // respectively. We send these to LinSysMerger and the final aggregated
-    // solution will end up in Transporter::diagnostics(). Note that we
-    // weigh/multiply all data here by sqrt(V_i), so that the nodal volumes do
-    // not have to be communicated separately. In LinSysMerger::diagnostics(),
-    // where we collect all contributions from chares on a PE, all data is
-    // squared. LinSysMerger::diagnostics() is where the sums are computed,
-    // then the sums are summed accross the whole problem in
-    // Transporter::diagnostics(), where the final square-root of the L2 norm,
-    // defined above, is taken.
+    // Prepare for computing diagnostics. Diagnostics are defined as the L2 norm
+    // of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[ sum_i (
+    // A_i )^2 V_i ], where the sum is taken over all mesh nodes and V_i is the
+    // nodal volume. We send two sets of quantities to the host for aggregation
+    // across the whole mesh: (1) the numerical solutions of all components of
+    // all PDEs, and their error, defined as A_i = (a_i - n_i), where a_i and
+    // n_i are the analytical and numerical solutions at node i, respectively.
+    // We send these to Solver and the final aggregated solution will end up in
+    // Transporter::diagnostics(). Note that we weigh/multiply all data here by
+    // sqrt(V_i), so that the nodal volumes do not have to be communicated
+    // separately. In Solver::diagnostics(), where we collect all contributions
+    // from chares on a PE, all data is squared. Solver::diagnostics() is where
+    // the sums are computed, then the sums are summed accross the whole problem
+    // in Transporter::diagnostics(), where the final square-root of the L2
+    // norm, defined above, is taken.
 
-    // Send both numerical and analytical solutions to linsysmerger
-    m_linsysmerger.ckLocalBranch()->
-      charediag( thisIndex, m_gid, m_u, a, m_v );
+    // Send both numerical and analytical solutions to solver
+    m_solver.ckLocalBranch()->charediag( thisIndex, m_gid, m_u, a, m_v );
 
   } else
     contribute(
@@ -1295,7 +1286,7 @@ Carrier::correctBC()
 //!   nodes
 // *****************************************************************************
 {
-  auto& dirbc = m_linsysmerger.ckLocalBranch()->dirbc();
+  auto& dirbc = m_solver.ckLocalBranch()->dirbc();
 
   if (dirbc.empty()) return true;
 
@@ -1346,27 +1337,20 @@ Carrier::apply()
   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
-  m_u = m_ul + m_a;
-  //m_u = m_u + m_du; // no FCT
+  if (g_inputdeck.get< tag::discr, tag::fct >())
+    m_u = m_ul + m_a;
+  else
+    m_u = m_u + m_du;
 
-  // send progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_transporter.chlim();
-
-  // Advance particles
-  m_tracker.track( m_transporter, thisProxy, m_coord, m_inpoel, m_msum,
-                   thisIndex, this, m_dt );
+//   // send progress report to host
+//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+//     m_transporter.chlim();
 
   // Compute diagnostics, e.g., residuals
   diagnostics();
 
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-    writeFields( m_t+m_dt );
+  // Output field data to file
+  out();
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.

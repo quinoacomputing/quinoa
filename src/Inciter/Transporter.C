@@ -35,21 +35,8 @@
 #include "NoWarning/partitioner.decl.h"
 
 // Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier,
-                                        inciter::AuxSolverLumpMassDiff >;
-
-// Force the compiler to not instantiate the template below as it is
-// instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
-extern template class
-  inciter::Partitioner<
-    inciter::CProxy_Transporter,
-    inciter::CProxy_Carrier,
-    tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                             inciter::CProxy_Carrier,
-                             inciter::AuxSolverLumpMassDiff >,
-    tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
+// instantiated in LinSys/Solver.C (only seems to be required on mac)
+extern template class tk::Solver< inciter::CProxy_Carrier >;
 
 extern CProxy_Main mainProxy;
 
@@ -69,9 +56,8 @@ Transporter::Transporter() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_linsysmerger(),
+  m_solver(),
   m_carrier(),
-  m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -123,13 +109,21 @@ Transporter::Transporter() :
   // Print out info on settings of selected partial differential equations
   m_print.pdes( "Partial differential equations integrated", stack.info() );
 
-  // Print discretization parameters
-  m_print.section( "Discretization parameters" );
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
+  m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG) {
+    m_print.item( "Flux-corrected transport (FCT)",
+                  g_inputdeck.get< tag::discr, tag::fct >() );
+    m_print.item( "FCT mass diffusion coeff",
+                  g_inputdeck.get< tag::discr, tag::ctau >() );
+  }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
@@ -140,9 +134,6 @@ Transporter::Transporter() :
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
-
-  m_print.item( "Mass diffusion coeff",
-                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
@@ -175,12 +166,12 @@ Transporter::Transporter() :
     diagHeader();
 
     // Create (empty) worker array
-    m_carrier = CarrierProxy::ckNew();
+    m_carrier = CProxy_Carrier::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
-    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
-    // a serial read, then send the same copy to all PEs. Carriers then will
-    // query the side sets from their local LinSysMerger branch.
+    // Solver, er.readSideSets() reads all side sets from file, which is a
+    // serial read, then send the same copy to all PEs. Carriers then will query
+    // the side sets from their local Solver branch.
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
@@ -200,30 +191,33 @@ Transporter::Transporter() :
         break;
       }
 
-    // Create linear system merger chare group
+    // Create linear system merger and solver chare group
     m_print.diag( "Creating linear system mergers" );
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
-                       g_inputdeck.get< tag::component >().nprop(),
-                       g_inputdeck.get< tag::cmd, tag::feedback >() );
-
-    // Create particle writer Charm++ chare group. Note that by passing an empty
-    // filename argument to the constructor, we tell the writer not to open a
-    // file and not to perform I/O. To enable particle I/O, put in the filename
-    // argument, commented out, instead of the empty string, and change the
-    // number of particles (the constructor argument to m_particles) in the
-    // initializer list of Carrier::Carrier(). This is basically a punt to
-    // enable skipping H5Part I/O. Particles are a highly experimental feature
-    // at this point.
-    m_print.diag( "Creating particle writers" );
-    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
-                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    // Create linear system merger and solver callbacks
+    std::vector< CkCallback > cbs {{
+        CkCallback( CkReductionTarget(Transporter,rowcomplete), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+      , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
+    }};
+    m_solver = tk::CProxy_Solver< CProxy_Carrier >::
+                 ckNew( cbs, m_carrier, ss,
+                        g_inputdeck.get< tag::component >().nprop(),
+                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
-                                             m_linsysmerger,
-                                             m_particlewriter );
+    std::vector< CkCallback > cbp {{
+        CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
+    }};
+    m_partitioner =
+      CProxy_Partitioner::ckNew( cbp, thisProxy, m_carrier, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -560,7 +554,7 @@ Transporter::rowcomplete()
   m_progInit.start( "Setting and outputting ICs, computing initial dt, "
                     "computing LHS ...",
                     {{ CkNumPes(), m_nchare, m_nchare }} );
-  m_linsysmerger.rowsreceived();
+  m_solver.rowsreceived();
   m_carrier.init();
 }
 
@@ -761,7 +755,7 @@ Transporter::evaluateTime()
   // all linear system merger group elements to prepare for a new rhs),
   // otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
-    m_linsysmerger.enable_wait4rhs();
+    m_solver.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
       m_progStep.start( "Time step ..." );
   } else
