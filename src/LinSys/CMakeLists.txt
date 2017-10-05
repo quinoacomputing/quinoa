@@ -23,10 +23,10 @@ add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 # processed, as Solver is specialized on CProxy_Transporter.
 add_dependencies( "solverCharmModule" "transporterCharmModule" )
 
-# Add extra dependency of Solver charm module on Carrier charm module.  This is
-# required to make sure carrier.decl.h is generated before solver.ci is
-# processed, as Solver is specialized on CProxy_Carrier.
-add_dependencies( "solverCharmModule" "carrierCharmModule" )
+# Add extra dependency of Solver charm module on CG charm module.  This is
+# required to make sure cg.decl.h is generated before solver.ci is processed, as
+# Solver is specialized on CProxy_CG.
+add_dependencies( "solverCharmModule" "cgCharmModule" )
 
 set_target_properties(LinSys PROPERTIES LIBRARY_OUTPUT_NAME quinoa_linsys)
 

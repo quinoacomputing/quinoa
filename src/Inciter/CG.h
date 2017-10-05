@@ -1,24 +1,24 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Carrier.h
+  \file      src/Inciter/CG.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Carrier advances a system of transport equations using CG+LW+FCT
-  \details   Carrier advances a system of transport equations using continuous
+  \brief     CG advances a system of transport equations using CG+LW+FCT
+  \details   CG advances a system of transport equations using continuous
     Galerkin (CG) finite elements with linear shapefunctions for spatial
     discretization combined with a time stepping discretization that is
     equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
     finite element context and treats discontinuities with flux-corrected
     transport (FCT).
 
-    There are a potentially large number of Carrier Charm++ chares created by
-    Transporter.  Each carrier gets a chunk of the full load (part of the mesh)
+    There are a potentially large number of CG Charm++ chares created by
+    Transporter.  Each CG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/carrier.ci.
+    discussed in the Charm++ interface file src/Inciter/cg.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
@@ -29,39 +29,39 @@
     to global reductions. Dashed lines are potential shortcuts that allow
     jumping over some of the task-graph under some circumstances or optional
     code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    carrier.ci.
+    cg.ci.
     \dot
-    digraph "Carrier SDAG" {
+    digraph "CG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       OwnAEC [ label="OwnAEC"
                tooltip="own contributions to the antidiffusive element
                         contributions computed"
-               URL="\ref inciter::Carrier::aec"];
+               URL="\ref inciter::CG::aec"];
       ComAEC [ label="ComAEC"
                tooltip="contributions to the antidiffusive element contributions
                         communicated"
-               URL="\ref inciter::Carrier::comaec"];
+               URL="\ref inciter::CG::comaec"];
       OwnALW [ label="OwnALW"
                tooltip="own contributions to the maximum and minimum unknowns of
                         elements surrounding nodes computed"
-               URL="\ref inciter::Carrier::alw"];
+               URL="\ref inciter::CG::alw"];
       ComALW [ label="ComALW"
                tooltip="contributions to the the maximum and minimum unknowns of
                         elements surrounding nodes communicated"
-               URL="\ref inciter::Carrier::comalw"];
+               URL="\ref inciter::CG::comalw"];
       Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
-            URL="\ref inciter::Carrier::verify"];
+            URL="\ref inciter::CG::verify"];
       OwnLim [ label="OwnLim"
                tooltip="compute limited antidiffusive element contributions"
-               URL="\ref inciter::Carrier::lim"];
+               URL="\ref inciter::CG::lim"];
       ComLim [ label="ComLim"
                tooltip="contributions to the limited antidiffusive element
                         contributions communicated"
-               URL="\ref inciter::Carrier::comlim"];
+               URL="\ref inciter::CG::comlim"];
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
-              URL="\ref inciter::Carrier::limit"];
+              URL="\ref inciter::CG::limit"];
       OwnAEC -> Ver [ style="dashed" ];
       OwnALW -> Ver [ style="dashed" ];
       OwnAEC -> OwnLim [ style="solid" ];
@@ -76,11 +76,11 @@
       ComLim -> Apply [ style="solid" ];
     }
     \enddot
-    \include Inciter/carrier.ci
+    \include Inciter/cg.ci
 */
 // *****************************************************************************
-#ifndef Carrier_h
-#define Carrier_h
+#ifndef CG_h
+#define CG_h
 
 #include <cstddef>
 #include <iosfwd>
@@ -102,7 +102,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/transporter.decl.h"
-#include "NoWarning/carrier.decl.h"
+#include "NoWarning/cg.decl.h"
 
 namespace tk {
   class ExodusIIMeshWriter;
@@ -114,16 +114,14 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType PDFMerger;
 
-//! Carrier Charm++ chare array used to advance PDEs in time with CG+LW+FCT
-class Carrier : public CBase_Carrier {
+//! CG Charm++ chare array used to advance PDEs in time with CG+LW+FCT
+class CG : public CBase_CG {
 
   private:
     using TransporterProxy = CProxy_Transporter;
-    using SolverProxy = tk::CProxy_Solver< CProxy_Carrier >;
+    using SolverProxy = tk::CProxy_Solver< CProxy_CG >;
 
   public:
-    using Array = CBase_Carrier;
-
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -137,7 +135,7 @@ class Carrier : public CBase_Carrier {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    Carrier_SDAG_CODE
+    CG_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(STRICT_GNUC)
@@ -148,20 +146,20 @@ class Carrier : public CBase_Carrier {
 
     //! Constructor
     explicit
-      Carrier( const TransporterProxy& transporter,
-               const SolverProxy& solver,
-               const std::vector< std::size_t >& conn,
-               const std::unordered_map< int,
-                       std::unordered_set< std::size_t > >& msum,
-               const std::unordered_map< std::size_t, std::size_t >& filenodes,
-               const tk::UnsMesh::EdgeNodes& edgenodes,
-               int ncarr );
+      CG( const TransporterProxy& transporter,
+          const SolverProxy& solver,
+          const std::vector< std::size_t >& conn,
+          const std::unordered_map< int,
+                  std::unordered_set< std::size_t > >& msum,
+          const std::unordered_map< std::size_t, std::size_t >& filenodes,
+          const tk::UnsMesh::EdgeNodes& edgenodes,
+          int nchare );
 
     //! Migrate constructor
-    explicit Carrier( CkMigrateMessage* ) {}
+    explicit CG( CkMigrateMessage* ) {}
 
     //! \brief Configure Charm++ reduction types
-    //! \details Since this is a [nodeinit] routine, see carrier.ci, the
+    //! \details Since this is a [nodeinit] routine, see cg.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
     //!   it is called without an object. See also: Section "Initializations at
@@ -237,7 +235,7 @@ class Carrier : public CBase_Carrier {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      CBase_Carrier::pup(p);
+      CBase_CG::pup(p);
       p | m_it;
       p | m_itf;
       p | m_t;
@@ -249,7 +247,7 @@ class Carrier : public CBase_Carrier {
       p | m_nalw;
       p | m_nlim;
       p | m_V;
-      p | m_ncarr;
+      p | m_nchare;
       p | m_outFilename;
       p | m_transporter;
       p | m_solver;
@@ -285,8 +283,8 @@ class Carrier : public CBase_Carrier {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i Carrier object reference
-    friend void operator|( PUP::er& p, Carrier& i ) { i.pup(p); }
+    //! \param[in,out] i CG object reference
+    friend void operator|( PUP::er& p, CG& i ) { i.pup(p); }
     //@}
 
   private:
@@ -321,8 +319,8 @@ class Carrier : public CBase_Carrier {
     std::size_t m_nlim;
     //! Total mesh volume
     tk::real m_V;
-    //! Total number of carrier chares
-    std::size_t m_ncarr;
+    //! Total number of CG chares
+    std::size_t m_nchare;
     //! Output filename
     std::string m_outFilename;
     //! Transporter proxy
@@ -375,7 +373,7 @@ class Carrier : public CBase_Carrier {
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!   Carrier chares associated to their chare IDs
+    //!   CG chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
     //!   points
     std::unordered_map< int, std::vector< std::size_t > > m_msum;
@@ -473,4 +471,4 @@ class Carrier : public CBase_Carrier {
 
 } // inciter::
 
-#endif // Carrier_h
+#endif // CG_h

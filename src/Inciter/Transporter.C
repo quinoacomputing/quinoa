@@ -36,7 +36,7 @@
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
-extern template class tk::Solver< inciter::CProxy_Carrier >;
+extern template class tk::Solver< inciter::CProxy_CG >;
 
 extern CProxy_Main mainProxy;
 
@@ -57,7 +57,7 @@ Transporter::Transporter() :
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_solver(),
-  m_carrier(),
+  m_cg(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -166,11 +166,11 @@ Transporter::Transporter() :
     diagHeader();
 
     // Create (empty) worker array
-    m_carrier = CProxy_Carrier::ckNew();
+    m_cg = CProxy_CG::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
     // Solver, er.readSideSets() reads all side sets from file, which is a
-    // serial read, then send the same copy to all PEs. Carriers then will query
+    // serial read, then send the same copy to all PEs. Workers then will query
     // the side sets from their local Solver branch.
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -200,8 +200,8 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
       , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
     }};
-    m_solver = tk::CProxy_Solver< CProxy_Carrier >::
-                 ckNew( cbs, m_carrier, ss,
+    m_solver = tk::CProxy_Solver< CProxy_CG >::
+                 ckNew( cbs, m_cg, ss,
                         g_inputdeck.get< tag::component >().nprop(),
                         g_inputdeck.get< tag::cmd, tag::feedback >() );
 
@@ -217,7 +217,7 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
     }};
     m_partitioner =
-      CProxy_Partitioner::ckNew( cbp, thisProxy, m_carrier, m_solver );
+      CProxy_Partitioner::ckNew( cbp, thisProxy, m_cg, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -401,17 +401,17 @@ Transporter::coord()
 // *****************************************************************************
 {
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
-  m_carrier.coord();
+  m_cg.coord();
 }
 
 void
 Transporter::volcomplete()
 // *****************************************************************************
-// Reduction target indicating that all Carriers have finished
+// Reduction target indicating that all workers have finished
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_carrier.totalvol();
+  m_cg.totalvol();
 }
 
 void
@@ -422,7 +422,7 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_carrier.stat();
+  m_cg.stat();
 }
 
 void
@@ -532,7 +532,7 @@ Transporter::stat()
 
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_carrier.setup( m_V );
+  m_cg.setup( m_V );
 }
 
 void
@@ -543,7 +543,7 @@ Transporter::rowcomplete()
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
 //!   exporting global row ids. This is a necessary precondition to be done
-//!   before we can issue a broadcast to all Carrier chares to continue with
+//!   before we can issue a broadcast to all worker chares to continue with
 //!   the initialization step. The other, also necessary but by itself not
 //!   sufficient, one is parcomplete(). Together rowcomplete() and
 //!   parcomplete() are sufficient for continuing with the initialization. See
@@ -555,13 +555,13 @@ Transporter::rowcomplete()
                     "computing LHS ...",
                     {{ CkNumPes(), m_nchare, m_nchare }} );
   m_solver.rowsreceived();
-  m_carrier.init();
+  m_cg.init();
 }
 
 void
 Transporter::initcomplete()
 // *****************************************************************************
-//  Reduction target indicating that all Carrier chares have finished their
+//  Reduction target indicating that all worker chares have finished their
 //  initialization step and have already continued with start time stepping
 // *****************************************************************************
 {
@@ -578,7 +578,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
-//! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
+//! \see For more detauls, see e.g., inciter::CG::diagnostics().
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -645,7 +645,7 @@ Transporter::dt( tk::real* d, std::size_t n )
   if (m_t+m_dt > term) m_dt = term - m_t;;
 
   // Advance to next time step
-  m_carrier.advance( m_it, m_t, m_dt );
+  m_cg.advance( m_it, m_t, m_dt );
 }
 
 void

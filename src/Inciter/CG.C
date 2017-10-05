@@ -1,17 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Carrier.C
+  \file      src/Inciter/CG.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Carrier advances a system of transport equations using CG+LW+FCT
-  \details   Carrier advances a system of transport equations using continuous
+  \brief     CG advances a system of transport equations using CG+LW+FCT
+  \details   CG advances a system of transport equations using continuous
     Galerkin (CG) finite elements with linear shapefunctions for spatial
     discretization combined with a time stepping discretization that is
     equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
     finite element context and treats discontinuities with flux-corrected
     transport (FCT).
 
-    There are a potentially large number of Carrier Charm++ chares created by
-    Transporter.  Each carrier gets a chunk of the full load (part of the mesh)
+    There are a potentially large number of CG Charm++ chares created by
+    Transporter.  Each CG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 */
 // *****************************************************************************
@@ -23,7 +23,7 @@
 #include <algorithm>
 
 #include "QuinoaConfig.h"
-#include "Carrier.h"
+#include "CG.h"
 #include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -42,7 +42,7 @@
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/Solver.C (only seems to be required on mac)
-extern template class tk::Solver< inciter::CProxy_Carrier >;
+extern template class tk::Solver< inciter::CProxy_CG >;
 
 namespace inciter {
 
@@ -50,12 +50,12 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
 
-//! \brief Charm++ reducers used by Carrier
+//! \brief Charm++ reducers used by CG
 //! \details These variables are defined here in the .C file and declared as
-//!   extern in Carrier.h. If instead one defines it in the header (as static),
+//!   extern in CG.h. If instead one defines it in the header (as static),
 //!   a new version of the variable is created any time the header file is
 //!   included, yielding no compilation nor linking errors. However, that leads
-//!   to runtime errors, since Carrier::registerReducers(), a Charm++
+//!   to runtime errors, since CG::registerReducers(), a Charm++
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
@@ -63,9 +63,9 @@ CkReduction::reducerType PDFMerger;
 
 } // inciter::
 
-using inciter::Carrier;
+using inciter::CG;
 
-Carrier::Carrier( const TransporterProxy& transporter,
+CG::CG( const TransporterProxy& transporter,
                   const SolverProxy& solver,
                   const std::vector< std::size_t >& conn,
                   const std::unordered_map< int,
@@ -73,7 +73,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
                   const std::unordered_map< std::size_t, std::size_t >&
                           filenodes,
                   const tk::UnsMesh::EdgeNodes& edgenodes,
-                  int ncarr ) :
+                  int nchare ) :
   __dep(),
   m_it( 0 ),
   m_itf( 0 ),
@@ -87,7 +87,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_nalw( 0 ),
   m_nlim( 0 ),
   m_V( 0.0 ),
-  m_ncarr( static_cast< std::size_t >( ncarr ) ),
+  m_nchare( static_cast< std::size_t >( nchare ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
                  std::to_string( thisIndex )
                  #ifdef HAS_ROOT
@@ -132,7 +132,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //!   contiguous-row-id linear system contributions) to edges (a pair of old
 //!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
 //!   added during inital uniform mesh refinement.
-//! \param[in] ncarr Total number of Carrier chares
+//! \param[in] nchare Total number of CG chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
 //!   contiguous (as much as this can be done with an unstructured mesh) as the
@@ -201,7 +201,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
 }
 
 void
-Carrier::coord()
+CG::coord()
 // *****************************************************************************
 //  Read mesh node coordinates and optionally add new edge-nodes in case of
 //  initial uniform refinement
@@ -217,7 +217,7 @@ Carrier::coord()
 }
 
 void
-Carrier::vol()
+CG::vol()
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries
 // *****************************************************************************
@@ -275,7 +275,7 @@ Carrier::vol()
 }
 
 void
-Carrier::comvol( const std::vector< std::size_t >& gid,
+CG::comvol( const std::vector< std::size_t >& gid,
                  const std::vector< tk::real >& V )
 // *****************************************************************************
 //  Receive nodal volumes on chare-boundaries
@@ -304,7 +304,7 @@ Carrier::comvol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::totalvol()
+CG::totalvol()
 // *****************************************************************************
 // Sum mesh volumes and contribute own mesh volume to total volume
 // *****************************************************************************
@@ -323,7 +323,7 @@ Carrier::totalvol()
 }
 
 void
-Carrier::stat()
+CG::stat()
 // *****************************************************************************
 // Compute mesh cell statistics
 // *****************************************************************************
@@ -379,7 +379,7 @@ Carrier::stat()
     volPDF.add( L );
   }
 
-  // Contribute to mesh statistics across all Carrier chares
+  // Contribute to mesh statistics across all CG chares
   contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
   contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
@@ -397,7 +397,7 @@ Carrier::stat()
 }
 
 void
-Carrier::setup( tk::real v )
+CG::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
@@ -414,7 +414,7 @@ Carrier::setup( tk::real v )
 }
 
 void
-Carrier::bc()
+CG::bc()
 // *****************************************************************************
 //  Extract node IDs from side set node lists and match to user-specified
 //  boundary conditions
@@ -516,7 +516,7 @@ Carrier::bc()
 }
 
 void
-Carrier::init()
+CG::init()
 // *****************************************************************************
 // Set ICs, compute initial time step size, output initial field data, compute
 // left-hand-side matrix
@@ -546,7 +546,7 @@ Carrier::init()
 }
 
 void
-Carrier::dt()
+CG::dt()
 // *****************************************************************************
 // Start computing minimum time step size
 // *****************************************************************************
@@ -575,13 +575,13 @@ Carrier::dt()
 
   }
 
-  // Contribute to mindt across all Carrier chares
+  // Contribute to mindt across all CG chares
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,dt), m_transporter) );
 }
 
 void
-Carrier::lhs()
+CG::lhs()
 // *****************************************************************************
 // Compute left-hand side of transport equations
 // *****************************************************************************
@@ -609,7 +609,7 @@ Carrier::lhs()
 }
 
 void
-Carrier::rhs()
+CG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
 // *****************************************************************************
@@ -651,7 +651,7 @@ Carrier::rhs()
 }
 
 void
-Carrier::readCoords()
+CG::readCoords()
 // *****************************************************************************
 //  Read coordinates of mesh nodes from file
 // *****************************************************************************
@@ -678,7 +678,7 @@ Carrier::readCoords()
 }
 
 void
-Carrier::addEdgeNodeCoords()
+CG::addEdgeNodeCoords()
 // *****************************************************************************
 //  Add coordinates of mesh nodes newly generated to edge-mid points during
 //  initial refinement
@@ -698,13 +698,13 @@ Carrier::addEdgeNodeCoords()
     auto p = tk::cref_find( m_lid, e.first[0] );
     auto q = tk::cref_find( m_lid, e.first[1] );
     auto i = tk::cref_find( m_lid, e.second );
-    Assert( p < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+    Assert( p < x.size(), "CG chare " + std::to_string(thisIndex) +
                           " indexing out of bounds: " + std::to_string(p)
                           + " must be lower than " + std::to_string(x.size()) );
-    Assert( q < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+    Assert( q < x.size(), "CG chare " + std::to_string(thisIndex) +
                           " indexing out of bounds: " + std::to_string(q)
                           + " must be lower than " + std::to_string(x.size()) );
-    Assert( i < x.size(), "Carrier chare " + std::to_string(thisIndex) +
+    Assert( i < x.size(), "CG chare " + std::to_string(thisIndex) +
                           " indexing out of bounds: " + std::to_string(i)
                           + " must be lower than " + std::to_string(x.size()) );
     x[i] = (x[p]+x[q])/2.0;
@@ -717,7 +717,7 @@ Carrier::addEdgeNodeCoords()
 }
 
 void
-Carrier::writeMesh()
+CG::writeMesh()
 // *****************************************************************************
 // Output chare element blocks to file
 // *****************************************************************************
@@ -746,7 +746,7 @@ Carrier::writeMesh()
 }
 
 void
-Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
+CG::writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const
 // *****************************************************************************
@@ -762,7 +762,7 @@ Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
 
 #ifdef HAS_ROOT
 void
-Carrier::writeSolution( const tk::RootMeshWriter& rmw,
+CG::writeSolution( const tk::RootMeshWriter& rmw,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const
 // *****************************************************************************
@@ -779,7 +779,7 @@ Carrier::writeSolution( const tk::RootMeshWriter& rmw,
 #endif
 
 void
-Carrier::writeMeta() const
+CG::writeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
 // *****************************************************************************
@@ -825,7 +825,7 @@ Carrier::writeMeta() const
 }
 
 void
-Carrier::writeFields( tk::real time )
+CG::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
@@ -880,7 +880,7 @@ Carrier::writeFields( tk::real time )
 }
 
 void
-Carrier::aec()
+CG::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \details This function computes and starts communicating m_p, which stores
@@ -910,7 +910,7 @@ Carrier::aec()
 }
 
 void
-Carrier::comaec( const std::vector< std::size_t >& gid,
+CG::comaec( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& P )
 // *****************************************************************************
 //  Receive sums of antidiffusive element contributions on chare-boundaries
@@ -942,7 +942,7 @@ Carrier::comaec( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::alw()
+CG::alw()
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \details This function computes and starts communicating m_q, which stores
@@ -972,7 +972,7 @@ Carrier::alw()
 }
 
 void
-Carrier::comalw( const std::vector< std::size_t >& gid,
+CG::comalw( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& Q )
 // *****************************************************************************
 // Receive contributions to the maxima and minima of unknowns of all elements
@@ -1008,7 +1008,7 @@ Carrier::comalw( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::lim()
+CG::lim()
 // *****************************************************************************
 //  Compute the limited antidiffusive element contributions
 //! \details This function computes and starts communicating m_a, which stores
@@ -1044,7 +1044,7 @@ Carrier::lim()
 }
 
 void
-Carrier::comlim( const std::vector< std::size_t >& gid,
+CG::comlim( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& A )
 // *****************************************************************************
 //  Receive contributions of limited antidiffusive element contributions on
@@ -1077,7 +1077,7 @@ Carrier::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::advance( uint64_t it, tk::real t, tk::real newdt )
+CG::advance( uint64_t it, tk::real t, tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step
@@ -1102,7 +1102,7 @@ Carrier::advance( uint64_t it, tk::real t, tk::real newdt )
 }
 
 void
-Carrier::out()
+CG::out()
 // *****************************************************************************
 // Output mesh and particle fields
 // *****************************************************************************
@@ -1127,7 +1127,7 @@ Carrier::out()
 }
 
 void
-Carrier::updateLowSol( const std::vector< std::size_t >& gid,
+CG::updateLowSol( const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update low order solution vector
@@ -1159,7 +1159,7 @@ Carrier::updateLowSol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::updateSol( const std::vector< std::size_t >& gid,
+CG::updateSol( const std::vector< std::size_t >& gid,
                     const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update high order solution vector
@@ -1190,18 +1190,18 @@ Carrier::updateSol( const std::vector< std::size_t >& gid,
 }
 
 void
-Carrier::verify()
+CG::verify()
 // *****************************************************************************
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
 {
-  if (m_fluxcorrector.verify( m_ncarr, m_inpoel, m_du, m_dul ))
+  if (m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul ))
     contribute(
       CkCallback( CkReductionTarget(Transporter,verified), m_transporter) );
 }
 
 void
-Carrier::diagnostics()
+CG::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
@@ -1256,7 +1256,7 @@ Carrier::diagnostics()
 }
 
 std::array< std::array< tk::real, 4 >, 3 >
-Carrier::velocity( std::size_t e )
+CG::velocity( std::size_t e )
 // *****************************************************************************
 // Extract velocity at the four cell nodes of a mesh element
 //! \param[in] e Element id
@@ -1278,7 +1278,7 @@ Carrier::velocity( std::size_t e )
 }
 
 bool
-Carrier::correctBC()
+CG::correctBC()
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
@@ -1321,7 +1321,7 @@ Carrier::correctBC()
 }
 
 void
-Carrier::apply()
+CG::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
@@ -1354,19 +1354,19 @@ Carrier::apply()
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
+//     //CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
 //     if (thisIndex == 2 && CkMyPe() == 2) {
 //       /*int j;
 //       for (int i; i < 50*std::pow(thisIndex,4); i++) {
 //         j = i*thisIndex;
 //       }*/
-//       CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
+//       CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
 //       migrateMe(1);
 //    }
 //    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
+//      CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
 }
 
-#include "NoWarning/carrier.def.h"
+#include "NoWarning/cg.def.h"

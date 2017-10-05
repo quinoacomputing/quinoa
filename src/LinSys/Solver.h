@@ -5,7 +5,7 @@
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix (lhs), the right hand side (rhs) vector,
-    and the solution (unknown) vector from individual worker (Carrier)
+    and the solution (unknown) vector from individual worker
     chares. Beside collection and assembly, the system is also solved. The
     solution is outsourced to hypre, an MPI-only library. Once the solution is
     available, the individual worker chares are updated with the new solution.
@@ -885,7 +885,7 @@ class Solver : public CBase_Solver< WorkerProxy > {
     //!   where the first one is the numerical and the second one is the
     //!   analytical solution. If the analytical solution for a PDE is not
     //!   defined, it is the initial condition.
-    //! \see charediag(), adddiag(), e.g., inciter::Carrier::diagnostics()
+    //! \see charediag(), adddiag(), e.g., inciter::CG::diagnostics()
     std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
@@ -1352,7 +1352,7 @@ class Solver : public CBase_Solver< WorkerProxy > {
 
     //! Compute diagnostics (residuals) and contribute them back to host
     //! \details Diagnostics: L2 norm for all components.
-    //! \see For info, see e.g., inciter::Carrier::diagnostics().
+    //! \see For info, see e.g., inciter::CG::diagnostics().
     void diagnostics() {
       Assert( diagcomplete(),
               "Values of distributed solution vector (for diagnostics) on PE " +

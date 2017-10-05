@@ -63,7 +63,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!      volume associated to a mesh node by summing the quarter of the element
 //!      volumes surrounding the node. Note that this is the correct node volume
 //!      taking into account that some nodes are on chare boundaries. See also
-//!      Carrier::vol().
+//!      CG::vol().
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
@@ -186,8 +186,8 @@ FluxCorrector::verify( std::size_t nchare,
 //!   point. Verification in parallel would incure communication of the
 //!   unlimited AEC, which in general is not necessary, so we will not do that
 //!   for the sake of verification.
-//! \note This function is optimized away in RELEASE mode, see carrier.ci and
-//!   Carrier::verify().
+//! \note This function is optimized away in RELEASE mode, see cg.ci and
+//!   CG::verify().
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),

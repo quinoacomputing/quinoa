@@ -27,7 +27,7 @@
       node [shape=record, fontname=Helvetica, fontsize=10];
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
-              URL="\ref inciter::Carrier::diagnostics"];
+              URL="\ref inciter::CG::diagnostics"];
       Out [ label="Out"
               tooltip="fields output to file"];
       Eval [ label="Eval"
@@ -48,19 +48,19 @@
       PartSetup -> Part [ style="solid" ];
       MinStat [ label="MinStat"
               tooltip="chares contribute to minimum mesh cell statistics"
-              URL="\ref inciter::Carrier::stat"];
+              URL="\ref inciter::CG::stat"];
       MaxStat [ label="MaxStat"
               tooltip="chares contribute to maximum mesh cell statistics"
-              URL="\ref inciter::Carrier::stat"];
+              URL="\ref inciter::CG::stat"];
       SumStat [ label="SumStat"
               tooltip="chares contribute to sum mesh cell statistics"
-              URL="\ref inciter::Carrier::stat"];
+              URL="\ref inciter::CG::stat"];
       PDFStat [ label="PDFStat"
               tooltip="chares contribute to PDF mesh cell statistics"
-              URL="\ref inciter::Carrier::stat"];
+              URL="\ref inciter::CG::stat"];
       Stat [ label="Stat"
               tooltip="chares contributed to mesh cell statistics"
-              URL="\ref inciter::Carrier::stat"];
+              URL="\ref inciter::CG::stat"];
       Setup [ label="Setup"
               tooltip="start computing row IDs, querying BCs, outputing mesh"
               URL="\ref inciter::Transporter::setup"];
@@ -89,7 +89,7 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 
-#include "NoWarning/carrier.decl.h"
+#include "NoWarning/cg.decl.h"
 
 namespace inciter {
 
@@ -202,7 +202,7 @@ class Transporter : public CBase_Transporter {
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v );
 
-    //! \brief Reduction target indicating that all Carriers have finished
+    //! \brief Reduction target indicating that all workers have finished
     //!   computing/receiving their part of the nodal volumes
     void volcomplete();
 
@@ -226,27 +226,27 @@ class Transporter : public CBase_Transporter {
     //!   all workers
     void dt( tk::real* d, std::size_t n );
 
-    //! \brief Reduction target indicating that all Carrier chares have
+    //! \brief Reduction target indicating that all worker chares have
     //!   finished their initialization step
     void initcomplete();
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
-    //!   residuals, from all Carrier chares
+    //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! \brief Reduction target indicating that Carrier chares contribute no
+    //! \brief Reduction target indicating that workerr chares contribute no
     //!    diagnostics and we ready to output the one-liner report
     void diagcomplete() { diag_complete(); }
 
     //! \brief Reduction target indicating that all particles writers have
     //!   finished outputing particles to file
     //! \details This function is a Charm++ reduction target that is called when
-    //!   all carrier chares have finished communicating particles
+    //!   all worker chares have finished communicating particles
     void outcomplete() { out_complete(); }
 
     //! \brief Reduction target indicating that the linear system solvers are
     //!   ready for the next time step
-    void computedt() { m_carrier.dt(); }
+    void computedt() { m_cg.dt(); }
 
     //! Normal finish of time stepping
     void finish();
@@ -256,13 +256,13 @@ class Transporter : public CBase_Transporter {
 
   private:
     InciterPrint m_print;                //!< Pretty printer
-    int m_nchare;                        //!< Number of carrier chares
+    int m_nchare;                        //!< Number of worker chares
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
     //! Linear system solver group proxy
-    tk::CProxy_Solver< CProxy_Carrier > m_solver;
-    CProxy_Carrier m_carrier;            //!< Carrier chare array proxy
+    tk::CProxy_Solver< CProxy_CG > m_solver;
+    CProxy_CG m_cg;                      //!< CG worker chare array proxy
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;

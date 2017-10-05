@@ -81,9 +81,6 @@ module transporter {
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
       // are completed will they be echoed to screen at once, denoted by Stat.
-      // Stat also continuous the setup by issuing a broadcast to
-      // Carrier::setup() which continue by setting up rows, querying boundary
-      // conditions, generating particles, outputting mesh, etc.
       //
       // The time step is evaluated only if both the diagnostics and the
       // field and particle output have been done by the workers.

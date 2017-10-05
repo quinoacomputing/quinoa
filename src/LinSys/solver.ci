@@ -15,8 +15,8 @@ module solver {
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system solver for Transporter & Carrier
-    chare Solver< inciter::CProxy_Carrier >;
+    // Will specialize linear system solver for CH
+    chare Solver< inciter::CProxy_CG >;
 
     // Solver is templated so that the same code (parameterized by the type
     // given by the template argument, WorkerProxy, can be generated for

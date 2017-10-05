@@ -14,15 +14,15 @@ module partitioner {
   include "UnsMesh.h";
 
   extern module transporter;
-  extern module carrier;
+  extern module cg;
 
   namespace inciter {
 
     group Partitioner {
       entry Partitioner( const std::vector< CkCallback >& cb,
                          const CProxy_Transporter& host,
-                         const CProxy_Carrier& worker,
-                         const tk::CProxy_Solver< CProxy_Carrier >& solver );
+                         const CProxy_CG& worker,
+                         const tk::CProxy_Solver< CProxy_CG >& solver );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

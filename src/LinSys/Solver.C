@@ -9,7 +9,7 @@
 
 #include "Solver.h"
 
-#include "NoWarning/carrier.decl.h"
+#include "NoWarning/cg.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -40,7 +40,7 @@ CkReduction::reducerType DiagMerger;
 // to instantiate registration and delivery of code for the individual
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
-template class tk::Solver< inciter::CProxy_Carrier >;
+template class tk::Solver< inciter::CProxy_CG >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
