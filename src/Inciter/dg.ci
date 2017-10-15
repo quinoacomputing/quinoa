@@ -1,0 +1,34 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/dg.ci
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for the discontinuous Galerkin scheme
+  \details   Charm++ module interface file for the discontinuous Galerking
+             scheme.
+  \see       DG.h and DG.C for more info.
+*/
+// *****************************************************************************
+
+module dg {
+
+  extern module transporter;
+  extern module discretization;
+  extern module solver;
+
+  include "UnsMesh.h";
+  include "PUPUtil.h";
+
+  namespace inciter {
+
+    array [1D] DG {
+      entry DG( const CProxy_Discretization& disc,
+                const tk::CProxy_Solver& );
+      entry void dt();
+      entry void setup( tk::real v );
+      entry void init();
+      entry void advance( uint64_t it, tk::real t, tk::real newdt );
+    };
+
+  } // inciter::
+
+}

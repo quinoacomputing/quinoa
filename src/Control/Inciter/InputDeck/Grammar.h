@@ -471,7 +471,7 @@ namespace deck {
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_inciter_option<
-                               tk::ctr::InitialAMR,
+                               ctr::InitialAMR,
                                tag::selected,
                                tag::initialamr >,
                              pegtl::alpha > > > {};

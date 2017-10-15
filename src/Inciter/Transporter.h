@@ -88,6 +88,7 @@
 #include "Partitioner.h"
 #include "VectorReducer.h"
 #include "Progress.h"
+#include "Scheme.h"
 
 #include "NoWarning/cg.decl.h"
 
@@ -246,7 +247,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that the linear system solvers are
     //!   ready for the next time step
-    void computedt() { m_cg.dt(); }
+    void computedt() { m_scheme.dt< tag::bcast >(); }
 
     //! Normal finish of time stepping
     void finish();
@@ -260,9 +261,8 @@ class Transporter : public CBase_Transporter {
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
-    //! Linear system solver group proxy
-    tk::CProxy_Solver< CProxy_CG > m_solver;
-    CProxy_CG m_cg;                      //!< CG worker chare array proxy
+    tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
+    Scheme m_scheme;                     //!< Discretization scheme (worker)
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;

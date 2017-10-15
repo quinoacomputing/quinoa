@@ -34,14 +34,11 @@
 #include "NoWarning/inciter.decl.h"
 #include "NoWarning/partitioner.decl.h"
 
-// Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/Solver.C (only seems to be required on mac)
-extern template class tk::Solver< inciter::CProxy_CG >;
-
 extern CProxy_Main mainProxy;
 
 namespace inciter {
 
+extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
 
@@ -57,7 +54,7 @@ Transporter::Transporter() :
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_solver(),
-  m_cg(),
+  m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -165,9 +162,6 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create (empty) worker array
-    m_cg = CProxy_CG::ckNew();
-
     // Create ExodusII reader for reading side sets from file. When creating
     // Solver, er.readSideSets() reads all side sets from file, which is a
     // serial read, then send the same copy to all PEs. Workers then will query
@@ -176,9 +170,8 @@ Transporter::Transporter() :
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
     // Read in side sets from file
-    m_print.diagstart( "Reading side sets ..." );
+    m_print.diag( "Reading side sets" );
     auto ss = er.readSidesets();
-    m_print.diagend( "done" );
 
     // Verify that side sets to which boundary conditions are assigned by user
     // exist in mesh file
@@ -200,13 +193,13 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
       , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
     }};
-    m_solver = tk::CProxy_Solver< CProxy_CG >::
-                 ckNew( cbs, m_cg, ss,
+    m_solver = tk::CProxy_Solver::
+                 ckNew( cbs, ss,
                         g_inputdeck.get< tag::component >().nprop(),
                         g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
-    m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
+    m_progGraph.start( "Creating partitioners and reading mesh graph" );
     m_timer[ TimerTag::MESHREAD ];
     std::vector< CkCallback > cbp {{
         CkCallback( CkReductionTarget(Transporter,part), thisProxy )
@@ -217,7 +210,7 @@ Transporter::Transporter() :
       , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
     }};
     m_partitioner =
-      CProxy_Partitioner::ckNew( cbp, thisProxy, m_cg, m_solver );
+      CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -281,6 +274,9 @@ Transporter::load( uint64_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
+  // Send total number of chares to all linear solver PEs
+  m_solver.nchare( m_nchare );
+
   // signal to runtime system that m_nchare is set
   load_complete();
 
@@ -293,7 +289,7 @@ Transporter::load( uint64_t nelem )
 
   // Print out info on load distribution
   const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == tk::ctr::InitialAMRType::UNIFORM)
+  if (ir == ctr::InitialAMRType::UNIFORM)
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -314,9 +310,9 @@ Transporter::load( uint64_t nelem )
                 tag::selected, tag::partitioner >();
 
   // Print out mesh refinement configuration and new mesh statistics
-  if (ir == tk::ctr::InitialAMRType::UNIFORM) {
+  if (ir == ctr::InitialAMRType::UNIFORM) {
     m_print.section( "Mesh refinement" );
-    m_print.Item< tk::ctr::InitialAMR, tag::selected, tag::initialamr >();
+    m_print.Item< ctr::InitialAMR, tag::selected, tag::initialamr >();
     m_print.item( "Final number of tetrahedra",
       std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
   }
@@ -334,7 +330,7 @@ Transporter::part()
 {
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
-  m_progPart.start( "Partitioning and distributing mesh ..." );
+  m_progPart.start( "Partitioning and distributing mesh" );
   // signal to runtime system that all workers are ready for mesh partitioning
   part_complete();
 }
@@ -348,7 +344,7 @@ Transporter::distributed()
 // *****************************************************************************
 {
   m_progPart.end();
-  m_progReorder.start( "Reordering mesh ..." );
+  m_progReorder.start( "Reordering mesh" );
   m_partitioner.flatten();
 }
 
@@ -367,7 +363,6 @@ Transporter::aveCost( tk::real c )
 // *****************************************************************************
 {
   m_progReorder.end();
-  m_print.diag( "Creating workers" );
   // Compute average and broadcast it back to all partitioners (PEs)
   m_avcost = c / CkNumPes();
   m_partitioner.stdCost( m_avcost );
@@ -401,7 +396,7 @@ Transporter::coord()
 // *****************************************************************************
 {
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
-  m_cg.coord();
+  m_scheme.coord< tag::bcast >();
 }
 
 void
@@ -411,7 +406,7 @@ Transporter::volcomplete()
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_cg.totalvol();
+  m_scheme.totalvol< tag::bcast >();
 }
 
 void
@@ -421,8 +416,9 @@ Transporter::totalvol( tk::real v )
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
+  m_partitioner.createWorkers();  // create "derived" workers (e.g., CG, DG)
   m_V = v;
-  m_cg.stat();
+  m_scheme.stat< tag::bcast >();
 }
 
 void
@@ -532,7 +528,8 @@ Transporter::stat()
 
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_cg.setup( m_V );
+
+  m_scheme.setup< tag::bcast >( m_V );
 }
 
 void
@@ -552,10 +549,10 @@ Transporter::rowcomplete()
 {
   m_progSetup.end();
   m_progInit.start( "Setting and outputting ICs, computing initial dt, "
-                    "computing LHS ...",
+                    "computing LHS",
                     {{ CkNumPes(), m_nchare, m_nchare }} );
   m_solver.rowsreceived();
-  m_cg.init();
+  m_scheme.init< tag::bcast >();
 }
 
 void
@@ -566,10 +563,10 @@ Transporter::initcomplete()
 // *****************************************************************************
 {
   m_progInit.end();
-  m_print.diag( "Starting time stepping ..." );
+  m_print.diag( "Starting time stepping" );
   header();   // print out time integration header
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step ...",
+    m_progStep.start( "Time step",
       {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
 }
 
@@ -645,7 +642,7 @@ Transporter::dt( tk::real* d, std::size_t n )
   if (m_t+m_dt > term) m_dt = term - m_t;;
 
   // Advance to next time step
-  m_cg.advance( m_it, m_t, m_dt );
+  m_scheme.advance< tag::bcast >( m_it, m_t, m_dt );
 }
 
 void
@@ -757,7 +754,7 @@ Transporter::evaluateTime()
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
     m_solver.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step ..." );
+      m_progStep.start( "Time step" );
   } else
     finish();
 }
