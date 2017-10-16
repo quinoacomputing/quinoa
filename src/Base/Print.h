@@ -186,6 +186,19 @@ class Print {
     void item( const std::string& name, const T& value ) const
     { stream<s>() << m_item_name_value_fmt % m_item_indent % name % value; }
 
+    //! Formatted print of item: name : bool
+    //! \param[in] name Item name to be printed
+    //! \param[in] b Item value as bool to be printed
+    //! \details boost::format does not directly support std::boolalpha, so it
+    //!   must be done via boost::io::group, hence this overload for when the
+    //!   item value to be printed is of type bool, which will print true/false
+    //!   instead of 1/0.
+    //! \see https://stackoverflow.com/a/13709726
+    template< Style s = VERBOSE >
+    void item( const std::string& name, bool b ) const
+    { stream<s>() << m_item_name_value_fmt % m_item_indent % name %
+                     boost::io::group(std::boolalpha, b); }
+
     //! Formatted print of item: h:m:s.
     //! \param[in] name Item name to be printed
     //! \param[in] watch Watch (in hours, minutes, seconds) to be printed as

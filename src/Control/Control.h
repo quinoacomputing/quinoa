@@ -13,6 +13,7 @@
 #ifndef Control_h
 #define Control_h
 
+#include <ios>
 #include <string>
 #include <sstream>
 
@@ -611,7 +612,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     type convert( const std::string& str ) {
       std::stringstream ss( str );
       type num;
-      ss >> num;
+      ss >> std::boolalpha >> num;
       if (ss.fail())
         Throw( "Failed to convert '" + str +
                "' to typeid " + typeid(num).name() );
@@ -625,9 +626,8 @@ class Control : public tuple::tagged_tuple<Ts...> {
     template< typename type >
     std::string convert( const type& val ) {
       std::stringstream ss;
-      ss << val;
-      if (ss.fail())
-        Throw( "Failed to convert value to string" );
+      ss << std::boolalpha << val;
+      if (ss.fail()) Throw( "Failed to convert value to string" );
       return ss.str();
     }
 

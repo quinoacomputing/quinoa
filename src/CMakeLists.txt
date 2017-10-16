@@ -21,10 +21,10 @@ disallow_in_source_builds()
 
 # Set version number: major.minor
 set(MAJOR_VER 0)
-set(MINOR_VER 1)
+set(MINOR_VER 2)
 
 # Set LA-CC number
-set(LACC "16015")
+set(LACC "17087")
 
 # Sets CMAKE_INSTALL_{BIN,LIB}DIR needed for multilib support
 include(GNUInstallDirs)
@@ -176,6 +176,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unused-command-line-argument")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -224,7 +225,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wshadow")
   add_compiler_flag("-Wstack-protector")
   add_compiler_flag("-Wstrict-aliasing=2")
-  add_compiler_flag("-Wswitch-default")
   add_compiler_flag("-Wunreachable-code")
   add_compiler_flag("-Wunused")
   add_compiler_flag("-Wunused-parameter")
@@ -300,6 +300,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
   # Linker flags for intel
   set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
+
+  # Use -O1 in release mode, otherwise the intel compiler generates code
+  # yielding some NaNs from some inciter regression tests from Hypre's PCGSolve.
+  if(CMAKE_BUILD_TYPE MATCHES "REL")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
+        "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
+        FORCE)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O1 -g -DNDEBUG" CACHE STRING
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO: Flags used by the compiler during release builds with debug info."
+        FORCE)
+  endif()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
@@ -501,7 +512,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
@@ -550,7 +560,6 @@ if (HAS_TESTU01)
   add_subdirectory(RNGTest)
 endif()
 add_subdirectory(Statistics)
-add_subdirectory(Particles)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.

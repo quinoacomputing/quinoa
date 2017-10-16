@@ -9,8 +9,6 @@
 
 module transporter {
 
-  extern module partitioner;
-
   namespace inciter {
 
     chare Transporter {
@@ -31,8 +29,6 @@ module transporter {
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void initcomplete();
-      entry [reductiontarget] void parcomcomplete();
-      entry [reductiontarget] void nparcomplete();
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void diagcomplete();
       entry [reductiontarget] void outcomplete();
@@ -61,7 +57,6 @@ module transporter {
       entry void chrhs();
       entry void pesolve();
       entry void chlim();
-      entry void chtrack();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -86,9 +81,6 @@ module transporter {
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
       // are completed will they be echoed to screen at once, denoted by Stat.
-      // Stat also continuous the setup by issuing a broadcast to
-      // Carrier::setup() which continue by setting up rows, querying boundary
-      // conditions, generating particles, outputting mesh, etc.
       //
       // The time step is evaluated only if both the diagnostics and the
       // field and particle output have been done by the workers.
@@ -98,15 +90,6 @@ module transporter {
       // reduction target, Transporter::diagnostics(). If diagnostics are not
       // collected in a time step, collection is skipped, and diag_complete() is
       // signaled from the shortcut function, Transporter::diagcomplete().
-      //
-      // Similar to diagnostics output, particle output is also optional and
-      // does not happen every time step. The Charm++ reduction target
-      // Transporter::outcomplete() is reached either way but on different
-      // routes: if particles are output, the reduction originates from the
-      // ParticleWriter Charm++ group after writeCoords() finished the output,
-      // if particles are not output, the reduction originates from
-      // Carrier::out(). Either way, the above DAG and its logic remains the
-      // same.
 
       entry void wait4part() {
         when load_complete(), part_complete() serial "part" {

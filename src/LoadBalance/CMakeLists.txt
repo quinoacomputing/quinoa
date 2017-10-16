@@ -8,6 +8,7 @@ add_library(LoadBalance
             CommMap.C
             LinearMap.C
             UnsMeshMap.C
+            ZoltanInterOp.C
 )
 
 addCharmModule( "linearmap" "LoadBalance" )

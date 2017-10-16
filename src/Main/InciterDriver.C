@@ -51,6 +51,6 @@ InciterDriver::execute() const
 // *****************************************************************************
 {
   // Instantiate Transporter chare on PE 0 which drives the time-integration of
-  // a PDE via several Carrier chares.
+  // a PDE via several worker chares.
   CProxy_Transporter::ckNew( 0 );
 }

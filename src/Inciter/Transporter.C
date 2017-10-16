@@ -35,21 +35,8 @@
 #include "NoWarning/partitioner.decl.h"
 
 // Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier,
-                                        inciter::AuxSolverLumpMassDiff >;
-
-// Force the compiler to not instantiate the template below as it is
-// instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
-extern template class
-  inciter::Partitioner<
-    inciter::CProxy_Transporter,
-    inciter::CProxy_Carrier,
-    tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                             inciter::CProxy_Carrier,
-                             inciter::AuxSolverLumpMassDiff >,
-    tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
+// instantiated in LinSys/Solver.C (only seems to be required on mac)
+extern template class tk::Solver< inciter::CProxy_CG >;
 
 extern CProxy_Main mainProxy;
 
@@ -69,10 +56,8 @@ Transporter::Transporter() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_stage( 0 ),
-  m_linsysmerger(),
-  m_carrier(),
-  m_particlewriter(),
+  m_solver(),
+  m_cg(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -124,13 +109,21 @@ Transporter::Transporter() :
   // Print out info on settings of selected partial differential equations
   m_print.pdes( "Partial differential equations integrated", stack.info() );
 
-  // Print discretization parameters
-  m_print.section( "Discretization parameters" );
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
+  m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG) {
+    m_print.item( "Flux-corrected transport (FCT)",
+                  g_inputdeck.get< tag::discr, tag::fct >() );
+    m_print.item( "FCT mass diffusion coeff",
+                  g_inputdeck.get< tag::discr, tag::ctau >() );
+  }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
@@ -141,9 +134,6 @@ Transporter::Transporter() :
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
-
-  m_print.item( "Mass diffusion coeff",
-                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
@@ -176,12 +166,12 @@ Transporter::Transporter() :
     diagHeader();
 
     // Create (empty) worker array
-    m_carrier = CarrierProxy::ckNew();
+    m_cg = CProxy_CG::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
-    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
-    // a serial read, then send the same copy to all PEs. Carriers then will
-    // query the side sets from their local LinSysMerger branch.
+    // Solver, er.readSideSets() reads all side sets from file, which is a
+    // serial read, then send the same copy to all PEs. Workers then will query
+    // the side sets from their local Solver branch.
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
@@ -201,30 +191,33 @@ Transporter::Transporter() :
         break;
       }
 
-    // Create linear system merger chare group
+    // Create linear system merger and solver chare group
     m_print.diag( "Creating linear system mergers" );
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
-                       g_inputdeck.get< tag::component >().nprop(),
-                       g_inputdeck.get< tag::cmd, tag::feedback >() );
-
-    // Create particle writer Charm++ chare group. Note that by passing an empty
-    // filename argument to the constructor, we tell the writer not to open a
-    // file and not to perform I/O. To enable particle I/O, put in the filename
-    // argument, commented out, instead of the empty string, and change the
-    // number of particles (the constructor argument to m_particles) in the
-    // initializer list of Carrier::Carrier(). This is basically a punt to
-    // enable skipping H5Part I/O. Particles are a highly experimental feature
-    // at this point.
-    m_print.diag( "Creating particle writers" );
-    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
-                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    // Create linear system merger and solver callbacks
+    std::vector< CkCallback > cbs {{
+        CkCallback( CkReductionTarget(Transporter,rowcomplete), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+      , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
+    }};
+    m_solver = tk::CProxy_Solver< CProxy_CG >::
+                 ckNew( cbs, m_cg, ss,
+                        g_inputdeck.get< tag::component >().nprop(),
+                        g_inputdeck.get< tag::cmd, tag::feedback >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
     m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
-                                             m_linsysmerger,
-                                             m_particlewriter );
+    std::vector< CkCallback > cbp {{
+        CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
+      , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
+    }};
+    m_partitioner =
+      CProxy_Partitioner::ckNew( cbp, thisProxy, m_cg, m_solver );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -408,17 +401,17 @@ Transporter::coord()
 // *****************************************************************************
 {
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
-  m_carrier.coord();
+  m_cg.coord();
 }
 
 void
 Transporter::volcomplete()
 // *****************************************************************************
-// Reduction target indicating that all Carriers have finished
+// Reduction target indicating that all workers have finished
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_carrier.totalvol();
+  m_cg.totalvol();
 }
 
 void
@@ -429,7 +422,7 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_carrier.stat();
+  m_cg.stat();
 }
 
 void
@@ -539,7 +532,7 @@ Transporter::stat()
 
   m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_carrier.setup( m_V );
+  m_cg.setup( m_V );
 }
 
 void
@@ -550,7 +543,7 @@ Transporter::rowcomplete()
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
 //!   exporting global row ids. This is a necessary precondition to be done
-//!   before we can issue a broadcast to all Carrier chares to continue with
+//!   before we can issue a broadcast to all worker chares to continue with
 //!   the initialization step. The other, also necessary but by itself not
 //!   sufficient, one is parcomplete(). Together rowcomplete() and
 //!   parcomplete() are sufficient for continuing with the initialization. See
@@ -561,14 +554,14 @@ Transporter::rowcomplete()
   m_progInit.start( "Setting and outputting ICs, computing initial dt, "
                     "computing LHS ...",
                     {{ CkNumPes(), m_nchare, m_nchare }} );
-  m_linsysmerger.rowsreceived();
-  m_carrier.init();
+  m_solver.rowsreceived();
+  m_cg.init();
 }
 
 void
 Transporter::initcomplete()
 // *****************************************************************************
-//  Reduction target indicating that all Carrier chares have finished their
+//  Reduction target indicating that all worker chares have finished their
 //  initialization step and have already continued with start time stepping
 // *****************************************************************************
 {
@@ -576,7 +569,7 @@ Transporter::initcomplete()
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step stage ...",
+    m_progStep.start( "Time step ...",
       {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
 }
 
@@ -585,7 +578,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
-//! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
+//! \see For more detauls, see e.g., inciter::CG::diagnostics().
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -645,16 +638,14 @@ Transporter::dt( tk::real* d, std::size_t n )
 
   Assert( n == 1, "Size of min(dt) must be 1" );
 
-  if (m_stage == 1 || m_it == 0) {
-    // Use newly computed time step size
-    m_dt = *d;
-    // Truncate the size of last time step
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    if (m_t+m_dt > term) m_dt = term - m_t;;
-  }
+  // Use newly computed time step size
+  m_dt = *d;
+  // Truncate the size of last time step
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  if (m_t+m_dt > term) m_dt = term - m_t;;
 
-  // Advance to next time step stage
-  m_carrier.advance( m_stage, m_dt, m_it, m_t );
+  // Advance to next time step
+  m_cg.advance( m_it, m_t, m_dt );
 }
 
 void
@@ -708,62 +699,54 @@ Transporter::evaluateTime()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
     m_progStep.end();
 
-  if (m_stage < 1) {    // if at half-stage, simply go to next one
+  // Increase number of iterations taken
+  ++m_it;
+  // Advance physical time to include time step just finished
+  m_t += m_dt;
 
-    ++m_stage;
+  bool diag = false;
 
-  } else {      // if final stage of time step, finish time step just taken
+  // Append diagnostics file at selected times
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >(),
+                       std::ios_base::app );
+    if (dw.diag( m_it, m_t, m_diag )) diag = true;
+    m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
+  }
 
-    m_stage = 0;
-    // Increase number of iterations taken
-    ++m_it;
-    // Advance physical time to include time step just finished
-    m_t += m_dt;
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
-    bool diag = false;
+    // estimate time elapsed and time for accomplishment
+    tk::Timer::Watch ete, eta;
+    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
+    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
+                 g_inputdeck.get< tag::discr, tag::t0 >(),
+               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
+               g_inputdeck.get< tag::discr, tag::nstep >(),
+               m_it,
+               ete,
+               eta );
 
-    // Append diagnostics file at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-      tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                         g_inputdeck.get< tag::flformat, tag::diag >(),
-                         g_inputdeck.get< tag::prec, tag::diag >(),
-                         std::ios_base::app );
-      if (dw.diag( m_it, m_t, m_diag )) diag = true;
-      m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
-    }
+    // Output one-liner
+    m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
+            << std::scientific << std::setprecision(6)
+            << std::setw(12) << m_t << "  "
+            << m_dt << "  "
+            << std::setfill('0')
+            << std::setw(3) << ete.hrs.count() << ":"
+            << std::setw(2) << ete.min.count() << ":"
+            << std::setw(2) << ete.sec.count() << "  "
+            << std::setw(3) << eta.hrs.count() << ":"
+            << std::setw(2) << eta.min.count() << ":"
+            << std::setw(2) << eta.sec.count() << "  ";
 
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+    // Augment one-liner with output indicators
+    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+    if (diag) m_print << 'D';
 
-      // estimate time elapsed and time for accomplishment
-      tk::Timer::Watch ete, eta;
-      const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-      timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                   g_inputdeck.get< tag::discr, tag::t0 >(),
-                 m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-                 g_inputdeck.get< tag::discr, tag::nstep >(),
-                 m_it,
-                 ete,
-                 eta );
-
-      // Output one-liner
-      m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-              << std::scientific << std::setprecision(6)
-              << std::setw(12) << m_t << "  "
-              << m_dt << "  "
-              << std::setfill('0')
-              << std::setw(3) << ete.hrs.count() << ":"
-              << std::setw(2) << ete.min.count() << ":"
-              << std::setw(2) << ete.sec.count() << "  "
-              << std::setw(3) << eta.hrs.count() << ":"
-              << std::setw(2) << eta.min.count() << ":"
-              << std::setw(2) << eta.sec.count() << "  ";
-
-      // Augment one-liner with output indicators
-      if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-      if (diag) m_print << 'D';
-
-      m_print << std::endl;
-    }
+    m_print << std::endl;
   }
 
   wait4eval();
@@ -772,9 +755,9 @@ Transporter::evaluateTime()
   // all linear system merger group elements to prepare for a new rhs),
   // otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
-    m_linsysmerger.enable_wait4rhs();
+    m_solver.enable_wait4rhs();
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step stage ..." );
+      m_progStep.start( "Time step ..." );
   } else
     finish();
 }

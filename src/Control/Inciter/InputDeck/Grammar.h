@@ -32,14 +32,14 @@ namespace deck {
                             ctr::InputDeck::keywords1,
                             ctr::InputDeck::keywords2,
                             ctr::InputDeck::keywords3,
-                            ctr::InputDeck::keywords4 >;
+                            ctr::InputDeck::keywords4,
+                            ctr::InputDeck::keywords5 >;
 
   // Inciter's InputDeck state
 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   static tk::tuple::tagged_tuple< tag::transport, std::size_t,
-                                  tag::poisson,   std::size_t,
                                   tag::compflow,  std::size_t > neq;
 
 } // ::deck
@@ -163,9 +163,6 @@ namespace grm {
       auto& physics = stack.template get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::EULER );
-      // If artificial viscosity is not given, default to 1.0
-      auto& av = stack.template get< tag::param, eq, tag::artvisc >();
-      if (av.empty()) av.push_back( 0.05 );
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -398,7 +395,7 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 >,
-                           bc_dirichlet< tag::compflow, tag::bcdir > >,
+                           bc_dirichlet< tag::transport, tag::bcdir > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -420,7 +417,6 @@ namespace deck {
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::npar, tag::npar,
                                       pegtl::digit >,
-                           parameter< tag::compflow, kw::artvisc, tag::artvisc >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
                            parameter< tag::compflow, kw::pde_p0, tag::p0 >,
                            parameter< tag::compflow, kw::pde_betax, tag::betax >,
@@ -444,6 +440,23 @@ namespace deck {
                                tk::ctr::PartitioningAlgorithm,
                                tag::selected,
                                tag::partitioner >,
+                             pegtl::alpha > > > {};
+
+  //! discretization ... end block
+  struct discretization :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::discretization >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::process<
+                             use< kw::scheme >,
+                             tk::grm::store_inciter_option<
+                               inciter::ctr::Scheme,
+                               tag::selected,
+                               tag::scheme >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::fct >,
+                             tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha > > > {};
 
   //! equation types
@@ -488,6 +501,7 @@ namespace deck {
                            equations,
                            amr,
                            partitioning,
+                           discretization,
                            plotvar,
                            tk::grm::diagnostics<
                              use,

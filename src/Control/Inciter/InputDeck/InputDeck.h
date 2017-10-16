@@ -75,8 +75,6 @@ class InputDeck :
                                        kw::pde_diffusivity,
                                        kw::pde_lambda,
                                        kw::pde_u0,
-                                       kw::poisson,
-                                       kw::dir_neu,
                                        kw::bc_dirichlet,
                                        kw::sideset,
                                        kw::compflow,
@@ -104,7 +102,6 @@ class InputDeck :
                                        kw::pde_alpha,
                                        kw::pde_beta,
                                        kw::pde_p0,
-                                       kw::laplace,
                                        kw::ctau,
                                        kw::cfl,
                                        kw::mj,
@@ -121,13 +118,17 @@ class InputDeck :
                                        kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
-                                       kw::artvisc,
                                        kw::filetype,
                                        kw::exodusii,
                                        kw::root,
                                        kw::error,
                                        kw::l2,
                                        kw::linf >;
+    using keywords5 = boost::mpl::set< kw::discretization,
+                                       kw::fct,
+                                       kw::scheme,
+                                       kw::cg,
+                                       kw::dg >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -144,6 +145,7 @@ class InputDeck :
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.0 );
       set< tag::discr, tag::cfl >( 0.0 );
+      set< tag::discr, tag::fct >( true );
       set< tag::discr, tag::ctau >( 1.0 );
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
@@ -161,6 +163,7 @@ class InputDeck :
       boost::mpl::for_each< keywords2 >( ctrinfoFill );
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
+      boost::mpl::for_each< keywords5 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */

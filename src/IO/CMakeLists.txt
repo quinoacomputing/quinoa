@@ -45,25 +45,3 @@ INSTALL(TARGETS MeshIO
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
-
-# Include function for adding Charm++ modules
-include(charm)
-
-add_library(AsyncIO
-            ParticleWriter.C
-)
-
-addCharmModule( "particlewriter" "AsyncIO" )
-
-# Add extra dependency of AsyncIO on Transporter charm module. This is required
-# so that transporter.decl.h and transporter.def.h are generated before AsyncIO
-# including those.
-add_dependencies( "AsyncIO" "transporterCharmModule" )
-
-set_target_properties(AsyncIO PROPERTIES LIBRARY_OUTPUT_NAME quinoa_asyncio)
-
-INSTALL(TARGETS AsyncIO
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
