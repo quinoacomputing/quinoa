@@ -40,7 +40,6 @@ namespace tk {
 //!   Solver::registerBCMerger(), a Charm++ "initnode" entry method, *may*
 //!   fill one while contribute() may use the other (unregistered) one. Result:
 //!   undefined behavior, segfault, and formatting the internet ...
-static CkReduction::reducerType BCVectorMerger;
 static CkReduction::reducerType BCMapMerger;
 static CkReduction::reducerType DiagMerger;
 
@@ -130,7 +129,6 @@ Solver::registerBCMerger()
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
-  BCVectorMerger = CkReduction::addReducer( tk::mergeVector );
   BCMapMerger = CkReduction::addReducer(
                   tk::mergeHashMap< std::size_t,
                     std::vector< std::pair< bool, tk::real > > > );
