@@ -12,14 +12,21 @@
     functions can be invoked by client code without knowing the underlying type
     or any specifics to the underlying differences of the classes that model the
     same concept, i.e., expose the same member functions. The idea is very
-    similar to inhertiance and runtime polymorphism with base classes and
+    similar to inheritance and runtime polymorphism with base classes and
     virtual functions: some member functions and data are common to all types
     modeled (and thus are not repeated and/or copied), while some are specific.
-    The advantages of this class over traditional runtime polimorphism are (1)
+    A difference is that the "base" and "child" classes are Charm++ proxies.
+    Note that while Charm++ does support inheritance and runtime polymorphism
+    with chare arrays, we still prefer the implementation below because it uses
+    entirely value semantics (inside and in client code) and thus it keeps the
+    complexity of the dispatch behind this class and does not expose it client
+    code.
+
+    The advantages of this class over traditional runtime polymorphism are (1)
     value semantics (both internally and to client code), (2) not templated,
     and (3) PUPable, i.e., an instance of Scheme can be sent across the network
-    using Charm++'s pup framework. Also, since the class only holds chare
-    proxies, it is extremely lightweight.
+    using Charm++'s pup framework. Also, since the class only holds a couple of
+    chare proxies, it is extremely lightweight.
 
     Example usage from client code:
 
@@ -64,7 +71,7 @@
     either as a broadcast or addressing a particular chare array element can be
     done by simply copying an existing (similar) one and modifying what
     underlying function (entry method) it calls. The ones that forward to
-    discproxy are groupped first, while the ones that forward to the specific
+    discproxy are grouped first, while the ones that forward to the specific
     proxy are listed as second. Using SFINAE, multiple overloads are (and can
     be) defined for a single function, depending on (1) whether it is a
     broadcast or addressing an array element, (2) whether it takes an optional
@@ -94,7 +101,7 @@
     number of the arguments to any of the entry methods change. One exception to
     this is those forwarding calls that deal with default arguments, allowing
     for passing CkEntryOptions objects. There the number of arguments are
-    hard-coded in the SFINAE construct, but should also be straighforward to
+    hard-coded in the SFINAE construct, but should also be straightforward to
     modify if necessary.
 
     The functors named as call_* are used to dispatch (at compile time) entry
@@ -109,7 +116,7 @@
     associative container storing std::function objects which would store
     pre-bound function arguments. That would work, but there are three problems
     with such an approach: (1) std::function is not obvious how to pup, i.e.,
-    send accross the network, (2) std::bind cannot currently be used to bind a
+    send across the network, (2) std::bind cannot currently be used to bind a
     variadic number arguments and thus the bind calls would not be very generic,
     and (3) a runtime associative container would take additional state.
 */
@@ -492,8 +499,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_setup : Call< call_setup< As... >, As... >,
-                        boost::static_visitor<> {
+    struct call_setup : Call< call_setup<As...>, As... > {
       using Base = Call< call_setup<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method
@@ -514,8 +520,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_advance : Call< call_advance< As... >, As... >,
-                          boost::static_visitor<> {
+    struct call_advance : Call< call_advance<As...>, As... > {
       using Base = Call< call_advance<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method
@@ -536,8 +541,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_insert : Call< call_insert< As... >, As... >,
-                         boost::static_visitor<> {
+    struct call_insert : Call< call_insert<As...>, As... > {
       using Base = Call< call_insert<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method
@@ -558,8 +562,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_doneInserting : Call< call_doneInserting< As... >, As... >,
-                                boost::static_visitor<> {
+    struct call_doneInserting : Call< call_doneInserting<As...>, As... > {
       using Base = Call< call_doneInserting<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method
@@ -580,8 +583,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_init : Call< call_init< As... >, As... >,
-                       boost::static_visitor<> {
+    struct call_init : Call< call_init<As...>, As... > {
       using Base = Call< call_init<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method
@@ -602,8 +604,7 @@ class Scheme : public SchemeBase {
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-    struct call_dt : Call< call_dt< As... >, As... >,
-                     boost::static_visitor<> {
+    struct call_dt : Call< call_dt<As...>, As... > {
       using Base = Call< call_dt<As...>, As... >;
       using Base::Base; // inherit base constructors
       //! Invoke the entry method

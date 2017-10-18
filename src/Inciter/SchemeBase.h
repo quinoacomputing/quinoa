@@ -94,10 +94,10 @@ class SchemeBase {
     //!   specializing functionality of this class. CRTP enables hiding all
     //!   generic functionality here while exposing only the specialized one
     //!   (the actual function call) to the base, which minimizes client code
-    //!   (cass Scheme). Unpacking the tuple to a variadic argument list is
+    //!   (in class Scheme). Unpacking the tuple to a variadic argument list is
     //!   loosely inspired by https://stackoverflow.com/a/16868151.
     template< class Spec, typename... Args >
-    struct Call {
+    struct Call : boost::static_visitor<> {
       //! Constructor storing called member function arguments in tuple
       Call( Args&&... args ) : arg( std::forward_as_tuple(args...) ) {}
       //! Helper class for unpacking tuple into argument list

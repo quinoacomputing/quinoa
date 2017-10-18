@@ -164,8 +164,6 @@ struct bcast {};
 struct elem {};
 struct avecost {};
 struct stdcost {};
-struct lo {};
-struct hi {};
 
 struct BirthdaySpacings {};
 struct Collision {};
