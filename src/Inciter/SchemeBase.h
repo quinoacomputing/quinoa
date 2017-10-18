@@ -14,7 +14,7 @@
 
 #include <tuple>
 
-#include <boost/variant.hpp>
+#include "NoWarning/variant.h"
 
 #include "Exception.h"
 #include "PUPUtil.h"

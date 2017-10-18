@@ -14,8 +14,7 @@
 #include <unordered_set>
 #include <array>
 
-#include <boost/variant.hpp>
-
+#include "NoWarning/variant.h"
 #include "NoWarning/optional.h"
 
 #include "NoWarning/pup_stl.h"
