@@ -1178,7 +1178,7 @@ Solver::updateSol()
   // that own them
   for (const auto& w : m_solimport) {
     std::vector< std::size_t > gid;
-    std::vector< tk::real > sol;
+    std::vector< tk::real > solution;
 
     for (auto r : w.second) {
       const auto it = m_sol.find( r );
@@ -1188,15 +1188,15 @@ Solver::updateSol()
         using diff_type = typename decltype(m_hypreSol)::difference_type;
         auto b = static_cast< diff_type >( i*m_ncomp );
         auto e = static_cast< diff_type >( (i+1)*m_ncomp );
-        sol.insert( end(sol),
-                    std::next( begin(m_hypreSol), b ),
-                    std::next( begin(m_hypreSol), e ) );
+        solution.insert( end(solution),
+                         std::next( begin(m_hypreSol), b ),
+                         std::next( begin(m_hypreSol), e ) );
       } else
         Throw( "Can't find global row id " + std::to_string(r) +
                " to export in solution vector" );
     }
 
-    m_worker[ w.first ].updateSol( gid, sol );
+    m_worker[ w.first ].updateSol( gid, solution );
   }
 }
 
@@ -1222,19 +1222,19 @@ Solver::updateLowSol()
 {
   for (const auto& w : m_solimport) {
     std::vector< std::size_t > gid;
-    std::vector< tk::real > sol;
+    std::vector< tk::real > solution;
 
     for (auto r : w.second) {
       const auto it = m_lowrhs.find( r );
       if (it != end(m_lowrhs)) {
         gid.push_back( it->first );
-        sol.insert(end(sol), begin(it->second), end(it->second));
+        solution.insert(end(solution), begin(it->second), end(it->second));
       } else
         Throw( "Can't find global row id " + std::to_string(r) +
                " to export in low order solution vector" );
     }
 
-    m_worker[ w.first ].updateLowSol( gid, sol );
+    m_worker[ w.first ].updateLowSol( gid, solution );
   }
 }
 

@@ -196,11 +196,11 @@ Discretization::vol()
 
 void
 Discretization::comvol( const std::vector< std::size_t >& gid,
-                        const std::vector< tk::real >& V )
+                        const std::vector< tk::real >& vol )
 // *****************************************************************************
 //  Receive nodal volumes on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive volume contributions
-//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
+//! \param[in] vol Partial sums of nodal volume contributions to chare-boundary
 //!   nodes
 //! \details This function receives contributions to m_vol, which stores the
 //!   nodal volumes. While m_vol stores own contributions, m_volc collects the
@@ -208,12 +208,12 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
 //!   and m_volc is overlapped. The two are combined in totalvol().
 // *****************************************************************************
 {
-  Assert( V.size() == gid.size(), "Size mismatch" );
+  Assert( vol.size() == gid.size(), "Size mismatch" );
 
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto bid = tk::cref_find( m_bid, gid[i] );
     Assert( bid < m_volc.size(), "Indexing out of bounds" );
-    m_volc[ bid ] += V[i];
+    m_volc[ bid ] += vol[i];
   }
 
   if (++m_nvol == m_msum.size()) {
@@ -236,9 +236,9 @@ Discretization::totalvol()
   }
 
   // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_v) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
+  tk::real vol = 0.0;
+  for (auto v : m_v) vol += v;
+  contribute( sizeof(tk::real), &vol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
 }
 

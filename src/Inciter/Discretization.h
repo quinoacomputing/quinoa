@@ -61,7 +61,7 @@ class Discretization : public CBase_Discretization {
 
     //! Collect nodal volumes across chare boundaries
     void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V );
+                 const std::vector< tk::real >& vol );
 
     //! Sum mesh volumes and contribute own mesh volume to total volume
     void totalvol();
@@ -69,7 +69,9 @@ class Discretization : public CBase_Discretization {
     //! Compute mesh cell statistics
     void stat();
 
-
+    /** @name Accessors
+      * */
+    ///@{
     const tk::UnsMesh::Coords& Coord() const{ return m_coord; }
     tk::UnsMesh::Coords& Coord() { return m_coord; }
 
@@ -128,6 +130,7 @@ class Discretization : public CBase_Discretization {
     Psup() const { return m_psup; }
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
+    //@}
 
     //! Output chare element blocks to output file
     void writeMesh();

@@ -19,10 +19,7 @@
   #pragma clang diagnostic ignored "-Wundef"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( push )
-  #pragma warning( disable: 367 )
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
 #include <boost/variant.hpp>
@@ -31,8 +28,6 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( pop )
 #endif
 
 #endif // nowarning_variant_h

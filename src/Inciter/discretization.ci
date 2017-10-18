@@ -28,7 +28,7 @@ module discretization {
       initnode void registerReducers();
       entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,
-                         const std::vector< tk::real >& V );
+                         const std::vector< tk::real >& vol );
       entry void totalvol();
       entry void stat();
     };
