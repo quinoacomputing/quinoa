@@ -12,17 +12,17 @@ module partitioner {
 
   include "Types.h";
   include "UnsMesh.h";
+  include "Scheme.h";
 
   extern module transporter;
-  extern module cg;
 
   namespace inciter {
 
     group Partitioner {
       entry Partitioner( const std::vector< CkCallback >& cb,
                          const CProxy_Transporter& host,
-                         const CProxy_CG& worker,
-                         const tk::CProxy_Solver< CProxy_CG >& solver );
+                         const Scheme& scheme,
+                         const tk::CProxy_Solver& solver );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
@@ -44,6 +44,7 @@ module partitioner {
                        const std::unordered_map< std::size_t,
                                                  std::vector< int > >& cn,
                        tk::UnsMesh::EdgeChares& ce );
+      entry void createWorkers();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

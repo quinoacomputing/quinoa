@@ -12,30 +12,19 @@ module solver {
 
   namespace tk {
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-
-    // Will specialize linear system solver for CH
-    chare Solver< inciter::CProxy_CG >;
-
-    // Solver is templated so that the same code (parameterized by the type
-    // given by the template argument, WorkerProxy, can be generated for
-    // different types of proxies. Howver, all possible specializations must be
-    // listed above to ensure that Charm++ generates correct code.
-    template< class WorkerProxy >
     group Solver {
       entry Solver( const std::vector< CkCallback >& cb,
-                    const WorkerProxy& worker,
                     const std::map< int,
                       std::vector< std::size_t > >& side,
                     std::size_t ncomp,
                     bool feedback );
+      entry void nchare( int n );
       initnode void registerBCMerger();
       entry void bounds( int pe, std::size_t lower, std::size_t upper );
       entry void enable_wait4rhs();
       entry [expedited] void addrow( int fromch,
-                         int frompe,
-                         const std::set< std::size_t >& row );
+                                     int frompe,
+                                     const std::set< std::size_t >& row );
       entry void recrow();
       entry [reductiontarget] void addbc( CkReductionMsg* msg );
       entry [expedited] void addsol( int fromch,
@@ -167,13 +156,17 @@ module solver {
       // FluxCorrector::aec().
       //
       // A word on multiple invokation of SDAG triggers: As the commit message
-      // of b79ea29 explains, the "triggers", such as hyprerow_complete(),
+      // of b79ea29 explains, the "triggers", such as lhsbc_complete(),
       // enumerated below, at threir call site should be thought of as messages
       // being put in some message queue and consumed at 'when' clauses wherever
       // they appear. If they appear in multiple when clauses, they consume
       // multple messages, thus they have to be triggered multiple times. See
       // also
       // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
+
+      entry void wait4nchare() {
+        when nchare_complete(), bounds_complete() serial "nchare" {
+          Group::contribute( m_cb.get< tag::coord >() ); } };
 
       entry void wait4row() {
         when row_complete() serial "row" {
@@ -193,11 +186,14 @@ module solver {
         when rhsbc_complete() serial "hyprerhs" { hyprerhs(); } };
 
       entry void wait4hypresol() {
-        when hypresol_complete(), hyprerow_complete() serial "sol" { sol(); } };
+        when hypresol_complete(), hyprerow_complete() serial "sol" {
+          sol(); } };
       entry void wait4hyprelhs() {
-        when hyprelhs_complete(), hyprerow_complete() serial "lhs" { lhs(); } };
+        when hyprelhs_complete(), hyprerow_complete() serial "lhs" {
+          lhs(); } };
       entry void wait4hyprerhs() {
-        when hyprerhs_complete(), hyprerow_complete() serial "rhs" { rhs(); } };
+        when hyprerhs_complete(), hyprerow_complete() serial "rhs" {
+          rhs(); } };
 
       entry void wait4fillsol() {
         when fillsol_complete() serial "asmsol" { assemblesol(); } };
@@ -218,6 +214,8 @@ module solver {
       entry void wait4lowsolve() {
         when lowsolve_complete() serial "updatelow" { updateLowSol(); } };
 
+      entry void nchare_complete();
+      entry void bounds_complete();
       entry void row_complete();
       entry void bc_complete_lhs();
       entry void bc_complete_rhs();

@@ -11,12 +11,10 @@
 
 mainmodule inciter {
 
-  extern module cg;
   extern module partitioner;
+  extern module cg;
 
   readonly CProxy_Main mainProxy;
-
-  include "Types.h";
 
   namespace inciter {
 

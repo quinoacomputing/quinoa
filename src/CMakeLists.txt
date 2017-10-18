@@ -101,6 +101,11 @@ if(${MPI_CXX_FOUND})
   add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 endif(${MPI_CXX_FOUND})
 
+# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
+# on why these macros are necessary for our use of BOOST::MPL.
+add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
+add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 

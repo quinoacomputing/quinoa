@@ -9,6 +9,8 @@
 
 module transporter {
 
+  include "Types.h";
+
   namespace inciter {
 
     chare Transporter {
