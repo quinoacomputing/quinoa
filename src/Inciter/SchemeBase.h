@@ -14,7 +14,7 @@
 
 #include <tuple>
 
-#include "NoWarning/variant.h"
+#include "Variant.h"
 
 #include "Exception.h"
 #include "PUPUtil.h"
@@ -52,7 +52,15 @@ class SchemeBase {
     }
 
     //! Get reference to discretization proxy
-    CProxy_Discretization& get() { return discproxy; }
+    CProxy_Discretization& get() noexcept { return discproxy; }
+
+    //! Query underlying proxy type
+    //! \return Zero-based index into the set of types of Proxy
+    int which() const noexcept { return proxy.which(); }
+
+    //! Query underlying proxy element type
+    //! \return Zero-based index into the set of types of ProxyElem
+    int which_element() const noexcept { return element(0).which(); }
 
   protected:
     //! Variant type listing all chare proxy types modeling the same concept
@@ -71,7 +79,7 @@ class SchemeBase {
     //! \return Chare array element proxy as a variant
     //! \details The returning element proxy is a variant, depending on the
     //!   input proxy.
-    ProxyElem element( const CkArrayIndex1D& x ) {
+    ProxyElem element( const CkArrayIndex1D& x ) const {
       return boost::apply_visitor( Idx(x), proxy );
     }
 
@@ -140,7 +148,9 @@ class SchemeBase {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      //p | proxy;
+      auto v = tk::Variant< CProxy_CG, CProxy_DG >( proxy );
+      p | v;
+      proxy = v.get();
       p | discproxy;
     }
     //! \brief Pack/Unpack serialize operator|
