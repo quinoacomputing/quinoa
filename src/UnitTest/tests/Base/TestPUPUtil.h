@@ -49,9 +49,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 1,
@@ -90,9 +92,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 2,
@@ -131,9 +135,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 3,
@@ -168,9 +174,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 4,
@@ -207,9 +215,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 5,
@@ -246,9 +256,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(t),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 6,
@@ -322,9 +334,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(a),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 7,
@@ -360,9 +374,11 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(m),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 8,
@@ -392,6 +408,48 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
+  //! Constructor taking (and migrating) a std::unordered_set
+  explicit Migrated( charm::UnorderedSet s ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_unordered_set(s),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple(),
+    m_variant()
+  {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 9,
+                         "Charm:migrate std::unordered_set<int> 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = R"([ {11} {12} ])";
+      std::string actual = "[ ";
+      for (auto n : m_unordered_set) actual += "{" + std::to_string(n) + "} ";
+      actual += "]";
+      // Evaluate test
+      ensure( "std::unordered_set<int> different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_unordered_set ==
+                charm::UnorderedSet{ 11, 12 } );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
   //! Constructor taking (and migrating) a boost::optional< std::string >
   explicit Migrated( charm::BoostOptionalStr o ) :
     m_enum_default(),
@@ -402,12 +460,14 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(o),
     m_boost_optional_int(),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 9,
+    tut::test_result tr( "Base/PUPUtil", 10,
                          "Charm:migrate boost::optional<str> 2",
                          tut::test_result::result_type::ok );
     try {
@@ -440,12 +500,14 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(o),
-    m_tagged_tuple()
+    m_tagged_tuple(),
+    m_variant()
   {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 10,
+    tut::test_result tr( "Base/PUPUtil", 11,
                          "Charm:migrate boost::optional<int> 2",
                          tut::test_result::result_type::ok );
     try {
@@ -478,12 +540,14 @@ class Migrated : public CBase_Migrated {
     m_tuple(),
     m_array(),
     m_unordered_map(),
+    m_unordered_set(),
     m_boost_optional_str(),
     m_boost_optional_int(),
-    m_tagged_tuple(t)
+    m_tagged_tuple(t),
+    m_variant()
   {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 11,
+    tut::test_result tr( "Base/PUPUtil", 12,
                          "Charm:migrate tk::tuple::tagged_tuple 2",
                          tut::test_result::result_type::ok );
     try {
@@ -508,6 +572,89 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
+  //! \brief Constructor taking (and migrating) a tk::Variant<int,double>
+  //!   holding int
+  explicit Migrated( charm::Variant v, int value ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_unordered_set(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple(),
+    m_variant(v)
+  {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 13,
+                         "Charm:migrate tk::Variant<int,double>(int) 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = "[ " + std::to_string(value) + " ]";
+      std::string actual = "[ " +
+        std::to_string( boost::get< int >( m_variant.get() ) ) + " ]";
+      // Evaluate test
+      ensure_equals( "tk::Variant<int,double>(int) different after migrated:"
+                     " expected `" + expected + "` actual `" + actual + "`",
+                     boost::get< int >( m_variant.get() ), value );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
+  //! \brief Constructor taking (and migrating) a tk::Variant<int,double>
+  //!   holding double
+  explicit Migrated( charm::Variant v, double value ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_unordered_set(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple(),
+    m_variant(v)
+  {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 14,
+                         "Charm:migrate tk::Variant<int,double>(double) 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = "[ " + std::to_string(value) + " ]";
+      std::string actual = "[ " +
+        std::to_string( boost::get< double >( m_variant.get() ) ) + " ]";
+      // Evaluate test
+      ensure_equals( "rk::Variant<int,double>(double) different after "
+                     "migrated: expected `" + expected + "` actual `" + actual +
+                     "`", boost::get< double >( m_variant.get() ), value,
+                     1.0e-15 );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
   charm::Enum_default m_enum_default;
   charm::Enum_uint8_t m_enum_uint8_t;
   charm::Enum_cstyle m_enum_cstyle;
@@ -516,14 +663,16 @@ class Migrated : public CBase_Migrated {
   charm::Tuple m_tuple;
   charm::Array m_array;
   charm::UnorderedMap m_unordered_map;
+  charm::UnorderedSet m_unordered_set;
   charm::BoostOptionalStr m_boost_optional_str;
   charm::BoostOptionalInt m_boost_optional_int;
   charm::TaggedTuple m_tagged_tuple;
+  charm::Variant m_variant;
 };
 
 //! Test Pack/Unpack of a default strongly-typed enum
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -543,7 +692,7 @@ void PUPUtil_object::test< 1 >() {
 
 //! Test Pack/Unpack of a uint8_t strongly-typed enum
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -563,7 +712,7 @@ void PUPUtil_object::test< 2 >() {
 
 //! Test Pack/Unpack of a C-style enum
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -583,7 +732,7 @@ void PUPUtil_object::test< 3 >() {
 
 //! Test Pack/Unpack of a std::pair< int, double >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -603,7 +752,7 @@ void PUPUtil_object::test< 4 >() {
 
 //! Test Pack/Unpack of a std::vector< std::string >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -625,7 +774,7 @@ void PUPUtil_object::test< 5 >() {
 //!    std::vector< std::string >, strongly-typed enum,
 //!    std::map< strongly-typed(uint8_t) enum, std::string > >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -650,7 +799,7 @@ void PUPUtil_object::test< 6 >() {
 
 //! Test Pack/Unpack of a std::array< int, 2 >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -670,7 +819,7 @@ void PUPUtil_object::test< 7 >() {
 
 //! Test Pack/Unpack of a std::unordered_map< int, std::string >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -688,9 +837,9 @@ void PUPUtil_object::test< 8 >() {
   CProxy_Migrated::ckNew( charm::UnorderedMap{ {11,"eleven"}, {12,"twelve"} } );
 }
 
-//! Test Pack/Unpack of a boost::optional< std::string >
+//! Test Pack/Unpack of a std::unordered_set< int >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -703,14 +852,14 @@ void PUPUtil_object::test< 9 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate boost::optional<str> 1" );
+  set_test_name( "Charm:migrate std::unordered_set<int> 1" );
 
-  CProxy_Migrated::ckNew( charm::BoostOptionalStr{ {"blah"} } );
+  CProxy_Migrated::ckNew( charm::UnorderedSet{ 11, 12 } );
 }
 
-//! Test Pack/Unpack of an uninitialized boost::optional< int >
+//! Test Pack/Unpack of a boost::optional< std::string >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -723,14 +872,14 @@ void PUPUtil_object::test< 10 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate boost::optional<none> 1" );
+  set_test_name( "Charm:migrate boost::optional<str> 1" );
 
-  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ boost::none } );
+  CProxy_Migrated::ckNew( charm::BoostOptionalStr{ {"blah"} } );
 }
 
-//! Test Pack/Unpack of tk::tuple::tagged_tuple
+//! Test Pack/Unpack of an uninitialized boost::optional< int >
 //! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
@@ -743,9 +892,71 @@ void PUPUtil_object::test< 11 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate boost::optional<none> 1" );
+
+  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ boost::none } );
+}
+
+//! Test Pack/Unpack of tk::tuple::tagged_tuple
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void PUPUtil_object::test< 12 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate tk::tuple::tagged_tuple 1" );
 
   CProxy_Migrated::ckNew( charm::TaggedTuple{ "Bob", 32, "bob@bob.bob" } );
+}
+
+//! Test Pack/Unpack of tk::Variant<int,double> holding an int
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void PUPUtil_object::test< 13 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate tk::Variant<int,double>(int) 1" );
+
+  boost::variant< int, double > v{213};
+  CProxy_Migrated::ckNew( charm::Variant(v), 213 );
+}
+
+//! Test Pack/Unpack of tk::Variant<int,double> holding a double
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void PUPUtil_object::test< 14 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate tk::Variant<int,double>(double) 1" );
+
+  boost::variant< int, double > v{3.14};
+  CProxy_Migrated::ckNew( charm::Variant(v), 3.14 );
 }
 
 } // tut::

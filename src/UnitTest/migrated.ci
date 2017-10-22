@@ -22,9 +22,12 @@ module migrated {
       entry Migrated( charm::Tuple t );
       entry Migrated( charm::Array a );
       entry Migrated( charm::UnorderedMap m );
+      entry Migrated( charm::UnorderedSet s );
       entry Migrated( charm::BoostOptionalStr o );
       entry Migrated( charm::BoostOptionalInt o );
       entry Migrated( charm::TaggedTuple t );
+      entry Migrated( charm::Variant v, int value );
+      entry Migrated( charm::Variant v, double value );
     }
 
   } // tut::

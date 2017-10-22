@@ -139,7 +139,7 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")

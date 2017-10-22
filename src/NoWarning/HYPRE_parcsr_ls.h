@@ -21,6 +21,7 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wmacro-redefined"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"

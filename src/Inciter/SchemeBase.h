@@ -140,7 +140,7 @@ class SchemeBase {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      p | proxy;
+      //p | proxy;
       p | discproxy;
     }
     //! \brief Pack/Unpack serialize operator|

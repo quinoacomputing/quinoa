@@ -14,7 +14,6 @@
 #include <unordered_set>
 #include <array>
 
-#include "NoWarning/variant.h"
 #include "NoWarning/optional.h"
 
 #include "NoWarning/pup_stl.h"
@@ -185,28 +184,6 @@ inline void pup( PUP::er& p, boost::optional< T >& o ) {
 //! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
 template< class T >
 inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
-
-//////////////////// Serialize boost::variant ////////////////////
-
-//! Functor to pup variant
-struct variant_pup : boost::static_visitor<> {
-  PUP::er& pup;
-  variant_pup( PUP::er& p ) : pup(p) {}
-  template< typename U > void operator()( U& u ) const { pup | u; }
-};
-
-//! Pack/Unpack boost::variant
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] v boost::variant< T... > of arbitrary types T... to pack/unpack
-template< typename... T >
-inline void pup( PUP::er& p, boost::variant< T... >& v ) {
-  boost::apply_visitor( variant_pup(p), v );
-}
-//! Pack/Unpack boost::variant
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in] v boost::variant< T... > of arbitrary types T... to pack/unpack
-template< typename... T >
-inline void operator|( PUP::er& p, boost::variant< T... >& v ) { pup( p, v ); }
 
 } // PUP::
 
