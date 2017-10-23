@@ -10,6 +10,7 @@
 module migrated {
 
   include "tests/Base/MigratedTypes.h";
+  include "Scheme.h";
 
   namespace tut {
 
@@ -28,6 +29,12 @@ module migrated {
       entry Migrated( charm::TaggedTuple t );
       entry Migrated( charm::Variant v, int value );
       entry Migrated( charm::Variant v, double value );
+    }
+
+    chare Receiver {
+      entry Receiver( const inciter::Scheme& s,
+                      int expected,
+                      std::string label );
     }
 
   } // tut::

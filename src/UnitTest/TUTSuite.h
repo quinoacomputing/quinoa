@@ -61,6 +61,7 @@ class TUTSuite : public CBase_TUTSuite {
         { "Base/Factory", 2 }
       , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
+      , { "Inciter/Scheme", 2 }
     };
 
     // Tests that must be run on PE 0
