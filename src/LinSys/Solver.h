@@ -47,20 +47,20 @@
              tooltip="chares contribute their global node IDs at which
                       they can set boundary conditions"
              URL="\ref tk::Solver::charebc"];
-      RowComplete   [ label="RowComplete" color="#e6851c" style="filled"
+      ComComplete   [ label="ComComplete" color="#e6851c" style="filled"
               tooltip="all linear system solver branches have done heir part of
               storing and exporting global row ids"
-              URL="\ref inciter::Transporter::rowcomplete"];
+              URL="\ref inciter::Transporter::comcomplete"];
       Init [ label="Init"
               tooltip="Workers start setting and outputing ICs, computing
                        initial dt, computing LHS"];
       dt [ label="dt"
            tooltip="Worker chares compute their minimum time step size"
            color="#e6851c" style="filled"];
-      Ver  [ label="Ver"
+      ComFinal  [ label="ComFinal"
               tooltip="start optional verifications, query BCs, and converting
                        row IDs to hypre format"
-              URL="\ref tk::Solver::rowsreceived"];
+              URL="\ref tk::Solver::comfinal"];
       LhsBC [ label="LhsBC"
               tooltip="set boundary conditions on the left-hand side matrix"
               URL="\ref tk::Solver::lhsbc"];
@@ -73,13 +73,13 @@
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
               URL="\ref tk::Solver::charelhs"];
-      ChLoLhs [ label="ChLowLhs"
+      ChLowLhs [ label="ChLowLhs"
               tooltip="chares contribute their low-order left hand side matrix"
               URL="\ref tk::Solver::charelow"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::Solver::charesol"];
-      ChLoRhs [ label="ChLowRhs"
+      ChLowRhs [ label="ChLowRhs"
               tooltip="chares contribute their contribution to the low-order
                        right hand side vector"
               URL="\ref tk::Solver::charelowrhs"];
@@ -115,7 +115,7 @@
               URL="\ref tk::Solver::assemblerhs"];
       Solve [ label="Solve" tooltip="solve linear system"
               URL="\ref tk::Solver::solve"];
-      LoSolve [ label="LoSolve" tooltip="solve low-order linear system"
+      LowSolve [ label="LowSolve" tooltip="solve low-order linear system"
               URL="\ref tk::Solver::lowsolve"];
       Upd [ label="Upd" tooltip="update solution"
                 color="#e6851c" style="filled"
@@ -123,10 +123,10 @@
       LowUpd [ label="LowUpd" tooltip="update low-order solution"
                color="#e6851c"style="filled"
                URL="\ref tk::Solver::updateLowol"];
-      ChRow -> RowComplete [ style="solid" ];
-      RowComplete -> Init [ style="solid" ];
-      RowComplete -> Ver [ style="solid" ];
-      Ver -> HypreRow [ style="solid" ];
+      ChRow -> ComComplete [ style="solid" ];
+      ComComplete -> Init [ style="solid" ];
+      ComComplete -> ComFinal [ style="solid" ];
+      ComFinal -> HypreRow [ style="solid" ];
       ChLhs -> LhsBC [ style="solid" ];
       ChRhs -> RhsBC [ style="solid" ];
       LhsBC -> HypreLhs [ style="solid" ];
@@ -221,14 +221,14 @@ class Solver : public CBase_Solver {
     //! Receive lower and upper global node IDs all PEs will operate on
     void bounds( int p, std::size_t lower, std::size_t upper );
 
-    //! Re-enable SDAG waits for rebuilding the right-hand side vector only
-    void enable_wait4rhs();
+    //! Prepare for next step
+    void next();
 
     //! Set number of worker chares expected to contribute on my PE
     void nchare( int n );
 
-    //! Chares contribute their global row ids
-    void charerow( int fromch, const std::vector< std::size_t >& row );
+    //! Chares contribute their global row ids for establishing communications
+    void charecom( int fromch, const std::vector< std::size_t >& row );
 
     //! Receive global row ids from fellow group branches
     void addrow( int fromch, int frompe, const std::set< std::size_t >& row );
@@ -291,8 +291,8 @@ class Solver : public CBase_Solver {
                     const std::map< std::size_t,
                                     std::vector< tk::real > >& lowlhs );
 
-    //! Assert that all global row indices have been received on my PE
-    void rowsreceived();
+    //! All communications have been establised among PEs
+    void comfinal();
 
     //! Chares query side set info
     //! \note This function does not have to be declared as a Charm++ entry
@@ -334,7 +334,7 @@ class Solver : public CBase_Solver {
   private:
     //! Charm++ reduction callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::row,   CkCallback
+        tag::com,   CkCallback
       , tag::dt,    CkCallback
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
@@ -453,7 +453,7 @@ class Solver : public CBase_Solver {
     inciter::CProxy_CG m_worker;
 
     //! Check if we have done our part in storing and exporting global row ids
-    bool rowcomplete() const;
+    bool comcomplete() const;
 
     //! Check if our portion of the solution vector values is complete
     bool solcomplete() const;
@@ -475,7 +475,7 @@ class Solver : public CBase_Solver {
     bool lowlhscomplete() const;
 
     //! Check if contributions to global row IDs are complete
-    void checkifrowcomplete();
+    void checkifcomcomplete();
 
     //! Check if contributions to unknown/solution vector are complete
     void checkifsolcomplete();

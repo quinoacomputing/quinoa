@@ -48,7 +48,8 @@ extern std::vector< PDE > g_pdes;
 
 using inciter::CG;
 
-CG::CG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
+CG::CG( const CProxy_Discretization& disc,
+        const tk::CProxy_Solver& solver ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -127,6 +128,9 @@ CG::CG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
         n.push_back( it->second );
     }
   }
+
+  // Signal the runtime system that the CG worker objects have been created
+  contribute(CkCallback(CkReductionTarget(Transporter,created), d->Tr()));
 }
 
 void
@@ -144,7 +148,7 @@ CG::setup( tk::real v )
   // Output chare mesh to file
   d->writeMesh();
   // Send off global row IDs to linear system solver
-  m_solver.ckLocalBranch()->charerow( thisIndex, d->Gid() );
+  m_solver.ckLocalBranch()->charecom( thisIndex, d->Gid() );
   // Output fields metadata to output file
   d->writeMeta();
 }
@@ -349,7 +353,7 @@ CG::writeFields( tk::real time )
 void
 CG::out()
 // *****************************************************************************
-// Output mesh and particle fields
+// Output mesh field data
 // *****************************************************************************
 {
   auto d = m_disc[ thisIndex ].ckLocal();
@@ -436,11 +440,6 @@ CG::lhs()
 
 //   // send progress report to host
 //   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chlhs();
-
-  // Call back to Transporter::initcomplete(), signaling that the initialization
-  // is complete and we are now starting time stepping
-  contribute( CkCallback(CkReductionTarget(Transporter,initcomplete),
-              d->Tr()) );
 }
 
 void

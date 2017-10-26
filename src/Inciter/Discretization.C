@@ -184,8 +184,7 @@ Discretization::vol()
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
@@ -218,8 +217,7 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
 
   if (++m_nvol == m_msum.size()) {
     m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   }
 }
 

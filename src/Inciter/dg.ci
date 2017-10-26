@@ -21,8 +21,7 @@ module dg {
   namespace inciter {
 
     array [1D] DG {
-      entry DG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& );
+      entry DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& );
       entry void dt();
       entry void setup( tk::real v );
       entry void init();

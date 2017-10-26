@@ -138,9 +138,8 @@ class CG : public CBase_CG {
     #endif
 
     //! Constructor
-    explicit
-      CG( const CProxy_Discretization& disc,
-          const tk::CProxy_Solver& solver );
+    explicit CG( const CProxy_Discretization& disc,
+                 const tk::CProxy_Solver& solver );
 
     //! Migrate constructor
     explicit CG( CkMigrateMessage* ) {}

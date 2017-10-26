@@ -74,8 +74,6 @@ Transporter::Transporter() :
                  {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
   m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "r", "m", "b" }} ),
-  m_progInit( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "i", "f", "l" }} ),
   m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "r", "s", "l", "p" }} )
 // *****************************************************************************
@@ -162,57 +160,98 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create ExodusII reader for reading side sets from file. When creating
-    // Solver, er.readSideSets() reads all side sets from file, which is a
-    // serial read, then send the same copy to all PEs. Workers then will query
-    // the side sets from their local Solver branch.
-    tk::ExodusIIMeshReader
-      er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+    // Read side sets from mesh file
+    auto ss = readSidesets();
 
-    // Read in side sets from file
-    m_print.diag( "Reading side sets" );
-    auto ss = er.readSidesets();
+    // Create linear system solver if needed
+    if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+      createSolver( ss );
 
-    // Verify that side sets to which boundary conditions are assigned by user
-    // exist in mesh file
-    std::unordered_set< int > conf;
-    for (const auto& eq : g_pdes) eq.side( conf );
-    for (auto i : conf)
-      if (ss.find(i) == end(ss)) {
-        m_print.diag( "WARNING: Boundary conditions specified on side set " +
-          std::to_string(i) + " which does not exist in mesh file" );
-        break;
-      }
-
-    // Create linear system merger and solver chare group
-    m_print.diag( "Creating linear system mergers" );
-    // Create linear system merger and solver callbacks
-    std::vector< CkCallback > cbs {{
-        CkCallback( CkReductionTarget(Transporter,rowcomplete), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
-      , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
-    }};
-    m_solver = tk::CProxy_Solver::
-                 ckNew( cbs, ss,
-                        g_inputdeck.get< tag::component >().nprop(),
-                        g_inputdeck.get< tag::cmd, tag::feedback >() );
-
-    // Create mesh partitioner Charm++ chare group and start partitioning mesh
-    m_progGraph.start( "Creating partitioners and reading mesh graph" );
-    m_timer[ TimerTag::MESHREAD ];
-    std::vector< CkCallback > cbp {{
-        CkCallback( CkReductionTarget(Transporter,part), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
-      , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
-    }};
-    m_partitioner =
-      CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver );
+    // Create mesh partitioner
+    createPartitioner();
 
   } else finish();      // stop if no time stepping requested
+}
+
+std::map< int, std::vector< std::size_t > >
+Transporter::readSidesets()
+// *****************************************************************************
+// Read side sets from mesh file
+//! \return Node lists mapped to side set ids
+// *****************************************************************************
+{
+  // Create ExodusII reader for reading side sets from file.
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+
+  // Read in side sets from file
+  m_print.diag( "Reading side sets" );
+  auto ss = er.readSidesets();
+
+  // Verify that side sets to which boundary conditions are assigned by user
+  // exist in mesh file
+  std::unordered_set< int > conf;
+  for (const auto& eq : g_pdes) eq.side( conf );
+  for (auto i : conf)
+    if (ss.find(i) == end(ss)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
+
+  return ss;
+}
+
+void
+Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
+// *****************************************************************************
+// Create linear solver
+//! \param[in] ss Node lists mapped to side set ids
+// *****************************************************************************
+{
+  // Create linear system merger and solver chare group
+  m_print.diag( "Creating linear system solver" );
+
+  // Create linear system solver callbacks
+  std::vector< CkCallback > cbs {{
+      CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+    , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
+  }};
+
+  // Create linear system solver Charm++ chare group
+  m_solver = tk::CProxy_Solver::
+               ckNew( cbs, ss,
+                      g_inputdeck.get< tag::component >().nprop(),
+                      g_inputdeck.get< tag::cmd, tag::feedback >() );
+}
+
+void
+Transporter::createPartitioner()
+// *****************************************************************************
+// Create mesh partitioner
+// *****************************************************************************
+{
+  // Create mesh partitioner Charm++ chare group and start partitioning mesh
+  m_progGraph.start( "Creating partitioners and reading mesh graph" );
+
+  // Start timing mesh read
+  m_timer[ TimerTag::MESHREAD ];
+
+  // Create partitioner callbacks
+  std::vector< CkCallback > cbp {{
+      CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+  }};
+
+  // Create mesh partitioner Charm++ chare group
+  m_partitioner =
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver );
 }
 
 void
@@ -274,8 +313,9 @@ Transporter::load( uint64_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
-  // Send total number of chares to all linear solver PEs
-  m_solver.nchare( m_nchare );
+  // Send total number of chares to all linear solver PEs, if they exist
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+    m_solver.nchare( m_nchare );
 
   // signal to runtime system that m_nchare is set
   load_complete();
@@ -351,8 +391,7 @@ Transporter::distributed()
 void
 Transporter::aveCost( tk::real c )
 // *****************************************************************************
-// Reduction target estimating the average communication cost of merging the
-// linear system
+// Reduction target estimating the average communication among all PEs
 //! \param[in] c Communication cost summed across all PEs. The cost associated
 //!   to a PE is a real number between 0 and 1, defined as the number of mesh
 //!   points the PE does not own, i.e., needs to send to some other PE, divided
@@ -372,7 +411,7 @@ void
 Transporter::stdCost( tk::real c )
 // *****************************************************************************
 // Reduction target estimating the standard deviation of the communication cost
-// of merging the linear system
+// acrosss all PEs
 //! \param[in] c Sum of the squares of the communication cost minus the average,
 //!   summed across all PEs. The cost associated to a PE is a real number
 //!   between 0 and 1, defined as the number of mesh points the PE does not own,
@@ -383,9 +422,8 @@ Transporter::stdCost( tk::real c )
 //!   here, gives an idea on the expected load imbalance.
 // *****************************************************************************
 {
-  m_print.diag( "Linear system communication cost: avg = " +
-                std::to_string( m_avcost ) + ", std = " +
-                std::to_string( std::sqrt( c/CkNumPes() ) ) );
+  m_print.diag( "Communication cost: avg = " + std::to_string( m_avcost ) +
+                ", std = " + std::to_string( std::sqrt( c/CkNumPes() ) ) );
 }
 
 void
@@ -400,7 +438,7 @@ Transporter::coord()
 }
 
 void
-Transporter::volcomplete()
+Transporter::vol()
 // *****************************************************************************
 // Reduction target indicating that all workers have finished
 // computing/receiving their part of the nodal volumes
@@ -416,8 +454,8 @@ Transporter::totalvol( tk::real v )
 //! \param[in] v mesh volume
 // *****************************************************************************
 {
-  m_partitioner.createWorkers();  // create "derived" workers (e.g., CG, DG)
   m_V = v;
+  m_partitioner.createWorkers();  // create "derived" workers (e.g., CG, DG)
   m_scheme.stat< tag::bcast >();
 }
 
@@ -526,48 +564,26 @@ Transporter::stat()
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
 
-  m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
+  m_progSetup.start( "Setting up PE communication, outputting mesh",
                      {{ CkNumPes(), m_nchare, CkNumPes() }} );
 
   m_scheme.setup< tag::bcast >( m_V );
 }
 
 void
-Transporter::rowcomplete()
+Transporter::comfinal()
 // *****************************************************************************
-// Reduction target indicating that all linear system merger branches have done
-// their part of storing and exporting global row ids
-//! \details This function is a Charm++ reduction target that is called when
-//!   all linear system merger branches have done their part of storing and
-//!   exporting global row ids. This is a necessary precondition to be done
-//!   before we can issue a broadcast to all worker chares to continue with
-//!   the initialization step. The other, also necessary but by itself not
-//!   sufficient, one is parcomplete(). Together rowcomplete() and
-//!   parcomplete() are sufficient for continuing with the initialization. See
-//!   also transporter.ci.
+//  Reduction target indicating that the communication has been established
+//  among PEs
 // *****************************************************************************
 {
   m_progSetup.end();
-  m_progInit.start( "Setting and outputting ICs, computing initial dt, "
-                    "computing LHS",
-                    {{ CkNumPes(), m_nchare, m_nchare }} );
-  m_solver.rowsreceived();
-  m_scheme.init< tag::bcast >();
-}
-
-void
-Transporter::initcomplete()
-// *****************************************************************************
-//  Reduction target indicating that all worker chares have finished their
-//  initialization step and have already continued with start time stepping
-// *****************************************************************************
-{
-  m_progInit.end();
-  m_print.diag( "Starting time stepping" );
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+    m_solver.comfinal();
+  m_print.diag( "Setting initial conditions, starting time stepping" );
+  m_timer[ TimerTag::TIMESTEP ];
   header();   // print out time integration header
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step",
-      {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
+  m_scheme.init< tag::bcast >();
 }
 
 void
@@ -641,6 +657,9 @@ Transporter::dt( tk::real* d, std::size_t n )
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   if (m_t+m_dt > term) m_dt = term - m_t;;
 
+  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
+    m_progStep.start( "Time step", {{m_nchare,CkNumPes(),m_nchare,m_nchare}} );
+
   // Advance to next time step
   m_scheme.advance< tag::bcast >( m_it, m_t, m_dt );
 }
@@ -680,7 +699,6 @@ Transporter::header()
     "       out - output-saved flags (F: field, D: diagnostics)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
-  m_timer[ TimerTag::TIMESTEP ];
 }
 
 void
@@ -752,11 +770,16 @@ Transporter::evaluateTime()
   // all linear system merger group elements to prepare for a new rhs),
   // otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep) {
-    m_solver.enable_wait4rhs();
+
+    if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+      m_solver.next();
+    else
+      computedt();
+
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
       m_progStep.start( "Time step" );
-  } else
-    finish();
+
+  } else finish();
 }
 
 #include "NoWarning/transporter.def.h"

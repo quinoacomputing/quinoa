@@ -155,7 +155,7 @@ struct material {};
 struct id {};
 struct cv {};
 struct k {};
-struct row {};
+struct com {};
 struct coord {};
 struct distributed {};
 struct flattened {};

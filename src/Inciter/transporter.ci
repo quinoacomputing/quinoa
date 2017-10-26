@@ -20,17 +20,17 @@ module transporter {
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
-      entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );
-      entry [reductiontarget] void volcomplete();
+      entry [reductiontarget] void vol();
       entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
+      entry [reductiontarget] void created();
       entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
-      entry [reductiontarget] void initcomplete();
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void diagcomplete();
       entry [reductiontarget] void outcomplete();
@@ -48,13 +48,9 @@ module transporter {
       entry void pereordered();
       entry void pebounds();
 
-      entry void perowcomplete();
+      entry void pecomfinal();
       entry void chbcmatched();
       entry void pebccomplete();
-
-      entry void pesolcomplete();
-      entry void chic();
-      entry void chlhs();
 
       entry void chrhs();
       entry void pesolve();
@@ -69,7 +65,7 @@ module transporter {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      // See srcInciter/Transporter.h.
+      // See src/Inciter/Transporter.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -99,7 +95,7 @@ module transporter {
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete() serial "stat" {
+             pdfstat_complete(), created_complete() serial "stat" {
           stat(); } };
 
       entry void wait4eval() {
@@ -112,6 +108,7 @@ module transporter {
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
+      entry void created_complete();
       entry void out_complete();
       entry void diag_complete();
     }

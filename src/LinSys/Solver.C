@@ -99,7 +99,7 @@ Solver::Solver( const std::vector< CkCallback >& cb,
 {
   // Activate SDAG waits
   wait4nchare();
-  wait4row();
+  wait4com();
   wait4lhsbc();
   wait4rhsbc();
   wait4sol();
@@ -174,9 +174,10 @@ Solver::bounds( int p, std::size_t lower, std::size_t upper )
 }
 
 void
-Solver::enable_wait4rhs()
+Solver::next()
 // *****************************************************************************
-//  Re-enable SDAG waits for rebuilding the right-hand side vector only
+//  Prepare for next step
+//! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
   wait4rhs();
@@ -221,9 +222,9 @@ Solver::nchare( int n )
 }
 
 void
-Solver::charerow( int fromch, const std::vector< std::size_t >& row )
+Solver::charecom( int fromch, const std::vector< std::size_t >& row )
 // *****************************************************************************
-//  Chares contribute their global row ids
+//  Chares contribute their global row ids for establishing communications
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] row Global mesh point (row) indices contributed
 //! \note This function does not have to be declared as a Charm++ entry
@@ -250,7 +251,7 @@ Solver::charerow( int fromch, const std::vector< std::size_t >& row )
     thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
   }
 
-  checkifrowcomplete();
+  checkifcomcomplete();
 }
 
 void
@@ -276,7 +277,7 @@ Solver::recrow()
 // *****************************************************************************
 {
   --m_nperow;
-  checkifrowcomplete();
+  checkifcomcomplete();
 }
 
 void
@@ -590,14 +591,19 @@ Solver::addlowlhs( int fromch,
 }
 
 void
-Solver::rowsreceived()
+Solver::comfinal()
 // *****************************************************************************
-//  Assert that all global row indices have been received on my PE
-//! \details The assert consists of three necessary conditions, which
-//!   together comprise the sufficient condition that all global row indices
-//!   have been received owned by this PE.
+//  All communications have been establised among PEs
+//! \details At this point all solver objects on all PEs must have received
+//!   their global row ids which means that the communications have been
+//!   established among all PEs and this the communications (maps) are final on
+//!   all PEs.
 // *****************************************************************************
 {
+  // Assert that all global row indices have been received on my PE.  The assert
+  // consists of three necessary conditions, which together comprise the
+  // sufficient condition that all global row indices have been received owned
+  // by this PE.
   Assert( // 1. have heard from every chare on my PE
           m_myworker.size() == m_nchare &&
           // 2. number of rows equals that of the expected on my PE
@@ -750,19 +756,19 @@ Solver::pe( std::size_t gid )
 }
 
 bool
-Solver::rowcomplete() const
+Solver::comcomplete() const
 // *****************************************************************************
 //  Check if we have done our part in storing and exporting global row ids
 //! \details This does not mean the global row ids on our PE is complete
-//!   (which is tested by an assert in rowsreceived), only that we have done
+//!   (which is tested by an assert in comfinal), only that we have done
 //!   our part of receiving contributions from chare array groups storing
 //!   the parts that we own and have sent the parts we do not own to fellow
 //!   PEs, i.e., we have nothing else to export. Only when all other fellow
 //!   branches have received all contributions are the row ids complete on
 //!   all PEs. This latter condition can only be tested after the global
 //!   reduction initiated by signal2host_row_complete, which is called when
-//!   all fellow branches have returned true from rowcomplete.
-//! \see rowsreceived()
+//!   all fellow branches have returned true from comcomplete.
+//! \see comfinal()
 //! \return True if we have done our part storing and exporting row ids
 // *****************************************************************************
 {
@@ -835,16 +841,16 @@ Solver::lowlhscomplete() const
 }
 
 void
-Solver::checkifrowcomplete()
+Solver::checkifcomcomplete()
 // *****************************************************************************
 //  Check if contributions to global row IDs are complete
 //! \details If so, send progress report to host that this sub-task is done,
 //!   and tell the runtime system that this is complete.
 // *****************************************************************************
 {
-  if (rowcomplete()) {
-    //if (m_feedback) m_host.perowcomplete();
-    row_complete();
+  if (comcomplete()) {
+    //if (m_feedback) m_host.pecomcomplete();
+    com_complete();
   };
 }
 
