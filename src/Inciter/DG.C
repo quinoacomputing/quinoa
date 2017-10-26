@@ -138,8 +138,7 @@ DG::diagnostics()
   Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
   // Signal the runtime system that diagnostics have been computed
-  contribute(
-    CkCallback(CkReductionTarget(Transporter,diagcomplete), d->Tr()));
+  contribute(CkCallback(CkReductionTarget(Transporter,diagcomplete), d->Tr()));
 }
 
 void
@@ -165,9 +164,6 @@ DG::out()
   if ( (std::fabs(d->T()+d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
        (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
     writeFields( d->T()+d->Dt() );
-
-  // Signal the runtime system that fields have been output
-  contribute( CkCallback(CkReductionTarget(Transporter,outcomplete), d->Tr()) );
 }
 
 void
@@ -190,11 +186,10 @@ DG::advance( uint64_t it, tk::real t, tk::real newdt )
   // Compute rhs for next time step, solve/advance system, ...
   // ...
 
-  // Compute diagnostics, e.g., residuals
-  diagnostics();
-
   // Output field data to file
   out();
+  // Compute diagnostics, e.g., residuals
+  diagnostics();
 }
 
 #include "NoWarning/dg.def.h"

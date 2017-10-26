@@ -25,14 +25,6 @@
     digraph "Transporter SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Diag [ label="Diag"
-              tooltip="chares contribute diagnostics"
-              URL="\ref inciter::CG::diagnostics"];
-      Out [ label="Out"
-              tooltip="fields output to file"];
-      Eval [ label="Eval"
-              tooltip="evaluate time at the end of the time step"
-              URL="\ref inciter::Transporter::evaluateTime"];
       Load [ label="Load"
               tooltip="Load is computed"
               URL="\ref inciter::Transporter::load"];
@@ -42,8 +34,6 @@
       Part [ label="Part"
               tooltip="Partition mesh"
               URL="\ref inciter::Partitioner::partition"];
-      Diag -> Eval [ style="solid" ];
-      Out -> Eval [ style="solid" ];
       Load -> Part [ style="solid" ];
       PartSetup -> Part [ style="solid" ];
       MinStat [ label="MinStat"
@@ -152,9 +142,6 @@
       c_update [ label="CG::update"
               tooltip="workers update their field data to new solution"
               URL="\ref inciter::CG::updateLow"];
-      t_out [ label="Transporter::out"
-              tooltip="field data have been output"
-              URL="\ref inciter::Transporter::outcomplete"];
       t_diag [ label="Transporter::diag"
               tooltip="diagnostics have been output"
               URL="\ref inciter::Transporter::diagcomplete"];
@@ -233,14 +220,129 @@
       s_lhs -> s_solve [ style="solid" ];
       c_rhs -> s_solve [ style="solid" ];
       s_comfinal -> s_solve [ style="solid" ];
-      c_update -> t_out [ style="solid" ];
       c_update -> t_diag [ style="solid" ];
       s_solve -> c_update [ style="solid" ];
-      t_out -> s_next [ style="solid" ];
       t_diag -> s_next [ style="solid" ];
       s_next -> c_dt [ style="solid" ];
     }
     \enddot
+
+    #### Call graph documenting the interactions of Transporter and DG ####
+    The following a DAG documentaion of the itneractions _among_ the classes
+    Transporter (single chare) and DG (chare array). The prefixes p_, t_ d_,
+    respectively, denote Partitioner, Transporter, and DG, which help
+    identifying which class' member function the label is associated with.
+    (These prefixes only show up in the source of "dot", used to generate the
+    visual graph. Note that DG can be thought of as a child that inherits from
+    class Discretization. Both DG and Discretization are Charm++ chare arrays
+    whose elements are abound together when migrated and via class Scheme they
+    are used in a runtime polymorphic fashion. This means when the prefix c is
+    used in the DAG below, the member function might be in the (base)
+    Discretization class instead of in DG. Note that the graph below is partial
+    as it only partially contains how this hooks into Partitioner.
+    \dot
+    digraph "Transporter-DG SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      p_dcreate [ label="Partitioner::create"
+              tooltip="Partitioners create Discretization (base) workers"
+              URL="\ref inciter::Partitioner::createWorkers"];
+      p_ccreate [ label="Partitioner::createWorkers"
+              tooltip="Partitioners create DG (child) workers"
+              URL="\ref inciter::Partitioner::createWorkers"];
+      t_coord [ label="Transporter::coord"
+              tooltip="read mesh coordinates"
+              URL="\ref inciter::Transporter::coord"];
+      t_stat [ label="Transporter::stat"
+              tooltip="output mesh statistics"
+              URL="\ref inciter::Transporter::stat"];
+      d_setup [ label="DG::setup"
+              tooltip="workers start setting up PE communications, output mesh"
+              URL="\ref inciter::DG::setup"];
+      t_comfinal [ label="Transporter::comfinal"
+              tooltip="communications maps final"
+              URL="\ref tk::Transporter:comfinal"];
+      d_init [ label="DG::init"
+              tooltip="set ICs, compute dt, compute LHS"
+              URL="\ref inciter::DG::init"];
+      d_dt [ label="DG::dt"
+              tooltip="workers compute size of next time step"
+              URL="\ref inciter::DG::dt"];
+      t_dt [ label="Transporter::dt"
+              tooltip="compute size of next time step globally"
+              URL="\ref inciter::Transporter::dt"];
+      d_advance [ label="DG::advance"
+              tooltip="advance to next time step"
+              URL="\ref inciter::DG::advance"];
+      t_diag [ label="Transporter::diag"
+              tooltip="diagnostics have been output"
+              URL="\ref inciter::Transporter::diagcomplete"];
+      d_vol [ label="DG::vol"
+              tooltip="compute nodal mesh volumes"
+              URL="\ref tk::DG::vol"];
+      t_vol [ label="Transporter::vol"
+              tooltip="nodal mesh volumes complete, start computing total volume"
+              URL="\ref inicter::Transporter::vol"];
+      d_totalvol [ label="DG::totalvol"
+              tooltip="compute total mesh volume"
+              URL="\ref tk::DG::totalvol"];
+      t_totalvol [ label="Transporter::totalvol"
+              tooltip="total mesh volume computed, start with mesh stats"
+              URL="\ref inicter::Transporter::totalvol"];
+      d_minstat [ label="DG::stat(min)"
+              tooltip="compute mesh statistics finding minima"
+              URL="\ref inciter::DG::stat"];
+      d_maxstat [ label="DG::stat(max)"
+              tooltip="compute mesh statistics finding maxima"
+              URL="\ref inciter::DG::stat"];
+      d_sumstat [ label="DG::stat(sum)"
+              tooltip="compute mesh statistics finding sums"
+              URL="\ref inciter::DG::stat"];
+      d_pdfstat [ label="DG::stat(pdf)"
+              tooltip="compute mesh statistics computing PDFs"
+              URL="\ref inciter::DG::stat"];
+      t_minstat [ label="Transporter::minstat"
+              tooltip="compute mesh statistics finding global minima"
+              URL="\ref inciter::Transporter::minstat"];
+      t_maxstat [ label="Transporter::maxstat"
+              tooltip="compute mesh statistics finding global maxima"
+              URL="\ref inciter::Transporter::maxstat"];
+      t_sumstat [ label="Transporter::sumstat"
+              tooltip="compute mesh statistics finding global sums"
+              URL="\ref inciter::Transporter::sumstat"];
+      t_pdfstat [ label="Transporter::pdfstat"
+              tooltip="compute mesh statistics computing global PDFs"
+              URL="\ref inciter::Transporter::pdfstat"];
+      p_dcreate -> t_coord [ style="solid" ];
+      t_coord -> d_vol [ style="solid" ];
+      d_vol -> t_vol [ style="solid" ];
+      t_vol -> d_totalvol [ style="solid" ];
+      d_totalvol -> t_totalvol [ style="solid" ];
+      t_totalvol -> p_ccreate [ style="solid" ];
+      t_totalvol -> d_minstat [ style="solid" ];
+      t_totalvol -> d_maxstat [ style="solid" ];
+      t_totalvol -> d_sumstat [ style="solid" ];
+      t_totalvol -> d_pdfstat [ style="solid" ];
+      d_minstat -> t_minstat [ style="solid" ];
+      d_maxstat -> t_maxstat [ style="solid" ];
+      d_sumstat -> t_sumstat [ style="solid" ];
+      d_pdfstat -> t_pdfstat [ style="solid" ];
+      t_minstat -> t_stat [ style="solid" ];
+      t_maxstat -> t_stat [ style="solid" ];
+      t_sumstat -> t_stat [ style="solid" ];
+      t_pdfstat -> t_stat [ style="solid" ];
+      p_ccreate -> t_stat [ style="solid" ];
+      t_stat -> d_setup [ style="solid" ];
+      d_setup -> t_comfinal [ style="solid" ];
+      t_comfinal -> d_init [ style="solid" ];
+      d_init -> d_dt [ style="solid" ];
+      d_dt -> t_dt [ style="solid" ];
+      t_dt -> d_advance [ style="solid" ];
+      d_advance -> t_diag [ style="solid" ];
+      t_diag -> d_dt [ style="solid" ];
+    }
+    \enddot
+
 */
 // *****************************************************************************
 #ifndef Transporter_h
@@ -397,13 +499,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that workerr chares contribute no
     //!    diagnostics and we ready to output the one-liner report
-    void diagcomplete() { diag_complete(); }
-
-    //! \brief Reduction target indicating that all particles writers have
-    //!   finished outputing particles to file
-    //! \details This function is a Charm++ reduction target that is called when
-    //!   all worker chares have finished communicating particles
-    void outcomplete() { out_complete(); }
+    void diagcomplete();
 
     //! \brief Reduction target indicating that the linear system solvers are
     //!   ready for the next time step
@@ -472,7 +568,7 @@ class Transporter : public CBase_Transporter {
     void header();
 
     //! Evaluate time step and output one-liner report
-    void evaluateTime();
+    void eval();
 
     //! Echo diagnostics on mesh statistics
     void stat();

@@ -33,7 +33,6 @@ module transporter {
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry [reductiontarget] void diagcomplete();
-      entry [reductiontarget] void outcomplete();
       entry [reductiontarget] void computedt();
       entry [reductiontarget] void finish();
       entry [reductiontarget] void verified();
@@ -80,14 +79,11 @@ module transporter {
       // reductions used to compute mesh cell statistics. Only when all of these
       // are completed will they be echoed to screen at once, denoted by Stat.
       //
-      // The time step is evaluated only if both the diagnostics and the
-      // field and particle output have been done by the workers.
-      //
       // Collecting diagnostics is optional, i.e., it does not happen every time
-      // step. If diagnostics are collected diag_complete() is signaled from the
+      // step. If diagnostics are collected diagcomplete() is called from the
       // reduction target, Transporter::diagnostics(). If diagnostics are not
-      // collected in a time step, collection is skipped, and diag_complete() is
-      // signaled from the shortcut function, Transporter::diagcomplete().
+      // collected in a time step, collection is skipped, and diagcomplete() is
+      // called from the shortcut function, Transporter::diagcomplete().
 
       entry void wait4part() {
         when load_complete(), part_complete() serial "part" {
@@ -98,10 +94,6 @@ module transporter {
              pdfstat_complete(), created_complete() serial "stat" {
           stat(); } };
 
-      entry void wait4eval() {
-        when out_complete(), diag_complete() serial "eval" {
-          evaluateTime(); } };
-
       entry void load_complete();
       entry void part_complete();
       entry void minstat_complete();
@@ -109,8 +101,6 @@ module transporter {
       entry void sumstat_complete();
       entry void pdfstat_complete();
       entry void created_complete();
-      entry void out_complete();
-      entry void diag_complete();
     }
 
   } // inciter::

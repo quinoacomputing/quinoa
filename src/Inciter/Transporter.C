@@ -141,7 +141,6 @@ Transporter::Transporter() :
     // Enable SDAG waits
     wait4part();
     wait4stat();
-    wait4eval();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -634,7 +633,17 @@ Transporter::diagnostics( CkReductionMsg* msg )
     }
   }
 
-  diag_complete();
+  diagcomplete();
+}
+
+void
+Transporter::diagcomplete()
+// *****************************************************************************
+// Reduction target indicating that workerr chares contribute no diagnostics and
+// we ready to output the one-liner report
+// *****************************************************************************
+{
+  eval();
 }
 
 void
@@ -702,9 +711,14 @@ Transporter::header()
 }
 
 void
-Transporter::evaluateTime()
+Transporter::eval()
 // *****************************************************************************
 // Evaluate time step and output one-liner report
+//! \note Collecting diagnostics is optional, i.e., it does not happen every
+//!    time step. If diagnostics are collected, eval() is called from the
+//!    reduction target, diagnostics(). If diagnostics are not collected in a
+//!    time step, collection is skipped, and eval() is called from the shortcut
+//!    function, diagcomplete().
 // *****************************************************************************
 {
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -763,8 +777,6 @@ Transporter::evaluateTime()
 
     m_print << std::endl;
   }
-
-  wait4eval();
 
   // if neither max iterations nor max time reached, will continue (by telling
   // all linear system merger group elements to prepare for a new rhs),

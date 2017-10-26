@@ -373,8 +373,6 @@ CG::out()
   if ( (std::fabs(d->T()+d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
        (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
     writeFields( d->T()+d->Dt() );
-
-  contribute( CkCallback(CkReductionTarget(Transporter,outcomplete), d->Tr()) );
 }
 
 
@@ -869,7 +867,7 @@ CG::diagnostics()
 
   } else
     contribute(
-      CkCallback(CkReductionTarget(Transporter,diagcomplete), d->Tr()));
+      CkCallback(CkReductionTarget(Transporter,diagcomplete), d->Tr()) );
 }
 
 bool
@@ -946,11 +944,10 @@ CG::apply()
 //   // send progress report to host
 //   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chlim();
 
-  // Compute diagnostics, e.g., residuals
-  diagnostics();
-
   // Output field data to file
   out();
+  // Compute diagnostics, e.g., residuals
+  diagnostics();
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
