@@ -128,9 +128,6 @@ CG::CG( const CProxy_Discretization& disc,
         n.push_back( it->second );
     }
   }
-
-  // Signal the runtime system that the CG worker objects have been created
-  contribute(CkCallback(CkReductionTarget(Transporter,created), d->Tr()));
 }
 
 void

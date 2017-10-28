@@ -99,22 +99,15 @@ Solver::Solver( const std::vector< CkCallback >& cb,
 {
   // Activate SDAG waits
   wait4nchare();
-  wait4com();
   wait4lhsbc();
   wait4rhsbc();
-  wait4sol();
   wait4lhs();
   wait4rhs();
   wait4hypresol();
   wait4hyprelhs();
   wait4hyprerhs();
-  wait4fillsol();
-  wait4filllhs();
-  wait4fillrhs();
   wait4asm();
   wait4low();
-  wait4solve();
-  wait4lowsolve();
 }
 
 void
@@ -166,10 +159,7 @@ Solver::bounds( int p, std::size_t lower, std::size_t upper )
     m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
     // Create linear solver
     m_solver.create();
-
     bounds_complete();
-    // Signal back to host that setup of workers can start
-    //contribute( m_cb.get< tag::coord >() );
   }
 }
 
@@ -183,11 +173,8 @@ Solver::next()
   wait4rhs();
   wait4rhsbc();
   wait4hyprerhs();
-  wait4fillrhs();
   wait4asm();
   wait4low();
-  wait4solve();
-  wait4lowsolve();
   m_rhsimport.clear();
   m_lowrhsimport.clear();
   m_diagimport.clear();
@@ -850,7 +837,7 @@ Solver::checkifcomcomplete()
 {
   if (comcomplete()) {
     //if (m_feedback) m_host.pecomcomplete();
-    com_complete();
+    contribute( m_cb.get< tag::com >() );
   };
 }
 
@@ -864,7 +851,7 @@ Solver::checkifsolcomplete()
 {
   if (solcomplete()) {
     //if (m_feedback) m_host.pesolcomplete();
-    sol_complete();
+    hypresol();
   }
 }
 
@@ -1098,7 +1085,8 @@ Solver::sol()
            m_hypreRows.data(),
            m_hypreSol.data() );
 
-  fillsol_complete();
+  m_x.assemble();
+  asmsol_complete();
 }
 
 void
@@ -1117,7 +1105,8 @@ Solver::lhs()
            m_hypreCols.data(),
            m_hypreMat.data() );
 
-  filllhs_complete();
+  m_A.assemble();
+  asmlhs_complete();
 }
 
 void
@@ -1134,35 +1123,6 @@ Solver::rhs()
            m_hypreRows.data(),
            m_hypreRhs.data() );
 
-  fillrhs_complete();
-}
-
-void
-Solver::assemblesol()
-// *****************************************************************************
-//  Assemble distributed solution vector
-// *****************************************************************************
-{
-  m_x.assemble();
-  asmsol_complete();
-}
-
-void
-Solver::assemblelhs()
-// *****************************************************************************
-//  Assemble distributed matrix
-// *****************************************************************************
-{
-  m_A.assemble();
-  asmlhs_complete();
-}
-
-void
-Solver::assemblerhs()
-// *****************************************************************************
-//  Assemble distributed right-hand side vector
-// *****************************************************************************
-{
   m_b.assemble();
   asmrhs_complete();
 }
@@ -1215,7 +1175,8 @@ Solver::solve()
   // send progress report to host
   //if (m_feedback) m_host.pesolve();
 
-  solve_complete();
+  //solve_complete();
+  updateSol();
 }
 
 void
@@ -1298,7 +1259,8 @@ Solver::lowsolve()
     ++ir; ++id; ++im;
   }
 
-  lowsolve_complete();
+  //lowsolve_complete();
+  updateLowSol();
 }
 
 void

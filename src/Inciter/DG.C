@@ -32,11 +32,6 @@ DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& ) :
 //  Constructor
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Signal the runtime system that the DG worker objects have been created
-  contribute(CkCallback(CkReductionTarget(Transporter,created), d->Tr()));
 }
 
 void

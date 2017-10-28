@@ -633,7 +633,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     }
   }
 
-  diagcomplete();
+  eval();
 }
 
 void

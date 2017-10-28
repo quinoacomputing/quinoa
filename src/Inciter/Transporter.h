@@ -51,9 +51,6 @@
       Stat [ label="Stat"
               tooltip="chares contributed to mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
-      Created [ label="Created"
-              tooltip="worker chares have been created"
-              URL="\ref inciter::CG::CG"];
       Setup [ label="Setup"
               tooltip="start computing row IDs, querying BCs, outputing mesh"
               URL="\ref inciter::Transporter::setup"];
@@ -61,7 +58,6 @@
       MaxStat -> Stat [ style="solid" ];
       SumStat -> Stat [ style="solid" ];
       PDFStat -> Stat [ style="solid" ];
-      Created -> Stat [ style="solid" ];
       Stat -> Setup [ style="solid" ];
     }
     \enddot
@@ -204,7 +200,6 @@
       t_maxstat -> t_stat [ style="solid" ];
       t_sumstat -> t_stat [ style="solid" ];
       t_pdfstat -> t_stat [ style="solid" ];
-      p_ccreate -> t_stat [ style="solid" ];
       t_stat -> c_setup [ style="solid" ];
       c_setup -> s_charecom [ style="solid" ];
       s_charecom -> t_comfinal [ style="solid" ];
@@ -331,7 +326,6 @@
       t_maxstat -> t_stat [ style="solid" ];
       t_sumstat -> t_stat [ style="solid" ];
       t_pdfstat -> t_stat [ style="solid" ];
-      p_ccreate -> t_stat [ style="solid" ];
       t_stat -> d_setup [ style="solid" ];
       d_setup -> t_comfinal [ style="solid" ];
       t_comfinal -> d_init [ style="solid" ];
@@ -485,9 +479,6 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target yielding PDF of mesh statistics across all
     //!    workers
     void pdfstat( CkReductionMsg* msg );
-
-    //! Reduction target signaling that all workers have been created
-    void created() { created_complete(); }
 
     //! \brief Reduction target yielding a single minimum time step size across
     //!   all workers
