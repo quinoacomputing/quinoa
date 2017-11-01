@@ -84,7 +84,7 @@ DG::setup( tk::real v )
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
 
   // Start time stepping
-  contribute( CkCallback( CkReductionTarget(Transporter,start), d->Tr()) );
+  dt();
 }
 
 void
