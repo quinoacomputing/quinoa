@@ -144,26 +144,20 @@ class CG : public CBase_CG {
     //! Migrate constructor
     explicit CG( CkMigrateMessage* ) {}
 
-    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
-    //!   case of initial uniform refinement
-    void coord();
-
-    //! \brief Setup rows, query boundary conditions, output
-    //!    mesh, etc.
+    //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
+
+    //! Compute time step size
+    void dt();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
 
     //! Look up and return old node ID for new one
     void oldID( int frompe, const std::vector< std::size_t >& newids );
-
-    //! Compute time step size
-    void dt();
-
-    //! \brief Set ICs, compute initial time step size, output initial field
-    //!   data, compute left-hand-side matrix
-    void init();
 
     //! Update high order solution vector
     void updateSol( //solMsg* m );
@@ -174,9 +168,6 @@ class CG : public CBase_CG {
     void updateLowSol( //solMsg* m );
                        const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& sol );
-
-    //! Advance equations to next time step
-    void advance( uint64_t it, tk::real t, tk::real newdt );
 
     //! Receive sums of antidiffusive element contributions on chare-boundaries
     void comaec( const std::vector< std::size_t >& gid,
@@ -273,8 +264,14 @@ class CG : public CBase_CG {
     //! Total mesh volume
     tk::real m_vol;
 
+    //! Prepare for next step
+    void next();
+
     //! Output mesh and particle fields to files
     void out();
+
+    //! Compute diagnostics, e.g., residuals
+    void diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
@@ -288,9 +285,6 @@ class CG : public CBase_CG {
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
-
-    //! Search particle ina single mesh cell
-    bool parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N );
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
     void aec();
@@ -308,9 +302,6 @@ class CG : public CBase_CG {
 
     //! Apply limited antidiffusive element contributions
     void apply();
-
-    //! Compute diagnostics, e.g., residuals
-    void diagnostics();
 
     //! Verify that solution does not change at Dirichlet boundary conditions
     bool correctBC();

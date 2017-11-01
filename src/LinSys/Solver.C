@@ -31,27 +31,34 @@
 
 namespace tk {
 
-//! \brief Charm++ reducers used by Solver
-//! \details These variables are defined here in the .C file and declared as
-//!   extern in Solver.h. If instead one defines them in the header (as
-//!   static), a new version of any of these variables is created any time the
-//!   header file is included, yielding no compilation nor linking errors.
-//!   However, that leads to runtime errors, since
-//!   Solver::registerBCMerger(), a Charm++ "initnode" entry method, *may*
-//!   fill one while contribute() may use the other (unregistered) one. Result:
-//!   undefined behavior, segfault, and formatting the internet ...
 static CkReduction::reducerType BCMapMerger;
 static CkReduction::reducerType DiagMerger;
 
 }
 
+tk::SolverShadow::SolverShadow()
+// *****************************************************************************
+//  Constructor
+//! \details Solver shadow class constructor used to fire off a reduction
+//!   different from Solver to avoid the runtime error "mis-matched client
+//!   callbacks in reduction messages". Why the constructor definition is not
+//!   defined in the class definition? To avoid the compiler warning: "warning:
+//!   instantiation of function 'CBaseT1<Group,
+//!   tk::CProxy_SolverShadow>::virtual_pup' required here, but no definition is
+//!   available [-Wundefined-func-template]".
+// *****************************************************************************
+{
+}
+
 using tk::Solver;
 
-Solver::Solver( const std::vector< CkCallback >& cb,
+Solver::Solver( CProxy_SolverShadow sh,
+                const std::vector< CkCallback >& cb,
                 const std::map< int, std::vector< std::size_t > >& s,
                 std::size_t n,
                 bool /*feedback*/ ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3] ),
+  m_shadow( sh ),
+  m_cb( cb[0], cb[1], cb[2] ),
   m_side( s ),
   m_ncomp( n ),
   m_nchare( 0 ),
@@ -101,8 +108,6 @@ Solver::Solver( const std::vector< CkCallback >& cb,
   wait4nchare();
   wait4lhsbc();
   wait4rhsbc();
-  wait4lhs();
-  wait4rhs();
   wait4hypresol();
   wait4hyprelhs();
   wait4hyprerhs();
@@ -111,14 +116,13 @@ Solver::Solver( const std::vector< CkCallback >& cb,
 }
 
 void
-Solver::registerBCMerger()
+Solver::registerReducers()
 // *****************************************************************************
-//  Configure Charm++ reduction types for concatenating BC nodelists
-//! \details Since this is a [nodeinit] routine, see solver.ci, the
-//!   Charm++ runtime system executes the routine exactly once on every
-//!   logical node early on in the Charm++ init sequence. Must be static as
-//!   it is called without an object. See also: Section "Initializations at
-//!   Program Startup" at in the Charm++ manual
+//  Configure Charm++ reduction types
+//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//!   routine exactly once on every logical node early on in the Charm++ init
+//!   sequence. Must be static as it is called without an object. See also:
+//!   Section "Initializations at Program Startup" at in the Charm++ manual
 //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
@@ -170,27 +174,28 @@ Solver::next()
 //! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
-  wait4rhs();
   wait4rhsbc();
   wait4hyprerhs();
   wait4asm();
   wait4low();
+
   m_rhsimport.clear();
   m_lowrhsimport.clear();
-  m_diagimport.clear();
-  m_rhs.clear();
-  m_bc.clear();
   m_lowrhs.clear();
   m_hypreRhs.clear();
+  m_rhs.clear();
+
+  m_diagimport.clear();
   m_diag.clear();
+  m_bc.clear();
+
   lowlhs_complete();
   hyprerow_complete();
   asmsol_complete();
   asmlhs_complete();
-  lhsbc_complete();
 
   // Continue with next time step
-  contribute( m_cb.get< tag::dt >() );
+  for (auto i : m_myworker) m_worker[i].dt();
 }
 
 void
@@ -209,15 +214,21 @@ Solver::nchare( int n )
 }
 
 void
-Solver::charecom( int fromch, const std::vector< std::size_t >& row )
+Solver::charecom( const inciter::CProxy_CG& worker,
+                  int fromch,
+                  const std::vector< std::size_t >& row )
 // *****************************************************************************
 //  Chares contribute their global row ids for establishing communications
+//! \param[in] worker Charm chare array proxy contribution coming from
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] row Global mesh point (row) indices contributed
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
 // *****************************************************************************
 {
+  // Store worker proxy for solution update later
+  m_worker = worker;
+
   // Collect chare ids of workers on my PE
   m_myworker.push_back( fromch );
 
@@ -238,7 +249,7 @@ Solver::charecom( int fromch, const std::vector< std::size_t >& row )
     thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
   }
 
-  checkifcomcomplete();
+  if (comcomplete()) contribute( m_cb.get< tag::com >() );
 }
 
 void
@@ -264,7 +275,7 @@ Solver::recrow()
 // *****************************************************************************
 {
   --m_nperow;
-  checkifcomcomplete();
+  if (comcomplete()) contribute( m_cb.get< tag::com >() );
 }
 
 void
@@ -301,7 +312,7 @@ Solver::charesol( int fromch,
     thisProxy[ tope ].addsol( fromch, p.second );
   }
 
-  checkifsolcomplete();
+  if (solcomplete()) hypresol();
 }
 
 void
@@ -320,7 +331,7 @@ Solver::addsol( int fromch,
     m_sol[ r.first ] = r.second;
   }
 
-  checkifsolcomplete();
+  if (solcomplete()) hypresol();
 }
 
 void
@@ -403,13 +414,11 @@ Solver::addlhs( int fromch,
 }
 
 void
-Solver::charerhs( const inciter::CProxy_CG& worker,
-                  int fromch,
+Solver::charerhs( int fromch,
                   const std::vector< std::size_t >& gid,
                   const Fields& r )
 // *****************************************************************************
 //  Chares contribute their rhs nonzero values
-//! \param[in] worker Charm chare array proxy contribution coming from
 //! \param[in] fromch Charm chare array index contribution coming from
 //! \param[in] gid Global row indices of the vector contributed
 //! \param[in] r Portion of the right-hand side vector contributed
@@ -419,9 +428,6 @@ Solver::charerhs( const inciter::CProxy_CG& worker,
 {
   Assert( gid.size() == r.nunk(),
           "Size of right-hand side and row ID vectors must equal" );
-
-  // Store worker proxy for solution update later
-  m_worker = worker;
 
   // Store+add vector of nonzero values owned and pack those to be exported
   std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
@@ -630,8 +636,9 @@ Solver::charebc( const std::unordered_map< std::size_t,
   // Forward all BC vectors received to fellow branches
   if (++m_nchbc == m_nchare) {
     auto stream = tk::serialize( m_bc );
-    contribute( stream.first, stream.second.get(), BCMapMerger,
-                CkCallback(CkIndex_Solver::addbc(nullptr),thisProxy) );
+    m_shadow.ckLocalBranch()->contribute(
+      stream.first, stream.second.get(), BCMapMerger,
+      CkCallback(CkIndex_Solver::addbc(nullptr),thisProxy) );
   }
 }
 
@@ -645,8 +652,8 @@ Solver::addbc( CkReductionMsg* msg )
   creator | m_bc;
   delete msg;
   //if (m_feedback) m_host.pebccomplete();    // send progress report to host
-  bc_complete_lhs(); bc_complete_rhs();
   m_nchbc = 0;
+  bc_complete();  bc_complete();
 }
 
 void
@@ -765,96 +772,6 @@ Solver::comcomplete() const
          m_nperow == 0;
 }
 
-bool
-Solver::solcomplete() const
-// *****************************************************************************
-//  Check if our portion of the solution vector values is complete
-//! \return True if all parts of the unknown/solution vector have been
-//!   received
-// *****************************************************************************
-{
-  return m_solimport == m_rowimport;
-}
-
-bool
-Solver::lhscomplete() const
-// *****************************************************************************
-//  Check if our portion of the matrix values is complete
-//! \return True if all parts of the left-hand side matrix have been received
-// *****************************************************************************
-{
-  return m_lhsimport == m_rowimport;
-}
-
-bool
-Solver::diagcomplete() const
-// *****************************************************************************
-//  Check if our portion of the solution vector values (for diagnostics) is
-//  complete
-//! \return True if all parts of the unknown/solution vector have been received
-// *****************************************************************************
-{
-  return m_diagimport == m_rowimport;
-}
-
-bool
-Solver::rhscomplete() const
-// *****************************************************************************
-//  Check if our portion of the right-hand side vector values is complete
-//! \return True if all parts of the right-hand side vector have been received
-// *****************************************************************************
-{
-  return m_rhsimport == m_rowimport;
-}
-
-bool
-Solver::lowrhscomplete() const
-// *****************************************************************************
-//  Check if our portion of the low-order rhs vector values is complete
-//! \return True if all parts of the low-order rhs vector have been received
-// *****************************************************************************
-{
-  return m_lowrhsimport == m_rowimport;
-}
-
-bool
-Solver::lowlhscomplete() const
-// *****************************************************************************
-//  Check if our portion of the low-order lhs vector values is complete
-//! \return True if all parts of the low-order lhs vector have been received
-// *****************************************************************************
-{
-  return m_lowlhsimport == m_rowimport;
-}
-
-void
-Solver::checkifcomcomplete()
-// *****************************************************************************
-//  Check if contributions to global row IDs are complete
-//! \details If so, send progress report to host that this sub-task is done,
-//!   and tell the runtime system that this is complete.
-// *****************************************************************************
-{
-  if (comcomplete()) {
-    //if (m_feedback) m_host.pecomcomplete();
-    contribute( m_cb.get< tag::com >() );
-  };
-}
-
-void
-Solver::checkifsolcomplete()
-// *****************************************************************************
-//  Check if contributions to unknown/solution vector are complete
-//! \details If so, send progress report to host that this sub-task is done,
-//!   and tell the runtime system that this is complete.
-// *****************************************************************************
-{
-  if (solcomplete()) {
-    //if (m_feedback) m_host.pesolcomplete();
-    hypresol();
-  }
-}
-
 void
 Solver::hyprerow()
 // *****************************************************************************
@@ -863,13 +780,15 @@ Solver::hyprerow()
 //!   to update the vector with HYPRE_IJVectorGetValues().
 // *****************************************************************************
 {
-  for (auto r : m_row) {
-    std::vector< int > h( m_ncomp );
-    std::iota( begin(h), end(h), r*m_ncomp+1 );
-    m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
+//std::cout << CkMyPe() << ": " << "hyprerow\n";
+  if (m_hypreRows.empty()) {
+    for (auto r : m_row) {
+      std::vector< int > h( m_ncomp );
+      std::iota( begin(h), end(h), r*m_ncomp+1 );
+      m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
+    }
+    hyprerow_complete();  hyprerow_complete();  hyprerow_complete();
   }
-
-  hyprerow_complete();  hyprerow_complete();  hyprerow_complete();
 }
 
 void
@@ -971,7 +890,7 @@ Solver::lhsbc()
 //           std::cout << 's';
 //     }
 
-  lhsbc_complete(); lhsbc_complete();
+  hyprelhs();
 }
 
 void
@@ -1008,7 +927,9 @@ Solver::rhsbc()
     }
   }
 
-  rhsbc_complete(); rhsbc_complete();
+  hyprerhs();
+
+  rhsbc_complete();
 }
 
 void
@@ -1017,6 +938,7 @@ Solver::hypresol()
 //  Build Hypre data for our portion of the solution vector
 // *****************************************************************************
 {
+//  std::cout << CkMyPe() << ": " << "hypresol\n";
   Assert( solcomplete(),
           "Values of distributed solution vector on PE " +
           std::to_string( CkMyPe() ) + " is incomplete" );
@@ -1095,8 +1017,8 @@ Solver::lhs()
 //  Set our portion of values of the distributed matrix
 // *****************************************************************************
 {
-  Assert( m_hypreMat.size() == m_hypreCols.size(), "Matrix values "
-          "incomplete on PE " + std::to_string(CkMyPe()) );
+  Assert( m_hypreMat.size() == m_hypreCols.size(),
+          "Matrix values incomplete on PE " + std::to_string(CkMyPe()) );
 
   // Set our portion of the matrix values
   m_A.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
@@ -1115,8 +1037,8 @@ Solver::rhs()
 //  Set our portion of values of the distributed right-hand side vector
 // *****************************************************************************
 {
-  Assert( m_hypreRhs.size() == m_hypreRows.size(), "RHS vector values "
-          "incomplete on PE " + std::to_string(CkMyPe()) );
+  Assert( m_hypreRhs.size() == m_hypreRows.size(),
+          "RHS vector values incomplete on PE " + std::to_string(CkMyPe()) );
 
   // Set our portion of the vector values
   m_b.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),

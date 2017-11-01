@@ -50,9 +50,6 @@ Transporter::Transporter() :
   __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_it( 0 ),
-  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_solver(),
   m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
   m_partitioner(),
@@ -64,7 +61,6 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
-  m_diag(),
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -213,14 +209,15 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
   // Create linear system solver callbacks
   std::vector< CkCallback > cbs {{
       CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
-    , CkCallback( CkReductionTarget(Transporter,computedt), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
     , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
   }};
 
   // Create linear system solver Charm++ chare group
   m_solver = tk::CProxy_Solver::
-               ckNew( cbs, ss,
+               ckNew( tk::CProxy_SolverShadow::ckNew(),
+                      cbs,
+                      ss,
                       g_inputdeck.get< tag::component >().nprop(),
                       g_inputdeck.get< tag::cmd, tag::feedback >() );
 }
@@ -385,6 +382,17 @@ Transporter::distributed()
   m_progPart.end();
   m_progReorder.start( "Reordering mesh" );
   m_partitioner.flatten();
+}
+
+void
+Transporter::flattened()
+// *****************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// flattening its global mesh node IDs and they are ready for computing the
+// communication maps required for node ID reordering
+// *****************************************************************************
+{
+  m_partitioner.gather();
 }
 
 void
@@ -563,26 +571,26 @@ Transporter::stat()
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
 
-  m_progSetup.start( "Setting up PE communication, outputting mesh",
-                     {{ CkNumPes(), m_nchare, CkNumPes() }} );
+  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
+     "Legend: it - iteration count\n"
+     "         t - time\n"
+     "        dt - time step size\n"
+     "       ETE - estimated time elapsed (h:m:s)\n"
+     "       ETA - estimated time for accomplishment (h:m:s)\n"
+     "       out - output-saved flags (F: field, D: diagnostics)\n",
+     "\n      it             t            dt        ETE        ETA   out\n"
+       " ---------------------------------------------------------------\n" );
 
   m_scheme.setup< tag::bcast >( m_V );
 }
 
 void
-Transporter::comfinal()
+Transporter::start()
 // *****************************************************************************
-//  Reduction target indicating that the communication has been established
-//  among PEs
+// Start time stepping
 // *****************************************************************************
 {
-  m_progSetup.end();
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
-    m_solver.comfinal();
-  m_print.diag( "Setting initial conditions, starting time stepping" );
-  m_timer[ TimerTag::TIMESTEP ];
-  header();   // print out time integration header
-  m_scheme.init< tag::bcast >();
+  m_scheme.dt< tag::bcast >();
 }
 
 void
@@ -590,7 +598,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
-//! \see For more detauls, see e.g., inciter::CG::diagnostics().
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -608,13 +615,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
      Assert( d[i].size() == ncomp,
              "Size mismatch at final stage of diagnostics aggregation" );
 
-  // Allocate storage for 'L2(var)' for all variables as those are always
-  // computed
-  m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
+  // Allocate storage for L2(var) for all variables as those are always computed
+  std::vector< tk::real > diag( ncomp, 0.0 );
 
   // Finish computing the L2 norm of the numerical solution
   for (std::size_t i=0; i<d[0].size(); ++i)
-    m_diag[i] = sqrt( d[0][i] / m_V );
+    diag[i] = sqrt( d[0][i] / m_V );
   
   // Query user-requested error types to be computed
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -625,52 +631,31 @@ Transporter::diagnostics( CkReductionMsg* msg )
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[1].size(); ++i)
-       m_diag.push_back( sqrt( d[1][i] / m_V ) );
+       diag.push_back( sqrt( d[1][i] / m_V ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
       for (std::size_t i=0; i<d[2].size(); ++i)
-        m_diag.push_back( d[2][i] );
+        diag.push_back( d[2][i] );
     }
   }
 
-  eval();
+  // Append diagnostics file at selected times
+  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                     g_inputdeck.get< tag::flformat, tag::diag >(),
+                     g_inputdeck.get< tag::prec, tag::diag >(),
+                     std::ios_base::app );
+  uint64_t it = 1;
+  tk::real t = 1.0;
+  dw.diag( it, t, diag );
 }
 
 void
-Transporter::diagcomplete()
+Transporter::next()
 // *****************************************************************************
-// Reduction target indicating that workerr chares contribute no diagnostics and
-// we ready to output the one-liner report
-// *****************************************************************************
-{
-  eval();
-}
-
-void
-Transporter::dt( tk::real* d, std::size_t n )
-// *****************************************************************************
-// Reduction target yielding a single minimum time step size across all workers
-//! \param[in] d Minimum time step size collected over all chares
-//! \param[in] n Size of data behind d
+// Reduction target used to synchronize PEs between linear solves of time steps
 // *****************************************************************************
 {
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
-  Assert( n == 1, "Size of min(dt) must be 1" );
-
-  // Use newly computed time step size
-  m_dt = *d;
-  // Truncate the size of last time step
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  if (m_t+m_dt > term) m_dt = term - m_t;;
-
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step", {{m_nchare,CkNumPes(),m_nchare,m_nchare}} );
-
-  // Advance to next time step
-  m_scheme.advance< tag::bcast >( m_it, m_t, m_dt );
+  m_solver.next();
 }
 
 void
@@ -679,119 +664,7 @@ Transporter::finish()
 // Normal finish of time stepping
 // *****************************************************************************
 {
-  // Print out reason for stopping
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  m_print.endsubsection();
-  if (m_it >= nstep)
-     m_print.note( "Normal finish, maximum number of iterations reached: " +
-                   std::to_string( nstep ) );
-   else
-     m_print.note( "Normal finish, maximum time reached: " +
-                   std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
-
-  // Quit
   mainProxy.finalize();
-}
-
-void
-Transporter::header()
-// *****************************************************************************
-// Print out time integration header
-// *****************************************************************************
-{
-  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
-    "Legend: it - iteration count\n"
-    "         t - time\n"
-    "        dt - time step size\n"
-    "       ETE - estimated time elapsed (h:m:s)\n"
-    "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (F: field, D: diagnostics)\n",
-    "\n      it             t            dt        ETE        ETA   out\n"
-      " ---------------------------------------------------------------\n" );
-}
-
-void
-Transporter::eval()
-// *****************************************************************************
-// Evaluate time step and output one-liner report
-//! \note Collecting diagnostics is optional, i.e., it does not happen every
-//!    time step. If diagnostics are collected, eval() is called from the
-//!    reduction target, diagnostics(). If diagnostics are not collected in a
-//!    time step, collection is skipped, and eval() is called from the shortcut
-//!    function, diagcomplete().
-// *****************************************************************************
-{
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.end();
-
-  // Increase number of iterations taken
-  ++m_it;
-  // Advance physical time to include time step just finished
-  m_t += m_dt;
-
-  bool diag = false;
-
-  // Append diagnostics file at selected times
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                       g_inputdeck.get< tag::flformat, tag::diag >(),
-                       g_inputdeck.get< tag::prec, tag::diag >(),
-                       std::ios_base::app );
-    if (dw.diag( m_it, m_t, m_diag )) diag = true;
-    m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
-  }
-
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
-
-    // estimate time elapsed and time for accomplishment
-    tk::Timer::Watch ete, eta;
-    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                 g_inputdeck.get< tag::discr, tag::t0 >(),
-               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-               g_inputdeck.get< tag::discr, tag::nstep >(),
-               m_it,
-               ete,
-               eta );
-
-    // Output one-liner
-    m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-            << std::scientific << std::setprecision(6)
-            << std::setw(12) << m_t << "  "
-            << m_dt << "  "
-            << std::setfill('0')
-            << std::setw(3) << ete.hrs.count() << ":"
-            << std::setw(2) << ete.min.count() << ":"
-            << std::setw(2) << ete.sec.count() << "  "
-            << std::setw(3) << eta.hrs.count() << ":"
-            << std::setw(2) << eta.min.count() << ":"
-            << std::setw(2) << eta.sec.count() << "  ";
-
-    // Augment one-liner with output indicators
-    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-    if (diag) m_print << 'D';
-
-    m_print << std::endl;
-  }
-
-  // if neither max iterations nor max time reached, will continue (by telling
-  // all linear system merger group elements to prepare for a new rhs),
-  // otherwise finish
-  if (std::fabs(m_t-term) > eps && m_it < nstep) {
-
-    if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
-      m_solver.next();
-    else
-      computedt();
-
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step" );
-
-  } else finish();
 }
 
 #include "NoWarning/transporter.def.h"

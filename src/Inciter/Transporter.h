@@ -48,8 +48,11 @@
       PDFStat [ label="PDFStat"
               tooltip="chares contribute to PDF mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
-      Stat [ label="Stat"
+      Com [ label="Com"
               tooltip="chares contributed to mesh cell statistics"
+              URL="\ref tk::Solver::charecom::"];
+      Stat [ label="Stat"
+              tooltip="all chares have contributed to mesh cell statistics"
               URL="\ref inciter::Discretization::stat"];
       Setup [ label="Setup"
               tooltip="start computing row IDs, querying BCs, outputing mesh"
@@ -58,6 +61,7 @@
       MaxStat -> Stat [ style="solid" ];
       SumStat -> Stat [ style="solid" ];
       PDFStat -> Stat [ style="solid" ];
+      Com -> Stat [ style="solid" ];
       Stat -> Setup [ style="solid" ];
     }
     \enddot
@@ -102,18 +106,6 @@
       c_setup [ label="CG::setup"
               tooltip="workers start setting up PE communications, output mesh"
               URL="\ref inciter::CG::setup"];
-      s_charecom [ label="Solver::charecom"
-              tooltip="setup communications maps among PEs"
-              URL="\ref tk::Solver:charecom"];
-      t_comfinal [ label="Transporter::comfinal"
-              tooltip="communications maps final"
-              URL="\ref tk::Transporter:comfinal"];
-      s_comfinal [ label="Solver::comfinal"
-              tooltip="communications maps final, start converting to hypre data"
-              URL="\ref tk::Solver:comfinal"];
-      c_init [ label="CG::init"
-              tooltip="set ICs, compute dt, compute LHS"
-              URL="\ref inciter::CG::init"];
       s_sol [ label="Solver::sol"
               tooltip="assemble unknown/solution vector"
               URL="\ref tk::Solver:charesol"];
@@ -123,33 +115,42 @@
       c_dt [ label="CG::dt"
               tooltip="workers compute size of next time step"
               URL="\ref inciter::CG::dt"];
-      t_dt [ label="Transporter::dt"
-              tooltip="compute size of next time step globally"
-              URL="\ref inciter::Transporter::dt"];
       c_advance [ label="CG::advance"
               tooltip="advance to next time step"
               URL="\ref inciter::CG::advance"];
       c_rhs [ label="CG::rhs"
               tooltip="workers compute new RHS"
               URL="\ref inciter::CG::rhs"];
+      s_rhs [ label="Solver::rhs"
+              tooltip="solver assemble new RHS"
+              URL="\ref tk::Solver::rhs"];
       s_solve [ label="Solver::solve"
-              tooltip="solve linear systems"
+              tooltip="solve linear system"
               URL="\ref tk::Solver::solve"];
+      s_com [ label="Solver::charecom"
+              tooltip="setup PE communication maps"
+              URL="\ref tk::Solver::charecom"];
       c_update [ label="CG::update"
               tooltip="workers update their field data to new solution"
               URL="\ref inciter::CG::updateLow"];
       t_diag [ label="Transporter::diag"
               tooltip="diagnostics have been output"
-              URL="\ref inciter::Transporter::diagcomplete"];
+              URL="\ref inciter::Transporter::diagnostics"];
       s_next [ label="Solver::next"
               tooltip="prepare for next time step"
               URL="\ref tk::Solver::next"];
+      t_comfinal [ label="Transporter::comfinal"
+              tooltip="communication maps are complete on Trarnsporter"
+              URL="\ref tk::Solver::comfinal"];
       c_vol [ label="CG::vol"
               tooltip="compute nodal mesh volumes"
               URL="\ref tk::CG::vol"];
       t_vol [ label="Transporter::vol"
               tooltip="nodal mesh volumes complete, start computing total volume"
               URL="\ref inicter::Transporter::vol"];
+      t_start [ label="Transporter::start"
+              tooltip="start time stepping"
+              URL="\ref inicter::Transporter::start"];
       c_totalvol [ label="CG::totalvol"
               tooltip="compute total mesh volume"
               URL="\ref tk::CG::totalvol"];
@@ -186,6 +187,8 @@
       t_coord -> c_vol [ style="solid" ];
       c_vol -> t_vol [ style="solid" ];
       t_vol -> c_totalvol [ style="solid" ];
+      p_ccreate -> s_com [ style="solid" ];
+      s_com -> t_comfinal [ style="solid" ];
       c_totalvol -> t_totalvol [ style="solid" ];
       t_totalvol -> p_ccreate [ style="solid" ];
       t_totalvol -> c_minstat [ style="solid" ];
@@ -200,21 +203,18 @@
       t_maxstat -> t_stat [ style="solid" ];
       t_sumstat -> t_stat [ style="solid" ];
       t_pdfstat -> t_stat [ style="solid" ];
+      t_comfinal-> t_stat [ style="solid" ];
       t_stat -> c_setup [ style="solid" ];
-      c_setup -> s_charecom [ style="solid" ];
-      s_charecom -> t_comfinal [ style="solid" ];
-      t_comfinal -> s_comfinal [ style="solid" ];
-      t_comfinal -> c_init [ style="solid" ];
-      c_init -> s_sol [ style="solid" ];
-      c_init -> s_lhs [ style="solid" ];
-      c_init -> c_dt [ style="solid" ];
-      c_dt -> t_dt [ style="solid" ];
-      t_dt -> c_advance [ style="solid" ];
+      c_setup -> s_sol [ style="solid" ];
+      c_setup -> s_lhs [ style="solid" ];
+      c_setup -> t_start [ style="solid" ];
+      t_start -> c_dt [ style="solid" ];
+      c_dt -> c_advance [ style="solid" ];
       c_advance -> c_rhs [ style="solid" ];
+      c_rhs -> s_rhs [ style="solid" ];
       s_sol -> s_solve [ style="solid" ];
       s_lhs -> s_solve [ style="solid" ];
-      c_rhs -> s_solve [ style="solid" ];
-      s_comfinal -> s_solve [ style="solid" ];
+      s_rhs -> s_solve [ style="solid" ];
       c_update -> t_diag [ style="solid" ];
       s_solve -> c_update [ style="solid" ];
       t_diag -> s_next [ style="solid" ];
@@ -257,21 +257,15 @@
       t_comfinal [ label="Transporter::comfinal"
               tooltip="communications maps final"
               URL="\ref tk::Transporter:comfinal"];
-      d_init [ label="DG::init"
-              tooltip="set ICs, compute dt, compute LHS"
-              URL="\ref inciter::DG::init"];
       d_dt [ label="DG::dt"
               tooltip="workers compute size of next time step"
               URL="\ref inciter::DG::dt"];
-      t_dt [ label="Transporter::dt"
-              tooltip="compute size of next time step globally"
-              URL="\ref inciter::Transporter::dt"];
       d_advance [ label="DG::advance"
               tooltip="advance to next time step"
               URL="\ref inciter::DG::advance"];
       t_diag [ label="Transporter::diag"
               tooltip="diagnostics have been output"
-              URL="\ref inciter::Transporter::diagcomplete"];
+              URL="\ref inciter::Transporter::diagnostics"];
       d_vol [ label="DG::vol"
               tooltip="compute nodal mesh volumes"
               URL="\ref tk::DG::vol"];
@@ -308,6 +302,9 @@
       t_pdfstat [ label="Transporter::pdfstat"
               tooltip="compute mesh statistics computing global PDFs"
               URL="\ref inciter::Transporter::pdfstat"];
+      t_start [ label="Transporter::start"
+              tooltip="start time stepping"
+              URL="\ref inicter::Transporter::start"];
       p_dcreate -> t_coord [ style="solid" ];
       t_coord -> d_vol [ style="solid" ];
       d_vol -> t_vol [ style="solid" ];
@@ -327,11 +324,11 @@
       t_sumstat -> t_stat [ style="solid" ];
       t_pdfstat -> t_stat [ style="solid" ];
       t_stat -> d_setup [ style="solid" ];
-      d_setup -> t_comfinal [ style="solid" ];
-      t_comfinal -> d_init [ style="solid" ];
-      d_init -> d_dt [ style="solid" ];
-      d_dt -> t_dt [ style="solid" ];
-      t_dt -> d_advance [ style="solid" ];
+      p_ccreate -> t_comfinal [ style="solid" ];
+      t_comfinal -> t_stat [ style="solid" ];
+      d_setup -> t_start [ style="solid" ];
+      t_start -> d_dt [ style="solid" ];
+      d_dt -> d_advance [ style="solid" ];
       d_advance -> t_diag [ style="solid" ];
       t_diag -> d_dt [ style="solid" ];
     }
@@ -407,7 +404,7 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished flattening its global mesh node IDs and they are ready
     //!   for computing the communication maps required for node ID reordering
-    void flattened() { m_partitioner.gather(); }
+    void flattened();
 
     //! Reduction target estimating the average communication cost among all PEs
     void aveCost( tk::real c );
@@ -455,7 +452,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
-    void comfinal();
+    void comfinal() { com_complete(); }
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v );
@@ -480,34 +477,26 @@ class Transporter : public CBase_Transporter {
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
-    //! \brief Reduction target yielding a single minimum time step size across
-    //!   all workers
-    void dt( tk::real* d, std::size_t n );
-
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! \brief Reduction target indicating that workerr chares contribute no
-    //!    diagnostics and we ready to output the one-liner report
-    void diagcomplete();
+    //! Reduction target outputing diagnostics
+    void verified() { m_print.diag( "AEC verified" ); }
 
-    //! \brief Reduction target indicating that the linear system solvers are
-    //!   ready for the next time step
-    void computedt() { m_scheme.dt< tag::bcast >(); }
+    //! Start time stepping
+    void start();
+
+    //! \brief Reduction target used to synchronize PEs between linear solves of
+    //!   time steps
+    void next();
 
     //! Normal finish of time stepping
     void finish();
 
-    //! \brief Reduction target outputing diagnostics
-    void verified() { m_print.diag( "AEC verified" ); }
-
   private:
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
-    uint64_t m_it;                       //!< Iteration count
-    tk::real m_t;                        //!< Physical time
-    tk::real m_dt;                       //!< Physical time step size
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
     Scheme m_scheme;                     //!< Discretization scheme (worker)
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
@@ -524,14 +513,12 @@ class Transporter : public CBase_Transporter {
     //! Average mesh statistics
     std::array< tk::real, 2 > m_avgstat;
     //! Timer tags
-    enum class TimerTag { TIMESTEP, MESHREAD };
+    enum class TimerTag { MESHREAD };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
     //! \brief Aggregate 'old' (as in file) node ID list at which Solver
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
-    //! Diagnostics
-    std::vector< tk::real > m_diag;
     // Progress object for task "Partitioning and distributing mesh"
     tk::Progress< 2 > m_progPart;
     // Progress object for task "Creating partitioners and reading mesh graph"
@@ -554,12 +541,6 @@ class Transporter : public CBase_Transporter {
 
     //! Configure and write diagnostics file header
     void diagHeader();
-
-    //! Print out time integration header
-    void header();
-
-    //! Evaluate time step and output one-liner report
-    void eval();
 
     //! Echo diagnostics on mesh statistics
     void stat();

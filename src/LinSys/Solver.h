@@ -176,6 +176,12 @@
 
 namespace tk {
 
+//! Solver shadow class used to fire off a reduction different from Solver
+//! \details Solver shadow class constructor used to fire off a reduction
+//!   different from Solver to avoid the runtime error "mis-matched client
+//!   callbacks in reduction messages"
+class SolverShadow : public CBase_SolverShadow { public: SolverShadow(); };
+
 //! Linear system merger and solver Charm++ chare group class
 //! \details Instantiations of Solver comprise a processor aware Charm++
 //!   chare group. When instantiated, a new object is created on each PE and not
@@ -210,13 +216,14 @@ class Solver : public CBase_Solver {
 
   public:
     //! Constructor
-    Solver( const std::vector< CkCallback >& cb,
+    Solver( CProxy_SolverShadow sh,
+            const std::vector< CkCallback >& cb,
             const std::map< int, std::vector< std::size_t > >& s,
             std::size_t n,
             bool /*feedback*/ );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
-    static void registerBCMerger();
+    static void registerReducers();
 
     //! Receive lower and upper global node IDs all PEs will operate on
     void bounds( int p, std::size_t lower, std::size_t upper );
@@ -228,7 +235,9 @@ class Solver : public CBase_Solver {
     void nchare( int n );
 
     //! Chares contribute their global row ids for establishing communications
-    void charecom( int fromch, const std::vector< std::size_t >& row );
+    void charecom( const inciter::CProxy_CG& worker,
+                   int fromch,
+                   const std::vector< std::size_t >& row );
 
     //! Receive global row ids from fellow group branches
     void addrow( int fromch, int frompe, const std::set< std::size_t >& row );
@@ -261,8 +270,7 @@ class Solver : public CBase_Solver {
                                            std::vector< tk::real > > >& l );
 
     //! Chares contribute their rhs nonzero values
-    void charerhs( const inciter::CProxy_CG& worker,
-                   int fromch,
+    void charerhs( int fromch,
                    const std::vector< std::size_t >& gid,
                    const Fields& r );
 
@@ -332,10 +340,10 @@ class Solver : public CBase_Solver {
     int pe( std::size_t gid );
 
   private:
+    CProxy_SolverShadow m_shadow;
     //! Charm++ reduction callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
         tag::com,   CkCallback
-      , tag::dt,    CkCallback
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
     > m_cb;
@@ -456,29 +464,23 @@ class Solver : public CBase_Solver {
     bool comcomplete() const;
 
     //! Check if our portion of the solution vector values is complete
-    bool solcomplete() const;
+    bool solcomplete() const { return m_solimport == m_rowimport; }
 
     //! Check if our portion of the matrix values is complete
-    bool lhscomplete() const;
+    bool lhscomplete() const { return m_lhsimport == m_rowimport; }
 
     //! \brief Check if our portion of the solution vector values (for
     //!   diagnostics) is complete
-    bool diagcomplete() const;
+    bool diagcomplete() const { return m_diagimport == m_rowimport; }
 
     //! Check if our portion of the right-hand side vector values is complete
-    bool rhscomplete() const;
+    bool rhscomplete() const { return m_rhsimport == m_rowimport; }
 
     //! Check if our portion of the low-order rhs vector values is complete
-    bool lowrhscomplete() const;
+    bool lowrhscomplete() const { return m_lowrhsimport == m_rowimport; }
 
     //! Check if our portion of the low-order lhs vector values is complete
-    bool lowlhscomplete() const;
-
-    //! Check if contributions to global row IDs are complete
-    void checkifcomcomplete();
-
-    //! Check if contributions to unknown/solution vector are complete
-    void checkifsolcomplete();
+    bool lowlhscomplete() const { return m_lowlhsimport == m_rowimport; }
 
     //! Build Hypre data for our portion of the global row ids
     void hyprerow();

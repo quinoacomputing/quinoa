@@ -22,14 +22,13 @@ module cg {
     array [1D] CG {
       entry CG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver );
-      entry void dt();
       entry void setup( tk::real v );
-      entry void init();
+      entry void dt();
+      entry [reductiontarget] void advance( tk::real newdt );
       entry void updateSol( const std::vector< std::size_t >& gid,
                             const std::vector< tk::real >& sol );
       entry void updateLowSol( const std::vector< std::size_t >& gid,
                                const std::vector< tk::real >& sol );
-      entry void advance( uint64_t it, tk::real t, tk::real newdt );
       entry void comaec( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& P );
       entry void comalw( const std::vector< std::size_t >& gid,

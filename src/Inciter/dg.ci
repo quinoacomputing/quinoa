@@ -22,10 +22,10 @@ module dg {
 
     array [1D] DG {
       entry DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& );
-      entry void dt();
+      initnode void registerReducers();      
       entry void setup( tk::real v );
-      entry void init();
-      entry void advance( uint64_t it, tk::real t, tk::real newdt );
+      entry void dt();
+      entry [reductiontarget] void advance( tk::real newdt );
     };
 
   } // inciter::

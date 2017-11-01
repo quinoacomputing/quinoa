@@ -13,6 +13,7 @@
 #include "DG.h"
 #include "Discretization.h"
 #include "PDE.h"
+#include "DiagReducer.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -20,6 +21,8 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
+
+static CkReduction::reducerType DiagMerger;
 
 } // inciter::
 
@@ -32,6 +35,26 @@ DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& ) :
 //  Constructor
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Signal the runtime system that the communication (maps) have been
+  // established among all PEs
+  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+}
+
+void
+DG::registerReducers()
+// *****************************************************************************
+//  Configure Charm++ reduction types
+//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//!   routine exactly once on every logical node early on in the Charm++ init
+//!   sequence. Must be static as it is called without an object. See also:
+//!   Section "Initializations at Program Startup" at in the Charm++ manual
+//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+// *****************************************************************************
+{
+  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
 }
 
 void
@@ -44,26 +67,12 @@ DG::setup( tk::real v )
   auto d = m_disc[ thisIndex ].ckLocal();
   Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
-  // Signal the runtime system that the communication (maps) have been
-  // established among all PEs
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
-
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
   d->writeMesh();
   // Output fields metadata to output file
   d->writeMeta();
-}
-
-void
-DG::init()
-// *****************************************************************************
-// Set ICs, compute initial time step size, output initial field data
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
   // zero initial solution vector
   // ...
@@ -71,20 +80,11 @@ DG::init()
   // Set initial conditions for all PDEs
   // ...
 
-  // Compute initial time step size
-  dt();
-
   // Output initial conditions to file (regardless of whether it was requested)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-    writeFields( d->T() );
-}
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
 
-void
-DG::writeFields( tk::real )
-// *****************************************************************************
-// Output mesh-based fields to file
-// *****************************************************************************
-{
+  // Start time stepping
+  contribute( CkCallback( CkReductionTarget(Transporter,start), d->Tr()) );
 }
 
 void
@@ -115,12 +115,17 @@ DG::dt()
 
   }
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Contribute to minimum dt across all chares
+  // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(Transporter,dt), d->Tr()) );
+              CkCallback(CkReductionTarget(DG,advance), thisProxy) );
+}
+
+void
+DG::writeFields( tk::real )
+// *****************************************************************************
+// Output mesh-based fields to file
+// *****************************************************************************
+{
 }
 
 void
@@ -132,8 +137,18 @@ DG::diagnostics()
   auto d = m_disc[ thisIndex ].ckLocal();
   Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
-  // Signal the runtime system that diagnostics have been computed
-  contribute(CkCallback(CkReductionTarget(Transporter,diagcomplete), d->Tr()));
+  const auto ncomp = g_inputdeck.get< tag::component >().nprop();
+
+  std::vector< std::vector< tk::real > >
+    diag( 3, std::vector< tk::real >( ncomp, 0.0 ) );
+
+  // Compute diagnostics
+  // ...
+
+  // Contribute to diagnostics across all PEs
+  auto stream = tk::serialize( diag );
+  contribute( stream.first, stream.second.get(), DiagMerger,
+    CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
 }
 
 void
@@ -149,42 +164,67 @@ DG::out()
   if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
        !g_inputdeck.get< tag::cmd, tag::benchmark >() )
   {
-    writeFields( d->T()+d->Dt() );
+    writeFields( d->T() + d->Dt() );
   }
 
   // Output final field data to file (regardless of whether it was requested)
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(d->T()+d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
+  if ( (std::fabs(d->T() + d->Dt() - term) < eps || (d->It()+1) >= nstep) &&
        (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+  {
     writeFields( d->T()+d->Dt() );
+  }
 }
 
 void
-DG::advance( uint64_t it, tk::real t, tk::real newdt )
+DG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step
-//! \param[in] it Iteration count
-//! \param[in] t Physical time
 // *****************************************************************************
 {
   auto d = m_disc[ thisIndex ].ckLocal();
   Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
-  // Update local copy of time step info (the master copies are in Transporter)
-  d->It() = it;
-  d->T() = t;
-  d->Dt() = newdt;
+  // Set new time step size
+  d->setdt( newdt );
 
   // Compute rhs for next time step, solve/advance system, ...
   // ...
+
+  // Prepare for next time step
+  next();
+}
+
+void
+DG::next()
+// *****************************************************************************
+// Prepare for next step
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
   diagnostics();
+  // Increase number of iterations and physical time
+  d->next();
+  // Output one-liner status report
+  d->status();
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+    dt();
+  else
+    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }
 
 #include "NoWarning/dg.def.h"

@@ -27,14 +27,13 @@ module transporter {
       entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
-      entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void diagcomplete();
-      entry [reductiontarget] void computedt();
-      entry [reductiontarget] void finish();
       entry [reductiontarget] void verified();
+      entry [reductiontarget] void start();
+      entry [reductiontarget] void next();
+      entry [reductiontarget] void finish();
 
       entry void pegraph();
 
@@ -77,12 +76,6 @@ module transporter {
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
       // are completed will they be echoed to screen at once, denoted by Stat.
-      //
-      // Collecting diagnostics is optional, i.e., it does not happen every time
-      // step. If diagnostics are collected diagcomplete() is called from the
-      // reduction target, Transporter::diagnostics(). If diagnostics are not
-      // collected in a time step, collection is skipped, and diagcomplete() is
-      // called from the shortcut function, Transporter::diagcomplete().
 
       entry void wait4part() {
         when load_complete(), part_complete() serial "part" {
@@ -90,7 +83,7 @@ module transporter {
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete() serial "stat" { stat(); } };
+             pdfstat_complete(), com_complete() serial "stat" { stat(); } };
 
       entry void load_complete();
       entry void part_complete();
@@ -98,6 +91,7 @@ module transporter {
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
+      entry void com_complete();
     }
 
   } // inciter::

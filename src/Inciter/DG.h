@@ -32,17 +32,17 @@ class DG : public CBase_DG {
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
 
+    //! Configure Charm++ reduction types for concatenating BC nodelists
+    static void registerReducers();
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Set ICs, compute initial time step size, output initial field data
-    void init();
-
-    //! Advance equations to next time step
-    void advance( uint64_t it, tk::real t, tk::real newdt );
-
     //! Compute time step size
     void dt();
+
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -64,6 +64,9 @@ class DG : public CBase_DG {
     //! Total mesh volume
     tk::real m_vol;
 
+    //! Prepare for next step
+    void next();
+ 
     //! Output mesh and particle fields to files
     void out();
 
@@ -71,7 +74,7 @@ class DG : public CBase_DG {
     void diagnostics();
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real );
+    void writeFields( tk::real time );
 };
 
 } // inciter::
