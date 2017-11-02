@@ -147,8 +147,8 @@ DG::diagnostics()
 
   // Contribute to diagnostics across all PEs
   auto stream = tk::serialize( diag );
-  contribute( stream.first, stream.second.get(), DiagMerger,
-    CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
+  //contribute( stream.first, stream.second.get(), DiagMerger,
+  //  CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
 }
 
 void
