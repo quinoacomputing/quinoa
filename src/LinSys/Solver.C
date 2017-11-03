@@ -279,6 +279,15 @@ Solver::recrow()
 }
 
 void
+Solver::created()
+// *****************************************************************************
+// Signal the runtime system that the workers have been created
+// *****************************************************************************
+{
+  contribute( m_cb.get< tag::com >() );
+}
+
+void
 Solver::charesol( int fromch,
                   const std::vector< std::size_t >& gid,
                   const Fields& solution )

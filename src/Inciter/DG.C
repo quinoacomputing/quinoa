@@ -13,6 +13,7 @@
 #include "DG.h"
 #include "Discretization.h"
 #include "PDE.h"
+#include "Solver.h"
 #include "DiagReducer.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -28,19 +29,15 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& ) :
+DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
   m_disc( disc ),
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Signal the runtime system that the communication (maps) have been
-  // established among all PEs
-  contribute(CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()));
+  // Signal the runtime system that the workers have been created
+  solver.ckLocalBranch()->created();
 }
 
 void
@@ -147,8 +144,8 @@ DG::diagnostics()
 
   // Contribute to diagnostics across all PEs
   auto stream = tk::serialize( diag );
-  //contribute( stream.first, stream.second.get(), DiagMerger,
-  //  CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
+  contribute( stream.first, stream.second.get(), DiagMerger,
+    CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
 }
 
 void
@@ -179,6 +176,14 @@ DG::out()
 }
 
 void
+DG::rhs()
+// *****************************************************************************
+// Compute right-hand side of transport equations
+// *****************************************************************************
+{
+}
+
+void
 DG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
@@ -192,7 +197,7 @@ DG::advance( tk::real newdt )
   d->setdt( newdt );
 
   // Compute rhs for next time step, solve/advance system, ...
-  // ...
+  rhs();
 
   // Prepare for next time step
   next();

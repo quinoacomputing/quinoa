@@ -158,9 +158,8 @@ Transporter::Transporter() :
     // Read side sets from mesh file
     auto ss = readSidesets();
 
-    // Create linear system solver if needed
-    if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
-      createSolver( ss );
+    // Create linear system solver
+    createSolver( ss );
 
     // Create mesh partitioner
     createPartitioner();
@@ -203,9 +202,6 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
 //! \param[in] ss Node lists mapped to side set ids
 // *****************************************************************************
 {
-  // Create linear system merger and solver chare group
-  m_print.diag( "Creating linear system solver" );
-
   // Create linear system solver callbacks
   std::vector< CkCallback > cbs {{
       CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
@@ -653,6 +649,7 @@ void
 Transporter::next()
 // *****************************************************************************
 // Reduction target used to synchronize PEs between linear solves of time steps
+//! \note Only called if CG is used
 // *****************************************************************************
 {
   m_solver.next();

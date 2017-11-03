@@ -27,7 +27,8 @@ class DG : public CBase_DG {
 
   public:
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& );
+    explicit DG( const CProxy_Discretization& disc,
+                 const tk::CProxy_Solver& solver );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
@@ -63,6 +64,9 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Total mesh volume
     tk::real m_vol;
+
+    //! Compute right hand side
+    void rhs();
 
     //! Prepare for next step
     void next();
