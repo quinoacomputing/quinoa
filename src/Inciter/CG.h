@@ -34,6 +34,12 @@
     digraph "CG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
+      Upd [ label="Upd" tooltip="update solution"
+                 style="solid"
+                URL="\ref tk::Solver::updateSol"];
+      LowUpd [ label="LowUpd" tooltip="update low-order solution"
+               style="solid"
+               URL="\ref tk::Solver::updateLowol"];
       OwnAEC [ label="OwnAEC"
                tooltip="own contributions to the antidiffusive element
                         contributions computed"
@@ -62,8 +68,15 @@
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
               URL="\ref inciter::CG::limit"];
+      s_next [ label="Solver::next"
+              tooltip="prepare for next time step"
+              URL="\ref tk::Solver::next"];
       OwnAEC -> Ver [ style="dashed" ];
       OwnALW -> Ver [ style="dashed" ];
+      Upd -> OwnAEC [ style="solid" ];
+      Upd -> ComEC [ style="solid" ];
+      LowUpd -> OwnALW [ style="solid" ];
+      LowUpd -> ComALW [ style="solid" ];
       OwnAEC -> OwnLim [ style="solid" ];
       ComAEC -> OwnLim [ style="solid" ];
       OwnALW -> OwnLim [ style="solid" ];
@@ -74,6 +87,7 @@
       ComALW -> ComLim [ style="solid" ];
       OwnLim -> Apply [ style="solid" ];
       ComLim -> Apply [ style="solid" ];
+      Apply -> s_next [ style="solid" ];
     }
     \enddot
     \include Inciter/cg.ci
