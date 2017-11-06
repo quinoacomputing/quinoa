@@ -35,32 +35,35 @@
     eventually lead to global reductions. Dashed lines are potential shortcuts
     that allow jumping over some of the task-graph under some circumstances or
     optional code paths (taken, e.g., only in DEBUG mode). See the detailed
-    discussion in linsysmrger.ci.
+    discussion in solver.ci.
     \dot
     digraph "Solver SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      ChRow [ label="ChRow"
+      ChCom [ label="ChCom"
               tooltip="chares contribute their global row IDs"
-              URL="\ref tk::Solver::charerow"];
+              URL="\ref tk::Solver::charecom"];
       ChBC [ label="ChBC"
              tooltip="chares contribute their global node IDs at which
                       they can set boundary conditions"
              URL="\ref tk::Solver::charebc"];
-      RowComplete   [ label="RowComplete" color="#e6851c" style="filled"
+      ComComplete   [ label="ComComplete"  style="solid"
               tooltip="all linear system solver branches have done heir part of
               storing and exporting global row ids"
-              URL="\ref inciter::Transporter::rowcomplete"];
-      Init [ label="Init"
+              URL="\ref inciter::Transporter::comcomplete"];
+      Setup [ label="Setup"
               tooltip="Workers start setting and outputing ICs, computing
-                       initial dt, computing LHS"];
+                       initial dt, computing LHS"
+              URL="\ref inciter::CG::setup"];
       dt [ label="dt"
            tooltip="Worker chares compute their minimum time step size"
-           color="#e6851c" style="filled"];
-      Ver  [ label="Ver"
-              tooltip="start optional verifications, query BCs, and converting
-                       row IDs to hypre format"
-              URL="\ref tk::Solver::rowsreceived"];
+            style="solid"];
+      ComFinal  [ label="ComFinal"
+              tooltip="start converting row IDs to hypre format"
+              URL="\ref tk::Solver::comfinal"];
+      t_start [ label="Transporter::start"
+              tooltip="start time stepping"
+              URL="\ref inicter::Transporter::start"];
       LhsBC [ label="LhsBC"
               tooltip="set boundary conditions on the left-hand side matrix"
               URL="\ref tk::Solver::lhsbc"];
@@ -73,13 +76,13 @@
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
               URL="\ref tk::Solver::charelhs"];
-      ChLoLhs [ label="ChLowLhs"
+      ChLowLhs [ label="ChLowLhs"
               tooltip="chares contribute their low-order left hand side matrix"
               URL="\ref tk::Solver::charelow"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::Solver::charesol"];
-      ChLoRhs [ label="ChLowRhs"
+      ChLowRhs [ label="ChLowRhs"
               tooltip="chares contribute their contribution to the low-order
                        right hand side vector"
               URL="\ref tk::Solver::charelowrhs"];
@@ -95,38 +98,28 @@
       HypreRhs [ label="HypreRhs"
               tooltip="convert right hand side vector to hypre format"
               URL="\ref tk::Solver::hyprerhs"];
-      FillSol [ label="FillSol"
+      Sol [ label="Sol"
               tooltip="fill/set solution vector"
               URL="\ref tk::Solver::sol"];
-      FillLhs [ label="FillLhs"
+      Lhs [ label="Lhs"
               tooltip="fill/set left hand side matrix"
               URL="\ref tk::Solver::lhs"];
-      FillRhs [ label="FillRhs"
+      Rhs [ label="Rhs"
               tooltip="fill/set right hand side vector"
               URL="\ref tk::Solver::rhs"];
-      AsmSol [ label="AsmSol"
-              tooltip="assemble solution vector"
-              URL="\ref tk::Solver::assemblesol"];
-      AsmLhs [ label="AsmLhs"
-              tooltip="assemble left hand side matrix"
-              URL="\ref tk::Solver::assemblelhs"];
-      AsmRhs [ label="AsmRhs"
-              tooltip="assemble right hand side vector"
-              URL="\ref tk::Solver::assemblerhs"];
       Solve [ label="Solve" tooltip="solve linear system"
               URL="\ref tk::Solver::solve"];
-      LoSolve [ label="LoSolve" tooltip="solve low-order linear system"
+      LowSolve [ label="LowSolve" tooltip="solve low-order linear system"
               URL="\ref tk::Solver::lowsolve"];
       Upd [ label="Upd" tooltip="update solution"
-                color="#e6851c" style="filled"
+                 style="solid"
                 URL="\ref tk::Solver::updateSol"];
       LowUpd [ label="LowUpd" tooltip="update low-order solution"
-               color="#e6851c"style="filled"
+               style="solid"
                URL="\ref tk::Solver::updateLowol"];
-      ChRow -> RowComplete [ style="solid" ];
-      RowComplete -> Init [ style="solid" ];
-      RowComplete -> Ver [ style="solid" ];
-      Ver -> HypreRow [ style="solid" ];
+      ChCom -> ComComplete [ style="solid" ];
+      ComComplete -> Setup [ style="solid" ];
+      ComFinal -> HypreRow [ style="solid" ];
       ChLhs -> LhsBC [ style="solid" ];
       ChRhs -> RhsBC [ style="solid" ];
       LhsBC -> HypreLhs [ style="solid" ];
@@ -134,21 +127,23 @@
       RhsBC -> LowSolve [ style="solid" ];
       ChLowRhs -> LowSolve [ style="solid" ];
       ChLowLhs -> LowSolve [ style="solid" ];
-      Init -> ChSol [ style="solid" ];
-      Init -> ChLhs [ style="solid" ];
-      Init -> ChLowLhs [ style="solid" ];
-      Init -> dt [ style="solid" ];
+      Setup -> ComFinal [ style="solid" ];
+      Setup -> ChSol [ style="solid" ];
+      Setup -> ChLhs [ style="solid" ];
+      Setup -> ChLowLhs [ style="solid" ];
+      Setup -> t_start [ style="solid" ];
+      t_start -> dt [ style="solid" ];
       dt -> ChRhs [ style="solid" ];
       dt -> ChLowRhs [ style="solid" ];
       dt -> ChBC [ style="solid" ];
       ChBC -> LhsBC [ style="solid" ];
       ChBC -> RhsBC [ style="solid" ];
-      HypreRow -> FillSol [ style="solid" ];
-      HypreRow -> FillLhs [ style="solid" ];
-      HypreRow -> FillRhs [ style="solid" ];
-      ChSol -> HypreSol -> FillSol -> AsmSol -> Solve [ style="solid" ];
-      HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
-      HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
+      HypreRow -> Sol [ style="solid" ];
+      HypreRow -> Lhs [ style="solid" ];
+      HypreRow -> Rhs [ style="solid" ];
+      ChSol -> HypreSol -> Sol -> Solve [ style="solid" ];
+      HypreLhs -> Lhs -> Solve [ style="solid" ];
+      HypreRhs -> Rhs -> Solve [ style="solid" ];
       Solve -> Upd [ style="solid" ];
       LowSolve -> LowUpd [ style="solid" ];
     }
@@ -175,6 +170,12 @@
 #include "NoWarning/cg.decl.h"
 
 namespace tk {
+
+//! Solver shadow class used to fire off a reduction different from Solver
+//! \details Solver shadow class constructor used to fire off a reduction
+//!   different from Solver to avoid the runtime error "mis-matched client
+//!   callbacks in reduction messages"
+class SolverShadow : public CBase_SolverShadow { public: SolverShadow(); };
 
 //! Linear system merger and solver Charm++ chare group class
 //! \details Instantiations of Solver comprise a processor aware Charm++
@@ -210,25 +211,31 @@ class Solver : public CBase_Solver {
 
   public:
     //! Constructor
-    Solver( const std::vector< CkCallback >& cb,
+    Solver( CProxy_SolverShadow sh,
+            const std::vector< CkCallback >& cb,
             const std::map< int, std::vector< std::size_t > >& s,
             std::size_t n,
             bool /*feedback*/ );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
-    static void registerBCMerger();
+    static void registerReducers();
 
     //! Receive lower and upper global node IDs all PEs will operate on
     void bounds( int p, std::size_t lower, std::size_t upper );
 
-    //! Re-enable SDAG waits for rebuilding the right-hand side vector only
-    void enable_wait4rhs();
+    //! Prepare for next step
+    void next();
 
     //! Set number of worker chares expected to contribute on my PE
     void nchare( int n );
 
-    //! Chares contribute their global row ids
-    void charerow( int fromch, const std::vector< std::size_t >& row );
+    //! Chares contribute their global row ids for establishing communications
+    void charecom( const inciter::CProxy_CG& worker,
+                   int fromch,
+                   const std::vector< std::size_t >& row );
+
+    //! Signal the runtime system that the workers have been created
+    void created();
 
     //! Receive global row ids from fellow group branches
     void addrow( int fromch, int frompe, const std::set< std::size_t >& row );
@@ -261,8 +268,7 @@ class Solver : public CBase_Solver {
                                            std::vector< tk::real > > >& l );
 
     //! Chares contribute their rhs nonzero values
-    void charerhs( const inciter::CProxy_CG& worker,
-                   int fromch,
+    void charerhs( int fromch,
                    const std::vector< std::size_t >& gid,
                    const Fields& r );
 
@@ -291,8 +297,8 @@ class Solver : public CBase_Solver {
                     const std::map< std::size_t,
                                     std::vector< tk::real > >& lowlhs );
 
-    //! Assert that all global row indices have been received on my PE
-    void rowsreceived();
+    //! All communications have been establised among PEs
+    void comfinal();
 
     //! Chares query side set info
     //! \note This function does not have to be declared as a Charm++ entry
@@ -332,10 +338,10 @@ class Solver : public CBase_Solver {
     int pe( std::size_t gid );
 
   private:
+    CProxy_SolverShadow m_shadow;
     //! Charm++ reduction callbacks associated to compile-time tags
     tk::tuple::tagged_tuple<
-        tag::row,   CkCallback
-      , tag::dt,    CkCallback
+        tag::com,   CkCallback
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
     > m_cb;
@@ -453,32 +459,26 @@ class Solver : public CBase_Solver {
     inciter::CProxy_CG m_worker;
 
     //! Check if we have done our part in storing and exporting global row ids
-    bool rowcomplete() const;
+    bool comcomplete() const;
 
     //! Check if our portion of the solution vector values is complete
-    bool solcomplete() const;
+    bool solcomplete() const { return m_solimport == m_rowimport; }
 
     //! Check if our portion of the matrix values is complete
-    bool lhscomplete() const;
+    bool lhscomplete() const { return m_lhsimport == m_rowimport; }
 
     //! \brief Check if our portion of the solution vector values (for
     //!   diagnostics) is complete
-    bool diagcomplete() const;
+    bool diagcomplete() const { return m_diagimport == m_rowimport; }
 
     //! Check if our portion of the right-hand side vector values is complete
-    bool rhscomplete() const;
+    bool rhscomplete() const { return m_rhsimport == m_rowimport; }
 
     //! Check if our portion of the low-order rhs vector values is complete
-    bool lowrhscomplete() const;
+    bool lowrhscomplete() const { return m_lowrhsimport == m_rowimport; }
 
     //! Check if our portion of the low-order lhs vector values is complete
-    bool lowlhscomplete() const;
-
-    //! Check if contributions to global row IDs are complete
-    void checkifrowcomplete();
-
-    //! Check if contributions to unknown/solution vector are complete
-    void checkifsolcomplete();
+    bool lowlhscomplete() const { return m_lowlhsimport == m_rowimport; }
 
     //! Build Hypre data for our portion of the global row ids
     void hyprerow();

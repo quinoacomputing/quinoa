@@ -183,6 +183,7 @@ class Partitioner : public CBase_Partitioner {
       , tag::load,        CkCallback
       , tag::avecost,     CkCallback
       , tag::stdcost,     CkCallback
+      , tag::coord,       CkCallback
     > m_cb;
     //! Host proxy
     CProxy_Transporter m_host;

@@ -59,8 +59,9 @@ class TUTSuite : public CBase_TUTSuite {
     //!   the comment before each Charm++ migration test name.
     const std::map< std::string, std::size_t > m_migrations {
         { "Base/Factory", 2 }
-      , { "Base/PUPUtil", 11 }
+      , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
+      , { "Inciter/Scheme", 2 }
     };
 
     // Tests that must be run on PE 0

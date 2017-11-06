@@ -11,6 +11,7 @@
 
 #include "PUPUtil.h"
 #include "TaggedTuple.h"
+#include "Variant.h"
 
 //! Unit test declarations and definitions
 namespace tut {
@@ -34,18 +35,22 @@ using Tuple = std::tuple< int, double, std::vector< std::string >,
                           Enum_default, std::map< Enum_uint8_t, std::string > >;
 using Array = std::array< int, 2 >;
 using UnorderedMap = std::unordered_map< int, std::string >;
+using UnorderedSet = std::unordered_set< int >;
 using BoostOptionalStr = boost::optional< std::string >;
 using BoostOptionalInt = boost::optional< int >;
 using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
                                              tag::age,   int,
                                              tag::email, std::string >;
-//! Pack/Unpack: delegate to tk::
+using Variant = tk::Variant< int, double >;
+
+//! Pack/Unpack: delegate to PUP::
 inline void operator|( PUP::er& p, Enum_default& e ) { PUP::pup( p, e ); }
 inline void operator|( PUP::er& p, Enum_uint8_t& e ) { PUP::pup( p, e ); }
 inline void operator|( PUP::er& p, Enum_cstyle& e ) { PUP::pup( p, e ); }
 inline void operator|( PUP::er& p, Tuple& t ) { PUP::pup( p, t ); }
 inline void operator|( PUP::er& p, Array& a ) { PUP::pup( p, a ); }
 inline void operator|( PUP::er& p, UnorderedMap& m ) { PUP::pup( p, m ); }
+inline void operator|( PUP::er& p, UnorderedSet& s ) { PUP::pup( p, s ); }
 inline void operator|( PUP::er& p, BoostOptionalStr& o ) { PUP::pup( p, o ); }
 inline void operator|( PUP::er& p, BoostOptionalInt& o ) { PUP::pup( p, o ); }
 inline void operator|( PUP::er& p, TaggedTuple& t ) { PUP::pup( p, t ); }

@@ -23,6 +23,14 @@ addCharmModule( "testarray" "UnitTest" )
 # the Charm++ module unittest (in Main/UnitTest.C).
 add_dependencies("UnitTest" "unittestCharmModule")
 
+# Add extra dependencies of UnitTest on those CharmModules that are required for
+# testing Inciter/Scheme.
+add_dependencies("UnitTest" "cgCharmModule")
+add_dependencies("UnitTest" "dgCharmModule")
+add_dependencies("UnitTest" "discretizationCharmModule")
+add_dependencies("UnitTest" "solverCharmModule")
+add_dependencies("UnitTest" "transporterCharmModule")
+
 # Add extra dependency of TUTSuite on charm modules testing advanced array
 # element placement using maps. This is required since TUTSuite spawns chare
 # arrays testing advanced array element placement maps.

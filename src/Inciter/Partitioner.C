@@ -29,7 +29,7 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
                           const CProxy_Transporter& host,
                           const Scheme& scheme,
                           const tk::CProxy_Solver& solver ) :
-  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5] ),
+  m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_scheme( scheme ),
   m_solver( solver ),
@@ -299,7 +299,7 @@ Partitioner::lower( std::size_t low )
 void
 Partitioner::stdCost( tk::real av )
 // *****************************************************************************
-//  Compute the variance of the communication cost of merging the linear system
+//  Compute the variance of the communication cost
 //! \param[in] av Average of the communication cost
 //! \details Computing the standard deviation is done via computing and
 //!   summing up the variances on each PE and asynchronously reducing the
@@ -314,10 +314,10 @@ Partitioner::stdCost( tk::real av )
 tk::real
 Partitioner::cost( std::size_t l, std::size_t u )
 // *****************************************************************************
-//  Compute communication cost of linear system merging for our PE
-//! \param[in] l Lower global row ID of linear system this PE works on
-//! \param[in] u Upper global row ID of linear system this PE works on
-//! \return Communication cost of merging the linear system for our PE
+//  Compute communication cost on our PE
+//! \param[in] l Lower global node ID this PE works on
+//! \param[in] u Upper global node ID this PE works on
+//! \return Communication cost for our PE
 //! \details The cost is a real number between 0 and 1, defined as the
 //!   number of mesh points we do not own, i.e., need to send to some other
 //!   PE, divided by the total number of points we contribute to. The lower
@@ -328,8 +328,7 @@ Partitioner::cost( std::size_t l, std::size_t u )
   for (auto p : m_nodeset) if (p >= l && p < u) ++ownpts; else ++compts;
 
   // Free storage of unique global node IDs chares on our PE will contribute to
-  // in a linear system as it is no longer needed after computing the
-  // communication cost.
+  // as it is no longer needed after computing the communication cost.
   tk::destroy( m_nodeset );
 
   return static_cast<tk::real>(compts) / static_cast<tk::real>(ownpts + compts);
@@ -1165,11 +1164,6 @@ Partitioner::create()
 // *****************************************************************************
 // Create chare array elements on this PE and assign the global mesh element IDs
 // they will operate on
-//! \details We create chare array elements by calling the insert() member
-//!   function, which allows specifying the PE on which the array element is
-//!   created and we send each chare array element the global mesh element
-//!   connectivity, i.e., node IDs, it contributes to and the old->new node
-//!   ID map.
 // *****************************************************************************
 {
   // send progress report to host
@@ -1185,14 +1179,22 @@ Partitioner::create()
   // Create worker chare array elements
   createDiscWorkers();
 
-  // Broadcast our bounds of global node IDs to all linear system solvers
-  m_solver.bounds( CkMyPe(), m_lower, m_upper );
+  // Broadcast our bounds of global node IDs to all linear system solvers, if
+  // they exist
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+    m_solver.bounds( CkMyPe(), m_lower, m_upper );
+  else // if no CG, no solver, continue with reading the mesh coordinates
+    contribute( m_cb.get< tag::coord >() );
 }
 
 void
 Partitioner::createDiscWorkers()
 // *****************************************************************************
 //  Create Discretization chare array elements on this PE
+//! \details We create chare array elements by calling the insert() member
+//!   function, which allows specifying the PE on which the array element is
+//!   created. and we send each chare array element the chunk of mesh it will
+//!   operate on.
 // *****************************************************************************
 {
   auto dist = chareDistribution();
@@ -1240,6 +1242,10 @@ void
 Partitioner::createWorkers()
 // *****************************************************************************
 //  Create worker chare array elements on this PE
+//! \details We create chare array elements by calling the insert() member
+//!   function, which allows specifying the PE on which the array element is
+//!   created. and we send each chare array element the chunk of mesh it will
+//!   operate on.
 // *****************************************************************************
 {
   auto dist = chareDistribution();

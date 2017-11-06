@@ -11,6 +11,7 @@
 #define Discretization_h
 
 #include "Types.h"
+#include "Timer.h"
 #include "Keywords.h"
 #include "Fields.h"
 #include "PUPUtil.h"
@@ -92,16 +93,11 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real >& Vol() { return m_vol; }
 
     tk::real Dt() const { return m_dt; }
-    tk::real& Dt() { return m_dt; }
-
     tk::real T() const { return m_t; }
-    tk::real& T() { return m_t; }
+    uint64_t It() const { return m_it; }
 
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
-
-    uint64_t It() const { return m_it; }
-    uint64_t& It() { return m_it; }
 
     std::size_t Nchare() const { return m_nchare; }
     std::size_t& Nchare() { return m_nchare; }
@@ -147,6 +143,15 @@ class Discretization : public CBase_Discretization {
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #endif
+
+    //! Set time step size
+    void setdt( tk::real newdt );
+
+    //! Prepare for next step
+    void next();
+
+    //! Otput one-liner status report
+    void status();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -257,6 +262,8 @@ class Discretization : public CBase_Discretization {
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
     std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Timer measuring a time step
+    tk::Timer m_timer;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

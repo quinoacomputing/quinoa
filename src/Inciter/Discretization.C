@@ -16,6 +16,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "PDE.h"
+#include "Print.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -60,7 +61,8 @@ Discretization::Discretization(
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
-  m_bid()
+  m_bid(),
+  m_timer()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -184,8 +186,7 @@ Discretization::vol()
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   else
     for (const auto& n : m_msum) {
       std::vector< tk::real > v;
@@ -218,8 +219,7 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
 
   if (++m_nvol == m_msum.size()) {
     m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
+    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
   }
 }
 
@@ -489,6 +489,74 @@ Discretization::writeMeta() const
       ew.writeNodeVarNames( names );
     }
 
+  }
+}
+
+void
+Discretization::setdt( tk::real newdt )
+// *****************************************************************************
+// Set time step size
+//! \param[in] newdt Size of the new time step
+// *****************************************************************************
+{
+  m_dt = newdt;
+
+  // Truncate the size of last time step
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  if (m_t+m_dt > term) m_dt = term - m_t;;
+}
+
+void
+Discretization::next()
+// *****************************************************************************
+// Prepare for next step
+// *****************************************************************************
+{
+  ++m_it;
+  m_t += m_dt;
+}
+
+void
+Discretization::status()
+// *****************************************************************************
+// Output one-liner status report
+// *****************************************************************************
+{
+  const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
+
+  if (thisIndex==0 && !(m_it%tty)) {
+
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    const auto field = g_inputdeck.get< tag::interval,tag::field >();
+    const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
+
+    // estimate time elapsed and time for accomplishment
+    tk::Timer::Watch ete, eta;
+    m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
+ 
+    tk::Print print( verbose ? std::cout : std::clog );
+ 
+    // Output one-liner
+    print << std::setfill(' ') << std::setw(8) << m_it << "  "
+          << std::scientific << std::setprecision(6)
+          << std::setw(12) << m_t << "  "
+          << m_dt << "  "
+          << std::setfill('0')
+          << std::setw(3) << ete.hrs.count() << ":"
+          << std::setw(2) << ete.min.count() << ":"
+          << std::setw(2) << ete.sec.count() << "  "
+          << std::setw(3) << eta.hrs.count() << ":"
+          << std::setw(2) << eta.min.count() << ":"
+          << std::setw(2) << eta.sec.count() << "  ";
+  
+    // Augment one-liner with output indicators
+    if (!(m_it % field)) print << 'F';
+    if (!(m_it % diag)) print << 'D';
+  
+    print << std::endl;
   }
 }
 
