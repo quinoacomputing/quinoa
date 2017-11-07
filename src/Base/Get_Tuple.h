@@ -18,8 +18,7 @@ namespace tk {
 
 #if not defined (_LIBCPP_STD_VER) || (_LIBCPP_STD_VER <= 11)
 
-namespace detail
-{
+namespace detail {
 
 template <class T, std::size_t N, class... Args>
 struct get_number_of_element_from_tuple_by_type_impl {
