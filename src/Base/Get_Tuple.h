@@ -16,11 +16,7 @@
 
 namespace tk {
 
-#if _LIBCPP_STD_VER > 11
-
-using std::get;
-
-#else
+#if not defined (_LIBCPP_STD_VER) || (_LIBCPP_STD_VER <= 11)
 
 namespace detail
 {
@@ -54,6 +50,10 @@ T& get(std::tuple<Args...>& t) {
   return std::get<detail::
     get_number_of_element_from_tuple_by_type_impl<T, 0, Args...>::value>(t);
 }
+
+#else
+
+using std::get;
 
 #endif
 
