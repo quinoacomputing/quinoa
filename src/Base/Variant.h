@@ -37,6 +37,8 @@
 #include "NoWarning/variant.h"
 #include "NoWarning/for_each.h"
 
+#include "Get_Tuple.h"
+
 namespace tk {
 
 template< typename... Types >
@@ -82,7 +84,7 @@ class Variant {
       Variant* const host;
       getval( Variant* const h ) : host(h) {}
       template< typename P > void operator()( const P& p ) const {
-        std::get< P >( host->tuple ) = p;
+        tk::get< P >( host->tuple ) = p;
       }
     };
 
@@ -92,7 +94,7 @@ class Variant {
       int cnt;
       setval( Variant* const h ) : host(h), cnt(0) {}
       template< typename U > void operator()( U ) {
-        if (host->idx == cnt++) host->variant = std::get< U >( host->tuple );
+        if (host->idx == cnt++) host->variant = tk::get< U >( host->tuple );
       }
     };
 
