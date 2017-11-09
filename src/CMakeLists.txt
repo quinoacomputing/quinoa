@@ -139,7 +139,7 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
@@ -258,7 +258,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   endif()
 
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++14")
+  add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
@@ -324,7 +324,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for cray)
-  add_compiler_flag("-hstd=c++14")
+  add_compiler_flag("-hstd=c++11")
 
   # Compiler flags for cray
   # enable errors, warnings, cautions, notes, comments
