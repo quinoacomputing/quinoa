@@ -801,4 +801,40 @@ genEsued( const std::vector< std::size_t >& inpoel,
   return std::make_pair( std::move(esued1), std::move(esued2) );
 }
 
+std::size_t 
+genNtfac( const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esuel )
+// *****************************************************************************
+//  Generate derived data, total number of faces in the mesh
+//! \param[in] esuel Elements surrounding elements. Example:
+//! \return Total number of faces in the mesh
+//! \details The unsigned integer here gives the total number of faces in 
+//     the mesh.
+// *****************************************************************************
+{
+  Assert( !esuel.first.empty(), "Attempt to call genNtfac() with empty esuel1" );
+  Assert( !esuel.second.empty(), "Attempt to call genNtfac() with empty esuel2" );
+
+  auto nelem = esuel.second.size() - 1;
+
+  std::size_t ntfac(0), nifac(0), nbfac(0);
+
+  // loop through elements surrounding elements to find number of internal faces
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+    {
+       auto jelem = esuel.first[i];
+       if (e < jelem)
+       {
+               nifac = nifac + 1;
+       }
+    }
+  }
+
+  ntfac = nifac + nbfac;
+
+  return ntfac;
+}
+
 } // tk::

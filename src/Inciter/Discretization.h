@@ -41,7 +41,9 @@ class Discretization : public CBase_Discretization {
                 std::unordered_set< std::size_t > >& msum,
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
-        int nchare );
+        int nchare,
+        const std::map< int, std::vector< std::size_t > >& ssfac,
+        const std::size_t& nbfac );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -264,6 +266,11 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
+
+    //! total number of boundary faces
+    std::size_t m_nbfac;
+    //! side-set information from boundary faces
+    const std::map< int, std::vector< std::size_t > > m_ssfac;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

@@ -38,7 +38,9 @@ Discretization::Discretization(
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
-  int nchare ) :
+  int nchare,
+  const std::map< int, std::vector< std::size_t > >& ssfac,
+  const std::size_t& nbfac ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -62,7 +64,9 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
-  m_timer()
+  m_timer(),
+  m_ssfac( ssfac ),
+  m_nbfac( nbfac )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

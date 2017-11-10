@@ -425,6 +425,67 @@ ExodusIIMeshReader::readSidesets()
   return side;
 }
 
+std::map< int, std::vector< std::size_t > >
+ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac)
+// *****************************************************************************
+//  Read face list of all side sets from ExodusII file
+//  Added by Aditya K Pandare
+//! \return Face lists mapped to side set ids
+// *****************************************************************************
+{
+  // Read ExodusII file header (fills m_neset)
+  readHeader();
+
+  // Face lists mapped to side set ids
+  std::map< int, std::vector< std::size_t > > side;
+
+  if (m_neset > 0)
+  {
+    // Read all side set ids from file
+    std::vector< int > ids( m_neset );
+    ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
+            "Failed to read side set ids from ExodusII file: " + m_filename );
+
+    // Read in face list for all side sets
+    for (auto i : ids)
+    {
+      int nface, nnode;
+
+      // Read number of faces and number of distribution factors in side set i
+      ErrChk( ex_get_set_param( m_inFile, EX_SIDE_SET, i, &nface, &nnode ) == 0,
+              "Failed to read side set " + std::to_string(i) + " parameters "
+              "from ExodusII file: " + m_filename );
+
+      // total number of boundary faces
+      nbfac += nface;
+
+      // Read number of nodes in side set i (overwrite nnode)
+      ErrChk( ex_get_side_set_node_list_len( m_inFile, i, &nnode ) == 0,
+              "Failed to read side set " + std::to_string(i) + " node list "
+              "length from ExodusII file: " + m_filename );
+
+      Assert(nnode > 0, "Number of nodes = 0 in side set" + std::to_string(i));
+      Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
+      std::vector< int > df( static_cast< std::size_t >( nface ) );
+      std::vector< int > nodes( static_cast< std::size_t >( nnode ) );
+
+      // Read in node list for side set i
+      ErrChk( ex_get_side_set_node_list( m_inFile, i, df.data(), nodes.data() )
+                == 0, "Failed to read node list of side set " +
+                      std::to_string(i) + " from ExodusII file: " +
+                      m_filename );
+
+      //// Make face list unique
+      //tk::unique( df );
+      // Store 0-based face ID list as std::size_t vector instead of ints
+      auto& list = side[ i ];
+      for (auto&& n : df) list.push_back( static_cast<std::size_t>(n-1) );
+    }
+  }
+
+  return side;
+}
+
 std::size_t
 ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************

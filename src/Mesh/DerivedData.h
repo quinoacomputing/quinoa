@@ -68,6 +68,11 @@ genEsued( const std::vector< std::size_t >& inpoel,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup );
 
+//! Generate derived data structure, total number of faces
+std::size_t 
+genNtfac( const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esuel );
+
 } // tk::
 
 #endif // DerivedData_h

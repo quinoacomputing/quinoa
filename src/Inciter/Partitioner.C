@@ -28,7 +28,9 @@ using inciter::Partitioner;
 Partitioner::Partitioner( const std::vector< CkCallback >& cb,
                           const CProxy_Transporter& host,
                           const Scheme& scheme,
-                          const tk::CProxy_Solver& solver ) :
+                          const tk::CProxy_Solver& solver,
+                          const std::map< int, std::vector< std::size_t > >& ssfac,
+                          const std::size_t& nbfac ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_scheme( scheme ),
@@ -60,7 +62,9 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   m_nodechares(),
   m_edgechares(),
   m_msum(),
-  m_msumed()
+  m_msumed(),
+  m_ssfac( ssfac ),
+  m_nbfac( nbfac )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -1210,7 +1214,7 @@ Partitioner::createDiscWorkers()
     // Create worker array element
     m_scheme.discInsert< tag::elem >( cid, m_host,
       tk::cref_find(m_chinpoel,cid), msum,
-      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, CkMyPe() );
+      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, m_ssfac, m_nbfac, CkMyPe() );
     m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 

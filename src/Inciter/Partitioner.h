@@ -117,7 +117,9 @@ class Partitioner : public CBase_Partitioner {
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const Scheme& scheme,
-                 const tk::CProxy_Solver& solver );
+                 const tk::CProxy_Solver& solver,
+                 const std::map< int, std::vector< std::size_t > >& ssfac,
+                 const std::size_t& nbfac );
 
     //! Partition the computational mesh
     void partition( int nchare );
@@ -316,6 +318,11 @@ class Partitioner : public CBase_Partitioner {
     //!   which the chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, tk::UnsMesh::Edges > > m_msumed;
+
+    //! total number of boundary faces
+    std::size_t m_nbfac;
+    //! side-set information from boundary faces
+    const std::map< int, std::vector< std::size_t > > m_ssfac;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );
