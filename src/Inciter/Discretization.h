@@ -128,6 +128,10 @@ class Discretization : public CBase_Discretization {
     Psup() const { return m_psup; }
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
+
+    //! added by Aditya KP
+    const std::size_t& Nbfac() { return m_nbfac; } 
+    const std::size_t& Ntfac() { return m_ntfac; } 
     //@}
 
     //! Output chare element blocks to output file
@@ -267,10 +271,12 @@ class Discretization : public CBase_Discretization {
     //! Timer measuring a time step
     tk::Timer m_timer;
 
-    //! total number of boundary faces
+    //! number of boundary faces
     std::size_t m_nbfac;
     //! side-set information from boundary faces
     const std::map< int, std::vector< std::size_t > > m_ssfac;
+    //! total number of faces
+    std::size_t m_ntfac;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

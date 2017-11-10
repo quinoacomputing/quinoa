@@ -802,10 +802,12 @@ genEsued( const std::vector< std::size_t >& inpoel,
 }
 
 std::size_t 
-genNtfac( const std::pair< std::vector< std::size_t >,
+genNtfac( const std::size_t& nbfac,
+          const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esuel )
 // *****************************************************************************
 //  Generate derived data, total number of faces in the mesh
+//  added by Aditya K Pandare
 //! \param[in] esuel Elements surrounding elements. Example:
 //! \return Total number of faces in the mesh
 //! \details The unsigned integer here gives the total number of faces in 
@@ -817,7 +819,7 @@ genNtfac( const std::pair< std::vector< std::size_t >,
 
   auto nelem = esuel.second.size() - 1;
 
-  std::size_t ntfac(0), nifac(0), nbfac(0);
+  std::size_t ntfac(0), nifac(0);
 
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)

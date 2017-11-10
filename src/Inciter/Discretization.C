@@ -66,7 +66,11 @@ Discretization::Discretization(
   m_bid(),
   m_timer(),
   m_ssfac( ssfac ),
-  m_nbfac( nbfac )
+  m_nbfac( nbfac ),
+  m_ntfac( tk::genNtfac( m_nbfac,
+                         tk::genEsuel(m_inpoel, 
+                         4, 
+                         tk::genEsup(m_inpoel,4)) ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

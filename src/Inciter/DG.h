@@ -52,6 +52,7 @@ class DG : public CBase_DG {
       CBase_DG::pup(p);
       p | m_disc;
       p | m_vol;
+      p | m_nbfac;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -64,6 +65,10 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Total mesh volume
     tk::real m_vol;
+    //! Number of boundary faces
+    std::size_t m_nbfac;
+    //! Total number of faces
+    std::size_t m_ntfac;
 
     //! Compute right hand side
     void rhs();

@@ -31,7 +31,9 @@ using inciter::DG;
 
 DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
   m_disc( disc ),
-  m_vol( 0.0 )
+  m_vol( 0.0 ),
+  m_nbfac( m_disc[thisIndex].ckLocal()->Nbfac() ),
+  m_ntfac( m_disc[thisIndex].ckLocal()->Ntfac() )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
