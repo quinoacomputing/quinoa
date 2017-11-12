@@ -9,7 +9,7 @@ add_library(Inciter
             Transporter.C
             Partitioner.C
             Discretization.C
-            CG.C
+            MatCG.C
             DG.C
             FluxCorrector.C
             AMR/mesh_adapter.C
@@ -20,7 +20,7 @@ add_library(Inciter
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
-addCharmModule( "cg" "Inciter" )
+addCharmModule( "matcg" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as

@@ -67,29 +67,29 @@
     \enddot
     \include Inciter/transporter.ci
 
-    #### Call graph documenting the interactions of Transporter, Solver, and CG ####
+    #### Call graph with the interactions of Transporter, Solver, and MatCG ####
     The following a DAG documentaion of the itneractions _among_ the classes
-    Transporter (single chare), Solver (chare group), and CG (chare array). The
-    prefixes p_, s_, t_ c_, respectively, denote Partitioner, Solver,
-    Transporter, and CG, which help identifying which class' member function the
-    label is associated with. (These prefixes only show up in the source of
-    "dot", used to generate the visual graph. Note that CG can be thought of as
-    a child that inherits from class Discretization. Both CG and Discretization
-    are Charm++ chare arrays whose elements are abound together when migrated
-    and via class Scheme they are used in a runtime polymorphic fashion. This
-    means when the prefix c is used in the DAG below, the member function might
-    be in the (base) Discretization class instead of in CG. Note that the graph
-    below is partial as it only partially contains how this hooks into
-    Partitioner.
+    Transporter (single chare), Solver (chare group), and MatCG (chare array).
+    The prefixes p_, s_, t_ c_, respectively, denote Partitioner, Solver,
+    Transporter, and MatCG, which help identifying which class' member function
+    the label is associated with. (These prefixes only show up in the source of
+    "dot", used to generate the visual graph. Note that MatMatCG can be thought
+    of as a child that inherits from class Discretization. Both MatCG and
+    Discretization are Charm++ chare arrays whose elements are abound together
+    when migrated and via class Scheme they are used in a runtime polymorphic
+    fashion. This means when the prefix c is used in the DAG below, the member
+    function might be in the (base) Discretization class instead of in MatCG.
+    Note that the graph below is partial as it only partially contains how this
+    hooks into Partitioner.
     \dot
-    digraph "Transporter-Solver-CG SDAG" {
+    digraph "Transporter-Solver-MatCG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       p_dcreate [ label="Partitioner::create"
               tooltip="Partitioners create Discretization (base) workers"
               URL="\ref inciter::Partitioner::createWorkers"];
       p_ccreate [ label="Partitioner::createWorkers"
-              tooltip="Partitioners create CG (child) workers"
+              tooltip="Partitioners create MatCG (child) workers"
               URL="\ref inciter::Partitioner::createWorkers"];
       s_nchare [ label="Solver::nchare"
               tooltip="set number of worker chares expected to contribute"
@@ -103,24 +103,24 @@
       t_stat [ label="Transporter::stat"
               tooltip="output mesh statistics"
               URL="\ref inciter::Transporter::stat"];
-      c_setup [ label="CG::setup"
+      c_setup [ label="MatCG::setup"
               tooltip="workers start setting up PE communications, output mesh"
-              URL="\ref inciter::CG::setup"];
+              URL="\ref inciter::MatCG::setup"];
       s_sol [ label="Solver::sol"
               tooltip="assemble unknown/solution vector"
               URL="\ref tk::Solver:charesol"];
       s_lhs [ label="Solver::lhs"
               tooltip="assemble LHS"
               URL="\ref tk::Solver:charelhs"];
-      c_dt [ label="CG::dt"
+      c_dt [ label="MatCG::dt"
               tooltip="workers compute size of next time step"
-              URL="\ref inciter::CG::dt"];
-      c_advance [ label="CG::advance"
+              URL="\ref inciter::MatCG::dt"];
+      c_advance [ label="MatCG::advance"
               tooltip="advance to next time step"
-              URL="\ref inciter::CG::advance"];
-      c_rhs [ label="CG::rhs"
+              URL="\ref inciter::MatCG::advance"];
+      c_rhs [ label="MatCG::rhs"
               tooltip="workers compute new RHS"
-              URL="\ref inciter::CG::rhs"];
+              URL="\ref inciter::MatCG::rhs"];
       s_rhs [ label="Solver::rhs"
               tooltip="solver assemble new RHS"
               URL="\ref tk::Solver::rhs"];
@@ -130,9 +130,9 @@
       s_com [ label="Solver::charecom"
               tooltip="setup PE communication maps"
               URL="\ref tk::Solver::charecom"];
-      c_update [ label="CG::update"
+      c_update [ label="MatCG::update"
               tooltip="workers update their field data to new solution"
-              URL="\ref inciter::CG::updateLow"];
+              URL="\ref inciter::MatCG::updateLow"];
       t_diag [ label="Transporter::diag"
               tooltip="diagnostics have been output"
               URL="\ref inciter::Transporter::diagnostics"];
@@ -142,33 +142,33 @@
       t_comfinal [ label="Transporter::comfinal"
               tooltip="communication maps are complete on Trarnsporter"
               URL="\ref tk::Solver::comfinal"];
-      c_vol [ label="CG::vol"
+      c_vol [ label="MatCG::vol"
               tooltip="compute nodal mesh volumes"
-              URL="\ref tk::CG::vol"];
+              URL="\ref tk::MatCG::vol"];
       t_vol [ label="Transporter::vol"
               tooltip="nodal mesh volumes complete, start computing total volume"
               URL="\ref inicter::Transporter::vol"];
       t_start [ label="Transporter::start"
               tooltip="start time stepping"
               URL="\ref inicter::Transporter::start"];
-      c_totalvol [ label="CG::totalvol"
+      c_totalvol [ label="MatCG::totalvol"
               tooltip="compute total mesh volume"
-              URL="\ref tk::CG::totalvol"];
+              URL="\ref tk::MatCG::totalvol"];
       t_totalvol [ label="Transporter::totalvol"
               tooltip="total mesh volume computed, start with mesh stats"
               URL="\ref inicter::Transporter::totalvol"];
-      c_minstat [ label="CG::stat(min)"
+      c_minstat [ label="MatCG::stat(min)"
               tooltip="compute mesh statistics finding minima"
-              URL="\ref inciter::CG::stat"];
-      c_maxstat [ label="CG::stat(max)"
+              URL="\ref inciter::MatCG::stat"];
+      c_maxstat [ label="MatCG::stat(max)"
               tooltip="compute mesh statistics finding maxima"
-              URL="\ref inciter::CG::stat"];
-      c_sumstat [ label="CG::stat(sum)"
+              URL="\ref inciter::MatCG::stat"];
+      c_sumstat [ label="MatCG::stat(sum)"
               tooltip="compute mesh statistics finding sums"
-              URL="\ref inciter::CG::stat"];
-      c_pdfstat [ label="CG::stat(pdf)"
+              URL="\ref inciter::MatCG::stat"];
+      c_pdfstat [ label="MatCG::stat(pdf)"
               tooltip="compute mesh statistics computing PDFs"
-              URL="\ref inciter::CG::stat"];
+              URL="\ref inciter::MatCG::stat"];
       t_minstat [ label="Transporter::minstat"
               tooltip="compute mesh statistics finding global minima"
               URL="\ref inciter::Transporter::minstat"];
@@ -351,8 +351,6 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
-
-#include "NoWarning/cg.decl.h"
 
 namespace inciter {
 

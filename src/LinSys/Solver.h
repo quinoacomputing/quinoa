@@ -54,7 +54,7 @@
       Setup [ label="Setup"
               tooltip="Workers start setting and outputing ICs, computing
                        initial dt, computing LHS"
-              URL="\ref inciter::CG::setup"];
+              URL="\ref inciter::MatCG::setup"];
       dt [ label="dt"
            tooltip="Worker chares compute their minimum time step size"
             style="solid"];
@@ -167,7 +167,7 @@
 #include "HypreSolver.h"
 
 #include "NoWarning/solver.decl.h"
-#include "NoWarning/cg.decl.h"
+#include "NoWarning/matcg.decl.h"
 
 namespace tk {
 
@@ -230,7 +230,7 @@ class Solver : public CBase_Solver {
     void nchare( int n );
 
     //! Chares contribute their global row ids for establishing communications
-    void charecom( const inciter::CProxy_CG& worker,
+    void charecom( const inciter::CProxy_MatCG& worker,
                    int fromch,
                    const std::vector< std::size_t >& row );
 
@@ -409,7 +409,7 @@ class Solver : public CBase_Solver {
     //!   where the first one is the numerical and the second one is the
     //!   analytical solution. If the analytical solution for a PDE is not
     //!   defined, it is the initial condition.
-    //! \see charediag(), adddiag(), e.g., inciter::CG::diagnostics()
+    //! \see charediag(), adddiag()
     std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
@@ -456,7 +456,7 @@ class Solver : public CBase_Solver {
     std::unordered_map< std::size_t,
                         std::map< std::size_t, std::vector<tk::real> > > m_bca;
     //! Worker proxy
-    inciter::CProxy_CG m_worker;
+    inciter::CProxy_MatCG m_worker;
 
     //! Check if we have done our part in storing and exporting global row ids
     bool comcomplete() const;

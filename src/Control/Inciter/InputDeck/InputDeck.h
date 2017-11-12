@@ -127,7 +127,8 @@ class InputDeck :
     using keywords5 = boost::mpl::set< kw::discretization,
                                        kw::fct,
                                        kw::scheme,
-                                       kw::cg,
+                                       kw::matcg,
+                                       kw::diagcg,
                                        kw::dg >;
 
     //! \brief Constructor: set defaults
@@ -152,7 +153,7 @@ class InputDeck :
       // Default AMR settings
       set< tag::selected, tag::initialamr >( InitialAMRType::NONE );
       // Default discretization scheme
-      set< tag::selected, tag::scheme >( SchemeType::CG );
+      set< tag::selected, tag::scheme >( SchemeType::MatCG );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals

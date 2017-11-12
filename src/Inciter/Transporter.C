@@ -47,7 +47,6 @@ extern std::vector< PDE > g_pdes;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_solver(),
@@ -105,11 +104,12 @@ Transporter::Transporter() :
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG) {
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
     m_print.item( "Flux-corrected transport (FCT)",
                   g_inputdeck.get< tag::discr, tag::fct >() );
     m_print.item( "FCT mass diffusion coeff",
@@ -306,8 +306,8 @@ Transporter::load( uint64_t nelem )
                  nelem, CkNumPes(), chunksize, remainder ) );
 
   // Send total number of chares to all linear solver PEs, if they exist
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
-    m_solver.nchare( m_nchare );
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG) m_solver.nchare( m_nchare );
 
   // signal to runtime system that m_nchare is set
   load_complete();
@@ -458,7 +458,7 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_partitioner.createWorkers();  // create "derived" workers (e.g., CG, DG)
+  m_partitioner.createWorkers();  // create "derived" workers (e.g., DG)
   m_scheme.stat< tag::bcast >();
 }
 
@@ -584,7 +584,7 @@ void
 Transporter::start()
 // *****************************************************************************
 // Start time stepping
-//! \note Only called if CG is used
+//! \note Only called if MatCG is used
 // *****************************************************************************
 {
   m_scheme.dt< tag::bcast >();
@@ -650,7 +650,7 @@ void
 Transporter::next()
 // *****************************************************************************
 // Reduction target used to synchronize PEs between linear solves of time steps
-//! \note Only called if CG is used
+//! \note Only called if MatCG is used
 // *****************************************************************************
 {
   m_solver.next();

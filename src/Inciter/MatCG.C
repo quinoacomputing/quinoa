@@ -1,15 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/CG.C
+  \file      src/Inciter/MatCG.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     CG advances a system of PDEs with the continuous Galerkin scheme
-  \details   CG advances a system of partial differential equations (PDEs) using
-    continuous Galerkin (CG) finite element (FE) spatial discretization (using
-    linear shapefunctions on tetrahedron elements) combined with a time stepping
-    scheme that is equivalent to the Lax-Wendroff (LW) scheme within the
-    unstructured-mesh FE context and treats discontinuities with flux-corrected
-    transport (FCT).
-  \see The documentation in CG.h.
+  \brief     MatCG for a PDE system with continuous Galerkin with a matrix
+  \details   MatCG advances a system of partial differential equations (PDEs)
+    using continuous Galerkin (MatCG) finite element (FE) spatial discretization
+    (using linear shapefunctions on tetrahedron elements) combined with a time
+    stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
+    the unstructured-mesh FE context and treats discontinuities with
+    flux-corrected transport (FCT). The left-hand side matrix is stored in a
+    compressed sparse row (CSR) storage and thus uses a linear solver.
+  \see The documentation in MatCG.h.
 */
 // *****************************************************************************
 
@@ -20,7 +21,7 @@
 #include <algorithm>
 
 #include "QuinoaConfig.h"
-#include "CG.h"
+#include "MatCG.h"
 #include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -46,9 +47,10 @@ extern std::vector< PDE > g_pdes;
 
 } // inciter::
 
-using inciter::CG;
+using inciter::MatCG;
 
-CG::CG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
+MatCG::MatCG( const CProxy_Discretization& disc,
+              const tk::CProxy_Solver& solver ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -133,7 +135,7 @@ CG::CG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
 }
 
 void
-CG::setup( tk::real v )
+MatCG::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
@@ -172,7 +174,7 @@ CG::setup( tk::real v )
 }
 
 void
-CG::dt()
+MatCG::dt()
 // *****************************************************************************
 // Comppute time step size
 // *****************************************************************************
@@ -206,11 +208,11 @@ CG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(CG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(MatCG,advance), thisProxy) );
 }
 
 void
-CG::lhs()
+MatCG::lhs()
 // *****************************************************************************
 // Compute left-hand side of transport equations
 // *****************************************************************************
@@ -233,7 +235,7 @@ CG::lhs()
 }
 
 void
-CG::rhs()
+MatCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
 // *****************************************************************************
@@ -274,7 +276,7 @@ CG::rhs()
 }
 
 void
-CG::bc()
+MatCG::bc()
 // *****************************************************************************
 //  Extract node IDs from side set node lists and match to user-specified
 //  boundary conditions
@@ -377,7 +379,7 @@ CG::bc()
 }
 
 void
-CG::aec()
+MatCG::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \details This function computes and starts communicating m_p, which stores
@@ -411,7 +413,7 @@ CG::aec()
 }
 
 void
-CG::comaec( const std::vector< std::size_t >& gid,
+MatCG::comaec( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& P )
 // *****************************************************************************
 //  Receive sums of antidiffusive element contributions on chare-boundaries
@@ -446,7 +448,7 @@ CG::comaec( const std::vector< std::size_t >& gid,
 }
 
 void
-CG::alw()
+MatCG::alw()
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \details This function computes and starts communicating m_q, which stores
@@ -479,7 +481,7 @@ CG::alw()
 }
 
 void
-CG::comalw( const std::vector< std::size_t >& gid,
+MatCG::comalw( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& Q )
 // *****************************************************************************
 // Receive contributions to the maxima and minima of unknowns of all elements
@@ -518,7 +520,7 @@ CG::comalw( const std::vector< std::size_t >& gid,
 }
 
 void
-CG::lim()
+MatCG::lim()
 // *****************************************************************************
 //  Compute the limited antidiffusive element contributions
 //! \details This function computes and starts communicating m_a, which stores
@@ -557,7 +559,7 @@ CG::lim()
 }
 
 void
-CG::comlim( const std::vector< std::size_t >& gid,
+MatCG::comlim( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& A )
 // *****************************************************************************
 //  Receive contributions of limited antidiffusive element contributions on
@@ -593,7 +595,7 @@ CG::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-CG::updateLowSol( const std::vector< std::size_t >& gid,
+MatCG::updateLowSol( const std::vector< std::size_t >& gid,
                   const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update low order solution vector
@@ -628,7 +630,7 @@ CG::updateLowSol( const std::vector< std::size_t >& gid,
 }
 
 void
-CG::updateSol( const std::vector< std::size_t >& gid,
+MatCG::updateSol( const std::vector< std::size_t >& gid,
                const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update high order solution vector
@@ -662,7 +664,7 @@ CG::updateSol( const std::vector< std::size_t >& gid,
 }
 
 void
-CG::verify()
+MatCG::verify()
 // *****************************************************************************
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
@@ -675,7 +677,7 @@ CG::verify()
 }
 
 void
-CG::diagnostics()
+MatCG::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
@@ -729,7 +731,7 @@ CG::diagnostics()
 }
 
 bool
-CG::correctBC()
+MatCG::correctBC()
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
@@ -775,7 +777,7 @@ CG::correctBC()
 }
 
 void
-CG::writeFields( tk::real time )
+MatCG::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
@@ -833,7 +835,7 @@ CG::writeFields( tk::real time )
 }
 
 void
-CG::out()
+MatCG::out()
 // *****************************************************************************
 // Output mesh field data
 // *****************************************************************************
@@ -860,7 +862,7 @@ CG::out()
 }
 
 void
-CG::apply()
+MatCG::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
@@ -889,7 +891,7 @@ CG::apply()
 }
 
 void
-CG::advance( tk::real newdt )
+MatCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step
@@ -913,7 +915,7 @@ CG::advance( tk::real newdt )
 }
 
 void
-CG::next()
+MatCG::next()
 // *****************************************************************************
 // Prepare for next step
 // *****************************************************************************
@@ -932,17 +934,17 @@ CG::next()
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
+//     //CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //     if (thisIndex == 2 && CkMyPe() == 2) {
 //       /*int j;
 //       for (int i; i < 50*std::pow(thisIndex,4); i++) {
 //         j = i*thisIndex;
 //       }*/
-//       CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
+//       CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //       migrateMe(1);
 //    }
 //    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
+//      CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
 
@@ -957,4 +959,4 @@ CG::next()
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }
 
-#include "NoWarning/cg.def.h"
+#include "NoWarning/matcg.def.h"

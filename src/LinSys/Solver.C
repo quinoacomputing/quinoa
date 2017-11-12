@@ -214,7 +214,7 @@ Solver::nchare( int n )
 }
 
 void
-Solver::charecom( const inciter::CProxy_CG& worker,
+Solver::charecom( const inciter::CProxy_MatCG& worker,
                   int fromch,
                   const std::vector< std::size_t >& row )
 // *****************************************************************************
@@ -1232,7 +1232,6 @@ Solver::diagnostics()
 // *****************************************************************************
 //  Compute diagnostics (residuals) and contribute them back to host
 //! \details Diagnostics: L2 norm for all components.
-//! \see For info, see e.g., inciter::CG::diagnostics().
 // *****************************************************************************
 {
   Assert( diagcomplete(),

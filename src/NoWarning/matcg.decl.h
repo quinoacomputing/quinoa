@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/cg.decl.h
+  \file      src/NoWarning/matcg.decl.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include cg.decl.h with turning off specific compiler warnings.
+  \brief     Include matcg.decl.h with turning off specific compiler warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_cg_decl_h
-#define nowarning_cg_decl_h
+#ifndef nowarning_matcg_decl_h
+#define nowarning_matcg_decl_h
 
 #include "Macro.h"
 
@@ -24,7 +24,7 @@
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include "../Inciter/cg.decl.h"
+#include "../Inciter/matcg.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -32,4 +32,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_cg_decl_h
+#endif // nowarning_matcg_decl_h

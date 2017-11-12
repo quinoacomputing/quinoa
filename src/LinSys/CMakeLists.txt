@@ -25,9 +25,9 @@ add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 add_dependencies( "solverCharmModule" "transporterCharmModule" )
 
 # Add extra dependency of Solver charm module on CG charm module.  This is
-# required to make sure cg.decl.h is generated before solver.ci is processed, as
-# Solver is specialized on CProxy_CG.
-add_dependencies( "solverCharmModule" "cgCharmModule" )
+# required to make sure matcg.decl.h is generated before solver.ci is processed,
+# as Solver is specialized on CProxy_MatCG.
+add_dependencies( "solverCharmModule" "matcgCharmModule" )
 
 set_target_properties(LinSys PROPERTIES LIBRARY_OUTPUT_NAME quinoa_linsys)
 

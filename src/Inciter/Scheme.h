@@ -32,7 +32,7 @@
 
     \code{.cpp}
       // Instantiate a Scheme object
-      Scheme s( ctr::SchemeType::CG );  // see Control/Inciter/Options/Scheme.h
+      Scheme s( ctr::SchemeType::DG );  // see Control/Inciter/Options/Scheme.h
 
       // Call a member function entry method in broadcast fashion
       s.coord< tag::bcast >( ... );     // equivalent to proxy.coord( ... );

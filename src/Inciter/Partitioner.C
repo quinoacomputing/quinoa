@@ -1179,11 +1179,10 @@ Partitioner::create()
   // Create worker chare array elements
   createDiscWorkers();
 
-  // Broadcast our bounds of global node IDs to all linear system solvers, if
-  // they exist
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+  // Broadcast our bounds of global node IDs to all matrix solvers
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::MatCG)
     m_solver.bounds( CkMyPe(), m_lower, m_upper );
-  else // if no CG, no solver, continue with reading the mesh coordinates
+  else // if no MatCG, no matrix solver, continue
     contribute( m_cb.get< tag::coord >() );
 }
 

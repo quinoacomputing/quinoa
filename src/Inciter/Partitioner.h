@@ -279,7 +279,7 @@ class Partitioner : public CBase_Partitioner {
     //!   contiguous-row-id linear system contributions) to edges (a pair of old
     //!   node IDs, as in file) associated to chare IDs (outer key) for only
     //!   the nodes newly added as a result of initial uniform refinement.
-    //! \note Used for looking up boundary conditions, see, e.g., CG::bc()
+    //! \note Used for looking up boundary conditions
     std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodes;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;

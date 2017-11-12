@@ -63,7 +63,7 @@ template<> template<>
 void Scheme_object::test< 1 >() {
   set_test_name( "ctor which" );
 
-  inciter::Scheme c( inciter::ctr::SchemeType::CG );
+  inciter::Scheme c( inciter::ctr::SchemeType::MatCG );
   ensure_equals( "Underlying type", c.which(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
   ensure_equals( "Underlying type", d.which(), 1 );
@@ -74,13 +74,13 @@ template<> template<>
 void Scheme_object::test< 2 >() {
   set_test_name( "operator[] which" );
 
-  inciter::Scheme c( inciter::ctr::SchemeType::CG );
+  inciter::Scheme c( inciter::ctr::SchemeType::MatCG );
   ensure_equals( "Underlying element type", c.which_element(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
   ensure_equals( "Underlying element type", d.which_element(), 1 );
 }
 
-//! Test Pack/Unpack of Scheme holding CProxy_CG
+//! Test Pack/Unpack of Scheme holding CProxy_MatCG
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -95,10 +95,10 @@ void Scheme_object::test< 3 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate Scheme(CG) 1" );
+  set_test_name( "Charm:migrate Scheme(MatCG) 1" );
 
   CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::CG ), 0, "CG" );
+    inciter::Scheme( inciter::ctr::SchemeType::MatCG ), 0, "MatCG" );
 }
 
 //! Test Pack/Unpack of Scheme holding CProxy_DG

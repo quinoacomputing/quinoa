@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/cg.def.h
+  \file      src/NoWarning/matcg.def.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include cg.def.h with turning off specific compiler warnings
+  \brief     Include matcg.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_cg_def_h
-#define nowarning_cg_def_h
+#ifndef nowarning_matcg_def_h
+#define nowarning_matcg_def_h
 
 #include "Macro.h"
 
@@ -27,7 +27,7 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
 #endif
 
-#include "../Inciter/cg.def.h"
+#include "../Inciter/matcg.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -35,4 +35,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_cg_def_h
+#endif // nowarning_matcg_def_h
