@@ -308,17 +308,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Linker flags for intel
   set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
 
-  # Use -O1 in release mode, otherwise the intel compiler generates code
-  # yielding some NaNs from some inciter regression tests from Hypre's PCGSolve.
-  if(CMAKE_BUILD_TYPE MATCHES "REL")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
-        "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
-        FORCE)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O1 -g -DNDEBUG" CACHE STRING
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO: Flags used by the compiler during release builds with debug info."
-        FORCE)
-  endif()
-
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
