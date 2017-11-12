@@ -839,4 +839,61 @@ genNtfac( const std::size_t& nbfac,
   return ntfac;
 }
 
+std::map< std::size_t, std::vector< int > > 
+genEsuf( const std::size_t& ntfac,
+         const std::size_t& nbfac,
+         const std::map< int, std::vector< std::size_t > >& belem,
+         const std::pair< std::vector< std::size_t >,
+                          std::vector< std::size_t > >& esuel )
+// *****************************************************************************
+//  Generate derived data, elements surrounding faces
+//  added by Aditya K Pandare
+//! \param[in] ntfac Total number of faces.
+//! \param[in] nbfac Number of boundary faces.
+//! \param[in] esuel Elements surrounding elements.
+//! \return Elements surrounding faces.
+//! \details The unsigned integer map gives the elements to the left and to 
+//     the right of each face in the mesh.
+// *****************************************************************************
+{
+  std::map< std::size_t, std::vector< int > > esuf;
+  auto nelem = esuel.second.size() - 1;
+
+  // this is the counter for number of faces which starts with nbface
+  // because the following loop is only for internal faces
+  std::size_t icoun(nbfac);
+
+  // loop to get face-element connectivity for internal faces
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+    {
+      auto jelem = esuel.first[i];
+      if (e < jelem)
+      {
+        esuf[icoun].push_back(e);
+        esuf[icoun].push_back(jelem);
+        icoun++;
+      }
+    }
+  }
+
+  // loop to get face-element connectivity for boundary faces
+  icoun = 0;
+  for (auto& iss : belem)
+  {
+    auto sideset = iss.second;
+    // define jelem from elems in side set connected to f!
+    for (auto f : sideset)
+    {
+      auto jelem = f;
+      esuf[icoun].push_back(jelem);
+      esuf[f].push_back(-1);  // outside domain
+      icoun++;
+    }
+  }
+
+  return esuf;
+}
+
 } // tk::

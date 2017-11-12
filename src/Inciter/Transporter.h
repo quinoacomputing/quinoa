@@ -534,14 +534,17 @@ class Transporter : public CBase_Transporter {
     std::map< int, std::vector< std::size_t > > readSidesets();
 
     //! Read side set faces from mesh file
-    std::map< int, std::vector< std::size_t > > readSidesetFaces(std::size_t& nbfac);
+    void readSidesetFaces(std::size_t& nbfac,
+                          std::map< int, std::vector< std::size_t > >& bface,
+                          std::map< int, std::vector< std::size_t > >& belem);
 
     //! Create linear solver
     void createSolver( const std::map< int, std::vector< std::size_t > >& ss );
 
     //! Create mesh partitioner
-    void createPartitioner(const std::map< int, std::vector< std::size_t > >& ssfac, 
-                           const std::size_t& nbfac);
+    void createPartitioner(const std::size_t& nbfac,
+                           const std::map< int, std::vector< std::size_t > >& bface, 
+                           const std::map< int, std::vector< std::size_t > >& belem);
 
     //! Configure and write diagnostics file header
     void diagHeader();

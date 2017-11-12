@@ -11,6 +11,7 @@
 #define DerivedData_h
 
 #include <vector>
+#include <map>
 #include <utility>
 #include <cstddef>
 
@@ -74,6 +75,12 @@ genNtfac( const std::size_t& nbfac,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esuel );
 
+std::map< std::size_t, std::vector< int > > 
+genEsuf( const std::size_t& ntfac,
+         const std::size_t& nbfac,
+         const std::map< int, std::vector< std::size_t > >& belem,
+         const std::pair< std::vector< std::size_t >,
+                          std::vector< std::size_t > >& esuel );
 } // tk::
 
 #endif // DerivedData_h

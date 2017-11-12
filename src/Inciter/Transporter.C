@@ -160,18 +160,19 @@ Transporter::Transporter() :
 
     // Read side sets for boundary faces
     // Added by Aditya KP
+    std::map< int, std::vector< std::size_t > > bface, belem;
     std::size_t nbfac(0);
 
     //if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG)
     //{
-        auto ssfac = readSidesetFaces(nbfac);
+        readSidesetFaces(nbfac, bface, belem);
     //}
 
     // Create linear system solver
     createSolver( ss );
 
     // Create mesh partitioner
-    createPartitioner(ssfac, nbfac);
+    createPartitioner(nbfac, bface, belem);
 
   } else finish();      // stop if no time stepping requested
 }
@@ -204,8 +205,10 @@ Transporter::readSidesets()
   return ss;
 }
 
-std::map< int, std::vector< std::size_t > >
-Transporter::readSidesetFaces(std::size_t& nbfac)
+void
+Transporter::readSidesetFaces(std::size_t& nbfac,
+                              std::map< int, std::vector< std::size_t > >& bface, 
+                              std::map< int, std::vector< std::size_t > >& belem)
 // *****************************************************************************
 // Read side set faces from mesh file
 // Added by Aditya K Pandare:
@@ -218,20 +221,18 @@ Transporter::readSidesetFaces(std::size_t& nbfac)
 
   // Read in side set faces from file
   m_print.diag( "Reading side set faces" );
-  auto ssfaces = er.readSidesetFaces(nbfac);
+  er.readSidesetFaces(nbfac,bface,belem);
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
   for (const auto& eq : g_pdes) eq.side( conf );
   for (auto i : conf)
-    if (ssfaces.find(i) == end(ssfaces)) {
+    if (bface.find(i) == end(bface)) {
       m_print.diag( "WARNING: Boundary conditions specified on side set face " +
         std::to_string(i) + " which does not exist in mesh file" );
       break;
     }
-
-  return ssfaces;
 }
 
 void
@@ -258,8 +259,9 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
 }
 
 void
-Transporter::createPartitioner(const std::map< int, std::vector< std::size_t > >& ssfac, 
-                               const std::size_t& nbfac)
+Transporter::createPartitioner(const std::size_t& nbfac,
+                               const std::map< int, std::vector< std::size_t > >& bface, 
+                               const std::map< int, std::vector< std::size_t > >& belem)
 // *****************************************************************************
 // Create mesh partitioner
 // *****************************************************************************
@@ -283,7 +285,8 @@ Transporter::createPartitioner(const std::map< int, std::vector< std::size_t > >
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver, ssfac, nbfac );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver, 
+                               nbfac, bface, belem );
 }
 
 void

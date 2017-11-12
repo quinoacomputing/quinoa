@@ -118,8 +118,9 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Transporter& host,
                  const Scheme& scheme,
                  const tk::CProxy_Solver& solver,
-                 const std::map< int, std::vector< std::size_t > >& ssfac,
-                 const std::size_t& nbfac );
+                 const std::size_t& nbfac,
+                 const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& belem );
 
     //! Partition the computational mesh
     void partition( int nchare );
@@ -322,7 +323,8 @@ class Partitioner : public CBase_Partitioner {
     //! total number of boundary faces
     std::size_t m_nbfac;
     //! side-set information from boundary faces
-    const std::map< int, std::vector< std::size_t > > m_ssfac;
+    const std::map< int, std::vector< std::size_t > > m_bface;
+    const std::map< int, std::vector< std::size_t > > m_belem;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );

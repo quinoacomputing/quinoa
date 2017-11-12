@@ -42,8 +42,9 @@ class Discretization : public CBase_Discretization {
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
         int nchare,
-        const std::map< int, std::vector< std::size_t > >& ssfac,
-        const std::size_t& nbfac );
+        const std::size_t& nbfac,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& belem );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -132,6 +133,9 @@ class Discretization : public CBase_Discretization {
     //! added by Aditya KP
     const std::size_t& Nbfac() { return m_nbfac; } 
     const std::size_t& Ntfac() { return m_ntfac; } 
+    const std::map< int, std::vector< std::size_t > >& Bface() { return m_bface; } 
+    const std::map< int, std::vector< std::size_t > >& Belem() { return m_belem; } 
+    const std::map< std::size_t, std::vector< int > >& Esuf()  { return m_esuf; }
     //@}
 
     //! Output chare element blocks to output file
@@ -274,9 +278,12 @@ class Discretization : public CBase_Discretization {
     //! number of boundary faces
     std::size_t m_nbfac;
     //! side-set information from boundary faces
-    const std::map< int, std::vector< std::size_t > > m_ssfac;
+    const std::map< int, std::vector< std::size_t > > m_bface;
+    const std::map< int, std::vector< std::size_t > > m_belem;
     //! total number of faces
     std::size_t m_ntfac;
+    //! element surrounding faces
+    std::map< std::size_t, std::vector< int > > m_esuf;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

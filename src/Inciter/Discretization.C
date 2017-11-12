@@ -39,8 +39,9 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
   int nchare,
-  const std::map< int, std::vector< std::size_t > >& ssfac,
-  const std::size_t& nbfac ) :
+  const std::size_t& nbfac,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& belem ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -65,12 +66,17 @@ Discretization::Discretization(
   m_volc(),
   m_bid(),
   m_timer(),
-  m_ssfac( ssfac ),
   m_nbfac( nbfac ),
+  m_bface( bface ),
+  m_belem( belem ),
   m_ntfac( tk::genNtfac( m_nbfac,
                          tk::genEsuel(m_inpoel, 
                          4, 
-                         tk::genEsup(m_inpoel,4)) ) )
+                         tk::genEsup(m_inpoel,4)) ) ),
+  m_esuf( tk::genEsuf( m_ntfac, m_nbfac, m_belem, 
+                       tk::genEsuel(m_inpoel, 
+                       4, 
+                       tk::genEsup(m_inpoel,4))) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

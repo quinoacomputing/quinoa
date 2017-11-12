@@ -92,7 +92,9 @@ class ExodusIIMeshReader {
     std::map< int, std::vector< std::size_t > > readSidesets();
 
     //! Read face list of all side sets from ExodusII file
-    std::map< int, std::vector< std::size_t > > readSidesetFaces(std::size_t& nbfac);
+    void readSidesetFaces(std::size_t& nbfac,
+                          std::map< int, std::vector< std::size_t > >& bface,
+                          std::map< int, std::vector< std::size_t > >& belem);
 
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;

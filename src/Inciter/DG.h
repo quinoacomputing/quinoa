@@ -69,6 +69,12 @@ class DG : public CBase_DG {
     std::size_t m_nbfac;
     //! Total number of faces
     std::size_t m_ntfac;
+    //! Boundary face list
+    const std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary element list
+    const std::map< int, std::vector< std::size_t > > m_belem;
+    //! Element surrounding faces
+    const std::map< std::size_t, std::vector< int > > m_esuf;
 
     //! Compute right hand side
     void rhs();
