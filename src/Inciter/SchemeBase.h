@@ -21,6 +21,7 @@
 #include "Inciter/Options/Scheme.h"
 
 #include "NoWarning/matcg.decl.h"
+#include "NoWarning/diagcg.decl.h"
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/discretization.decl.h"
 
@@ -46,6 +47,8 @@ class SchemeBase {
       bound.bindTo( discproxy );
       if (scheme == ctr::SchemeType::MatCG) {
         proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::DiagCG) {
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::DG) {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
@@ -64,10 +67,11 @@ class SchemeBase {
 
   protected:
     //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy = boost::variant< CProxy_MatCG, CProxy_DG >;
+    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
-      boost::variant< CProxy_MatCG::element_t, CProxy_DG::element_t >;
+      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
+                      CProxy_DG::element_t >;
 
     //! Variant storing one proxy to which this class is configured for
     Proxy proxy;
@@ -148,7 +152,7 @@ class SchemeBase {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      auto v = tk::Variant< CProxy_MatCG, CProxy_DG >( proxy );
+      auto v = tk::Variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >( proxy );
       p | v;
       proxy = v.get();
       p | discproxy;

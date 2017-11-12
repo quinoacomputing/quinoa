@@ -307,7 +307,8 @@ Transporter::load( uint64_t nelem )
 
   // Send total number of chares to all linear solver PEs, if they exist
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
-  if (scheme == ctr::SchemeType::MatCG) m_solver.nchare( m_nchare );
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
+    m_solver.nchare( m_nchare );
 
   // signal to runtime system that m_nchare is set
   load_complete();
@@ -584,7 +585,7 @@ void
 Transporter::start()
 // *****************************************************************************
 // Start time stepping
-//! \note Only called if MatCG is used
+//! \note Only called if MatCG/DiagG is used
 // *****************************************************************************
 {
   m_scheme.dt< tag::bcast >();
@@ -650,7 +651,7 @@ void
 Transporter::next()
 // *****************************************************************************
 // Reduction target used to synchronize PEs between linear solves of time steps
-//! \note Only called if MatCG is used
+//! \note Only called if MatCG/DiagCG is used
 // *****************************************************************************
 {
   m_solver.next();

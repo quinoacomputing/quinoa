@@ -16,6 +16,7 @@
 // *****************************************************************************
 
 #include "Partitioner.h"
+#include "Inciter/Options/Scheme.h"
 
 namespace inciter {
 
@@ -1180,7 +1181,8 @@ Partitioner::create()
   createDiscWorkers();
 
   // Broadcast our bounds of global node IDs to all matrix solvers
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::MatCG)
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.bounds( CkMyPe(), m_lower, m_upper );
   else // if no MatCG, no matrix solver, continue
     contribute( m_cb.get< tag::coord >() );

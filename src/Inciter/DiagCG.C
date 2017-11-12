@@ -1,17 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/MatCG.C
+  \file      src/Inciter/DiagCG.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     MatCG for a PDE system with continuous Galerkin with a matrix
-  \details   MatCG advances a system of partial differential equations (PDEs)
+  \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
+  \details   DiagCG advances a system of partial differential equations (PDEs)
     using continuous Galerkin (CG) finite element (FE) spatial discretization
     (using linear shapefunctions on tetrahedron elements) combined with a time
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
-    flux-corrected transport (FCT). The left-hand side matrix is stored in a
-    compressed sparse row (CSR) storage and thus uses a matrix-based linear
-    solver.
-  \see The documentation in MatCG.h.
+    flux-corrected transport (FCT). Only the diagonal entries of the left-hand
+    side matrix are non-zero thus it does not need a mtrix-based linear solver.
+  \see The documentation in DiagCG.h.
 */
 // *****************************************************************************
 
@@ -22,7 +21,7 @@
 #include <algorithm>
 
 #include "QuinoaConfig.h"
-#include "MatCG.h"
+#include "DiagCG.h"
 #include "Solver.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -48,10 +47,10 @@ extern std::vector< PDE > g_pdes;
 
 } // inciter::
 
-using inciter::MatCG;
+using inciter::DiagCG;
 
-MatCG::MatCG( const CProxy_Discretization& disc,
-              const tk::CProxy_Solver& solver ) :
+DiagCG::DiagCG( const CProxy_Discretization& disc,
+                const tk::CProxy_Solver& solver ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -132,11 +131,11 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   }
 
   // Send off global row IDs to linear system solver
-  m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
+  //m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
 }
 
 void
-MatCG::setup( tk::real v )
+DiagCG::setup( tk::real v )
 // *****************************************************************************
 // Setup rows, query boundary conditions, output mesh, etc.
 //! \param[in] v Total mesh volume
@@ -175,7 +174,7 @@ MatCG::setup( tk::real v )
 }
 
 void
-MatCG::dt()
+DiagCG::dt()
 // *****************************************************************************
 // Comppute time step size
 // *****************************************************************************
@@ -209,11 +208,11 @@ MatCG::dt()
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(MatCG,advance), thisProxy) );
+              CkCallback(CkReductionTarget(DiagCG,advance), thisProxy) );
 }
 
 void
-MatCG::lhs()
+DiagCG::lhs()
 // *****************************************************************************
 // Compute left-hand side of transport equations
 // *****************************************************************************
@@ -236,7 +235,7 @@ MatCG::lhs()
 }
 
 void
-MatCG::rhs()
+DiagCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
 // *****************************************************************************
@@ -277,7 +276,7 @@ MatCG::rhs()
 }
 
 void
-MatCG::bc()
+DiagCG::bc()
 // *****************************************************************************
 //  Extract node IDs from side set node lists and match to user-specified
 //  boundary conditions
@@ -380,7 +379,7 @@ MatCG::bc()
 }
 
 void
-MatCG::aec()
+DiagCG::aec()
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \details This function computes and starts communicating m_p, which stores
@@ -414,8 +413,8 @@ MatCG::aec()
 }
 
 void
-MatCG::comaec( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& P )
+DiagCG::comaec( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& P )
 // *****************************************************************************
 //  Receive sums of antidiffusive element contributions on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive AEC contributions
@@ -449,7 +448,7 @@ MatCG::comaec( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::alw()
+DiagCG::alw()
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \details This function computes and starts communicating m_q, which stores
@@ -482,8 +481,8 @@ MatCG::alw()
 }
 
 void
-MatCG::comalw( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& Q )
+DiagCG::comalw( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& Q )
 // *****************************************************************************
 // Receive contributions to the maxima and minima of unknowns of all elements
 // surrounding mesh nodes on chare-boundaries
@@ -521,7 +520,7 @@ MatCG::comalw( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::lim()
+DiagCG::lim()
 // *****************************************************************************
 //  Compute the limited antidiffusive element contributions
 //! \details This function computes and starts communicating m_a, which stores
@@ -560,8 +559,8 @@ MatCG::lim()
 }
 
 void
-MatCG::comlim( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& A )
+DiagCG::comlim( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& A )
 // *****************************************************************************
 //  Receive contributions of limited antidiffusive element contributions on
 //  chare-boundaries
@@ -596,8 +595,8 @@ MatCG::comlim( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::updateLowSol( const std::vector< std::size_t >& gid,
-                     const std::vector< tk::real >& du )
+DiagCG::updateLowSol( const std::vector< std::size_t >& gid,
+                      const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update low order solution vector
 //! \param[in] gid Global row indices of the vector updated
@@ -631,8 +630,8 @@ MatCG::updateLowSol( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::updateSol( const std::vector< std::size_t >& gid,
-                  const std::vector< tk::real >& du )
+DiagCG::updateSol( const std::vector< std::size_t >& gid,
+                   const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update high order solution vector
 //! \param[in] gid Global row indices of the vector updated
@@ -665,7 +664,7 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
 }
 
 void
-MatCG::verify()
+DiagCG::verify()
 // *****************************************************************************
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
@@ -678,7 +677,7 @@ MatCG::verify()
 }
 
 void
-MatCG::diagnostics()
+DiagCG::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
@@ -732,7 +731,7 @@ MatCG::diagnostics()
 }
 
 bool
-MatCG::correctBC()
+DiagCG::correctBC()
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
@@ -778,7 +777,7 @@ MatCG::correctBC()
 }
 
 void
-MatCG::writeFields( tk::real time )
+DiagCG::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
@@ -836,7 +835,7 @@ MatCG::writeFields( tk::real time )
 }
 
 void
-MatCG::out()
+DiagCG::out()
 // *****************************************************************************
 // Output mesh field data
 // *****************************************************************************
@@ -863,7 +862,7 @@ MatCG::out()
 }
 
 void
-MatCG::apply()
+DiagCG::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
@@ -892,7 +891,7 @@ MatCG::apply()
 }
 
 void
-MatCG::advance( tk::real newdt )
+DiagCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step
@@ -916,7 +915,7 @@ MatCG::advance( tk::real newdt )
 }
 
 void
-MatCG::next()
+DiagCG::next()
 // *****************************************************************************
 // Prepare for next step
 // *****************************************************************************
@@ -935,17 +934,17 @@ MatCG::next()
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
+//     //CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //     if (thisIndex == 2 && CkMyPe() == 2) {
 //       /*int j;
 //       for (int i; i < 50*std::pow(thisIndex,4); i++) {
 //         j = i*thisIndex;
 //       }*/
-//       CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
+//       CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //       migrateMe(1);
 //    }
 //    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm MatCG chare %d on PE %d\n",thisIndex,CkMyPe());
+//      CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
 
@@ -960,4 +959,4 @@ MatCG::next()
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }
 
-#include "NoWarning/matcg.def.h"
+#include "NoWarning/diagcg.def.h"

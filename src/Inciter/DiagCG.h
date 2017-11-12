@@ -1,26 +1,25 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/MatCG.h
+  \file      src/Inciter/DiagCG.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     MatCG for a PDE system with continuous Galerkin with a matrix
-  \details   MatCG advances a system of partial differential equations (PDEs)
+  \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
+  \details   DiagCG advances a system of partial differential equations (PDEs)
     using continuous Galerkin (CG) finite element (FE) spatial discretization
     (using linear shapefunctions on tetrahedron elements) combined with a time
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
-    flux-corrected transport (FCT). The left-hand side matrix is stored in a
-    compressed sparse row (CSR) storage and thus uses a matrix-based linear
-    solver.
+    flux-corrected transport (FCT). Only the diagonal entries of the left-hand
+    side matrix are non-zero thus it does not need a mtrix-based linear solver.
 
-    There are a potentially large number of MatCG Charm++ chares created by
-    Transporter. Each MatCG gets a chunk of the full load (part of the mesh)
+    There are a potentially large number of CG Charm++ chares created by
+    Transporter. Each DiagCG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/matcg.ci.
+    discussed in the Charm++ interface file src/Inciter/diagcg.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
@@ -31,9 +30,9 @@
     to global reductions. Dashed lines are potential shortcuts that allow
     jumping over some of the task-graph under some circumstances or optional
     code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    matcg.ci.
+    diagcg.ci.
     \dot
-    digraph "MatCG SDAG" {
+    digraph "DiagCG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       Upd [ label="Upd" tooltip="update solution"
@@ -45,31 +44,31 @@
       OwnAEC [ label="OwnAEC"
                tooltip="own contributions to the antidiffusive element
                         contributions computed"
-               URL="\ref inciter::MatCG::aec"];
+               URL="\ref inciter::DiagCG::aec"];
       ComAEC [ label="ComAEC"
                tooltip="contributions to the antidiffusive element contributions
                         communicated"
-               URL="\ref inciter::MatCG::comaec"];
+               URL="\ref inciter::DiagCG::comaec"];
       OwnALW [ label="OwnALW"
                tooltip="own contributions to the maximum and minimum unknowns of
                         elements surrounding nodes computed"
-               URL="\ref inciter::MatCG::alw"];
+               URL="\ref inciter::DiagCG::alw"];
       ComALW [ label="ComALW"
                tooltip="contributions to the the maximum and minimum unknowns of
                         elements surrounding nodes communicated"
-               URL="\ref inciter::MatCG::comalw"];
+               URL="\ref inciter::DiagCG::comalw"];
       Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
-            URL="\ref inciter::MatCG::verify"];
+            URL="\ref inciter::DiagCG::verify"];
       OwnLim [ label="OwnLim"
                tooltip="compute limited antidiffusive element contributions"
-               URL="\ref inciter::MatCG::lim"];
+               URL="\ref inciter::DiagCG::lim"];
       ComLim [ label="ComLim"
                tooltip="contributions to the limited antidiffusive element
                         contributions communicated"
-               URL="\ref inciter::MatCG::comlim"];
+               URL="\ref inciter::DiagCG::comlim"];
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
-              URL="\ref inciter::MatCG::limit"];
+              URL="\ref inciter::DiagCG::limit"];
       s_next [ label="Solver::next"
               tooltip="prepare for next time step"
               URL="\ref tk::Solver::next"];
@@ -92,11 +91,11 @@
       Apply -> s_next [ style="solid" ];
     }
     \enddot
-    \include Inciter/matcg.ci
+    \include Inciter/diagcg.ci
 */
 // *****************************************************************************
-#ifndef MatCG_h
-#define MatCG_h
+#ifndef DiagCG_h
+#define DiagCG_h
 
 #include <cstddef>
 #include <iosfwd>
@@ -116,7 +115,7 @@
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "NoWarning/matcg.decl.h"
+#include "NoWarning/diagcg.decl.h"
 
 namespace tk {
   class ExodusIIMeshWriter;
@@ -127,8 +126,8 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! MatCG Charm++ chare array used to advance PDEs in time with MatCG+LW+FCT
-class MatCG : public CBase_MatCG {
+//! DiagCG Charm++ chare array used to advance PDEs in time with DiagCG+LW+FCT
+class DiagCG : public CBase_DiagCG {
 
   public:
     #if defined(__clang__)
@@ -144,7 +143,7 @@ class MatCG : public CBase_MatCG {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    MatCG_SDAG_CODE
+    DiagCG_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(STRICT_GNUC)
@@ -154,11 +153,11 @@ class MatCG : public CBase_MatCG {
     #endif
 
     //! Constructor
-    explicit MatCG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver );
+    explicit DiagCG( const CProxy_Discretization& disc,
+                     const tk::CProxy_Solver& solver );
 
     //! Migrate constructor
-    explicit MatCG( CkMigrateMessage* ) {}
+    explicit DiagCG( CkMigrateMessage* ) {}
 
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
@@ -203,7 +202,7 @@ class MatCG : public CBase_MatCG {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      CBase_MatCG::pup(p);
+      CBase_DiagCG::pup(p);
       p | m_itf;
       p | m_nhsol;
       p | m_nlsol;
@@ -230,8 +229,8 @@ class MatCG : public CBase_MatCG {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i MatCG object reference
-    friend void operator|( PUP::er& p, MatCG& i ) { i.pup(p); }
+    //! \param[in,out] i DiagCG object reference
+    friend void operator|( PUP::er& p, DiagCG& i ) { i.pup(p); }
     //@}
 
   private:
@@ -325,4 +324,4 @@ class MatCG : public CBase_MatCG {
 
 } // inciter::
 
-#endif // MatCG_h
+#endif // DiagCG_h

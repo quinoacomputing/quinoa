@@ -1,16 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/matcg.ci
+  \file      src/Inciter/diagcg.ci
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Charm++ module interface file for continuous Galerkin FEM w/ matrix
-  \details   Charm++ module interface file for the continuous Galerkin (CG)
-     discretization scheme using a compressed sparse row (CSR) matrix for the
-     left hand side and a linear solver.
-  \see       MatCG.h and MatCG.C for more info.
+  \brief     Charm++ module interface for continuous Galerkin FEM w/o matrix
+  \details   Charm++ module interface file for the continuous Galerkin
+     discretization scheme using a diagonal matrix for the left hand side.
+  \see       DiagCG.h and DiagCG.C for more info.
 */
 // *****************************************************************************
 
-module matcg {
+module diagcg {
 
   extern module transporter;
   extern module discretization;
@@ -21,9 +20,9 @@ module matcg {
 
   namespace inciter {
 
-    array [1D] MatCG {
-      entry MatCG( const CProxy_Discretization& disc,
-                   const tk::CProxy_Solver& solver );
+    array [1D] DiagCG {
+      entry DiagCG( const CProxy_Discretization& disc,
+                    const tk::CProxy_Solver& solver );
       entry void setup( tk::real v );
       entry void dt();
       entry [reductiontarget] void advance( tk::real newdt );
@@ -47,7 +46,7 @@ module matcg {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      // See src/Inciter/MatCG.h.
+      // See src/Inciter/DiagCG.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -59,7 +58,7 @@ module matcg {
       // mode) verify that the AECs assembled to nodes equal to the difference
       // between the high and low order increments. See also
       // FluxCorrector::aec() and FluxCorrector::verify(). Note that this
-      // verification is only done if there is only a single MatCG chare as
+      // verification is only done if there is only a single DiagCG chare as
       // the correct verification would entail communication for multiple
       // chares. Note also that the DAG conditions below for wait4ver() require
       // the own contributions to the AEC and ALW instead of requiring the low
@@ -87,7 +86,7 @@ module matcg {
       // Note that the none of wait4ver(), wait4fct(), and wait4app(), nor its
       // underlying computations and communications involve global reductions or
       // broadcasts: the entire FCT algorithm runs completely independent on
-      // each MatCG chare, and exercising task parallelism within.
+      // each DiagCG chare, and exercising task parallelism within.
 
       #ifndef NDEBUG
       entry void wait4ver() {
