@@ -150,7 +150,9 @@ class InputDeck :
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
-      set< tag::selected, tag::initialamr >( tk::ctr::InitialAMRType::NONE );
+      set< tag::selected, tag::initialamr >( InitialAMRType::NONE );
+      // Default discretization scheme
+      set< tag::selected, tag::scheme >( SchemeType::CG );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals

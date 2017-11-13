@@ -2,17 +2,14 @@
 /*!
   \file      src/Inciter/CG.C
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     CG advances a system of transport equations using CG+LW+FCT
-  \details   CG advances a system of transport equations using continuous
-    Galerkin (CG) finite elements with linear shapefunctions for spatial
-    discretization combined with a time stepping discretization that is
-    equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
-    finite element context and treats discontinuities with flux-corrected
+  \brief     CG advances a system of PDEs with the continuous Galerkin scheme
+  \details   CG advances a system of partial differential equations (PDEs) using
+    continuous Galerkin (CG) finite element (FE) spatial discretization (using
+    linear shapefunctions on tetrahedron elements) combined with a time stepping
+    scheme that is equivalent to the Lax-Wendroff (LW) scheme within the
+    unstructured-mesh FE context and treats discontinuities with flux-corrected
     transport (FCT).
-
-    There are a potentially large number of CG Charm++ chares created by
-    Transporter.  Each CG gets a chunk of the full load (part of the mesh)
-    and does the same: initializes and advances a number of PDE systems in time.
+  \see The documentation in CG.h.
 */
 // *****************************************************************************
 
@@ -35,14 +32,11 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
+#include "Discretization.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
 #endif
-
-// Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/Solver.C (only seems to be required on mac)
-extern template class tk::Solver< inciter::CProxy_CG >;
 
 namespace inciter {
 
@@ -50,89 +44,43 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
 
-//! \brief Charm++ reducers used by CG
-//! \details These variables are defined here in the .C file and declared as
-//!   extern in CG.h. If instead one defines it in the header (as static),
-//!   a new version of the variable is created any time the header file is
-//!   included, yielding no compilation nor linking errors. However, that leads
-//!   to runtime errors, since CG::registerReducers(), a Charm++
-//!   "initnode" entry method, *may* fill one while contribute() may use the
-//!   other (unregistered) one. Result: undefined behavior, segfault, and
-//!   formatting the internet ...
-CkReduction::reducerType PDFMerger;
-
 } // inciter::
 
 using inciter::CG;
 
-CG::CG( const TransporterProxy& transporter,
-                  const SolverProxy& solver,
-                  const std::vector< std::size_t >& conn,
-                  const std::unordered_map< int,
-                          std::unordered_set< std::size_t > >& msum,
-                  const std::unordered_map< std::size_t, std::size_t >&
-                          filenodes,
-                  const tk::UnsMesh::EdgeNodes& edgenodes,
-                  int nchare ) :
-  __dep(),
-  m_it( 0 ),
+CG::CG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
   m_itf( 0 ),
-  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_lastFieldWriteTime( -1.0 ),
-  m_nvol( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
   m_naec( 0 ),
   m_nalw( 0 ),
   m_nlim( 0 ),
-  m_V( 0.0 ),
-  m_nchare( static_cast< std::size_t >( nchare ) ),
-  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
-                 std::to_string( thisIndex )
-                 #ifdef HAS_ROOT
-                 + (g_inputdeck.get< tag::selected, tag::filetype >() ==
-                     tk::ctr::FieldFileType::ROOT ? ".root" : "")
-                 #endif
-                ),
-  m_transporter( transporter ),
+  m_disc( disc ),
   m_solver( solver ),
-  m_filenodes( filenodes ),
-  m_edgenodes( edgenodes ),
-  m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-  m_fluxcorrector( m_inpoel.size() ),
-  m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
-  m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_du( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_dul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_ue( m_inpoel.size()/4, g_inputdeck.get< tag::component >().nprop() ),
+  m_side(),
+  m_fluxcorrector( m_disc[thisIndex].ckLocal()->Inpoel().size() ),
+  m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
+       g_inputdeck.get< tag::component >().nprop() ),
+  m_ul( m_u.nunk(), m_u.nprop() ),
+  m_du( m_u.nunk(), m_u.nprop() ),
+  m_dul( m_u.nunk(), m_u.nprop() ),
+  m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
   m_p( m_u.nunk(), m_u.nprop()*2 ),
   m_q( m_u.nunk(), m_u.nprop()*2 ),
-  m_a( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
-  m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_v( m_gid.size(), 0.0 ),
-  m_vol( m_gid.size(), 0.0 ),
-  m_volc(),
-  m_bid(),
+  m_a( m_u.nunk(), m_u.nprop() ),
+  m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
+  m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
   m_pc(),
   m_qc(),
-  m_ac()
+  m_ac(),
+  m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
+//! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] conn Vector of mesh element connectivity owned (global IDs)
-//! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
-//!   mesh chunk we operate on
 //! \param[in] filenodes Map associating old node IDs (as in file) to new node
 //!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \param[in] edgenodes Map associating new node IDs ('new' as in producing
-//!   contiguous-row-id linear system contributions) to edges (a pair of old
-//!   node IDs ('old' as in file). These 'new' node IDs are the ones newly
-//!   added during inital uniform mesh refinement.
-//! \param[in] nchare Total number of CG chares
 //! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
 //!   (which corresponds to rows in the linear system) are (approximately)
 //!   contiguous (as much as this can be done with an unstructured mesh) as the
@@ -143,43 +91,24 @@ CG::CG( const TransporterProxy& transporter,
 //!   problem.
 // *****************************************************************************
 {
-  Assert( m_psup.second.size()-1 == m_gid.size(),
-          "Number of mesh points and number of global IDs unequal" );
-
-  // Convert neighbor nodes to vectors from sets
-  for (const auto& n : msum) {
-    auto& v = m_msum[ n.first ];
-    v.insert( end(v), begin(n.second), end(n.second) );
-  }
-
-  // Register ourselves with the linear system solver
-  m_solver.ckLocalBranch()->checkin();
-
-  // Count the number of mesh nodes at which we receive data from other chares
-  // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c;
-  for (const auto& n : m_msum) for (auto i : n.second) c.push_back( i );
-  tk::unique( c );
-  m_bid = tk::assignLid( c );
-
-  // Allocate receive buffer for nodal volumes
-  m_volc.resize( m_bid.size(), 0.0 );
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
   // Allocate receive buffers for FCT
-  m_pc.resize( m_bid.size() );
+  m_pc.resize( d->Bid().size() );
   for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
-  m_qc.resize( m_bid.size() );
+  m_qc.resize( d->Bid().size() );
   for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
-  m_ac.resize( m_bid.size() );
+  m_ac.resize( d->Bid().size() );
   for (auto& b : m_ac) b.resize( m_u.nprop() );
 
   // Invert file-node map, a map associating old node IDs (as in file) to new
   // node IDs (as in producing contiguous-row-id linear system contributions),
   // so we can search more efficiently for old node IDs.
-  decltype(m_filenodes) linnodes;
-  for (const auto& i : m_filenodes) {
-    auto n = tk::cref_find(m_lid,i.first);
-    Assert( n < m_gid.size(),
+  std::unordered_map< std::size_t, std::size_t > linnodes;
+  for (const auto& i : d->Filenodes()) {
+    auto n = tk::cref_find(d->Lid(),i.first);
+    Assert( n < d->Gid().size(),
             "Local IDs must be lower than the local number of grid points" );
     linnodes[ i.second ] = n;
   }
@@ -198,202 +127,9 @@ CG::CG( const TransporterProxy& transporter,
         n.push_back( it->second );
     }
   }
-}
 
-void
-CG::coord()
-// *****************************************************************************
-//  Read mesh node coordinates and optionally add new edge-nodes in case of
-//  initial uniform refinement
-// *****************************************************************************
-{
-  // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords();
-  // Add coordinates of mesh nodes newly generated to edge-mid points during
-  // initial refinement
-  addEdgeNodeCoords();
-  // Compute mesh cell volumes
-  vol();
-}
-
-void
-CG::vol()
-// *****************************************************************************
-// Sum mesh volumes to nodes, start communicating them on chare-boundaries
-// *****************************************************************************
-{
-  const auto& x = m_coord[0];
-  const auto& y = m_coord[1];
-  const auto& z = m_coord[2];
-
-  // Compute nodal volumes on our chunk of the mesh
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
-                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-    // compute element Jacobi determinant * 5/120 = element volume / 4
-    const std::array< tk::real, 3 >
-      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-    const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
-    ErrChk( J > 0, "Element Jacobian non-positive: PE:" +
-                   std::to_string(CkMyPe()) + ", node IDs: " +
-                   std::to_string(m_gid[N[0]]) + ',' +
-                   std::to_string(m_gid[N[1]]) + ',' +
-                   std::to_string(m_gid[N[2]]) + ',' +
-                   std::to_string(m_gid[N[3]]) + ", coords: (" +
-                   std::to_string(x[N[0]]) + ", " +
-                   std::to_string(y[N[0]]) + ", " +
-                   std::to_string(z[N[0]]) + "), (" +
-                   std::to_string(x[N[1]]) + ", " +
-                   std::to_string(y[N[1]]) + ", " +
-                   std::to_string(z[N[1]]) + "), (" +
-                   std::to_string(x[N[2]]) + ", " +
-                   std::to_string(y[N[2]]) + ", " +
-                   std::to_string(z[N[2]]) + "), (" +
-                   std::to_string(x[N[3]]) + ", " +
-                   std::to_string(y[N[3]]) + ", " +
-                   std::to_string(z[N[3]]) + ')' );
-    // scatter add V/4 to nodes
-    for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
-  }
-
-  // Store nodal volumes without contributions from other chares on
-  // chare-boundaries
-  m_v = m_vol;
-
-  // Send our nodal volume contributions to neighbor chares
-  if (m_msum.empty())
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
-  else
-    for (const auto& n : m_msum) {
-      std::vector< tk::real > v;
-      for (auto i : n.second) v.push_back( m_vol[ tk::cref_find(m_lid,i) ] );
-      thisProxy[ n.first ].comvol( n.second, v );
-    }
-}
-
-void
-CG::comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V )
-// *****************************************************************************
-//  Receive nodal volumes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive volume contributions
-//! \param[in] V Partial sums of nodal volume contributions to chare-boundary
-//!   nodes
-//! \details This function receives contributions to m_vol, which stores the
-//!   nodal volumes. While m_vol stores own contributions, m_volc collects the
-//!   neighbor chare contributions during communication. This way work on m_vol
-//!   and m_volc is overlapped. The two are combined in totalvol().
-// *****************************************************************************
-{
-  Assert( V.size() == gid.size(), "Size mismatch" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
-    Assert( bid < m_volc.size(), "Indexing out of bounds" );
-    m_volc[ bid ] += V[i];
-  }
-
-  if (++m_nvol == m_msum.size()) {
-    m_nvol = 0;
-    contribute(
-       CkCallback(CkReductionTarget(Transporter,volcomplete), m_transporter) );
-  }
-}
-
-void
-CG::totalvol()
-// *****************************************************************************
-// Sum mesh volumes and contribute own mesh volume to total volume
-// *****************************************************************************
-{
-  // Combine own and communicated contributions of nodal volumes
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
-    m_vol[ lid ] += m_volc[ b.second ];
-  }
-
-  // Sum mesh volume to host
-  tk::real V = 0.0;
-  for (auto v : m_v) V += v;
-  contribute( sizeof(tk::real), &V, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
-}
-
-void
-CG::stat()
-// *****************************************************************************
-// Compute mesh cell statistics
-// *****************************************************************************
-{
-  const auto& x = m_coord[0];
-  const auto& y = m_coord[1];
-  const auto& z = m_coord[2];
-
-  auto MIN = -std::numeric_limits< tk::real >::max();
-  auto MAX = std::numeric_limits< tk::real >::max();
-  std::array< tk::real, 2 > min = {{ MAX, MAX }};
-  std::array< tk::real, 2 > max = {{ MIN, MIN }};
-  std::array< tk::real, 4 > sum{{ 0.0, 0.0, 0.0, 0.0 }};
-  tk::UniPDF edgePDF( 1e-4 );
-  tk::UniPDF volPDF( 1e-4 );
-
-  // Compute edge length statistics
-  // Note that while the min and max edge lengths are independent of the number
-  // of CPUs (by the time they are aggregated across all chares), the sum of
-  // the edge lengths and the edge length PDF are not. This is because the
-  // edges on the chare-boundary are counted multiple times and we
-  // conscientiously do not make an effort to precisely compute this, because
-  // that would require communication and more complex logic. Since these
-  // statistics are intended as simple average diagnostics, we ignore these
-  // small differences. For reproducible average edge lengths and edge length
-  // PDFs, run the mesh in serial.
-  for (std::size_t p=0; p<m_gid.size(); ++p)
-    for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
-       const auto dx = x[ m_psup.first[i] ] - x[ p ];
-       const auto dy = y[ m_psup.first[i] ] - y[ p ];
-       const auto dz = z[ m_psup.first[i] ] - z[ p ];
-       const auto length = std::sqrt( dx*dx + dy*dy + dz*dz );
-       if (length < min[0]) min[0] = length;
-       if (length > max[0]) max[0] = length;
-       sum[0] += 1.0;
-       sum[1] += length;
-       edgePDF.add( length );
-    }
-
-  // Compute mesh cell volume statistics
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
-                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-    const std::array< tk::real, 3 >
-      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-    const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
-    if (L < min[1]) min[1] = L;
-    if (L > max[1]) max[1] = L;
-    sum[2] += 1.0;
-    sum[3] += L;
-    volPDF.add( L );
-  }
-
-  // Contribute to mesh statistics across all CG chares
-  contribute( min.size()*sizeof(tk::real), min.data(), CkReduction::min_double,
-    CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
-  contribute( max.size()*sizeof(tk::real), max.data(), CkReduction::max_double,
-    CkCallback(CkReductionTarget(Transporter,maxstat), m_transporter) );
-  contribute( sum.size()*sizeof(tk::real), sum.data(), CkReduction::sum_double,
-    CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
-
-  // Serialize PDFs to raw stream
-  auto stream = tk::serialize( { edgePDF, volPDF } );
-  // Create Charm++ callback function for reduction of PDFs with
-  // Transporter::pdfstat() as the final target where the results will appear.
-  CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
-  // Contribute serialized PDF of partial sums to host via Charm++ reduction
-  contribute( stream.first, stream.second.get(), PDFMerger, cb );
+  // Send off global row IDs to linear system solver
+  m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
 }
 
 void
@@ -403,14 +139,138 @@ CG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  m_solver.ckLocalBranch()->comfinal();
+
   // Store total mesh volume
-  m_V = v;
+  m_vol = v;
   // Output chare mesh to file
-  writeMesh();
-  // Send off global row IDs to linear system solver
-  m_solver.ckLocalBranch()->charerow( thisIndex, m_gid );
+  d->writeMesh();
   // Output fields metadata to output file
-  writeMeta();
+  d->writeMeta();
+
+  // Compute left-hand side of PDEs
+  lhs();
+
+  // zero initial solution vector
+  m_du.fill( 0.0 );
+
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_pdes)
+    eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
+
+  // Send off initial guess for assembly
+  m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );
+
+  // Output initial conditions to file (regardless of whether it was requested)
+  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
+
+  // Start time stepping
+  contribute( CkCallback( CkReductionTarget(Transporter,start), d->Tr()) );
+}
+
+void
+CG::dt()
+// *****************************************************************************
+// Comppute time step size
+// *****************************************************************************
+{
+  tk::real mindt = std::numeric_limits< tk::real >::max();
+
+  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
+  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // use constant dt if configured
+  if (std::abs(const_dt - def_const_dt) > eps) {
+
+    mindt = const_dt;
+
+  } else {      // compute dt based on CFL
+
+    // find the minimum dt across all PDEs integrated
+    for (const auto& eq : g_pdes) {
+      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+      if (eqdt < mindt) mindt = eqdt;
+    }
+
+    // Scale smallest dt with CFL coefficient
+    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+
+  }
+
+  // Contribute to minimum dt across all chares the advance to next step
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+              CkCallback(CkReductionTarget(CG,advance), thisProxy) );
+}
+
+void
+CG::lhs()
+// *****************************************************************************
+// Compute left-hand side of transport equations
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Compute left-hand side matrix for all equations
+  for (const auto& eq : g_pdes)
+    eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
+
+  // Send off left hand side for assembly
+  m_solver.ckLocalBranch()->
+    charelhs( thisIndex, d->Gid(), d->Psup(), m_lhsd, m_lhso );
+
+  // Compute lumped mass lhs required for the low order solution
+  auto lump = m_fluxcorrector.lump( d->Coord(), d->Inpoel() );
+  // Send off lumped mass lhs for assembly
+  m_solver.ckLocalBranch()->charelowlhs( thisIndex, d->Gid(), lump );
+}
+
+void
+CG::rhs()
+// *****************************************************************************
+// Compute right-hand side of transport equations
+// *****************************************************************************
+{
+  // Initialize FCT data structures for new time step
+  m_p.fill( 0.0 );
+  m_a.fill( 0.0 );
+  for (std::size_t p=0; p<m_u.nunk(); ++p)
+    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
+      m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
+      m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
+    }
+
+  for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_qc)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
+      b[c*2+0] = -std::numeric_limits< tk::real >::max();
+      b[c*2+1] = std::numeric_limits< tk::real >::max();
+    }
+
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Compute right-hand side and query Dirichlet BCs for all equations
+  tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
+  for (const auto& eq : g_pdes)
+    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, r );
+  // Query Dirichlet BCs and send to linear system solver
+  bc();
+  // Send off right-hand sides for assembly
+  m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
+
+  // Compute mass diffusion rhs contribution required for the low order solution
+  auto diff = m_fluxcorrector.diff( d->Coord(), d->Inpoel(), m_u );
+  // Send off mass diffusion rhs contribution for assembly
+  m_solver.ckLocalBranch()->charelowrhs( thisIndex, d->Gid(), diff );
 }
 
 void
@@ -433,6 +293,8 @@ CG::bc()
 //!   that BC data held in Solver::m_bc are the same on all PEs. That is
 // *****************************************************************************
 {
+  using NodeBC = std::vector< std::pair< bool, tk::real > >;
+
   // Vector of pairs of bool and boundary condition value associated to mesh
   // node IDs at which the user has set Dirichlet boundary conditions for all
   // PDEs integrated
@@ -475,14 +337,17 @@ CG::bc()
   // words, this only works for a single PDE system and a sytem of systems. This
   // machinery is only tested with a single system of PDEs at this point.
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   for (const auto& s : m_side) {
     std::size_t c = 0;
     for (std::size_t eq=0; eq<g_pdes.size(); ++eq) {
-      auto eqbc = g_pdes[eq].dirbc( m_t, m_dt, s, m_coord );
+      auto eqbc = g_pdes[eq].dirbc( d->T(), d->Dt(), s, d->Coord() );
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
         const auto& bcs = n.second;             // BCs
-        auto& nodebc = dirbc[ m_gid[id] ];      // BCs to be set for node
+        auto& nodebc = dirbc[ d->Gid()[id] ];   // BCs to be set for node
         if (nodebc.size() > c) {        // node already has BCs from this PDE
           Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
           for (std::size_t i=0; i<bcs.size(); i++)
@@ -507,376 +372,8 @@ CG::bc()
     Assert( n.second.size() == m_u.nprop(), "Size of NodeBC vector incorrect" );
   }
 
-//   // Send progress report to host
-//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-//     m_transporter.chbcmatched();
-
   // Send off list of owned node IDs mapped to side sets to Solver
   m_solver.ckLocalBranch()->charebc( dirbc );
-}
-
-void
-CG::init()
-// *****************************************************************************
-// Set ICs, compute initial time step size, output initial field data, compute
-// left-hand-side matrix
-// *****************************************************************************
-{
-  // zero initial solution vector
-  m_du.fill( 0.0 );
-
-  // Send off initial guess for assembly
-  m_solver.ckLocalBranch()->charesol( thisIndex, m_gid, m_du );
-
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t, m_gid );
-
-  // Compute initial time step size
-  dt();
-
-  // Output initial conditions to file (regardless of whether it was requested)
-  if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( m_t );
-
-//   // send progress report to host
-//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-//     m_transporter.chic();
-
-  // Compute left-hand side of PDE
-  lhs();
-}
-
-void
-CG::dt()
-// *****************************************************************************
-// Start computing minimum time step size
-// *****************************************************************************
-{
-  tk::real mindt = std::numeric_limits< tk::real >::max();
-
-  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
-  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
-  auto eps = std::numeric_limits< tk::real >::epsilon();
-
-  // use constant dt if configured
-  if (std::abs(const_dt - def_const_dt) > eps) {
-
-    mindt = const_dt;
-
-  } else {      // compute dt based on CFL
-
-    // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_pdes) {
-      auto eqdt = eq.dt( m_coord, m_inpoel, m_u );
-      if (eqdt < mindt) mindt = eqdt;
-    }
-
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
-
-  }
-
-  // Contribute to mindt across all CG chares
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-    CkCallback(CkReductionTarget(Transporter,dt), m_transporter) );
-}
-
-void
-CG::lhs()
-// *****************************************************************************
-// Compute left-hand side of transport equations
-// *****************************************************************************
-{
-  // Compute left-hand side matrix for all equations
-  for (const auto& eq : g_pdes)
-    eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
-
-  // Send off left hand side for assembly
-  m_solver.ckLocalBranch()->charelhs(thisIndex, m_gid, m_psup, m_lhsd, m_lhso);
-
-  // Compute lumped mass lhs required for the low order solution
-  auto lump = m_fluxcorrector.lump( m_coord, m_inpoel );
-  // Send off lumped mass lhs for assembly
-  m_solver.ckLocalBranch()->charelowlhs( thisIndex, m_gid, lump );
-
-//   // send progress report to host
-//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-//     m_transporter.chlhs();
-
-  // Call back to Transporter::initcomplete(), signaling that the initialization
-  // is complete and we are now starting time stepping
-  contribute(
-      CkCallback(CkReductionTarget(Transporter,initcomplete), m_transporter));
-}
-
-void
-CG::rhs()
-// *****************************************************************************
-// Compute right-hand side of transport equations
-// *****************************************************************************
-{
-  // Initialize FCT data structures for new time step
-  m_p.fill( 0.0 );
-  m_a.fill( 0.0 );
-  for (std::size_t p=0; p<m_u.nunk(); ++p)
-    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-      m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
-      m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
-    }
-
-  for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_qc)
-    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      b[c*2+0] = -std::numeric_limits< tk::real >::max();
-      b[c*2+1] = std::numeric_limits< tk::real >::max();
-    }
-
-  // Compute right-hand side and query Dirichlet BCs for all equations
-  tk::Fields r( m_gid.size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes)
-    eq.rhs( m_t, m_dt, m_coord, m_inpoel, m_u, m_ue, r );
-  // Query Dirichlet BCs and send to linear system solver
-  bc();
-  // Send off right-hand sides for assembly
-  m_solver.ckLocalBranch()->charerhs( thisIndex, m_gid, r );
-
-  // Compute mass diffusion rhs contribution required for the low order solution
-  auto diff = m_fluxcorrector.diff( m_coord, m_inpoel, m_u );
-  // Send off mass diffusion rhs contribution for assembly
-  m_solver.ckLocalBranch()->charelowrhs( thisIndex, m_gid, diff );
-
-//   // send progress report to host
-//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-//     m_transporter.chrhs();
-}
-
-void
-CG::readCoords()
-// *****************************************************************************
-//  Read coordinates of mesh nodes from file
-// *****************************************************************************
-{
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  auto nnode = er.readHeader();
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-
-  auto nn = m_lid.size();
-  x.resize( nn );
-  y.resize( nn );
-  z.resize( nn );
-
-  for (auto p : m_gid) {
-    auto n = m_filenodes.find(p);
-    if (n != end(m_filenodes) && n->second < nnode)
-      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
-  }
-}
-
-void
-CG::addEdgeNodeCoords()
-// *****************************************************************************
-//  Add coordinates of mesh nodes newly generated to edge-mid points during
-//  initial refinement
-// *****************************************************************************
-{
-  if (m_edgenodes.empty()) return;
-
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
-  Assert( x.size() == y.size() && x.size() == z.size(), "Size mismatch" );
-
-  // Lambda to add coordinates for a single new node on an edge
-  auto addnode = [ this, &x, &y, &z ]
-                 ( const decltype(m_edgenodes)::value_type& e )
-  {
-    auto p = tk::cref_find( m_lid, e.first[0] );
-    auto q = tk::cref_find( m_lid, e.first[1] );
-    auto i = tk::cref_find( m_lid, e.second );
-    Assert( p < x.size(), "CG chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(p)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( q < x.size(), "CG chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(q)
-                          + " must be lower than " + std::to_string(x.size()) );
-    Assert( i < x.size(), "CG chare " + std::to_string(thisIndex) +
-                          " indexing out of bounds: " + std::to_string(i)
-                          + " must be lower than " + std::to_string(x.size()) );
-    x[i] = (x[p]+x[q])/2.0;
-    y[i] = (y[p]+y[q])/2.0;
-    z[i] = (z[p]+z[q])/2.0;
-  };
-
-  // add new nodes
-  for (const auto& e : m_edgenodes) addnode( e );
-}
-
-void
-CG::writeMesh()
-// *****************************************************************************
-// Output chare element blocks to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-      tk::RootMeshWriter rmw( m_outFilename, 0 );
-      rmw.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-
-    } else
-    #endif
-    {
-
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-      // Write chare mesh initializing element connectivity and point coords
-      ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-    
-    }    
-  }
-}
-
-void
-CG::writeSolution( const tk::ExodusIIMeshWriter& ew,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
-}
-
-#ifdef HAS_ROOT
-void
-CG::writeSolution( const tk::RootMeshWriter& rmw,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const
-// *****************************************************************************
-// Output solution to file
-//! \param[in] rmw Root mesh-based writer object
-//! \param[in] it Iteration count
-//! \param[in] u Vector of fields to write to file
-//! \author A. Pakki
-// *****************************************************************************
-{
-  int varid = 0;
-  for (const auto& f : u) rmw.writeNodeScalar( it, ++varid, f );
-}
-#endif
-
-void
-CG::writeMeta() const
-// *****************************************************************************
-// Output mesh-based fields metadata to file
-// *****************************************************************************
-{
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    #ifdef HAS_ROOT
-    auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-    if (filetype == tk::ctr::FieldFileType::ROOT) {
- 
-      tk::RootMeshWriter rmw( m_outFilename, 1 );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      rmw.writeNodeVarNames( names );
-
-    } else
-    #endif
-    {
-
-      // Create ExodusII writer
-      tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
-
-      // Collect nodal field output names from all PDEs
-      std::vector< std::string > names;
-      for (const auto& eq : g_pdes) {
-        auto n = eq.fieldNames();
-        names.insert( end(names), begin(n), end(n) );
-      }
-
-      // Write node field names
-      ew.writeNodeVarNames( names );
-    }
-
-  }
-}
-
-void
-CG::writeFields( tk::real time )
-// *****************************************************************************
-// Output mesh-based fields to file
-//! \param[in] time Physical time
-// *****************************************************************************
-{
-  // Only write if the last time is different than the current one
-  if (std::abs(m_lastFieldWriteTime - time) <
-      std::numeric_limits< tk::real >::epsilon() )
-    return;
-
-  // Save time stamp at which the last field write happened
-  m_lastFieldWriteTime = time;
-
-  // Increase field output iteration count
-  ++m_itf;
-
-  // Lambda to collect node fields output from all PDEs
-  auto nodefields = [&]() {
-    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
-    std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_pdes) {
-      auto o = eq.fieldOutput( time, m_V, m_coord, m_v, u );
-      output.insert( end(output), begin(o), end(o) );
-    }
-    return output;
-  };
-
-  #ifdef HAS_ROOT
-  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
-
-  if (filetype == tk::ctr::FieldFileType::ROOT) {
-
-    // Create Root writer
-    tk::RootMeshWriter rmw( m_outFilename, 1 );
-    // Write time stamp
-    rmw.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    writeSolution( rmw, m_itf, nodefields() );
-
-  } else
-  #endif
-  {
-
-    // Create ExodusII writer
-    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
-    // Write time stamp
-    ew.writeTimeStamp( m_itf, time );
-    // Write node fields to file
-    writeSolution( ew, m_itf, nodefields() );
-
-  }
 }
 
 void
@@ -888,18 +385,22 @@ CG::aec()
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
   auto& dbc = m_solver.ckLocalBranch()->dirbc();
-  m_fluxcorrector.aec( m_coord, m_inpoel, m_vol, dbc, m_gid, m_du, m_u, m_p );
+  m_fluxcorrector.aec( d->Coord(), d->Inpoel(), d->Vol(), dbc, d->Gid(), m_du,
+                       m_u, m_p );
 
-  if (m_msum.empty())
+  if (d->Msum().empty())
     comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
+    for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(m_lid,i) ] );
+      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(d->Lid(),i) ] );
       thisProxy[ n.first ].comaec( n.second, p );
     }
 
@@ -929,13 +430,16 @@ CG::comaec( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
     Assert( bid < m_pc.size(), "Indexing out of bounds" );
     m_pc[ bid ] += P[i];
   }
 
-  if (++m_naec == m_msum.size()) {
+  if (++m_naec == d->Msum().size()) {
     m_naec = 0;
     comaec_complete();
   }
@@ -950,18 +454,21 @@ CG::alw()
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
   // Note that the maximum and minimum unknowns are complete on nodes that are
   // not shared with other chares and only partially complete on chare-boundary
   // nodes.
-  m_fluxcorrector.alw( m_inpoel, m_u, m_ul, m_q );
+  m_fluxcorrector.alw( d->Inpoel(), m_u, m_ul, m_q );
 
-  if (m_msum.empty())
+  if (d->Msum().empty())
     comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
+    for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(m_lid,i) ] );
+      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(d->Lid(),i) ] );
       thisProxy[ n.first ].comalw( n.second, q );
     }
 
@@ -990,8 +497,11 @@ CG::comalw( const std::vector< std::size_t >& gid,
 {
   Assert( Q.size() == gid.size(), "Size mismatch" );
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
     Assert( bid < m_qc.size(), "Indexing out of bounds" );
     auto& o = m_qc[ bid ];
     const auto& q = Q[i];
@@ -1001,7 +511,7 @@ CG::comalw( const std::vector< std::size_t >& gid,
     }
   }
 
-  if (++m_nalw == m_msum.size()) {
+  if (++m_nalw == d->Msum().size()) {
     m_nalw = 0;
     comalw_complete();
   }
@@ -1016,9 +526,12 @@ CG::lim()
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Combine own and communicated contributions to P and Q
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
+  for (const auto& b : d->Bid()) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
     const auto& bpc = m_pc[ b.second ];
     const auto& bqc = m_qc[ b.second ];
     for (ncomp_t c=0; c<m_p.nprop()/2; ++c) {
@@ -1029,14 +542,14 @@ CG::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, m_ul, m_q, m_a );
+  m_fluxcorrector.lim( d->Inpoel(), m_p, m_ul, m_q, m_a );
 
-  if (m_msum.empty())
+  if (d->Msum().empty())
     comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
+    for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(m_lid,i) ] );
+      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(d->Lid(),i) ] );
       thisProxy[ n.first ].comlim( n.second, a );
     }
 
@@ -1064,71 +577,24 @@ CG::comlim( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
     Assert( bid < m_ac.size(), "Indexing out of bounds" );
     m_ac[ bid ] += A[i];
   }
  
-  if (++m_nlim == m_msum.size()) {
+  if (++m_nlim == d->Msum().size()) {
     m_nlim = 0;
     comlim_complete();
   }
 }
 
 void
-CG::advance( uint64_t it, tk::real t, tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-//! \param[in] it Iteration count
-//! \param[in] t Physical time
-// *****************************************************************************
-{
-  // Update local copy of time step info (the master copies are in Transporter)
-  m_it = it;
-  m_t = t;
-  m_dt = newdt;
-
-  // Activate SDAG-waits
-  #ifndef NDEBUG
-  wait4ver();
-  #endif
-  wait4fct();
-  wait4app();
-
-  // Compute rhs for next time step
-  rhs();
-}
-
-void
-CG::out()
-// *****************************************************************************
-// Output mesh and particle fields
-// *****************************************************************************
-{
-  // Optionally output field and particle data
-  if ( !((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
-       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
-  {
-    writeFields( m_t+m_dt );
-  }
-
-  // Output final field data to file (regardless of whether it was requested)
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  if ( (std::fabs(m_t+m_dt-term) < eps || (m_it+1) >= nstep) &&
-       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
-    writeFields( m_t+m_dt );
-
-  contribute(
-     CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
-}
-
-void
 CG::updateLowSol( const std::vector< std::size_t >& gid,
-                       const std::vector< tk::real >& du )
+                  const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update low order solution vector
 //! \param[in] gid Global row indices of the vector updated
@@ -1140,9 +606,12 @@ CG::updateLowSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the low order solution vector must equal" );
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto id = tk::cref_find( m_lid, gid[i] );
+    auto id = tk::cref_find( d->Lid(), gid[i] );
     for (ncomp_t c=0; c<ncomp; ++c) m_dul( id, c, 0 ) = du[ i*ncomp+c ];
   }
 
@@ -1151,7 +620,7 @@ CG::updateLowSol( const std::vector< std::size_t >& gid,
 
   // If all contributions we own have been received, continue by updating a
   // different solution vector
-  if (m_nlsol == m_gid.size()) {
+  if (m_nlsol == d->Gid().size()) {
     m_nlsol = 0;
     m_ul = m_u + m_dul;
     alw();
@@ -1160,7 +629,7 @@ CG::updateLowSol( const std::vector< std::size_t >& gid,
 
 void
 CG::updateSol( const std::vector< std::size_t >& gid,
-                    const std::vector< tk::real >& du )
+               const std::vector< tk::real >& du )
 // *****************************************************************************
 // Update high order solution vector
 //! \param[in] gid Global row indices of the vector updated
@@ -1172,9 +641,12 @@ CG::updateSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the high order solution vector must equal" );
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto id = tk::cref_find( m_lid, gid[i] );
+    auto id = tk::cref_find( d->Lid(), gid[i] );
     for (ncomp_t c=0; c<ncomp; ++c) m_du( id, c, 0 ) = du[ i*ncomp+c ];
   }
 
@@ -1183,7 +655,7 @@ CG::updateSol( const std::vector< std::size_t >& gid,
 
   // If all contributions we own have been received, continue by updating a
   // different solution vector
-  if (m_nhsol == m_gid.size()) {
+  if (m_nhsol == d->Gid().size()) {
     m_nhsol = 0;
     aec();
   }
@@ -1195,9 +667,11 @@ CG::verify()
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
 {
-  if (m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul ))
-    contribute(
-      CkCallback( CkReductionTarget(Transporter,verified), m_transporter) );
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  if (m_fluxcorrector.verify( d->Nchare(), d->Inpoel(), m_du, m_dul ))
+    contribute( CkCallback( CkReductionTarget(Transporter,verified), d->Tr()) );
 }
 
 void
@@ -1206,10 +680,12 @@ CG::diagnostics()
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
 {
-  // Optionally: collect analytical solutions and send both the latest
-  // analytical and numerical solutions to Solver for computing and outputing
-  // diagnostics
-  if ( !(m_it % g_inputdeck.get< tag::interval, tag::diag >()) ) {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Optionally collect analytical solutions and send both the latest analytical
+  // and numerical solutions to Solver for computing and outputing diagnostics
+  if ( !(d->It() % g_inputdeck.get< tag::interval, tag::diag >()) ) {
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
@@ -1229,16 +705,16 @@ CG::diagnostics()
     // really the initial condition.
     auto a = m_u;
     for (const auto& eq : g_pdes)
-      eq.initialize( m_coord, a, m_t+m_dt, m_gid );
+      eq.initialize( d->Coord(), a, d->T()+d->Dt(), d->Gid() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as the L2 norm
-    // of a quantity, computed in mesh nodes, A, as || A ||_2 = sqrt[ sum_i (
-    // A_i )^2 V_i ], where the sum is taken over all mesh nodes and V_i is the
-    // nodal volume. We send two sets of quantities to the host for aggregation
-    // across the whole mesh: (1) the numerical solutions of all components of
-    // all PDEs, and their error, defined as A_i = (a_i - n_i), where a_i and
-    // n_i are the analytical and numerical solutions at node i, respectively.
-    // We send these to Solver and the final aggregated solution will end up in
+    // of a quantity, computed in mesh nodes, A, as ||A||_2 = sqrt[ sum_i(A_i)^2
+    // V_i ], where the sum is taken over all mesh nodes and V_i is the nodal
+    // volume. We send two sets of quantities to the host for aggregation across
+    // the whole mesh: (1) the numerical solutions of all components of all
+    // PDEs, and their error, defined as A_i = (a_i - n_i), where a_i and n_i
+    // are the analytical and numerical solutions at node i, respectively. We
+    // send these to Solver and the final aggregated solution will end up in
     // Transporter::diagnostics(). Note that we weigh/multiply all data here by
     // sqrt(V_i), so that the nodal volumes do not have to be communicated
     // separately. In Solver::diagnostics(), where we collect all contributions
@@ -1248,33 +724,8 @@ CG::diagnostics()
     // norm, defined above, is taken.
 
     // Send both numerical and analytical solutions to solver
-    m_solver.ckLocalBranch()->charediag( thisIndex, m_gid, m_u, a, m_v );
-
-  } else
-    contribute(
-      CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
-}
-
-std::array< std::array< tk::real, 4 >, 3 >
-CG::velocity( std::size_t e )
-// *****************************************************************************
-// Extract velocity at the four cell nodes of a mesh element
-//! \param[in] e Element id
-//! \return Array of 3 arrays of 4 nodal velocity differences
-//! \details This funcion extracts the velocity field, defined by each PDE
-//!   integrated. All PDEs configured are interrogated and the last nonzero
-//!   velocity vector is returned at all four nodes of the mesh element.
-// *****************************************************************************
-{
-  std::array< std::array< tk::real, 4 >, 3 > c;
-  for (const auto& eq : g_pdes) {
-    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
-                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }}; 
-    auto v = eq.velocity( m_u, m_coord, N );
-    if (!v.empty()) c = std::move(v);
+    m_solver.ckLocalBranch()->charediag( thisIndex, d->Gid(), m_u, a, d->V() );
   }
-
-  return c;
 }
 
 bool
@@ -1290,6 +741,9 @@ CG::correctBC()
 
   if (dirbc.empty()) return true;
 
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // We loop through the map that associates a vector of local node IDs to side
   // set IDs for all side sets read from mesh file. Then for each side set for
   // all mesh nodes on a given side set we attempt to find the global node ID
@@ -1304,7 +758,7 @@ CG::correctBC()
   // which is an error.
   for (const auto& s : m_side)
     for (auto i : s.second) {
-      auto u = dirbc.find( m_gid[i] );
+      auto u = dirbc.find( d->Gid()[i] );
       if (u != end(dirbc)) {
         const auto& b = u->second;
         Assert( b.size() == m_u.nprop(), "Size mismatch" );
@@ -1321,14 +775,102 @@ CG::correctBC()
 }
 
 void
+CG::writeFields( tk::real time )
+// *****************************************************************************
+// Output mesh-based fields to file
+//! \param[in] time Physical time
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Only write if the last time is different than the current one
+  if (std::abs(d->LastFieldWriteTime() - time) <
+      std::numeric_limits< tk::real >::epsilon() )
+    return;
+
+  // Save time stamp at which the last field write happened
+  d->LastFieldWriteTime() = time;
+
+  // Increase field output iteration count
+  ++m_itf;
+
+  // Lambda to collect node fields output from all PDEs
+  auto nodefields = [&]() {
+    auto u = m_u;   // make a copy as eq::output() may overwrite its arg
+    std::vector< std::vector< tk::real > > output;
+    for (const auto& eq : g_pdes) {
+      auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
+      output.insert( end(output), begin(o), end(o) );
+    }
+    return output;
+  };
+
+  #ifdef HAS_ROOT
+  auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
+
+  if (filetype == tk::ctr::FieldFileType::ROOT) {
+
+    // Create Root writer
+    tk::RootMeshWriter rmw( d->OutFilename(), 1 );
+    // Write time stamp
+    rmw.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    d->writeSolution( rmw, m_itf, nodefields() );
+
+  } else
+  #endif
+  {
+
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+    // Write time stamp
+    ew.writeTimeStamp( m_itf, time );
+    // Write node fields to file
+    d->writeSolution( ew, m_itf, nodefields() );
+
+  }
+}
+
+void
+CG::out()
+// *****************************************************************************
+// Output mesh field data
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Optionally output field and particle data
+  if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
+       !g_inputdeck.get< tag::cmd, tag::benchmark >() )
+  {
+    writeFields( d->T()+d->Dt() );
+  }
+
+  // Output final field data to file (regardless of whether it was requested)
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  if ( (std::fabs(d->T() + d->Dt()-term) < eps || (d->It()+1) >= nstep) &&
+       (!g_inputdeck.get< tag::cmd, tag::benchmark >()) )
+  {
+    writeFields( d->T()+d->Dt() );
+  }
+}
+
+void
 CG::apply()
 // *****************************************************************************
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
 {
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
   // Combine own and communicated contributions to A
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
+  for (const auto& b : d->Bid()) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
     const auto& bac = m_ac[ b.second ];
     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
   }
@@ -1342,15 +884,51 @@ CG::apply()
   else
     m_u = m_u + m_du;
 
-//   // send progress report to host
-//   if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-//     m_transporter.chlim();
+  // Prepare for next time step
+  next();
+}
 
-  // Compute diagnostics, e.g., residuals
-  diagnostics();
+void
+CG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+
+  // Set new time step size
+  d->setdt( newdt );
+
+  // Activate SDAG-waits
+  #ifndef NDEBUG
+  wait4ver();
+  #endif
+  wait4fct();
+  wait4app();
+
+  // Compute rhs for next time step
+  rhs();
+}
+
+void
+CG::next()
+// *****************************************************************************
+// Prepare for next step
+// *****************************************************************************
+{
+  auto d = m_disc[ thisIndex ].ckLocal();
+  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
 
   // Output field data to file
   out();
+  // Compute diagnostics, e.g., residuals
+  diagnostics();
+  // Increase number of iterations and physical time
+  d->next();
+  // Output one-liner status report
+  d->status();
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
@@ -1367,6 +945,16 @@ CG::apply()
 //      CkPrintf("I'm CG chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+    contribute(CkCallback( CkReductionTarget(Transporter,next), d->Tr()) );
+  else
+    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }
 
 #include "NoWarning/cg.def.h"

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/DiagReducer.h
+  \file      src/LinSys/DiagReducer.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging diagnostics across PEs
   \details   Custom Charm++ reducer for merging diagnostics across PEs.

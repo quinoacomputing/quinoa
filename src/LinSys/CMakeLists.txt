@@ -6,6 +6,7 @@ project(LinSys CXX)
 include(charm)
 
 add_library(LinSys
+            DiagReducer.C
             Solver.C)
 
 addCharmModule( "solver" "LinSys" )

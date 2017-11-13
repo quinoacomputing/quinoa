@@ -49,7 +49,7 @@ class FileConvWriter {
     const std::string m_file_exodus;       //!< ExodusII File name
 
     //! Root file handle
-    tk::unique_ptr< TFile > m_infile = nullptr;
+    std::unique_ptr< TFile > m_infile = nullptr;
     //! ROOT tree handle
     TTree* m_tree_local = nullptr;
 

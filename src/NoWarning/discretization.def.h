@@ -1,33 +1,29 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/HYPRE_parcsr_ls.h
+  \file      src/NoWarning/discretization.def.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include HYPRE_parcsr_ls.h with turning off specific compiler
+  \brief     Include discretization.def.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_HYPRE_parcsr_ls_h
-#define nowarning_HYPRE_parcsr_ls_h
+#ifndef nowarning_discretization_def_h
+#define nowarning_discretization_def_h
 
 #include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
-  #pragma clang diagnostic ignored "-Wold-style-cast"
-  #pragma clang diagnostic ignored "-Wcast-align"
-  #pragma clang diagnostic ignored "-Wdeprecated"
-  #pragma clang diagnostic ignored "-Wdocumentation"
-  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-  #pragma clang diagnostic ignored "-Wmacro-redefined"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wsign-conversion"
+  #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include <HYPRE_parcsr_ls.h>
+#include "../Inciter/discretization.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -35,4 +31,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_HYPRE_parcsr_ls_h
+#endif // nowarning_discretization_def_h

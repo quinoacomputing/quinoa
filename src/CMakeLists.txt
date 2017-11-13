@@ -101,6 +101,11 @@ if(${MPI_CXX_FOUND})
   add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 endif(${MPI_CXX_FOUND})
 
+# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
+# on why these macros are necessary for our use of BOOST::MPL.
+add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
+add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -233,6 +238,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-sign-compare")
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-Wno-stack-protector")
+  add_compiler_flag("-Wno-expansion-to-defined")
+  add_compiler_flag("-Wno-int-in-bool-context")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
@@ -250,7 +257,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for intel)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
@@ -301,22 +308,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Linker flags for intel
   set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
 
-  # Use -O1 in release mode, otherwise the intel compiler generates code
-  # yielding some NaNs from some inciter regression tests from Hypre's PCGSolve.
-  if(CMAKE_BUILD_TYPE MATCHES "REL")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
-        "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
-        FORCE)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O1 -g -DNDEBUG" CACHE STRING
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO: Flags used by the compiler during release builds with debug info."
-        FORCE)
-  endif()
-
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for cray)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for cray)
   add_compiler_flag("-hstd=c++11")
 
   # Compiler flags for cray

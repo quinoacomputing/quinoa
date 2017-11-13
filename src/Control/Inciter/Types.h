@@ -35,7 +35,7 @@ using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
   tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
-  tag::initialamr,   tk::ctr::InitialAMRType,        //!< Initial AMR type
+  tag::initialamr,   InitialAMRType,          //!< Initial AMR type
   tag::scheme,       inciter::ctr::SchemeType //!< Spatial discretization scheme
 >;
 

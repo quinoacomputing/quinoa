@@ -155,11 +155,13 @@ struct material {};
 struct id {};
 struct cv {};
 struct k {};
-struct row {};
+struct com {};
 struct coord {};
 struct distributed {};
 struct flattened {};
 struct load {};
+struct bcast {};
+struct elem {};
 struct avecost {};
 struct stdcost {};
 

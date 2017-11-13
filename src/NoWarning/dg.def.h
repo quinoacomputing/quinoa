@@ -1,29 +1,28 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/beta_distribution.h
+  \file      src/NoWarning/dg.def.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include boost/random/beta_distribution.hpp with turning off
-             specific compiler warnings
+  \brief     Include dg.def.h with turning off specific compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_beta_distribution_h
-#define nowarning_beta_distribution_h
+#ifndef nowarning_dg_def_h
+#define nowarning_dg_def_h
 
 #include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-  #pragma clang diagnostic ignored "-Wfloat-equal"
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
+  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wundef"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wfloat-equal"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
-#include <boost/random/beta_distribution.hpp>
+#include "../Inciter/dg.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -31,4 +30,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_beta_distribution_h
+#endif // nowarning_dg_def_h

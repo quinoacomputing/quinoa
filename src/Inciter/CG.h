@@ -2,16 +2,16 @@
 /*!
   \file      src/Inciter/CG.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     CG advances a system of transport equations using CG+LW+FCT
-  \details   CG advances a system of transport equations using continuous
-    Galerkin (CG) finite elements with linear shapefunctions for spatial
-    discretization combined with a time stepping discretization that is
-    equivalent to the Lax-Wendroff (LW) scheme within the unstructured-mesh
-    finite element context and treats discontinuities with flux-corrected
+  \brief     CG advances a system of PDEs with the continuous Galerkin scheme
+  \details   CG advances a system of partial differential equations (PDEs) using
+    continuous Galerkin (CG) finite element (FE) spatial discretization (using
+    linear shapefunctions on tetrahedron elements) combined with a time stepping
+    scheme that is equivalent to the Lax-Wendroff (LW) scheme within the
+    unstructured-mesh FE context and treats discontinuities with flux-corrected
     transport (FCT).
 
     There are a potentially large number of CG Charm++ chares created by
-    Transporter.  Each CG gets a chunk of the full load (part of the mesh)
+    Transporter. Each CG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
@@ -34,6 +34,12 @@
     digraph "CG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
+      Upd [ label="Upd" tooltip="update solution"
+                 style="solid"
+                URL="\ref tk::Solver::updateSol"];
+      LowUpd [ label="LowUpd" tooltip="update low-order solution"
+               style="solid"
+               URL="\ref tk::Solver::updateLowol"];
       OwnAEC [ label="OwnAEC"
                tooltip="own contributions to the antidiffusive element
                         contributions computed"
@@ -62,8 +68,15 @@
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
               URL="\ref inciter::CG::limit"];
+      s_next [ label="Solver::next"
+              tooltip="prepare for next time step"
+              URL="\ref tk::Solver::next"];
       OwnAEC -> Ver [ style="dashed" ];
       OwnALW -> Ver [ style="dashed" ];
+      Upd -> OwnAEC [ style="solid" ];
+      Upd -> ComEC [ style="solid" ];
+      LowUpd -> OwnALW [ style="solid" ];
+      LowUpd -> ComALW [ style="solid" ];
       OwnAEC -> OwnLim [ style="solid" ];
       ComAEC -> OwnLim [ style="solid" ];
       OwnALW -> OwnLim [ style="solid" ];
@@ -74,6 +87,7 @@
       ComALW -> ComLim [ style="solid" ];
       OwnLim -> Apply [ style="solid" ];
       ComLim -> Apply [ style="solid" ];
+      Apply -> s_next [ style="solid" ];
     }
     \enddot
     \include Inciter/cg.ci
@@ -97,11 +111,9 @@
 #include "Fields.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
-#include "PDFReducer.h"
 #include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "NoWarning/transporter.decl.h"
 #include "NoWarning/cg.decl.h"
 
 namespace tk {
@@ -112,14 +124,9 @@ namespace tk {
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern CkReduction::reducerType PDFMerger;
 
 //! CG Charm++ chare array used to advance PDEs in time with CG+LW+FCT
 class CG : public CBase_CG {
-
-  private:
-    using TransporterProxy = CProxy_Transporter;
-    using SolverProxy = tk::CProxy_Solver< CProxy_CG >;
 
   public:
     #if defined(__clang__)
@@ -145,47 +152,20 @@ class CG : public CBase_CG {
     #endif
 
     //! Constructor
-    explicit
-      CG( const TransporterProxy& transporter,
-          const SolverProxy& solver,
-          const std::vector< std::size_t >& conn,
-          const std::unordered_map< int,
-                  std::unordered_set< std::size_t > >& msum,
-          const std::unordered_map< std::size_t, std::size_t >& filenodes,
-          const tk::UnsMesh::EdgeNodes& edgenodes,
-          int nchare );
+    explicit CG( const CProxy_Discretization& disc,
+                 const tk::CProxy_Solver& solver );
 
     //! Migrate constructor
     explicit CG( CkMigrateMessage* ) {}
 
-    //! \brief Configure Charm++ reduction types
-    //! \details Since this is a [nodeinit] routine, see cg.ci, the
-    //!   Charm++ runtime system executes the routine exactly once on every
-    //!   logical node early on in the Charm++ init sequence. Must be static as
-    //!   it is called without an object. See also: Section "Initializations at
-    //!   Program Startup" at in the Charm++ manual
-    //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-    static void registerReducers() {
-      PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
-    }
-
-    //! \brief Read mesh node coordinates and optionally add new edge-nodes in
-    //!   case of initial uniform refinement
-    void coord();
-
-    //! \brief Setup rows, query boundary conditions, output
-    //!    mesh, etc.
+    //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
 
-    //! Collect nodal volumes across chare boundaries
-    void comvol( const std::vector< std::size_t >& gid,
-                 const std::vector< tk::real >& V );
+    //! Compute time step size
+    void dt();
 
-    //! Sum mesh volumes and contribute own mesh volume to total volume
-    void totalvol();
-
-    //! Compute mesh cell statistics
-    void stat();
+    //! Advance equations to next time step
+    void advance( tk::real newdt );
 
     //! Request owned node IDs on which a Dirichlet BC is set by the user
     void requestBCs();
@@ -193,29 +173,15 @@ class CG : public CBase_CG {
     //! Look up and return old node ID for new one
     void oldID( int frompe, const std::vector< std::size_t >& newids );
 
-    //! \brief Set ICs, compute initial time step size, output initial field
-    //!   data, compute left-hand-side matrix
-    void init();
-
     //! Update high order solution vector
-    void updateSol( const std::vector< std::size_t >& gid,
+    void updateSol( //solMsg* m );
+                    const std::vector< std::size_t >& gid,
                     const std::vector< tk::real >& sol );
 
     //! Update low order solution vector
-    void updateLowSol( const std::vector< std::size_t >& gid,
+    void updateLowSol( //solMsg* m );
+                       const std::vector< std::size_t >& gid,
                        const std::vector< tk::real >& sol );
-
-    //! Advance equations to next time step
-    void advance( uint64_t it, tk::real t, tk::real newdt );
-
-    //! Compute time step size
-    void dt();
-
-    //! Extract the velocity at cell nodes
-    std::array< std::array< tk::real, 4 >, 3 > velocity( std::size_t e );
-
-    //! Output mesh and particle fields to files
-    void out();
 
     //! Receive sums of antidiffusive element contributions on chare-boundaries
     void comaec( const std::vector< std::size_t >& gid,
@@ -236,32 +202,15 @@ class CG : public CBase_CG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_CG::pup(p);
-      p | m_it;
       p | m_itf;
-      p | m_t;
-      p | m_dt;
-      p | m_nvol;
       p | m_nhsol;
       p | m_nlsol;
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
-      p | m_V;
-      p | m_nchare;
-      p | m_outFilename;
-      p | m_transporter;
+      p | m_disc;
       p | m_solver;
       p | m_fluxcorrector;
-      p | m_filenodes;
-      p | m_edgenodes;
-      p | m_el;
-      if (p.isUnpacking()) {
-        m_inpoel = std::get< 0 >( m_el );
-        m_gid = std::get< 1 >( m_el );
-        m_lid = std::get< 2 >( m_el );
-      }
-      p | m_coord;
-      p | m_psup;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -272,14 +221,10 @@ class CG : public CBase_CG {
       p | m_a;
       p | m_lhsd;
       p | m_lhso;
-      p | m_msum;
-      p | m_v;
-      p | m_vol;
-      p | m_volc;
-      p | m_bid;
       p | m_pc;
       p | m_qc;
       p | m_ac;
+      p | m_vol;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -289,21 +234,9 @@ class CG : public CBase_CG {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
-    using NodeBC = std::vector< std::pair< bool, tk::real > >;
 
-    //! Iteration count
-    uint64_t m_it;
     //! Field output iteration count
     uint64_t m_itf;
-    //! Physical time
-    tk::real m_t;
-    //! Physical time step size
-    tk::real m_dt;
-    //! Physical time at which the last field output was written
-    tk::real m_lastFieldWriteTime;
-    //! \brief Number of chares from which we received nodal volume
-    //!   contributions on chare boundaries
-    std::size_t m_nvol;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
@@ -317,47 +250,15 @@ class CG : public CBase_CG {
     //! \brief Number of chares from which we received limited antidiffusion
     //!   element contributiones on chare boundaries
     std::size_t m_nlim;
-    //! Total mesh volume
-    tk::real m_V;
-    //! Total number of CG chares
-    std::size_t m_nchare;
-    //! Output filename
-    std::string m_outFilename;
-    //! Transporter proxy
-    TransporterProxy m_transporter;
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy
-    SolverProxy m_solver;
-    //! \brief Map associating old node IDs (as in file) to new node IDs (as in
-    //!   producing contiguous-row-id linear system contributions)
-    std::unordered_map< std::size_t, std::size_t > m_filenodes;
+    tk::CProxy_Solver m_solver;
     //! \brief Map associating local node IDs to side set IDs for all side sets
     //!   read from mesh file (not only those the user sets BCs on)
     std::map< int, std::vector< std::size_t > > m_side;
-    //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
-    //!   for only the nodes newly added as a result of initial uniform
-    //!   refinement.
-    tk::UnsMesh::EdgeNodes m_edgenodes;
-    //! \brief Elements of the mesh chunk we operate on
-    //! \details Initialized by the constructor. The first vector is the element
-    //!   connectivity (local IDs), the second vector is the global node IDs of
-    //!   owned elements, while the third one is a map of global->local node
-    //!   IDs.
-    std::tuple< std::vector< std::size_t >,
-                std::vector< std::size_t >,
-                std::unordered_map< std::size_t, std::size_t > > m_el;
-    //! Alias to element connectivity in m_el
-    std::vector< std::size_t > m_inpoel = std::get< 0 >( m_el );
-    //! Alias to global node IDs of owned elements in m_el
-    std::vector< std::size_t > m_gid = std::get< 1 >( m_el );
-    //! \brief Alias to local node ids associated to the global ones of owned
-    //!    elements in m_el
-    std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
-    //! Mesh point coordinates
-    std::array< std::vector< tk::real >, 3 > m_coord;
     //! Flux corrector performing FCT
     FluxCorrector m_fluxcorrector;
-    //! Points surrounding points of our chunk of the mesh
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
@@ -372,78 +273,32 @@ class CG : public CBase_CG {
     tk::Fields m_p, m_q, m_a;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::Fields m_lhsd, m_lhso;
-    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!   CG chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
-    //! Nodal mesh volumes
-    //! \details This is the volume of the mesh associated to nodes of owned
-    //!   elements (sum of surrounding cell volumes / 4) without contributions
-    //!   from other chares on chare-boundaries
-    std::vector< tk::real > m_v;
-    //! Volume of nodes
-    //! \details This is the volume of the mesh associated to nodes of owned
-    //!   elements (sum of surrounding cell volumes / 4) with contributions from
-    //!   other chares on chare-boundaries
-    std::vector< tk::real > m_vol;
-    //! Receive buffer for volume of nodes
-    //! \details This is a communication buffer used to compute the volume of
-    //!   the mesh associated to nodes of owned elements (sum of surrounding
-    //!   cell volumes / 4) with contributions from other chares on
-    //!   chare-boundaries.
-    std::vector< tk::real > m_volc;
-    //! \brief Local chare-boundary mesh node IDs at which we receive
-    //!   contributions associated to global mesh node IDs of mesh elements we
-    //!   contribute to
-    std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Receive buffers for FCT
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
+    //! Total mesh volume
+    tk::real m_vol;
 
-    //! Query old node IDs for a list of new node IDs
-    std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
+    //! Prepare for next step
+    void next();
 
-    //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
-    void vol();
+    //! Output mesh and particle fields to files
+    void out();
+
+    //! Compute diagnostics, e.g., residuals
+    void diagnostics();
+
+    //! Output mesh-based fields to file
+    void writeFields( tk::real time );
 
     //! \brief Extract node IDs from side set node lists and match to
     //    user-specified boundary conditions
     void bc();
-
-    //! Read coordinates of mesh nodes given
-    void readCoords();
-
-    //! \brief Add coordinates of mesh nodes newly generated to edge-mid points
-    //!    during initial refinement
-    void addEdgeNodeCoords();
 
     //! Compute left-hand side of transport equations
     void lhs();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
-
-    //! Output chare element blocks to output file
-    void writeMesh();
-
-    //! Output solution to file
-    void writeSolution( const tk::ExodusIIMeshWriter& ew,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const;
-    #ifdef HAS_ROOT
-    void writeSolution( const tk::RootMeshWriter& rmw,
-                        uint64_t it,
-                        const std::vector< std::vector< tk::real > >& u ) const;
-    #endif
-
-    //! Output mesh-based fields metadata to file
-    void writeMeta() const;
-
-    //! Output mesh-based fields to file
-    void writeFields( tk::real time );
-
-    //! Search particle ina single mesh cell
-    bool parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N );
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
     void aec();
@@ -461,9 +316,6 @@ class CG : public CBase_CG {
 
     //! Apply limited antidiffusive element contributions
     void apply();
-
-    //! Compute diagnostics, e.g., residuals
-    void diagnostics();
 
     //! Verify that solution does not change at Dirichlet boundary conditions
     bool correctBC();
