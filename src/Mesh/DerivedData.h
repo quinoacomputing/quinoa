@@ -56,6 +56,13 @@ genEsuel( const std::vector< std::size_t >& inpoel,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup );
 
+//! Generate derived data structure, elements surrounding elements
+//  for tetrahedra in the form of a full vector with voundary elements
+std::vector< int >
+genEsuelTet( const std::vector< std::size_t >& inpoel,
+             const std::pair< std::vector< std::size_t >,
+                              std::vector< std::size_t > >& esup );
+
 //! Generate derived data structure, edges of elements
 std::vector< std::size_t >
 genInedel( const std::vector< std::size_t >& inpoel,
@@ -71,16 +78,24 @@ genEsued( const std::vector< std::size_t >& inpoel,
 
 //! Generate derived data structure, total number of faces
 std::size_t 
-genNtfac( const std::size_t& nbfac,
-          const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esuel );
+genNtfac( std::size_t nfpe,
+          const std::size_t& nbfac,
+          const std::vector< int >& esuelTet );
 
-std::map< std::size_t, std::vector< int > > 
-genEsuf( const std::size_t& ntfac,
+//! Generate derived data structure, elements surrounding faces
+std::vector< int >
+genEsuf( std::size_t nfpe,
+         const std::size_t& ntfac,
          const std::size_t& nbfac,
          const std::map< int, std::vector< std::size_t > >& belem,
-         const std::pair< std::vector< std::size_t >,
-                          std::vector< std::size_t > >& esuel );
+         const std::vector< int >& esuelTet );
+
+//! Generate derived data structure, node-face connectivity
+std::vector< std::size_t >
+genInpofaTet( const std::size_t& ntfac,
+              const std::size_t& nbfac,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< int >& esuelTet );
 } // tk::
 
 #endif // DerivedData_h

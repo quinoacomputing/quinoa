@@ -133,9 +133,8 @@ class Discretization : public CBase_Discretization {
     //! added by Aditya KP
     const std::size_t& Nbfac() { return m_nbfac; } 
     const std::size_t& Ntfac() { return m_ntfac; } 
-    const std::map< int, std::vector< std::size_t > >& Bface() { return m_bface; } 
-    const std::map< int, std::vector< std::size_t > >& Belem() { return m_belem; } 
-    const std::map< std::size_t, std::vector< int > >& Esuf()  { return m_esuf; }
+    const std::vector< int > & Esuf()  { return m_esuf; }
+    const std::vector< std::size_t > & Inpofa()  { return m_inpofa; }
     //@}
 
     //! Output chare element blocks to output file
@@ -277,13 +276,17 @@ class Discretization : public CBase_Discretization {
 
     //! number of boundary faces
     std::size_t m_nbfac;
-    //! side-set information from boundary faces
+    //! boundary faces side-set information
     const std::map< int, std::vector< std::size_t > > m_bface;
     const std::map< int, std::vector< std::size_t > > m_belem;
+    //! elements surrounding elements
+    std::vector< int > m_esuelfull;
     //! total number of faces
     std::size_t m_ntfac;
     //! element surrounding faces
-    std::map< std::size_t, std::vector< int > > m_esuf;
+    std::vector< int > m_esuf;
+    //! face-node connectivity
+    std::vector< std::size_t > m_inpofa;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

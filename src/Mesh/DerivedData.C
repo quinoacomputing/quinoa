@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <cstddef>
+#include <array>
 
 #include "Exception.h"                  // for Assert
 #include "DerivedData.h"
@@ -801,36 +802,168 @@ genEsued( const std::vector< std::size_t >& inpoel,
   return std::make_pair( std::move(esued1), std::move(esued2) );
 }
 
+std::vector< int >
+genEsuelTet( const std::vector< std::size_t >& inpoel,
+             const std::pair< std::vector< std::size_t >,
+                              std::vector< std::size_t > >& esup )
+// *****************************************************************************
+//  Generate derived data structure, elements surrounding elements
+//  as a fixed length data structure as a full vector, including
+//  boundary elements as -1.
+//  This is for Tetrahedra only.
+//  added by Aditya K Pandare
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh. Example:
+//!   \code{.cpp}
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
+//!   \endcode
+//!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
+//!   and { 10, 14, 13, 12 }.
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Vector storing elements surrounding elements
+//! \warning It is not okay to call this function with an empty container for
+//!   inpoel or esup.first or esup.second; it will throw an exception.
+//! \details The data generated here is stored in a single vector, 
+//!   with length nfpe * nelem. Note however, that nelem is not explicitly 
+//!   provided, but calculated from inpoel. For boundary elements, at the 
+//!   boundary face, this esuelTet stores value -1 indicating that this is 
+//!   outside the domain. The convention for numbering the 
+//!   local faces in the tet is very important in generating the inpofa array 
+//!   later. The convention used here is that the face opposite to 
+//!   local node 1 is numbered 1 and so on for the other 3 nodes.
+//!   Thus function is specific to tetrahedra, which is reflected in the fact 
+//!   that nnpe and nfpe are being set in the function rather than being input 
+//!   arguments.
+//!   To find out the number of elements, _nelem_, the size of the mesh
+//!   connectivity vector, _inpoel_, can be devided by the number of nodes per
+//!   elements, _nnpe_:
+//!   \code{.cpp}
+//!     auto nelem = inpoel.size()/nnpe;
+//!   \endcode
+// *****************************************************************************
+{
+  Assert( !inpoel.empty(), "Attempt to call genEsuelTet() on empty container" );
+  Assert( !esup.first.empty(), "Attempt to call genEsuelTet() with empty esup1" );
+  Assert( !esup.second.empty(),
+          "Attempt to call genEsuelTet() with empty esup2" );
+
+  auto& esup1 = esup.first;
+  auto& esup2 = esup.second;
+
+  // set tetrahedron geometry
+  std::size_t nnpe(4), nfpe(4), nnpf(3);
+
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by four" );
+
+  // get nelem and npoin
+  auto nelem = inpoel.size()/nnpe;
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = *minmax.second + 1;
+
+  std::vector< int > esuelTet(nfpe*nelem, -1); 
+  std::vector< std::size_t > lhelp(nnpf,0), 
+                             lpoin(npoin,0);
+
+  // array storing the naming conventions for a tet
+  // this is the local points on face array
+  std::array< std::array< std::size_t, 3 >, 4 >
+     lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    auto mark = nnpe*e;
+    for (std::size_t fe=0; fe<nfpe; ++fe)
+    {
+      // array which stores points on this face
+      lhelp[0] = inpoel[mark+lpofa[fe][0]];
+      lhelp[1] = inpoel[mark+lpofa[fe][1]];
+      lhelp[2] = inpoel[mark+lpofa[fe][2]];
+
+      // mark in this array
+      lpoin[lhelp[0]] = 1;
+      lpoin[lhelp[1]] = 1;
+      lpoin[lhelp[2]] = 1;
+
+      // select a point on this face
+      auto ipoin = lhelp[0];
+
+      // loop over elements around this point
+      for (std::size_t j=esup2[ipoin]+1; j<=esup2[ipoin+1]; ++j )
+      {
+        auto jelem = esup1[j];
+        // if this jelem is not e itself then proceed
+        if (jelem != e)
+        {
+          for (std::size_t fj=0; fj<nfpe; ++fj)
+          {
+            std::size_t icoun(0);
+            for (std::size_t jnofa=0; jnofa<nnpf; ++jnofa)
+            {
+              auto markj = jelem*nnpe;
+              auto jpoin = inpoel[markj+lpofa[fj][jnofa]];
+              if (lpoin[jpoin] == 1) { ++icoun; }
+            }
+            //store esuel if
+            if (icoun == nnpf)
+            {
+              auto markf = nfpe*e;
+              esuelTet[markf+fe] = static_cast<int>(jelem);
+
+              markf = nfpe*jelem;
+              esuelTet[markf+fj] = static_cast<int>(e);
+            }
+          }
+        }
+      }
+      // reset this array
+      lpoin[lhelp[0]] = 0;
+      lpoin[lhelp[1]] = 0;
+      lpoin[lhelp[2]] = 0;
+    }
+  }
+
+  return esuelTet;
+}
+
 std::size_t 
-genNtfac( const std::size_t& nbfac,
-          const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esuel )
+genNtfac( std::size_t nfpe,
+          const std::size_t& nbfac,
+          const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, total number of faces in the mesh
 //  added by Aditya K Pandare
-//! \param[in] esuel Elements surrounding elements. Example:
+//! \param[in] nfpe Number of faces per element.
+//! \param[in] nbfac Number of boundary faces.
+//! \param[in] esuelTet Elements surrounding elements.
 //! \return Total number of faces in the mesh
 //! \details The unsigned integer here gives the total number of faces in 
 //     the mesh.
 // *****************************************************************************
 {
-  Assert( !esuel.first.empty(), "Attempt to call genNtfac() with empty esuel1" );
-  Assert( !esuel.second.empty(), "Attempt to call genNtfac() with empty esuel2" );
+  Assert( !esuelTet.empty(), "Attempt to call genNtfac() with empty esuelTet" );
+  Assert( esuelTet.size()%nfpe == 0, 
+                  "Size of esuelTet must be divisible by nfpe" );
+  Assert( nfpe > 0, "Attempt to call genNtfac() with zero faces per element" );
 
-  auto nelem = esuel.second.size() - 1;
+  auto nelem = esuelTet.size()/nfpe;
 
   std::size_t ntfac(0), nifac(0);
+  // note: nbfac is assumed to be already initialized
 
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)
   {
-    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
     {
-       auto jelem = esuel.first[i];
-       if (e < jelem)
-       {
-               nifac = nifac + 1;
-       }
+      if (esuelTet[ip] != -1)
+      {
+        if ( e<static_cast< std::size_t >(esuelTet[ip]) )
+        {
+          ++nifac;
+        }
+      }
     }
   }
 
@@ -839,61 +972,141 @@ genNtfac( const std::size_t& nbfac,
   return ntfac;
 }
 
-std::map< std::size_t, std::vector< int > > 
-genEsuf( const std::size_t& ntfac,
+std::vector< int >
+genEsuf( std::size_t nfpe,
+         const std::size_t& ntfac,
          const std::size_t& nbfac,
          const std::map< int, std::vector< std::size_t > >& belem,
-         const std::pair< std::vector< std::size_t >,
-                          std::vector< std::size_t > >& esuel )
+         const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, elements surrounding faces
 //  added by Aditya K Pandare
+//! \param[in] nfpe  Number of faces per element.
 //! \param[in] ntfac Total number of faces.
 //! \param[in] nbfac Number of boundary faces.
-//! \param[in] esuel Elements surrounding elements.
+//! \param[in] belem Boundary element map according to side-sets.
+//! \param[in] esuelTet Elements surrounding elements.
+//! \return Elements surrounding faces.
+//! \details The unsigned integer vector gives the IDs of the elements to the 
+//    left and the right of each face in the mesh. The convention followed 
+//    throughout is : The left element always has an ID smaller than the ID of 
+//    the right element.
+// *****************************************************************************
+{
+  Assert( esuelTet.size()%nfpe == 0, 
+                  "Size of esuelTet must be divisible by nfpe" );
+  Assert( nfpe > 0, "Attempt to call genEsuf() with zero faces per element" );
+
+  auto nelem = esuelTet.size()/nfpe;
+
+  std::vector< int > esuf(2*ntfac);
+
+  // counters for number of internal and boundary faces 
+  std::size_t icoun(2*nbfac), bcoun(0);
+
+  // loop to get face-element connectivity for internal faces
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    for (std::size_t ip=nfpe*e; ip<nfpe*(e+1); ++ip)
+    {
+      auto jelem = esuelTet[ip];
+      if (jelem != -1)
+      {
+        if ( e < static_cast< std::size_t >(jelem) )
+        {
+          esuf[icoun] = static_cast< int >(e);
+          esuf[icoun+1] = static_cast< int >(jelem);
+          icoun = icoun + 2;
+        }
+      }
+    }
+  }
+
+  bcoun = 0;
+  for (auto& iss : belem)
+  {
+    for (auto f : iss.second)
+    {
+      // define ielem from elems in side set connected to f!
+      auto ielem = f;
+      esuf[bcoun] = static_cast< int >(ielem);
+      esuf[bcoun+1] = -1;  // outside domain
+      bcoun = bcoun + 2;
+    }
+  }
+
+  return esuf;
+}
+
+std::vector< std::size_t >
+genInpofaTet( const std::size_t& ntfac,
+              const std::size_t& nbfac,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< int >& esuelTet )
+// *****************************************************************************
+//  Generate derived data, points on faces for tetrahedra only
+//  added by Aditya K Pandare
+//! \param[in] ntfac Total number of faces.
+//! \param[in] nbfac Number of boundary faces.
+//! \param[in] inpoel Element-node connectivity.
+//! \param[in] esuelTet Elements surrounding elements.
 //! \return Elements surrounding faces.
 //! \details The unsigned integer map gives the elements to the left and to 
 //     the right of each face in the mesh.
 // *****************************************************************************
 {
-  std::map< std::size_t, std::vector< int > > esuf;
-  auto nelem = esuel.second.size() - 1;
+  std::vector< std::size_t > inpofa;
 
-  // this is the counter for number of faces which starts with nbface
-  // because the following loop is only for internal faces
-  std::size_t icoun(nbfac);
+  // set tetrahedron geometry
+  std::size_t nnpe(4), nfpe(4), nnpf(3);
 
-  // loop to get face-element connectivity for internal faces
+  Assert( esuelTet.size()%nfpe == 0, 
+                  "Size of esuelTet must be divisible by nfpe" );
+  Assert( inpoel.size()%nnpe == 0, 
+                  "Size of inpoel must be divisible by nnpe" );
+
+  auto nelem = inpoel.size()/nnpe;
+
+  inpofa.resize(nnpf*ntfac);
+
+  // array storing the naming conventions for a tet
+  // this is the local points on face array
+  std::array< std::array< std::size_t, 3 >, 4 >
+     lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
+
+  // counters for number of internal and boundary faces 
+  std::size_t icoun(nnpf*nbfac), bcoun(0);
+  std::size_t mark(0);
+
+  // loop over elems to get nodes on faces
   for (std::size_t e=0; e<nelem; ++e)
   {
-    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+    mark = nnpe*e;
+    for (std::size_t f=0; f<nfpe ; ++f)
     {
-      auto jelem = esuel.first[i];
-      if (e < jelem)
+      auto ip = nfpe*e + f;
+      auto jelem = esuelTet[ip];
+      if (jelem == -1)
       {
-        esuf[icoun].push_back(e);
-        esuf[icoun].push_back(jelem);
-        icoun++;
+        inpofa[bcoun]   = inpoel[mark+lpofa[f][0]];
+        inpofa[bcoun+1] = inpoel[mark+lpofa[f][1]];
+        inpofa[bcoun+2] = inpoel[mark+lpofa[f][2]];
+        bcoun = bcoun + nnpf;
+      }
+      else
+      {
+        if ( e < static_cast< std::size_t >(jelem) )
+        {
+          inpofa[icoun]   = inpoel[mark+lpofa[f][0]];
+          inpofa[icoun+1] = inpoel[mark+lpofa[f][1]];
+          inpofa[icoun+2] = inpoel[mark+lpofa[f][2]];
+          icoun = icoun + nnpf;
+        }
       }
     }
   }
 
-  // loop to get face-element connectivity for boundary faces
-  icoun = 0;
-  for (auto& iss : belem)
-  {
-    auto sideset = iss.second;
-    // define jelem from elems in side set connected to f!
-    for (auto f : sideset)
-    {
-      auto jelem = f;
-      esuf[icoun].push_back(jelem);
-      esuf[f].push_back(-1);  // outside domain
-      icoun++;
-    }
-  }
-
-  return esuf;
+  return inpofa;
 }
 
 } // tk::

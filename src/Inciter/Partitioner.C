@@ -1216,7 +1216,8 @@ Partitioner::createDiscWorkers()
     // Create worker array element
     m_scheme.discInsert< tag::elem >( cid, m_host,
       tk::cref_find(m_chinpoel,cid), msum,
-      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, m_nbfac, m_bface, m_belem, CkMyPe() );
+      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, 
+      m_nbfac, m_bface, m_belem, CkMyPe() );
     m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 

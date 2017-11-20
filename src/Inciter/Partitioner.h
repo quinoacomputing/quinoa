@@ -319,12 +319,14 @@ class Partitioner : public CBase_Partitioner {
     //!   which the chares will need to communicate) during time stepping.
     std::unordered_map< int,
       std::unordered_map< int, tk::UnsMesh::Edges > > m_msumed;
-
-    //! total number of boundary faces
+    //! \brief Boundary face information extracted from side-sets.
+    //!   m_nbfac is the total number of boundary faces in all side-sets,
+    //!   m_bface is the list of boundary faces in the side-sets,
+    //!   m_belem is the list of boundary elements corresponding to the 
+    //!   boundary face number in m_bface.
     std::size_t m_nbfac;
-    //! side-set information from boundary faces
-    const std::map< int, std::vector< std::size_t > > m_bface;
-    const std::map< int, std::vector< std::size_t > > m_belem;
+    std::map< int, std::vector< std::size_t > > m_bface;
+    std::map< int, std::vector< std::size_t > > m_belem;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );

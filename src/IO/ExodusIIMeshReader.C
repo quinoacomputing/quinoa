@@ -467,7 +467,6 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
       Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
       std::vector< int > tbface( static_cast< std::size_t >( nface ) );
       std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
-      std::vector< int > nodes( static_cast< std::size_t >( nnode ) );
 
       // Read in face and element list for side set i
       ErrChk( ex_get_side_set( m_inFile, i, tbelem.data(), tbface.data() ) == 0, 

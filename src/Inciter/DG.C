@@ -34,8 +34,6 @@ DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
   m_vol( 0.0 ),
   m_nbfac( m_disc[thisIndex].ckLocal()->Nbfac() ),
   m_ntfac( m_disc[thisIndex].ckLocal()->Ntfac() ),
-  m_bface( m_disc[thisIndex].ckLocal()->Bface() ),
-  m_belem( m_disc[thisIndex].ckLocal()->Belem() ),
   m_esuf( m_disc[thisIndex].ckLocal()->Esuf() )
 // *****************************************************************************
 //  Constructor

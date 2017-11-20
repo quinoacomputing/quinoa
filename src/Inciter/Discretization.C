@@ -69,14 +69,20 @@ Discretization::Discretization(
   m_nbfac( nbfac ),
   m_bface( bface ),
   m_belem( belem ),
-  m_ntfac( tk::genNtfac( m_nbfac,
-                         tk::genEsuel(m_inpoel, 
-                         4, 
-                         tk::genEsup(m_inpoel,4)) ) ),
-  m_esuf( tk::genEsuf( m_ntfac, m_nbfac, m_belem, 
-                       tk::genEsuel(m_inpoel, 
-                       4, 
-                       tk::genEsup(m_inpoel,4))) )
+  m_esuelfull( tk::genEsuelTet( m_inpoel, 
+                                tk::genEsup(m_inpoel,4) ) ),
+  m_ntfac( tk::genNtfac( 4,
+                         m_nbfac,
+                         m_esuelfull ) ),
+  m_esuf( tk::genEsuf( 4,
+                       m_ntfac, 
+                       m_nbfac, 
+                       m_belem,
+                       m_esuelfull ) ),
+  m_inpofa( tk::genInpofaTet( m_ntfac, 
+                              m_nbfac, 
+                              m_inpoel, 
+                              m_esuelfull ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

@@ -158,21 +158,11 @@ Transporter::Transporter() :
     // Read side sets from mesh file
     auto ss = readSidesets();
 
-    // Read side sets for boundary faces
-    // Added by Aditya KP
-    std::map< int, std::vector< std::size_t > > bface, belem;
-    std::size_t nbfac(0);
-
-    //if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG)
-    //{
-        readSidesetFaces(nbfac, bface, belem);
-    //}
-
     // Create linear system solver
     createSolver( ss );
 
     // Create mesh partitioner
-    createPartitioner(nbfac, bface, belem);
+    createPartitioner();
 
   } else finish();      // stop if no time stepping requested
 }
@@ -259,9 +249,7 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
 }
 
 void
-Transporter::createPartitioner(const std::size_t& nbfac,
-                               const std::map< int, std::vector< std::size_t > >& bface, 
-                               const std::map< int, std::vector< std::size_t > >& belem)
+Transporter::createPartitioner()
 // *****************************************************************************
 // Create mesh partitioner
 // *****************************************************************************
@@ -271,6 +259,13 @@ Transporter::createPartitioner(const std::size_t& nbfac,
 
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
+
+  // Read side sets for boundary faces
+  // Added by Aditya KP
+  std::map< int, std::vector< std::size_t > > bface, belem;
+  std::size_t nbfac(0);
+
+  readSidesetFaces(nbfac, bface, belem);
 
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{

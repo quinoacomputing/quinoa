@@ -542,9 +542,7 @@ class Transporter : public CBase_Transporter {
     void createSolver( const std::map< int, std::vector< std::size_t > >& ss );
 
     //! Create mesh partitioner
-    void createPartitioner(const std::size_t& nbfac,
-                           const std::map< int, std::vector< std::size_t > >& bface, 
-                           const std::map< int, std::vector< std::size_t > >& belem);
+    void createPartitioner();
 
     //! Configure and write diagnostics file header
     void diagHeader();
