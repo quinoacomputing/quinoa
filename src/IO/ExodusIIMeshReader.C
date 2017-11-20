@@ -432,11 +432,15 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
 // *****************************************************************************
 //  Read face list of all side sets from ExodusII file
 //  Added by Aditya K Pandare
-//! \return Face lists mapped to side set ids
+//! \param[out] total number of boundary faces
+//! \param[out] Face lists mapped to side set ids
+//! \param[out] Element lists mapped to side set ids
 // *****************************************************************************
 {
   // Read ExodusII file header (fills m_neset)
   readHeader();
+
+  nbfac = 0;
 
   if (m_neset > 0)
   {
@@ -469,7 +473,12 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
       std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
 
       // Read in face and element list for side set i
-      ErrChk( ex_get_side_set( m_inFile, i, tbelem.data(), tbface.data() ) == 0, 
+      // This is the deprecated function from the exo2 library.
+      //ErrChk( ex_get_side_set( m_inFile, i, tbelem.data(), tbface.data() ) == 0, 
+      //        "Failed to read side set " + std::to_string(i) + " face/elem list "
+      //        "length from ExodusII file: " + m_filename );
+
+      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(), tbface.data() ) == 0, 
               "Failed to read side set " + std::to_string(i) + " face/elem list "
               "length from ExodusII file: " + m_filename );
 
