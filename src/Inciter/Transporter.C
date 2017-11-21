@@ -203,7 +203,9 @@ Transporter::readSidesetFaces(std::size_t& nbfac,
 // Read side set faces from mesh file
 // Added by Aditya K Pandare:
 // This is added to obtain face-element connectivity details
-//! \return Face lists mapped to side set ids
+//! \param[out] nbfac Total number of boundary faces in all the side-sets.
+//! \param[out] bface Boundary face list associated with each side-set.
+//! \param[out] belem boundary element list associated with faces in bface.
 // *****************************************************************************
 {
   // Create ExodusII reader for reading side sets from file.

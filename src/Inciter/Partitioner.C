@@ -29,7 +29,7 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
                           const CProxy_Transporter& host,
                           const Scheme& scheme,
                           const tk::CProxy_Solver& solver,
-                          const std::size_t& nbfac,
+                          std::size_t nbfac,
                           const std::map< int, std::vector< std::size_t > >& bface,
                           const std::map< int, std::vector< std::size_t > >& belem ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),

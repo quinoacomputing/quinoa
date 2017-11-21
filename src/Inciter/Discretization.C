@@ -39,7 +39,7 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
   int nchare,
-  const std::size_t& nbfac,
+  std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& belem ) :
   m_it( 0 ),
@@ -69,20 +69,20 @@ Discretization::Discretization(
   m_nbfac( nbfac ),
   m_bface( bface ),
   m_belem( belem ),
-  m_esuelfull( tk::genEsuelTet( m_inpoel, 
-                                tk::genEsup(m_inpoel,4) ) ),
+  m_esuel( tk::genEsuelTet( m_inpoel, 
+                            tk::genEsup(m_inpoel,4) ) ),
   m_ntfac( tk::genNtfac( 4,
                          m_nbfac,
-                         m_esuelfull ) ),
+                         m_esuel ) ),
   m_esuf( tk::genEsuf( 4,
                        m_ntfac, 
                        m_nbfac, 
                        m_belem,
-                       m_esuelfull ) ),
+                       m_esuel ) ),
   m_inpofa( tk::genInpofaTet( m_ntfac, 
                               m_nbfac, 
                               m_inpoel, 
-                              m_esuelfull ) )
+                              m_esuel ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

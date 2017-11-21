@@ -42,7 +42,7 @@ class Discretization : public CBase_Discretization {
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
         int nchare,
-        const std::size_t& nbfac,
+        std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::map< int, std::vector< std::size_t > >& belem );
 
@@ -190,6 +190,11 @@ class Discretization : public CBase_Discretization {
       p | m_vol;
       p | m_volc;
       p | m_bid;
+      p | m_nbfac;
+      p | m_esuel;
+      p | m_ntfac;
+      p | m_esuf;
+      p | m_inpofa;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -280,7 +285,7 @@ class Discretization : public CBase_Discretization {
     const std::map< int, std::vector< std::size_t > > m_bface;
     const std::map< int, std::vector< std::size_t > > m_belem;
     //! elements surrounding elements
-    std::vector< int > m_esuelfull;
+    std::vector< int > m_esuel;
     //! total number of faces
     std::size_t m_ntfac;
     //! element surrounding faces

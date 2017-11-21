@@ -2552,13 +2552,7 @@ void DerivedData_object::test< 66 >() {
   };
 
   // Shift elem IDs to start from zero
-  for (auto& iss : belem)
-  {
-    for (auto& f : iss.second)
-    {
-      f = f-1;
-    }
-  }
+  for (auto& iss : belem) tk::shiftToZero( iss.second );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -2581,12 +2575,6 @@ void DerivedData_object::test< 66 >() {
                  ntfac, 170 );
   ensure_equals( "number of boundary faces is incorrect",
                  nbfac, 48 );
-
-  //for(std::size_t f=0; f<ntfac; ++f)
-  //{
-  //  auto ie = 2*f;
-  //  CkPrintf("%d %d %d \n",f+1, esuf[ie]+1, esuf[ie+1]+1);
-  //}
 
   // Generate correct solution for elements surrounding faces
   std::vector< int > correct_esuf { 1,  0, 
@@ -2904,13 +2892,7 @@ void DerivedData_object::test< 67 >() {
   };
 
   // Shift elem IDs to start from zero
-  for (auto& iss : belem)
-  {
-    for (auto& f : iss.second)
-    {
-      f = f-1;
-    }
-  }
+  for (auto& iss : belem) tk::shiftToZero( iss.second );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -2928,14 +2910,6 @@ void DerivedData_object::test< 67 >() {
 
   // Generate inpofa
   auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, esuelTet );
-
-  //for (std::size_t f=0; f<ntfac; ++f)
-  //{
-  //        auto mark = f*3;
-  //        auto ie = f*2;
-  //        CkPrintf("%d |: %d  %d  :  %d  %d  %d \n",
-  //                 f,esuf[ie]+1,esuf[ie+1]+1,inpofa[mark]+1,inpofa[mark+1]+1,inpofa[mark+2]+1);
-  //}
 
   // Generate correct solution for elements surrounding faces
   std::vector< int > correct_inpofa {   9,  1, 24,

@@ -79,21 +79,21 @@ genEsued( const std::vector< std::size_t >& inpoel,
 //! Generate derived data structure, total number of faces
 std::size_t 
 genNtfac( std::size_t nfpe,
-          const std::size_t& nbfac,
+          std::size_t nbfac,
           const std::vector< int >& esuelTet );
 
 //! Generate derived data structure, elements surrounding faces
 std::vector< int >
 genEsuf( std::size_t nfpe,
-         const std::size_t& ntfac,
-         const std::size_t& nbfac,
+         std::size_t ntfac,
+         std::size_t nbfac,
          const std::map< int, std::vector< std::size_t > >& belem,
          const std::vector< int >& esuelTet );
 
 //! Generate derived data structure, node-face connectivity
 std::vector< std::size_t >
-genInpofaTet( const std::size_t& ntfac,
-              const std::size_t& nbfac,
+genInpofaTet( std::size_t ntfac,
+              std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
               const std::vector< int >& esuelTet );
 } // tk::

@@ -929,7 +929,7 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
 
 std::size_t 
 genNtfac( std::size_t nfpe,
-          const std::size_t& nbfac,
+          std::size_t nbfac,
           const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, total number of faces in the mesh
@@ -950,7 +950,6 @@ genNtfac( std::size_t nfpe,
   auto nelem = esuelTet.size()/nfpe;
 
   std::size_t ntfac(0), nifac(0);
-  // note: nbfac is assumed to be already initialized
 
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)
@@ -974,8 +973,8 @@ genNtfac( std::size_t nfpe,
 
 std::vector< int >
 genEsuf( std::size_t nfpe,
-         const std::size_t& ntfac,
-         const std::size_t& nbfac,
+         std::size_t ntfac,
+         std::size_t nbfac,
          const std::map< int, std::vector< std::size_t > >& belem,
          const std::vector< int >& esuelTet )
 // *****************************************************************************
@@ -1039,8 +1038,8 @@ genEsuf( std::size_t nfpe,
 }
 
 std::vector< std::size_t >
-genInpofaTet( const std::size_t& ntfac,
-              const std::size_t& nbfac,
+genInpofaTet( std::size_t ntfac,
+              std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
               const std::vector< int >& esuelTet )
 // *****************************************************************************

@@ -432,9 +432,9 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
 // *****************************************************************************
 //  Read face list of all side sets from ExodusII file
 //  Added by Aditya K Pandare
-//! \param[out] total number of boundary faces
-//! \param[out] Face lists mapped to side set ids
-//! \param[out] Element lists mapped to side set ids
+//! \param[out] nbfac total number of boundary faces
+//! \param[out] bface Face lists mapped to side set ids
+//! \param[out] belem Element lists mapped to side set ids
 // *****************************************************************************
 {
   // Read ExodusII file header (fills m_neset)
@@ -462,28 +462,15 @@ ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
       // total number of boundary faces
       nbfac += static_cast< std::size_t >(nface);
 
-      // Read number of nodes in side set i (overwrite nnode)
-      ErrChk( ex_get_side_set_node_list_len( m_inFile, i, &nnode ) == 0,
-              "Failed to read side set " + std::to_string(i) + " node list "
-              "length from ExodusII file: " + m_filename );
-
-      Assert(nnode > 0, "Number of nodes = 0 in side set" + std::to_string(i));
       Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
       std::vector< int > tbface( static_cast< std::size_t >( nface ) );
       std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
 
       // Read in face and element list for side set i
-      // This is the deprecated function from the exo2 library.
-      //ErrChk( ex_get_side_set( m_inFile, i, tbelem.data(), tbface.data() ) == 0, 
-      //        "Failed to read side set " + std::to_string(i) + " face/elem list "
-      //        "length from ExodusII file: " + m_filename );
-
       ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(), tbface.data() ) == 0, 
               "Failed to read side set " + std::to_string(i) + " face/elem list "
               "length from ExodusII file: " + m_filename );
 
-      //// Make face list unique
-      //tk::unique( df );
       // Store 0-based face ID list as std::size_t vector instead of ints
       auto& list1 = bface[ i ];
       for (auto&& n : tbface) list1.push_back( static_cast<std::size_t>(n-1) );
