@@ -41,7 +41,10 @@ class Discretization : public CBase_Discretization {
                 std::unordered_set< std::size_t > >& msum,
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
-        int nchare );
+        int nchare,
+        std::size_t nbfac,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& belem );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -126,6 +129,12 @@ class Discretization : public CBase_Discretization {
     Psup() const { return m_psup; }
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
     Psup() { return m_psup; }
+
+    //! added by Aditya KP
+    const std::size_t& Nbfac() { return m_nbfac; } 
+    const std::size_t& Ntfac() { return m_ntfac; } 
+    const std::vector< int > & Esuf()  { return m_esuf; }
+    const std::vector< std::size_t > & Inpofa()  { return m_inpofa; }
     //@}
 
     //! Output chare element blocks to output file
@@ -181,6 +190,11 @@ class Discretization : public CBase_Discretization {
       p | m_vol;
       p | m_volc;
       p | m_bid;
+      p | m_nbfac;
+      p | m_esuel;
+      p | m_ntfac;
+      p | m_esuf;
+      p | m_inpofa;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -264,6 +278,20 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
+
+    //! number of boundary faces
+    std::size_t m_nbfac;
+    //! boundary faces side-set information
+    const std::map< int, std::vector< std::size_t > > m_bface;
+    const std::map< int, std::vector< std::size_t > > m_belem;
+    //! elements surrounding elements
+    std::vector< int > m_esuel;
+    //! total number of faces
+    std::size_t m_ntfac;
+    //! element surrounding faces
+    std::vector< int > m_esuf;
+    //! face-node connectivity
+    std::vector< std::size_t > m_inpofa;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
