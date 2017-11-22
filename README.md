@@ -50,6 +50,7 @@ Currently, Quinoa consists of the following tools:
 5. [Robert Pavel](https://github.com/rspavel)
 6. [Aditya Pakki](https://github.com/adityapakki)
 7. [Bob Bird](https://github.com/rfbird)
+8. [Aditya Pandare](https://github.com/adityakpandare)
 
 ## Resources
 
