@@ -196,6 +196,38 @@ Transporter::readSidesets()
 }
 
 void
+Transporter::readSidesetFaces(std::size_t& nbfac,
+                              std::map< int, std::vector< std::size_t > >& bface, 
+                              std::map< int, std::vector< std::size_t > >& belem)
+// *****************************************************************************
+// Read side set faces from mesh file
+// Added by Aditya K Pandare:
+// This is added to obtain face-element connectivity details
+//! \param[out] nbfac Total number of boundary faces in all the side-sets.
+//! \param[out] bface Boundary face list associated with each side-set.
+//! \param[out] belem boundary element list associated with faces in bface.
+// *****************************************************************************
+{
+  // Create ExodusII reader for reading side sets from file.
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+
+  // Read in side set faces from file
+  m_print.diag( "Reading side set faces" );
+  er.readSidesetFaces(nbfac,bface,belem);
+
+  // Verify that side sets to which boundary conditions are assigned by user
+  // exist in mesh file
+  std::unordered_set< int > conf;
+  for (const auto& eq : g_pdes) eq.side( conf );
+  for (auto i : conf)
+    if (bface.find(i) == end(bface)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set face " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
+}
+
+void
 Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
 // *****************************************************************************
 // Create linear solver
@@ -230,6 +262,13 @@ Transporter::createPartitioner()
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
 
+  // Read side sets for boundary faces
+  // Added by Aditya KP
+  std::map< int, std::vector< std::size_t > > bface, belem;
+  std::size_t nbfac(0);
+
+  readSidesetFaces(nbfac, bface, belem);
+
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{
       CkCallback( CkReductionTarget(Transporter,part), thisProxy )
@@ -243,7 +282,8 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver, 
+                               nbfac, bface, belem );
 }
 
 void
