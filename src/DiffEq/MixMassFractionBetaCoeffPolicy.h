@@ -652,6 +652,10 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         //tk::real beta3 = b1 * d2/d/d/ds / (1.0+ds) / (1.0 + d2/d/d + d2/d/d/ds) * (1.0+d2/d/d);
         //tk::real beta2 = 1.0 / (1.0+ds);
         tk::real eta = d2/d/d/ds;
+        // test moment model for density variance:
+        //tk::real chi = (std::pow(1.0-m,3.0) + std::pow(m,3.0))/m/(1.0-m);
+        //tk::real Sk = 0;
+        //eta = (1.0 - Sk*std::pow(ds,0.5) + (2.0+chi)*ds) / std::pow(1.0+ds,2.0);
         tk::real beta2 = b2*(1.0+eta*ds);
         //tk::real beta3 = b1*b3 * d2/d/d/ds / (1.0+ds) * (1.0+r[c])/(1.0+r[c]*yt);
         //tk::real beta3 = b1*b3 * (1.0+ds)/(1.0+d2/d/d) * (1.0+r[c])/(1.0+r[c]*yt);
