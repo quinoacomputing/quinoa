@@ -400,8 +400,7 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
   // If all contributions we own have been received, continue with FCT
   if (m_nhsol == d->Gid().size()) {
     m_nhsol = 0;
-    auto& bc = m_solver.ckLocalBranch()->dirbc();
-    d->FCT()->aec( *d, m_du, m_u, bc );
+    d->FCT()->aec( *d, m_du, m_u, m_solver.ckLocalBranch()->dirbc() );
   }
 }
 
