@@ -13,6 +13,7 @@ add_library(Inciter
             DiagCG.C
             DG.C
             FluxCorrector.C
+            DistFCT.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C
@@ -23,6 +24,7 @@ addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
+addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as

@@ -61,8 +61,7 @@ DG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Store total mesh volume
   m_vol = v;
@@ -131,8 +130,7 @@ DG::diagnostics()
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   const auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
@@ -154,8 +152,7 @@ DG::out()
 // Output mesh field data
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Optionally output field and particle data
   if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
@@ -190,8 +187,7 @@ DG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Set new time step size
   d->setdt( newdt );
@@ -209,8 +205,7 @@ DG::next()
 // Prepare for next step
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Output field data to file
   out();

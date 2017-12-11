@@ -243,7 +243,7 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme );
 }
 
 void

@@ -93,16 +93,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 //!   problem.
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Allocate receive buffers for FCT
-  m_pc.resize( d->Bid().size() );
-  for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
-  m_qc.resize( d->Bid().size() );
-  for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
-  m_ac.resize( d->Bid().size() );
-  for (auto& b : m_ac) b.resize( m_u.nprop() );
+  auto d = Disc();
 
   // Invert file-node map, a map associating old node IDs (as in file) to new
   // node IDs (as in producing contiguous-row-id linear system contributions),
@@ -141,8 +132,7 @@ DiagCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   m_solver.ckLocalBranch()->comfinal();
 
@@ -185,8 +175,7 @@ DiagCG::dt()
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // use constant dt if configured
   if (std::abs(const_dt - def_const_dt) > eps) {
@@ -217,8 +206,7 @@ DiagCG::lhs()
 // Compute left-hand side of transport equations
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
@@ -257,8 +245,7 @@ DiagCG::rhs()
       b[c*2+1] = std::numeric_limits< tk::real >::max();
     }
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
@@ -339,8 +326,7 @@ DiagCG::bc()
   // words, this only works for a single PDE system and a sytem of systems. This
   // machinery is only tested with a single system of PDEs at this point.
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   for (const auto& s : m_side) {
     std::size_t c = 0;
@@ -387,8 +373,7 @@ DiagCG::aec()
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
@@ -432,8 +417,7 @@ DiagCG::comaec( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto bid = tk::cref_find( d->Bid(), gid[i] );
@@ -456,8 +440,7 @@ DiagCG::alw()
 //!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute the maximum and minimum unknowns of all elements surrounding nodes
   // Note that the maximum and minimum unknowns are complete on nodes that are
@@ -499,8 +482,7 @@ DiagCG::comalw( const std::vector< std::size_t >& gid,
 {
   Assert( Q.size() == gid.size(), "Size mismatch" );
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto bid = tk::cref_find( d->Bid(), gid[i] );
@@ -528,8 +510,7 @@ DiagCG::lim()
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Combine own and communicated contributions to P and Q
   for (const auto& b : d->Bid()) {
@@ -579,8 +560,7 @@ DiagCG::comlim( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto bid = tk::cref_find( d->Bid(), gid[i] );
@@ -608,8 +588,7 @@ DiagCG::updateLowSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the low order solution vector must equal" );
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
@@ -643,8 +622,7 @@ DiagCG::updateSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the high order solution vector must equal" );
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
@@ -669,11 +647,10 @@ DiagCG::verify()
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  if (m_fluxcorrector.verify( d->Nchare(), d->Inpoel(), m_du, m_dul ))
-    contribute( CkCallback( CkReductionTarget(Transporter,verified), d->Tr()) );
+//   auto d = Disc();
+// 
+//   if (m_fluxcorrector.verify( d->Nchare(), d->Inpoel(), m_du, m_dul ))
+//     contribute( CkCallback( CkReductionTarget(Transporter,verified), d->Tr()) );
 }
 
 void
@@ -682,8 +659,7 @@ DiagCG::diagnostics()
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Optionally collect analytical solutions and send both the latest analytical
   // and numerical solutions to Solver for computing and outputing diagnostics
@@ -731,10 +707,11 @@ DiagCG::diagnostics()
 }
 
 bool
-DiagCG::correctBC()
+DiagCG::correctBC( const tk::Fields& a )
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
+//! \param[in] a Limited antidiffusive element contributions
 //! \return True if the solution is correct at Dirichlet boundary condition
 //!   nodes
 // *****************************************************************************
@@ -743,8 +720,7 @@ DiagCG::correctBC()
 
   if (dirbc.empty()) return true;
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // We loop through the map that associates a vector of local node IDs to side
   // set IDs for all side sets read from mesh file. Then for each side set for
@@ -766,7 +742,7 @@ DiagCG::correctBC()
         Assert( b.size() == m_u.nprop(), "Size mismatch" );
         for (std::size_t c=0; c<b.size(); ++c)
           if ( b[c].first &&
-               std::abs( m_dul(i,c,0) + m_a(i,c,0) - b[c].second ) >
+               std::abs( m_dul(i,c,0) + a(i,c,0) - b[c].second ) >
                  std::numeric_limits< tk::real >::epsilon() ) {
              return false;
           }
@@ -783,8 +759,7 @@ DiagCG::writeFields( tk::real time )
 //! \param[in] time Physical time
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Only write if the last time is different than the current one
   if (std::abs(d->LastFieldWriteTime() - time) <
@@ -840,8 +815,7 @@ DiagCG::out()
 // Output mesh field data
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Optionally output field and particle data
   if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
@@ -867,27 +841,26 @@ DiagCG::apply()
 // Apply limited antidiffusive element contributions
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Combine own and communicated contributions to A
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& bac = m_ac[ b.second ];
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
-  }
-
-  // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( correctBC(), "Dirichlet boundary condition incorrect" );
-
-  // Apply limited antidiffusive element contributions to low order solution
-  if (g_inputdeck.get< tag::discr, tag::fct >())
-    m_u = m_ul + m_a;
-  else
-    m_u = m_u + m_du;
-
-  // Prepare for next time step
-  next();
+//   auto d = Disc();
+// 
+//   // Combine own and communicated contributions to A
+//   for (const auto& b : d->Bid()) {
+//     auto lid = tk::cref_find( d->Lid(), b.first );
+//     const auto& bac = m_ac[ b.second ];
+//     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
+//   }
+// 
+//   // Verify that solution values do not change at Dirichlet BC nodes
+//   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
+// 
+//   // Apply limited antidiffusive element contributions to low order solution
+//   if (g_inputdeck.get< tag::discr, tag::fct >())
+//     m_u = m_ul + m_a;
+//   else
+//     m_u = m_u + m_du;
+// 
+//   // Prepare for next time step
+//   next();
 }
 
 void
@@ -897,8 +870,7 @@ DiagCG::advance( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Set new time step size
   d->setdt( newdt );
@@ -915,13 +887,19 @@ DiagCG::advance( tk::real newdt )
 }
 
 void
-DiagCG::next()
+DiagCG::next( const tk::Fields& a )
 // *****************************************************************************
+//! \param[in] a Limited antidiffusive element contributions
 // Prepare for next step
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  // Apply limited antidiffusive element contributions to low order solution
+  if (g_inputdeck.get< tag::discr, tag::fct >())
+    m_u = m_ul + a;
+  else
+    m_u = m_u + m_du;
+
+  auto d = Disc();
 
   // Output field data to file
   out();

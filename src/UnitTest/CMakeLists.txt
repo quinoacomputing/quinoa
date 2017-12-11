@@ -26,6 +26,8 @@ add_dependencies("UnitTest" "unittestCharmModule")
 # Add extra dependencies of UnitTest on those CharmModules that are required for
 # testing Inciter/Scheme.
 add_dependencies("UnitTest" "matcgCharmModule")
+add_dependencies("UnitTest" "diagcgCharmModule")
+add_dependencies("UnitTest" "distfctCharmModule")
 add_dependencies("UnitTest" "dgCharmModule")
 add_dependencies("UnitTest" "discretizationCharmModule")
 add_dependencies("UnitTest" "solverCharmModule")

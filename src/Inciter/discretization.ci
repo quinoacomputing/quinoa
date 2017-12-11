@@ -11,6 +11,7 @@
 module discretization {
 
   extern module transporter;
+  extern module distfct;
 
   include "UnsMesh.h";
 
@@ -18,6 +19,7 @@ module discretization {
 
     array [1D] Discretization {
       entry Discretization(
+        const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const std::vector< std::size_t >& conn,
         const std::unordered_map< int,

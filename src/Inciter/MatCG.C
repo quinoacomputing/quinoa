@@ -35,6 +35,7 @@
 #include "DerivedData.h"
 #include "PDE.h"
 #include "Discretization.h"
+#include "DistFCT.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -55,27 +56,17 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
-  m_naec( 0 ),
-  m_nalw( 0 ),
-  m_nlim( 0 ),
   m_disc( disc ),
   m_solver( solver ),
   m_side(),
-  m_fluxcorrector( m_disc[thisIndex].ckLocal()->Inpoel().size() ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
   m_dul( m_u.nunk(), m_u.nprop() ),
   m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
-  m_p( m_u.nunk(), m_u.nprop()*2 ),
-  m_q( m_u.nunk(), m_u.nprop()*2 ),
-  m_a( m_u.nunk(), m_u.nprop() ),
   m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
   m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
-  m_pc(),
-  m_qc(),
-  m_ac(),
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
@@ -94,16 +85,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 //!   problem.
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Allocate receive buffers for FCT
-  m_pc.resize( d->Bid().size() );
-  for (auto& b : m_pc) b.resize( m_u.nprop()*2 );
-  m_qc.resize( d->Bid().size() );
-  for (auto& b : m_qc) b.resize( m_u.nprop()*2 );
-  m_ac.resize( d->Bid().size() );
-  for (auto& b : m_ac) b.resize( m_u.nprop() );
+  auto d = Disc();
 
   // Invert file-node map, a map associating old node IDs (as in file) to new
   // node IDs (as in producing contiguous-row-id linear system contributions),
@@ -142,8 +124,7 @@ MatCG::setup( tk::real v )
 //! \param[in] v Total mesh volume
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   m_solver.ckLocalBranch()->comfinal();
 
@@ -186,8 +167,7 @@ MatCG::dt()
   auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // use constant dt if configured
   if (std::abs(const_dt - def_const_dt) > eps) {
@@ -218,8 +198,7 @@ MatCG::lhs()
 // Compute left-hand side of transport equations
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
@@ -230,7 +209,7 @@ MatCG::lhs()
     charelhs( thisIndex, d->Gid(), d->Psup(), m_lhsd, m_lhso );
 
   // Compute lumped mass lhs required for the low order solution
-  auto lump = m_fluxcorrector.lump( d->Coord(), d->Inpoel() );
+  auto lump = d->FCT()->lump( *d );
   // Send off lumped mass lhs for assembly
   m_solver.ckLocalBranch()->charelowlhs( thisIndex, d->Gid(), lump );
 }
@@ -241,25 +220,7 @@ MatCG::rhs()
 // Compute right-hand side of transport equations
 // *****************************************************************************
 {
-  // Initialize FCT data structures for new time step
-  m_p.fill( 0.0 );
-  m_a.fill( 0.0 );
-  for (std::size_t p=0; p<m_u.nunk(); ++p)
-    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-      m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
-      m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
-    }
-
-  for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_qc)
-    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      b[c*2+0] = -std::numeric_limits< tk::real >::max();
-      b[c*2+1] = std::numeric_limits< tk::real >::max();
-    }
-
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
@@ -271,7 +232,7 @@ MatCG::rhs()
   m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
 
   // Compute mass diffusion rhs contribution required for the low order solution
-  auto diff = m_fluxcorrector.diff( d->Coord(), d->Inpoel(), m_u );
+  auto diff = d->FCT()->diff( *d, m_u );
   // Send off mass diffusion rhs contribution for assembly
   m_solver.ckLocalBranch()->charelowrhs( thisIndex, d->Gid(), diff );
 }
@@ -340,8 +301,7 @@ MatCG::bc()
   // words, this only works for a single PDE system and a sytem of systems. This
   // machinery is only tested with a single system of PDEs at this point.
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   for (const auto& s : m_side) {
     std::size_t c = 0;
@@ -380,222 +340,6 @@ MatCG::bc()
 }
 
 void
-MatCG::aec()
-// *****************************************************************************
-//  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-//! \details This function computes and starts communicating m_p, which stores
-//!    the sum of all positive (negative) antidiffusive element contributions to
-//!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Compute and sum antidiffusive element contributions to mesh nodes. Note
-  // that the sums are complete on nodes that are not shared with other chares
-  // and only partial sums on chare-boundary nodes.
-  auto& dbc = m_solver.ckLocalBranch()->dirbc();
-  m_fluxcorrector.aec( d->Coord(), d->Inpoel(), d->Vol(), dbc, d->Gid(), m_du,
-                       m_u, m_p );
-
-  if (d->Msum().empty())
-    comaec_complete();
-  else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comaec( n.second, p );
-    }
-
-  ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
-}
-
-void
-MatCG::comaec( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& P )
-// *****************************************************************************
-//  Receive sums of antidiffusive element contributions on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive AEC contributions
-//! \param[in] P Partial sums of positive (negative) antidiffusive element
-//!   contributions to chare-boundary nodes
-//! \details This function receives contributions to m_p, which stores the
-//!   sum of all positive (negative) antidiffusive element contributions to
-//!   nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec(). While m_p stores
-//!   own contributions, m_pc collects the neighbor chare contributions during
-//!   communication. This way work on m_p and m_pc is overlapped. The two are
-//!   combined in lim().
-// *****************************************************************************
-{
-  Assert( P.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_pc.size(), "Indexing out of bounds" );
-    m_pc[ bid ] += P[i];
-  }
-
-  if (++m_naec == d->Msum().size()) {
-    m_naec = 0;
-    comaec_complete();
-  }
-}
-
-void
-MatCG::alw()
-// *****************************************************************************
-//  Compute the maximum and minimum unknowns of elements surrounding nodes
-//! \details This function computes and starts communicating m_q, which stores
-//!    the maximum and mimimum unknowns of all elements surrounding each node
-//!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Compute the maximum and minimum unknowns of all elements surrounding nodes
-  // Note that the maximum and minimum unknowns are complete on nodes that are
-  // not shared with other chares and only partially complete on chare-boundary
-  // nodes.
-  m_fluxcorrector.alw( d->Inpoel(), m_u, m_ul, m_q );
-
-  if (d->Msum().empty())
-    comalw_complete();
-  else // send contributions at chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comalw( n.second, q );
-    }
-
-  ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
-}
-
-void
-MatCG::comalw( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& Q )
-// *****************************************************************************
-// Receive contributions to the maxima and minima of unknowns of all elements
-// surrounding mesh nodes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive contributions
-//! \param[in] Q Partial contributions to maximum and minimum unknowns of all
-//!   elements surrounding nodes to chare-boundary nodes
-//! \details This function receives contributions to m_q, which stores the
-//!   maximum and mimimum unknowns of all elements surrounding each node
-//!   (Lohner: u^{max,min}_i), see also FluxCorrector::alw(). While m_q stores
-//!   own contributions, m_qc collects the neighbor chare contributions during
-//!   communication. This way work on m_q and m_qc is overlapped. The two are
-//!   combined in lim().
-// *****************************************************************************
-{
-  Assert( Q.size() == gid.size(), "Size mismatch" );
-
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_qc.size(), "Indexing out of bounds" );
-    auto& o = m_qc[ bid ];
-    const auto& q = Q[i];
-    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      if (q[c*2+0] > o[c*2+0]) o[c*2+0] = q[c*2+0];
-      if (q[c*2+1] < o[c*2+1]) o[c*2+1] = q[c*2+1];
-    }
-  }
-
-  if (++m_nalw == d->Msum().size()) {
-    m_nalw = 0;
-    comalw_complete();
-  }
-}
-
-void
-MatCG::lim()
-// *****************************************************************************
-//  Compute the limited antidiffusive element contributions
-//! \details This function computes and starts communicating m_a, which stores
-//!   the limited antidiffusive element contributions assembled to nodes
-//!   (Lohner: AEC^c), see also FluxCorrector::limit().
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Combine own and communicated contributions to P and Q
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& bpc = m_pc[ b.second ];
-    const auto& bqc = m_qc[ b.second ];
-    for (ncomp_t c=0; c<m_p.nprop()/2; ++c) {
-      m_p(lid,c*2+0,0) += bpc[c*2+0];
-      m_p(lid,c*2+1,0) += bpc[c*2+1];
-      if (bqc[c*2+0] > m_q(lid,c*2+0,0)) m_q(lid,c*2+0,0) = bqc[c*2+0];
-      if (bqc[c*2+1] < m_q(lid,c*2+1,0)) m_q(lid,c*2+1,0) = bqc[c*2+1];
-    }
-  }
-
-  m_fluxcorrector.lim( d->Inpoel(), m_p, m_ul, m_q, m_a );
-
-  if (d->Msum().empty())
-    comlim_complete();
-  else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comlim( n.second, a );
-    }
-
-  ownlim_complete();
-}
-
-void
-MatCG::comlim( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& A )
-// *****************************************************************************
-//  Receive contributions of limited antidiffusive element contributions on
-//  chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive contributions
-//! \param[in] A Partial contributions to antidiffusive element contributions to
-//!   chare-boundary nodes
-//! \details This function receives contributions to m_a, which stores the
-//!   limited antidiffusive element contributions assembled to nodes (Lohner:
-//!   AEC^c), see also FluxCorrector::limit(). While m_a stores own
-//!   contributions, m_ac collects the neighbor chare contributions during
-//!   communication. This way work on m_a and m_ac is overlapped. The two are
-//!   combined in apply().
-// *****************************************************************************
-{
-  Assert( A.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_ac.size(), "Indexing out of bounds" );
-    m_ac[ bid ] += A[i];
-  }
- 
-  if (++m_nlim == d->Msum().size()) {
-    m_nlim = 0;
-    comlim_complete();
-  }
-}
-
-void
 MatCG::updateLowSol( const std::vector< std::size_t >& gid,
                      const std::vector< tk::real >& du )
 // *****************************************************************************
@@ -609,8 +353,7 @@ MatCG::updateLowSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the low order solution vector must equal" );
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
@@ -621,12 +364,11 @@ MatCG::updateLowSol( const std::vector< std::size_t >& gid,
   // Count number of solution nodes updated
   m_nlsol += gid.size();
 
-  // If all contributions we own have been received, continue by updating a
-  // different solution vector
+  // If all contributions we own have been received, continue with FCT
   if (m_nlsol == d->Gid().size()) {
     m_nlsol = 0;
     m_ul = m_u + m_dul;
-    alw();
+    d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );
   }
 }
 
@@ -644,8 +386,7 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
           "Size of row ID vector times the number of scalar components and the "
           "size of the high order solution vector must equal" );
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
@@ -656,25 +397,12 @@ MatCG::updateSol( const std::vector< std::size_t >& gid,
   // Count number of solution nodes updated
   m_nhsol += gid.size();
 
-  // If all contributions we own have been received, continue by updating a
-  // different solution vector
+  // If all contributions we own have been received, continue with FCT
   if (m_nhsol == d->Gid().size()) {
     m_nhsol = 0;
-    aec();
+    auto& bc = m_solver.ckLocalBranch()->dirbc();
+    d->FCT()->aec( *d, m_du, m_u, bc );
   }
-}
-
-void
-MatCG::verify()
-// *****************************************************************************
-// Verify antidiffusive element contributions up to linear solver convergence
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  if (m_fluxcorrector.verify( d->Nchare(), d->Inpoel(), m_du, m_dul ))
-    contribute( CkCallback( CkReductionTarget(Transporter,verified), d->Tr()) );
 }
 
 void
@@ -683,8 +411,7 @@ MatCG::diagnostics()
 // Compute diagnostics, e.g., residuals
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Optionally collect analytical solutions and send both the latest analytical
   // and numerical solutions to Solver for computing and outputing diagnostics
@@ -732,10 +459,11 @@ MatCG::diagnostics()
 }
 
 bool
-MatCG::correctBC()
+MatCG::correctBC( const tk::Fields& a )
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
+//! \param[in] a Limited antidiffusive element contributions
 //! \return True if the solution is correct at Dirichlet boundary condition
 //!   nodes
 // *****************************************************************************
@@ -744,8 +472,7 @@ MatCG::correctBC()
 
   if (dirbc.empty()) return true;
 
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // We loop through the map that associates a vector of local node IDs to side
   // set IDs for all side sets read from mesh file. Then for each side set for
@@ -767,7 +494,7 @@ MatCG::correctBC()
         Assert( b.size() == m_u.nprop(), "Size mismatch" );
         for (std::size_t c=0; c<b.size(); ++c)
           if ( b[c].first &&
-               std::abs( m_dul(i,c,0) + m_a(i,c,0) - b[c].second ) >
+               std::abs( m_dul(i,c,0) + a(i,c,0) - b[c].second ) >
                  std::numeric_limits< tk::real >::epsilon() ) {
              return false;
           }
@@ -784,8 +511,7 @@ MatCG::writeFields( tk::real time )
 //! \param[in] time Physical time
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Only write if the last time is different than the current one
   if (std::abs(d->LastFieldWriteTime() - time) <
@@ -841,8 +567,7 @@ MatCG::out()
 // Output mesh field data
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Optionally output field and particle data
   if ( !((d->It()+1) % g_inputdeck.get< tag::interval, tag::field >()) &&
@@ -863,66 +588,38 @@ MatCG::out()
 }
 
 void
-MatCG::apply()
-// *****************************************************************************
-// Apply limited antidiffusive element contributions
-// *****************************************************************************
-{
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
-
-  // Combine own and communicated contributions to A
-  for (const auto& b : d->Bid()) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& bac = m_ac[ b.second ];
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
-  }
-
-  // Verify that solution values do not change at Dirichlet BC nodes
-  Assert( correctBC(), "Dirichlet boundary condition incorrect" );
-
-  // Apply limited antidiffusive element contributions to low order solution
-  if (g_inputdeck.get< tag::discr, tag::fct >())
-    m_u = m_ul + m_a;
-  else
-    m_u = m_u + m_du;
-
-  // Prepare for next time step
-  next();
-}
-
-void
 MatCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  auto d = Disc();
 
   // Set new time step size
   d->setdt( newdt );
 
-  // Activate SDAG-waits
-  #ifndef NDEBUG
-  wait4ver();
-  #endif
-  wait4fct();
-  wait4app();
+  // Activate SDAG-waits for FCT
+  d->FCT()->next();
 
   // Compute rhs for next time step
   rhs();
 }
 
 void
-MatCG::next()
+MatCG::next( const tk::Fields& a )
 // *****************************************************************************
 // Prepare for next step
+//! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
-  auto d = m_disc[ thisIndex ].ckLocal();
-  Assert( d!=nullptr, "Discretization proxy's ckLocal() null" );
+  // Apply limited antidiffusive element contributions to low order solution
+  if (g_inputdeck.get< tag::discr, tag::fct >())
+    m_u = m_ul + a;
+  else
+    m_u = m_u + m_du;
+
+  auto d = Disc();
 
   // Output field data to file
   out();

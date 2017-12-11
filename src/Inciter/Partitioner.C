@@ -28,12 +28,12 @@ using inciter::Partitioner;
 
 Partitioner::Partitioner( const std::vector< CkCallback >& cb,
                           const CProxy_Transporter& host,
-                          const Scheme& scheme,
-                          const tk::CProxy_Solver& solver ) :
+                          const tk::CProxy_Solver& solver,
+                          const Scheme& scheme ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
-  m_scheme( scheme ),
   m_solver( solver ),
+  m_scheme( scheme ),
   m_npe( 0 ),
   m_reqNodes(),
   m_reqEdges(),

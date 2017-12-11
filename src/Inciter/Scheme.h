@@ -220,7 +220,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 0,
       typename std::enable_if< sizeof...(Args) == 7, int >::type = 0 >
     void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].insert( std::forward<Args>(args)..., nullptr );
+      discproxy[x].insert( fctproxy, std::forward<Args>(args)..., nullptr );
     }
     //////  discproxy[x].insert(...,CkEntryOptions)
     //! Function to call the insert entry method of an element discproxy (p2p)
@@ -233,7 +233,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 1,
       typename std::enable_if< sizeof...(Args) == 8, int >::type = 0 >
     void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].insert( std::forward<Args>(args)... );
+      discproxy[x].insert( fctproxy, std::forward<Args>(args)... );
     }
 
     //////  discproxy.doneInserting(...)
@@ -246,7 +246,7 @@ class Scheme : public SchemeBase {
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
     void doneDiscInserting( Args&&... args ) {
-      discproxy.doneInserting( std::forward<Args>(args)... );
+      discproxy.doneInserting( fctproxy, std::forward<Args>(args)... );
     }
     //////  discproxy[x].doneInserting(...)
     //! \brief Function to call the doneInserting entry method of an element
@@ -301,7 +301,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 0,
       typename std::enable_if< sizeof...(Args) == 1, int >::type = 0 >
     void setup( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_setup<Args...,std::nullptr_t>(
         std::forward<Args>(args)...,nullptr), e );
     }
@@ -316,7 +316,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 0,
       typename std::enable_if< sizeof...(Args) == 2, int >::type = 0 >
     void setup( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_setup<Args...>( std::forward<Args>(args)... ),
                             e );
     }
@@ -343,7 +343,7 @@ class Scheme : public SchemeBase {
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 0 >
     void dt( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_dt<Args...>( std::forward<Args>(args)... ),
                             e );
     }
@@ -359,7 +359,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 0,
       typename std::enable_if< sizeof...(Args) == 3, int >::type = 0 >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_insert<Args...,std::nullptr_t>(
         std::forward<Args>(args)...,nullptr), e );
     }
@@ -374,7 +374,7 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::elem >::value, int >::type = 1,
       typename std::enable_if< sizeof...(Args) == 4, int >::type = 0 >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor( call_insert<Args...>( std::forward<Args>(args)... ),
                             e );
     }
@@ -402,7 +402,7 @@ class Scheme : public SchemeBase {
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 0 >
     void doneInserting( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = element( x );
+      auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor(
         call_doneInserting<Args...>( std::forward<Args>(args)... ), e );
     }

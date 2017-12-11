@@ -35,6 +35,7 @@ class Discretization : public CBase_Discretization {
     //! Constructor
     explicit
       Discretization(
+        const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const std::vector< std::size_t >& conn,
         const std::unordered_map< int,
@@ -79,9 +80,9 @@ class Discretization : public CBase_Discretization {
     const std::vector< std::size_t >& Gid() const { return m_gid; }
     std::vector< std::size_t >& Gid() { return m_gid; }
 
-    const std::unordered_map< std::size_t, std::size_t > & Lid() const
+    const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
-    std::unordered_map< std::size_t, std::size_t > & Lid() { return m_lid; }
+    std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
 
     const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
@@ -99,11 +100,14 @@ class Discretization : public CBase_Discretization {
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
-    std::size_t Nchare() const { return m_nchare; }
-    std::size_t& Nchare() { return m_nchare; }
-
     const CProxy_Transporter& Tr() const { return m_transporter; }
     CProxy_Transporter& Tr() { return m_transporter; }
+
+    //! Access bound DistFCT class pointer
+    DistFCT* FCT() const {
+      Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
+      return m_fct[ thisIndex ].ckLocal();
+    }
 
     const std::unordered_map< std::size_t, std::size_t >& Filenodes() const
     { return m_filenodes; }
@@ -163,8 +167,8 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_lastFieldWriteTime;
       p | m_nvol;
-      p | m_nchare;
       p | m_outFilename;
+      p | m_fct;
       p | m_transporter;
       p | m_filenodes;
       p | m_edgenodes;
@@ -202,10 +206,10 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
-    //! Total number of Discretization chares
-    std::size_t m_nchare;
     //! Output filename
     std::string m_outFilename;
+    //! Distributed FCT proxy
+    CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
