@@ -29,10 +29,10 @@
 #define Variant_h
 
 #include <tuple>
-#include <boost/mpl/vector.hpp>
 
 #include "NoWarning/variant.h"
 #include "NoWarning/for_each.h"
+#include "NoWarning/vector.h"
 #include "NoWarning/pup.h"
 #include "NoWarning/charm++.h"
 
