@@ -420,8 +420,8 @@ MatCG::diagnostics()
     // thus the "error", defined between this "analytical" and numerical
     // solution will be a measure of the "distance" between the initial
     // condition and the current numerical solution. This is not necessarily
-    // useful, but simplies the logic because all PDEs can be treated as baing
-    // able to compute an error based on some "analytical" solution, which
+    // useful, but simplies the logic because all PDEs can be treated as being
+    // able to compute an error based on some "analytical" solution, which is
     // really the initial condition.
     auto a = m_u;
     for (const auto& eq : g_pdes)
@@ -435,13 +435,10 @@ MatCG::diagnostics()
     // PDEs, and their error, defined as A_i = (a_i - n_i), where a_i and n_i
     // are the analytical and numerical solutions at node i, respectively. We
     // send these to Solver and the final aggregated solution will end up in
-    // Transporter::diagnostics(). Note that we weigh/multiply all data here by
-    // sqrt(V_i), so that the nodal volumes do not have to be communicated
-    // separately. In Solver::diagnostics(), where we collect all contributions
-    // from chares on a PE, all data is squared. Solver::diagnostics() is where
-    // the sums are computed, then the sums are summed accross the whole problem
-    // in Transporter::diagnostics(), where the final square-root of the L2
-    // norm, defined above, is taken.
+    // Transporter::diagnostics(). from chares on a PE, all solution data are
+    // squared. Solver::diagnostics() is where the sums are computed, then the
+    // sums are summed accross the whole problem in Transporter::diagnostics(),
+    // where the final square-root of the L2 norm, defined above, is taken.
 
     // Send both numerical and analytical solutions to solver
     m_solver.ckLocalBranch()->charediag( thisIndex, d->Gid(), m_u, a, d->V() );
