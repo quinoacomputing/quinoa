@@ -135,7 +135,7 @@ DG::diagnostics()
   const auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
   std::vector< std::vector< tk::real > >
-    diag( 3, std::vector< tk::real >( ncomp, 0.0 ) );
+    diag( 6, std::vector< tk::real >( ncomp, 0.0 ) );
 
   // Compute diagnostics
   // ...

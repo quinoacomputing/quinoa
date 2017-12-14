@@ -365,9 +365,7 @@ DistFCT::verify()
 // Verify antidiffusive element contributions up to linear solver convergence
 // *****************************************************************************
 {
-  if (m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul )) {
-    contribute( CkCallback( CkReductionTarget(Transporter,verified), m_host) );
-  }
+  m_fluxcorrector.verify( m_nchare, m_inpoel, m_du, m_dul );
 }
 
 bool

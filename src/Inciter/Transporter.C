@@ -607,7 +607,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
-  Assert( d.size() == 3, "Diagnostics vector size mismatch" );
+  Assert( d.size() == 6, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
      Assert( d[i].size() == ncomp,
@@ -642,9 +642,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      g_inputdeck.get< tag::flformat, tag::diag >(),
                      g_inputdeck.get< tag::prec, tag::diag >(),
                      std::ios_base::app );
-  uint64_t it = 1;
-  tk::real t = 1.0;
-  dw.diag( it, t, diag );
+  dw.diag( static_cast<uint64_t>(d[3][0]), d[4][0], d[5][0], diag );
 }
 
 void

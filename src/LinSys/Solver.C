@@ -66,6 +66,9 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_nchbc( 0 ),
   m_lower( 0 ),
   m_upper( 0 ),
+  m_it( 0 ),
+  m_t( 0.0 ),
+  m_dt( 0.0 ),
   //m_feedback( feedback ),
   m_myworker(),
   m_rowimport(),
@@ -667,6 +670,9 @@ Solver::addbc( CkReductionMsg* msg )
 
 void
 Solver::charediag( int fromch,
+                   uint64_t it,
+                   tk::real t,
+                   tk::real dt,
                    const std::vector< std::size_t >& gid,
                    const Fields& u,
                    const Fields& a,
@@ -675,6 +681,9 @@ Solver::charediag( int fromch,
 //  Chares contribute their numerical and analytical solutions nonzero values
 //  for computing diagnostics
 //! \param[in] fromch Charm chare array index contribution coming from
+//! \param[in] it Iteration count (number of time steps taken)
+//! \param[in] t Physical time
+//! \param[in] dt Physical time step size
 //! \param[in] gid Global row indices of the vector contributed
 //! \param[in] u Portion of the numerical unknown/solution vector
 //! \param[in] a Portion of the analytical solution vector
@@ -685,6 +694,11 @@ Solver::charediag( int fromch,
 {
   Assert( gid.size() == u.nunk(),
           "Size of numerical solution and row ID vectors must equal" );
+
+  // Sore iteration count, physical time, and time step size
+  m_it = it;
+  m_t = t;
+  m_dt = dt;
 
   // Store numerical and analytical solution vector nonzero values owned and
   // pack those to be exported, also build import map used to test for
@@ -1213,8 +1227,8 @@ Solver::updateDiag( std::size_t row,
 //!   and can be called for rows with first contributions or subsequent
 //!   contributions to rows which already hold partial data. The correct
 //!   policy for updates across PEs (i.e., at nodes that are shared across
-//!   PEs) is: overwrite the numerical and analytical solutions and summing
-//!   nodal volumes.
+//!   PEs) is: overwrite the numerical and analytical solutions, sum the nodal
+//!   volumes.
 // *****************************************************************************
 {
   auto& d = m_diag[ row ];
@@ -1241,7 +1255,7 @@ Solver::diagnostics()
           std::to_string( CkMyPe() ) + " is incomplete" );
 
   std::vector< std::vector< tk::real > >
-    diag( 3, std::vector< tk::real >( m_ncomp, 0.0 ) );
+    diag( 6, std::vector< tk::real >( m_ncomp, 0.0 ) );
 
   for (const auto& s : m_diag) {
     Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
@@ -1265,6 +1279,11 @@ Solver::diagnostics()
       }
     }
   }
+
+  // Append iteration count, physical time, and time step size to message
+  diag[3][0] = static_cast< tk::real >( m_it );
+  diag[4][0] = m_t;
+  diag[5][0] = m_dt;
 
   // Contribute to diagnostics across all PEs
   auto stream = tk::serialize( diag );

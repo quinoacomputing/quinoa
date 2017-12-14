@@ -479,9 +479,6 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
-    //! Reduction target outputing diagnostics
-    void verified() { m_print.diag( "AEC verified" ); }
-
     //! Start time stepping
     void start();
 

@@ -323,6 +323,9 @@ class Solver : public CBase_Solver {
     //! \brief Chares contribute their numerical and analytical solutions
     //!   nonzero values for computing diagnostics
     void charediag( int fromch,
+                    uint64_t it,
+                    tk::real t,
+                    tk::real dt,
                     const std::vector< std::size_t >& gid,
                     const Fields& u,
                     const Fields& a,
@@ -353,6 +356,9 @@ class Solver : public CBase_Solver {
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
+    uint64_t m_it;             //!< Iteration count (original in Discretization)
+    tk::real m_t;              //!< Physical time (original in Discretization)
+    tk::real m_dt;             //!< Time step size (original in Discretization)
     //bool m_feedback;            //!< Whether to send sub-task feedback to host
     //! Ids of workers on my PE
     std::vector< int > m_myworker;

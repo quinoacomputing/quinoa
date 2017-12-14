@@ -575,7 +575,8 @@ DiagCG::diagnostics()
     // where the final square-root of the L2 norm, defined above, is taken.
 
     // Send both numerical and analytical solutions to solver
-    m_solver.ckLocalBranch()->charediag( thisIndex, d->Gid(), m_u, a, d->V() );
+    m_solver.ckLocalBranch()->charediag( thisIndex, d->It()+1, d->T()+d->Dt(),
+                                          d->Dt(), d->Gid(), m_u, a, d->V() );
   }
 }
 

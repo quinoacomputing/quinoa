@@ -75,6 +75,10 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     // Max for the Linf norm of the numerical - analytical solution for all comp
     for (std::size_t i=0; i<v[2].size(); ++i)
       if (w[2][i] > v[2][i]) v[2][i] = w[2][i];
+    // Copy the rest
+    for (std::size_t j=3; j<v.size(); ++j)
+      for (std::size_t i=0; i<v[j].size(); ++i)
+        v[j][i] = w[j][i];
   }
 
   // Serialize concatenated diagnostics vector to raw stream
