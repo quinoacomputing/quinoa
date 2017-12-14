@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConv.C
-  \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File file converter Charm++ main chare
   \details   File file converter Charm++ main chare. This file contains the

@@ -26,16 +26,12 @@ module diagcg {
       entry void setup( tk::real v );
       entry void dt();
       entry [reductiontarget] void advance( tk::real newdt );
-      entry void updateSol( const std::vector< std::size_t >& gid,
-                            const std::vector< tk::real >& sol );
-      entry void updateLowSol( const std::vector< std::size_t >& gid,
-                               const std::vector< tk::real >& sol );
-      entry void comaec( const std::vector< std::size_t >& gid,
-                         const std::vector< std::vector< tk::real > >& P );
-      entry void comalw( const std::vector< std::size_t >& gid,
-                         const std::vector< std::vector< tk::real > >& Q );
-      entry void comlim( const std::vector< std::size_t >& gid,
-                         const std::vector< std::vector< tk::real > >& U );
+      entry void comlhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& L );
+      entry void comrhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R );
+      entry void comdif( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& D );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -52,60 +48,41 @@ module diagcg {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Only in DEBUG mode, wait4ver(): When the low and high order solutions
-      // have been updated, and the own portion of the antidiffusive element
-      // contributions (AEC) have been computed, we optionally (inly in DEBUG
-      // mode) verify that the AECs assembled to nodes equal to the difference
-      // between the high and low order increments. See also
-      // FluxCorrector::aec() and FluxCorrector::verify(). Note that this
-      // verification is only done if there is only a single DiagCG chare as
-      // the correct verification would entail communication for multiple
-      // chares. Note also that the DAG conditions below for wait4ver() require
-      // the own contributions to the AEC and ALW instead of requiring the low
-      // and high order solutions and the own AEC. Requiring the former set (as
-      // implemented) is stronger than the latter, because the former can only
-      // be satisfied when the latter is also satisfied. The former is
-      // implemented because that avoids introducing two more SDAG messages,
-      // e.g., lo_complete() and hi_complete(), and that would require 3
-      // conditions instead of two, leading to simpler code.
+      // There are two parts of the DAG below: (1) setup: tasks leading to the
+      // start of time stepping, and (2) solve: tasks leading to solving the
+      // high and low order linear systems. Setup only happens once, while solve
+      // happens every time step.
       //
-      // Computing limited antidiffusive element contributions, wait4fct():
-      // Computing and communicating contributions on chare-boundaries of
-      // antidiffusive element contributions (AEC), and the maximum and minimum
-      // unknowns of elements surrounding nodes (ALW) are overlapped. See
-      // aec(), comaec(), alw(), comalw(). When all are complete on a single
-      // chare, computing the limited antidiffusive element contributions can
-      // start.
+      // (1) Setup: The left hand side matrix (lumped-mass matrix, where only
+      // the diagonals are stored in a vector) are computed and assembled on the
+      // chare boundaries. Only when own contributions are complete and when
+      // chare-boundary contributions are received can timestepping start. This
+      // happens independently on each chare, communicating with their
+      // respective neighbors. Once the left hand side (diagonal) matrix is
+      // assembled it is assumed to never change during time stepping.
       //
-      // Applying the limited antidiffusive element contributions, wait4app():
-      // Computing the limited antidiffusive element contributions assembled and
-      // applied to mesh nodes involves own and contributions on the
-      // chare-boundary nodes. When both are done on a single chare, applying
-      // the new limited AECs can be done.
-      //
-      // Note that the none of wait4ver(), wait4fct(), and wait4app(), nor its
-      // underlying computations and communications involve global reductions or
-      // broadcasts: the entire FCT algorithm runs completely independent on
-      // each DiagCG chare, and exercising task parallelism within.
+      // (2) Solve: The right hand side vector contributions are computed and
+      // assembled on the chare boundaries. For the low order solution there is
+      // an additional, mass-diffusion, term added to the right hand side. Only
+      // when own contributions to both terms on the right hand side are
+      // complete and when chare-boundary contributions to both terms on the
+      // right hand side are received can the two systems be solved. This
+      // happens independently on each chare, communicating with their
+      // respective neighbors.
 
-      #ifndef NDEBUG
-      entry void wait4ver() {
-        when ownaec_complete(), ownalw_complete() serial "ver" { verify(); } };
-      #endif
+      entry void wait4setup() {
+        when ownlhs_complete(), comlhs_complete() serial "setup" { start(); } };
 
-      entry void wait4fct() {
-        when ownaec_complete(), comaec_complete(),
-             ownalw_complete(), comalw_complete() serial "fct" { lim(); } };
+      entry void wait4rhs() {
+        when ownrhs_complete(), comrhs_complete(),
+             owndif_complete(), comdif_complete() serial "rhs" { solve(); } };
 
-      entry void wait4app() {
-        when ownlim_complete(), comlim_complete() serial "app" { apply(); } };
-
-      entry void ownaec_complete();
-      entry void ownalw_complete();
-      entry void ownlim_complete();
-      entry void comaec_complete();
-      entry void comalw_complete();
-      entry void comlim_complete();
+      entry void ownlhs_complete();
+      entry void ownrhs_complete();
+      entry void owndif_complete();
+      entry void comlhs_complete();
+      entry void comrhs_complete();
+      entry void comdif_complete();
     };
 
   } // inciter::

@@ -3663,29 +3663,29 @@ using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
 struct matcg_info {
   static std::string name()
-  { return "continuous Galerkin + Lax-Wendroff with matrix"; }
+  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "discretization + Lax Wendroff with a matrix solver"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the continuous Galerkin (CG) finite
-    element spatial discretiztaion used in inciter. CG is combined with a
-    Lax-Wendroff scheme for time discretization and flux-corrected transport
-    (FCT) for treating discontinuous solutions. This option selects the scheme
-    that stores the left-hand side matrix as a compressed sparse row (CSR)
-    storage and uses a linear solver. See Control/Inciter/Options/Scheme.h for
-    other valid options.)"; }
+    R"(This keyword is used to select the consistent-mass continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix as a compressed sparse row
+    (CSR) storage consistent-mass matrix and uses a linear solver. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
 using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
 
 struct diagcg_info {
   static std::string name()
-  { return "continuous Galerkin + Lax-Wendroff with diagonal LHS"; }
+  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
-    "discretization + Lax Wendroff with a diagonal matrix as the left hand "
+    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
     "side matrix"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the continuous Galerkin (CG) finite
-    element spatial discretiztaion used in inciter. CG is combined with a
+    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
+    finite element spatial discretiztaion used in inciter. CG is combined with a
     Lax-Wendroff scheme for time discretization and flux-corrected transport
     (FCT) for treating discontinuous solutions. This option selects the scheme
     that stores the left-hand side matrix lumped, i.e., only the diagonal

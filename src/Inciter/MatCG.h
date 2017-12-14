@@ -8,9 +8,9 @@
     (using linear shapefunctions on tetrahedron elements) combined with a time
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
-    flux-corrected transport (FCT). The left-hand side matrix is stored in a
-    compressed sparse row (CSR) storage and thus uses a matrix-based linear
-    solver.
+    flux-corrected transport (FCT). The left-hand side (consistent-mass) matrix
+    is stored in a compressed sparse row (CSR) storage and thus this scheme uses
+    a matrix-based linear solver.
 
     There are a potentially large number of MatCG Charm++ chares created by
     Transporter. Each MatCG gets a chunk of the full load (part of the mesh)
@@ -81,12 +81,6 @@ class MatCG : public CBase_MatCG {
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
-
-    //! Request owned node IDs on which a Dirichlet BC is set by the user
-    void requestBCs();
-
-    //! Look up and return old node ID for new one
-    void oldID( int frompe, const std::vector< std::size_t >& newids );
 
     //! Update high order solution vector
     void updateSol( //solMsg* m );

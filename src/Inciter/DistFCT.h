@@ -30,7 +30,7 @@
     digraph "DistFCT SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Upd [ label="Upd" tooltip="update solution"
+      Upd [ label="Upd" tooltip="update high-order solution"
                  style="solid"
                 URL="\ref tk::Solver::updateSol"];
       LowUpd [ label="LowUpd" tooltip="update low-order solution"

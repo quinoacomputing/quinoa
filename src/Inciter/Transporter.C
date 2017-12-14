@@ -651,7 +651,7 @@ void
 Transporter::next()
 // *****************************************************************************
 // Reduction target used to synchronize PEs between linear solves of time steps
-//! \note Only called if MatCG/DiagCG is used
+//! \note Only called from MatCG
 // *****************************************************************************
 {
   m_solver.next();

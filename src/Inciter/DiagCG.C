@@ -34,6 +34,7 @@
 #include "DerivedData.h"
 #include "PDE.h"
 #include "Discretization.h"
+#include "DistFCT.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -52,45 +53,30 @@ using inciter::DiagCG;
 DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const tk::CProxy_Solver& solver ) :
   m_itf( 0 ),
-  m_nhsol( 0 ),
-  m_nlsol( 0 ),
-  m_naec( 0 ),
-  m_nalw( 0 ),
-  m_nlim( 0 ),
+  m_nsol( 0 ),
+  m_nlhs( 0 ),
+  m_nrhs( 0 ),
+  m_ndif( 0 ),
   m_disc( disc ),
   m_solver( solver ),
   m_side(),
-  m_fluxcorrector( m_disc[thisIndex].ckLocal()->Inpoel().size() ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
   m_dul( m_u.nunk(), m_u.nprop() ),
   m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
-  m_p( m_u.nunk(), m_u.nprop()*2 ),
-  m_q( m_u.nunk(), m_u.nprop()*2 ),
-  m_a( m_u.nunk(), m_u.nprop() ),
-  m_lhsd( m_disc[thisIndex].ckLocal()->Psup().second.size()-1, m_u.nprop() ),
-  m_lhso( m_disc[thisIndex].ckLocal()->Psup().first.size(), m_u.nprop() ),
-  m_pc(),
-  m_qc(),
-  m_ac(),
+  m_lhs( m_u.nunk(), m_u.nprop() ),
+  m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_dif( m_u.nunk(), m_u.nprop() ),
+  m_lhsc(),
+  m_rhsc(),
+  m_difc(),
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
-//! \param[in] transporter Host (Transporter) proxy
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] filenodes Map associating old node IDs (as in file) to new node
-//!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
-//!   (which corresponds to rows in the linear system) are (approximately)
-//!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by Solver objects. This ordering
-//!   is in start contrast with "as-in-file" ordering, which is the ordering of
-//!   the mesh nodes as it is stored in the file from which the mesh is read in.
-//!   The as-in-file ordering is highly non-contiguous across the distributed
-//!   problem.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -121,8 +107,21 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
     }
   }
 
-  // Send off global row IDs to linear system solver
-  //m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
+  // Allocate communication buffers for LHS, ICs, RHS, mass diffusion RHS
+  auto np = m_u.nprop();
+  auto nb = d->Bid().size();
+  m_lhsc.resize( nb );
+  for (auto& b : m_lhsc) b.resize( np );
+  m_rhsc.resize( nb );
+  for (auto& b : m_rhsc) b.resize( np );
+  m_difc.resize( nb );
+  for (auto& b : m_difc) b.resize( np );
+
+  // Zero communication buffers for setup (LHS, ICs)
+  for (auto& b : m_lhsc) std::fill( begin(b), end(b), 0.0 );
+
+  // Signal the runtime system that the workers have been created
+  solver.ckLocalBranch()->created();
 }
 
 void
@@ -134,8 +133,6 @@ DiagCG::setup( tk::real v )
 {
   auto d = Disc();
 
-  m_solver.ckLocalBranch()->comfinal();
-
   // Store total mesh volume
   m_vol = v;
   // Output chare mesh to file
@@ -146,21 +143,92 @@ DiagCG::setup( tk::real v )
   // Compute left-hand side of PDEs
   lhs();
 
-  // zero initial solution vector
-  m_du.fill( 0.0 );
-
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes)
     eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
 
-  // Send off initial guess for assembly
-  m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );
+  // Activate SDAG waits for setup
+  wait4setup();
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
+}
 
-  // Start time stepping
-  contribute( CkCallback( CkReductionTarget(Transporter,start), d->Tr()) );
+void
+DiagCG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Combine own and communicated contributions to LHS and ICs
+  for (const auto& b : d->Bid()) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    const auto& blhsc = m_lhsc[ b.second ];
+    for (ncomp_t c=0; c<m_lhs.nprop(); ++c) m_lhs(lid,c,0) += blhsc[c];
+  }
+
+  // Zero communication buffers for first time step (rhs, mass diffusion rhs)
+  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+
+  dt();
+}
+
+void
+DiagCG::lhs()
+// *****************************************************************************
+// Compute the left-hand side of transport equations
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute lumped mass lhs required for both high and low order solutions
+  m_lhs = d->FCT()->lump( *d );
+
+  if (d->Msum().empty())
+    comlhs_complete();
+  else // send contributions of lhs to chare-boundary nodes to fellow chares
+    for (const auto& n : d->Msum()) {
+      std::vector< std::vector< tk::real > > l;
+      for (auto i : n.second) l.push_back( m_lhs[ tk::cref_find(d->Lid(),i) ] );
+      thisProxy[ n.first ].comlhs( n.second, l );
+    }
+
+  ownlhs_complete();
+}
+
+void
+DiagCG::comlhs( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& L )
+// *****************************************************************************
+//  Receive contributions to left-hand side diagonal matrix on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive LHS contributions
+//! \param[in] L Partial contributions of LHS to chare-boundary nodes
+//! \details This function receives contributions to m_lhs, which stores the
+//!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
+//!   own contributions, m_lhsc collects the neighbor chare contributions during
+//!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
+//!   are combined in start().
+// *****************************************************************************
+{
+  Assert( L.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  auto d = Disc();
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
+    Assert( bid < m_lhsc.size(), "Indexing out of bounds" );
+    m_lhsc[ bid ] += L[i];
+  }
+
+  if (++m_nlhs == d->Msum().size()) {
+    m_nlhs = 0;
+    comlhs_complete();
+  }
 }
 
 void
@@ -201,65 +269,108 @@ DiagCG::dt()
 }
 
 void
-DiagCG::lhs()
-// *****************************************************************************
-// Compute left-hand side of transport equations
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Compute left-hand side matrix for all equations
-  for (const auto& eq : g_pdes)
-    eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
-
-  // Send off left hand side for assembly
-  m_solver.ckLocalBranch()->
-    charelhs( thisIndex, d->Gid(), d->Psup(), m_lhsd, m_lhso );
-
-  // Compute lumped mass lhs required for the low order solution
-  auto lump = m_fluxcorrector.lump( d->Coord(), d->Inpoel() );
-  // Send off lumped mass lhs for assembly
-  m_solver.ckLocalBranch()->charelowlhs( thisIndex, d->Gid(), lump );
-}
-
-void
 DiagCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
 // *****************************************************************************
 {
-  // Initialize FCT data structures for new time step
-  m_p.fill( 0.0 );
-  m_a.fill( 0.0 );
-  for (std::size_t p=0; p<m_u.nunk(); ++p)
-    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
-      m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
-      m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
-    }
-
-  for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
-  for (auto& b : m_qc)
-    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      b[c*2+0] = -std::numeric_limits< tk::real >::max();
-      b[c*2+1] = std::numeric_limits< tk::real >::max();
-    }
-
   auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
-  tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
   for (const auto& eq : g_pdes)
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, r );
+    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
+
   // Query Dirichlet BCs and send to linear system solver
   bc();
-  // Send off right-hand sides for assembly
-  m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
+
+  if (d->Msum().empty())
+    comrhs_complete();
+  else // send contributions of rhs to chare-boundary nodes to fellow chares
+    for (const auto& n : d->Msum()) {
+      std::vector< std::vector< tk::real > > r;
+      for (auto i : n.second) r.push_back( m_rhs[ tk::cref_find(d->Lid(),i) ] );
+      thisProxy[ n.first ].comrhs( n.second, r );
+    }
+
+  ownrhs_complete();
 
   // Compute mass diffusion rhs contribution required for the low order solution
-  auto diff = m_fluxcorrector.diff( d->Coord(), d->Inpoel(), m_u );
-  // Send off mass diffusion rhs contribution for assembly
-  m_solver.ckLocalBranch()->charelowrhs( thisIndex, d->Gid(), diff );
+  m_dif = d->FCT()->diff( *d, m_u );
+
+  if (d->Msum().empty())
+    comdif_complete();
+  else // send contributions of diff to chare-boundary nodes to fellow chares
+    for (const auto& n : d->Msum()) {
+      std::vector< std::vector< tk::real > > D;
+      for (auto i : n.second) D.push_back( m_dif[ tk::cref_find(d->Lid(),i) ] );
+      thisProxy[ n.first ].comdif( n.second, D );
+    }
+
+  owndif_complete();
+}
+
+void
+DiagCG::comrhs( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& R )
+// *****************************************************************************
+//  Receive contributions to right-hand side vector on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
+//! \param[in] R Partial contributions of RHS to chare-boundary nodes
+//! \details This function receives contributions to m_rhs, which stores the
+//!   right hand side vector at mesh nodes. While m_rhs stores own
+//!   contributions, m_rhsc collects the neighbor chare contributions during
+//!   communication. This way work on m_rhs and m_rhsc is overlapped. The two
+//!   are combined in solve().
+// *****************************************************************************
+{
+  Assert( R.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  auto d = Disc();
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
+    Assert( bid < m_rhsc.size(), "Indexing out of bounds" );
+    m_rhsc[ bid ] += R[i];
+  }
+
+  if (++m_nrhs == d->Msum().size()) {
+    m_nrhs = 0;
+    comrhs_complete();
+  }
+}
+
+void
+DiagCG::comdif( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& D )
+// *****************************************************************************
+//  Receive contributions to right-hand side mass diffusion on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive ontributions
+//! \param[in] D Partial contributions to chare-boundary nodes
+//! \details This function receives contributions to m_dif, which stores the
+//!   mass diffusion right hand side vector at mesh nodes. While m_dif stores
+//!   own contributions, m_difc collects the neighbor chare contributions during
+//!   communication. This way work on m_dif and m_difc is overlapped. The two
+//!   are combined in solve().
+// *****************************************************************************
+{
+  Assert( D.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  auto d = Disc();
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto bid = tk::cref_find( d->Bid(), gid[i] );
+    Assert( bid < m_difc.size(), "Indexing out of bounds" );
+    m_difc[ bid ] += D[i];
+  }
+
+  if (++m_ndif == d->Msum().size()) {
+    m_ndif = 0;
+    comdif_complete();
+  }
 }
 
 void
@@ -365,292 +476,57 @@ DiagCG::bc()
 }
 
 void
-DiagCG::aec()
+DiagCG::solve()
 // *****************************************************************************
-//  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-//! \details This function computes and starts communicating m_p, which stores
-//!    the sum of all positive (negative) antidiffusive element contributions to
-//!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
+//  Solve low and high order diagonal systems
 // *****************************************************************************
 {
-  auto d = Disc();
-
-  // Compute and sum antidiffusive element contributions to mesh nodes. Note
-  // that the sums are complete on nodes that are not shared with other chares
-  // and only partial sums on chare-boundary nodes.
-  auto& dbc = m_solver.ckLocalBranch()->dirbc();
-  m_fluxcorrector.aec( d->Coord(), d->Inpoel(), d->Vol(), dbc, d->Gid(), m_du,
-                       m_u, m_p );
-
-  if (d->Msum().empty())
-    comaec_complete();
-  else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > p;
-      for (auto i : n.second) p.push_back( m_p[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comaec( n.second, p );
-    }
-
-  ownaec_complete();
-  #ifndef NDEBUG
-  ownaec_complete();
-  #endif
-}
-
-void
-DiagCG::comaec( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& P )
-// *****************************************************************************
-//  Receive sums of antidiffusive element contributions on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive AEC contributions
-//! \param[in] P Partial sums of positive (negative) antidiffusive element
-//!   contributions to chare-boundary nodes
-//! \details This function receives contributions to m_p, which stores the
-//!   sum of all positive (negative) antidiffusive element contributions to
-//!   nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec(). While m_p stores
-//!   own contributions, m_pc collects the neighbor chare contributions during
-//!   communication. This way work on m_p and m_pc is overlapped. The two are
-//!   combined in lim().
-// *****************************************************************************
-{
-  Assert( P.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
+  const auto ncomp = m_rhs.nprop();
+  const auto& dirbc = m_solver.ckLocalBranch()->dirbc();
 
   auto d = Disc();
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_pc.size(), "Indexing out of bounds" );
-    m_pc[ bid ] += P[i];
-  }
-
-  if (++m_naec == d->Msum().size()) {
-    m_naec = 0;
-    comaec_complete();
-  }
-}
-
-void
-DiagCG::alw()
-// *****************************************************************************
-//  Compute the maximum and minimum unknowns of elements surrounding nodes
-//! \details This function computes and starts communicating m_q, which stores
-//!    the maximum and mimimum unknowns of all elements surrounding each node
-//!    (Lohner: u^{max,min}_i), see also FluxCorrector::alw().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Compute the maximum and minimum unknowns of all elements surrounding nodes
-  // Note that the maximum and minimum unknowns are complete on nodes that are
-  // not shared with other chares and only partially complete on chare-boundary
-  // nodes.
-  m_fluxcorrector.alw( d->Inpoel(), m_u, m_ul, m_q );
-
-  if (d->Msum().empty())
-    comalw_complete();
-  else // send contributions at chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > q;
-      for (auto i : n.second) q.push_back( m_q[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comalw( n.second, q );
-    }
-
-  ownalw_complete();
-  #ifndef NDEBUG
-  ownalw_complete();
-  #endif
-}
-
-void
-DiagCG::comalw( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& Q )
-// *****************************************************************************
-// Receive contributions to the maxima and minima of unknowns of all elements
-// surrounding mesh nodes on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive contributions
-//! \param[in] Q Partial contributions to maximum and minimum unknowns of all
-//!   elements surrounding nodes to chare-boundary nodes
-//! \details This function receives contributions to m_q, which stores the
-//!   maximum and mimimum unknowns of all elements surrounding each node
-//!   (Lohner: u^{max,min}_i), see also FluxCorrector::alw(). While m_q stores
-//!   own contributions, m_qc collects the neighbor chare contributions during
-//!   communication. This way work on m_q and m_qc is overlapped. The two are
-//!   combined in lim().
-// *****************************************************************************
-{
-  Assert( Q.size() == gid.size(), "Size mismatch" );
-
-  auto d = Disc();
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_qc.size(), "Indexing out of bounds" );
-    auto& o = m_qc[ bid ];
-    const auto& q = Q[i];
-    for (ncomp_t c=0; c<m_u.nprop(); ++c) {
-      if (q[c*2+0] > o[c*2+0]) o[c*2+0] = q[c*2+0];
-      if (q[c*2+1] < o[c*2+1]) o[c*2+1] = q[c*2+1];
-    }
-  }
-
-  if (++m_nalw == d->Msum().size()) {
-    m_nalw = 0;
-    comalw_complete();
-  }
-}
-
-void
-DiagCG::lim()
-// *****************************************************************************
-//  Compute the limited antidiffusive element contributions
-//! \details This function computes and starts communicating m_a, which stores
-//!   the limited antidiffusive element contributions assembled to nodes
-//!   (Lohner: AEC^c), see also FluxCorrector::limit().
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Combine own and communicated contributions to P and Q
+  // Combine own and communicated contributions to rhs and mass diffusion
   for (const auto& b : d->Bid()) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    const auto& bpc = m_pc[ b.second ];
-    const auto& bqc = m_qc[ b.second ];
-    for (ncomp_t c=0; c<m_p.nprop()/2; ++c) {
-      m_p(lid,c*2+0,0) += bpc[c*2+0];
-      m_p(lid,c*2+1,0) += bpc[c*2+1];
-      if (bqc[c*2+0] > m_q(lid,c*2+0,0)) m_q(lid,c*2+0,0) = bqc[c*2+0];
-      if (bqc[c*2+1] < m_q(lid,c*2+1,0)) m_q(lid,c*2+1,0) = bqc[c*2+1];
+    const auto& brhsc = m_rhsc[ b.second ];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += brhsc[c];
+    const auto& bdifc = m_difc[ b.second ];
+    for (ncomp_t c=0; c<ncomp; ++c) m_dif(lid,c,0) += bdifc[c];
+  }
+
+  // Zero communication buffers for next time step (rhs, mass diffusion rhs)
+  for (auto& b : m_rhsc) std::fill( begin(b), end(b), 0.0 );
+  for (auto& b : m_difc) std::fill( begin(b), end(b), 0.0 );
+
+  // Set Dirichlet BCs for lhs and both low and high order rhs vectors. Note
+  // that the low order rhs (more prcisely the mass-diffusion term) is set to
+  // zero instead of the solution increment at Dirichlet BCs, because for the
+  // low order solution the right hand side is the sum of the high order right
+  // hand side and mass diffusion so the low order system is L = R + D, where L
+  // is the lumped mass matrix, R is the high order RHS, and D is
+  // mass diffusion, and R already will have the Dirichlet BC set.
+  for (const auto& n : dirbc) {
+    auto b = d->Lid().find( n.first );
+    if (b != end(d->Lid())) {
+      auto id = b->second;
+      for (ncomp_t c=0; c<ncomp; ++c)
+        if (n.second[c].first) {
+          m_lhs( id, c, 0 ) = 1.0;
+          m_rhs( id, c, 0 ) = n.second[c].second;
+          m_dif( id, c, 0 ) = 0.0;
+        }
     }
   }
 
-  m_fluxcorrector.lim( d->Inpoel(), m_p, m_ul, m_q, m_a );
+  // Solve low and high order diagonal systems and update low order solution
+  m_dul = (m_rhs + m_dif) / m_lhs;
+  m_ul = m_u + m_dul;
+  m_du = m_rhs / m_lhs;
 
-  if (d->Msum().empty())
-    comlim_complete();
-  else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > a;
-      for (auto i : n.second) a.push_back( m_a[ tk::cref_find(d->Lid(),i) ] );
-      thisProxy[ n.first ].comlim( n.second, a );
-    }
-
-  ownlim_complete();
-}
-
-void
-DiagCG::comlim( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& A )
-// *****************************************************************************
-//  Receive contributions of limited antidiffusive element contributions on
-//  chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive contributions
-//! \param[in] A Partial contributions to antidiffusive element contributions to
-//!   chare-boundary nodes
-//! \details This function receives contributions to m_a, which stores the
-//!   limited antidiffusive element contributions assembled to nodes (Lohner:
-//!   AEC^c), see also FluxCorrector::limit(). While m_a stores own
-//!   contributions, m_ac collects the neighbor chare contributions during
-//!   communication. This way work on m_a and m_ac is overlapped. The two are
-//!   combined in apply().
-// *****************************************************************************
-{
-  Assert( A.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = Disc();
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( d->Bid(), gid[i] );
-    Assert( bid < m_ac.size(), "Indexing out of bounds" );
-    m_ac[ bid ] += A[i];
-  }
- 
-  if (++m_nlim == d->Msum().size()) {
-    m_nlim = 0;
-    comlim_complete();
-  }
-}
-
-void
-DiagCG::updateLowSol( const std::vector< std::size_t >& gid,
-                      const std::vector< tk::real >& du )
-// *****************************************************************************
-// Update low order solution vector
-//! \param[in] gid Global row indices of the vector updated
-//! \param[in] du Portion of the unknown/solution vector update
-// *****************************************************************************
-{
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
-  Assert( gid.size() * ncomp == du.size(),
-          "Size of row ID vector times the number of scalar components and the "
-          "size of the low order solution vector must equal" );
-
-  auto d = Disc();
-
-  // Receive update of solution vector
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto id = tk::cref_find( d->Lid(), gid[i] );
-    for (ncomp_t c=0; c<ncomp; ++c) m_dul( id, c, 0 ) = du[ i*ncomp+c ];
-  }
-
-  // Count number of solution nodes updated
-  m_nlsol += gid.size();
-
-  // If all contributions we own have been received, continue by updating a
-  // different solution vector
-  if (m_nlsol == d->Gid().size()) {
-    m_nlsol = 0;
-    m_ul = m_u + m_dul;
-    alw();
-  }
-}
-
-void
-DiagCG::updateSol( const std::vector< std::size_t >& gid,
-                   const std::vector< tk::real >& du )
-// *****************************************************************************
-// Update high order solution vector
-//! \param[in] gid Global row indices of the vector updated
-//! \param[in] du Portion of the unknown/solution vector update
-// *****************************************************************************
-{
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
-  Assert( gid.size() * ncomp == du.size(),
-          "Size of row ID vector times the number of scalar components and the "
-          "size of the high order solution vector must equal" );
-
-  auto d = Disc();
-
-  // Receive update of solution vector
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto id = tk::cref_find( d->Lid(), gid[i] );
-    for (ncomp_t c=0; c<ncomp; ++c) m_du( id, c, 0 ) = du[ i*ncomp+c ];
-  }
-
-  // Count number of solution nodes updated
-  m_nhsol += gid.size();
-
-  // If all contributions we own have been received, continue by updating a
-  // different solution vector
-  if (m_nhsol == d->Gid().size()) {
-    m_nhsol = 0;
-    aec();
-  }
-}
-
-void
-DiagCG::verify()
-// *****************************************************************************
-// Verify antidiffusive element contributions up to linear solver convergence
-// *****************************************************************************
-{
-//   auto d = Disc();
-// 
-//   if (m_fluxcorrector.verify( d->Nchare(), d->Inpoel(), m_du, m_dul ))
-//     contribute( CkCallback( CkReductionTarget(Transporter,verified), d->Tr()) );
+  // Continue with FCT
+  d->FCT()->aec( *d, m_du, m_u, dirbc );
+  d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
 }
 
 void
@@ -836,34 +712,6 @@ DiagCG::out()
 }
 
 void
-DiagCG::apply()
-// *****************************************************************************
-// Apply limited antidiffusive element contributions
-// *****************************************************************************
-{
-//   auto d = Disc();
-// 
-//   // Combine own and communicated contributions to A
-//   for (const auto& b : d->Bid()) {
-//     auto lid = tk::cref_find( d->Lid(), b.first );
-//     const auto& bac = m_ac[ b.second ];
-//     for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
-//   }
-// 
-//   // Verify that solution values do not change at Dirichlet BC nodes
-//   Assert( correctBC(), "Dirichlet boundary condition incorrect" );
-// 
-//   // Apply limited antidiffusive element contributions to low order solution
-//   if (g_inputdeck.get< tag::discr, tag::fct >())
-//     m_u = m_ul + m_a;
-//   else
-//     m_u = m_u + m_du;
-// 
-//   // Prepare for next time step
-//   next();
-}
-
-void
 DiagCG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
@@ -875,12 +723,11 @@ DiagCG::advance( tk::real newdt )
   // Set new time step size
   d->setdt( newdt );
 
-  // Activate SDAG-waits
-  #ifndef NDEBUG
-  wait4ver();
-  #endif
-  wait4fct();
-  wait4app();
+  // Activate SDAG-waits for FCT
+  d->FCT()->next();
+
+  // Actiavate SDAG waits for time step
+  wait4rhs();
 
   // Compute rhs for next time step
   rhs();
@@ -910,29 +757,13 @@ DiagCG::next( const tk::Fields& a )
   // Output one-liner status report
   d->status();
 
-//     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
-//     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//     if (thisIndex == 2 && CkMyPe() == 2) {
-//       /*int j;
-//       for (int i; i < 50*std::pow(thisIndex,4); i++) {
-//         j = i*thisIndex;
-//       }*/
-//       CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//       migrateMe(1);
-//    }
-//    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm DiagCG chare %d on PE %d\n",thisIndex,CkMyPe());
-//      migrateMe(2);
-//    }
-
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep)
-    contribute(CkCallback( CkReductionTarget(Transporter,next), d->Tr()) );
+    dt();
   else
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }

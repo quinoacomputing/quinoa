@@ -70,19 +70,8 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
-//! \param[in] transporter Host (Transporter) proxy
 //! \param[in] disc Discretization proxy
 //! \param[in] solver Linear system solver (Solver) proxy
-//! \param[in] filenodes Map associating old node IDs (as in file) to new node
-//!   IDs (as in producing contiguous-row-id linear system contributions)
-//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
-//!   (which corresponds to rows in the linear system) are (approximately)
-//!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by Solver objects. This ordering
-//!   is in start contrast with "as-in-file" ordering, which is the ordering of
-//!   the mesh nodes as it is stored in the file from which the mesh is read in.
-//!   The as-in-file ordering is highly non-contiguous across the distributed
-//!   problem.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -226,8 +215,10 @@ MatCG::rhs()
   tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
   for (const auto& eq : g_pdes)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, r );
+
   // Query Dirichlet BCs and send to linear system solver
   bc();
+
   // Send off right-hand sides for assembly
   m_solver.ckLocalBranch()->charerhs( thisIndex, d->Gid(), r );
 

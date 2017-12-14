@@ -8,10 +8,10 @@
     (using linear shapefunctions on tetrahedron elements) combined with a time
     stepping scheme that is equivalent to the Lax-Wendroff (LW) scheme within
     the unstructured-mesh FE context and treats discontinuities with
-    flux-corrected transport (FCT). Only the diagonal entries of the left-hand
-    side matrix are non-zero thus it does not need a mtrix-based linear solver.
+    flux-corrected transport (FCT). The left-hand side (lumped-mass) matrix
+    is diagonal thus this scheme does not use a matrix-based linear solver.
 
-    There are a potentially large number of CG Charm++ chares created by
+    There are a potentially large number of DiagCG Charm++ chares created by
     Transporter. Each DiagCG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
@@ -35,60 +35,36 @@
     digraph "DiagCG SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Upd [ label="Upd" tooltip="update solution"
-                 style="solid"
-                URL="\ref tk::Solver::updateSol"];
-      LowUpd [ label="LowUpd" tooltip="update low-order solution"
-               style="solid"
-               URL="\ref tk::Solver::updateLowol"];
-      OwnAEC [ label="OwnAEC"
-               tooltip="own contributions to the antidiffusive element
-                        contributions computed"
-               URL="\ref inciter::DiagCG::aec"];
-      ComAEC [ label="ComAEC"
-               tooltip="contributions to the antidiffusive element contributions
+      OwnLhs [ label="OwnLhs"
+               tooltip="own contributions to the left hand side lumped-mass
+                        matrix computed"
+               URL="\ref inciter::DiagCG::lhs"];
+      ComLhs [ label="ComLhs"
+               tooltip="contributions to the left hand side lumped-mass matrix
                         communicated"
-               URL="\ref inciter::DiagCG::comaec"];
-      OwnALW [ label="OwnALW"
-               tooltip="own contributions to the maximum and minimum unknowns of
-                        elements surrounding nodes computed"
-               URL="\ref inciter::DiagCG::alw"];
-      ComALW [ label="ComALW"
-               tooltip="contributions to the the maximum and minimum unknowns of
-                        elements surrounding nodes communicated"
-               URL="\ref inciter::DiagCG::comalw"];
-      Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
-            URL="\ref inciter::DiagCG::verify"];
-      OwnLim [ label="OwnLim"
-               tooltip="compute limited antidiffusive element contributions"
-               URL="\ref inciter::DiagCG::lim"];
-      ComLim [ label="ComLim"
-               tooltip="contributions to the limited antidiffusive element
-                        contributions communicated"
-               URL="\ref inciter::DiagCG::comlim"];
-      Apply [ label="Apply"
-              tooltip="apply limited antidiffusive element contributions"
-              URL="\ref inciter::DiagCG::limit"];
-      s_next [ label="Solver::next"
-              tooltip="prepare for next time step"
-              URL="\ref tk::Solver::next"];
-      OwnAEC -> Ver [ style="dashed" ];
-      OwnALW -> Ver [ style="dashed" ];
-      Upd -> OwnAEC [ style="solid" ];
-      Upd -> ComEC [ style="solid" ];
-      LowUpd -> OwnALW [ style="solid" ];
-      LowUpd -> ComALW [ style="solid" ];
-      OwnAEC -> OwnLim [ style="solid" ];
-      ComAEC -> OwnLim [ style="solid" ];
-      OwnALW -> OwnLim [ style="solid" ];
-      ComALW -> OwnLim [ style="solid" ];
-      OwnAEC -> ComLim [ style="solid" ];
-      ComAEC -> ComLim [ style="solid" ];
-      OwnALW -> ComLim [ style="solid" ];
-      ComALW -> ComLim [ style="solid" ];
-      OwnLim -> Apply [ style="solid" ];
-      ComLim -> Apply [ style="solid" ];
-      Apply -> s_next [ style="solid" ];
+               URL="\ref inciter::DiagCG::comlhs"];
+      OwnRhs [ label="OwnRhs"
+               tooltip="own contributions to the right hand side computed"
+               URL="\ref inciter::DiagCG::rhs"];
+      ComRhs [ label="ComRhs"
+               tooltip="contributions to the right hand side communicated"
+               URL="\ref inciter::DiagCG::comrhs"];
+      OwnDif [ label="OwnDif"
+               tooltip="own contributions to the mass diffusion rhs computed"
+               URL="\ref inciter::DiagCG::rhs"];
+      ComDif [ label="ComDif"
+               tooltip="contributions to the mass diffusion rhs communicated"
+               URL="\ref inciter::DiagCG::comdif"];
+      Start [ label="Ver" tooltip="start time stepping"
+              URL="\ref inciter::DiagCG::start"];
+      Solve [ label="Ver" tooltip="solve diagonal systems"
+              URL="\ref inciter::DiagCG::solve"];
+      OwnLhs -> Start [ style="solid" ];
+      ComLhs -> Start [ style="solid" ];
+      OwnRhs -> Solve [ style="solid" ];
+      ComRhs -> Solve [ style="solid" ];
+      OwnDif -> Solve [ style="solid" ];
+      ComDif -> Solve [ style="solid" ];
     }
     \enddot
     \include Inciter/diagcg.ci
@@ -176,36 +152,19 @@ class DiagCG : public CBase_DiagCG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
-    //! Request owned node IDs on which a Dirichlet BC is set by the user
-    void requestBCs();
+    //! Receive contributions to left-hand side matrix on chare-boundaries
+    void comlhs( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& L );
 
-    //! Look up and return old node ID for new one
-    void oldID( int frompe, const std::vector< std::size_t >& newids );
+    //! Receive contributions to right-hand side vector on chare-boundaries
+    void comrhs( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& R );
 
-    //! Update high order solution vector
-    void updateSol( //solMsg* m );
-                    const std::vector< std::size_t >& gid,
-                    const std::vector< tk::real >& sol );
+    //!  Receive contributions to RHS mass diffusion on chare-boundaries
+    void comdif( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& D );
 
-    //! Update low order solution vector
-    void updateLowSol( //solMsg* m );
-                       const std::vector< std::size_t >& gid,
-                       const std::vector< tk::real >& sol );
-
-    //! Receive sums of antidiffusive element contributions on chare-boundaries
-    void comaec( const std::vector< std::size_t >& gid,
-                 const std::vector< std::vector< tk::real > >& P );
-
-    //! \brief Receive contributions to the maxima and minima of unknowns of all
-    //!   elements surrounding mesh nodes on chare-boundaries
-    void comalw( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& Q );
-
-    //! \brief Receive contributions of limited antidiffusive element
-    //!   contributions on chare-boundaries
-    void comlim( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& A );
-
+    //! Prepare for next step
     //! Prepare for next step
     void next( const tk::Fields& a );
 
@@ -218,27 +177,24 @@ class DiagCG : public CBase_DiagCG {
     void pup( PUP::er &p ) {
       CBase_DiagCG::pup(p);
       p | m_itf;
-      p | m_nhsol;
-      p | m_nlsol;
-      p | m_naec;
-      p | m_nalw;
-      p | m_nlim;
+      p | m_nsol;
+      p | m_nlhs;
+      p | m_nrhs;
+      p | m_ndif;
       p | m_disc;
       p | m_solver;
-      p | m_fluxcorrector;
+      p | m_side;
       p | m_u;
       p | m_ul;
       p | m_du;
       p | m_dul;
       p | m_ue;
-      p | m_p;
-      p | m_q;
-      p | m_a;
-      p | m_lhsd;
-      p | m_lhso;
-      p | m_pc;
-      p | m_qc;
-      p | m_ac;
+      p | m_lhs;
+      p | m_rhs;
+      p | m_dif;
+      p | m_lhsc;
+      p | m_rhsc;
+      p | m_difc;
       p | m_vol;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -252,19 +208,14 @@ class DiagCG : public CBase_DiagCG {
 
     //! Field output iteration count
     uint64_t m_itf;
-    //! Counter for high order solution nodes updated
-    std::size_t m_nhsol;
-    //! Counter for low order solution nodes updated
-    std::size_t m_nlsol;
-    //! \brief Number of chares from which we received antidiffusive element
-    //!   contributions on chare boundaries
-    std::size_t m_naec;
-    //! \brief Number of chares from which we received maximum and minimum
-    //!   unknowns of elements surrounding nodes on chare boundaries
-    std::size_t m_nalw;
-    //! \brief Number of chares from which we received limited antidiffusion
-    //!   element contributiones on chare boundaries
-    std::size_t m_nlim;
+    //! Counter for high order solution vector nodes updated
+    std::size_t m_nsol;
+    //! Counter for left-hand side matrix (vector) nodes updated
+    std::size_t m_nlhs;
+    //! Counter for right-hand side vector nodes updated
+    std::size_t m_nrhs;
+    //! Counter for right-hand side masss-diffusion vector nodes updated
+    std::size_t m_ndif;
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy
@@ -272,8 +223,6 @@ class DiagCG : public CBase_DiagCG {
     //! \brief Map associating local node IDs to side set IDs for all side sets
     //!   read from mesh file (not only those the user sets BCs on)
     std::map< int, std::vector< std::size_t > > m_side;
-    //! Flux corrector performing FCT
-    FluxCorrector m_fluxcorrector;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
@@ -284,12 +233,14 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_dul;
     //! Unknown/solution vector at mesh cells
     tk::Fields m_ue;
-    //! Flux-corrected transport data structures
-    tk::Fields m_p, m_q, m_a;
-    //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
-    tk::Fields m_lhsd, m_lhso;
-    //! Receive buffers for FCT
-    std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
+    //! Lumped lhs mass matrix
+    tk::Fields m_lhs;
+    //! Right-hand side vector (for the high order system)
+    tk::Fields m_rhs;
+    //! Mass diffusion right-hand side vector (for the low order system)
+    tk::Fields m_dif;
+    //! Receive buffers for communication
+    std::vector< std::vector< tk::real > > m_lhsc, m_rhsc, m_difc;
     //! Total mesh volume
     tk::real m_vol;
 
@@ -318,22 +269,11 @@ class DiagCG : public CBase_DiagCG {
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
-    //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec();
+    //! Start time stepping
+    void start();
 
-    //! \brief Compute the maximum and minimum unknowns of all elements
-    //!   surrounding nodes
-    void alw();
-
-    //! \brief Verify antidiffusive element contributions up to linear solver
-    //!   convergence
-    void verify();
-
-    //! Compute the limited antidiffusive element contributions
-    void lim();
-
-    //! Apply limited antidiffusive element contributions
-    void apply();
+    //! Solve low and high order diagonal systems
+    void solve();
 };
 
 } // inciter::

@@ -1148,9 +1148,11 @@ Solver::lowsolve()
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) l[i] = 1.0;
       // rhs (set to zero instead of the solution increment at Dirichlet
-      // BCs, because for the low order solution we solve for L = R + D,
-      // where L is the lumped mass matrix, R is the high order RHS, and D
-      // is mass diffusion, and R already has the Dirichlet BC set)
+      // BCs, because for the low order solution the right hand side is the sum
+      // of the high order right hand side and mass diffusion, so the low order
+      // system is L = R + D, where L is the lumped mass matrix, R is the high
+      // order RHS, and D is mass diffusion, and R already has the Dirichlet BC
+      // set)
       auto& r = tk::ref_find( m_lowrhs, n.first );
       for (std::size_t i=0; i<m_ncomp; ++i)
         if (n.second[i].first) r[i] = 0.0;
