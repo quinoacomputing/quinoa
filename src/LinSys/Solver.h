@@ -406,9 +406,10 @@ class Solver : public CBase_Solver {
     //! \brief Part of solution vector owned by my PE
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row IDs. The map-value is a pair of vectors,
-    //!   where the first one is the numerical and the second one is the
-    //!   analytical solution. If the analytical solution for a PDE is not
-    //!   defined, it is the initial condition.
+    //!   where the first one is the numerical, the second one is the
+    //!   analytical solution (each for all scalar components solved), and the
+    //!   third one is the nodal volume (only a single value). If the analytical
+    //!   solution for a PDE is not defined, it is the initial condition.
     //! \see charediag(), adddiag()
     std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
