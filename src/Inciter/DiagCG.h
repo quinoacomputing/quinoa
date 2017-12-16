@@ -73,15 +73,9 @@
 #ifndef DiagCG_h
 #define DiagCG_h
 
-#include <cstddef>
-#include <iosfwd>
-#include <utility>
 #include <vector>
-#include <cstring>
-#include <cmath>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
-#include <set>
 
 #include "QuinoaConfig.h"
 #include "Types.h"
@@ -89,6 +83,7 @@
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
+#include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/diagcg.decl.h"
@@ -138,10 +133,13 @@ class DiagCG : public CBase_DiagCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit DiagCG( CkMigrateMessage* ) {}
+    explicit DiagCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
+
+    //! Configure Charm++ custom reduction types initiated from this chare array
+    static void registerReducers();
 
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
@@ -196,6 +194,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_rhsc;
       p | m_difc;
       p | m_vol;
+      p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -243,6 +242,8 @@ class DiagCG : public CBase_DiagCG {
     std::vector< std::vector< tk::real > > m_lhsc, m_rhsc, m_difc;
     //! Total mesh volume
     tk::real m_vol;
+    //! Diagnostics object
+    Diagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -252,9 +253,6 @@ class DiagCG : public CBase_DiagCG {
 
     //! Output mesh and particle fields to files
     void out();
-
-    //! Compute diagnostics, e.g., residuals
-    void diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

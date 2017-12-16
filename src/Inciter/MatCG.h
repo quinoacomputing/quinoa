@@ -26,15 +26,9 @@
 #ifndef MatCG_h
 #define MatCG_h
 
-#include <cstddef>
-#include <iosfwd>
-#include <utility>
 #include <vector>
-#include <cstring>
-#include <cmath>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
-#include <set>
 
 #include "QuinoaConfig.h"
 #include "Types.h"
@@ -42,6 +36,7 @@
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
+#include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/matcg.decl.h"
@@ -68,10 +63,13 @@ class MatCG : public CBase_MatCG {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit MatCG( CkMigrateMessage* ) {}
+    explicit MatCG( CkMigrateMessage* ) : m_diag( *Disc() ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
+
+    //! Configure Charm++ custom reduction types initiated from this chare array
+    static void registerReducers();
 
     //! Setup: query boundary conditions, output mesh, etc.
     void setup( tk::real v );
@@ -116,6 +114,7 @@ class MatCG : public CBase_MatCG {
       p | m_lhsd;
       p | m_lhso;
       p | m_vol;
+      p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -153,6 +152,8 @@ class MatCG : public CBase_MatCG {
     tk::Fields m_lhsd, m_lhso;
     //! Total mesh volume
     tk::real m_vol;
+    //! Diagnostics object
+    Diagnostics m_diag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -162,9 +163,6 @@ class MatCG : public CBase_MatCG {
 
     //! Output mesh and particle fields to files
     void out();
-
-    //! Compute diagnostics, e.g., residuals
-    void diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

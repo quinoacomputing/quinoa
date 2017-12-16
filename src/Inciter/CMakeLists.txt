@@ -14,6 +14,8 @@ add_library(Inciter
             DG.C
             FluxCorrector.C
             DistFCT.C
+            DiagReducer.C
+            Diagnostics.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C

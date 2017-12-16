@@ -620,7 +620,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   for (std::size_t i=0; i<d[0].size(); ++i)
     diag[i] = sqrt( d[0][i] / m_V );
   
-  // Query user-requested error types to be computed
+  // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
 
   decltype(ncomp) n = 0;

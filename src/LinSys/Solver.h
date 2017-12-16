@@ -380,10 +380,6 @@ class Solver : public CBase_Solver {
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order lhs vector
     std::map< int, std::vector< std::size_t > > m_lowlhsimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the solution/unknown vector for
-    //!   computing diagnostics, e.g., residuals
-    std::map< int, std::vector< std::size_t > > m_diagimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my PE
@@ -409,15 +405,6 @@ class Solver : public CBase_Solver {
     //!   to global mesh point row ids. This vector collects the nonzero values
     //!   of the low-order system lhs "matrix" solution.
     std::map< std::size_t, std::vector< tk::real > > m_lowlhs;
-    //! \brief Part of solution vector owned by my PE
-    //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row IDs. The map-value is a pair of vectors,
-    //!   where the first one is the numerical, the second one is the
-    //!   analytical solution (each for all scalar components solved), and the
-    //!   third one is the nodal volume (only a single value). If the analytical
-    //!   solution for a PDE is not defined, it is the initial condition.
-    //! \see charediag(), adddiag()
-    std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -473,10 +460,6 @@ class Solver : public CBase_Solver {
 
     //! Check if our portion of the matrix values is complete
     bool lhscomplete() const { return m_lhsimport == m_rowimport; }
-
-    //! \brief Check if our portion of the solution vector values (for
-    //!   diagnostics) is complete
-    bool diagcomplete() const { return m_diagimport == m_rowimport; }
 
     //! Check if our portion of the right-hand side vector values is complete
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }

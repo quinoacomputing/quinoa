@@ -14,12 +14,6 @@
 */
 // *****************************************************************************
 
-#include <string>
-#include <cmath>
-#include <array>
-#include <set>
-#include <algorithm>
-
 #include "QuinoaConfig.h"
 #include "DiagCG.h"
 #include "Solver.h"
@@ -35,6 +29,7 @@
 #include "PDE.h"
 #include "Discretization.h"
 #include "DistFCT.h"
+#include "DiagReducer.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -72,7 +67,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_lhsc(),
   m_rhsc(),
   m_difc(),
-  m_vol( 0.0 )
+  m_vol( 0.0 ),
+  m_diag( *Disc() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -122,6 +118,20 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
+}
+
+void
+DiagCG::registerReducers()
+// *****************************************************************************
+//  Configure Charm++ reduction types initiated from this chare array
+//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//!   routine exactly once on every logical node early on in the Charm++ init
+//!   sequence. Must be static as it is called without an object. See also:
+//!   Section "Initializations at Program Startup" at in the Charm++ manual
+//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+// *****************************************************************************
+{
+  Diagnostics::registerReducers();
 }
 
 void
@@ -529,57 +539,6 @@ DiagCG::solve()
   d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
 }
 
-void
-DiagCG::diagnostics()
-// *****************************************************************************
-// Compute diagnostics, e.g., residuals
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Optionally collect analytical solutions and send both the latest analytical
-  // and numerical solutions to Solver for computing and outputing diagnostics
-  if ( !(d->It() % g_inputdeck.get< tag::interval, tag::diag >()) ) {
-
-    // Collect analytical solutions (if available) from all PDEs. Note that
-    // calling the polymorphic PDE::initialize() is assumed to evaluate the
-    // analytical solution for a PDE. For those PDE problems that have
-    // analytical solutions, this is the same as used for setting the initial
-    // conditions, since if the analytical solution is available for a problem
-    // it is (so far anyway) always initialized to its analytical solution and
-    // that is done by calling PDE::initialize(). If the analytical solution is
-    // a function of time, that is already incorporated in setting initial
-    // conditions. For those PDEs where the analytical solution is not
-    // available, initialize() returns the initial conditions (obviously), and
-    // thus the "error", defined between this "analytical" and numerical
-    // solution will be a measure of the "distance" between the initial
-    // condition and the current numerical solution. This is not necessarily
-    // useful, but simplies the logic because all PDEs can be treated as being
-    // able to compute an error based on some "analytical" solution, which is
-    // really the initial condition.
-    auto a = m_u;
-    for (const auto& eq : g_pdes)
-      eq.initialize( d->Coord(), a, d->T()+d->Dt(), d->Gid() );
-
-    // Prepare for computing diagnostics. Diagnostics are defined as the L2 norm
-    // of a quantity, computed in mesh nodes, A, as ||A||_2 = sqrt[ sum_i(A_i)^2
-    // V_i ], where the sum is taken over all mesh nodes and V_i is the nodal
-    // volume. We send two sets of quantities to the host for aggregation across
-    // the whole mesh: (1) the numerical solutions of all components of all
-    // PDEs, and their error, defined as A_i = (a_i - n_i), where a_i and n_i
-    // are the analytical and numerical solutions at node i, respectively. We
-    // send these to Solver and the final aggregated solution will end up in
-    // Transporter::diagnostics(). from chares on a PE, all solution data are
-    // squared. Solver::diagnostics() is where the sums are computed, then the
-    // sums are summed accross the whole problem in Transporter::diagnostics(),
-    // where the final square-root of the L2 norm, defined above, is taken.
-
-    // Send both numerical and analytical solutions to solver
-    m_solver.ckLocalBranch()->charediag( thisIndex, d->It()+1, d->T()+d->Dt(),
-                                          d->Dt(), d->Gid(), m_u, a, d->V() );
-  }
-}
-
 bool
 DiagCG::correctBC( const tk::Fields& a )
 // *****************************************************************************
@@ -749,7 +708,7 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  diagnostics();
+  m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report

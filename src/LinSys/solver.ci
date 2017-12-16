@@ -46,9 +46,6 @@ module solver {
       entry void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry void adddiag( int fromch,
-                          std::map< std::size_t,
-                           std::vector< std::vector< tk::real > > >& solution );
       entry void comfinal();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

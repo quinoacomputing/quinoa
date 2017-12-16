@@ -24,6 +24,7 @@ module matcg {
     array [1D] MatCG {
       entry MatCG( const CProxy_Discretization& disc,
                    const tk::CProxy_Solver& solver );
+      initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();
       entry [reductiontarget] void advance( tk::real newdt );

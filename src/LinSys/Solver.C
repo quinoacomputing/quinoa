@@ -25,14 +25,12 @@
 #include "ContainerUtil.h"
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
-#include "DiagReducer.h"
 
 #include "Solver.h"
 
 namespace tk {
 
 static CkReduction::reducerType BCMapMerger;
-static CkReduction::reducerType DiagMerger;
 
 }
 
@@ -77,14 +75,12 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_rhsimport(),
   m_lowrhsimport(),
   m_lowlhsimport(),
-  m_diagimport(),
   m_row(),
   m_sol(),
   m_lhs(),
   m_rhs(),
   m_lowrhs(),
   m_lowlhs(),
-  m_diag(),
   m_x(),
   m_A(),
   m_b(),
@@ -132,7 +128,6 @@ Solver::registerReducers()
   BCMapMerger = CkReduction::addReducer(
                   tk::mergeHashMap< std::size_t,
                     std::vector< std::pair< bool, tk::real > > > );
-  DiagMerger = CkReduction::addReducer( tk::mergeDiag );
 }
 
 void
@@ -188,8 +183,6 @@ Solver::next()
   m_hypreRhs.clear();
   m_rhs.clear();
 
-  m_diagimport.clear();
-  m_diag.clear();
   m_bc.clear();
 
   lowlhs_complete();
@@ -668,83 +661,6 @@ Solver::addbc( CkReductionMsg* msg )
   bc_complete();  bc_complete();
 }
 
-void
-Solver::charediag( int fromch,
-                   uint64_t it,
-                   tk::real t,
-                   tk::real dt,
-                   const std::vector< std::size_t >& gid,
-                   const Fields& u,
-                   const Fields& a,
-                   const std::vector< tk::real >& v )
-// *****************************************************************************
-//  Chares contribute their numerical and analytical solutions nonzero values
-//  for computing diagnostics
-//! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] it Iteration count (number of time steps taken)
-//! \param[in] t Physical time
-//! \param[in] dt Physical time step size
-//! \param[in] gid Global row indices of the vector contributed
-//! \param[in] u Portion of the numerical unknown/solution vector
-//! \param[in] a Portion of the analytical solution vector
-//! \param[in] v Vector of nodal volumes
-//! \note This function does not have to be declared as a Charm++ entry
-//!   method since it is always called by chares on the same PE.
-// *****************************************************************************
-{
-  Assert( gid.size() == u.nunk(),
-          "Size of numerical solution and row ID vectors must equal" );
-
-  // Sore iteration count, physical time, and time step size
-  m_it = it;
-  m_t = t;
-  m_dt = dt;
-
-  // Store numerical and analytical solution vector nonzero values owned and
-  // pack those to be exported, also build import map used to test for
-  // completion
-  std::map< int, std::map< std::size_t,
-                   std::vector< std::vector< tk::real > > > > exp;
-
-  for (std::size_t i=0; i<gid.size(); ++i)
-    if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
-      m_diagimport[ fromch ].push_back( gid[i] );
-      updateDiag( gid[i], u[i], a[i], v[i] );
-    } else
-      exp[ pe(gid[i]) ][ gid[i] ] =
-        {{ u[i], a[i], std::vector<tk::real>(1,v[i]) }};
-
-  // Export non-owned vector values to fellow branches that own them
-  for (const auto& p : exp) {
-    auto tope = static_cast< int >( p.first );
-    thisProxy[ tope ].adddiag( fromch, p.second );
-  }
-
-  if (diagcomplete()) diagnostics();
-}
-
-void
-Solver::adddiag( int fromch,
-                 std::map< std::size_t,
-                   std::vector< std::vector< tk::real > > >& solution )
-// *****************************************************************************
-//  Receive numerical and analytical solution vector nonzeros from fellow group
-//  branches for computing diagnostics
-//! \param[in] fromch Charm chare array index contribution coming from
-//! \param[in] solution Portion of the solution vector contributed,
-//!   containing global row indices and values for all components of the
-//!   numerical and analytical solutions (if available)
-// *****************************************************************************
-{
-  for (auto&& r : solution) {
-    m_diagimport[ fromch ].push_back( r.first );
-    updateDiag( r.first, std::move(r.second[0]), std::move(r.second[1]),
-                r.second[2][0] );
-  }
-
-  if (diagcomplete()) diagnostics();
-}
-
 int
 Solver::pe( std::size_t gid )
 // *****************************************************************************
@@ -1208,87 +1124,6 @@ Solver::lowsolve()
 
   //lowsolve_complete();
   updateLowSol();
-}
-
-void
-Solver::updateDiag( std::size_t row,
-                    std::vector< tk::real >&& u,
-                    std::vector< tk::real >&& a,
-                    tk::real v )
-// *****************************************************************************
-//  Update diagnostics vector
-//! \param[in] row Global row index of the diagnostics vector to update
-//! \param[in] u Numerical solution vector for all components
-//! \param[in] a Analytical solution vector for all components
-//! \param[in] v Nodal volume
-//! \details This function is used to update the vector of diagnostics that
-//!   collects (across PEs) the numerical solution, the analytical solution,
-//!   and the nodal volumes at nodes. This involves communication across PEs
-//!   and can be called for rows with first contributions or subsequent
-//!   contributions to rows which already hold partial data. The correct
-//!   policy for updates across PEs (i.e., at nodes that are shared across
-//!   PEs) is: overwrite the numerical and analytical solutions, sum the nodal
-//!   volumes.
-// *****************************************************************************
-{
-  auto& d = m_diag[ row ];
-
-  if (d.size() != 3) {
-    d.resize( 2, std::vector<tk::real>(m_ncomp,0.0) );
-    d.resize( 3, std::vector<tk::real>(1,0.0) );
-  }
-
-  d[0] = std::move( u );    // overwrite numerical solution
-  d[1] = std::move( a );    // overwrite analytical solution
-  d[2][0] += v;             // sum nodal volume
-}
-
-void
-Solver::diagnostics()
-// *****************************************************************************
-//  Compute diagnostics (residuals) and contribute them back to host
-//! \details Diagnostics: L2 norm for all components.
-// *****************************************************************************
-{
-  Assert( diagcomplete(),
-          "Values of distributed solution vector (for diagnostics) on PE " +
-          std::to_string( CkMyPe() ) + " is incomplete" );
-
-  std::vector< std::vector< tk::real > >
-    diag( 6, std::vector< tk::real >( m_ncomp, 0.0 ) );
-
-  for (const auto& s : m_diag) {
-    Assert( s.second.size() == 3, "Size of diagnostics vector must be 3" );
-    auto row = s.first;
-
-    if (row >= m_lower && row < m_upper) {    // only if own
-      const auto& u = s.second[0];    // numerical solution (all components)
-      const auto& a = s.second[1];    // analytical solution (all components)
-      auto v = s.second[2][0];        // nodal volume
-
-      // Compute L2 norm of the numerical solution
-      for (std::size_t c=0; c<m_ncomp; ++c)
-        diag[0][c] += u[c] * u[c] * v;
-      // Compute L2 norm of the numerical - analytical solution
-      for (std::size_t c=0; c<m_ncomp; ++c)
-        diag[1][c] += (u[c]-a[c]) * (u[c]-a[c]) * v;
-      // Compute Linf norm of the numerical - analytical solution
-      for (std::size_t c=0; c<m_ncomp; ++c) {
-        auto err = std::abs( u[c] - a[c] );
-        if (err > diag[2][c]) diag[2][c] = err;
-      }
-    }
-  }
-
-  // Append iteration count, physical time, and time step size to message
-  diag[3][0] = static_cast< tk::real >( m_it );
-  diag[4][0] = m_t;
-  diag[5][0] = m_dt;
-
-  // Contribute to diagnostics across all PEs
-  auto stream = tk::serialize( diag );
-  contribute( stream.first, stream.second.get(), DiagMerger,
-              m_cb.get< tag::diag >() );
 }
 
 #include "NoWarning/solver.def.h"
