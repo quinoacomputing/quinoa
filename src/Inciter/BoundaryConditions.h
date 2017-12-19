@@ -14,7 +14,6 @@
 #include <unordered_map>
 
 #include "Discretization.h"
-#include "PUPUtil.h"
 
 #include "boundaryconditions.decl.h"
 
