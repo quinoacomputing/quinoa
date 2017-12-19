@@ -31,6 +31,7 @@
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
+#include "BoundaryConditions.h"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.h"
@@ -53,7 +54,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
   m_nlsol( 0 ),
   m_disc( disc ),
   m_solver( solver ),
-  m_side(),
+  m_side( Disc()->BC()->sideNodes( Disc()->Filenodes(), Disc()->Lid() ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
@@ -71,32 +72,6 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Invert file-node map, a map associating old node IDs (as in file) to new
-  // node IDs (as in producing contiguous-row-id linear system contributions),
-  // so we can search more efficiently for old node IDs.
-  std::unordered_map< std::size_t, std::size_t > linnodes;
-  for (const auto& i : d->Filenodes()) {
-    auto n = tk::cref_find(d->Lid(),i.first);
-    Assert( n < d->Gid().size(),
-            "Local IDs must be lower than the local number of grid points" );
-    linnodes[ i.second ] = n;
-  }
-
-  // Access all side sets and their old node IDs (as in file) from Solver
-  auto& oldside = m_solver.ckLocalBranch()->side();
-
-  // Create map that assigns the local mesh node IDs mapped to side set ids,
-  // storing only those nodes for a given side set that are part of our chunk of
-  // the mesh.
-  for (const auto& s : oldside) {
-    auto& n = m_side[ s.first ];
-    for (auto o : s.second) {
-      auto it = linnodes.find( o );
-      if (it != end(linnodes))
-        n.push_back( it->second );
-    }
-  }
 
   // Send off global row IDs to linear system solver
   m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );

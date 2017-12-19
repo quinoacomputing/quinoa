@@ -351,6 +351,7 @@
 #include "VectorReducer.h"
 #include "Progress.h"
 #include "Scheme.h"
+#include "BoundaryConditions.h"
 
 namespace inciter {
 
@@ -493,7 +494,8 @@ class Transporter : public CBase_Transporter {
     InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
     tk::CProxy_Solver m_solver;          //!< Linear system solver group proxy
-    Scheme m_scheme;                     //!< Discretization scheme (worker)
+    CProxy_BoundaryConditions m_bc;      //!< Boundary conditions group proxy
+    Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
@@ -525,13 +527,13 @@ class Transporter : public CBase_Transporter {
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
 
-    //! Read side sets from mesh file
-    std::map< int, std::vector< std::size_t > > readSidesets();
+    //! Create boundary conditions group
+    void createBC();
 
-    //! Create linear solver
-    void createSolver( const std::map< int, std::vector< std::size_t > >& ss );
+    //! Create linear solver group
+    void createSolver();
 
-    //! Create mesh partitioner
+    //! Create mesh partitioner group
     void createPartitioner();
 
     //! Configure and write diagnostics file header

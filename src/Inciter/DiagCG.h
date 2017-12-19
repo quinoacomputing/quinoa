@@ -219,8 +219,7 @@ class DiagCG : public CBase_DiagCG {
     CProxy_Discretization m_disc;
     //! Linear system merger and solver proxy
     tk::CProxy_Solver m_solver;
-    //! \brief Map associating local node IDs to side set IDs for all side sets
-    //!   read from mesh file (not only those the user sets BCs on)
+    //! Map associating local node IDs to side set IDs
     std::map< int, std::vector< std::size_t > > m_side;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;

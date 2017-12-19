@@ -52,12 +52,10 @@ using tk::Solver;
 
 Solver::Solver( CProxy_SolverShadow sh,
                 const std::vector< CkCallback >& cb,
-                const std::map< int, std::vector< std::size_t > >& s,
                 std::size_t n,
                 bool /*feedback*/ ) :
   m_shadow( sh ),
   m_cb( cb[0], cb[1], cb[2] ),
-  m_side( s ),
   m_ncomp( n ),
   m_nchare( 0 ),
   m_nperow( 0 ),

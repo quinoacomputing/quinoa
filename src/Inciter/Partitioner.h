@@ -117,6 +117,7 @@ class Partitioner : public CBase_Partitioner {
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
                  const tk::CProxy_Solver& solver,
+                 const CProxy_BoundaryConditions& bc,
                  const Scheme& scheme );
 
     //! Partition the computational mesh
@@ -189,6 +190,8 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Transporter m_host;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
+    //! Boundary conditions proxy
+    CProxy_BoundaryConditions m_bc;
     //! Discretization scheme
     Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to

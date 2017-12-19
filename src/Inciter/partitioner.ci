@@ -22,6 +22,7 @@ module partitioner {
       entry Partitioner( const std::vector< CkCallback >& cb,
                          const CProxy_Transporter& host,
                          const tk::CProxy_Solver& solver,
+                         const CProxy_BoundaryConditions& bc,
                          const Scheme& scheme );
       entry void partition( int nchare );
       entry void add( int frompe,

@@ -213,7 +213,6 @@ class Solver : public CBase_Solver {
     //! Constructor
     Solver( CProxy_SolverShadow sh,
             const std::vector< CkCallback >& cb,
-            const std::map< int, std::vector< std::size_t > >& s,
             std::size_t n,
             bool /*feedback*/ );
 
@@ -300,11 +299,6 @@ class Solver : public CBase_Solver {
     //! All communications have been establised among PEs
     void comfinal();
 
-    //! Chares query side set info
-    //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
-    const std::map< int, std::vector< std::size_t > >& side() { return m_side; }
-
     //! Chares query Dirichlet boundary conditions
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
@@ -348,8 +342,6 @@ class Solver : public CBase_Solver {
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
     > m_cb;
-    //! Global (as in file) mesh node IDs mapped to side set ids of the mesh
-    std::map< int, std::vector< std::size_t > > m_side;
     std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to

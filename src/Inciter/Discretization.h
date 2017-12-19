@@ -37,6 +37,7 @@ class Discretization : public CBase_Discretization {
       Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
+        const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
         const std::unordered_map< int,
                 std::unordered_set< std::size_t > >& msum,
@@ -102,6 +103,9 @@ class Discretization : public CBase_Discretization {
 
     const CProxy_Transporter& Tr() const { return m_transporter; }
     CProxy_Transporter& Tr() { return m_transporter; }
+
+    //! Access boundary conditions group local branch pointer
+    BoundaryConditions* BC() { return m_bc.ckLocalBranch(); }
 
     //! Access bound DistFCT class pointer
     DistFCT* FCT() const {
@@ -170,6 +174,7 @@ class Discretization : public CBase_Discretization {
       p | m_outFilename;
       p | m_fct;
       p | m_transporter;
+      p | m_bc;
       p | m_filenodes;
       p | m_edgenodes;
       p | m_el;
@@ -212,12 +217,10 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
-    //! \brief Map associating old node IDs (as in file) to new node IDs (as in
-    //!   producing contiguous-row-id linear system contributions)
+    //! Boundary conditions proxy
+    CProxy_BoundaryConditions m_bc;
+    //! Map associating file node IDs to local node IDs
     std::unordered_map< std::size_t, std::size_t > m_filenodes;
-    //! \brief Map associating local node IDs to side set IDs for all side sets
-    //!   read from mesh file (not only those the user sets BCs on)
-    std::map< int, std::vector< std::size_t > > m_side;
     //! \brief Maps associating node node IDs to edges (a pair of old node IDs)
     //!   for only the nodes newly added as a result of initial uniform
     //!   refinement.

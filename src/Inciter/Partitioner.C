@@ -29,10 +29,12 @@ using inciter::Partitioner;
 Partitioner::Partitioner( const std::vector< CkCallback >& cb,
                           const CProxy_Transporter& host,
                           const tk::CProxy_Solver& solver,
+                          const CProxy_BoundaryConditions& bc,
                           const Scheme& scheme ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
+  m_bc( bc ),
   m_scheme( scheme ),
   m_npe( 0 ),
   m_reqNodes(),
@@ -1209,9 +1211,9 @@ Partitioner::createDiscWorkers()
     typename decltype(m_chedgenodes)::mapped_type edno;
     if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
     // Create worker array element
-    m_scheme.discInsert< tag::elem >( cid, m_host,
-      tk::cref_find(m_chinpoel,cid), msum,
-      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, CkMyPe() );
+    m_scheme.discInsert< tag::elem >( cid, m_host, m_bc,
+      tk::cref_find(m_chinpoel,cid), msum, tk::cref_find(m_chfilenodes,cid),
+      edno, m_nchare, CkMyPe() );
     m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 

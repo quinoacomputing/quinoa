@@ -50,6 +50,7 @@ Transporter::Transporter() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_solver(),
+  m_bc(),
   m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -155,51 +156,50 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Read side sets from mesh file
-    auto ss = readSidesets();
+    // Create boundary condition object group
+    createBC();
 
-    // Create linear system solver
-    createSolver( ss );
+    // Create linear system solver group
+    createSolver();
 
-    // Create mesh partitioner
+    // Create mesh partitioner group
     createPartitioner();
 
   } else finish();      // stop if no time stepping requested
 }
 
-std::map< int, std::vector< std::size_t > >
-Transporter::readSidesets()
+void
+Transporter::createBC()
 // *****************************************************************************
-// Read side sets from mesh file
-//! \return Node lists mapped to side set ids
+// Create boundary conditions group
 // *****************************************************************************
 {
   // Create ExodusII reader for reading side sets from file.
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read in side sets from file
+  // Read in side sets associated to mesh node IDs from file
   m_print.diag( "Reading side sets" );
-  auto ss = er.readSidesets();
+  auto sidenodes = er.readSidesets();
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
   for (const auto& eq : g_pdes) eq.side( conf );
   for (auto i : conf)
-    if (ss.find(i) == end(ss)) {
+    if (sidenodes.find(i) == end(sidenodes)) {
       m_print.diag( "WARNING: Boundary conditions specified on side set " +
         std::to_string(i) + " which does not exist in mesh file" );
       break;
     }
 
-  return ss;
+  // Create boundary conditions Charm++ chare group
+  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
 }
 
 void
-Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
+Transporter::createSolver()
 // *****************************************************************************
 // Create linear solver
-//! \param[in] ss Node lists mapped to side set ids
 // *****************************************************************************
 {
   // Create linear system solver callbacks
@@ -213,7 +213,6 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
   m_solver = tk::CProxy_Solver::
                ckNew( tk::CProxy_SolverShadow::ckNew(),
                       cbs,
-                      ss,
                       g_inputdeck.get< tag::component >().nprop(),
                       g_inputdeck.get< tag::cmd, tag::feedback >() );
 }
@@ -243,7 +242,7 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_scheme );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme );
 }
 
 void

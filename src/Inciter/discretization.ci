@@ -21,6 +21,7 @@ module discretization {
       entry Discretization(
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
+        const CProxy_BoundaryConditions& bc,
         const std::vector< std::size_t >& conn,
         const std::unordered_map< int,
                 std::unordered_set< std::size_t > >& msum,
