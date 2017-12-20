@@ -218,7 +218,7 @@ class Scheme : public SchemeBase {
     //!   using the last argument as default.
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 0,
-      typename std::enable_if< sizeof...(Args) == 8, int >::type = 0 >
+      typename std::enable_if< sizeof...(Args) == 11, int >::type = 0 >
     void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
       discproxy[x].insert( fctproxy, std::forward<Args>(args)..., nullptr );
     }
@@ -231,7 +231,7 @@ class Scheme : public SchemeBase {
     //!   specifying a non-default last argument.
     template< typename Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::elem >::value, int >::type = 1,
-      typename std::enable_if< sizeof...(Args) == 9, int >::type = 0 >
+      typename std::enable_if< sizeof...(Args) == 12, int >::type = 0 >
     void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
       discproxy[x].insert( fctproxy, std::forward<Args>(args)... );
     }

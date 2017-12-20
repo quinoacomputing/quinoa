@@ -27,7 +27,10 @@ module discretization {
                 std::unordered_set< std::size_t > >& msum,
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
-        int nchare );
+        int nchare,
+        std::size_t nbfac,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::map< int, std::vector< std::size_t > >& belem );
       initnode void registerReducers();
       entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,

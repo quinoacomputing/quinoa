@@ -26,11 +26,15 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::Partitioner;
 
-Partitioner::Partitioner( const std::vector< CkCallback >& cb,
-                          const CProxy_Transporter& host,
-                          const tk::CProxy_Solver& solver,
-                          const CProxy_BoundaryConditions& bc,
-                          const Scheme& scheme ) :
+Partitioner::Partitioner(
+  const std::vector< CkCallback >& cb,
+  const CProxy_Transporter& host,
+  const tk::CProxy_Solver& solver,
+  const CProxy_BoundaryConditions& bc,
+  const Scheme& scheme,
+  std::size_t nbfac,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& belem ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
@@ -63,13 +67,20 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   m_nodechares(),
   m_edgechares(),
   m_msum(),
-  m_msumed()
+  m_msumed(),
+  m_nbfac( nbfac ),
+  m_bface( bface ),
+  m_belem( belem )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
 //! \param[in] host Host Charm++ proxy we are being called from
-//! \param[in] scheme Discretization scheme
 //! \param[in] solver Linear system solver proxy
+//! \param[in] bc Boundary conditions group proxy
+//! \param[in] scheme Discretization scheme
+//! \param[in] nbfac Total number of boundary faces
+//! \param[out] bface Face lists mapped to side set ids
+//! \param[out] belem Element lists mapped to side set ids
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -1213,7 +1224,7 @@ Partitioner::createDiscWorkers()
     // Create worker array element
     m_scheme.discInsert< tag::elem >( cid, m_host, m_bc,
       tk::cref_find(m_chinpoel,cid), msum, tk::cref_find(m_chfilenodes,cid),
-      edno, m_nchare, CkMyPe() );
+      edno, m_nchare, m_nbfac, m_bface, m_belem, CkMyPe() );
     m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 

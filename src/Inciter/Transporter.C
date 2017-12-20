@@ -229,6 +229,25 @@ Transporter::createPartitioner()
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
 
+  // Create ExodusII reader for reading side sets from file.
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+
+  // Read side sets for boundary faces
+  m_print.diag( "Reading side set faces" );
+  std::map< int, std::vector< std::size_t > > bface, belem;
+  auto nbfac = er.readSidesetFaces( bface, belem );
+
+  // Verify that side sets to which boundary conditions are assigned by user
+  // exist in mesh file
+  std::unordered_set< int > conf;
+  for (const auto& eq : g_pdes) eq.side( conf );
+  for (auto i : conf)
+    if (bface.find(i) == end(bface)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set face " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
+
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{
       CkCallback( CkReductionTarget(Transporter,part), thisProxy )
@@ -242,7 +261,8 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme );
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
+                               nbfac, bface, belem );
 }
 
 void
