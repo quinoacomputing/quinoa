@@ -54,7 +54,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_ndif( 0 ),
   m_disc( disc ),
-  m_solver( solver ),
   m_side( Disc()->BC()->sideNodes( Disc()->Filenodes(), Disc()->Lid() ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
@@ -65,6 +64,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_dif( m_u.nunk(), m_u.nprop() ),
+  m_bc(),
   m_lhsc(),
   m_rhsc(),
   m_difc(),
@@ -367,11 +367,8 @@ DiagCG::bc()
   auto d = Disc();
 
   // Match user-specified boundary conditions to side sets
-  auto dirbc = d->BC()->match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
-                               d->Gid(), m_side );
-
-  // Send off BCs to Solver for aggregation
-  m_solver.ckLocalBranch()->charebc( dirbc );
+  m_bc = d->BC()->match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+                         m_side );
 }
 
 void
@@ -381,7 +378,6 @@ DiagCG::solve()
 // *****************************************************************************
 {
   const auto ncomp = m_rhs.nprop();
-  const auto& dirbc = m_solver.ckLocalBranch()->dirbc();
 
   auto d = Disc();
 
@@ -405,7 +401,7 @@ DiagCG::solve()
   // hand side and mass diffusion so the low order system is L = R + D, where L
   // is the lumped mass matrix, R is the high order RHS, and D is
   // mass diffusion, and R already will have the Dirichlet BC set.
-  for (const auto& n : dirbc) {
+  for (const auto& n : m_bc) {
     auto b = d->Lid().find( n.first );
     if (b != end(d->Lid())) {
       auto id = b->second;
@@ -424,7 +420,7 @@ DiagCG::solve()
   m_du = m_rhs / m_lhs;
 
   // Continue with FCT
-  d->FCT()->aec( *d, m_du, m_u, dirbc );
+  d->FCT()->aec( *d, m_du, m_u, m_bc );
   d->FCT()->alw( m_u, m_ul, m_dul, thisProxy );  
 }
 
@@ -438,28 +434,25 @@ DiagCG::correctBC( const tk::Fields& a )
 //!   nodes
 // *****************************************************************************
 {
-  auto& dirbc = m_solver.ckLocalBranch()->dirbc();
-
-  if (dirbc.empty()) return true;
+  if (m_bc.empty()) return true;
 
   auto d = Disc();
 
   // We loop through the map that associates a vector of local node IDs to side
   // set IDs for all side sets read from mesh file. Then for each side set for
-  // all mesh nodes on a given side set we attempt to find the global node ID
-  // in dirbc, which stores only those nodes (and BC settings) at which the
-  // user has configured Dirichlet BCs to be set. Then for all scalar
-  // components of all system of systems of PDEs integrated if a BC is to be
-  // set for a given component, we compute the low order solution increment +
-  // the anti-diffusive element contributions, which is the current solution
-  // increment (to be used to update the solution at time n) at that node. This
-  // solution increment must equal the BC prescribed at the given node as we
-  // solve for solution increments. If not, the BCs are not set correctly,
-  // which is an error.
+  // all mesh nodes on a given side set we attempt to find the global node ID in
+  // m_bc, which stores only those nodes (and BC settings) at which the user has
+  // configured Dirichlet BCs to be set. Then for all scalar components of all
+  // system of systems of PDEs integrated if a BC is to be set for a given
+  // component, we compute the low order solution increment + the anti-diffusive
+  // element contributions, which is the current solution increment (to be used
+  // to update the solution at time n) at that node. This solution increment
+  // must equal the BC prescribed at the given node as we solve for solution
+  // increments. If not, the BCs are not set correctly, which is an error.
   for (const auto& s : m_side)
     for (auto i : s.second) {
-      auto u = dirbc.find( d->Gid()[i] );
-      if (u != end(dirbc)) {
+      auto u = m_bc.find( d->Gid()[i] );
+      if (u != end(m_bc)) {
         const auto& b = u->second;
         Assert( b.size() == m_u.nprop(), "Size mismatch" );
         for (std::size_t c=0; c<b.size(); ++c)

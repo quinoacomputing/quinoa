@@ -88,6 +88,11 @@ BoundaryConditions::match(
 //! \param[in] coord Mesh node coordinates
 //! \param[in] gid Global node IDs
 //! \param[in] sidenodes Map storing local mesh node IDs mapped to side set ids
+//! \return Vector of pairs of bool and boundary condition value associated to mesh
+//!   node IDs at which the user has set Dirichlet boundary conditions for all
+//!   PDEs integrated. The bool indicates whether the BC is set at the node for
+//!   that component the if true, the real value is the increment (from t to dt)
+//!   in the BC specified for a component.
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
 //!   finite surfaces. These finite surfaces are given by element sets (i.e., a
 //!   list of elements). This function queries Dirichlet boundary condition
@@ -173,10 +178,13 @@ BoundaryConditions::match(
   // equal to the total number of scalar components for all systems of PDEs
   // integrated. This is intentional, because this way the linear system solver
   // does not have to (and does not) know about individual equation systems.
+  // This entire loop is optimized away in RELEASE mode, thus the IGNOREs to
+  // silence compiler warnings.
   for (const auto& n : dirbc) {
     IGNORE(n);
     Assert( n.second.size() == ncomp, "Size of NodeBC vector incorrect" );
   }
+  IGNORE(ncomp);
 
   return dirbc;
 }

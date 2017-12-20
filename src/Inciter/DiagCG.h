@@ -237,6 +237,14 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_rhs;
     //! Mass diffusion right-hand side vector (for the low order system)
     tk::Fields m_dif;
+    //! Boundary conditions evaluated and assigned to mesh node IDs
+    //! \details Vector of pairs of bool and boundary condition value associated
+    //!   to meshnode IDs at which the user has set Dirichlet boundary
+    //!   conditions for all PDEs integrated. The bool indicates whether the BC
+    //!   is set at the node for that component the if true, the real value is
+    //!   the increment (from t to dt) in the BC specified for a component.
+    std::unordered_map< std::size_t,
+      std::vector< std::pair< bool, tk::real > > > m_bc;
     //! Receive buffers for communication
     std::vector< std::vector< tk::real > > m_lhsc, m_rhsc, m_difc;
     //! Total mesh volume
