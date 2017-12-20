@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/RootMeshWriter.C
   \author    A. Pakki
-  \copyright 2012-2015, Jozsef Pakki, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Los Alamos National Security, LLC.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class definition.
 */
