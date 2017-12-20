@@ -198,8 +198,6 @@ class Discretization : public CBase_Discretization {
     //@}
 
   private:
-    using NodeBC = std::vector< std::pair< bool, tk::real > >;
-
     //! Iteration count
     uint64_t m_it;
      //! Physical time

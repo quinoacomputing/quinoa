@@ -14,6 +14,7 @@
 #include <unordered_map>
 
 #include "Discretization.h"
+#include "SystemComponents.h"
 
 #include "boundaryconditions.decl.h"
 
@@ -31,6 +32,16 @@ class BoundaryConditions : public CBase_BoundaryConditions {
     std::map< int, std::vector< std::size_t > >
     sideNodes( const std::unordered_map< std::size_t, std::size_t >& filenodes,
                const std::unordered_map< std::size_t, std::size_t >& lid );
+
+    //! Query and match user-specified boundary conditions to side sets
+    std::unordered_map< std::size_t,
+      std::vector< std::pair< bool, tk::real > > >
+    match( tk::ctr::ncomp_type ncomp,
+           tk::real t,
+           tk::real dt,
+           const tk::UnsMesh::Coords& coord,
+           const std::vector< std::size_t > gid,
+           const std::map< int, std::vector< std::size_t > >& sidenodes );
 
   private:
     //! Map associating file-node IDs to side set IDs for all side sets in file
