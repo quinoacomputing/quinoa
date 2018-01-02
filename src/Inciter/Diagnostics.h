@@ -28,7 +28,7 @@ class Diagnostics {
     static void registerReducers();
 
     //! Compute diagnostics, e.g., residuals, norms of errors, etc.
-    void compute( Discretization& d, const tk::Fields& u );
+    bool compute( Discretization& d, const tk::Fields& u );
 
     ///@{
     //! \brief Pack/Unpack serialize member function

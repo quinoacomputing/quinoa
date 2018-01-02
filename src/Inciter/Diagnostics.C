@@ -55,16 +55,17 @@ Diagnostics::registerReducers()
   DiagMerger = CkReduction::addReducer( tk::mergeDiag );
 }
 
-void
+bool
 Diagnostics::compute( Discretization& d, const tk::Fields& u )
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
 //! \param[in] u Current solution vector
+//! \return True if diagnostics have been computed
 // *****************************************************************************
 {
   // Optionally collect diagnostics and send for aggregation across all workers
-  if ( !(d.It() % g_inputdeck.get< tag::interval, tag::diag >()) ) {
+  if ( !((d.It()+1) % g_inputdeck.get< tag::interval, tag::diag >()) ) {
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
@@ -133,5 +134,8 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
+    return true;
   }
+
+  return false;
 }

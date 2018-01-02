@@ -575,8 +575,8 @@ DiagCG::advance( tk::real newdt )
 void
 DiagCG::next( const tk::Fields& a )
 // *****************************************************************************
-//! \param[in] a Limited antidiffusive element contributions
 // Prepare for next step
+//! \param[in] a Limited antidiffusive element contributions
 // *****************************************************************************
 {
   // Apply limited antidiffusive element contributions to low order solution
@@ -590,11 +590,23 @@ DiagCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  m_diag.compute( *d, m_u );
+ auto diag =  m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
+
+  // Evaluate whether to continue with next step
+  if (!diag) eval();
+}
+
+void
+DiagCG::eval()
+// *****************************************************************************
+// Evaluate whether to continue with next step
+// *****************************************************************************
+{
+  auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();

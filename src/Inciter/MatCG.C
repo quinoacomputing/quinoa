@@ -135,6 +135,9 @@ MatCG::dt()
 // Comppute time step size
 // *****************************************************************************
 {
+  // Report to linear solver that we are ready for the next linear solve
+  m_solver.ckLocalBranch()->next();
+
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -460,7 +463,7 @@ MatCG::next( const tk::Fields& a )
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  m_diag.compute( *d, m_u );
+  auto diag = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
@@ -482,13 +485,25 @@ MatCG::next( const tk::Fields& a )
 //      migrateMe(2);
 //    }
 
+  // Evaluate whether to continue with next step
+  if (!diag) eval();
+}
+
+void
+MatCG::eval()
+// *****************************************************************************
+// Evaluate whether to continue with next step
+// *****************************************************************************
+{
+  auto d = Disc();
+
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep)
-    contribute(CkCallback( CkReductionTarget(Transporter,next), d->Tr()) );
+    dt();
   else
     contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
 }

@@ -346,6 +346,7 @@ class Solver : public CBase_Solver {
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
+    std::size_t m_nnext;        //!< Number of chares want to go to next step
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     uint64_t m_it;             //!< Iteration count (original in Discretization)

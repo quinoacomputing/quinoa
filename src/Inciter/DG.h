@@ -45,6 +45,9 @@ class DG : public CBase_DG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    //! Evaluate whether to continue with next step
+    void eval();
+
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -81,7 +84,7 @@ class DG : public CBase_DG {
     void out();
 
     //! Compute diagnostics, e.g., residuals
-    void diagnostics();
+    bool diagnostics();
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );

@@ -124,10 +124,11 @@ DG::writeFields( tk::real )
 {
 }
 
-void
+bool
 DG::diagnostics()
 // *****************************************************************************
 // Compute diagnostics, e.g., residuals
+//! \return True if diagnostics have been computed
 // *****************************************************************************
 {
   auto d = Disc();
@@ -144,6 +145,8 @@ DG::diagnostics()
   auto stream = tk::serialize( diag );
   contribute( stream.first, stream.second.get(), DiagMerger,
     CkCallback(CkIndex_Transporter::diagnostics(nullptr), d->Tr()) );
+
+  return true;
 }
 
 void
@@ -210,11 +213,23 @@ DG::next()
   // Output field data to file
   out();
   // Compute diagnostics, e.g., residuals
-  diagnostics();
+  auto diag = diagnostics();
   // Increase number of iterations and physical time
   d->next();
   // Output one-liner status report
   d->status();
+
+  // Evaluate whether to continue with next step
+  if (!diag) eval();
+}
+
+void
+DG::eval()
+// *****************************************************************************
+// Evaluate whether to continue with next step
+// *****************************************************************************
+{
+  auto d = Disc();
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();

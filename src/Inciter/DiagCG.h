@@ -162,12 +162,14 @@ class DiagCG : public CBase_DiagCG {
     void comdif( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& D );
 
-    //! Prepare for next step
-    //! Prepare for next step
-    void next( const tk::Fields& a );
-
     //! Verify that solution does not change at Dirichlet boundary conditions
     bool correctBC( const tk::Fields& a );
+
+    //! Prepare for next step    
+    void next( const tk::Fields& a );
+
+    //! Evaluate whether to continue with next step
+    void eval();
 
     ///@{
     //! \brief Pack/Unpack serialize member function

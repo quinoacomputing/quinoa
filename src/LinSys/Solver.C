@@ -60,6 +60,7 @@ Solver::Solver( CProxy_SolverShadow sh,
   m_nchare( 0 ),
   m_nperow( 0 ),
   m_nchbc( 0 ),
+  m_nnext( 0 ),
   m_lower( 0 ),
   m_upper( 0 ),
   m_it( 0 ),
@@ -170,26 +171,27 @@ Solver::next()
 //! \details Re-enable SDAG waits for rebuilding the right-hand side vector only
 // *****************************************************************************
 {
-  wait4rhsbc();
-  wait4hyprerhs();
-  wait4asm();
-  wait4low();
+  if (++m_nnext == m_nchare) {
+    wait4rhsbc();
+    wait4hyprerhs();
+    wait4asm();
+    wait4low();
+  
+    m_rhsimport.clear();
+    m_lowrhsimport.clear();
+    m_lowrhs.clear();
+    m_hypreRhs.clear();
+    m_rhs.clear();
+  
+    m_bc.clear();
+  
+    lowlhs_complete();
+    hyprerow_complete();
+    asmsol_complete();
+    asmlhs_complete();
 
-  m_rhsimport.clear();
-  m_lowrhsimport.clear();
-  m_lowrhs.clear();
-  m_hypreRhs.clear();
-  m_rhs.clear();
-
-  m_bc.clear();
-
-  lowlhs_complete();
-  hyprerow_complete();
-  asmsol_complete();
-  asmlhs_complete();
-
-  // Continue with next time step
-  for (auto i : m_myworker) m_worker[i].dt();
+    m_nnext = 0;
+  }
 }
 
 void

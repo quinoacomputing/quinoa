@@ -662,16 +662,9 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      g_inputdeck.get< tag::prec, tag::diag >(),
                      std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[3][0]), d[4][0], d[5][0], diag );
-}
 
-void
-Transporter::next()
-// *****************************************************************************
-// Reduction target used to synchronize PEs between linear solves of time steps
-//! \note Only called from MatCG
-// *****************************************************************************
-{
-  m_solver.next();
+  // Evaluate whther to continue with next step
+  m_scheme.eval< tag::bcast >();
 }
 
 void

@@ -483,10 +483,6 @@ class Transporter : public CBase_Transporter {
     //! Start time stepping
     void start();
 
-    //! \brief Reduction target used to synchronize PEs between linear solves of
-    //!   time steps
-    void next();
-
     //! Normal finish of time stepping
     void finish();
 

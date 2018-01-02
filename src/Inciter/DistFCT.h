@@ -126,7 +126,7 @@ class DistFCT : public CBase_DistFCT {
     using ProxyElem =
       boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t >;
   
-    //! Functor to call the Next() member function behind SchemeProxy
+    //! Functor to call the next() member function behind SchemeProxy
     struct Next : boost::static_visitor<> {
       Next( const tk::Fields& a ) : A(a) {}
       template< typename P >

@@ -93,6 +93,9 @@ class MatCG : public CBase_MatCG {
     //! Prepare for next step
     void next( const tk::Fields& a );
 
+    //! Evaluate whether to continue with next step
+    void eval();
+
     //! Verify that solution does not change at Dirichlet boundary conditions
     bool correctBC( const tk::Fields& a );
 
