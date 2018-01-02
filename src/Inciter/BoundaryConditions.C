@@ -73,13 +73,13 @@ BoundaryConditions::sideNodes(
 
 std::unordered_map< std::size_t,
   std::vector< std::pair< bool, tk::real > > >
-BoundaryConditions::match(
-  tk::ctr::ncomp_type ncomp,
-  tk::real t,
-  tk::real dt,
-  const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t > gid,
-  const std::map< int, std::vector< std::size_t > >& sidenodes )
+BoundaryConditions::match( tk::ctr::ncomp_type ncomp,
+                           tk::real t,
+                           tk::real dt,
+                           const tk::UnsMesh::Coords& coord,
+                           const std::vector< std::size_t > gid,
+                           const std::map< int, std::vector< std::size_t > >&
+                             sidenodes )
 // *****************************************************************************
 //  Query and matchto user-specified boundary conditions to side sets
 //! \param[in] ncomp Number of scalar components in PDE system
