@@ -135,9 +135,6 @@ MatCG::dt()
 // Comppute time step size
 // *****************************************************************************
 {
-  // Report to linear solver that we are ready for the next linear solve
-  m_solver.ckLocalBranch()->next();
-
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
   auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
@@ -503,9 +500,9 @@ MatCG::eval()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep)
-    dt();
+    contribute( CkCallback( CkReductionTarget(Transporter,next), d->Tr() ) );
   else
-    contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr()) );
+    contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
 }
 
 #include "NoWarning/matcg.def.h"

@@ -111,10 +111,11 @@ Transporter::Transporter() :
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
   if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
-    m_print.item( "Flux-corrected transport (FCT)",
-                  g_inputdeck.get< tag::discr, tag::fct >() );
-    m_print.item( "FCT mass diffusion coeff",
-                  g_inputdeck.get< tag::discr, tag::ctau >() );
+    auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+    m_print.item( "Flux-corrected transport (FCT)", fct );
+    if (fct)
+      m_print.item( "FCT mass diffusion coeff",
+                    g_inputdeck.get< tag::discr, tag::ctau >() );
   }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );

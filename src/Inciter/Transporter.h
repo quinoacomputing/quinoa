@@ -483,6 +483,9 @@ class Transporter : public CBase_Transporter {
     //! Start time stepping
     void start();
 
+    //! Reset linear solver for next time step
+    void next() { m_solver.next(); }
+
     //! Normal finish of time stepping
     void finish();
 
