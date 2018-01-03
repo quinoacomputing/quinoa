@@ -26,6 +26,11 @@ inciter
     end
   end
 
+  diagnostics
+    interval 2
+    error linf
+  end
+
   plotvar
     interval 5
   end
