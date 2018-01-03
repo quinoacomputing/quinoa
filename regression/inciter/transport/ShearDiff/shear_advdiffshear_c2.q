@@ -20,6 +20,10 @@ inciter
     diffusivity 3.0 2.0 1.0 1.0 2.0 3.0 end
     u0 10.0 15.0 end
     lambda 0.5 1.0 0.75 0.25 end
+
+    bc_dirichlet
+      sideset 1 2 3 4 5 6 end
+    end
   end
 
   plotvar
