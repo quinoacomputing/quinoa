@@ -22,6 +22,7 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <boost/variant.hpp>
