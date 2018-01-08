@@ -101,8 +101,6 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/RNG/TestRandom123.h"
 
 #include "tests/LoadBalance/TestLoadDistributor.h"
-// Disabled due to API change.
-// See https://lists.cs.illinois.edu/lists/arc/charm/2017-01/msg00018.html.
 #include "tests/LoadBalance/TestLinearMap.h"
 #include "tests/LoadBalance/TestUnsMeshMap.h"
 
@@ -110,6 +108,8 @@ const int MAX_TESTS_IN_GROUP = 80;
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
+
+#include "tests/Inciter/TestScheme.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

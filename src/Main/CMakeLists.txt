@@ -40,6 +40,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${Zoltan2_LIBRARIES}
                       ${H5PART_LIBRARIES}
                       ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
@@ -63,15 +64,13 @@ config_executable(${INCITER_EXECUTABLE})
 target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       InciterControl
-                      LoadBalance
                       Inciter
+                      LoadBalance
                       LinSys
                       Base
                       IO
                       MeshIO
-                      AsyncIO
                       Mesh
-                      Particles
                       Statistics
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}

@@ -15,7 +15,7 @@
 #include "Keywords.h"
 #include "PUPUtil.h"
 
-namespace tk {
+namespace inciter {
 namespace ctr {
 
 //! Mesh partitioning algorithm types
@@ -50,6 +50,6 @@ class InitialAMR : public tk::Toggle< InitialAMRType > {
 };
 
 } // ctr::
-} // tk::
+} // inciter::
 
 #endif // InciterInitialAMROptions_h

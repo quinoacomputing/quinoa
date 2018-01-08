@@ -425,6 +425,61 @@ ExodusIIMeshReader::readSidesets()
   return side;
 }
 
+void
+ExodusIIMeshReader::readSidesetFaces(std::size_t& nbfac,
+                                     std::map< int, std::vector< std::size_t > >& bface, 
+                                     std::map< int, std::vector< std::size_t > >& belem)
+// *****************************************************************************
+//  Read face list of all side sets from ExodusII file
+//  Added by Aditya K Pandare
+//! \param[out] nbfac total number of boundary faces
+//! \param[out] bface Face lists mapped to side set ids
+//! \param[out] belem Element lists mapped to side set ids
+// *****************************************************************************
+{
+  // Read ExodusII file header (fills m_neset)
+  readHeader();
+
+  nbfac = 0;
+
+  if (m_neset > 0)
+  {
+    // Read all side set ids from file
+    std::vector< int > ids( m_neset );
+    ErrChk( ex_get_ids( m_inFile, EX_SIDE_SET, ids.data() ) == 0,
+            "Failed to read side set ids from ExodusII file: " + m_filename );
+
+    // Read in face list for all side sets
+    for (auto i : ids)
+    {
+      int nface, nnode;
+
+      // Read number of faces and number of distribution factors in side set i
+      ErrChk( ex_get_set_param( m_inFile, EX_SIDE_SET, i, &nface, &nnode ) == 0,
+              "Failed to read side set " + std::to_string(i) + " parameters "
+              "from ExodusII file: " + m_filename );
+
+      // total number of boundary faces
+      nbfac += static_cast< std::size_t >(nface);
+
+      Assert(nface > 0, "Number of faces = 0 in side set" + std::to_string(i));
+      std::vector< int > tbface( static_cast< std::size_t >( nface ) );
+      std::vector< int > tbelem( static_cast< std::size_t >( nface ) );
+
+      // Read in face and element list for side set i
+      ErrChk( ex_get_set( m_inFile, EX_SIDE_SET, i, tbelem.data(), tbface.data() ) == 0, 
+              "Failed to read side set " + std::to_string(i) + " face/elem list "
+              "length from ExodusII file: " + m_filename );
+
+      // Store 0-based face ID list as std::size_t vector instead of ints
+      auto& list1 = bface[ i ];
+      for (auto&& n : tbface) list1.push_back( static_cast<std::size_t>(n-1) );
+      auto& list2 = belem[ i ];
+      for (auto&& n : tbelem) list2.push_back( static_cast<std::size_t>(n-1) );
+    }
+  }
+}
+
 std::size_t
 ExodusIIMeshReader::nelem( tk::ExoElemType elemtype ) const
 // *****************************************************************************

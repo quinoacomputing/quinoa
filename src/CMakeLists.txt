@@ -101,6 +101,11 @@ if(${MPI_CXX_FOUND})
   add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 endif(${MPI_CXX_FOUND})
 
+# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
+# on why these macros are necessary for our use of BOOST::MPL.
+add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
+add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -176,6 +181,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unused-command-line-argument")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -224,7 +230,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wshadow")
   add_compiler_flag("-Wstack-protector")
   add_compiler_flag("-Wstrict-aliasing=2")
-  add_compiler_flag("-Wswitch-default")
   add_compiler_flag("-Wunreachable-code")
   add_compiler_flag("-Wunused")
   add_compiler_flag("-Wunused-parameter")
@@ -233,6 +238,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-sign-compare")
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-Wno-stack-protector")
+  add_compiler_flag("-Wno-expansion-to-defined")
+  add_compiler_flag("-Wno-int-in-bool-context")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
@@ -250,7 +257,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for intel)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
@@ -305,7 +312,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for cray)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for cray)
   add_compiler_flag("-hstd=c++11")
 
   # Compiler flags for cray
@@ -474,7 +481,7 @@ if("${isSystemDir}" STREQUAL "-1")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
+find_package(Doxygen 1.8.12)
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
@@ -501,7 +508,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
@@ -550,7 +556,6 @@ if (HAS_TESTU01)
   add_subdirectory(RNGTest)
 endif()
 add_subdirectory(Statistics)
-add_subdirectory(Particles)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.

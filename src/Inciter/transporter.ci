@@ -9,7 +9,7 @@
 
 module transporter {
 
-  extern module partitioner;
+  include "Types.h";
 
   namespace inciter {
 
@@ -20,25 +20,20 @@ module transporter {
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void flattened();
       entry [reductiontarget] void coord();
-      entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void comfinal();
       entry [reductiontarget] void totalvol( tk::real v );
-      entry [reductiontarget] void volcomplete();
+      entry [reductiontarget] void vol();
       entry [reductiontarget] void minstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void maxstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void sumstat( tk::real d[n], std::size_t n );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
-      entry [reductiontarget] void dt( tk::real d[n], std::size_t n );
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
-      entry [reductiontarget] void initcomplete();
-      entry [reductiontarget] void parcomcomplete();
-      entry [reductiontarget] void nparcomplete();
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void diagcomplete();
-      entry [reductiontarget] void outcomplete();
-      entry [reductiontarget] void computedt();
-      entry [reductiontarget] void finish();
       entry [reductiontarget] void verified();
+      entry [reductiontarget] void start();
+      entry [reductiontarget] void next();
+      entry [reductiontarget] void finish();
 
       entry void pegraph();
 
@@ -50,18 +45,13 @@ module transporter {
       entry void pereordered();
       entry void pebounds();
 
-      entry void perowcomplete();
+      entry void pecomfinal();
       entry void chbcmatched();
       entry void pebccomplete();
-
-      entry void pesolcomplete();
-      entry void chic();
-      entry void chlhs();
 
       entry void chrhs();
       entry void pesolve();
       entry void chlim();
-      entry void chtrack();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -72,7 +62,7 @@ module transporter {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      // See srcInciter/Transporter.h.
+      // See src/Inciter/Transporter.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -86,27 +76,6 @@ module transporter {
       // MinStat, MaxStat, SumStat, and PdfStat denote different global
       // reductions used to compute mesh cell statistics. Only when all of these
       // are completed will they be echoed to screen at once, denoted by Stat.
-      // Stat also continuous the setup by issuing a broadcast to
-      // Carrier::setup() which continue by setting up rows, querying boundary
-      // conditions, generating particles, outputting mesh, etc.
-      //
-      // The time step is evaluated only if both the diagnostics and the
-      // field and particle output have been done by the workers.
-      //
-      // Collecting diagnostics is optional, i.e., it does not happen every time
-      // step. If diagnostics are collected diag_complete() is signaled from the
-      // reduction target, Transporter::diagnostics(). If diagnostics are not
-      // collected in a time step, collection is skipped, and diag_complete() is
-      // signaled from the shortcut function, Transporter::diagcomplete().
-      //
-      // Similar to diagnostics output, particle output is also optional and
-      // does not happen every time step. The Charm++ reduction target
-      // Transporter::outcomplete() is reached either way but on different
-      // routes: if particles are output, the reduction originates from the
-      // ParticleWriter Charm++ group after writeCoords() finished the output,
-      // if particles are not output, the reduction originates from
-      // Carrier::out(). Either way, the above DAG and its logic remains the
-      // same.
 
       entry void wait4part() {
         when load_complete(), part_complete() serial "part" {
@@ -114,12 +83,7 @@ module transporter {
 
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete() serial "stat" {
-          stat(); } };
-
-      entry void wait4eval() {
-        when out_complete(), diag_complete() serial "eval" {
-          evaluateTime(); } };
+             pdfstat_complete(), com_complete() serial "stat" { stat(); } };
 
       entry void load_complete();
       entry void part_complete();
@@ -127,8 +91,7 @@ module transporter {
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
-      entry void out_complete();
-      entry void diag_complete();
+      entry void com_complete();
     }
 
   } // inciter::

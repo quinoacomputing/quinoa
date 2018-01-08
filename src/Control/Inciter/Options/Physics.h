@@ -35,7 +35,6 @@ class Physics : public tk::Toggle< PhysicsType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::advection
                                        , kw::advdiff
-                                       , kw::laplace
                                        , kw::compflow_navierstokes
                                        , kw::compflow_euler
                                        >;

@@ -1,0 +1,119 @@
+// *****************************************************************************
+/*!
+  \file      src/LinSys/solver.ci
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for merging a linear system
+  \details   Charm++ module interface file for merging a linear system. See more
+     in src/LinSys/Solver.h.
+*/
+// *****************************************************************************
+
+module solver {
+
+  namespace tk {
+
+    group SolverShadow { entry SolverShadow(); };
+
+    group Solver {
+      entry Solver( CProxy_SolverShadow sh,
+                    const std::vector< CkCallback >& cb,
+                    const std::map< int,
+                      std::vector< std::size_t > >& side,
+                    std::size_t ncomp,
+                    bool feedback );
+      entry void nchare( int n );
+      initnode void registerReducers();
+      entry void bounds( int pe, std::size_t lower, std::size_t upper );
+      entry void next();
+      entry void addrow( int fromch,
+                         int frompe,
+                         const std::set< std::size_t >& row );
+      entry void recrow();
+      entry [reductiontarget] void addbc( CkReductionMsg* msg );
+      entry void addsol( int fromch,
+                         const std::map< std::size_t,
+                                         std::vector< tk::real > >& solution );
+      entry void addlhs( int fromch,
+        const std::map< std::size_t,
+                        std::map< std::size_t,
+                                  std::vector< tk::real > > >& lhs );
+      entry void addrhs( int fromch,
+                         const std::map< std::size_t,
+                                         std::vector< tk::real > >& rhs );
+      entry void addlowrhs( int fromch,
+                            const std::map< std::size_t,
+                                            std::vector< tk::real > >& lorhs );
+      entry void addlowlhs( int fromch,
+                            const std::map< std::size_t,
+                                            std::vector< tk::real > >& lolhs );
+      entry void adddiag( int fromch,
+                          std::map< std::size_t,
+                           std::vector< std::vector< tk::real > > >& solution );
+      entry void comfinal();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //
+      // See src/LinSys/Solver.h.
+      //
+      // Interpretation of the DAG in src/LinSys/Solver.h
+      // ------------------------------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // A word on multiple invokation of SDAG triggers: As the commit message
+      // of b79ea29 explains, the "triggers", such as hyprerow_complete(),
+      // enumerated below, at threir call site should be thought of as messages
+      // being put in some message queue and consumed at 'when' clauses wherever
+      // they appear. If they appear in multiple when clauses, they consume
+      // multple messages, thus they have to be triggered multiple times. See
+      // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
+
+      entry void wait4nchare() {
+        when nchare_complete(), bounds_complete() serial "nchare" {
+          contribute( m_cb.get< tag::coord >() ); } };
+
+      entry void wait4lhsbc() {
+        when lhs_complete(), bc_complete() serial "lhsbc" { lhsbc(); } };
+      entry void wait4rhsbc() {
+        when rhs_complete(), bc_complete() serial "rhsbc" { rhsbc(); } };
+
+      entry void wait4hypresol() {
+        when hypresol_complete(), hyprerow_complete() serial "sol" { sol(); } };
+      entry void wait4hyprelhs() {
+        when hyprelhs_complete(), hyprerow_complete() serial "lhs" { lhs(); } };
+      entry void wait4hyprerhs() {
+        when hyprerhs_complete(), hyprerow_complete() serial "rhs" { rhs(); } };
+
+      entry void wait4asm() {
+        when asmsol_complete(), asmlhs_complete(), asmrhs_complete()
+          serial "solve" { solve(); } };
+      entry void wait4low() {
+        when rhsbc_complete(), lowlhs_complete(), lowrhs_complete()
+          serial "low" { lowsolve(); } };
+
+      entry void nchare_complete();
+      entry void bounds_complete();
+      entry void bc_complete();
+      entry void rhsbc_complete();
+      entry void hyprerow_complete();
+      entry void lhs_complete();
+      entry void rhs_complete();
+      entry void lowrhs_complete();
+      entry void lowlhs_complete();
+      entry void hyprelhs_complete();
+      entry void hyprerhs_complete();
+      entry void hypresol_complete();
+      entry void asmlhs_complete();
+      entry void asmrhs_complete();
+      entry void asmsol_complete();
+    };
+
+  } // tk::
+
+}

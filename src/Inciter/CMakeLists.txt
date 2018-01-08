@@ -8,14 +8,20 @@ include(charm)
 add_library(Inciter
             Transporter.C
             Partitioner.C
-            Carrier.C
+            Discretization.C
+            CG.C
+            DG.C
             FluxCorrector.C
-            DiagReducer.C
+            AMR/mesh_adapter.C
+            AMR/util.C
+            AMR/edge.C
 )
 
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
-addCharmModule( "carrier" "Inciter" )
+addCharmModule( "discretization" "Inciter" )
+addCharmModule( "cg" "Inciter" )
+addCharmModule( "dg" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
@@ -29,20 +35,10 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 #add_dependencies( "transporterCharmModule" "linearmapCharmModule" )
 #add_dependencies( "transporterCharmModule" "unsmeshmapCharmModule" )
 
-# Add extra dependency of Inciter on LinSysMerger charm module. This is required
-# so that linsysmerger.decl.h and linsysmerger.def.h are generated before
-# Inciter including those.
-add_dependencies( "Inciter" "linsysmergerCharmModule" )
-
-# Add extra dependency of Inciter on ParticleWriter charm module. This is
-# required so that particlewriter.decl.h and particlewriter.def.h are generated
-# before Inciter including those.
-add_dependencies( "Inciter" "particlewriterCharmModule" )
-
-# Add extra dependency of Carrier charm module on ParticleWriter charm module.
-# This is required so that particlewriter.decl.h and particlewriter.def.h are
-# generated before Carrier including those.
-add_dependencies( "carrierCharmModule" "particlewriterCharmModule" )
+# Add extra dependency of Inciter on Solver charm module. This is required so
+# that solver.decl.h and solver.def.h are generated before Inciter including
+# those.
+add_dependencies( "Inciter" "solverCharmModule" )
 
 # Add extra dependency of Transporter charm module on Partitioner charm module.
 # This is required so that Partitioner.decl.h and Partitioner.def.h are
