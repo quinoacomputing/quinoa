@@ -141,7 +141,6 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 # Set the requirement for the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
@@ -309,6 +308,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
+
+  # Display all error messages (inform, warn, severe and fatal)
+  add_compiler_flag("-Minform=inform")
+  add_compiler_flag("-a")
+  add_compiler_flag("--pedantic")
+  add_compiler_flag("--display_error_number")
+
+  # ignore warning on parameter was set but never used
+  add_compiler_flag("--diag_suppress550")
+  # ignore warning on variable was declared but never referenced
+  add_compiler_flag("--diag_suppress177")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
