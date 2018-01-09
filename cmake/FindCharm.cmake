@@ -48,6 +48,7 @@ FIND_PROGRAM(CHARM_COMPILER
   ${CHARM_ROOT}/bin
   $ENV{CHARM_ROOT}/bin
   ${CYGWIN_INSTALL_PATH}/bin
+  ${CMAKE_INSTALL_PREFIX}/charm/bin
 )
 
 if(CHARM_COMPILER)
@@ -58,6 +59,7 @@ FIND_PATH(CHARM_INCLUDE_DIR NAMES charm.h
                             HINTS ${HINTS_CHARMINC}
                                   ${CHARM_ROOT}/include
                                   $ENV{CHARM_ROOT}/include
+                                  ${CMAKE_INSTALL_PREFIX}/charm/include
                             PATH_SUFFIXES charm)
 
 set(CHARM_INCLUDE_DIRS ${CHARM_INCLUDE_DIR})
