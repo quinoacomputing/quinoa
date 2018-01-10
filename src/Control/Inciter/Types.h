@@ -18,7 +18,8 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Inciter/Options/Scheme.h"
-#include "Inciter/Options/InitialAMR.h"
+#include "Inciter/Options/AMRInitial.h"
+#include "Inciter/Options/AMRError.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "Options/TxtFloatFormat.h"
 #include "Options/FieldFile.h"
@@ -35,8 +36,14 @@ using selects = tk::tuple::tagged_tuple<
   tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType,//!< Mesh partitioner
   tag::filetype,     tk::ctr::FieldFileType,         //!< Field output file type
-  tag::initialamr,   InitialAMRType,          //!< Initial AMR type
   tag::scheme,       inciter::ctr::SchemeType //!< Spatial discretization scheme
+>;
+
+//! Adaptive-mesh refinement options
+using amr = tk::tuple::tagged_tuple<
+  tag::amr,          bool,                 //!< AMR on/off
+  tag::init,         AMRInitialType,       //!< Initial AMR type
+  tag::error,        AMRErrorType          //!< Error estimator for AMR
 >;
 
 //! Discretization parameters storage

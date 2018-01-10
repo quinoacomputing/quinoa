@@ -255,8 +255,8 @@ Partitioner::flatten()
 // *****************************************************************************
 {
   // Optionally refine mesh if requested
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM) refine();
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM) refine();
 
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==

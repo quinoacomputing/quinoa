@@ -34,6 +34,7 @@ class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
+                      tag::amr,        amr,
                       tag::discr,      discretization,
                       tag::prec,       precision,
                       tag::flformat,   floatformat,
@@ -113,9 +114,6 @@ class InputDeck :
                                        kw::pde_ce,
                                        kw::pde_kappa,
                                        kw::pde_r0,
-                                       kw::amr,
-                                       kw::amr_initial,
-                                       kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
                                        kw::filetype,
@@ -126,6 +124,12 @@ class InputDeck :
                                        kw::linf >;
     using keywords5 = boost::mpl::set< kw::discretization,
                                        kw::fct,
+                                       kw::amr,
+                                       kw::amr_initial,
+                                       kw::amr_uniform,
+                                       kw::amr_error,
+                                       kw::amr_gradient,
+                                       kw::amr_hessian,
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,
@@ -151,7 +155,9 @@ class InputDeck :
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
-      set< tag::selected, tag::initialamr >( InitialAMRType::NONE );
+      set< tag::amr, tag::amr >( false );
+      set< tag::amr, tag::init >( AMRInitialType::NONE );
+      set< tag::amr, tag::error >( AMRErrorType::GRADIENT );
       // Default discretization scheme
       set< tag::selected, tag::scheme >( SchemeType::MatCG );
       // Default txt floating-point output precision in digits
@@ -176,6 +182,7 @@ class InputDeck :
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
+                   tag::amr,        amr,
                    tag::discr,      discretization,
                    tag::prec,       precision,
                    tag::flformat,   floatformat,
