@@ -2,8 +2,8 @@
 /*!
   \file      src/NoWarning/bool.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include boost/functional/bool.hpp with turning off specific
-             compiler warnings
+  \brief     Include boost/mpl/bool.hpp with turning off specific compiler
+             warnings
 */
 // *****************************************************************************
 #ifndef nowarning_bool_h

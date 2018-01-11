@@ -12,7 +12,7 @@
 #include <map>
 
 #include "NoWarning/vector.h"
-#include <boost/mpl/joint_view.hpp>
+#include "NoWarning/joint_view.h"
 
 #include "QuinoaConfig.h"
 
