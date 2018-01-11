@@ -9,7 +9,7 @@
 #ifndef CharmUtil_h
 #define CharmUtil_h
 
-#include <boost/mpl/bool.hpp>
+#include "NoWarning/bool.h"
 
 namespace tk {
 

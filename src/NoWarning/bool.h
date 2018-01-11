@@ -1,27 +1,30 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/bind.h
+  \file      src/NoWarning/bool.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Include boost/bind/bind.hpp with turning off specific compiler
-             warnings
+  \brief     Include boost/functional/bool.hpp with turning off specific
+             compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_bind_h
-#define nowarning_bind_h
+#ifndef nowarning_bool_h
+#define nowarning_bool_h
 
 #include "Macro.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
-#include <boost/bind/bind.hpp>
+#include <boost/mpl/bool.hpp>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_bind_h
+#endif // nowarning_bool_h
