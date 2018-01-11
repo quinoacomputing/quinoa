@@ -11,8 +11,8 @@
 
 #include <map>
 
-#include "NoWarning/vector.h"
-#include "NoWarning/joint_view.h"
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/joint_view.hpp>
 
 #include "QuinoaConfig.h"
 

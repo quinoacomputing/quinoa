@@ -15,7 +15,6 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
-  #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
 #endif
 
 #include <boost/bind/bind.hpp>

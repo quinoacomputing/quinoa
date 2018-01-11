@@ -12,8 +12,6 @@
 #include "Macro.h"
 
 #if defined(__clang__)
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -22,7 +20,6 @@
 #include <boost/functional/factory.hpp>
 
 #if defined(__clang__)
-  #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
