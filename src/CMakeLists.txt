@@ -467,8 +467,6 @@ set(CMAKE_SKIP_BUILD_RPATH false)
 # (use later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
 # Add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
@@ -477,7 +475,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # add a target to generate API documentation with Doxygen
