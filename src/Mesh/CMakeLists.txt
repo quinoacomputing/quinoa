@@ -6,6 +6,7 @@ include(charm)
 
 add_library(Mesh
             DerivedData.C
+            Gradients.C
             Reorder.C
             STLMesh.C
 )
