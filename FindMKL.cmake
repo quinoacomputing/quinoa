@@ -96,8 +96,10 @@ else()
 endif()
 
 # Add MKL library path to rpath
-get_filename_component(MKL_RPATH_DIR ${MKL_CORE_LIBRARY} DIRECTORY)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${MKL_RPATH_DIR}")
+if(MKL_CORE_LIBRARY)
+  get_filename_component(MKL_RPATH_DIR ${MKL_CORE_LIBRARY} DIRECTORY)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${MKL_RPATH_DIR}")
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if
 # all listed variables are TRUE.
