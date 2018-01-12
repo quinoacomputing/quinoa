@@ -98,7 +98,7 @@ edgegrad( std::size_t edge,
           ncomp_t c )
 // *****************************************************************************
 //  Compute gradient at a mesh edge
-//! \param[in] node Edge id at which to compute gradient
+//! \param[in] edgeEdge id at which to compute gradient
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] esued Linked lists storing elements surrounding edges, see
@@ -150,7 +150,7 @@ edgegrad( std::size_t edge,
      // compute edge volume: every element contributes their volume / 6
      vol += J/36.0;
 
-     // compute gradient over element weighed by cell volume / 6 and sum to node
+     // compute gradient over element weighed by cell volume / 6 and sum to edge
      for (std::size_t j=0; j<3; ++j)
        for (std::size_t i=0; i<4; ++i)
          g[j] += grad[i][j] * u[i] * J/36.0;
