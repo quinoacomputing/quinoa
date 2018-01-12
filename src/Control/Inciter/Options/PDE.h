@@ -9,7 +9,7 @@
 #ifndef InciterPDEOptions_h
 #define InciterPDEOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include "NoWarning/vector.h"
 
 #include "TaggedTuple.h"
 #include "Toggle.h"
