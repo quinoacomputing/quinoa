@@ -10,6 +10,7 @@
 #include "DiagReducer.h"
 #include "Make_unique.h"
 #include "ContainerUtil.h"
+#include "Diagnostics.h"
 
 namespace tk {
 
@@ -63,6 +64,8 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     curCreator | w;
     // Aaggregate diagnostics vector
     Assert( v.size() == w.size(),
+            "Size mismatch during diagnostics aggregation" );
+    Assert( v.size() == inciter::NUMDIAG,
             "Size mismatch during diagnostics aggregation" );
     for (std::size_t i=0; i<v.size(); ++i)
       Assert( v[i].size() == w[i].size(),

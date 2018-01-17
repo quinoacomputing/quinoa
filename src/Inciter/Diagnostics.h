@@ -17,6 +17,17 @@
 
 namespace inciter {
 
+//! Number of entries in diagnostics vector (of vectors), see compute()
+const std::size_t NUMDIAG = 6;
+
+//! Diagnostics labels
+enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
+            L2ERR,      //!< L2 norm of numerical-analytic solution
+            LINFERR,    //!< L_inf norm of numerical-analytic solution
+            ITER,       //!< Iteration count
+            TIME,       //!< Physical time
+            DT };       //!< Time step size
+
 //! Diagnostics class used to compute diagnostics while integrating PDEs
 class Diagnostics {
 

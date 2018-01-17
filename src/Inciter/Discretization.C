@@ -463,7 +463,6 @@ Discretization::writeSolution(
 //! \param[in] rmw Root mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of fields to write to file
-//! \author A. Pakki
 // *****************************************************************************
 {
   int varid = 0;

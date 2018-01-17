@@ -161,9 +161,9 @@ BoundaryConditions::match( tk::ctr::ncomp_type ncomp,
         auto& nodebc = dirbc[ gid[id] ];        // BCs to be set for node
         if (nodebc.size() > c) {        // node already has BCs from this PDE
           Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
-          for (std::size_t i=0; i<bcs.size(); i++)
-            if (bcs[i].first)
-              nodebc[c+i] = bcs[i];
+          for (std::size_t i=0; i<bcs.size(); i++) {
+            if (bcs[i].first) nodebc[c+i] = bcs[i];
+          }
         } else {        // node does not yet have BCs from this PDE
           // This branch needs to be completed for system of systems of PDEs.
           // See note above.

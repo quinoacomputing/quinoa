@@ -120,7 +120,6 @@ ExodusIIMeshWriter::writeHeader( const char* title,
 //! \param[in] nblk Number of mesh element blocks in ExodusII file
 //! \param[in] node_set Number of node sets in ExodusII file
 //! \param[in] side_set Number of side sets in ExodusII file
-//! \author A. Pakki
 // *****************************************************************************
 {
   ErrChk(
@@ -150,7 +149,6 @@ ExodusIIMeshWriter::writeNodes( const std::vector< tk::real >& x,
 //! \param[in] x coordinates of mesh nodes
 //! \param[in] y coordinates of mesh nodes
 //! \param[in] z coordinates of mesh nodes
-//! \author A. Pakki
 // *****************************************************************************
 {
   ErrChk( ex_put_coord( m_outFile, x.data(), y.data(), z.data() ) == 0,

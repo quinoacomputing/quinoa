@@ -15,6 +15,7 @@
 #include "PDE.h"
 #include "Solver.h"
 #include "DiagReducer.h"
+#include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -136,7 +137,7 @@ DG::diagnostics()
   const auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
   std::vector< std::vector< tk::real > >
-    diag( 6, std::vector< tk::real >( ncomp, 0.0 ) );
+    diag( NUMDIAG, std::vector< tk::real >( ncomp, 0.0 ) );
 
   // Compute diagnostics
   // ...

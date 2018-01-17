@@ -20,7 +20,7 @@ namespace inciter {
 namespace ctr {
 
 //! Scheme types
-enum class SchemeType : uint8_t { MatCG=0
+enum class SchemeType : uint8_t { MatCG
                                 , DiagCG
                                 , DG };
 

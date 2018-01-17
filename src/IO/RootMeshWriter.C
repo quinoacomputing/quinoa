@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.C
-  \author    A. Pakki
   \copyright 2016-2017, Los Alamos National Security, LLC.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class definition.
@@ -28,7 +27,6 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 //! \param[in] mode Root writer constructor mode: ExoWriter::CREATE for
 //!   creating a new file, ExoWriter::OPEN for opening an existing file for
 //!   appending
-//! \author A. Pakki
 // *****************************************************************************
 {
   if (option == 0 ) {
@@ -47,7 +45,6 @@ RootMeshWriter::RootMeshWriter( const std::string filename, int option ) :
 RootMeshWriter::~RootMeshWriter() noexcept
 // *****************************************************************************
 //  Destructor
-//! \author A. Pakki
 // *****************************************************************************
 {
   if (m_rfile) {
@@ -61,7 +58,6 @@ RootMeshWriter::writeMesh( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write Root mesh file
 //! \param[in] mesh Unstructured mesh object
-//! \author A. Pakki
 // *****************************************************************************
 {
   writeHeader( mesh );
@@ -74,7 +70,6 @@ RootMeshWriter::writeHeader( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write Root header
 //! \param[in] mesh Unstructured mesh object
-//! \author A. Pakki
 // *****************************************************************************
 {
 
@@ -88,7 +83,6 @@ RootMeshWriter::writeNodes( const UnsMesh& mesh )
 // *****************************************************************************
 //  Write node coordinates to Root file
 //! \param[in] mesh Unstructured mesh object
-//! \author A. Pakki
 // *****************************************************************************
 {
   // the file requires the vertices and the number of triangles
@@ -115,7 +109,6 @@ RootMeshWriter::writeElements( const UnsMesh& mesh ) const
 // *****************************************************************************
 //  Write element connectivity to Root file
 //! \param[in] mesh Unstructured mesh object
-//! \author A. Pakki
 // *****************************************************************************
 {
   int elclass = 0;
@@ -132,7 +125,6 @@ const
 //  Write element block to ROOT file
 //! \param[inout] elclass Count element class ids in file
 //! \param[in] inpoel Element connectivity.
-//! \author A. Pakki
 // *****************************************************************************
 {
   if (inpoel.empty()) return;
@@ -160,7 +152,6 @@ const
 // *****************************************************************************
 //  Write the names of nodal output variables to ROOT file
 //! \param[in] nv Nodal variable names
-//! \author A. Pakki
 // *****************************************************************************
 {
   std::vector < std::string > nv_copy;
@@ -180,7 +171,6 @@ RootMeshWriter::writeTimeStamp( uint64_t it, tk::real time )
 //  Write time stamp to ROOT file
 //! \param[in] it Iteration number
 //! \param[in] time Time
-//! \author A. Pakki
 // *****************************************************************************
 {
   
@@ -207,7 +197,6 @@ RootMeshWriter::writeNodeScalar( uint64_t it,
 //! \param[in] it Iteration number
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output
-//! \author A. Pakki
 // *****************************************************************************
 {
 
