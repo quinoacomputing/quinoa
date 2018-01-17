@@ -29,6 +29,7 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Diagnostics.h"
 #include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"
@@ -627,7 +628,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
-  Assert( d.size() == 6, "Diagnostics vector size mismatch" );
+  Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
      Assert( d[i].size() == ncomp,

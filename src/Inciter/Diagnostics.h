@@ -17,6 +17,9 @@
 
 namespace inciter {
 
+//! Number of entries in diagnostics vector (of vectors), see compute()
+const std::size_t NUMDIAG = 6;
+
 //! Diagnostics class used to compute diagnostics while integrating PDEs
 class Diagnostics {
 

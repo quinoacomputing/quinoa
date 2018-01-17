@@ -102,7 +102,7 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // 1: L2-norm of all scalar components of the numerical-analytic solution
     // 2: Linf-norm of all scalar components of the numerical-analytic solution
     std::vector< std::vector< tk::real > >
-      diag( 6, std::vector< tk::real >( u.nprop(), 0.0 ) );
+      diag( NUMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i)
