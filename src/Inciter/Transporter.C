@@ -634,12 +634,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
      Assert( d[i].size() == ncomp,
              "Size mismatch at final stage of diagnostics aggregation" );
 
-  // Allocate storage for L2(var) for all variables as those are always computed
+  // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
 
-  // Finish computing the L2 norm of the numerical solution
-  for (std::size_t i=0; i<d[0].size(); ++i)
-    diag[i] = sqrt( d[0][i] / m_V );
+  // Finish computing diagnostics
+  for (std::size_t i=0; i<d[L2SOL].size(); ++i)
+    diag[i] = sqrt( d[L2SOL][i] / m_V );
   
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -649,12 +649,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
     n += ncomp;
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
-     for (std::size_t i=0; i<d[1].size(); ++i)
-       diag.push_back( sqrt( d[1][i] / m_V ) );
+     for (std::size_t i=0; i<d[L2ERR].size(); ++i)
+       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
-      for (std::size_t i=0; i<d[2].size(); ++i)
-        diag.push_back( d[2][i] );
+      for (std::size_t i=0; i<d[LINFERR].size(); ++i)
+        diag.push_back( d[LINFERR][i] );
     }
   }
 
@@ -663,7 +663,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      g_inputdeck.get< tag::flformat, tag::diag >(),
                      g_inputdeck.get< tag::prec, tag::diag >(),
                      std::ios_base::app );
-  dw.diag( static_cast<uint64_t>(d[3][0]), d[4][0], d[5][0], diag );
+  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whther to continue with next step
   m_scheme.eval< tag::bcast >();

@@ -107,17 +107,17 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i)
       if (m_slave.find(i) == end(m_slave)) {    // ignore non-owned nodes
-        // Compute L2 norm of the numerical solution
+        // Compute sum for L2 norm of the numerical solution
         for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[0][c] += u(i,c,0) * u(i,c,0) * d.Vol()[i];
-        // Compute L2 norm of the numerical-analytic solution
+          diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * d.Vol()[i];
+        // Compute sum for L2 norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[1][c] +=
+          diag[L2ERR][c] +=
             (u(i,c,0)-a(i,c,0)) * (u(i,c,0)-a(i,c,0)) * d.Vol()[i];
-        // Compute Linf norm of the numerical-analytic solution
+        // Compute max for Linf norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c) {
           auto err = std::abs( u(i,c,0) - a(i,c,0) );
-          if (err > diag[2][c]) diag[2][c] = err;
+          if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
         }
       }
 
@@ -125,9 +125,9 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // 3: Current iteration count (only the first entry is used)
     // 4: Current physical time (only the first entry is used)
     // 5: Current physical time step size (only the first entry is used)
-    diag[3][0] = static_cast< tk::real >( d.It()+1 );
-    diag[4][0] = d.T() + d.Dt();
-    diag[5][0] = d.Dt();
+    diag[ITER][0] = static_cast< tk::real >( d.It()+1 );
+    diag[TIME][0] = d.T() + d.Dt();
+    diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
     auto stream = tk::serialize( diag );
