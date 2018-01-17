@@ -9,7 +9,7 @@
 #ifndef PDFFileOptions_h
 #define PDFFileOptions_h
 
-#include <boost/mpl/vector.hpp>
+#include "NoWarning/vector.h"
 
 #include "Toggle.h"
 #include "Keywords.h"

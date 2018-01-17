@@ -27,6 +27,12 @@
   #define R123_USE_GNU_UINT128 1
 #endif
 
+#ifdef __PGI
+  #undef R123_USE_GNU_UINT128
+  #undef R123_USE_MULHILO64_C99
+  #define R123_USE_MULHILO64_C99 1
+#endif
+
 #include <Random123/philox.h>
 
 #ifdef POWERPC
