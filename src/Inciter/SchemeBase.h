@@ -20,7 +20,9 @@
 #include "PUPUtil.h"
 #include "Inciter/Options/Scheme.h"
 
-#include "NoWarning/cg.decl.h"
+#include "NoWarning/matcg.decl.h"
+#include "NoWarning/diagcg.decl.h"
+#include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/discretization.decl.h"
 
@@ -44,8 +46,12 @@ class SchemeBase {
     {
       CkArrayOptions bound;
       bound.bindTo( discproxy );
-      if (scheme == ctr::SchemeType::CG) {
-        proxy = static_cast< CProxy_CG >( CProxy_CG::ckNew(bound) );
+      if (scheme == ctr::SchemeType::MatCG) {
+        proxy = static_cast< CProxy_MatCG >( CProxy_MatCG::ckNew(bound) );
+        fctproxy = CProxy_DistFCT::ckNew(bound);
+      } else if (scheme == ctr::SchemeType::DiagCG) {
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
+        fctproxy= CProxy_DistFCT::ckNew(bound);
       } else if (scheme == ctr::SchemeType::DG) {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
@@ -60,38 +66,24 @@ class SchemeBase {
 
     //! Query underlying proxy element type
     //! \return Zero-based index into the set of types of ProxyElem
-    int which_element() const noexcept { return element(0).which(); }
+    int which_element() const noexcept {
+      return tk::element< ProxyElem >( proxy, 0 ).which();
+    }
 
   protected:
     //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy = boost::variant< CProxy_CG, CProxy_DG >;
+    using Proxy = boost::variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >;
     //! Variant type listing all chare element proxy types (behind operator[])
     using ProxyElem =
-      boost::variant< CProxy_CG::element_t, CProxy_DG::element_t >;
+      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t,
+                      CProxy_DG::element_t >;
 
     //! Variant storing one proxy to which this class is configured for
     Proxy proxy;
     //! Charm++ proxy to data and code common to all discretizations
     CProxy_Discretization discproxy;
-
-    //! Function dereferencing operator[] on chare proxy returning element proxy
-    //! \param[in] x Chare array element index
-    //! \return Chare array element proxy as a variant
-    //! \details The returning element proxy is a variant, depending on the
-    //!   input proxy.
-    ProxyElem element( const CkArrayIndex1D& x ) const {
-      return boost::apply_visitor( Idx(x), proxy );
-    }
-
-    //! Functor to dereference operator[] of chare proxy returning element proxy
-    //! \details The returning element proxy is a variant with a type depending
-    //!   on the input proxy.
-    struct Idx : boost::static_visitor< ProxyElem > {
-      Idx( const CkArrayIndex1D& idx ) : x(idx) {}
-      template< typename P >
-        ProxyElem operator()( const P& p ) const { return p[x]; }
-      CkArrayIndex1D x;
-    };
+    //! Charm++ proxy to flux-corrected transport (FCT) driver class
+    CProxy_DistFCT fctproxy;
 
     //! Generic base for all call_* classes
     //! \details This class stores the entry method arguments and contains a
@@ -148,10 +140,11 @@ class SchemeBase {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      auto v = tk::Variant< CProxy_CG, CProxy_DG >( proxy );
+      auto v = tk::Variant< CProxy_MatCG, CProxy_DiagCG, CProxy_DG >( proxy );
       p | v;
       proxy = v.get();
       p | discproxy;
+      p | fctproxy;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

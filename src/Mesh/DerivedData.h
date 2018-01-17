@@ -56,8 +56,9 @@ genEsuel( const std::vector< std::size_t >& inpoel,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup );
 
-//! Generate derived data structure, elements surrounding elements
-//  for tetrahedra in the form of a full vector with voundary elements
+//! \brief Generate derived data structure, elements surrounding elements
+//!   as a fixed length data structure as a full vector, including boundary
+//!   elements as -1.
 std::vector< int >
 genEsuelTet( const std::vector< std::size_t >& inpoel,
              const std::pair< std::vector< std::size_t >,
@@ -77,7 +78,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
                            std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, total number of faces
-std::size_t 
+std::size_t
 genNtfac( std::size_t nfpe,
           std::size_t nbfac,
           const std::vector< int >& esuelTet );

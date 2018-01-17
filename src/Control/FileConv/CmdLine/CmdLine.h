@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Control/FileConv/CmdLine/CmdLine.h
-  \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FileConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -32,7 +31,6 @@ namespace ctr {
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/FileConv/Types.h
-//! \author A. Pakki
 class CmdLine :
   public tk::Control< // tag        type
                       tag::io,      ios,
@@ -69,7 +67,6 @@ class CmdLine :
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \author A. Pakki
     void pup( PUP::er& p ) {
       tk::Control< tag::io,       ios,
                    tag::verbose,  bool,
@@ -83,7 +80,6 @@ class CmdLine :
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] c CmdLine object reference
-    //! \author A. Pakki
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}
 };

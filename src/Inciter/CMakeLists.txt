@@ -9,9 +9,14 @@ add_library(Inciter
             Transporter.C
             Partitioner.C
             Discretization.C
-            CG.C
+            MatCG.C
+            DiagCG.C
             DG.C
             FluxCorrector.C
+            DistFCT.C
+            DiagReducer.C
+            Diagnostics.C
+            BoundaryConditions.C
             AMR/mesh_adapter.C
             AMR/util.C
             AMR/edge.C
@@ -20,8 +25,11 @@ add_library(Inciter
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
-addCharmModule( "cg" "Inciter" )
+addCharmModule( "matcg" "Inciter" )
+addCharmModule( "diagcg" "Inciter" )
+addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
+addCharmModule( "boundaryconditions" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

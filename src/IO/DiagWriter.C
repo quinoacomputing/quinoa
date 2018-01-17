@@ -51,12 +51,13 @@ DiagWriter::header( const std::vector< std::string >& name ) const
 //! \param[in] name Vector of strings with the names of diagnostics
 // *****************************************************************************
 {
-  m_outFile << "#" << std::setw(9) << "1:it";
-  m_outFile << std::setw(m_width) << "2:t";
+  m_outFile << "#" << std::setw(9) << "1:it"
+            << std::setw(m_width) << "2:t"
+            << std::setw(m_width) << "3:dt";
   std::stringstream out;
 
   // Output names of diagnostics
-  std::size_t column = 3;
+  std::size_t column = 4;
   for (const auto& n : name) {
     out << column++ << ':' << n;
     m_outFile << std::setw(m_width) << out.str();
@@ -69,6 +70,7 @@ DiagWriter::header( const std::vector< std::string >& name ) const
 std::size_t
 DiagWriter::diag( uint64_t it,
                   tk::real t,
+                  tk::real dt,
                   const std::vector< tk::real >& diagnostics )
 // *****************************************************************************
 //  Write out diagnostics
@@ -78,8 +80,9 @@ DiagWriter::diag( uint64_t it,
 //! \return The total number of diagnostics written to the output file
 // *****************************************************************************
 {
-  m_outFile << std::setw(10) << it;
-  m_outFile << std::setw(m_width) << t;
+  m_outFile << std::setw(10) << it
+            << std::setw(m_width) << t
+            << std::setw(m_width) << dt;
 
   // Output diagnostics
   for (const auto& d : diagnostics) m_outFile << std::setw(m_width) << d;

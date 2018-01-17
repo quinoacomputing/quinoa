@@ -40,6 +40,7 @@ class DiagWriter : public tk::Writer {
     //! Write diagnostics file
     std::size_t diag( uint64_t it,
                       tk::real t,
+                      tk::real dt,
                       const std::vector< tk::real >& diagnostics );
 
   private:

@@ -29,6 +29,7 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Diagnostics.h"
 #include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"
@@ -47,10 +48,10 @@ extern std::vector< PDE > g_pdes;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_solver(),
+  m_bc(),
   m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -105,15 +106,17 @@ Transporter::Transporter() :
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG) {
-    m_print.item( "Flux-corrected transport (FCT)",
-                  g_inputdeck.get< tag::discr, tag::fct >() );
-    m_print.item( "FCT mass diffusion coeff",
-                  g_inputdeck.get< tag::discr, tag::ctau >() );
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+    auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+    m_print.item( "Flux-corrected transport (FCT)", fct );
+    if (fct)
+      m_print.item( "FCT mass diffusion coeff",
+                    g_inputdeck.get< tag::discr, tag::ctau >() );
   }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
@@ -155,83 +158,50 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Read side sets from mesh file
-    auto ss = readSidesets();
+    // Create boundary condition object group
+    createBC();
 
-    // Create linear system solver
-    createSolver( ss );
+    // Create linear system solver group
+    createSolver();
 
-    // Create mesh partitioner
+    // Create mesh partitioner group
     createPartitioner();
 
   } else finish();      // stop if no time stepping requested
 }
 
-std::map< int, std::vector< std::size_t > >
-Transporter::readSidesets()
+void
+Transporter::createBC()
 // *****************************************************************************
-// Read side sets from mesh file
-//! \return Node lists mapped to side set ids
+// Create boundary conditions group
 // *****************************************************************************
 {
   // Create ExodusII reader for reading side sets from file.
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  // Read in side sets from file
+  // Read in side sets associated to mesh node IDs from file
   m_print.diag( "Reading side sets" );
-  auto ss = er.readSidesets();
+  auto sidenodes = er.readSidesets();
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
   for (const auto& eq : g_pdes) eq.side( conf );
   for (auto i : conf)
-    if (ss.find(i) == end(ss)) {
+    if (sidenodes.find(i) == end(sidenodes)) {
       m_print.diag( "WARNING: Boundary conditions specified on side set " +
         std::to_string(i) + " which does not exist in mesh file" );
       break;
     }
 
-  return ss;
+  // Create boundary conditions Charm++ chare group
+  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
 }
 
 void
-Transporter::readSidesetFaces(std::size_t& nbfac,
-                              std::map< int, std::vector< std::size_t > >& bface, 
-                              std::map< int, std::vector< std::size_t > >& belem)
-// *****************************************************************************
-// Read side set faces from mesh file
-// Added by Aditya K Pandare:
-// This is added to obtain face-element connectivity details
-//! \param[out] nbfac Total number of boundary faces in all the side-sets.
-//! \param[out] bface Boundary face list associated with each side-set.
-//! \param[out] belem boundary element list associated with faces in bface.
-// *****************************************************************************
-{
-  // Create ExodusII reader for reading side sets from file.
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-
-  // Read in side set faces from file
-  m_print.diag( "Reading side set faces" );
-  er.readSidesetFaces(nbfac,bface,belem);
-
-  // Verify that side sets to which boundary conditions are assigned by user
-  // exist in mesh file
-  std::unordered_set< int > conf;
-  for (const auto& eq : g_pdes) eq.side( conf );
-  for (auto i : conf)
-    if (bface.find(i) == end(bface)) {
-      m_print.diag( "WARNING: Boundary conditions specified on side set face " +
-        std::to_string(i) + " which does not exist in mesh file" );
-      break;
-    }
-}
-
-void
-Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
+Transporter::createSolver()
 // *****************************************************************************
 // Create linear solver
-//! \param[in] ss Node lists mapped to side set ids
 // *****************************************************************************
 {
   // Create linear system solver callbacks
@@ -245,7 +215,6 @@ Transporter::createSolver( const std::map<int, std::vector<std::size_t> >& ss )
   m_solver = tk::CProxy_Solver::
                ckNew( tk::CProxy_SolverShadow::ckNew(),
                       cbs,
-                      ss,
                       g_inputdeck.get< tag::component >().nprop(),
                       g_inputdeck.get< tag::cmd, tag::feedback >() );
 }
@@ -262,12 +231,24 @@ Transporter::createPartitioner()
   // Start timing mesh read
   m_timer[ TimerTag::MESHREAD ];
 
-  // Read side sets for boundary faces
-  // Added by Aditya KP
-  std::map< int, std::vector< std::size_t > > bface, belem;
-  std::size_t nbfac(0);
+  // Create ExodusII reader for reading side sets from file.
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
-  readSidesetFaces(nbfac, bface, belem);
+  // Read side sets for boundary faces
+  m_print.diag( "Reading side set faces" );
+  std::map< int, std::vector< std::size_t > > bface, belem;
+  auto nbfac = er.readSidesetFaces( bface, belem );
+
+  // Verify that side sets to which boundary conditions are assigned by user
+  // exist in mesh file
+  std::unordered_set< int > conf;
+  for (const auto& eq : g_pdes) eq.side( conf );
+  for (auto i : conf)
+    if (bface.find(i) == end(bface)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set face " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
 
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{
@@ -282,7 +263,7 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, thisProxy, m_scheme, m_solver, 
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
                                nbfac, bface, belem );
 }
 
@@ -346,7 +327,8 @@ Transporter::load( uint64_t nelem )
                  nelem, CkNumPes(), chunksize, remainder ) );
 
   // Send total number of chares to all linear solver PEs, if they exist
-  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::CG)
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
     m_solver.nchare( m_nchare );
 
   // signal to runtime system that m_nchare is set
@@ -498,7 +480,7 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_partitioner.createWorkers();  // create "derived" workers (e.g., CG, DG)
+  m_partitioner.createWorkers();  // create "derived" workers (e.g., DG)
   m_scheme.stat< tag::bcast >();
 }
 
@@ -624,7 +606,7 @@ void
 Transporter::start()
 // *****************************************************************************
 // Start time stepping
-//! \note Only called if CG is used
+//! \note Only called if MatCG/DiagG is used
 // *****************************************************************************
 {
   m_scheme.dt< tag::bcast >();
@@ -646,20 +628,20 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
-  Assert( d.size() == 3, "Diagnostics vector size mismatch" );
+  Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
      Assert( d[i].size() == ncomp,
              "Size mismatch at final stage of diagnostics aggregation" );
 
-  // Allocate storage for L2(var) for all variables as those are always computed
+  // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
 
-  // Finish computing the L2 norm of the numerical solution
-  for (std::size_t i=0; i<d[0].size(); ++i)
-    diag[i] = sqrt( d[0][i] / m_V );
+  // Finish computing diagnostics
+  for (std::size_t i=0; i<d[L2SOL].size(); ++i)
+    diag[i] = sqrt( d[L2SOL][i] / m_V );
   
-  // Query user-requested error types to be computed
+  // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
 
   decltype(ncomp) n = 0;
@@ -667,12 +649,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
     n += ncomp;
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
-     for (std::size_t i=0; i<d[1].size(); ++i)
-       diag.push_back( sqrt( d[1][i] / m_V ) );
+     for (std::size_t i=0; i<d[L2ERR].size(); ++i)
+       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
-      for (std::size_t i=0; i<d[2].size(); ++i)
-        diag.push_back( d[2][i] );
+      for (std::size_t i=0; i<d[LINFERR].size(); ++i)
+        diag.push_back( d[LINFERR][i] );
     }
   }
 
@@ -681,19 +663,10 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      g_inputdeck.get< tag::flformat, tag::diag >(),
                      g_inputdeck.get< tag::prec, tag::diag >(),
                      std::ios_base::app );
-  uint64_t it = 1;
-  tk::real t = 1.0;
-  dw.diag( it, t, diag );
-}
+  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-void
-Transporter::next()
-// *****************************************************************************
-// Reduction target used to synchronize PEs between linear solves of time steps
-//! \note Only called if CG is used
-// *****************************************************************************
-{
-  m_solver.next();
+  // Evaluate whther to continue with next step
+  m_scheme.eval< tag::bcast >();
 }
 
 void

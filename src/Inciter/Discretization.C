@@ -15,6 +15,7 @@
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Inciter/Options/Scheme.h"
 #include "PDE.h"
 #include "Print.h"
 
@@ -33,7 +34,9 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Discretization;
 
 Discretization::Discretization(
+  const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
+  const CProxy_BoundaryConditions& bc,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
@@ -47,7 +50,6 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_lastFieldWriteTime( -1.0 ),
   m_nvol( 0 ),
-  m_nchare( static_cast< std::size_t >( nchare ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + '.' +
                  std::to_string( thisIndex )
                  #ifdef HAS_ROOT
@@ -55,7 +57,9 @@ Discretization::Discretization(
                      tk::ctr::FieldFileType::ROOT ? ".root" : "")
                  #endif
                 ),
+  m_fct( fctproxy ),
   m_transporter( transporter ),
+  m_bc( bc ),
   m_filenodes( filenodes ),
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
@@ -69,23 +73,14 @@ Discretization::Discretization(
   m_nbfac( nbfac ),
   m_bface( bface ),
   m_belem( belem ),
-  m_esuel( tk::genEsuelTet( m_inpoel, 
-                            tk::genEsup(m_inpoel,4) ) ),
-  m_ntfac( tk::genNtfac( 4,
-                         m_nbfac,
-                         m_esuel ) ),
-  m_esuf( tk::genEsuf( 4,
-                       m_ntfac, 
-                       m_nbfac, 
-                       m_belem,
-                       m_esuel ) ),
-  m_inpofa( tk::genInpofaTet( m_ntfac, 
-                              m_nbfac, 
-                              m_inpoel, 
-                              m_esuel ) )
+  m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
+  m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
+  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) ),
+  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_esuel ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
+//! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] solver Linear system solver (Solver) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
@@ -125,6 +120,16 @@ Discretization::Discretization(
 
   // Allocate receive buffer for nodal volumes
   m_volc.resize( m_bid.size(), 0.0 );
+
+  // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
+  // is configured false in the input deck, at this point, we still need the FCT
+  // object as FCT is still being performed, only its results are ignored. See
+  // also, e.g., MatCG::next().
+  const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  const auto nprop = g_inputdeck.get< tag::component >().nprop();
+  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
+    m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
+                               m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
 }
 
 void
@@ -458,7 +463,6 @@ Discretization::writeSolution(
 //! \param[in] rmw Root mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] u Vector of fields to write to file
-//! \author A. Pakki
 // *****************************************************************************
 {
   int varid = 0;

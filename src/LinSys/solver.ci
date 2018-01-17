@@ -17,8 +17,6 @@ module solver {
     group Solver {
       entry Solver( CProxy_SolverShadow sh,
                     const std::vector< CkCallback >& cb,
-                    const std::map< int,
-                      std::vector< std::size_t > >& side,
                     std::size_t ncomp,
                     bool feedback );
       entry void nchare( int n );
@@ -46,9 +44,6 @@ module solver {
       entry void addlowlhs( int fromch,
                             const std::map< std::size_t,
                                             std::vector< tk::real > >& lolhs );
-      entry void adddiag( int fromch,
-                          std::map< std::size_t,
-                           std::vector< std::vector< tk::real > > >& solution );
       entry void comfinal();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

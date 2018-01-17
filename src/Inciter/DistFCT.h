@@ -1,24 +1,20 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/CG.h
+  \file      src/Inciter/DistFCT.h
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     CG advances a system of PDEs with the continuous Galerkin scheme
-  \details   CG advances a system of partial differential equations (PDEs) using
-    continuous Galerkin (CG) finite element (FE) spatial discretization (using
-    linear shapefunctions on tetrahedron elements) combined with a time stepping
-    scheme that is equivalent to the Lax-Wendroff (LW) scheme within the
-    unstructured-mesh FE context and treats discontinuities with flux-corrected
-    transport (FCT).
+  \brief     Charm++ module interface for distributed flux-corrected transport
+  \details   Charm++ module interface file for asynchronous distributed
+    flux-corrected transport (FCT).
 
-    There are a potentially large number of CG Charm++ chares created by
-    Transporter. Each CG gets a chunk of the full load (part of the mesh)
-    and does the same: initializes and advances a number of PDE systems in time.
+    There are a potentially large number of DistFCT Charm++ chares created by
+    Transporter. Each DistFCT gets a chunk of the full load (part of the mesh)
+    and performs flux-corrected transport.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/cg.ci.
+    discussed in the Charm++ interface file src/Inciter/distfct.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
@@ -29,12 +25,12 @@
     to global reductions. Dashed lines are potential shortcuts that allow
     jumping over some of the task-graph under some circumstances or optional
     code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
-    cg.ci.
+    distfct.ci.
     \dot
-    digraph "CG SDAG" {
+    digraph "DistFCT SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
-      Upd [ label="Upd" tooltip="update solution"
+      Upd [ label="Upd" tooltip="update high-order solution"
                  style="solid"
                 URL="\ref tk::Solver::updateSol"];
       LowUpd [ label="LowUpd" tooltip="update low-order solution"
@@ -43,34 +39,31 @@
       OwnAEC [ label="OwnAEC"
                tooltip="own contributions to the antidiffusive element
                         contributions computed"
-               URL="\ref inciter::CG::aec"];
+               URL="\ref inciter::DistFCT::aec"];
       ComAEC [ label="ComAEC"
                tooltip="contributions to the antidiffusive element contributions
                         communicated"
-               URL="\ref inciter::CG::comaec"];
+               URL="\ref inciter::DistFCT::comaec"];
       OwnALW [ label="OwnALW"
                tooltip="own contributions to the maximum and minimum unknowns of
                         elements surrounding nodes computed"
-               URL="\ref inciter::CG::alw"];
+               URL="\ref inciter::DistFCT::alw"];
       ComALW [ label="ComALW"
                tooltip="contributions to the the maximum and minimum unknowns of
                         elements surrounding nodes communicated"
-               URL="\ref inciter::CG::comalw"];
+               URL="\ref inciter::DistFCT::comalw"];
       Ver [ label="Ver" tooltip="verify antidiffusive element contributions"
-            URL="\ref inciter::CG::verify"];
+            URL="\ref inciter::DistFCT::verify"];
       OwnLim [ label="OwnLim"
                tooltip="compute limited antidiffusive element contributions"
-               URL="\ref inciter::CG::lim"];
+               URL="\ref inciter::DistFCT::lim"];
       ComLim [ label="ComLim"
                tooltip="contributions to the limited antidiffusive element
                         contributions communicated"
-               URL="\ref inciter::CG::comlim"];
+               URL="\ref inciter::DistFCT::comlim"];
       Apply [ label="Apply"
               tooltip="apply limited antidiffusive element contributions"
-              URL="\ref inciter::CG::limit"];
-      s_next [ label="Solver::next"
-              tooltip="prepare for next time step"
-              URL="\ref tk::Solver::next"];
+              URL="\ref inciter::DistFCT::limit"];
       OwnAEC -> Ver [ style="dashed" ];
       OwnALW -> Ver [ style="dashed" ];
       Upd -> OwnAEC [ style="solid" ];
@@ -87,14 +80,14 @@
       ComALW -> ComLim [ style="solid" ];
       OwnLim -> Apply [ style="solid" ];
       ComLim -> Apply [ style="solid" ];
-      Apply -> s_next [ style="solid" ];
     }
     \enddot
-    \include Inciter/cg.ci
+    \include Inciter/distfct.ci
+  \see       DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
 */
 // *****************************************************************************
-#ifndef CG_h
-#define CG_h
+#ifndef DistFCT_h
+#define DistFCT_h
 
 #include <cstddef>
 #include <iosfwd>
@@ -106,32 +99,55 @@
 #include <unordered_set>
 #include <set>
 
+#include "Variant.h"
+
 #include "QuinoaConfig.h"
 #include "Types.h"
 #include "Fields.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "FluxCorrector.h"
+#include "Discretization.h"
+#include "MatCG.h"
+#include "DiagCG.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "NoWarning/cg.decl.h"
-
-namespace tk {
-  class ExodusIIMeshWriter;
-  class RootMeshWriter;
-}
+#include "NoWarning/distfct.decl.h"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+//! DistFCT Charm++ chare array used to advance PDEs in time with MatCG+LW+FCT
+class DistFCT : public CBase_DistFCT {
 
-//! CG Charm++ chare array used to advance PDEs in time with CG+LW+FCT
-class CG : public CBase_CG {
+  private:
+    //! Variant storing one proxy storing the discretization proxy we work with
+    using SchemeProxy = boost::variant< CProxy_MatCG, CProxy_DiagCG >;
+    //! Variant type listing chare element proxy types of discretization proxy
+    using ProxyElem =
+      boost::variant< CProxy_MatCG::element_t, CProxy_DiagCG::element_t >;
+  
+    //! Functor to call the next() member function behind SchemeProxy
+    struct Next : boost::static_visitor<> {
+      Next( const tk::Fields& a ) : A(a) {}
+      template< typename P >
+        void operator()( const P& p ) const { p.ckLocal()->next( A ); }
+      const tk::Fields& A;
+    };
+  
+    //! Functor to call the correctBC() member function behind SchemeProxy
+    struct correctBC : boost::static_visitor< bool > {
+      correctBC( const tk::Fields& a ) : A(a) {}
+      template< typename P >
+        bool operator()( const P& p ) const
+        { return p.ckLocal()->correctBC( A ); }
+      const tk::Fields& A;
+    };
 
   public:
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -142,7 +158,7 @@ class CG : public CBase_CG {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    CG_SDAG_CODE
+    DistFCT_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(STRICT_GNUC)
@@ -152,36 +168,35 @@ class CG : public CBase_CG {
     #endif
 
     //! Constructor
-    explicit CG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver );
+    explicit
+    DistFCT( const CProxy_Transporter& host,
+             int nchare,
+             std::size_t nu,
+             std::size_t np,
+             const std::unordered_map< int, std::vector< std::size_t > >& msum,
+             const std::unordered_map< std::size_t, std::size_t >& bid,
+             const std::unordered_map< std::size_t, std::size_t >& lid,
+             const std::vector< std::size_t >& inpoel );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Migrate constructor
-    explicit CG( CkMigrateMessage* ) {}
+    explicit DistFCT( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
-    //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    //! Compute lumped mass lhs required for the low order solution
+    tk::Fields lump( const Discretization& d );
 
-    //! Compute time step size
-    void dt();
+    //! \brief Compute mass diffusion rhs contribution required for the low
+    //!   order solution
+    tk::Fields diff( const Discretization& d, const tk::Fields& Un );
 
-    //! Advance equations to next time step
-    void advance( tk::real newdt );
-
-    //! Request owned node IDs on which a Dirichlet BC is set by the user
-    void requestBCs();
-
-    //! Look up and return old node ID for new one
-    void oldID( int frompe, const std::vector< std::size_t >& newids );
-
-    //! Update high order solution vector
-    void updateSol( //solMsg* m );
-                    const std::vector< std::size_t >& gid,
-                    const std::vector< tk::real >& sol );
-
-    //! Update low order solution vector
-    void updateLowSol( //solMsg* m );
-                       const std::vector< std::size_t >& gid,
-                       const std::vector< tk::real >& sol );
+    //! Prepare for next time step stage
+    void next();
 
     //! Receive sums of antidiffusive element contributions on chare-boundaries
     void comaec( const std::vector< std::size_t >& gid,
@@ -190,53 +205,67 @@ class CG : public CBase_CG {
     //! \brief Receive contributions to the maxima and minima of unknowns of all
     //!   elements surrounding mesh nodes on chare-boundaries
     void comalw( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& Q );
+                 const std::vector< std::vector< tk::real > >& Q );
 
     //! \brief Receive contributions of limited antidiffusive element
     //!   contributions on chare-boundaries
     void comlim( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& A );
+                 const std::vector< std::vector< tk::real > >& A );
+
+    //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
+    void aec( const Discretization& d,
+              const tk::Fields& dUh,
+              const tk::Fields& Un,
+              const std::unordered_map< std::size_t,
+                      std::vector< std::pair< bool, tk::real > > >& bc );
+
+    //! \brief Compute the maximum and minimum unknowns of all elements
+    //!   surrounding nodes
+    void alw( const tk::Fields& Un,
+              const tk::Fields& Ul,
+              const tk::Fields& dUl,
+              const SchemeProxy& scheme );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      CBase_CG::pup(p);
-      p | m_itf;
+      CBase_DistFCT::pup(p);
       p | m_nhsol;
       p | m_nlsol;
       p | m_naec;
       p | m_nalw;
       p | m_nlim;
-      p | m_disc;
-      p | m_solver;
+      p | m_nchare;
+      p | m_msum;
+      p | m_bid;
+      p | m_lid;
+      p | m_inpoel;
       p | m_fluxcorrector;
-      p | m_u;
-      p | m_ul;
-      p | m_du;
-      p | m_dul;
-      p | m_ue;
       p | m_p;
       p | m_q;
       p | m_a;
-      p | m_lhsd;
-      p | m_lhso;
       p | m_pc;
       p | m_qc;
       p | m_ac;
-      p | m_vol;
+      p | m_ul;
+      p | m_dul;
+      p | m_du;
+      auto v = tk::Variant< CProxy_MatCG, CProxy_DiagCG >( m_scheme );
+      p | v;
+      m_scheme = v.get();
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i CG object reference
-    friend void operator|( PUP::er& p, CG& i ) { i.pup(p); }
+    //! \param[in,out] i DistFCT object reference
+    friend void operator|( PUP::er& p, DistFCT& i ) { i.pup(p); }
     //@}
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Field output iteration count
-    uint64_t m_itf;
+    //! Transporter (host) proxy
+    CProxy_Transporter m_host;
     //! Counter for high order solution nodes updated
     std::size_t m_nhsol;
     //! Counter for low order solution nodes updated
@@ -250,62 +279,36 @@ class CG : public CBase_CG {
     //! \brief Number of chares from which we received limited antidiffusion
     //!   element contributiones on chare boundaries
     std::size_t m_nlim;
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
-    //! Linear system merger and solver proxy
-    tk::CProxy_Solver m_solver;
-    //! \brief Map associating local node IDs to side set IDs for all side sets
-    //!   read from mesh file (not only those the user sets BCs on)
-    std::map< int, std::vector< std::size_t > > m_side;
+    //! Total number of worker chares
+    std::size_t m_nchare;
+    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
+    //!   chares associated to their chare IDs
+    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
+    //!   points
+    //! \note This is a copy. Original in (bound) Discretization
+    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    //! \brief Local chare-boundary mesh node IDs at which we receive
+    //!   contributions associated to global mesh node IDs of mesh elements we
+    //!   contribute to
+    //! \note This is a copy. Original in (bound) Discretization
+    std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Local mesh node ids associated to the global ones of owned elements
+    //! \note This is a copy. Original in (bound) Discretization
+    std::unordered_map< std::size_t, std::size_t > m_lid;
+    //! Mesh connectivity of our chunk of the mesh
+    //! \note This is a copy. Original in (bound) Discretization
+    std::vector< std::size_t > m_inpoel;
     //! Flux corrector performing FCT
     FluxCorrector m_fluxcorrector;
-    //! Unknown/solution vector at mesh nodes
-    tk::Fields m_u;
-    //! Unknown/solution vector at mesh nodes (low orderd)
-    tk::Fields m_ul;
-    //! Unknown/solution vector increment (high order)
-    tk::Fields m_du;
-    //! Unknown/solution vector increment (low order)
-    tk::Fields m_dul;
-    //! Unknown/solution vector at mesh cells
-    tk::Fields m_ue;
     //! Flux-corrected transport data structures
     tk::Fields m_p, m_q, m_a;
-    //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
-    tk::Fields m_lhsd, m_lhso;
     //! Receive buffers for FCT
     std::vector< std::vector< tk::real > > m_pc, m_qc, m_ac;
-    //! Total mesh volume
-    tk::real m_vol;
-
-    //! Prepare for next step
-    void next();
-
-    //! Output mesh and particle fields to files
-    void out();
-
-    //! Compute diagnostics, e.g., residuals
-    void diagnostics();
-
-    //! Output mesh-based fields to file
-    void writeFields( tk::real time );
-
-    //! \brief Extract node IDs from side set node lists and match to
-    //    user-specified boundary conditions
-    void bc();
-
-    //! Compute left-hand side of transport equations
-    void lhs();
-
-    //! Compute righ-hand side vector of transport equations
-    void rhs();
-
-    //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec();
-
-    //! \brief Compute the maximum and minimum unknowns of all elements
-    //!   surrounding nodes
-    void alw();
+    //! Pointer to low order solution vector and increment
+    //! \note These are copies. Original in (bound) Discretization
+    tk::Fields m_ul, m_dul, m_du;
+    //! Variant storing the discretization scheme class we interoperate with
+    SchemeProxy m_scheme;
 
     //! \brief Verify antidiffusive element contributions up to linear solver
     //!   convergence
@@ -318,9 +321,9 @@ class CG : public CBase_CG {
     void apply();
 
     //! Verify that solution does not change at Dirichlet boundary conditions
-    bool correctBC();
+    bool verifyBC();
 };
 
 } // inciter::
 
-#endif // CG_h
+#endif // DistFCT_h

@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/RootMeshWriter.h
-  \author    A. Pakki 
-  \copyright 2012-2015, Aditya Pakki, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Los Alamos National Security, LLC.
   \brief     Root mesh-based data writer
   \details   Root mesh-based data writer class declaration.
 */

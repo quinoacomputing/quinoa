@@ -1,0 +1,92 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/diagcg.ci
+  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface for continuous Galerkin FEM w/o matrix
+  \details   Charm++ module interface file for the continuous Galerkin
+     discretization scheme using a diagonal matrix for the left hand side.
+  \see       DiagCG.h and DiagCG.C for more info.
+*/
+// *****************************************************************************
+
+module diagcg {
+
+  extern module transporter;
+  extern module discretization;
+  extern module solver;
+
+  include "UnsMesh.h";
+  include "PUPUtil.h";
+
+  namespace inciter {
+
+    array [1D] DiagCG {
+      entry DiagCG( const CProxy_Discretization& disc,
+                    const tk::CProxy_Solver& solver );
+      initnode void registerReducers();
+      entry void setup( tk::real v );
+      entry void dt();
+      entry void eval();
+      entry [reductiontarget] void advance( tk::real newdt );
+      entry void comlhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& L );
+      entry void comrhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R );
+      entry void comdif( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& D );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //
+      // See src/Inciter/DiagCG.h.
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // There are two parts of the DAG below: (1) setup: tasks leading to the
+      // start of time stepping, and (2) solve: tasks leading to solving the
+      // high and low order linear systems. Setup only happens once, while solve
+      // happens every time step.
+      //
+      // (1) Setup: The left hand side matrix (lumped-mass matrix, where only
+      // the diagonals are stored in a vector) are computed and assembled on the
+      // chare boundaries. Only when own contributions are complete and when
+      // chare-boundary contributions are received can timestepping start. This
+      // happens independently on each chare, communicating with their
+      // respective neighbors. Once the left hand side (diagonal) matrix is
+      // assembled it is assumed to never change during time stepping.
+      //
+      // (2) Solve: The right hand side vector contributions are computed and
+      // assembled on the chare boundaries. For the low order solution there is
+      // an additional, mass-diffusion, term added to the right hand side. Only
+      // when own contributions to both terms on the right hand side are
+      // complete and when chare-boundary contributions to both terms on the
+      // right hand side are received can the two systems be solved. This
+      // happens independently on each chare, communicating with their
+      // respective neighbors.
+
+      entry void wait4setup() {
+        when ownlhs_complete(), comlhs_complete() serial "setup" { start(); } };
+
+      entry void wait4rhs() {
+        when ownrhs_complete(), comrhs_complete(),
+             owndif_complete(), comdif_complete() serial "rhs" { solve(); } };
+
+      entry void ownlhs_complete();
+      entry void ownrhs_complete();
+      entry void owndif_complete();
+      entry void comlhs_complete();
+      entry void comrhs_complete();
+      entry void comdif_complete();
+    };
+
+  } // inciter::
+
+}

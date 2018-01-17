@@ -1,34 +1,30 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/cg.ci
+  \file      src/Inciter/distfct.ci
   \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
-  \brief     Charm++ module interface file for the continuous Galerkin scheme
-  \details   Charm++ module interface file for the continuous Galerkin scheme.
-  \see       CG.h and CG.C for more info.
+  \brief     Charm++ module interface for distributed flux-corrected transport
+  \details   Charm++ module interface file for asynchronous distributed
+    flux-corrected transport (FCT).
+  \see       DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
 */
 // *****************************************************************************
 
-module cg {
+module distfct {
 
-  extern module transporter;
-  extern module discretization;
-  extern module solver;
-
-  include "UnsMesh.h";
-  include "PUPUtil.h";
+  include "unordered_map";
 
   namespace inciter {
 
-    array [1D] CG {
-      entry CG( const CProxy_Discretization& disc,
-                const tk::CProxy_Solver& solver );
-      entry void setup( tk::real v );
-      entry void dt();
-      entry [reductiontarget] void advance( tk::real newdt );
-      entry void updateSol( const std::vector< std::size_t >& gid,
-                            const std::vector< tk::real >& sol );
-      entry void updateLowSol( const std::vector< std::size_t >& gid,
-                               const std::vector< tk::real >& sol );
+    array [1D] DistFCT {
+      entry DistFCT(
+        const CProxy_Transporter& host,
+        int nchare,
+        std::size_t nu,
+        std::size_t np,
+        const std::unordered_map< int, std::vector< std::size_t > >& msum,
+        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const std::unordered_map< std::size_t, std::size_t >& lid,
+        const std::vector< std::size_t >& inpoel );
       entry void comaec( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& P );
       entry void comalw( const std::vector< std::size_t >& gid,
@@ -45,7 +41,7 @@ module cg {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      // See src/Inciter/CG.h.
+      // See src/Inciter/DistFCT.h.
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -57,7 +53,7 @@ module cg {
       // mode) verify that the AECs assembled to nodes equal to the difference
       // between the high and low order increments. See also
       // FluxCorrector::aec() and FluxCorrector::verify(). Note that this
-      // verification is only done if there is only a single CG chare as
+      // verification is only done if there is only a single worker chare as
       // the correct verification would entail communication for multiple
       // chares. Note also that the DAG conditions below for wait4ver() require
       // the own contributions to the AEC and ALW instead of requiring the low
@@ -85,7 +81,7 @@ module cg {
       // Note that the none of wait4ver(), wait4fct(), and wait4app(), nor its
       // underlying computations and communications involve global reductions or
       // broadcasts: the entire FCT algorithm runs completely independent on
-      // each CG chare, and exercising task parallelism within.
+      // each worker chare, and exercising task parallelism within.
 
       #ifndef NDEBUG
       entry void wait4ver() {

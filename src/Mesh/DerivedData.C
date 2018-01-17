@@ -810,8 +810,7 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
 //  Generate derived data structure, elements surrounding elements
 //  as a fixed length data structure as a full vector, including
 //  boundary elements as -1.
-//  This is for Tetrahedra only.
-//  added by Aditya K Pandare
+//  \warning This is for Tetrahedra only.
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
@@ -824,16 +823,16 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
 //! \return Vector storing elements surrounding elements
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esup.first or esup.second; it will throw an exception.
-//! \details The data generated here is stored in a single vector, 
-//!   with length nfpe * nelem. Note however, that nelem is not explicitly 
-//!   provided, but calculated from inpoel. For boundary elements, at the 
-//!   boundary face, this esuelTet stores value -1 indicating that this is 
-//!   outside the domain. The convention for numbering the 
-//!   local faces in the tet is very important in generating the inpofa array 
-//!   later. The convention used here is that the face opposite to 
+//! \details The data generated here is stored in a single vector,
+//!   with length nfpe * nelem. Note however, that nelem is not explicitly
+//!   provided, but calculated from inpoel. For boundary elements, at the
+//!   boundary face, this esuelTet stores value -1 indicating that this is
+//!   outside the domain. The convention for numbering the
+//!   local faces in the tet is very important in generating the inpofa array
+//!   later. The convention used here is that the face opposite to
 //!   local node 1 is numbered 1 and so on for the other 3 nodes.
-//!   Thus function is specific to tetrahedra, which is reflected in the fact 
-//!   that nnpe and nfpe are being set in the function rather than being input 
+//!   Thus function is specific to tetrahedra, which is reflected in the fact
+//!   that nnpe and nfpe are being set in the function rather than being input
 //!   arguments.
 //!   To find out the number of elements, _nelem_, the size of the mesh
 //!   connectivity vector, _inpoel_, can be devided by the number of nodes per
@@ -862,8 +861,8 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = *minmax.second + 1;
 
-  std::vector< int > esuelTet(nfpe*nelem, -1); 
-  std::vector< std::size_t > lhelp(nnpf,0), 
+  std::vector< int > esuelTet(nfpe*nelem, -1);
+  std::vector< std::size_t > lhelp(nnpf,0),
                              lpoin(npoin,0);
 
   // array storing the naming conventions for a tet
@@ -927,29 +926,28 @@ genEsuelTet( const std::vector< std::size_t >& inpoel,
   return esuelTet;
 }
 
-std::size_t 
+std::size_t
 genNtfac( std::size_t nfpe,
           std::size_t nbfac,
           const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, total number of faces in the mesh
-//  added by Aditya K Pandare
 //! \param[in] nfpe Number of faces per element.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] esuelTet Elements surrounding elements.
 //! \return Total number of faces in the mesh
-//! \details The unsigned integer here gives the total number of faces in 
+//! \details The unsigned integer here gives the total number of faces in
 //     the mesh.
 // *****************************************************************************
 {
   Assert( !esuelTet.empty(), "Attempt to call genNtfac() with empty esuelTet" );
-  Assert( esuelTet.size()%nfpe == 0, 
+  Assert( esuelTet.size()%nfpe == 0,
                   "Size of esuelTet must be divisible by nfpe" );
   Assert( nfpe > 0, "Attempt to call genNtfac() with zero faces per element" );
 
   auto nelem = esuelTet.size()/nfpe;
 
-  std::size_t ntfac(0), nifac(0);
+  std::size_t nifac = 0;
 
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)
@@ -966,9 +964,7 @@ genNtfac( std::size_t nfpe,
     }
   }
 
-  ntfac = nifac + nbfac;
-
-  return ntfac;
+  return nifac + nbfac;
 }
 
 std::vector< int >
@@ -979,16 +975,15 @@ genEsuf( std::size_t nfpe,
          const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, elements surrounding faces
-//  added by Aditya K Pandare
 //! \param[in] nfpe  Number of faces per element.
 //! \param[in] ntfac Total number of faces.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] belem Boundary element map according to side-sets.
 //! \param[in] esuelTet Elements surrounding elements.
 //! \return Elements surrounding faces.
-//! \details The unsigned integer vector gives the IDs of the elements to the 
+//! \details The unsigned integer vector gives the IDs of the elements to the
 //    left and the right of each face in the mesh. The convention followed 
-//    throughout is : The left element always has an ID smaller than the ID of 
+//    throughout is : The left element always has an ID smaller than the ID of
 //    the right element.
 // *****************************************************************************
 {
@@ -1000,7 +995,7 @@ genEsuf( std::size_t nfpe,
 
   std::vector< int > esuf(2*ntfac);
 
-  // counters for number of internal and boundary faces 
+  // counters for number of internal and boundary faces
   std::size_t icoun(2*nbfac), bcoun(0);
 
   // loop to get face-element connectivity for internal faces
@@ -1044,13 +1039,12 @@ genInpofaTet( std::size_t ntfac,
               const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, points on faces for tetrahedra only
-//  added by Aditya K Pandare
 //! \param[in] ntfac Total number of faces.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] esuelTet Elements surrounding elements.
 //! \return Elements surrounding faces.
-//! \details The unsigned integer map gives the elements to the left and to 
+//! \details The unsigned integer map gives the elements to the left and to
 //     the right of each face in the mesh.
 // *****************************************************************************
 {
@@ -1059,9 +1053,9 @@ genInpofaTet( std::size_t ntfac,
   // set tetrahedron geometry
   std::size_t nnpe(4), nfpe(4), nnpf(3);
 
-  Assert( esuelTet.size()%nfpe == 0, 
+  Assert( esuelTet.size()%nfpe == 0,
                   "Size of esuelTet must be divisible by nfpe" );
-  Assert( inpoel.size()%nnpe == 0, 
+  Assert( inpoel.size()%nnpe == 0,
                   "Size of inpoel must be divisible by nnpe" );
 
   auto nelem = inpoel.size()/nnpe;
@@ -1073,7 +1067,7 @@ genInpofaTet( std::size_t ntfac,
   std::array< std::array< std::size_t, 3 >, 4 >
      lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
-  // counters for number of internal and boundary faces 
+  // counters for number of internal and boundary faces
   std::size_t icoun(nnpf*nbfac), bcoun(0);
   std::size_t mark(0);
 

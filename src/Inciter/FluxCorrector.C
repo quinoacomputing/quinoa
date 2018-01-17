@@ -62,8 +62,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!    * M_L^{-1} is the inverse of the assembled lumped mass matrix, i.e., the
 //!      volume associated to a mesh node by summing the quarter of the element
 //!      volumes surrounding the node. Note that this is the correct node volume
-//!      taking into account that some nodes are on chare boundaries. See also
-//!      CG::vol().
+//!      taking into account that some nodes are on chare boundaries.
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
@@ -72,6 +71,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,
@@ -111,8 +111,9 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     std::vector< std::array< tk::real, 4 > > un( ncomp );
     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
     // access high-order solution increment at element nodes
-    std::vector< std::array< tk::real, 4 > > duh( ncomp );
-    for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
+    std::vector< std::array< tk::real, 4 > > duh( ncomp, {{0,0,0,0}} );
+    if (sch == ctr::SchemeType::MatCG)  // duh = 0 for lumped-mass CG
+      for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
 
     // Compute antidiffusive element contributions (AEC). The high order system
     // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the
@@ -186,8 +187,8 @@ FluxCorrector::verify( std::size_t nchare,
 //!   point. Verification in parallel would incure communication of the
 //!   unlimited AEC, which in general is not necessary, so we will not do that
 //!   for the sake of verification.
-//! \note This function is optimized away in RELEASE mode, see cg.ci and
-//!   CG::verify().
+//! \note Client code should ensure that this function is optimized away in
+//!   RELEASE mode.
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),

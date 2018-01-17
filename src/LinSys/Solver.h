@@ -54,7 +54,7 @@
       Setup [ label="Setup"
               tooltip="Workers start setting and outputing ICs, computing
                        initial dt, computing LHS"
-              URL="\ref inciter::CG::setup"];
+              URL="\ref inciter::MatCG::setup"];
       dt [ label="dt"
            tooltip="Worker chares compute their minimum time step size"
             style="solid"];
@@ -167,7 +167,7 @@
 #include "HypreSolver.h"
 
 #include "NoWarning/solver.decl.h"
-#include "NoWarning/cg.decl.h"
+#include "NoWarning/matcg.decl.h"
 
 namespace tk {
 
@@ -213,7 +213,6 @@ class Solver : public CBase_Solver {
     //! Constructor
     Solver( CProxy_SolverShadow sh,
             const std::vector< CkCallback >& cb,
-            const std::map< int, std::vector< std::size_t > >& s,
             std::size_t n,
             bool /*feedback*/ );
 
@@ -230,7 +229,7 @@ class Solver : public CBase_Solver {
     void nchare( int n );
 
     //! Chares contribute their global row ids for establishing communications
-    void charecom( const inciter::CProxy_CG& worker,
+    void charecom( const inciter::CProxy_MatCG& worker,
                    int fromch,
                    const std::vector< std::size_t >& row );
 
@@ -300,11 +299,6 @@ class Solver : public CBase_Solver {
     //! All communications have been establised among PEs
     void comfinal();
 
-    //! Chares query side set info
-    //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
-    const std::map< int, std::vector< std::size_t > >& side() { return m_side; }
-
     //! Chares query Dirichlet boundary conditions
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
@@ -323,6 +317,9 @@ class Solver : public CBase_Solver {
     //! \brief Chares contribute their numerical and analytical solutions
     //!   nonzero values for computing diagnostics
     void charediag( int fromch,
+                    uint64_t it,
+                    tk::real t,
+                    tk::real dt,
                     const std::vector< std::size_t >& gid,
                     const Fields& u,
                     const Fields& a,
@@ -345,14 +342,15 @@ class Solver : public CBase_Solver {
       , tag::coord, CkCallback
       , tag::diag,  CkCallback
     > m_cb;
-    //! Global (as in file) mesh node IDs mapped to side set ids of the mesh
-    std::map< int, std::vector< std::size_t > > m_side;
     std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
+    uint64_t m_it;             //!< Iteration count (original in Discretization)
+    tk::real m_t;              //!< Physical time (original in Discretization)
+    tk::real m_dt;             //!< Time step size (original in Discretization)
     //bool m_feedback;            //!< Whether to send sub-task feedback to host
     //! Ids of workers on my PE
     std::vector< int > m_myworker;
@@ -374,10 +372,6 @@ class Solver : public CBase_Solver {
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the low-order lhs vector
     std::map< int, std::vector< std::size_t > > m_lowlhsimport;
-    //! \brief Import map associating a list of global row ids to a worker chare
-    //!   id during the communication of the solution/unknown vector for
-    //!   computing diagnostics, e.g., residuals
-    std::map< int, std::vector< std::size_t > > m_diagimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my PE
@@ -403,14 +397,6 @@ class Solver : public CBase_Solver {
     //!   to global mesh point row ids. This vector collects the nonzero values
     //!   of the low-order system lhs "matrix" solution.
     std::map< std::size_t, std::vector< tk::real > > m_lowlhs;
-    //! \brief Part of solution vector owned by my PE
-    //! \details Vector of values (for each scalar equation solved) associated
-    //!   to global mesh point row IDs. The map-value is a pair of vectors,
-    //!   where the first one is the numerical and the second one is the
-    //!   analytical solution. If the analytical solution for a PDE is not
-    //!   defined, it is the initial condition.
-    //! \see charediag(), adddiag(), e.g., inciter::CG::diagnostics()
-    std::map< std::size_t, std::vector< std::vector< tk::real > > > m_diag;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -456,7 +442,7 @@ class Solver : public CBase_Solver {
     std::unordered_map< std::size_t,
                         std::map< std::size_t, std::vector<tk::real> > > m_bca;
     //! Worker proxy
-    inciter::CProxy_CG m_worker;
+    inciter::CProxy_MatCG m_worker;
 
     //! Check if we have done our part in storing and exporting global row ids
     bool comcomplete() const;
@@ -466,10 +452,6 @@ class Solver : public CBase_Solver {
 
     //! Check if our portion of the matrix values is complete
     bool lhscomplete() const { return m_lhsimport == m_rowimport; }
-
-    //! \brief Check if our portion of the solution vector values (for
-    //!   diagnostics) is complete
-    bool diagcomplete() const { return m_diagimport == m_rowimport; }
 
     //! Check if our portion of the right-hand side vector values is complete
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }

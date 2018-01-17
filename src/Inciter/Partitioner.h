@@ -116,8 +116,9 @@ class Partitioner : public CBase_Partitioner {
     //! Constructor
     Partitioner( const std::vector< CkCallback >& cb,
                  const CProxy_Transporter& host,
-                 const Scheme& scheme,
                  const tk::CProxy_Solver& solver,
+                 const CProxy_BoundaryConditions& bc,
+                 const Scheme& scheme,
                  std::size_t nbfac,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::map< int, std::vector< std::size_t > >& belem );
@@ -190,10 +191,12 @@ class Partitioner : public CBase_Partitioner {
     > m_cb;
     //! Host proxy
     CProxy_Transporter m_host;
-    //! Discretization scheme
-    Scheme m_scheme;
     //! Linear system solver proxy
     tk::CProxy_Solver m_solver;
+    //! Boundary conditions proxy
+    CProxy_BoundaryConditions m_bc;
+    //! Discretization scheme
+    Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -282,7 +285,7 @@ class Partitioner : public CBase_Partitioner {
     //!   contiguous-row-id linear system contributions) to edges (a pair of old
     //!   node IDs, as in file) associated to chare IDs (outer key) for only
     //!   the nodes newly added as a result of initial uniform refinement.
-    //! \note Used for looking up boundary conditions, see, e.g., CG::bc()
+    //! \note Used for looking up boundary conditions
     std::unordered_map< int, tk::UnsMesh::EdgeNodes > m_chedgenodes;
     //! Communication cost of linear system merging for our PE
     tk::real m_cost;

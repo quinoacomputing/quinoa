@@ -3661,17 +3661,38 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
-struct cg_info {
-  static std::string name() { return "continuous Galerkin + Lax-Wendroff"; }
-  static std::string shortDescription() { return
-    "Select continuous Galerkin discretization"; }
+struct matcg_info {
+  static std::string name()
+  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a matrix solver"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the continuous Galerkin (CG) spatial
-    discretiztaion used in inciter. Selecting CG also selects the Lax-Wendroff
-    scheme for time discretization. See
+    R"(This keyword is used to select the consistent-mass continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix as a compressed sparse row
+    (CSR) storage consistent-mass matrix and uses a linear solver. See
     Control/Inciter/Options/Scheme.h for other valid options.)"; }
 };
-using cg = keyword< cg_info, TAOCPP_PEGTL_STRING("cg") >;
+using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
+
+struct diagcg_info {
+  static std::string name()
+  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
+    "side matrix"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
+    finite element spatial discretiztaion used in inciter. CG is combined with a
+    Lax-Wendroff scheme for time discretization and flux-corrected transport
+    (FCT) for treating discontinuous solutions. This option selects the scheme
+    that stores the left-hand side matrix lumped, i.e., only the diagonal
+    elements stored and thus does not require a linear solver. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct dg_info {
   static std::string name() { return "discontinuous Galerkin + Runge-Kutta"; }
@@ -3696,7 +3717,8 @@ struct scheme_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + cg::string() + "\' | \'"
+      return '\'' + matcg::string() + "\' | \'"
+                  + diagcg::string() + "\' | \'"
                   + dg::string() + '\'';
     }
   };
@@ -3710,10 +3732,10 @@ struct fct_info {
   static std::string longDescription() { return
     R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
     Note that FCT is only used in conjunction with continuous Galerkin finite
-    element discretization, configured by 'scheme cg' and it has no effect when
-    the discontinuous Galerkin (DG) scheme is used, configured by 'scheme
-    dg'. Also note that even if FCT is turnedd off, it is still performed, only
-    its result is not applied.)"; }
+    element discretization, configured by schemes matcg or diagcg and it has no
+    effect when the discontinuous Galerkin (DG) scheme is used, configured by
+    'scheme dg'. Also note that even if FCT is turned off, it is still
+    performed, only its result is not applied.)"; }
   struct expect {
     using type = bool;
     static std::string description() { return "string"; }
