@@ -34,7 +34,6 @@ FileConvWriter::FileConvWriter( const std::string& file_root,
 //  Constructor: open Exodus II file, Root file
 //! \param[in] file_root File to open as ROOT file
 //! \param[in] file_exodus File to be opened as ExodusII file to be written
-//! \author A. Pakki
 // *****************************************************************************
 {
 
@@ -56,7 +55,6 @@ FileConvWriter::FileConvWriter( const std::string& file_root,
 FileConvWriter::~FileConvWriter() noexcept
 // *****************************************************************************
 //  Destructor
-//! \author A. Pakki 
 // *****************************************************************************
 {
   // close the ROOT file
@@ -67,7 +65,6 @@ void
 FileConvWriter::convertFiles() 
 //*****************************************************************************
 //  Convert the input file [ROOT] layout to output file [ExodusII] layout
-//  Author A. Pakki
 //*****************************************************************************
 {
 
@@ -83,7 +80,6 @@ void
 FileConvWriter::writeHeader() 
 //*****************************************************************************
 //  Write the Header details
-//  Author A. Pakki
 //*****************************************************************************
 {
 
@@ -107,7 +103,6 @@ void
 FileConvWriter::writeCoordinates()
 //*****************************************************************************
 //  Write the Coordinates (x,y,z) data
-//  Author A. Pakki
 //*****************************************************************************
 {
 
@@ -131,7 +126,6 @@ void
 FileConvWriter::writeConnectivity()
 //*****************************************************************************
 //  Write the Connectivity between the coordinates.
-//  Author A. Pakki
 //*****************************************************************************
 {
 
@@ -153,7 +147,6 @@ void
 FileConvWriter::writeVarNames()
 //*****************************************************************************
 //  Write the Variables names
-//  Author A. Pakki
 //*****************************************************************************
 {
   std::vector<std::string> *var_copy = nullptr;
@@ -171,7 +164,6 @@ void
 FileConvWriter::writeData()
 //*****************************************************************************
 //  Write the Timestamp and Variables from Input to Output
-//  Author A. Pakki
 //*****************************************************************************
 {
 
