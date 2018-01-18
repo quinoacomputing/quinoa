@@ -1,12 +1,3 @@
-################################################################################
-# vim: filetype=dockerfile:
-#
-# \file      docker/Dockerfile.quinoa-build-travis
-# \copyright 2016-2018, Los Alamos National Security, LLC.
-# \brief     Dockerfile for continuous integration of Quinoa using travis-ci.org
-#
-################################################################################
-
 FROM quinoacomputing/buildenv:gentoo
 
 ARG COVERAGE
