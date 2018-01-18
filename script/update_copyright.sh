@@ -3,10 +3,18 @@
 # \file      script/update_copyright.sh
 # \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Switch copyright year in all files
+# \details   Suggested arguments:
+#   quinoa: doc docker regression script src
+#   quinoa-tpl: docker
+#   quinoa-cmake: .
 #
 ################################################################################
 
-declare -a dirs=( "doc" "docker" "regression" "script" "src" )
+# Require at least one argument
+die () { echo >&2 "$@"; exit 1; }
+[ "$#" -eq 0 ] && die "Usage: $0 <directories>"
+
+declare -a dirs=( "$@" )
 
 for i in "${dirs[@]}"
 do
