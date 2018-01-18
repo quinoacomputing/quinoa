@@ -1,4 +1,11 @@
 #!/bin/sh -ex
+# ################################################################################
+#
+# \file      script/cobalt-runjob.sh
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \brief     Helper script for the cobalt scheduler
+#
+################################################################################
 RUNNER_NCPUS_ARG=$1
 NUMPES=$2
 TEST_EXECUTABLE=$3
