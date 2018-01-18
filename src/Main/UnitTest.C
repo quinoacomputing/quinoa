@@ -111,6 +111,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #endif
 
 #include "tests/Inciter/TestScheme.h"
+#include "tests/Inciter/AMR/TestError.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

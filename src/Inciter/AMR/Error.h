@@ -9,31 +9,45 @@
 #ifndef Error_h
 #define Error_h
 
-#include "PUPUtil.h"
 #include "Fields.h"
+#include "Keywords.h"
+#include "Inciter/Options/AMRError.h"
 
 namespace AMR {
 
 //! Class for computing error estimates for mesh refinement
 class Error {
 
+ private:
+   using ncomp_t = kw::ncomp::info::expect::type;
+
   public:
-    //! Constructor
-    explicit Error();
-
     //! Compute error estimate for a scalar quantity
-    void scalar( const tk::Fields& u );
+    tk::real scalar( const tk::Fields& u,
+                     const std::pair< std::size_t, std::size_t >& edge,
+                     ncomp_t c,
+                     const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
+                     inciter::ctr::AMRErrorType err );
 
-    ///@{
-    //! \brief Pack/Unpack serialize member function
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-    }
-    //! \brief Pack/Unpack serialize operator|
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] d Error object reference
-    friend void operator|( PUP::er& p, Error& d ) { d.pup(p); }
-    //@}
+  private:
+    //! Estimate error for scalar quantity on edge based on jump in solution
+    tk::real
+    error_jump( const tk::Fields& u,
+                const std::pair< std::size_t, std::size_t >& edge,
+                ncomp_t c );
+
+    //! Estimate error for scalar quantity on edge based on Hessian of solution
+    tk::real
+    error_hessian( const tk::Fields& u,
+                   const std::pair< std::size_t, std::size_t >& edge,
+                   ncomp_t c,
+                   const std::array< std::vector< tk::real >, 3 >& coord,
+                   const std::vector< std::size_t >& inpoel,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& esup );
 };
 
 } // AMR::

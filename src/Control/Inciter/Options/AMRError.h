@@ -19,7 +19,7 @@ namespace inciter {
 namespace ctr {
 
 //! Mesh partitioning algorithm types
-enum class AMRErrorType : uint8_t { GRADIENT
+enum class AMRErrorType : uint8_t { JUMP
                                   , HESSIAN };
 
 //! Pack/Unpack AMRErrorType: forward overload to generic enum class packer
@@ -30,8 +30,8 @@ class AMRError : public tk::Toggle< AMRErrorType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::amr_gradient,
-                                         kw::amr_hessian >;
+    using keywords = boost::mpl::vector< kw::amr_jump
+                                       , kw::amr_hessian >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -41,10 +41,10 @@ class AMRError : public tk::Toggle< AMRErrorType > {
         //! Group, i.e., options, name
         "AMR error estimator",
         //! Enums -> names
-        { { AMRErrorType::GRADIENT, kw::amr_gradient::name() },
+        { { AMRErrorType::JUMP, kw::amr_jump::name() },
           { AMRErrorType::HESSIAN, kw::amr_hessian::name() } },
         //! keywords -> Enums
-        { { kw::amr_gradient::string(), AMRErrorType::GRADIENT },
+        { { kw::amr_jump::string(), AMRErrorType::JUMP },
           { kw::amr_hessian::string(), AMRErrorType::HESSIAN } } ) {}
 };
 

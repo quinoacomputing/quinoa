@@ -31,6 +31,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Mesh
                       RNG
                       LoadBalance
+                      MeshRefinement
                       UnitTest
                       UnitTestControl
                       ${PUGIXML_LIBRARIES}
@@ -72,6 +73,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshIO
                       Mesh
                       Statistics
+                      MeshRefinement
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}

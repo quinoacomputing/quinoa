@@ -70,11 +70,6 @@
 
 namespace tut {
 
-// #if defined(STRICT_GNUC)
-//   #pragma GCC diagnostic push
-//   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
-// #endif
-
 //! All tests in group inherited from this base
 struct Gradients_common {
   const tk::real pr = 5.0*std::numeric_limits< tk::real >::epsilon();
@@ -123,7 +118,7 @@ static Gradients_group Gradients( "Mesh/Gradients" );
 
 //! Test definitions for group
 
-//! Test nodal gradients  for tetrahedron-only mesh
+//! Test nodal gradients for tetrahedron-only mesh
 template<> template<>
 void Gradients_object::test< 1 >() {
   set_test_name( "node gradients of tetrahedra mesh" );
@@ -136,7 +131,7 @@ void Gradients_object::test< 1 >() {
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = *minmax.second + 1;
 
-  // Generate edges surrounding points
+  // Generate elements surrounding points
   auto esup = tk::genEsup( inpoel, 4 );
 
   // generate a constant scalar field
@@ -220,8 +215,9 @@ void Gradients_object::test< 2 >() {
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = *minmax.second + 1;
 
-  // Generate edges surrounding points
+  // Generate elements surrounding points
   auto esup = tk::genEsup( inpoel, 4 );
+  // Generate elements surrounding edges
   auto esued = tk::genEsued( inpoel, 4, esup );
 
   // find out number of edges in mesh
@@ -294,10 +290,6 @@ void Gradients_object::test< 2 >() {
     ensure_equals( "z-gradient of z-linear vector incorrect", gz[2], -0.5, pr );
   }
 }
-
-// #if defined(STRICT_GNUC)
-//   #pragma GCC diagnostic pop
-// #endif
 
 } // tut::
 

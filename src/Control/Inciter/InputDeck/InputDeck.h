@@ -128,7 +128,7 @@ class InputDeck :
                                        kw::amr_initial,
                                        kw::amr_uniform,
                                        kw::amr_error,
-                                       kw::amr_gradient,
+                                       kw::amr_jump,
                                        kw::amr_hessian,
                                        kw::scheme,
                                        kw::matcg,
@@ -157,7 +157,7 @@ class InputDeck :
       // Default AMR settings
       set< tag::amr, tag::amr >( false );
       set< tag::amr, tag::init >( AMRInitialType::NONE );
-      set< tag::amr, tag::error >( AMRErrorType::GRADIENT );
+      set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default discretization scheme
       set< tag::selected, tag::scheme >( SchemeType::MatCG );
       // Default txt floating-point output precision in digits
