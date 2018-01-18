@@ -3669,8 +3669,8 @@ struct amr_hessian_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the Hessian-based error indicator for
     solution-adaptive mesh refinement. The error is estimated by computing the
-    Hessian (2nd derivative matrix) of the solution normalized by the solution
-    value.)"; }
+    Hessian (2nd derivative matrix) of the solution normalized by sum of the
+    absolute values of the gradients at edges-end points.)"; }
 };
 using amr_hessian = keyword< amr_hessian_info, TAOCPP_PEGTL_STRING("hessian") >;
 
