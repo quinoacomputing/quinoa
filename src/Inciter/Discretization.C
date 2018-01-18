@@ -546,6 +546,7 @@ Discretization::status()
 // Output one-liner status report
 // *****************************************************************************
 {
+  // Query after how many time steps user wants TTY dump
   const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
 
   if (thisIndex==0 && !(m_it%tty)) {
