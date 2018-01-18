@@ -65,7 +65,11 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
 // *****************************************************************************
 {
   // Optionally collect diagnostics and send for aggregation across all workers
-  if ( !((d.It()+1) % g_inputdeck.get< tag::interval, tag::diag >()) ) {
+
+  // Query after how many time steps user wants to dump diagnostics
+  auto diagfreq = g_inputdeck.get< tag::interval, tag::diag >();
+
+  if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 
     // Collect analytical solutions (if available) from all PDEs. Note that
     // calling the polymorphic PDE::initialize() is assumed to evaluate the
