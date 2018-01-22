@@ -451,7 +451,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
-    void comfinal() { com_complete(); }
+    void comfinal();
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v );
