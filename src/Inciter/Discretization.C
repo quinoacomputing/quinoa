@@ -44,7 +44,7 @@ Discretization::Discretization(
   int nchare,
   std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& belem ) :
+  const std::vector< std::size_t >&  triinpoel ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -72,11 +72,12 @@ Discretization::Discretization(
   m_timer(),
   m_nbfac( nbfac ),
   m_bface( bface ),
-  m_belem( belem ),
+  m_triinpoel( triinpoel ),
   m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
   m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
-  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) ),
-  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_esuel ) )
+  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel, m_esuel ) ),
+  m_belem( tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) ) ),
+  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

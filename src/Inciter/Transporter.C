@@ -158,44 +158,13 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create boundary condition object group
-    createBC();
-
     // Create linear system solver group
     createSolver();
 
-    // Create mesh partitioner group
+    // Create mesh partitioner AND boundary condition object group
     createPartitioner();
 
   } else finish();      // stop if no time stepping requested
-}
-
-void
-Transporter::createBC()
-// *****************************************************************************
-// Create boundary conditions group
-// *****************************************************************************
-{
-  // Create ExodusII reader for reading side sets from file.
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-
-  // Read in side sets associated to mesh node IDs from file
-  m_print.diag( "Reading side sets" );
-  auto sidenodes = er.readSidesets();
-
-  // Verify that side sets to which boundary conditions are assigned by user
-  // exist in mesh file
-  std::unordered_set< int > conf;
-  for (const auto& eq : g_pdes) eq.side( conf );
-  for (auto i : conf)
-    if (sidenodes.find(i) == end(sidenodes)) {
-      m_print.diag( "WARNING: Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-      break;
-    }
-
-  // Create boundary conditions Charm++ chare group
-  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
 }
 
 void
@@ -222,7 +191,7 @@ Transporter::createSolver()
 void
 Transporter::createPartitioner()
 // *****************************************************************************
-// Create mesh partitioner
+// Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
   // Create mesh partitioner Charm++ chare group and start partitioning mesh
@@ -234,21 +203,39 @@ Transporter::createPartitioner()
   // Create ExodusII reader for reading side sets from file.
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
 
+  // Read in side sets associated to mesh node IDs from file
+  m_print.diag( "Reading side sets" );
+  auto sidenodes = er.readSidesets();
+
   // Read side sets for boundary faces
   m_print.diag( "Reading side set faces" );
-  std::map< int, std::vector< std::size_t > > bface, belem;
-  auto nbfac = er.readSidesetFaces( bface, belem );
+  std::map< int, std::vector< std::size_t > > bface;
+  auto nbfac = er.readSidesetFaces( bface );
+
+  // Read triangle boundary-face connectivity 
+  std::vector< std::size_t > triinpoel;
+  er.readFaces( nbfac, triinpoel );
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
   for (const auto& eq : g_pdes) eq.side( conf );
   for (auto i : conf)
+  {
+    if (sidenodes.find(i) == end(sidenodes)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
     if (bface.find(i) == end(bface)) {
       m_print.diag( "WARNING: Boundary conditions specified on side set face " +
         std::to_string(i) + " which does not exist in mesh file" );
       break;
     }
+  }
+
+  // Create boundary conditions Charm++ chare group
+  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
 
   // Create partitioner callbacks
   std::vector< CkCallback > cbp {{
@@ -264,7 +251,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               nbfac, bface, belem );
+                               nbfac, bface, triinpoel );
 }
 
 void

@@ -88,7 +88,7 @@ std::vector< int >
 genEsuf( std::size_t nfpe,
          std::size_t ntfac,
          std::size_t nbfac,
-         const std::map< int, std::vector< std::size_t > >& belem,
+         const std::vector< std::size_t >& belem,
          const std::vector< int >& esuelTet );
 
 //! Generate derived data structure, node-face connectivity
@@ -96,7 +96,15 @@ std::vector< std::size_t >
 genInpofaTet( std::size_t ntfac,
               std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& triinpoel,
               const std::vector< int >& esuelTet );
+
+//! Generate derived data structure, host/boundary element
+std::vector< std::size_t >
+genBelemTet( std::size_t nbfac,
+              const std::vector< std::size_t >& inpofa,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup );
 } // tk::
 
 #endif // DerivedData_h

@@ -30,7 +30,7 @@ module discretization {
         int nchare,
         std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& belem );
+        const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void coord();
       entry void comvol( const std::vector< std::size_t >& gid,

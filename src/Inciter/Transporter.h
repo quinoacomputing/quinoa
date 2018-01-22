@@ -526,13 +526,10 @@ class Transporter : public CBase_Transporter {
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
 
-    //! Create boundary conditions group
-    void createBC();
-
     //! Create linear solver group
     void createSolver();
 
-    //! Create mesh partitioner group
+    //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
 
     //! Configure and write diagnostics file header
