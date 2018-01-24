@@ -44,9 +44,9 @@ class Discretization : public CBase_Discretization {
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
         int nchare,
-        std::size_t nbfac,
+        std::size_t tnbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel );
+        const std::vector< std::size_t >& t_triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -199,13 +199,14 @@ class Discretization : public CBase_Discretization {
       p | m_volc;
       p | m_bid;
       p | m_timer;
-      p | m_nbfac;
       p | m_bface;
       p | m_triinpoel;
+      p | m_nbfac;
       p | m_esuel;
       p | m_ntfac;
-      p | m_esuf;
       p | m_inpofa;
+      p | m_belem;
+      p | m_esuf;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -285,13 +286,13 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
-    //! Number of boundary faces
-    std::size_t m_nbfac;
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
-    //! Wlements surrounding elements
+    //! Number of boundary faces
+    std::size_t m_nbfac;
+    //! Elements surrounding elements
     std::vector< int > m_esuel;
     //! Rotal number of faces
     std::size_t m_ntfac;

@@ -42,9 +42,9 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
   int nchare,
-  std::size_t nbfac,
+  std::size_t tnbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >&  triinpoel ) :
+  const std::vector< std::size_t >& t_triinpoel ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -70,9 +70,8 @@ Discretization::Discretization(
   m_volc(),
   m_bid(),
   m_timer(),
-  m_nbfac( nbfac ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_nbfac( tk::genNbfacTet( tnbfac, m_inpoel, t_triinpoel, m_triinpoel ) ),
   m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
   m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
   m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel, m_esuel ) ),

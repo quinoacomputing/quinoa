@@ -15,9 +15,11 @@
 #include <type_traits>
 #include <cstddef>
 #include <array>
+#include <unordered_set>
 
 #include "Exception.h"                  // for Assert
 #include "DerivedData.h"
+#include "ContainerUtil.h"
 
 namespace tk {
 
@@ -802,6 +804,86 @@ genEsued( const std::vector< std::size_t >& inpoel,
   return std::make_pair( std::move(esued1), std::move(esued2) );
 }
 
+std::size_t
+genNbfacTet( std::size_t tnbfac,
+             const std::vector< std::size_t >& inpoel,
+             const std::vector< std::size_t >& t_triinpoel,
+             std::vector< std::size_t >& triinpoel )
+// *****************************************************************************
+//  Generate the number of boundary-faces on this chare/worker/mesh-partition.
+//  \warning This is for Tetrahedra only.
+//! \param[in] tnbfac Total number of boundary faces in the entire mesh.
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh.
+//! \param[in] t_triinpoel Interconnectivity of points and boundary-face in the
+//!   entire mesh.
+//! \param[inout] triinpoel Interconnectivity of points and boundary-face in 
+//!   this mesh-partition.
+//! \return Number of boundary-faces on this chare/mesh-partition.
+//! \details This function generates the number of physical-boundaries and a 
+//!   vector with face-node connectivity for boundary-faces that are present 
+//!   in this mesh-partition.
+// *****************************************************************************
+{
+  std::size_t nbfac(0), nnpf(3);
+
+  if (tnbfac > 0)
+  {
+
+  Assert( !inpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( !t_triinpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( t_triinpoel.size()/nnpf == tnbfac, 
+                  "Incorrect size of triinpoel in genNbfacTet()" );
+
+  auto nptet = inpoel;
+  auto nptri = t_triinpoel;
+
+  // reduced inpoel and t_triinpoel
+  tk::unique( nptet );
+  tk::unique( nptri );
+
+  std::unordered_set< std::size_t > snptet;
+
+  // getting the reduced inpoel as a set for quick searches
+  snptet.insert( begin(nptet), end(nptet));
+
+  // vector to store boundary-face-nodes in this chunk
+  std::vector< std::size_t > nptri_chunk;
+
+  // getting the nodes of the boundary-faces in this chunk
+  for (auto i : nptri)
+    if (snptet.find(i) != end(snptet))
+      nptri_chunk.push_back(i);
+
+  std::size_t tag, icoun;
+
+  // matching nodes in nptri_chunk with nodes in t_triinpoel to 
+  // get the number of faces in this chunk
+  for (std::size_t f=0; f<tnbfac; ++f)
+  {
+    icoun = f*nnpf;
+    tag = 0;
+    for (std::size_t i=0; i<nnpf; ++i)
+    {
+      for (auto j : nptri_chunk)
+      {
+        if (t_triinpoel[icoun+i] == j) ++tag;
+      }
+    }
+    if (tag == nnpf)
+    // this is a boundary face
+    {
+      ++nbfac;
+      triinpoel.push_back( t_triinpoel[icoun] );
+      triinpoel.push_back( t_triinpoel[icoun+1] );
+      triinpoel.push_back( t_triinpoel[icoun+2] );
+    }
+  }
+  }
+
+  return nbfac;
+}
+
 std::vector< int >
 genEsuelTet( const std::vector< std::size_t >& inpoel,
              const std::pair< std::vector< std::size_t >,
@@ -949,6 +1031,9 @@ genNtfac( std::size_t nfpe,
 
   std::size_t nifac = 0;
 
+  if (nbfac > 0)
+  {
+
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -962,6 +1047,7 @@ genNtfac( std::size_t nfpe,
         }
       }
     }
+  }
   }
 
   return nifac + nbfac;
@@ -995,6 +1081,9 @@ genEsuf( std::size_t nfpe,
 
   std::vector< int > esuf(2*ntfac);
 
+  if (nbfac > 0)
+  {
+
   // counters for number of internal and boundary faces
   std::size_t icoun(2*nbfac), bcoun(0);
 
@@ -1023,6 +1112,7 @@ genEsuf( std::size_t nfpe,
     esuf[bcoun+1] = -1;  // outside domain
     bcoun = bcoun + 2;
   }
+  }
 
   return esuf;
 }
@@ -1046,6 +1136,9 @@ genInpofaTet( std::size_t ntfac,
 // *****************************************************************************
 {
   std::vector< std::size_t > inpofa;
+
+  if (nbfac > 0)
+  {
 
   // set tetrahedron geometry
   std::size_t nnpe(4), nfpe(4), nnpf(3);
@@ -1100,6 +1193,7 @@ genInpofaTet( std::size_t ntfac,
       inpofa[icoun+i] = triinpoel[icoun+i];
     }
   }
+  }
 
   return inpofa;
 }
@@ -1121,6 +1215,9 @@ genBelemTet( std::size_t nbfac,
 {
   std::vector< std::size_t > belem(nbfac);
 
+  if (nbfac > 0)
+  {
+
   // set tetrahedron geometry
   std::size_t nnpf(3), tag(0);
 
@@ -1137,6 +1234,7 @@ genBelemTet( std::size_t nbfac,
     {
       auto gp = inpofa[nnpf*f + lp];
 
+      Assert( gp < esup.second.size(), "Indexing out of esup2" );
       // loop over elements surrounding this node
       for (auto i=esup.second[gp]+1; i<=esup.second[gp+1]; ++i)
       {
@@ -1164,6 +1262,7 @@ genBelemTet( std::size_t nbfac,
         break;
       }
     }
+  }
   }
 
   return belem;

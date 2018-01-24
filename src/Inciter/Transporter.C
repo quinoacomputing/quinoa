@@ -212,9 +212,20 @@ Transporter::createPartitioner()
   std::map< int, std::vector< std::size_t > > bface;
   auto nbfac = er.readSidesetFaces( bface );
 
-  // Read triangle boundary-face connectivity 
   std::vector< std::size_t > triinpoel;
-  er.readFaces( nbfac, triinpoel );
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+
+  if (nbfac<1 && scheme == ctr::SchemeType::DG)
+  {
+    CkPrintf( "ERROR: Boundary faces not specified using side-sets in ",
+              "exodus II mesh file" );
+    CkExit();
+  }
+  else if (nbfac>0)
+  {
+    // Read triangle boundary-face connectivity 
+    er.readFaces( nbfac, triinpoel );
+  }
 
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
