@@ -147,6 +147,9 @@ DiagCG::start()
 {
   auto d = Disc();
 
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
+
   // Combine own and communicated contributions to LHS and ICs
   for (const auto& b : d->Bid()) {
     auto lid = tk::cref_find( d->Lid(), b.first );
