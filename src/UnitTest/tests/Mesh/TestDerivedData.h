@@ -2421,7 +2421,7 @@ void DerivedData_object::test< 57 >() {
 //! Generate and test number of boundary-faces for tet-only mesh
 template<> template<>
 void DerivedData_object::test< 65 >() {
-  set_test_name( "genNbfacTet for tetrahedra" );
+  set_test_name( "Boundary faces (genNbfacTet) for tetrahedra" );
 
   std::map< int, std::vector< std::size_t > > bface;
 

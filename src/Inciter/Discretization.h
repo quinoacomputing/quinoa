@@ -46,7 +46,7 @@ class Discretization : public CBase_Discretization {
         int nchare,
         std::size_t tnbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& t_triinpoel );
+        const std::vector< std::size_t >& triinpoel_complete );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -300,7 +300,7 @@ class Discretization : public CBase_Discretization {
     std::vector< std::size_t > m_inpofa;
     //! Boundary element vector
     std::vector< std::size_t > m_belem;
-    //! Wlement surrounding faces
+    //! Element surrounding faces
     std::vector< int > m_esuf;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries

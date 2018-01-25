@@ -807,22 +807,32 @@ genEsued( const std::vector< std::size_t >& inpoel,
 std::size_t
 genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
-             const std::vector< std::size_t >& t_triinpoel,
+             const std::vector< std::size_t >& triinpoel_complete,
              std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
-//  Generate the number of boundary-faces on this chare/worker/mesh-partition.
-//  \warning This is for Tetrahedra only.
+//  Generate the number of boundary-faces and the triangle boundary-face
+//  connectivity for a chunk of a full mesh.
+//  \warning This is for Triangular face-elements only.
 //! \param[in] tnbfac Total number of boundary faces in the entire mesh.
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh.
-//! \param[in] t_triinpoel Interconnectivity of points and boundary-face in the
-//!   entire mesh.
-//! \param[inout] triinpoel Interconnectivity of points and boundary-face in 
+//! \param[in] triinpoel_complete Interconnectivity of points and boundary-face
+//!   in the entire mesh.
+//! \param[inout] triinpoel Interconnectivity of points and boundary-face in
 //!   this mesh-partition.
 //! \return Number of boundary-faces on this chare/mesh-partition.
-//! \details This function generates the number of physical-boundaries and a 
-//!   vector with face-node connectivity for boundary-faces that are present 
-//!   in this mesh-partition.
+//! \details This function takes a mesh by its domain-element
+//!   (tetrahedron-connectivity) in inpoel and a boundary-face (triangle)
+//!   connectivity in triinpoel_complete. Based on these two arrays, it
+//!   searches for those faces of triinpoel_complete that are also in inpoel
+//!   and as a result it generates (1) the number of boundary faces shared with
+//!   the mesh in inpoel and (2) the intersection of the triangle element
+//!   connectivity whose faces are shared with inpoel. An example use case is
+//!   where triinpoel_complete contains the connectivity for the boundary of the
+//!   full problem/mesh and inpoel contains the connectivity for only a chunk of
+//!   an already partitioned mesh. This function then intersects
+//!   triinpoel_complete with inpoel and returns only those faces that share
+//!   nodes with inpoel.
 // *****************************************************************************
 {
   std::size_t nbfac(0), nnpf(3);
@@ -831,14 +841,13 @@ genNbfacTet( std::size_t tnbfac,
   {
 
   Assert( !inpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
-  Assert( !t_triinpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
-  Assert( t_triinpoel.size()/nnpf == tnbfac, 
+  Assert( !triinpoel_complete.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( triinpoel_complete.size()/nnpf == tnbfac, 
                   "Incorrect size of triinpoel in genNbfacTet()" );
 
   auto nptet = inpoel;
-  auto nptri = t_triinpoel;
+  auto nptri = triinpoel_complete;
 
-  // reduced inpoel and t_triinpoel
   tk::unique( nptet );
   tk::unique( nptri );
 
@@ -857,8 +866,8 @@ genNbfacTet( std::size_t tnbfac,
 
   std::size_t tag, icoun;
 
-  // matching nodes in nptri_chunk with nodes in t_triinpoel to 
-  // get the number of faces in this chunk
+  // matching nodes in nptri_chunk with nodes in inpoel and 
+  // triinpoel_complete to get the number of faces in this chunk
   for (std::size_t f=0; f<tnbfac; ++f)
   {
     icoun = f*nnpf;
@@ -867,16 +876,16 @@ genNbfacTet( std::size_t tnbfac,
     {
       for (auto j : nptri_chunk)
       {
-        if (t_triinpoel[icoun+i] == j) ++tag;
+        if (triinpoel_complete[icoun+i] == j) ++tag;
       }
     }
     if (tag == nnpf)
     // this is a boundary face
     {
       ++nbfac;
-      triinpoel.push_back( t_triinpoel[icoun] );
-      triinpoel.push_back( t_triinpoel[icoun+1] );
-      triinpoel.push_back( t_triinpoel[icoun+2] );
+      triinpoel.push_back( triinpoel_complete[icoun] );
+      triinpoel.push_back( triinpoel_complete[icoun+1] );
+      triinpoel.push_back( triinpoel_complete[icoun+2] );
     }
   }
   }
@@ -1130,9 +1139,8 @@ genInpofaTet( std::size_t ntfac,
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] triinpoel Face-node connectivity.
 //! \param[in] esuelTet Elements surrounding elements.
-//! \return Elements surrounding faces.
-//! \details The unsigned integer vector gives the elements to the left and to
-//     the right of each face in the mesh.
+//! \return Elements surrounding faces. The unsigned integer vector gives the
+//!   elements to the left and to the right of each face in the mesh.
 // *****************************************************************************
 {
   std::vector< std::size_t > inpofa;
@@ -1204,13 +1212,13 @@ genBelemTet( std::size_t nbfac,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup )
 // *****************************************************************************
-//  Generate derived data, host elements for boundary faces
+//  Generate derived data, and array of elements which share one or more of
+//   their faces with the domain boundary (host elements).
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpofa Face-node connectivity.
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \return Host elements or boundary elements.
-//! \details The unsigned integer vector gives the elements to the left of
-//     each boundary face in the mesh.
+//! \return Host elements or boundary elements. The unsigned integer vector
+//!   gives the elements to the left of each boundary face in the mesh.
 // *****************************************************************************
 {
   std::vector< std::size_t > belem(nbfac);

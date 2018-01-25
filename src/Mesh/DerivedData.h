@@ -81,7 +81,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
 std::size_t
 genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
-             const std::vector< std::size_t >& t_triinpoel,
+             const std::vector< std::size_t >& triinpoel_complete,
              std::vector< std::size_t >& triinpoel );
 
 //! Generate derived data structure, total number of faces

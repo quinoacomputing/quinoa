@@ -217,9 +217,7 @@ Transporter::createPartitioner()
 
   if (nbfac<1 && scheme == ctr::SchemeType::DG)
   {
-    CkPrintf( "ERROR: Boundary faces not specified using side-sets in ",
-              "exodus II mesh file" );
-    CkExit();
+    Throw( "Boundary faces not specified using side-sets in ExodusII input file" );
   }
   else if (nbfac>0)
   {
@@ -235,11 +233,6 @@ Transporter::createPartitioner()
   {
     if (sidenodes.find(i) == end(sidenodes)) {
       m_print.diag( "WARNING: Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-      break;
-    }
-    if (bface.find(i) == end(bface)) {
-      m_print.diag( "WARNING: Boundary conditions specified on side set face " +
         std::to_string(i) + " which does not exist in mesh file" );
       break;
     }

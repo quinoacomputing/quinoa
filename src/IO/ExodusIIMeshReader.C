@@ -381,10 +381,11 @@ void
 ExodusIIMeshReader::readFaces( std::size_t nbfac,
                                std::vector< std::size_t >& conn )
 // *****************************************************************************
-//  Read element connectivity of a number of mesh cells from ExodusII file
+//  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[in] nbfac Number of boundary faces
 //! \param[inout] conn Connectivity vector to push to
-//! \details This function takes the total number of boundary faces.
+//! \details This function reads-in the total number of boundary faces 
+//!   also called triangle-elements in the EXO2 file, and their connectivity.
 // *****************************************************************************
 {
   std::size_t nnpf(3);

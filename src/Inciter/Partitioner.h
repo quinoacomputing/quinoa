@@ -329,7 +329,6 @@ class Partitioner : public CBase_Partitioner {
     //!   m_bface is the list of boundary faces in the side-sets.
     std::map< int, std::vector< std::size_t > > m_bface;
     //! \brief Boundary face-node connectivity.
-    //!   m_triinpoel is the boundary face-node connectivity.
     std::vector< std::size_t > m_triinpoel;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
