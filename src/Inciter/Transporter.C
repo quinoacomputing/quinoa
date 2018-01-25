@@ -462,6 +462,12 @@ Transporter::coord()
   // Discretization chare array elements
   m_scheme.doneDiscInserting< tag::bcast >();
 
+  // Tell the runtime system that every PE is done with dynamically inserting
+  // Discretization chare array elements
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
+    m_scheme.doneDistFCTInserting< tag::bcast >();
+
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
 
   m_scheme.coord< tag::bcast >();

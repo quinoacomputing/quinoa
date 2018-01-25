@@ -249,6 +249,19 @@ class Scheme : public SchemeBase {
       discproxy.doneInserting( std::forward<Args>(args)... );
     }
 
+    //////  fctcproxy.doneInserting(...)
+    //! \brief Function to call the doneInserting entry method of an array
+    //!   fctproxy (broadcast)
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the doneInserting member function of a
+    //!   chare array fctproxy and thus equivalent to
+    //!   fctproxy.doneInserting(...).
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void doneDistFCTInserting( Args&&... args ) {
+      fctproxy.doneInserting( std::forward<Args>(args)... );
+    }
+
     // Calls to proxy, specific to a particular discretization
 
     //////  proxy.setup(...)
