@@ -337,6 +337,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 21: type qualifiers are meaningless in this declaration
   # 47: macro has an incompatible redefinition
   # 68: integer conversion resulted in a change of sign
+  # 82: storage class specifier is not the first specifier in the declaration
   # 111: indicated statement is not reachable
   # 186: unsigned integer is being compared to zero
   # 193: zero is used for the indicated undefined preprocessing identifier
@@ -345,6 +346,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 181: argument is incompatible with the corresponding format string conversion
   # 261: access control is not specified ("private" by default)
   # 237: indicated selector expression is constant
+  # 284: a "NULL" reference is not allowed
   # 301: indicated "typedef" name has already been declared (with same type)
   # 324: duplicate friend declaration
   # 368: class template defines no constructor to initialize ...
@@ -366,7 +368,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 10153: the initialization of class "Chare" will be done before that of member
   # 11749: declaration hides member
   # 11548: comparison between signed and unsigned operands
-  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212")
+  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
 
 endif()

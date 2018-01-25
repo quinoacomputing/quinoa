@@ -27,7 +27,7 @@
   #define R123_USE_GNU_UINT128 1
 #endif
 
-#ifdef __PGI
+#if defined(__PGI) || defined(_CRAYC)
   #undef R123_USE_GNU_UINT128
   #undef R123_USE_MULHILO64_C99
   #define R123_USE_MULHILO64_C99 1
