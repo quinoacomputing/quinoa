@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/CompFlow/Physics/Euler.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Physics configuration for the Euler equation
   \details   This file defines a Physics policy class for the compressible flow
      equations, defined in PDE/CompFlow/CompFlow.h. The class defined here is
