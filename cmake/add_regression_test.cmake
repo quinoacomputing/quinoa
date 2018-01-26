@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/add_regression_test.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
 #
 ################################################################################
