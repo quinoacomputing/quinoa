@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
 
@@ -451,7 +451,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that the communication has been
     //!    established among PEs
-    void comfinal() { com_complete(); }
+    void comfinal();
 
     //! Reduction target summing total mesh volume
     void totalvol( tk::real v );
@@ -526,13 +526,10 @@ class Transporter : public CBase_Transporter {
     // Progress object for sub-tasks of a time step
     tk::Progress< 4 > m_progStep;
 
-    //! Create boundary conditions group
-    void createBC();
-
     //! Create linear solver group
     void createSolver();
 
-    //! Create mesh partitioner group
+    //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
 
     //! Configure and write diagnostics file header

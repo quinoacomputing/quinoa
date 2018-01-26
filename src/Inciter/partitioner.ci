@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/partitioner.ci
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
              to perform mesh partitioning.
@@ -27,7 +27,7 @@ module partitioner {
         const Scheme& scheme,
         std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& belem );
+        const std::vector< std::size_t >& triinpoel );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

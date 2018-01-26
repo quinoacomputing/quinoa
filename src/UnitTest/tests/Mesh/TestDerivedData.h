@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
      mesh connectivities defined in the code. The tetrahedron mesh in Gmsh ASCII
@@ -2418,6 +2418,98 @@ void DerivedData_object::test< 57 >() {
   }
 }
 
+//! Generate and test number of boundary-faces for tet-only mesh
+template<> template<>
+void DerivedData_object::test< 65 >() {
+  set_test_name( "Boundary faces (genNbfacTet) for tetrahedra" );
+
+  std::map< int, std::vector< std::size_t > > bface;
+
+  // Create unstructured-mesh object to read into
+  tk::UnsMesh inmesh;
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  auto tnbfac = er.readSidesetFaces( bface );
+
+  // Test if the number of boundary faces is correct
+  ensure_equals( "total number of boundary faces incorrect",
+                 tnbfac, 24 );
+
+  // Mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                       1, 14,  5, 11,
+                                       7,  6, 10, 12,
+                                      14,  8,  5, 10,
+                                       8,  7, 10, 13,
+                                       7, 13,  3, 12,
+                                       1,  4, 14,  9,
+                                      13,  4,  3,  9,
+                                       3,  2, 12,  9,
+                                       4,  8, 14, 13,
+                                       6,  5, 10, 11,
+                                       1,  2,  9, 11,
+                                       2,  6, 12, 11,
+                                       6, 10, 12, 11,
+                                       2, 12,  9, 11,
+                                       5, 14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                       7, 10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
+
+  // Boundary-face node connectivity for the entire mesh
+  std::vector< std::size_t > t_triinpoel {  2,  9,  3,
+                                            1,  9,  2,
+                                            3,  9,  4,
+                                            1,  4,  9,
+                                            7, 10,  6,
+                                            6, 10,  5,
+                                            8, 10,  7,
+                                           10,  8,  5,
+                                            6, 11,  2,
+                                            2, 11,  1,
+                                           11,  6,  5,
+                                           11,  5,  1,
+                                            3, 12,  2,
+                                           12,  6,  2,
+                                            7, 12,  3,
+                                           12,  7,  6,
+                                           13,  7,  3,
+                                            4, 13,  3,
+                                           13,  8,  7,
+                                            8, 13,  4,
+                                            5,  8, 14,
+                                            1,  5, 14,
+                                            4, 14,  8,
+                                            1, 14,  4 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+  tk::shiftToZero( t_triinpoel );
+
+  std::vector< std::size_t > triinpoel;
+
+  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, triinpoel );
+
+  ensure_equals( "number of boundary-faces is incorrect",
+                 nbfac, tnbfac );
+
+  ensure_equals( "total number of entries in triinpoel is incorrect",
+                 triinpoel.size(), t_triinpoel.size() );
+
+  for(std::size_t i=0 ; i<triinpoel.size(); ++i)
+  {
+    ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
+                    triinpoel[i], t_triinpoel[i]);
+  }
+}
+
 //! Generate and test face-data structures for tet-only mesh
 template<> template<>
 void DerivedData_object::test< 66 >() {
@@ -2499,59 +2591,58 @@ void DerivedData_object::test< 66 >() {
                                       31, 26,  7, 18 };
 
   // boundary elements for this mesh
-  std::map< int, std::vector< std::size_t > > belem {
-    { { 0 }, {  1,
-                1,
-                2,
-                2,
-                3,
-                4,
-                5,
-                5,
-                6,
-                6,
-               12,
-               14,
-               16,
-               17,
-               18,
-               19,
-               25,
-               28,
-               29,
-               29,
-               30,
-               31,
-               32,
-               33,
-               34,
-               35,
-               36,
-               43,
-               44,
-               45,
-               46,
-               50,
-               51,
-               51,
-               53,
-               55,
-               61,
-               63,
-               64,
-               65,
-               66,
-               67,
-               68,
-               69,
-               70,
-               71,
-               72,
-               73 } },
-  };
+  std::vector< std::size_t > belem {
+    { 1,
+      1,
+      2,
+      2,
+      3,
+      4,
+      5,
+      5,
+      6,
+      6,
+     12,
+     14,
+     16,
+     17,
+     18,
+     19,
+     25,
+     28,
+     29,
+     29,
+     30,
+     31,
+     32,
+     33,
+     34,
+     35,
+     36,
+     43,
+     44,
+     45,
+     46,
+     50,
+     51,
+     51,
+     53,
+     55,
+     61,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73 } };
 
   // Shift elem IDs to start from zero
-  for (auto& iss : belem) tk::shiftToZero( iss.second );
+  tk::shiftToZero( belem );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -2837,61 +2928,6 @@ void DerivedData_object::test< 67 >() {
                                       31, 10, 18,  3,
                                       31, 26,  7, 18 };
 
-  // boundary elements for this mesh
-  std::map< int, std::vector< std::size_t > > belem {
-    { { 0 }, {  1,
-                1,
-                2,
-                2,
-                3,
-                4,
-                5,
-                5,
-                6,
-                6,
-               12,
-               14,
-               16,
-               17,
-               18,
-               19,
-               25,
-               28,
-               29,
-               29,
-               30,
-               31,
-               32,
-               33,
-               34,
-               35,
-               36,
-               43,
-               44,
-               45,
-               46,
-               50,
-               51,
-               51,
-               53,
-               55,
-               61,
-               63,
-               64,
-               65,
-               66,
-               67,
-               68,
-               69,
-               70,
-               71,
-               72,
-               73 } },
-  };
-
-  // Shift elem IDs to start from zero
-  for (auto& iss : belem) tk::shiftToZero( iss.second );
-
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
 
@@ -2903,11 +2939,112 @@ void DerivedData_object::test< 67 >() {
   std::size_t nbfac(48);
   auto ntfac = tk::genNtfac(4, nbfac, esuelTet);
 
-  // Generate esuf
-  auto esuf = tk::genEsuf(4, ntfac, nbfac, belem, esuelTet);
+  std::map< int, std::vector< std::size_t > > bface {
+          { { 0 }, {0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41, 
+                    42,
+                    43,
+                    44,
+                    45,
+                    46,
+                    47 } } 
+  };
+
+  // Read boundary face-node connectivity
+  std::vector< std::size_t > triinpoel {  9,  1, 24,
+                                         12,  1,  9,
+                                         24,  1, 20,
+                                         20,  1, 12,
+                                         20, 12, 23,
+                                         13, 24, 20,
+                                         13, 20,  5,
+                                          5, 20, 23,
+                                         13,  5, 16,
+                                          5, 23, 16,
+                                         19, 23, 12,
+                                         17, 24, 13,
+                                         21, 12,  9,
+                                         22, 13, 16,
+                                         17,  9, 24,
+                                         19, 16, 23,
+                                         17, 13,  6,
+                                          6, 13, 14,
+                                         12, 21,  4,
+                                          4, 19, 12,
+                                         10, 21,  9,
+                                          9, 17,  2,
+                                          9,  2, 10,
+                                         16, 19,  8,
+                                         16,  8, 15,
+                                         13, 22, 14,
+                                         22, 16, 15,
+                                         17,  6, 14,
+                                         19,  4, 25,
+                                          8, 19, 15,
+                                          2, 17, 10,
+                                         17, 14, 26,
+                                         25,  4, 11,
+                                         11,  4, 21,
+                                         19, 25, 15,
+                                         10, 17, 26,
+                                         11, 21, 10,
+                                          7, 22, 15,
+                                          7, 14, 22,
+                                         18, 15, 25,
+                                         18, 25, 11,
+                                         11, 10,  3,
+                                         10, 26, 18,
+                                         26, 14,  7,
+                                          7, 15, 18,
+                                         18, 11,  3,
+                                         10, 18,  3,
+                                         26,  7, 18 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( triinpoel );
 
   // Generate inpofa
-  auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, esuelTet );
+  auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuelTet );
 
   // Generate correct solution for elements surrounding faces
   std::vector< int > correct_inpofa {   9,  1, 24,
@@ -3081,13 +3218,130 @@ void DerivedData_object::test< 67 >() {
                                        31,  7, 18,
                                        31, 18,  3 };
 
-  ensure_equals( "total number of entries in esuf is incorrect",
+  ensure_equals( "total number of entries in inpofa is incorrect",
                  inpofa.size(), correct_inpofa.size() );
 
   for(std::size_t i=0 ; i<inpofa.size(); ++i)
   {
           ensure_equals("incorrect entry " + std::to_string(i) + " in inpofa",
                           inpofa[i], correct_inpofa[i]-1);
+  }
+}
+
+//! Generate and test boundary-element vector for tet-only mesh
+template<> template<>
+void DerivedData_object::test< 68 >() {
+  set_test_name( "genBelemTet for tetrahedra" );
+
+  std::map< int, std::vector< std::size_t > > bface;
+
+  // Create unstructured-mesh object to read into
+  tk::UnsMesh inmesh;
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  auto nbfac = er.readSidesetFaces( bface );
+
+  // Test if the number of boundary faces is correct
+  ensure_equals( "total number of boundary faces incorrect",
+                 nbfac, 24 );
+
+  // Mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                       1, 14,  5, 11,
+                                       7,  6, 10, 12,
+                                      14,  8,  5, 10,
+                                       8,  7, 10, 13,
+                                       7, 13,  3, 12,
+                                       1,  4, 14,  9,
+                                      13,  4,  3,  9,
+                                       3,  2, 12,  9,
+                                       4,  8, 14, 13,
+                                       6,  5, 10, 11,
+                                       1,  2,  9, 11,
+                                       2,  6, 12, 11,
+                                       6, 10, 12, 11,
+                                       2, 12,  9, 11,
+                                       5, 14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                       7, 10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
+
+  // Boundary-face node connectivity
+  std::vector< std::size_t > triinpoel {  2,  9,  3,
+                                          1,  9,  2,
+                                          3,  9,  4,
+                                          1,  4,  9,
+                                          7, 10,  6,
+                                          6, 10,  5,
+                                          8, 10,  7,
+                                         10,  8,  5,
+                                          6, 11,  2,
+                                          2, 11,  1,
+                                         11,  6,  5,
+                                         11,  5,  1,
+                                          3, 12,  2,
+                                         12,  6,  2,
+                                          7, 12,  3,
+                                         12,  7,  6,
+                                         13,  7,  3,
+                                          4, 13,  3,
+                                         13,  8,  7,
+                                          8, 13,  4,
+                                          5,  8, 14,
+                                          1,  5, 14,
+                                          4, 14,  8,
+                                          1, 14,  4 };
+
+  // Correct boundary elements
+  std::vector< std::size_t > correct_belem{ 12,
+                                            15,
+                                            11,
+                                            10,
+                                             6,
+                                            14,
+                                             8,
+                                             7,
+                                            16,
+                                            15,
+                                            14,
+                                             5,
+                                            12,
+                                            16,
+                                             9,
+                                             6,
+                                             9,
+                                            11,
+                                             8,
+                                            13,
+                                             7,
+                                             5,
+                                            13,
+                                            10 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+  tk::shiftToZero( triinpoel );
+
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto esuel = tk::genEsuelTet( inpoel, esup );
+  auto ntfac = tk::genNtfac( 4, nbfac, esuel );
+  auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuel );
+  auto belem = tk::genBelemTet( nbfac, inpofa, esup );
+
+  ensure_equals( "total number of entries in belem is incorrect",
+                 belem.size(), correct_belem.size() );
+
+  for(std::size_t i=0 ; i<belem.size(); ++i)
+  {
+    ensure_equals("incorrect entry " + std::to_string(i) + " in belem",
+                    belem[i], correct_belem[i]-1);
   }
 }
 

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/Transport/Physics.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     All physics configurations for the scalar transport equations
   \details   This file collects all Physics policy classes for the scalar
     transport equations, defined in PDE/Transport/Transport.h.
