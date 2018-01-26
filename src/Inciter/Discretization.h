@@ -101,6 +101,9 @@ class Discretization : public CBase_Discretization {
     tk::real T() const { return m_t; }
     uint64_t It() const { return m_it; }
 
+    const tk::Timer& Timer() const { return m_timer; }
+    tk::Timer& Timer() { return m_timer; }
+
     tk::real LastFieldWriteTime() const { return m_lastFieldWriteTime; }
     tk::real& LastFieldWriteTime() { return m_lastFieldWriteTime; }
 
