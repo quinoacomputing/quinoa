@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Discretization.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
 */
@@ -42,9 +42,9 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
   int nchare,
-  std::size_t nbfac,
+  std::size_t tnbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& belem ) :
+  const std::vector< std::size_t >& triinpoel_complete ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -70,13 +70,13 @@ Discretization::Discretization(
   m_volc(),
   m_bid(),
   m_timer(),
-  m_nbfac( nbfac ),
   m_bface( bface ),
-  m_belem( belem ),
+  m_nbfac( tk::genNbfacTet( tnbfac, m_inpoel, triinpoel_complete, m_triinpoel ) ),
   m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
   m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
-  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) ),
-  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_esuel ) )
+  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel, m_esuel ) ),
+  m_belem( tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) ) ),
+  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -127,11 +127,9 @@ Discretization::Discretization(
   // also, e.g., MatCG::next().
   const auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
-  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)) {
+  if ((sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG))
     m_fct[ thisIndex ].insert( m_transporter, nchare, m_gid.size(), nprop,
                                m_msum, m_bid, m_lid, m_inpoel, CkMyPe() );
-    m_fct[ thisIndex ].doneInserting();
-  }
 }
 
 void

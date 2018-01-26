@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/DetectCodeCoverage.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Detect prerequesites for code coverage analysis
 #
 ################################################################################

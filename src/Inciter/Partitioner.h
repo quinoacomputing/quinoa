@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
 
@@ -121,7 +121,7 @@ class Partitioner : public CBase_Partitioner {
                  const Scheme& scheme,
                  std::size_t nbfac,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& belem );
+                 const std::vector< std::size_t >& triinpoel );
 
     //! Partition the computational mesh
     void partition( int nchare );
@@ -328,10 +328,8 @@ class Partitioner : public CBase_Partitioner {
     //! \brief Boundary face list from side-sets.
     //!   m_bface is the list of boundary faces in the side-sets.
     std::map< int, std::vector< std::size_t > > m_bface;
-    //! \brief Boundary element list from side-sets.
-    //!   m_belem is the list of boundary elements corresponding to the 
-    //!   boundary face number in m_bface.
-    std::map< int, std::vector< std::size_t > > m_belem;
+    //! \brief Boundary face-node connectivity.
+    std::vector< std::size_t > m_triinpoel;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );

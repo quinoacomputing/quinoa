@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/MatCG.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     MatCG for a PDE system with continuous Galerkin with a matrix
   \details   MatCG advances a system of partial differential equations (PDEs)
     using continuous Galerkin (CG) finite element (FE) spatial discretization

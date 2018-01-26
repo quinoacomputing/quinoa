@@ -1,4 +1,10 @@
-# Cmake code common to all regression testing
+################################################################################
+#
+# \file      src/regression/CMakeLists.txt
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+# \brief     Cmake code common to all regression testing
+#
+################################################################################
 
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")

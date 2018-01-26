@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Scheme.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Generic forwarding interface to discretization proxies
   \details   This file defines a generic interface to discretization proxies.
 
@@ -247,6 +247,19 @@ class Scheme : public SchemeBase {
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
     void doneDiscInserting( Args&&... args ) {
       discproxy.doneInserting( std::forward<Args>(args)... );
+    }
+
+    //////  fctcproxy.doneInserting(...)
+    //! \brief Function to call the doneInserting entry method of an array
+    //!   fctproxy (broadcast)
+    //! \param[in] args Arguments to member function (entry method) to be called
+    //! \details This function calls the doneInserting member function of a
+    //!   chare array fctproxy and thus equivalent to
+    //!   fctproxy.doneInserting(...).
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void doneDistFCTInserting( Args&&... args ) {
+      fctproxy.doneInserting( std::forward<Args>(args)... );
     }
 
     // Calls to proxy, specific to a particular discretization
