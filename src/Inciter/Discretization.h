@@ -44,9 +44,9 @@ class Discretization : public CBase_Discretization {
         const std::unordered_map< std::size_t, std::size_t >& filenodes,
         const tk::UnsMesh::EdgeNodes& edgenodes,
         int nchare,
-        std::size_t nbfac,
+        std::size_t tnbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& belem );
+        const std::vector< std::size_t >& triinpoel_complete );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -199,13 +199,14 @@ class Discretization : public CBase_Discretization {
       p | m_volc;
       p | m_bid;
       p | m_timer;
-      p | m_nbfac;
       p | m_bface;
-      p | m_belem;
+      p | m_triinpoel;
+      p | m_nbfac;
       p | m_esuel;
       p | m_ntfac;
-      p | m_esuf;
       p | m_inpofa;
+      p | m_belem;
+      p | m_esuf;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -285,19 +286,22 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step
     tk::Timer m_timer;
-    //! Number of boundary faces
-    std::size_t m_nbfac;
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
-    std::map< int, std::vector< std::size_t > > m_belem;
-    //! Wlements surrounding elements
+    //! Boundary face-node connectivity
+    std::vector< std::size_t > m_triinpoel;
+    //! Number of boundary faces
+    std::size_t m_nbfac;
+    //! Elements surrounding elements
     std::vector< int > m_esuel;
     //! Rotal number of faces
     std::size_t m_ntfac;
-    //! Wlement surrounding faces
-    std::vector< int > m_esuf;
     //! Face-node connectivity
     std::vector< std::size_t > m_inpofa;
+    //! Boundary element vector
+    std::vector< std::size_t > m_belem;
+    //! Element surrounding faces
+    std::vector< int > m_esuf;
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

@@ -88,13 +88,16 @@ class ExodusIIMeshReader {
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 
+    //! Read face connectivity of a number boundary faces from file
+    void readFaces( std::size_t nbfac,
+                    std::vector< std::size_t >& conn );
+
     //! Read node list of all side sets from ExodusII file
     std::map< int, std::vector< std::size_t > > readSidesets();
 
     //! Read face list of all side sets from ExodusII file
     std::size_t
-    readSidesetFaces( std::map< int, std::vector< std::size_t > >& bface,
-                      std::map< int, std::vector< std::size_t > >& belem );
+    readSidesetFaces( std::map< int, std::vector< std::size_t > >& belem );
 
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;
