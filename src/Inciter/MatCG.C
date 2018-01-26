@@ -127,6 +127,9 @@ MatCG::setup( tk::real v )
 
   // Start time stepping
   contribute( CkCallback( CkReductionTarget(Transporter,start), d->Tr()) );
+
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
 }
 
 void
