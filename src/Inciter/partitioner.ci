@@ -27,7 +27,7 @@ module partitioner {
         const Scheme& scheme,
         std::size_t nbfac,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& belem );
+        const std::vector< std::size_t >& triinpoel );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

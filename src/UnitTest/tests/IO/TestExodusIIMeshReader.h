@@ -1529,6 +1529,65 @@ void ExodusIIMeshReader_object::test< 4 >() {
     }
 }
 
+//! Read side-set (boundary) connectivity
+template<> template<>
+void ExodusIIMeshReader_object::test< 5 >() {
+  set_test_name( "read side-set boundary-face connectivity" );
+
+  std::map< int, std::vector< std::size_t > > bface;
+
+  // Create unstructured-mesh object to read into
+  tk::UnsMesh inmesh;
+  // Read in mesh from file
+  std::string infile( REGRESSION_DIR
+                      "/meshconv/gmsh_output/box_24_ss1.exo" );
+  tk::ExodusIIMeshReader er( infile );
+  auto nbfac = er.readSidesetFaces( bface );
+
+  // Test if the number of boundary faces is correct
+  ensure_equals( "total number of boundary faces incorrect",
+                 nbfac, 24 );
+
+  // Read boundary face-node connectivity
+  std::vector< std::size_t > triinpoel;
+  er.readFaces( nbfac, triinpoel );
+
+  // Generate correct solution for face-node connectivity
+  std::vector< int > correct_triinpoel {  2,  9,  3,
+                                          1,  9,  2,
+                                          3,  9,  4,
+                                          1,  4,  9,
+                                          7, 10,  6,
+                                          6, 10,  5,
+                                          8, 10,  7,
+                                         10,  8,  5,
+                                          6, 11,  2,
+                                          2, 11,  1,
+                                         11,  6,  5,
+                                         11,  5,  1,
+                                          3, 12,  2,
+                                         12,  6,  2,
+                                          7, 12,  3,
+                                         12,  7,  6,
+                                         13,  7,  3,
+                                          4, 13,  3,
+                                         13,  8,  7,
+                                          8, 13,  4,
+                                          5,  8, 14,
+                                          1,  5, 14,
+                                          4, 14,  8, 
+                                          1, 14,  4 };
+
+  ensure_equals( "total number of entries in inpofa is incorrect",
+                 triinpoel.size(), correct_triinpoel.size() );
+
+  for(std::size_t i=0 ; i<triinpoel.size(); ++i)
+  {
+          ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
+                          triinpoel[i], correct_triinpoel[i]-1);
+  }
+}
+
 } // tut::
 
 #endif // test_ExodusIIMeshReader_h
