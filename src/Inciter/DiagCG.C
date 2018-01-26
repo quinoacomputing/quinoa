@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DiagCG.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
   \details   DiagCG advances a system of partial differential equations (PDEs)
     using continuous Galerkin (CG) finite element (FE) spatial discretization
@@ -146,6 +146,9 @@ DiagCG::start()
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Start timer measuring time stepping wall clock time
+  d->Timer().zero();
 
   // Combine own and communicated contributions to LHS and ICs
   for (const auto& b : d->Bid()) {

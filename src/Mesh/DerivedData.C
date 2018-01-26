@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
      of an unstructured mesh.
@@ -15,9 +15,11 @@
 #include <type_traits>
 #include <cstddef>
 #include <array>
+#include <unordered_set>
 
 #include "Exception.h"                  // for Assert
 #include "DerivedData.h"
+#include "ContainerUtil.h"
 
 namespace tk {
 
@@ -802,6 +804,95 @@ genEsued( const std::vector< std::size_t >& inpoel,
   return std::make_pair( std::move(esued1), std::move(esued2) );
 }
 
+std::size_t
+genNbfacTet( std::size_t tnbfac,
+             const std::vector< std::size_t >& inpoel,
+             const std::vector< std::size_t >& triinpoel_complete,
+             std::vector< std::size_t >& triinpoel )
+// *****************************************************************************
+//  Generate the number of boundary-faces and the triangle boundary-face
+//  connectivity for a chunk of a full mesh.
+//  \warning This is for Triangular face-elements only.
+//! \param[in] tnbfac Total number of boundary faces in the entire mesh.
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh.
+//! \param[in] triinpoel_complete Interconnectivity of points and boundary-face
+//!   in the entire mesh.
+//! \param[inout] triinpoel Interconnectivity of points and boundary-face in
+//!   this mesh-partition.
+//! \return Number of boundary-faces on this chare/mesh-partition.
+//! \details This function takes a mesh by its domain-element
+//!   (tetrahedron-connectivity) in inpoel and a boundary-face (triangle)
+//!   connectivity in triinpoel_complete. Based on these two arrays, it
+//!   searches for those faces of triinpoel_complete that are also in inpoel
+//!   and as a result it generates (1) the number of boundary faces shared with
+//!   the mesh in inpoel and (2) the intersection of the triangle element
+//!   connectivity whose faces are shared with inpoel. An example use case is
+//!   where triinpoel_complete contains the connectivity for the boundary of the
+//!   full problem/mesh and inpoel contains the connectivity for only a chunk of
+//!   an already partitioned mesh. This function then intersects
+//!   triinpoel_complete with inpoel and returns only those faces that share
+//!   nodes with inpoel.
+// *****************************************************************************
+{
+  std::size_t nbfac(0), nnpf(3);
+
+  if (tnbfac > 0)
+  {
+
+  Assert( !inpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( !triinpoel_complete.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( triinpoel_complete.size()/nnpf == tnbfac, 
+                  "Incorrect size of triinpoel in genNbfacTet()" );
+
+  auto nptet = inpoel;
+  auto nptri = triinpoel_complete;
+
+  tk::unique( nptet );
+  tk::unique( nptri );
+
+  std::unordered_set< std::size_t > snptet;
+
+  // getting the reduced inpoel as a set for quick searches
+  snptet.insert( begin(nptet), end(nptet));
+
+  // vector to store boundary-face-nodes in this chunk
+  std::vector< std::size_t > nptri_chunk;
+
+  // getting the nodes of the boundary-faces in this chunk
+  for (auto i : nptri)
+    if (snptet.find(i) != end(snptet))
+      nptri_chunk.push_back(i);
+
+  std::size_t tag, icoun;
+
+  // matching nodes in nptri_chunk with nodes in inpoel and 
+  // triinpoel_complete to get the number of faces in this chunk
+  for (std::size_t f=0; f<tnbfac; ++f)
+  {
+    icoun = f*nnpf;
+    tag = 0;
+    for (std::size_t i=0; i<nnpf; ++i)
+    {
+      for (auto j : nptri_chunk)
+      {
+        if (triinpoel_complete[icoun+i] == j) ++tag;
+      }
+    }
+    if (tag == nnpf)
+    // this is a boundary face
+    {
+      ++nbfac;
+      triinpoel.push_back( triinpoel_complete[icoun] );
+      triinpoel.push_back( triinpoel_complete[icoun+1] );
+      triinpoel.push_back( triinpoel_complete[icoun+2] );
+    }
+  }
+  }
+
+  return nbfac;
+}
+
 std::vector< int >
 genEsuelTet( const std::vector< std::size_t >& inpoel,
              const std::pair< std::vector< std::size_t >,
@@ -949,6 +1040,9 @@ genNtfac( std::size_t nfpe,
 
   std::size_t nifac = 0;
 
+  if (nbfac > 0)
+  {
+
   // loop through elements surrounding elements to find number of internal faces
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -963,6 +1057,7 @@ genNtfac( std::size_t nfpe,
       }
     }
   }
+  }
 
   return nifac + nbfac;
 }
@@ -971,14 +1066,14 @@ std::vector< int >
 genEsuf( std::size_t nfpe,
          std::size_t ntfac,
          std::size_t nbfac,
-         const std::map< int, std::vector< std::size_t > >& belem,
+         const std::vector< std::size_t >& belem,
          const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, elements surrounding faces
 //! \param[in] nfpe  Number of faces per element.
 //! \param[in] ntfac Total number of faces.
 //! \param[in] nbfac Number of boundary faces.
-//! \param[in] belem Boundary element map according to side-sets.
+//! \param[in] belem Boundary element vector.
 //! \param[in] esuelTet Elements surrounding elements.
 //! \return Elements surrounding faces.
 //! \details The unsigned integer vector gives the IDs of the elements to the
@@ -994,6 +1089,9 @@ genEsuf( std::size_t nfpe,
   auto nelem = esuelTet.size()/nfpe;
 
   std::vector< int > esuf(2*ntfac);
+
+  if (nbfac > 0)
+  {
 
   // counters for number of internal and boundary faces
   std::size_t icoun(2*nbfac), bcoun(0);
@@ -1017,16 +1115,12 @@ genEsuf( std::size_t nfpe,
   }
 
   bcoun = 0;
-  for (auto& iss : belem)
+  for (auto ie : belem)
   {
-    for (auto f : iss.second)
-    {
-      // define ielem from elems in side set connected to f!
-      auto ielem = f;
-      esuf[bcoun] = static_cast< int >(ielem);
-      esuf[bcoun+1] = -1;  // outside domain
-      bcoun = bcoun + 2;
-    }
+    esuf[bcoun] = static_cast< int >(ie);
+    esuf[bcoun+1] = -1;  // outside domain
+    bcoun = bcoun + 2;
+  }
   }
 
   return esuf;
@@ -1036,19 +1130,23 @@ std::vector< std::size_t >
 genInpofaTet( std::size_t ntfac,
               std::size_t nbfac,
               const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& triinpoel,
               const std::vector< int >& esuelTet )
 // *****************************************************************************
 //  Generate derived data, points on faces for tetrahedra only
 //! \param[in] ntfac Total number of faces.
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpoel Element-node connectivity.
+//! \param[in] triinpoel Face-node connectivity.
 //! \param[in] esuelTet Elements surrounding elements.
-//! \return Elements surrounding faces.
-//! \details The unsigned integer map gives the elements to the left and to
-//     the right of each face in the mesh.
+//! \return Elements surrounding faces. The unsigned integer vector gives the
+//!   elements to the left and to the right of each face in the mesh.
 // *****************************************************************************
 {
   std::vector< std::size_t > inpofa;
+
+  if (nbfac > 0)
+  {
 
   // set tetrahedron geometry
   std::size_t nnpe(4), nfpe(4), nnpf(3);
@@ -1068,10 +1166,11 @@ genInpofaTet( std::size_t ntfac,
      lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
   // counters for number of internal and boundary faces
-  std::size_t icoun(nnpf*nbfac), bcoun(0);
+  std::size_t icoun(nnpf*nbfac);
   std::size_t mark(0);
 
   // loop over elems to get nodes on faces
+  // this fills the interior face-node connectivity part
   for (std::size_t e=0; e<nelem; ++e)
   {
     mark = nnpe*e;
@@ -1079,14 +1178,7 @@ genInpofaTet( std::size_t ntfac,
     {
       auto ip = nfpe*e + f;
       auto jelem = esuelTet[ip];
-      if (jelem == -1)
-      {
-        inpofa[bcoun]   = inpoel[mark+lpofa[f][0]];
-        inpofa[bcoun+1] = inpoel[mark+lpofa[f][1]];
-        inpofa[bcoun+2] = inpoel[mark+lpofa[f][2]];
-        bcoun = bcoun + nnpf;
-      }
-      else
+      if (jelem != -1)
       {
         if ( e < static_cast< std::size_t >(jelem) )
         {
@@ -1099,7 +1191,89 @@ genInpofaTet( std::size_t ntfac,
     }
   }
 
+  // this fills the boundary face-node connectivity part
+  // consistent with triinpoel
+  for (std::size_t f=0; f<nbfac; ++f)
+  {
+    icoun = nnpf * f;
+    for(std::size_t i=0; i<nnpf ; ++i)
+    {
+      inpofa[icoun+i] = triinpoel[icoun+i];
+    }
+  }
+  }
+
   return inpofa;
+}
+        
+std::vector< std::size_t >
+genBelemTet( std::size_t nbfac,
+              const std::vector< std::size_t >& inpofa,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup )
+// *****************************************************************************
+//  Generate derived data, and array of elements which share one or more of
+//   their faces with the domain boundary (host elements).
+//! \param[in] nbfac Number of boundary faces.
+//! \param[in] inpofa Face-node connectivity.
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Host elements or boundary elements. The unsigned integer vector
+//!   gives the elements to the left of each boundary face in the mesh.
+// *****************************************************************************
+{
+  std::vector< std::size_t > belem(nbfac);
+
+  if (nbfac > 0)
+  {
+
+  // set tetrahedron geometry
+  std::size_t nnpf(3), tag(0);
+
+  // loop over all the boundary faces
+  for(std::size_t f=0; f<nbfac; ++f)
+  {
+    belem[f] = 0;
+
+    // array storing the element-cluster around face
+    std::vector< std::size_t > elemcluster;
+
+    // loop over the nodes of this boundary face
+    for(std::size_t lp=0; lp<nnpf; ++lp)
+    {
+      auto gp = inpofa[nnpf*f + lp];
+
+      Assert( gp < esup.second.size(), "Indexing out of esup2" );
+      // loop over elements surrounding this node
+      for (auto i=esup.second[gp]+1; i<=esup.second[gp+1]; ++i)
+      {
+        // form element-cluster vector
+        elemcluster.push_back(esup.first[i]);
+      }
+    }
+
+    // loop over element cluster to find repeating elements
+    for(std::size_t i=0; i<elemcluster.size(); ++i)
+    {
+      auto ge = elemcluster[i];
+      tag = 1;
+      for(std::size_t j=0; j<elemcluster.size(); ++j)
+      {
+        if ( i != j && elemcluster[j] == ge )
+        {
+          tag++;
+        }
+      }
+      if (tag == nnpf)
+      {
+        // this is the required boundary element
+        belem[f] = ge;
+        break;
+      }
+    }
+  }
+  }
+
+  return belem;
 }
 
 } // tk::

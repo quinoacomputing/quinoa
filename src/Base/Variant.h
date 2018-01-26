@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Base/Variant.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Variant is a wrapper around boost::variant to make it PUPable
   \details   Variant is a wrapper around boost::variant to make it PUPable.
 
