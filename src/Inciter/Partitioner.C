@@ -1224,7 +1224,6 @@ Partitioner::createDiscWorkers()
     m_scheme.discInsert< tag::elem >( cid, m_host, m_bc,
       tk::cref_find(m_chinpoel,cid), msum, tk::cref_find(m_chfilenodes,cid),
       edno, m_nchare, m_nbfac, m_bface, m_triinpoel, CkMyPe() );
-    m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 
   // Free storage for unique global mesh nodes chares on our PE will
@@ -1270,7 +1269,6 @@ Partitioner::createWorkers()
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
     // Create worker array element
     m_scheme.insert< tag::elem >( cid, m_scheme.get(), m_solver, CkMyPe() );
-    m_scheme.doneInserting< tag::elem >( cid );
   }
 }
 
