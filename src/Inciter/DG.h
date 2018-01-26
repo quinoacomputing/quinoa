@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DG.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
     discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
