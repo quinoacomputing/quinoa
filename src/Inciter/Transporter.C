@@ -615,7 +615,7 @@ Transporter::stat()
      "\n      it             t            dt        ETE        ETA   out\n"
        " ---------------------------------------------------------------\n" );
 
-  m_scheme.setup< tag::bcast >( m_V );
+  m_scheme.setup( m_V );
 }
 
 void
