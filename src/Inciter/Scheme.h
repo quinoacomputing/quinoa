@@ -246,20 +246,20 @@ class Scheme : public SchemeBase {
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
     void doneDiscInserting( Args&&... args ) {
-      discproxy.doneInserting( fctproxy, std::forward<Args>(args)... );
+      discproxy.doneInserting( std::forward<Args>(args)... );
     }
-    //////  discproxy[x].doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an element
-    //!   discproxy (p2p)
-    //! \param[in] x Chare array element index
+
+    //////  fctcproxy.doneInserting(...)
+    //! \brief Function to call the doneInserting entry method of an array
+    //!   fctproxy (broadcast)
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the doneInserting member function of a
-    //!   chare array element discproxy and thus equivalent to
-    //!   discproxy[x].doneInserting(...)..
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void doneDiscInserting( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].doneInserting( std::forward<Args>(args)... );
+    //!   chare array fctproxy and thus equivalent to
+    //!   fctproxy.doneInserting(...).
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void doneDistFCTInserting( Args&&... args ) {
+      fctproxy.doneInserting( std::forward<Args>(args)... );
     }
 
     // Calls to proxy, specific to a particular discretization
@@ -417,21 +417,6 @@ class Scheme : public SchemeBase {
     void doneInserting( Args&&... args ) {
       boost::apply_visitor(
         call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-    //////  proxy[x].doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an element
-    //!   proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the doneInserting member function of a
-    //!   chare array element proxy and thus equivalent to
-    //!   proxy[x].doneInserting(...)..
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void doneInserting( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor(
-        call_doneInserting<Args...>( std::forward<Args>(args)... ), e );
     }
 
   private:
