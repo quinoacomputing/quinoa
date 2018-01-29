@@ -1,0 +1,27 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/facedata.ci
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for common stuff to discretizations
+  \details   Charm++ module interface file for common stuff to discretizations.
+  \see       FaceData.h and FaceData.C for more info.
+*/
+// *****************************************************************************
+
+module facedata {
+
+  extern module transporter;
+
+  include "UnsMesh.h";
+
+  namespace inciter {
+
+    entry FaceData(
+      const std::vector< std::size_t >& conn,
+      std::size_t nbfac_complete,
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::vector< std::size_t >& triinpoel_complete );
+
+  } // inciter::
+
+}

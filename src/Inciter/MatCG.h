@@ -38,6 +38,7 @@
 #include "FluxCorrector.h"
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "FaceData.h"
 
 #include "NoWarning/matcg.decl.h"
 
@@ -56,7 +57,8 @@ class MatCG : public CBase_MatCG {
   public:
     //! Constructor
     explicit MatCG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver& solver );
+                    const tk::CProxy_Solver& solver,
+                    const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

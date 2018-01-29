@@ -19,6 +19,7 @@
 #define DG_h
 
 #include "NoWarning/dg.decl.h"
+#include "FaceData.h"
 
 namespace inciter {
 
@@ -28,7 +29,8 @@ class DG : public CBase_DG {
   public:
     //! Constructor
     explicit DG( const CProxy_Discretization& disc,
-                 const tk::CProxy_Solver& solver );
+                 const tk::CProxy_Solver& solver,
+                 const FaceData& fd );
 
     //! Migrate constructor
     explicit DG( CkMigrateMessage* ) {}
