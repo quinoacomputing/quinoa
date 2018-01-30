@@ -25,7 +25,6 @@ add_library(Inciter
 
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
-addCharmModule( "facedata" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
 addCharmModule( "matcg" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
@@ -54,8 +53,6 @@ add_dependencies( "Inciter" "solverCharmModule" )
 # This is required so that Partitioner.decl.h and Partitioner.def.h are
 # generated before Transporter including those.
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
-
-add_dependencies( "partitionerCharmModule" "facedataCharmModule" )
 
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
 

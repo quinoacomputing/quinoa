@@ -15,8 +15,6 @@
 #include "UnsMesh.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "facedata.decl.h"
-
 namespace tk {
   class ExodusIIMeshWriter;
   class RootMeshWriter;
@@ -31,6 +29,9 @@ extern ctr::InputDeck g_inputdeck;
 class FaceData
 {
   public:
+    //! Empty constructor for Charm++
+    explicit FaceData() {}
+
     //! Constructor
     explicit
       FaceData(
@@ -66,7 +67,6 @@ class FaceData
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      FaceData::pup(p);
       p | m_el;
       if (p.isUnpacking()) {
         m_inpoel = std::get< 0 >( m_el );

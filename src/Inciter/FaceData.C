@@ -18,10 +18,10 @@
 #include "Inciter/Options/Scheme.h"
 #include "PDE.h"
 #include "Print.h"
+#include "FaceData.h"
 
 namespace inciter {
 
-static CkReduction::reducerType PDFMerger;
 extern std::vector< PDE > g_pdes;
 extern ctr::InputDeck g_inputdeck;
 
@@ -33,17 +33,7 @@ FaceData::FaceData(
   const std::vector< std::size_t >& conn,
   std::size_t nbfac_complete,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel_complete ) :
-  (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG) ? (
-    m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
-    m_bface( bface ),
-    m_nbfac( tk::genNbfacTet( nbfac_complete, m_inpoel, triinpoel_complete, m_triinpoel ) ),
-    m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
-    m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
-    m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel, m_esuel ) ),
-    m_belem( tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) ) ),
-    m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) )
-  ) : ( {} )
+  const std::vector< std::size_t >& triinpoel_complete ) : m_bface( bface )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
@@ -58,16 +48,29 @@ FaceData::FaceData(
 //!   problem.
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG) {
+
+    m_el = tk::global2local( conn );   // fills m_inpoel, m_gid, m_lid
+    m_bface = bface;
+    m_nbfac = tk::genNbfacTet( nbfac_complete, m_inpoel, triinpoel_complete,
+                               m_triinpoel );
+    m_esuel = tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) );
+    m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
+    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel,
+                                 m_esuel );
+    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) );
+    m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
+
+  }
+
   Assert( m_belem.size() == m_nbfac,
           "Number of boundary-elements and number of boundary-faces unequal" );
 }
 
-void
-FaceData::test()
-// *****************************************************************************
-// test member function
-// *****************************************************************************
-{
-}
-
-#include "facedata.def.h"
+// void
+// FaceData::test()
+// // *****************************************************************************
+// // test member function
+// // *****************************************************************************
+// {
+// }
