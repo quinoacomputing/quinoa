@@ -8,9 +8,6 @@
 #ifndef FaceData_h
 #define FaceData_h
 
-#include "Types.h"
-#include "Keywords.h"
-#include "Fields.h"
 #include "PUPUtil.h"
 #include "UnsMesh.h"
 #include "Inciter/InputDeck/InputDeck.h"

@@ -7,22 +7,14 @@
 */
 // *****************************************************************************
 
-#include "Tags.h"
 #include "Reorder.h"
 #include "Vector.h"
 #include "DerivedData.h"
-#include "Discretization.h"
-#include "ExodusIIMeshReader.h"
-#include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "Inciter/Options/Scheme.h"
-#include "PDE.h"
-#include "Print.h"
 #include "FaceData.h"
 
 namespace inciter {
 
-extern std::vector< PDE > g_pdes;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
@@ -51,7 +43,7 @@ FaceData::FaceData(
   if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG) {
 
     m_el = tk::global2local( conn );   // fills m_inpoel, m_gid, m_lid
-    m_bface = bface;
+    m_inpoel = std::get< 0 >( m_el );
     m_nbfac = tk::genNbfacTet( nbfac_complete, m_inpoel, triinpoel_complete,
                                m_triinpoel );
     m_esuel = tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) );
@@ -61,10 +53,9 @@ FaceData::FaceData(
     m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) );
     m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
 
+    Assert( m_belem.size() == m_nbfac,
+            "Number of boundary-elements and number of boundary-faces unequal" );
   }
-
-  Assert( m_belem.size() == m_nbfac,
-          "Number of boundary-elements and number of boundary-faces unequal" );
 }
 
 // void
