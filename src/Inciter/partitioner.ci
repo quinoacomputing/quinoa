@@ -13,6 +13,7 @@ module partitioner {
   include "Types.h";
   include "UnsMesh.h";
   include "Scheme.h";
+  include "FaceData.h";
 
   extern module transporter;
 

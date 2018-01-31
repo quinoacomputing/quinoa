@@ -840,10 +840,12 @@ genNbfacTet( std::size_t tnbfac,
   if (tnbfac > 0)
   {
 
-  Assert( !inpoel.empty(), "Attempt to call genNbfacTet() on empty container" );
-  Assert( !triinpoel_complete.empty(), "Attempt to call genNbfacTet() on empty container" );
+  Assert( !inpoel.empty(),
+          "Attempt to call genNbfacTet() on empty inpoel container" );
+  Assert( !triinpoel_complete.empty(),
+          "Attempt to call genNbfacTet() on empty triinpoel_complete container" );
   Assert( triinpoel_complete.size()/nnpf == tnbfac, 
-                  "Incorrect size of triinpoel in genNbfacTet()" );
+          "Incorrect size of triinpoel in genNbfacTet()" );
 
   auto nptet = inpoel;
   auto nptri = triinpoel_complete;
