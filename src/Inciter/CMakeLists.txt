@@ -8,6 +8,7 @@ include(charm)
 add_library(Inciter
             Transporter.C
             Partitioner.C
+            FaceData.C
             Discretization.C
             MatCG.C
             DiagCG.C

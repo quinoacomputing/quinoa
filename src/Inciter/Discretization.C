@@ -41,10 +41,7 @@ Discretization::Discretization(
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
-  int nchare,
-  std::size_t tnbfac,
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel_complete ) :
+  int nchare ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -69,14 +66,7 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
-  m_timer(),
-  m_bface( bface ),
-  m_nbfac( tk::genNbfacTet( tnbfac, m_inpoel, triinpoel_complete, m_triinpoel ) ),
-  m_esuel( tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) ) ),
-  m_ntfac( tk::genNtfac( 4, m_nbfac, m_esuel ) ),
-  m_inpofa( tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel, m_esuel ) ),
-  m_belem( tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) ) ),
-  m_esuf( tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel ) )
+  m_timer()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy

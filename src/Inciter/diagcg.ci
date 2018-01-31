@@ -17,12 +17,14 @@ module diagcg {
 
   include "UnsMesh.h";
   include "PUPUtil.h";
+  include "FaceData.h";
 
   namespace inciter {
 
     array [1D] DiagCG {
       entry DiagCG( const CProxy_Discretization& disc,
-                    const tk::CProxy_Solver& solver );
+                    const tk::CProxy_Solver& solver,
+                    const FaceData& fd );
       initnode void registerReducers();
       entry void setup( tk::real v );
       entry void dt();
