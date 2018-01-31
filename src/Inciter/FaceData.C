@@ -1,14 +1,13 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FaceData.C
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \details   Face-data used only in discontinuous Galerkin discretization scheme
   \see       FaceData.h for more info.
 */
 // *****************************************************************************
 
 #include "Reorder.h"
-#include "Vector.h"
 #include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "FaceData.h"
@@ -30,27 +29,30 @@ FaceData::FaceData(
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //!   mesh chunk we operate on
-//! \details "Contiguous-row-id" here means that the numbering of the mesh nodes
-//!   (which corresponds to rows in the linear system) are (approximately)
-//!   contiguous (as much as this can be done with an unstructured mesh) as the
-//!   problem is distirbuted across PEs, held by Solver objects. This ordering
-//!   is in start contrast with "as-in-file" ordering, which is the ordering of
-//!   the mesh nodes as it is stored in the file from which the mesh is read in.
-//!   The as-in-file ordering is highly non-contiguous across the distributed
-//!   problem.
+//! \param[in] nbfac_complete Total number of boundary-faces (triangles) in 
+//!   the entire mesh
+//! \param[in] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids
+//! \param[in] triinpoel_complete Interconnectivity of points and 
+//!   boundary-face in the entire mesh
+//! \details This class is created per chare-worker in 
+//!   Partitioner::createWorkers(). This is done so that Discretization will 
+//!   not hold all this data unnecessarily, viz. for MatCG and DiagCG, where 
+//!   it's not needed. It will be computed only when DG discretization is 
+//!   chosen.
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::selected, tag::scheme >() == ctr::SchemeType::DG) {
 
-    m_el = tk::global2local( conn );   // fills m_inpoel, m_gid, m_lid
-    m_inpoel = std::get< 0 >( m_el );
-    m_nbfac = tk::genNbfacTet( nbfac_complete, m_inpoel, triinpoel_complete,
+    auto el = tk::global2local( conn );   // fills inpoel, m_gid, m_lid
+    auto inpoel = std::get< 0 >( el );
+    m_nbfac = tk::genNbfacTet( nbfac_complete, inpoel, triinpoel_complete,
                                m_triinpoel );
-    m_esuel = tk::genEsuelTet( m_inpoel,tk::genEsup(m_inpoel,4) );
+    m_esuel = tk::genEsuelTet( inpoel,tk::genEsup(inpoel,4) );
     m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
-    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, m_inpoel, m_triinpoel,
+    m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
                                  m_esuel );
-    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(m_inpoel,4) );
+    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, tk::genEsup(inpoel,4) );
     m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
 
     Assert( m_belem.size() == m_nbfac,

@@ -1232,9 +1232,6 @@ Partitioner::createDiscWorkers()
   // Free storage for unique global mesh edges whose nodes chares on our
   // PE will contribute to in a linear system as no longer needed.
   tk::destroy( m_edgeset );
-  //// Free storage of global mesh node ids associated to chares owned as it
-  //// is no longer needed after creating the workers.
-  //tk::destroy( m_chinpoel );
   // Free maps associating old node IDs to new node IDs categorized by
   // chares as it is no longer needed after creating the workers.
   tk::destroy( m_chfilenodes );

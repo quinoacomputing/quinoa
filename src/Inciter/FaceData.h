@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FaceData.h
-  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
+  \copyright 2016-2018, Los Alamos National Security, LLC.
   \details   Face-data used only in discontinuous Galerkin discretization scheme
 */
 // *****************************************************************************
@@ -9,17 +9,8 @@
 #define FaceData_h
 
 #include "PUPUtil.h"
-#include "UnsMesh.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
-namespace tk {
-  class ExodusIIMeshWriter;
-  class RootMeshWriter;
-}
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! \brief FaceData class holding face-connectivity data useful
 //!   to DG discretization
@@ -40,16 +31,6 @@ class FaceData
     /** @name Accessors
       * */
     ///@{
-    const std::vector< std::size_t >& Gid() const { return m_gid; }
-    std::vector< std::size_t >& Gid() { return m_gid; }
-
-    const std::unordered_map< std::size_t, std::size_t >& Lid() const
-    { return m_lid; }
-    std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
-
-    const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
-    std::vector< std::size_t >& Inpoel() { return m_inpoel; }
-
     const std::map< int, std::vector< std::size_t > >& Bface() const
     { return m_bface; }
     std::size_t Nbfac() const { return m_nbfac; }
@@ -64,12 +45,6 @@ class FaceData
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      p | m_el;
-      if (p.isUnpacking()) {
-        m_inpoel = std::get< 0 >( m_el );
-        m_gid = std::get< 1 >( m_el );
-        m_lid = std::get< 2 >( m_el );
-      }
       p | m_bface;
       p | m_triinpoel;
       p | m_nbfac;
@@ -86,21 +61,6 @@ class FaceData
     //@}
 
   private:
-    //! \brief Elements of the mesh chunk we operate on
-    //! \details Initialized by the constructor. The first vector is the element
-    //!   connectivity (local IDs), the second vector is the global node IDs of
-    //!   owned elements, while the third one is a map of global->local node
-    //!   IDs.
-    std::tuple< std::vector< std::size_t >,
-                std::vector< std::size_t >,
-                std::unordered_map< std::size_t, std::size_t > > m_el;
-    //! Alias to element connectivity in m_el
-    std::vector< std::size_t > m_inpoel = std::get< 0 >( m_el );
-    //! Alias to global node IDs of owned elements in m_el
-    std::vector< std::size_t > m_gid = std::get< 1 >( m_el );
-    //! \brief Alias to local node ids associated to the global ones of owned
-    //!    elements in m_el
-    std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
     //! Boundary faces side-set information
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary face-node connectivity

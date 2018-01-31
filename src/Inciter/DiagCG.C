@@ -94,7 +94,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  (void)fd;
+  IGNORE( fd );
 }
 
 void

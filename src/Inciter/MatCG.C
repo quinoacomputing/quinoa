@@ -76,7 +76,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 
   // Send off global row IDs to linear system solver
   m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
-  (void)fd;
+  IGNORE( fd );
 }
 
 void
