@@ -30,7 +30,9 @@ static CkReduction::reducerType DiagMerger;
 
 using inciter::DG;
 
-DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
+DG::DG( const CProxy_Discretization& disc,
+        const tk::CProxy_Solver& solver,
+        const FaceData& fd ) :
   m_disc( disc ),
   m_vol( 0.0 )
 // *****************************************************************************
@@ -39,6 +41,7 @@ DG::DG( const CProxy_Discretization& disc, const tk::CProxy_Solver& solver ) :
 {
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
+  IGNORE( fd );
 }
 
 void

@@ -75,6 +75,7 @@
 #include "DerivedData.h"
 #include "UnsMesh.h"
 #include "AMR/mesh_adapter.h"
+#include "FaceData.h"
 
 #include "NoWarning/partitioner.decl.h"
 

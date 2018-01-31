@@ -1223,7 +1223,7 @@ Partitioner::createDiscWorkers()
     // Create worker array element
     m_scheme.discInsert< tag::elem >( cid, m_host, m_bc,
       tk::cref_find(m_chinpoel,cid), msum, tk::cref_find(m_chfilenodes,cid),
-      edno, m_nchare, m_nbfac, m_bface, m_triinpoel, CkMyPe() );
+      edno, m_nchare, CkMyPe() );
   }
 
   // Free storage for unique global mesh nodes chares on our PE will
@@ -1232,9 +1232,6 @@ Partitioner::createDiscWorkers()
   // Free storage for unique global mesh edges whose nodes chares on our
   // PE will contribute to in a linear system as no longer needed.
   tk::destroy( m_edgeset );
-  // Free storage of global mesh node ids associated to chares owned as it
-  // is no longer needed after creating the workers.
-  tk::destroy( m_chinpoel );
   // Free maps associating old node IDs to new node IDs categorized by
   // chares as it is no longer needed after creating the workers.
   tk::destroy( m_chfilenodes );
@@ -1267,8 +1264,12 @@ Partitioner::createWorkers()
     auto cid = CkMyPe() * dist[0] + c;
     // Make sure (bound) base is already created and accessible
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
+
+    // Face data class
+    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
+
     // Create worker array element
-    m_scheme.insert< tag::elem >( cid, m_scheme.get(), m_solver, CkMyPe() );
+    m_scheme.insert< tag::elem >( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
 }
 

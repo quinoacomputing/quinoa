@@ -48,7 +48,8 @@ extern std::vector< PDE > g_pdes;
 using inciter::MatCG;
 
 MatCG::MatCG( const CProxy_Discretization& disc,
-              const tk::CProxy_Solver& solver ) :
+              const tk::CProxy_Solver& solver,
+              const FaceData& fd ) :
   m_itf( 0 ),
   m_nhsol( 0 ),
   m_nlsol( 0 ),
@@ -75,6 +76,7 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 
   // Send off global row IDs to linear system solver
   m_solver.ckLocalBranch()->charecom( thisProxy, thisIndex, d->Gid() );
+  IGNORE( fd );
 }
 
 void

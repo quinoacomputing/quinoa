@@ -85,6 +85,7 @@
 #include "FluxCorrector.h"
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "FaceData.h"
 
 #include "NoWarning/diagcg.decl.h"
 
@@ -126,7 +127,8 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const tk::CProxy_Solver& solver );
+                     const tk::CProxy_Solver& solver,
+                     const FaceData& fd );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
