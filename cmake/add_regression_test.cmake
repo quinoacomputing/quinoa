@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/add_regression_test.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
 #
 ################################################################################
@@ -291,7 +291,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   #  5 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
     PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous"
-    FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different")
+    FAIL_REGULAR_EXPRESSION "exodiff: ERROR;exodiff: Files are different;FAIL;CMake Error")
 
   # Set labels cmake test property. The LABELS built-in cmake property is not
   # passed as part of test_properties above in set_test_properties as

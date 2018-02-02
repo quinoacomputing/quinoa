@@ -1,8 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/FileConvWriter.h
-  \author    A. Pakki 
-  \copyright 2012-2015, Aditya Pakki, 2016, Los Alamos National Security, LLC.
+  \copyright 2016-2017, Los Alamos National Security, LLC.
   \brief     Convert the input files to output file format  
   \details   Convert the input file in ROOT format to the ExodusII layout
 	     The next step post the output would be to utilize exodiff utility.
@@ -49,7 +48,7 @@ class FileConvWriter {
     const std::string m_file_exodus;       //!< ExodusII File name
 
     //! Root file handle
-    tk::unique_ptr< TFile > m_infile = nullptr;
+    std::unique_ptr< TFile > m_infile = nullptr;
     //! ROOT tree handle
     TTree* m_tree_local = nullptr;
 

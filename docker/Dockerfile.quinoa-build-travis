@@ -62,7 +62,7 @@ RUN cd .. && if [ ${COVERAGE} ]; then \
     find . -type f -name '*.def.h*.gcov' -o -name '*UnitTest#tests*.gcov' -delete; \
   fi; \
 fi
-RUN cd .. && if [ ${SONARQUBE} ]; then \
+RUN cd .. && if [ ${SONARQUBE} ] && [ -n "${SONARQUBE_GITHUB_TOKEN}" ] && [ -n "${SONARQUBE_TOKEN}" ]; then \
   sonar-scanner \
     -Dsonar.projectKey=${TRAVIS_REPO_SLUG#*/} \
     -Dsonar.projectName=${TRAVIS_REPO_SLUG#*/} \
@@ -77,7 +77,7 @@ RUN cd .. && if [ ${SONARQUBE} ]; then \
     -Dsonar.exclusions=build/CMakeFiles/**,**/*.decl.h,**/*.def.h \
     -Dsonar.cfamily.build-wrapper-output=build/bw-output \
     -Dsonar.cfamily.gcov.reportsPath=build \
-    -Dsonar.host.url=https://sonarqube.com \
+    -Dsonar.host.url=https://sonarcloud.io \
     -Dsonar.organization=${TRAVIS_REPO_SLUG%%/*} \
     $([ $TRAVIS_PULL_REQUEST != false ] && echo \
       "-Dsonar.analysis.mode=preview \

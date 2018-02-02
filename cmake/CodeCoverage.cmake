@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/CodeCoverage.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
 #
 ################################################################################
@@ -78,7 +78,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/Random123/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -183,7 +183,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Combine trace files
     COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --gcov-tool ${GCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' '*/c++/*' '*/include/*' '*/boost/*' '*/charm/*' '*.decl.h' '*.def.h' '*/STDIN' '*/openmpi/*' '*/pstreams/*' '*/Random123/*' '*/pegtl/*' '*/tut/*' '*/moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css

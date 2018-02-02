@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConvDriver.h
-  \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File converter driver
   \details   File converter driver.

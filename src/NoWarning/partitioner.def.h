@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/partitioner.def.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Include partitioner.def.h with turning off specific compiler
              warnings
 */
@@ -29,6 +29,7 @@
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "../Inciter/partitioner.def.h"

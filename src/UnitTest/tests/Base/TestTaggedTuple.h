@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
 */
@@ -45,7 +45,7 @@ template<> template<>
 void TaggedTuple_object::test< 1 >() {
   set_test_name( "const-ref accessors" );
 
-  // Defina a struct holding a record with const-ref accessors
+  // Define a struct holding a record with const-ref accessors
   struct A {
     A( const record& r ) : m_rec( r ) {}
     const std::string& getName() const { return m_rec.get< name >(); }

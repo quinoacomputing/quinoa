@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Main/UnitTest.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-
@@ -101,8 +101,6 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/RNG/TestRandom123.h"
 
 #include "tests/LoadBalance/TestLoadDistributor.h"
-// Disabled due to API change.
-// See https://lists.cs.illinois.edu/lists/arc/charm/2017-01/msg00018.html.
 #include "tests/LoadBalance/TestLinearMap.h"
 #include "tests/LoadBalance/TestUnsMeshMap.h"
 
@@ -110,6 +108,8 @@ const int MAX_TESTS_IN_GROUP = 80;
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
+
+#include "tests/Inciter/TestScheme.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

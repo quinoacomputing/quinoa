@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/Transporter.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
@@ -29,32 +29,17 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Diagnostics.h"
 #include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"
 #include "NoWarning/partitioner.decl.h"
 
-// Force the compiler to not instantiate the template below as it is
-// instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Carrier,
-                                        inciter::AuxSolverLumpMassDiff >;
-
-// Force the compiler to not instantiate the template below as it is
-// instantiated in Inciterer/Partitioner.C (only required with gcc 4.8.5)
-extern template class
-  inciter::Partitioner<
-    inciter::CProxy_Transporter,
-    inciter::CProxy_Carrier,
-    tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
-                             inciter::CProxy_Carrier,
-                             inciter::AuxSolverLumpMassDiff >,
-    tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
-
 extern CProxy_Main mainProxy;
 
 namespace inciter {
 
+extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< PDE > g_pdes;
 
@@ -63,16 +48,11 @@ extern std::vector< PDE > g_pdes;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
-  m_it( 0 ),
-  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
-  m_stage( 0 ),
-  m_linsysmerger(),
-  m_carrier(),
-  m_particlewriter(),
+  m_solver(),
+  m_bc(),
+  m_scheme( g_inputdeck.get< tag::selected, tag::scheme >() ),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_V( 0.0 ),
@@ -82,7 +62,6 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0 }} ),
   m_timer(),
   m_linsysbc(),
-  m_diag(),
   m_progPart( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "p", "d" }}, {{ CkNumPes(), CkNumPes() }} ),
   m_progGraph( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -92,8 +71,6 @@ Transporter::Transporter() :
                  {{ CkNumPes(), CkNumPes(), CkNumPes(), CkNumPes() }} ),
   m_progSetup( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
                {{ "r", "m", "b" }} ),
-  m_progInit( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "i", "f", "l" }} ),
   m_progStep( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               {{ "r", "s", "l", "p" }} )
 // *****************************************************************************
@@ -124,13 +101,23 @@ Transporter::Transporter() :
   // Print out info on settings of selected partial differential equations
   m_print.pdes( "Partial differential equations integrated", stack.info() );
 
-  // Print discretization parameters
-  m_print.section( "Discretization parameters" );
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
   const auto cfl = g_inputdeck.get< tag::discr, tag::cfl >();
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
+  m_print.Item< ctr::Scheme, tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG) {
+    auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+    m_print.item( "Flux-corrected transport (FCT)", fct );
+    if (fct)
+      m_print.item( "FCT mass diffusion coeff",
+                    g_inputdeck.get< tag::discr, tag::ctau >() );
+  }
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
@@ -141,9 +128,6 @@ Transporter::Transporter() :
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
-
-  m_print.item( "Mass diffusion coeff",
-                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
@@ -156,7 +140,6 @@ Transporter::Transporter() :
     // Enable SDAG waits
     wait4part();
     wait4stat();
-    wait4eval();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -175,58 +158,104 @@ Transporter::Transporter() :
     // Configure and write diagnostics file header
     diagHeader();
 
-    // Create (empty) worker array
-    m_carrier = CarrierProxy::ckNew();
+    // Create linear system solver group
+    createSolver();
 
-    // Create ExodusII reader for reading side sets from file. When creating
-    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
-    // a serial read, then send the same copy to all PEs. Carriers then will
-    // query the side sets from their local LinSysMerger branch.
-    tk::ExodusIIMeshReader
-      er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-    // Read in side sets from file
-    m_print.diagstart( "Reading side sets ..." );
-    auto ss = er.readSidesets();
-    m_print.diagend( "done" );
-
-    // Verify that side sets to which boundary conditions are assigned by user
-    // exist in mesh file
-    std::unordered_set< int > conf;
-    for (const auto& eq : g_pdes) eq.side( conf );
-    for (auto i : conf)
-      if (ss.find(i) == end(ss)) {
-        m_print.diag( "WARNING: Boundary conditions specified on side set " +
-          std::to_string(i) + " which does not exist in mesh file" );
-        break;
-      }
-
-    // Create linear system merger chare group
-    m_print.diag( "Creating linear system mergers" );
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier, ss,
-                       g_inputdeck.get< tag::component >().nprop(),
-                       g_inputdeck.get< tag::cmd, tag::feedback >() );
-
-    // Create particle writer Charm++ chare group. Note that by passing an empty
-    // filename argument to the constructor, we tell the writer not to open a
-    // file and not to perform I/O. To enable particle I/O, put in the filename
-    // argument, commented out, instead of the empty string, and change the
-    // number of particles (the constructor argument to m_particles) in the
-    // initializer list of Carrier::Carrier(). This is basically a punt to
-    // enable skipping H5Part I/O. Particles are a highly experimental feature
-    // at this point.
-    m_print.diag( "Creating particle writers" );
-    m_particlewriter = ParticleWriterProxy::ckNew( thisProxy, "" );
-                         //g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
-
-    // Create mesh partitioner Charm++ chare group and start partitioning mesh
-    m_progGraph.start( "Creating partitioners and reading mesh graph ..." );
-    m_timer[ TimerTag::MESHREAD ];
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
-                                             m_linsysmerger,
-                                             m_particlewriter );
+    // Create mesh partitioner AND boundary condition object group
+    createPartitioner();
 
   } else finish();      // stop if no time stepping requested
+}
+
+void
+Transporter::createSolver()
+// *****************************************************************************
+// Create linear solver
+// *****************************************************************************
+{
+  // Create linear system solver callbacks
+  std::vector< CkCallback > cbs {{
+      CkCallback( CkReductionTarget(Transporter,comfinal), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+    , CkCallback( CkIndex_Transporter::diagnostics(nullptr), thisProxy )
+  }};
+
+  // Create linear system solver Charm++ chare group
+  m_solver = tk::CProxy_Solver::
+               ckNew( tk::CProxy_SolverShadow::ckNew(),
+                      cbs,
+                      g_inputdeck.get< tag::component >().nprop(),
+                      g_inputdeck.get< tag::cmd, tag::feedback >() );
+}
+
+void
+Transporter::createPartitioner()
+// *****************************************************************************
+// Create mesh partitioner AND boundary conditions group
+// *****************************************************************************
+{
+  // Create mesh partitioner Charm++ chare group and start partitioning mesh
+  m_progGraph.start( "Creating partitioners and reading mesh graph" );
+
+  // Start timing mesh read
+  m_timer[ TimerTag::MESHREAD ];
+
+  // Create ExodusII reader for reading side sets from file.
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+
+  // Read in side sets associated to mesh node IDs from file
+  m_print.diag( "Reading side sets" );
+  auto sidenodes = er.readSidesets();
+
+  // Read side sets for boundary faces
+  m_print.diag( "Reading side set faces" );
+  std::map< int, std::vector< std::size_t > > bface;
+  auto nbfac = er.readSidesetFaces( bface );
+
+  std::vector< std::size_t > triinpoel;
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+
+  if (nbfac<1 && scheme == ctr::SchemeType::DG)
+  {
+    Throw( "Boundary faces not specified using side-sets in ExodusII input file" );
+  }
+  else if (nbfac>0)
+  {
+    // Read triangle boundary-face connectivity 
+    er.readFaces( nbfac, triinpoel );
+  }
+
+  // Verify that side sets to which boundary conditions are assigned by user
+  // exist in mesh file
+  std::unordered_set< int > conf;
+  for (const auto& eq : g_pdes) eq.side( conf );
+  for (auto i : conf)
+  {
+    if (sidenodes.find(i) == end(sidenodes)) {
+      m_print.diag( "WARNING: Boundary conditions specified on side set " +
+        std::to_string(i) + " which does not exist in mesh file" );
+      break;
+    }
+  }
+
+  // Create boundary conditions Charm++ chare group
+  m_bc = inciter::CProxy_BoundaryConditions::ckNew( sidenodes );
+
+  // Create partitioner callbacks
+  std::vector< CkCallback > cbp {{
+      CkCallback( CkReductionTarget(Transporter,part), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,flattened), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,aveCost), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,stdCost), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,coord), thisProxy )
+  }};
+
+  // Create mesh partitioner Charm++ chare group
+  m_partitioner =
+    CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
+                               nbfac, bface, triinpoel );
 }
 
 void
@@ -288,6 +317,11 @@ Transporter::load( uint64_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
+  // Send total number of chares to all linear solver PEs, if they exist
+  const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (scheme == ctr::SchemeType::MatCG || scheme == ctr::SchemeType::DiagCG)
+    m_solver.nchare( m_nchare );
+
   // signal to runtime system that m_nchare is set
   load_complete();
 
@@ -300,7 +334,7 @@ Transporter::load( uint64_t nelem )
 
   // Print out info on load distribution
   const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == tk::ctr::InitialAMRType::UNIFORM)
+  if (ir == ctr::InitialAMRType::UNIFORM)
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -321,9 +355,9 @@ Transporter::load( uint64_t nelem )
                 tag::selected, tag::partitioner >();
 
   // Print out mesh refinement configuration and new mesh statistics
-  if (ir == tk::ctr::InitialAMRType::UNIFORM) {
+  if (ir == ctr::InitialAMRType::UNIFORM) {
     m_print.section( "Mesh refinement" );
-    m_print.Item< tk::ctr::InitialAMR, tag::selected, tag::initialamr >();
+    m_print.Item< ctr::InitialAMR, tag::selected, tag::initialamr >();
     m_print.item( "Final number of tetrahedra",
       std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
   }
@@ -341,7 +375,7 @@ Transporter::part()
 {
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESHREAD );
   m_print.diag( "Mesh read time: " + std::to_string(timer.dsec()) + " sec" );
-  m_progPart.start( "Partitioning and distributing mesh ..." );
+  m_progPart.start( "Partitioning and distributing mesh" );
   // signal to runtime system that all workers are ready for mesh partitioning
   part_complete();
 }
@@ -355,15 +389,25 @@ Transporter::distributed()
 // *****************************************************************************
 {
   m_progPart.end();
-  m_progReorder.start( "Reordering mesh ..." );
+  m_progReorder.start( "Reordering mesh" );
   m_partitioner.flatten();
+}
+
+void
+Transporter::flattened()
+// *****************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// flattening its global mesh node IDs and they are ready for computing the
+// communication maps required for node ID reordering
+// *****************************************************************************
+{
+  m_partitioner.gather();
 }
 
 void
 Transporter::aveCost( tk::real c )
 // *****************************************************************************
-// Reduction target estimating the average communication cost of merging the
-// linear system
+// Reduction target estimating the average communication among all PEs
 //! \param[in] c Communication cost summed across all PEs. The cost associated
 //!   to a PE is a real number between 0 and 1, defined as the number of mesh
 //!   points the PE does not own, i.e., needs to send to some other PE, divided
@@ -374,7 +418,6 @@ Transporter::aveCost( tk::real c )
 // *****************************************************************************
 {
   m_progReorder.end();
-  m_print.diag( "Creating workers" );
   // Compute average and broadcast it back to all partitioners (PEs)
   m_avcost = c / CkNumPes();
   m_partitioner.stdCost( m_avcost );
@@ -384,7 +427,7 @@ void
 Transporter::stdCost( tk::real c )
 // *****************************************************************************
 // Reduction target estimating the standard deviation of the communication cost
-// of merging the linear system
+// acrosss all PEs
 //! \param[in] c Sum of the squares of the communication cost minus the average,
 //!   summed across all PEs. The cost associated to a PE is a real number
 //!   between 0 and 1, defined as the number of mesh points the PE does not own,
@@ -395,9 +438,8 @@ Transporter::stdCost( tk::real c )
 //!   here, gives an idea on the expected load imbalance.
 // *****************************************************************************
 {
-  m_print.diag( "Linear system communication cost: avg = " +
-                std::to_string( m_avcost ) + ", std = " +
-                std::to_string( std::sqrt( c/CkNumPes() ) ) );
+  m_print.diag( "Communication cost: avg = " + std::to_string( m_avcost ) +
+                ", std = " + std::to_string( std::sqrt( c/CkNumPes() ) ) );
 }
 
 void
@@ -407,18 +449,43 @@ Transporter::coord()
 // start reading their mesh node coordinates
 // *****************************************************************************
 {
+  // Tell the runtime system that every PE is done with dynamically inserting
+  // Discretization chare array elements
+  m_scheme.doneDiscInserting< tag::bcast >();
+
+  // Tell the runtime system that every PE is done with dynamically inserting
+  // Discretization chare array elements
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG)
+    m_scheme.doneDistFCTInserting< tag::bcast >();
+
   m_print.diag( "Reading mesh node coordinates, computing nodal volumes" );
-  m_carrier.coord();
+
+  m_scheme.coord< tag::bcast >();
 }
 
 void
-Transporter::volcomplete()
+Transporter::comfinal()
 // *****************************************************************************
-// Reduction target indicating that all Carriers have finished
+// Reduction target indicating that the communication has been established among
+// PEs
+// *****************************************************************************
+{
+  // Tell the runtime system that every PE is done with dynamically inserting
+  // Discretization worker (MatCG, DiagCG, DG, ...) chare array elements
+  m_scheme.doneInserting< tag::bcast >();
+
+  com_complete();
+}
+
+void
+Transporter::vol()
+// *****************************************************************************
+// Reduction target indicating that all workers have finished
 // computing/receiving their part of the nodal volumes
 // *****************************************************************************
 {
-  m_carrier.totalvol();
+  m_scheme.totalvol< tag::bcast >();
 }
 
 void
@@ -429,7 +496,8 @@ Transporter::totalvol( tk::real v )
 // *****************************************************************************
 {
   m_V = v;
-  m_carrier.stat();
+  m_partitioner.createWorkers();  // create "derived" workers (e.g., DG)
+  m_scheme.stat< tag::bcast >();
 }
 
 void
@@ -537,47 +605,27 @@ Transporter::stat()
                 std::to_string( m_maxstat[1] ) + " / " +
                 std::to_string( m_avgstat[1] ) );
 
-  m_progSetup.start( "Computing row IDs, querying BCs, outputting mesh",
-                     {{ CkNumPes(), m_nchare, CkNumPes() }} );
-  m_carrier.setup( m_V );
+  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
+     "Legend: it - iteration count\n"
+     "         t - time\n"
+     "        dt - time step size\n"
+     "       ETE - estimated time elapsed (h:m:s)\n"
+     "       ETA - estimated time for accomplishment (h:m:s)\n"
+     "       out - output-saved flags (F: field, D: diagnostics)\n",
+     "\n      it             t            dt        ETE        ETA   out\n"
+       " ---------------------------------------------------------------\n" );
+
+  m_scheme.setup< tag::bcast >( m_V );
 }
 
 void
-Transporter::rowcomplete()
+Transporter::start()
 // *****************************************************************************
-// Reduction target indicating that all linear system merger branches have done
-// their part of storing and exporting global row ids
-//! \details This function is a Charm++ reduction target that is called when
-//!   all linear system merger branches have done their part of storing and
-//!   exporting global row ids. This is a necessary precondition to be done
-//!   before we can issue a broadcast to all Carrier chares to continue with
-//!   the initialization step. The other, also necessary but by itself not
-//!   sufficient, one is parcomplete(). Together rowcomplete() and
-//!   parcomplete() are sufficient for continuing with the initialization. See
-//!   also transporter.ci.
+// Start time stepping
+//! \note Only called if MatCG/DiagG is used
 // *****************************************************************************
 {
-  m_progSetup.end();
-  m_progInit.start( "Setting and outputting ICs, computing initial dt, "
-                    "computing LHS ...",
-                    {{ CkNumPes(), m_nchare, m_nchare }} );
-  m_linsysmerger.rowsreceived();
-  m_carrier.init();
-}
-
-void
-Transporter::initcomplete()
-// *****************************************************************************
-//  Reduction target indicating that all Carrier chares have finished their
-//  initialization step and have already continued with start time stepping
-// *****************************************************************************
-{
-  m_progInit.end();
-  m_print.diag( "Starting time stepping ..." );
-  header();   // print out time integration header
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.start( "Time step stage ...",
-      {{ m_nchare, CkNumPes(), m_nchare, m_nchare }} );
+  m_scheme.dt< tag::bcast >();
 }
 
 void
@@ -585,7 +633,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
-//! \see For more detauls, see e.g., inciter::Carrier::diagnostics().
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -597,21 +644,20 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
-  Assert( d.size() == 3, "Diagnostics vector size mismatch" );
+  Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
      Assert( d[i].size() == ncomp,
              "Size mismatch at final stage of diagnostics aggregation" );
 
-  // Allocate storage for 'L2(var)' for all variables as those are always
-  // computed
-  m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
+  // Allocate storage for those diagnostics that are always computed
+  std::vector< tk::real > diag( ncomp, 0.0 );
 
-  // Finish computing the L2 norm of the numerical solution
-  for (std::size_t i=0; i<d[0].size(); ++i)
-    m_diag[i] = sqrt( d[0][i] / m_V );
+  // Finish computing diagnostics
+  for (std::size_t i=0; i<d[L2SOL].size(); ++i)
+    diag[i] = sqrt( d[L2SOL][i] / m_V );
   
-  // Query user-requested error types to be computed
+  // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
 
   decltype(ncomp) n = 0;
@@ -619,42 +665,24 @@ Transporter::diagnostics( CkReductionMsg* msg )
     n += ncomp;
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
-     for (std::size_t i=0; i<d[1].size(); ++i)
-       m_diag.push_back( sqrt( d[1][i] / m_V ) );
+     for (std::size_t i=0; i<d[L2ERR].size(); ++i)
+       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
-      for (std::size_t i=0; i<d[2].size(); ++i)
-        m_diag.push_back( d[2][i] );
+      for (std::size_t i=0; i<d[LINFERR].size(); ++i)
+        diag.push_back( d[LINFERR][i] );
     }
   }
 
-  diag_complete();
-}
+  // Append diagnostics file at selected times
+  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                     g_inputdeck.get< tag::flformat, tag::diag >(),
+                     g_inputdeck.get< tag::prec, tag::diag >(),
+                     std::ios_base::app );
+  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-void
-Transporter::dt( tk::real* d, std::size_t n )
-// *****************************************************************************
-// Reduction target yielding a single minimum time step size across all workers
-//! \param[in] d Minimum time step size collected over all chares
-//! \param[in] n Size of data behind d
-// *****************************************************************************
-{
-  #ifdef NDEBUG
-  IGNORE(n);
-  #endif
-
-  Assert( n == 1, "Size of min(dt) must be 1" );
-
-  if (m_stage == 1 || m_it == 0) {
-    // Use newly computed time step size
-    m_dt = *d;
-    // Truncate the size of last time step
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    if (m_t+m_dt > term) m_dt = term - m_t;;
-  }
-
-  // Advance to next time step stage
-  m_carrier.advance( m_stage, m_dt, m_it, m_t );
+  // Evaluate whther to continue with next step
+  m_scheme.eval< tag::bcast >();
 }
 
 void
@@ -663,120 +691,7 @@ Transporter::finish()
 // Normal finish of time stepping
 // *****************************************************************************
 {
-  // Print out reason for stopping
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  m_print.endsubsection();
-  if (m_it >= nstep)
-     m_print.note( "Normal finish, maximum number of iterations reached: " +
-                   std::to_string( nstep ) );
-   else
-     m_print.note( "Normal finish, maximum time reached: " +
-                   std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
-
-  // Quit
   mainProxy.finalize();
-}
-
-void
-Transporter::header()
-// *****************************************************************************
-// Print out time integration header
-// *****************************************************************************
-{
-  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
-    "Legend: it - iteration count\n"
-    "         t - time\n"
-    "        dt - time step size\n"
-    "       ETE - estimated time elapsed (h:m:s)\n"
-    "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (F: field, D: diagnostics)\n",
-    "\n      it             t            dt        ETE        ETA   out\n"
-      " ---------------------------------------------------------------\n" );
-  m_timer[ TimerTag::TIMESTEP ];
-}
-
-void
-Transporter::evaluateTime()
-// *****************************************************************************
-// Evaluate time step and output one-liner report
-// *****************************************************************************
-{
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-    m_progStep.end();
-
-  if (m_stage < 1) {    // if at half-stage, simply go to next one
-
-    ++m_stage;
-
-  } else {      // if final stage of time step, finish time step just taken
-
-    m_stage = 0;
-    // Increase number of iterations taken
-    ++m_it;
-    // Advance physical time to include time step just finished
-    m_t += m_dt;
-
-    bool diag = false;
-
-    // Append diagnostics file at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-      tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                         g_inputdeck.get< tag::flformat, tag::diag >(),
-                         g_inputdeck.get< tag::prec, tag::diag >(),
-                         std::ios_base::app );
-      if (dw.diag( m_it, m_t, m_diag )) diag = true;
-      m_diag.resize( g_inputdeck.get< tag::component >().nprop(), 0.0 );
-    }
-
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
-
-      // estimate time elapsed and time for accomplishment
-      tk::Timer::Watch ete, eta;
-      const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-      timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                   g_inputdeck.get< tag::discr, tag::t0 >(),
-                 m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-                 g_inputdeck.get< tag::discr, tag::nstep >(),
-                 m_it,
-                 ete,
-                 eta );
-
-      // Output one-liner
-      m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-              << std::scientific << std::setprecision(6)
-              << std::setw(12) << m_t << "  "
-              << m_dt << "  "
-              << std::setfill('0')
-              << std::setw(3) << ete.hrs.count() << ":"
-              << std::setw(2) << ete.min.count() << ":"
-              << std::setw(2) << ete.sec.count() << "  "
-              << std::setw(3) << eta.hrs.count() << ":"
-              << std::setw(2) << eta.min.count() << ":"
-              << std::setw(2) << eta.sec.count() << "  ";
-
-      // Augment one-liner with output indicators
-      if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-      if (diag) m_print << 'D';
-
-      m_print << std::endl;
-    }
-  }
-
-  wait4eval();
-
-  // if neither max iterations nor max time reached, will continue (by telling
-  // all linear system merger group elements to prepare for a new rhs),
-  // otherwise finish
-  if (std::fabs(m_t-term) > eps && m_it < nstep) {
-    m_linsysmerger.enable_wait4rhs();
-    if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-      m_progStep.start( "Time step stage ..." );
-  } else
-    finish();
 }
 
 #include "NoWarning/transporter.def.h"

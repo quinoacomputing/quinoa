@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/DiagReducer.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
 */
@@ -10,6 +10,7 @@
 #include "DiagReducer.h"
 #include "Make_unique.h"
 #include "ContainerUtil.h"
+#include "Diagnostics.h"
 
 namespace tk {
 
@@ -64,10 +65,12 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     // Aaggregate diagnostics vector
     Assert( v.size() == w.size(),
             "Size mismatch during diagnostics aggregation" );
+    Assert( v.size() == inciter::NUMDIAG,
+            "Size mismatch during diagnostics aggregation" );
     for (std::size_t i=0; i<v.size(); ++i)
       Assert( v[i].size() == w[i].size(),
               "Size mismatch during diagnostics aggregation" );
-    // Apply diagnostics aggregation policy, see also LinSysMerger::updateDiag()
+    // Apply diagnostics aggregation policy, see also Solver::updateDiag()
     // Sum for L2 normal of the numerical solution for all scalar components
     for (std::size_t i=0; i<v[0].size(); ++i) v[0][i] += w[0][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps
@@ -75,6 +78,10 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     // Max for the Linf norm of the numerical - analytical solution for all comp
     for (std::size_t i=0; i<v[2].size(); ++i)
       if (w[2][i] > v[2][i]) v[2][i] = w[2][i];
+    // Copy the rest
+    for (std::size_t j=3; j<v.size(); ++j)
+      for (std::size_t i=0; i<v[j].size(); ++i)
+        v[j][i] = w[j][i];
   }
 
   // Serialize concatenated diagnostics vector to raw stream

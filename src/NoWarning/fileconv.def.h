@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/fileconv.def.h
-  \author    A. Pakki 
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include fileconv.def.h with turning off specific compiler
              warnings

@@ -2,7 +2,7 @@
 # vim: filetype=dockerfile:
 #
 # \file      docker/Dockerfile.quinoa-build-alpine
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
 #
 ################################################################################
@@ -16,24 +16,24 @@
 # absolutely no dependencies. This container is cleaned at the end, it only
 # contains the absolute minimal setup required to run the executables in order
 # to reduce the container size. This container is intended for distributing
-# containerized releases.
+# containerized releases (and to test the static build).
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
 #
 # All prerequisites for building the container are downloaded from the internet.
 
-FROM alpine:edge
+FROM alpine:latest
 
 ARG COMMIT
 
 # Install system-wide prerequisites
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
+#RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
 RUN apk update && apk add libtool autoconf automake bash m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev
 
 # Install OpenMPI
-ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
-RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.7.tar.bz2 /install/
+RUN cd /install/ && tar xjf openmpi-1.10.7.tar.bz2 && cd openmpi-1.10.7 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 ENV MANPATH /opt/openmpi/share/man:$MANPATH
@@ -46,9 +46,7 @@ RUN rm -rf /install
 RUN ln -s /usr/bin/cpp /lib/cpp
 
 # Setup user
-RUN addgroup quinoa
-RUN adduser -S quinoa quinoa
-RUN chown -R quinoa:quinoa /home/quinoa
+RUN addgroup quinoa && adduser -S quinoa quinoa && chown -R quinoa:quinoa /home/quinoa
 USER quinoa
 WORKDIR /home/quinoa
 CMD ["/bin/sh"]
@@ -59,7 +57,7 @@ RUN git clone --recursive https://github.com/quinoacomputing/quinoa.git
 RUN cd quinoa && git checkout $COMMIT
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
-# Build
+# Build quinoa
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$(grep -c processor /proc/cpuinfo) && ../script/run_tests.sh
 
 # Ensure all executables are statically linked
