@@ -92,9 +92,6 @@ GmshMeshReader::readMeshFormat()
   if ( isBinary() ) {
     int one;
     m_inFile.read( reinterpret_cast<char*>(&one), sizeof(int) );
-    #ifdef __bg__
-    one = tk::swap_endian< int >( one );
-    #endif
     ErrChk( one == 1, "Endianness does not match in file " + m_filename );
     getline( m_inFile, s );  // finish reading the line
   }
@@ -129,15 +126,7 @@ GmshMeshReader::readNodes( UnsMesh& mesh )
       m_inFile >> id >> coord[0] >> coord[1] >> coord[2];
     } else {
       m_inFile.read( reinterpret_cast<char*>(&id), sizeof(int) );
-      #ifdef __bg__
-      id = tk::swap_endian< int >( id );
-      #endif
       m_inFile.read( reinterpret_cast<char*>(coord.data()), 3*sizeof(double) );
-      #ifdef __bg__
-      coord[0] = tk::swap_endian< double >( coord[0] );
-      coord[1] = tk::swap_endian< double >( coord[1] );
-      coord[2] = tk::swap_endian< double >( coord[2] );
-      #endif
     }
 
     mesh.x().push_back( coord[0] );
@@ -183,11 +172,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
       m_inFile.read( reinterpret_cast<char*>(&elmtype), sizeof(int) );
       m_inFile.read( reinterpret_cast<char*>(&n), sizeof(int) );
       m_inFile.read( reinterpret_cast<char*>(&ntags), sizeof(int) );
-      #ifdef __bg__
-      elmtype = tk::swap_endian< int >( elmtype );
-      n = tk::swap_endian< int >( n );
-      ntags = tk::swap_endian< int >( ntags );
-      #endif
     }
 
     // Find element type, throw exception if not supported
@@ -200,9 +184,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
       // Read element id if binary
       if (isBinary()) {
         m_inFile.read( reinterpret_cast<char*>(&id), sizeof(int) );
-        #ifdef __bg__
-        id = tk::swap_endian< int >( id );
-        #endif
       }
 
       // Read and ignore element tags
@@ -215,9 +196,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
           reinterpret_cast<char*>(tags.data()),
           static_cast<std::streamsize>(
             static_cast<std::size_t>(ntags) * sizeof(int) ) );
-        #ifdef __bg__
-        for (auto& t : tags) t = tk::swap_endian< int >( t );
-        #endif
       }
 
       // Read and add element node list (i.e. connectivity)
@@ -231,9 +209,6 @@ GmshMeshReader::readElements( UnsMesh& mesh )
         m_inFile.read(
           reinterpret_cast< char* >( nds.data() ),
           static_cast< std::streamsize >( nnode * sizeof(int) ) );
-        #ifdef __bg__
-        for (auto& j : nds) j = tk::swap_endian< int >( j );
-        #endif
         for (std::size_t j=0; j<nnode; j++)
           nodes[j] = static_cast< std::size_t >( nds[j] );
       }
