@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      cmake/TPLs.cmake
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
 #
 ################################################################################
@@ -54,7 +54,7 @@ find_package(PStreams REQUIRED)
 
 #### Hypre
 set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
-find_package(Hypre REQUIRED)
+find_package(Hypre 2.9.0 REQUIRED)
 
 #### PugiXML
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours

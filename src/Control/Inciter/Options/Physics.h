@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Physics.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Physics options for inciter
   \details   Physics options for inciter
 */
@@ -35,7 +35,6 @@ class Physics : public tk::Toggle< PhysicsType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::advection
                                        , kw::advdiff
-                                       , kw::laplace
                                        , kw::compflow_navierstokes
                                        , kw::compflow_euler
                                        >;

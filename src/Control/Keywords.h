@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Keywords.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
     of command-line argument parsers as well as input, i.e., control, file
@@ -2890,23 +2890,6 @@ struct shear_diff_info {
 };
 using shear_diff = keyword< shear_diff_info, TAOCPP_PEGTL_STRING("shear_diff") >;
 
-struct dir_neu_info {
-  using code = Code< D >;
-  static std::string name() { return "Dirichlet & Neumann"; }
-  static std::string shortDescription() { return
-    "Select the Poisson equation test problem with Dirichlet and Neumann BCs"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select a Poisson equation test problem.
-    Dirichlet and Neumann boundary conditions are simply hard-coded to set up
-    the test problem, suitable to exercise and test the finite element
-    discretization of the Laplace operator yielding both volume and boundary
-    integral terms in its weak form. Example: "problem dir_neu".)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using dir_neu = keyword< dir_neu_info, TAOCPP_PEGTL_STRING("dir_neu") >;
-
 struct slot_cyl_info {
   using code = Code< Z >;
   static std::string name() { return "Zalesak's slotted cylinder"; }
@@ -3021,7 +3004,6 @@ struct problem_info {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + "\' | \'"
-                  + dir_neu::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
@@ -3062,27 +3044,6 @@ struct compflow_euler_info {
 };
 using compflow_euler = keyword< compflow_euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
-struct artvisc_info {
-  static std::string name() { return "artificial viscosity"; }
-  static std::string shortDescription() { return
-    R"(Configure artificial viscosity)"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify amount of artifical viscosity to
-    stabilize time integration of the the Euler equations. The same scalar value
-    is applied to all equations of the system. Note that while this keyword is
-    supposed to be (and recognized) in a 'compflow ... end' block, it is only
-    used for the Euler equations.)"; }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-    static std::string choices() {
-      return "real larger than or equal to " + std::to_string(lower);
-    }
-  };
-};
-using artvisc = keyword< artvisc_info, TAOCPP_PEGTL_STRING("artvisc") >;
-
 struct advection_info {
   using code = Code< A >;
   static std::string name() { return "Advection"; }
@@ -3113,21 +3074,6 @@ struct advdiff_info {
 };
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
-struct laplace_info {
-  using code = Code< L >;
-  static std::string name() { return "Laplace"; }
-  static std::string shortDescription() { return
-    "Specify the Laplace physics configuration for a PDE "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Laplace physics configuration for a
-    PDE. Example: "poisson physics laplace end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
-
 struct physics_info {
   using code = Code< h >;
   static std::string name() { return "physics configuration"; }
@@ -3143,7 +3089,7 @@ struct physics_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + advection::string() + "\' | \'"
-                  + laplace::string() + "\' | \'"
+                  + advdiff::string() + "\' | \'"
                   + compflow_navierstokes::string() + "\' | \'"
                   + compflow_euler::string() + '\'';
     }
@@ -3426,22 +3372,6 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
-struct poisson_info {
-  static std::string name() { return "Poisson"; }
-  static std::string shortDescription() { return
-    "Start configuration block for a Poisson equation"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce an poisson ... end block, used to
-    specify the configuration for a partial differential equation of
-    Poisson type. Keywords allowed in an poisson ... end block: )"
-    + std::string("\'")
-    + problem::string() + "\'. "
-    + R"(For an example poisson ... end block, see
-      doc/html/inicter_example_poisson.html.)";
-  }
-};
-using poisson = keyword< poisson_info, TAOCPP_PEGTL_STRING("poisson") >;
-
 struct sideset_info {
   static std::string name() { return "sideset"; }
   static std::string shortDescription() { return
@@ -3469,7 +3399,7 @@ struct bc_dirichlet_info {
     block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
-      doc/html/inicter_example_poisson.html.)";
+      doc/html/inicter_example_shear.html.)";
   }
 };
 using bc_dirichlet = keyword< bc_dirichlet_info, TAOCPP_PEGTL_STRING("bc_dirichlet") >;
@@ -3687,7 +3617,7 @@ struct partitioning_info {
     R"(This keyword is used to introduce a partitioning ... end block, used to
     specify the configuration for mesh partitioning. Keywords allowed
     in a partitioning ... end block: )" + std::string("\'")
-    + rcb::string() + "\'.";
+    + algorithm::string() + "\'.";
   }
 };
 using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
@@ -3731,7 +3661,103 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
+struct matcg_info {
+  static std::string name()
+  { return "consistent-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a matrix solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the consistent-mass continuous Galerkin
+    (CG) finite element spatial discretiztaion used in inciter. CG is combined
+    with a Lax-Wendroff scheme for time discretization and flux-corrected
+    transport (FCT) for treating discontinuous solutions. This option selects
+    the scheme that stores the left-hand side matrix as a compressed sparse row
+    (CSR) storage consistent-mass matrix and uses a linear solver. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using matcg = keyword< matcg_info, TAOCPP_PEGTL_STRING("matcg") >;
 
+struct diagcg_info {
+  static std::string name()
+  { return "lumped-mass continuous Galerkin + Lax-Wendroff"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "discretization + Lax Wendroff with a lumped mass matrix as the left hand "
+    "side matrix"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the lumped-mass continuous Galerkin (CG)
+    finite element spatial discretiztaion used in inciter. CG is combined with a
+    Lax-Wendroff scheme for time discretization and flux-corrected transport
+    (FCT) for treating discontinuous solutions. This option selects the scheme
+    that stores the left-hand side matrix lumped, i.e., only the diagonal
+    elements stored and thus does not require a linear solver. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
+
+struct dg_info {
+  static std::string name() { return "discontinuous Galerkin + Runge-Kutta"; }
+  static std::string shortDescription() { return
+    "Select discontinuous Galerkin discretization"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the discontinuous Galerkin (DG) spatial
+    discretiztaion used in inciter. Selecting DG also selects the Runge-Kutta
+    scheme for time discretization. See
+    Control/Inciter/Options/Scheme.h for other valid options.)"; }
+};
+using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
+
+struct scheme_info {
+  static std::string name() { return "scheme"; }
+  static std::string shortDescription() { return
+    "Select discretization scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a spatial discretization scheme,
+    necessarily connected to the teporal discretization scheme. See
+    Control/Inciter/Options/Scheme.h for valid options.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + matcg::string() + "\' | \'"
+                  + diagcg::string() + "\' | \'"
+                  + dg::string() + '\'';
+    }
+  };
+};
+using scheme = keyword< scheme_info, TAOCPP_PEGTL_STRING("scheme") >;
+
+struct fct_info {
+  static std::string name() { return "Flux-corrected transport"; }
+  static std::string shortDescription() { return
+    "Turn flux-corrected transport on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
+    Note that FCT is only used in conjunction with continuous Galerkin finite
+    element discretization, configured by schemes matcg or diagcg and it has no
+    effect when the discontinuous Galerkin (DG) scheme is used, configured by
+    'scheme dg'. Also note that even if FCT is turned off, it is still
+    performed, only its result is not applied.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
+
+struct discretization_info {
+  static std::string name() { return "discretization"; }
+  static std::string shortDescription() { return
+    "Start configuration block for discretization scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a discretization ... end block, used to
+    configure the spatial discretization. Keywords allowed in a discretization
+    ... end block: )" + std::string("\'")
+    + fct::string() + "\' | \'"
+    + scheme::string() + "\'.";
+  }
+};
+using discretization =
+  keyword< discretization_info, TAOCPP_PEGTL_STRING("discretization") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

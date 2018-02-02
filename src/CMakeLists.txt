@@ -1,7 +1,7 @@
 ################################################################################
 #
 # \file      src/CMakeLists.txt
-# \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Build quinoa
 #
 ################################################################################
@@ -101,6 +101,11 @@ if(${MPI_CXX_FOUND})
   add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
 endif(${MPI_CXX_FOUND})
 
+# See documentation for tk::grm::use in src/ControlCommonGrammar.h for details
+# on why these macros are necessary for our use of BOOST::MPL.
+add_definitions(-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS)
+add_definitions(-D BOOST_MPL_LIMIT_METAFUNCTION_ARITY=20)
+
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -136,7 +141,6 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 # Set the requirement for the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Get git revision
@@ -176,6 +180,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-unused-command-line-argument")
+  add_compiler_flag("-Wno-disabled-macro-expansion")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -224,7 +230,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wshadow")
   add_compiler_flag("-Wstack-protector")
   add_compiler_flag("-Wstrict-aliasing=2")
-  add_compiler_flag("-Wswitch-default")
   add_compiler_flag("-Wunreachable-code")
   add_compiler_flag("-Wunused")
   add_compiler_flag("-Wunused-parameter")
@@ -233,6 +238,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-sign-compare")
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-Wno-stack-protector")
+  add_compiler_flag("-Wno-expansion-to-defined")
+  add_compiler_flag("-Wno-int-in-bool-context")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
@@ -250,7 +257,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for intel)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
@@ -303,9 +310,20 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
+  # Display all error messages (inform, warn, severe and fatal)
+  add_compiler_flag("-Minform=inform")
+  add_compiler_flag("-a")
+  add_compiler_flag("--pedantic")
+  add_compiler_flag("--display_error_number")
+
+  # ignore warning on parameter was set but never used
+  add_compiler_flag("--diag_suppress550")
+  # ignore warning on variable was declared but never referenced
+  add_compiler_flag("--diag_suppress177")
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
 
-  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for cray)
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for cray)
   add_compiler_flag("-hstd=c++11")
 
   # Compiler flags for cray
@@ -319,6 +337,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 21: type qualifiers are meaningless in this declaration
   # 47: macro has an incompatible redefinition
   # 68: integer conversion resulted in a change of sign
+  # 82: storage class specifier is not the first specifier in the declaration
   # 111: indicated statement is not reachable
   # 186: unsigned integer is being compared to zero
   # 193: zero is used for the indicated undefined preprocessing identifier
@@ -327,6 +346,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 181: argument is incompatible with the corresponding format string conversion
   # 261: access control is not specified ("private" by default)
   # 237: indicated selector expression is constant
+  # 284: a "NULL" reference is not allowed
   # 301: indicated "typedef" name has already been declared (with same type)
   # 324: duplicate friend declaration
   # 368: class template defines no constructor to initialize ...
@@ -348,7 +368,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 10153: the initialization of class "Chare" will be done before that of member
   # 11749: declaration hides member
   # 11548: comparison between signed and unsigned operands
-  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212")
+  add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
 
 endif()
@@ -460,8 +480,6 @@ set(CMAKE_SKIP_BUILD_RPATH false)
 # (use later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
 # Add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
@@ -470,11 +488,11 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 if("${isSystemDir}" STREQUAL "-1")
-   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
+find_package(Doxygen 1.8.12)
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
@@ -501,7 +519,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${RNGTEST_SRC_DIR}
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Particles
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${MPI_CXX_INCLUDE_PATH}
                     ${MKL_INCLUDE_DIRS}
@@ -550,7 +567,6 @@ if (HAS_TESTU01)
   add_subdirectory(RNGTest)
 endif()
 add_subdirectory(Statistics)
-add_subdirectory(Particles)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.

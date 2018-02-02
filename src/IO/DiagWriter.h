@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/IO/DiagWriter.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
      facilitates outputing diagnostics to text files.
@@ -40,6 +40,7 @@ class DiagWriter : public tk::Writer {
     //! Write diagnostics file
     std::size_t diag( uint64_t it,
                       tk::real t,
+                      tk::real dt,
                       const std::vector< tk::real >& diagnostics );
 
   private:

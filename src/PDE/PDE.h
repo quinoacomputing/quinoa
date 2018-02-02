@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDE.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
     The class uses runtime polymorphism without client-side inheritance:
@@ -94,8 +94,9 @@ class PDE {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
+              tk::Fields& Ue,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, R ); }
+    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -119,9 +120,9 @@ class PDE {
     std::unordered_map< std::size_t,  std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& s,
+           const std::pair< const int, std::vector< std::size_t > >& sides,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return self->dirbc( t, deltat, s, coord ); }
+    { return self->dirbc( t, deltat, sides, coord ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -170,6 +171,7 @@ class PDE {
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const tk::Fields&,
+                        tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
@@ -217,8 +219,9 @@ class PDE {
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const tk::Fields& U,
+                tk::Fields& Ue,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, R ); }
+      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
@@ -233,9 +236,9 @@ class PDE {
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
              tk::real deltat,
-             const std::pair< const int, std::vector< std::size_t > >& s,
+             const std::pair< const int, std::vector< std::size_t > >& sides,
              const std::array< std::vector< tk::real >, 3 >& coord ) const
-        override { return data.dirbc( t, deltat, s, coord ); }
+        override { return data.dirbc( t, deltat, sides, coord ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override

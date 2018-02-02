@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/NoWarning/replace.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Include boost/algorithm/string/replace.hpp with turning off
              specific compiler warnings
 */
@@ -15,7 +15,6 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wold-style-cast"
-  #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
   #pragma clang diagnostic ignored "-Wdocumentation"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Inciter/FluxCorrector.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. Each
     FluxCorrector object performs the limiting procedure, according to a
@@ -44,7 +44,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   across all PEs, not just the ones need to be set on this PE.
 //! \param[in] gid Local to global node ID mapping
 //! \param[in] dUh Increment of the high order solution
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \param[in,out] P The sums of positive (negative) AECs to nodes
 //! \details The antidiffusive element contributions (AEC) are defined as the
 //!   difference between the high and low order solution, where the high order
@@ -57,13 +57,12 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 //!    * M_Le is the element's lumped mass matrix,
 //!    * ctau is the mass diffusion coefficient on the rhs of the low order
 //!      solution, see also FluxCorrector::diff(),
-//!    * Un is the solution at the previous time step stage,
+//!    * Un is the solution at the previous time step
 //!    * dUh is the increment of the high order solution, and
 //!    * M_L^{-1} is the inverse of the assembled lumped mass matrix, i.e., the
 //!      volume associated to a mesh node by summing the quarter of the element
 //!      volumes surrounding the node. Note that this is the correct node volume
-//!      taking into account that some nodes are on chare boundaries. See also
-//!      Carrier::vol().
+//!      taking into account that some nodes are on chare boundaries.
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
 //!   element flux-corrected transport (FEM–FCT) for the Euler and Navier–Stokes
 //!   equations. Int. J. Numer. Meth. Fluids, 7: 1093–1109.
@@ -72,6 +71,7 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,
@@ -111,8 +111,9 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
     std::vector< std::array< tk::real, 4 > > un( ncomp );
     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
     // access high-order solution increment at element nodes
-    std::vector< std::array< tk::real, 4 > > duh( ncomp );
-    for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
+    std::vector< std::array< tk::real, 4 > > duh( ncomp, {{0,0,0,0}} );
+    if (sch == ctr::SchemeType::MatCG)  // duh = 0 for lumped-mass CG
+      for (ncomp_t c=0; c<ncomp; ++c) duh[c] = dUh.extract( c, 0, N );
 
     // Compute antidiffusive element contributions (AEC). The high order system
     // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the
@@ -186,8 +187,8 @@ FluxCorrector::verify( std::size_t nchare,
 //!   point. Verification in parallel would incure communication of the
 //!   unlimited AEC, which in general is not necessary, so we will not do that
 //!   for the sake of verification.
-//! \note This function is optimized away in RELEASE mode, see carrier.ci and
-//!   Carrier::verify().
+//! \note Client code should ensure that this function is optimized away in
+//!   RELEASE mode.
 // *****************************************************************************
 {
   Assert( dUl.nunk() == dUh.nunk() && dUl.nprop() == dUh.nprop(),
@@ -283,7 +284,7 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //  Compute mass diffusion contribution to the RHS of the low order system
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
@@ -341,7 +342,7 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 //  Compute the maximum and minimum unknowns of elements surrounding nodes
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] Un Solution at the previous time step stage
+//! \param[in] Un Solution at the previous time step
 //! \param[in] Ul Low order solution
 //! \param[in,out] Q Maximum and mimimum unknowns of elements surrounding nodes
 // *****************************************************************************

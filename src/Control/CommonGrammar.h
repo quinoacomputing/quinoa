@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
     Template Library (PEGTL) to create the grammar and the associated parser.
@@ -11,12 +11,6 @@
 #define CommonGrammar_h
 
 #include <sstream>
-
-// See documentation for tk::grm::use below for why these macros are here
-#undef BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-#undef BOOST_MPL_LIMIT_METAFUNCTION_ARITY
-#define BOOST_MPL_LIMIT_METAFUNCTION_ARITY 10
 
 #include <boost/mpl/or.hpp>
 #include "NoWarning/for_each.h"
@@ -1575,7 +1569,7 @@ namespace grm {
   //!   boost::mpl::or_ allows a maximum 5 template arguments by definition,
   //!   i.e., max 5 OR'd pools, which corresponds to a maximum of 5x20=100
   //!   keywords. If you need more than that, increase
-  //!   BOOST_MPL_LIMIT_METAFUNCTION_ARITY at the top of this file.
+  //!   BOOST_MPL_LIMIT_METAFUNCTION_ARITY in src/CMakeLitst.txt.
   //! \warning Note that an even more elegant solution to the problem this
   //!   wrapper is intended to solve is to use a metaprogram that collects all
   //!   occurrences of the keywords in a grammar. However, that does not seem to

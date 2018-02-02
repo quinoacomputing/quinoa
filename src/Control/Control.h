@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Control.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
     implementing still very generic accessors to tuple elements at various
@@ -13,6 +13,7 @@
 #ifndef Control_h
 #define Control_h
 
+#include <ios>
 #include <string>
 #include <sstream>
 
@@ -611,7 +612,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     type convert( const std::string& str ) {
       std::stringstream ss( str );
       type num;
-      ss >> num;
+      ss >> std::boolalpha >> num;
       if (ss.fail())
         Throw( "Failed to convert '" + str +
                "' to typeid " + typeid(num).name() );
@@ -625,9 +626,8 @@ class Control : public tuple::tagged_tuple<Ts...> {
     template< typename type >
     std::string convert( const type& val ) {
       std::stringstream ss;
-      ss << val;
-      if (ss.fail())
-        Throw( "Failed to convert value to string" );
+      ss << std::boolalpha << val;
+      if (ss.fail()) Throw( "Failed to convert value to string" );
       return ss.str();
     }
 

@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
     functionality related to registering and instantiating partial differential
@@ -19,14 +19,13 @@
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
 
-#include "Transport.h"
-#include "CompFlow.h"
+#include "Transport/Transport.h"
+#include "Transport/Physics.h"
+#include "Transport/Problem.h"
 
-#include "TransportPhysics.h"
-#include "CompFlowPhysics.h"
-
-#include "TransportProblem.h"
-#include "CompFlowProblem.h"
+#include "CompFlow/CompFlow.h"
+#include "CompFlow/Physics.h"
+#include "CompFlow/Problem.h"
 
 using inciter::PDEStack;
 
@@ -225,10 +224,6 @@ PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
-
-  const auto& av = g_inputdeck.get< tag::param, tag::compflow, tag::artvisc >();
-  if (!av.empty())
-    nfo.emplace_back( "artificial viscosity", parameters( av ) );
 
   const auto& mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >();
   if (!mu.empty())

@@ -3,7 +3,7 @@
 ################################################################################
 # 
 # \file      script/run_tests.sh
-# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
 #

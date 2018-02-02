@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/UnitTest/TUTSuite.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
     be unit test suites other than this one which uses the Template Unit Test
@@ -59,8 +59,9 @@ class TUTSuite : public CBase_TUTSuite {
     //!   the comment before each Charm++ migration test name.
     const std::map< std::string, std::size_t > m_migrations {
         { "Base/Factory", 2 }
-      , { "Base/PUPUtil", 11 }
+      , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
+      , { "Inciter/Scheme", 3 }
     };
 
     // Tests that must be run on PE 0

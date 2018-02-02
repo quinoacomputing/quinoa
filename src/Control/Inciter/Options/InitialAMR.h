@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/InitialAMR.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Initial (before t=0) adaptive mesh refinement options
   \details   Initial (before t=0) adaptive mesh refinement options
 */
@@ -15,7 +15,7 @@
 #include "Keywords.h"
 #include "PUPUtil.h"
 
-namespace tk {
+namespace inciter {
 namespace ctr {
 
 //! Mesh partitioning algorithm types
@@ -50,6 +50,6 @@ class InitialAMR : public tk::Toggle< InitialAMRType > {
 };
 
 } // ctr::
-} // tk::
+} // inciter::
 
 #endif // InciterInitialAMROptions_h

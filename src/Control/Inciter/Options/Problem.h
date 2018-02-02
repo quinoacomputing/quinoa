@@ -1,7 +1,7 @@
 // *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/Problem.h
-  \copyright 2012-2015, J. Bakosi, 2016-2017, Los Alamos National Security, LLC.
+  \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter
 */
@@ -22,7 +22,6 @@ namespace ctr {
 //! Problem types
 enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    SHEAR_DIFF,
-                                   DIR_NEU,
                                    VORTICAL_FLOW,
                                    NL_ENERGY_GROWTH,
                                    RAYLEIGH_TAYLOR,
@@ -39,7 +38,6 @@ class Problem : public tk::Toggle< ProblemType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::user_defined
                                        , kw::shear_diff
-                                       , kw::dir_neu
                                        , kw::vortical_flow
                                        , kw::nl_energy_growth
                                        , kw::rayleigh_taylor
@@ -57,7 +55,6 @@ class Problem : public tk::Toggle< ProblemType > {
         //! Enums -> names
         { { ProblemType::USER_DEFINED, kw::user_defined::name() },
           { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
-          { ProblemType::DIR_NEU, kw::dir_neu::name() },
           { ProblemType::VORTICAL_FLOW, kw::vortical_flow::name() },
           { ProblemType::NL_ENERGY_GROWTH, kw::nl_energy_growth::name() },
           { ProblemType::RAYLEIGH_TAYLOR, kw::rayleigh_taylor::name() },
@@ -66,7 +63,6 @@ class Problem : public tk::Toggle< ProblemType > {
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
-          { kw::dir_neu::string(), ProblemType::DIR_NEU },
           { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
           { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
           { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR },
@@ -103,7 +99,6 @@ class Problem : public tk::Toggle< ProblemType > {
     std::map< ProblemType, std::string > policy {
         { ProblemType::USER_DEFINED, *kw::user_defined::code() }
       , { ProblemType::SHEAR_DIFF, *kw::shear_diff::code() }
-      , { ProblemType::DIR_NEU, *kw::dir_neu::code() }
       , { ProblemType::VORTICAL_FLOW, *kw::vortical_flow::code() }
       , { ProblemType::NL_ENERGY_GROWTH, *kw::nl_energy_growth::code() }
       , { ProblemType::RAYLEIGH_TAYLOR, *kw::rayleigh_taylor::code() }      

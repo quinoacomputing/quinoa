@@ -1,7 +1,6 @@
 // *****************************************************************************
 /*!
   \file      src/Main/FileConv.C
-  \author    A. Pakki
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     File file converter Charm++ main chare
   \details   File file converter Charm++ main chare. This file contains the
@@ -131,7 +130,6 @@ class Main : public CBase_Main {
 //! \details By the time this object is constructed, the Charm++ runtime system
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
-//! \author A. Pakki
 class execute : public CBase_execute {
   public: execute() { mainProxy.execute(); }
 };
