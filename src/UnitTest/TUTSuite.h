@@ -70,6 +70,7 @@ class TUTSuite : public CBase_TUTSuite {
     const std::unordered_set< std::string > m_fromPE0 {
         { "LoadBalance/LinearMap"}
       , { "LoadBalance/UnsMeshMap" }
+      , { "Inciter/Scheme" }
     };
 
     //! Fire up all tests in a test group
