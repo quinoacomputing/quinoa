@@ -37,6 +37,7 @@
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -53,6 +54,7 @@
   #pragma warning( push )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
+  #pragma warning( disable: 1125 )
 #endif
 
 #include "../UnitTest/tutsuite.decl.h"
