@@ -42,9 +42,13 @@ DG::DG( const CProxy_Discretization& disc,
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
 
-  // Compute face geometry
   auto d = Disc();
+
+  // Compute face geometry
   m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
+
+  // Compute element geometry
+  m_geoElem = tk::genGeoElemTet(d->Inpoel(), d->Coord());
 }
 
 void

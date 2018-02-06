@@ -121,6 +121,11 @@ tk::Fields
 genGeoFaceTri( std::size_t ntfac,
                const std::vector< std::size_t >& inpofa,
                const tk::UnsMesh::Coords& coord );
+
+//! Generate derived data structure, element geometry
+tk::Fields
+genGeoElemTet( const std::vector< std::size_t >& inpoel,
+               const tk::UnsMesh::Coords& coord );
 } // tk::
 
 #endif // DerivedData_h

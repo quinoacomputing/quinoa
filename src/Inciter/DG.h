@@ -59,6 +59,7 @@ class DG : public CBase_DG {
       p | m_disc;
       p | m_vol;
       p | m_geoFace;
+      p | m_geoElem;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -73,6 +74,8 @@ class DG : public CBase_DG {
     tk::real m_vol;
     //! Face geometry
     tk::Fields m_geoFace;
+    //! Element geometry
+    tk::Fields m_geoElem;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

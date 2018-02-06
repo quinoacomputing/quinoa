@@ -3348,7 +3348,7 @@ void DerivedData_object::test< 68 >() {
 //! Generate and test face-geometry vector for a single tetrahedron
 template<> template<>
 void DerivedData_object::test< 69 >() {
-  set_test_name( "Face-geometries (genGeoFaceTri) for a tetrahedron" );
+  set_test_name( "Face-geometry (genGeoFaceTri) for a tetrahedron" );
 
   // total number of faces
   std::size_t ntfac(4);
@@ -3407,6 +3407,45 @@ void DerivedData_object::test< 69 >() {
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cz",
                     geoFace(f,6,0), correct_fcent[2][f], prec);
   }
+}
+
+//! Generate and test element-geometry vector for a single tetrahedron
+template<> template<>
+void DerivedData_object::test< 70 >() {
+  set_test_name( "Element-geometry (genGeoElemTet) for a tetrahedron" );
+
+  // coordinates of tetrahedron vertices
+  tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
+                               {0.0, 0.0, 1.0, 0.0},
+                               {0.0, 0.0, 0.0, 1.0} }};
+
+  // element-node connectivity
+  std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+
+  // get element-geometries
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+
+  // correct element-volume
+  tk::real correct_vole { 1.0/6.0 };
+
+  // correct element-centroid
+  tk::UnsMesh::Coords correct_ecent {{ {1.0/4.0},
+                                       {1.0/4.0},
+                                       {1.0/4.0} }};
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  ensure_equals("incorrect entry in geoElem-vol",
+                  geoElem(0,0,0), correct_vole, prec);
+
+  ensure_equals("incorrect entry in geoElem-cx",
+                  geoElem(0,1,0), correct_ecent[0][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cy",
+                  geoElem(0,2,0), correct_ecent[1][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cz",
+                  geoElem(0,3,0), correct_ecent[2][0], prec);
 }
 
 #if defined(STRICT_GNUC)
