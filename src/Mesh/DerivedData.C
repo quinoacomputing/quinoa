@@ -1277,5 +1277,114 @@ genBelemTet( std::size_t nbfac,
 
   return belem;
 }
+        
+tk::Fields
+genGeoFaceTri( std::size_t ntfac,
+               const std::vector< std::size_t >& inpofa,
+               const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Generate derived data, which stores the geometry details both internal and
+//   boundary triangular faces in the mesh.
+//! \param[in] ntfac Total number of faces in the mesh.
+//! \param[in] inpofa Face-node connectivity.
+//! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
+//! \return Face geometry information. This includes face area, unit normal
+//!   pointing outward of the element to the left of the face, and face
+//!   centroid coordinates. Use the following examples to access this
+//!   information for face-f.
+//!   face area: geoFace[7*f],
+//!   unit-normal x-component: geoFace[7*f + 1],
+//!               y-component: geoFace[7*f + 2],
+//!               z-component: geoFace[7*f + 3],
+//!   centroid x-coordinate: geoFace[7*f + 4],
+//!            y-coordinate: geoFace[7*f + 5],
+//!            z-coordinate: geoFace[7*f + 6].
+// *****************************************************************************
+{
+  tk::Fields geoFace( ntfac, 7 );
+
+  // set triangle geometry
+  std::size_t nnpf(3);
+
+  Assert( inpofa.size()%nnpf == 0,
+          "Size of inpofa must be divisible by nnpf" );
+
+  std::size_t ip1, ip2, ip3;
+  tk::real xp1, yp1, zp1,
+           xp2, yp2, zp2,
+           xp3, yp3, zp3,
+           ax, ay, az,
+           bx, by, bz,
+           nx, ny, nz,
+           sidea, sideb, sidec,
+           semip, farea;
+
+  for(std::size_t f=0; f<ntfac; ++f)
+  {
+    // get area
+    ip1 = inpofa[nnpf*f];
+    ip2 = inpofa[nnpf*f + 1];
+    ip3 = inpofa[nnpf*f + 2];
+
+    xp1 = coord[0][ip1];
+    yp1 = coord[1][ip1];
+    zp1 = coord[2][ip1];
+                       
+    xp2 = coord[0][ip2];
+    yp2 = coord[1][ip2];
+    zp2 = coord[2][ip2];
+                       
+    xp3 = coord[0][ip3];
+    yp3 = coord[1][ip3];
+    zp3 = coord[2][ip3];
+
+    sidea = sqrt( (xp2-xp1)*(xp2-xp1)
+                + (yp2-yp1)*(yp2-yp1)
+                + (zp2-zp1)*(zp2-zp1) );
+
+    sideb = sqrt( (xp3-xp2)*(xp3-xp2)
+                + (yp3-yp2)*(yp3-yp2)
+                + (zp3-zp2)*(zp3-zp2) );
+
+    sidec = sqrt( (xp1-xp3)*(xp1-xp3)
+                + (yp1-yp3)*(yp1-yp3)
+                + (zp1-zp3)*(zp1-zp3) );
+
+    semip = 0.5 * (sidea + sideb + sidec);
+
+    farea = sqrt( semip
+                * (semip-sidea)
+                * (semip-sideb)
+                * (semip-sidec) );
+    
+    geoFace(f,0,0) = farea;
+
+    // get unit normal to face
+    ax = xp2 - xp1;
+    ay = yp2 - yp1;
+    az = zp2 - zp1;
+
+    bx = xp3 - xp1;
+    by = yp3 - yp1;
+    bz = zp3 - zp1;
+
+    nx =   ay*bz - az*by;
+    ny = -(ax*bz - az*bx);
+    nz =   ax*by - ay*bx;
+
+    farea = sqrt(nx*nx + ny*ny + nz*nz);
+
+    geoFace(f,1,0) = nx/farea;
+    geoFace(f,2,0) = ny/farea;
+    geoFace(f,3,0) = nz/farea;
+
+    // get centroid
+    geoFace(f,4,0) = (xp1+xp2+xp3)/3.0;
+    geoFace(f,5,0) = (yp1+yp2+yp3)/3.0;
+    geoFace(f,6,0) = (zp1+zp2+zp3)/3.0;
+  }
+
+  return geoFace;
+}
 
 } // tk::

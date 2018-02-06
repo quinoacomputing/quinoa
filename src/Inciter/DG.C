@@ -41,7 +41,10 @@ DG::DG( const CProxy_Discretization& disc,
 {
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  IGNORE( fd );
+
+  // Compute face geometry
+  auto d = Disc();
+  m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
 }
 
 void
