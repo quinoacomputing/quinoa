@@ -1588,6 +1588,24 @@ void ExodusIIMeshReader_object::test< 5 >() {
   }
 }
 
+//! Attempt to read side-set (boundary) connectivity, feeding garbage
+template<> template<>
+void ExodusIIMeshReader_object::test< 6 >() {
+  set_test_name( "boundary-face conn read throws on garbage" );
+
+  // Attempt to read boundary face-node connectivity passing nbfac=0
+  try {
+    std::vector< std::size_t > triinpoel;
+    std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
+    tk::ExodusIIMeshReader er( infile );
+    er.readFaces( 0, triinpoel );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown, test ok
+  }
+}
+
 } // tut::
 
 #endif // test_ExodusIIMeshReader_h

@@ -215,13 +215,10 @@ Transporter::createPartitioner()
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
-  if (nbfac<1 && scheme == ctr::SchemeType::DG)
-  {
-    Throw( "Boundary faces not specified using side-sets in ExodusII input file" );
-  }
-  else if (nbfac>0)
-  {
-    // Read triangle boundary-face connectivity 
+  // Read triangle boundary-face connectivity
+  if (scheme == ctr::SchemeType::DG) {
+    m_print.diag( "Reading side set faces" );
+    nbfac = er.readSidesetFaces( bface );
     er.readFaces( nbfac, triinpoel );
   }
 

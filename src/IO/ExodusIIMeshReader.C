@@ -388,6 +388,8 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
 //!   also called triangle-elements in the EXO2 file, and their connectivity.
 // *****************************************************************************
 {
+  ErrChk( nbfac > 0, "Number of boundary faces must be larger than zero" );
+
   std::size_t nnpf(3);
 
   // Read triangle boundary-face connectivity
