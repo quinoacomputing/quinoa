@@ -3420,7 +3420,7 @@ void DerivedData_object::test< 70 >() {
                                {0.0, 0.0, 0.0, 1.0} }};
 
   // element-node connectivity
-  std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+  std::vector< std::size_t > inpoel { 0, 3, 2, 1 };
 
   // get element-geometries
   auto geoElem = tk::genGeoElemTet( inpoel, coord );

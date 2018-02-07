@@ -20,6 +20,7 @@
 #include "Exception.h"                  // for Assert
 #include "DerivedData.h"
 #include "ContainerUtil.h"
+#include "Vector.h"
 
 namespace tk {
 
@@ -1414,58 +1415,31 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
   tk::Fields geoElem( nelem, 4 );
 
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
   for(std::size_t e=0; e<nelem; ++e)
   {
-    std::size_t ip1, ip2, ip3, ip4;
-    tk::real xp1, yp1, zp1,
-             xp2, yp2, zp2,
-             xp3, yp3, zp3,
-             xp4, yp4, zp4,
-             x34, y34, z34,
-             xy34, xz34, yz34,
-             vole;
-
     // get volume
-    ip1 = inpoel[nnpe*e];
-    ip2 = inpoel[nnpe*e + 1];
-    ip3 = inpoel[nnpe*e + 2];
-    ip4 = inpoel[nnpe*e + 3];
+    const auto A = inpoel[nnpe*e+0];
+    const auto B = inpoel[nnpe*e+1];
+    const auto C = inpoel[nnpe*e+2];
+    const auto D = inpoel[nnpe*e+3];
+    std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
+                              ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
+                              da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
 
-    xp1 = coord[0][ip1];
-    yp1 = coord[1][ip1];
-    zp1 = coord[2][ip1];
+    const auto vole = tk::triple( ba, ca, da ) / 6.0;
 
-    xp2 = coord[0][ip2];
-    yp2 = coord[1][ip2];
-    zp2 = coord[2][ip2];
-
-    xp3 = coord[0][ip3];
-    yp3 = coord[1][ip3];
-    zp3 = coord[2][ip3];
-
-    xp4 = coord[0][ip4];
-    yp4 = coord[1][ip4];
-    zp4 = coord[2][ip4];
-
-    x34 = xp3 - xp4;
-    y34 = yp3 - yp4;
-    z34 = zp3 - zp4;
-
-    xy34 = xp3*yp4 - yp3*xp4;
-    yz34 = yp3*zp4 - zp3*yp4;
-    xz34 = xp3*zp4 - zp3*xp4;
-
-    vole = (  xp1 * ( yp2*z34 - zp2*y34 + yz34 )
-            - yp1 * ( xp2*z34 - zp2*x34 + xz34 )
-            + zp1 * ( xp2*y34 - yp2*x34 + xy34 )
-            - ( xp2*yz34 - yp2*xz34 + zp2*xy34 ) ) / 6.0;
+    Assert( vole > 0, "Element Jacobian non-positive" );
 
     geoElem(e,0,0) = vole;
 
     // get centroid
-    geoElem(e,1,0) = (xp1+xp2+xp3+xp4)/4.0;
-    geoElem(e,2,0) = (yp1+yp2+yp3+yp4)/4.0;
-    geoElem(e,3,0) = (zp1+zp2+zp3+zp4)/4.0;
+    geoElem(e,1,0) = (x[A]+x[B]+x[C]+x[D])/4.0;
+    geoElem(e,2,0) = (y[A]+y[B]+y[C]+y[D])/4.0;
+    geoElem(e,3,0) = (z[A]+z[B]+z[C]+z[D])/4.0;
   }
 
   return geoElem;
