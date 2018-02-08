@@ -14,6 +14,9 @@
 #include <map>
 #include <utility>
 #include <cstddef>
+#include "Types.h"
+#include "Fields.h"
+#include "UnsMesh.h"
 
 namespace tk {
 
@@ -112,6 +115,17 @@ genBelemTet( std::size_t nbfac,
               const std::vector< std::size_t >& inpofa,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup );
+
+//! Generate derived data structure, face geometry
+tk::Fields
+genGeoFaceTri( std::size_t ntfac,
+               const std::vector< std::size_t >& inpofa,
+               const tk::UnsMesh::Coords& coord );
+
+//! Generate derived data structure, element geometry
+tk::Fields
+genGeoElemTet( const std::vector< std::size_t >& inpoel,
+               const tk::UnsMesh::Coords& coord );
 } // tk::
 
 #endif // DerivedData_h
