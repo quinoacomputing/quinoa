@@ -210,7 +210,7 @@ Transporter::createPartitioner()
   // Read side sets for boundary faces
   m_print.diag( "Reading side set faces" );
   std::map< int, std::vector< std::size_t > > bface;
-  auto nbfac = er.readSidesetFaces( bface );
+  std::size_t nbfac = 0;
 
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
