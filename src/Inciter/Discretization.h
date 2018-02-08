@@ -145,6 +145,9 @@ class Discretization : public CBase_Discretization {
     //! Output mesh-based fields metadata to file
     void writeMeta() const;
 
+    //! Output mesh-based element fields metadata to file
+    void writeElemMeta() const;
+
     //! Output solution to file
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
@@ -154,6 +157,10 @@ class Discretization : public CBase_Discretization {
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #endif
+    void writeElemSolution( const tk::ExodusIIMeshWriter& ew,
+                            uint64_t it,
+                            const std::vector< std::vector< tk::real > >& u )
+                          const;
 
     //! Set time step size
     void setdt( tk::real newdt );

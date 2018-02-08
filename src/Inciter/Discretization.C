@@ -461,6 +461,22 @@ Discretization::writeSolution(
 #endif
 
 void
+Discretization::writeElemSolution(
+  const tk::ExodusIIMeshWriter& ew,
+  uint64_t it,
+  const std::vector< std::vector< tk::real > >& u ) const
+// *****************************************************************************
+// Output solution to file
+//! \param[in] ew ExodusII mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] u Vector of element fields to write to file
+// *****************************************************************************
+{
+  int varid = 0;
+  for (const auto& f : u) ew.writeElemScalar( it, ++varid, f );
+}
+
+void
 Discretization::writeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
@@ -503,6 +519,29 @@ Discretization::writeMeta() const
       ew.writeNodeVarNames( names );
     }
 
+  }
+}
+
+void
+Discretization::writeElemMeta() const
+// *****************************************************************************
+// Output mesh-based element fields metadata to file
+// *****************************************************************************
+{
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >())
+  {
+    // Create ExodusII writer
+    tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+    // Collect elemental field output names from all PDEs
+    std::vector< std::string > names {{ "scalar" }};
+    //for (const auto& eq : g_pdes) {
+    //  auto n = eq.fieldNames();
+    //  names.insert( end(names), begin(n), end(n) );
+    //}
+
+    // Write element field names
+    ew.writeElemVarNames( names );
   }
 }
 
