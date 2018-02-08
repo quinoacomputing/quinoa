@@ -3345,6 +3345,109 @@ void DerivedData_object::test< 68 >() {
   }
 }
 
+//! Generate and test face-geometry vector for a single tetrahedron
+template<> template<>
+void DerivedData_object::test< 69 >() {
+  set_test_name( "Face-geometry (genGeoFaceTri) for a tetrahedron" );
+
+  // total number of faces
+  std::size_t ntfac(4);
+
+  // coordinates of tetrahedron vertices
+  tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
+                               {0.0, 0.0, 1.0, 0.0},
+                               {0.0, 0.0, 0.0, 1.0} }};
+
+  // face-node connectivity
+  std::vector< std::size_t > inpofa { 0, 1, 2,
+                                      0, 3, 1,
+                                      1, 3, 2,
+                                      2, 3, 0 };
+
+  // get face-geometries
+  auto geoFace = tk::genGeoFaceTri( ntfac, inpofa, coord );
+
+  // correct face-areas
+  std::vector< tk::real > correct_farea { 0.5, 0.5, 0.5, 0.8660254037844389 };
+
+  // correct face-normals
+  std::array< std::vector< tk::real >, 3 > correct_fnorm {{
+                                       { 0.0,  0.0, -1.0, 1.0/sqrt(3.0)},
+                                       { 0.0, -1.0,  0.0, 1.0/sqrt(3.0)},
+                                       {-1.0,  0.0,  0.0, 1.0/sqrt(3.0)},
+                                       }};
+
+  // correct face-centroids
+  tk::UnsMesh::Coords correct_fcent {{ {1.0/3.0, 1.0/3.0, 0.0,     1.0/3.0},
+                                       {1.0/3.0, 0.0,     1.0/3.0, 1.0/3.0},
+                                       {0.0,     1.0/3.0, 1.0/3.0, 1.0/3.0} }};
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  for(std::size_t f=0 ; f<ntfac; ++f)
+  {
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-area",
+                    geoFace(f,0,0), correct_farea[f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nx",
+                    geoFace(f,1,0), correct_fnorm[0][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-ny",
+                    geoFace(f,2,0), correct_fnorm[1][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nz",
+                    geoFace(f,3,0), correct_fnorm[2][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cx",
+                    geoFace(f,4,0), correct_fcent[0][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cy",
+                    geoFace(f,5,0), correct_fcent[1][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cz",
+                    geoFace(f,6,0), correct_fcent[2][f], prec);
+  }
+}
+
+//! Generate and test element-geometry vector for a single tetrahedron
+template<> template<>
+void DerivedData_object::test< 70 >() {
+  set_test_name( "Element-geometry (genGeoElemTet) for a tetrahedron" );
+
+  // coordinates of tetrahedron vertices
+  tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
+                               {0.0, 0.0, 1.0, 0.0},
+                               {0.0, 0.0, 0.0, 1.0} }};
+
+  // element-node connectivity
+  std::vector< std::size_t > inpoel { 0, 3, 2, 1 };
+
+  // get element-geometries
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+
+  // correct element-volume
+  tk::real correct_vole { 1.0/6.0 };
+
+  // correct element-centroid
+  tk::UnsMesh::Coords correct_ecent {{ {1.0/4.0},
+                                       {1.0/4.0},
+                                       {1.0/4.0} }};
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  ensure_equals("incorrect entry in geoElem-vol",
+                  geoElem(0,0,0), correct_vole, prec);
+
+  ensure_equals("incorrect entry in geoElem-cx",
+                  geoElem(0,1,0), correct_ecent[0][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cy",
+                  geoElem(0,2,0), correct_ecent[1][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cz",
+                  geoElem(0,3,0), correct_ecent[2][0], prec);
+}
+
 #if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
