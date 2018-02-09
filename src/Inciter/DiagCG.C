@@ -125,7 +125,7 @@ DiagCG::setup( tk::real v )
   // Output chare mesh to file
   d->writeMesh();
   // Output fields metadata to output file
-  d->writeMeta();
+  d->writeNodeMeta();
 
   // Compute left-hand side of PDEs
   lhs();
@@ -513,7 +513,7 @@ DiagCG::writeFields( tk::real time )
     // Write time stamp
     rmw.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( rmw, m_itf, nodefields() );
+    d->writeNodeSolution( rmw, m_itf, nodefields() );
 
   } else
   #endif
@@ -524,7 +524,7 @@ DiagCG::writeFields( tk::real time )
     // Write time stamp
     ew.writeTimeStamp( m_itf, time );
     // Write node fields to file
-    d->writeSolution( ew, m_itf, nodefields() );
+    d->writeNodeSolution( ew, m_itf, nodefields() );
 
   }
 }
