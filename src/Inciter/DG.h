@@ -18,9 +18,12 @@
 #ifndef DG_h
 #define DG_h
 
-#include "NoWarning/dg.decl.h"
-#include "FaceData.h"
+#include <vector>
+
 #include "DerivedData.h"
+#include "FaceData.h"
+
+#include "NoWarning/dg.decl.h"
 
 namespace inciter {
 
@@ -56,7 +59,9 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
       CBase_DG::pup(p);
+      p | m_itf;
       p | m_disc;
+      p | m_u;
       p | m_vol;
       p | m_geoFace;
       p | m_geoElem;
@@ -68,8 +73,12 @@ class DG : public CBase_DG {
     //@}
 
   private:
+    //! Field output iteration count
+    uint64_t m_itf;
     //! Discretization proxy
     CProxy_Discretization m_disc;
+    //! Vector of unknown/solution average over each mesh element
+    tk::Fields m_u;
     //! Total mesh volume
     tk::real m_vol;
     //! Face geometry
