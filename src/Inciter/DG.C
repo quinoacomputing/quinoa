@@ -37,7 +37,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_itf( 0 ),
   m_disc( disc ),
   m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
-       1/*g_inputdeck.get< tag::component >().nprop()*/ ),
+       g_inputdeck.get< tag::component >().nprop() ),
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
