@@ -427,7 +427,7 @@ Discretization::writeMesh()
 }
 
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::ExodusIIMeshWriter& ew,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -444,7 +444,7 @@ Discretization::writeSolution(
 
 #ifdef HAS_ROOT
 void
-Discretization::writeSolution(
+Discretization::writeNodeSolution(
   const tk::RootMeshWriter& rmw,
   uint64_t it,
   const std::vector< std::vector< tk::real > >& u ) const
@@ -477,7 +477,7 @@ Discretization::writeElemSolution(
 }
 
 void
-Discretization::writeMeta() const
+Discretization::writeNodeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
 // *****************************************************************************

@@ -143,17 +143,17 @@ class Discretization : public CBase_Discretization {
     void writeMesh();
 
     //! Output mesh-based fields metadata to file
-    void writeMeta() const;
+    void writeNodeMeta() const;
 
     //! Output mesh-based element fields metadata to file
     void writeElemMeta() const;
 
     //! Output solution to file
-    void writeSolution( const tk::ExodusIIMeshWriter& ew,
+    void writeNodeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #ifdef HAS_ROOT
-    void writeSolution( const tk::RootMeshWriter& rmw,
+    void writeNodeSolution( const tk::RootMeshWriter& rmw,
                         uint64_t it,
                         const std::vector< std::vector< tk::real > >& u ) const;
     #endif
