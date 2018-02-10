@@ -28,6 +28,7 @@
 #include "Exception.h"
 #include "Factory.h"
 #include "CGPDE.h"
+#include "DGPDE.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -37,10 +38,15 @@ extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! \brief Factory for PDEs using continuous Galerkin: keys associated to their
-//!   constructors
+//! \brief Factory for PDEs using continuous Galerkin discretization storing
+//!   keys associated to their constructors
 using CGPDEFactory =
   std::map< ctr::PDEKey, std::function< CGPDE(const ncomp_t&) > >;
+
+//! \brief Factory for PDEs using discontinuous Galerkin discretization storing
+//!   keys associated to their constructors
+using DGPDEFactory =
+  std::map< ctr::PDEKey, std::function< DGPDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
 class PDEStack {
@@ -50,7 +56,10 @@ class PDEStack {
     explicit PDEStack();
 
     //! Instantiate selected PDEs using continuous Galerkin discretization
-    std::vector< CGPDE > selected() const;
+    std::vector< CGPDE > selectedCG() const;
+
+    //! Instantiate selected PDEs using discontinuous Galerkin discretization
+    std::vector< DGPDE > selectedDG() const;
 
     //! Constant accessor to CGPDE factory
     //! \return Constant reference to the CGPDE factory
@@ -154,7 +163,11 @@ class PDEStack {
     //! \brief Partial differential equations factory for those PDEs that use
     //!   continuous Galerkin discretization
     CGPDEFactory m_cgfactory;
-    std::set< ctr::PDEType > m_eqTypes;       //!< Counters for equation types
+    //! \brief Partial differential equations factory for those PDEs that use
+    //!   discontinuous Galerkin discretization
+    DGPDEFactory m_dgfactory;
+    //! Counters for equation types
+    std::set< ctr::PDEType > m_eqTypes;
 };
 
 } // inciter::

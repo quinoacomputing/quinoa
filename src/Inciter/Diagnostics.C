@@ -17,7 +17,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< CGPDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 static CkReduction::reducerType DiagMerger;
 
@@ -88,7 +88,7 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // able to compute an error based on some "analytical" solution, which is
     // really the initial condition.
     auto a = u;
-    for (const auto& eq : g_pdes)
+    for (const auto& eq : g_cgpde)
       eq.initialize( d.Coord(), a, d.T()+d.Dt(), d.Gid() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,

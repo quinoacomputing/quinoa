@@ -116,7 +116,7 @@ PDEStack::PDEStack() : m_cgfactory(), m_eqTypes()
 }
 
 std::vector< inciter::CGPDE >
-PDEStack::selected() const
+PDEStack::selectedCG() const
 // *****************************************************************************
 //  Instantiate all selected PDEs using continuous Galerkin discretization
 //! \return std::vector of instantiated partial differential equation objects
@@ -130,8 +130,29 @@ PDEStack::selected() const
       pdes.push_back( createPDE< tag::transport >( d, cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
       pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
-    else Throw( "Can't find selected PDE" );
+    else Throw( "Can't find selected CGPDE" );
   }
+
+  return pdes;
+}
+
+std::vector< inciter::DGPDE >
+PDEStack::selectedDG() const
+// *****************************************************************************
+//  Instantiate all selected PDEs using discontinuous Galerkin discretization
+//! \return std::vector of instantiated partial differential equation objects
+// *****************************************************************************
+{
+  std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
+  std::vector< DGPDE > pdes;                // will store instantiated PDEs
+
+//   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+//     if (d == ctr::PDEType::TRANSPORT)
+//       pdes.push_back( createPDE< tag::transport >( d, cnt ) );
+//     else if (d == ctr::PDEType::COMPFLOW)
+//       pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
+//     else Throw( "Can't find selected CGPDE" );
+//   }
 
   return pdes;
 }

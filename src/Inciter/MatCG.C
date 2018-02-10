@@ -41,7 +41,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< CGPDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -118,7 +118,7 @@ MatCG::setup( tk::real v )
   m_du.fill( 0.0 );
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
 
   // Send off initial guess for assembly
@@ -156,7 +156,7 @@ MatCG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
@@ -180,7 +180,7 @@ MatCG::lhs()
   auto d = Disc();
 
   // Compute left-hand side matrix for all equations
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.lhs( d->Coord(), d->Inpoel(), d->Psup(), m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
@@ -203,7 +203,7 @@ MatCG::rhs()
 
   // Compute right-hand side and query Dirichlet BCs for all equations
   tk::Fields r( d->Gid().size(), g_inputdeck.get< tag::component >().nprop() );
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, r );
 
   // Query and match user-specified boundary conditions to side sets
@@ -369,7 +369,7 @@ MatCG::writeFields( tk::real time )
   auto nodefields = [&]() {
     auto u = m_u;   // make a copy as eq::output() may overwrite its arg
     std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
       output.insert( end(output), begin(o), end(o) );
     }

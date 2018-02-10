@@ -40,7 +40,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< CGPDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
 
@@ -131,7 +131,7 @@ DiagCG::setup( tk::real v )
   lhs();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
 
   // Activate SDAG waits for setup
@@ -243,7 +243,7 @@ DiagCG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
@@ -267,7 +267,7 @@ DiagCG::rhs()
   auto d = Disc();
 
   // Compute right-hand side and query Dirichlet BCs for all equations
-  for (const auto& eq : g_pdes)
+  for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
@@ -496,7 +496,7 @@ DiagCG::writeFields( tk::real time )
   auto nodefields = [&]() {
     auto u = m_u;   // make a copy as eq::output() may overwrite its arg
     std::vector< std::vector< tk::real > > output;
-    for (const auto& eq : g_pdes) {
+    for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( time, m_vol, d->Coord(), d->V(), u );
       output.insert( end(output), begin(o), end(o) );
     }

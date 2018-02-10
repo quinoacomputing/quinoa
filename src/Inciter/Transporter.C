@@ -41,7 +41,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< CGPDE > g_pdes;
+extern std::vector< CGPDE > g_cgpde;
 
 }
 
@@ -225,7 +225,7 @@ Transporter::createPartitioner()
   // Verify that side sets to which boundary conditions are assigned by user
   // exist in mesh file
   std::unordered_set< int > conf;
-  for (const auto& eq : g_pdes) eq.side( conf );
+  for (const auto& eq : g_cgpde) eq.side( conf );
   for (auto i : conf)
   {
     if (sidenodes.find(i) == end(sidenodes)) {
@@ -268,7 +268,7 @@ Transporter::diagHeader()
 
   // Collect variables names for integral/diagnostics output
   std::vector< std::string > var;
-  for (const auto& eq : g_pdes) {
+  for (const auto& eq : g_cgpde) {
     auto o = eq.names();
     var.insert( end(var), begin(o), end(o) );
   }
