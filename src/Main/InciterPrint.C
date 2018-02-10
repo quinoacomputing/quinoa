@@ -10,14 +10,14 @@
 #include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
 
-#include "PDE.h"
+#include "CGPDE.h"
 #include "InciterPrint.h"
 
 using inciter::InciterPrint;
 
 namespace inciter {
 
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_pdes;
 
 } // inciter::
 

@@ -26,7 +26,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Discretization.h"
 #include "DistFCT.h"
 #include "DiagReducer.h"
@@ -40,7 +40,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_pdes;
 
 } // inciter::
 

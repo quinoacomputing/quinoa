@@ -16,7 +16,7 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/Options/Scheme.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Print.h"
 
 #ifdef HAS_ROOT
@@ -26,7 +26,7 @@
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_pdes;
 extern ctr::InputDeck g_inputdeck;
 
 } // inciter::

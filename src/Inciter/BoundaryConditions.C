@@ -13,11 +13,11 @@
 
 #include "BoundaryConditions.h"
 #include "SystemComponents.h"
-#include "PDE.h"
+#include "CGPDE.h"
 
 namespace inciter {
 
-extern std::vector< PDE > g_pdes;
+extern std::vector< CGPDE > g_pdes;
 
 }
 

@@ -29,21 +29,22 @@
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_factory(), m_eqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_eqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
-//!   potentially large number of entries in the partial differential equation
-//!   factory, m_factory, which is of type inciter::PDEFactory, a std::map. At
-//!   this time, each type of partial differential equation can be configured to
-//!   use a unique _problem policy_. (More types of policies will most likely
-//!   come in the future.) Policy classes are template arguments to the partial
-//!   differential equation classes and influence their behavior in a different
-//!   way, abstracting away certain functions, e.g., how to set problem-specific
-//!   initial and/or boundary conditions and how to update their coefficients
-//!   during time integration. For more information on policy-based design, see
-//!   http://en.wikipedia.org/wiki/Policy-based_design. This abstraction allows
-//!   [separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns).
+//!   potentially large number of entries in a partial differential equation
+//!   factory, a standard associative container. At this time, each type of
+//!   partial differential equation can be configured to use a unique _physics
+//!   policy_ and a unique _problem policy_. (More types of policies might be
+//!   introduced in the future.) Policy classes are template arguments to the
+//!   partial differential equation classes and influence their behavior in a
+//!   different way, abstracting away certain functions, e.g., how to set
+//!   problem-specific initial and/or boundary conditions and how to update
+//!   their coefficients during time integration. For more information on
+//!   policy-based design, see http://en.wikipedia.org/wiki/Policy-based_design.
+//!   This abstraction allows [separation of concerns]
+//!   (http://en.wikipedia.org/wiki/Separation_of_concerns).
 //!
 //!   Since the functionality of the policies are orthogonal to each other,
 //!   i.e., they do not depend on each other or their host (the partial
@@ -72,7 +73,7 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //!   relationship is more of a _models a_-type, which simplifies client-code
 //!   and allows for the benfits of runtime inheritance with value-semantics
 //!   which is less error prone and easier to read. See more about the
-//!   _models-a_ relationship and its implementation in PDE/PDE.h.
+//!   _models-a_ relationship and its implementation in, e.g., PDE/CGPDE.h.
 //!
 //!   The design discussed above allows the registration, instantiation, and
 //!   use of the partial differential equations to be generic, which eliminates
@@ -99,30 +100,30 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 {
   namespace mpl = boost::mpl;
 
-  // Transport PDE
-  // Construct vector of vectors for all possible policies for PDE
+  // Transport CGPDEs
+  // Construct vector of vectors for all possible policies
   using TransportPolicies = mpl::vector< TransportPhysics, TransportProblems >;
-  // Register PDE for all combinations of policies
+  // Register a PDE for all combinations of policies
   mpl::cartesian_product< TransportPolicies >(
-    registerPDE< Transport >( m_factory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
+    registerPDE< Transport >( m_cgfactory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
 
-  // Compressible flow system of PDEs
-  // Construct vector of vectors for all possible policies for PDE
+  // Compressible flow system of CGPDEs
+  // Construct vector of vectors for all possible policies
   using CompFlowPolicies = mpl::vector< CompFlowPhysics, CompFlowProblems >;
-  // Register PDE for all combinations of policies
+  // Register a PDE for all combinations of policies
   mpl::cartesian_product< CompFlowPolicies >(
-    registerPDE< CompFlow >( m_factory, ctr::PDEType::COMPFLOW, m_eqTypes ) );
+    registerPDE< CompFlow >( m_cgfactory, ctr::PDEType::COMPFLOW, m_eqTypes ) );
 }
 
-std::vector< inciter::PDE >
+std::vector< inciter::CGPDE >
 PDEStack::selected() const
 // *****************************************************************************
-//  Instantiate all selected partial differential equations
+//  Instantiate all selected PDEs using continuous Galerkin discretization
 //! \return std::vector of instantiated partial differential equation objects
 // *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
-  std::vector< PDE > pdes;                      // will store instantiated PDEs
+  std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::TRANSPORT)

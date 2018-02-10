@@ -27,7 +27,7 @@
 #include "Keywords.h"
 #include "Exception.h"
 #include "Factory.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "Inciter/Options/PDE.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -37,10 +37,10 @@ extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! \brief Partial differential equation factory: keys associated to their
+//! \brief Factory for PDEs using continuous Galerkin: keys associated to their
 //!   constructors
-using PDEFactory =
-  std::map< ctr::PDEKey, std::function< PDE(const ncomp_t&) > >;
+using CGPDEFactory =
+  std::map< ctr::PDEKey, std::function< CGPDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
 class PDEStack {
@@ -49,13 +49,12 @@ class PDEStack {
     //! Constructor: register partial differential equations into factory
     explicit PDEStack();
 
-    //! Instantiate selected partial differential equations
-    std::vector< PDE > selected() const;
+    //! Instantiate selected PDEs using continuous Galerkin discretization
+    std::vector< CGPDE > selected() const;
 
-    //! \brief Constant accessor to partial differential equation factory
-    //! \return Constant reference to the internal partial differential equation
-    //!   factory
-    const PDEFactory& factory() const { return m_factory; }
+    //! Constant accessor to CGPDE factory
+    //! \return Constant reference to the CGPDE factory
+    const CGPDEFactory& factory() const { return m_cgfactory; }
 
     //! Return info on selected partial differential equations
     std::vector< std::vector< std::pair< std::string, std::string > > > info()
@@ -77,11 +76,11 @@ class PDEStack {
     template< template< class, class > class Eq >
     struct registerPDE {
       //! Need to store the reference to factory we are registering into
-      PDEFactory& factory;
+      CGPDEFactory& factory;
       //! Need to store which differential equation we are registering
       const ctr::PDEType type;
       //! Constructor, also count number of unique equation types registered
-      explicit registerPDE( PDEFactory& f,
+      explicit registerPDE( CGPDEFactory& f,
                             ctr::PDEType t,
                             std::set< ctr::PDEType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
@@ -96,7 +95,7 @@ class PDEStack {
         // Build differential equation key
         ctr::PDEKey key{ type, Physics::type(), Problem::type() };
         // Register equation (with policies given by mpl::vector U) into factory
-        tk::recordModelLate< PDE, Eq< Physics, Problem > >
+        tk::recordModelLate< CGPDE, Eq< Physics, Problem > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }
     };
@@ -110,7 +109,7 @@ class PDEStack {
     //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   partial differential equations by type.
     template< class EqTag >
-    PDE createPDE( ctr::PDEType eq, std::map< ctr::PDEType, ncomp_t >& cnt )
+    CGPDE createPDE( ctr::PDEType eq, std::map< ctr::PDEType, ncomp_t >& cnt )
     const {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
@@ -125,8 +124,8 @@ class PDEStack {
         ctr::PDEKey key{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] };
-        const auto it = m_factory.find( key );
-        Assert( it != end( m_factory ), "Can't find PDE in factory" );
+        const auto it = m_cgfactory.find( key );
+        Assert( it != end( m_cgfactory ), "Can't find PDE in factory" );
         return it->second( c );    // instantiate and return PDE object
       } else Throw ( "Can't create PDE with zero components" );
     }
@@ -152,8 +151,10 @@ class PDEStack {
       return s.str();
     }
 
-    PDEFactory m_factory;            //!< Partial differential equations factory
-    std::set< ctr::PDEType > m_eqTypes;   //!< Count number of equation types
+    //! \brief Partial differential equations factory for those PDEs that use
+    //!   continuous Galerkin discretization
+    CGPDEFactory m_cgfactory;
+    std::set< ctr::PDEType > m_eqTypes;       //!< Counters for equation types
 };
 
 } // inciter::

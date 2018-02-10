@@ -1,9 +1,10 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/PDE.h
+  \file      src/PDE/CGPDE.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Partial differential equation
-  \details   This file defines a generic partial differential equation class.
+  \brief     Partial differential equation base for continuous Galerkin PDEs
+  \details   This file defines a generic partial differential equation (PDE)
+    class for PDEs that use continuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
     inheritance is confined to the internals of the class, inivisble to
     client-code. The class exclusively deals with ownership enabling client-side
@@ -12,8 +13,8 @@
     Papers-and-Presentations.
 */
 // *****************************************************************************
-#ifndef PDE_h
-#define PDE_h
+#ifndef CGPDE_h
+#define CGPDE_h
 
 #include <array>
 #include <string>
@@ -28,15 +29,15 @@
 
 namespace inciter {
 
-//! \brief Partial differential equation
+//! \brief Partial differential equation base for continuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
 //!   inivisble to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
-//!   Papers-and-Presentations. For example client code that models a PDE,
+//!   Papers-and-Presentations. For example client code that models a CGPDE,
 //!   see inciter::CompFlow.
-class PDE {
+class CGPDE {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -46,7 +47,7 @@ class PDE {
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
-    template< typename T > explicit PDE( T x ) :
+    template< typename T > explicit CGPDE( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
@@ -68,7 +69,7 @@ class PDE {
     //!    Concept.
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
-    explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
+    explicit CGPDE( std::function<T(Args...)> x, Args&&... args ) :
       self( tk::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
@@ -140,14 +141,14 @@ class PDE {
     { return self->fieldOutput( t, V, coord, v, U ); }
 
     //! Copy assignment
-    PDE& operator=( const PDE& x )
-    { PDE tmp(x); *this = std::move(tmp); return *this; }
+    CGPDE& operator=( const CGPDE& x )
+    { CGPDE tmp(x); *this = std::move(tmp); return *this; }
     //! Copy constructor
-    PDE( const PDE& x ) : self( x.self->copy() ) {}
+    CGPDE( const CGPDE& x ) : self( x.self->copy() ) {}
     //! Move assignment
-    PDE& operator=( PDE&& ) noexcept = default;
+    CGPDE& operator=( CGPDE&& ) noexcept = default;
     //! Move constructor
-    PDE( PDE&& ) noexcept = default;
+    CGPDE( CGPDE&& ) noexcept = default;
 
   private:
     //! \brief Concept is a pure virtual base class specifying the requirements
@@ -258,4 +259,4 @@ class PDE {
 
 } // inciter::
 
-#endif // PDE_h
+#endif // CGPDE_h

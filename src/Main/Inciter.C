@@ -19,7 +19,7 @@
 #include "QuinoaConfig.h"
 #include "Timer.h"
 #include "Exception.h"
-#include "PDE.h"
+#include "CGPDE.h"
 #include "PDEStack.h"
 #include "ProcessException.h"
 #include "InciterPrint.h"
@@ -70,11 +70,11 @@ ctr::InputDeck g_inputdeck_defaults;
 //!   system distributes it to all PEs during initialization. Once distributed,
 //!   the object does not change.
 ctr::InputDeck g_inputdeck;
-//! Partial differential equations selected by user
+//! Partial differential equations using continuous Galerkin selected by user
 //! \details This vector is in global scope, because it holds polymorphic
 //!   objects, and thus must be distributed to all PEs during initialization.
 //!   Once distributed by the runtime system, the objects do not change.
-std::vector< PDE > g_pdes;
+std::vector< CGPDE > g_pdes;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -94,7 +94,7 @@ std::vector< PDE > g_pdes;
 //! explains the guard for sizing: the code below is called for packing only (in
 //! serial) and packing and unpacking (in parallel).
 inline
-void operator|( PUP::er& p, std::vector< PDE >& eqs ) {
+void operator|( PUP::er& p, std::vector< CGPDE >& eqs ) {
   if (!p.isSizing()) eqs = PDEStack().selected();
 }
 

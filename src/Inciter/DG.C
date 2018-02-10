@@ -12,7 +12,7 @@
 
 #include "DG.h"
 #include "Discretization.h"
-#include "PDE.h"
+//#include "PDE.h"
 #include "Solver.h"
 #include "DiagReducer.h"
 #include "Diagnostics.h"
@@ -23,7 +23,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< PDE > g_pdes;
+//extern std::vector< PDE > g_pdes;
 
 static CkReduction::reducerType DiagMerger;
 
