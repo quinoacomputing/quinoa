@@ -62,7 +62,15 @@ class Transport {
                      tk::real t,
                      const std::vector< std::size_t >& ) const
     {
-      Problem::init( coord, unk, m_c, m_ncomp, m_offset, t );
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      for (ncomp_t i=0; i<x.size(); ++i) {
+        const auto s = Problem::solution( m_c, m_ncomp, x[i], y[i], z[i], t );
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          unk( i, c, m_offset ) = s[c];
+      }
     }
 
     //! Compute the left hand side sparse matrix

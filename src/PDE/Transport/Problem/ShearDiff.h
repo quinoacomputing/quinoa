@@ -60,7 +60,7 @@ namespace inciter {
 */
 class TransportProblemShearDiff {
 
-  private:
+  public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
@@ -97,6 +97,7 @@ class TransportProblemShearDiff {
       return r;
     }
 
+  private:
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     //! \param[in] e Equation system index, i.e., which transporte equation
@@ -136,33 +137,6 @@ class TransportProblemShearDiff {
       const auto& d = g_inputdeck.get< param, transport, tag::diffusivity >()[e];
       ErrChk( 3*ncomp == d.size(),
         "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
-    }
-
-    //! Set initial conditions for dispersion in simple shear flow
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] e Equation system index, i.e., which transport equation
-    //!   system we operate on among the systems of PDEs
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] t Physical time
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type ncomp,
-                      tk::ctr::ncomp_type offset,
-                      tk::real t )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( e, ncomp, x[i], y[i], z[i], t );
-        for (ncomp_t c=0; c<ncomp; ++c)
-          unk(i,c,offset) = s[c];
-      }
     }
 
     //! \brief Query all side set IDs the user has configured for all components

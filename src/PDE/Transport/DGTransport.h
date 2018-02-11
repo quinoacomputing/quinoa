@@ -54,15 +54,19 @@ class Transport {
     }
 
     //! Initalize the transport equations using problem policy
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
-    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::Fields& unk,
-                     tk::real t,
+//     //! \param[in] coord Mesh node coordinates
+//     //! \param[in,out] unk Array of unknowns
+//     //! \param[in] t Physical time
+    void initialize( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+                     tk::Fields& /*unk*/,
+                     tk::real /*t*/,
                      const std::vector< std::size_t >& ) const
     {
-      Problem::init( coord, unk, m_c, m_ncomp, m_offset, t );
+      // Call Problem::solution in a loop over all elements assigning the
+      // initial conditions for cell centers. See cg::Transport::initialize()
+      // for an example for a loop over all nodes using the node coordinates.
+      // Instead of coord, you probably want to pass in a const-ref to
+      // DG::m_geoElem.
     }
 
     //! Compute the left hand side sparse matrix

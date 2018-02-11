@@ -31,15 +31,16 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
 
-  private:
+  public:
     //! Evaluate analytical solution at (x,y,t) for all components
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,t)
     static std::vector< tk::real >
-    solution( tk::ctr::ncomp_type ncomp,
-              tk::real x, tk::real y, tk::real t )
+    solution( tk::ctr::ncomp_type,
+              tk::ctr::ncomp_type ncomp,
+              tk::real x, tk::real y, tk::real, tk::real t )
     {
       using std::sin; using std::cos;
       std::vector< tk::real > s( ncomp, 0.0 );
@@ -100,6 +101,7 @@ class TransportProblemSlotCyl {
       return s;
     }
 
+  private:
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     //! \param[in] x X coordinate where to evaluate the solution
@@ -111,8 +113,8 @@ class TransportProblemSlotCyl {
     solinc( tk::ctr::ncomp_type ncomp,
             tk::real x, tk::real y, tk::real t, tk::real dt )
     {
-      auto st1 = solution( ncomp, x, y, t );
-      auto st2 = solution( ncomp, x, y, t+dt );
+      auto st1 = solution( 0, ncomp, x, y, 0.0, t );
+      auto st2 = solution( 0, ncomp, x, y, 0.0, t+dt );
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
@@ -121,30 +123,6 @@ class TransportProblemSlotCyl {
   public:
     //! Do error checking on PDE parameters
     static void errchk( tk::ctr::ncomp_type, tk::ctr::ncomp_type ) {}
-
-    //! Set initial conditions for Zalesak's slotted cylinder case
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] t Physical time
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type,
-                      tk::ctr::ncomp_type ncomp,
-                      tk::ctr::ncomp_type offset,
-                      tk::real t )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( ncomp, x[i], y[i], t );
-        for (ncomp_t c=0; c<ncomp; ++c)
-          unk(i,c,offset) = s[c];
-      }
-    }
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system

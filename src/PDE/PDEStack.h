@@ -112,17 +112,23 @@ class PDEStack {
       }
     };
 
-    // Wrapper of registerPDE specialized for registering CG PDEs
+    //! Wrapper of registerPDE specialized for registering CG PDEs
     template< template< class, class > class Eq >
     struct registerCG : registerPDE< Eq, CGFactory, CGPDE > {
+      //! Delegate constructor to base and specialize to CG
+      //! \param[in] stack Host class to access factory and counters
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
       explicit registerCG< Eq >( PDEStack* const stack , ctr::PDEType t ) :
         registerPDE< Eq, CGFactory, CGPDE >
                    ( stack->m_cgfactory, t, stack->m_eqTypes ) {}
     };
 
-    // Wrapper of registerPDE specialized for registering DG PDEs
+    //! Wrapper of registerPDE specialized for registering DG PDEs
     template< template< class, class > class Eq >
     struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
+      //! Delegate constructor to base and specialize to CG
+      //! \param[in] stack Host class to access factory and counters
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
       explicit registerDG< Eq >( PDEStack* const stack , ctr::PDEType t ) :
         registerPDE< Eq, DGFactory, DGPDE >
                    ( stack->m_dgfactory, t, stack->m_eqTypes ) {}
