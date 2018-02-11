@@ -40,12 +40,12 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! \brief Factory for PDEs using continuous Galerkin discretization storing
 //!   keys associated to their constructors
-using CGPDEFactory =
+using CGFactory =
   std::map< ctr::PDEKey, std::function< CGPDE(const ncomp_t&) > >;
 
 //! \brief Factory for PDEs using discontinuous Galerkin discretization storing
 //!   keys associated to their constructors
-using DGPDEFactory =
+using DGFactory =
   std::map< ctr::PDEKey, std::function< DGPDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
@@ -63,7 +63,7 @@ class PDEStack {
 
     //! Constant accessor to CGPDE factory
     //! \return Constant reference to the CGPDE factory
-    const CGPDEFactory& factory() const { return m_cgfactory; }
+    const CGFactory& factory() const { return m_cgfactory; }
 
     //! Return info on selected partial differential equations
     std::vector< std::vector< std::pair< std::string, std::string > > > info()
@@ -82,14 +82,17 @@ class PDEStack {
     //!   as that will not have to specify the template arguments of the
     //!   template argument (the policies of Eq), since we can figure it out
     //!   here. See also http://stackoverflow.com/a/214900
-    template< template< class, class > class Eq >
+    template< template< class, class > class Eq, class Factory, class PDE >
     struct registerPDE {
       //! Need to store the reference to factory we are registering into
-      CGPDEFactory& factory;
+      Factory& factory;
       //! Need to store which differential equation we are registering
       const ctr::PDEType type;
       //! Constructor, also count number of unique equation types registered
-      explicit registerPDE( CGPDEFactory& f,
+      //! \param[in,out] f Factory into which to register PDE
+      //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+      //! \param[in] eqTypes Equation type counters
+      explicit registerPDE( Factory& f,
                             ctr::PDEType t,
                             std::set< ctr::PDEType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
@@ -104,9 +107,25 @@ class PDEStack {
         // Build differential equation key
         ctr::PDEKey key{ type, Physics::type(), Problem::type() };
         // Register equation (with policies given by mpl::vector U) into factory
-        tk::recordModelLate< CGPDE, Eq< Physics, Problem > >
+        tk::recordModelLate< PDE, Eq< Physics, Problem > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }
+    };
+
+    // Wrapper of registerPDE specialized for registering CG PDEs
+    template< template< class, class > class Eq >
+    struct registerCG : registerPDE< Eq, CGFactory, CGPDE > {
+      explicit registerCG< Eq >( PDEStack* const stack , ctr::PDEType t ) :
+        registerPDE< Eq, CGFactory, CGPDE >
+                   ( stack->m_cgfactory, t, stack->m_eqTypes ) {}
+    };
+
+    // Wrapper of registerPDE specialized for registering DG PDEs
+    template< template< class, class > class Eq >
+    struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
+      explicit registerDG< Eq >( PDEStack* const stack , ctr::PDEType t ) :
+        registerPDE< Eq, DGFactory, DGPDE >
+                   ( stack->m_dgfactory, t, stack->m_eqTypes ) {}
     };
 
     //! \brief Instantiate a partial differential equation
@@ -162,10 +181,10 @@ class PDEStack {
 
     //! \brief Partial differential equations factory for those PDEs that use
     //!   continuous Galerkin discretization
-    CGPDEFactory m_cgfactory;
+    CGFactory m_cgfactory;
     //! \brief Partial differential equations factory for those PDEs that use
     //!   discontinuous Galerkin discretization
-    DGPDEFactory m_dgfactory;
+    DGFactory m_dgfactory;
     //! Counters for equation types
     std::set< ctr::PDEType > m_eqTypes;
 };

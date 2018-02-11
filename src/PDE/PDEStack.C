@@ -19,12 +19,16 @@
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
 
-#include "Transport/Transport.h"
-#include "Transport/Physics.h"
+#include "Transport/CGTransport.h"
+#include "Transport/DGTransport.h"
+#include "Transport/Physics/CG.h"
+#include "Transport/Physics/DG.h"
 #include "Transport/Problem.h"
 
-#include "CompFlow/CompFlow.h"
-#include "CompFlow/Physics.h"
+#include "CompFlow/CGCompFlow.h"
+#include "CompFlow/DGCompFlow.h"
+#include "CompFlow/Physics/CG.h"
+#include "CompFlow/Physics/DG.h"
 #include "CompFlow/Problem.h"
 
 using inciter::PDEStack;
@@ -100,19 +104,41 @@ PDEStack::PDEStack() : m_cgfactory(), m_eqTypes()
 {
   namespace mpl = boost::mpl;
 
-  // Transport CGPDEs
-  // Construct vector of vectors for all possible policies
-  using TransportPolicies = mpl::vector< TransportPhysics, TransportProblems >;
-  // Register a PDE for all combinations of policies
-  mpl::cartesian_product< TransportPolicies >(
-    registerPDE< Transport >( m_cgfactory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
+  // Register PDEs using continuous Galerkin discretization
 
-  // Compressible flow system of CGPDEs
+  // Transport PDEs
   // Construct vector of vectors for all possible policies
-  using CompFlowPolicies = mpl::vector< CompFlowPhysics, CompFlowProblems >;
-  // Register a PDE for all combinations of policies
-  mpl::cartesian_product< CompFlowPolicies >(
-    registerPDE< CompFlow >( m_cgfactory, ctr::PDEType::COMPFLOW, m_eqTypes ) );
+  using CGTransportPolicies =
+    mpl::vector< cg::TransportPhysics, TransportProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< CGTransportPolicies >(
+    registerCG< cg::Transport >( this, ctr::PDEType::TRANSPORT ) );
+
+  // Compressible flow PDEs
+  // Construct vector of vectors for all possible policies
+  using CGCompFlowPolicies =
+    mpl::vector< cg::CompFlowPhysics, CompFlowProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< CGCompFlowPolicies >(
+    registerCG< cg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
+
+  // Register PDEs using discontinuous Galerkin discretization
+
+  // Transport PDEs
+  // Construct vector of vectors for all possible policies
+  using DGTransportPolicies =
+    mpl::vector< dg::TransportPhysics, TransportProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< DGTransportPolicies >(
+    registerDG< dg::Transport >( this, ctr::PDEType::TRANSPORT ) );
+
+  // Compressible flow DGPDEs
+  // Construct vector of vectors for all possible policies
+  using DGCompFlowPolicies =
+    mpl::vector< dg::CompFlowPhysics, CompFlowProblems >;
+  // Register PDEs for all combinations of policies
+  mpl::cartesian_product< DGCompFlowPolicies >(
+    registerDG< dg::CompFlow >( this, ctr::PDEType::COMPFLOW ) );
 }
 
 std::vector< inciter::CGPDE >

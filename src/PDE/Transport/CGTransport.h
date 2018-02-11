@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport.h
+  \file      src/PDE/Transport/CGTransport.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Governing equations describing transport of scalars
+  \brief     Scalar transport using continous Galerkin discretization
   \details   This file implements the physics operators governing transported
-     scalars.
+     scalars using continuous Galerkin discretization.
 */
 // *****************************************************************************
-#ifndef Transport_h
-#define Transport_h
+#ifndef CGTransport_h
+#define CGTransport_h
 
 #include <vector>
 #include <array>
@@ -25,12 +25,14 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! \brief Transport equation used polymorphically with tk::PDE
+namespace cg {
+
+//! \brief Transport equation used polymorphically with tk::CGPDE
 //! \details The template argument(s) specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/TransportPhysics.h
-//!   - Problem - problem configuration, see PDE/TransportProblem.h
-//! \note The default physics is Advection, set in
+//!   - Physics - physics configuration, see PDE/Transport/Physics/CG.h
+//!   - Problem - problem configuration, see PDE/Transport/Problem.h
+//! \note The default physics is CGAdvection, set in
 //!    inciter::deck::check_transport()
 template< class Physics, class Problem >
 class Transport {
@@ -456,6 +458,7 @@ class Transport {
     const ncomp_t m_offset;             //!< Offset this PDE operates from
 };
 
+} // cg::
 } // inciter::
 
 #endif // Transport_h

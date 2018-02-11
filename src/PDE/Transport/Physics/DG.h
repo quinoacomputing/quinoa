@@ -1,12 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport/Physics.h
+  \file      src/PDE/Transport/Physics/DG.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     All physics configurations for the scalar transport equations
-  \details   This file collects all Physics policy classes for the scalar
-    transport equations, defined in PDE/Transport/Transport.h.
+  \brief     Physics configurations for scalar transport using discontinuous
+             Galerkin
+  \details   This file configures all Physics policy classes for the scalar
+    transport equations implemented using discontinuous Galerkin discretization,
+    defined in PDE/Transport/DGTransport.h.
 
-    General requirements on Transport Physics policy classes:
+    General requirements on DGTransport Physics policy classes:
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -25,20 +27,20 @@
       time step size based on the diffusion term.
 */
 // *****************************************************************************
-#ifndef TransportPhysics_h
-#define TransportPhysics_h
+#ifndef TransportDGPhysics_h
+#define TransportDGPhysics_h
 
 #include <boost/mpl/vector.hpp>
 
-#include "Physics/Advection.h"
-#include "Physics/AdvDiff.h"
+#include "DGAdvection.h"
 
 namespace inciter {
+namespace dg {
 
-//! List of all Transport Physics policies (defined in the includes above)
-using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection
-                                           , TransportPhysicsAdvDiff >;
+//! Transport Physics policies implemented using discontinuous Galerkin
+using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection >;
 
+} // dg::
 } // inciter::
 
-#endif // TransportPhysics_h
+#endif // TransportDGPhysics_h
