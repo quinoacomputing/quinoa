@@ -374,7 +374,7 @@ class Transport {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] sides Pair of side set ID and node IDs on the side set
+    //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
@@ -384,9 +384,31 @@ class Transport {
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& sides,
+           const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return Problem::dirbc( m_c, m_ncomp, t, deltat, sides, coord ); }
+    {
+      using tag::param; using tag::transport; using tag::bcdir;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
+      if (!ubc.empty()) {
+        Assert( ubc.size() > m_c, "Indexing out of Dirichlet BC eq-vector" );
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        const auto& z = coord[2];
+        for (const auto& b : ubc[m_c])
+          if (std::stoi(b) == side.first)
+            for (auto n : side.second) {
+              Assert( x.size() > n, "Indexing out of coordinate array" );
+              auto s =
+                Problem::solinc( m_c, m_ncomp, x[n], y[n], z[n], t, deltat );
+              auto& nbc = bc[n] = NodeBC( m_ncomp );
+              for (ncomp_t c=0; c<m_ncomp; ++c)
+                nbc[c] = { true, s[c] };
+            }
+      }
+      return bc;
+    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
