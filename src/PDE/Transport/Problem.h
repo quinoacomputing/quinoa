@@ -28,7 +28,6 @@
      from t to t+dt of the analytic solution (if defined).
 
    - Must define the static function _side()_,  used to query all side set IDs
-   - Must define the static function _side()_,  used to query all side set IDs
      the user has configured for all components.
 
    - Must define the static function _dirbc()_,  used to query Dirichlet

@@ -54,6 +54,16 @@ class CompFlowProblemVorticalFlow {
       return {{ 1.0, ru, rv, rw, rE }};
     }
 
+    //! \brief Evaluate the increment from t to t+dt of the analytical solution
+    //!   at (x,y,z) for all components
+    //! \return Increment in values of all components: all zero for this problem
+    static std::array< tk::real, 5 >
+    solinc( tk::ctr::ncomp_type,
+            tk::real, tk::real, tk::real, tk::real, tk::real )
+    {
+      return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
+    }
+
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -91,39 +101,6 @@ class CompFlowProblemVorticalFlow {
       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
-    }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] side Pair of side set ID and node IDs on the side set
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( ncomp_t e,
-           tk::real,
-           tk::real,
-           const std::pair< const int, std::vector< std::size_t > >& side,
-           const std::array< std::vector< tk::real >, 3 >& )
-    {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
-      if (!ubc.empty()) {
-        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-        for (const auto& b : ubc[e])
-          if (std::stoi(b) == side.first)
-            for (auto n : side.second)
-              bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
-                         {true,0.0} }};
-      }
-      return bc;
     }
 
     //! Return field names to be output to file

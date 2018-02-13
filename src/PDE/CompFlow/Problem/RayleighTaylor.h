@@ -173,48 +173,6 @@ class CompFlowProblemRayleighTaylor {
           conf.insert( std::stoi(i) );
     }
 
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] t Physical time
-    //! \param[in] deltat Time step size
-    //! \param[in] side Pair of side set ID and node IDs on the side set
-    //! \param[in] coord Mesh node coordinates
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type e,
-           tk::real t,
-           tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& side,
-           const std::array< std::vector< tk::real >, 3 >& coord )
-    {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
-      if (!ubc.empty()) {
-        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        const auto& z = coord[2];
-        for (const auto& b : ubc[e])
-          if (std::stoi(b) == side.first)
-            for (auto n : side.second) {
-              Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = solinc( e, x[n], y[n], z[n], t, deltat );
-              bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
-                         {true,s[4]} }};
-            }
-      }
-      return bc;
-    }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     static std::vector< std::string > fieldNames() {
