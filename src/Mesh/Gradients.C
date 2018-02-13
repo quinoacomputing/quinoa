@@ -77,9 +77,11 @@ nodegrad( std::size_t node,
      vol += 5.0*J/120.0;
 
      // compute gradient over element weighed by cell volume / 4 and sum to node
-     for (std::size_t j=0; j<3; ++j)
-       for (std::size_t i=0; i<4; ++i)
+     for (std::size_t j=0; j<3; ++j) {
+       for (std::size_t i=0; i<4; ++i) {
          g[j] += grad[i][j] * u[i] * 5.0*J/120.0;
+       }
+     }
    }
 
    // divide components of nodal gradient by nodal volume
@@ -151,9 +153,11 @@ edgegrad( std::size_t edge,
      vol += J/36.0;
 
      // compute gradient over element weighed by cell volume / 6 and sum to edge
-     for (std::size_t j=0; j<3; ++j)
-       for (std::size_t i=0; i<4; ++i)
+     for (std::size_t j=0; j<3; ++j) {
+       for (std::size_t i=0; i<4; ++i) {
          g[j] += grad[i][j] * u[i] * J/36.0;
+       }
+     }
    }
 
    // divide components of gradient by edge volume
