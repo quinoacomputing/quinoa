@@ -3353,6 +3353,12 @@ void DerivedData_object::test< 68 >() {
                                             13,
                                             10 };
 
+  std::vector< std::size_t > nodemap { 0, 1, 2,  3,  4,  5,  6, 
+                                       7, 8, 9, 10, 11, 12, 13 };
+
+  std::vector< std::size_t > gid { 0, 1, 2,  3,  4,  5,  6, 
+                                   7, 8, 9, 10, 11, 12, 13 };
+
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( triinpoel );
@@ -3361,7 +3367,7 @@ void DerivedData_object::test< 68 >() {
   auto esuel = tk::genEsuelTet( inpoel, esup );
   auto ntfac = tk::genNtfac( 4, nbfac, esuel );
   auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuel );
-  auto belem = tk::genBelemTet( nbfac, inpofa, esup );
+  auto belem = tk::genBelemTet( nbfac, inpofa, nodemap, gid, esup );
 
   ensure_equals( "total number of entries in belem is incorrect",
                  belem.size(), correct_belem.size() );

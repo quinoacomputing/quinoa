@@ -71,7 +71,7 @@ FaceData::FaceData(
     m_ntfac = tk::genNtfac( 4, m_nbfac, m_esuel );
     m_inpofa = tk::genInpofaTet( m_ntfac, m_nbfac, inpoel, m_triinpoel,
                                  m_esuel );
-    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, esup );
+    m_belem =  tk::genBelemTet( m_nbfac, m_inpofa, nodemap, gid, esup );
     m_esuf = tk::genEsuf( 4, m_ntfac, m_nbfac, m_belem, m_esuel );
 
     Assert( m_belem.size() == m_nbfac,

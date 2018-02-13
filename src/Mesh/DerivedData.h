@@ -115,6 +115,8 @@ genInpofaTet( std::size_t ntfac,
 std::vector< std::size_t >
 genBelemTet( std::size_t nbfac,
               const std::vector< std::size_t >& inpofa,
+              const std::vector< std::size_t >& nodemap,
+              const std::vector< std::size_t >& gid,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup );
 

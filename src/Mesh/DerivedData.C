@@ -1224,6 +1224,8 @@ genInpofaTet( std::size_t ntfac,
 std::vector< std::size_t >
 genBelemTet( std::size_t nbfac,
               const std::vector< std::size_t >& inpofa,
+              const std::vector< std::size_t >& nodemap,
+              const std::vector< std::size_t >& gid,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup )
 // *****************************************************************************
@@ -1231,6 +1233,10 @@ genBelemTet( std::size_t nbfac,
 //   their faces with the domain boundary (host elements).
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpofa Face-node connectivity.
+//! \param[in] node_map Vector mapping the local Exodus node-IDs to global
+//!            Exodus node-IDs
+//! \param[in] gid Vector mapping the local renumbered node-IDs to local Exodus
+//!            node-IDs
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
 //! \return Host elements or boundary elements. The unsigned integer vector
 //!   gives the elements to the left of each boundary face in the mesh.
@@ -1257,9 +1263,20 @@ genBelemTet( std::size_t nbfac,
     {
       auto gp = inpofa[nnpf*f + lp];
 
-      Assert( gp < esup.second.size(), "Indexing out of esup2" );
+      // 1. find the Exodus-local node ID for gp
+      auto it = std::find (nodemap.begin(), nodemap.end(), gp);
+      if (it == nodemap.end()) { continue; }
+      auto lgp = static_cast< std::size_t >(it-nodemap.begin());
+
+      // 2. find the renumbered node ID for lgp,
+      //    this is the local node id that esup uses
+      auto ip = std::find (gid.begin(), gid.end(), lgp);
+      Assert( ip != gid.end(), "gid map pointing to nothing!" );
+      auto rgp = static_cast< std::size_t >(ip-gid.begin());
+
+      Assert( rgp < esup.second.size(), "Indexing out of esup2" );
       // loop over elements surrounding this node
-      for (auto i=esup.second[gp]+1; i<=esup.second[gp+1]; ++i)
+      for (auto i=esup.second[rgp]+1; i<=esup.second[rgp+1]; ++i)
       {
         // form element-cluster vector
         elemcluster.push_back(esup.first[i]);
