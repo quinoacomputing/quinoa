@@ -2423,7 +2423,7 @@ template<> template<>
 void DerivedData_object::test< 65 >() {
   set_test_name( "Boundary faces (genNbfacTet) for tetrahedra" );
 
-  std::map< int, std::vector< std::size_t > > bface;
+  std::map< int, std::vector< std::size_t > > bface, t_bface;
 
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
@@ -2431,7 +2431,7 @@ void DerivedData_object::test< 65 >() {
   std::string infile( REGRESSION_DIR
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto tnbfac = er.readSidesetFaces( bface );
+  auto tnbfac = er.readSidesetFaces( t_bface );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",
@@ -2489,24 +2489,52 @@ void DerivedData_object::test< 65 >() {
                                             4, 14,  8,
                                             1, 14,  4 };
 
+  // Correct Boundary-face node connectivity
+  std::vector< std::size_t > correct_triinpoel {  7, 10,  6,
+                                                  6, 10,  5,
+                                                  8, 10,  7,
+                                                 10,  8,  5,
+                                                  5,  8, 14,
+                                                  1,  5, 14,
+                                                  4, 14,  8,
+                                                  1, 14,  4,
+                                                  2,  9,  3,
+                                                  1,  9,  2,
+                                                  3,  9,  4,
+                                                  1,  4,  9,
+                                                  3, 12,  2,
+                                                 12,  6,  2,
+                                                  7, 12,  3,
+                                                 12,  7,  6,
+                                                 13,  7,  3,
+                                                  4, 13,  3,
+                                                 13,  8,  7,
+                                                  8, 13,  4,
+                                                  6, 11,  2,
+                                                  2, 11,  1,
+                                                 11,  6,  5,
+                                                 11,  5,  1 };
+
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( t_triinpoel );
+  tk::shiftToZero( correct_triinpoel );
 
   std::vector< std::size_t > triinpoel;
 
-  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, triinpoel );
+  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, t_bface,
+                                triinpoel, bface );
 
   ensure_equals( "number of boundary-faces is incorrect",
                  nbfac, tnbfac );
 
   ensure_equals( "total number of entries in triinpoel is incorrect",
-                 triinpoel.size(), t_triinpoel.size() );
+                 triinpoel.size(), correct_triinpoel.size() );
 
   for(std::size_t i=0 ; i<triinpoel.size(); ++i)
   {
     ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
-                    triinpoel[i], t_triinpoel[i]);
+                    triinpoel[i], correct_triinpoel[i]);
   }
 }
 

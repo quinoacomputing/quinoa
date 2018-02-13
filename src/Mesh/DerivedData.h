@@ -85,7 +85,9 @@ std::size_t
 genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& triinpoel_complete,
-             std::vector< std::size_t >& triinpoel );
+             const std::map< int, std::vector< std::size_t > >& bface_complete,
+             std::vector< std::size_t >& triinpoel,
+             std::map< int, std::vector< std::size_t > > bface );
 
 //! Generate derived data structure, total number of faces
 std::size_t

@@ -215,11 +215,14 @@ Transporter::createPartitioner()
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
+  // Read local to global node-ID map from file
+  auto nodemap = er.readNodemap();
+
   // Read triangle boundary-face connectivity
   if (scheme == ctr::SchemeType::DG) {
     m_print.diag( "Reading side set faces" );
     nbfac = er.readSidesetFaces( bface );
-    er.readFaces( nbfac, triinpoel );
+    er.readFaces( nbfac, nodemap, triinpoel );
   }
 
   // Verify that side sets to which boundary conditions are assigned by user
@@ -252,7 +255,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               nbfac, bface, triinpoel );
+                               nbfac, bface, triinpoel, nodemap );
 }
 
 void

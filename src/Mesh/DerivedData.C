@@ -809,7 +809,9 @@ std::size_t
 genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& triinpoel_complete,
-             std::vector< std::size_t >& triinpoel )
+             const std::map< int, std::vector< std::size_t > >& bface_complete,
+             std::vector< std::size_t >& triinpoel,
+             std::map< int, std::vector< std::size_t > > bface )
 // *****************************************************************************
 //  Generate the number of boundary-faces and the triangle boundary-face
 //  connectivity for a chunk of a full mesh.
@@ -819,8 +821,12 @@ genNbfacTet( std::size_t tnbfac,
 //!   node ids of each element of an unstructured mesh.
 //! \param[in] triinpoel_complete Interconnectivity of points and boundary-face
 //!   in the entire mesh.
+//! \param[in] bface_complete Map of boundary-face lists mapped to corresponding 
+//!   side set ids for the entire mesh.
 //! \param[inout] triinpoel Interconnectivity of points and boundary-face in
 //!   this mesh-partition.
+//! \param[inout] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids for this mesh-partition
 //! \return Number of boundary-faces on this chare/mesh-partition.
 //! \details This function takes a mesh by its domain-element
 //!   (tetrahedron-connectivity) in inpoel and a boundary-face (triangle)
@@ -871,26 +877,32 @@ genNbfacTet( std::size_t tnbfac,
 
   // matching nodes in nptri_chunk with nodes in inpoel and 
   // triinpoel_complete to get the number of faces in this chunk
-  for (std::size_t f=0; f<tnbfac; ++f)
+  for (const auto& ss : bface_complete)
   {
-    icoun = f*nnpf;
-    tag = 0;
-    for (std::size_t i=0; i<nnpf; ++i)
+    for (auto f : ss.second)
     {
-      for (auto j : nptri_chunk)
+      icoun = f*nnpf;
+      tag = 0;
+      for (std::size_t i=0; i<nnpf; ++i)
       {
-        if (triinpoel_complete[icoun+i] == j) ++tag;
+        for (auto j : nptri_chunk)
+        {
+          if (triinpoel_complete[icoun+i] == j) ++tag;
+        }
+      }
+      if (tag == nnpf)
+      // this is a boundary face
+      {
+        triinpoel.push_back( triinpoel_complete[icoun] );
+        triinpoel.push_back( triinpoel_complete[icoun+1] );
+        triinpoel.push_back( triinpoel_complete[icoun+2] );
+
+        bface[ss.first].push_back(nbfac);
+        ++nbfac;
       }
     }
-    if (tag == nnpf)
-    // this is a boundary face
-    {
-      ++nbfac;
-      triinpoel.push_back( triinpoel_complete[icoun] );
-      triinpoel.push_back( triinpoel_complete[icoun+1] );
-      triinpoel.push_back( triinpoel_complete[icoun+2] );
-    }
   }
+
   }
 
   return nbfac;
