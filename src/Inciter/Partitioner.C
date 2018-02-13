@@ -1221,7 +1221,7 @@ Partitioner::createDiscWorkers()
     typename decltype(m_chedgenodes)::mapped_type edno;
     if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
     // Create worker array element
-    m_scheme.discInsert< tag::elem >( cid, m_host, m_bc,
+    m_scheme.discInsert( cid, m_host, m_bc,
       tk::cref_find(m_chinpoel,cid), msum, tk::cref_find(m_chfilenodes,cid),
       edno, m_nchare, CkMyPe() );
   }
@@ -1269,7 +1269,7 @@ Partitioner::createWorkers()
     FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
 
     // Create worker array element
-    m_scheme.insert< tag::elem >( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
+    m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
 }
 
