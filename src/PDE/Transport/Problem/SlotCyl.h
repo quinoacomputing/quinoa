@@ -152,20 +152,6 @@ class TransportProblemSlotCyl {
       return vel;
     }
 
-    //! Return the velocity field at cell nodes
-    //! \return Array of the four values of the three velocity coordinates
-    static std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields&,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N )
-    {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      return {{ {{ 0.5-y[N[0]], 0.5-y[N[1]], 0.5-y[N[2]], 0.5-y[N[3]] }},
-                {{ x[N[0]]-0.5, x[N[1]]-0.5, x[N[2]]-0.5, x[N[3]]-0.5 }},
-                {{ 0.0,         0.0,         0.0,         0.0 }} }};
-    }
-
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::SLOT_CYL; }
 };

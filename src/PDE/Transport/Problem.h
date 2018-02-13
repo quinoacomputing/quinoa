@@ -24,15 +24,16 @@
      solution (if defined) and for initialization of the computed fields at time
      t.
 
+   - Must define the static function _solinc()_, used to evaluate the increment
+     from t to t+dt of the analytic solution (if defined).
+
+   - Must define the static function _side()_,  used to query all side set IDs
    - Must define the static function _side()_,  used to query all side set IDs
      the user has configured for all components.
 
    - Must define the static function _dirbc()_,  used to query Dirichlet
      boundary condition value on a given side set for all components in the PDE
      system.
-
-   - Must define the static function _velocity()_, used to query the velocity
-     field at cell nodes.
 
    - Must define the static function _prescribedVelocity()_, used to query the
      prescribed velocity at a point.

@@ -104,13 +104,6 @@ class DGPDE {
                  const tk::Fields& U ) const
     { return self->dt( coord, inpoel, U ); }
 
-    //! Public interface for computing the transport velocity at nodes
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N ) const
-    { return self->velocity( U, coord, N ); }
-
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
     void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
@@ -176,10 +169,6 @@ class DGPDE {
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
-      virtual std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields&,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::array< std::size_t, 4 >&  ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
@@ -226,11 +215,6 @@ class DGPDE {
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
       { return data.dt( coord, inpoel, U ); }
-      std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields& U,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::array< std::size_t, 4 >& N  ) const override
-      { return data.velocity( U, coord, N ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >

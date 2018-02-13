@@ -170,16 +170,6 @@ class TransportProblemShearDiff {
       return vel;
     }
 
-    //! Return the velocity field at cell nodes
-    //! \return Array of the four values of the three velocity coordinates
-    static std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields&,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& )
-    { return {{ {{0.0, 0.0, 0.0, 0.0}},
-                {{0.0, 0.0, 0.0, 0.0}},
-                {{0.0, 0.0, 0.0, 0.0}} }}; }
-
     //! Problem type enum accessor
     //! \return Problem type as enum
     static ctr::ProblemType type() noexcept

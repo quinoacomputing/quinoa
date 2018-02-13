@@ -349,17 +349,6 @@ class Transport {
       return mindt;
     }
 
-    //! Extract the transport velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the transport velocity
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N ) const
-    { return Problem::velocity( U, coord, N ); }
-
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
