@@ -59,8 +59,7 @@ class Transport {
     //! \param[in] t Physical time
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& ) const
+                     tk::real t ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -442,7 +441,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t, {{}} );
+      initialize( coord, U, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

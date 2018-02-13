@@ -118,8 +118,7 @@ MatCG::setup( tk::real v )
   m_du.fill( 0.0 );
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
+  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Send off initial guess for assembly
   m_solver.ckLocalBranch()->charesol( thisIndex, d->Gid(), m_du );

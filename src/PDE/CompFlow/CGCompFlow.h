@@ -45,14 +45,23 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    //! \param[in] gid Global node IDs of owned elements
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
+                     tk::real t ) const
     {
-      // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, unk, 0, m_offset, t );
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      // set initial and boundary conditions using problem policy
+      for (ncomp_t i=0; i<coord[0].size(); ++i) {
+        const auto s = Problem::solution( 0, x[i], y[i], z[i], t );
+        unk(i,0,m_offset) = s[0]; // rho
+        unk(i,1,m_offset) = s[1]; // rho * u
+        unk(i,2,m_offset) = s[2]; // rho * v
+        unk(i,3,m_offset) = s[3]; // rho * w
+        unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
+      }
     }
 
     //! Compute the left hand side sparse matrix

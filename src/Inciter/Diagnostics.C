@@ -89,7 +89,7 @@ Diagnostics::compute( Discretization& d, const tk::Fields& u )
     // really the initial condition.
     auto a = u;
     for (const auto& eq : g_cgpde)
-      eq.initialize( d.Coord(), a, d.T()+d.Dt(), d.Gid() );
+      eq.initialize( d.Coord(), a, d.T()+d.Dt() );
 
     // Prepare for computing diagnostics. Diagnostics are defined as some norm,
     // .e.g., L2 norm, of a quantity, computed in mesh nodes, A, as ||A||_2 =

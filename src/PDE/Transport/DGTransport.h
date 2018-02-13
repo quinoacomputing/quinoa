@@ -59,8 +59,7 @@ class Transport {
 //     //! \param[in] t Physical time
     void initialize( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
                      tk::Fields& /*unk*/,
-                     tk::real /*t*/,
-                     const std::vector< std::size_t >& ) const
+                     tk::real /*t*/ ) const
     {
       // Call Problem::solution() in a loop over all elements assigning the
       // initial conditions for cell centers. See cg::Transport::initialize()
@@ -426,7 +425,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t, {{}} );
+      initialize( coord, U, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

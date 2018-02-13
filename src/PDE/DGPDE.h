@@ -75,9 +75,8 @@ class DGPDE {
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
-    { self->initialize( coord, unk, t, gid ); }
+                     tk::real t ) const
+    { self->initialize( coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -152,8 +151,7 @@ class DGPDE {
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
-                               tk::real,
-                               const std::vector< std::size_t >& ) const = 0;
+                               tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
@@ -194,9 +192,8 @@ class DGPDE {
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                        tk::Fields& unk,
-                       tk::real t,
-                       const std::vector< std::size_t >& gid )
-      const override { data.initialize( coord, unk, t, gid ); }
+                       tk::real t )
+      const override { data.initialize( coord, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,

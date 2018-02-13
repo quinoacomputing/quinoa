@@ -51,6 +51,8 @@ class CompFlowProblemNLEnergyGrowth {
                         tk::real p )
     { return std::pow( -3.0*(ce + kappa*h*h*t), p ); }
 
+  public:
+
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -62,7 +64,7 @@ class CompFlowProblemNLEnergyGrowth {
     static std::array< tk::real, 5 >
     solution( tk::ctr::ncomp_type e,
               tk::real x, tk::real y, tk::real z, tk::real t )
-   {
+    {
       using tag::param; using tag::compflow;
       // manufactured solution parameters
       const auto ce = g_inputdeck.get< param, compflow, tag::ce >()[e];
@@ -102,38 +104,6 @@ class CompFlowProblemNLEnergyGrowth {
       std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                       []( tk::real s, tk::real& d ){ return d -= s; } );
       return st2;
-    }
-
-  public:
-
-    //! Set initial conditions
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] t Physical time
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >&,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset,
-                      tk::real t )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      // set initial and boundary conditions
-      for (ncomp_t i=0; i<coord[0].size(); ++i) {
-        const auto s = solution( e, x[i], y[i], z[i], t );
-        unk(i,0,offset) = s[0]; // rho
-        unk(i,1,offset) = s[1]; // rho * u
-        unk(i,2,offset) = s[2]; // rho * v
-        unk(i,3,offset) = s[3]; // rho * w
-        unk(i,4,offset) = s[4]; // rho * e, e: total = kinetic + internal energy
-      }
     }
 
     //! Compute and return source term for NLEG manufactured solution

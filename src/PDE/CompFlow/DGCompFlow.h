@@ -42,17 +42,17 @@ class CompFlow {
     explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
-    //! \param[in] gid Global node IDs of owned elements
-    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
+//     //! \param[in] coord Mesh node coordinates
+//     //! \param[in,out] unk Array of unknowns
+//     //! \param[in] t Physical time
+    void initialize( const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+                     tk::Fields& /*unk*/,
+                     tk::real /*t*/ ) const
     {
-      // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, unk, 0, m_offset, t );
+      // Loop over all cells and call Problem::solution() to query the initial
+      // conditions or the analytical solutions (whichever Problem::solution()
+      // evaluates for the given problem). See cg::CompFlow::initialize() for a
+      // node-based example.
     }
 
     //! Compute the left hand side sparse matrix

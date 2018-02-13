@@ -26,28 +26,11 @@ class CompFlowProblemUserDefined {
 
   public:
 
-    //! Set initial conditions
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >&,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type,
-                      tk::ctr::ncomp_type offset,
-                      tk::real )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        // domain points
-        unk(i,0,offset) = 1.0;        // density
-        unk(i,1,offset) = 0.0;        // density * velocity
-        unk(i,2,offset) = 0.0;
-        unk(i,3,offset) = 1.0;
-        unk(i,4,offset) = 293.0;      // density * specific total energy
-      }
+    //! Evaluate initial condition solution at (x,y,z,t) for all components
+    //! \return Values of all components evaluated at (x,y,z,t)
+    static std::array< tk::real, 5 >
+    solution( tk::ctr::ncomp_type, tk::real, tk::real, tk::real, tk::real ) {
+      return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution

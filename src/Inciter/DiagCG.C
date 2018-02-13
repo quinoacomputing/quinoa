@@ -131,8 +131,7 @@ DiagCG::setup( tk::real v )
   lhs();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Gid() );
+  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Activate SDAG waits for setup
   wait4setup();
