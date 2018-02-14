@@ -25,7 +25,7 @@ FaceData::FaceData(
   std::size_t nbfac_complete,
   const std::map< int, std::vector< std::size_t > >& bface_complete,
   const std::vector< std::size_t >& triinpoel_complete,
-  const std::vector< std::size_t >& nodemap )// : m_bface( bface )
+  const std::vector< std::size_t >& nodemap )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)

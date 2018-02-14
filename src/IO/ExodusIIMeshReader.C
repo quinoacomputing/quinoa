@@ -416,6 +416,10 @@ ExodusIIMeshReader::readNodemap()
 // *****************************************************************************
 //  Read local to global node-ID map from ExodusII file
 //! \return node_map Vector mapping the local Exodus node-IDs to global node-IDs
+//! \details The node-map is required to get the "Exodus-global" node-IDs from
+//!   the "Exodus-internal" node-IDs, which are returned from the exodus APIs.
+//!   The node-IDs in the exodus file are referred to as the "Exodus-global"
+//!   node-IDs or "fileIDs" in Quinoa.
 // *****************************************************************************
 {
   // Read triangle boundary-face connectivity

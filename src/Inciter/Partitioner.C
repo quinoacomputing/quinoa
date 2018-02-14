@@ -81,7 +81,10 @@ Partitioner::Partitioner(
 //! \param[in] bc Boundary conditions group proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] nbfac Total number of boundary faces
-//! \param[out] bface Face lists mapped to side set ids
+//! \param[in] bface Face lists mapped to side set ids
+//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] nodemap Vector mapping the local Exodus node-IDs to global Exodus
+//!            node-IDs
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
