@@ -34,7 +34,8 @@ Partitioner::Partitioner(
   const Scheme& scheme,
   std::size_t nbfac,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::vector< std::size_t >& triinpoel ) :
+  const std::vector< std::size_t >& triinpoel,
+  const std::vector< std::size_t >& nodemap ) :
   m_cb( cb[0], cb[1], cb[2], cb[3], cb[4], cb[5], cb[6] ),
   m_host( host ),
   m_solver( solver ),
@@ -70,7 +71,8 @@ Partitioner::Partitioner(
   m_msumed(),
   m_nbfac( nbfac ),
   m_bface( bface ),
-  m_triinpoel( triinpoel )
+  m_triinpoel( triinpoel ),
+  m_nodemap( nodemap )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cb Charm++ callbacks
@@ -79,7 +81,10 @@ Partitioner::Partitioner(
 //! \param[in] bc Boundary conditions group proxy
 //! \param[in] scheme Discretization scheme
 //! \param[in] nbfac Total number of boundary faces
-//! \param[out] bface Face lists mapped to side set ids
+//! \param[in] bface Face lists mapped to side set ids
+//! \param[in] triinpoel Interconnectivity of points and boundary-face
+//! \param[in] nodemap Vector mapping the local Exodus node-IDs to global Exodus
+//!            node-IDs
 // *****************************************************************************
 {
   tk::ExodusIIMeshReader
@@ -1266,7 +1271,7 @@ Partitioner::createWorkers()
     Assert( m_scheme.get()[cid].ckLocal() != nullptr, "About to pass nullptr" );
 
     // Face data class
-    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel);
+    FaceData fd(tk::cref_find(m_chinpoel,cid), m_nbfac, m_bface, m_triinpoel, m_nodemap);
 
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
