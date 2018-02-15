@@ -1550,7 +1550,8 @@ void ExodusIIMeshReader_object::test< 5 >() {
 
   // Read boundary face-node connectivity
   std::vector< std::size_t > triinpoel;
-  er.readFaces( nbfac, triinpoel );
+  auto nodemap = er.readNodemap();
+  er.readFaces( nbfac, nodemap, triinpoel );
 
   // Generate correct solution for face-node connectivity
   std::vector< int > correct_triinpoel {  2,  9,  3,
@@ -1598,7 +1599,8 @@ void ExodusIIMeshReader_object::test< 6 >() {
     std::vector< std::size_t > triinpoel;
     std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
     tk::ExodusIIMeshReader er( infile );
-    er.readFaces( 0, triinpoel );
+    auto nodemap = er.readNodemap();
+    er.readFaces( 0, nodemap, triinpoel );
     fail( "should throw exception" );
   }
   catch ( tk::Exception& ) {
