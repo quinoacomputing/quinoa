@@ -26,7 +26,8 @@ class FaceData
         const std::vector< std::size_t >& conn,
         std::size_t nbfac_complete,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel_complete );
+        const std::vector< std::size_t >& triinpoel_complete,
+        const std::vector< std::size_t >& nodemap );
 
     /** @name Accessors
       * */
