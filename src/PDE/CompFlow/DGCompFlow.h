@@ -25,7 +25,7 @@ extern ctr::InputDeck g_inputdeck;
 
 namespace dg {
 
-//! \brief CompFlow used polymorphically with tk::PDE
+//! \brief CompFlow used polymorphically with tk::DGPDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/CompFlow/Physics.h

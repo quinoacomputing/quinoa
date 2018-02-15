@@ -66,6 +66,8 @@ class Transport {
       // for an example for a loop over all nodes using the node coordinates.
       // Instead of coord, we probably want to pass in a const-ref to
       // DG::m_geoElem and work with the cell centroid coordinates.
+      std::cout << "type: " <<
+        std::to_string( static_cast< uint8_t >( Problem::type() )) << '\n';
     }
 
     //! Compute the left hand side sparse matrix

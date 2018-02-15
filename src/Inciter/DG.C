@@ -12,7 +12,7 @@
 
 #include "DG.h"
 #include "Discretization.h"
-//#include "DGPDE.h"
+#include "DGPDE.h"
 #include "Solver.h"
 #include "DiagReducer.h"
 #include "Diagnostics.h"
@@ -23,7 +23,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-//extern std::vector< PDE > g_dgpde;
+extern std::vector< DGPDE > g_dgpde;
 
 static CkReduction::reducerType DiagMerger;
 
@@ -103,6 +103,10 @@ DG::setup( tk::real v )
                             + (ycc-0.25)*(ycc-0.25))/(2.0 * 0.005) );
     m_u(e,0,0) = u; // scalar
   }
+
+  // Set initial conditions for all PDEs
+  std::cout << "DG::init: " << g_dgpde.size() << '\n';
+  for (const auto& eq : g_dgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );

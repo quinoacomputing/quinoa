@@ -33,7 +33,7 @@
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_cgfactory(), m_eqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_eqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
@@ -151,12 +151,17 @@ PDEStack::selectedCG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
-  for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-    if (d == ctr::PDEType::TRANSPORT)
-      pdes.push_back( createPDE< tag::transport >( d, cnt ) );
-    else if (d == ctr::PDEType::COMPFLOW)
-      pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
-    else Throw( "Can't find selected CGPDE" );
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (sch == ctr::SchemeType::MatCG || sch == ctr::SchemeType::DiagCG) {
+
+    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createCG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createCG< tag::compflow >( d, cnt ) );
+      else Throw( "Can't find selected CGPDE" );
+    }
+
   }
 
   return pdes;
@@ -172,13 +177,18 @@ PDEStack::selectedDG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< DGPDE > pdes;                // will store instantiated PDEs
 
-//   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-//     if (d == ctr::PDEType::TRANSPORT)
-//       pdes.push_back( createPDE< tag::transport >( d, cnt ) );
-//     else if (d == ctr::PDEType::COMPFLOW)
-//       pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
-//     else Throw( "Can't find selected CGPDE" );
-//   }
+  auto sch = g_inputdeck.get< tag::selected, tag::scheme >();
+  if (sch == ctr::SchemeType::DG) {
+
+    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createDG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createDG< tag::compflow >( d, cnt ) );
+      else Throw( "Can't find selected DGPDE" );
+    }
+
+  }
 
   return pdes;
 }
