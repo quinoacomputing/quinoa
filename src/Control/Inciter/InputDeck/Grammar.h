@@ -259,6 +259,17 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct enable_amr : pegtl::success {};
+  //! Enable adaptive mesh refinement (AMR)
+  template<>
+  struct action< enable_amr > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      stack.template get< tag::amr, tag::amr >() = true;
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -467,13 +478,19 @@ namespace deck {
   struct amr :
          pegtl::if_must<
            tk::grm::readkw< use< kw::amr >::pegtl_string >,
+           tk::grm::enable_amr, // enable AMR if amr...end block encountered
            tk::grm::block< use< kw::end >,
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_inciter_option<
-                               ctr::InitialAMR,
-                               tag::selected,
-                               tag::initialamr >,
+                               ctr::AMRInitial,
+                               tag::amr, tag::init >,
+                             pegtl::alpha >,
+                           tk::grm::process<
+                             use< kw::amr_error >,
+                             tk::grm::store_inciter_option<
+                               ctr::AMRError,
+                               tag::amr, tag::error >,
                              pegtl::alpha > > > {};
 
   //! plotvar ... end block
