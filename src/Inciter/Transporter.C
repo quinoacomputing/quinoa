@@ -333,8 +333,8 @@ Transporter::load( uint64_t nelem )
   m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM)
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM)
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -354,12 +354,18 @@ Transporter::load( uint64_t nelem )
   m_print.Item< tk::ctr::PartitioningAlgorithm,
                 tag::selected, tag::partitioner >();
 
-  // Print out mesh refinement configuration and new mesh statistics
-  if (ir == ctr::InitialAMRType::UNIFORM) {
-    m_print.section( "Mesh refinement" );
-    m_print.Item< ctr::InitialAMR, tag::selected, tag::initialamr >();
-    m_print.item( "Final number of tetrahedra",
-      std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+  // Print out adaptive mesh refinement configuration
+  const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
+  if (amr) {
+    m_print.section( "Adaptive mesh refinement (AMR)" );
+    m_print.Item< ctr::AMRInitial, tag::amr, tag::init >();
+    m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    // Print out initially refined  mesh statistics
+    if (ir == ctr::AMRInitialType::UNIFORM) {
+      m_print.section( "Initial mesh refinement" );
+      m_print.item( "Final number of tetrahedra",
+        std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+    }
   }
 
   m_print.endsubsection();

@@ -3648,6 +3648,49 @@ struct amr_initial_info {
 };
 using amr_initial = keyword< amr_initial_info, TAOCPP_PEGTL_STRING("initial") >;
 
+struct amr_jump_info {
+  static std::string name() { return "jump"; }
+  static std::string shortDescription() { return
+    "Error estimation based on the jump in the solution normalized by solution";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the jump-based error indicator for
+    solution-adaptive mesh refinement. The error is estimated by computing the
+    magnitude of the jump in the solution value normalized by the solution
+    value.)"; }
+};
+using amr_jump =
+  keyword< amr_jump_info, TAOCPP_PEGTL_STRING("jump") >;
+
+struct amr_hessian_info {
+  static std::string name() { return "Hessian"; }
+  static std::string shortDescription() { return
+    "Error estimation based on the Hessian normalized by solution value"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Hessian-based error indicator for
+    solution-adaptive mesh refinement. The error is estimated by computing the
+    Hessian (2nd derivative matrix) of the solution normalized by sum of the
+    absolute values of the gradients at edges-end points.)"; }
+};
+using amr_hessian = keyword< amr_hessian_info, TAOCPP_PEGTL_STRING("hessian") >;
+
+struct amr_error_info {
+  static std::string name() { return "error type"; }
+  static std::string shortDescription() { return
+    "Configure the error type for solution-adaptive mesh refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the algorithm used to estimate the error
+    for solution-adaptive mesh refinement.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + amr_jump::string() + "\' | \'"
+                  + amr_hessian::string() + '\'';
+    }
+  };
+};
+using amr_error = keyword< amr_error_info, TAOCPP_PEGTL_STRING("error") >;
+
 struct amr_info {
   static std::string name() { return "AMR"; }
   static std::string shortDescription() { return
