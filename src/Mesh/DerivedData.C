@@ -17,7 +17,7 @@
 #include <array>
 #include <unordered_set>
 
-#include "Exception.h"                  // for Assert
+#include "Exception.h"
 #include "DerivedData.h"
 #include "ContainerUtil.h"
 #include "Vector.h"
