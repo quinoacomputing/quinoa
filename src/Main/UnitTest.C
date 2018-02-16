@@ -91,6 +91,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"
 #include "tests/Mesh/TestGradients.h"
+#include "tests/Mesh/TestAround.h"
 
 #include "tests/RNG/TestRNG.h"
 #ifdef HAS_MKL
