@@ -1,10 +1,9 @@
 /*!
   \page      coverage Code coverage and static analysis reports
 
-In Quinoa code correctness is verified and quantified using [multiple
-levels](\ref correct) of testing. Here are various code coverage analysis
-reports for building in Release and Debug mode. These coverage builds are
-updated whenever the
+In Quinoa code correctness is verified and quantified using [multiple levels](\ref correct)
+of testing. Here are various code coverage analysis reports for building in
+Release and Debug mode. These coverage builds are updated whenever the
 [master](https://github.com/quinoacomputing/quinoa/tree/master) or the
 [develop](https://github.com/quinoacomputing/quinoa/tree/develop) branches are
 updated.
@@ -37,7 +36,7 @@ target="_blank">Cppcheck static analysis report (Release)</a>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 21 Aug 2017 08:33:53 AM MDT
+<em>Page last updated:</em> Fri 16 Feb 2018 07:41:38 AM MST
 <em>Copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.</em>
 </small></div>
 */
