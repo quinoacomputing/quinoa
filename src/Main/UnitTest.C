@@ -90,6 +90,8 @@ const int MAX_TESTS_IN_GROUP = 80;
 
 #include "tests/Mesh/TestDerivedData.h"
 #include "tests/Mesh/TestReorder.h"
+#include "tests/Mesh/TestGradients.h"
+#include "tests/Mesh/TestAround.h"
 
 #include "tests/RNG/TestRNG.h"
 #ifdef HAS_MKL
@@ -110,6 +112,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #endif
 
 #include "tests/Inciter/TestScheme.h"
+#include "tests/Inciter/AMR/TestError.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

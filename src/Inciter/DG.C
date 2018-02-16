@@ -17,6 +17,7 @@
 #include "DiagReducer.h"
 #include "Diagnostics.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "ExodusIIMeshWriter.h"
 
 namespace inciter {
 
@@ -33,7 +34,10 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const tk::CProxy_Solver& solver,
         const FaceData& fd ) :
+  m_itf( 0 ),
   m_disc( disc ),
+  m_u( m_disc[thisIndex].ckLocal()->Inpoel().size()/4,
+       g_inputdeck.get< tag::component >().nprop() ),
   m_vol( 0.0 )
 // *****************************************************************************
 //  Constructor
@@ -41,7 +45,14 @@ DG::DG( const CProxy_Discretization& disc,
 {
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
-  IGNORE( fd );
+
+  auto d = Disc();
+
+  // Compute face geometry
+  m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
+
+  // Compute element geometry
+  m_geoElem = tk::genGeoElemTet(d->Inpoel(), d->Coord());
 }
 
 void
@@ -72,13 +83,26 @@ DG::setup( tk::real v )
   // Output chare mesh to file
   d->writeMesh();
   // Output fields metadata to output file
-  d->writeMeta();
+  d->writeElemMeta();
 
   // zero initial solution vector
   // ...
 
+  std::size_t nnpe(4);
+  std::size_t nelem = d->Inpoel().size()/nnpe;
+
   // Set initial conditions for all PDEs
-  // ...
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    auto xcc = m_geoElem(e,1,0);
+    auto ycc = m_geoElem(e,2,0);
+    auto zcc = m_geoElem(e,3,0);
+    IGNORE(zcc);
+
+    tk::real u = 1.0 * exp( -((xcc-0.25)*(xcc-0.25) 
+                            + (ycc-0.25)*(ycc-0.25))/(2.0 * 0.005) );
+    m_u(e,0,0) = u; // scalar
+  }
 
   // Output initial conditions to file (regardless of whether it was requested)
   if ( !g_inputdeck.get< tag::cmd, tag::benchmark >() ) writeFields( d->T() );
@@ -121,11 +145,30 @@ DG::dt()
 }
 
 void
-DG::writeFields( tk::real )
+DG::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] time Physical time
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Save time stamp at which the last field write happened
+  d->LastFieldWriteTime() = time;
+
+  // Increase field output iteration count
+  ++m_itf;
+
+  // Collect element field output
+  std::vector< std::vector< tk::real > > elemfields;
+  elemfields.push_back( m_u.extract(0,0) );
+
+  // Create ExodusII writer
+  tk::ExodusIIMeshWriter ew( d->OutFilename(), tk::ExoWriter::OPEN );
+  // Write time stamp
+  ew.writeTimeStamp( m_itf, time );
+  // Write node fields to file
+  d->writeElemSolution( ew, m_itf, elemfields );
 }
 
 bool

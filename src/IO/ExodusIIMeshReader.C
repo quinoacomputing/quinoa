@@ -379,28 +379,25 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 
 void
 ExodusIIMeshReader::readFaces( std::size_t nbfac,
+                               const std::vector< std::size_t >& node_map,
                                std::vector< std::size_t >& conn )
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[in] nbfac Number of boundary faces
+//! \param[in] node_map Vector mapping the local Exodus node-IDs to global
+//!            node-IDs
 //! \param[inout] conn Connectivity vector to push to
 //! \details This function reads-in the total number of boundary faces 
 //!   also called triangle-elements in the EXO2 file, and their connectivity.
 // *****************************************************************************
 {
+  ErrChk( nbfac > 0, "Number of boundary faces must be larger than zero" );
+
   std::size_t nnpf(3);
 
   // Read triangle boundary-face connectivity
   std::vector< std::size_t > l_triinpoel;
-  auto nnode = readElemBlockIDs();
   readElements( {{0,nbfac-1}}, tk::ExoElemType::TRI, l_triinpoel );
-
-  // Create array to store node-number map
-  std::vector< int > node_map( nnode );
-
-  // Read in the node number map to map the above nodes to the global node-IDs
-  ErrChk( ex_get_id_map( m_inFile, EX_NODE_MAP, node_map.data() ) == 0,
-          "Failed to read node map length from ExodusII file: " );
 
   std::size_t count(0);
   // Use node_map to get the global-IDs of the face-node connectivity
@@ -409,9 +406,40 @@ ExodusIIMeshReader::readFaces( std::size_t nbfac,
     count = f*nnpf;
     for (std::size_t i=0; i<nnpf; ++i)
     {
-      conn.push_back( static_cast< std::size_t >(node_map[ l_triinpoel[count+i] ]-1) );
+      conn.push_back( node_map[ l_triinpoel[count+i] ] );
     }
   }
+}
+
+std::vector< std::size_t >
+ExodusIIMeshReader::readNodemap()
+// *****************************************************************************
+//  Read local to global node-ID map from ExodusII file
+//! \return node_map Vector mapping the local Exodus node-IDs to global node-IDs
+//! \details The node-map is required to get the "Exodus-global" node-IDs from
+//!   the "Exodus-internal" node-IDs, which are returned from the exodus APIs.
+//!   The node-IDs in the exodus file are referred to as the "Exodus-global"
+//!   node-IDs or "fileIDs" in Quinoa.
+// *****************************************************************************
+{
+  // Read triangle boundary-face connectivity
+  auto nnode = readElemBlockIDs();
+
+  // Create array to store node-number map
+  std::vector< int > node_map( nnode );
+
+  // Read in the node number map to map the above nodes to the global node-IDs
+  ErrChk( ex_get_id_map( m_inFile, EX_NODE_MAP, node_map.data() ) == 0,
+          "Failed to read node map length from ExodusII file: " );
+
+  std::vector< std::size_t > node_map1( nnode );
+
+  for (std::size_t i=0; i<nnode; ++i)
+  {
+          node_map1[i] = static_cast< std::size_t >(node_map[i]-1);
+  }
+
+  return node_map1;
 }
 
 std::map< int, std::vector< std::size_t > >

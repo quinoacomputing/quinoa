@@ -1550,7 +1550,8 @@ void ExodusIIMeshReader_object::test< 5 >() {
 
   // Read boundary face-node connectivity
   std::vector< std::size_t > triinpoel;
-  er.readFaces( nbfac, triinpoel );
+  auto nodemap = er.readNodemap();
+  er.readFaces( nbfac, nodemap, triinpoel );
 
   // Generate correct solution for face-node connectivity
   std::vector< int > correct_triinpoel {  2,  9,  3,
@@ -1585,6 +1586,25 @@ void ExodusIIMeshReader_object::test< 5 >() {
   {
           ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
                           triinpoel[i], correct_triinpoel[i]-1);
+  }
+}
+
+//! Attempt to read side-set (boundary) connectivity, feeding garbage
+template<> template<>
+void ExodusIIMeshReader_object::test< 6 >() {
+  set_test_name( "boundary-face conn read throws on garbage" );
+
+  // Attempt to read boundary face-node connectivity passing nbfac=0
+  try {
+    std::vector< std::size_t > triinpoel;
+    std::string infile( REGRESSION_DIR "/meshconv/gmsh_output/box_24_ss1.exo" );
+    tk::ExodusIIMeshReader er( infile );
+    auto nodemap = er.readNodemap();
+    er.readFaces( 0, nodemap, triinpoel );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown, test ok
   }
 }
 

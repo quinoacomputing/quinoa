@@ -17,9 +17,10 @@
 #include <array>
 #include <unordered_set>
 
-#include "Exception.h"                  // for Assert
+#include "Exception.h"
 #include "DerivedData.h"
 #include "ContainerUtil.h"
+#include "Vector.h"
 
 namespace tk {
 
@@ -808,7 +809,9 @@ std::size_t
 genNbfacTet( std::size_t tnbfac,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& triinpoel_complete,
-             std::vector< std::size_t >& triinpoel )
+             const std::map< int, std::vector< std::size_t > >& bface_complete,
+             std::vector< std::size_t >& triinpoel,
+             std::map< int, std::vector< std::size_t > >& bface )
 // *****************************************************************************
 //  Generate the number of boundary-faces and the triangle boundary-face
 //  connectivity for a chunk of a full mesh.
@@ -818,8 +821,12 @@ genNbfacTet( std::size_t tnbfac,
 //!   node ids of each element of an unstructured mesh.
 //! \param[in] triinpoel_complete Interconnectivity of points and boundary-face
 //!   in the entire mesh.
+//! \param[in] bface_complete Map of boundary-face lists mapped to corresponding 
+//!   side set ids for the entire mesh.
 //! \param[inout] triinpoel Interconnectivity of points and boundary-face in
 //!   this mesh-partition.
+//! \param[inout] bface Map of boundary-face lists mapped to corresponding 
+//!   side set ids for this mesh-partition
 //! \return Number of boundary-faces on this chare/mesh-partition.
 //! \details This function takes a mesh by its domain-element
 //!   (tetrahedron-connectivity) in inpoel and a boundary-face (triangle)
@@ -870,26 +877,32 @@ genNbfacTet( std::size_t tnbfac,
 
   // matching nodes in nptri_chunk with nodes in inpoel and 
   // triinpoel_complete to get the number of faces in this chunk
-  for (std::size_t f=0; f<tnbfac; ++f)
+  for (const auto& ss : bface_complete)
   {
-    icoun = f*nnpf;
-    tag = 0;
-    for (std::size_t i=0; i<nnpf; ++i)
+    for (auto f : ss.second)
     {
-      for (auto j : nptri_chunk)
+      icoun = f*nnpf;
+      tag = 0;
+      for (std::size_t i=0; i<nnpf; ++i)
       {
-        if (triinpoel_complete[icoun+i] == j) ++tag;
+        for (auto j : nptri_chunk)
+        {
+          if (triinpoel_complete[icoun+i] == j) ++tag;
+        }
+      }
+      if (tag == nnpf)
+      // this is a boundary face
+      {
+        triinpoel.push_back( triinpoel_complete[icoun] );
+        triinpoel.push_back( triinpoel_complete[icoun+1] );
+        triinpoel.push_back( triinpoel_complete[icoun+2] );
+
+        bface[ss.first].push_back(nbfac);
+        ++nbfac;
       }
     }
-    if (tag == nnpf)
-    // this is a boundary face
-    {
-      ++nbfac;
-      triinpoel.push_back( triinpoel_complete[icoun] );
-      triinpoel.push_back( triinpoel_complete[icoun+1] );
-      triinpoel.push_back( triinpoel_complete[icoun+2] );
-    }
   }
+
   }
 
   return nbfac;
@@ -1211,6 +1224,8 @@ genInpofaTet( std::size_t ntfac,
 std::vector< std::size_t >
 genBelemTet( std::size_t nbfac,
               const std::vector< std::size_t >& inpofa,
+              const std::vector< std::size_t >& nodemap,
+              const std::vector< std::size_t >& gid,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup )
 // *****************************************************************************
@@ -1218,6 +1233,10 @@ genBelemTet( std::size_t nbfac,
 //   their faces with the domain boundary (host elements).
 //! \param[in] nbfac Number of boundary faces.
 //! \param[in] inpofa Face-node connectivity.
+//! \param[in] node_map Vector mapping the local Exodus node-IDs to global
+//!            Exodus node-IDs
+//! \param[in] gid Vector mapping the local renumbered node-IDs to local Exodus
+//!            node-IDs
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
 //! \return Host elements or boundary elements. The unsigned integer vector
 //!   gives the elements to the left of each boundary face in the mesh.
@@ -1244,9 +1263,20 @@ genBelemTet( std::size_t nbfac,
     {
       auto gp = inpofa[nnpf*f + lp];
 
-      Assert( gp < esup.second.size(), "Indexing out of esup2" );
+      // 1. find the Exodus-local node ID for gp
+      auto it = std::find (nodemap.begin(), nodemap.end(), gp);
+      if (it == nodemap.end()) { continue; }
+      auto lgp = static_cast< std::size_t >(it-nodemap.begin());
+
+      // 2. find the renumbered node ID for lgp,
+      //    this is the local node id that esup uses
+      auto ip = std::find (gid.begin(), gid.end(), lgp);
+      Assert( ip != gid.end(), "gid map pointing to nothing!" );
+      auto rgp = static_cast< std::size_t >(ip-gid.begin());
+
+      Assert( rgp < esup.second.size(), "Indexing out of esup2" );
       // loop over elements surrounding this node
-      for (auto i=esup.second[gp]+1; i<=esup.second[gp+1]; ++i)
+      for (auto i=esup.second[rgp]+1; i<=esup.second[rgp+1]; ++i)
       {
         // form element-cluster vector
         elemcluster.push_back(esup.first[i]);
@@ -1276,6 +1306,172 @@ genBelemTet( std::size_t nbfac,
   }
 
   return belem;
+}
+        
+tk::Fields
+genGeoFaceTri( std::size_t ntfac,
+               const std::vector< std::size_t >& inpofa,
+               const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Generate derived data, which stores the geometry details both internal and
+//   boundary triangular faces in the mesh.
+//! \param[in] ntfac Total number of faces in the mesh.
+//! \param[in] inpofa Face-node connectivity.
+//! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
+//! \return Face geometry information. This includes face area, unit normal
+//!   pointing outward of the element to the left of the face, and face
+//!   centroid coordinates. Use the following examples to access this
+//!   information for face-f.
+//!   face area: geoFace(f,0,0),
+//!   unit-normal x-component: geoFace(f,1,0),
+//!               y-component: geoFace(f,2,0),
+//!               z-component: geoFace(f,3,0),
+//!   centroid x-coordinate: geoFace(f,4,0),
+//!            y-coordinate: geoFace(f,5,0),
+//!            z-coordinate: geoFace(f,6,0).
+// *****************************************************************************
+{
+  tk::Fields geoFace( ntfac, 7 );
+
+  // set triangle geometry
+  std::size_t nnpf(3);
+
+  Assert( inpofa.size()%nnpf == 0,
+          "Size of inpofa must be divisible by nnpf" );
+
+  for(std::size_t f=0; f<ntfac; ++f)
+  {
+    std::size_t ip1, ip2, ip3;
+    tk::real xp1, yp1, zp1,
+             xp2, yp2, zp2,
+             xp3, yp3, zp3,
+             ax, ay, az,
+             bx, by, bz,
+             nx, ny, nz,
+             sidea, sideb, sidec,
+             semip, farea;
+
+    // get area
+    ip1 = inpofa[nnpf*f];
+    ip2 = inpofa[nnpf*f + 1];
+    ip3 = inpofa[nnpf*f + 2];
+
+    xp1 = coord[0][ip1];
+    yp1 = coord[1][ip1];
+    zp1 = coord[2][ip1];
+
+    xp2 = coord[0][ip2];
+    yp2 = coord[1][ip2];
+    zp2 = coord[2][ip2];
+
+    xp3 = coord[0][ip3];
+    yp3 = coord[1][ip3];
+    zp3 = coord[2][ip3];
+
+    sidea = sqrt( (xp2-xp1)*(xp2-xp1)
+                + (yp2-yp1)*(yp2-yp1)
+                + (zp2-zp1)*(zp2-zp1) );
+
+    sideb = sqrt( (xp3-xp2)*(xp3-xp2)
+                + (yp3-yp2)*(yp3-yp2)
+                + (zp3-zp2)*(zp3-zp2) );
+
+    sidec = sqrt( (xp1-xp3)*(xp1-xp3)
+                + (yp1-yp3)*(yp1-yp3)
+                + (zp1-zp3)*(zp1-zp3) );
+
+    semip = 0.5 * (sidea + sideb + sidec);
+
+    farea = sqrt( semip
+                * (semip-sidea)
+                * (semip-sideb)
+                * (semip-sidec) );
+
+    geoFace(f,0,0) = farea;
+
+    // get unit normal to face
+    ax = xp2 - xp1;
+    ay = yp2 - yp1;
+    az = zp2 - zp1;
+
+    bx = xp3 - xp1;
+    by = yp3 - yp1;
+    bz = zp3 - zp1;
+
+    nx =   ay*bz - az*by;
+    ny = -(ax*bz - az*bx);
+    nz =   ax*by - ay*bx;
+
+    farea = sqrt(nx*nx + ny*ny + nz*nz);
+
+    geoFace(f,1,0) = nx/farea;
+    geoFace(f,2,0) = ny/farea;
+    geoFace(f,3,0) = nz/farea;
+
+    // get centroid
+    geoFace(f,4,0) = (xp1+xp2+xp3)/3.0;
+    geoFace(f,5,0) = (yp1+yp2+yp3)/3.0;
+    geoFace(f,6,0) = (zp1+zp2+zp3)/3.0;
+  }
+
+  return geoFace;
+}
+        
+tk::Fields
+genGeoElemTet( const std::vector< std::size_t >& inpoel,
+               const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Generate derived data, which stores the geometry details of tetrahedral
+//   elements.
+//! \param[in] inpoel Element-node connectivity.
+//! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
+//! \return Element geometry information. This includes element volume and
+//!   element centroid coordinates. Use the following examples to access this
+//!   information for element-e.
+//!   volume: geoElem(e,0,0),
+//!   centroid x-coordinate: geoElem(f,1,0),
+//!            y-coordinate: geoElem(f,2,0),
+//!            z-coordinate: geoElem(f,3,0).
+// *****************************************************************************
+{
+  // set tetrahedron geometry
+  std::size_t nnpe(4);
+
+  Assert( inpoel.size()%nnpe == 0,
+          "Size of inpoel must be divisible by nnpe" );
+
+  auto nelem = inpoel.size()/nnpe;
+
+  tk::Fields geoElem( nelem, 4 );
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  for(std::size_t e=0; e<nelem; ++e)
+  {
+    // get volume
+    const auto A = inpoel[nnpe*e+0];
+    const auto B = inpoel[nnpe*e+1];
+    const auto C = inpoel[nnpe*e+2];
+    const auto D = inpoel[nnpe*e+3];
+    std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
+                              ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
+                              da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
+
+    const auto vole = tk::triple( ba, ca, da ) / 6.0;
+
+    Assert( vole > 0, "Element Jacobian non-positive" );
+
+    geoElem(e,0,0) = vole;
+
+    // get centroid
+    geoElem(e,1,0) = (x[A]+x[B]+x[C]+x[D])/4.0;
+    geoElem(e,2,0) = (y[A]+y[B]+y[C]+y[D])/4.0;
+    geoElem(e,3,0) = (z[A]+z[B]+z[C]+z[D])/4.0;
+  }
+
+  return geoElem;
 }
 
 } // tk::

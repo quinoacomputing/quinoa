@@ -2423,7 +2423,7 @@ template<> template<>
 void DerivedData_object::test< 65 >() {
   set_test_name( "Boundary faces (genNbfacTet) for tetrahedra" );
 
-  std::map< int, std::vector< std::size_t > > bface;
+  std::map< int, std::vector< std::size_t > > bface, t_bface;
 
   // Create unstructured-mesh object to read into
   tk::UnsMesh inmesh;
@@ -2431,7 +2431,7 @@ void DerivedData_object::test< 65 >() {
   std::string infile( REGRESSION_DIR
                       "/meshconv/gmsh_output/box_24_ss1.exo" );
   tk::ExodusIIMeshReader er( infile );
-  auto tnbfac = er.readSidesetFaces( bface );
+  auto tnbfac = er.readSidesetFaces( t_bface );
 
   // Test if the number of boundary faces is correct
   ensure_equals( "total number of boundary faces incorrect",
@@ -2489,24 +2489,52 @@ void DerivedData_object::test< 65 >() {
                                             4, 14,  8,
                                             1, 14,  4 };
 
+  // Correct Boundary-face node connectivity
+  std::vector< std::size_t > correct_triinpoel {  7, 10,  6,
+                                                  6, 10,  5,
+                                                  8, 10,  7,
+                                                 10,  8,  5,
+                                                  5,  8, 14,
+                                                  1,  5, 14,
+                                                  4, 14,  8,
+                                                  1, 14,  4,
+                                                  2,  9,  3,
+                                                  1,  9,  2,
+                                                  3,  9,  4,
+                                                  1,  4,  9,
+                                                  3, 12,  2,
+                                                 12,  6,  2,
+                                                  7, 12,  3,
+                                                 12,  7,  6,
+                                                 13,  7,  3,
+                                                  4, 13,  3,
+                                                 13,  8,  7,
+                                                  8, 13,  4,
+                                                  6, 11,  2,
+                                                  2, 11,  1,
+                                                 11,  6,  5,
+                                                 11,  5,  1 };
+
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( t_triinpoel );
+  tk::shiftToZero( correct_triinpoel );
 
   std::vector< std::size_t > triinpoel;
 
-  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, triinpoel );
+  auto nbfac = tk::genNbfacTet( tnbfac, inpoel, t_triinpoel, t_bface,
+                                triinpoel, bface );
 
   ensure_equals( "number of boundary-faces is incorrect",
                  nbfac, tnbfac );
 
   ensure_equals( "total number of entries in triinpoel is incorrect",
-                 triinpoel.size(), t_triinpoel.size() );
+                 triinpoel.size(), correct_triinpoel.size() );
 
   for(std::size_t i=0 ; i<triinpoel.size(); ++i)
   {
     ensure_equals("incorrect entry " + std::to_string(i) + " in triinpoel",
-                    triinpoel[i], t_triinpoel[i]);
+                    triinpoel[i], correct_triinpoel[i]);
   }
 }
 
@@ -3325,6 +3353,12 @@ void DerivedData_object::test< 68 >() {
                                             13,
                                             10 };
 
+  std::vector< std::size_t > nodemap { 0, 1, 2,  3,  4,  5,  6, 
+                                       7, 8, 9, 10, 11, 12, 13 };
+
+  std::vector< std::size_t > gid { 0, 1, 2,  3,  4,  5,  6, 
+                                   7, 8, 9, 10, 11, 12, 13 };
+
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
   tk::shiftToZero( triinpoel );
@@ -3333,7 +3367,7 @@ void DerivedData_object::test< 68 >() {
   auto esuel = tk::genEsuelTet( inpoel, esup );
   auto ntfac = tk::genNtfac( 4, nbfac, esuel );
   auto inpofa = tk::genInpofaTet( ntfac, nbfac, inpoel, triinpoel, esuel );
-  auto belem = tk::genBelemTet( nbfac, inpofa, esup );
+  auto belem = tk::genBelemTet( nbfac, inpofa, nodemap, gid, esup );
 
   ensure_equals( "total number of entries in belem is incorrect",
                  belem.size(), correct_belem.size() );
@@ -3343,6 +3377,109 @@ void DerivedData_object::test< 68 >() {
     ensure_equals("incorrect entry " + std::to_string(i) + " in belem",
                     belem[i], correct_belem[i]-1);
   }
+}
+
+//! Generate and test face-geometry vector for a single tetrahedron
+template<> template<>
+void DerivedData_object::test< 69 >() {
+  set_test_name( "Face-geometry (genGeoFaceTri) for a tetrahedron" );
+
+  // total number of faces
+  std::size_t ntfac(4);
+
+  // coordinates of tetrahedron vertices
+  tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
+                               {0.0, 0.0, 1.0, 0.0},
+                               {0.0, 0.0, 0.0, 1.0} }};
+
+  // face-node connectivity
+  std::vector< std::size_t > inpofa { 0, 1, 2,
+                                      0, 3, 1,
+                                      1, 3, 2,
+                                      2, 3, 0 };
+
+  // get face-geometries
+  auto geoFace = tk::genGeoFaceTri( ntfac, inpofa, coord );
+
+  // correct face-areas
+  std::vector< tk::real > correct_farea { 0.5, 0.5, 0.5, 0.8660254037844389 };
+
+  // correct face-normals
+  std::array< std::vector< tk::real >, 3 > correct_fnorm {{
+                                       { 0.0,  0.0, -1.0, 1.0/sqrt(3.0)},
+                                       { 0.0, -1.0,  0.0, 1.0/sqrt(3.0)},
+                                       {-1.0,  0.0,  0.0, 1.0/sqrt(3.0)},
+                                       }};
+
+  // correct face-centroids
+  tk::UnsMesh::Coords correct_fcent {{ {1.0/3.0, 1.0/3.0, 0.0,     1.0/3.0},
+                                       {1.0/3.0, 0.0,     1.0/3.0, 1.0/3.0},
+                                       {0.0,     1.0/3.0, 1.0/3.0, 1.0/3.0} }};
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  for(std::size_t f=0 ; f<ntfac; ++f)
+  {
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-area",
+                    geoFace(f,0,0), correct_farea[f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nx",
+                    geoFace(f,1,0), correct_fnorm[0][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-ny",
+                    geoFace(f,2,0), correct_fnorm[1][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nz",
+                    geoFace(f,3,0), correct_fnorm[2][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cx",
+                    geoFace(f,4,0), correct_fcent[0][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cy",
+                    geoFace(f,5,0), correct_fcent[1][f], prec);
+
+    ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cz",
+                    geoFace(f,6,0), correct_fcent[2][f], prec);
+  }
+}
+
+//! Generate and test element-geometry vector for a single tetrahedron
+template<> template<>
+void DerivedData_object::test< 70 >() {
+  set_test_name( "Element-geometry (genGeoElemTet) for a tetrahedron" );
+
+  // coordinates of tetrahedron vertices
+  tk::UnsMesh::Coords coord {{ {1.0, 0.0, 0.0, 0.0},
+                               {0.0, 0.0, 1.0, 0.0},
+                               {0.0, 0.0, 0.0, 1.0} }};
+
+  // element-node connectivity
+  std::vector< std::size_t > inpoel { 0, 3, 2, 1 };
+
+  // get element-geometries
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+
+  // correct element-volume
+  tk::real correct_vole { 1.0/6.0 };
+
+  // correct element-centroid
+  tk::UnsMesh::Coords correct_ecent {{ {1.0/4.0},
+                                       {1.0/4.0},
+                                       {1.0/4.0} }};
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  ensure_equals("incorrect entry in geoElem-vol",
+                  geoElem(0,0,0), correct_vole, prec);
+
+  ensure_equals("incorrect entry in geoElem-cx",
+                  geoElem(0,1,0), correct_ecent[0][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cy",
+                  geoElem(0,2,0), correct_ecent[1][0], prec);
+
+  ensure_equals("incorrect entry in geoElem-cz",
+                  geoElem(0,3,0), correct_ecent[2][0], prec);
 }
 
 #if defined(STRICT_GNUC)

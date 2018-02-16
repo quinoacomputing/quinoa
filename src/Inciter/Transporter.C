@@ -210,19 +210,19 @@ Transporter::createPartitioner()
   // Read side sets for boundary faces
   m_print.diag( "Reading side set faces" );
   std::map< int, std::vector< std::size_t > > bface;
-  auto nbfac = er.readSidesetFaces( bface );
+  std::size_t nbfac = 0;
 
   std::vector< std::size_t > triinpoel;
   const auto scheme = g_inputdeck.get< tag::selected, tag::scheme >();
 
-  if (nbfac<1 && scheme == ctr::SchemeType::DG)
-  {
-    Throw( "Boundary faces not specified using side-sets in ExodusII input file" );
-  }
-  else if (nbfac>0)
-  {
-    // Read triangle boundary-face connectivity 
-    er.readFaces( nbfac, triinpoel );
+  // Read local to global node-ID map from file
+  auto nodemap = er.readNodemap();
+
+  // Read triangle boundary-face connectivity
+  if (scheme == ctr::SchemeType::DG) {
+    m_print.diag( "Reading side set faces" );
+    nbfac = er.readSidesetFaces( bface );
+    er.readFaces( nbfac, nodemap, triinpoel );
   }
 
   // Verify that side sets to which boundary conditions are assigned by user
@@ -255,7 +255,7 @@ Transporter::createPartitioner()
   // Create mesh partitioner Charm++ chare group
   m_partitioner =
     CProxy_Partitioner::ckNew( cbp, thisProxy, m_solver, m_bc, m_scheme,
-                               nbfac, bface, triinpoel );
+                               nbfac, bface, triinpoel, nodemap );
 }
 
 void
@@ -333,8 +333,8 @@ Transporter::load( uint64_t nelem )
   m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM)
+  const auto ir = g_inputdeck.get< tag::amr, tag::init >();
+  if (ir == ctr::AMRInitialType::UNIFORM)
     m_print.section( "Load distribution (before initial mesh refinement)" );
   else
     m_print.section( "Load distribution" );
@@ -354,12 +354,18 @@ Transporter::load( uint64_t nelem )
   m_print.Item< tk::ctr::PartitioningAlgorithm,
                 tag::selected, tag::partitioner >();
 
-  // Print out mesh refinement configuration and new mesh statistics
-  if (ir == ctr::InitialAMRType::UNIFORM) {
-    m_print.section( "Mesh refinement" );
-    m_print.Item< ctr::InitialAMR, tag::selected, tag::initialamr >();
-    m_print.item( "Final number of tetrahedra",
-      std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+  // Print out adaptive mesh refinement configuration
+  const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
+  if (amr) {
+    m_print.section( "Adaptive mesh refinement (AMR)" );
+    m_print.Item< ctr::AMRInitial, tag::amr, tag::init >();
+    m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    // Print out initially refined  mesh statistics
+    if (ir == ctr::AMRInitialType::UNIFORM) {
+      m_print.section( "Initial mesh refinement" );
+      m_print.item( "Final number of tetrahedra",
+        std::to_string(nelem*8) + " (8*" + std::to_string(nelem) + ')' );
+    }
   }
 
   m_print.endsubsection();
@@ -615,7 +621,7 @@ Transporter::stat()
      "\n      it             t            dt        ETE        ETA   out\n"
        " ---------------------------------------------------------------\n" );
 
-  m_scheme.setup< tag::bcast >( m_V );
+  m_scheme.setup( m_V );
 }
 
 void
@@ -644,6 +650,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
+  Assert( ncomp > 0, "Number of scalar components must be positive");
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
