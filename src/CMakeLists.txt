@@ -595,6 +595,7 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
                             TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
                                             ${PROCESSOR_COUNT}
+                                            ${RUNNER_ARGS}
                                             Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
