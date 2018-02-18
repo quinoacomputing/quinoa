@@ -592,11 +592,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
 # Setup code coverage for unit tests
 if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
-  setup_target_for_coverage(unit doc/html unittest_coverage
-                            ${RUNNER}
-                            TESTRUNNER_ARGS
-                            ${RUNNER_NCPUS_ARG} ${PROCESSOR_COUNT}
-                            Main/${UNITTEST_EXECUTABLE} -v
+  setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
+                            TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
+                                            ${PROCESSOR_COUNT}
+                                            ${RUNNER_ARGS}
+                                            Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
                                     ${UNITTEST_EXECUTABLE})
 endif()
@@ -606,9 +606,8 @@ if(CODE_COVERAGE)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
-                            TESTRUNNER_ARGS
-                            -j${PROCESSOR_COUNT}
-                            ${REGRESSION_COVERAGE_ARGS}
+                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                                            ${REGRESSION_COVERAGE_ARGS}
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

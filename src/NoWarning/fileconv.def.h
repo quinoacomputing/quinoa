@@ -23,6 +23,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #include "../Main/fileconv.def.h"
