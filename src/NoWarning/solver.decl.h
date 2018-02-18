@@ -37,6 +37,7 @@
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
@@ -52,6 +53,7 @@
   #pragma warning( push )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
+  #pragma warning( disable: 1125 )
 #endif
 
 #include "../LinSys/solver.decl.h"

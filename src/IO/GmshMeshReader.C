@@ -16,7 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>     // NOT NEEDED
 
 #include "QEndian.h"
 #include "UnsMesh.h"

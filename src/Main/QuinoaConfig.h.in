@@ -19,7 +19,7 @@
 
 namespace tk {
  
-#define VERSION                      "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
+#define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
 #define GIT_COMMIT                   "@GIT_SHA1@"
 #define MPI_COMPILER                 "@MPI_COMPILER@"
 #define COMPILER                     "@COMPILER@"
