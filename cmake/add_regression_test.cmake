@@ -256,7 +256,6 @@ function(ADD_REGRESSION_TEST test_name executable)
            COMMAND ${CMAKE_COMMAND}
            -DTEST_NAME=${test_name}
            -DWORKDIR=${workdir}
-           -DRUNNER_REQUIRED=${RUNNER_REQUIRED}
            -DRUNNER=${RUNNER}
            -DRUNNER_NCPUS_ARG=${RUNNER_NCPUS_ARG}
            -DRUNNER_ARGS=${RUNNER_ARGS}
