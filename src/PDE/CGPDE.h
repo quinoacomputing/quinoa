@@ -1,9 +1,10 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/PDE.h
+  \file      src/PDE/CGPDE.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Partial differential equation
-  \details   This file defines a generic partial differential equation class.
+  \brief     Partial differential equation base for continuous Galerkin PDEs
+  \details   This file defines a generic partial differential equation (PDE)
+    class for PDEs that use continuous Galerkin spatial discretization.
     The class uses runtime polymorphism without client-side inheritance:
     inheritance is confined to the internals of the class, inivisble to
     client-code. The class exclusively deals with ownership enabling client-side
@@ -12,8 +13,8 @@
     Papers-and-Presentations.
 */
 // *****************************************************************************
-#ifndef PDE_h
-#define PDE_h
+#ifndef CGPDE_h
+#define CGPDE_h
 
 #include <array>
 #include <string>
@@ -28,15 +29,15 @@
 
 namespace inciter {
 
-//! \brief Partial differential equation
+//! \brief Partial differential equation base for continuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
 //!   inivisble to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
-//!   Papers-and-Presentations. For example client code that models a PDE,
+//!   Papers-and-Presentations. For example client code that models a CGPDE,
 //!   see inciter::CompFlow.
-class PDE {
+class CGPDE {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -46,7 +47,7 @@ class PDE {
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
-    template< typename T > explicit PDE( T x ) :
+    template< typename T > explicit CGPDE( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
@@ -68,16 +69,15 @@ class PDE {
     //!    Concept.
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
-    explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
+    explicit CGPDE( std::function<T(Args...)> x, Args&&... args ) :
       self( tk::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
-    { self->initialize( coord, unk, t, gid ); }
+                     tk::real t ) const
+    { self->initialize( coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -103,13 +103,6 @@ class PDE {
                  const std::vector< std::size_t >& inpoel,
                  const tk::Fields& U ) const
     { return self->dt( coord, inpoel, U ); }
-
-    //! Public interface for computing the transport velocity at nodes
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N ) const
-    { return self->velocity( U, coord, N ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -140,14 +133,14 @@ class PDE {
     { return self->fieldOutput( t, V, coord, v, U ); }
 
     //! Copy assignment
-    PDE& operator=( const PDE& x )
-    { PDE tmp(x); *this = std::move(tmp); return *this; }
+    CGPDE& operator=( const CGPDE& x )
+    { CGPDE tmp(x); *this = std::move(tmp); return *this; }
     //! Copy constructor
-    PDE( const PDE& x ) : self( x.self->copy() ) {}
+    CGPDE( const CGPDE& x ) : self( x.self->copy() ) {}
     //! Move assignment
-    PDE& operator=( PDE&& ) noexcept = default;
+    CGPDE& operator=( CGPDE&& ) noexcept = default;
     //! Move constructor
-    PDE( PDE&& ) noexcept = default;
+    CGPDE( CGPDE&& ) noexcept = default;
 
   private:
     //! \brief Concept is a pure virtual base class specifying the requirements
@@ -159,8 +152,7 @@ class PDE {
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
-                               tk::real,
-                               const std::vector< std::size_t >& ) const = 0;
+                               tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
@@ -176,10 +168,6 @@ class PDE {
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
-      virtual std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields&,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::array< std::size_t, 4 >&  ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
@@ -205,9 +193,8 @@ class PDE {
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                        tk::Fields& unk,
-                       tk::real t,
-                       const std::vector< std::size_t >& gid )
-      const override { data.initialize( coord, unk, t, gid ); }
+                       tk::real t )
+      const override { data.initialize( coord, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
@@ -226,11 +213,6 @@ class PDE {
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
       { return data.dt( coord, inpoel, U ); }
-      std::array< std::array< tk::real, 4 >, 3 > velocity(
-        const tk::Fields& U,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::array< std::size_t, 4 >& N  ) const override
-      { return data.velocity( U, coord, N ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
@@ -258,4 +240,4 @@ class PDE {
 
 } // inciter::
 
-#endif // PDE_h
+#endif // CGPDE_h

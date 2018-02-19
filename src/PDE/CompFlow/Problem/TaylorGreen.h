@@ -30,7 +30,8 @@ namespace inciter {
 //!   Fluids, 2013, Vol.81, pp.57-67.
 class CompFlowProblemTaylorGreen {
 
-  private:
+  public:
+
     //! Evaluate analytical solution at (x,y,0) for all components
     //! \param[in] e Equation system index, i.e., which compressible
     //!   flow equation system we operate on among the systems of PDEs
@@ -38,7 +39,9 @@ class CompFlowProblemTaylorGreen {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,0)
     static std::array< tk::real, 5 >
-    solution( tk::ctr::ncomp_type e, tk::real x, tk::real y ) {
+    solution( tk::ctr::ncomp_type e,
+              tk::real x, tk::real y, tk::real, tk::real )
+    {
       using tag::param; using tag::compflow; using std::sin; using std::cos;
       // ratio of specific heats
       const tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[e];
@@ -55,33 +58,14 @@ class CompFlowProblemTaylorGreen {
       return {{ r, r*u, r*v, r*w, rE }};
     }
 
-  public:
-
-    //! Set initial conditions
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      const std::vector< std::size_t >&,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type offset,
-                      tk::real )
+    //! \brief Evaluate the increment from t to t+dt of the analytical solution
+    //!   at (x,y,z) for all components
+    //! \return Increment in values of all components: all zero for this problem
+    static std::array< tk::real, 5 >
+    solinc( tk::ctr::ncomp_type,
+            tk::real, tk::real, tk::real, tk::real, tk::real )
     {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( e, x[i], y[i] );
-        unk(i,0,offset) = s[0]; // rho
-        unk(i,1,offset) = s[1]; // rho * u
-        unk(i,2,offset) = s[2]; // rho * v
-        unk(i,3,offset) = s[3]; // rho * w
-        unk(i,4,offset) = s[4]; // rho * e, e: total = kinetic + internal energy
-      }
+      return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
@@ -107,39 +91,6 @@ class CompFlowProblemTaylorGreen {
       for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
         for (const auto& i : s)
           conf.insert( std::stoi(i) );
-    }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] side Pair of side set ID and node IDs on the side set
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type e,
-           tk::real,
-           tk::real,
-           const std::pair< const int, std::vector< std::size_t > >& side,
-           const std::array< std::vector< tk::real >, 3 >& )
-    {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
-      if (!ubc.empty()) {
-        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-        for (const auto& b : ubc[e])
-          if (std::stoi(b) == side.first)
-          for (auto n : side.second)
-            bc[n] = {{ {true,0.0}, {true,0.0}, {true,0.0}, {true,0.0},
-                       {true,0.0} }};
-      }
-      return bc;
     }
 
     //! Return field names to be output to file

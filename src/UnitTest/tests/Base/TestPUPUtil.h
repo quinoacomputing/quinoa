@@ -100,7 +100,7 @@ class Migrated : public CBase_Migrated {
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 2,
-                         "Charm:migrate uint_8t enum 2",
+                         "Charm:migrate uint8_t enum 2",
                          tut::test_result::result_type::ok );
     try {
       // Generate error message with expected and actual value in case if fail

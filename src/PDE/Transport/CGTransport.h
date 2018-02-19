@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport.h
+  \file      src/PDE/Transport/CGTransport.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Governing equations describing transport of scalars
+  \brief     Scalar transport using continous Galerkin discretization
   \details   This file implements the physics operators governing transported
-     scalars.
+     scalars using continuous Galerkin discretization.
 */
 // *****************************************************************************
-#ifndef Transport_h
-#define Transport_h
+#ifndef CGTransport_h
+#define CGTransport_h
 
 #include <vector>
 #include <array>
@@ -25,12 +25,14 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! \brief Transport equation used polymorphically with tk::PDE
+namespace cg {
+
+//! \brief Transport equation used polymorphically with tk::CGPDE
 //! \details The template argument(s) specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/TransportPhysics.h
-//!   - Problem - problem configuration, see PDE/TransportProblem.h
-//! \note The default physics is Advection, set in
+//!   - Physics - physics configuration, see PDE/Transport/Physics/CG.h
+//!   - Problem - problem configuration, see PDE/Transport/Problem.h
+//! \note The default physics is CGAdvection, set in
 //!    inciter::deck::check_transport()
 template< class Physics, class Problem >
 class Transport {
@@ -57,10 +59,17 @@ class Transport {
     //! \param[in] t Physical time
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& ) const
+                     tk::real t ) const
     {
-      Problem::init( coord, unk, m_c, m_ncomp, m_offset, t );
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      for (ncomp_t i=0; i<x.size(); ++i) {
+        const auto s = Problem::solution( m_c, m_ncomp, x[i], y[i], z[i], t );
+        for (ncomp_t c=0; c<m_ncomp; ++c)
+          unk( i, c, m_offset ) = s[c];
+      }
     }
 
     //! Compute the left hand side sparse matrix
@@ -343,17 +352,6 @@ class Transport {
       return mindt;
     }
 
-    //! Extract the transport velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] N Element node indices    
-    //! \return Array of the four values of the transport velocity
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::array< std::size_t, 4 >& N ) const
-    { return Problem::velocity( U, coord, N ); }
-
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
     //! \param[in,out] conf Set of unique side set IDs to add to
@@ -364,7 +362,7 @@ class Transport {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] sides Pair of side set ID and node IDs on the side set
+    //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
@@ -374,9 +372,31 @@ class Transport {
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& sides,
+           const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return Problem::dirbc( m_c, m_ncomp, t, deltat, sides, coord ); }
+    {
+      using tag::param; using tag::transport; using tag::bcdir;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
+      if (!ubc.empty()) {
+        Assert( ubc.size() > m_c, "Indexing out of Dirichlet BC eq-vector" );
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        const auto& z = coord[2];
+        for (const auto& b : ubc[m_c])
+          if (std::stoi(b) == side.first)
+            for (auto n : side.second) {
+              Assert( x.size() > n, "Indexing out of coordinate array" );
+              auto s =
+                Problem::solinc( m_c, m_ncomp, x[n], y[n], z[n], t, deltat );
+              auto& nbc = bc[n] = NodeBC( m_ncomp );
+              for (ncomp_t c=0; c<m_ncomp; ++c)
+                nbc[c] = { true, s[c] };
+            }
+      }
+      return bc;
+    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -421,7 +441,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t, {{}} );
+      initialize( coord, U, t );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
@@ -456,6 +476,7 @@ class Transport {
     const ncomp_t m_offset;             //!< Offset this PDE operates from
 };
 
+} // cg::
 } // inciter::
 
 #endif // Transport_h

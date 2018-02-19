@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/CompFlow.h
+  \file      src/PDE/CompFlow/CGCompFlow.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     Governing equations describing compressible single-phase flow
+  \brief     Compressible single-material flow using continuous Galerkin
   \details   This file implements the physics operators governing compressible
-    fluid flow.
+    single-material flow using continuous Galerkin discretization.
 */
 // *****************************************************************************
-#ifndef CompFlow_h
-#define CompFlow_h
+#ifndef CGCompFlow_h
+#define CGCompFlow_h
 
 #include <cmath>
 #include <algorithm>
@@ -23,7 +23,9 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! \brief CompFlow used polymorphically with tk::PDE
+namespace cg {
+
+//! \brief CompFlow used polymorphically with tk::CGPDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/CompFlow/Physics.h
@@ -43,14 +45,23 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    //! \param[in] gid Global node IDs of owned elements
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
-                     const std::vector< std::size_t >& gid ) const
+                     tk::real t ) const
     {
-      // Set initial conditions using problem configuration policy
-      Problem::init( coord, gid, unk, 0, m_offset, t );
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      // set initial and boundary conditions using problem policy
+      for (ncomp_t i=0; i<coord[0].size(); ++i) {
+        const auto s = Problem::solution( 0, x[i], y[i], z[i], t );
+        unk(i,0,m_offset) = s[0]; // rho
+        unk(i,1,m_offset) = s[1]; // rho * u
+        unk(i,2,m_offset) = s[2]; // rho * v
+        unk(i,3,m_offset) = s[3]; // rho * w
+        unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
+      }
     }
 
     //! Compute the left hand side sparse matrix
@@ -401,7 +412,7 @@ class CompFlow {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
-    //! \param[in] sides Pair of side set ID and node IDs on the side set
+    //! \param[in] side Pair of side set ID and node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
@@ -411,9 +422,29 @@ class CompFlow {
     std::unordered_map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
            tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& sides,
+           const std::pair< const int, std::vector< std::size_t > >& side,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
-    { return Problem::dirbc( 0, t, deltat, sides, coord ); }
+    {
+      using tag::param; using tag::compflow; using tag::bcdir;
+      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      std::unordered_map< std::size_t, NodeBC > bc;
+      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      if (!ubc.empty()) {
+        Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        const auto& z = coord[2];
+        for (const auto& b : ubc[0])
+          if (std::stoi(b) == side.first)
+            for (auto n : side.second) {
+              Assert( x.size() > n, "Indexing out of coordinate array" );
+              auto s = Problem::solinc( 0, x[n], y[n], z[n], t, deltat );
+              bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
+                         {true,s[4]} }};
+            }
+      }
+      return bc;
+    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -444,6 +475,8 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
 };
 
+} // cg::
+
 } // inciter::
 
-#endif // CompFlow_h
+#endif // CGCompFlow_h

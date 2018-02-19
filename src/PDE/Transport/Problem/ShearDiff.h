@@ -60,19 +60,19 @@ namespace inciter {
 */
 class TransportProblemShearDiff {
 
-  private:
+  public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Time where to evaluate the solution
     //! \return Values of all components evaluated at (x,y,z,t)
     static std::vector< tk::real >
-    solution( tk::ctr::ncomp_type e,
-              tk::ctr::ncomp_type ncomp,
-              tk::real x, tk::real y, tk::real z, tk::real t )
+    solution( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+              tk::real t )
     {
       using tag::param; using tag::transport;
       const auto& u0 = g_inputdeck.get< param, transport, tag::u0 >()[e];
@@ -101,6 +101,7 @@ class TransportProblemShearDiff {
     //!   at (x,y,z) for all components
     //! \param[in] e Equation system index, i.e., which transporte equation
     //!   system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of components in this transport equation system
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
@@ -108,9 +109,8 @@ class TransportProblemShearDiff {
     //! \param[in] dt Time increment at which evaluate the solution increment to
     //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
     static std::vector< tk::real >
-    solinc( tk::ctr::ncomp_type e,
-            tk::ctr::ncomp_type ncomp,
-            tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
+    solinc( ncomp_t e, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+            tk::real t, tk::real dt )
     {
       auto st1 = solution( e, ncomp, x, y, z, t );
       auto st2 = solution( e, ncomp, x, y, z, t+dt );
@@ -119,13 +119,11 @@ class TransportProblemShearDiff {
       return st2;
     }
 
-  public:
     //! Do error checking on PDE parameters
     //! \param[in] e Equation system index, i.e., which transport equation
     //!   system we operate on among the systems of PDEs
     //! \param[in] ncomp Number of components in this transport equation
-    static void errchk( tk::ctr::ncomp_type e, tk::ctr::ncomp_type ncomp )
-    {
+    static void errchk( ncomp_t e, ncomp_t ncomp ) {
       using tag::param; using tag::transport;
       const auto& u0 = g_inputdeck.get< param, transport, tag::u0 >()[e];
       ErrChk( ncomp == u0.size(),
@@ -136,33 +134,6 @@ class TransportProblemShearDiff {
       const auto& d = g_inputdeck.get< param, transport, tag::diffusivity >()[e];
       ErrChk( 3*ncomp == d.size(),
         "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
-    }
-
-    //! Set initial conditions for dispersion in simple shear flow
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] e Equation system index, i.e., which transport equation
-    //!   system we operate on among the systems of PDEs
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] t Physical time
-    static void init( const std::array< std::vector< tk::real >, 3 >& coord,
-                      tk::Fields& unk,
-                      tk::ctr::ncomp_type e,
-                      tk::ctr::ncomp_type ncomp,
-                      tk::ctr::ncomp_type offset,
-                      tk::real t )
-    {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s = solution( e, ncomp, x[i], y[i], z[i], t );
-        for (ncomp_t c=0; c<ncomp; ++c)
-          unk(i,c,offset) = s[c];
-      }
     }
 
     //! \brief Query all side set IDs the user has configured for all components
@@ -187,8 +158,8 @@ class TransportProblemShearDiff {
     prescribedVelocity( tk::real,
                         tk::real y,
                         tk::real z,
-                        tk::ctr::ncomp_type e,
-                        tk::ctr::ncomp_type ncomp )
+                        ncomp_t e,
+                        ncomp_t ncomp )
     {
       using tag::param; using tag::transport;
       const auto& u0 = g_inputdeck.get< param, transport, tag::u0 >()[e];
@@ -197,61 +168,6 @@ class TransportProblemShearDiff {
       for (ncomp_t c=0; c<ncomp; ++c)
         vel[c] = {{ u0[c] + l[2*c+0]*y + l[2*c+1]*z, 0.0, 0.0 }};
       return vel;
-    }
-
-    //! Return the velocity field at cell nodes
-    //! \return Array of the four values of the three velocity coordinates
-    static std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields&,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& )
-    { return {{ {{0.0, 0.0, 0.0, 0.0}},
-                {{0.0, 0.0, 0.0, 0.0}},
-                {{0.0, 0.0, 0.0, 0.0}} }}; }
-
-    //! \brief Query Dirichlet boundary condition value on a given side set for
-    //!    all components in this PDE system
-    //! \param[in] e Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] ncomp Number of components in this transport equation
-    //! \param[in] t Physical time
-    //! \param[in] deltat Time step size
-    //! \param[in] side Pair of side set ID and node IDs on the side set
-    //! \param[in] coord Mesh node coordinates
-    //! \return Vector of pairs of bool and boundary condition value associated
-    //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
-    static std::unordered_map< std::size_t,
-                               std::vector< std::pair< bool, tk::real > > >
-    dirbc( tk::ctr::ncomp_type e,
-           tk::ctr::ncomp_type ncomp,
-           tk::real t,
-           tk::real deltat,
-           const std::pair< const int, std::vector< std::size_t > >& side,
-           const std::array< std::vector< tk::real >, 3 >& coord )
-    {
-      using tag::param; using tag::transport; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
-      std::unordered_map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
-      if (!ubc.empty()) {
-        Assert( ubc.size() > e, "Indexing out of Dirichlet BC eq-vector" );
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        const auto& z = coord[2];
-        for (const auto& b : ubc[e])
-          if (std::stoi(b) == side.first)
-            for (auto n : side.second) {
-              Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = solinc( e, ncomp, x[n], y[n], z[n], t, deltat );
-              auto& nbc = bc[n] = NodeBC( ncomp );
-              for (ncomp_t c=0; c<ncomp; ++c)
-                nbc[c] = { true, s[c] };
-            }
-      }
-      return bc;
     }
 
     //! Problem type enum accessor

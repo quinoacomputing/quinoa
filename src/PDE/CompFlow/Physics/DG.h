@@ -1,10 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Physics.h
+  \file      src/PDE/CompFlow/Physics/DG.h
   \copyright 2012-2015, J. Bakosi, 2016-2018, Los Alamos National Security, LLC.
-  \brief     All physics configurations for the compressible flow equations
-  \details   This file collects all Physics policy classes for the compressible
-    flow equations, defined in PDE/CompFlow/CompFlow.h.
+  \brief     Physics configurations for compressible single-material flow using
+    discontinuous Galerkin
+  \details   This file configures all Physics policy classes for compressible
+    single-material flow implementied using discontinuous Galerkin
+    discretization, defined in PDE/CompFlow/DGCompFlow.h.
 
     General requirements on CompFlow Physics policy classes:
 
@@ -12,7 +14,7 @@
       policy option. Example:
       \code{.cpp}
         static ctr::PhysicsType type() noexcept {
-          return ctr::PhysicsType::NAVIERSTOKES;
+          return ctr::PhysicsType::EULER;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -31,20 +33,22 @@
       step size based on the heat diffusion term.
 */
 // *****************************************************************************
-#ifndef CompFlowPhysics_h
-#define CompFlowPhysics_h
+#ifndef CompFlowPhysicsDG_h
+#define CompFlowPhysicsDG_h
 
 #include <boost/mpl/vector.hpp>
 
-#include "Physics/Euler.h"
-#include "Physics/NavierStokes.h"
+#include "DGEuler.h"
+#include "DGNavierStokes.h"
 
 namespace inciter {
+namespace dg {
 
-//! List of all CompFlow Physics policies (defined in the includes above)
+//! CompFlow Physics policies implemented using discontinuous Galerkin
 using CompFlowPhysics = boost::mpl::vector< CompFlowPhysicsEuler
                                           , CompFlowPhysicsNavierStokes >;
 
+} // dg::
 } // inciter::
 
-#endif // CompFlowPhysics_h
+#endif // CompFlowPhysicsDG_h
